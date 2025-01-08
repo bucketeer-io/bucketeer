@@ -1,7 +1,6 @@
 import { FC, memo } from 'react';
-import { MultiValue } from 'react-select';
+import { StylesConfig, ActionMeta, MultiValue } from 'react-select';
 import ReactCreatableSelect from 'react-select/creatable';
-import { cn } from 'utils/style';
 
 export interface Option {
   value: string;
@@ -12,13 +11,82 @@ export interface CreatableSelectProps {
   options?: Option[];
   disabled?: boolean;
   isSearchable?: boolean;
-  defaultValues?: Option[];
+  defaultValues?: MultiValue<Option>;
   closeMenuOnSelect?: boolean;
   className?: string;
-  onChange: (options: MultiValue<Option>) => void;
-  value?: Option;
+  onChange: (
+    options: MultiValue<Option>,
+    actionMeta: ActionMeta<Option>
+  ) => void;
+  value?: MultiValue<Option>;
   placeholder?: string;
 }
+
+const textColor = '#475569';
+const textColorDisabled = '#6B7280';
+const backgroundColor = 'white';
+const backgroundColorDisabled = '#F3F4F6';
+const borderColor = '#CBD5E1';
+const fontSize = '1rem';
+const lineHeight = '1.25rem';
+const minHeight = '3rem';
+
+export const colourStyles: StylesConfig<Option, true> = {
+  control: (styles, { isDisabled }) => ({
+    ...styles,
+    backgroundColor: isDisabled ? backgroundColorDisabled : backgroundColor,
+    borderColor: borderColor,
+    '&:hover': {
+      borderColor: borderColor
+    },
+    fontSize: fontSize,
+    lineHeight: lineHeight,
+    minHeight: minHeight,
+    boxShadow: 'none !important',
+    borderRadius: '8px'
+  }),
+  option: (styles, { isFocused }) => ({
+    ...styles,
+    backgroundColor: isFocused ? backgroundColor : undefined,
+    color: textColor,
+    ':hover': {
+      backgroundColor: '#FAFAFC !important',
+      cursor: 'pointer'
+    }
+  }),
+  menu: base => ({
+    ...base,
+    fontSize: fontSize,
+    lineHeight: lineHeight,
+    color: textColor
+  }),
+  placeholder: styles => ({
+    ...styles,
+    color: '#94A3B8 !important'
+  }),
+  multiValue: (base, { isDisabled }) => ({
+    ...base,
+    color: isDisabled ? textColorDisabled : textColor,
+    backgroundColor: '#E8E4F1 !important',
+    borderRadius: '4px'
+  }),
+  multiValueLabel: base => ({
+    ...base,
+    color: '#573792 !important'
+  }),
+  multiValueRemove: base => ({
+    ...base,
+    color: '#9A87BE !important',
+    ':hover': {
+      color: '#292C4C !important'
+    }
+  }),
+  singleValue: (styles, { isDisabled }) => ({
+    ...styles,
+    color: isDisabled ? textColorDisabled : textColor,
+    backgroundColor: 'red !important'
+  })
+};
 
 export const CreatableSelect: FC<CreatableSelectProps> = memo(
   ({
@@ -39,31 +107,7 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
         placeholder={placeholder}
         className={className}
         classNamePrefix="react-select"
-        classNames={{
-          control: ({ menuIsOpen, isFocused, isDisabled }) =>
-            cn(
-              'flex items-center px-3 py-1.5 gap-x-3 w-full border !outline-none !rounded-lg bg-white !border-gray-400 hover:!shadow-border-gray-400 focus:!shadow-border-gray-400',
-              {
-                '!shadow-border-gray-400 !outline-none':
-                  menuIsOpen || isFocused,
-                'disabled:!cursor-not-allowed disabled:!border-gray-400 disabled:!bg-gray-100 disabled:!shadow-none':
-                  isDisabled
-              }
-            ),
-          option: ({ isSelected }) =>
-            cn(
-              '!typo-para-medium !leading-5 !text-gray-700 hover:!bg-gray-100',
-              {
-                '!bg-gray-100': isSelected
-              }
-            ),
-          input: () => 'm-0 p-0',
-          placeholder: () => '!text-gray-500',
-          valueContainer: () => '!p-0 !m-0',
-          multiValueLabel: () =>
-            '!typo-para-medium !text-gray-700 !bg-primary-100/70 !rounded truncate',
-          singleValue: () => '!typo-para-medium !text-gray-700 truncate'
-        }}
+        styles={colourStyles}
         components={{
           DropdownIndicator: null
         }}
@@ -71,7 +115,9 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
         isSearchable={isSearchable}
         value={value}
         defaultValue={defaultValues}
-        onChange={onChange}
+        onChange={(newValue, actionMeta) =>
+          onChange(newValue as MultiValue<Option>, actionMeta)
+        }
         closeMenuOnSelect={closeMenuOnSelect}
       />
     );

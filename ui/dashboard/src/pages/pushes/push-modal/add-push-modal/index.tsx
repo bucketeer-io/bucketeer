@@ -10,7 +10,7 @@ import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
-import { convertFileToUnit8Array } from 'utils/converts';
+import { covertFileToByteString } from 'utils/converts';
 import { IconInfo } from '@icons';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
@@ -35,7 +35,7 @@ interface AddPushModalProps {
 
 export interface AddPushForm {
   name: string;
-  fcmServiceAccount: string;
+  fcmServiceAccount: Uint8Array | string;
   tags: string[];
   environmentId: string;
 }
@@ -87,18 +87,20 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
 
   const onSubmit: SubmitHandler<AddPushForm> = async values => {
     try {
-      await pushCreator(values).then(() => {
-        notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {` has been successfully created!`}
-            </span>
-          )
+      covertFileToByteString(files[0], data => {
+        pushCreator({ ...values, fcmServiceAccount: data }).then(() => {
+          notify({
+            toastType: 'toast',
+            messageType: 'success',
+            message: (
+              <span>
+                <b>{values.name}</b> {` has been successfully created!`}
+              </span>
+            )
+          });
+          invalidatePushes(queryClient);
+          onClose();
         });
-        invalidatePushes(queryClient);
-        onClose();
       });
     } catch (error) {
       const errorMessage = (error as Error)?.message;
@@ -143,14 +145,12 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
               render={({ field }) => (
                 <Form.Item>
                   <Form.Label required className="relative w-fit">
-                    <>
-                      {t('fcm-api-key')}
-                      <Icon
-                        icon={IconInfo}
-                        className="absolute -right-8"
-                        size={'sm'}
-                      />
-                    </>
+                    {t('fcm-api-key')}
+                    <Icon
+                      icon={IconInfo}
+                      className="absolute -right-8"
+                      size={'sm'}
+                    />
                   </Form.Label>
                   <Form.Control>
                     <UploadFiles
@@ -159,13 +159,11 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                       acceptTypeText="JSON"
                       onChange={files => {
                         if (files?.length) {
+                          field.onChange(files[0]);
                           setFiles(files);
-                          convertFileToUnit8Array(files[0], data =>
-                            field.onChange(data)
-                          );
                         } else {
-                          setFiles([]);
                           field.onChange('');
+                          setFiles([]);
                         }
                       }}
                     />

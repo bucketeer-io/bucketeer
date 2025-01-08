@@ -23,7 +23,6 @@ import {
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
-import TextArea from 'components/textarea';
 
 interface EditPushModalProps {
   isOpen: boolean;
@@ -51,7 +50,7 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
 
-  const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
+  const { data: collection } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
 
@@ -77,7 +76,7 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
 
   const {
     getValues,
-    formState: { isValid, isSubmitting }
+    formState: { isValid, isSubmitting, isDirty }
   } = form;
 
   const onSubmit: SubmitHandler<EditPushForm> = async values => {
@@ -128,23 +127,6 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
             />
             <Form.Field
               control={form.control}
-              name="fcmServiceAccount"
-              disabled
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Label required>{t('fcm-api-key')}</Form.Label>
-                  <Form.Control>
-                    <TextArea
-                      placeholder={`${t('form:placeholder-firebase')}`}
-                      {...field}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-            <Form.Field
-              control={form.control}
               name={`environmentId`}
               render={({ field }) => (
                 <Form.Item className="py-2">
@@ -158,7 +140,7 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                             item => item.id === getValues('environmentId')
                           )?.name
                         }
-                        disabled={isLoadingEnvs}
+                        disabled
                         variant="secondary"
                         className="w-full"
                       />
@@ -223,7 +205,7 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isValid}
+                    disabled={!isValid || !isDirty}
                     loading={isSubmitting}
                   >
                     {t(`submit`)}

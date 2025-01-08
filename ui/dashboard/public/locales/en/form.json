@@ -39,6 +39,6 @@
   "select-language": "Select language",
   "select-role": "Select role",
   "select-environment": "Select environment",
-  "upload-files": "Drop your profile photo here, or <underline>{{text}}</underline>",
+  "upload-files": "Drop your file here, or <underline>{{text}}</underline>",
   "accept-file-types": "{{type}}"
 }

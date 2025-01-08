@@ -120,9 +120,9 @@ const UploadFiles = ({
           onDragLeave={preventAndStopFnc}
           onClick={() => uploadRef?.current?.click()}
         >
-          <Icon icon={IconUpload} size={'xl'} color="primary-500" />
+          <Icon icon={IconUpload} color="primary-500" />
           {children || (
-            <div className="flex-center flex-col gap-y-2 typo-para-medium text-gray-600">
+            <div className="flex-center flex-col gap-y-2 typo-para-small text-gray-600">
               <div>
                 <Trans
                   i18nKey="form:upload-files"
@@ -142,8 +142,11 @@ const UploadFiles = ({
       </div>
       {files && files?.length > 0 && (
         <div className="flex flex-col w-full gap-y-2">
-          {files.map(file => (
-            <div className="flex items-center w-full gap-x-4 p-1 border-2 border-dashed border-gray-300 rounded">
+          {files.map((file, index) => (
+            <div
+              key={index}
+              className="flex items-center w-full gap-x-4 p-1 border-2 border-dashed border-gray-300 rounded-md"
+            >
               <Icon icon={IconFolder} size={'xl'} color="gray-500" />
               <div className="flex flex-col flex-1 gap-y-1 truncate">
                 <p className="typo-para-small text-gray-800">{file.name}</p>

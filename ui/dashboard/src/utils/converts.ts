@@ -36,13 +36,24 @@ export const formatFileSize = (size: number): string => {
   return `${formattedSize} ${units[i]}`;
 };
 
-export const convertFileToUnit8Array = (
+export const uint8ArrayToBase64 = (uint8Array: Uint8Array): string => {
+  const binary = Array.from(uint8Array)
+    .map(byte => String.fromCharCode(byte))
+    .join('');
+  return btoa(binary);
+};
+
+export const covertFileToByteString = (
   file: Blob,
-  onLoad: (data: Uint8Array) => void
+  onLoad: (data: string) => void
 ) => {
   const reader = new FileReader();
   reader.readAsArrayBuffer(file);
+
   reader.onload = () => {
-    onLoad(new Uint8Array(reader.result as ArrayBuffer));
+    const base64String = uint8ArrayToBase64(
+      new Uint8Array(reader.result as ArrayBuffer)
+    );
+    onLoad(base64String);
   };
 };

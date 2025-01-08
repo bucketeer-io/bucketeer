@@ -85,9 +85,9 @@
   "public-api": "Public API",
   "fcm": "FCM",
   "fcm-subtitle": "Manage all pushes within the platform",
-  "new-push": "New Push",
-  "edit-push": "Update Push",
-  "new-push-subtitle": "By using the push feature, the SDK can be updated in real-time. Every time a feature flag is updated, a notification is sent to the client.",
+  "new-push": "New Push Notification",
+  "edit-push": "Update Push Notification",
+  "new-push-subtitle": "Every time a feature flag is updated, a push notification is sent to the SDK client allowing you to update the SDK cache in real-time.",
   "tags": "Tags",
-  "fcm-api-key": "Firebase Cloud Messaging API Key"
+  "fcm-api-key": "Firebase Service Account"
 }

@@ -1,10 +1,10 @@
 import axiosClient from '@api/axios-client';
 import { Push } from '@types';
 
-export type PushCreatorParams = {
+export type PushCreatorPayload = {
   tags: string[];
   name: string;
-  fcmServiceAccount: string;
+  fcmServiceAccount: Uint8Array | string;
   environmentId: string;
 };
 
@@ -13,9 +13,9 @@ export interface PushCreatorResponse {
 }
 
 export const pushCreator = async (
-  params?: PushCreatorParams
+  payload?: PushCreatorPayload
 ): Promise<PushCreatorResponse> => {
   return axiosClient
-    .post<PushCreatorResponse>('/v1/push', params)
+    .post<PushCreatorResponse>('/v1/push', payload)
     .then(response => response.data);
 };
