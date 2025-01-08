@@ -897,8 +897,8 @@ func (s *NotificationService) ListEnabledSubscriptions(
 	var whereParts []mysql.WherePart
 	whereParts = append(
 		whereParts,
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
-		mysql.NewFilter("disabled", "=", false),
+		mysql.NewFilter("sub.environment_id", "=", req.EnvironmentId),
+		mysql.NewFilter("sub.disabled", "=", false),
 	)
 	sourceTypesValues := make([]interface{}, len(req.SourceTypes))
 	for i, st := range req.SourceTypes {
@@ -907,7 +907,7 @@ func (s *NotificationService) ListEnabledSubscriptions(
 	if len(sourceTypesValues) > 0 {
 		whereParts = append(
 			whereParts,
-			mysql.NewJSONFilter("source_types", mysql.JSONContainsNumber, sourceTypesValues),
+			mysql.NewJSONFilter("sub.source_types", mysql.JSONContainsNumber, sourceTypesValues),
 		)
 	}
 	subscriptions, cursor, _, err := s.listSubscriptionsMySQL(
