@@ -61,7 +61,6 @@ interface ListNotificationParams {
   orderDirection?: OrderDirection;
   searchKeyword?: string;
   disabled?: boolean;
-  organizationId: string;
 }
 
 export const listNotification = createAsyncThunk<
@@ -76,7 +75,6 @@ export const listNotification = createAsyncThunk<
   request.setOrderBy(params.orderBy);
   request.setOrderDirection(params.orderDirection);
   request.setSearchKeyword(params.searchKeyword);
-  request.setOrganizationId(params.organizationId);
   params.disabled != null &&
     request.setDisabled(new BoolValue().setValue(params.disabled));
   const result = await subscriptionGrpc.listSubscriptions(request);
