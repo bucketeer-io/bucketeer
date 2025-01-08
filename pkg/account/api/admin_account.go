@@ -135,7 +135,7 @@ func (s *AccountService) GetMe(
 		adminEnvRoles := s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
 
 		// update system admin user last seen
-		err := s.updateLastSeen(ctx, sysAdminAccount.Email, req.OrganizationId)
+		err := s.updateLastSeen(ctx, sysAdminAccount.Email, sysAdminAccount.OrganizationId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update system admin user last seen",
