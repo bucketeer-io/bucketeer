@@ -344,6 +344,8 @@ func (s *authService) updateUserInfoForOrganizations(
 			OrganizationId: org.Id,
 		})
 		if err != nil {
+                         // Because we don't know what organization the user belongs when exchanging the token,
+                         // we ignore logs that were not found to avoid unnecessary logging.
 			if status.Code(err) != codes.NotFound {
 				s.logger.Error(
 					"Failed to get account",
