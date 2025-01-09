@@ -30408,6 +30408,11 @@
                 "id": 8,
                 "name": "organization_id",
                 "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
               }
             ],
             "reserved_ids": [
