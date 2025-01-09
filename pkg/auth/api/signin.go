@@ -42,7 +42,6 @@ func (s *authService) SignIn(
 			"Sign in failed",
 			zap.Bool("enabled", config.Enabled),
 			zap.String("email", request.Email),
-			zap.String("password", request.Password),
 		)
 		dt, err := auth.StatusAccessDenied.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
