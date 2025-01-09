@@ -108,8 +108,8 @@ func (s *FeatureService) newListTagsOrdersMySQL(
 	var column string
 	switch orderBy {
 	case featureproto.ListTagsRequest_DEFAULT,
-		featureproto.ListTagsRequest_ID:
-		column = "tag.id"
+		featureproto.ListTagsRequest_NAME:
+		column = "tag.name"
 	case featureproto.ListTagsRequest_CREATED_AT:
 		column = "tag.created_at"
 	case featureproto.ListTagsRequest_UPDATED_AT:
@@ -143,7 +143,18 @@ func (s *FeatureService) upsertTags(
 		if trimed == "" {
 			continue
 		}
-		t := domain.NewTag(trimed)
+		t, err := domain.NewTag(trimed)
+		if err != nil {
+			s.logger.Error(
+				"Failed to create domain tag",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environment_id", environment_id),
+					zap.String("tagID", tag),
+				)...,
+			)
+			return err
+		}
 		if err := tagStorage.UpsertTag(ctx, t, environment_id); err != nil {
 			s.logger.Error(
 				"Failed to store tag",

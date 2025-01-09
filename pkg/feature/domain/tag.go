@@ -17,6 +17,7 @@ package domain
 import (
 	"time"
 
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -24,13 +25,18 @@ type Tag struct {
 	*feature.Tag
 }
 
-func NewTag(id string) *Tag {
+func NewTag(name string) (*Tag, error) {
 	now := time.Now().Unix()
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return nil, err
+	}
 	return &Tag{
 		Tag: &feature.Tag{
-			Id:        id,
+			Id:        id.String(),
+			Name:      name,
 			CreatedAt: now,
 			UpdatedAt: now,
 		},
-	}
+	}, nil
 }
