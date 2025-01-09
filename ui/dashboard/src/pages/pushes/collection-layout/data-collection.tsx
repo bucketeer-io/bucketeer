@@ -48,7 +48,7 @@ export const useColumns = ({
           <div className="flex flex-col gap-0.5 max-w-fit">
             <button
               onClick={() => onActions(push, 'EDIT')}
-              className="underline text-primary-500 break-all typo-para-medium text-left"
+              className="underline text-primary-500 break-all line-clamp-2 typo-para-medium text-left"
             >
               {push.name}
             </button>

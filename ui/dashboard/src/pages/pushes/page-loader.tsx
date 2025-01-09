@@ -29,7 +29,7 @@ const PageLoader = () => {
     isError
   } = useFetchPushes({
     pageSize: 1,
-    environmentId: currenEnvironment.id
+    organizationId: currenEnvironment.organizationId
   });
 
   const [selectedPush, setSelectedPush] = useState<Push>();

@@ -6,6 +6,7 @@ import { stringifyParams } from 'utils/search-params';
 
 export interface PushesFetcherParams extends CollectionParams {
   environmentId?: string;
+  organizationId?: string;
 }
 
 export const pushesFetcher = async (
