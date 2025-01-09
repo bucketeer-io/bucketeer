@@ -23,12 +23,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	v2 "github.com/bucketeer-io/bucketeer/pkg/coderef/storage/v2"
+	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/pkg/role"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/proto/coderef"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
@@ -51,26 +51,31 @@ func WithLogger(logger *zap.Logger) Option {
 }
 
 type CodeReferenceService struct {
-	codeRefStorage v2.CodeReferenceStorage
-	publisher      publisher.Publisher
-	opts           *options
-	logger         *zap.Logger
+	accountClient accountclient.Client
+	mysqlClient   mysql.Client
+	publisher     publisher.Publisher
+	opts          *options
+	logger        *zap.Logger
 }
 
 func NewCodeReferenceService(
+	ac accountclient.Client,
 	mysqlClient mysql.Client,
-	publisher publisher.Publisher,
+	p publisher.Publisher,
 	opts ...Option,
 ) *CodeReferenceService {
-	options := defaultOptions
+	dopts := &options{
+		logger: zap.NewNop(),
+	}
 	for _, opt := range opts {
-		opt(&options)
+		opt(dopts)
 	}
 	return &CodeReferenceService{
-		codeRefStorage: v2.NewCodeReferenceStorage(mysqlClient),
-		publisher:      publisher,
-		opts:           &options,
-		logger:         options.logger.Named("api"),
+		accountClient: ac,
+		mysqlClient:   mysqlClient,
+		publisher:     p,
+		opts:          dopts,
+		logger:        dopts.logger.Named("api"),
 	}
 }
 
@@ -88,7 +93,16 @@ func (s *CodeReferenceService) checkEnvironmentRole(
 		ctx,
 		requiredRole,
 		environmentID,
-		nil, // TODO: implement account lookup function
+		func(email string) (*accountproto.AccountV2, error) {
+			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
+				Email:         email,
+				EnvironmentId: environmentID,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return resp.Account, nil
+		},
 	)
 	if err != nil {
 		switch status.Code(err) {

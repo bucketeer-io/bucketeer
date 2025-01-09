@@ -51,7 +51,8 @@ func (s *CodeReferenceService) GetCodeReference(
 	if err := validateGetCodeReferenceRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	codeRef, err := s.codeRefStorage.GetCodeReference(ctx, req.Id, req.EnvironmentId)
+	codeRefStorage := v2.NewCodeReferenceStorage(s.mysqlClient)
+	codeRef, err := codeRefStorage.GetCodeReference(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2.ErrCodeReferenceNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -141,7 +142,8 @@ func (s *CodeReferenceService) ListCodeReferences(
 		}
 		cursor = c
 	}
-	codeRefs, nextCursor, totalCount, err := s.codeRefStorage.ListCodeReferences(
+	codeRefStorage := v2.NewCodeReferenceStorage(s.mysqlClient)
+	codeRefs, nextCursor, totalCount, err := codeRefStorage.ListCodeReferences(
 		ctx,
 		whereParts,
 		orders,
@@ -283,7 +285,8 @@ func (s *CodeReferenceService) CreateCodeReference(
 		}
 		return nil, dt.Err()
 	}
-	if err := s.codeRefStorage.CreateCodeReference(ctx, codeRef); err != nil {
+	codeRefStorage := v2.NewCodeReferenceStorage(s.mysqlClient)
+	if err := codeRefStorage.CreateCodeReference(ctx, codeRef); err != nil {
 		s.logger.Error(
 			"Failed to create code reference",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -320,7 +323,8 @@ func (s *CodeReferenceService) UpdateCodeReference(
 	if err := validateUpdateCodeReferenceRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	codeRef, err := s.codeRefStorage.GetCodeReference(ctx, req.Id, req.EnvironmentId)
+	codeRefStorage := v2.NewCodeReferenceStorage(s.mysqlClient)
+	codeRef, err := codeRefStorage.GetCodeReference(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2.ErrCodeReferenceNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -429,7 +433,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 		}
 		return nil, dt.Err()
 	}
-	if err := s.codeRefStorage.UpdateCodeReference(ctx, updatedCodeRef); err != nil {
+	if err := codeRefStorage.UpdateCodeReference(ctx, updatedCodeRef); err != nil {
 		s.logger.Error(
 			"Failed to update code reference",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -466,7 +470,8 @@ func (s *CodeReferenceService) DeleteCodeReference(
 	if err := validateDeleteCodeReferenceRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	codeRef, err := s.codeRefStorage.GetCodeReference(ctx, req.Id, req.EnvironmentId)
+	codeRefStorage := v2.NewCodeReferenceStorage(s.mysqlClient)
+	codeRef, err := codeRefStorage.GetCodeReference(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2.ErrCodeReferenceNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -540,7 +545,8 @@ func (s *CodeReferenceService) DeleteCodeReference(
 		}
 		return nil, dt.Err()
 	}
-	if err := s.codeRefStorage.DeleteCodeReference(ctx, codeRef.Id, codeRef.EnvironmentId); err != nil {
+	codeRefStorage = v2.NewCodeReferenceStorage(s.mysqlClient)
+	if err := codeRefStorage.DeleteCodeReference(ctx, codeRef.Id, codeRef.EnvironmentId); err != nil {
 		s.logger.Error(
 			"Failed to delete code reference",
 			log.FieldsFromImcomingContext(ctx).AddFields(

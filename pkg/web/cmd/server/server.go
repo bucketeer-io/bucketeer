@@ -688,6 +688,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go dashboardServer.Run()
 	// codeReferenceService
 	codeReferenceService := coderefapi.NewCodeReferenceService(
+		accountClient,
 		mysqlClient,
 		domainTopicPublisher,
 		coderefapi.WithLogger(logger),

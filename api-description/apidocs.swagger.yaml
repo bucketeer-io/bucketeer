@@ -789,6 +789,304 @@ paths:
           type: string
       tags:
         - Account
+  /v1/code_references:
+    get:
+      summary: List
+      description: List code references. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.code_references.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListCodeReferencesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: featureId
+          in: query
+          required: false
+          type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Code References
+    post:
+      summary: Create
+      description: Create a new code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.code_references.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateCodeReferenceRequest'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Code References
+  /v1/code_references/{id}:
+    get:
+      summary: Get
+      description: Get a code reference. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.code_references.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Code References
+    delete:
+      summary: Delete
+      description: Delete a code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.code_references.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayDeleteCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Code References
+    patch:
+      summary: Update
+      description: Update a code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.code_references.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/GatewayUpdateCodeReferenceBody'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Code References
   /v1/features:
     get:
       summary: List
@@ -1303,6 +1601,15 @@ definitions:
       - PARTIALLY_MATCH
     default: EQUALS
     description: ' - FEATURE_FLAG: Attribute is feature ID, and value is variation ID.'
+  CodeReferenceRepositoryType:
+    type: string
+    enum:
+      - REPOSITORY_TYPE_UNSPECIFIED
+      - GITHUB
+      - GITLAB
+      - BITBUCKET
+      - CUSTOM
+    default: REPOSITORY_TYPE_UNSPECIFIED
   FeatureVariationType:
     type: string
     enum:
@@ -1344,6 +1651,26 @@ definitions:
         type: boolean
         description: if true, the account will be deleted and other fields will be ignored.
         title: deleted
+  GatewayUpdateCodeReferenceBody:
+    type: object
+    properties:
+      filePath:
+        type: string
+      lineNumber:
+        type: integer
+        format: int32
+      codeSnippet:
+        type: string
+      contentHash:
+        type: string
+      aliases:
+        type: array
+        items:
+          type: string
+      repositoryBranch:
+        type: string
+      commitHash:
+        type: string
   GatewayUpdateFeatureBody:
     type: object
     properties:
@@ -1666,6 +1993,41 @@ definitions:
     properties:
       account:
         $ref: '#/definitions/accountAccountV2'
+  bucketeergatewayCreateCodeReferenceRequest:
+    type: object
+    properties:
+      featureId:
+        type: string
+      environmentId:
+        type: string
+      filePath:
+        type: string
+      lineNumber:
+        type: integer
+        format: int32
+      codeSnippet:
+        type: string
+      contentHash:
+        type: string
+      aliases:
+        type: array
+        items:
+          type: string
+      repositoryName:
+        type: string
+      repositoryOwner:
+        type: string
+      repositoryType:
+        $ref: '#/definitions/CodeReferenceRepositoryType'
+      repositoryBranch:
+        type: string
+      commitHash:
+        type: string
+  bucketeergatewayCreateCodeReferenceResponse:
+    type: object
+    properties:
+      codeReference:
+        $ref: '#/definitions/coderefCodeReference'
   bucketeergatewayCreateFeatureRequest:
     type: object
     properties:
@@ -1714,6 +2076,8 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
+  bucketeergatewayDeleteCodeReferenceResponse:
+    type: object
   bucketeergatewayGetAccountV2ByEnvironmentIDResponse:
     type: object
     properties:
@@ -1724,6 +2088,11 @@ definitions:
     properties:
       account:
         $ref: '#/definitions/accountAccountV2'
+  bucketeergatewayGetCodeReferenceResponse:
+    type: object
+    properties:
+      codeReference:
+        $ref: '#/definitions/coderefCodeReference'
   bucketeergatewayGetFeatureResponse:
     type: object
     properties:
@@ -1747,6 +2116,19 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/accountAccountV2'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  bucketeergatewayListCodeReferencesResponse:
+    type: object
+    properties:
+      codeReferences:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/coderefCodeReference'
       cursor:
         type: string
       totalCount:
@@ -1778,6 +2160,11 @@ definitions:
     properties:
       account:
         $ref: '#/definitions/accountAccountV2'
+  bucketeergatewayUpdateCodeReferenceResponse:
+    type: object
+    properties:
+      codeReference:
+        $ref: '#/definitions/coderefCodeReference'
   bucketeergatewayUpdateFeatureResponse:
     type: object
     properties:
@@ -1809,6 +2196,57 @@ definitions:
       - NODE_SERVER
       - JAVASCRIPT
     default: UNKNOWN
+  coderefCodeReference:
+    type: object
+    properties:
+      id:
+        type: string
+      featureId:
+        type: string
+      filePath:
+        type: string
+      lineNumber:
+        type: integer
+        format: int32
+      codeSnippet:
+        type: string
+      contentHash:
+        type: string
+      aliases:
+        type: array
+        items:
+          type: string
+      repositoryName:
+        type: string
+      repositoryOwner:
+        type: string
+      repositoryType:
+        $ref: '#/definitions/CodeReferenceRepositoryType'
+      repositoryBranch:
+        type: string
+      commitHash:
+        type: string
+      environmentId:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+  coderefListCodeReferencesRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  coderefListCodeReferencesRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
   environmentEnvironmentV2:
     type: object
     properties:
