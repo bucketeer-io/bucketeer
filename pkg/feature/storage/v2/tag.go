@@ -57,11 +57,12 @@ func (s *tagStorage) UpsertTag(
 	query := `
 		INSERT INTO tag (
 			id,
+			name,
 			created_at,
 			updated_at,
 			environment_id
 		) VALUES (
-			?, ?, ?, ?
+			?, ?, ?, ?, ?
 		) ON DUPLICATE KEY UPDATE
 			updated_at = VALUES(updated_at)
 	`
@@ -69,6 +70,7 @@ func (s *tagStorage) UpsertTag(
 		ctx,
 		query,
 		tag.Id,
+		tag.Name,
 		tag.CreatedAt,
 		tag.UpdatedAt,
 		environmentId,
@@ -91,6 +93,7 @@ func (s *tagStorage) ListTags(
 	query := fmt.Sprintf(`
 		SELECT
 			id,
+			name,
 			created_at,
 			updated_at
 		FROM
@@ -108,6 +111,7 @@ func (s *tagStorage) ListTags(
 		tag := proto.Tag{}
 		err := rows.Scan(
 			&tag.Id,
+			&tag.Name,
 			&tag.CreatedAt,
 			&tag.UpdatedAt,
 		)
