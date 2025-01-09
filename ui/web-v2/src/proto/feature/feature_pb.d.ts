@@ -245,6 +245,9 @@ export class Tag extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getName(): string;
+  setName(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Tag.AsObject;
   static toObject(includeInstance: boolean, msg: Tag): Tag.AsObject;
@@ -265,5 +268,6 @@ export namespace Tag {
     id: string;
     createdAt: number;
     updatedAt: number;
+    name: string;
   };
 }

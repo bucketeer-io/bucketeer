@@ -92,8 +92,8 @@ export const FeatureSettingsForm: FC<FeatureSettingsFormProps> = memo(
                   return (
                     <CreatableSelect
                       options={tagsList.map((tag) => ({
-                        label: tag.id,
-                        value: tag.id
+                        label: tag.name,
+                        value: tag.name
                       }))}
                       disabled={!editable}
                       defaultValues={field.value.map((tag) => {
