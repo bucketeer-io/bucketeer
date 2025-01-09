@@ -7,6 +7,10 @@ type WriteType =
   | 'WriteType_OVERRIDE'
   | 'WriteType_PATCH';
 
+export type AvatarCommand = {
+  avatarImage: string;
+  avatarFileType: string;
+};
 export interface AccountUpdaterParams {
   email: string;
   organizationId: string;
@@ -35,10 +39,7 @@ export interface AccountUpdaterParams {
   changeLastSeenCommand?: {
     lastSeen: string;
   };
-  changeAvatarCommand?: {
-    avatarImage: string;
-    avatarFileType: string;
-  };
+  changeAvatarCommand?: AvatarCommand;
 }
 
 export const accountUpdater = async (params?: AccountUpdaterParams) => {

@@ -1,9 +1,9 @@
+import { useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { IconEditOutlined } from 'react-icons-material-design';
-import { accountUpdater } from '@api/account/account-updater';
+import { accountUpdater, AvatarCommand } from '@api/account/account-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
-import primaryAvatar from 'assets/avatars/primary.svg';
-// import defaultAvatar from 'assets/avatars/default.svg';
+import defaultAvatar from 'assets/avatars/default.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -37,12 +37,18 @@ const formSchema = yup.object().shape({
 });
 
 export type FilterProps = {
+  selectedAvatar: AvatarCommand | null;
   isOpen: boolean;
   onClose: () => void;
   onEditAvatar: () => void;
 };
 
-const UserProfileModal = ({ isOpen, onClose, onEditAvatar }: FilterProps) => {
+const UserProfileModal = ({
+  selectedAvatar,
+  isOpen,
+  onClose,
+  onEditAvatar
+}: FilterProps) => {
   const { t } = useTranslation(['common', 'form']);
   const { consoleAccount, onMeFetcher } = useAuth();
   const { notify } = useToast();
@@ -57,32 +63,55 @@ const UserProfileModal = ({ isOpen, onClose, onEditAvatar }: FilterProps) => {
     }
   });
 
-  const avatar = consoleAccount?.avatarImage
-    ? consoleAccount.avatarImage
-    : primaryAvatar;
+  const avatar = consoleAccount?.avatarImage;
 
-  const onSubmit: SubmitHandler<UserInfoForm> = values => {
-    return accountUpdater({
-      organizationId: currentEnvironment.organizationId,
-      email: consoleAccount!.email,
-      changeFirstNameCommand: {
-        firstName: values.firstName
-      },
-      changeLastNameCommand: {
-        lastName: values.lastName
-      },
-      changeLanguageCommand: {
-        language: values.language
+  const avatarSrc = useMemo(
+    () =>
+      selectedAvatar || avatar
+        ? `data:${selectedAvatar?.avatarFileType || consoleAccount?.avatarFileType};base64,${selectedAvatar?.avatarImage || avatar}`
+        : defaultAvatar,
+    [avatar, selectedAvatar, defaultAvatar]
+  );
+
+  const onSubmit: SubmitHandler<UserInfoForm> = async values => {
+    try {
+      const resp = await accountUpdater({
+        organizationId: currentEnvironment.organizationId,
+        email: consoleAccount!.email,
+        changeFirstNameCommand: {
+          firstName: values.firstName
+        },
+        changeLastNameCommand: {
+          lastName: values.lastName
+        },
+        changeLanguageCommand: {
+          language: values.language
+        },
+        ...(selectedAvatar && selectedAvatar?.avatarImage
+          ? {
+              changeAvatarCommand: {
+                ...selectedAvatar
+              }
+            }
+          : {})
+      });
+
+      if (resp) {
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: `Profile has been successfully updated!`
+        });
+        onMeFetcher({ organizationId: currentEnvironment.organizationId });
+        onClose();
       }
-    }).then(() => {
+    } catch (error) {
       notify({
         toastType: 'toast',
-        messageType: 'success',
-        message: `Profile has been successfully updated!`
+        messageType: 'error',
+        message: (error as Error)?.message || 'Something went wrong.'
       });
-      onMeFetcher({ organizationId: currentEnvironment.organizationId });
-      onClose();
-    });
+    }
   };
 
   return (
@@ -97,12 +126,7 @@ const UserProfileModal = ({ isOpen, onClose, onEditAvatar }: FilterProps) => {
           <div className="p-5">
             <div className="flex items-center justify-center mb-2">
               <div className="relative">
-                <AvatarImage
-                  image={`data:image/jpeg;base64,${avatar}`}
-                  size="xl"
-                  alt="user-avatar"
-                />
-                {/* <AvatarImage image={defaultAvatar} size="xl" alt="user-avatar" /> */}
+                <AvatarImage image={avatarSrc} size="xl" alt="user-avatar" />
                 <Button
                   type="button"
                   className="absolute bottom-0 right-0 size-8 px-1"

@@ -1,20 +1,26 @@
+import { useMemo, useState } from 'react';
+import { AvatarCommand } from '@api/account/account-updater';
 import * as Popover from '@radix-ui/react-popover';
-import primaryAvatar from 'assets/avatars/primary.svg';
+import defaultAvatar from 'assets/avatars/default.svg';
 import { useAuth } from 'auth';
 import { useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { IconBuilding, IconChevronRight, IconLogout, IconUser } from '@icons';
 import { AvatarImage } from 'components/avatar';
-import EditPhottoProfileModal from './edit-photo';
+import EditPhotoProfileModal from './edit-photo';
 import LogoutConfirmModal from './logout-confirm';
 import MenuItemComponent from './menu-item';
-import UploadUploadAvatarModal from './upload-avatar';
+import UploadAvatarModal from './upload-avatar';
 import UserProfileModal from './user-profile';
 
 const UserMenu = () => {
   const { t } = useTranslation(['common']);
   const { logout, myOrganizations, consoleAccount } = useAuth();
+
+  const [selectedAvatar, setSelectedAvatar] = useState<AvatarCommand | null>(
+    null
+  );
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
@@ -34,9 +40,21 @@ const UserMenu = () => {
     onCloseUploadPhotoModal
   ] = useToggleOpen(false);
 
-  const avatar = consoleAccount?.avatarUrl
-    ? consoleAccount.avatarUrl
-    : primaryAvatar;
+  const avatar = consoleAccount?.avatarImage;
+
+  const avatarSrc = useMemo(
+    () =>
+      avatar
+        ? `data:${consoleAccount?.avatarFileType};base64,${avatar}`
+        : defaultAvatar,
+    [avatar, defaultAvatar]
+  );
+
+  const onSelectAvatar = (avatar: AvatarCommand | null, cb?: () => void) => {
+    setSelectedAvatar(avatar);
+    onOpenProfileModal();
+    if (cb) cb();
+  };
 
   const onHandleLogout = () => {
     logout();
@@ -72,7 +90,7 @@ const UserMenu = () => {
         </div>
       </Popover.Content>
       <Popover.Trigger>
-        <AvatarImage image={avatar} size="sm" alt="user-avatar" />
+        <AvatarImage image={avatarSrc} size="sm" alt="user-avatar" />
       </Popover.Trigger>
 
       {openConfirmModal && (
@@ -85,8 +103,12 @@ const UserMenu = () => {
 
       {openProfileModal && (
         <UserProfileModal
+          selectedAvatar={selectedAvatar}
           isOpen={openProfileModal}
-          onClose={onCloseProfileModal}
+          onClose={() => {
+            onCloseProfileModal();
+            setSelectedAvatar(null);
+          }}
           onEditAvatar={() => {
             onCloseProfileModal();
             onOpenUploadAvatarModal();
@@ -94,17 +116,24 @@ const UserMenu = () => {
         />
       )}
       {openUploadAvatarModal && (
-        <UploadUploadAvatarModal
+        <UploadAvatarModal
           isOpen={openUploadAvatarModal}
-          onClose={onCloseUploadAvatarModal}
+          onClose={() => {
+            onCloseUploadAvatarModal();
+            setSelectedAvatar(null);
+          }}
           onUploadPhoto={() => {
             onCloseUploadAvatarModal();
             onOpenUploadPhotoModal();
           }}
+          onSelectAvatar={avatar =>
+            onSelectAvatar(avatar, onCloseUploadAvatarModal)
+          }
         />
       )}
       {openUploadPhotoModal && (
-        <EditPhottoProfileModal
+        <EditPhotoProfileModal
+          onUpload={avatar => onSelectAvatar(avatar, onCloseUploadPhotoModal)}
           isOpen={openUploadPhotoModal}
           onClose={onCloseUploadPhotoModal}
         />

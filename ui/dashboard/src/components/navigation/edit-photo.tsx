@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { AvatarCommand } from '@api/account/account-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -16,29 +17,32 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 Mb
 type ProcessingStatus = 'select' | 'resize';
 
 const formSchema = yup.object().shape({
-  image: yup.string().required()
+  avatarImage: yup.string().required(),
+  avatarFileType: yup.string().required()
 });
 
-export type EditPhottoProfileProps = {
+export type EditPhotoProfileProps = {
   isOpen: boolean;
   onClose: () => void;
-  onUpload: (image: string) => void;
+  onUpload: (avatar: AvatarCommand) => void;
 };
 
-const EditPhottoProfileModal = ({
+const EditPhotoProfileModal = ({
   isOpen,
   onClose,
   onUpload
-}: EditPhottoProfileProps) => {
+}: EditPhotoProfileProps) => {
   const { t } = useTranslation(['common']);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
-      image: ''
+      avatarImage: '',
+      avatarFileType: ''
     }
   });
-  const image = form.watch('image');
+  const avatarImage = form.watch('avatarImage');
+  const avatarFileType = form.watch('avatarFileType');
 
   const [progressingStatus, setProcessingStatus] =
     useState<ProcessingStatus>('select');
@@ -64,31 +68,35 @@ const EditPhottoProfileModal = ({
           maxFileSize={MAX_FILE_SIZE}
           onChange={file => {
             readImageFile(file).then(result => {
-              form.setValue('image', result);
+              form.setValue('avatarImage', result);
+              form.setValue('avatarFileType', file.type);
             });
             setProcessingStatus('resize');
           }}
         />
       </div>
 
-      {image && progressingStatus === 'resize' && (
+      {avatarImage && progressingStatus === 'resize' && (
         <>
           <div className="flex w-full flex-col items-center p-5">
             <div className="h-[220px] w-full">
               <PhotoResize
                 ref={photoResizeRef}
                 aspect={2 / 2}
-                value={image}
-                onChange={value => {
-                  form.setValue('image', value);
-                }}
+                value={avatarImage}
+                onChange={value => form.setValue('avatarImage', value)}
               />
             </div>
           </div>
           <ButtonBar
             secondaryButton={
               <Button
-                onClick={() => onUpload(image)}
+                onClick={() =>
+                  onUpload({
+                    avatarImage: avatarImage?.split(',')[1] || '',
+                    avatarFileType
+                  })
+                }
                 loading={form.formState.isSubmitting}
               >
                 {t(`submit`)}
@@ -106,4 +114,4 @@ const EditPhottoProfileModal = ({
   );
 };
 
-export default EditPhottoProfileModal;
+export default EditPhotoProfileModal;
