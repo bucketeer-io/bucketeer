@@ -147,8 +147,8 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
                       return (
                         <CreatableSelect
                           options={tagsList.map((tag) => ({
-                            label: tag.id,
-                            value: tag.id
+                            label: tag.name,
+                            value: tag.name
                           }))}
                           onChange={(options: Option[]) => {
                             field.onChange(options.map((o) => o.value));

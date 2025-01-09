@@ -689,8 +689,8 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
           case FilterTypes.TAGS:
             setFilterValues(
               tagsList.map((tag) => ({
-                value: tag.id,
-                label: tag.id
+                value: tag.name,
+                label: tag.name
               }))
             );
             return;
