@@ -1,17 +1,21 @@
+import { useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { apiKeyUpdater } from '@api/api-key';
+import { pushCreator } from '@api/push';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateAPIKeys } from '@queries/api-keys';
+import { invalidatePushes } from '@queries/pushes';
+import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
-import { APIKey, APIKeyRole } from '@types';
+import { covertFileToByteString } from 'utils/converts';
 import { IconInfo } from '@icons';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
+import { CreatableSelect } from 'components/creatable-select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,117 +26,98 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
-import { RadioGroup, RadioGroupItem } from 'components/radio';
-import TextArea from 'components/textarea';
+import UploadFiles from 'components/upload-files';
 
-interface EditAPIKeyModalProps {
+interface AddPushModalProps {
   isOpen: boolean;
   onClose: () => void;
-  apiKey: APIKey;
 }
 
-type APIKeyOption = {
-  id: string;
-  label: string;
-  description: string;
-  value: APIKeyRole;
-};
-
-export interface EditAPIKeyForm {
+export interface AddPushForm {
   name: string;
+  fcmServiceAccount: Uint8Array | string;
+  tags: string[];
   environmentId: string;
-  description?: string;
 }
 
 export const formSchema = yup.object().shape({
   name: yup.string().required(),
-  environmentId: yup.string().required(),
-  description: yup.string()
+  fcmServiceAccount: yup.string().required(),
+  tags: yup.array().required(),
+  environmentId: yup.string().required()
 });
 
-const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
+const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
   const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const { data: collection } = useFetchEnvironments({
+  const [files, setFiles] = useState<File[]>([]);
+
+  const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
+
+  const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
+    params: {
+      cursor: String(0),
+      pageSize: LIST_PAGE_SIZE,
+      environmentId: currentEnvironment.id
+    }
+  });
   const environments = (collection?.environments || []).filter(item => item.id);
+  const tagOptions = tagCollection?.tags || [];
 
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
-      name: apiKey.name,
-      environmentId: currentEnvironment.id,
-      description: apiKey.description
+      name: '',
+      fcmServiceAccount: '',
+      tags: [],
+      environmentId: ''
     }
   });
 
-  const options: APIKeyOption[] = [
-    {
-      id: 'client-sdk',
-      label: t('form:api-key.client-sdk'),
-      description: t('form:api-key.client-sdk-desc'),
-      value: 'SDK_CLIENT'
-    },
-    {
-      id: 'server-sdk',
-      label: t('form:api-key.server-sdk'),
-      description: t('form:api-key.server-sdk-desc'),
-      value: 'SDK_SERVER'
-    },
-    {
-      id: 'public-api-read-only',
-      label: t('form:api-key.public-api-read-only'),
-      description: t('form:api-key.public-api-read-only-desc'),
-      value: 'PUBLIC_API_READ_ONLY'
-    },
-    {
-      id: 'public-api-write',
-      label: t('form:api-key.public-api-write'),
-      description: t('form:api-key.public-api-write-desc'),
-      value: 'PUBLIC_API_WRITE'
-    },
-    {
-      id: 'public-api-admin',
-      label: t('form:api-key.public-api-admin'),
-      description: t('form:api-key.public-api-admin-desc'),
-      value: 'PUBLIC_API_ADMIN'
-    }
-  ];
-
   const {
     getValues,
-    formState: { isValid, isSubmitting, isDirty }
+    formState: { isValid, isSubmitting }
   } = form;
 
-  const onSubmit: SubmitHandler<EditAPIKeyForm> = values => {
-    return apiKeyUpdater({
-      id: apiKey.id,
-      environmentId: values.environmentId,
-      description: values.description,
-      name: values.name
-    }).then(() => {
+  const onSubmit: SubmitHandler<AddPushForm> = async values => {
+    try {
+      covertFileToByteString(files[0], data => {
+        pushCreator({ ...values, fcmServiceAccount: data }).then(() => {
+          notify({
+            toastType: 'toast',
+            messageType: 'success',
+            message: (
+              <span>
+                <b>{values.name}</b> {` has been successfully created!`}
+              </span>
+            )
+          });
+          invalidatePushes(queryClient);
+          onClose();
+        });
+      });
+    } catch (error) {
+      const errorMessage = (error as Error)?.message;
       notify({
         toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {` has been successfully updated!`}
-          </span>
-        )
+        messageType: 'error',
+        message: errorMessage || 'Something went wrong.'
       });
-      invalidateAPIKeys(queryClient);
-      onClose();
-    });
+    }
   };
 
   return (
-    <SlideModal title={t('update-api-key')} isOpen={isOpen} onClose={onClose}>
+    <SlideModal title={t('new-push')} isOpen={isOpen} onClose={onClose}>
       <div className="w-full p-5 pb-28">
+        <div className="typo-para-small text-gray-600 mb-3">
+          {t('new-push-subtitle')}
+        </div>
         <p className="text-gray-800 typo-head-bold-small">
           {t('form:general-info')}
         </p>
@@ -156,15 +141,31 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
             />
             <Form.Field
               control={form.control}
-              name="description"
+              name="fcmServiceAccount"
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label optional>{t('form:description')}</Form.Label>
+                  <Form.Label required className="relative w-fit">
+                    {t('fcm-api-key')}
+                    <Icon
+                      icon={IconInfo}
+                      className="absolute -right-8"
+                      size={'sm'}
+                    />
+                  </Form.Label>
                   <Form.Control>
-                    <TextArea
-                      placeholder={t('form:placeholder-desc')}
-                      rows={4}
-                      {...field}
+                    <UploadFiles
+                      files={files}
+                      accept={['.json']}
+                      acceptTypeText="JSON"
+                      onChange={files => {
+                        if (files?.length) {
+                          field.onChange(files[0]);
+                          setFiles(files);
+                        } else {
+                          field.onChange('');
+                          setFiles([]);
+                        }
+                      }}
                     />
                   </Form.Control>
                   <Form.Message />
@@ -172,9 +173,6 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
               )}
             />
 
-            <p className="text-gray-800 typo-head-bold-small">
-              {t('environment')}
-            </p>
             <Form.Field
               control={form.control}
               name={`environmentId`}
@@ -190,7 +188,7 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
                             item => item.id === getValues('environmentId')
                           )?.name
                         }
-                        disabled
+                        disabled={isLoadingEnvs}
                         variant="secondary"
                         className="w-full"
                       />
@@ -218,34 +216,29 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
               )}
             />
 
-            <div className="flex items-center gap-2 mt-4">
-              <p className="text-gray-800 typo-head-bold-small">
-                {t('key-role')}
-              </p>
-              <Icon
-                icon={IconInfo}
-                size="xs"
-                color="gray-500"
-                className="mt-0.5"
-              />
-            </div>
-
-            <RadioGroup defaultValue={apiKey.role}>
-              {options.map(({ id, label, description, value }) => (
-                <div
-                  key={id}
-                  className="flex items-center last:border-b-0 border-b py-4 gap-x-5"
-                >
-                  <label htmlFor={id} className="flex-1 opacity-50">
-                    <p className="typo-para-medium text-gray-700">{label}</p>
-                    <p className="typo-para-small text-gray-600">
-                      {description}
-                    </p>
-                  </label>
-                  <RadioGroupItem disabled value={value} id={id} />
-                </div>
-              ))}
-            </RadioGroup>
+            <Form.Field
+              control={form.control}
+              name={`tags`}
+              render={({ field }) => (
+                <Form.Item className="py-2">
+                  <Form.Label required>{t('tags')}</Form.Label>
+                  <Form.Control>
+                    <CreatableSelect
+                      disabled={isLoadingTags}
+                      placeholder={t(`form:placeholder-tags`)}
+                      options={tagOptions?.map(tag => ({
+                        label: tag.id,
+                        value: tag.id
+                      }))}
+                      onChange={value =>
+                        field.onChange(value.map(tag => tag.value))
+                      }
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
 
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
@@ -257,7 +250,7 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isValid || !isDirty}
+                    disabled={!isValid}
                     loading={isSubmitting}
                   >
                     {t(`submit`)}
@@ -272,4 +265,4 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
   );
 };
 
-export default EditAPIKeyModal;
+export default AddPushModal;

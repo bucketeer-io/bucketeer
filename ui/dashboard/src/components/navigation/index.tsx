@@ -74,7 +74,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
         {
           label: `FCM`,
           icon: IconSystem.IconFCM,
-          href: `/${envUrlCode}${ROUTING.PAGE_PATH_INTEGRATION_FCM}`
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_PUSHES}`
         }
       ]
     }
