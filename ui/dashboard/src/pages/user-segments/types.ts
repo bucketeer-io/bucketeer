@@ -20,3 +20,11 @@ export interface CollectionProps {
 }
 
 export type UserSegmentsActionsType = 'EDIT' | 'DELETE' | 'FLAG';
+
+export type UserSegmentForm = {
+  id?: string;
+  name: string;
+  description?: string;
+  userIds?: string;
+  file?: unknown;
+};

@@ -7,8 +7,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
-import * as yup from 'yup';
 import { covertFileToUint8ToBase64 } from 'utils/converts';
+import { UserSegmentForm } from 'pages/user-segments/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
@@ -18,25 +18,12 @@ import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
 import Upload from 'components/upload-files';
+import { formSchema } from '../../form-schema';
 
 interface AddUserSegmentModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-export interface AddUserSegmentForm {
-  id?: string;
-  name: string;
-  description?: string;
-  userIds?: string;
-}
-
-const formSchema = yup.object().shape({
-  name: yup.string().required(),
-  description: yup.string(),
-  id: yup.string(),
-  userIds: yup.string()
-});
 
 const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
   const { t } = useTranslation(['common', 'form']);
@@ -47,7 +34,6 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
 
   const [userIdsType, setUserIdsType] = useState('upload');
   const [files, setFiles] = useState<File[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -55,13 +41,14 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
       id: '',
       name: '',
       description: '',
-      userIds: ''
+      userIds: '',
+      file: null
     }
   });
 
   const {
-    setValue
-    // formState: { isValid, isSubmitting }
+    formState: { isValid, isSubmitting, isDirty },
+    trigger
   } = form;
 
   const addSuccess = (name: string) => {
@@ -75,20 +62,11 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
       )
     });
     invalidateUserSegments(queryClient);
-    setIsLoading(false);
     onClose();
   };
 
-  const onAddSuccess = (name: string, isUpload = true) => {
-    let timerId: NodeJS.Timeout | null = null;
-    if (timerId) clearTimeout(timerId);
-    if (isUpload) return (timerId = setTimeout(() => addSuccess(name), 6000));
-    return addSuccess(name);
-  };
-
-  const onSubmit: SubmitHandler<AddUserSegmentForm> = async values => {
+  const onSubmit: SubmitHandler<UserSegmentForm> = async values => {
     try {
-      setIsLoading(true);
       const resp = await userSegmentCreator({
         environmentId: currentEnvironment.id,
         name: values.name,
@@ -97,10 +75,9 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
 
       if (resp) {
         let file: File | null = null;
-        if (files.length) {
-          file = files[0];
+        if (values.file || files.length) {
+          file = (values.file as File) || files[0];
         } else if (values.userIds?.length) {
-          // Convert string to file object
           file = new File([values.userIds], 'filename.txt', {
             type: 'text/plain'
           });
@@ -113,9 +90,9 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
               state: 'INCLUDED',
               data: base64String
             });
-            if (uploadResp) onAddSuccess(values.name);
+            if (uploadResp) addSuccess(values.name);
           });
-        } else onAddSuccess(values.name, false);
+        } else addSuccess(values.name);
       }
     } catch (error) {
       notify({
@@ -169,65 +146,97 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
             />
             <Divider className="mt-1 mb-5" />
             <p className="text-gray-900 typo-head-bold-small mb-5">{`${t('form:list-of-users-ids')} (${t('form:optional')})`}</p>
+
             <RadioGroup
               defaultValue="upload"
               onValueChange={value => setUserIdsType(value)}
               className="flex flex-col w-full gap-y-4"
             >
-              <div className="flex flex-col w-full h-fit gap-y-3">
-                <div className="flex items-center h-fit gap-x-2">
-                  <RadioGroupItem
-                    value={'upload'}
-                    checked={userIdsType === 'upload'}
-                    id={'upload'}
-                  />
-                  <label
-                    htmlFor={'upload'}
-                    className="cursor-pointer typo-para-small text-gray-700"
-                  >
-                    {t('form:browse-files')}
-                  </label>
-                </div>
-                {userIdsType === 'upload' && (
-                  <div className="flex w-full max-w-full h-fit pl-8">
-                    <Upload
-                      files={files}
-                      className="border-l border-primary-500 pl-4"
-                      uploadClassName="min-h-[200px] h-[200px]"
-                      onChange={files => setFiles(files)}
-                    />
-                  </div>
+              <Form.Field
+                control={form.control}
+                name="file"
+                render={({ field }) => (
+                  <Form.Item className="py-0">
+                    <Form.Control>
+                      <div className="flex flex-col w-full h-fit gap-y-3">
+                        <div className="flex items-center h-fit gap-x-2">
+                          <RadioGroupItem
+                            value={'upload'}
+                            checked={userIdsType === 'upload'}
+                            id={'upload'}
+                          />
+                          <label
+                            htmlFor={'upload'}
+                            className="cursor-pointer typo-para-small text-gray-700"
+                          >
+                            {t('form:browse-files')}
+                          </label>
+                        </div>
+                        {userIdsType === 'upload' && (
+                          <div className="flex w-full max-w-full h-fit pl-8">
+                            <Upload
+                              files={files}
+                              className="border-l border-primary-500 pl-4"
+                              uploadClassName="min-h-[200px] h-[200px]"
+                              onChange={files => {
+                                if (files.length) {
+                                  setFiles(files);
+                                  field.onChange(files[0]);
+                                } else {
+                                  setFiles([]);
+                                  field.onChange(null);
+                                }
+                                trigger('file');
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
                 )}
-              </div>
-              <div className="flex flex-col w-full gap-y-3">
-                <div className="flex items-center gap-x-2">
-                  <RadioGroupItem
-                    id={'typing'}
-                    value={'typing'}
-                    checked={userIdsType === 'typing'}
-                  />
-                  <label
-                    htmlFor={'typing'}
-                    className="cursor-pointer typo-para-small text-gray-700"
-                  >
-                    {t('form:enter-user-ids')}
-                  </label>
-                </div>
-                {userIdsType === 'typing' && (
-                  <div className="flex w-full max-w-full h-fit gap-x-4 pl-8">
-                    <Divider
-                      vertical
-                      width={1}
-                      className="border-primary-500 !h-[120px]"
-                    />
-                    <TextArea
-                      placeholder={t('form:placeholder-enter-user-ids')}
-                      rows={4}
-                      onChange={e => setValue('userIds', e.target.value)}
-                    />
-                  </div>
+              />
+              <Form.Field
+                control={form.control}
+                name="userIds"
+                render={({ field }) => (
+                  <Form.Item className="py-0">
+                    <Form.Control>
+                      <div className="flex flex-col w-full gap-y-3">
+                        <div className="flex items-center gap-x-2">
+                          <RadioGroupItem
+                            id={'typing'}
+                            value={'typing'}
+                            checked={userIdsType === 'typing'}
+                          />
+                          <label
+                            htmlFor={'typing'}
+                            className="cursor-pointer typo-para-small text-gray-700"
+                          >
+                            {t('form:enter-user-ids')}
+                          </label>
+                        </div>
+                        {userIdsType === 'typing' && (
+                          <div className="flex w-full max-w-full h-fit gap-x-4 pl-8">
+                            <Divider
+                              vertical
+                              width={1}
+                              className="border-primary-500 !h-[120px]"
+                            />
+                            <TextArea
+                              placeholder={t('form:placeholder-enter-user-ids')}
+                              rows={4}
+                              onChange={e => field.onChange(e.target.value)}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
                 )}
-              </div>
+              />
             </RadioGroup>
 
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
@@ -240,8 +249,8 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!form.formState.isDirty || isLoading}
-                    loading={isLoading}
+                    disabled={!isDirty || !isValid || isSubmitting}
+                    loading={isSubmitting}
                   >
                     {t(`create-user-segment`)}
                   </Button>
