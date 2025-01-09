@@ -3272,6 +3272,10 @@ paths:
           in: query
           required: false
           type: string
+        - name: disabled
+          in: query
+          required: false
+          type: boolean
       tags:
         - push
   /v1/segment:

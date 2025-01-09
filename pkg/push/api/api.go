@@ -1173,6 +1173,9 @@ func (s *PushService) ListPushes(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"push.name"}, req.SearchKeyword))
 	}
+	if req.Disabled != nil {
+		whereParts = append(whereParts, mysql.NewFilter("push.disabled", "=", req.Disabled.Value))
+	}
 	orders, err := s.newListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
