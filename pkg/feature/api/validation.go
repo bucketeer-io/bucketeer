@@ -214,16 +214,6 @@ func validateDeleteSegmentRequest(req *featureproto.DeleteSegmentRequest, locali
 		}
 		return dt.Err()
 	}
-	if req.Command == nil {
-		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	return nil
 }
 

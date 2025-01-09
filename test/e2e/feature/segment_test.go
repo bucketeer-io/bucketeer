@@ -23,6 +23,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -32,6 +33,75 @@ import (
 const (
 	prefixSegment = "e2e-test"
 )
+
+func TestCreateListSegmentNoCommand(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	client := newFeatureClient(t)
+	createResp, err := client.CreateSegment(ctx, &featureproto.CreateSegmentRequest{
+		EnvironmentId: *environmentNamespace,
+		Name:          newSegmentName(t),
+		Description:   fmt.Sprintf("%s-description", prefixSegment),
+	})
+	assert.NoError(t, err)
+
+	listResp, err := client.ListSegments(ctx, &featureproto.ListSegmentsRequest{
+		EnvironmentId: *environmentNamespace,
+	})
+	assert.NoError(t, err)
+	assert.NotNil(t, listResp)
+
+	var segment *featureproto.Segment
+	for _, s := range listResp.Segments {
+		if s.Id == createResp.Segment.Id {
+			assert.Equal(t, createResp.Segment.Name, s.Name)
+			segment = s
+			break
+		}
+	}
+	if segment == nil {
+		t.Fatalf("segment not found in list response")
+	}
+
+	// delete segment
+	_, err = client.DeleteSegment(ctx, &featureproto.DeleteSegmentRequest{
+		Id:            segment.Id,
+		EnvironmentId: *environmentNamespace,
+	})
+	assert.NoError(t, err)
+}
+
+func TestCreateUpdateNoCommand(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	client := newFeatureClient(t)
+	createResp, err := client.CreateSegment(ctx, &featureproto.CreateSegmentRequest{
+		EnvironmentId: *environmentNamespace,
+		Name:          newSegmentName(t),
+		Description:   fmt.Sprintf("%s-description", prefixSegment),
+	})
+	assert.NoError(t, err)
+	assert.NotNil(t, createResp)
+	segment := createResp.Segment
+
+	updateResp, err := client.UpdateSegment(ctx, &featureproto.UpdateSegmentRequest{
+		Id:            createResp.Segment.Id,
+		EnvironmentId: *environmentNamespace,
+		Name:          wrapperspb.String(fmt.Sprintf("%s-update", segment.Name)),
+	})
+	assert.NoError(t, err)
+	if updateResp == nil {
+		t.Fatalf("update response is nil")
+	}
+	assert.Equal(t, fmt.Sprintf("%s-update", segment.Name), updateResp.Segment.Name)
+
+	// delete segment
+	_, err = client.DeleteSegment(ctx, &featureproto.DeleteSegmentRequest{
+		Id:            segment.Id,
+		EnvironmentId: *environmentNamespace,
+	})
+	assert.NoError(t, err)
+}
 
 func TestCreateSegment(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)

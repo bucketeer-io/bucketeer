@@ -45,6 +45,7 @@ type SegmentStorage interface {
 		isInUseStatus *bool,
 		environmentId string,
 	) ([]*proto.Segment, int, int64, map[string][]string, error)
+	DeleteSegment(ctx context.Context, id string) error
 }
 
 type segmentStorage struct {
@@ -96,7 +97,7 @@ func (s *segmentStorage) CreateSegment(
 		environmentId,
 	)
 	if err != nil {
-		if err == mysql.ErrDuplicateEntry {
+		if errors.Is(err, mysql.ErrDuplicateEntry) {
 			return ErrSegmentAlreadyExists
 		}
 		return err
@@ -212,7 +213,7 @@ func (s *segmentStorage) GetSegment(
 		featureIDs,
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, nil, ErrSegmentNotFound
 		}
 		return nil, nil, err
@@ -350,4 +351,23 @@ func (s *segmentStorage) ListSegments(
 		return nil, 0, 0, nil, err
 	}
 	return segments, nextOffset, totalCount, featureIDsMap, nil
+}
+
+func (s *segmentStorage) DeleteSegment(ctx context.Context, id string) error {
+	query := `
+		DELETE FROM segment
+			WHERE id = ?
+	`
+	result, err := s.qe.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected != 1 {
+		return ErrSegmentUnexpectedAffectedRows
+	}
+	return nil
 }

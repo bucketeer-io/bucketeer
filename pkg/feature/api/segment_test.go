@@ -194,16 +194,9 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 		{
 			setup:         nil,
 			id:            "",
-			cmd:           nil,
+			cmd:           &featureproto.DeleteSegmentCommand{},
 			environmentId: "ns0",
 			expected:      createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
-		},
-		{
-			setup:         nil,
-			id:            "id",
-			cmd:           nil,
-			environmentId: "ns0",
-			expected:      createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -266,6 +259,105 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 			EnvironmentId: tc.environmentId,
 		}
 		_, err := service.DeleteSegment(ctx, req)
+		assert.Equal(t, tc.expected, err)
+	}
+}
+
+func TestDeleteSegmentNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	testcases := []struct {
+		desc     string
+		setup    func(*FeatureService)
+		req      *featureproto.DeleteSegmentRequest
+		expected error
+	}{
+		{
+			desc:  "error: missing id",
+			setup: nil,
+			req: &featureproto.DeleteSegmentRequest{
+				Id:            "",
+				EnvironmentId: "ns0",
+			},
+			expected: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc: "error: segment not found",
+			setup: func(s *FeatureService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2fs.ErrSegmentNotFound)
+			},
+			req: &featureproto.DeleteSegmentRequest{
+				Id:            "id",
+				EnvironmentId: "ns0",
+			},
+			expected: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *FeatureService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &featureproto.DeleteSegmentRequest{
+				Id:            "id",
+				EnvironmentId: "ns0",
+			},
+			expected: nil,
+		},
+	}
+	for _, tc := range testcases {
+		service := createFeatureService(mockController)
+		if tc.setup != nil {
+			tc.setup(service)
+		}
+		ctx = setToken(ctx)
+		_, err := service.DeleteSegment(ctx, tc.req)
 		assert.Equal(t, tc.expected, err)
 	}
 }
