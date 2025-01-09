@@ -84,19 +84,19 @@ const EditPhotoProfileModal = ({
                 ref={photoResizeRef}
                 aspect={2 / 2}
                 value={avatarImage}
-                onChange={value => form.setValue('avatarImage', value)}
+                onChange={value =>
+                  onUpload({
+                    avatarImage: value?.split(',')[1] || '',
+                    avatarFileType
+                  })
+                }
               />
             </div>
           </div>
           <ButtonBar
             secondaryButton={
               <Button
-                onClick={() =>
-                  onUpload({
-                    avatarImage: avatarImage?.split(',')[1] || '',
-                    avatarFileType
-                  })
-                }
+                onClick={() => photoResizeRef?.current?.crop()}
                 loading={form.formState.isSubmitting}
               >
                 {t(`submit`)}

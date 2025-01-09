@@ -2,11 +2,6 @@ import axiosClient from '@api/axios-client';
 import { OrganizationRole } from '@types';
 import { EnvironmentRoleItem } from './account-creator';
 
-type WriteType =
-  | 'WriteType_UNSPECIFIED'
-  | 'WriteType_OVERRIDE'
-  | 'WriteType_PATCH';
-
 export type AvatarCommand = {
   avatarImage: string;
   avatarFileType: string;
@@ -14,32 +9,21 @@ export type AvatarCommand = {
 export interface AccountUpdaterParams {
   email: string;
   organizationId: string;
-  changeNameCommand?: {
-    name: string;
-  };
-  changeAvatarUrlCommand?: {
-    avatarImageUrl: string;
-  };
-  changeOrganizationRoleCommand?: {
+  name?: string;
+  avatarImageUrl?: string;
+  organizationRole?: {
     role: OrganizationRole;
   };
-  changeEnvironmentRolesCommand?: {
-    roles: EnvironmentRoleItem[];
-    writeType?: WriteType;
+  environmentRoles?: EnvironmentRoleItem[];
+  firstName?: string;
+  lastName?: string;
+  language?: string;
+  lastSeen?: string;
+  avatar?: {
+    avatarImage: string;
+    avatarFileType: string;
   };
-  changeFirstNameCommand?: {
-    firstName: string;
-  };
-  changeLastNameCommand?: {
-    lastName: string;
-  };
-  changeLanguageCommand?: {
-    language: string;
-  };
-  changeLastSeenCommand?: {
-    lastSeen: string;
-  };
-  changeAvatarCommand?: AvatarCommand;
+  disabled?: boolean;
 }
 
 export const accountUpdater = async (params?: AccountUpdaterParams) => {

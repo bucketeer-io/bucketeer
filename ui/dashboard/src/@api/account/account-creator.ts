@@ -6,15 +6,11 @@ export interface EnvironmentRoleItem {
   role: EnvironmentRoleType;
 }
 
-export interface AccountCreatorCommand {
+export interface AccountCreatorPayload {
+  organizationId: string;
   email: string;
   organizationRole: OrganizationRole;
   environmentRoles: EnvironmentRoleItem[];
-}
-
-export interface AccountCreatorParams {
-  organizationId: string;
-  command: AccountCreatorCommand;
 }
 
 export interface AccountCreatorResponse {
@@ -22,7 +18,7 @@ export interface AccountCreatorResponse {
 }
 
 export const accountCreator = async (
-  params?: AccountCreatorParams
+  params?: AccountCreatorPayload
 ): Promise<AccountCreatorResponse> => {
   return axiosClient
     .post<AccountCreatorResponse>('/v1/account/create_account', params)

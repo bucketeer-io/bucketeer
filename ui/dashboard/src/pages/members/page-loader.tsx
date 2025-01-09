@@ -59,7 +59,6 @@ const PageLoader = () => {
       return accountDeleter({
         email: member.email,
         organizationId: member.organizationId,
-        command: {}
       });
     },
     onSuccess: () => {
@@ -92,7 +91,6 @@ const PageLoader = () => {
       return archiveMutation({
         email,
         organizationId: currenEnvironment.organizationId,
-        command: {}
       });
     },
     onSuccess: () => {

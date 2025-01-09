@@ -9,6 +9,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { UserInfoForm } from '@types';
+import { isNotEmptyObject } from 'utils/data-type';
 import { languageList } from 'pages/members/member-modal/add-member-modal';
 import { AvatarImage } from 'components/avatar';
 import Button from 'components/button';
@@ -63,35 +64,39 @@ const UserProfileModal = ({
     }
   });
 
-  const avatar = consoleAccount?.avatarImage;
+  const avatarType =
+    selectedAvatar?.avatarFileType || consoleAccount?.avatarFileType;
+  const avatar = selectedAvatar?.avatarImage || consoleAccount?.avatarImage;
+  const isUserAvatar = selectedAvatar || avatar;
 
   const avatarSrc = useMemo(
     () =>
-      selectedAvatar || avatar
-        ? `data:${selectedAvatar?.avatarFileType || consoleAccount?.avatarFileType};base64,${selectedAvatar?.avatarImage || avatar}`
-        : defaultAvatar,
+      isUserAvatar ? `data:${avatarType};base64,${avatar}` : defaultAvatar,
     [avatar, selectedAvatar, defaultAvatar]
   );
 
+  const { trigger } = form;
+
   const onSubmit: SubmitHandler<UserInfoForm> = async values => {
+    const environmentRoles = consoleAccount?.environmentRoles.map(item => ({
+      environmentId: item.environment.id,
+      role: item.role
+    }));
+
     try {
       const resp = await accountUpdater({
         organizationId: currentEnvironment.organizationId,
-        email: consoleAccount!.email,
-        changeFirstNameCommand: {
-          firstName: values.firstName
+        email: consoleAccount?.email!,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        language: values.language,
+        organizationRole: {
+          role: consoleAccount?.organizationRole!
         },
-        changeLastNameCommand: {
-          lastName: values.lastName
-        },
-        changeLanguageCommand: {
-          language: values.language
-        },
-        ...(selectedAvatar && selectedAvatar?.avatarImage
+        environmentRoles,
+        ...(selectedAvatar && isNotEmptyObject(selectedAvatar)
           ? {
-              changeAvatarCommand: {
-                ...selectedAvatar
-              }
+              avatar: selectedAvatar
             }
           : {})
       });
@@ -147,6 +152,10 @@ const UserProfileModal = ({
                     <Input
                       placeholder={t(`form:enter-first-name`)}
                       {...field}
+                      onChange={value => {
+                        field.onChange(value);
+                        trigger('firstName');
+                      }}
                     />
                   </Form.Control>
                   <Form.Message />
@@ -160,7 +169,14 @@ const UserProfileModal = ({
                 <Form.Item>
                   <Form.Label required>{t(`last-name`)}</Form.Label>
                   <Form.Control>
-                    <Input placeholder={t(`form:enter-last-name`)} {...field} />
+                    <Input
+                      placeholder={t(`form:enter-last-name`)}
+                      {...field}
+                      onChange={value => {
+                        field.onChange(value);
+                        trigger('lastName');
+                      }}
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>
@@ -211,7 +227,10 @@ const UserProfileModal = ({
           <ButtonBar
             secondaryButton={
               <Button
-                disabled={!form.formState.isDirty || !form.formState.isValid}
+                disabled={
+                  (!selectedAvatar && !form.formState.isDirty) ||
+                  !form.formState.isValid
+                }
                 loading={form.formState.isSubmitting}
               >
                 {t(`save`)}
