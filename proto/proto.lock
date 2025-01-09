@@ -30728,6 +30728,11 @@
                 "id": 7,
                 "name": "environment_id",
                 "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "organization_id",
+                "type": "string"
               }
             ],
             "reserved_ids": [
@@ -31463,6 +31468,66 @@
           {
             "name": "go_package",
             "value": "github.com/bucketeer-io/bucketeer/proto/push"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "tag:/:tag.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "Tag.EntityType",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN"
+              },
+              {
+                "name": "FEATURE_FLAG",
+                "integer": 1
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "Tag",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "updated_at",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "entity_type",
+                "type": "EntityType"
+              },
+              {
+                "id": 5,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.tag"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/tag"
           }
         ]
       }

@@ -118,6 +118,9 @@ export class ListPushesRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListPushesRequest.AsObject;
   static toObject(
@@ -147,6 +150,7 @@ export namespace ListPushesRequest {
     orderDirection: ListPushesRequest.OrderDirectionMap[keyof ListPushesRequest.OrderDirectionMap];
     searchKeyword: string;
     environmentId: string;
+    organizationId: string;
   };
 
   export interface OrderByMap {

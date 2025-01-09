@@ -300,7 +300,7 @@ func (s *NotificationService) UpdateSubscription(
 	if err := s.updateSubscription(ctx, commands, req.Id, req.EnvironmentId, editor, localizer); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
-				"Failed to update feature",
+				"Failed to update subscription",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
@@ -367,7 +367,7 @@ func (s *NotificationService) EnableSubscription(
 	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
-				"Failed to enable feature",
+				"Failed to enable subscription",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
@@ -404,7 +404,7 @@ func (s *NotificationService) DisableSubscription(
 	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
-				"Failed to disable feature",
+				"Failed to disable subscription",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
@@ -799,7 +799,11 @@ func (s *NotificationService) ListSubscriptions(
 		return nil, err
 	}
 	var whereParts []mysql.WherePart
-	if req.EnvironmentId != "" {
+	if req.OrganizationId != "" {
+		// New console
+		whereParts = append(whereParts, mysql.NewFilter("env.organization_id", "=", req.OrganizationId))
+	} else {
+		// Current console
 		whereParts = append(whereParts, mysql.NewFilter("sub.environment_id", "=", req.EnvironmentId))
 	}
 	sourceTypesValues := make([]interface{}, len(req.SourceTypes))
@@ -817,9 +821,6 @@ func (s *NotificationService) ListSubscriptions(
 	}
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"sub.name"}, req.SearchKeyword))
-	}
-	if req.OrganizationId != "" {
-		whereParts = append(whereParts, mysql.NewFilter("env.organization_id", "=", req.OrganizationId))
 	}
 	orders, err := s.newSubscriptionListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -897,8 +898,8 @@ func (s *NotificationService) ListEnabledSubscriptions(
 	var whereParts []mysql.WherePart
 	whereParts = append(
 		whereParts,
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
-		mysql.NewFilter("disabled", "=", false),
+		mysql.NewFilter("sub.environment_id", "=", req.EnvironmentId),
+		mysql.NewFilter("sub.disabled", "=", false),
 	)
 	sourceTypesValues := make([]interface{}, len(req.SourceTypes))
 	for i, st := range req.SourceTypes {
@@ -907,7 +908,7 @@ func (s *NotificationService) ListEnabledSubscriptions(
 	if len(sourceTypesValues) > 0 {
 		whereParts = append(
 			whereParts,
-			mysql.NewJSONFilter("source_types", mysql.JSONContainsNumber, sourceTypesValues),
+			mysql.NewJSONFilter("sub.source_types", mysql.JSONContainsNumber, sourceTypesValues),
 		)
 	}
 	subscriptions, cursor, _, err := s.listSubscriptionsMySQL(

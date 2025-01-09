@@ -58,6 +58,7 @@ message ListPushesRequest {
   OrderDirection order_direction = 5;
   string search_keyword = 6;
   string environment_id = 7;
+  string organization_id = 8;
 }
 
 message ListPushesResponse {

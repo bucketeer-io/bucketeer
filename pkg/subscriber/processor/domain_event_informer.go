@@ -50,7 +50,7 @@ func NewDomainEventInformer(
 	environmentClient environmentclient.Client,
 	sender sender.Sender,
 	logger *zap.Logger,
-) subscriber.Processor {
+) subscriber.PubSubProcessor {
 	return &domainEventInformer{
 		environmentClient: environmentClient,
 		sender:            sender,
