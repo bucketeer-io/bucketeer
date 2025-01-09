@@ -266,7 +266,6 @@ export class Tag extends jspb.Message {
 export namespace Tag {
   export type AsObject = {
     id: string;
-    name: string;
     createdAt: number;
     updatedAt: number;
     name: string;
