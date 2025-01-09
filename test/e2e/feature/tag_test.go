@@ -62,10 +62,10 @@ func TestUpdateTag(t *testing.T) {
 	}
 }
 
-func findTags(tags []*feature.Tag, targetIDs []string) []*feature.Tag {
+func findTags(tags []*feature.Tag, targetNames []string) []*feature.Tag {
 	var result []*feature.Tag
 	for _, tag := range tags {
-		if exist := existTag(targetIDs, tag.Id); !exist {
+		if exist := existTag(targetNames, tag.Name); !exist {
 			continue
 		}
 		result = append(result, tag)
