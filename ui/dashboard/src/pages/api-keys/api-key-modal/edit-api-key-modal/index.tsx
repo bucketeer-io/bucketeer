@@ -57,7 +57,7 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
+  const { data: collection } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
   const environments = (collection?.environments || []).filter(item => item.id);
@@ -190,7 +190,7 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
                             item => item.id === getValues('environmentId')
                           )?.name
                         }
-                        disabled={isLoadingEnvs}
+                        disabled
                         variant="secondary"
                         className="w-full"
                       />

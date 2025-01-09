@@ -22152,6 +22152,11 @@
                 "id": 3,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "name",
+                "type": "string"
               }
             ]
           }
@@ -22797,6 +22802,10 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "NAME",
+                "integer": 4
               }
             ]
           },
@@ -30733,6 +30742,11 @@
                 "id": 8,
                 "name": "organization_id",
                 "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
               }
             ],
             "reserved_ids": [

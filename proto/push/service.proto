@@ -59,6 +59,7 @@ message ListPushesRequest {
   string search_keyword = 6;
   string environment_id = 7;
   string organization_id = 8;
+  google.protobuf.BoolValue disabled = 9;
 }
 
 message ListPushesResponse {

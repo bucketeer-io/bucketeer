@@ -3272,6 +3272,10 @@ paths:
           in: query
           required: false
           type: string
+        - name: disabled
+          in: query
+          required: false
+          type: boolean
       tags:
         - push
   /v1/segment:
@@ -3935,6 +3939,7 @@ paths:
             - ID
             - CREATED_AT
             - UPDATED_AT
+            - NAME
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -4861,6 +4866,8 @@ definitions:
       updatedAt:
         type: string
         format: int64
+      name:
+        type: string
   bucketeerfeatureVariation:
     type: object
     properties:
@@ -5867,6 +5874,7 @@ definitions:
       - ID
       - CREATED_AT
       - UPDATED_AT
+      - NAME
     default: DEFAULT
   featureListTagsRequestOrderDirection:
     type: string

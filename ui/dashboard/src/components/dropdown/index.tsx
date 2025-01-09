@@ -10,6 +10,7 @@ import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { cva } from 'class-variance-authority';
 import { cn } from 'utils/style';
 import { IconSearch } from '@icons';
+import Checkbox from 'components/checkbox';
 import Icon from 'components/icon';
 import Input, { InputProps } from 'components/input';
 
@@ -131,7 +132,7 @@ const DropdownMenuItem = forwardRef<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     icon?: FunctionComponent;
     isMultiselect?: boolean;
-    selected?: boolean;
+    isSelected?: boolean;
     label?: string;
     value: DropdownValue;
     description?: string;
@@ -146,6 +147,8 @@ const DropdownMenuItem = forwardRef<
       label,
       value,
       description,
+      isMultiselect,
+      isSelected,
       closeWhenSelected = true,
       onSelectOption,
       ...props
@@ -161,13 +164,14 @@ const DropdownMenuItem = forwardRef<
       onSelect={
         onSelectOption
           ? event => {
-              if (!closeWhenSelected) event.preventDefault();
+              if (!closeWhenSelected || isMultiselect) event.preventDefault();
               return onSelectOption(value, event);
             }
           : undefined
       }
       {...props}
     >
+      {isMultiselect && <Checkbox checked={isSelected} />}
       {icon && (
         <div className="flex-center size-5">
           <Icon icon={icon} size={'xs'} color="gray-600" />

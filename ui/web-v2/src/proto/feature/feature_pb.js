@@ -1566,7 +1566,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
         createdAt: jspb.Message.getFieldWithDefault(msg, 2, 0),
-        updatedAt: jspb.Message.getFieldWithDefault(msg, 3, 0)
+        updatedAt: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        name: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -1616,6 +1617,10 @@ proto.bucketeer.feature.Tag.deserializeBinaryFromReader = function (
         var value = /** @type {number} */ (reader.readInt64());
         msg.setUpdatedAt(value);
         break;
+      case 4:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setName(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -1657,6 +1662,10 @@ proto.bucketeer.feature.Tag.serializeBinaryToWriter = function (
   f = message.getUpdatedAt();
   if (f !== 0) {
     writer.writeInt64(3, f);
+  }
+  f = message.getName();
+  if (f.length > 0) {
+    writer.writeString(4, f);
   }
 };
 
@@ -1706,6 +1715,22 @@ proto.bucketeer.feature.Tag.prototype.getUpdatedAt = function () {
  */
 proto.bucketeer.feature.Tag.prototype.setUpdatedAt = function (value) {
   return jspb.Message.setProto3IntField(this, 3, value);
+};
+
+/**
+ * optional string name = 4;
+ * @return {string}
+ */
+proto.bucketeer.feature.Tag.prototype.getName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.Tag} returns this
+ */
+proto.bucketeer.feature.Tag.prototype.setName = function (value) {
+  return jspb.Message.setProto3StringField(this, 4, value);
 };
 
 goog.object.extend(exports, proto.bucketeer.feature);

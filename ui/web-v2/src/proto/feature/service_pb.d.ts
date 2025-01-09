@@ -2338,6 +2338,7 @@ export namespace ListTagsRequest {
     ID: 1;
     CREATED_AT: 2;
     UPDATED_AT: 3;
+    NAME: 4;
   }
 
   export const OrderBy: OrderByMap;

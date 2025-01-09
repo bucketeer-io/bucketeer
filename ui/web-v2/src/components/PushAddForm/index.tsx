@@ -97,8 +97,8 @@ export const PushAddForm: FC<PushAddFormProps> = memo(
                           }}
                           disabled={isSubmitted}
                           options={tagsList.map((tag) => ({
-                            label: tag.id,
-                            value: tag.id
+                            label: tag.name,
+                            value: tag.name
                           }))}
                           closeMenuOnSelect={false}
                         />

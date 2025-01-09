@@ -14615,7 +14615,8 @@ proto.bucketeer.feature.ListTagsRequest.OrderBy = {
   DEFAULT: 0,
   ID: 1,
   CREATED_AT: 2,
-  UPDATED_AT: 3
+  UPDATED_AT: 3,
+  NAME: 4
 };
 
 /**
