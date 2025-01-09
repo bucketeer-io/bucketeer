@@ -48,7 +48,7 @@ export interface AddNotificationForm {
 
 export const formSchema = yup.object().shape({
   name: yup.string().required(),
-  url: yup.string().required().url(),
+  url: yup.string().required().url('Must be a valid URL'),
   environment: yup.string().required(),
   language: yup.mixed<NotificationLanguage>().required(),
   types: yup.array().min(1, 'Required').required()
@@ -151,7 +151,8 @@ const AddNotificationModal = ({
   const {
     watch,
     getValues,
-    formState: { isValid, isSubmitting }
+    formState: { isValid, isSubmitting },
+    trigger
   } = form;
 
   const checkedTypes = watch('types');
@@ -196,7 +197,11 @@ const AddNotificationModal = ({
   };
 
   return (
-    <SlideModal title={t('new-notification')} isOpen={isOpen} onClose={onClose}>
+    <SlideModal
+      title={t('new-push-notification')}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
       <div className="w-full p-5 pb-28">
         <div className="typo-para-small text-gray-600 mb-3">
           {t('new-notification-subtitle')}
@@ -232,8 +237,12 @@ const AddNotificationModal = ({
                   </Form.Label>
                   <Form.Control>
                     <Input
-                      placeholder={`${t('form:placeholder-url')}`}
                       {...field}
+                      placeholder={`${t('form:placeholder-url')}`}
+                      onChange={value => {
+                        field.onChange(value);
+                        trigger('url');
+                      }}
                     />
                   </Form.Control>
                   <Form.Message />

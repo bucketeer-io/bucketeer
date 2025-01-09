@@ -82,8 +82,8 @@
   "state": "State",
   "slack": "Slack",
   "slack-subtitle": "Manage all notifications within the platform",
-  "new-notification": "New Notification",
-  "update-notification": "Update Notification",
+  "new-push-notification": "New Push Notification",
+  "update-push-notification": "Update Push Notification",
   "new-notification-subtitle": "A notification lets you know when someone adds or updates something on the admin console and operational tasks status.",
   "slack-incoming-webhook": "Slack Incoming Webhook URL",
   "notification-language": "Notification Language",
@@ -130,5 +130,12 @@
     "stale-feature-flag-description": "Get notified when a feature flag becomes stale",
     "subscription": "Subscription"
   },
-  "no-data": "No data"
+  "no-data": "No data",
+  "fcm": "FCM",
+  "fcm-subtitle": "Manage all pushes within the platform",
+  "new-push": "New Push Notification",
+  "edit-push": "Update Push Notification",
+  "new-push-subtitle": "Every time a feature flag is updated, a push notification is sent to the SDK client allowing you to update the SDK cache in real-time.",
+  "tags": "Tags",
+  "fcm-api-key": "Firebase Service Account"
 }

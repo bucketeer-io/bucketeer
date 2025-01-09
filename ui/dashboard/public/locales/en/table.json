@@ -20,7 +20,10 @@
     "disable-api-key": "Disable API Key",
     "enable-api-key": "Enable API Key",
     "disable-notification": "Disable Notification",
-    "enable-notification": "Enable Notification"
+    "enable-notification": "Enable Notification",
+    "edit-push": "Edit Push",
+    "disable-push": "Disable Push",
+    "enable-push": "Enable Push"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -35,7 +38,9 @@
     "member-title": "No registered members",
     "member-desc": "There are no registered members. Invite a new one to start managing.",
     "notification-title": "No registered notifications",
-    "notification-desc": "There are no registered notifications. Add a new one to start managing."
+    "notification-desc": "There are no registered notifications. Add a new one to start managing.",
+    "push-title": "No registered pushes",
+    "push-desc": "There are no registered pushes. Add a new one to start managing."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
@@ -57,5 +62,9 @@
   "notification": {
     "confirm-enable-desc": "The notification \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
     "confirm-disable-desc": "The notification \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
+  },
+  "push": {
+    "confirm-enable-desc": "The Push \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
+    "confirm-disable-desc": "The Push \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
   }
 }

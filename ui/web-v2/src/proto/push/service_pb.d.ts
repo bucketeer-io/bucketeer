@@ -118,6 +118,14 @@ export class ListPushesRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  hasDisabled(): boolean;
+  clearDisabled(): void;
+  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListPushesRequest.AsObject;
   static toObject(
@@ -147,6 +155,8 @@ export namespace ListPushesRequest {
     orderDirection: ListPushesRequest.OrderDirectionMap[keyof ListPushesRequest.OrderDirectionMap];
     searchKeyword: string;
     environmentId: string;
+    organizationId: string;
+    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 
   export interface OrderByMap {
@@ -154,6 +164,8 @@ export namespace ListPushesRequest {
     NAME: 1;
     CREATED_AT: 2;
     UPDATED_AT: 3;
+    ENVIRONMENT: 4;
+    STATE: 5;
   }
 
   export const OrderBy: OrderByMap;

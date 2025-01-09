@@ -53,12 +53,12 @@ type Subscriber interface {
 	Stop()
 }
 
-type Processor interface {
+type PubSubProcessor interface {
 	Process(ctx context.Context, msgChan <-chan *puller.Message) error
 }
 
 type OnDemandProcessor interface {
-	Processor
+	PubSubProcessor
 	Switch(ctx context.Context) (bool, error)
 }
 
@@ -73,26 +73,26 @@ type Configuration struct {
 	WorkerNum                    int    `json:"workerNum"`
 }
 
-type subscriber struct {
+type pubSubSubscriber struct {
 	name          string
 	configuration Configuration
-	processor     Processor
+	processor     PubSubProcessor
 	cancel        context.CancelFunc
 	opts          options
 	logger        *zap.Logger
 }
 
-func NewSubscriber(
+func NewPubSubSubscriber(
 	name string,
 	configuration Configuration,
-	processor Processor,
+	processor PubSubProcessor,
 	opts ...Option,
 ) Subscriber {
 	options := defaultOptions
 	for _, o := range opts {
 		o(&options)
 	}
-	return &subscriber{
+	return &pubSubSubscriber{
 		name:          name,
 		configuration: configuration,
 		processor:     processor,
@@ -101,7 +101,7 @@ func NewSubscriber(
 	}
 }
 
-func (s subscriber) Run(ctx context.Context) {
+func (s pubSubSubscriber) Run(ctx context.Context) {
 	s.logger.Debug("subscriber starting",
 		zap.String("name", s.name),
 		zap.String("project", s.configuration.Project),
@@ -134,13 +134,13 @@ func (s subscriber) Run(ctx context.Context) {
 		zap.String("name", s.name))
 }
 
-func (s subscriber) Stop() {
+func (s pubSubSubscriber) Stop() {
 	if s.cancel != nil {
 		s.cancel()
 	}
 }
 
-func (s subscriber) createPuller(
+func (s pubSubSubscriber) createPuller(
 	ctx context.Context,
 ) puller.RateLimitedPuller {
 	pubsubClient, err := pubsub.NewClient(

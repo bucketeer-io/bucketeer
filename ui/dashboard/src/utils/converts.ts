@@ -25,3 +25,35 @@ export const truncateTextCenter = (value: string, maxLen: number = 14) => {
 
   return `${start}...${end}`;
 };
+
+export const formatFileSize = (size: number): string => {
+  if (size === 0) return '0 Bytes';
+
+  const units = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+  const i = Math.floor(Math.log(size) / Math.log(1024));
+
+  const formattedSize = (size / Math.pow(1024, i)).toFixed(2); // Two decimal places
+  return `${formattedSize} ${units[i]}`;
+};
+
+export const uint8ArrayToBase64 = (uint8Array: Uint8Array): string => {
+  const binary = Array.from(uint8Array)
+    .map(byte => String.fromCharCode(byte))
+    .join('');
+  return btoa(binary);
+};
+
+export const covertFileToByteString = (
+  file: Blob,
+  onLoad: (data: string) => void
+) => {
+  const reader = new FileReader();
+  reader.readAsArrayBuffer(file);
+
+  reader.onload = () => {
+    const base64String = uint8ArrayToBase64(
+      new Uint8Array(reader.result as ArrayBuffer)
+    );
+    onLoad(base64String);
+  };
+};

@@ -41,16 +41,16 @@ type NotificationOption = {
 
 export interface EditNotificationForm {
   name: string;
-  url: string;
-  environment: string;
+  url?: string;
+  environment?: string;
   language: NotificationLanguage;
   types: SourceType[];
 }
 
 export const formSchema = yup.object().shape({
   name: yup.string().required(),
-  url: yup.string().required().url(),
-  environment: yup.string().required(),
+  url: yup.string(),
+  environment: yup.string(),
   language: yup.mixed<NotificationLanguage>().required(),
   types: yup.array().min(1).required()
 });
@@ -134,7 +134,7 @@ const EditNotificationModal = ({
   const [filteredTypes, setSearchTypes] =
     useState<NotificationOption[]>(SOURCE_TYPE_ITEMS);
 
-  const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
+  const { data: collection } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
   const environments = (collection?.environments || []).filter(item => item.id);
@@ -196,7 +196,7 @@ const EditNotificationModal = ({
 
   return (
     <SlideModal
-      title={t('update-notification')}
+      title={t('update-push-notification')}
       isOpen={isOpen}
       onClose={onClose}
     >
@@ -259,7 +259,7 @@ const EditNotificationModal = ({
                             item => item.id === getValues('environment')
                           )?.name
                         }
-                        disabled={isLoadingEnvs}
+                        disabled
                         variant="secondary"
                         className="w-full"
                       />

@@ -136,7 +136,6 @@ func (s *Server) setupRPC() {
 		s.logger.Fatal("Failed to read credentials: %v", zap.Error(err))
 	}
 	interceptors := []grpc.UnaryServerInterceptor{
-		LogUnaryServerInterceptor(s.logger),
 		MetricsUnaryServerInterceptor(),
 	}
 	if s.verifier != nil {

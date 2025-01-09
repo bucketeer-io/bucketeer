@@ -50,7 +50,7 @@ func NewUserEventPersister(
 	config interface{},
 	mysqlClient mysql.Client,
 	logger *zap.Logger,
-) (subscriber.Processor, error) {
+) (subscriber.PubSubProcessor, error) {
 	userEventPerisiterJsonConfig, ok := config.(map[string]interface{})
 	if !ok {
 		logger.Error("UserEventPersister: invalid config")

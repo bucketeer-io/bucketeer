@@ -44,6 +44,8 @@ message ListPushesRequest {
     NAME = 1;
     CREATED_AT = 2;
     UPDATED_AT = 3;
+    ENVIRONMENT = 4;
+    STATE = 5;
   }
   enum OrderDirection {
     ASC = 0;
@@ -56,6 +58,8 @@ message ListPushesRequest {
   OrderDirection order_direction = 5;
   string search_keyword = 6;
   string environment_id = 7;
+  string organization_id = 8;
+  google.protobuf.BoolValue disabled = 9;
 }
 
 message ListPushesResponse {
@@ -91,7 +95,6 @@ message UpdatePushResponse {
 
 message GetPushRequest {
   string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
-  ;
   string id = 2 [(google.api.field_behavior) = REQUIRED];
 }
 

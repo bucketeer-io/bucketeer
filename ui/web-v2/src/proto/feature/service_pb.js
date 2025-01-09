@@ -25,6 +25,8 @@ var global =
 
 var google_api_annotations_pb = require('../../google/api/annotations_pb.js');
 goog.object.extend(proto, google_api_annotations_pb);
+var google_api_field_behavior_pb = require('../../google/api/field_behavior_pb.js');
+goog.object.extend(proto, google_api_field_behavior_pb);
 var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
 goog.object.extend(proto, google_protobuf_wrappers_pb);
 var protoc$gen$openapiv2_options_annotations_pb = require('../../protoc-gen-openapiv2/options/annotations_pb.js');
@@ -9331,7 +9333,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
+        name: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        description: jspb.Message.getFieldWithDefault(msg, 5, '')
       };
 
     if (includeInstance) {
@@ -9381,9 +9385,17 @@ proto.bucketeer.feature.CreateSegmentRequest.deserializeBinaryFromReader =
           );
           msg.setCommand(value);
           break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setName(value);
+          break;
         case 4:
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
+          break;
+        case 5:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setDescription(value);
           break;
         default:
           reader.skipField();
@@ -9425,9 +9437,17 @@ proto.bucketeer.feature.CreateSegmentRequest.serializeBinaryToWriter =
         proto_feature_command_pb.CreateSegmentCommand.serializeBinaryToWriter
       );
     }
+    f = message.getName();
+    if (f.length > 0) {
+      writer.writeString(3, f);
+    }
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(4, f);
+    }
+    f = message.getDescription();
+    if (f.length > 0) {
+      writer.writeString(5, f);
     }
   };
 
@@ -9475,6 +9495,24 @@ proto.bucketeer.feature.CreateSegmentRequest.prototype.hasCommand =
   };
 
 /**
+ * optional string name = 3;
+ * @return {string}
+ */
+proto.bucketeer.feature.CreateSegmentRequest.prototype.getName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.CreateSegmentRequest} returns this
+ */
+proto.bucketeer.feature.CreateSegmentRequest.prototype.setName = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 3, value);
+};
+
+/**
  * optional string environment_id = 4;
  * @return {string}
  */
@@ -9492,6 +9530,26 @@ proto.bucketeer.feature.CreateSegmentRequest.prototype.getEnvironmentId =
 proto.bucketeer.feature.CreateSegmentRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 4, value);
+  };
+
+/**
+ * optional string description = 5;
+ * @return {string}
+ */
+proto.bucketeer.feature.CreateSegmentRequest.prototype.getDescription =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 5, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.CreateSegmentRequest} returns this
+ */
+proto.bucketeer.feature.CreateSegmentRequest.prototype.setDescription =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 5, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -13029,7 +13087,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        data: msg.getData_asB64(),
+        state: jspb.Message.getFieldWithDefault(msg, 6, 0)
       };
 
     if (includeInstance) {
@@ -13087,6 +13147,17 @@ proto.bucketeer.feature.BulkUploadSegmentUsersRequest.deserializeBinaryFromReade
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 5:
+          var value = /** @type {!Uint8Array} */ (reader.readBytes());
+          msg.setData(value);
+          break;
+        case 6:
+          var value =
+            /** @type {!proto.bucketeer.feature.SegmentUser.State} */ (
+              reader.readEnum()
+            );
+          msg.setState(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -13135,6 +13206,14 @@ proto.bucketeer.feature.BulkUploadSegmentUsersRequest.serializeBinaryToWriter =
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(4, f);
+    }
+    f = message.getData_asU8();
+    if (f.length > 0) {
+      writer.writeBytes(5, f);
+    }
+    f = message.getState();
+    if (f !== 0.0) {
+      writer.writeEnum(6, f);
     }
   };
 
@@ -13218,6 +13297,68 @@ proto.bucketeer.feature.BulkUploadSegmentUsersRequest.prototype.getEnvironmentId
 proto.bucketeer.feature.BulkUploadSegmentUsersRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 4, value);
+  };
+
+/**
+ * optional bytes data = 5;
+ * @return {!(string|Uint8Array)}
+ */
+proto.bucketeer.feature.BulkUploadSegmentUsersRequest.prototype.getData =
+  function () {
+    return /** @type {!(string|Uint8Array)} */ (
+      jspb.Message.getFieldWithDefault(this, 5, '')
+    );
+  };
+
+/**
+ * optional bytes data = 5;
+ * This is a type-conversion wrapper around `getData()`
+ * @return {string}
+ */
+proto.bucketeer.feature.BulkUploadSegmentUsersRequest.prototype.getData_asB64 =
+  function () {
+    return /** @type {string} */ (jspb.Message.bytesAsB64(this.getData()));
+  };
+
+/**
+ * optional bytes data = 5;
+ * Note that Uint8Array is not supported on all browsers.
+ * @see http://caniuse.com/Uint8Array
+ * This is a type-conversion wrapper around `getData()`
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.feature.BulkUploadSegmentUsersRequest.prototype.getData_asU8 =
+  function () {
+    return /** @type {!Uint8Array} */ (jspb.Message.bytesAsU8(this.getData()));
+  };
+
+/**
+ * @param {!(string|Uint8Array)} value
+ * @return {!proto.bucketeer.feature.BulkUploadSegmentUsersRequest} returns this
+ */
+proto.bucketeer.feature.BulkUploadSegmentUsersRequest.prototype.setData =
+  function (value) {
+    return jspb.Message.setProto3BytesField(this, 5, value);
+  };
+
+/**
+ * optional SegmentUser.State state = 6;
+ * @return {!proto.bucketeer.feature.SegmentUser.State}
+ */
+proto.bucketeer.feature.BulkUploadSegmentUsersRequest.prototype.getState =
+  function () {
+    return /** @type {!proto.bucketeer.feature.SegmentUser.State} */ (
+      jspb.Message.getFieldWithDefault(this, 6, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.feature.SegmentUser.State} value
+ * @return {!proto.bucketeer.feature.BulkUploadSegmentUsersRequest} returns this
+ */
+proto.bucketeer.feature.BulkUploadSegmentUsersRequest.prototype.setState =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 6, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

@@ -19,7 +19,7 @@ export const EmptyCollection = ({ onAdd }: { onAdd: () => void }) => {
       <EmptyState.Actions>
         <EmptyState.ActionButton variant="primary" onClick={onAdd}>
           <IconAddOutlined />
-          {t(`new-notification`)}
+          {t(`new-push-notification`)}
         </EmptyState.ActionButton>
       </EmptyState.Actions>
     </EmptyState.Root>

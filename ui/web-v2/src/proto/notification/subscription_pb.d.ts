@@ -37,6 +37,9 @@ export class Subscription extends jspb.Message {
   getName(): string;
   setName(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   getEnvironmentName(): string;
   setEnvironmentName(value: string): void;
 
@@ -72,6 +75,7 @@ export namespace Subscription {
     >;
     recipient?: proto_notification_recipient_pb.Recipient.AsObject;
     name: string;
+    environmentId: string;
     environmentName: string;
   };
 

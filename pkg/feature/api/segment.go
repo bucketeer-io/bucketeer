@@ -19,9 +19,11 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
@@ -48,6 +50,9 @@ func (s *FeatureService) CreateSegment(
 		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
+	}
+	if req.Command == nil {
+		return s.createSegmentNoCommand(ctx, req, editor, localizer)
 	}
 	if err = validateCreateSegmentRequest(req.Command, localizer); err != nil {
 		s.logger.Error(
@@ -128,7 +133,125 @@ func (s *FeatureService) CreateSegment(
 		return nil
 	})
 	if err != nil {
-		if err == v2fs.ErrSegmentAlreadyExists {
+		if errors.Is(err, v2fs.ErrSegmentAlreadyExists) {
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to create segment",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &featureproto.CreateSegmentResponse{
+		Segment: segment.Segment,
+	}, nil
+}
+
+func (s *FeatureService) createSegmentNoCommand(
+	ctx context.Context,
+	req *featureproto.CreateSegmentRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*featureproto.CreateSegmentResponse, error) {
+	if err := validateCreateSegmentNoCommandRequest(req, localizer); err != nil {
+		s.logger.Info(
+			"Invalid argument",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, err
+	}
+	segment, err := domain.NewSegment(req.Name, req.Description)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create segment",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		segmentStorage := v2fs.NewSegmentStorage(tx)
+		if err := segmentStorage.CreateSegment(ctx, segment, req.EnvironmentId); err != nil {
+			s.logger.Error(
+				"Failed to store segment",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return err
+		}
+		prev := &domain.Segment{}
+		if err := copier.Copy(prev, segment); err != nil {
+			return err
+		}
+		e, err := domainevent.NewEvent(
+			editor,
+			eventproto.Event_SEGMENT,
+			segment.Id,
+			eventproto.Event_SEGMENT_CREATED,
+			&eventproto.SegmentCreatedEvent{
+				Id:          segment.Id,
+				Name:        segment.Name,
+				Description: segment.Description,
+			},
+			req.EnvironmentId,
+			segment.Segment,
+			prev,
+		)
+		if err != nil {
+			return nil
+		}
+		return s.domainPublisher.Publish(ctx, e)
+	})
+	if err != nil {
+		if errors.Is(err, v2fs.ErrSegmentAlreadyExists) {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),

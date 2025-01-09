@@ -9,7 +9,7 @@
   "placeholder-prj-id": "Enter project id",
   "placeholder-search-type": "Search notification type",
   "placeholder-firebase": "Enter firebase cloud messaging API key",
-  "placeholder-tags": "Select",
+  "placeholder-tags": "Select tags",
   "placeholder-search-input": "Search Input",
   "url-code": "URL Code",
   "owner-email": "Owner's email",
@@ -38,5 +38,14 @@
   "enter-last-name": "Enter last name",
   "select-language": "Select language",
   "select-role": "Select role",
-  "select-environment": "Select environment"
+  "select-environment": "Select environment",
+  "search-notification-type": "Search notification type",
+  "notification-type": {
+    "project": "Get notified when someone adds or updates a project",
+    "environment": "Get notified when someone adds or updates an environment",
+    "account": "Get notified when someone adds or updates an account",
+    "notification": "Get notified when someone adds or updates a notification"
+  },
+  "upload-files": "Drop your file here, or <underline>{{text}}</underline>",
+  "accept-file-types": "{{type}}"
 }

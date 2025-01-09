@@ -25,6 +25,7 @@ import {
   PAGE_PATH_NOTIFICATIONS,
   PAGE_PATH_ORGANIZATIONS,
   PAGE_PATH_PROJECTS,
+  PAGE_PATH_PUSHES,
   PAGE_PATH_ROOT,
   PAGE_PATH_SETTINGS
 } from 'constants/routing';
@@ -37,6 +38,7 @@ import FeatureFlagsPage from 'pages/feature-flags';
 import MembersPage from 'pages/members';
 import NotFoundPage from 'pages/not-found';
 import NotificationsPage from 'pages/notifications';
+import PushesPage from 'pages/pushes';
 import SettingsPage from 'pages/settings';
 import SignInPage from 'pages/signin';
 import SignInEmailPage from 'pages/signin/email';
@@ -161,6 +163,7 @@ export const EnvironmentRoot = memo(
           path={`${PAGE_PATH_NOTIFICATIONS}`}
           element={<NotificationsPage />}
         />
+        <Route path={`${PAGE_PATH_PUSHES}`} element={<PushesPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     );

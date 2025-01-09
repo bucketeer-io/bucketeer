@@ -23433,11 +23433,48 @@
               {
                 "id": 1,
                 "name": "command",
-                "type": "CreateSegmentCommand"
+                "type": "CreateSegmentCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "name",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "description",
                 "type": "string"
               }
             ],
@@ -23461,12 +23498,24 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -23524,7 +23573,13 @@
               {
                 "id": 9,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -23760,12 +23815,48 @@
               {
                 "id": 3,
                 "name": "command",
-                "type": "BulkUploadSegmentUsersCommand"
+                "type": "BulkUploadSegmentUsersCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "data",
+                "type": "bytes",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "segment user ids separated by comma or new line"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 6,
+                "name": "state",
+                "type": "SegmentUser.State"
               }
             ],
             "reserved_ids": [
@@ -24297,17 +24388,387 @@
               {
                 "name": "CreateSegment",
                 "in_type": "CreateSegmentRequest",
-                "out_type": "CreateSegmentResponse"
+                "out_type": "CreateSegmentResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/segment"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a segment."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "segment"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.segment.create"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "GetSegment",
                 "in_type": "GetSegmentRequest",
-                "out_type": "GetSegmentResponse"
+                "out_type": "GetSegmentResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/segment"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get a segment."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "segment"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.segment.get"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "ListSegments",
                 "in_type": "ListSegmentsRequest",
-                "out_type": "ListSegmentsResponse"
+                "out_type": "ListSegmentsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/segments"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List segments."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "segment"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.segment.list"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "DeleteSegment",
@@ -24360,7 +24821,133 @@
               {
                 "name": "BulkUploadSegmentUsers",
                 "in_type": "BulkUploadSegmentUsersRequest",
-                "out_type": "BulkUploadSegmentUsersResponse"
+                "out_type": "BulkUploadSegmentUsersResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/segment_users/bulk_upload"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Bulk upload"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Bulk upload segment users."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "segment"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.segment_users.bulk_upload"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "BulkDownloadSegmentUsers",
@@ -24561,6 +25148,9 @@
         "imports": [
           {
             "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/api/field_behavior.proto"
           },
           {
             "path": "google/protobuf/wrappers.proto"
@@ -27954,6 +28544,14 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "ENVIRONMENT",
+                "integer": 4
+              },
+              {
+                "name": "STATE",
+                "integer": 5
               }
             ]
           },
@@ -29389,6 +29987,11 @@
               },
               {
                 "id": 8,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 9,
                 "name": "environment_name",
                 "type": "string"
               }
@@ -29649,6 +30252,11 @@
                 "id": 10,
                 "name": "environment_id",
                 "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "environment_name",
+                "type": "string"
               }
             ],
             "reserved_ids": [
@@ -29688,6 +30296,14 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "ENVIRONMENT",
+                "integer": 4
+              },
+              {
+                "name": "STATE",
+                "integer": 5
               }
             ]
           },
@@ -29787,6 +30403,16 @@
                 "id": 7,
                 "name": "environment_id",
                 "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
               }
             ],
             "reserved_ids": [
@@ -30522,6 +31148,66 @@
           {
             "name": "go_package",
             "value": "github.com/bucketeer-io/bucketeer/proto/push"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "tag:/:tag.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "Tag.EntityType",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN"
+              },
+              {
+                "name": "FEATURE_FLAG",
+                "integer": 1
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "Tag",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "updated_at",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "entity_type",
+                "type": "EntityType"
+              },
+              {
+                "id": 5,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.tag"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/tag"
           }
         ]
       }
