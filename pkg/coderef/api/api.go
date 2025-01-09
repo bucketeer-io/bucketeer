@@ -38,10 +38,6 @@ type options struct {
 	logger *zap.Logger
 }
 
-var defaultOptions = options{
-	logger: zap.NewNop(),
-}
-
 type Option func(*options)
 
 func WithLogger(logger *zap.Logger) Option {
