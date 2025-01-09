@@ -15,6 +15,7 @@ import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
+import TruncationWithTooltip from 'elements/truncation-with-tooltip';
 import { APIKeyActionsType } from '../types';
 
 export const useColumns = ({
@@ -64,7 +65,7 @@ export const useColumns = ({
           <div className="flex flex-col gap-0.5 max-w-fit">
             <button
               onClick={() => onActions(apiKey, 'EDIT')}
-              className="underline text-primary-500 break-all typo-para-medium text-left"
+              className="underline text-primary-500 break-all line-clamp-1 typo-para-medium text-left"
             >
               {apiKey.name}
             </button>
@@ -99,12 +100,23 @@ export const useColumns = ({
       accessorKey: 'environment',
       header: `${t('environment')}`,
       size: 250,
+      maxSize: 250,
       cell: ({ row }) => {
         const apiKey = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {apiKey.environmentName}
-          </div>
+          <TruncationWithTooltip
+            elementId={`env-${apiKey.id}`}
+            maxSize={250}
+            content={apiKey.environmentName}
+            trigger={
+              <div
+                id={`env-${apiKey.id}`}
+                className="text-gray-700 typo-para-medium w-fit"
+              >
+                {apiKey.environmentName}
+              </div>
+            }
+          />
         );
       }
     },

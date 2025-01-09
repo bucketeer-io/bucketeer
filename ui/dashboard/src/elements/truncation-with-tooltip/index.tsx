@@ -20,8 +20,12 @@ const TruncationWithTooltip = ({
     const checkTruncation = () => {
       const element = document.getElementById(elementId);
       if (element) {
-        const { offsetWidth } = element;
-        if (offsetWidth > maxSize) {
+        const { offsetWidth, parentElement } = element;
+        const size = maxSize - 32;
+        if (
+          offsetWidth > size ||
+          (parentElement && parentElement?.offsetWidth < size)
+        ) {
           element.classList.add(...['w-full', 'max-w-full', 'truncate']);
           return setIsTruncate(true);
         }

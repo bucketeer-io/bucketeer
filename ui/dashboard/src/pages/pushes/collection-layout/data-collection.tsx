@@ -18,8 +18,19 @@ import DateTooltip from 'elements/date-tooltip';
 import TruncationWithTooltip from '../../../elements/truncation-with-tooltip';
 import { PushActionsType } from '../types';
 
-export const Tag = ({ value }: { value: string }) => (
-  <div className="flex-center px-2 py-1.5 bg-primary-100/70 text-primary-500 typo-para-small leading-[14px] rounded whitespace-nowrap">
+export const Tag = ({
+  value,
+  className
+}: {
+  value: string;
+  className?: string;
+}) => (
+  <div
+    className={cn(
+      'px-2 py-1.5 bg-primary-100/70 text-primary-500 typo-para-small w-fit leading-[14px] rounded whitespace-nowrap',
+      className
+    )}
+  >
     {value}
   </div>
 );
@@ -27,26 +38,27 @@ export const Tag = ({ value }: { value: string }) => (
 export const renderTag = ({
   tags,
   isExpanded,
+  className,
   onExpand
 }: {
   tags: string[];
   isExpanded: boolean;
+  className?: string;
   onExpand: () => void;
 }) => {
   return (
     <div
-      className={cn(
-        'flex items-center w-full gap-x-2 transition-all duration-300',
-        {
-          'items-start': isExpanded
-        }
-      )}
+      className={cn('flex items-center w-full gap-x-2', {
+        'items-start': isExpanded
+      })}
     >
-      <div className="flex items-center flex-wrap gap-2 max-w-fit transition-all duration-300">
+      <div className="flex w-fit items-center flex-wrap gap-2">
         {(isExpanded ? tags : tags.slice(0, 3))?.map((tag, index) => (
-          <Tag value={tag} key={index} />
+          <Tag key={index} value={tag} className={className} />
         ))}
-        {tags.length > 3 && <Tag value={`+${tags.length - 3}`} />}
+        {tags.length > 3 && !isExpanded && (
+          <Tag value={`+${tags.length - 3}`} />
+        )}
       </div>
       {tags.length > 3 && (
         <div
@@ -95,11 +107,11 @@ export const useColumns = ({
           <div className="flex flex-col gap-0.5 max-w-fit">
             <button
               onClick={() => onActions(push, 'EDIT')}
-              className="underline text-primary-500 break-all line-clamp-2 typo-para-medium text-left"
+              className="underline text-primary-500 break-all line-clamp-1 typo-para-medium text-left"
             >
               {push.name}
             </button>
-            <div className="typo-para-tiny text-gray-500">
+            <div className="typo-para-tiny text-gray-500 break-all line-clamp-1">
               {truncateTextCenter(push.name)}
             </div>
           </div>
@@ -116,6 +128,7 @@ export const useColumns = ({
         return renderTag({
           tags: push.tags,
           isExpanded: expandedTags.includes(push.id),
+          className: 'max-w-[250px] truncate',
           onExpand: () => handleExpandTag(push.id)
         });
       }
@@ -135,7 +148,7 @@ export const useColumns = ({
             trigger={
               <div
                 id={`env-${push.id}`}
-                className={cn('text-gray-700 typo-para-medium w-fit')}
+                className={'text-gray-700 typo-para-medium w-fit'}
               >
                 {push.environmentName}
               </div>

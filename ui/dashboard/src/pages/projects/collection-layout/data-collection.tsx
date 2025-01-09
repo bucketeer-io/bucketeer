@@ -11,6 +11,7 @@ import { Project } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { Popover } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
+import TruncationWithTooltip from 'elements/truncation-with-tooltip';
 
 export const useColumns = ({
   onActionHandler
@@ -33,7 +34,7 @@ export const useColumns = ({
         return (
           <Link
             to={`/${currentEnvironment.urlCode}${PAGE_PATH_PROJECTS}/${project.id}`}
-            className="underline text-primary-500 typo-para-medium"
+            className="underline text-primary-500 typo-para-medium line-clamp-1 break-all"
           >
             {project.name}
           </Link>
@@ -44,12 +45,23 @@ export const useColumns = ({
       accessorKey: 'creatorEmail',
       header: `${t('maintainer')}`,
       size: 350,
+      maxSize: 350,
       cell: ({ row }) => {
         const project = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {project.creatorEmail}
-          </div>
+          <TruncationWithTooltip
+            elementId={`maintainer-${project.id}`}
+            maxSize={350}
+            content={project.creatorEmail}
+            trigger={
+              <div
+                id={`maintainer-${project.id}`}
+                className="text-gray-700 typo-para-medium w-fit"
+              >
+                {project.creatorEmail}
+              </div>
+            }
+          />
         );
       }
     },
