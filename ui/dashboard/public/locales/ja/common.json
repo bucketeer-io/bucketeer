@@ -140,7 +140,6 @@
   "fcm-api-key": "Firebase Service Account",
   "user-segments": "User Segments",
   "user-segments-subtitle": "You can create segments to help you start testing feature flags for specifics type of users",
-  "create-user-segment": "Create User Segment",
   "new-user-segment": "New User Segment",
   "update-user-segment": "Update User Segment",
   "delete-user-segment": "Delete User Segment",

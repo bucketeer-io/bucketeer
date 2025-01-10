@@ -23,7 +23,7 @@ export const useColumns = ({
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 250,
+      size: 350,
       cell: ({ row }) => {
         const segment = row.original;
         return (
@@ -39,7 +39,7 @@ export const useColumns = ({
     {
       accessorKey: 'includedUserCount',
       header: `${t('users')}`,
-      size: 350,
+      size: 200,
       cell: ({ row }) => {
         const segment = row.original;
         return (
@@ -52,7 +52,7 @@ export const useColumns = ({
     {
       accessorKey: 'connections',
       header: `${t('connections')}`,
-      size: 120,
+      size: 200,
       cell: ({ row }) => {
         const segment = row.original;
         return (
@@ -71,7 +71,7 @@ export const useColumns = ({
     {
       accessorKey: 'updatedAt',
       header: t('table:updated-at'),
-      size: 100,
+      size: 200,
       cell: ({ row }) => {
         const segment = row.original;
         return (

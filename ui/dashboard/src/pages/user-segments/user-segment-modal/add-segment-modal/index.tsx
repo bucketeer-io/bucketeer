@@ -34,6 +34,7 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
 
   const [userIdsType, setUserIdsType] = useState('upload');
   const [files, setFiles] = useState<File[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -47,7 +48,7 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
   });
 
   const {
-    formState: { isValid, isSubmitting, isDirty },
+    formState: { isValid, isDirty, isSubmitting },
     trigger
   } = form;
 
@@ -62,11 +63,20 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
       )
     });
     invalidateUserSegments(queryClient);
+    setIsLoading(false);
     onClose();
+  };
+
+  const onAddSuccess = (name: string, isUpload = true) => {
+    let timerId: NodeJS.Timeout | null = null;
+    if (timerId) clearTimeout(timerId);
+    if (isUpload) return (timerId = setTimeout(() => addSuccess(name), 10000));
+    return addSuccess(name);
   };
 
   const onSubmit: SubmitHandler<UserSegmentForm> = async values => {
     try {
+      setIsLoading(true);
       const resp = await userSegmentCreator({
         environmentId: currentEnvironment.id,
         name: values.name,
@@ -90,9 +100,10 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
               state: 'INCLUDED',
               data: base64String
             });
-            if (uploadResp) addSuccess(values.name);
+            console.log({ uploadResp });
+            if (uploadResp) onAddSuccess(values.name);
           });
-        } else addSuccess(values.name);
+        } else onAddSuccess(values.name, false);
       }
     } catch (error) {
       notify({
@@ -104,7 +115,12 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
   };
 
   return (
-    <SlideModal title={t('new-user-segment')} isOpen={isOpen} onClose={onClose}>
+    <SlideModal
+      title={t('new-user-segment')}
+      shouldCloseOnOverlayClick={!isLoading}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
       <div className="w-full p-5">
         <p className="text-gray-800 typo-head-bold-small">
           {t('form:general-info')}
@@ -148,8 +164,8 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
             <p className="text-gray-900 typo-head-bold-small mb-5">{`${t('form:list-of-users-ids')} (${t('form:optional')})`}</p>
 
             <RadioGroup
-              defaultValue="upload"
-              onValueChange={value => setUserIdsType(value)}
+              defaultValue={userIdsType}
+              onValueChange={setUserIdsType}
               className="flex flex-col w-full gap-y-4"
             >
               <Form.Field
@@ -179,13 +195,8 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
                               className="border-l border-primary-500 pl-4"
                               uploadClassName="min-h-[200px] h-[200px]"
                               onChange={files => {
-                                if (files.length) {
-                                  setFiles(files);
-                                  field.onChange(files[0]);
-                                } else {
-                                  setFiles([]);
-                                  field.onChange(null);
-                                }
+                                setFiles(files);
+                                field.onChange(files?.length ? files[0] : null);
                                 trigger('file');
                               }}
                             />
@@ -243,16 +254,16 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
               <ButtonBar
                 primaryButton={
                   <Button variant="secondary" onClick={onClose}>
-                    {t(`common:cancel`)}
+                    {t(`cancel`)}
                   </Button>
                 }
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isDirty || !isValid || isSubmitting}
-                    loading={isSubmitting}
+                    disabled={!isDirty || !isValid || isSubmitting || isLoading}
+                    loading={isSubmitting || isLoading}
                   >
-                    {t(`create-user-segment`)}
+                    {t(`submit`)}
                   </Button>
                 }
               />

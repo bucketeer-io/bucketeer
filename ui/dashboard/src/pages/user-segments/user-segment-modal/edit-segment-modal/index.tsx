@@ -1,22 +1,28 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { Trans } from 'react-i18next';
+import { userSegmentBulkUpload } from '@api/user-segment';
+import { userSegmentUpdater } from '@api/user-segment/user-segment-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { invalidateUserSegments } from '@queries/user-segments';
+import { useQueryClient } from '@tanstack/react-query';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
-import { IconToastWarning } from '@icons';
+import { covertFileToUint8ToBase64 } from 'utils/converts';
+import { cn } from 'utils/style';
 import { UserSegmentForm } from 'pages/user-segments/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
 import Form from 'components/form';
-import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
 import Upload from 'components/upload-files';
 import { formSchema } from '../../form-schema';
+import SegmentWarning from './segment-warning';
 
 interface EditUserSegmentModalProps {
   userSegment: UserSegment;
@@ -30,8 +36,21 @@ const EditUserSegmentModal = ({
   onClose
 }: EditUserSegmentModalProps) => {
   const { t } = useTranslation(['common', 'form']);
-  const [userIdsType, setUserIdsType] = useState('typing');
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const queryClient = useQueryClient();
+  const { notify } = useToast();
+
+  const isDisabledUserIds = useMemo(
+    () => userSegment.isInUseStatus || userSegment.features?.length > 0,
+    [userSegment]
+  );
+
+  const [userIdsType, setUserIdsType] = useState(
+    isDisabledUserIds ? '' : 'upload'
+  );
   const [files, setFiles] = useState<File[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -39,7 +58,8 @@ const EditUserSegmentModal = ({
       id: userSegment?.id || '',
       name: userSegment?.name || '',
       description: userSegment?.description || '',
-      userIds: ''
+      userIds: '',
+      file: null
     }
   });
 
@@ -48,14 +68,72 @@ const EditUserSegmentModal = ({
     trigger
   } = form;
 
-  const onSubmit: SubmitHandler<UserSegmentForm> = values => {
-    console.log({ values });
+  const updateSuccess = (name: string) => {
+    notify({
+      toastType: 'toast',
+      messageType: 'success',
+      message: (
+        <span>
+          <b>{name}</b> {` has been successfully updated!`}
+        </span>
+      )
+    });
+    invalidateUserSegments(queryClient);
+    setIsLoading(false);
+    onClose();
+  };
+
+  const onUpdateSuccess = (name: string, isUpload = true) => {
+    let timerId: NodeJS.Timeout | null = null;
+    if (timerId) clearTimeout(timerId);
+    if (isUpload)
+      return (timerId = setTimeout(() => updateSuccess(name), 10000));
+    return updateSuccess(name);
+  };
+
+  const onSubmit: SubmitHandler<UserSegmentForm> = async values => {
+    try {
+      setIsLoading(true);
+      const { id, name, description } = values;
+      let file: File | null = null;
+      if (values.file || files.length) {
+        file = (values.file as File) || files[0];
+      } else if (values.userIds?.length) {
+        file = new File([values.userIds], 'filename.txt', {
+          type: 'text/plain'
+        });
+      }
+      if (file) {
+        covertFileToUint8ToBase64(file, async base64String => {
+          await userSegmentBulkUpload({
+            segmentId: id as string,
+            environmentId: currentEnvironment.id,
+            state: 'INCLUDED',
+            data: base64String
+          });
+        });
+      }
+      const resp = await userSegmentUpdater({
+        id: id as string,
+        name,
+        description,
+        environmentId: currentEnvironment.id
+      });
+      if (resp?.segment) onUpdateSuccess(name, !!file);
+    } catch (error) {
+      notify({
+        toastType: 'toast',
+        messageType: 'error',
+        message: (error as Error)?.message || 'Something went wrong.'
+      });
+    }
   };
 
   return (
     <SlideModal
       title={t('update-user-segment')}
       isOpen={isOpen}
+      shouldCloseOnOverlayClick={!isLoading}
       onClose={onClose}
     >
       <div className="w-full p-5 pb-28">
@@ -103,15 +181,18 @@ const EditUserSegmentModal = ({
             <Divider className="mt-1 mb-5" />
             <p className="text-gray-900 typo-head-bold-small mb-5">{`${t('form:list-of-users-ids')} (${t('form:optional')})`}</p>
             <RadioGroup
-              defaultValue="typing"
-              onValueChange={value => setUserIdsType(value)}
+              defaultValue={userIdsType}
+              onValueChange={setUserIdsType}
+              disabled={isDisabledUserIds}
               className="flex flex-col w-full gap-y-4"
             >
               <Form.Field
                 control={form.control}
                 name="file"
                 render={({ field }) => (
-                  <Form.Item className="py-0">
+                  <Form.Item
+                    className={cn('py-0', { 'opacity-50': isDisabledUserIds })}
+                  >
                     <Form.Control>
                       <div className="flex flex-col w-full gap-y-3">
                         <div className="flex items-center gap-x-2">
@@ -122,7 +203,10 @@ const EditUserSegmentModal = ({
                           />
                           <label
                             htmlFor={'upload'}
-                            className="cursor-pointer typo-para-small text-gray-700"
+                            className={cn(
+                              'cursor-pointer typo-para-small text-gray-700',
+                              { 'cursor-not-allowed': isDisabledUserIds }
+                            )}
                           >
                             {t('form:browse-files')}
                           </label>
@@ -134,13 +218,8 @@ const EditUserSegmentModal = ({
                               className="border-l border-primary-500 pl-4"
                               uploadClassName="min-h-[200px] h-[200px]"
                               onChange={files => {
-                                if (files.length) {
-                                  setFiles(files);
-                                  field.onChange(files[0]);
-                                } else {
-                                  setFiles([]);
-                                  field.onChange(null);
-                                }
+                                setFiles(files);
+                                field.onChange(files?.length ? files[0] : null);
                                 trigger('file');
                               }}
                             />
@@ -156,7 +235,9 @@ const EditUserSegmentModal = ({
                 control={form.control}
                 name="userIds"
                 render={({ field }) => (
-                  <Form.Item className="py-0">
+                  <Form.Item
+                    className={cn('py-0', { 'opacity-50': isDisabledUserIds })}
+                  >
                     <Form.Control>
                       <div className="flex flex-col w-full gap-y-3">
                         <div className="flex items-center gap-x-2">
@@ -167,7 +248,10 @@ const EditUserSegmentModal = ({
                           />
                           <label
                             htmlFor={'typing'}
-                            className="cursor-pointer typo-para-small text-gray-700"
+                            className={cn(
+                              'cursor-pointer typo-para-small text-gray-700',
+                              { 'cursor-not-allowed': isDisabledUserIds }
+                            )}
                           >
                             {t('form:enter-user-ids')}
                           </label>
@@ -194,27 +278,9 @@ const EditUserSegmentModal = ({
               />
             </RadioGroup>
 
-            <div className="flex flex-col w-full px-4 py-3 bg-accent-yellow-50 border-l-4 border-accent-yellow-500 rounded mt-5">
-              <div className="flex gap-x-2 w-full pr-3">
-                <Icon
-                  icon={IconToastWarning}
-                  size={'xxs'}
-                  color="accent-yellow-500"
-                  className="mt-1"
-                />
-                <Trans
-                  i18nKey="form:update-user-segment-warning"
-                  values={{ count: 1 }}
-                  components={{
-                    p: <p className="typo-para-medium text-accent-yellow-500" />
-                  }}
-                />
-              </div>
-              <div className="flex gap-x-2 w-full pl-6 typo-para-medium text-primary-500">
-                <p>1.</p>
-                <p className="hover:underline">{userSegment.name}</p>
-              </div>
-            </div>
+            {isDisabledUserIds && (
+              <SegmentWarning features={userSegment.features} />
+            )}
 
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
@@ -226,8 +292,8 @@ const EditUserSegmentModal = ({
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isDirty || !isValid || isSubmitting}
-                    loading={isSubmitting}
+                    disabled={!isDirty || !isValid || isLoading || isSubmitting}
+                    loading={isSubmitting || isLoading}
                   >
                     {t(`submit`)}
                   </Button>

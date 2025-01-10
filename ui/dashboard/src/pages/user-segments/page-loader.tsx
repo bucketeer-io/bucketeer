@@ -1,5 +1,9 @@
 import { useState } from 'react';
+import { userSegmentDelete } from '@api/user-segment/user-segment-delete';
+import { invalidateUserSegments } from '@queries/user-segments';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { useToast } from 'hooks';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { UserSegment } from '@types';
 import PageLayout from 'elements/page-layout';
@@ -25,6 +29,8 @@ const PageLoader = () => {
 
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const { notify } = useToast();
+  const queryClient = useQueryClient();
 
   const {
     data: collection,
@@ -37,6 +43,36 @@ const PageLoader = () => {
   });
 
   const isEmpty = collection?.segments.length === 0;
+
+  const mutation = useMutation({
+    mutationFn: async (selectedSegment: UserSegment) => {
+      return userSegmentDelete({
+        id: selectedSegment.id,
+        environmentId: currenEnvironment.id
+      });
+    },
+    onSuccess: () => {
+      onCloseDeleteModal();
+      invalidateUserSegments(queryClient);
+      notify({
+        toastType: 'toast',
+        messageType: 'success',
+        message: (
+          <span>
+            <b>{selectedSegment?.name}</b>
+            {` has been deleted successfully!`}
+          </span>
+        )
+      });
+      mutation.reset();
+    }
+  });
+
+  const onDeleteSegment = () => {
+    if (selectedSegment) {
+      mutation.mutate(selectedSegment);
+    }
+  };
 
   return (
     <>
@@ -71,7 +107,7 @@ const PageLoader = () => {
           onClose={onCloseAddModal}
         />
       )}
-      {isOpenEditModal && (
+      {isOpenEditModal && selectedSegment && (
         <EditUserSegmentModal
           isOpen={isOpenEditModal}
           onClose={onCloseEditModal}
@@ -91,7 +127,7 @@ const PageLoader = () => {
           loading={false}
           userSegment={selectedSegment}
           onClose={onCloseDeleteModal}
-          onSubmit={() => {}}
+          onSubmit={onDeleteSegment}
         />
       )}
     </>

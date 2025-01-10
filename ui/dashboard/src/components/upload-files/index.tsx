@@ -120,9 +120,9 @@ const UploadFiles = ({
           onDragLeave={preventAndStopFnc}
           onClick={() => uploadRef?.current?.click()}
         >
-          <Icon icon={IconUpload} size={'xl'} color="primary-500" />
+          <Icon icon={IconUpload} color="primary-500" />
           {children || (
-            <div className="flex-center flex-col gap-y-2 typo-para-medium text-gray-600">
+            <div className="flex-center flex-col gap-y-2 typo-para-small text-gray-600">
               <div>
                 <Trans
                   i18nKey="form:upload-files"

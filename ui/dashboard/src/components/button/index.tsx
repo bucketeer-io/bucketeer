@@ -31,7 +31,7 @@ const buttonVariants = cva(
           'bg-accent-red-500 text-gray-50 shadow-border-accent-red-500',
           'rounded-lg px-6 py-2',
           'hover:bg-accent-red-600 hover:shadow-border-accent-red-600',
-          'disabled:bg-accent-red-50 disabled:text-gray-500 '
+          'disabled:bg-accent-red-50 disabled:text-gray-500'
         ],
         text: [
           'text-primary-500 px-2',

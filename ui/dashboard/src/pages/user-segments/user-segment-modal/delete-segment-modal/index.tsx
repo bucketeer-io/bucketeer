@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
@@ -5,6 +6,7 @@ import { IconDelete } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import DialogModal from 'components/modal/dialog';
+import SegmentWarning from '../edit-segment-modal/segment-warning';
 
 export type DeleteUserSegmentProps = {
   onSubmit: () => void;
@@ -23,6 +25,11 @@ const DeleteUserSegmentModal = ({
 }: DeleteUserSegmentProps) => {
   const { t } = useTranslation(['common']);
 
+  const isInUseSegment = useMemo(
+    () => userSegment.isInUseStatus || userSegment.features.length > 0,
+    [userSegment]
+  );
+
   return (
     <DialogModal
       className="w-[500px]"
@@ -31,14 +38,20 @@ const DeleteUserSegmentModal = ({
       onClose={onClose}
     >
       <div className="py-8 px-5 flex flex-col gap-6 items-center justify-center">
-        <IconDelete />
-        <div className="typo-para-big text-gray-700 text-center">
-          <Trans
-            i18nKey="table:user-segment.delete-user-segment-desc"
-            values={{ name: userSegment.name }}
-            components={{ bold: <strong /> }}
-          />
-        </div>
+        {isInUseSegment ? (
+          <SegmentWarning features={userSegment.features} className="mt-0" />
+        ) : (
+          <>
+            <IconDelete />
+            <div className="typo-para-big text-gray-700 text-center">
+              <Trans
+                i18nKey="table:user-segment.delete-user-segment-desc"
+                values={{ name: userSegment.name }}
+                components={{ bold: <strong /> }}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <ButtonBar
@@ -46,6 +59,7 @@ const DeleteUserSegmentModal = ({
           <Button
             variant="negative"
             loading={loading}
+            disabled={isInUseSegment || loading}
             className="w-24"
             onClick={onSubmit}
           >
