@@ -6,5 +6,6 @@ export * from './environment';
 export * from './collection';
 export * from './account';
 export * from './api-key';
+export * from './notification';
 export * from './push';
 export * from './tag';

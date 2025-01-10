@@ -36,7 +36,6 @@ const Checkbox = forwardRef(
       >
         <div className="flex-center size-5">
           <CheckboxPrimitive.Root
-            {...props}
             className={cn(
               'flex-center size-[18px] rounded border border-gray-500 transition-colors duration-200',
               {
@@ -47,6 +46,7 @@ const Checkbox = forwardRef(
             id={inputId}
             ref={ref}
             onCheckedChange={onCheckedChange}
+            {...props}
           >
             <CheckboxPrimitive.Indicator
               className={cn('flex-center size-full opacity-0', {
