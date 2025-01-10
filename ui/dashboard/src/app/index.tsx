@@ -22,6 +22,7 @@ import {
   PAGE_PATH_FEATURES,
   PAGE_PATH_MEMBERS,
   PAGE_PATH_NEW,
+  PAGE_PATH_NOTIFICATIONS,
   PAGE_PATH_ORGANIZATIONS,
   PAGE_PATH_PROJECTS,
   PAGE_PATH_PUSHES,
@@ -36,6 +37,7 @@ import APIKeysPage from 'pages/api-keys';
 import FeatureFlagsPage from 'pages/feature-flags';
 import MembersPage from 'pages/members';
 import NotFoundPage from 'pages/not-found';
+import NotificationsPage from 'pages/notifications';
 import PushesPage from 'pages/pushes';
 import SettingsPage from 'pages/settings';
 import SignInPage from 'pages/signin';
@@ -157,6 +159,10 @@ export const EnvironmentRoot = memo(
         <Route path={`${PAGE_PATH_PROJECTS}/*`} element={<ProjectsRoot />} />
         <Route path={`${PAGE_PATH_APIKEYS}`} element={<APIKeysPage />} />
         <Route path={`${PAGE_PATH_MEMBERS}`} element={<MembersPage />} />
+        <Route
+          path={`${PAGE_PATH_NOTIFICATIONS}`}
+          element={<NotificationsPage />}
+        />
         <Route path={`${PAGE_PATH_PUSHES}`} element={<PushesPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

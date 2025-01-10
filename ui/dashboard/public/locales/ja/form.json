@@ -39,6 +39,13 @@
   "select-language": "Select language",
   "select-role": "Select role",
   "select-environment": "Select environment",
+  "search-notification-type": "Search notification type",
+  "notification-type": {
+    "project": "Get notified when someone adds or updates a project",
+    "environment": "Get notified when someone adds or updates an environment",
+    "account": "Get notified when someone adds or updates an account",
+    "notification": "Get notified when someone adds or updates a notification"
+  },
   "upload-files": "Drop your file here, or <underline>{{text}}</underline>",
   "accept-file-types": "{{type}}",
   "member-tags-tooltip": "Tags can be used to group members making it easier when listing them on the list page"

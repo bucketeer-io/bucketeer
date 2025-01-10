@@ -34,6 +34,3 @@ export const PAGE_PATH_FEATURE_HISTORY = '/history';
 
 export const PAGE_PATH_AUTH_CALLBACK = '/auth/callback';
 export const PAGE_PATH_AUTH_SIGNIN = '/auth/signin';
-
-export const PAGE_PATH_INTEGRATION_SLACK = '/integration/slack';
-export const PAGE_PATH_INTEGRATION_FCM = '/integration/fcm';
