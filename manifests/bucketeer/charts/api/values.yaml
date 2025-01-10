@@ -27,6 +27,7 @@ env:
   featureService: localhost:9001
   accountService: localhost:9001
   pushService: localhost:9001
+  codeRefService: localhost:9001
   traceSamplingProbability: 0.0001
 affinity: {}
 nodeSelector: {}
