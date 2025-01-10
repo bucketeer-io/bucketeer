@@ -16,12 +16,14 @@ package api
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"strconv"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/command"
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
@@ -55,7 +57,7 @@ func (s *experimentService) GetGoal(ctx context.Context, req *proto.GetGoalReque
 	}
 	goal, err := s.getGoalMySQL(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
-		if err == v2es.ErrGoalNotFound {
+		if errors.Is(err, v2es.ErrGoalNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -221,6 +223,9 @@ func (s *experimentService) CreateGoal(
 	if err != nil {
 		return nil, err
 	}
+	if req.Command == nil {
+		return s.createGoalNoCommand(ctx, req, editor, localizer)
+	}
 	if err := validateCreateGoalRequest(req, localizer); err != nil {
 		return nil, err
 	}
@@ -271,7 +276,7 @@ func (s *experimentService) CreateGoal(
 		return goalStorage.CreateGoal(ctx, goal, req.EnvironmentId)
 	})
 	if err != nil {
-		if err == v2es.ErrGoalAlreadyExists {
+		if errors.Is(err, v2es.ErrGoalAlreadyExists) {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
@@ -297,20 +302,116 @@ func (s *experimentService) CreateGoal(
 		}
 		return nil, dt.Err()
 	}
-	return &proto.CreateGoalResponse{}, nil
+	return &proto.CreateGoalResponse{
+		Goal: goal.Goal,
+	}, nil
+}
+
+func (s *experimentService) createGoalNoCommand(
+	ctx context.Context,
+	req *proto.CreateGoalRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*proto.CreateGoalResponse, error) {
+	if err := validateCreateGoalNoCommandRequest(req, localizer); err != nil {
+		return nil, err
+	}
+	goal, err := domain.NewGoal(req.Id, req.Name, req.Description)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create a new goal",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		goalStorage := v2es.NewGoalStorage(tx)
+		prev := &domain.Goal{}
+		e, err := domainevent.NewEvent(
+			editor,
+			eventproto.Event_GOAL,
+			goal.Id,
+			eventproto.Event_GOAL_CREATED,
+			&eventproto.GoalCreatedEvent{
+				Id:          goal.Id,
+				Name:        goal.Name,
+				Description: goal.Description,
+				Deleted:     goal.Deleted,
+				CreatedAt:   goal.CreatedAt,
+				UpdatedAt:   goal.UpdatedAt,
+			},
+			req.EnvironmentId,
+			goal.Goal,
+			prev,
+		)
+		if err != nil {
+			return err
+		}
+		if err := s.publisher.Publish(ctx, e); err != nil {
+			return err
+		}
+		return goalStorage.CreateGoal(ctx, goal, req.EnvironmentId)
+	})
+	if err != nil {
+		if errors.Is(err, v2es.ErrGoalAlreadyExists) {
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to create goal",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &proto.CreateGoalResponse{
+		Goal: goal.Goal,
+	}, nil
 }
 
 func validateCreateGoalRequest(req *proto.CreateGoalRequest, localizer locale.Localizer) error {
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	if req.Command.Id == "" {
 		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -332,6 +433,40 @@ func validateCreateGoalRequest(req *proto.CreateGoalRequest, localizer locale.Lo
 		return dt.Err()
 	}
 	if req.Command.Name == "" {
+		dt, err := statusGoalNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
+func validateCreateGoalNoCommandRequest(req *proto.CreateGoalRequest, localizer locale.Localizer) error {
+	if req.Id == "" {
+		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if !goalIDRegex.MatchString(req.Id) {
+		dt, err := statusInvalidGoalID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "goal_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Name == "" {
 		dt, err := statusGoalNameRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),

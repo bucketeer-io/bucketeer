@@ -213,14 +213,6 @@ func TestCreateGoalMySQL(t *testing.T) {
 		{
 			setup: nil,
 			req: &experimentproto.CreateGoalRequest{
-				Command:       nil,
-				EnvironmentId: "ns0",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
-		{
-			setup: nil,
-			req: &experimentproto.CreateGoalRequest{
 				Command:       &experimentproto.CreateGoalCommand{Id: ""},
 				EnvironmentId: "ns0",
 			},
@@ -264,6 +256,101 @@ func TestCreateGoalMySQL(t *testing.T) {
 			},
 			req: &experimentproto.CreateGoalRequest{
 				Command:       &experimentproto.CreateGoalCommand{Id: "Bucketeer-id-2020", Name: "name-1"},
+				EnvironmentId: "ns0",
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		service := createExperimentService(mockController, nil, nil, nil)
+		if p.setup != nil {
+			p.setup(service)
+		}
+		_, err := service.CreateGoal(ctx, p.req)
+		assert.Equal(t, p.expectedErr, err)
+	}
+}
+
+func TestCreateGoalNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithTokenAndMetadata(metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(s *experimentService)
+		req         *experimentproto.CreateGoalRequest
+		expectedErr error
+	}{
+		{
+			desc:  "error: missing Id",
+			setup: nil,
+			req: &experimentproto.CreateGoalRequest{
+				Id:            "",
+				Name:          "name-0",
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+		},
+		{
+			desc:  "error: invalid Id",
+			setup: nil,
+			req: &experimentproto.CreateGoalRequest{
+				Id:            "bucketeer_goal_id?",
+				Name:          "name-0",
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusInvalidGoalID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "goal_id")),
+		},
+		{
+			desc:  "error: missing Name",
+			setup: nil,
+			req: &experimentproto.CreateGoalRequest{
+				EnvironmentId: "ns0",
+				Id:            "Bucketeer-id-2019",
+				Name:          "",
+			},
+			expectedErr: createError(statusGoalNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+		},
+		{
+			desc: "error: ErrGoalAlreadyExists",
+			setup: func(s *experimentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2es.ErrGoalAlreadyExists)
+			},
+			req: &experimentproto.CreateGoalRequest{
+				Id:            "Bucketeer-id-2019",
+				Name:          "name-0",
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *experimentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &experimentproto.CreateGoalRequest{
+				Id:            "Bucketeer-id-2020",
+				Name:          "name-1",
 				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
