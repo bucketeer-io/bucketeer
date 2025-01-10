@@ -30798,6 +30798,10 @@
                 "integer": 16
               },
               {
+                "name": "DOMAIN_EVENT_TAG",
+                "integer": 17
+              },
+              {
                 "name": "FEATURE_STALE",
                 "integer": 100
               },

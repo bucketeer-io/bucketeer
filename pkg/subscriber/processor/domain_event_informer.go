@@ -228,6 +228,8 @@ func (d domainEventInformer) convSourceType(
 		return notificationproto.Subscription_DOMAIN_EVENT_ORGANIZATION, nil
 	case domaineventproto.Event_FLAG_TRIGGER:
 		return notificationproto.Subscription_DOMAIN_EVENT_FLAG_TRIGGER, nil
+	case domaineventproto.Event_TAG:
+		return notificationproto.Subscription_DOMAIN_EVENT_TAG, nil
 	}
 	return notificationproto.Subscription_SourceType(0), ErrUnknownSourceType
 }

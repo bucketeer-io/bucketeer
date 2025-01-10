@@ -31,6 +31,7 @@ const (
 	urlTemplateAutoOpsRule  = "%s/%s/features/%s/settings"
 	urlTemplatePush         = "%s/%s/settings/pushes/%s"
 	urlTemplateSubscription = "%s/%s/settings/notifications/%s"
+	urlTemplateTag          = "%s/%s/tags/%s"
 
 	urlTemplateAdminSubscription = "%s/admin/notifications/%s"
 	urlTemplateEnvironment       = "%s/admin/environments/%s"
@@ -75,6 +76,8 @@ func URL(entityType proto.Event_EntityType, url, envURLCode, id string) (string,
 		return fmt.Sprintf(urlTemplateOrganization, url, id), nil
 	case proto.Event_FLAG_TRIGGER:
 		return fmt.Sprintf(urlTemplateFeature, url, envURLCode, id), nil
+	case proto.Event_TAG:
+		return fmt.Sprintf(urlTemplateTag, url, envURLCode, id), nil
 	}
 	return "", ErrUnknownEntityType
 }
