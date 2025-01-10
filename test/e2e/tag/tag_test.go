@@ -83,6 +83,39 @@ func TestUpsertAndListTag(t *testing.T) {
 	}
 }
 
+func TestDeleteTag(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	client := newTagClient(t)
+	// Create tag
+	createReq := &tagproto.CreateTagRequest{
+		Name:          newTagName(t),
+		EnvironmentId: *environmentNamespace,
+		EntityType:    tagproto.Tag_FEATURE_FLAG,
+	}
+	resp, err := client.CreateTag(ctx, createReq)
+	if err != nil {
+		t.Fatalf("Failed to create tag. Error %v", err)
+	}
+	// Delete tag
+	req := &tagproto.DeleteTagRequest{
+		Id:            resp.Tag.Id,
+		EnvironmentId: *environmentNamespace,
+	}
+	defer cancel()
+	if _, err := client.DeleteTag(ctx, req); err != nil {
+		t.Fatalf("Failed to delete tag. Error: %v", err)
+	}
+	// List the tags
+	tags := listTags(ctx, t, client)
+	target := findTags(tags, []string{resp.Tag.Name})
+	// Check if it has been deleted
+	if len(target) != 0 {
+		t.Fatalf("The tag hasn't deleted. Tag: %v", target)
+	}
+}
+
 func listTags(ctx context.Context, t *testing.T, client tagclient.Client) []*tagproto.Tag {
 	t.Helper()
 	resp, err := client.ListTags(ctx, &tagproto.ListTagsRequest{
