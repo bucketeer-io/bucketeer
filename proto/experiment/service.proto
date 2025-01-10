@@ -17,6 +17,9 @@ syntax = "proto3";
 package bucketeer.experiment;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/experiment";
 
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 import "google/protobuf/wrappers.proto";
 
 import "proto/experiment/command.proto";
@@ -24,9 +27,9 @@ import "proto/experiment/goal.proto";
 import "proto/experiment/experiment.proto";
 
 message GetGoalRequest {
-  string id = 1;
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
   reserved 2;
-  string environment_id = 3;
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
 message GetGoalResponse {
@@ -52,7 +55,7 @@ message ListGoalsRequest {
   string search_keyword = 6;
   google.protobuf.BoolValue is_in_use_status = 7;
   google.protobuf.BoolValue archived = 8;
-  string environment_id = 9;
+  string environment_id = 9 [(google.api.field_behavior) = REQUIRED];
 }
 
 message ListGoalsResponse {
@@ -62,12 +65,22 @@ message ListGoalsResponse {
 }
 
 message CreateGoalRequest {
-  CreateGoalCommand command = 1;
+  CreateGoalCommand command = 1 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   reserved 2;
-  string environment_id = 3;
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
+  string id = 4 [(google.api.field_behavior) = REQUIRED];
+  string name = 5 [(google.api.field_behavior) = REQUIRED];
+  string description = 6;
 }
 
-message CreateGoalResponse {}
+message CreateGoalResponse {
+  Goal goal = 1;
+}
 
 message ArchiveGoalRequest {
   string id = 1;
@@ -212,9 +225,106 @@ message DeleteExperimentRequest {
 message DeleteExperimentResponse {}
 
 service ExperimentService {
-  rpc GetGoal(GetGoalRequest) returns (GetGoalResponse) {}
-  rpc ListGoals(ListGoalsRequest) returns (ListGoalsResponse) {}
-  rpc CreateGoal(CreateGoalRequest) returns (CreateGoalResponse) {}
+  rpc GetGoal(GetGoalRequest) returns (GetGoalResponse) {
+    option (google.api.http) = {
+      get: "/v1/goal"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get"
+      description: "Get a goal."
+      tags: "goal"
+      operation_id: "web.v1.goal.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc ListGoals(ListGoalsRequest) returns (ListGoalsResponse) {
+    option (google.api.http) = {
+      get: "/v1/goals"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List"
+      description: "List goals."
+      tags: "goal"
+      operation_id: "web.v1.goals.list"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc CreateGoal(CreateGoalRequest) returns (CreateGoalResponse) {
+    option (google.api.http) = {
+      post: "/v1/goal"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create"
+      description: "Create a goal."
+      tags: "goal"
+      operation_id: "web.v1.goal.create"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc UpdateGoal(UpdateGoalRequest) returns (UpdateGoalResponse) {}
   rpc ArchiveGoal(ArchiveGoalRequest) returns (ArchiveGoalResponse) {}
   rpc DeleteGoal(DeleteGoalRequest) returns (DeleteGoalResponse) {}
