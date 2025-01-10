@@ -214,16 +214,6 @@ func validateDeleteSegmentRequest(req *featureproto.DeleteSegmentRequest, locali
 		}
 		return dt.Err()
 	}
-	if req.Command == nil {
-		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	return nil
 }
 
@@ -239,6 +229,33 @@ func validateUpdateSegment(segmentID string, commands []command.Command, localiz
 		return dt.Err()
 	}
 	return validateUpdateSegmentCommands(commands, localizer)
+}
+
+func validateUpdateSegmentNoCommand(
+	req *featureproto.UpdateSegmentRequest,
+	localizer locale.Localizer,
+) error {
+	if req.Id == "" {
+		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Name != nil && req.Name.Value == "" {
+		dt, err := statusMissingName.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
 }
 
 func validateUpdateSegmentCommands(commands []command.Command, localizer locale.Localizer) error {

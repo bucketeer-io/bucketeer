@@ -20,9 +20,63 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
+
+func TestUpdateSegment(t *testing.T) {
+	testcases := []struct {
+		name        *wrapperspb.StringValue
+		description *wrapperspb.StringValue
+		segment     *Segment
+		expected    *Segment
+	}{
+		{
+			segment: &Segment{
+				Segment: &featureproto.Segment{
+					Id:          "id0",
+					Name:        "name",
+					Description: "description",
+				},
+			},
+			name:        nil,
+			description: wrapperspb.String("new-description"),
+			expected: &Segment{
+				Segment: &featureproto.Segment{
+					Id:          "id0",
+					Name:        "name",
+					Description: "new-description",
+				},
+			},
+		},
+		{
+			segment: &Segment{
+				Segment: &featureproto.Segment{
+					Id:          "id1",
+					Name:        "name",
+					Description: "description",
+				},
+			},
+			name:        wrapperspb.String("new-name"),
+			description: nil,
+			expected: &Segment{
+				Segment: &featureproto.Segment{
+					Id:          "id1",
+					Name:        "new-name",
+					Description: "description",
+				},
+			},
+		},
+	}
+	for i, tc := range testcases {
+		des := fmt.Sprintf("index: %d", i)
+		updated, err := tc.segment.UpdateSegment(tc.name, tc.description)
+		require.NoError(t, err)
+		assert.Equal(t, tc.expected.Name, updated.Name, des)
+		assert.Equal(t, tc.expected.Description, updated.Description, des)
+	}
+}
 
 func TestAddClauseValueToSegment(t *testing.T) {
 	testcases := []struct {
