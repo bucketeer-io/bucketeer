@@ -157,6 +157,7 @@ message Event {
     SEGMENT_USER_DELETED = 513;
     SEGMENT_BULK_UPLOAD_USERS = 514;
     SEGMENT_BULK_UPLOAD_USERS_STATUS_CHANGED = 515;
+    SEGMENT_UPDATED = 516;
     ENVIRONMENT_CREATED = 600;
     ENVIRONMENT_RENAMED = 601;
     ENVIRONMENT_DESCRIPTION_CHANGED = 602;
@@ -689,6 +690,12 @@ message SegmentCreatedEvent {
 
 message SegmentDeletedEvent {
   string id = 1;
+}
+
+message SegmentUpdatedEvent {
+  string id = 1;
+  google.protobuf.StringValue name = 2;
+  google.protobuf.StringValue description = 3;
 }
 
 message SegmentNameChangedEvent {

@@ -293,6 +293,9 @@ func (s *FeatureService) DeleteSegment(
 	if err != nil {
 		return nil, err
 	}
+	if req.Command == nil {
+		return s.deleteSegmentNoCommand(ctx, req, editor, localizer)
+	}
 	if err := validateDeleteSegmentRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -306,7 +309,7 @@ func (s *FeatureService) DeleteSegment(
 	if err := s.checkSegmentInUse(ctx, req.Id, req.EnvironmentId, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.updateSegment(
+	if _, err := s.updateSegment(
 		ctx,
 		editor,
 		[]command.Command{req.Command},
@@ -315,6 +318,109 @@ func (s *FeatureService) DeleteSegment(
 		localizer,
 	); err != nil {
 		return nil, err
+	}
+	return &featureproto.DeleteSegmentResponse{}, nil
+}
+
+func (s *FeatureService) deleteSegmentNoCommand(
+	ctx context.Context,
+	req *featureproto.DeleteSegmentRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*featureproto.DeleteSegmentResponse, error) {
+	if err := validateDeleteSegmentRequest(req, localizer); err != nil {
+		s.logger.Error(
+			"Invalid argument",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, err
+	}
+	if err := s.checkSegmentInUse(ctx, req.Id, req.EnvironmentId, localizer); err != nil {
+		return nil, err
+	}
+
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		segmentStorage := v2fs.NewSegmentStorage(tx)
+		segment, _, err := segmentStorage.GetSegment(ctx, req.Id, req.EnvironmentId)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get segment",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return err
+		}
+		prev := &domain.Segment{}
+		if err := copier.Copy(prev, segment); err != nil {
+			return err
+		}
+		event, err := domainevent.NewEvent(
+			editor,
+			eventproto.Event_SEGMENT,
+			segment.Id,
+			eventproto.Event_SEGMENT_DELETED,
+			&eventproto.SegmentDeletedEvent{
+				Id: segment.Id,
+			},
+			req.EnvironmentId,
+			segment.Segment,
+			prev,
+		)
+		if err != nil {
+			return nil
+		}
+		if err := s.domainPublisher.Publish(ctx, event); err != nil {
+			return err
+		}
+		return segmentStorage.DeleteSegment(ctx, segment.Id)
+	})
+	if err != nil {
+		if errors.Is(err, v2fs.ErrSegmentNotFound) || errors.Is(err, v2fs.ErrSegmentUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to delete segment",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &featureproto.DeleteSegmentResponse{}, nil
 }
@@ -408,6 +514,9 @@ func (s *FeatureService) UpdateSegment(
 		)
 		return nil, err
 	}
+	if req.Commands == nil {
+		return s.updateSegmentNoCommand(ctx, req, editor, localizer)
+	}
 	commands := make([]command.Command, 0, len(req.Commands))
 	for _, c := range req.Commands {
 		cmd, err := command.UnmarshalCommand(c)
@@ -440,26 +549,39 @@ func (s *FeatureService) UpdateSegment(
 		)
 		return nil, err
 	}
-	if err := s.updateSegment(
+	segment, err := s.updateSegment(
 		ctx,
 		editor,
 		commands,
 		req.Id,
 		req.EnvironmentId,
 		localizer,
-	); err != nil {
+	)
+	if err != nil {
 		return nil, err
 	}
-	return &featureproto.UpdateSegmentResponse{}, nil
+	return &featureproto.UpdateSegmentResponse{
+		Segment: segment,
+	}, nil
 }
 
-func (s *FeatureService) updateSegment(
+func (s *FeatureService) updateSegmentNoCommand(
 	ctx context.Context,
+	req *featureproto.UpdateSegmentRequest,
 	editor *eventproto.Editor,
-	commands []command.Command,
-	segmentID, environmentId string,
 	localizer locale.Localizer,
-) error {
+) (*featureproto.UpdateSegmentResponse, error) {
+	err := validateUpdateSegmentNoCommand(req, localizer)
+	if err != nil {
+		s.logger.Error(
+			"Invalid argument",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, err
+	}
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -473,10 +595,117 @@ func (s *FeatureService) updateSegment(
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
 		if err != nil {
-			return statusInternal.Err()
+			return nil, statusInternal.Err()
 		}
-		return dt.Err()
+		return nil, dt.Err()
 	}
+
+	var updatedSegment *featureproto.Segment
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		segmentStorage := v2fs.NewSegmentStorage(tx)
+		segment, _, err := segmentStorage.GetSegment(ctx, req.Id, req.EnvironmentId)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get segment",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return err
+		}
+		updated, err := segment.UpdateSegment(req.Name, req.Description)
+		if err != nil {
+			s.logger.Error(
+				"Failed to update segment",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return err
+		}
+		updatedSegment = updated.Segment
+		e, err := domainevent.NewEvent(
+			editor,
+			eventproto.Event_SEGMENT,
+			req.Id,
+			eventproto.Event_SEGMENT_NAME_CHANGED,
+			&eventproto.SegmentUpdatedEvent{
+				Id:          req.Id,
+				Name:        req.Name,
+				Description: req.Description,
+			},
+			req.EnvironmentId,
+			updated.Segment,
+			segment.Segment,
+		)
+		if err != nil {
+			return err
+		}
+		if err := s.domainPublisher.Publish(ctx, e); err != nil {
+			return err
+		}
+		return segmentStorage.UpdateSegment(ctx, updated, req.EnvironmentId)
+	})
+	if err != nil {
+		if errors.Is(err, v2fs.ErrSegmentNotFound) || errors.Is(err, v2fs.ErrSegmentUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to update segment",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &featureproto.UpdateSegmentResponse{
+		Segment: updatedSegment,
+	}, nil
+}
+
+func (s *FeatureService) updateSegment(
+	ctx context.Context,
+	editor *eventproto.Editor,
+	commands []command.Command,
+	segmentID, environmentId string,
+	localizer locale.Localizer,
+) (*featureproto.Segment, error) {
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	var updatedSegment *featureproto.Segment
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		segmentStorage := v2fs.NewSegmentStorage(tx)
 		segment, _, err := segmentStorage.GetSegment(ctx, segmentID, environmentId)
@@ -511,18 +740,19 @@ func (s *FeatureService) updateSegment(
 				return err
 			}
 		}
+		updatedSegment = segment.Segment
 		return segmentStorage.UpdateSegment(ctx, segment, environmentId)
 	})
 	if err != nil {
-		if err == v2fs.ErrSegmentNotFound || err == v2fs.ErrSegmentUnexpectedAffectedRows {
+		if errors.Is(err, v2fs.ErrSegmentNotFound) || errors.Is(err, v2fs.ErrSegmentUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
 			})
 			if err != nil {
-				return statusInternal.Err()
+				return nil, statusInternal.Err()
 			}
-			return dt.Err()
+			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to update segment",
@@ -536,11 +766,11 @@ func (s *FeatureService) updateSegment(
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
 		if err != nil {
-			return statusInternal.Err()
+			return nil, statusInternal.Err()
 		}
-		return dt.Err()
+		return nil, dt.Err()
 	}
-	return nil
+	return updatedSegment, nil
 }
 
 func (s *FeatureService) GetSegment(

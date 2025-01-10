@@ -26,6 +26,7 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 
@@ -193,16 +194,9 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 		{
 			setup:         nil,
 			id:            "",
-			cmd:           nil,
+			cmd:           &featureproto.DeleteSegmentCommand{},
 			environmentId: "ns0",
 			expected:      createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
-		},
-		{
-			setup:         nil,
-			id:            "id",
-			cmd:           nil,
-			environmentId: "ns0",
-			expected:      createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -269,6 +263,105 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 	}
 }
 
+func TestDeleteSegmentNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	testcases := []struct {
+		desc     string
+		setup    func(*FeatureService)
+		req      *featureproto.DeleteSegmentRequest
+		expected error
+	}{
+		{
+			desc:  "error: missing id",
+			setup: nil,
+			req: &featureproto.DeleteSegmentRequest{
+				Id:            "",
+				EnvironmentId: "ns0",
+			},
+			expected: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc: "error: segment not found",
+			setup: func(s *FeatureService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2fs.ErrSegmentNotFound)
+			},
+			req: &featureproto.DeleteSegmentRequest{
+				Id:            "id",
+				EnvironmentId: "ns0",
+			},
+			expected: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *FeatureService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &featureproto.DeleteSegmentRequest{
+				Id:            "id",
+				EnvironmentId: "ns0",
+			},
+			expected: nil,
+		},
+	}
+	for _, tc := range testcases {
+		service := createFeatureService(mockController)
+		if tc.setup != nil {
+			tc.setup(service)
+		}
+		ctx = setToken(ctx)
+		_, err := service.DeleteSegment(ctx, tc.req)
+		assert.Equal(t, tc.expected, err)
+	}
+}
+
 func TestUpdateSegmentMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -306,13 +399,6 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 			expected:      createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			setup:         nil,
-			id:            "id",
-			cmds:          nil,
-			environmentId: "ns0",
-			expected:      createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
-		},
-		{
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -339,6 +425,91 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 			EnvironmentId: tc.environmentId,
 		}
 		_, err := service.UpdateSegment(ctx, req)
+		assert.Equal(t, tc.expected, err)
+	}
+}
+
+func TestUpdateSegmentNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	testcases := []struct {
+		desc     string
+		setup    func(*FeatureService)
+		req      *featureproto.UpdateSegmentRequest
+		expected error
+	}{
+		{
+			desc:  "error: missing id",
+			setup: nil,
+			req: &featureproto.UpdateSegmentRequest{
+				EnvironmentId: "ns0",
+			},
+			expected: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc:  "error: update empty name",
+			setup: nil,
+			req: &featureproto.UpdateSegmentRequest{
+				Id:            "id0",
+				EnvironmentId: "ns0",
+				Name:          wrapperspb.String(""),
+			},
+			expected: createError(statusMissingName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+		},
+		{
+			desc: "success update name",
+			setup: func(s *FeatureService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &featureproto.UpdateSegmentRequest{
+				Id:            "id0",
+				EnvironmentId: "ns0",
+				Name:          wrapperspb.String("new-name"),
+			},
+			expected: nil,
+		},
+		{
+			desc: "success update description",
+			setup: func(s *FeatureService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &featureproto.UpdateSegmentRequest{
+				Id:            "id0",
+				EnvironmentId: "ns0",
+				Description:   wrapperspb.String("new-description"),
+			},
+		},
+	}
+	for _, tc := range testcases {
+		service := createFeatureService(mockController)
+		if tc.setup != nil {
+			tc.setup(service)
+		}
+		ctx = setToken(ctx)
+		_, err := service.UpdateSegment(ctx, tc.req)
 		assert.Equal(t, tc.expected, err)
 	}
 }

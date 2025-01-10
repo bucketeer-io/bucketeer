@@ -287,7 +287,12 @@ message ListSegmentsResponse {
 
 message DeleteSegmentRequest {
   string id = 1;
-  DeleteSegmentCommand command = 2;
+  DeleteSegmentCommand command = 2 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   reserved 3;
   string environment_id = 4;
 }
@@ -296,12 +301,21 @@ message DeleteSegmentResponse {}
 
 message UpdateSegmentRequest {
   string id = 1;
-  repeated Command commands = 2;
+  repeated Command commands = 2 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   reserved 3;
-  string environment_id = 4;
+  string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.StringValue name = 5;
+  google.protobuf.StringValue description = 6;
 }
 
-message UpdateSegmentResponse {}
+message UpdateSegmentResponse {
+  Segment segment = 1;
+}
 
 message AddSegmentUserRequest {
   string id = 1;
@@ -649,8 +663,73 @@ service FeatureService {
       }
     };
   }
-  rpc DeleteSegment(DeleteSegmentRequest) returns (DeleteSegmentResponse) {}
-  rpc UpdateSegment(UpdateSegmentRequest) returns (UpdateSegmentResponse) {}
+  rpc DeleteSegment(DeleteSegmentRequest) returns (DeleteSegmentResponse) {
+    option (google.api.http) = {
+      delete: "/v1/segment"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete",
+      description: "Delete a segment."
+      tags: "segment"
+      operation_id: "web.v1.segment.delete"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc UpdateSegment(UpdateSegmentRequest) returns (UpdateSegmentResponse) {
+    option (google.api.http) = {
+      patch: "/v1/segment"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update",
+      description: "Update a segment."
+      tags: "segment"
+      operation_id: "web.v1.segment.update"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 
   rpc AddSegmentUser(AddSegmentUserRequest) returns (AddSegmentUserResponse) {
     option deprecated = true;

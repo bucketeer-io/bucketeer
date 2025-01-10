@@ -17,6 +17,9 @@ package domain
 import (
 	"time"
 
+	"github.com/jinzhu/copier"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -39,6 +42,24 @@ func NewSegment(name string, description string) (*Segment, error) {
 			CreatedAt:   time.Now().Unix(),
 		},
 	}, nil
+}
+
+func (s *Segment) UpdateSegment(
+	name *wrapperspb.StringValue,
+	description *wrapperspb.StringValue,
+) (*Segment, error) {
+	updated := &Segment{}
+	if err := copier.Copy(updated, s); err != nil {
+		return nil, err
+	}
+	if name != nil {
+		updated.Name = name.Value
+	}
+	if description != nil {
+		updated.Description = description.Value
+	}
+	updated.UpdatedAt = time.Now().Unix()
+	return updated, nil
 }
 
 func (s *Segment) SetDeleted() error {
