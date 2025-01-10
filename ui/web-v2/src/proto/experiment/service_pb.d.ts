@@ -2,6 +2,9 @@
 // file: proto/experiment/service.proto
 
 import * as jspb from 'google-protobuf';
+import * as google_api_annotations_pb from '../../google/api/annotations_pb';
+import * as google_api_field_behavior_pb from '../../google/api/field_behavior_pb';
+import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-openapiv2/options/annotations_pb';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
 import * as proto_experiment_command_pb from '../../proto/experiment/command_pb';
 import * as proto_experiment_goal_pb from '../../proto/experiment/goal_pb';
@@ -211,6 +214,15 @@ export class CreateGoalRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateGoalRequest.AsObject;
   static toObject(
@@ -236,10 +248,18 @@ export namespace CreateGoalRequest {
   export type AsObject = {
     command?: proto_experiment_command_pb.CreateGoalCommand.AsObject;
     environmentId: string;
+    id: string;
+    name: string;
+    description: string;
   };
 }
 
 export class CreateGoalResponse extends jspb.Message {
+  hasGoal(): boolean;
+  clearGoal(): void;
+  getGoal(): proto_experiment_goal_pb.Goal | undefined;
+  setGoal(value?: proto_experiment_goal_pb.Goal): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateGoalResponse.AsObject;
   static toObject(
@@ -262,7 +282,9 @@ export class CreateGoalResponse extends jspb.Message {
 }
 
 export namespace CreateGoalResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    goal?: proto_experiment_goal_pb.Goal.AsObject;
+  };
 }
 
 export class ArchiveGoalRequest extends jspb.Message {

@@ -23,6 +23,12 @@ var global =
   }.call(null) ||
   Function('return this')();
 
+var google_api_annotations_pb = require('../../google/api/annotations_pb.js');
+goog.object.extend(proto, google_api_annotations_pb);
+var google_api_field_behavior_pb = require('../../google/api/field_behavior_pb.js');
+goog.object.extend(proto, google_api_field_behavior_pb);
+var protoc$gen$openapiv2_options_annotations_pb = require('../../protoc-gen-openapiv2/options/annotations_pb.js');
+goog.object.extend(proto, protoc$gen$openapiv2_options_annotations_pb);
 var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
 goog.object.extend(proto, google_protobuf_wrappers_pb);
 var proto_experiment_command_pb = require('../../proto/experiment/command_pb.js');
@@ -1925,7 +1931,10 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        id: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        name: jspb.Message.getFieldWithDefault(msg, 5, ''),
+        description: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {
@@ -1979,6 +1988,18 @@ proto.bucketeer.experiment.CreateGoalRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setId(value);
+          break;
+        case 5:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setName(value);
+          break;
+        case 6:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setDescription(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -2022,6 +2043,18 @@ proto.bucketeer.experiment.CreateGoalRequest.serializeBinaryToWriter =
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(3, f);
+    }
+    f = message.getId();
+    if (f.length > 0) {
+      writer.writeString(4, f);
+    }
+    f = message.getName();
+    if (f.length > 0) {
+      writer.writeString(5, f);
+    }
+    f = message.getDescription();
+    if (f.length > 0) {
+      writer.writeString(6, f);
     }
   };
 
@@ -2088,6 +2121,62 @@ proto.bucketeer.experiment.CreateGoalRequest.prototype.setEnvironmentId =
     return jspb.Message.setProto3StringField(this, 3, value);
   };
 
+/**
+ * optional string id = 4;
+ * @return {string}
+ */
+proto.bucketeer.experiment.CreateGoalRequest.prototype.getId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.experiment.CreateGoalRequest} returns this
+ */
+proto.bucketeer.experiment.CreateGoalRequest.prototype.setId = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+/**
+ * optional string name = 5;
+ * @return {string}
+ */
+proto.bucketeer.experiment.CreateGoalRequest.prototype.getName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.experiment.CreateGoalRequest} returns this
+ */
+proto.bucketeer.experiment.CreateGoalRequest.prototype.setName = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 5, value);
+};
+
+/**
+ * optional string description = 6;
+ * @return {string}
+ */
+proto.bucketeer.experiment.CreateGoalRequest.prototype.getDescription =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 6, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.experiment.CreateGoalRequest} returns this
+ */
+proto.bucketeer.experiment.CreateGoalRequest.prototype.setDescription =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 6, value);
+  };
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -2124,7 +2213,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        goal:
+          (f = msg.getGoal()) &&
+          proto_experiment_goal_pb.Goal.toObject(includeInstance, f)
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -2164,6 +2257,14 @@ proto.bucketeer.experiment.CreateGoalResponse.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
+        case 1:
+          var value = new proto_experiment_goal_pb.Goal();
+          reader.readMessage(
+            value,
+            proto_experiment_goal_pb.Goal.deserializeBinaryFromReader
+          );
+          msg.setGoal(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -2196,7 +2297,52 @@ proto.bucketeer.experiment.CreateGoalResponse.prototype.serializeBinary =
 proto.bucketeer.experiment.CreateGoalResponse.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
+    f = message.getGoal();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_experiment_goal_pb.Goal.serializeBinaryToWriter
+      );
+    }
   };
+
+/**
+ * optional Goal goal = 1;
+ * @return {?proto.bucketeer.experiment.Goal}
+ */
+proto.bucketeer.experiment.CreateGoalResponse.prototype.getGoal = function () {
+  return /** @type{?proto.bucketeer.experiment.Goal} */ (
+    jspb.Message.getWrapperField(this, proto_experiment_goal_pb.Goal, 1)
+  );
+};
+
+/**
+ * @param {?proto.bucketeer.experiment.Goal|undefined} value
+ * @return {!proto.bucketeer.experiment.CreateGoalResponse} returns this
+ */
+proto.bucketeer.experiment.CreateGoalResponse.prototype.setGoal = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.experiment.CreateGoalResponse} returns this
+ */
+proto.bucketeer.experiment.CreateGoalResponse.prototype.clearGoal =
+  function () {
+    return this.setGoal(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.experiment.CreateGoalResponse.prototype.hasGoal = function () {
+  return jspb.Message.getField(this, 1) != null;
+};
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
