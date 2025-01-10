@@ -362,7 +362,7 @@ func TestCreateGoalNoCommandMySQL(t *testing.T) {
 			p.setup(service)
 		}
 		_, err := service.CreateGoal(ctx, p.req)
-		assert.Equal(t, p.expectedErr, err)
+		assert.Equal(t, p.expectedErr, err, p.desc)
 	}
 }
 
