@@ -227,6 +227,24 @@ func (s *CodeReferenceService) CreateCodeReference(
 		req.CommitHash,
 		req.EnvironmentId,
 	)
+	codeRefStorage := v2.NewCodeReferenceStorage(s.mysqlClient)
+	if err := codeRefStorage.CreateCodeReference(ctx, codeRef); err != nil {
+		s.logger.Error(
+			"Failed to create code reference",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", id.String()),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
 	createEvent, err := domainevent.NewEvent(
 		editor,
 		eventproto.Event_CODEREF,
@@ -285,24 +303,6 @@ func (s *CodeReferenceService) CreateCodeReference(
 		}
 		return nil, dt.Err()
 	}
-	codeRefStorage := v2.NewCodeReferenceStorage(s.mysqlClient)
-	if err := codeRefStorage.CreateCodeReference(ctx, codeRef); err != nil {
-		s.logger.Error(
-			"Failed to create code reference",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", id.String()),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
 	return &proto.CreateCodeReferenceResponse{CodeReference: &codeRef.CodeReference}, nil
 }
 
@@ -324,62 +324,87 @@ func (s *CodeReferenceService) UpdateCodeReference(
 		return nil, err
 	}
 	codeRefStorage := v2.NewCodeReferenceStorage(s.mysqlClient)
-	codeRef, err := codeRefStorage.GetCodeReference(ctx, req.Id, req.EnvironmentId)
-	if err != nil {
-		if errors.Is(err, v2.ErrCodeReferenceNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+	var codeRef *domain.CodeReference
+	var updatedCodeRef *domain.CodeReference
+	err = codeRefStorage.RunInTransaction(ctx, func() error {
+		var err error
+		codeRef, err = codeRefStorage.GetCodeReference(ctx, req.Id, req.EnvironmentId)
+		if err != nil {
+			if errors.Is(err, v2.ErrCodeReferenceNotFound) {
+				dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalize(locale.NotFoundError),
+				})
+				if err != nil {
+					return statusInternal.Err()
+				}
+				return dt.Err()
+			}
+			s.logger.Error(
+				"Failed to get code reference",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
+				Message: localizer.MustLocalize(locale.InternalServerError),
 			})
 			if err != nil {
-				return nil, statusInternal.Err()
+				return statusInternal.Err()
 			}
-			return nil, dt.Err()
+			return dt.Err()
 		}
-		s.logger.Error(
-			"Failed to get code reference",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", req.Id),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
+		updatedCodeRef, err = codeRef.Update(
+			req.FilePath,
+			req.LineNumber,
+			req.CodeSnippet,
+			req.ContentHash,
+			req.Aliases,
+			req.RepositoryBranch,
+			req.CommitHash,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
 		if err != nil {
-			return nil, statusInternal.Err()
+			s.logger.Error(
+				"Failed to update code reference",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
-		return nil, dt.Err()
-	}
-	updatedCodeRef, err := codeRef.Update(
-		req.FilePath,
-		req.LineNumber,
-		req.CodeSnippet,
-		req.ContentHash,
-		req.Aliases,
-		req.RepositoryBranch,
-		req.CommitHash,
-	)
+		if err := codeRefStorage.UpdateCodeReference(ctx, updatedCodeRef); err != nil {
+			s.logger.Error(
+				"Failed to update code reference",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		return nil
+	})
 	if err != nil {
-		s.logger.Error(
-			"Failed to update code reference",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", req.Id),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, err
 	}
-
 	updateEvent, err := domainevent.NewEvent(
 		editor,
 		eventproto.Event_CODEREF,
@@ -399,7 +424,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 		},
 		req.EnvironmentId,
 		updatedCodeRef,
-		&codeRef,
+		codeRef,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -422,23 +447,6 @@ func (s *CodeReferenceService) UpdateCodeReference(
 			"Failed to publish event",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	if err := codeRefStorage.UpdateCodeReference(ctx, updatedCodeRef); err != nil {
-		s.logger.Error(
-			"Failed to update code reference",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", req.Id),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -500,6 +508,23 @@ func (s *CodeReferenceService) DeleteCodeReference(
 		}
 		return nil, dt.Err()
 	}
+	if err := codeRefStorage.DeleteCodeReference(ctx, codeRef.Id, codeRef.EnvironmentId); err != nil {
+		s.logger.Error(
+			"Failed to delete code reference",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", req.Id),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
 	deleteEvent, err := domainevent.NewEvent(
 		editor,
 		eventproto.Event_CODEREF,
@@ -534,24 +559,6 @@ func (s *CodeReferenceService) DeleteCodeReference(
 			"Failed to publish event",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	codeRefStorage = v2.NewCodeReferenceStorage(s.mysqlClient)
-	if err := codeRefStorage.DeleteCodeReference(ctx, codeRef.Id, codeRef.EnvironmentId); err != nil {
-		s.logger.Error(
-			"Failed to delete code reference",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", req.Id),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
