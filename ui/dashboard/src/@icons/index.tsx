@@ -32,12 +32,17 @@ import IconSwitch from './sidebar-icons/switch.svg?react';
 import IconUsage from './sidebar-icons/usage.svg?react';
 import IconUser from './sidebar-icons/user.svg?react';
 import IconDelete from './special-icons/delete.svg?react';
+import IconExperiment from './special-icons/experiment.svg?react';
+import IconExperimentsConnected from './special-icons/experiments-connected.svg?react';
 import IconFCM from './special-icons/fcm.svg?react';
 import IconGithub from './special-icons/github.svg?react';
 import IconGoal from './special-icons/goal.svg?react';
 import IconGoogle from './special-icons/google.svg?react';
 import IconLogoutConfirm from './special-icons/logout.svg?react';
 import IconNoData from './special-icons/no-data.svg?react';
+import IconNotInUse from './special-icons/not-in-use.svg?react';
+import IconOperation from './special-icons/operation.svg?react';
+import IconOperationsConnected from './special-icons/operations-connected.svg?react';
 import IconSlack from './special-icons/slack.svg?react';
 
 export {
@@ -84,5 +89,10 @@ export {
   IconFCM,
   IconNoData,
   IconLogoutConfirm,
-  IconDelete
+  IconDelete,
+  IconExperiment,
+  IconOperation,
+  IconNotInUse,
+  IconExperimentsConnected,
+  IconOperationsConnected
 };

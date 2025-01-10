@@ -47,5 +47,10 @@
     "notification": "Get notified when someone adds or updates a notification"
   },
   "upload-files": "Drop your file here, or <underline>{{text}}</underline>",
-  "accept-file-types": "{{type}}"
+  "accept-file-types": "{{type}}",
+  "goal-id": "Goal ID",
+  "placeholder-goal-id": "Enter Goal ID",
+  "connections": "Connections",
+  "experiments": "Experiments",
+  "operations": "Operations"
 }

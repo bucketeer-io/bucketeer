@@ -38,6 +38,7 @@
   "if": "If",
   "clear": "Clear",
   "confirm": "Confirm",
+  "close": "Close",
   "select-filter": "Select filter",
   "select-value": "Select value",
   "new-project": "New Project",
@@ -137,5 +138,11 @@
   "edit-push": "Update Push Notification",
   "new-push-subtitle": "Every time a feature flag is updated, a push notification is sent to the SDK client allowing you to update the SDK cache in real-time.",
   "tags": "Tags",
-  "fcm-api-key": "Firebase Service Account"
+  "fcm-api-key": "Firebase Service Account",
+  "goals": "Goals",
+  "goals-subtitle": "You can set goals and use them to start experiments within your feature flags",
+  "new-goal": "New Goal",
+  "experiments-connected": "Experiments Connected",
+  "operations-connected": "Operations Connected",
+  "goal-connected-desc": "This goal currently is connected to the following {{type}}:"
 }
