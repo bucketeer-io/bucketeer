@@ -4127,6 +4127,106 @@ paths:
           type: string
       tags:
         - subscription
+  /v1/tag:
+    delete:
+      summary: Delete
+      description: Delete a tag.
+      operationId: web.v1.tag.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/tagDeleteTagResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - tag
+    post:
+      summary: Create
+      description: Create a tag.
+      operationId: web.v1.tag.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/tagCreateTagResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/tagCreateTagRequest'
+      tags:
+        - tag
   /v1/tags:
     get:
       summary: List
@@ -4136,7 +4236,7 @@ paths:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/featureListTagsResponse'
+            $ref: '#/definitions/bucketeertagListTagsResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -4184,10 +4284,11 @@ paths:
           type: string
           enum:
             - DEFAULT
-            - ID
+            - NAME
             - CREATED_AT
             - UPDATED_AT
-            - NAME
+            - ENTITY_TYPE
+            - ENVIRONMENT
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -4202,6 +4303,10 @@ paths:
           required: false
           type: string
         - name: environmentId
+          in: query
+          required: false
+          type: string
+        - name: organizationId
           in: query
           required: false
           type: string
@@ -4326,6 +4431,12 @@ definitions:
       - EXPERIMENT_RUNNING
       - MAU_COUNT
     default: DOMAIN_EVENT_FEATURE
+  TagEntityType:
+    type: string
+    enum:
+      - UNKNOWN
+      - FEATURE_FLAG
+    default: UNKNOWN
   UpdateAccountV2RequestAccountV2Avatar:
     type: object
     properties:
@@ -5103,6 +5214,34 @@ definitions:
         format: int32
       ownerEmail:
         type: string
+  bucketeerfeatureListTagsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - ID
+      - CREATED_AT
+      - UPDATED_AT
+      - NAME
+    default: DEFAULT
+  bucketeerfeatureListTagsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  bucketeerfeatureListTagsResponse:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerfeatureTag'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
   bucketeerfeatureTag:
     type: object
     properties:
@@ -5128,6 +5267,52 @@ definitions:
         type: string
         title: number or even json object
       description:
+        type: string
+  bucketeertagListTagsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+      - ENTITY_TYPE
+      - ENVIRONMENT
+    default: DEFAULT
+  bucketeertagListTagsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  bucketeertagListTagsResponse:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeertagTag'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  bucketeertagTag:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      entityType:
+        $ref: '#/definitions/TagEntityType'
+      environmentId:
         type: string
   environmentArchiveEnvironmentV2Command:
     type: object
@@ -6381,34 +6566,6 @@ definitions:
       totalCount:
         type: string
         format: int64
-  featureListTagsRequestOrderBy:
-    type: string
-    enum:
-      - DEFAULT
-      - ID
-      - CREATED_AT
-      - UPDATED_AT
-      - NAME
-    default: DEFAULT
-  featureListTagsRequestOrderDirection:
-    type: string
-    enum:
-      - ASC
-      - DESC
-    default: ASC
-  featureListTagsResponse:
-    type: object
-    properties:
-      tags:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/bucketeerfeatureTag'
-      cursor:
-        type: string
-      totalCount:
-        type: string
-        format: int64
   featurePrerequisite:
     type: object
     properties:
@@ -7188,6 +7345,26 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
+  tagCreateTagRequest:
+    type: object
+    properties:
+      name:
+        type: string
+      entityType:
+        $ref: '#/definitions/TagEntityType'
+      environmentId:
+        type: string
+    required:
+      - name
+      - entityType
+      - environmentId
+  tagCreateTagResponse:
+    type: object
+    properties:
+      tag:
+        $ref: '#/definitions/bucketeertagTag'
+  tagDeleteTagResponse:
+    type: object
   userUser:
     type: object
     properties:

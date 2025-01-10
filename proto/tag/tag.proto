@@ -23,8 +23,9 @@ message Tag {
     FEATURE_FLAG = 1;
   }
   string id = 1;
-  int64 created_at = 2;
-  int64 updated_at = 3;
-  EntityType entity_type = 4;
-  string environment_id = 5;
+  string name = 2;
+  int64 created_at = 3;
+  int64 updated_at = 4;
+  EntityType entity_type = 5;
+  string environment_id = 6;
 }

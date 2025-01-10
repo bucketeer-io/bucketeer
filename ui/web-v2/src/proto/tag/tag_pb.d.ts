@@ -7,6 +7,9 @@ export class Tag extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
+  getName(): string;
+  setName(value: string): void;
+
   getCreatedAt(): number;
   setCreatedAt(value: number): void;
 
@@ -37,6 +40,7 @@ export class Tag extends jspb.Message {
 export namespace Tag {
   export type AsObject = {
     id: string;
+    name: string;
     createdAt: number;
     updatedAt: number;
     entityType: Tag.EntityTypeMap[keyof Tag.EntityTypeMap];

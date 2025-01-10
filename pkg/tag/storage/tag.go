@@ -18,6 +18,7 @@ package storage
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -26,20 +27,31 @@ import (
 )
 
 var (
+	ErrTagNotFound               = errors.New("tag: not found")
+	ErrTagUnexpectedAffectedRows = errors.New("tag: unexpected affected rows")
+
 	//go:embed sql/insert_tag.sql
 	insertTagSQL string
+	//go:embed sql/select_tag.sql
+	selectTagSQL string
 	//go:embed sql/select_tags.sql
-	listTagsSQL string
+	selectTagsSQL string
+	//go:embed sql/count_tags.sql
+	countTagsSQL string
+	//go:embed sql/delete_tag.sql
+	deleteTagSQL string
 )
 
 type TagStorage interface {
 	UpsertTag(ctx context.Context, tag *domain.Tag) error
+	GetTag(ctx context.Context, id, environmentId string) (*domain.Tag, error)
 	ListTags(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.Tag, int, int64, error)
+	DeleteTag(ctx context.Context, id, environmentId string) error
 }
 
 type tagStorage struct {
@@ -55,6 +67,7 @@ func (s *tagStorage) UpsertTag(ctx context.Context, tag *domain.Tag) error {
 		ctx,
 		insertTagSQL,
 		tag.Id,
+		&tag.Name,
 		tag.CreatedAt,
 		tag.UpdatedAt,
 		int32(tag.EntityType),
@@ -66,6 +79,32 @@ func (s *tagStorage) UpsertTag(ctx context.Context, tag *domain.Tag) error {
 	return nil
 }
 
+func (s *tagStorage) GetTag(ctx context.Context, id, environmentId string) (*domain.Tag, error) {
+	var entityType int32
+	tag := proto.Tag{}
+	err := s.qe.QueryRowContext(
+		ctx,
+		selectTagSQL,
+		id,
+		environmentId,
+	).Scan(
+		&tag.Id,
+		&tag.Name,
+		&tag.CreatedAt,
+		&tag.UpdatedAt,
+		&entityType,
+		&tag.EnvironmentId,
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrTagNotFound
+		}
+		return nil, err
+	}
+	tag.EntityType = proto.Tag_EntityType(entityType)
+	return &domain.Tag{Tag: &tag}, nil
+}
+
 func (s *tagStorage) ListTags(
 	ctx context.Context,
 	whereParts []mysql.WherePart,
@@ -75,7 +114,7 @@ func (s *tagStorage) ListTags(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(listTagsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	query := fmt.Sprintf(selectTagsSQL, whereSQL, orderBySQL, limitOffsetSQL)
 
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
@@ -88,6 +127,7 @@ func (s *tagStorage) ListTags(
 		tag := proto.Tag{}
 		err := rows.Scan(
 			&tag.Id,
+			&tag.Name,
 			&tag.CreatedAt,
 			&tag.UpdatedAt,
 			&entityType,
@@ -103,10 +143,25 @@ func (s *tagStorage) ListTags(
 		return nil, 0, 0, err
 	}
 	nextOffset := offset + len(tags)
-	countQuery := fmt.Sprintf(listTagsSQL, whereSQL)
+	countQuery := fmt.Sprintf(countTagsSQL, whereSQL)
 	var totalCount int64
 	if err := s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount); err != nil {
 		return nil, 0, 0, err
 	}
 	return tags, nextOffset, totalCount, nil
+}
+
+func (s *tagStorage) DeleteTag(ctx context.Context, id, environmentId string) error {
+	result, err := s.qe.ExecContext(ctx, deleteTagSQL, id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected != 1 {
+		return ErrTagUnexpectedAffectedRows
+	}
+	return nil
 }

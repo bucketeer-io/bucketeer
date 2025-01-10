@@ -21,6 +21,7 @@ import * as proto_feature_prerequisite_pb from '../../../proto/feature/prerequis
 import * as proto_autoops_progressive_rollout_pb from '../../../proto/autoops/progressive_rollout_pb';
 import * as proto_feature_flag_trigger_pb from '../../../proto/feature/flag_trigger_pb';
 import * as proto_account_search_filter_pb from '../../../proto/account/search_filter_pb';
+import * as proto_tag_tag_pb from '../../../proto/tag/tag_pb';
 
 export class Event extends jspb.Message {
   getId(): string;
@@ -116,6 +117,7 @@ export namespace Event {
     PROGRESSIVE_ROLLOUT: 14;
     ORGANIZATION: 15;
     FLAG_TRIGGER: 16;
+    TAG: 17;
   }
 
   export const EntityType: EntityTypeMap;
@@ -292,6 +294,8 @@ export namespace Event {
     FLAG_TRIGGER_ENABLED: 1605;
     FLAG_TRIGGER_DELETED: 1606;
     FLAG_TRIGGER_USAGE_UPDATED: 1607;
+    TAG_CREATED: 1701;
+    TAG_DELETED: 1702;
   }
 
   export const Type: TypeMap;
@@ -6955,5 +6959,93 @@ export namespace AccountV2LanguageChangedEvent {
   export type AsObject = {
     email: string;
     language: string;
+  };
+}
+
+export class TagCreatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getCreatedAt(): number;
+  setCreatedAt(value: number): void;
+
+  getUpdatedAt(): number;
+  setUpdatedAt(value: number): void;
+
+  getEntityType(): proto_tag_tag_pb.Tag.EntityTypeMap[keyof proto_tag_tag_pb.Tag.EntityTypeMap];
+  setEntityType(
+    value: proto_tag_tag_pb.Tag.EntityTypeMap[keyof proto_tag_tag_pb.Tag.EntityTypeMap]
+  ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TagCreatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: TagCreatedEvent
+  ): TagCreatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: TagCreatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): TagCreatedEvent;
+  static deserializeBinaryFromReader(
+    message: TagCreatedEvent,
+    reader: jspb.BinaryReader
+  ): TagCreatedEvent;
+}
+
+export namespace TagCreatedEvent {
+  export type AsObject = {
+    id: string;
+    name: string;
+    createdAt: number;
+    updatedAt: number;
+    entityType: proto_tag_tag_pb.Tag.EntityTypeMap[keyof proto_tag_tag_pb.Tag.EntityTypeMap];
+    environmentId: string;
+  };
+}
+
+export class TagDeletedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TagDeletedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: TagDeletedEvent
+  ): TagDeletedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: TagDeletedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): TagDeletedEvent;
+  static deserializeBinaryFromReader(
+    message: TagDeletedEvent,
+    reader: jspb.BinaryReader
+  ): TagDeletedEvent;
+}
+
+export namespace TagDeletedEvent {
+  export type AsObject = {
+    id: string;
+    environmentId: string;
   };
 }

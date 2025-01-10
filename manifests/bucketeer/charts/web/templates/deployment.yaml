@@ -80,6 +80,9 @@ spec:
         - name: envoy-push-descriptor-secret
           secret:
             secretName: {{ template "web.fullname" . }}-push
+        - name: envoy-tag-descriptor-secret
+          secret:
+            secretName: {{ template "web.fullname" . }}-tag
         - name: envoy-batch-descriptor-secret
           secret:
             secretName: {{ template "web.fullname" . }}-batch
@@ -162,6 +165,8 @@ spec:
               value: "{{ .Values.env.notificationServicePort }}"
             - name: BUCKETEER_WEB_PUSH_SERVICE_PORT
               value: "{{ .Values.env.pushServicePort }}"
+            - name: BUCKETEER_WEB_TAG_SERVICE_PORT
+              value: "{{ .Values.env.tagServicePort }}"
             - name: BUCKETEER_WEB_WEB_CONSOLE_SERVICE_PORT
               value: "{{ .Values.env.webConsoleServicePort }}"
             - name: BUCKETEER_WEB_DASHBOARD_SERVICE_PORT
@@ -303,6 +308,9 @@ spec:
               readOnly: true
             - name: envoy-push-descriptor-secret
               mountPath: /usr/local/push-secret
+              readOnly: true
+            - name: envoy-tag-descriptor-secret
+              mountPath: /usr/local/tag-secret
               readOnly: true
             - name: envoy-batch-descriptor-secret
               mountPath: /usr/local/batch-secret
