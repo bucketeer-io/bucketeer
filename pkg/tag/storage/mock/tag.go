@@ -43,6 +43,35 @@ func (m *MockTagStorage) EXPECT() *MockTagStorageMockRecorder {
 	return m.recorder
 }
 
+// DeleteTag mocks base method.
+func (m *MockTagStorage) DeleteTag(ctx context.Context, id, environmentId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteTag", ctx, id, environmentId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteTag indicates an expected call of DeleteTag.
+func (mr *MockTagStorageMockRecorder) DeleteTag(ctx, id, environmentId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTag", reflect.TypeOf((*MockTagStorage)(nil).DeleteTag), ctx, id, environmentId)
+}
+
+// GetTag mocks base method.
+func (m *MockTagStorage) GetTag(ctx context.Context, id, environmentId string) (*domain.Tag, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTag", ctx, id, environmentId)
+	ret0, _ := ret[0].(*domain.Tag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTag indicates an expected call of GetTag.
+func (mr *MockTagStorageMockRecorder) GetTag(ctx, id, environmentId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTag", reflect.TypeOf((*MockTagStorage)(nil).GetTag), ctx, id, environmentId)
+}
+
 // ListTags mocks base method.
 func (m *MockTagStorage) ListTags(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*tag.Tag, int, int64, error) {
 	m.ctrl.T.Helper()
