@@ -1,6 +1,5 @@
 -- Remove environment_namespace column from all tables
 ALTER TABLE feature DROP COLUMN environment_namespace;
-ALTER TABLE account DROP COLUMN environment_namespace;
 ALTER TABLE api_key DROP COLUMN environment_namespace;
 ALTER TABLE audit_log DROP COLUMN environment_namespace;
 ALTER TABLE auto_ops_rule DROP COLUMN environment_namespace;
