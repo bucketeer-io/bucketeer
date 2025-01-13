@@ -19,7 +19,7 @@ export interface CollectionProps {
   projects: Account[];
 }
 
-export type UserSegmentsActionsType = 'EDIT' | 'DELETE' | 'FLAG';
+export type UserSegmentsActionsType = 'EDIT' | 'DELETE' | 'DOWNLOAD' | 'FLAG';
 
 export type UserSegmentForm = {
   id?: string;

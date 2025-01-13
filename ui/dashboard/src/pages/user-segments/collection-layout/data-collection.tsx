@@ -1,4 +1,6 @@
+import { useCallback } from 'react';
 import {
+  IconCloudDownloadOutlined,
   IconDeleteOutlined,
   IconEditOutlined,
   IconMoreHorizOutlined
@@ -9,15 +11,26 @@ import { UserSegment } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
 import { Popover } from 'components/popover';
+import Spinner from 'components/spinner';
 import { UserSegmentsActionsType } from '../types';
 
 export const useColumns = ({
+  segmentUploading,
   onActionHandler
 }: {
+  segmentUploading: UserSegment | null;
   onActionHandler: (value: UserSegment, type: UserSegmentsActionsType) => void;
 }): ColumnDef<UserSegment>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
+
+  const getUploadingStatus = useCallback(
+    (segment: UserSegment) => {
+      if (segment.status === 'UPLOADING') return true;
+      if (segmentUploading?.id === segment.id) return true;
+    },
+    [segmentUploading]
+  );
 
   return [
     {
@@ -29,9 +42,12 @@ export const useColumns = ({
         return (
           <div
             onClick={() => onActionHandler(segment, 'EDIT')}
-            className="underline text-primary-500 typo-para-medium cursor-pointer"
+            className="flex items-center gap-x-2 cursor-pointer"
           >
-            {segment.name}
+            <p className="underline text-primary-500 typo-para-medium">
+              {segment.name}
+            </p>
+            {getUploadingStatus(segment) && <Spinner />}
           </div>
         );
       }
@@ -89,16 +105,22 @@ export const useColumns = ({
       size: 150,
       cell: ({ row }) => {
         const segment = row.original;
+        const isUploading = getUploadingStatus(segment);
         return (
           <div
             className={cn(
               'typo-para-small text-accent-green-500 bg-accent-green-50 px-2 py-[3px] w-fit rounded',
               {
-                'bg-gray-200 text-gray-600': !segment.isInUseStatus
+                'bg-gray-200 text-gray-600': !segment.isInUseStatus,
+                'bg-accent-orange-50 text-accent-orange-500': isUploading
               }
             )}
           >
-            {segment.isInUseStatus ? 'In Use' : 'Not In Use'}
+            {isUploading
+              ? 'Uploading'
+              : segment.isInUseStatus
+                ? 'In Use'
+                : 'Not In Use'}
           </div>
         );
       }
@@ -118,6 +140,12 @@ export const useColumns = ({
         return (
           <Popover
             options={[
+              {
+                label: `${t('table:popover.download-segment')}`,
+                icon: IconCloudDownloadOutlined,
+                value: 'DOWNLOAD',
+                disabled: !Number(segment.includedUserCount)
+              },
               {
                 label: `${t('table:popover.edit-segment')}`,
                 icon: IconEditOutlined,

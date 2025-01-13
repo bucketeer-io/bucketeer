@@ -28,12 +28,14 @@ interface EditUserSegmentModalProps {
   userSegment: UserSegment;
   isOpen: boolean;
   onClose: () => void;
+  setSegmentUploading: (userSegment: UserSegment | null) => void;
 }
 
 const EditUserSegmentModal = ({
   userSegment,
   isOpen,
-  onClose
+  onClose,
+  setSegmentUploading
 }: EditUserSegmentModalProps) => {
   const { t } = useTranslation(['common', 'form']);
   const { consoleAccount } = useAuth();
@@ -50,7 +52,6 @@ const EditUserSegmentModal = ({
     isDisabledUserIds ? '' : 'upload'
   );
   const [files, setFiles] = useState<File[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -68,32 +69,33 @@ const EditUserSegmentModal = ({
     trigger
   } = form;
 
-  const updateSuccess = (name: string) => {
-    notify({
-      toastType: 'toast',
-      messageType: 'success',
-      message: (
-        <span>
-          <b>{name}</b> {` has been successfully updated!`}
-        </span>
-      )
-    });
+  const updateSuccess = (name: string, isUpload = false) => {
+    if (!isUpload) {
+      notify({
+        toastType: 'toast',
+        messageType: 'success',
+        message: (
+          <span>
+            <b>{name}</b> {` has been successfully updated!`}
+          </span>
+        )
+      });
+      onClose();
+    }
+    if (isUpload) setSegmentUploading(null);
     invalidateUserSegments(queryClient);
-    setIsLoading(false);
-    onClose();
   };
 
-  const onUpdateSuccess = (name: string, isUpload = true) => {
+  const onUpdateSuccess = (name: string, isUpload = false) => {
     let timerId: NodeJS.Timeout | null = null;
     if (timerId) clearTimeout(timerId);
     if (isUpload)
-      return (timerId = setTimeout(() => updateSuccess(name), 10000));
-    return updateSuccess(name);
+      return (timerId = setTimeout(() => updateSuccess(name, isUpload), 10000));
+    return updateSuccess(name, isUpload);
   };
 
   const onSubmit: SubmitHandler<UserSegmentForm> = async values => {
     try {
-      setIsLoading(true);
       const { id, name, description } = values;
       let file: File | null = null;
       if (values.file || files.length) {
@@ -111,6 +113,7 @@ const EditUserSegmentModal = ({
             state: 'INCLUDED',
             data: base64String
           });
+          onUpdateSuccess(name, true);
         });
       }
       const resp = await userSegmentUpdater({
@@ -119,7 +122,10 @@ const EditUserSegmentModal = ({
         description,
         environmentId: currentEnvironment.id
       });
-      if (resp?.segment) onUpdateSuccess(name, !!file);
+      if (resp?.segment) {
+        if (file) setSegmentUploading(resp?.segment);
+        onUpdateSuccess(name, false);
+      }
     } catch (error) {
       notify({
         toastType: 'toast',
@@ -133,7 +139,6 @@ const EditUserSegmentModal = ({
     <SlideModal
       title={t('update-user-segment')}
       isOpen={isOpen}
-      shouldCloseOnOverlayClick={!isLoading}
       onClose={onClose}
     >
       <div className="w-full p-5 pb-28">
@@ -292,8 +297,8 @@ const EditUserSegmentModal = ({
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isDirty || !isValid || isLoading || isSubmitting}
-                    loading={isSubmitting || isLoading}
+                    disabled={!isDirty || !isValid || isSubmitting}
+                    loading={isSubmitting}
                   >
                     {t(`submit`)}
                   </Button>

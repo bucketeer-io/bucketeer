@@ -26,7 +26,8 @@
     "disable-push": "Disable Push",
     "enable-push": "Enable Push",
     "edit-segment": "Edit User Segment",
-    "delete-segment": "Delete User Segment"
+    "delete-segment": "Delete User Segment",
+    "download-segment": "Download User Segment"
   },
   "empty": {
     "project-title": "No registered projects",

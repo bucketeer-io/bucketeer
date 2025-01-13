@@ -46,7 +46,6 @@
     "account": "Get notified when someone adds or updates an account",
     "notification": "Get notified when someone adds or updates a notification"
   },
-  "accept-file-types": "{{type}}",
   "placeholder-search-user-segments": "Search user segment",
   "list-of-users-ids": "List Of Users IDs",
   "browse-files": "Browse files",

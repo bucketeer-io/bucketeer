@@ -16,11 +16,13 @@ import { UserSegmentsActionsType, UserSegmentsFilters } from './types';
 import FilterUserSegmentModal from './user-segment-modal/filter-segment-modal';
 
 const PageContent = ({
+  segmentUploading,
   onAdd,
   onEdit,
   onOpenFlagModal,
   onDelete
 }: {
+  segmentUploading: UserSegment | null;
   onAdd: () => void;
   onEdit: (v: UserSegment) => void;
   onOpenFlagModal: (v: UserSegment) => void;
@@ -58,7 +60,8 @@ const PageContent = ({
   ) => {
     if (type === 'EDIT') return onEdit(segment);
     if (type === 'FLAG') return onOpenFlagModal(segment);
-    return onDelete(segment);
+    if (type === 'DELETE') return onDelete(segment);
+    // handle download segment ...
   };
 
   useEffect(() => {
@@ -100,6 +103,7 @@ const PageContent = ({
       )}
       <div className="mt-5 flex flex-col flex-1">
         <CollectionLoader
+          segmentUploading={segmentUploading}
           onAdd={onAdd}
           filters={filters}
           setFilters={onChangeFilters}

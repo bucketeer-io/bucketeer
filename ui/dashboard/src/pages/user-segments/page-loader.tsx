@@ -17,6 +17,9 @@ import FlagsConnectedModal from './user-segment-modal/flags-connected-modal';
 
 const PageLoader = () => {
   const [selectedSegment, setSelectedSegment] = useState<UserSegment>();
+  const [segmentUploading, setSegmentUploading] = useState<UserSegment | null>(
+    null
+  );
 
   const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
     useToggleOpen(false);
@@ -86,6 +89,7 @@ const PageLoader = () => {
         </PageLayout.EmptyState>
       ) : (
         <PageContent
+          segmentUploading={segmentUploading}
           onAdd={onOpenAddModal}
           onEdit={value => {
             setSelectedSegment(value);
@@ -112,6 +116,7 @@ const PageLoader = () => {
           isOpen={isOpenEditModal}
           onClose={onCloseEditModal}
           userSegment={selectedSegment!}
+          setSegmentUploading={setSegmentUploading}
         />
       )}
       {isOpenFlagModal && selectedSegment && (

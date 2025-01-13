@@ -34,7 +34,6 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
 
   const [userIdsType, setUserIdsType] = useState('upload');
   const [files, setFiles] = useState<File[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -52,31 +51,32 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
     trigger
   } = form;
 
-  const addSuccess = (name: string) => {
-    notify({
-      toastType: 'toast',
-      messageType: 'success',
-      message: (
-        <span>
-          <b>{name}</b> {` has been successfully created!`}
-        </span>
-      )
-    });
+  const addSuccess = (name: string, isUpload = false) => {
+    if (!isUpload) {
+      notify({
+        toastType: 'toast',
+        messageType: 'success',
+        message: (
+          <span>
+            <b>{name}</b> {` has been successfully created!`}
+          </span>
+        )
+      });
+      onClose();
+    }
     invalidateUserSegments(queryClient);
-    setIsLoading(false);
-    onClose();
   };
 
-  const onAddSuccess = (name: string, isUpload = true) => {
+  const onAddSuccess = (name: string, isUpload = false) => {
     let timerId: NodeJS.Timeout | null = null;
     if (timerId) clearTimeout(timerId);
-    if (isUpload) return (timerId = setTimeout(() => addSuccess(name), 10000));
-    return addSuccess(name);
+    if (isUpload)
+      return (timerId = setTimeout(() => addSuccess(name, isUpload), 10000));
+    return addSuccess(name, isUpload);
   };
 
   const onSubmit: SubmitHandler<UserSegmentForm> = async values => {
     try {
-      setIsLoading(true);
       const resp = await userSegmentCreator({
         environmentId: currentEnvironment.id,
         name: values.name,
@@ -100,8 +100,8 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
               state: 'INCLUDED',
               data: base64String
             });
-            console.log({ uploadResp });
-            if (uploadResp) onAddSuccess(values.name);
+            onAddSuccess(values.name);
+            if (uploadResp) onAddSuccess(values.name, true);
           });
         } else onAddSuccess(values.name, false);
       }
@@ -115,12 +115,7 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
   };
 
   return (
-    <SlideModal
-      title={t('new-user-segment')}
-      shouldCloseOnOverlayClick={!isLoading}
-      isOpen={isOpen}
-      onClose={onClose}
-    >
+    <SlideModal title={t('new-user-segment')} isOpen={isOpen} onClose={onClose}>
       <div className="w-full p-5">
         <p className="text-gray-800 typo-head-bold-small">
           {t('form:general-info')}
@@ -260,8 +255,8 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isDirty || !isValid || isSubmitting || isLoading}
-                    loading={isSubmitting || isLoading}
+                    disabled={!isDirty || !isValid || isSubmitting}
+                    loading={isSubmitting}
                   >
                     {t(`submit`)}
                   </Button>

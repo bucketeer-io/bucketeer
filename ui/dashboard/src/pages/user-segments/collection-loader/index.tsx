@@ -13,18 +13,20 @@ import { UserSegmentsActionsType, UserSegmentsFilters } from '../types';
 import { useFetchSegments } from './use-fetch-segment';
 
 const CollectionLoader = ({
+  segmentUploading,
   onAdd,
   filters,
   setFilters,
   onActionHandler
 }: {
+  segmentUploading: UserSegment | null;
   onAdd?: () => void;
   filters: UserSegmentsFilters;
   setFilters: (values: Partial<UserSegmentsFilters>) => void;
   organizationIds?: string[];
   onActionHandler: (value: UserSegment, type: UserSegmentsActionsType) => void;
 }) => {
-  const columns = useColumns({ onActionHandler });
+  const columns = useColumns({ segmentUploading, onActionHandler });
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
 
