@@ -1,4 +1,4 @@
-CREATE TABLE code_references (
+CREATE TABLE code_reference (
     id varchar(255) NOT NULL,
     feature_id VARCHAR(255) NOT NULL,
     file_path VARCHAR(512) NOT NULL,
