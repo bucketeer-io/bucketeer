@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { environmentArchive, environmentUnarchive } from '@api/environment';
 import { invalidateEnvironments } from '@queries/environments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { PAGE_PATH_ENVIRONMENTS, PAGE_PATH_PROJECTS } from 'constants/routing';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Environment } from '@types';
@@ -19,6 +21,13 @@ const ProjectEnvironments = () => {
   const { t } = useTranslation(['common', 'table']);
   const queryClient = useQueryClient();
 
+  const params = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const isAdd = useMemo(() => params['*'] === 'new', [params]);
+  const isEdit = useMemo(() => params['*'] && params['*'] !== 'new', [params]);
+
   const {
     data: collection,
     isLoading,
@@ -29,11 +38,12 @@ const ProjectEnvironments = () => {
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>();
   const [isArchiving, setIsArchiving] = useState<boolean>();
 
-  const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
-    useToggleOpen(false);
+  const onOpenAddModal = () => navigate(`${location.pathname}/new`);
 
-  const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
-    useToggleOpen(false);
+  const onCloseActionModal = () =>
+    navigate(
+      `/${params?.envUrlCode}${PAGE_PATH_PROJECTS}/${params?.projectId}${PAGE_PATH_ENVIRONMENTS}`
+    );
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
@@ -70,7 +80,7 @@ const ProjectEnvironments = () => {
       setIsArchiving(false);
       onOpenConfirmModal();
     } else {
-      onOpenEditModal();
+      navigate(`${location.pathname}/${environment.id}`);
     }
     setSelectedEnvironment(environment);
   };
@@ -94,17 +104,13 @@ const ProjectEnvironments = () => {
             onActionHandler={onHandleActions}
           />
 
-          {isOpenAddModal && (
-            <AddEnvironmentModal
-              isOpen={isOpenAddModal}
-              onClose={onCloseAddModal}
-            />
+          {isAdd && (
+            <AddEnvironmentModal isOpen={isAdd} onClose={onCloseActionModal} />
           )}
-          {isOpenEditModal && (
+          {isEdit && (
             <EditEnvironmentModal
-              isOpen={isOpenEditModal}
-              onClose={onCloseEditModal}
-              environment={selectedEnvironment!}
+              isOpen={isEdit}
+              onClose={onCloseActionModal}
             />
           )}
           {openConfirmModal && (

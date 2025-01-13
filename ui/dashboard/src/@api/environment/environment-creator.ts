@@ -14,7 +14,7 @@ export interface EnvironmentCreatorParams {
 }
 
 export interface EnvironmentResponse {
-  environment: Array<Environment>;
+  environment: Environment;
 }
 
 export const environmentCreator = async (

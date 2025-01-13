@@ -51,7 +51,7 @@ const PageContent = ({ project }: { project: Project }) => {
               }
             />
             <Route
-              path={PAGE_PATH_ENVIRONMENTS}
+              path={`${PAGE_PATH_ENVIRONMENTS}/*`}
               element={<ProjectEnvironments />}
             />
             <Route

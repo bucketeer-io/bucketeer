@@ -1,6 +1,7 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
-import { environmentUpdater } from '@api/environment';
+import { environmentFetcher, environmentUpdater } from '@api/environment';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateEnvironments } from '@queries/environments';
 import { useQueryProjects } from '@queries/projects';
@@ -21,7 +22,6 @@ import TextArea from 'components/textarea';
 interface EditEnvironmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  environment: Environment;
 }
 
 export interface EditEnvironmentForm {
@@ -38,29 +38,60 @@ const formSchema = yup.object().shape({
 
 const EditEnvironmentModal = ({
   isOpen,
-  onClose,
-  environment
+  onClose
 }: EditEnvironmentModalProps) => {
   const queryClient = useQueryClient();
-  const { projectId } = useParams();
+  const { projectId, ...rest } = useParams();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
   const { data: collection } = useQueryProjects();
+
+  const environmentId = useMemo(() => rest['*'], [rest]);
+
+  const [environment, setEnvironment] = useState<Environment>();
 
   const project = collection?.projects.find(item => item.id === projectId);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
-      name: environment.name,
-      description: environment.description,
-      requireComment: environment.requireComment
+      name: environment?.name || '',
+      description: environment?.description || '',
+      requireComment: environment?.requireComment
     }
   });
 
+  const handleFetchingEnvironment = useCallback(async () => {
+    try {
+      const resp = await environmentFetcher({
+        id: environmentId as string
+      });
+
+      const environment = resp?.environment;
+      if (environment) {
+        form.reset({
+          name: environment?.name,
+          description: environment?.description,
+          requireComment: environment?.requireComment
+        });
+        setEnvironment(environment);
+      }
+    } catch (error) {
+      notify({
+        toastType: 'toast',
+        messageType: 'error',
+        message: (error as Error)?.message || 'Something went wrong.'
+      });
+    }
+  }, [form, environmentId]);
+
+  useEffect(() => {
+    if (environmentId) handleFetchingEnvironment();
+  }, [environmentId]);
+
   const onSubmit: SubmitHandler<EditEnvironmentForm> = values => {
     return environmentUpdater({
-      id: environment.id,
+      id: environment?.id || '',
       renameCommand: {
         name: values.name
       },
@@ -114,7 +145,7 @@ const EditEnvironmentModal = ({
               <Form.Label required>{t('form:url-code')}</Form.Label>
               <Form.Control>
                 <Input
-                  value={environment.urlCode}
+                  value={environment?.urlCode || ''}
                   placeholder={`${t('form:placeholder-code')}`}
                   disabled
                 />
