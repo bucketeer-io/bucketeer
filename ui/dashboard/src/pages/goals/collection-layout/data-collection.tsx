@@ -1,5 +1,5 @@
 import {
-  IconDeleteOutlined,
+  IconArchiveOutlined,
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
@@ -9,6 +9,7 @@ import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
+import { Goal } from '@types';
 import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import { copyToClipBoard } from 'utils/function';
@@ -17,7 +18,6 @@ import { IconCopy } from '@icons';
 import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
-import { Goal } from '../page-loader';
 import { GoalActions } from '../types';
 
 const Tag = ({
@@ -103,20 +103,22 @@ export const useColumns = ({
     },
     {
       accessorKey: 'connections',
-      header: `${t('table:connections')}`,
+      header: `${t('table:goals.connections')}`,
       size: 150,
       cell: ({ row }) => {
         const goal = row.original;
-        const connectionLength = goal.connections?.data.length;
-        const connectionType = goal.connections?.type;
+        // const connectionLength = goal.connections?.data.length;
+        // const connectionType = goal.connections?.type;
 
-        if (!goal.isInUseStatus || !connectionLength)
-          return <Tag tag={'not in use'} type="not-in-use" />;
+        // if (!goal.isInUseStatus || !connectionLength)
+        //   return <Tag tag={'not in use'} type="not-in-use" />;
         return (
           <Tag
-            tag={`${connectionLength} ${connectionType === 'experiments' ? 'Experiment' : 'Operation'}${connectionLength > 1 ? 's' : ''}`}
-            type={connectionType as string}
-            onClick={() => onActions(goal, 'CONNECTION')}
+            // tag={`${connectionLength} ${connectionType === 'experiments' ? 'Experiment' : 'Operation'}${connectionLength > 1 ? 's' : ''}`}
+            tag="not in use"
+            // type={connectionType as string}
+            type="not-in-use"
+            onClick={() => goal.isInUseStatus && onActions(goal, 'CONNECTION')}
           />
         );
       }
@@ -157,9 +159,9 @@ export const useColumns = ({
           <Popover
             options={compact([
               {
-                label: `${t('table:popover.delete-goal')}`,
-                icon: IconDeleteOutlined,
-                value: 'DELETE'
+                label: `${t('archive-goal')}`,
+                icon: IconArchiveOutlined,
+                value: 'ARCHIVE'
               }
             ])}
             icon={IconMoreHorizOutlined}

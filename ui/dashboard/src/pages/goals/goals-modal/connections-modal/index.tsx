@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
+import { Goal } from '@types';
 import { IconExperimentsConnected, IconOperationsConnected } from '@icons';
-import { Goal } from 'pages/goals/page-loader';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Icon from 'components/icon';
@@ -16,7 +16,6 @@ export type ConfirmModalProps = {
 
 const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
   const { t } = useTranslation(['common']);
-
   const connectionType = useMemo(() => goal?.connections?.type, [goal]);
 
   return (
@@ -46,11 +45,11 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
           <div className="flex-center w-full text-center px-[67px] text-gray-700">
             <Trans
               i18nKey="goal-connected-desc"
-              values={{ type: goal.connections?.type }}
+              values={{ type: goal?.connections?.type }}
             />
           </div>
           <div className="flex flex-col w-full p-4 gap-y-5 rounded bg-gray-100">
-            {goal.connections?.data.map((item, index) => (
+            {goal?.connections?.data.map((item, index) => (
               <div
                 key={index}
                 className="flex items-center gap-x-2 typo-para-medium leading-4 text-primary-500"

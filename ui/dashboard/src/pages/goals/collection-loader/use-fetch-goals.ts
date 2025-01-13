@@ -1,15 +1,17 @@
-import { useQueryAPIKeys } from '@queries/api-keys';
+import { useQueryGoals } from '@queries/goals';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { OrderBy, OrderDirection } from '@types';
 
-export const useFetchAPIKeys = ({
+export const useFetchGoals = ({
   page = 1,
   pageSize,
   orderBy,
   searchQuery,
   orderDirection,
   disabled,
-  organizationId
+  environmentId,
+  isInUseStatus,
+  archived
 }: {
   pageSize?: number;
   page?: number;
@@ -17,11 +19,13 @@ export const useFetchAPIKeys = ({
   orderBy?: OrderBy;
   orderDirection?: OrderDirection;
   disabled?: boolean;
-  organizationId?: string;
+  environmentId?: string;
+  isInUseStatus?: boolean;
+  archived?: boolean;
 } = {}) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
 
-  return useQueryAPIKeys({
+  return useQueryGoals({
     params: {
       pageSize: pageSize || LIST_PAGE_SIZE,
       cursor: String(cursor),
@@ -29,7 +33,9 @@ export const useFetchAPIKeys = ({
       orderDirection,
       searchKeyword: searchQuery,
       disabled,
-      organizationId
+      environmentId,
+      isInUseStatus,
+      archived
     }
   });
 };

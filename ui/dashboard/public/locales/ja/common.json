@@ -144,5 +144,10 @@
   "new-goal": "New Goal",
   "experiments-connected": "Experiments Connected",
   "operations-connected": "Operations Connected",
-  "goal-connected-desc": "This goal currently is connected to the following {{type}}:"
+  "not-in-use": "Not In Use",
+  "goal-connected-desc": "This goal currently is connected to the following {{type}}:",
+  "save-with-comment": "Save with Comment",
+  "archive-goal": "Archive Goal",
+  "delete-goal": "Delete Goal",
+  "goal-connections": "Goal Connections"
 }

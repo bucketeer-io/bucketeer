@@ -1,7 +1,9 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { goalCreator } from '@api/goal';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateProjects } from '@queries/projects';
+import { invalidateGoals } from '@queries/goals';
 import { useQueryClient } from '@tanstack/react-query';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -21,20 +23,23 @@ interface AddGoalModalProps {
 }
 
 export interface AddGoalForm {
-  id?: string;
+  id: string;
   name: string;
   connections?: string;
   description?: string;
 }
 
 const formSchema = yup.object().shape({
-  id: yup.string(),
+  id: yup.string().required(),
   name: yup.string().required(),
   description: yup.string(),
   connections: yup.string()
 });
 
 const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
+  const { consoleAccount } = useAuth();
+  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
@@ -60,14 +65,20 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
           </span>
         )
       });
-      invalidateProjects(queryClient);
+      invalidateGoals(queryClient);
       onClose();
     }
   };
 
-  const onSubmit: SubmitHandler<AddGoalForm> = values => {
-    console.log(values);
-    addSuccess(values.name);
+  const onSubmit: SubmitHandler<AddGoalForm> = async values => {
+    const { id, name, description } = values;
+    const resp = await goalCreator({
+      id,
+      name,
+      description,
+      environmentId: currenEnvironment.id
+    });
+    if (resp.goal) addSuccess(values.name);
   };
 
   const {

@@ -71,5 +71,10 @@
     "confirm-enable-desc": "The Push \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
     "confirm-disable-desc": "The Push \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
   },
-  "connections": "Connections"
+  "goals": {
+    "connections": "Connections",
+    "experiment": "Experiment",
+    "experiment-status": "Experiment Status",
+    "goal-status": "Goal Status"
+  }
 }

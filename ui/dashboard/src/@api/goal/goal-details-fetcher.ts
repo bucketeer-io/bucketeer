@@ -1,22 +1,22 @@
 import axiosClient from '@api/axios-client';
 import pickBy from 'lodash/pickBy';
-import { Push } from '@types';
+import { Goal } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 
-export interface PushFetcherParams {
+export interface GoalDetailsFetcherParams {
   id: string;
   environmentId: string;
 }
 
-export interface PushResponse {
-  push: Array<Push>;
+export interface GoalDetailsResponse {
+  goal: Goal;
 }
 
-export const pushFetcher = async (
-  params?: PushFetcherParams
-): Promise<PushResponse> => {
+export const goalDetailsFetcher = async (
+  params?: GoalDetailsFetcherParams
+): Promise<GoalDetailsResponse> => {
   return axiosClient
-    .get<PushResponse>('/v1/push', {
+    .get<GoalDetailsResponse>('/v1/goal', {
       params: pickBy(params, v => isNotEmpty(v))
     })
     .then(response => response.data);

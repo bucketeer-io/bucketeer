@@ -52,5 +52,10 @@
   "placeholder-goal-id": "Enter Goal ID",
   "connections": "Connections",
   "experiments": "Experiments",
-  "operations": "Operations"
+  "operations": "Operations",
+  "goal-details": {
+    "archive-desc": "This goal will be archived across all environments and will only appear in your list when filtered for",
+    "delete-desc": "Permanently delete this goal across all environments in this project",
+    "delete-warning-desc": "You cannot delete a goal when your goal has connections"
+  }
 }

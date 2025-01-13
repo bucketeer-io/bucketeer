@@ -5,6 +5,7 @@ import IconClose from './customized-icons/close.svg?react';
 import IconCopy from './customized-icons/copy.svg?react';
 import IconDisable from './customized-icons/disable.svg?react';
 import IconEmail from './customized-icons/email.svg?react';
+import IconInfoFilled from './customized-icons/info-filled.svg?react';
 import IconInfo from './customized-icons/info.svg?react';
 import IconSearch from './customized-icons/search.svg?react';
 import IconSortingDown from './customized-icons/sorting-down.svg?react';
@@ -81,6 +82,7 @@ export {
   IconDisable,
   IconCopy,
   IconUpload,
+  IconInfoFilled,
   // Special icons
   IconGoal,
   IconGoogle,
