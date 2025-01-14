@@ -53,7 +53,7 @@ export const useColumns = ({
       }
     },
     {
-      accessorKey: 'includedUserCount',
+      accessorKey: 'users',
       header: `${t('users')}`,
       size: 200,
       cell: ({ row }) => {

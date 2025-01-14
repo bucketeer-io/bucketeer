@@ -47,7 +47,7 @@ const FlagsConnectedModal = ({
               <p>{index + 1}.</p>
               <Link
                 to={`/${currentEnvironment.urlCode}/${PAGE_PATH_FEATURES}/${item.id}/targeting`}
-                className="hover:underline"
+                className="underline"
               >
                 {item.name}
               </Link>

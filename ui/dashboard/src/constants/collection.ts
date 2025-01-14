@@ -22,5 +22,6 @@ export const sortingListFields: SortingListFields = {
   creatorEmail: 'CREATOR_EMAIL',
   lastSeen: 'LAST_SEEN',
   environment: 'ENVIRONMENT',
-  connections: 'CONNECTIONS'
+  connections: 'CONNECTIONS',
+  users: 'USERS'
 };
