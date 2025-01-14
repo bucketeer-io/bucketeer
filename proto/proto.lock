@@ -23222,6 +23222,10 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "CONNECTIONS",
+                "integer": 4
               }
             ]
           },
