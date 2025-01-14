@@ -20,13 +20,15 @@ const PageContent = ({
   onAdd,
   onEdit,
   onOpenFlagModal,
-  onDelete
+  onDelete,
+  onDownload
 }: {
   segmentUploading: UserSegment | null;
   onAdd: () => void;
   onEdit: (v: UserSegment) => void;
   onOpenFlagModal: (v: UserSegment) => void;
   onDelete: (v: UserSegment) => void;
+  onDownload: (v: UserSegment) => void;
 }) => {
   const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
@@ -61,7 +63,7 @@ const PageContent = ({
     if (type === 'EDIT') return onEdit(segment);
     if (type === 'FLAG') return onOpenFlagModal(segment);
     if (type === 'DELETE') return onDelete(segment);
-    // handle download segment ...
+    onDownload(segment);
   };
 
   useEffect(() => {

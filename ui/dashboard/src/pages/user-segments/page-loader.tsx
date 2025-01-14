@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { userSegmentBulkDownload } from '@api/user-segment';
 import { userSegmentDelete } from '@api/user-segment/user-segment-delete';
 import { invalidateUserSegments } from '@queries/user-segments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -31,7 +32,7 @@ const PageLoader = () => {
     useToggleOpen(false);
 
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { notify } = useToast();
   const queryClient = useQueryClient();
 
@@ -42,7 +43,7 @@ const PageLoader = () => {
     isError
   } = useFetchSegments({
     pageSize: 1,
-    environmentId: currenEnvironment.id
+    environmentId: currentEnvironment.id
   });
 
   const isEmpty = collection?.segments.length === 0;
@@ -51,7 +52,7 @@ const PageLoader = () => {
     mutationFn: async (selectedSegment: UserSegment) => {
       return userSegmentDelete({
         id: selectedSegment.id,
-        environmentId: currenEnvironment.id
+        environmentId: currentEnvironment.id
       });
     },
     onSuccess: () => {
@@ -77,6 +78,29 @@ const PageLoader = () => {
     }
   };
 
+  const onBulkDownloadSegment = async (segment: UserSegment) => {
+    const resp = await userSegmentBulkDownload({
+      segmentId: segment.id,
+      environmentId: currentEnvironment.id
+    });
+    if (resp.data) {
+      const url = window.URL.createObjectURL(
+        new Blob([atob(String(resp.data))])
+      );
+      const link = window.document.createElement('a');
+      link.href = url;
+      link.setAttribute(
+        'download',
+        `${currentEnvironment.name}-${segment.name}.csv`
+      );
+      window.document.body.appendChild(link);
+      link.click();
+      if (link.parentNode) {
+        link.parentNode.removeChild(link);
+      }
+    }
+  };
+
   return (
     <>
       {isLoading ? (
@@ -91,18 +115,19 @@ const PageLoader = () => {
         <PageContent
           segmentUploading={segmentUploading}
           onAdd={onOpenAddModal}
-          onEdit={value => {
-            setSelectedSegment(value);
+          onEdit={segment => {
+            setSelectedSegment(segment);
             onOpenEditModal();
           }}
-          onOpenFlagModal={value => {
-            setSelectedSegment(value);
+          onOpenFlagModal={segment => {
+            setSelectedSegment(segment);
             onOpenFlagModal();
           }}
-          onDelete={value => {
-            setSelectedSegment(value);
+          onDelete={segment => {
+            setSelectedSegment(segment);
             onOpenDeleteModal();
           }}
+          onDownload={onBulkDownloadSegment}
         />
       )}
       {isOpenAddModal && (
