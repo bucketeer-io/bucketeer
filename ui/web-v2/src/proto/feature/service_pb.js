@@ -10273,7 +10273,8 @@ proto.bucketeer.feature.ListSegmentsRequest.OrderBy = {
   DEFAULT: 0,
   NAME: 1,
   CREATED_AT: 2,
-  UPDATED_AT: 3
+  UPDATED_AT: 3,
+  CONNECTIONS: 4
 };
 
 /**

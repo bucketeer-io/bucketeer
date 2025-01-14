@@ -1525,6 +1525,7 @@ export namespace ListSegmentsRequest {
     NAME: 1;
     CREATED_AT: 2;
     UPDATED_AT: 3;
+    CONNECTIONS: 4;
   }
 
   export const OrderBy: OrderByMap;

@@ -875,14 +875,14 @@ func (s *FeatureService) ListSegments(
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+		mysql.NewFilter("seg.deleted", "=", false),
+		mysql.NewFilter("seg.environment_id", "=", req.EnvironmentId),
 	}
 	if req.Status != nil {
-		whereParts = append(whereParts, mysql.NewFilter("status", "=", req.Status.Value))
+		whereParts = append(whereParts, mysql.NewFilter("seg.status", "=", req.Status.Value))
 	}
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"name", "description"}, req.SearchKeyword))
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"seg.name", "seg.description"}, req.SearchKeyword))
 	}
 	orders, err := s.newSegmentListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -977,11 +977,13 @@ func (s *FeatureService) newSegmentListOrders(
 	switch orderBy {
 	case featureproto.ListSegmentsRequest_DEFAULT,
 		featureproto.ListSegmentsRequest_NAME:
-		column = "name"
+		column = "seg.name"
 	case featureproto.ListSegmentsRequest_CREATED_AT:
-		column = "created_at"
+		column = "seg.created_at"
 	case featureproto.ListSegmentsRequest_UPDATED_AT:
-		column = "updated_at"
+		column = "seg.updated_at"
+	case featureproto.ListSegmentsRequest_CONNECTIONS:
+		column = "feature_ids"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

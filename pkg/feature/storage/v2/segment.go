@@ -18,6 +18,7 @@ package v2
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"errors"
 	"fmt"
 	"strings"
@@ -31,6 +32,11 @@ var (
 	ErrSegmentAlreadyExists          = errors.New("segment: already exists")
 	ErrSegmentNotFound               = errors.New("segment: not found")
 	ErrSegmentUnexpectedAffectedRows = errors.New("segment: unexpected affected rows")
+
+	//go:embed sql/segment/select_segments.sql
+	selectSegmentsSQL string
+	//go:embed sql/segment/count_segments.sql
+	countSegmentsSQL string
 )
 
 type SegmentStorage interface {
@@ -236,9 +242,6 @@ func (s *segmentStorage) ListSegments(
 	environmentId string,
 ) ([]*proto.Segment, int, int64, map[string][]string, error) {
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	prepareArgs := make([]interface{}, 0, len(whereArgs)+1)
-	prepareArgs = append(prepareArgs, environmentId)
-	prepareArgs = append(prepareArgs, whereArgs...)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	var isInUseStatusSQL string
@@ -249,34 +252,8 @@ func (s *segmentStorage) ListSegments(
 			isInUseStatusSQL = "HAVING feature_ids IS NULL"
 		}
 	}
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			name,
-			description,
-			rules,
-			created_at,
-			updated_at,
-			version,
-			deleted,
-			included_user_count,
-			excluded_user_count,
-			status,
-			(
-				SELECT 
-					GROUP_CONCAT(id)
-				FROM 
-					feature
-				WHERE
-					environment_id = ? AND
-					rules LIKE concat("%%", segment.id, "%%")
-			) AS feature_ids
-		FROM
-			segment
-		%s %s %s %s
-		`, whereSQL, isInUseStatusSQL, orderBySQL, limitOffsetSQL,
-	)
-	rows, err := s.qe.QueryContext(ctx, query, prepareArgs...)
+	query := fmt.Sprintf(selectSegmentsSQL, whereSQL, isInUseStatusSQL, orderBySQL, limitOffsetSQL)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, nil, err
 	}
@@ -326,27 +303,8 @@ func (s *segmentStorage) ListSegments(
 			countConditionSQL = "> 0 THEN NULL ELSE 1"
 		}
 	}
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(	
-				CASE 
-					WHEN (
-						SELECT 
-							COUNT(1)
-						FROM 
-							feature
-						WHERE
-							environment_id = ? AND
-							rules LIKE concat("%%", segment.id, "%%")
-					) %s
-				END
-			)
-		FROM
-			segment
-		%s
-		`, countConditionSQL, whereSQL,
-	)
-	err = s.qe.QueryRowContext(ctx, countQuery, prepareArgs...).Scan(&totalCount)
+	countQuery := fmt.Sprintf(countSegmentsSQL, countConditionSQL, whereSQL)
+	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, nil, err
 	}
