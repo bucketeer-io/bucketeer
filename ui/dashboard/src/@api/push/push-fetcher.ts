@@ -9,7 +9,7 @@ export interface PushFetcherParams {
 }
 
 export interface PushResponse {
-  apiKey: Array<Push>;
+  push: Push;
 }
 
 export const pushFetcher = async (
