@@ -57,6 +57,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	tagapi "github.com/bucketeer-io/bucketeer/pkg/tag/api"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 )
 
@@ -112,6 +113,7 @@ type server struct {
 	pushServicePort         *int
 	webConsoleServicePort   *int
 	dashboardServicePort    *int
+	tagServicePort          *int
 	// Service
 	accountService     *string
 	authService        *string
@@ -233,6 +235,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"dashboard-service-port",
 			"Port to bind to dashboard service.",
 		).Default("9103").Int(),
+		tagServicePort: cmd.Flag(
+			"tag-service-port",
+			"Port to bind to tag service.",
+		).Default("9104").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -637,6 +643,21 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go pushServer.Run()
+	// tagService
+	tagService := tagapi.NewTagService(
+		mysqlClient,
+		accountClient,
+		domainTopicPublisher,
+		tagapi.WithLogger(logger),
+	)
+	tagServer := rpc.NewServer(tagService, *s.certPath, *s.keyPath,
+		"tag-server",
+		rpc.WithPort(*s.tagServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	go tagServer.Run()
 	webConsoleServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
 		rest.WithLogger(logger),
@@ -669,6 +690,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go featureServer.Stop(serverShutDownTimeout)
 		go notificationServer.Stop(serverShutDownTimeout)
 		go pushServer.Stop(serverShutDownTimeout)
+		go tagServer.Stop(serverShutDownTimeout)
 		go webConsoleServer.Stop(serverShutDownTimeout)
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()

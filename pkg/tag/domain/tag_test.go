@@ -24,9 +24,11 @@ import (
 
 func TestNewTag(t *testing.T) {
 	t.Parallel()
-	tag := NewTag("tag", "envID", proto.Tag_FEATURE_FLAG)
+	tag, err := NewTag("tag", "envID", proto.Tag_FEATURE_FLAG)
+	assert.NoError(t, err)
 	assert.IsType(t, &Tag{}, tag)
-	assert.Equal(t, "tag", tag.Id)
+	assert.NotEmpty(t, tag.Id)
+	assert.Equal(t, "tag", tag.Name)
 	assert.True(t, tag.CreatedAt > 0)
 	assert.True(t, tag.UpdatedAt > 0)
 	assert.Equal(t, proto.Tag_FEATURE_FLAG, tag.EntityType)

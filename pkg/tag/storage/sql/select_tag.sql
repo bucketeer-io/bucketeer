@@ -7,4 +7,6 @@ SELECT
     environment_id
 FROM
     tag
-%s %s %s
+WHERE
+    id = ? AND
+    environment_id = ?
