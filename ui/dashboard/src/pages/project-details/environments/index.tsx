@@ -4,7 +4,11 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { environmentArchive, environmentUnarchive } from '@api/environment';
 import { invalidateEnvironments } from '@queries/environments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PAGE_PATH_ENVIRONMENTS, PAGE_PATH_PROJECTS } from 'constants/routing';
+import {
+  ID_NEW,
+  PAGE_PATH_ENVIRONMENTS,
+  PAGE_PATH_PROJECTS
+} from 'constants/routing';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Environment } from '@types';
@@ -38,7 +42,7 @@ const ProjectEnvironments = () => {
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>();
   const [isArchiving, setIsArchiving] = useState<boolean>();
 
-  const onOpenAddModal = () => navigate(`${location.pathname}/new`);
+  const onOpenAddModal = () => navigate(`${location.pathname}/${ID_NEW}`);
 
   const onCloseActionModal = () =>
     navigate(

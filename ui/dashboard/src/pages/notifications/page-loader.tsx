@@ -48,16 +48,14 @@ const PageLoader = () => {
     notification: Notification,
     type: NotificationActionsType
   ) => {
-    if (type === 'EDIT') {
-      onOpenEditModal();
-    } else if (type === 'ENABLE') {
-      setIsDisabling(false);
-      onOpenConfirmModal();
-    } else if (type === 'DISABLE') {
-      setIsDisabling(true);
-      onOpenConfirmModal();
-    }
     setSelectedNotification(notification);
+    if (type === 'EDIT') return onOpenEditModal();
+    if (type === 'ENABLE') {
+      setIsDisabling(false);
+      return onOpenConfirmModal();
+    }
+    setIsDisabling(true);
+    onOpenConfirmModal();
   };
 
   const mutationState = useMutation({

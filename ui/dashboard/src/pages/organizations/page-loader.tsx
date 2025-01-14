@@ -65,16 +65,14 @@ const PageLoader = () => {
     organization: Organization,
     type: OrganizationActionsType
   ) => {
+    setSelectedOrganization(organization);
+    if (type === 'EDIT') return onOpenEditModal();
     if (type === 'ARCHIVE') {
       setIsArchiving(true);
-      onOpenConfirmModal();
-    } else if (type === 'UNARCHIVE') {
-      setIsArchiving(false);
-      onOpenConfirmModal();
-    } else {
-      onOpenEditModal();
+      return onOpenConfirmModal();
     }
-    setSelectedOrganization(organization);
+    setIsArchiving(false);
+    onOpenConfirmModal();
   };
 
   const isEmpty = collection?.Organizations.length === 0;

@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { accountDisable, accountEnable } from '@api/account';
 import { accountDeleter } from '@api/account/account-deleter';
 import { invalidateAccounts } from '@queries/accounts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { ID_NEW, PAGE_PATH_MEMBERS } from 'constants/routing';
 import { useToast } from 'hooks';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { Account } from '@types';
@@ -25,6 +27,12 @@ const PageLoader = () => {
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const location = useLocation();
+  const params = useParams();
+  const isAdd = useMemo(() => params['*'] && params['*'] === 'new', [params]);
+  const isEdit = useMemo(() => params['*'] && params['*'] !== 'new', [params]);
+
+  const navigate = useNavigate();
 
   const {
     data: collection,
@@ -39,16 +47,14 @@ const PageLoader = () => {
   const [selectedMember, setSelectedMember] = useState<Account>();
   const [isDisabling, setIsDisabling] = useState<boolean>(false);
 
-  const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
-    useToggleOpen(false);
+  const onOpenAddModal = () => navigate(`${location.pathname}/${ID_NEW}`);
+  const onCloseActionModal = () =>
+    navigate(`/${params?.envUrlCode}${PAGE_PATH_MEMBERS}`);
 
   const [isOpenDetailsModal, onOpenDetailsModal, onCloseDetailsModal] =
     useToggleOpen(false);
 
   const [isOpenDeleteModal, onOpenDeleteModal, onCloseDeleteModal] =
-    useToggleOpen(false);
-
-  const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
     useToggleOpen(false);
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
@@ -109,20 +115,17 @@ const PageLoader = () => {
   };
 
   const onHandleActions = (member: Account, type: MemberActionsType) => {
-    if (type === 'EDIT') {
-      onOpenEditModal();
-    } else if (type === 'DELETE') {
-      onOpenDeleteModal();
-    } else if (type === 'DETAILS') {
-      onOpenDetailsModal();
-    } else if (type === 'ENABLE') {
-      setIsDisabling(false);
-      onOpenConfirmModal();
-    } else if (type === 'DISABLE') {
-      setIsDisabling(true);
-      onOpenConfirmModal();
-    }
     setSelectedMember(member);
+    if (type === 'EDIT')
+      return navigate(`${location.pathname}/${member.email}`);
+    if (type === 'DELETE') return onOpenDeleteModal();
+    if (type === 'DETAILS') return onOpenDetailsModal();
+    if (type === 'ENABLE') {
+      setIsDisabling(false);
+      return onOpenConfirmModal();
+    }
+    setIsDisabling(true);
+    onOpenConfirmModal();
   };
 
   const isEmpty = collection?.accounts.length === 0;
@@ -140,15 +143,9 @@ const PageLoader = () => {
       ) : (
         <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
       )}
-      {isOpenAddModal && (
-        <AddMemberModal isOpen={isOpenAddModal} onClose={onCloseAddModal} />
-      )}
-      {isOpenEditModal && (
-        <EditMemberModal
-          isOpen={isOpenEditModal}
-          onClose={onCloseEditModal}
-          member={selectedMember!}
-        />
+      {isAdd && <AddMemberModal isOpen={isAdd} onClose={onCloseActionModal} />}
+      {isEdit && (
+        <EditMemberModal isOpen={isEdit} onClose={onCloseActionModal} />
       )}
       {isOpenDeleteModal && (
         <DeleteMemberModal
