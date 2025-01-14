@@ -66,6 +66,7 @@ const EditUserSegmentModal = ({
 
   const {
     formState: { isValid, isDirty, isSubmitting },
+    getFieldState,
     trigger
   } = form;
 
@@ -97,6 +98,7 @@ const EditUserSegmentModal = ({
   const onSubmit: SubmitHandler<UserSegmentForm> = async values => {
     try {
       const { id, name, description } = values;
+
       let file: File | null = null;
       if (values.file || files.length) {
         file = (values.file as File) || files[0];
@@ -116,16 +118,20 @@ const EditUserSegmentModal = ({
           onUpdateSuccess(name, true);
         });
       }
-      const resp = await userSegmentUpdater({
-        id: id as string,
-        name,
-        description,
-        environmentId: currentEnvironment.id
-      });
-      if (resp?.segment) {
-        if (file) setSegmentUploading(resp?.segment);
-        onUpdateSuccess(name, false);
+
+      if (
+        getFieldState('name').isDirty ||
+        getFieldState('description').isDirty
+      ) {
+        await userSegmentUpdater({
+          id: id as string,
+          name,
+          description,
+          environmentId: currentEnvironment.id
+        });
       }
+      if (file) setSegmentUploading(userSegment);
+      onUpdateSuccess(name, false);
     } catch (error) {
       notify({
         toastType: 'toast',
