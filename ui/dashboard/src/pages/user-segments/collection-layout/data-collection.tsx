@@ -73,7 +73,12 @@ export const useColumns = ({
         const segment = row.original;
         return (
           <div
-            className="flex-center w-fit px-2 py-1.5 rounded bg-primary-50 text-primary-500 typo-para-medium cursor-pointer"
+            className={cn(
+              'flex-center w-fit px-2 py-1.5 rounded bg-primary-50 text-primary-500 typo-para-medium',
+              {
+                'cursor-pointer': segment?.features?.length
+              }
+            )}
             onClick={() =>
               segment?.features?.length && onActionHandler(segment, 'FLAG')
             }

@@ -1,3 +1,6 @@
+import { Link } from 'react-router-dom';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
 import { IconFlagConnected } from '@icons';
@@ -18,6 +21,8 @@ const FlagsConnectedModal = ({
   onClose
 }: DeleteMemberProps) => {
   const { t } = useTranslation(['common']);
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   return (
     <DialogModal
@@ -40,7 +45,12 @@ const FlagsConnectedModal = ({
               className="flex items-center gap-x-2 w-full truncate typo-para-medium text-primary-500"
             >
               <p>{index + 1}.</p>
-              <p className="underline">{item.name}</p>
+              <Link
+                to={`/${currentEnvironment.urlCode}/${PAGE_PATH_FEATURES}/${item.id}/targeting`}
+                className="hover:underline"
+              >
+                {item.name}
+              </Link>
             </div>
           ))}
         </div>

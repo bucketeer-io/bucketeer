@@ -1,4 +1,7 @@
 import { Trans } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { UserSegmentFeature } from '@types';
 import { cn } from 'utils/style';
 import { IconToastWarning } from '@icons';
@@ -11,6 +14,9 @@ const SegmentWarning = ({
   features: UserSegmentFeature[];
   className?: string;
 }) => {
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
   return (
     <div
       className={cn(
@@ -40,7 +46,12 @@ const SegmentWarning = ({
             className="flex gap-x-2 w-full pl-6 typo-para-medium text-primary-500"
           >
             <p>{index + 1}.</p>
-            <p className="hover:underline">{item.name}</p>
+            <Link
+              to={`/${currentEnvironment.urlCode}/${PAGE_PATH_FEATURES}/${item.id}/targeting`}
+              className="hover:underline"
+            >
+              {item.name}
+            </Link>
           </div>
         ))}
       </div>
