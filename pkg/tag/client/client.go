@@ -12,33 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package domain
+//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
+package client
 
 import (
-	"time"
+	"google.golang.org/grpc"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	proto "github.com/bucketeer-io/bucketeer/proto/tag"
 )
 
-type Tag struct {
-	*proto.Tag
+type Client interface {
+	proto.TagServiceClient
+	Close()
 }
 
-func NewTag(name, environmentID string, entityType proto.Tag_EntityType) (*Tag, error) {
-	now := time.Now().Unix()
-	id, err := uuid.NewUUID()
+type client struct {
+	proto.TagServiceClient
+	address    string
+	connection *grpc.ClientConn
+}
+
+func NewClient(addr, certPath string, opts ...rpcclient.Option) (Client, error) {
+	conn, err := rpcclient.NewClientConn(addr, certPath, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return &Tag{
-		Tag: &proto.Tag{
-			Id:            id.String(),
-			Name:          name,
-			CreatedAt:     now,
-			UpdatedAt:     now,
-			EntityType:    entityType,
-			EnvironmentId: environmentID,
-		},
+	return &client{
+		TagServiceClient: proto.NewTagServiceClient(conn),
+		address:          addr,
+		connection:       conn,
 	}, nil
+}
+
+func (c *client) Close() {
+	c.connection.Close()
 }

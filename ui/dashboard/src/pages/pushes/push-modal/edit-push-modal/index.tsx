@@ -182,8 +182,8 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                       disabled={isLoadingTags}
                       placeholder={t(`form:placeholder-tags`)}
                       options={tagOptions?.map(tag => ({
-                        label: tag.id,
-                        value: tag.id
+                        label: tag.name,
+                        value: tag.name
                       }))}
                       onChange={value =>
                         field.onChange(value.map(tag => tag.value))

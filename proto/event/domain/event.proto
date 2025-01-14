@@ -37,6 +37,7 @@ import "proto/feature/prerequisite.proto";
 import "proto/autoops/progressive_rollout.proto";
 import "proto/feature/flag_trigger.proto";
 import "proto/account/search_filter.proto";
+import "proto/tag/tag.proto";
 
 message Event {
   enum EntityType {
@@ -57,6 +58,7 @@ message Event {
     PROGRESSIVE_ROLLOUT = 14;
     ORGANIZATION = 15;
     FLAG_TRIGGER = 16;
+    TAG = 17;
   }
   enum Type {
     UNKNOWN = 0;
@@ -236,6 +238,8 @@ message Event {
     FLAG_TRIGGER_ENABLED = 1605;
     FLAG_TRIGGER_DELETED = 1606;
     FLAG_TRIGGER_USAGE_UPDATED = 1607;
+    TAG_CREATED = 1701;
+    TAG_DELETED = 1702;
   }
   string id = 1;
   int64 timestamp = 2;
@@ -1192,4 +1196,18 @@ message AccountV2LastNameChangedEvent {
 message AccountV2LanguageChangedEvent {
   string email = 1;
   string language = 2;
+}
+
+message TagCreatedEvent {
+  string id = 1;
+  string name = 2;
+  int64 created_at = 3;
+  int64 updated_at = 4;
+  bucketeer.tag.Tag.EntityType entity_type = 5;
+  string environment_id = 6;
+}
+
+message TagDeletedEvent {
+  string id = 1;
+  string environment_id = 6;
 }

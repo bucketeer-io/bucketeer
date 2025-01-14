@@ -77,10 +77,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        createdAt: jspb.Message.getFieldWithDefault(msg, 2, 0),
-        updatedAt: jspb.Message.getFieldWithDefault(msg, 3, 0),
-        entityType: jspb.Message.getFieldWithDefault(msg, 4, 0),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 5, '')
+        name: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        createdAt: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        updatedAt: jspb.Message.getFieldWithDefault(msg, 4, 0),
+        entityType: jspb.Message.getFieldWithDefault(msg, 5, 0),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {
@@ -120,20 +121,24 @@ proto.bucketeer.tag.Tag.deserializeBinaryFromReader = function (msg, reader) {
         msg.setId(value);
         break;
       case 2:
-        var value = /** @type {number} */ (reader.readInt64());
-        msg.setCreatedAt(value);
+        var value = /** @type {string} */ (reader.readString());
+        msg.setName(value);
         break;
       case 3:
         var value = /** @type {number} */ (reader.readInt64());
-        msg.setUpdatedAt(value);
+        msg.setCreatedAt(value);
         break;
       case 4:
+        var value = /** @type {number} */ (reader.readInt64());
+        msg.setUpdatedAt(value);
+        break;
+      case 5:
         var value = /** @type {!proto.bucketeer.tag.Tag.EntityType} */ (
           reader.readEnum()
         );
         msg.setEntityType(value);
         break;
-      case 5:
+      case 6:
         var value = /** @type {string} */ (reader.readString());
         msg.setEnvironmentId(value);
         break;
@@ -168,21 +173,25 @@ proto.bucketeer.tag.Tag.serializeBinaryToWriter = function (message, writer) {
   if (f.length > 0) {
     writer.writeString(1, f);
   }
-  f = message.getCreatedAt();
-  if (f !== 0) {
-    writer.writeInt64(2, f);
+  f = message.getName();
+  if (f.length > 0) {
+    writer.writeString(2, f);
   }
-  f = message.getUpdatedAt();
+  f = message.getCreatedAt();
   if (f !== 0) {
     writer.writeInt64(3, f);
   }
+  f = message.getUpdatedAt();
+  if (f !== 0) {
+    writer.writeInt64(4, f);
+  }
   f = message.getEntityType();
   if (f !== 0.0) {
-    writer.writeEnum(4, f);
+    writer.writeEnum(5, f);
   }
   f = message.getEnvironmentId();
   if (f.length > 0) {
-    writer.writeString(5, f);
+    writer.writeString(6, f);
   }
 };
 
@@ -211,26 +220,26 @@ proto.bucketeer.tag.Tag.prototype.setId = function (value) {
 };
 
 /**
- * optional int64 created_at = 2;
+ * optional string name = 2;
+ * @return {string}
+ */
+proto.bucketeer.tag.Tag.prototype.getName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.tag.Tag} returns this
+ */
+proto.bucketeer.tag.Tag.prototype.setName = function (value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+/**
+ * optional int64 created_at = 3;
  * @return {number}
  */
 proto.bucketeer.tag.Tag.prototype.getCreatedAt = function () {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
-};
-
-/**
- * @param {number} value
- * @return {!proto.bucketeer.tag.Tag} returns this
- */
-proto.bucketeer.tag.Tag.prototype.setCreatedAt = function (value) {
-  return jspb.Message.setProto3IntField(this, 2, value);
-};
-
-/**
- * optional int64 updated_at = 3;
- * @return {number}
- */
-proto.bucketeer.tag.Tag.prototype.getUpdatedAt = function () {
   return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
 };
 
@@ -238,17 +247,33 @@ proto.bucketeer.tag.Tag.prototype.getUpdatedAt = function () {
  * @param {number} value
  * @return {!proto.bucketeer.tag.Tag} returns this
  */
-proto.bucketeer.tag.Tag.prototype.setUpdatedAt = function (value) {
+proto.bucketeer.tag.Tag.prototype.setCreatedAt = function (value) {
   return jspb.Message.setProto3IntField(this, 3, value);
 };
 
 /**
- * optional EntityType entity_type = 4;
+ * optional int64 updated_at = 4;
+ * @return {number}
+ */
+proto.bucketeer.tag.Tag.prototype.getUpdatedAt = function () {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
+};
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.tag.Tag} returns this
+ */
+proto.bucketeer.tag.Tag.prototype.setUpdatedAt = function (value) {
+  return jspb.Message.setProto3IntField(this, 4, value);
+};
+
+/**
+ * optional EntityType entity_type = 5;
  * @return {!proto.bucketeer.tag.Tag.EntityType}
  */
 proto.bucketeer.tag.Tag.prototype.getEntityType = function () {
   return /** @type {!proto.bucketeer.tag.Tag.EntityType} */ (
-    jspb.Message.getFieldWithDefault(this, 4, 0)
+    jspb.Message.getFieldWithDefault(this, 5, 0)
   );
 };
 
@@ -257,15 +282,15 @@ proto.bucketeer.tag.Tag.prototype.getEntityType = function () {
  * @return {!proto.bucketeer.tag.Tag} returns this
  */
 proto.bucketeer.tag.Tag.prototype.setEntityType = function (value) {
-  return jspb.Message.setProto3EnumField(this, 4, value);
+  return jspb.Message.setProto3EnumField(this, 5, value);
 };
 
 /**
- * optional string environment_id = 5;
+ * optional string environment_id = 6;
  * @return {string}
  */
 proto.bucketeer.tag.Tag.prototype.getEnvironmentId = function () {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ''));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ''));
 };
 
 /**
@@ -273,7 +298,7 @@ proto.bucketeer.tag.Tag.prototype.getEnvironmentId = function () {
  * @return {!proto.bucketeer.tag.Tag} returns this
  */
 proto.bucketeer.tag.Tag.prototype.setEnvironmentId = function (value) {
-  return jspb.Message.setProto3StringField(this, 5, value);
+  return jspb.Message.setProto3StringField(this, 6, value);
 };
 
 goog.object.extend(exports, proto.bucketeer.tag);

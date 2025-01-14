@@ -815,39 +815,7 @@ service FeatureService {
   }
   rpc EvaluateFeatures(EvaluateFeaturesRequest)
       returns (EvaluateFeaturesResponse) {}
-  rpc ListTags(ListTagsRequest) returns (ListTagsResponse) {
-    option (google.api.http) = {
-      get: "/v1/tags"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "List",
-      description: "List tags."
-      tags: "tag"
-      operation_id: "web.v1.tag.list"
-      responses: {
-        key: "400"
-        value: {
-          description: "Returned for bad requests that may have failed validation."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "401"
-        value: {
-          description: "Request could not be authenticated (authentication required)."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
-          }
-        }
-      }
-    };
-  }
+  rpc ListTags(ListTagsRequest) returns (ListTagsResponse) {}
   rpc CreateFlagTrigger(CreateFlagTriggerRequest)
       returns (CreateFlagTriggerResponse) {}
   rpc UpdateFlagTrigger(UpdateFlagTriggerRequest)
