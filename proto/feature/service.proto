@@ -264,6 +264,7 @@ message ListSegmentsRequest {
     CREATED_AT = 2;
     UPDATED_AT = 3;
     CONNECTIONS = 4;
+    USERS = 5;
   }
   enum OrderDirection {
     ASC = 0;

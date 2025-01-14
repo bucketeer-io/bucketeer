@@ -23291,6 +23291,10 @@
               {
                 "name": "CONNECTIONS",
                 "integer": 4
+              },
+              {
+                "name": "USERS",
+                "integer": 5
               }
             ]
           },
