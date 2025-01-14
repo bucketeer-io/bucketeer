@@ -3834,6 +3834,7 @@ paths:
             - CREATED_AT
             - UPDATED_AT
             - CONNECTIONS
+            - USERS
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -6548,6 +6549,7 @@ definitions:
       - CREATED_AT
       - UPDATED_AT
       - CONNECTIONS
+      - USERS
     default: DEFAULT
   featureListSegmentsRequestOrderDirection:
     type: string

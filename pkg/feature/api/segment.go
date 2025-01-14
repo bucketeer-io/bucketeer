@@ -982,6 +982,8 @@ func (s *FeatureService) newSegmentListOrders(
 		column = "seg.created_at"
 	case featureproto.ListSegmentsRequest_UPDATED_AT:
 		column = "seg.updated_at"
+	case featureproto.ListSegmentsRequest_USERS:
+		column = "seg.included_user_count"
 	case featureproto.ListSegmentsRequest_CONNECTIONS:
 		column = "feature_ids"
 	default:
