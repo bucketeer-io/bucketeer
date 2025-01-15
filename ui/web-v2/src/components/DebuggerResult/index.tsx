@@ -19,8 +19,8 @@ import { messages } from '../../lang/messages';
 import { Reason } from '../../proto/feature/reason_pb';
 import { HoverPopover } from '../HoverPopover';
 
-const FEATURE_NAME_ID_MAX_LENGTH = 70;
-const VARIATION_NAME_ID_MAX_LENGTH = 35;
+const FEATURE_NAME_ID_MAX_LENGTH = 50;
+const VARIATION_NAME_ID_MAX_LENGTH = 30;
 
 interface FlagStatusIconProps {
   flagStatus: FlagStatus;
@@ -97,19 +97,19 @@ export const DebuggerResult: FC<DebuggerResultProps> = memo(
               <tr>
                 <th
                   scope="col"
-                  className="w-[60%] py-3.5 pl-4 pr-3 text-left text-sm font-normal text-gray-400 sm:pl-0"
+                  className="py-3.5 pl-4 pr-3 text-left text-sm font-normal text-gray-400 sm:pl-0"
                 >
                   NAME
                 </th>
                 <th
                   scope="col"
-                  className="w-[25%] px-3 py-3.5 text-left text-sm font-normal text-gray-400"
+                  className="px-3 py-3.5 text-left text-sm font-normal text-gray-400"
                 >
                   VARIATION
                 </th>
                 <th
                   scope="col"
-                  className="w-[15%] px-3 py-3.5 text-left text-sm font-normal text-gray-400"
+                  className="px-3 py-3.5 text-left text-sm font-normal text-gray-400"
                 >
                   REASON
                 </th>
