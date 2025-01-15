@@ -65,7 +65,7 @@ const EditAPIKeyModal = ({ isOpen, onClose }: EditAPIKeyModalProps) => {
 
   const {
     id: apiId,
-    state: { environmentName },
+    state,
     errorToast
   } = useActionWithURL({
     idKey: '*'
@@ -74,6 +74,8 @@ const EditAPIKeyModal = ({ isOpen, onClose }: EditAPIKeyModalProps) => {
   const { data: collection } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
+
+  const environmentName = useMemo(() => state?.environmentName, [state]);
 
   const apiKeyEnvironment = useMemo(() => {
     return collection?.environments?.find(

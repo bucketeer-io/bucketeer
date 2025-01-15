@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Trans } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { notificationUpdater } from '@api/notification';
 import { invalidateNotifications } from '@queries/notifications';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { ID_NEW, PAGE_PATH_NOTIFICATIONS } from 'constants/routing';
+import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Notification } from '@types';
@@ -20,7 +23,15 @@ const PageLoader = () => {
   const { t } = useTranslation(['table']);
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const location = useLocation();
+
+  const { isAdd, isEdit, onOpenAddModal, onOpenEditModal, onCloseActionModal } =
+    useActionWithURL({
+      idKey: '*',
+      addPath: `${location.pathname}/${String(ID_NEW)}`,
+      closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_NOTIFICATIONS}`
+    });
 
   const {
     data: collection,
@@ -29,17 +40,11 @@ const PageLoader = () => {
     isError
   } = useFetchNotifications({
     pageSize: 1,
-    organizationId: currenEnvironment.organizationId
+    organizationId: currentEnvironment.organizationId
   });
   const [isDisabling, setIsDisabling] = useState<boolean>(false);
   const [selectedNotification, setSelectedNotification] =
     useState<Notification>();
-
-  const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
-    useToggleOpen(false);
-
-  const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
-    useToggleOpen(false);
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
@@ -48,8 +53,11 @@ const PageLoader = () => {
     notification: Notification,
     type: NotificationActionsType
   ) => {
+    if (type === 'EDIT')
+      return onOpenEditModal(`${location.pathname}/${notification.id}`, {
+        environmentId: notification.environmentId
+      });
     setSelectedNotification(notification);
-    if (type === 'EDIT') return onOpenEditModal();
     if (type === 'ENABLE') {
       setIsDisabling(false);
       return onOpenConfirmModal();
@@ -95,18 +103,11 @@ const PageLoader = () => {
         <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
       )}
 
-      {isOpenAddModal && (
-        <AddNotificationModal
-          isOpen={isOpenAddModal}
-          onClose={onCloseAddModal}
-        />
+      {isAdd && (
+        <AddNotificationModal isOpen={isAdd} onClose={onCloseActionModal} />
       )}
-      {isOpenEditModal && selectedNotification && (
-        <EditNotificationModal
-          isOpen={isOpenEditModal}
-          onClose={onCloseEditModal}
-          notification={selectedNotification}
-        />
+      {isEdit && (
+        <EditNotificationModal isOpen={isEdit} onClose={onCloseActionModal} />
       )}
       {openConfirmModal && (
         <ConfirmModal

@@ -1,15 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { notificationUpdater } from '@api/notification';
 import { yupResolver } from '@hookform/resolvers/yup';
+import {
+  invalidateNotificationDetails,
+  useQueryNotificationDetails
+} from '@queries/notification-details';
 import { invalidateNotifications } from '@queries/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { languageList } from 'constants/notification';
 import { useToast } from 'hooks';
+import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
-import { Notification, NotificationLanguage, SourceType } from '@types';
+import { NotificationLanguage, SourceType } from '@types';
 import { IconNoData } from '@icons';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
@@ -26,11 +31,11 @@ import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import SearchInput from 'components/search-input';
+import Spinner from 'components/spinner';
 
 interface EditNotificationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  notification: Notification;
 }
 
 type NotificationOption = {
@@ -57,8 +62,7 @@ export const formSchema = yup.object().shape({
 
 const EditNotificationModal = ({
   isOpen,
-  onClose,
-  notification
+  onClose
 }: EditNotificationModalProps) => {
   const { notify } = useToast();
   const queryClient = useQueryClient();
@@ -134,19 +138,42 @@ const EditNotificationModal = ({
   const [filteredTypes, setSearchTypes] =
     useState<NotificationOption[]>(SOURCE_TYPE_ITEMS);
 
+  const {
+    id: notificationId,
+    state,
+    errorToast
+  } = useActionWithURL({
+    idKey: '*'
+  });
+  const environmentId = useMemo(() => state?.environmentId, [state]);
+
+  const {
+    data: notificationCollection,
+    isLoading,
+    error
+  } = useQueryNotificationDetails({
+    params: {
+      id: notificationId as string,
+      environmentId
+    }
+  });
+
   const { data: collection } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
+
+  const notification = notificationCollection?.subscription;
+
   const environments = (collection?.environments || []).filter(item => item.id);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
-      name: notification.name,
-      url: notification.recipient.slackChannelRecipient.webhookUrl,
-      environment: notification.environmentId,
-      language: notification.recipient.language,
-      types: notification.sourceTypes.sort()
+      name: '',
+      url: '',
+      environment: '',
+      language: 'ENGLISH',
+      types: []
     }
   });
 
@@ -172,27 +199,51 @@ const EditNotificationModal = ({
     }
   };
 
-  const onSubmit: SubmitHandler<EditNotificationForm> = values => {
-    return notificationUpdater({
-      id: notification.id,
-      environmentId: values.environment,
-      name: values.name,
-      sourceTypes: values.types,
-      language: values.language
-    }).then(() => {
-      notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {` has been successfully updated!`}
-          </span>
-        )
+  const onSubmit: SubmitHandler<EditNotificationForm> = async values => {
+    try {
+      const resp = await notificationUpdater({
+        id: notification?.id || notificationId || '',
+        environmentId: values.environment,
+        name: values.name,
+        sourceTypes: values.types,
+        language: values.language
       });
-      invalidateNotifications(queryClient);
-      onClose();
-    });
+      if (resp) {
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: (
+            <span>
+              <b>{values.name}</b> {` has been successfully updated!`}
+            </span>
+          )
+        });
+        invalidateNotifications(queryClient);
+        invalidateNotificationDetails(queryClient, {
+          id: notification?.id || notificationId || '',
+          environmentId
+        });
+        onClose();
+      }
+    } catch (error) {
+      errorToast(error as Error);
+    }
   };
+
+  useEffect(() => {
+    if (notification)
+      form.reset({
+        name: notification.name,
+        url: notification.recipient.slackChannelRecipient.webhookUrl,
+        environment: notification.environmentId,
+        language: notification.recipient.language,
+        types: notification.sourceTypes.sort()
+      });
+  }, [notification]);
+
+  useEffect(() => {
+    if (error) errorToast(error);
+  }, [error]);
 
   return (
     <SlideModal
@@ -200,240 +251,246 @@ const EditNotificationModal = ({
       isOpen={isOpen}
       onClose={onClose}
     >
-      <div className="w-full p-5 pb-28">
-        <div className="typo-para-small text-gray-600 mb-3">
-          {t('new-notification-subtitle')}
+      {isLoading ? (
+        <div className="flex-center py-10">
+          <Spinner />
         </div>
-        <p className="text-gray-800 typo-head-bold-small">
-          {t('form:general-info')}
-        </p>
-        <FormProvider {...form}>
-          <Form onSubmit={form.handleSubmit(onSubmit)}>
-            <Form.Field
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Label required>{t('name')}</Form.Label>
-                  <Form.Control>
-                    <Input
-                      placeholder={`${t('form:placeholder-name')}`}
-                      {...field}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-            <Form.Field
-              control={form.control}
-              name="url"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Label required>
-                    {t('slack-incoming-webhook')}
-                  </Form.Label>
-                  <Form.Control>
-                    <Input
-                      disabled
-                      placeholder={`${t('form:placeholder-url')}`}
-                      {...field}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-            <Form.Field
-              control={form.control}
-              name={`environment`}
-              render={({ field }) => (
-                <Form.Item className="py-2">
-                  <Form.Label required>{t('environment')}</Form.Label>
-                  <Form.Control>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        placeholder={t(`form:select-environment`)}
-                        label={
-                          environments.find(
-                            item => item.id === getValues('environment')
-                          )?.name
-                        }
-                        disabled
-                        variant="secondary"
-                        className="w-full"
-                      />
-                      <DropdownMenuContent
-                        className="w-[502px]"
-                        align="start"
-                        {...field}
-                      >
-                        {environments.map((item, index) => (
-                          <DropdownMenuItem
-                            {...field}
-                            key={index}
-                            value={item.id}
-                            label={item.name}
-                            onSelectOption={value => {
-                              field.onChange(value);
-                            }}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-            <Form.Field
-              control={form.control}
-              name={`language`}
-              render={({ field }) => (
-                <Form.Item className="py-2">
-                  <Form.Label required>{t('language')}</Form.Label>
-                  <Form.Control>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        placeholder={t(`form:select-language`)}
-                        label={
-                          languageList.find(
-                            item => item.value === getValues('language')
-                          )?.label
-                        }
-                        variant="secondary"
-                        className="w-full"
-                      />
-                      <DropdownMenuContent
-                        className="w-[502px]"
-                        align="start"
-                        {...field}
-                      >
-                        {languageList.map((item, index) => (
-                          <DropdownMenuItem
-                            {...field}
-                            key={index}
-                            value={item.value}
-                            label={item.label}
-                            onSelectOption={value => {
-                              field.onChange(value);
-                            }}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-
-            <Divider className="my-3" />
-            <p className="text-gray-800 typo-head-bold-small mb-4">
-              {t('types')}
-            </p>
-
-            <SearchInput
-              value={searchValue}
-              onChange={onSearchTypes}
-              placeholder={t(`form:search-notification-type`)}
-            />
-
-            {filteredTypes.length > 0 ? (
+      ) : (
+        <div className="w-full p-5 pb-28">
+          <div className="typo-para-small text-gray-600 mb-3">
+            {t('new-notification-subtitle')}
+          </div>
+          <p className="text-gray-800 typo-head-bold-small">
+            {t('form:general-info')}
+          </p>
+          <FormProvider {...form}>
+            <Form onSubmit={form.handleSubmit(onSubmit)}>
               <Form.Field
                 control={form.control}
-                name={`types`}
+                name="name"
                 render={({ field }) => (
-                  <>
-                    <div className="mt-4 flex items-center justify-between">
-                      <div className="typo-para-tiny text-gray-500 uppercase">
-                        {t('all-types-selected', {
-                          count: checkedTypes.length
-                        })}
-                      </div>
-                      <Checkbox
-                        checked={
-                          checkedTypes.length === SOURCE_TYPE_ITEMS.length
-                        }
-                        onCheckedChange={checked => {
-                          if (checked) {
-                            field.onChange(
-                              SOURCE_TYPE_ITEMS.map(item => item.value)
-                            );
-                          } else {
-                            field.onChange([]);
-                          }
-                        }}
+                  <Form.Item>
+                    <Form.Label required>{t('name')}</Form.Label>
+                    <Form.Control>
+                      <Input
+                        placeholder={`${t('form:placeholder-name')}`}
+                        {...field}
                       />
-                    </div>
-                    <Divider className="mt-3" />
-
-                    {filteredTypes.map(item => (
-                      <div
-                        key={item.value}
-                        className="flex items-center py-3 gap-x-5"
-                      >
-                        <label
-                          htmlFor={item.value}
-                          className="flex-1 cursor-pointer"
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+              <Form.Field
+                control={form.control}
+                name="url"
+                render={({ field }) => (
+                  <Form.Item>
+                    <Form.Label required>
+                      {t('slack-incoming-webhook')}
+                    </Form.Label>
+                    <Form.Control>
+                      <Input
+                        disabled
+                        placeholder={`${t('form:placeholder-url')}`}
+                        {...field}
+                      />
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+              <Form.Field
+                control={form.control}
+                name={`environment`}
+                render={({ field }) => (
+                  <Form.Item className="py-2">
+                    <Form.Label required>{t('environment')}</Form.Label>
+                    <Form.Control>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          placeholder={t(`form:select-environment`)}
+                          label={
+                            environments.find(
+                              item => item.id === getValues('environment')
+                            )?.name
+                          }
+                          disabled
+                          variant="secondary"
+                          className="w-full"
+                        />
+                        <DropdownMenuContent
+                          className="w-[502px]"
+                          align="start"
+                          {...field}
                         >
-                          <p className="typo-para-medium text-gray-800">
-                            {item.label}
-                          </p>
-                          <p className="typo-para-small text-gray-600 mt-0.5">
-                            {item.description}
-                          </p>
-                        </label>
+                          {environments.map((item, index) => (
+                            <DropdownMenuItem
+                              {...field}
+                              key={index}
+                              value={item.id}
+                              label={item.name}
+                              onSelectOption={value => {
+                                field.onChange(value);
+                              }}
+                            />
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+              <Form.Field
+                control={form.control}
+                name={`language`}
+                render={({ field }) => (
+                  <Form.Item className="py-2">
+                    <Form.Label required>{t('language')}</Form.Label>
+                    <Form.Control>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          placeholder={t(`form:select-language`)}
+                          label={
+                            languageList.find(
+                              item => item.value === getValues('language')
+                            )?.label
+                          }
+                          variant="secondary"
+                          className="w-full"
+                        />
+                        <DropdownMenuContent
+                          className="w-[502px]"
+                          align="start"
+                          {...field}
+                        >
+                          {languageList.map((item, index) => (
+                            <DropdownMenuItem
+                              {...field}
+                              key={index}
+                              value={item.value}
+                              label={item.label}
+                              onSelectOption={value => {
+                                field.onChange(value);
+                              }}
+                            />
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+
+              <Divider className="my-3" />
+              <p className="text-gray-800 typo-head-bold-small mb-4">
+                {t('types')}
+              </p>
+
+              <SearchInput
+                value={searchValue}
+                onChange={onSearchTypes}
+                placeholder={t(`form:search-notification-type`)}
+              />
+
+              {filteredTypes.length > 0 ? (
+                <Form.Field
+                  control={form.control}
+                  name={`types`}
+                  render={({ field }) => (
+                    <>
+                      <div className="mt-4 flex items-center justify-between">
+                        <div className="typo-para-tiny text-gray-500 uppercase">
+                          {t('all-types-selected', {
+                            count: checkedTypes.length
+                          })}
+                        </div>
                         <Checkbox
-                          id={item.value}
-                          checked={checkedTypes.includes(item.value)}
+                          checked={
+                            checkedTypes.length === SOURCE_TYPE_ITEMS.length
+                          }
                           onCheckedChange={checked => {
                             if (checked) {
-                              checkedTypes.push(item.value);
-                              field.onChange(checkedTypes.sort());
-                            } else {
-                              const checkedItems = checkedTypes.filter(
-                                v => v !== item.value
+                              field.onChange(
+                                SOURCE_TYPE_ITEMS.map(item => item.value)
                               );
-                              field.onChange(checkedItems.sort());
+                            } else {
+                              field.onChange([]);
                             }
                           }}
                         />
                       </div>
-                    ))}
-                  </>
-                )}
-              />
-            ) : (
-              <div className="flex flex-col justify-center items-center gap-3 pt-16 pb-4">
-                <IconNoData />
-                <div className="typo-para-medium text-gray-500">
-                  {t(`no-data`)}
-                </div>
-              </div>
-            )}
+                      <Divider className="mt-3" />
 
-            <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
-              <ButtonBar
-                primaryButton={
-                  <Button variant="secondary" onClick={onClose}>
-                    {t(`cancel`)}
-                  </Button>
-                }
-                secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!isValid || !isDirty}
-                    loading={isSubmitting}
-                  >
-                    {t(`submit`)}
-                  </Button>
-                }
-              />
-            </div>
-          </Form>
-        </FormProvider>
-      </div>
+                      {filteredTypes.map(item => (
+                        <div
+                          key={item.value}
+                          className="flex items-center py-3 gap-x-5"
+                        >
+                          <label
+                            htmlFor={item.value}
+                            className="flex-1 cursor-pointer"
+                          >
+                            <p className="typo-para-medium text-gray-800">
+                              {item.label}
+                            </p>
+                            <p className="typo-para-small text-gray-600 mt-0.5">
+                              {item.description}
+                            </p>
+                          </label>
+                          <Checkbox
+                            id={item.value}
+                            checked={checkedTypes.includes(item.value)}
+                            onCheckedChange={checked => {
+                              if (checked) {
+                                checkedTypes.push(item.value);
+                                field.onChange(checkedTypes.sort());
+                              } else {
+                                const checkedItems = checkedTypes.filter(
+                                  v => v !== item.value
+                                );
+                                field.onChange(checkedItems.sort());
+                              }
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </>
+                  )}
+                />
+              ) : (
+                <div className="flex flex-col justify-center items-center gap-3 pt-16 pb-4">
+                  <IconNoData />
+                  <div className="typo-para-medium text-gray-500">
+                    {t(`no-data`)}
+                  </div>
+                </div>
+              )}
+
+              <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
+                <ButtonBar
+                  primaryButton={
+                    <Button variant="secondary" onClick={onClose}>
+                      {t(`cancel`)}
+                    </Button>
+                  }
+                  secondaryButton={
+                    <Button
+                      type="submit"
+                      disabled={!isValid || !isDirty}
+                      loading={isSubmitting}
+                    >
+                      {t(`submit`)}
+                    </Button>
+                  }
+                />
+              </div>
+            </Form>
+          </FormProvider>
+        </div>
+      )}
     </SlideModal>
   );
 };

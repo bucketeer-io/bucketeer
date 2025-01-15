@@ -13,7 +13,7 @@ export interface NotificationFetcherResponse {
 }
 
 export const notificationFetcher = async (
-  payload: NotificationFetcherPayload
+  payload?: NotificationFetcherPayload
 ): Promise<NotificationFetcherResponse> => {
   const params = pickBy(payload, v => isNotEmpty(v));
 

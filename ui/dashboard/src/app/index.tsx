@@ -160,7 +160,7 @@ export const EnvironmentRoot = memo(
         <Route path={`${PAGE_PATH_APIKEYS}/*`} element={<APIKeysPage />} />
         <Route path={`${PAGE_PATH_MEMBERS}/*`} element={<MembersPage />} />
         <Route
-          path={`${PAGE_PATH_NOTIFICATIONS}`}
+          path={`${PAGE_PATH_NOTIFICATIONS}/*`}
           element={<NotificationsPage />}
         />
         <Route path={`${PAGE_PATH_PUSHES}`} element={<PushesPage />} />
