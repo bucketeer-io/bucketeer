@@ -19,7 +19,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -204,27 +203,13 @@ func (s *autoOpsRuleStorage) ListAutoOpsRulesV2(
 	ctx context.Context,
 	options *mysql.ListOptions,
 ) ([]*proto.AutoOpsRule, int, error) {
-	var whereParts []mysql.WherePart = []mysql.WherePart{}
-	var orderBySQL string = ""
-	var limitOffsetSQL string = ""
-	var limit int = 0
-	var offset int = 0
-	if options != nil {
-		whereParts = options.CreateWhereParts()
-		orderBySQL = mysql.ConstructOrderBySQLString(options.Orders)
-		limitOffsetSQL = mysql.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
-		limit = options.Limit
-		offset = options.Offset
-	}
-
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	query := fmt.Sprintf(selectAutoOpsRulesSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAutoOpsRulesSQL, options)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer rows.Close()
-	autoOpsRules := make([]*proto.AutoOpsRule, 0, limit)
+	autoOpsRules := make([]*proto.AutoOpsRule, 0)
 	for rows.Next() {
 		autoOpsRule := proto.AutoOpsRule{}
 		var opsType int32
@@ -246,6 +231,10 @@ func (s *autoOpsRuleStorage) ListAutoOpsRulesV2(
 	}
 	if rows.Err() != nil {
 		return nil, 0, err
+	}
+	var offset int
+	if options != nil {
+		offset = options.Offset
 	}
 	nextOffset := offset + len(autoOpsRules)
 	return autoOpsRules, nextOffset, nil

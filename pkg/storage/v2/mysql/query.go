@@ -286,7 +286,7 @@ func ConstructWhereSQLString(wps []WherePart) (sql string, args []interface{}) {
 		sb.WriteString(wpSQL)
 		args = append(args, wpArgs...)
 	}
-	sql = sb.String()
+	sql = sb.String() + " "
 	return
 }
 
@@ -336,6 +336,21 @@ func ConstructOrderBySQLString(orders []*Order) string {
 		sb.WriteString(o.Direction.String())
 	}
 	return sb.String()
+}
+
+func ConstructQueryAndWhereArgs(baseQuery string, options *ListOptions) (query string, whereArgs []interface{}) {
+	if options != nil {
+		var whereQuery string
+		whereParts := options.CreateWhereParts()
+		whereQuery, whereArgs = ConstructWhereSQLString(whereParts)
+		orderByQuery := ConstructOrderBySQLString(options.Orders)
+		limitOffsetQuery := ConstructLimitOffsetSQLString(options.Limit, options.Offset)
+		query = baseQuery + whereQuery + orderByQuery + limitOffsetQuery
+	} else {
+		query = baseQuery
+		whereArgs = []interface{}{}
+	}
+	return
 }
 
 type Orders struct {

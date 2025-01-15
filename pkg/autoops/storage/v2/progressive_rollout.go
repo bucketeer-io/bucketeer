@@ -19,7 +19,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -205,27 +204,13 @@ func (s *progressiveRolloutStorage) ListProgressiveRolloutsV2(
 	ctx context.Context,
 	options *mysql.ListOptions,
 ) ([]*autoopsproto.ProgressiveRollout, int64, int, error) {
-	var whereParts []mysql.WherePart = []mysql.WherePart{}
-	var orderBySQL string = ""
-	var limitOffsetSQL string = ""
-	var limit int = 0
-	var offset int = 0
-	if options != nil {
-		whereParts = options.CreateWhereParts()
-		orderBySQL = mysql.ConstructOrderBySQLString(options.Orders)
-		limitOffsetSQL = mysql.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
-		limit = options.Limit
-		offset = options.Offset
-	}
-
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	query := fmt.Sprintf(selectOpsProgressiveRolloutsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectOpsProgressiveRolloutsSQL, options)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
-	progressiveRollouts := make([]*autoopsproto.ProgressiveRollout, 0, limit)
+	progressiveRollouts := make([]*autoopsproto.ProgressiveRollout, 0)
 	for rows.Next() {
 		progressiveRollout := autoopsproto.ProgressiveRollout{}
 		err := rows.Scan(
@@ -247,9 +232,13 @@ func (s *progressiveRolloutStorage) ListProgressiveRolloutsV2(
 	if rows.Err() != nil {
 		return nil, 0, 0, err
 	}
+	var offset int
+	if options != nil {
+		offset = options.Offset
+	}
 	nextOffset := offset + len(progressiveRollouts)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countOpsProgressiveRolloutsSQL, whereSQL)
+	countQuery, whereArgs := mysql.ConstructQueryAndWhereArgs(countOpsProgressiveRolloutsSQL, options)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
