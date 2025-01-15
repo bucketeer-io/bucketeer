@@ -27,10 +27,12 @@ import (
 
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 
+	autoopsclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
+	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
 
@@ -170,6 +172,11 @@ func TestListGoalMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
+				s.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ListAutoOpsRules(
+					gomock.Any(), gomock.Any(),
+				).Return(&autoopsproto.ListAutoOpsRulesResponse{
+					AutoOpsRules: []*autoopsproto.AutoOpsRule{},
+				}, nil)
 			},
 			req:         &experimentproto.ListGoalsRequest{EnvironmentId: "ns0"},
 			expectedErr: nil,

@@ -31,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	proto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
@@ -174,6 +175,33 @@ func (s *experimentService) ListGoals(
 		}
 		return nil, dt.Err()
 	}
+
+	listAutoOpRulesResp, err := s.autoOpsClient.ListAutoOpsRules(ctx, &autoopsproto.ListAutoOpsRulesRequest{
+		EnvironmentId: req.EnvironmentId,
+	})
+	if err != nil {
+		s.logger.Error(
+			"Failed to list auto ops rules",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	err = s.mapConnectedOperations(goals, listAutoOpRulesResp.AutoOpsRules)
+	if err != nil {
+		s.logger.Error("Failed to unmarshal OpsEventRateClause", zap.Error(err))
+		return nil, err
+	}
+
 	return &proto.ListGoalsResponse{
 		Goals:      goals,
 		Cursor:     strconv.Itoa(nextCursor),
@@ -210,6 +238,33 @@ func (s *experimentService) newGoalListOrders(
 		direction = mysql.OrderDirectionDesc
 	}
 	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
+}
+
+func (s *experimentService) mapConnectedOperations(
+	goals []*proto.Goal,
+	autoOpsRules []*autoopsproto.AutoOpsRule,
+) error {
+	goalOpsMap := make(map[string][]*autoopsproto.AutoOpsRule)
+	for _, rule := range autoOpsRules {
+		for _, clause := range rule.Clauses {
+			if clause.Clause.MessageIs(&autoopsproto.OpsEventRateClause{}) {
+				c := &autoopsproto.OpsEventRateClause{}
+				if err := clause.Clause.UnmarshalTo(c); err != nil {
+					return err
+				}
+				if c.GoalId == "" {
+					continue
+				}
+				goalOpsMap[c.GoalId] = append(goalOpsMap[c.GoalId], rule)
+			}
+		}
+	}
+	for _, goal := range goals {
+		if ops, ok := goalOpsMap[goal.Id]; ok {
+			goal.AutoOpsRules = ops
+		}
+	}
+	return nil
 }
 
 func (s *experimentService) CreateGoal(

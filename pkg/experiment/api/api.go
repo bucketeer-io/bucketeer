@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -51,6 +52,7 @@ func WithLogger(l *zap.Logger) Option {
 type experimentService struct {
 	featureClient featureclient.Client
 	accountClient accountclient.Client
+	autoOpsClient autoopsclient.Client
 	mysqlClient   mysql.Client
 	publisher     publisher.Publisher
 	opts          *options
@@ -60,6 +62,7 @@ type experimentService struct {
 func NewExperimentService(
 	featureClient featureclient.Client,
 	accountClient accountclient.Client,
+	autoOpsClient autoopsclient.Client,
 	mysqlClient mysql.Client,
 	publisher publisher.Publisher,
 	opts ...Option,
@@ -73,6 +76,7 @@ func NewExperimentService(
 	return &experimentService{
 		featureClient: featureClient,
 		accountClient: accountClient,
+		autoOpsClient: autoOpsClient,
 		mysqlClient:   mysqlClient,
 		publisher:     publisher,
 		opts:          dopts,

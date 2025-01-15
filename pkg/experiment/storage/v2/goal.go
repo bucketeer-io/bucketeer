@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
@@ -29,6 +30,11 @@ var (
 	ErrGoalAlreadyExists          = errors.New("goal: already exists")
 	ErrGoalNotFound               = errors.New("goal: not found")
 	ErrGoalUnexpectedAffectedRows = errors.New("goal: unexpected affected rows")
+
+	//go:embed sql/goal/list_goals.sql
+	listGoalSQL string
+	//go:embed sql/goal/count_goals.sql
+	countGoalSQL string
 )
 
 type GoalStorage interface {
@@ -205,32 +211,7 @@ func (s *goalStorage) ListGoals(
 			isInUseStatusSQL = "HAVING is_in_use_status = FALSE"
 		}
 	}
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			name,
-			description,
-			archived,
-			deleted,
-			created_at,
-			updated_at,
-			CASE 
-				WHEN (
-					SELECT 
-						COUNT(1)
-					FROM 
-						experiment
-					WHERE
-						environment_id = ? AND
-						goal_ids LIKE concat("%%", goal.id, "%%")
-				) > 0 THEN TRUE 
-				ELSE FALSE 
-			END AS is_in_use_status
-		FROM
-			goal
-		%s %s %s %s
-		`, whereSQL, isInUseStatusSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(listGoalSQL, whereSQL, isInUseStatusSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, prepareArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -248,6 +229,7 @@ func (s *goalStorage) ListGoals(
 			&goal.CreatedAt,
 			&goal.UpdatedAt,
 			&goal.IsInUseStatus,
+			&mysql.JSONObject{Val: &goal.Experiments},
 		)
 		if err != nil {
 			return nil, 0, 0, err
@@ -267,26 +249,7 @@ func (s *goalStorage) ListGoals(
 			countConditionSQL = "> 0 THEN NULL ELSE 1"
 		}
 	}
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(	
-				CASE 
-					WHEN (
-						SELECT 
-							COUNT(1)
-						FROM 
-							experiment
-						WHERE
-							environment_id = ? AND
-							goal_ids LIKE concat("%%", goal.id, "%%")
-					) %s
-				END
-			)
-		FROM
-			goal
-		%s
-		`, countConditionSQL, whereSQL,
-	)
+	countQuery := fmt.Sprintf(countGoalSQL, countConditionSQL, whereSQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, prepareArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
