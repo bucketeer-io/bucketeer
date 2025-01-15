@@ -202,6 +202,12 @@
                 "id": 17,
                 "name": "environment_count",
                 "type": "int32"
+              },
+              {
+                "id": 18,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
               }
             ],
             "messages": [

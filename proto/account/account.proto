@@ -75,6 +75,7 @@ message AccountV2 {
   string avatar_file_type = 15;
   bytes avatar_image = 16;
   int32 environment_count = 17;
+  repeated string tags = 18;
 }
 
 message ConsoleAccount {
