@@ -1010,6 +1010,16 @@ func (s *AccountService) ListAccountsV2(
 	if req.Disabled != nil {
 		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
 	}
+	tagValues := make([]interface{}, 0, len(req.Tags))
+	for _, tag := range req.Tags {
+		tagValues = append(tagValues, tag)
+	}
+	if len(tagValues) > 0 {
+		whereParts = append(
+			whereParts,
+			mysql.NewJSONFilter("tags", mysql.JSONContainsString, tagValues),
+		)
+	}
 	if req.OrganizationRole != nil {
 		whereParts = append(whereParts, mysql.NewFilter("organization_role", "=", req.OrganizationRole.Value))
 	}
@@ -1106,6 +1116,8 @@ func (s *AccountService) newAccountV2ListOrders(
 		column = "last_seen"
 	case accountproto.ListAccountsV2Request_STATE:
 		column = "disabled"
+	case accountproto.ListAccountsV2Request_TAGS:
+		column = "tags"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
