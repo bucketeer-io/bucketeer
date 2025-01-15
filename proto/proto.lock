@@ -15696,8 +15696,12 @@
                 "integer": 16
               },
               {
-                "name": "CODEREF",
+                "name": "TAG",
                 "integer": 17
+              },
+              {
+                "name": "CODEREF",
+                "integer": 18
               }
             ],
             "reserved_ids": [
@@ -16453,16 +16457,24 @@
                 "integer": 1607
               },
               {
-                "name": "CODE_REFERENCE_CREATED",
-                "integer": 1700
-              },
-              {
-                "name": "CODE_REFERENCE_UPDATED",
+                "name": "TAG_CREATED",
                 "integer": 1701
               },
               {
-                "name": "CODE_REFERENCE_DELETED",
+                "name": "TAG_DELETED",
                 "integer": 1702
+              },
+              {
+                "name": "CODE_REFERENCE_CREATED",
+                "integer": 1800
+              },
+              {
+                "name": "CODE_REFERENCE_UPDATED",
+                "integer": 1801
+              },
+              {
+                "name": "CODE_REFERENCE_DELETED",
+                "integer": 1802
               }
             ],
             "reserved_ids": [
@@ -19673,6 +19685,56 @@
             ]
           },
           {
+            "name": "TagCreatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "updated_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "entity_type",
+                "type": "bucketeer.tag.Tag.EntityType"
+              },
+              {
+                "id": 6,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "TagDeletedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
             "name": "CodeReferenceCreatedEvent",
             "fields": [
               {
@@ -19882,6 +19944,9 @@
           },
           {
             "path": "proto/account/search_filter.proto"
+          },
+          {
+            "path": "proto/tag/tag.proto"
           },
           {
             "path": "proto/coderef/code_reference.proto"
@@ -24981,6 +25046,14 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "CONNECTIONS",
+                "integer": 4
+              },
+              {
+                "name": "USERS",
+                "integer": 5
               }
             ]
           },
@@ -26169,7 +26242,13 @@
               {
                 "id": 2,
                 "name": "segment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
@@ -26179,7 +26258,13 @@
               {
                 "id": 4,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -27497,24 +27582,14 @@
               {
                 "name": "BulkDownloadSegmentUsers",
                 "in_type": "BulkDownloadSegmentUsersRequest",
-                "out_type": "BulkDownloadSegmentUsersResponse"
-              },
-              {
-                "name": "EvaluateFeatures",
-                "in_type": "EvaluateFeaturesRequest",
-                "out_type": "EvaluateFeaturesResponse"
-              },
-              {
-                "name": "ListTags",
-                "in_type": "ListTagsRequest",
-                "out_type": "ListTagsResponse",
+                "out_type": "BulkDownloadSegmentUsersResponse",
                 "options": [
                   {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/tags"
+                        "value": "/v1/segment_users/bulk_download"
                       }
                     ]
                   },
@@ -27523,19 +27598,19 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "List"
+                        "value": "Bulk download"
                       },
                       {
                         "name": "description",
-                        "value": "List tags."
+                        "value": "Bulk download segment users."
                       },
                       {
                         "name": "tags",
-                        "value": "tag"
+                        "value": "segment"
                       },
                       {
                         "name": "operation_id",
-                        "value": "web.v1.tag.list"
+                        "value": "web.v1.segment_users.bulk_download"
                       },
                       {
                         "name": "responses",
@@ -27630,6 +27705,16 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "EvaluateFeatures",
+                "in_type": "EvaluateFeaturesRequest",
+                "out_type": "EvaluateFeaturesResponse"
+              },
+              {
+                "name": "ListTags",
+                "in_type": "ListTagsRequest",
+                "out_type": "ListTagsResponse"
               },
               {
                 "name": "CreateFlagTrigger",
@@ -33026,8 +33111,12 @@
                 "integer": 16
               },
               {
-                "name": "DOMAIN_EVENT_CODEREF",
+                "name": "DOMAIN_EVENT_TAG",
                 "integer": 17
+              },
+              {
+                "name": "DOMAIN_EVENT_CODEREF",
+                "integer": 18
               },
               {
                 "name": "FEATURE_STALE",
@@ -34252,6 +34341,612 @@
       }
     },
     {
+      "protopath": "tag:/:service.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "ListTagsRequest.OrderBy",
+            "enum_fields": [
+              {
+                "name": "DEFAULT"
+              },
+              {
+                "name": "NAME",
+                "integer": 1
+              },
+              {
+                "name": "CREATED_AT",
+                "integer": 2
+              },
+              {
+                "name": "UPDATED_AT",
+                "integer": 3
+              },
+              {
+                "name": "ENTITY_TYPE",
+                "integer": 4
+              },
+              {
+                "name": "ENVIRONMENT",
+                "integer": 5
+              }
+            ]
+          },
+          {
+            "name": "ListTagsRequest.OrderDirection",
+            "enum_fields": [
+              {
+                "name": "ASC"
+              },
+              {
+                "name": "DESC",
+                "integer": 1
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "CreateTagRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "entity_type",
+                "type": "Tag.EntityType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "CreateTagResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "tag",
+                "type": "Tag"
+              }
+            ]
+          },
+          {
+            "name": "DeleteTagRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "DeleteTagResponse"
+          },
+          {
+            "name": "ListTagsRequest",
+            "fields": [
+              {
+                "id": 2,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "order_by",
+                "type": "OrderBy"
+              },
+              {
+                "id": 5,
+                "name": "order_direction",
+                "type": "OrderDirection"
+              },
+              {
+                "id": 6,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "organization_id",
+                "type": "string"
+              }
+            ],
+            "reserved_ids": [
+              1
+            ]
+          },
+          {
+            "name": "ListTagsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "tags",
+                "type": "Tag",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          }
+        ],
+        "services": [
+          {
+            "name": "TagService",
+            "rpcs": [
+              {
+                "name": "ListTags",
+                "in_type": "ListTagsRequest",
+                "out_type": "ListTagsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/tags"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List tags."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "tag"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.tag.list"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "CreateTag",
+                "in_type": "CreateTagRequest",
+                "out_type": "CreateTagResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/tag"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a tag."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "tag"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.tag.create"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DeleteTag",
+                "in_type": "DeleteTagRequest",
+                "out_type": "DeleteTagResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/tag"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete a tag."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "tag"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.tag.delete"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/api/field_behavior.proto"
+          },
+          {
+            "path": "protoc-gen-openapiv2/options/annotations.proto"
+          },
+          {
+            "path": "proto/tag/tag.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.tag"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/tag"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "tag:/:tag.proto",
       "def": {
         "enums": [
@@ -34283,21 +34978,26 @@
               },
               {
                 "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
                 "name": "created_at",
                 "type": "int64"
               },
               {
-                "id": 3,
+                "id": 4,
                 "name": "updated_at",
                 "type": "int64"
               },
               {
-                "id": 4,
+                "id": 5,
                 "name": "entity_type",
                 "type": "EntityType"
               },
               {
-                "id": 5,
+                "id": 6,
                 "name": "environment_id",
                 "type": "string"
               }

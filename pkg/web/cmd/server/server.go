@@ -102,19 +102,19 @@ type server struct {
 	domainTopic                   *string
 	bulkSegmentUsersReceivedTopic *string
 	// Port
-	accountServicePort      *int
-	authServicePort         *int
-	auditLogServicePort     *int
-	autoOpsServicePort      *int
-	environmentServicePort  *int
-	eventCounterServicePort *int
-	experimentServicePort   *int
-	featureServicePort      *int
-	notificationServicePort *int
-	pushServicePort         *int
-	webConsoleServicePort   *int
-	dashboardServicePort    *int
-	tagServicePort          *int
+	accountServicePort       *int
+	authServicePort          *int
+	auditLogServicePort      *int
+	autoOpsServicePort       *int
+	environmentServicePort   *int
+	eventCounterServicePort  *int
+	experimentServicePort    *int
+	featureServicePort       *int
+	notificationServicePort  *int
+	pushServicePort          *int
+	webConsoleServicePort    *int
+	dashboardServicePort     *int
+	tagServicePort           *int
 	codeReferenceServicePort *int
 	// Service
 	accountService       *string
