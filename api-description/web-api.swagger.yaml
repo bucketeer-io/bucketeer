@@ -894,6 +894,7 @@ paths:
             - ENVIRONMENT_COUNT
             - LAST_SEEN
             - STATE
+            - TAGS
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -925,6 +926,13 @@ paths:
           required: false
           type: integer
           format: int32
+        - name: tags
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
       tags:
         - Account
   /v1/account/list_api_keys:
@@ -4776,6 +4784,10 @@ definitions:
         type: string
       language:
         type: string
+      tags:
+        type: array
+        items:
+          type: string
   accountCreateAccountV2Response:
     type: object
     properties:
@@ -4989,6 +5001,7 @@ definitions:
       - ENVIRONMENT_COUNT
       - LAST_SEEN
       - STATE
+      - TAGS
     default: DEFAULT
   accountListAccountsV2RequestOrderDirection:
     type: string
@@ -5092,6 +5105,10 @@ definitions:
         $ref: '#/definitions/UpdateAccountV2RequestAccountV2Avatar'
       disabled:
         type: boolean
+      tags:
+        type: array
+        items:
+          type: string
   accountUpdateAccountV2Response:
     type: object
     properties:

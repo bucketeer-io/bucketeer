@@ -214,6 +214,11 @@ export class CreateAccountV2Request extends jspb.Message {
   getLanguage(): string;
   setLanguage(value: string): void;
 
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAccountV2Request.AsObject;
   static toObject(
@@ -247,6 +252,7 @@ export namespace CreateAccountV2Request {
     firstName: string;
     lastName: string;
     language: string;
+    tagsList: Array<string>;
   };
 }
 
@@ -645,6 +651,11 @@ export class UpdateAccountV2Request extends jspb.Message {
   getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateAccountV2Request.AsObject;
   static toObject(
@@ -689,6 +700,7 @@ export namespace UpdateAccountV2Request {
     lastSeen?: google_protobuf_wrappers_pb.Int64Value.AsObject;
     avatar?: UpdateAccountV2Request.AccountV2Avatar.AsObject;
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    tagsList: Array<string>;
   };
 
   export class AccountV2Avatar extends jspb.Message {
@@ -982,6 +994,11 @@ export class ListAccountsV2Request extends jspb.Message {
   getEnvironmentRole(): google_protobuf_wrappers_pb.Int32Value | undefined;
   setEnvironmentRole(value?: google_protobuf_wrappers_pb.Int32Value): void;
 
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListAccountsV2Request.AsObject;
   static toObject(
@@ -1015,6 +1032,7 @@ export namespace ListAccountsV2Request {
     organizationRole?: google_protobuf_wrappers_pb.Int32Value.AsObject;
     environmentId?: google_protobuf_wrappers_pb.StringValue.AsObject;
     environmentRole?: google_protobuf_wrappers_pb.Int32Value.AsObject;
+    tagsList: Array<string>;
   };
 
   export interface OrderByMap {
@@ -1026,6 +1044,7 @@ export namespace ListAccountsV2Request {
     ENVIRONMENT_COUNT: 5;
     LAST_SEEN: 6;
     STATE: 7;
+    TAGS: 8;
   }
 
   export const OrderBy: OrderByMap;
