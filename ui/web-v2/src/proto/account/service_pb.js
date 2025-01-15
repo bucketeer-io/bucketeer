@@ -4024,7 +4024,13 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           (f = msg.getDisabled()) &&
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
         tagsList:
-          (f = jspb.Message.getRepeatedField(msg, 22)) == null ? undefined : f
+          (f = jspb.Message.getRepeatedField(msg, 22)) == null ? undefined : f,
+        changeTagsCommand:
+          (f = msg.getChangeTagsCommand()) &&
+          proto_account_command_pb.ChangeAccountV2TagsCommand.toObject(
+            includeInstance,
+            f
+          )
       };
 
     if (includeInstance) {
@@ -4251,6 +4257,15 @@ proto.bucketeer.account.UpdateAccountV2Request.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.addTags(value);
           break;
+        case 23:
+          var value = new proto_account_command_pb.ChangeAccountV2TagsCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.ChangeAccountV2TagsCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setChangeTagsCommand(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -4458,6 +4473,15 @@ proto.bucketeer.account.UpdateAccountV2Request.serializeBinaryToWriter =
     f = message.getTagsList();
     if (f.length > 0) {
       writer.writeRepeatedString(22, f);
+    }
+    f = message.getChangeTagsCommand();
+    if (f != null) {
+      writer.writeMessage(
+        23,
+        f,
+        proto_account_command_pb.ChangeAccountV2TagsCommand
+          .serializeBinaryToWriter
+      );
     }
   };
 
@@ -5678,6 +5702,48 @@ proto.bucketeer.account.UpdateAccountV2Request.prototype.addTags = function (
 proto.bucketeer.account.UpdateAccountV2Request.prototype.clearTagsList =
   function () {
     return this.setTagsList([]);
+  };
+
+/**
+ * optional ChangeAccountV2TagsCommand change_tags_command = 23;
+ * @return {?proto.bucketeer.account.ChangeAccountV2TagsCommand}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeTagsCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.ChangeAccountV2TagsCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.ChangeAccountV2TagsCommand,
+        23
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.ChangeAccountV2TagsCommand|undefined} value
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setChangeTagsCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 23, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeTagsCommand =
+  function () {
+    return this.setChangeTagsCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeTagsCommand =
+  function () {
+    return jspb.Message.getField(this, 23) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

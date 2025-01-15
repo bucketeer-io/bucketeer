@@ -4641,6 +4641,13 @@ definitions:
     properties:
       role:
         $ref: '#/definitions/AccountV2RoleOrganization'
+  accountChangeAccountV2TagsCommand:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: string
   accountChangeDefaultSearchFilterCommand:
     type: object
     properties:
@@ -5114,6 +5121,8 @@ definitions:
         type: array
         items:
           type: string
+      changeTagsCommand:
+        $ref: '#/definitions/accountChangeAccountV2TagsCommand'
   accountUpdateAccountV2Response:
     type: object
     properties:

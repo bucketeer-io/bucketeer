@@ -656,6 +656,15 @@ export class UpdateAccountV2Request extends jspb.Message {
   setTagsList(value: Array<string>): void;
   addTags(value: string, index?: number): string;
 
+  hasChangeTagsCommand(): boolean;
+  clearChangeTagsCommand(): void;
+  getChangeTagsCommand():
+    | proto_account_command_pb.ChangeAccountV2TagsCommand
+    | undefined;
+  setChangeTagsCommand(
+    value?: proto_account_command_pb.ChangeAccountV2TagsCommand
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateAccountV2Request.AsObject;
   static toObject(
@@ -701,6 +710,7 @@ export namespace UpdateAccountV2Request {
     avatar?: UpdateAccountV2Request.AccountV2Avatar.AsObject;
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     tagsList: Array<string>;
+    changeTagsCommand?: proto_account_command_pb.ChangeAccountV2TagsCommand.AsObject;
   };
 
   export class AccountV2Avatar extends jspb.Message {

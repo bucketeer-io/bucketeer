@@ -132,6 +132,7 @@ message UpdateAccountV2Request {
   AccountV2Avatar avatar = 20;
   google.protobuf.BoolValue disabled = 21;
   repeated string tags = 22;
+  ChangeAccountV2TagsCommand change_tags_command = 23 [deprecated = true];
 }
 
 message UpdateAccountV2Response {

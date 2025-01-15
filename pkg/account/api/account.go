@@ -440,6 +440,7 @@ func (s *AccountService) updateAccountV2NoCommand(
 		req.Language,
 		req.AvatarImageUrl,
 		req.Avatar,
+		req.Tags,
 		req.OrganizationRole,
 		req.EnvironmentRoles,
 		req.Disabled,
@@ -484,6 +485,7 @@ func isNoUpdateAccountV2Command(req *accountproto.UpdateAccountV2Request) bool {
 		req.ChangeLanguageCommand == nil &&
 		req.ChangeAvatarUrlCommand == nil &&
 		req.ChangeAvatarCommand == nil &&
+		req.ChangeTagsCommand == nil &&
 		req.ChangeOrganizationRoleCommand == nil &&
 		req.ChangeEnvironmentRolesCommand == nil &&
 		req.ChangeLastSeenCommand == nil
@@ -557,6 +559,7 @@ func (s *AccountService) EnableAccountV2(
 		nil,
 		nil,
 		nil,
+		[]string{},
 		nil,
 		nil,
 		wrapperspb.Bool(false),
@@ -630,6 +633,7 @@ func (s *AccountService) DisableAccountV2(
 		nil,
 		nil,
 		nil,
+		[]string{},
 		nil,
 		nil,
 		wrapperspb.Bool(true),
@@ -701,6 +705,7 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 	email, organizationID string,
 	name, firstName, lastName, language, avatarImageURL *wrapperspb.StringValue,
 	avatar *accountproto.UpdateAccountV2Request_AccountV2Avatar,
+	tags []string,
 	organizationRole *accountproto.UpdateAccountV2Request_OrganizationRoleValue,
 	environmentRoles []*accountproto.AccountV2_EnvironmentRole,
 	isDisabled *wrapperspb.BoolValue,
@@ -719,6 +724,7 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 			language,
 			avatarImageURL,
 			avatar,
+			tags,
 			organizationRole,
 			environmentRoles,
 			isDisabled,

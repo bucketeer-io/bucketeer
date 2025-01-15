@@ -1393,6 +1393,17 @@
                 "name": "tags",
                 "type": "string",
                 "is_repeated": true
+              },
+              {
+                "id": 23,
+                "name": "change_tags_command",
+                "type": "ChangeAccountV2TagsCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               }
             ],
             "messages": [
