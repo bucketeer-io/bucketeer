@@ -4447,6 +4447,7 @@ definitions:
     enum:
       - UNKNOWN
       - FEATURE_FLAG
+      - ACCOUNT
     default: UNKNOWN
   UpdateAccountV2RequestAccountV2Avatar:
     type: object
