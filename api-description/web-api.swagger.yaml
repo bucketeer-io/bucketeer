@@ -5954,6 +5954,8 @@ definitions:
         type: string
       description:
         type: string
+      connectionType:
+        $ref: '#/definitions/GoalConnectionType'
     required:
       - environmentId
       - id

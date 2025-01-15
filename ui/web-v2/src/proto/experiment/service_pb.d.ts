@@ -223,6 +223,11 @@ export class CreateGoalRequest extends jspb.Message {
   getDescription(): string;
   setDescription(value: string): void;
 
+  getConnectionType(): proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap];
+  setConnectionType(
+    value: proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap]
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateGoalRequest.AsObject;
   static toObject(
@@ -251,6 +256,7 @@ export namespace CreateGoalRequest {
     id: string;
     name: string;
     description: string;
+    connectionType: proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap];
   };
 }
 

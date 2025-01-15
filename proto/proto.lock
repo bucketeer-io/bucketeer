@@ -20681,6 +20681,11 @@
                 "id": 6,
                 "name": "description",
                 "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "connection_type",
+                "type": "Goal.ConnectionType"
               }
             ],
             "reserved_ids": [

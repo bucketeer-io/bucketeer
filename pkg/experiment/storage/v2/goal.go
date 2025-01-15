@@ -31,10 +31,14 @@ var (
 	ErrGoalNotFound               = errors.New("goal: not found")
 	ErrGoalUnexpectedAffectedRows = errors.New("goal: unexpected affected rows")
 
-	//go:embed sql/goal/list_goals.sql
-	listGoalSQL string
+	//go:embed sql/goal/select_goals.sql
+	selectGoalsSQL string
+	//go:embed sql/goal/select_goal.sql
+	selectGoalSQL string
 	//go:embed sql/goal/count_goals.sql
 	countGoalSQL string
+	//go:embed sql/goal/insert_goal.sql
+	insertGoalSQL string
 )
 
 type GoalStorage interface {
@@ -60,26 +64,13 @@ func NewGoalStorage(qe mysql.QueryExecer) GoalStorage {
 }
 
 func (s *goalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmentId string) error {
-	query := `
-		INSERT INTO goal (
-			id,
-			name,
-			description,
-			archived,
-			deleted,
-			created_at,
-			updated_at,
-			environment_id
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?
-		)
-	`
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
+		insertGoalSQL,
 		g.Id,
 		g.Name,
 		g.Description,
+		g.ConnectionType,
 		g.Archived,
 		g.Deleted,
 		g.CreatedAt,
@@ -87,7 +78,7 @@ func (s *goalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmen
 		environmentId,
 	)
 	if err != nil {
-		if err == mysql.ErrDuplicateEntry {
+		if errors.Is(err, mysql.ErrDuplicateEntry) {
 			return ErrGoalAlreadyExists
 		}
 		return err
@@ -137,36 +128,9 @@ func (s *goalStorage) UpdateGoal(ctx context.Context, g *domain.Goal, environmen
 
 func (s *goalStorage) GetGoal(ctx context.Context, id, environmentId string) (*domain.Goal, error) {
 	goal := proto.Goal{}
-	query := `
-		SELECT
-			id,
-			name,
-			description,
-			archived,
-			deleted,
-			created_at,
-			updated_at,
-			CASE 
-				WHEN (
-					SELECT 
-						COUNT(1)
-					FROM 
-						experiment
-					WHERE
-						environment_id = ? AND
-						goal_ids LIKE concat("%", goal.id, "%")
-				) > 0 THEN TRUE 
-				ELSE FALSE 
-			END AS is_in_use_status
-		FROM
-			goal
-		WHERE
-			id = ? AND
-			environment_id = ?
-	`
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
+		selectGoalSQL,
 		environmentId,
 		id,
 		environmentId,
@@ -174,14 +138,16 @@ func (s *goalStorage) GetGoal(ctx context.Context, id, environmentId string) (*d
 		&goal.Id,
 		&goal.Name,
 		&goal.Description,
+		&goal.ConnectionType,
 		&goal.Archived,
 		&goal.Deleted,
 		&goal.CreatedAt,
 		&goal.UpdatedAt,
 		&goal.IsInUseStatus,
+		&mysql.JSONObject{Val: &goal.Experiments},
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrGoalNotFound
 		}
 		return nil, err
@@ -211,7 +177,7 @@ func (s *goalStorage) ListGoals(
 			isInUseStatusSQL = "HAVING is_in_use_status = FALSE"
 		}
 	}
-	query := fmt.Sprintf(listGoalSQL, whereSQL, isInUseStatusSQL, orderBySQL, limitOffsetSQL)
+	query := fmt.Sprintf(selectGoalsSQL, whereSQL, isInUseStatusSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, prepareArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -224,6 +190,7 @@ func (s *goalStorage) ListGoals(
 			&goal.Id,
 			&goal.Name,
 			&goal.Description,
+			&goal.ConnectionType,
 			&goal.Archived,
 			&goal.Deleted,
 			&goal.CreatedAt,

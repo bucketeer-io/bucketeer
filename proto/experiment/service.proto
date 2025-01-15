@@ -76,6 +76,7 @@ message CreateGoalRequest {
   string id = 4 [(google.api.field_behavior) = REQUIRED];
   string name = 5 [(google.api.field_behavior) = REQUIRED];
   string description = 6;
+  Goal.ConnectionType connection_type = 7;
 }
 
 message CreateGoalResponse {

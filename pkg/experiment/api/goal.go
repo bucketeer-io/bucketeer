@@ -77,6 +77,18 @@ func (s *experimentService) GetGoal(ctx context.Context, req *proto.GetGoalReque
 		}
 		return nil, dt.Err()
 	}
+	err = s.mapConnectedOperations(ctx, []*proto.Goal{goal.Goal}, req.EnvironmentId)
+	if err != nil {
+		s.logger.Error("Failed to map connected operations", zap.Error(err))
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
 	return &proto.GetGoalResponse{Goal: goal.Goal}, nil
 }
 
@@ -175,18 +187,9 @@ func (s *experimentService) ListGoals(
 		}
 		return nil, dt.Err()
 	}
-
-	listAutoOpRulesResp, err := s.autoOpsClient.ListAutoOpsRules(ctx, &autoopsproto.ListAutoOpsRulesRequest{
-		EnvironmentId: req.EnvironmentId,
-	})
+	err = s.mapConnectedOperations(ctx, goals, req.EnvironmentId)
 	if err != nil {
-		s.logger.Error(
-			"Failed to list auto ops rules",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
+		s.logger.Error("Failed to map connected operations", zap.Error(err))
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
@@ -195,11 +198,6 @@ func (s *experimentService) ListGoals(
 			return nil, statusInternal.Err()
 		}
 		return nil, dt.Err()
-	}
-	err = s.mapConnectedOperations(goals, listAutoOpRulesResp.AutoOpsRules)
-	if err != nil {
-		s.logger.Error("Failed to unmarshal OpsEventRateClause", zap.Error(err))
-		return nil, err
 	}
 
 	return &proto.ListGoalsResponse{
@@ -241,9 +239,17 @@ func (s *experimentService) newGoalListOrders(
 }
 
 func (s *experimentService) mapConnectedOperations(
+	ctx context.Context,
 	goals []*proto.Goal,
-	autoOpsRules []*autoopsproto.AutoOpsRule,
+	environmentID string,
 ) error {
+	listAutoOpRulesResp, err := s.autoOpsClient.ListAutoOpsRules(ctx, &autoopsproto.ListAutoOpsRulesRequest{
+		EnvironmentId: environmentID,
+	})
+	if err != nil {
+		return err
+	}
+	autoOpsRules := listAutoOpRulesResp.AutoOpsRules
 	goalOpsMap := make(map[string][]*autoopsproto.AutoOpsRule)
 	for _, rule := range autoOpsRules {
 		for _, clause := range rule.Clauses {
@@ -284,7 +290,7 @@ func (s *experimentService) CreateGoal(
 	if err := validateCreateGoalRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	goal, err := domain.NewGoal(req.Command.Id, req.Command.Name, req.Command.Description)
+	goal, err := domain.NewGoal(req.Command.Id, req.Command.Name, req.Command.Description, proto.Goal_UNKNOWN)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new goal",
@@ -371,7 +377,7 @@ func (s *experimentService) createGoalNoCommand(
 	if err := validateCreateGoalNoCommandRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	goal, err := domain.NewGoal(req.Id, req.Name, req.Description)
+	goal, err := domain.NewGoal(req.Id, req.Name, req.Description, req.ConnectionType)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new goal",

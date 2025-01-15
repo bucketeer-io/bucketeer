@@ -102,6 +102,11 @@ func TestGetGoalMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
+				s.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ListAutoOpsRules(
+					gomock.Any(), gomock.Any(),
+				).Return(&autoopsproto.ListAutoOpsRulesResponse{
+					AutoOpsRules: []*autoopsproto.AutoOpsRule{},
+				}, nil)
 			},
 			id:            "id-1",
 			environmentId: "ns0",
