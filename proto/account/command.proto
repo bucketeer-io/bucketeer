@@ -58,7 +58,7 @@ message ChangeAccountV2AvatarCommand {
   string avatar_file_type = 2;
 }
 
-message ChangeTagsCommand {
+message ChangeAccountV2TagsCommand {
   repeated string tags = 1;
 }
 

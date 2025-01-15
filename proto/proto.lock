@@ -641,7 +641,7 @@
             ]
           },
           {
-            "name": "ChangeTagsCommand",
+            "name": "ChangeAccountV2TagsCommand",
             "fields": [
               {
                 "id": 1,
@@ -14753,6 +14753,10 @@
                 "integer": 321
               },
               {
+                "name": "ACCOUNT_V2_TAGS_CHANGED",
+                "integer": 322
+              },
+              {
                 "name": "APIKEY_CREATED",
                 "integer": 400
               },
@@ -16395,6 +16399,12 @@
                 "id": 12,
                 "name": "language",
                 "type": "string"
+              },
+              {
+                "id": 13,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -16440,6 +16450,22 @@
                 "id": 2,
                 "name": "avatar_image_url",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2TagsChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },

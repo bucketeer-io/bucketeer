@@ -276,34 +276,34 @@ export namespace ChangeAccountV2AvatarCommand {
   };
 }
 
-export class ChangeTagsCommand extends jspb.Message {
+export class ChangeAccountV2TagsCommand extends jspb.Message {
   clearTagsList(): void;
   getTagsList(): Array<string>;
   setTagsList(value: Array<string>): void;
   addTags(value: string, index?: number): string;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ChangeTagsCommand.AsObject;
+  toObject(includeInstance?: boolean): ChangeAccountV2TagsCommand.AsObject;
   static toObject(
     includeInstance: boolean,
-    msg: ChangeTagsCommand
-  ): ChangeTagsCommand.AsObject;
+    msg: ChangeAccountV2TagsCommand
+  ): ChangeAccountV2TagsCommand.AsObject;
   static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
   static extensionsBinary: {
     [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
   };
   static serializeBinaryToWriter(
-    message: ChangeTagsCommand,
+    message: ChangeAccountV2TagsCommand,
     writer: jspb.BinaryWriter
   ): void;
-  static deserializeBinary(bytes: Uint8Array): ChangeTagsCommand;
+  static deserializeBinary(bytes: Uint8Array): ChangeAccountV2TagsCommand;
   static deserializeBinaryFromReader(
-    message: ChangeTagsCommand,
+    message: ChangeAccountV2TagsCommand,
     reader: jspb.BinaryReader
-  ): ChangeTagsCommand;
+  ): ChangeAccountV2TagsCommand;
 }
 
-export namespace ChangeTagsCommand {
+export namespace ChangeAccountV2TagsCommand {
   export type AsObject = {
     tagsList: Array<string>;
   };

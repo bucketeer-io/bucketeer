@@ -56,6 +56,7 @@ func TestHandleV2(t *testing.T) {
 					"lname",
 					"en",
 					"avatarImageURL",
+					[]string{"tag"},
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
 					[]*accountproto.AccountV2_EnvironmentRole{},
@@ -80,6 +81,7 @@ func TestHandleV2(t *testing.T) {
 					"lname",
 					"en",
 					"avatarImageURL",
+					[]string{"tag"},
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
 					[]*accountproto.AccountV2_EnvironmentRole{},
@@ -104,6 +106,7 @@ func TestHandleV2(t *testing.T) {
 					"lname",
 					"en",
 					"avatarImageURL",
+					[]string{"tag"},
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
 					[]*accountproto.AccountV2_EnvironmentRole{},
@@ -128,6 +131,7 @@ func TestHandleV2(t *testing.T) {
 					"lname",
 					"en",
 					"avatarImageURL",
+					[]string{"tag"},
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
 					[]*accountproto.AccountV2_EnvironmentRole{},
@@ -152,6 +156,7 @@ func TestHandleV2(t *testing.T) {
 					"lname",
 					"en",
 					"avatarImageURL",
+					[]string{"tag"},
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
 					[]*accountproto.AccountV2_EnvironmentRole{},
@@ -167,6 +172,31 @@ func TestHandleV2(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			desc: "ChangeAccountV2TagsCommand: success",
+			setup: func(h *accountV2CommandHandler) {
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"fname",
+					"lname",
+					"en",
+					"avatarImageURL",
+					[]string{"tag"},
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{},
+				)
+				h.account = a
+				prev := &domain.AccountV2{}
+				err := copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAccount = prev
+				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			input:       &accountproto.ChangeAccountV2TagsCommand{},
+			expectedErr: nil,
+		},
+		{
 			desc: "ChangeAccountV2OrganizationRoleCommand: success",
 			setup: func(h *accountV2CommandHandler) {
 				a := domain.NewAccountV2(
@@ -176,6 +206,7 @@ func TestHandleV2(t *testing.T) {
 					"lname",
 					"en",
 					"avatarImageURL",
+					[]string{"tag"},
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
 					[]*accountproto.AccountV2_EnvironmentRole{},
@@ -200,6 +231,7 @@ func TestHandleV2(t *testing.T) {
 					"lname",
 					"en",
 					"avatarImageURL",
+					[]string{"tag"},
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
 					[]*accountproto.AccountV2_EnvironmentRole{
@@ -237,6 +269,7 @@ func TestHandleV2(t *testing.T) {
 					"lname",
 					"en",
 					"avatarImageURL",
+					[]string{"tag"},
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
 					[]*accountproto.AccountV2_EnvironmentRole{
@@ -274,6 +307,7 @@ func TestHandleV2(t *testing.T) {
 					"lname",
 					"en",
 					"avatarImageURL",
+					[]string{"tag"},
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
 					[]*accountproto.AccountV2_EnvironmentRole{},
@@ -298,6 +332,7 @@ func TestHandleV2(t *testing.T) {
 					"lname",
 					"en",
 					"avatarImageURL",
+					[]string{"tag"},
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
 					[]*accountproto.AccountV2_EnvironmentRole{},
@@ -322,6 +357,7 @@ func TestHandleV2(t *testing.T) {
 					"lname",
 					"en",
 					"avatarImageURL",
+					[]string{"tag"},
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
 					[]*accountproto.AccountV2_EnvironmentRole{},
