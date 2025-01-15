@@ -25,9 +25,12 @@ const SlideModal = ({
   children,
   shouldCloseOnOverlayClick = true
 }: SliderProps) => {
-  const onOpenChange = useCallback((v: boolean) => {
-    if (v === false && shouldCloseOnOverlayClick) onClose();
-  }, []);
+  const onOpenChange = useCallback(
+    (v: boolean) => {
+      if (v === false && shouldCloseOnOverlayClick) onClose();
+    },
+    [shouldCloseOnOverlayClick]
+  );
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>

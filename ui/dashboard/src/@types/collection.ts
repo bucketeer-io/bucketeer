@@ -20,7 +20,9 @@ export type OrderBy =
   | 'LAST_SEEN'
   | 'CREATOR_EMAIL'
   | 'ENVIRONMENT'
-  | 'TAGS';
+  | 'TAGS'
+  | 'CONNECTIONS'
+  | 'USERS';
 
 export type OrderDirection = 'ASC' | 'DESC';
 
