@@ -67,6 +67,7 @@ func NewAccountV2(
 		Email:            email,
 		Name:             name,
 		AvatarImageUrl:   avatarImageURL,
+		Tags:             []string{}, // TODO: Implement tags
 		OrganizationId:   organizationID,
 		OrganizationRole: organizationRole,
 		EnvironmentRoles: environmentRoles,

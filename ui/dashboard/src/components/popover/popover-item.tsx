@@ -7,12 +7,14 @@ import Icon from 'components/icon';
 type PopoverItemWrapperProps = PropsWithChildren & {
   type: 'trigger' | 'item';
   addonSlot?: AddonSlot;
+  disabled?: boolean;
   onClick?: () => void;
 };
 const PopoverItemWrapper = ({
   type,
   children,
   addonSlot,
+  disabled,
   onClick
 }: PopoverItemWrapperProps) => {
   if (type === 'trigger') return <>{children}</>;
@@ -22,10 +24,14 @@ const PopoverItemWrapper = ({
         'flex cursor-pointer items-center gap-x-2 p-2 text-gray-700',
         'hover:bg-primary-50 [&>*]:hover:text-primary-500',
         {
-          'flex-row-reverse': addonSlot === 'right'
+          'flex-row-reverse': addonSlot === 'right',
+          '!bg-transparent !text-gray-400 [&>*]:hover:!text-gray-400 cursor-not-allowed':
+            disabled
         }
       )}
-      onClick={onClick && onClick}
+      onClick={() => {
+        if (!disabled && onClick) onClick();
+      }}
     >
       {children}
     </div>
@@ -37,6 +43,7 @@ export type PopoverItemProps = {
   addonSlot?: AddonSlot;
   icon?: FunctionComponent;
   label?: string;
+  disabled?: boolean;
   onClick?: () => void;
 };
 
@@ -45,13 +52,22 @@ const PopoverItem = ({
   addonSlot,
   icon,
   label,
+  disabled,
   onClick
 }: PopoverItemProps) => {
   return (
-    <PopoverItemWrapper type={type} addonSlot={addonSlot} onClick={onClick}>
+    <PopoverItemWrapper
+      disabled={disabled}
+      type={type}
+      addonSlot={addonSlot}
+      onClick={onClick}
+    >
       {icon && (
         <span
-          className={'flex size-5 items-center justify-center text-gray-600'}
+          className={cn(
+            'flex size-5 items-center justify-center text-gray-600',
+            { 'text-gray-400': disabled }
+          )}
         >
           <Icon icon={icon} size={type === 'item' ? 'xxs' : 'sm'} />
         </span>

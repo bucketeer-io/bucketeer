@@ -137,5 +137,15 @@
   "edit-push": "Update Push Notification",
   "new-push-subtitle": "Every time a feature flag is updated, a push notification is sent to the SDK client allowing you to update the SDK cache in real-time.",
   "tags": "Tags",
-  "fcm-api-key": "Firebase Service Account"
+  "fcm-api-key": "Firebase Service Account",
+  "user-segments": "User Segments",
+  "user-segments-subtitle": "You can create segments to help you start testing feature flags for specifics type of users",
+  "new-user-segment": "New User Segment",
+  "update-user-segment": "Update User Segment",
+  "delete-user-segment": "Delete User Segment",
+  "connections": "Connections",
+  "status": "Status",
+  "flags-connected": "Flags Connected",
+  "flags-connected-desc": "This user segment is currently connected to the following feature flags:",
+  "close": "Close"
 }

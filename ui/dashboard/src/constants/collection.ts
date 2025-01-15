@@ -21,5 +21,7 @@ export const sortingListFields: SortingListFields = {
   featureFlagCount: 'FEATURE_COUNT',
   creatorEmail: 'CREATOR_EMAIL',
   lastSeen: 'LAST_SEEN',
-  environment: 'ENVIRONMENT'
+  environment: 'ENVIRONMENT',
+  connections: 'CONNECTIONS',
+  users: 'USERS'
 };

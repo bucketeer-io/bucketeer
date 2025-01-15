@@ -3834,6 +3834,7 @@ paths:
             - CREATED_AT
             - UPDATED_AT
             - CONNECTIONS
+            - USERS
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -4539,6 +4540,10 @@ definitions:
       environmentCount:
         type: integer
         format: int32
+      tags:
+        type: array
+        items:
+          type: string
   accountAccountV2EnvironmentRole:
     type: object
     properties:
@@ -6622,6 +6627,7 @@ definitions:
       - CREATED_AT
       - UPDATED_AT
       - CONNECTIONS
+      - USERS
     default: DEFAULT
   featureListSegmentsRequestOrderDirection:
     type: string
