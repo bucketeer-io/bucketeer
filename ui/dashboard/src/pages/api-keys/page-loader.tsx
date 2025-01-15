@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Trans } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { apiKeyUpdater } from '@api/api-key';
 import { invalidateAPIKeys } from '@queries/api-keys';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { ID_NEW, PAGE_PATH_APIKEYS } from 'constants/routing';
+import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { APIKey } from '@types';
@@ -20,7 +23,15 @@ const PageLoader = () => {
   const { t } = useTranslation(['table']);
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const location = useLocation();
+
+  const { isAdd, isEdit, onOpenAddModal, onOpenEditModal, onCloseActionModal } =
+    useActionWithURL({
+      idKey: '*',
+      addPath: `${location.pathname}/${String(ID_NEW)}`,
+      closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}`
+    });
 
   const {
     data: collection,
@@ -29,39 +40,34 @@ const PageLoader = () => {
     isError
   } = useFetchAPIKeys({
     pageSize: 1,
-    organizationId: currenEnvironment.organizationId
+    organizationId: currentEnvironment.organizationId
   });
 
   const [selectedAPIKey, setSelectedAPIKey] = useState<APIKey>();
   const [isDisabling, setIsDisabling] = useState<boolean>(false);
-
-  const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
-    useToggleOpen(false);
-
-  const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
-    useToggleOpen(false);
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
 
   const onHandleActions = (apiKey: APIKey, type: APIKeyActionsType) => {
     if (type === 'EDIT') {
-      onOpenEditModal();
-    } else if (type === 'ENABLE') {
-      setIsDisabling(false);
-      onOpenConfirmModal();
-    } else if (type === 'DISABLE') {
-      setIsDisabling(true);
-      onOpenConfirmModal();
+      return onOpenEditModal(`${location.pathname}/${apiKey.id}`, {
+        environmentName: apiKey.environmentName
+      });
     }
     setSelectedAPIKey(apiKey);
+    onOpenConfirmModal();
+    if (type === 'ENABLE') {
+      return setIsDisabling(false);
+    }
+    setIsDisabling(true);
   };
 
   const mutationState = useMutation({
     mutationFn: async (id: string) => {
       return apiKeyUpdater({
         id,
-        environmentId: currenEnvironment.id,
+        environmentId: currentEnvironment.id,
         disabled: isDisabling
       });
     },
@@ -94,15 +100,9 @@ const PageLoader = () => {
         <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
       )}
 
-      {isOpenAddModal && (
-        <AddAPIKeyModal isOpen={isOpenAddModal} onClose={onCloseAddModal} />
-      )}
-      {isOpenEditModal && selectedAPIKey && (
-        <EditAPIKeyModal
-          isOpen={isOpenEditModal}
-          onClose={onCloseEditModal}
-          apiKey={selectedAPIKey}
-        />
+      {isAdd && <AddAPIKeyModal isOpen={isAdd} onClose={onCloseActionModal} />}
+      {isEdit && (
+        <EditAPIKeyModal isOpen={isEdit} onClose={onCloseActionModal} />
       )}
       {openConfirmModal && (
         <ConfirmModal

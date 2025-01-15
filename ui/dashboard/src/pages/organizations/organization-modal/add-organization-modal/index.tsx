@@ -61,23 +61,32 @@ const AddOrganizationModal = ({
     }
   });
 
-  const onSubmit: SubmitHandler<AddOrganizationForm> = values => {
-    return organizationCreator({
-      ...values,
-      isSystemAdmin: false
-    }).then(() => {
+  const onSubmit: SubmitHandler<AddOrganizationForm> = async values => {
+    try {
+      const resp = await organizationCreator({
+        ...values,
+        isSystemAdmin: false
+      });
+      if (resp) {
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: (
+            <span>
+              <b>{values.name}</b> {`has been successfully created!`}
+            </span>
+          )
+        });
+        invalidateOrganizations(queryClient);
+        onClose();
+      }
+    } catch (error) {
       notify({
         toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {`has been successfully created!`}
-          </span>
-        )
+        messageType: 'error',
+        message: (error as Error)?.message || 'Something went wrong.'
       });
-      invalidateOrganizations(queryClient);
-      onClose();
-    });
+    }
   };
 
   return (

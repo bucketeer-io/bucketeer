@@ -8,6 +8,7 @@ export const OrganizationsRoot = () => {
   return (
     <Routes>
       <Route index element={<OrganizationsPage />} />
+      <Route path=":organizationId" element={<OrganizationsPage />} />
       <Route path=":organizationId/*" element={<OrganizationDetailPage />} />
     </Routes>
   );

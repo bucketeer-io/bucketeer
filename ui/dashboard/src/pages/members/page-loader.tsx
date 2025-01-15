@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { accountDisable, accountEnable } from '@api/account';
 import { accountDeleter } from '@api/account/account-deleter';
 import { invalidateAccounts } from '@queries/accounts';
@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { ID_NEW, PAGE_PATH_MEMBERS } from 'constants/routing';
 import { useToast } from 'hooks';
+import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { Account } from '@types';
 import ConfirmModal from 'elements/confirm-modal';
@@ -28,11 +29,18 @@ const PageLoader = () => {
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
   const location = useLocation();
-  const params = useParams();
-  const isAdd = useMemo(() => params['*'] && params['*'] === 'new', [params]);
-  const isEdit = useMemo(() => params['*'] && !isAdd, [params, isAdd]);
 
-  const navigate = useNavigate();
+  const {
+    isAdd,
+    isEdit,
+    params: { envUrlCode },
+    onOpenAddModal,
+    onOpenEditModal,
+    onCloseActionModal
+  } = useActionWithURL({
+    idKey: '*',
+    addPath: `${location.pathname}/${ID_NEW}`
+  });
 
   const {
     data: collection,
@@ -47,9 +55,8 @@ const PageLoader = () => {
   const [selectedMember, setSelectedMember] = useState<Account>();
   const [isDisabling, setIsDisabling] = useState<boolean>(false);
 
-  const onOpenAddModal = () => navigate(`${location.pathname}/${ID_NEW}`);
-  const onCloseActionModal = () =>
-    navigate(`/${params?.envUrlCode}${PAGE_PATH_MEMBERS}`);
+  const handleOnCloseActionModal = () =>
+    onCloseActionModal(`/${envUrlCode}${PAGE_PATH_MEMBERS}`);
 
   const [isOpenDetailsModal, onOpenDetailsModal, onCloseDetailsModal] =
     useToggleOpen(false);
@@ -115,9 +122,9 @@ const PageLoader = () => {
   };
 
   const onHandleActions = (member: Account, type: MemberActionsType) => {
-    setSelectedMember(member);
     if (type === 'EDIT')
-      return navigate(`${location.pathname}/${member.email}`);
+      return onOpenEditModal(`${location.pathname}/${member.email}`);
+    setSelectedMember(member);
     if (type === 'DELETE') return onOpenDeleteModal();
     if (type === 'DETAILS') return onOpenDetailsModal();
     if (type === 'ENABLE') {
@@ -143,9 +150,11 @@ const PageLoader = () => {
       ) : (
         <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
       )}
-      {isAdd && <AddMemberModal isOpen={isAdd} onClose={onCloseActionModal} />}
+      {isAdd && (
+        <AddMemberModal isOpen={isAdd} onClose={handleOnCloseActionModal} />
+      )}
       {isEdit && (
-        <EditMemberModal isOpen={isEdit} onClose={onCloseActionModal} />
+        <EditMemberModal isOpen={isEdit} onClose={handleOnCloseActionModal} />
       )}
       {isOpenDeleteModal && (
         <DeleteMemberModal

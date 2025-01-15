@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { Trans } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { organizationArchive, organizationUnarchive } from '@api/organization';
 import { invalidateOrganizations } from '@queries/organizations';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ID_NEW, PAGE_PATH_ORGANIZATIONS } from 'constants/routing';
+import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Organization } from '@types';
@@ -18,6 +21,14 @@ import { OrganizationActionsType } from './types';
 const PageLoader = () => {
   const { t } = useTranslation(['common', 'table']);
   const queryClient = useQueryClient();
+  const location = useLocation();
+
+  const { isAdd, isEdit, onOpenAddModal, onOpenEditModal, onCloseActionModal } =
+    useActionWithURL({
+      idKey: '*',
+      addPath: `${location.pathname}/${ID_NEW}`,
+      closeModalPath: `${PAGE_PATH_ORGANIZATIONS}`
+    });
 
   const {
     data: collection,
@@ -30,12 +41,6 @@ const PageLoader = () => {
     useState<Organization>();
 
   const [isArchiving, setIsArchiving] = useState<boolean>();
-
-  const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
-    useToggleOpen(false);
-
-  const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
-    useToggleOpen(false);
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
@@ -65,8 +70,9 @@ const PageLoader = () => {
     organization: Organization,
     type: OrganizationActionsType
   ) => {
+    if (type === 'EDIT')
+      return onOpenEditModal(`${location.pathname}/${organization.id}`);
     setSelectedOrganization(organization);
-    if (type === 'EDIT') return onOpenEditModal();
     if (type === 'ARCHIVE') {
       setIsArchiving(true);
       return onOpenConfirmModal();
@@ -90,18 +96,11 @@ const PageLoader = () => {
       ) : (
         <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
       )}
-      {isOpenAddModal && (
-        <AddOrganizationModal
-          isOpen={isOpenAddModal}
-          onClose={onCloseAddModal}
-        />
+      {isAdd && (
+        <AddOrganizationModal isOpen={isAdd} onClose={onCloseActionModal} />
       )}
-      {isOpenEditModal && (
-        <EditOrganizationModal
-          isOpen={isOpenEditModal}
-          onClose={onCloseEditModal}
-          organization={selectedOrganization!}
-        />
+      {isEdit && (
+        <EditOrganizationModal isOpen={isEdit} onClose={onCloseActionModal} />
       )}
       {openConfirmModal && (
         <ConfirmModal

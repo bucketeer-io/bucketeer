@@ -62,11 +62,11 @@ const OrganizationProjects = () => {
           }}
         />
       )}
-      {isOpenEditModal && (
+      {isOpenEditModal && selectedProject && (
         <EditProjectModal
           isOpen={isOpenEditModal}
           onClose={onCloseEditModal}
-          project={selectedProject!}
+          _projectId={selectedProject.id}
         />
       )}
       <CollectionLoader

@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
 import { environmentUpdater } from '@api/environment';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
@@ -11,6 +10,7 @@ import { invalidateEnvironments } from '@queries/environments';
 import { useQueryProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from 'hooks';
+import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import Button from 'components/button';
@@ -45,12 +45,17 @@ const EditEnvironmentModal = ({
   onClose
 }: EditEnvironmentModalProps) => {
   const queryClient = useQueryClient();
-  const { projectId, ...rest } = useParams();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
   const { data: collection } = useQueryProjects();
 
-  const environmentId = useMemo(() => rest['*'], [rest]);
+  const {
+    id: environmentId,
+    params: { projectId },
+    errorToast
+  } = useActionWithURL({
+    idKey: '*'
+  });
 
   const {
     data: environmentCollection,
@@ -73,14 +78,6 @@ const EditEnvironmentModal = ({
       requireComment: false
     }
   });
-
-  const errorToast = useCallback((error: Error) => {
-    notify({
-      messageType: 'error',
-      toastType: 'toast',
-      message: error?.message || 'Something went wrong.'
-    });
-  }, []);
 
   const onSubmit: SubmitHandler<EditEnvironmentForm> = async values => {
     try {

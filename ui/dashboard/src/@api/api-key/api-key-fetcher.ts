@@ -9,7 +9,7 @@ export interface APIKeyFetcherParams {
 }
 
 export interface APIKeyResponse {
-  apiKey: Array<APIKey>;
+  apiKey: APIKey;
 }
 
 export const apiKeyFetcher = async (

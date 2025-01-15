@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Trans } from 'react-i18next';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { environmentArchive, environmentUnarchive } from '@api/environment';
 import { invalidateEnvironments } from '@queries/environments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,6 +9,7 @@ import {
   PAGE_PATH_ENVIRONMENTS,
   PAGE_PATH_PROJECTS
 } from 'constants/routing';
+import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Environment } from '@types';
@@ -24,13 +25,19 @@ import { EnvironmentActionsType } from './types';
 const ProjectEnvironments = () => {
   const { t } = useTranslation(['common', 'table']);
   const queryClient = useQueryClient();
-
-  const params = useParams();
   const location = useLocation();
-  const navigate = useNavigate();
 
-  const isAdd = useMemo(() => params['*'] === 'new', [params]);
-  const isEdit = useMemo(() => params['*'] && !isAdd, [params, isAdd]);
+  const {
+    isAdd,
+    isEdit,
+    params: { envUrlCode, projectId },
+    onOpenAddModal,
+    onOpenEditModal,
+    onCloseActionModal
+  } = useActionWithURL({
+    idKey: '*',
+    addPath: `${location.pathname}/${ID_NEW}`
+  });
 
   const {
     data: collection,
@@ -42,11 +49,9 @@ const ProjectEnvironments = () => {
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>();
   const [isArchiving, setIsArchiving] = useState<boolean>();
 
-  const onOpenAddModal = () => navigate(`${location.pathname}/${ID_NEW}`);
-
-  const onCloseActionModal = () =>
-    navigate(
-      `/${params?.envUrlCode}${PAGE_PATH_PROJECTS}/${params?.projectId}${PAGE_PATH_ENVIRONMENTS}`
+  const handleOnCloseActionModal = () =>
+    onCloseActionModal(
+      `/${envUrlCode}${PAGE_PATH_PROJECTS}/${projectId}${PAGE_PATH_ENVIRONMENTS}`
     );
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
@@ -84,7 +89,7 @@ const ProjectEnvironments = () => {
       setIsArchiving(false);
       onOpenConfirmModal();
     } else {
-      navigate(`${location.pathname}/${environment.id}`);
+      onOpenEditModal(`${location.pathname}/${environment.id}`);
     }
     setSelectedEnvironment(environment);
   };
@@ -109,12 +114,15 @@ const ProjectEnvironments = () => {
           />
 
           {isAdd && (
-            <AddEnvironmentModal isOpen={isAdd} onClose={onCloseActionModal} />
+            <AddEnvironmentModal
+              isOpen={isAdd}
+              onClose={handleOnCloseActionModal}
+            />
           )}
           {isEdit && (
             <EditEnvironmentModal
               isOpen={isEdit}
-              onClose={onCloseActionModal}
+              onClose={handleOnCloseActionModal}
             />
           )}
           {openConfirmModal && (

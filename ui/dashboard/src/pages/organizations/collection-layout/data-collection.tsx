@@ -5,6 +5,7 @@ import {
 } from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
+import { PAGE_PATH_PROJECTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { Organization } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
@@ -31,7 +32,7 @@ export const useColumns = ({
         const organization = row.original;
         return (
           <Link
-            to={`${organization.id}`}
+            to={`${organization.id}${PAGE_PATH_PROJECTS}`}
             className="underline text-primary-500 typo-para-medium"
           >
             {organization.name}

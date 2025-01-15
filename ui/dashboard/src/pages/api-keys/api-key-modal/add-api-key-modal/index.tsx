@@ -44,7 +44,7 @@ export interface AddAPIKeyForm {
   role: APIKeyRole;
 }
 
-export const formSchema = yup.object().shape({
+const formSchema = yup.object().shape({
   name: yup.string().required(),
   environmentId: yup.string().required(),
   description: yup.string(),

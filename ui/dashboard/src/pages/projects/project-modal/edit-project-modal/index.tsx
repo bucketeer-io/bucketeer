@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
 import { projectUpdater } from '@api/project';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
@@ -10,6 +9,7 @@ import {
 import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from 'hooks';
+import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import Button from 'components/button';
@@ -21,6 +21,7 @@ import Spinner from 'components/spinner';
 import TextArea from 'components/textarea';
 
 interface EditProjectModalProps {
+  _projectId?: string;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -35,12 +36,18 @@ const formSchema = yup.object().shape({
   description: yup.string()
 });
 
-const EditProjectModal = ({ isOpen, onClose }: EditProjectModalProps) => {
+const EditProjectModal = ({
+  _projectId,
+  isOpen,
+  onClose
+}: EditProjectModalProps) => {
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
-  const params = useParams();
-  const projectId = useMemo(() => params['*'], [params]);
+  const { id, errorToast } = useActionWithURL({
+    idKey: '*'
+  });
+  const projectId = useMemo(() => _projectId || id, [id, _projectId]);
 
   const { data, isLoading, error } = useQueryProjectDetails({
     params: {
@@ -57,13 +64,6 @@ const EditProjectModal = ({ isOpen, onClose }: EditProjectModalProps) => {
       description: ''
     }
   });
-
-  const errorToast = (error: Error) =>
-    notify({
-      toastType: 'toast',
-      messageType: 'error',
-      message: error?.message || 'Something went wrong.'
-    });
 
   const onSubmit: SubmitHandler<EditProjectForm> = async values => {
     try {

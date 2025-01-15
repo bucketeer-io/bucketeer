@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
 import { EnvironmentRoleItem } from '@api/account/account-creator';
 import { accountUpdater } from '@api/account/account-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -12,6 +11,7 @@ import { invalidateAccounts } from '@queries/accounts';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
+import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { EnvironmentRoleType, OrganizationRole } from '@types';
@@ -72,8 +72,10 @@ const EditMemberModal = ({ isOpen, onClose }: EditMemberModalProps) => {
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const params = useParams();
-  const memberEmail = useMemo(() => params['*'], [params]);
+
+  const { id: memberEmail, errorToast } = useActionWithURL({
+    idKey: '*'
+  });
 
   const {
     data: memberCollection,
@@ -119,17 +121,6 @@ const EditMemberModal = ({ isOpen, onClose }: EditMemberModalProps) => {
     }
     return false;
   }, [isDirty, isValid, memberEnvironments]);
-
-  const errorToast = useCallback(
-    (error: Error) => {
-      notify({
-        messageType: 'error',
-        toastType: 'toast',
-        message: error?.message || 'Something went wrong.'
-      });
-    },
-    [notify]
-  );
 
   const onSubmit: SubmitHandler<EditMemberForm> = async values => {
     try {
