@@ -4758,6 +4758,10 @@ definitions:
         type: string
       language:
         type: string
+      tags:
+        type: array
+        items:
+          type: string
   accountCreateAccountV2Request:
     type: object
     properties:

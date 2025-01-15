@@ -566,6 +566,12 @@
                 "id": 8,
                 "name": "language",
                 "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -631,6 +637,17 @@
                 "id": 2,
                 "name": "avatar_file_type",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ChangeTagsCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },

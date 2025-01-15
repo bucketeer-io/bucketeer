@@ -30,6 +30,7 @@ message CreateAccountV2Command {
   string first_name = 6;
   string last_name = 7;
   string language = 8;
+  repeated string tags = 9;
 }
 
 message ChangeAccountV2NameCommand {
@@ -55,6 +56,10 @@ message ChangeAccountV2AvatarImageUrlCommand {
 message ChangeAccountV2AvatarCommand {
   bytes avatar_image = 1;
   string avatar_file_type = 2;
+}
+
+message ChangeTagsCommand {
+  repeated string tags = 1;
 }
 
 message ChangeAccountV2LastSeenCommand {
