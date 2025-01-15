@@ -532,7 +532,7 @@ proto.bucketeer.account.Account.prototype.setDeleted = function (value) {
  * @private {!Array<number>}
  * @const
  */
-proto.bucketeer.account.AccountV2.repeatedFields_ = [6, 10];
+proto.bucketeer.account.AccountV2.repeatedFields_ = [6, 10, 18];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -592,7 +592,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         lastSeen: jspb.Message.getFieldWithDefault(msg, 14, 0),
         avatarFileType: jspb.Message.getFieldWithDefault(msg, 15, ''),
         avatarImage: msg.getAvatarImage_asB64(),
-        environmentCount: jspb.Message.getFieldWithDefault(msg, 17, 0)
+        environmentCount: jspb.Message.getFieldWithDefault(msg, 17, 0),
+        tagsList:
+          (f = jspb.Message.getRepeatedField(msg, 18)) == null ? undefined : f
       };
 
     if (includeInstance) {
@@ -714,6 +716,10 @@ proto.bucketeer.account.AccountV2.deserializeBinaryFromReader = function (
         var value = /** @type {number} */ (reader.readInt32());
         msg.setEnvironmentCount(value);
         break;
+      case 18:
+        var value = /** @type {string} */ (reader.readString());
+        msg.addTags(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -819,6 +825,10 @@ proto.bucketeer.account.AccountV2.serializeBinaryToWriter = function (
   f = message.getEnvironmentCount();
   if (f !== 0) {
     writer.writeInt32(17, f);
+  }
+  f = message.getTagsList();
+  if (f.length > 0) {
+    writer.writeRepeatedString(18, f);
   }
 };
 
@@ -1500,6 +1510,44 @@ proto.bucketeer.account.AccountV2.prototype.setEnvironmentCount = function (
   value
 ) {
   return jspb.Message.setProto3IntField(this, 17, value);
+};
+
+/**
+ * repeated string tags = 18;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.account.AccountV2.prototype.getTagsList = function () {
+  return /** @type {!Array<string>} */ (
+    jspb.Message.getRepeatedField(this, 18)
+  );
+};
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.setTagsList = function (value) {
+  return jspb.Message.setField(this, 18, value || []);
+};
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.addTags = function (
+  value,
+  opt_index
+) {
+  return jspb.Message.addToRepeatedField(this, 18, value, opt_index);
+};
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.clearTagsList = function () {
+  return this.setTagsList([]);
 };
 
 /**

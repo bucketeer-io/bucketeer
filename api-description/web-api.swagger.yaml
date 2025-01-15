@@ -4551,6 +4551,10 @@ definitions:
       environmentCount:
         type: integer
         format: int32
+      tags:
+        type: array
+        items:
+          type: string
   accountAccountV2EnvironmentRole:
     type: object
     properties:
