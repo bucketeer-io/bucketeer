@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { ID_NEW, PAGE_PATH_PROJECTS } from 'constants/routing';
+import { PAGE_PATH_PROJECTS } from 'constants/routing';
 import useActionWithURL from 'hooks/use-action-with-url';
 import PageLayout from 'elements/page-layout';
 import { EmptyCollection } from './collection-layout/empty-collection';
@@ -16,8 +16,6 @@ const PageLoader = () => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { isAdd, isEdit, onOpenAddModal, onOpenEditModal, onCloseActionModal } =
     useActionWithURL({
-      idKey: '*',
-      addPath: `${location.pathname}/${ID_NEW}`,
       closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_PROJECTS}`
     });
   const {

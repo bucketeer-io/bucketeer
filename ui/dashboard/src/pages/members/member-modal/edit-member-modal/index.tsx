@@ -29,7 +29,7 @@ import {
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
-import Spinner from 'components/spinner';
+import FormLoading from 'elements/form-loading';
 import {
   defaultEnvironmentRole,
   languageList,
@@ -73,9 +73,7 @@ const EditMemberModal = ({ isOpen, onClose }: EditMemberModalProps) => {
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const { id: memberEmail, errorToast } = useActionWithURL({
-    idKey: '*'
-  });
+  const { id: memberEmail, errorToast } = useActionWithURL({});
 
   const {
     data: memberCollection,
@@ -188,9 +186,7 @@ const EditMemberModal = ({ isOpen, onClose }: EditMemberModalProps) => {
   return (
     <SlideModal title={t('update-member')} isOpen={isOpen} onClose={onClose}>
       {isLoading ? (
-        <div className="flex-center py-10">
-          <Spinner />
-        </div>
+        <FormLoading />
       ) : (
         <div className="w-full p-5 pb-28">
           <p className="text-gray-800 typo-head-bold-small">

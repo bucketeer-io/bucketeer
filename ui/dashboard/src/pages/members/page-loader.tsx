@@ -6,7 +6,7 @@ import { accountDeleter } from '@api/account/account-deleter';
 import { invalidateAccounts } from '@queries/accounts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { ID_NEW, PAGE_PATH_MEMBERS } from 'constants/routing';
+import { PAGE_PATH_MEMBERS } from 'constants/routing';
 import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
@@ -37,10 +37,7 @@ const PageLoader = () => {
     onOpenAddModal,
     onOpenEditModal,
     onCloseActionModal
-  } = useActionWithURL({
-    idKey: '*',
-    addPath: `${location.pathname}/${ID_NEW}`
-  });
+  } = useActionWithURL({});
 
   const {
     data: collection,

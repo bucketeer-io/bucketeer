@@ -29,8 +29,8 @@ import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
-import Spinner from 'components/spinner';
 import TextArea from 'components/textarea';
+import FormLoading from 'elements/form-loading';
 
 interface EditAPIKeyModalProps {
   isOpen: boolean;
@@ -63,13 +63,7 @@ const EditAPIKeyModal = ({ isOpen, onClose }: EditAPIKeyModalProps) => {
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const {
-    id: apiId,
-    state,
-    errorToast
-  } = useActionWithURL({
-    idKey: '*'
-  });
+  const { id: apiId, state, errorToast } = useActionWithURL({});
 
   const { data: collection } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
@@ -193,9 +187,7 @@ const EditAPIKeyModal = ({ isOpen, onClose }: EditAPIKeyModalProps) => {
   return (
     <SlideModal title={t('update-api-key')} isOpen={isOpen} onClose={onClose}>
       {fetchApiLoading ? (
-        <div className="flex-center py-10">
-          <Spinner />
-        </div>
+        <FormLoading />
       ) : (
         <div className="w-full p-5 pb-28">
           <p className="text-gray-800 typo-head-bold-small">

@@ -163,7 +163,7 @@ export const EnvironmentRoot = memo(
           path={`${PAGE_PATH_NOTIFICATIONS}/*`}
           element={<NotificationsPage />}
         />
-        <Route path={`${PAGE_PATH_PUSHES}`} element={<PushesPage />} />
+        <Route path={`${PAGE_PATH_PUSHES}/*`} element={<PushesPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     );

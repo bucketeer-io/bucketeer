@@ -5,12 +5,12 @@ import { AnyObject } from 'yup';
 import { useToast } from './use-toast';
 
 interface Props {
-  idKey: string;
+  idKey?: string;
   addPath?: string;
   closeModalPath?: string;
 }
 
-const useActionWithURL = ({ idKey, addPath, closeModalPath }: Props) => {
+const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
   const { [idKey]: action, ...params } = useParams();
   const navigate = useNavigate();
   const { notify } = useToast();
@@ -20,9 +20,8 @@ const useActionWithURL = ({ idKey, addPath, closeModalPath }: Props) => {
   const isAdd = useMemo(() => action === ID_NEW, [action]);
   const isEdit = useMemo(() => action && !isAdd, [action, isAdd]);
 
-  const onOpenAddModal = (path?: string) => {
-    if (!!addPath || !!path) navigate(String(addPath || path));
-  };
+  const onOpenAddModal = () =>
+    navigate(addPath || `${location.pathname}/${ID_NEW}`);
 
   const onOpenEditModal = (path: string, state?: AnyObject) =>
     navigate(path, {

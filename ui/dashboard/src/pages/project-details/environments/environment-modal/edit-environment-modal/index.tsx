@@ -20,8 +20,8 @@ import Divider from 'components/divider';
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
-import Spinner from 'components/spinner';
 import TextArea from 'components/textarea';
+import FormLoading from 'elements/form-loading';
 
 interface EditEnvironmentModalProps {
   isOpen: boolean;
@@ -53,9 +53,7 @@ const EditEnvironmentModal = ({
     id: environmentId,
     params: { projectId },
     errorToast
-  } = useActionWithURL({
-    idKey: '*'
-  });
+  } = useActionWithURL({});
 
   const {
     data: environmentCollection,
@@ -131,9 +129,7 @@ const EditEnvironmentModal = ({
   return (
     <SlideModal title={t('update-env')} isOpen={isOpen} onClose={onClose}>
       {isLoading ? (
-        <div className="flex-center py-10">
-          <Spinner />
-        </div>
+        <FormLoading />
       ) : (
         <div className="w-full p-5">
           <p className="text-gray-800 typo-head-bold-small">

@@ -4,11 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { environmentArchive, environmentUnarchive } from '@api/environment';
 import { invalidateEnvironments } from '@queries/environments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  ID_NEW,
-  PAGE_PATH_ENVIRONMENTS,
-  PAGE_PATH_PROJECTS
-} from 'constants/routing';
+import { PAGE_PATH_ENVIRONMENTS, PAGE_PATH_PROJECTS } from 'constants/routing';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
@@ -34,10 +30,7 @@ const ProjectEnvironments = () => {
     onOpenAddModal,
     onOpenEditModal,
     onCloseActionModal
-  } = useActionWithURL({
-    idKey: '*',
-    addPath: `${location.pathname}/${ID_NEW}`
-  });
+  } = useActionWithURL({});
 
   const {
     data: collection,

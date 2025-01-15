@@ -25,8 +25,8 @@ import {
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
-import Spinner from 'components/spinner';
 import TextArea from 'components/textarea';
+import FormLoading from 'elements/form-loading';
 
 interface EditOrganizationModalProps {
   isOpen: boolean;
@@ -53,9 +53,7 @@ const EditOrganizationModal = ({
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
 
-  const { id: organizationId, errorToast } = useActionWithURL({
-    idKey: '*'
-  });
+  const { id: organizationId, errorToast } = useActionWithURL({});
 
   const { data, isLoading, error } = useQueryOrganizationDetails({
     params: {
@@ -133,9 +131,7 @@ const EditOrganizationModal = ({
   return (
     <SlideModal title={t('update-org')} isOpen={isOpen} onClose={onClose}>
       {isLoading ? (
-        <div className="flex-center py-10">
-          <Spinner />
-        </div>
+        <FormLoading />
       ) : (
         <div className="w-full p-5">
           <p className="text-gray-800 typo-head-bold-small">

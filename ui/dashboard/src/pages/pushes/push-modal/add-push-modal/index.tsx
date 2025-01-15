@@ -86,9 +86,9 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
   } = form;
 
   const onSubmit: SubmitHandler<AddPushForm> = async values => {
-    try {
-      covertFileToByteString(files[0], data => {
-        pushCreator({ ...values, fcmServiceAccount: data }).then(() => {
+    covertFileToByteString(files[0], data => {
+      pushCreator({ ...values, fcmServiceAccount: data })
+        .then(() => {
           notify({
             toastType: 'toast',
             messageType: 'success',
@@ -100,16 +100,15 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
           });
           invalidatePushes(queryClient);
           onClose();
-        });
-      });
-    } catch (error) {
-      const errorMessage = (error as Error)?.message;
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: errorMessage || 'Something went wrong.'
-      });
-    }
+        })
+        .catch(error =>
+          notify({
+            toastType: 'toast',
+            messageType: 'error',
+            message: (error as Error)?.message || 'Something went wrong.'
+          })
+        );
+    });
   };
 
   return (

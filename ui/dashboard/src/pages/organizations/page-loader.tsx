@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { organizationArchive, organizationUnarchive } from '@api/organization';
 import { invalidateOrganizations } from '@queries/organizations';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ID_NEW, PAGE_PATH_ORGANIZATIONS } from 'constants/routing';
+import { PAGE_PATH_ORGANIZATIONS } from 'constants/routing';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
@@ -25,8 +25,6 @@ const PageLoader = () => {
 
   const { isAdd, isEdit, onOpenAddModal, onOpenEditModal, onCloseActionModal } =
     useActionWithURL({
-      idKey: '*',
-      addPath: `${location.pathname}/${ID_NEW}`,
       closeModalPath: `${PAGE_PATH_ORGANIZATIONS}`
     });
 

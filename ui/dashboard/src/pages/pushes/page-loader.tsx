@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Trans } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { pushUpdater } from '@api/push';
 import { invalidatePushes } from '@queries/pushes';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { PAGE_PATH_PUSHES } from 'constants/routing';
+import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Push } from '@types';
@@ -20,7 +23,13 @@ const PageLoader = () => {
   const { t } = useTranslation(['table']);
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const location = useLocation();
+
+  const { isAdd, isEdit, onOpenAddModal, onOpenEditModal, onCloseActionModal } =
+    useActionWithURL({
+      closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_PUSHES}`
+    });
 
   const {
     data: collection,
@@ -29,31 +38,26 @@ const PageLoader = () => {
     isError
   } = useFetchPushes({
     pageSize: 1,
-    organizationId: currenEnvironment.organizationId
+    organizationId: currentEnvironment.organizationId
   });
 
   const [selectedPush, setSelectedPush] = useState<Push>();
   const [isDisabling, setIsDisabling] = useState<boolean>(false);
 
-  const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
-    useToggleOpen(false);
-
-  const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
-    useToggleOpen(false);
-
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
 
   const onHandleActions = (push: Push, type: PushActionsType) => {
+    if (type === 'EDIT')
+      return onOpenEditModal(`${location.pathname}/${push.id}`, {
+        environmentId: push.environmentId
+      });
     setSelectedPush(push);
-
-    if (type === 'EDIT') return onOpenEditModal();
+    onOpenConfirmModal();
     if (type === 'ENABLE') {
-      setIsDisabling(false);
-      return onOpenConfirmModal();
+      return setIsDisabling(false);
     }
     setIsDisabling(true);
-    onOpenConfirmModal();
   };
 
   const mutationState = useMutation({
@@ -93,16 +97,8 @@ const PageLoader = () => {
         <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
       )}
 
-      {isOpenAddModal && (
-        <AddPushModal isOpen={isOpenAddModal} onClose={onCloseAddModal} />
-      )}
-      {isOpenEditModal && selectedPush && (
-        <EditPushModal
-          isOpen={isOpenEditModal}
-          onClose={onCloseEditModal}
-          push={selectedPush}
-        />
-      )}
+      {isAdd && <AddPushModal isOpen={isAdd} onClose={onCloseActionModal} />}
+      {isEdit && <EditPushModal isOpen={isEdit} onClose={onCloseActionModal} />}
       {openConfirmModal && (
         <ConfirmModal
           isOpen={openConfirmModal}

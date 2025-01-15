@@ -5,7 +5,7 @@ import { apiKeyUpdater } from '@api/api-key';
 import { invalidateAPIKeys } from '@queries/api-keys';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { ID_NEW, PAGE_PATH_APIKEYS } from 'constants/routing';
+import { PAGE_PATH_APIKEYS } from 'constants/routing';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
@@ -28,8 +28,6 @@ const PageLoader = () => {
 
   const { isAdd, isEdit, onOpenAddModal, onOpenEditModal, onCloseActionModal } =
     useActionWithURL({
-      idKey: '*',
-      addPath: `${location.pathname}/${String(ID_NEW)}`,
       closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}`
     });
 

@@ -17,8 +17,8 @@ import { ButtonBar } from 'components/button-bar';
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
-import Spinner from 'components/spinner';
 import TextArea from 'components/textarea';
+import FormLoading from 'elements/form-loading';
 
 interface EditProjectModalProps {
   _projectId?: string;
@@ -44,9 +44,7 @@ const EditProjectModal = ({
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
-  const { id, errorToast } = useActionWithURL({
-    idKey: '*'
-  });
+  const { id, errorToast } = useActionWithURL({});
   const projectId = useMemo(() => _projectId || id, [id, _projectId]);
 
   const { data, isLoading, error } = useQueryProjectDetails({
@@ -112,9 +110,7 @@ const EditProjectModal = ({
   return (
     <SlideModal title={t('update-project')} isOpen={isOpen} onClose={onClose}>
       {isLoading ? (
-        <div className="flex-center py-10">
-          <Spinner />
-        </div>
+        <FormLoading />
       ) : (
         <div className="w-full p-5">
           <p className="text-gray-800 typo-head-bold-small">

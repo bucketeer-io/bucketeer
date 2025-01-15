@@ -31,7 +31,7 @@ import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import SearchInput from 'components/search-input';
-import Spinner from 'components/spinner';
+import FormLoading from 'elements/form-loading';
 
 interface EditNotificationModalProps {
   isOpen: boolean;
@@ -252,9 +252,7 @@ const EditNotificationModal = ({
       onClose={onClose}
     >
       {isLoading ? (
-        <div className="flex-center py-10">
-          <Spinner />
-        </div>
+        <FormLoading />
       ) : (
         <div className="w-full p-5 pb-28">
           <div className="typo-para-small text-gray-600 mb-3">
