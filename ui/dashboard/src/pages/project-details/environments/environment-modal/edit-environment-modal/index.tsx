@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { environmentUpdater } from '@api/environment';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -49,11 +49,8 @@ const EditEnvironmentModal = ({
   const { notify } = useToast();
   const { data: collection } = useQueryProjects();
 
-  const {
-    id: environmentId,
-    params: { projectId },
-    errorToast
-  } = useActionWithURL({});
+  const { id: environmentId, params, errorToast } = useActionWithURL({});
+  const projectId = useMemo(() => params?.projectId, [params]);
 
   const {
     data: environmentCollection,

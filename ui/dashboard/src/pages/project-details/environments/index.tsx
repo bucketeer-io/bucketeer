@@ -26,7 +26,7 @@ const ProjectEnvironments = () => {
   const {
     isAdd,
     isEdit,
-    params: { envUrlCode, projectId },
+    params,
     onOpenAddModal,
     onOpenEditModal,
     onCloseActionModal
@@ -44,7 +44,7 @@ const ProjectEnvironments = () => {
 
   const handleOnCloseActionModal = () =>
     onCloseActionModal(
-      `/${envUrlCode}${PAGE_PATH_PROJECTS}/${projectId}${PAGE_PATH_ENVIRONMENTS}`
+      `/${params?.envUrlCode}${PAGE_PATH_PROJECTS}/${params?.projectId}${PAGE_PATH_ENVIRONMENTS}`
     );
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =

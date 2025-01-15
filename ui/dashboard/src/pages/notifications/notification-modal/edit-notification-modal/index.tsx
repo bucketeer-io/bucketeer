@@ -138,13 +138,7 @@ const EditNotificationModal = ({
   const [filteredTypes, setSearchTypes] =
     useState<NotificationOption[]>(SOURCE_TYPE_ITEMS);
 
-  const {
-    id: notificationId,
-    state,
-    errorToast
-  } = useActionWithURL({
-    idKey: '*'
-  });
+  const { id: notificationId, state, errorToast } = useActionWithURL({});
   const environmentId = useMemo(() => state?.environmentId, [state]);
 
   const {

@@ -33,7 +33,7 @@ const PageLoader = () => {
   const {
     isAdd,
     isEdit,
-    params: { envUrlCode },
+    params,
     onOpenAddModal,
     onOpenEditModal,
     onCloseActionModal
@@ -53,7 +53,7 @@ const PageLoader = () => {
   const [isDisabling, setIsDisabling] = useState<boolean>(false);
 
   const handleOnCloseActionModal = () =>
-    onCloseActionModal(`/${envUrlCode}${PAGE_PATH_MEMBERS}`);
+    onCloseActionModal(`/${params?.envUrlCode}${PAGE_PATH_MEMBERS}`);
 
   const [isOpenDetailsModal, onOpenDetailsModal, onCloseDetailsModal] =
     useToggleOpen(false);
