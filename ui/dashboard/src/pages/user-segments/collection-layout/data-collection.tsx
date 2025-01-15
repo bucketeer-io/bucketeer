@@ -44,7 +44,7 @@ export const useColumns = ({
             onClick={() => onActionHandler(segment, 'EDIT')}
             className="flex items-center gap-x-2 cursor-pointer"
           >
-            <p className="underline text-primary-500 typo-para-medium truncate">
+            <p className="underline text-primary-500 typo-para-medium line-clamp-2 break-all">
               {segment.name}
             </p>
             {getUploadingStatus(segment) && <Spinner />}
