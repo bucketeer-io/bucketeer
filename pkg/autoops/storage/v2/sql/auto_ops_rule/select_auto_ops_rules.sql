@@ -13,4 +13,3 @@ FROM
 JOIN feature ft ON
     aor.feature_id = ft.id AND
     aor.environment_id = ft.environment_id
-%s %s %s
