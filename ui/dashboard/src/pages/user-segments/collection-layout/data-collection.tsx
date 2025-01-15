@@ -44,7 +44,7 @@ export const useColumns = ({
             onClick={() => onActionHandler(segment, 'EDIT')}
             className="flex items-center gap-x-2 cursor-pointer"
           >
-            <p className="underline text-primary-500 typo-para-medium">
+            <p className="underline text-primary-500 typo-para-medium truncate">
               {segment.name}
             </p>
             {getUploadingStatus(segment) && <Spinner />}
@@ -90,21 +90,6 @@ export const useColumns = ({
       }
     },
     {
-      accessorKey: 'updatedAt',
-      header: t('table:updated-at'),
-      size: 200,
-      cell: ({ row }) => {
-        const segment = row.original;
-        return (
-          <div className="text-gray-700 typo-para-medium">
-            {Number(segment.updatedAt) === 0
-              ? t('never')
-              : formatDateTime(segment.updatedAt)}
-          </div>
-        );
-      }
-    },
-    {
       accessorKey: 'status',
       header: `${t('status')}`,
       size: 150,
@@ -126,6 +111,21 @@ export const useColumns = ({
               : segment.isInUseStatus
                 ? 'In Use'
                 : 'Not In Use'}
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: 'updatedAt',
+      header: t('table:updated-at'),
+      size: 200,
+      cell: ({ row }) => {
+        const segment = row.original;
+        return (
+          <div className="text-gray-700 typo-para-medium">
+            {Number(segment.updatedAt) === 0
+              ? t('never')
+              : formatDateTime(segment.updatedAt)}
           </div>
         );
       }
