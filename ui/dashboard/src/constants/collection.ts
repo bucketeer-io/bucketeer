@@ -22,7 +22,7 @@ export const sortingListFields: SortingListFields = {
   creatorEmail: 'CREATOR_EMAIL',
   lastSeen: 'LAST_SEEN',
   environment: 'ENVIRONMENT',
-  tags: 'TAGS',
   connections: 'CONNECTIONS',
-  users: 'USERS'
+  users: 'USERS',
+  tags: 'TAGS'
 };
