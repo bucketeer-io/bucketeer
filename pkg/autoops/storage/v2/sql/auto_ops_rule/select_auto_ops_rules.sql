@@ -9,4 +9,3 @@ SELECT
     status
 FROM
     auto_ops_rule
-%s %s %s
