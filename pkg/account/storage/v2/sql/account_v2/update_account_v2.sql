@@ -8,6 +8,7 @@ SET
     avatar_image_url = ?,
     avatar_file_type = ?,
     avatar_image = ?,
+    tags = ?,
     organization_role = ?,
     environment_roles = ?,
     disabled = ?,

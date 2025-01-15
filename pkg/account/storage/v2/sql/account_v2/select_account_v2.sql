@@ -7,6 +7,7 @@ SELECT
     avatar_image_url,
     avatar_file_type,
     avatar_image,
+    tags,
     organization_id,
     organization_role,
     environment_roles,
