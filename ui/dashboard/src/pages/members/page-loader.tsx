@@ -30,7 +30,7 @@ const PageLoader = () => {
   const location = useLocation();
   const params = useParams();
   const isAdd = useMemo(() => params['*'] && params['*'] === 'new', [params]);
-  const isEdit = useMemo(() => params['*'] && params['*'] !== 'new', [params]);
+  const isEdit = useMemo(() => params['*'] && !isAdd, [params, isAdd]);
 
   const navigate = useNavigate();
 

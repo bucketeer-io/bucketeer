@@ -17,6 +17,7 @@ export const ProjectsRoot = () => {
   return (
     <Routes>
       <Route index element={<ProjectsPage />} />
+      <Route path=":projectId" element={<ProjectsPage />} />
       <Route path=":projectId/*" element={<ProjectDetailsPage />} />
     </Routes>
   );

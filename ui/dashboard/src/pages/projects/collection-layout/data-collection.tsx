@@ -5,7 +5,7 @@ import {
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { PAGE_PATH_PROJECTS } from 'constants/routing';
+import { PAGE_PATH_ENVIRONMENTS, PAGE_PATH_PROJECTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { Project } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
@@ -32,7 +32,7 @@ export const useColumns = ({
         const project = row.original;
         return (
           <Link
-            to={`/${currentEnvironment.urlCode}${PAGE_PATH_PROJECTS}/${project.id}`}
+            to={`/${currentEnvironment.urlCode}${PAGE_PATH_PROJECTS}/${project.id}${PAGE_PATH_ENVIRONMENTS}`}
             className="underline text-primary-500 typo-para-medium"
           >
             {project.name}

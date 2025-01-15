@@ -30,7 +30,7 @@ const ProjectEnvironments = () => {
   const navigate = useNavigate();
 
   const isAdd = useMemo(() => params['*'] === 'new', [params]);
-  const isEdit = useMemo(() => params['*'] && params['*'] !== 'new', [params]);
+  const isEdit = useMemo(() => params['*'] && !isAdd, [params, isAdd]);
 
   const {
     data: collection,

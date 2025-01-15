@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { useToggleOpen } from 'hooks/use-toggle-open';
+import { useMemo } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { ID_NEW, PAGE_PATH_PROJECTS } from 'constants/routing';
 import { Project } from '@types';
 import PageLayout from 'elements/page-layout';
 import { EmptyCollection } from './collection-layout/empty-collection';
@@ -9,6 +11,13 @@ import AddProjectModal from './project-modal/add-project-modal';
 import EditProjectModal from './project-modal/edit-project-modal';
 
 const PageLoader = () => {
+  const params = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
   const {
     data: collection,
     isLoading,
@@ -16,12 +25,15 @@ const PageLoader = () => {
     isError
   } = useFetchProjects({ pageSize: 1 });
 
-  const [selectedProject, setSelectedProject] = useState<Project>();
+  const isAdd = useMemo(() => params['*'] && params['*'] === ID_NEW, [params]);
+  const isEdit = useMemo(() => params['*'] && !isAdd, [params, isAdd]);
 
-  const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
-    useToggleOpen(false);
-  const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
-    useToggleOpen(false);
+  const onOpenAddModal = () => navigate(`${location.pathname}/${ID_NEW}`);
+  const onOpenEditModal = (project: Project) =>
+    navigate(`${location.pathname}/${project.id}`);
+
+  const onCloseActionModal = () =>
+    navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_PROJECTS}`);
 
   const isEmpty = collection?.projects.length === 0;
 
@@ -36,23 +48,11 @@ const PageLoader = () => {
           <EmptyCollection onAdd={onOpenAddModal} />
         </PageLayout.EmptyState>
       ) : (
-        <PageContent
-          onAdd={onOpenAddModal}
-          onEdit={value => {
-            setSelectedProject(value);
-            onOpenEditModal();
-          }}
-        />
+        <PageContent onAdd={onOpenAddModal} onEdit={onOpenEditModal} />
       )}
-      {isOpenAddModal && (
-        <AddProjectModal isOpen={isOpenAddModal} onClose={onCloseAddModal} />
-      )}
-      {isOpenEditModal && (
-        <EditProjectModal
-          isOpen={isOpenEditModal}
-          onClose={onCloseEditModal}
-          project={selectedProject!}
-        />
+      {isAdd && <AddProjectModal isOpen={isAdd} onClose={onCloseActionModal} />}
+      {isEdit && (
+        <EditProjectModal isOpen={isEdit} onClose={onCloseActionModal} />
       )}
     </>
   );
