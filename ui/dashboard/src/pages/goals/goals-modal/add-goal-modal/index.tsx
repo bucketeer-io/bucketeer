@@ -38,7 +38,7 @@ const formSchema = yup.object().shape({
 
 const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
@@ -76,7 +76,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
       id,
       name,
       description,
-      environmentId: currenEnvironment.id
+      environmentId: currentEnvironment.id
     });
     if (resp.goal) addSuccess(values.name);
   };

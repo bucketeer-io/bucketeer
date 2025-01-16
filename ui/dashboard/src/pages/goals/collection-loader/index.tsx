@@ -25,7 +25,7 @@ const CollectionLoader = ({
 }) => {
   const columns = useColumns({ onActions });
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const {
     data: collection,
@@ -34,7 +34,7 @@ const CollectionLoader = ({
     isError
   } = useFetchGoals({
     ...filters,
-    environmentId: currenEnvironment.id
+    environmentId: currentEnvironment.id
   });
 
   const onSortingChangeHandler = (sorting: SortingState) => {

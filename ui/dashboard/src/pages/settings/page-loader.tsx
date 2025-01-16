@@ -5,10 +5,10 @@ import PageContent from './page-content';
 
 const PageLoader = () => {
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const { data, isLoading, refetch, isError } = useQueryOrganizationDetails({
-    params: { id: currenEnvironment.organizationId }
+    params: { id: currentEnvironment.organizationId }
   });
 
   const organization = data?.organization;

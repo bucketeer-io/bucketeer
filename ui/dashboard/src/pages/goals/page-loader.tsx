@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useToggleOpen } from 'hooks';
+import useActionWithURL from 'hooks/use-action-with-url';
 import { Goal } from '@types';
 import PageLayout from 'elements/page-layout';
 import { EmptyCollection } from './collection-layout/empty-collection';
@@ -12,7 +14,11 @@ import { GoalActions } from './types';
 
 const PageLoader = () => {
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const { isAdd, onOpenAddModal, onCloseActionModal } = useActionWithURL({
+    closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_GOALS}`
+  });
 
   const {
     data: collection,
@@ -21,13 +27,10 @@ const PageLoader = () => {
     isError
   } = useFetchGoals({
     pageSize: 1,
-    environmentId: currenEnvironment.id
+    environmentId: currentEnvironment.id
   });
 
   const [selectedGoal, setSelectedGoal] = useState<Goal>();
-
-  const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
-    useToggleOpen(false);
 
   const [isOpenConnectionModal, onOpenConnectionModal, onCloseConnectionModal] =
     useToggleOpen(false);
@@ -55,9 +58,7 @@ const PageLoader = () => {
         <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
       )}
 
-      {isOpenAddModal && (
-        <AddGoalModal isOpen={isOpenAddModal} onClose={onCloseAddModal} />
-      )}
+      {isAdd && <AddGoalModal isOpen={isAdd} onClose={onCloseActionModal} />}
       {isOpenConnectionModal && selectedGoal && (
         <ConnectionsModal
           isOpen={isOpenConnectionModal}
