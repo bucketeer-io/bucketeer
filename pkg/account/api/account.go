@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
@@ -33,8 +34,10 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	tagdomain "github.com/bucketeer-io/bucketeer/pkg/tag/domain"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
 )
 
 func (s *AccountService) CreateAccountV2(
@@ -122,6 +125,9 @@ func (s *AccountService) CreateAccountV2(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
+				zap.Any("environmentRoles", req.Command.EnvironmentRoles),
+				zap.String("email", req.Command.Email),
+				zap.Strings("tags", req.Command.Tags),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -132,6 +138,22 @@ func (s *AccountService) CreateAccountV2(
 			return nil, statusInternal.Err()
 		}
 		return nil, dt.Err()
+	}
+	// Upsert tags
+	for _, envRole := range req.Command.EnvironmentRoles {
+		if err := s.upsertTags(ctx, req.Command.Tags, envRole.EnvironmentId); err != nil {
+			s.logger.Error(
+				"Failed to upsert account tags",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationId", req.OrganizationId),
+					zap.String("environmentId", envRole.EnvironmentId),
+					zap.String("email", req.Command.Email),
+					zap.Strings("tags", req.Command.Tags),
+				)...,
+			)
+			return nil, statusInternal.Err()
+		}
 	}
 	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
 }
@@ -244,7 +266,22 @@ func (s *AccountService) createAccountV2NoCommand(
 		)
 		return nil, err
 	}
-
+	// Upsert tags
+	for _, envRole := range req.EnvironmentRoles {
+		if err := s.upsertTags(ctx, req.Tags, envRole.EnvironmentId); err != nil {
+			s.logger.Error(
+				"Failed to upsert account tags",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationId", req.OrganizationId),
+					zap.String("environmentId", envRole.EnvironmentId),
+					zap.String("email", req.Email),
+					zap.Strings("tags", req.Tags),
+				)...,
+			)
+			return nil, statusInternal.Err()
+		}
+	}
 	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
 }
 
@@ -293,6 +330,35 @@ func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
 	err = s.accountStorage.UpdateAccountV2(ctx, updated)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (s *AccountService) upsertTags(
+	ctx context.Context,
+	tags []string,
+	environmentID string,
+) error {
+	for _, tag := range tags {
+		trimed := strings.TrimSpace(tag)
+		if trimed == "" {
+			continue
+		}
+		t, err := tagdomain.NewTag(trimed, environmentID, tagproto.Tag_ACCOUNT)
+		if err != nil {
+			s.logger.Error(
+				"Failed to create domain tag",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", environmentID),
+					zap.String("tagId", tag),
+				)...,
+			)
+			return err
+		}
+		if err := s.tagStorage.UpsertTag(ctx, t); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -392,6 +458,24 @@ func (s *AccountService) UpdateAccountV2(
 		}
 		return nil, dt.Err()
 	}
+	// Upsert tags
+	if req.ChangeTagsCommand != nil {
+		for _, envRole := range updatedAccountPb.EnvironmentRoles {
+			if err := s.upsertTags(ctx, req.ChangeTagsCommand.Tags, envRole.EnvironmentId); err != nil {
+				s.logger.Error(
+					"Failed to upsert account tags",
+					log.FieldsFromImcomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("organizationId", req.OrganizationId),
+						zap.String("environmentId", envRole.EnvironmentId),
+						zap.String("email", updatedAccountPb.Email),
+						zap.Strings("tags", req.ChangeTagsCommand.Tags),
+					)...,
+				)
+				return nil, statusInternal.Err()
+			}
+		}
+	}
 	return &accountproto.UpdateAccountV2Response{
 		Account: updatedAccountPb,
 	}, nil
@@ -472,6 +556,24 @@ func (s *AccountService) updateAccountV2NoCommand(
 			return nil, statusInternal.Err()
 		}
 		return nil, dt.Err()
+	}
+	// Upsert tags
+	if req.Tags != nil {
+		for _, envRole := range updatedAccountPb.EnvironmentRoles {
+			if err := s.upsertTags(ctx, req.Tags, envRole.EnvironmentId); err != nil {
+				s.logger.Error(
+					"Failed to upsert account tags",
+					log.FieldsFromImcomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("organizationId", req.OrganizationId),
+						zap.String("environmentId", envRole.EnvironmentId),
+						zap.String("email", req.Email),
+						zap.Strings("tags", req.Tags),
+					)...,
+				)
+				return nil, statusInternal.Err()
+			}
+		}
 	}
 	return &accountproto.UpdateAccountV2Response{
 		Account: updatedAccountPb,

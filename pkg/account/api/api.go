@@ -25,13 +25,13 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	v2 "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
-
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/pkg/role"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	tagstorage "github.com/bucketeer-io/bucketeer/pkg/tag/storage"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
@@ -60,6 +60,7 @@ func WithLogger(logger *zap.Logger) Option {
 type AccountService struct {
 	environmentClient environmentclient.Client
 	accountStorage    v2.AccountStorage
+	tagStorage        tagstorage.TagStorage
 	publisher         publisher.Publisher
 	opts              *options
 	logger            *zap.Logger
@@ -78,6 +79,7 @@ func NewAccountService(
 	return &AccountService{
 		environmentClient: e,
 		accountStorage:    v2.NewAccountStorage(mysqlClient),
+		tagStorage:        tagstorage.NewTagStorage(mysqlClient),
 		publisher:         publisher,
 		opts:              &options,
 		logger:            options.logger.Named("api"),
