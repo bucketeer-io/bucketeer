@@ -1,4 +1,4 @@
-h1:1U5jIPq+qybRztakDvsHfiZpa0H25nkrjJikshHIBsY=
+h1:ByERmIG4qrnBTy9Iu6SJWvS0WrGAx+McScOzEnkb+GU=
 20240626022133_initialization.sql h1:u9qmPkwWX7PN92qEcDDfR92lrMpwadQSMxUJgv6LjQ0=
 20240708065726_update_audit_log_table.sql h1:k7gK8Njv1yHMsYXAQtSgMaSbXy4lxyZ9MPzbJyMyyoM=
 20240815043128_update_auto_ops_rule_table.sql h1:6ib+XfS1uu9AUO3qESvkpUfOu3qUsLwHm9KHcrGEz0E=
@@ -21,4 +21,4 @@ h1:1U5jIPq+qybRztakDvsHfiZpa0H25nkrjJikshHIBsY=
 20250108145651_update_tag_table.sql h1:HGaQB+/bTGL8vqZPJl5nlRS/NlUS1ksFsaI2AbBkPmc=
 20250109061411_update_tag_table.sql h1:3QsxRDVjdv45SkOKTUFswaSFaXV2ViHoqjlr6XR5fmY=
 20250115040347_update_account_v2_table.sql h1:nEzBj41mgpXbQGgbNaIZ9thMqvtfamLO9NHISpEwMm8=
-20250116054703_remove_environment_namespace_column.sql h1:rNedkHKoOMy1kMGuxYgajIl4QDYeLON3jQCurdwmcjU=
+20250116054703_remove_environment_namespace_column.sql h1:UNiN/syYAs8nUQOkMw3RRvDQBQU/kKYv7B3XBhL6qPM=
