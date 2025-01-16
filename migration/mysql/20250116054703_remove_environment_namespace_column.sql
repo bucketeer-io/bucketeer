@@ -8,7 +8,8 @@ ALTER TABLE experiment_result DROP COLUMN environment_namespace;
 ALTER TABLE feature_last_used_info DROP COLUMN environment_namespace;
 ALTER TABLE flag_trigger DROP COLUMN environment_namespace;
 ALTER TABLE goal DROP COLUMN environment_namespace;
-ALTER TABLE mau DROP COLUMN environment_namespace;
+-- We don't use mau table anymore, ignore it
+-- ALTER TABLE mau DROP COLUMN environment_namespace;
 ALTER TABLE ops_count DROP COLUMN environment_namespace;
 ALTER TABLE ops_progressive_rollout DROP COLUMN environment_namespace;
 ALTER TABLE push DROP COLUMN environment_namespace;
