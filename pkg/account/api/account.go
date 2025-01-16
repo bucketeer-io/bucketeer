@@ -71,7 +71,7 @@ func (s *AccountService) CreateAccountV2(
 		req.Command.LastName,
 		req.Command.Language,
 		req.Command.AvatarImageUrl,
-		req.Tags,
+		req.Command.Tags,
 		req.OrganizationId,
 		req.Command.OrganizationRole,
 		req.Command.EnvironmentRoles,
@@ -510,6 +510,9 @@ func (s *AccountService) getUpdateAccountV2Commands(req *accountproto.UpdateAcco
 	}
 	if req.ChangeAvatarCommand != nil {
 		commands = append(commands, req.ChangeAvatarCommand)
+	}
+	if req.ChangeTagsCommand != nil {
+		commands = append(commands, req.ChangeTagsCommand)
 	}
 	if req.ChangeOrganizationRoleCommand != nil {
 		commands = append(commands, req.ChangeOrganizationRoleCommand)
