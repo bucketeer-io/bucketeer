@@ -7,6 +7,7 @@ import { messages } from '../../lang/messages';
 import { classNames } from '../../utils/css';
 import { FilterTypes } from '../FeatureList';
 import { Select } from '../Select';
+import { CreatableSelect } from '../CreatableSelect';
 
 export type FilterType = 'maintainer' | 'hasExperiment' | 'enabled';
 
@@ -120,46 +121,44 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                         <div className="mx-3 pt-[6px]">
                           {f(messages.feature.clause.operator.equal)}
                         </div>
-                        <Select
-                          placeholder={f(
-                            selectedFilterType?.value === FilterTypes.TAGS
-                              ? messages.tags.tagsPlaceholder
-                              : messages.select
-                          )}
-                          closeMenuOnSelect={isMultiFilter ? false : true}
-                          className={classNames(
-                            isMultiFilter
-                              ? 'min-w-[270px]'
-                              : isFilterTypeMaintainer
+                        {isMultiFilter ? (
+                          <CreatableSelect
+                            placeholder={f(messages.tags.tagsPlaceholder)}
+                            options={values}
+                            defaultValues={multiValueOption}
+                            onChange={(o: Option[]) => {
+                              setMultiValueOption(o);
+                            }}
+                            closeMenuOnSelect={false}
+                            className={classNames('min-w-[270px]')}
+                          />
+                        ) : (
+                          <Select
+                            placeholder={f(messages.select)}
+                            closeMenuOnSelect={true}
+                            className={classNames(
+                              isFilterTypeMaintainer
                                 ? 'min-w-[220px]'
                                 : 'min-w-[106px]'
-                          )}
-                          options={values}
-                          styles={{
-                            menu: ({ ...css }) => ({
-                              width: 'max-content',
-                              minWidth: '100%',
-                              ...css
-                            }),
-                            singleValue: ({ ...otherStyles }) => ({
-                              ...otherStyles
-                            })
-                          }}
-                          value={isMultiFilter ? multiValueOption : valueOption}
-                          onChange={(o) => {
-                            if (isMultiFilter) {
-                              setMultiValueOption(o);
-                            } else {
-                              setValueOption(o);
-                            }
-                          }}
-                          isSearchable={
-                            selectedFilterType?.value === FilterTypes.TAGS ||
-                            isFilterTypeMaintainer
-                          }
-                          isMulti={isMultiFilter}
-                          clearable={isFilterTypeMaintainer}
-                        />
+                            )}
+                            options={values}
+                            styles={{
+                              menu: ({ ...css }) => ({
+                                width: 'max-content',
+                                minWidth: '100%',
+                                ...css
+                              }),
+                              singleValue: ({ ...otherStyles }) => ({
+                                ...otherStyles
+                              })
+                            }}
+                            value={valueOption}
+                            onChange={(o) => setValueOption(o)}
+                            isSearchable={isFilterTypeMaintainer}
+                            isMulti={isMultiFilter}
+                            clearable={isFilterTypeMaintainer}
+                          />
+                        )}
                         <div className={classNames('flex-none ml-4')}>
                           <button
                             type="button"
