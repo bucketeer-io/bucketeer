@@ -16,6 +16,7 @@ import { ListSkeleton } from '../ListSkeleton';
 import { Pagination } from '../Pagination';
 import { RelativeDateText } from '../RelativeDateText';
 import { Switch } from '../Switch';
+import { TagChips } from '../TagsChips';
 
 export interface AccountListProps {
   searchOptions: AccountSearchOptions;
@@ -121,7 +122,7 @@ export const AccountList: FC<AccountListProps> = memo(
                   return (
                     <tr key={account.email} className={classNames('p-2')}>
                       <td className="pl-5 pr-2 py-3 border-b">
-                        <div className="flex pb-1">
+                        <div className="flex pb-1.5">
                           <button
                             className="link whitespace-nowrap"
                             onClick={() => onUpdate(account)}
@@ -135,6 +136,7 @@ export const AccountList: FC<AccountListProps> = memo(
                             />
                           </div>
                         </div>
+                        <TagChips tags={account.tagsList} />
                       </td>
                       <td
                         className={classNames(

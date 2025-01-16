@@ -1,5 +1,5 @@
 import { AppState } from '../../modules';
-import { Tag } from '../../proto/feature/feature_pb';
+import { Tag } from '../../proto/tag/tag_pb';
 import { Dialog } from '@headlessui/react';
 import { FC, memo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -30,6 +30,9 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
     const tagsList = useSelector<AppState, Tag.AsObject[]>(
       (state) => selectAllTags(state.tags),
       shallowEqual
+    );
+    const featureFlagTagsList = tagsList.filter(
+      (tag) => tag.entityType === Tag.EntityType.FEATURE_FLAG
     );
 
     return (
@@ -72,7 +75,9 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
                 </div>
                 <div className="">
                   <label htmlFor="tags">
-                    <span className="input-label">{f(messages.tags)}</span>
+                    <span className="input-label">
+                      {f(messages.tags.title)}
+                    </span>
                   </label>
                   <Controller
                     name="tags"
@@ -90,7 +95,7 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
                               label: tag
                             };
                           })}
-                          options={tagsList.map((tag) => ({
+                          options={featureFlagTagsList.map((tag) => ({
                             label: tag.name,
                             value: tag.name
                           }))}

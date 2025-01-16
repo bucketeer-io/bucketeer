@@ -55,6 +55,8 @@ import {
 } from '../../utils/search-params';
 
 import { addFormSchema, updateFormSchema } from './formSchema';
+import { listTags } from '../../modules/tags';
+import { ListTagsRequest } from '../../proto/tag/service_pb';
 
 interface Sort {
   orderBy: OrderBy;
@@ -222,6 +224,13 @@ export const AccountIndexPage: FC = memo(() => {
         options && options.role != null ? Number(options.role) : null;
       const disabled =
         options && options.enabled ? options.enabled === 'false' : null;
+      const tags =
+        options && Array.isArray(options.tagIds)
+          ? options.tagIds
+          : typeof options?.tagIds === 'string' && options?.tagIds.length > 0
+            ? [options.tagIds]
+            : [];
+
       dispatch(
         listAccounts({
           environmentId: currentEnvironment.id,
@@ -232,7 +241,8 @@ export const AccountIndexPage: FC = memo(() => {
           orderBy: sort.orderBy,
           orderDirection: sort.orderDirection,
           disabled: disabled,
-          role: role
+          role: role,
+          tags
         })
       );
     },
@@ -326,7 +336,8 @@ export const AccountIndexPage: FC = memo(() => {
       resetUpdate({
         name: a.name,
         email: a.email,
-        role: getRoleV1(a.organizationRole, envRole.role).value
+        role: getRoleV1(a.organizationRole, envRole.role).value,
+        tags: a.tagsList
       });
       history.push({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}/${a.email}`,
@@ -340,7 +351,8 @@ export const AccountIndexPage: FC = memo(() => {
     resolver: yupResolver(addFormSchema),
     defaultValues: {
       email: null,
-      role: null
+      role: null,
+      tags: []
     },
     mode: 'onChange'
   });
@@ -376,7 +388,8 @@ export const AccountIndexPage: FC = memo(() => {
           email: data.email,
           environmentId: currentEnvironment.id,
           environmentRole: envRole,
-          organizationRole: orgRole
+          organizationRole: orgRole,
+          tagsList: data.tags
         })
       ).then(() => {
         resetAdd();
@@ -393,8 +406,13 @@ export const AccountIndexPage: FC = memo(() => {
   const handleUpdate = useCallback(
     async (data) => {
       let name: string;
+      let tagsList: string[];
+
       if (dirtyFields.name) {
         name = data.name;
+      }
+      if (dirtyFields.tags) {
+        tagsList = data.tags;
       }
       const [orgRole, envRole] = convertToAccountV2Role(data.role);
       dispatch(
@@ -404,7 +422,8 @@ export const AccountIndexPage: FC = memo(() => {
           name: name,
           email: accountId,
           environmentRole: envRole,
-          organizationRole: orgRole
+          organizationRole: orgRole,
+          tagsList: tagsList
         })
       ).then(() => {
         dispatch(
@@ -435,7 +454,17 @@ export const AccountIndexPage: FC = memo(() => {
       searchOptions,
       searchOptions.page ? Number(searchOptions.page) : 1
     );
-  }, [updateAccountList]);
+    dispatch(
+      listTags({
+        environmentId: currentEnvironment.id,
+        pageSize: 99999,
+        cursor: '',
+        orderBy: ListTagsRequest.OrderBy.DEFAULT,
+        orderDirection: ListTagsRequest.OrderDirection.ASC,
+        searchKeyword: null
+      })
+    );
+  }, [updateAccountList, dispatch]);
 
   useEffect(() => {
     if (isUpdate) {
@@ -452,7 +481,8 @@ export const AccountIndexPage: FC = memo(() => {
         resetUpdate({
           name: payload.name,
           email: payload.email,
-          role: getRoleV1(payload.organizationRole, envRole.role).value
+          role: getRoleV1(payload.organizationRole, envRole.role).value,
+          tags: payload.tagsList
         });
       });
     }

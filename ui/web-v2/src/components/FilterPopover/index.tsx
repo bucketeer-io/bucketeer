@@ -116,7 +116,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                         <Select
                           placeholder={f(
                             selectedFilterType?.value === FilterTypes.TAGS
-                              ? messages.feature.filter.tagsPlaceholder
+                              ? messages.tags.tagsPlaceholder
                               : messages.select
                           )}
                           closeMenuOnSelect={isMultiFilter ? false : true}
