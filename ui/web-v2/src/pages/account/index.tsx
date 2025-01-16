@@ -398,6 +398,7 @@ export const AccountIndexPage: FC = memo(() => {
           `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}`
         );
         updateAccountList(null, 1);
+        fetchListTags();
       });
     },
     [dispatch]
@@ -433,10 +434,24 @@ export const AccountIndexPage: FC = memo(() => {
           })
         );
         handleClose();
+        fetchListTags();
       });
     },
     [dispatch, accountId, dirtyFields]
   );
+
+  const fetchListTags = useCallback(() => {
+    dispatch(
+      listTags({
+        environmentId: currentEnvironment.id,
+        pageSize: 99999,
+        cursor: '',
+        orderBy: ListTagsRequest.OrderBy.DEFAULT,
+        orderDirection: ListTagsRequest.OrderDirection.ASC,
+        searchKeyword: null
+      })
+    );
+  }, [dispatch]);
 
   useEffect(() => {
     history.listen(() => {
@@ -454,17 +469,8 @@ export const AccountIndexPage: FC = memo(() => {
       searchOptions,
       searchOptions.page ? Number(searchOptions.page) : 1
     );
-    dispatch(
-      listTags({
-        environmentId: currentEnvironment.id,
-        pageSize: 99999,
-        cursor: '',
-        orderBy: ListTagsRequest.OrderBy.DEFAULT,
-        orderDirection: ListTagsRequest.OrderDirection.ASC,
-        searchKeyword: null
-      })
-    );
-  }, [updateAccountList, dispatch]);
+    fetchListTags();
+  }, [updateAccountList]);
 
   useEffect(() => {
     if (isUpdate) {
