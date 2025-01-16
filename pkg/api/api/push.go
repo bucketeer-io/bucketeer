@@ -61,7 +61,7 @@ func (s *grpcGatewayService) ListPushes(
 	if res == nil {
 		s.logger.Error("Failed to list pushes: nil response",
 			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("environment_namespace", envAPIKey.Environment.Id),
+				zap.String("environment_id", envAPIKey.Environment.Id),
 				zap.String("search_keyword", req.SearchKeyword),
 			)...,
 		)

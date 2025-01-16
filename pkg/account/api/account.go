@@ -217,7 +217,7 @@ func (s *AccountService) createAccountV2NoCommand(
 				CreatedAt:        account.CreatedAt,
 				UpdatedAt:        account.UpdatedAt,
 			},
-			storage.AdminEnvironmentNamespace,
+			storage.AdminEnvironmentID,
 			account,
 			nil,
 		)
@@ -310,7 +310,7 @@ func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
 			Email:            updated.Email,
 			EnvironmentRoles: updated.EnvironmentRoles,
 		},
-		storage.AdminEnvironmentNamespace,
+		storage.AdminEnvironmentID,
 		updated,
 		account,
 	)

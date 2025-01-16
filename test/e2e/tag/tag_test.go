@@ -35,18 +35,18 @@ const (
 var (
 	// FIXME: To avoid compiling the test many times, webGatewayAddr, webGatewayPort & apiKey has been also added here to prevent from getting:
 	// "flag provided but not defined" error during the test. These 3 are being use in the Gateway test
-	webGatewayAddr       = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
-	webGatewayPort       = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
-	webGatewayCert       = flag.String("web-gateway-cert", "", "Web gateway crt file")
-	apiKeyPath           = flag.String("api-key", "", "Client SDK API key for api-gateway")
-	apiKeyServerPath     = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
-	gatewayAddr          = flag.String("gateway-addr", "", "Gateway endpoint address")
-	gatewayPort          = flag.Int("gateway-port", 443, "Gateway endpoint port")
-	gatewayCert          = flag.String("gateway-cert", "", "Gateway crt file")
-	serviceTokenPath     = flag.String("service-token", "", "Service token path")
-	environmentNamespace = flag.String("environment-namespace", "", "Environment namespace")
-	testID               = flag.String("test-id", "", "test ID")
-	organizationID       = flag.String("organization-id", "", "Organization ID")
+	webGatewayAddr   = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
+	webGatewayPort   = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
+	webGatewayCert   = flag.String("web-gateway-cert", "", "Web gateway crt file")
+	apiKeyPath       = flag.String("api-key", "", "Client SDK API key for api-gateway")
+	apiKeyServerPath = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
+	gatewayAddr      = flag.String("gateway-addr", "", "Gateway endpoint address")
+	gatewayPort      = flag.Int("gateway-port", 443, "Gateway endpoint port")
+	gatewayCert      = flag.String("gateway-cert", "", "Gateway crt file")
+	serviceTokenPath = flag.String("service-token", "", "Service token path")
+	environmentId    = flag.String("environment-id", "", "Environment id")
+	testID           = flag.String("test-id", "", "test ID")
+	organizationID   = flag.String("organization-id", "", "Organization ID")
 )
 
 func TestUpsertAndListTag(t *testing.T) {
@@ -91,7 +91,7 @@ func TestDeleteTag(t *testing.T) {
 	// Create tag
 	createReq := &tagproto.CreateTagRequest{
 		Name:          newTagName(t),
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentId,
 		EntityType:    tagproto.Tag_FEATURE_FLAG,
 	}
 	resp, err := client.CreateTag(ctx, createReq)
@@ -101,7 +101,7 @@ func TestDeleteTag(t *testing.T) {
 	// Delete tag
 	req := &tagproto.DeleteTagRequest{
 		Id:            resp.Tag.Id,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentId,
 	}
 	defer cancel()
 	if _, err := client.DeleteTag(ctx, req); err != nil {
@@ -120,7 +120,7 @@ func listTags(ctx context.Context, t *testing.T, client tagclient.Client) []*tag
 	t.Helper()
 	resp, err := client.ListTags(ctx, &tagproto.ListTagsRequest{
 		PageSize:      0,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentId,
 	})
 	if err != nil {
 		t.Fatal("Failed to list tags", err)
@@ -185,7 +185,7 @@ func createTag(
 	t.Helper()
 	createReq := &tagproto.CreateTagRequest{
 		Name:          tag,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentId,
 		EntityType:    entityType,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
