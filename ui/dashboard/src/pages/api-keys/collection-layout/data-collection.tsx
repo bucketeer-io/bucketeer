@@ -108,15 +108,14 @@ export const useColumns = ({
             elementId={`env-${apiKey.id}`}
             maxSize={250}
             content={apiKey.environmentName}
-            trigger={
-              <div
-                id={`env-${apiKey.id}`}
-                className="text-gray-700 typo-para-medium w-fit"
-              >
-                {apiKey.environmentName}
-              </div>
-            }
-          />
+          >
+            <div
+              id={`env-${apiKey.id}`}
+              className="text-gray-700 typo-para-medium w-fit"
+            >
+              {apiKey.environmentName}
+            </div>
+          </TruncationWithTooltip>
         );
       }
     },

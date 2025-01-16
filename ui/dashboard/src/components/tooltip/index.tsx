@@ -3,6 +3,8 @@ import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { cn } from 'utils/style';
 
 export type TooltipProps = {
+  align?: 'start' | 'center' | 'end';
+  delayDuration?: number;
   hidden?: boolean;
   content?: string;
   trigger: ReactNode;
@@ -37,11 +39,18 @@ TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
 const Tooltip = forwardRef(
   (
-    { hidden, content, trigger, className }: TooltipProps,
+    {
+      delayDuration = 700,
+      align = 'center',
+      hidden,
+      content,
+      trigger,
+      className
+    }: TooltipProps,
     ref: Ref<HTMLDivElement>
   ) => {
     return (
-      <TooltipProvider>
+      <TooltipProvider delayDuration={delayDuration}>
         <TooltipRoot>
           <TooltipTrigger type="button" asChild>
             {trigger}
@@ -52,6 +61,7 @@ const Tooltip = forwardRef(
               ref={ref}
               className={className}
               sideOffset={5}
+              align={align}
             >
               {content}
               <TooltipArrow className="fill-gray-700" />

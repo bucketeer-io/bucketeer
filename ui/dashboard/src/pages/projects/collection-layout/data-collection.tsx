@@ -53,15 +53,14 @@ export const useColumns = ({
             elementId={`maintainer-${project.id}`}
             maxSize={350}
             content={project.creatorEmail}
-            trigger={
-              <div
-                id={`maintainer-${project.id}`}
-                className="text-gray-700 typo-para-medium w-fit"
-              >
-                {project.creatorEmail}
-              </div>
-            }
-          />
+          >
+            <div
+              id={`maintainer-${project.id}`}
+              className="text-gray-700 typo-para-medium w-fit"
+            >
+              {project.creatorEmail}
+            </div>
+          </TruncationWithTooltip>
         );
       }
     },

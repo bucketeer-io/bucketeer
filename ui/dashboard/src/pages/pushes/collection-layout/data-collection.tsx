@@ -19,20 +19,30 @@ import TruncationWithTooltip from '../../../elements/truncation-with-tooltip';
 import { PushActionsType } from '../types';
 
 export const Tag = ({
+  tagId,
   value,
   className
 }: {
+  tagId?: string;
   value: string;
   className?: string;
 }) => (
-  <div
-    className={cn(
-      'px-2 py-1.5 bg-primary-100/70 text-primary-500 typo-para-small w-fit leading-[14px] rounded whitespace-nowrap',
-      className
-    )}
+  <TruncationWithTooltip
+    elementId={tagId || ''}
+    content={value}
+    maxSize={250}
+    className="!w-fit"
   >
-    {value}
-  </div>
+    <div
+      id={tagId}
+      className={cn(
+        'px-2 py-1.5 bg-primary-100/70 text-primary-500 typo-para-small !w-fit leading-[14px] rounded whitespace-nowrap',
+        className
+      )}
+    >
+      {value}
+    </div>
+  </TruncationWithTooltip>
 );
 
 export const renderTag = ({
@@ -54,7 +64,12 @@ export const renderTag = ({
     >
       <div className="flex w-fit items-center flex-wrap gap-2">
         {(isExpanded ? tags : tags.slice(0, 3))?.map((tag, index) => (
-          <Tag key={index} value={tag} className={className} />
+          <Tag
+            tagId={`${tag}-${index}`}
+            key={index}
+            value={tag}
+            className={className}
+          />
         ))}
         {tags.length > 3 && !isExpanded && (
           <Tag value={`+${tags.length - 3}`} />
@@ -104,13 +119,22 @@ export const useColumns = ({
         const push = row.original;
 
         return (
-          <div className="flex flex-col gap-0.5 max-w-fit">
-            <button
-              onClick={() => onActions(push, 'EDIT')}
-              className="underline text-primary-500 break-all line-clamp-1 typo-para-medium text-left"
+          <div className="flex flex-col gap-0.5 max-w-fit min-w-[300px]">
+            <TruncationWithTooltip
+              elementId={`name-${push.id}`}
+              content={push.name}
+              maxSize={300}
+              additionalClassName={['max-w-full']}
+              tooltipWrapperCls="left-0 translate-x-0"
             >
-              {push.name}
-            </button>
+              <button
+                id={`name-${push.id}`}
+                onClick={() => onActions(push, 'EDIT')}
+                className="underline text-primary-500 break-all line-clamp-1 typo-para-medium text-left"
+              >
+                {push.name}
+              </button>
+            </TruncationWithTooltip>
             <div className="typo-para-tiny text-gray-500 break-all line-clamp-1">
               {truncateTextCenter(push.name)}
             </div>
@@ -128,7 +152,7 @@ export const useColumns = ({
         return renderTag({
           tags: push.tags,
           isExpanded: expandedTags.includes(push.id),
-          className: 'max-w-[250px] truncate',
+          className: '!max-w-[250px] truncate',
           onExpand: () => handleExpandTag(push.id)
         });
       }
@@ -145,15 +169,14 @@ export const useColumns = ({
             elementId={`env-${push.id}`}
             maxSize={250}
             content={push.environmentName}
-            trigger={
-              <div
-                id={`env-${push.id}`}
-                className={'text-gray-700 typo-para-medium w-fit'}
-              >
-                {push.environmentName}
-              </div>
-            }
-          />
+          >
+            <div
+              id={`env-${push.id}`}
+              className={'text-gray-700 typo-para-medium w-fit'}
+            >
+              {push.environmentName}
+            </div>
+          </TruncationWithTooltip>
         );
       }
     },

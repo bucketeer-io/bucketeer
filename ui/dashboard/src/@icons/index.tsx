@@ -1,3 +1,4 @@
+import IconAngleDown from './customized-icons/angle-down.svg?react';
 import IconBackspace from './customized-icons/backspace.svg?react';
 import IconChecked from './customized-icons/checked.svg?react';
 import IconChevronDown from './customized-icons/chevron-down.svg?react';
@@ -78,6 +79,7 @@ export {
   IconCopy,
   IconUpload,
   IconChevronDown,
+  IconAngleDown,
   // Special icons
   IconGoal,
   IconGoogle,
