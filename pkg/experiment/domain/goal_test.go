@@ -17,9 +17,10 @@ package domain
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stretchr/testify/assert"
+	proto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
 
 func TestRenameGoal(t *testing.T) {
@@ -58,7 +59,7 @@ func TestSetDeletedGoal(t *testing.T) {
 
 func newGoal(t *testing.T) *Goal {
 	t.Helper()
-	g, err := NewGoal("gID", "gName", "gDesc")
+	g, err := NewGoal("gID", "gName", "gDesc", proto.Goal_OPERATION)
 	require.NoError(t, err)
 	return g
 }

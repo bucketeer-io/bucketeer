@@ -24,14 +24,18 @@ type Goal struct {
 	*proto.Goal
 }
 
-func NewGoal(id, name, description string) (*Goal, error) {
+func NewGoal(
+	id, name, description string,
+	connectionType proto.Goal_ConnectionType,
+) (*Goal, error) {
 	now := time.Now().Unix()
 	return &Goal{&proto.Goal{
-		Id:          id,
-		Name:        name,
-		Description: description,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		Id:             id,
+		Name:           name,
+		Description:    description,
+		ConnectionType: connectionType,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}}, nil
 }
 

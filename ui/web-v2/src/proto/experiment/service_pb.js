@@ -1430,7 +1430,8 @@ proto.bucketeer.experiment.ListGoalsRequest.OrderBy = {
   DEFAULT: 0,
   NAME: 1,
   CREATED_AT: 2,
-  UPDATED_AT: 3
+  UPDATED_AT: 3,
+  CONNECTION_TYPE: 4
 };
 
 /**
@@ -1934,7 +1935,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         environmentId: jspb.Message.getFieldWithDefault(msg, 3, ''),
         id: jspb.Message.getFieldWithDefault(msg, 4, ''),
         name: jspb.Message.getFieldWithDefault(msg, 5, ''),
-        description: jspb.Message.getFieldWithDefault(msg, 6, '')
+        description: jspb.Message.getFieldWithDefault(msg, 6, ''),
+        connectionType: jspb.Message.getFieldWithDefault(msg, 7, 0)
       };
 
     if (includeInstance) {
@@ -2000,6 +2002,13 @@ proto.bucketeer.experiment.CreateGoalRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setDescription(value);
           break;
+        case 7:
+          var value =
+            /** @type {!proto.bucketeer.experiment.Goal.ConnectionType} */ (
+              reader.readEnum()
+            );
+          msg.setConnectionType(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -2055,6 +2064,10 @@ proto.bucketeer.experiment.CreateGoalRequest.serializeBinaryToWriter =
     f = message.getDescription();
     if (f.length > 0) {
       writer.writeString(6, f);
+    }
+    f = message.getConnectionType();
+    if (f !== 0.0) {
+      writer.writeEnum(7, f);
     }
   };
 
@@ -2175,6 +2188,26 @@ proto.bucketeer.experiment.CreateGoalRequest.prototype.getDescription =
 proto.bucketeer.experiment.CreateGoalRequest.prototype.setDescription =
   function (value) {
     return jspb.Message.setProto3StringField(this, 6, value);
+  };
+
+/**
+ * optional Goal.ConnectionType connection_type = 7;
+ * @return {!proto.bucketeer.experiment.Goal.ConnectionType}
+ */
+proto.bucketeer.experiment.CreateGoalRequest.prototype.getConnectionType =
+  function () {
+    return /** @type {!proto.bucketeer.experiment.Goal.ConnectionType} */ (
+      jspb.Message.getFieldWithDefault(this, 7, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.experiment.Goal.ConnectionType} value
+ * @return {!proto.bucketeer.experiment.CreateGoalRequest} returns this
+ */
+proto.bucketeer.experiment.CreateGoalRequest.prototype.setConnectionType =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 7, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

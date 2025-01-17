@@ -42,6 +42,7 @@ message ListGoalsRequest {
     NAME = 1;
     CREATED_AT = 2;
     UPDATED_AT = 3;
+    CONNECTION_TYPE = 4;
   }
   enum OrderDirection {
     ASC = 0;
@@ -76,6 +77,7 @@ message CreateGoalRequest {
   string id = 4 [(google.api.field_behavior) = REQUIRED];
   string name = 5 [(google.api.field_behavior) = REQUIRED];
   string description = 6;
+  Goal.ConnectionType connection_type = 7;
 }
 
 message CreateGoalResponse {

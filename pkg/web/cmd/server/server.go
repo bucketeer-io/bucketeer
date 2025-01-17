@@ -574,6 +574,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	experimentService := experimentapi.NewExperimentService(
 		featureClient,
 		accountClient,
+		autoOpsClient,
 		mysqlClient,
 		domainTopicPublisher,
 		experimentapi.WithLogger(logger),

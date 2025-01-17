@@ -16085,6 +16085,11 @@
                 "id": 6,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "connection_type",
+                "type": "bucketeer.experiment.Goal.ConnectionType"
               }
             ]
           },
@@ -18474,6 +18479,9 @@
           },
           {
             "path": "proto/tag/tag.proto"
+          },
+          {
+            "path": "proto/experiment/goal.proto"
           }
         ],
         "package": {
@@ -20096,6 +20104,11 @@
                 "id": 3,
                 "name": "description",
                 "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "connection_type",
+                "type": "Goal.ConnectionType"
               }
             ]
           },
@@ -20218,6 +20231,11 @@
           },
           {
             "name": "FinishExperimentCommand"
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/experiment/goal.proto"
           }
         ],
         "package": {
@@ -20411,6 +20429,24 @@
     {
       "protopath": "experiment:/:goal.proto",
       "def": {
+        "enums": [
+          {
+            "name": "Goal.ConnectionType",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN"
+              },
+              {
+                "name": "EXPERIMENT",
+                "integer": 1
+              },
+              {
+                "name": "OPERATION",
+                "integer": 2
+              }
+            ]
+          }
+        ],
         "messages": [
           {
             "name": "Goal",
@@ -20454,8 +20490,33 @@
                 "id": 8,
                 "name": "archived",
                 "type": "bool"
+              },
+              {
+                "id": 9,
+                "name": "connection_type",
+                "type": "ConnectionType"
+              },
+              {
+                "id": 10,
+                "name": "experiments",
+                "type": "Experiment",
+                "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "auto_ops_rules",
+                "type": "autoops.AutoOpsRule",
+                "is_repeated": true
               }
             ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/experiment/experiment.proto"
+          },
+          {
+            "path": "proto/autoops/auto_ops_rule.proto"
           }
         ],
         "package": {
@@ -20490,6 +20551,10 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "CONNECTION_TYPE",
+                "integer": 4
               }
             ]
           },
@@ -20714,6 +20779,11 @@
                 "id": 6,
                 "name": "description",
                 "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "connection_type",
+                "type": "Goal.ConnectionType"
               }
             ],
             "reserved_ids": [

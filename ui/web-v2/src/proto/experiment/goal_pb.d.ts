@@ -2,6 +2,8 @@
 // file: proto/experiment/goal.proto
 
 import * as jspb from 'google-protobuf';
+import * as proto_experiment_experiment_pb from '../../proto/experiment/experiment_pb';
+import * as proto_autoops_auto_ops_rule_pb from '../../proto/autoops/auto_ops_rule_pb';
 
 export class Goal extends jspb.Message {
   getId(): string;
@@ -27,6 +29,31 @@ export class Goal extends jspb.Message {
 
   getArchived(): boolean;
   setArchived(value: boolean): void;
+
+  getConnectionType(): Goal.ConnectionTypeMap[keyof Goal.ConnectionTypeMap];
+  setConnectionType(
+    value: Goal.ConnectionTypeMap[keyof Goal.ConnectionTypeMap]
+  ): void;
+
+  clearExperimentsList(): void;
+  getExperimentsList(): Array<proto_experiment_experiment_pb.Experiment>;
+  setExperimentsList(
+    value: Array<proto_experiment_experiment_pb.Experiment>
+  ): void;
+  addExperiments(
+    value?: proto_experiment_experiment_pb.Experiment,
+    index?: number
+  ): proto_experiment_experiment_pb.Experiment;
+
+  clearAutoOpsRulesList(): void;
+  getAutoOpsRulesList(): Array<proto_autoops_auto_ops_rule_pb.AutoOpsRule>;
+  setAutoOpsRulesList(
+    value: Array<proto_autoops_auto_ops_rule_pb.AutoOpsRule>
+  ): void;
+  addAutoOpsRules(
+    value?: proto_autoops_auto_ops_rule_pb.AutoOpsRule,
+    index?: number
+  ): proto_autoops_auto_ops_rule_pb.AutoOpsRule;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Goal.AsObject;
@@ -56,5 +83,16 @@ export namespace Goal {
     updatedAt: number;
     isInUseStatus: boolean;
     archived: boolean;
+    connectionType: Goal.ConnectionTypeMap[keyof Goal.ConnectionTypeMap];
+    experimentsList: Array<proto_experiment_experiment_pb.Experiment.AsObject>;
+    autoOpsRulesList: Array<proto_autoops_auto_ops_rule_pb.AutoOpsRule.AsObject>;
   };
+
+  export interface ConnectionTypeMap {
+    UNKNOWN: 0;
+    EXPERIMENT: 1;
+    OPERATION: 2;
+  }
+
+  export const ConnectionType: ConnectionTypeMap;
 }
