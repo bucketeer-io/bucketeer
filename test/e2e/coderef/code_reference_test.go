@@ -27,6 +27,7 @@ import (
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	coderefproto "github.com/bucketeer-io/bucketeer/proto/coderef"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/golang/protobuf/ptypes/wrappers"
 )
 
 const (
@@ -37,6 +38,7 @@ var (
 	webGatewayAddr       = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
 	webGatewayPort       = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
 	webGatewayCert       = flag.String("web-gateway-cert", "", "Web gateway crt file")
+	apiKeyPath           = flag.String("api-key", "", "Client SDK API key for api-gateway")
 	apiKeyServerPath     = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
 	gatewayAddr          = flag.String("gateway-addr", "", "Gateway endpoint address")
 	gatewayPort          = flag.Int("gateway-port", 443, "Gateway endpoint port")
@@ -87,11 +89,17 @@ func TestUpdateCodeReference(t *testing.T) {
 
 	// Update code reference
 	updateReq := &coderefproto.UpdateCodeReferenceRequest{
-		Id:            createResp.CodeReference.Id,
-		EnvironmentId: *environmentNamespace,
-		FilePath:      "updated/path/to/file.go",
-		LineNumber:    200,
-		CodeSnippet:   "updated code snippet",
+		Id:               createResp.CodeReference.Id,
+		EnvironmentId:    *environmentNamespace,
+		FilePath:         "updated/path/to/file.go",
+		LineNumber:       200,
+		CodeSnippet:      "updated code snippet",
+		ContentHash:      "updated-hash-123",
+		RepositoryName:   createResp.CodeReference.RepositoryName,
+		RepositoryOwner:  createResp.CodeReference.RepositoryOwner,
+		RepositoryType:   createResp.CodeReference.RepositoryType,
+		RepositoryBranch: createResp.CodeReference.RepositoryBranch,
+		CommitHash:       createResp.CodeReference.CommitHash,
 	}
 	_, err := client.UpdateCodeReference(context.Background(), updateReq)
 	assert.NoError(t, err)
@@ -104,6 +112,12 @@ func TestUpdateCodeReference(t *testing.T) {
 	assert.Equal(t, updateReq.FilePath, getResp.CodeReference.FilePath)
 	assert.Equal(t, updateReq.LineNumber, getResp.CodeReference.LineNumber)
 	assert.Equal(t, updateReq.CodeSnippet, getResp.CodeReference.CodeSnippet)
+	assert.Equal(t, updateReq.ContentHash, getResp.CodeReference.ContentHash)
+	assert.Equal(t, updateReq.RepositoryName, getResp.CodeReference.RepositoryName)
+	assert.Equal(t, updateReq.RepositoryOwner, getResp.CodeReference.RepositoryOwner)
+	assert.Equal(t, updateReq.RepositoryType, getResp.CodeReference.RepositoryType)
+	assert.Equal(t, updateReq.RepositoryBranch, getResp.CodeReference.RepositoryBranch)
+	assert.Equal(t, updateReq.CommitHash, getResp.CodeReference.CommitHash)
 }
 
 func TestListCodeReferences(t *testing.T) {
@@ -255,6 +269,8 @@ func createFeature(t *testing.T, client featureclient.Client, featureID string) 
 				Description: "this is a false variation",
 			},
 		},
+		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
 	}
 	createReq := &featureproto.CreateFeatureRequest{
 		Command:       cmd,
