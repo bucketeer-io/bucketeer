@@ -22,6 +22,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/coderef/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	proto "github.com/bucketeer-io/bucketeer/proto/coderef"
 )
 
 var (
@@ -131,6 +132,7 @@ func (s *codeReferenceStorage) GetCodeReference(
 	id, environmentID string,
 ) (*domain.CodeReference, error) {
 	codeRef := &domain.CodeReference{}
+	var repositoryType int32
 	row := s.qe(ctx).QueryRowContext(
 		ctx,
 		selectCodeReferenceSQL,
@@ -147,7 +149,7 @@ func (s *codeReferenceStorage) GetCodeReference(
 		&mysql.JSONObject{Val: &codeRef.Aliases},
 		&codeRef.RepositoryName,
 		&codeRef.RepositoryOwner,
-		&codeRef.RepositoryType,
+		&repositoryType,
 		&codeRef.RepositoryBranch,
 		&codeRef.CommitHash,
 		&codeRef.EnvironmentId,
@@ -160,6 +162,7 @@ func (s *codeReferenceStorage) GetCodeReference(
 		}
 		return nil, err
 	}
+	codeRef.RepositoryType = proto.CodeReference_RepositoryType(repositoryType)
 	return codeRef, nil
 }
 
@@ -181,6 +184,7 @@ func (s *codeReferenceStorage) ListCodeReferences(
 	codeRefs := make([]*domain.CodeReference, 0, limit)
 	for rows.Next() {
 		codeRef := &domain.CodeReference{}
+		var repositoryType int32
 		err := rows.Scan(
 			&codeRef.Id,
 			&codeRef.FeatureId,
@@ -191,7 +195,7 @@ func (s *codeReferenceStorage) ListCodeReferences(
 			&mysql.JSONObject{Val: &codeRef.Aliases},
 			&codeRef.RepositoryName,
 			&codeRef.RepositoryOwner,
-			&codeRef.RepositoryType,
+			&repositoryType,
 			&codeRef.RepositoryBranch,
 			&codeRef.CommitHash,
 			&codeRef.EnvironmentId,
@@ -201,6 +205,7 @@ func (s *codeReferenceStorage) ListCodeReferences(
 		if err != nil {
 			return nil, 0, 0, err
 		}
+		codeRef.RepositoryType = proto.CodeReference_RepositoryType(repositoryType)
 		codeRefs = append(codeRefs, codeRef)
 	}
 	if rows.Err() != nil {

@@ -228,15 +228,5 @@ func validateListCodeReferencesRequest(req *proto.ListCodeReferencesRequest, loc
 		}
 		return dt.Err()
 	}
-	if req.OrderBy == proto.ListCodeReferencesRequest_DEFAULT {
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	return nil
 }
