@@ -7,7 +7,7 @@ import { messages } from '../../lang/messages';
 import { classNames } from '../../utils/css';
 import { FilterTypes } from '../FeatureList';
 import { Select } from '../Select';
-import { CreatableSelect } from '../CreatableSelect';
+import { CreatableSelect, FormatCreateLabel } from '../CreatableSelect';
 
 export type FilterType = 'maintainer' | 'hasExperiment' | 'enabled';
 
@@ -131,6 +131,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                             }}
                             closeMenuOnSelect={false}
                             className={classNames('min-w-[270px]')}
+                            formatCreateLabel={FormatCreateLabel.NONE}
                           />
                         ) : (
                           <Select
