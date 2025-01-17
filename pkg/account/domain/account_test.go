@@ -32,6 +32,7 @@ func TestNewAccountV2(t *testing.T) {
 		"Doe",
 		"en",
 		"avatarImageURL",
+		[]string{"tag"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -42,6 +43,7 @@ func TestNewAccountV2(t *testing.T) {
 	assert.Equal(t, "Doe", a.LastName)
 	assert.Equal(t, "en", a.Language)
 	assert.Equal(t, "avatarImageURL", a.AvatarImageUrl)
+	assert.Equal(t, []string{"tag"}, a.Tags)
 	assert.Equal(t, "organizationID", a.OrganizationId)
 	assert.Equal(t, proto.AccountV2_Role_Organization_MEMBER, a.OrganizationRole)
 	assert.Equal(t, []*proto.AccountV2_EnvironmentRole{}, a.EnvironmentRoles)
@@ -55,6 +57,7 @@ func TestChangeFirstName(t *testing.T) {
 		"lname",
 		"en",
 		"avatarImageURL",
+		[]string{"tag"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -71,6 +74,7 @@ func TestChangeLastName(t *testing.T) {
 		"lname",
 		"en",
 		"avatarImageURL",
+		[]string{"tag"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -87,12 +91,30 @@ func TestChangeAvatarImageURL(t *testing.T) {
 		"lname",
 		"en",
 		"avatarImageURL",
+		[]string{"tag-1"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
 	)
 	a.ChangeAvatarImageURL("newURL")
 	assert.Equal(t, "newURL", a.AvatarImageUrl)
+}
+
+func TestChangeTags(t *testing.T) {
+	a := NewAccountV2(
+		"email",
+		"name",
+		"fname",
+		"lname",
+		"en",
+		"avatarImageURL",
+		[]string{"tag-1"},
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
+	a.ChangeFirstName("newName")
+	assert.Equal(t, "newName", a.FirstName)
 }
 
 func TestChangeOrganizationRole(t *testing.T) {
@@ -103,6 +125,7 @@ func TestChangeOrganizationRole(t *testing.T) {
 		"lname",
 		"en",
 		"avatarImageURL",
+		[]string{"tag"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -119,6 +142,7 @@ func TestChangeEnvironmentRole(t *testing.T) {
 		"lname",
 		"en",
 		"avatarImageURL",
+		[]string{"tag"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -242,6 +266,7 @@ func TestPatchEnvironmentRole(t *testing.T) {
 				"lname",
 				"en",
 				"avatarImageURL",
+				[]string{"tag"},
 				"organizationID",
 				proto.AccountV2_Role_Organization_MEMBER,
 				[]*proto.AccountV2_EnvironmentRole{
@@ -268,6 +293,7 @@ func TestEnableV2(t *testing.T) {
 		"lname",
 		"en",
 		"avatarImageURL",
+		[]string{"tag"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -285,6 +311,7 @@ func TestDisableV2(t *testing.T) {
 		"lname",
 		"en",
 		"avatarImageURL",
+		[]string{"tag"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -299,6 +326,7 @@ func TestAddSearchFilter(t *testing.T) {
 		FirstName:        "John",
 		LastName:         "Doe",
 		AvatarImageUrl:   "avatarImageURL",
+		Tags:             []string{"tag"},
 		OrganizationId:   "organizationID",
 		OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
 		EnvironmentRoles: []*proto.AccountV2_EnvironmentRole{
@@ -374,6 +402,7 @@ func TestAddSearchFilter(t *testing.T) {
 				account.LastName,
 				account.Language,
 				account.AvatarImageUrl,
+				account.Tags,
 				account.OrganizationId,
 				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.expectedFilters {
@@ -532,6 +561,7 @@ func TestChangeSearchFilterName(t *testing.T) {
 				account.LastName,
 				account.Language,
 				account.AvatarImageUrl,
+				account.Tags,
 				account.OrganizationId,
 				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
@@ -685,6 +715,7 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 				account.LastName,
 				account.Language,
 				account.AvatarImageUrl,
+				account.Tags,
 				account.OrganizationId,
 				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
@@ -838,6 +869,7 @@ func TestChangeDefaultSearchFilter(t *testing.T) {
 				account.LastName,
 				account.Language,
 				account.AvatarImageUrl,
+				account.Tags,
 				account.OrganizationId,
 				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
@@ -978,6 +1010,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 				account.LastName,
 				account.Language,
 				account.AvatarImageUrl,
+				account.Tags,
 				account.OrganizationId,
 				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
@@ -1028,6 +1061,7 @@ func TestAccountV2_Update(t *testing.T) {
 		"lastName",
 		"en",
 		"avatarImageURL",
+		[]string{"tag"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{
@@ -1043,6 +1077,7 @@ func TestAccountV2_Update(t *testing.T) {
 		wrapperspb.String("ja"),
 		wrapperspb.String("newAvatarImageURL"),
 		nil,
+		[]string{"tag-1"},
 		&proto.UpdateAccountV2Request_OrganizationRoleValue{
 			Role: proto.AccountV2_Role_Organization_ADMIN,
 		},
@@ -1064,6 +1099,7 @@ func TestAccountV2_Update(t *testing.T) {
 	assert.Equal(t, "newLastName", updated.LastName)
 	assert.Equal(t, "ja", updated.Language)
 	assert.Equal(t, "newAvatarImageURL", updated.AvatarImageUrl)
+	assert.Equal(t, []string{"tag-1"}, updated.Tags)
 	assert.Equal(t, "organizationID", updated.OrganizationId)
 	assert.Equal(t, proto.AccountV2_Role_Organization_ADMIN, updated.OrganizationRole)
 	assert.Equal(t, []*proto.AccountV2_EnvironmentRole{
@@ -1115,6 +1151,7 @@ func TestAccountV2_GetAccountFullName(t *testing.T) {
 				p.account.LastName,
 				p.account.Language,
 				p.account.AvatarImageUrl,
+				p.account.Tags,
 				p.account.OrganizationId,
 				p.account.OrganizationRole,
 				p.account.EnvironmentRoles,

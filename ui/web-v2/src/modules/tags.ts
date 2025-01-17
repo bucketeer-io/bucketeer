@@ -7,10 +7,10 @@ import {
 import { Message } from 'google-protobuf';
 import { Any } from 'google-protobuf/google/protobuf/any_pb';
 
-import * as featureGrpc from '../grpc/features';
+import * as tagsGrpc from '../grpc/tags';
 import { Command } from '../proto/feature/command_pb';
-import { Tag } from '../proto/feature/feature_pb';
-import { ListTagsRequest, ListTagsResponse } from '../proto/feature/service_pb';
+import { Tag } from '../proto/tag/tag_pb';
+import { ListTagsRequest, ListTagsResponse } from '../proto/tag/service_pb';
 
 import { AppState } from '.';
 
@@ -49,7 +49,7 @@ export const listTags = createAsyncThunk<
   request.setOrderDirection(params.orderDirection);
   request.setSearchKeyword(params.searchKeyword);
 
-  const result = await featureGrpc.listTags(request);
+  const result = await tagsGrpc.listTags(request);
   return result.response.toObject();
 });
 

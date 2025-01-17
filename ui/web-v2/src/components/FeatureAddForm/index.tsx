@@ -1,5 +1,5 @@
 import { AppState } from '../../modules';
-import { Feature, Tag } from '../../proto/feature/feature_pb';
+import { Feature } from '../../proto/feature/feature_pb';
 import { Dialog } from '@headlessui/react';
 import { FC, memo, useCallback } from 'react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
@@ -16,6 +16,7 @@ import { AddForm } from '../../pages/feature/formSchema';
 import { HoverPopover } from '../HoverPopover';
 import { classNames } from '../../utils/css';
 import { MinusCircleIcon } from '@heroicons/react/solid';
+import { Tag } from '../../proto/tag/tag_pb';
 
 export interface FeatureAddFormProps {
   onSubmit: () => void;
@@ -33,9 +34,14 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
       getValues,
       setValue
     } = methods;
+
     const tagsList = useSelector<AppState, Tag.AsObject[]>(
       (state) => selectAllTags(state.tags),
       shallowEqual
+    );
+
+    const featureFlagTagsList = tagsList.filter(
+      (tag) => tag.entityType === Tag.EntityType.FEATURE_FLAG
     );
 
     const variationsOptions = getValues('variations').map((variation, idx) => {
@@ -138,7 +144,9 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
                 </div>
                 <div className="">
                   <label htmlFor="tags">
-                    <span className="input-label">{f(messages.tags)}</span>
+                    <span className="input-label">
+                      {f(messages.tags.title)}
+                    </span>
                   </label>
                   <Controller
                     name="tags"
@@ -146,7 +154,7 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
                     render={({ field }) => {
                       return (
                         <CreatableSelect
-                          options={tagsList.map((tag) => ({
+                          options={featureFlagTagsList.map((tag) => ({
                             label: tag.name,
                             value: tag.name
                           }))}

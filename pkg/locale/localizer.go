@@ -42,6 +42,7 @@ const (
 	AccountLastName              = "AccountLastName"
 	AccountLanguage              = "AccountLanguage"
 	AccountAvatarImageURL        = "AccountAvatarImageURL"
+	AccountTags                  = "AccountTags"
 	AccountOrganizationRole      = "AccountOrganizationRole"
 	AccountEnvironmentRoles      = "AccountEnvironmentRoles"
 	AccountSearchFilter          = "AccountSearchFilter"

@@ -201,6 +201,7 @@ export namespace Event {
     ACCOUNT_V2_LAST_NAME_CHANGED: 319;
     ACCOUNT_V2_LANGUAGE_CHANGED: 320;
     ACCOUNT_V2_UPDATED: 321;
+    ACCOUNT_V2_TAGS_CHANGED: 322;
     APIKEY_CREATED: 400;
     APIKEY_NAME_CHANGED: 401;
     APIKEY_ENABLED: 402;
@@ -2591,6 +2592,11 @@ export class AccountV2CreatedEvent extends jspb.Message {
   getLanguage(): string;
   setLanguage(value: string): void;
 
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AccountV2CreatedEvent.AsObject;
   static toObject(
@@ -2626,6 +2632,7 @@ export namespace AccountV2CreatedEvent {
     firstName: string;
     lastName: string;
     language: string;
+    tagsList: Array<string>;
   };
 }
 
@@ -2735,6 +2742,43 @@ export namespace AccountV2AvatarImageURLChangedEvent {
   export type AsObject = {
     email: string;
     avatarImageUrl: string;
+  };
+}
+
+export class AccountV2TagsChangedEvent extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2TagsChangedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: AccountV2TagsChangedEvent
+  ): AccountV2TagsChangedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: AccountV2TagsChangedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2TagsChangedEvent;
+  static deserializeBinaryFromReader(
+    message: AccountV2TagsChangedEvent,
+    reader: jspb.BinaryReader
+  ): AccountV2TagsChangedEvent;
+}
+
+export namespace AccountV2TagsChangedEvent {
+  export type AsObject = {
+    email: string;
+    tagsList: Array<string>;
   };
 }
 

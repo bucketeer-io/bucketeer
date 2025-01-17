@@ -41,7 +41,8 @@ import {
 } from '../../modules/me';
 import { selectAll as selectAllTags } from '../../modules/tags';
 import { AccountV2 } from '../../proto/account/account_pb';
-import { Feature, Tag } from '../../proto/feature/feature_pb';
+import { Feature } from '../../proto/feature/feature_pb';
+import { Tag } from '../../proto/tag/tag_pb';
 import { FeatureSearchOptions } from '../../types/feature';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
@@ -196,7 +197,7 @@ export enum FilterTypes {
 const filterOptions: Option[] = [
   {
     value: FilterTypes.TAGS,
-    label: intl.formatMessage(messages.tags)
+    label: intl.formatMessage(messages.tags.title)
   },
   {
     value: FilterTypes.HAS_PREREQUISITES,
@@ -526,6 +527,9 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       (state) => selectAllTags(state.tags),
       shallowEqual
     );
+    const featureFlagTagsList = tagsList.filter(
+      (tag) => tag.entityType === Tag.EntityType.FEATURE_FLAG
+    );
     const [filterValues, setFilterValues] = useState<Option[]>([]);
     const [open, setOpen] = useState(false);
 
@@ -688,7 +692,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             return;
           case FilterTypes.TAGS:
             setFilterValues(
-              tagsList.map((tag) => ({
+              featureFlagTagsList.map((tag) => ({
                 value: tag.name,
                 label: tag.name
               }))
@@ -696,7 +700,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             return;
         }
       },
-      [setFilterValues, accounts, tagsList]
+      [setFilterValues, accounts, featureFlagTagsList]
     );
 
     const handleUpdateOption = (

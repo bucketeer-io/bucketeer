@@ -1,5 +1,5 @@
 import { AppState } from '../../modules';
-import { Tag } from '../../proto/feature/feature_pb';
+import { Tag } from '../../proto/tag/tag_pb';
 import { Dialog } from '@headlessui/react';
 import { ChangeEvent, FC, memo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -9,8 +9,9 @@ import FileUploadIcon from '@material-ui/icons/CloudUpload';
 import FilePresentIcon from '@material-ui/icons/FileCopyOutlined';
 import { messages } from '../../lang/messages';
 import { selectAll as selectAllTags } from '../../modules/tags';
-import { CreatableSelect, Option } from '../CreatableSelect';
+import { Option } from '../CreatableSelect';
 import { classNames } from '../../utils/css';
+import { Select } from '../Select';
 
 export interface PushAddFormProps {
   onSubmit: () => void;
@@ -32,6 +33,9 @@ export const PushAddForm: FC<PushAddFormProps> = memo(
     const tagsList = useSelector<AppState, Tag.AsObject[]>(
       (state) => selectAllTags(state.tags),
       shallowEqual
+    );
+    const featureFlagTagsList = tagsList.filter(
+      (tag) => tag.entityType === Tag.EntityType.FEATURE_FLAG
     );
 
     const onFileInput = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -84,23 +88,27 @@ export const PushAddForm: FC<PushAddFormProps> = memo(
                 </div>
                 <div className="">
                   <label htmlFor="tags">
-                    <span className="input-label">{f(messages.tags)}</span>
+                    <span className="input-label">
+                      {f(messages.tags.title)}
+                    </span>
                   </label>
                   <Controller
                     name="tags"
                     control={control}
                     render={({ field }) => {
                       return (
-                        <CreatableSelect
+                        <Select
+                          isMulti
                           onChange={(options: Option[]) => {
                             field.onChange(options.map((o) => o.value));
                           }}
                           disabled={isSubmitted}
-                          options={tagsList.map((tag) => ({
+                          options={featureFlagTagsList.map((tag) => ({
                             label: tag.name,
                             value: tag.name
                           }))}
                           closeMenuOnSelect={false}
+                          placeholder={f(messages.tags.tagsPlaceholder)}
                         />
                       );
                     }}

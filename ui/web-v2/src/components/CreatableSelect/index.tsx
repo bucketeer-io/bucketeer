@@ -1,6 +1,10 @@
 import React, { FC, memo } from 'react';
 import ReactCreatableSelect from 'react-select/creatable';
 
+export enum FormatCreateLabel {
+  NONE = 'none'
+}
+
 export interface Option {
   value: string;
   label: string;
@@ -16,6 +20,7 @@ export interface CreatableSelectProps {
   onChange: (options: Option[]) => void;
   value?: Option;
   placeholder?: string;
+  formatCreateLabel?: FormatCreateLabel;
 }
 
 const textColor = '#3F3F46';
@@ -77,7 +82,8 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
     defaultValues,
     closeMenuOnSelect,
     value,
-    placeholder = ''
+    placeholder = '',
+    formatCreateLabel
   }) => {
     return (
       <ReactCreatableSelect
@@ -96,6 +102,11 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
         defaultValue={defaultValues}
         onChange={onChange}
         closeMenuOnSelect={closeMenuOnSelect}
+        formatCreateLabel={(inputValue) =>
+          formatCreateLabel === FormatCreateLabel.NONE
+            ? `"${inputValue}"`
+            : `Create "${inputValue}"`
+        }
       />
     );
   }
