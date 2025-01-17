@@ -3141,6 +3141,54 @@ paths:
             $ref: '#/definitions/experimentCreateGoalRequest'
       tags:
         - goal
+    patch:
+      summary: Update
+      description: Update a goal.
+      operationId: web.v1.goal.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/experimentUpdateGoalResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/experimentUpdateGoalRequest'
+      tags:
+        - goal
   /v1/goals:
     get:
       summary: List
@@ -6150,8 +6198,37 @@ definitions:
     type: object
   experimentUpdateExperimentResponse:
     type: object
+  experimentUpdateGoalRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      renameCommand:
+        $ref: '#/definitions/experimentRenameGoalCommand'
+        description: deprecated
+      changeDescriptionCommand:
+        $ref: '#/definitions/experimentChangeDescriptionGoalCommand'
+        description: deprecated
+      environmentId:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      archived:
+        type: boolean
+        description: if true, the goal will be archived
+      deleted:
+        type: boolean
+        description: if true, the goal will be deleted, and other fields will be ignored
+    required:
+      - id
+      - environmentId
   experimentUpdateGoalResponse:
     type: object
+    properties:
+      goal:
+        $ref: '#/definitions/experimentGoal'
   featureAddSegmentUserCommand:
     type: object
     properties:

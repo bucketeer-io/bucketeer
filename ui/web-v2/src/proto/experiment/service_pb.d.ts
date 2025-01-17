@@ -448,6 +448,26 @@ export class UpdateGoalRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasArchived(): boolean;
+  clearArchived(): void;
+  getArchived(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setArchived(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  hasDeleted(): boolean;
+  clearDeleted(): void;
+  getDeleted(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDeleted(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateGoalRequest.AsObject;
   static toObject(
@@ -475,10 +495,19 @@ export namespace UpdateGoalRequest {
     renameCommand?: proto_experiment_command_pb.RenameGoalCommand.AsObject;
     changeDescriptionCommand?: proto_experiment_command_pb.ChangeDescriptionGoalCommand.AsObject;
     environmentId: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    archived?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    deleted?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 }
 
 export class UpdateGoalResponse extends jspb.Message {
+  hasGoal(): boolean;
+  clearGoal(): void;
+  getGoal(): proto_experiment_goal_pb.Goal | undefined;
+  setGoal(value?: proto_experiment_goal_pb.Goal): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateGoalResponse.AsObject;
   static toObject(
@@ -501,7 +530,9 @@ export class UpdateGoalResponse extends jspb.Message {
 }
 
 export namespace UpdateGoalResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    goal?: proto_experiment_goal_pb.Goal.AsObject;
+  };
 }
 
 export class GetExperimentRequest extends jspb.Message {

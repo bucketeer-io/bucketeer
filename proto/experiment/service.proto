@@ -102,14 +102,36 @@ message DeleteGoalRequest {
 message DeleteGoalResponse {}
 
 message UpdateGoalRequest {
-  string id = 1;
-  RenameGoalCommand rename_command = 2;
-  ChangeDescriptionGoalCommand change_description_command = 3;
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  RenameGoalCommand rename_command = 2 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  ChangeDescriptionGoalCommand change_description_command = 3 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   reserved 4;
-  string environment_id = 5;
+  string environment_id = 5 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.StringValue name = 6;
+  google.protobuf.StringValue description = 7;
+  google.protobuf.BoolValue archived = 8
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "if true, the goal will be archived"
+      }];
+  google.protobuf.BoolValue deleted = 9 [(grpc.gateway.protoc_gen_openapiv2
+                                              .options.openapiv2_field) = {
+    description: "if true, the goal will be deleted, and other fields will be ignored"
+  }];
 }
 
-message UpdateGoalResponse {}
+message UpdateGoalResponse {
+  Goal goal = 1;
+}
 
 message GetExperimentRequest {
   string id = 1;
@@ -326,7 +348,40 @@ service ExperimentService {
       }
     };
   }
-  rpc UpdateGoal(UpdateGoalRequest) returns (UpdateGoalResponse) {}
+  rpc UpdateGoal(UpdateGoalRequest) returns (UpdateGoalResponse) {
+    option (google.api.http) = {
+      patch: "/v1/goal"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update"
+      description: "Update a goal."
+      tags: "goal"
+      operation_id: "web.v1.goal.update"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ArchiveGoal(ArchiveGoalRequest) returns (ArchiveGoalResponse) {}
   rpc DeleteGoal(DeleteGoalRequest) returns (DeleteGoalResponse) {}
 

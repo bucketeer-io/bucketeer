@@ -167,6 +167,7 @@ export namespace Event {
     GOAL_DESCRIPTION_CHANGED: 102;
     GOAL_DELETED: 103;
     GOAL_ARCHIVED: 104;
+    GOAL_UPDATED: 105;
     EXPERIMENT_CREATED: 200;
     EXPERIMENT_STOPPED: 201;
     EXPERIMENT_START_AT_CHANGED: 202;
@@ -1977,6 +1978,49 @@ export namespace GoalCreatedEvent {
     deleted: boolean;
     createdAt: number;
     updatedAt: number;
+  };
+}
+
+export class GoalUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GoalUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GoalUpdatedEvent
+  ): GoalUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GoalUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): GoalUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: GoalUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): GoalUpdatedEvent;
+}
+
+export namespace GoalUpdatedEvent {
+  export type AsObject = {
+    id: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
   };
 }
 

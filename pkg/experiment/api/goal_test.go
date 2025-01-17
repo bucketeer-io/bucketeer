@@ -24,14 +24,14 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
-
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
@@ -409,14 +409,6 @@ func TestUpdateGoalMySQL(t *testing.T) {
 			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
 		},
 		{
-			setup: nil,
-			req: &experimentproto.UpdateGoalRequest{
-				Id:            "id-0",
-				EnvironmentId: "ns0",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
-		{
 			setup: func(s *experimentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
@@ -440,6 +432,120 @@ func TestUpdateGoalMySQL(t *testing.T) {
 			req: &experimentproto.UpdateGoalRequest{
 				Id:            "id-1",
 				RenameCommand: &experimentproto.RenameGoalCommand{Name: "name-1"},
+				EnvironmentId: "ns0",
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		service := createExperimentService(mockController, nil, nil, nil)
+		if p.setup != nil {
+			p.setup(service)
+		}
+		_, err := service.UpdateGoal(ctx, p.req)
+		assert.Equal(t, p.expectedErr, err)
+	}
+}
+
+func TestUpdateGoalNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithTokenAndMetadata(metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*experimentService)
+		req         *experimentproto.UpdateGoalRequest
+		expectedErr error
+	}{
+		{
+			desc:  "error: missing Id",
+			setup: nil,
+			req: &experimentproto.UpdateGoalRequest{
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+		},
+		{
+			desc:  "error: name empty",
+			setup: nil,
+			req: &experimentproto.UpdateGoalRequest{
+				Id:            "id-0",
+				Name:          wrapperspb.String(""),
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusGoalNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+		},
+		{
+			desc: "error: not found",
+			setup: func(s *experimentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2es.ErrGoalNotFound)
+			},
+			req: &experimentproto.UpdateGoalRequest{
+				Id:            "id-0",
+				Name:          wrapperspb.String("name-0"),
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *experimentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &experimentproto.UpdateGoalRequest{
+				Id:            "id-1",
+				Name:          wrapperspb.String("name-0"),
+				Description:   wrapperspb.String("description-0"),
+				EnvironmentId: "ns0",
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: archived goal",
+			setup: func(s *experimentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &experimentproto.UpdateGoalRequest{
+				Id:            "id-1",
+				Archived:      wrapperspb.Bool(true),
+				EnvironmentId: "ns0",
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: delete goal",
+			setup: func(s *experimentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &experimentproto.UpdateGoalRequest{
+				Id:            "id-1",
+				Deleted:       wrapperspb.Bool(true),
 				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,

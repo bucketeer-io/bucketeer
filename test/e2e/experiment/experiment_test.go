@@ -24,6 +24,8 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -560,6 +562,58 @@ func TestStatusUpdateFromWaitingToStopped(t *testing.T) {
 			t.Fatalf(fmt.Sprintf("retry timeout: %s", resp.Experiment.Name))
 		}
 		time.Sleep(time.Second)
+	}
+}
+
+func TestCreateListGoalsNoCommand(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	c := newExperimentClient(t)
+	defer c.Close()
+	goalID := createGoalID(t)
+	createGoalResp, err := c.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
+		EnvironmentId: *environmentNamespace,
+		Id:            goalID,
+		Name:          fmt.Sprintf("%s-goal-name", goalID),
+		Description:   fmt.Sprintf("%s-goal-description", goalID),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.NotNil(t, createGoalResp)
+
+	listGoalsResp, err := c.ListGoals(ctx, &experimentproto.ListGoalsRequest{
+		EnvironmentId: *environmentNamespace,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if listGoalsResp == nil || len(listGoalsResp.Goals) == 0 {
+		t.Fatal("No goals")
+	}
+
+	var pbGoal *experimentproto.Goal
+	for _, goal := range listGoalsResp.Goals {
+		if goal.Id == createGoalResp.Goal.Id {
+			pbGoal = goal
+			break
+		}
+	}
+	if pbGoal == nil {
+		t.Fatalf("Goal not found: %s", createGoalResp.Goal.Id)
+	}
+	assert.Equal(t, createGoalResp.Goal.Id, pbGoal.Id)
+	assert.Equal(t, createGoalResp.Goal.Name, pbGoal.Name)
+	assert.Equal(t, createGoalResp.Goal.Description, pbGoal.Description)
+
+	_, err = c.UpdateGoal(ctx, &experimentproto.UpdateGoalRequest{
+		Id:            goalID,
+		EnvironmentId: *environmentNamespace,
+		Deleted:       wrapperspb.Bool(true),
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 

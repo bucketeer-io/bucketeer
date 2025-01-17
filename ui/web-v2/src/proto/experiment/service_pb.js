@@ -3112,7 +3112,19 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 5, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 5, ''),
+        name:
+          (f = msg.getName()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
+        description:
+          (f = msg.getDescription()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
+        archived:
+          (f = msg.getArchived()) &&
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
+        deleted:
+          (f = msg.getDeleted()) &&
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -3180,6 +3192,38 @@ proto.bucketeer.experiment.UpdateGoalRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 6:
+          var value = new google_protobuf_wrappers_pb.StringValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+          );
+          msg.setName(value);
+          break;
+        case 7:
+          var value = new google_protobuf_wrappers_pb.StringValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+          );
+          msg.setDescription(value);
+          break;
+        case 8:
+          var value = new google_protobuf_wrappers_pb.BoolValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
+          );
+          msg.setArchived(value);
+          break;
+        case 9:
+          var value = new google_protobuf_wrappers_pb.BoolValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
+          );
+          msg.setDeleted(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -3236,6 +3280,38 @@ proto.bucketeer.experiment.UpdateGoalRequest.serializeBinaryToWriter =
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(5, f);
+    }
+    f = message.getName();
+    if (f != null) {
+      writer.writeMessage(
+        6,
+        f,
+        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getDescription();
+    if (f != null) {
+      writer.writeMessage(
+        7,
+        f,
+        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getArchived();
+    if (f != null) {
+      writer.writeMessage(
+        8,
+        f,
+        google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getDeleted();
+    if (f != null) {
+      writer.writeMessage(
+        9,
+        f,
+        google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
+      );
     }
   };
 
@@ -3361,6 +3437,174 @@ proto.bucketeer.experiment.UpdateGoalRequest.prototype.setEnvironmentId =
     return jspb.Message.setProto3StringField(this, 5, value);
   };
 
+/**
+ * optional google.protobuf.StringValue name = 6;
+ * @return {?proto.google.protobuf.StringValue}
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.getName = function () {
+  return /** @type{?proto.google.protobuf.StringValue} */ (
+    jspb.Message.getWrapperField(
+      this,
+      google_protobuf_wrappers_pb.StringValue,
+      6
+    )
+  );
+};
+
+/**
+ * @param {?proto.google.protobuf.StringValue|undefined} value
+ * @return {!proto.bucketeer.experiment.UpdateGoalRequest} returns this
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.setName = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 6, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.experiment.UpdateGoalRequest} returns this
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.clearName = function () {
+  return this.setName(undefined);
+};
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.hasName = function () {
+  return jspb.Message.getField(this, 6) != null;
+};
+
+/**
+ * optional google.protobuf.StringValue description = 7;
+ * @return {?proto.google.protobuf.StringValue}
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.getDescription =
+  function () {
+    return /** @type{?proto.google.protobuf.StringValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.StringValue,
+        7
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.StringValue|undefined} value
+ * @return {!proto.bucketeer.experiment.UpdateGoalRequest} returns this
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.setDescription =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 7, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.experiment.UpdateGoalRequest} returns this
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.clearDescription =
+  function () {
+    return this.setDescription(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.hasDescription =
+  function () {
+    return jspb.Message.getField(this, 7) != null;
+  };
+
+/**
+ * optional google.protobuf.BoolValue archived = 8;
+ * @return {?proto.google.protobuf.BoolValue}
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.getArchived =
+  function () {
+    return /** @type{?proto.google.protobuf.BoolValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.BoolValue,
+        8
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.BoolValue|undefined} value
+ * @return {!proto.bucketeer.experiment.UpdateGoalRequest} returns this
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.setArchived = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 8, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.experiment.UpdateGoalRequest} returns this
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.clearArchived =
+  function () {
+    return this.setArchived(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.hasArchived =
+  function () {
+    return jspb.Message.getField(this, 8) != null;
+  };
+
+/**
+ * optional google.protobuf.BoolValue deleted = 9;
+ * @return {?proto.google.protobuf.BoolValue}
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.getDeleted =
+  function () {
+    return /** @type{?proto.google.protobuf.BoolValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.BoolValue,
+        9
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.BoolValue|undefined} value
+ * @return {!proto.bucketeer.experiment.UpdateGoalRequest} returns this
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.setDeleted = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 9, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.experiment.UpdateGoalRequest} returns this
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.clearDeleted =
+  function () {
+    return this.setDeleted(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.hasDeleted =
+  function () {
+    return jspb.Message.getField(this, 9) != null;
+  };
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -3397,7 +3641,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        goal:
+          (f = msg.getGoal()) &&
+          proto_experiment_goal_pb.Goal.toObject(includeInstance, f)
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -3437,6 +3685,14 @@ proto.bucketeer.experiment.UpdateGoalResponse.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
+        case 1:
+          var value = new proto_experiment_goal_pb.Goal();
+          reader.readMessage(
+            value,
+            proto_experiment_goal_pb.Goal.deserializeBinaryFromReader
+          );
+          msg.setGoal(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -3469,7 +3725,52 @@ proto.bucketeer.experiment.UpdateGoalResponse.prototype.serializeBinary =
 proto.bucketeer.experiment.UpdateGoalResponse.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
+    f = message.getGoal();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_experiment_goal_pb.Goal.serializeBinaryToWriter
+      );
+    }
   };
+
+/**
+ * optional Goal goal = 1;
+ * @return {?proto.bucketeer.experiment.Goal}
+ */
+proto.bucketeer.experiment.UpdateGoalResponse.prototype.getGoal = function () {
+  return /** @type{?proto.bucketeer.experiment.Goal} */ (
+    jspb.Message.getWrapperField(this, proto_experiment_goal_pb.Goal, 1)
+  );
+};
+
+/**
+ * @param {?proto.bucketeer.experiment.Goal|undefined} value
+ * @return {!proto.bucketeer.experiment.UpdateGoalResponse} returns this
+ */
+proto.bucketeer.experiment.UpdateGoalResponse.prototype.setGoal = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.experiment.UpdateGoalResponse} returns this
+ */
+proto.bucketeer.experiment.UpdateGoalResponse.prototype.clearGoal =
+  function () {
+    return this.setGoal(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.experiment.UpdateGoalResponse.prototype.hasGoal = function () {
+  return jspb.Message.getField(this, 1) != null;
+};
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
