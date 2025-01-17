@@ -11,6 +11,8 @@ import { useIsEditable } from '../../modules/me';
 import { selectAll as selectAllTags } from '../../modules/tags';
 import { Option } from '../CreatableSelect';
 import { Select } from '../Select';
+import { Push } from '../../proto/push/push_pb';
+import { selectAll as selectAllPushes } from '../../modules/pushes';
 
 export interface PushUpdateFormProps {
   onSubmit: () => void;
@@ -28,12 +30,20 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
       formState: { errors, isValid, isDirty, isSubmitted }
     } = methods;
 
+    const pushList = useSelector<AppState, Push.AsObject[]>(
+      (state) => selectAllPushes(state.push),
+      shallowEqual
+    );
     const tagsList = useSelector<AppState, Tag.AsObject[]>(
       (state) => selectAllTags(state.tags),
       shallowEqual
     );
     const featureFlagTagsList = tagsList.filter(
       (tag) => tag.entityType === Tag.EntityType.FEATURE_FLAG
+    );
+    // Filter out tags that are already used in existing pushes
+    const filteredTagsList = featureFlagTagsList.filter(
+      (tag) => !pushList.some((push) => push.tagsList.includes(tag.name))
     );
 
     return (
@@ -97,7 +107,7 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
                               label: tag
                             };
                           })}
-                          options={featureFlagTagsList.map((tag) => ({
+                          options={filteredTagsList.map((tag) => ({
                             label: tag.name,
                             value: tag.name
                           }))}
