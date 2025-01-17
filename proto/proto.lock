@@ -16031,6 +16031,11 @@
                 "id": 6,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "connection_type",
+                "type": "bucketeer.experiment.Goal.ConnectionType"
               }
             ]
           },
@@ -18398,6 +18403,9 @@
           },
           {
             "path": "proto/tag/tag.proto"
+          },
+          {
+            "path": "proto/experiment/goal.proto"
           }
         ],
         "package": {
@@ -20020,6 +20028,11 @@
                 "id": 3,
                 "name": "description",
                 "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "connection_type",
+                "type": "Goal.ConnectionType"
               }
             ]
           },
@@ -20142,6 +20155,11 @@
           },
           {
             "name": "FinishExperimentCommand"
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/experiment/goal.proto"
           }
         ],
         "package": {

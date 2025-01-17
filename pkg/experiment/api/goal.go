@@ -290,7 +290,7 @@ func (s *experimentService) CreateGoal(
 	if err := validateCreateGoalRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	goal, err := domain.NewGoal(req.Command.Id, req.Command.Name, req.Command.Description, proto.Goal_UNKNOWN)
+	goal, err := domain.NewGoal(req.Command.Id, req.Command.Name, req.Command.Description, req.Command.ConnectionType)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new goal",
@@ -421,12 +421,13 @@ func (s *experimentService) createGoalNoCommand(
 			goal.Id,
 			eventproto.Event_GOAL_CREATED,
 			&eventproto.GoalCreatedEvent{
-				Id:          goal.Id,
-				Name:        goal.Name,
-				Description: goal.Description,
-				Deleted:     goal.Deleted,
-				CreatedAt:   goal.CreatedAt,
-				UpdatedAt:   goal.UpdatedAt,
+				Id:             goal.Id,
+				Name:           goal.Name,
+				Description:    goal.Description,
+				ConnectionType: goal.ConnectionType,
+				Deleted:        goal.Deleted,
+				CreatedAt:      goal.CreatedAt,
+				UpdatedAt:      goal.UpdatedAt,
 			},
 			req.EnvironmentId,
 			goal.Goal,

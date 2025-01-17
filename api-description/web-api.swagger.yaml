@@ -5940,6 +5940,8 @@ definitions:
         type: string
       description:
         type: string
+      connectionType:
+        $ref: '#/definitions/GoalConnectionType'
   experimentCreateGoalRequest:
     type: object
     properties:

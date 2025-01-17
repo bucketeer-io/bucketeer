@@ -63,6 +63,8 @@ var proto_account_search_filter_pb = require('../../../proto/account/search_filt
 goog.object.extend(proto, proto_account_search_filter_pb);
 var proto_tag_tag_pb = require('../../../proto/tag/tag_pb.js');
 goog.object.extend(proto, proto_tag_tag_pb);
+var proto_experiment_goal_pb = require('../../../proto/experiment/goal_pb.js');
+goog.object.extend(proto, proto_experiment_goal_pb);
 goog.exportSymbol(
   'proto.bucketeer.event.domain.APIKeyChangedEvent',
   null,
@@ -14480,7 +14482,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         description: jspb.Message.getFieldWithDefault(msg, 3, ''),
         deleted: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
         createdAt: jspb.Message.getFieldWithDefault(msg, 5, 0),
-        updatedAt: jspb.Message.getFieldWithDefault(msg, 6, 0)
+        updatedAt: jspb.Message.getFieldWithDefault(msg, 6, 0),
+        connectionType: jspb.Message.getFieldWithDefault(msg, 7, 0)
       };
 
     if (includeInstance) {
@@ -14545,6 +14548,13 @@ proto.bucketeer.event.domain.GoalCreatedEvent.deserializeBinaryFromReader =
           var value = /** @type {number} */ (reader.readInt64());
           msg.setUpdatedAt(value);
           break;
+        case 7:
+          var value =
+            /** @type {!proto.bucketeer.experiment.Goal.ConnectionType} */ (
+              reader.readEnum()
+            );
+          msg.setConnectionType(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -14600,6 +14610,10 @@ proto.bucketeer.event.domain.GoalCreatedEvent.serializeBinaryToWriter =
     f = message.getUpdatedAt();
     if (f !== 0) {
       writer.writeInt64(6, f);
+    }
+    f = message.getConnectionType();
+    if (f !== 0.0) {
+      writer.writeEnum(7, f);
     }
   };
 
@@ -14714,6 +14728,26 @@ proto.bucketeer.event.domain.GoalCreatedEvent.prototype.getUpdatedAt =
 proto.bucketeer.event.domain.GoalCreatedEvent.prototype.setUpdatedAt =
   function (value) {
     return jspb.Message.setProto3IntField(this, 6, value);
+  };
+
+/**
+ * optional bucketeer.experiment.Goal.ConnectionType connection_type = 7;
+ * @return {!proto.bucketeer.experiment.Goal.ConnectionType}
+ */
+proto.bucketeer.event.domain.GoalCreatedEvent.prototype.getConnectionType =
+  function () {
+    return /** @type {!proto.bucketeer.experiment.Goal.ConnectionType} */ (
+      jspb.Message.getFieldWithDefault(this, 7, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.experiment.Goal.ConnectionType} value
+ * @return {!proto.bucketeer.event.domain.GoalCreatedEvent} returns this
+ */
+proto.bucketeer.event.domain.GoalCreatedEvent.prototype.setConnectionType =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 7, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
