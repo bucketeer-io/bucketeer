@@ -38,6 +38,7 @@ import "proto/autoops/progressive_rollout.proto";
 import "proto/feature/flag_trigger.proto";
 import "proto/account/search_filter.proto";
 import "proto/tag/tag.proto";
+import "proto/experiment/goal.proto";
 import "proto/coderef/code_reference.proto";
 
 message Event {
@@ -505,6 +506,7 @@ message GoalCreatedEvent {
   bool deleted = 4;
   int64 created_at = 5;
   int64 updated_at = 6;
+  bucketeer.experiment.Goal.ConnectionType connection_type = 7;
 }
 
 message GoalUpdatedEvent {

@@ -22,6 +22,7 @@ import * as proto_autoops_progressive_rollout_pb from '../../../proto/autoops/pr
 import * as proto_feature_flag_trigger_pb from '../../../proto/feature/flag_trigger_pb';
 import * as proto_account_search_filter_pb from '../../../proto/account/search_filter_pb';
 import * as proto_tag_tag_pb from '../../../proto/tag/tag_pb';
+import * as proto_experiment_goal_pb from '../../../proto/experiment/goal_pb';
 import * as proto_coderef_code_reference_pb from '../../../proto/coderef/code_reference_pb';
 
 export class Event extends jspb.Message {
@@ -1955,6 +1956,11 @@ export class GoalCreatedEvent extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getConnectionType(): proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap];
+  setConnectionType(
+    value: proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap]
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GoalCreatedEvent.AsObject;
   static toObject(
@@ -1984,6 +1990,7 @@ export namespace GoalCreatedEvent {
     deleted: boolean;
     createdAt: number;
     updatedAt: number;
+    connectionType: proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap];
   };
 }
 
