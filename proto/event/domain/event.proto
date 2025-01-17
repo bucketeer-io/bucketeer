@@ -38,6 +38,7 @@ import "proto/autoops/progressive_rollout.proto";
 import "proto/feature/flag_trigger.proto";
 import "proto/account/search_filter.proto";
 import "proto/tag/tag.proto";
+import "proto/experiment/goal.proto";
 
 message Event {
   enum EntityType {
@@ -139,6 +140,7 @@ message Event {
     ACCOUNT_V2_LAST_NAME_CHANGED = 319;
     ACCOUNT_V2_LANGUAGE_CHANGED = 320;
     ACCOUNT_V2_UPDATED = 321;
+    ACCOUNT_V2_TAGS_CHANGED = 322;
     APIKEY_CREATED = 400;
     APIKEY_NAME_CHANGED = 401;
     APIKEY_ENABLED = 402;
@@ -499,6 +501,7 @@ message GoalCreatedEvent {
   bool deleted = 4;
   int64 created_at = 5;
   int64 updated_at = 6;
+  bucketeer.experiment.Goal.ConnectionType connection_type = 7;
 }
 
 message GoalUpdatedEvent {
@@ -599,6 +602,7 @@ message AccountV2CreatedEvent {
   string first_name = 10;
   string last_name = 11;
   string language = 12;
+  repeated string tags = 13;
 }
 
 message AccountV2UpdatedEvent {
@@ -614,6 +618,11 @@ message AccountV2NameChangedEvent {
 message AccountV2AvatarImageURLChangedEvent {
   string email = 1;
   string avatar_image_url = 2;
+}
+
+message AccountV2TagsChangedEvent {
+  string email = 1;
+  repeated string tags = 2;
 }
 
 message AccountV2OrganizationRoleChangedEvent {

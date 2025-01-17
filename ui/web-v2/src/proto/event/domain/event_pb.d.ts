@@ -22,6 +22,7 @@ import * as proto_autoops_progressive_rollout_pb from '../../../proto/autoops/pr
 import * as proto_feature_flag_trigger_pb from '../../../proto/feature/flag_trigger_pb';
 import * as proto_account_search_filter_pb from '../../../proto/account/search_filter_pb';
 import * as proto_tag_tag_pb from '../../../proto/tag/tag_pb';
+import * as proto_experiment_goal_pb from '../../../proto/experiment/goal_pb';
 
 export class Event extends jspb.Message {
   getId(): string;
@@ -201,6 +202,7 @@ export namespace Event {
     ACCOUNT_V2_LAST_NAME_CHANGED: 319;
     ACCOUNT_V2_LANGUAGE_CHANGED: 320;
     ACCOUNT_V2_UPDATED: 321;
+    ACCOUNT_V2_TAGS_CHANGED: 322;
     APIKEY_CREATED: 400;
     APIKEY_NAME_CHANGED: 401;
     APIKEY_ENABLED: 402;
@@ -1949,6 +1951,11 @@ export class GoalCreatedEvent extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getConnectionType(): proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap];
+  setConnectionType(
+    value: proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap]
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GoalCreatedEvent.AsObject;
   static toObject(
@@ -1978,6 +1985,7 @@ export namespace GoalCreatedEvent {
     deleted: boolean;
     createdAt: number;
     updatedAt: number;
+    connectionType: proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap];
   };
 }
 
@@ -2628,6 +2636,11 @@ export class AccountV2CreatedEvent extends jspb.Message {
   getLanguage(): string;
   setLanguage(value: string): void;
 
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AccountV2CreatedEvent.AsObject;
   static toObject(
@@ -2663,6 +2676,7 @@ export namespace AccountV2CreatedEvent {
     firstName: string;
     lastName: string;
     language: string;
+    tagsList: Array<string>;
   };
 }
 
@@ -2772,6 +2786,43 @@ export namespace AccountV2AvatarImageURLChangedEvent {
   export type AsObject = {
     email: string;
     avatarImageUrl: string;
+  };
+}
+
+export class AccountV2TagsChangedEvent extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2TagsChangedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: AccountV2TagsChangedEvent
+  ): AccountV2TagsChangedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: AccountV2TagsChangedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2TagsChangedEvent;
+  static deserializeBinaryFromReader(
+    message: AccountV2TagsChangedEvent,
+    reader: jspb.BinaryReader
+  ): AccountV2TagsChangedEvent;
+}
+
+export namespace AccountV2TagsChangedEvent {
+  export type AsObject = {
+    email: string;
+    tagsList: Array<string>;
   };
 }
 

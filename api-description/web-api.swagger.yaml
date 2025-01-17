@@ -894,6 +894,7 @@ paths:
             - ENVIRONMENT_COUNT
             - LAST_SEEN
             - STATE
+            - TAGS
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -925,6 +926,13 @@ paths:
           required: false
           type: integer
           format: int32
+        - name: tags
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
       tags:
         - Account
   /v1/account/list_api_keys:
@@ -3249,6 +3257,7 @@ paths:
             - NAME
             - CREATED_AT
             - UPDATED_AT
+            - CONNECTION_TYPE
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -4476,6 +4485,7 @@ definitions:
     enum:
       - UNKNOWN
       - FEATURE_FLAG
+      - ACCOUNT
     default: UNKNOWN
   UpdateAccountV2RequestAccountV2Avatar:
     type: object
@@ -4669,6 +4679,13 @@ definitions:
     properties:
       role:
         $ref: '#/definitions/AccountV2RoleOrganization'
+  accountChangeAccountV2TagsCommand:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: string
   accountChangeDefaultSearchFilterCommand:
     type: object
     properties:
@@ -4787,6 +4804,10 @@ definitions:
         type: string
       language:
         type: string
+      tags:
+        type: array
+        items:
+          type: string
   accountCreateAccountV2Request:
     type: object
     properties:
@@ -4813,6 +4834,10 @@ definitions:
         type: string
       language:
         type: string
+      tags:
+        type: array
+        items:
+          type: string
   accountCreateAccountV2Response:
     type: object
     properties:
@@ -5026,6 +5051,7 @@ definitions:
       - ENVIRONMENT_COUNT
       - LAST_SEEN
       - STATE
+      - TAGS
     default: DEFAULT
   accountListAccountsV2RequestOrderDirection:
     type: string
@@ -5129,6 +5155,12 @@ definitions:
         $ref: '#/definitions/UpdateAccountV2RequestAccountV2Avatar'
       disabled:
         type: boolean
+      tags:
+        type: array
+        items:
+          type: string
+      changeTagsCommand:
+        $ref: '#/definitions/accountChangeAccountV2TagsCommand'
   accountUpdateAccountV2Response:
     type: object
     properties:
@@ -5988,6 +6020,8 @@ definitions:
         type: string
       description:
         type: string
+      connectionType:
+        $ref: '#/definitions/GoalConnectionType'
   experimentCreateGoalRequest:
     type: object
     properties:
@@ -6163,6 +6197,7 @@ definitions:
       - NAME
       - CREATED_AT
       - UPDATED_AT
+      - CONNECTION_TYPE
     default: DEFAULT
   experimentListGoalsRequestOrderDirection:
     type: string

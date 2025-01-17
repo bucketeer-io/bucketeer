@@ -68,6 +68,8 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 		return h.changeLanguage(ctx, c)
 	case *accountproto.ChangeAccountV2AvatarImageUrlCommand:
 		return h.changeAvatarImageURL(ctx, c)
+	case *accountproto.ChangeAccountV2TagsCommand:
+		return h.changeTags(ctx, c)
 	case *accountproto.ChangeAccountV2OrganizationRoleCommand:
 		return h.changeOrganizationRole(ctx, c)
 	case *accountproto.ChangeAccountV2EnvironmentRolesCommand:
@@ -104,6 +106,7 @@ func (h *accountV2CommandHandler) create(ctx context.Context, cmd *accountproto.
 		LastName:         h.account.LastName,
 		Language:         h.account.Language,
 		AvatarImageUrl:   h.account.AvatarImageUrl,
+		Tags:             h.account.Tags,
 		OrganizationId:   h.account.OrganizationId,
 		OrganizationRole: h.account.OrganizationRole,
 		EnvironmentRoles: h.account.EnvironmentRoles,
@@ -178,6 +181,23 @@ func (h *accountV2CommandHandler) changeAvatarImageURL(
 		&eventproto.AccountV2AvatarImageURLChangedEvent{
 			Email:          h.account.Email,
 			AvatarImageUrl: cmd.AvatarImageUrl,
+		},
+	)
+}
+
+func (h *accountV2CommandHandler) changeTags(
+	ctx context.Context,
+	cmd *accountproto.ChangeAccountV2TagsCommand,
+) error {
+	if err := h.account.ChangeTags(cmd.Tags); err != nil {
+		return err
+	}
+	return h.send(
+		ctx,
+		eventproto.Event_ACCOUNT_V2_TAGS_CHANGED,
+		&eventproto.AccountV2TagsChangedEvent{
+			Email: h.account.Email,
+			Tags:  cmd.Tags,
 		},
 	)
 }

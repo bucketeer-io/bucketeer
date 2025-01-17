@@ -21,6 +21,7 @@ message Tag {
   enum EntityType {
     UNKNOWN = 0;
     FEATURE_FLAG = 1;
+    ACCOUNT = 2;
   }
   string id = 1;
   string name = 2;

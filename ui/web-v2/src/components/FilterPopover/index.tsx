@@ -7,6 +7,7 @@ import { messages } from '../../lang/messages';
 import { classNames } from '../../utils/css';
 import { FilterTypes } from '../FeatureList';
 import { Select } from '../Select';
+import { CreatableSelect, FormatCreateLabel } from '../CreatableSelect';
 
 export type FilterType = 'maintainer' | 'hasExperiment' | 'enabled';
 
@@ -51,6 +52,12 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
       }
     };
 
+    const handlePopoverClose = () => {
+      setSelectedFilterType(null);
+      setValueOption(null);
+      setMultiValueOption([]);
+    };
+
     useEffect(() => {
       if (isFilterTypeMaintainer) {
         setValueOption(null);
@@ -83,6 +90,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
           leave="transition ease-in duration-150"
           leaveFrom="opacity-100 translate-y-0"
           leaveTo="opacity-0 translate-y-1"
+          afterLeave={handlePopoverClose}
         >
           <Popover.Panel
             className={classNames(
@@ -113,46 +121,45 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                         <div className="mx-3 pt-[6px]">
                           {f(messages.feature.clause.operator.equal)}
                         </div>
-                        <Select
-                          placeholder={f(
-                            selectedFilterType?.value === FilterTypes.TAGS
-                              ? messages.feature.filter.tagsPlaceholder
-                              : messages.select
-                          )}
-                          closeMenuOnSelect={isMultiFilter ? false : true}
-                          className={classNames(
-                            isMultiFilter
-                              ? 'min-w-[270px]'
-                              : isFilterTypeMaintainer
+                        {isMultiFilter ? (
+                          <CreatableSelect
+                            placeholder={f(messages.tags.tagsPlaceholder)}
+                            options={values}
+                            defaultValues={multiValueOption}
+                            onChange={(o: Option[]) => {
+                              setMultiValueOption(o);
+                            }}
+                            closeMenuOnSelect={false}
+                            className={classNames('min-w-[270px]')}
+                            formatCreateLabel={FormatCreateLabel.NONE}
+                          />
+                        ) : (
+                          <Select
+                            placeholder={f(messages.select)}
+                            closeMenuOnSelect={true}
+                            className={classNames(
+                              isFilterTypeMaintainer
                                 ? 'min-w-[220px]'
                                 : 'min-w-[106px]'
-                          )}
-                          options={values}
-                          styles={{
-                            menu: ({ ...css }) => ({
-                              width: 'max-content',
-                              minWidth: '100%',
-                              ...css
-                            }),
-                            singleValue: ({ ...otherStyles }) => ({
-                              ...otherStyles
-                            })
-                          }}
-                          value={isMultiFilter ? multiValueOption : valueOption}
-                          onChange={(o) => {
-                            if (isMultiFilter) {
-                              setMultiValueOption(o);
-                            } else {
-                              setValueOption(o);
-                            }
-                          }}
-                          isSearchable={
-                            selectedFilterType?.value === FilterTypes.TAGS ||
-                            isFilterTypeMaintainer
-                          }
-                          isMulti={isMultiFilter}
-                          clearable={isFilterTypeMaintainer}
-                        />
+                            )}
+                            options={values}
+                            styles={{
+                              menu: ({ ...css }) => ({
+                                width: 'max-content',
+                                minWidth: '100%',
+                                ...css
+                              }),
+                              singleValue: ({ ...otherStyles }) => ({
+                                ...otherStyles
+                              })
+                            }}
+                            value={valueOption}
+                            onChange={(o) => setValueOption(o)}
+                            isSearchable={isFilterTypeMaintainer}
+                            isMulti={isMultiFilter}
+                            clearable={isFilterTypeMaintainer}
+                          />
+                        )}
                         <div className={classNames('flex-none ml-4')}>
                           <button
                             type="button"

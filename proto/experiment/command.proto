@@ -17,10 +17,13 @@ syntax = "proto3";
 package bucketeer.experiment;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/experiment";
 
+import "proto/experiment/goal.proto";
+
 message CreateGoalCommand {
   string id = 1;
   string name = 2;
   string description = 3;
+  Goal.ConnectionType connection_type = 4;
 }
 
 message RenameGoalCommand {

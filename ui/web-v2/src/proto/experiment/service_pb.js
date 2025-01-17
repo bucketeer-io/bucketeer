@@ -1430,7 +1430,8 @@ proto.bucketeer.experiment.ListGoalsRequest.OrderBy = {
   DEFAULT: 0,
   NAME: 1,
   CREATED_AT: 2,
-  UPDATED_AT: 3
+  UPDATED_AT: 3,
+  CONNECTION_TYPE: 4
 };
 
 /**
