@@ -6,15 +6,19 @@ import {
 } from '@api/account/account-creator';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
+import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { Language, useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { EnvironmentRoleType, OrganizationRole } from '@types';
+import { IconInfo } from '@icons';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
+import { CreatableSelect } from 'components/creatable-select';
 import Divider from 'components/divider';
 import {
   DropdownMenu,
@@ -23,8 +27,10 @@ import {
   DropdownMenuTrigger
 } from 'components/dropdown';
 import Form from 'components/form';
+import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
+import { Tooltip } from 'components/tooltip';
 import EnvironmentRoles from './environment-roles';
 
 interface AddMemberModalProps {
@@ -67,6 +73,7 @@ export interface AddMemberForm {
   email: string;
   role: OrganizationRole;
   environmentRoles: EnvironmentRoleItem[];
+  tags: string[];
 }
 
 export const formSchema = yup.object().shape({
@@ -80,7 +87,8 @@ export const formSchema = yup.object().shape({
         environmentId: yup.string().required(),
         role: yup.mixed<EnvironmentRoleType>().required()
       })
-    )
+    ),
+  tags: yup.array().min(1).required()
 });
 
 const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
@@ -89,6 +97,15 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
+    params: {
+      cursor: String(0),
+      pageSize: LIST_PAGE_SIZE,
+      environmentId: currentEnvironment.id
+    }
+  });
+  const tagOptions = tagCollection?.tags || [];
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -126,7 +143,8 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
       command: {
         email: values.email,
         organizationRole: values.role,
-        environmentRoles: values.environmentRoles
+        environmentRoles: values.environmentRoles,
+        tags: values.tags
       }
     }).then(() => {
       notify({
@@ -208,6 +226,42 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                 </Form.Item>
               )}
             />
+
+            <Form.Field
+              control={form.control}
+              name={`tags`}
+              render={({ field }) => (
+                <Form.Item className="py-2">
+                  <Form.Label required className="relative w-fit">
+                    {t('tags')}
+                    <Tooltip
+                      trigger={
+                        <div className="flex-center absolute top-0 -right-8">
+                          <Icon icon={IconInfo} size={'sm'} color="gray-600" />
+                        </div>
+                      }
+                      content={t('form:member-tags-tooltip')}
+                      className="!z-[100]"
+                    />
+                  </Form.Label>
+                  <Form.Control>
+                    <CreatableSelect
+                      disabled={isLoadingTags}
+                      placeholder={t(`form:placeholder-tags`)}
+                      options={tagOptions?.map(tag => ({
+                        label: tag.id,
+                        value: tag.id
+                      }))}
+                      onChange={value =>
+                        field.onChange(value.map(tag => tag.value))
+                      }
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+
             <Divider className="mt-1 mb-3" />
             <Form.Field
               control={form.control}

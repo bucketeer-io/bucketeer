@@ -40,5 +40,6 @@
   "select-role": "Select role",
   "select-environment": "Select environment",
   "upload-files": "Drop your file here, or <underline>{{text}}</underline>",
-  "accept-file-types": "{{type}}"
+  "accept-file-types": "{{type}}",
+  "member-tags-tooltip": "Tags can be used to group members making it easier when listing them on the list page"
 }

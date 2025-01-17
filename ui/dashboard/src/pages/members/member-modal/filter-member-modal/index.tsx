@@ -27,13 +27,18 @@ export interface Option {
 }
 
 export enum FilterTypes {
-  ENABLED = 'enabled'
+  ENABLED = 'enabled',
+  ROLE = 'role'
 }
 
 export const filterOptions: Option[] = [
   {
     value: FilterTypes.ENABLED,
     label: 'Enabled'
+  },
+  {
+    value: FilterTypes.ROLE,
+    label: 'Role'
   }
 ];
 
@@ -45,6 +50,21 @@ export const enabledOptions: Option[] = [
   {
     value: 'no',
     label: 'No'
+  }
+];
+
+export const roleOptions: Option[] = [
+  {
+    value: '1',
+    label: 'Member'
+  },
+  {
+    value: '2',
+    label: 'Admin'
+  },
+  {
+    value: '3',
+    label: 'Owner'
   }
 ];
 
@@ -68,17 +88,31 @@ const FilterMemberModal = ({
           });
         }
         return;
+      case FilterTypes.ROLE:
+        if (valueOption?.value) {
+          onSubmit({
+            organizationRole: +valueOption?.value
+          });
+        }
+        return;
     }
   };
 
   useEffect(() => {
     if (isNotEmpty(filters?.disabled)) {
       setSelectedFilterType(filterOptions[0]);
-      setValueOption(enabledOptions[filters?.disabled ? 1 : 0]);
-    } else {
-      setSelectedFilterType(undefined);
-      setValueOption(undefined);
+      return setValueOption(enabledOptions[filters?.disabled ? 1 : 0]);
     }
+    if (isNotEmpty(filters?.organizationRole)) {
+      setSelectedFilterType(filterOptions[1]);
+      return setValueOption(
+        roleOptions.find(
+          item => item.value === String(filters?.organizationRole)
+        )
+      );
+    }
+    setSelectedFilterType(undefined);
+    setValueOption(undefined);
   }, [filters]);
 
   return (
@@ -122,7 +156,10 @@ const FilterMemberModal = ({
               className="w-full"
             />
             <DropdownMenuContent className="w-[235px]" align="start">
-              {enabledOptions.map((item, index) => (
+              {(selectedFilterType?.label === FilterTypes.ENABLED
+                ? enabledOptions
+                : roleOptions
+              ).map((item, index) => (
                 <DropdownMenuItem
                   key={index}
                   value={item.value}
