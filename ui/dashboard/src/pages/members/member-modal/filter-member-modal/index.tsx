@@ -156,7 +156,7 @@ const FilterMemberModal = ({
               className="w-full"
             />
             <DropdownMenuContent className="w-[235px]" align="start">
-              {(selectedFilterType?.label === FilterTypes.ENABLED
+              {(selectedFilterType?.value === FilterTypes.ENABLED
                 ? enabledOptions
                 : roleOptions
               ).map((item, index) => (
