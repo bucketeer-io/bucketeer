@@ -7,6 +7,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
+import { ConnectionType } from '@types';
 import { IconInfo } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -25,7 +26,7 @@ interface AddGoalModalProps {
 export interface AddGoalForm {
   id: string;
   name: string;
-  connections?: string;
+  connectionType?: string;
   description?: string;
 }
 
@@ -33,7 +34,7 @@ const formSchema = yup.object().shape({
   id: yup.string().required(),
   name: yup.string().required(),
   description: yup.string(),
-  connections: yup.string()
+  connectionType: yup.string()
 });
 
 const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
@@ -49,7 +50,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
     defaultValues: {
       id: '',
       name: '',
-      connections: 'experiments',
+      connectionType: 'EXPERIMENT',
       description: ''
     }
   });
@@ -71,11 +72,9 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
   };
 
   const onSubmit: SubmitHandler<AddGoalForm> = async values => {
-    const { id, name, description } = values;
     const resp = await goalCreator({
-      id,
-      name,
-      description,
+      ...values,
+      connectionType: values.connectionType as ConnectionType,
       environmentId: currentEnvironment.id
     });
     if (resp.goal) addSuccess(values.name);
@@ -152,7 +151,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
             />
             <Form.Field
               control={form.control}
-              name="connections"
+              name="connectionType"
               render={({ field }) => (
                 <Form.Item className="flex flex-col w-full py-0 gap-y-4">
                   <Form.Label>{t('form:connections')}</Form.Label>
@@ -165,7 +164,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                       <div className="flex items-center gap-x-2">
                         <RadioGroupItem
                           id="experiments-connection"
-                          value="experiments"
+                          value="EXPERIMENT"
                         />
                         <label
                           htmlFor="experiments-connection"

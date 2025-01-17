@@ -9,16 +9,6 @@ interface Props {
   goal: Goal;
 }
 
-const mockConnections = {
-  type: 'experiments',
-  data: [
-    {
-      id: 'experiment_1',
-      name: 'Experiment 1'
-    }
-  ]
-};
-
 const GoalConnections = ({ goal }: Props) => {
   const { t } = useTranslation(['common', 'table']);
 
@@ -47,8 +37,8 @@ const GoalConnections = ({ goal }: Props) => {
             {t('table:goals.goal-status')}
           </div>
         </div>
-        <div className="flex flex-col w-full gap-y-3">
-          {(goal?.connections || mockConnections)?.data?.map((item, index) => (
+        <div className="flex flex-col w-full gap-y-2">
+          {goal?.experiments?.map((item, index) => (
             <div key={index} className={gridRowCls}>
               <div
                 className={cn(
@@ -60,8 +50,8 @@ const GoalConnections = ({ goal }: Props) => {
               </div>
               <div className={experimentStatusCls}>
                 <Status
-                  status="running"
-                  className="bg-accent-green-50 text-accent-green-500"
+                  status={item.status}
+                  text={item.status?.toLowerCase()?.replace('_', ' ')}
                 />
               </div>
               <div className={cn(goalStatusCls, 'flex items-center gap-x-2')}>

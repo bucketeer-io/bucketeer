@@ -149,5 +149,6 @@
   "save-with-comment": "Save with Comment",
   "archive-goal": "Archive Goal",
   "delete-goal": "Delete Goal",
-  "goal-connections": "Goal Connections"
+  "goal-connections": "Goal Connections",
+  "in-use": "In Use"
 }

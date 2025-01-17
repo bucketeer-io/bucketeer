@@ -12,8 +12,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
   return (
     <PageLayout.Content className="gap-y-6 overflow-auto">
       <GoalUpdateForm goal={goal} />
-      {/* {goal?.connections && <GoalConnections goal={goal} />} */}
-      <GoalConnections goal={goal} />
+      {goal.experiments?.length > 0 && <GoalConnections goal={goal} />}
       <GoalActions
         title={t('archive-goal')}
         description={t('form:goal-details.archive-desc')}
@@ -26,8 +25,9 @@ const PageContent = ({ goal }: { goal: Goal }) => {
         btnText={t('delete-goal')}
         onClick={() => {}}
       >
-        {/* {goal?.connections && <DeleteWarning />} */}
-        <DeleteWarning />
+        {(goal.experiments?.length > 0 || goal.isInUseStatus) && (
+          <DeleteWarning />
+        )}
       </GoalActions>
     </PageLayout.Content>
   );

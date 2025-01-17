@@ -9,7 +9,7 @@ import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
-import { Goal } from '@types';
+import { ConnectionType, Goal } from '@types';
 import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import { copyToClipBoard } from 'utils/function';
@@ -26,7 +26,7 @@ const Tag = ({
   onClick
 }: {
   tag: string;
-  type: string;
+  type: ConnectionType;
   onClick?: () => void;
 }) => {
   return (
@@ -35,9 +35,9 @@ const Tag = ({
         'flex-center w-fit px-2 py-1.5 typo-para-small leading-[14px] text-center rounded-[3px] capitalize cursor-pointer',
         {
           'px-[19.5px] text-gray-600 bg-gray-100 cursor-default':
-            type === 'not-in-use',
-          'text-primary-500 bg-primary-50': type === 'experiments',
-          'text-accent-pink-500 bg-accent-pink-50': type === 'operations'
+            type === 'UNKNOWN',
+          'text-primary-500 bg-primary-50': type === 'EXPERIMENT',
+          'text-accent-pink-500 bg-accent-pink-50': type === 'OPERATION'
         }
       )}
       onClick={onClick}
@@ -107,18 +107,16 @@ export const useColumns = ({
       size: 150,
       cell: ({ row }) => {
         const goal = row.original;
-        // const connectionLength = goal.connections?.data.length;
-        // const connectionType = goal.connections?.type;
+        const experimentLength = goal.experiments?.length;
+        const { connectionType } = goal;
 
-        // if (!goal.isInUseStatus || !connectionLength)
-        //   return <Tag tag={'not in use'} type="not-in-use" />;
+        if (!goal.isInUseStatus || !experimentLength)
+          return <Tag tag={'not in use'} type="UNKNOWN" />;
         return (
           <Tag
-            // tag={`${connectionLength} ${connectionType === 'experiments' ? 'Experiment' : 'Operation'}${connectionLength > 1 ? 's' : ''}`}
-            tag="not in use"
-            // type={connectionType as string}
-            type="not-in-use"
-            onClick={() => goal.isInUseStatus && onActions(goal, 'CONNECTION')}
+            tag={`${experimentLength} ${connectionType === 'EXPERIMENT' ? 'Experiment' : 'Operation'}${experimentLength > 1 ? 's' : ''}`}
+            type={connectionType}
+            onClick={() => experimentLength && onActions(goal, 'CONNECTION')}
           />
         );
       }

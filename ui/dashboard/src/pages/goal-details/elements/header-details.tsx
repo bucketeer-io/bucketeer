@@ -1,13 +1,14 @@
 import { useToast } from 'hooks';
+import { useTranslation } from 'i18n';
 import { Goal } from '@types';
 import { truncateTextCenter } from 'utils/converts';
 import { copyToClipBoard } from 'utils/function';
-import { cn } from 'utils/style';
 import { IconCopy } from '@icons';
 import Icon from 'components/icon';
 import Status from 'elements/status';
 
 const HeaderDetails = ({ goal }: { goal: Goal }) => {
+  const { t } = useTranslation(['common']);
   const { notify } = useToast();
 
   const handleCopyId = (id: string) => {
@@ -30,10 +31,8 @@ const HeaderDetails = ({ goal }: { goal: Goal }) => {
           {goal.name}
         </h1>
         <Status
-          status={goal?.isInUseStatus ? 'In Use' : 'Not In Use'}
-          className={cn({
-            'bg-accent-green-50 text-accent-green-500': goal.isInUseStatus
-          })}
+          text={t(goal?.isInUseStatus ? 'in-use' : 'not-in-use')}
+          isInUseStatus={goal.isInUseStatus}
         />
       </div>
       <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 select-none">

@@ -1,15 +1,16 @@
 import axiosClient from '@api/axios-client';
-import { Goal } from '@types';
+import { ConnectionType, Goal } from '@types';
 
 export type GoalCreatorPayload = {
   environmentId: string;
   id: string;
   name: string;
+  connectionType: ConnectionType;
   description?: string;
 };
 
 export interface GoalCreatorResponse {
-  goal: Array<Goal>;
+  goal: Goal;
 }
 
 export const goalCreator = async (
