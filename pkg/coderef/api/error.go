@@ -22,7 +22,6 @@ import (
 var (
 	statusInternal              = status.New(codes.Internal, "coderef: internal")
 	statusInvalidCursor         = status.New(codes.InvalidArgument, "coderef: invalid cursor")
-	statusInvalidOrderBy        = status.New(codes.InvalidArgument, "coderef: invalid order_by")
 	statusMissingID             = status.New(codes.InvalidArgument, "coderef: missing id")
 	statusMissingEnvironmentID  = status.New(codes.InvalidArgument, "coderef: missing environment_id")
 	statusMissingFeatureID      = status.New(codes.InvalidArgument, "coderef: missing feature_id")
