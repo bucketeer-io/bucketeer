@@ -9,6 +9,7 @@ export type TooltipProps = {
   content?: string;
   trigger: ReactNode;
   className?: string;
+  alignOffset?: number;
 };
 
 const TooltipProvider = TooltipPrimitive.Provider;
@@ -45,7 +46,8 @@ const Tooltip = forwardRef(
       hidden,
       content,
       trigger,
-      className
+      className,
+      alignOffset = 0
     }: TooltipProps,
     ref: Ref<HTMLDivElement>
   ) => {
@@ -61,6 +63,7 @@ const Tooltip = forwardRef(
               ref={ref}
               className={className}
               sideOffset={5}
+              alignOffset={alignOffset}
               align={align}
             >
               {content}

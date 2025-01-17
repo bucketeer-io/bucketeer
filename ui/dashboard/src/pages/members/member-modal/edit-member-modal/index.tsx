@@ -282,14 +282,15 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                   <Form.Label required className="relative w-fit">
                     {t('tags')}
                     <Tooltip
-                      delayDuration={500}
+                      align="start"
+                      alignOffset={-44}
                       trigger={
-                        <div className="flex-center absolute top-0 -right-8">
+                        <div className="flex-center absolute top-0 -right-6">
                           <Icon icon={IconInfo} size={'sm'} color="gray-600" />
                         </div>
                       }
                       content={t('form:member-tags-tooltip')}
-                      className="!z-[100]"
+                      className="!z-[100] max-w-[400px]"
                     />
                   </Form.Label>
                   <Form.Control>
