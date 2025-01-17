@@ -8,7 +8,7 @@ CREATE TABLE code_reference (
     aliases JSON,
     repository_name VARCHAR(255) NOT NULL,
     repository_owner VARCHAR(255) NOT NULL,
-    repository_type ENUM('GITHUB', 'GITLAB', 'BITBUCKET', 'CUSTOM') NOT NULL,
+    repository_type TINYINT NOT NULL COMMENT '0:UNSPECIFIED, 1:GITHUB, 2:GITLAB, 3:BITBUCKET, 4:CUSTOM',
     repository_branch VARCHAR(255) NOT NULL,
     commit_hash VARCHAR(40) NOT NULL,
     environment_id VARCHAR(255) NOT NULL,
