@@ -58,7 +58,9 @@ type AccountWithOrganization struct {
 }
 
 func NewAccountV2(
-	email, name, firstName, lastName, language, avatarImageURL, organizationID string,
+	email, name, firstName, lastName, language, avatarImageURL string,
+	tags []string,
+	organizationID string,
 	organizationRole proto.AccountV2_Role_Organization,
 	environmentRoles []*proto.AccountV2_EnvironmentRole,
 ) *AccountV2 {
@@ -67,7 +69,7 @@ func NewAccountV2(
 		Email:            email,
 		Name:             name,
 		AvatarImageUrl:   avatarImageURL,
-		Tags:             []string{}, // TODO: Implement tags
+		Tags:             tags,
 		OrganizationId:   organizationID,
 		OrganizationRole: organizationRole,
 		EnvironmentRoles: environmentRoles,
@@ -84,6 +86,7 @@ func NewAccountV2(
 func (a *AccountV2) Update(
 	name, firstName, lastName, language, avatarImageURL *wrapperspb.StringValue,
 	avatar *proto.UpdateAccountV2Request_AccountV2Avatar,
+	tags []string,
 	organizationRole *proto.UpdateAccountV2Request_OrganizationRoleValue,
 	environmentRoles []*proto.AccountV2_EnvironmentRole,
 	isDisabled *wrapperspb.BoolValue,
@@ -111,6 +114,9 @@ func (a *AccountV2) Update(
 	if avatar != nil {
 		updated.AvatarImage = avatar.AvatarImage
 		updated.AvatarFileType = avatar.AvatarFileType
+	}
+	if tags != nil {
+		updated.Tags = tags
 	}
 	if organizationRole != nil {
 		updated.OrganizationRole = organizationRole.Role
@@ -161,6 +167,12 @@ func (a *AccountV2) ChangeAvatarImageURL(url string) error {
 func (a *AccountV2) ChangeAvatar(image []byte, fileType string) error {
 	a.AccountV2.AvatarImage = image
 	a.AccountV2.AvatarFileType = fileType
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (a *AccountV2) ChangeTags(tags []string) error {
+	a.AccountV2.Tags = tags
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }

@@ -24,4 +24,5 @@ export interface AccountSearchOptions {
   page?: string;
   role?: string;
   enabled?: string;
+  tagIds?: string[];
 }

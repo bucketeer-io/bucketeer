@@ -566,6 +566,12 @@
                 "id": 8,
                 "name": "language",
                 "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -631,6 +637,17 @@
                 "id": 2,
                 "name": "avatar_file_type",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ChangeAccountV2TagsCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -920,6 +937,10 @@
               {
                 "name": "STATE",
                 "integer": 7
+              },
+              {
+                "name": "TAGS",
+                "integer": 8
               }
             ]
           },
@@ -1084,6 +1105,12 @@
                 "id": 10,
                 "name": "language",
                 "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -1360,6 +1387,23 @@
                 "id": 21,
                 "name": "disabled",
                 "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 22,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 23,
+                "name": "change_tags_command",
+                "type": "ChangeAccountV2TagsCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               }
             ],
             "messages": [
@@ -1502,6 +1546,12 @@
                 "id": 10,
                 "name": "environment_role",
                 "type": "google.protobuf.Int32Value"
+              },
+              {
+                "id": 11,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -14714,6 +14764,10 @@
                 "integer": 321
               },
               {
+                "name": "ACCOUNT_V2_TAGS_CHANGED",
+                "integer": 322
+              },
+              {
                 "name": "APIKEY_CREATED",
                 "integer": 400
               },
@@ -16356,6 +16410,12 @@
                 "id": 12,
                 "name": "language",
                 "type": "string"
+              },
+              {
+                "id": 13,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -16401,6 +16461,22 @@
                 "id": 2,
                 "name": "avatar_image_url",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2TagsChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -32652,6 +32728,10 @@
               {
                 "name": "FEATURE_FLAG",
                 "integer": 1
+              },
+              {
+                "name": "ACCOUNT",
+                "integer": 2
               }
             ]
           }
