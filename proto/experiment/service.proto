@@ -65,6 +65,21 @@ message ListGoalsResponse {
   int64 total_count = 3;
 }
 
+message GetGoalConnectionReportRequest {
+  string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetGoalConnectionReportResponse {
+  int64 current_month_total_experiments = 1;
+  int64 last_month_total_experiments = 2;
+
+  int64 current_month_total_operations = 3;
+  int64 last_month_total_operations = 4;
+
+  int64 current_month_not_in_use_goals = 5;
+  int64 last_month_not_in_use_goals = 6;
+}
+
 message CreateGoalRequest {
   CreateGoalCommand command = 1 [
     deprecated = true,
@@ -269,6 +284,40 @@ service ExperimentService {
       description: "List goals."
       tags: "goal"
       operation_id: "web.v1.goals.list"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc GetGoalConnectionReport(GetGoalConnectionReportRequest)
+      returns (GetGoalConnectionReportResponse) {
+    option (google.api.http) = {
+      get: "/v1/goal/connection-report"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get connection report"
+      description: "This API returns a summary of the total number of experiments, auto operations, and not-in-use goals for the last and current months."
+      tags: "goal"
+      operation_id: "web.v1.goal.get_connection_report"
       responses: {
         key: "400"
         value: {
