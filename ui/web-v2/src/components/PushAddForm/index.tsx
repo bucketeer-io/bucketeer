@@ -9,8 +9,9 @@ import FileUploadIcon from '@material-ui/icons/CloudUpload';
 import FilePresentIcon from '@material-ui/icons/FileCopyOutlined';
 import { messages } from '../../lang/messages';
 import { selectAll as selectAllTags } from '../../modules/tags';
-import { CreatableSelect, Option } from '../CreatableSelect';
+import { Option } from '../CreatableSelect';
 import { classNames } from '../../utils/css';
+import { Select } from '../Select';
 
 export interface PushAddFormProps {
   onSubmit: () => void;
@@ -96,7 +97,8 @@ export const PushAddForm: FC<PushAddFormProps> = memo(
                     control={control}
                     render={({ field }) => {
                       return (
-                        <CreatableSelect
+                        <Select
+                          isMulti
                           onChange={(options: Option[]) => {
                             field.onChange(options.map((o) => o.value));
                           }}
@@ -106,6 +108,7 @@ export const PushAddForm: FC<PushAddFormProps> = memo(
                             value: tag.name
                           }))}
                           closeMenuOnSelect={false}
+                          placeholder={f(messages.tags.tagsPlaceholder)}
                         />
                       );
                     }}

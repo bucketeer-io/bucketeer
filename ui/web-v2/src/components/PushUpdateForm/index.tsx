@@ -9,7 +9,8 @@ import { shallowEqual, useSelector } from 'react-redux';
 import { messages } from '../../lang/messages';
 import { useIsEditable } from '../../modules/me';
 import { selectAll as selectAllTags } from '../../modules/tags';
-import { CreatableSelect, Option } from '../CreatableSelect';
+import { Option } from '../CreatableSelect';
+import { Select } from '../Select';
 
 export interface PushUpdateFormProps {
   onSubmit: () => void;
@@ -84,7 +85,8 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
                     control={control}
                     render={({ field }) => {
                       return (
-                        <CreatableSelect
+                        <Select
+                          isMulti
                           onChange={(options: Option[]) => {
                             field.onChange(options.map((o) => o.value));
                           }}
@@ -100,6 +102,7 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
                             value: tag.name
                           }))}
                           closeMenuOnSelect={false}
+                          placeholder={f(messages.tags.tagsPlaceholder)}
                         />
                       );
                     }}
