@@ -221,6 +221,8 @@ func (s *experimentService) newGoalListOrders(
 		column = "created_at"
 	case proto.ListGoalsRequest_UPDATED_AT:
 		column = "updated_at"
+	case proto.ListGoalsRequest_CONNECTION_TYPE:
+		column = "connection_type"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

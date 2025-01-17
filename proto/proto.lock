@@ -20551,6 +20551,10 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "CONNECTION_TYPE",
+                "integer": 4
               }
             ]
           },

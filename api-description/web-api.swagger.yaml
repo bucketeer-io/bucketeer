@@ -3209,6 +3209,7 @@ paths:
             - NAME
             - CREATED_AT
             - UPDATED_AT
+            - CONNECTION_TYPE
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -6148,6 +6149,7 @@ definitions:
       - NAME
       - CREATED_AT
       - UPDATED_AT
+      - CONNECTION_TYPE
     default: DEFAULT
   experimentListGoalsRequestOrderDirection:
     type: string

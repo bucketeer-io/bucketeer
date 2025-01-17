@@ -149,6 +149,7 @@ export namespace ListGoalsRequest {
     NAME: 1;
     CREATED_AT: 2;
     UPDATED_AT: 3;
+    CONNECTION_TYPE: 4;
   }
 
   export const OrderBy: OrderByMap;
