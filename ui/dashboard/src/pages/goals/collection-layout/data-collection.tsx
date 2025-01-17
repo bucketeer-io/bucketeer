@@ -24,10 +24,12 @@ import { GoalActions } from '../types';
 const Tag = ({
   tag,
   type,
+  className,
   onClick
 }: {
   tag: string;
   type: ConnectionType;
+  className?: string;
   onClick?: () => void;
 }) => {
   return (
@@ -39,7 +41,8 @@ const Tag = ({
             type === 'UNKNOWN',
           'text-primary-500 bg-primary-50': type === 'EXPERIMENT',
           'text-accent-pink-500 bg-accent-pink-50': type === 'OPERATION'
-        }
+        },
+        className
       )}
       onClick={onClick}
     >
@@ -104,7 +107,7 @@ export const useColumns = ({
       }
     },
     {
-      accessorKey: 'connections',
+      accessorKey: 'connectionType',
       header: `${t('table:goals.connections')}`,
       size: 150,
       cell: ({ row }) => {
@@ -112,12 +115,13 @@ export const useColumns = ({
         const experimentLength = goal.experiments?.length;
         const { connectionType } = goal;
 
-        if (!goal.isInUseStatus || !experimentLength)
+        if (!goal.isInUseStatus && goal.connectionType === 'UNKNOWN')
           return <Tag tag={'not in use'} type="UNKNOWN" />;
         return (
           <Tag
-            tag={`${experimentLength} ${connectionType === 'EXPERIMENT' ? 'Experiment' : 'Operation'}${experimentLength > 1 ? 's' : ''}`}
+            tag={`${experimentLength} ${connectionType === 'EXPERIMENT' ? 'Experiment' : 'Operation'}${experimentLength === 0 || experimentLength > 1 ? 's' : ''}`}
             type={connectionType}
+            className={!experimentLength ? 'cursor-default' : ''}
             onClick={() => experimentLength && onActions(goal, 'CONNECTION')}
           />
         );

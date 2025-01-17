@@ -4,6 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateGoals } from '@queries/goals';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { AxiosError } from 'axios';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -31,7 +32,13 @@ export interface AddGoalForm {
 }
 
 const formSchema = yup.object().shape({
-  id: yup.string().required(),
+  id: yup
+    .string()
+    .required()
+    .matches(
+      /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
+      "Goal ID must start with a letter or number and only contain letters, numbers, or '-'"
+    ),
   name: yup.string().required(),
   description: yup.string(),
   connectionType: yup.string()
@@ -58,8 +65,6 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
   const addSuccess = (name: string) => {
     {
       notify({
-        toastType: 'toast',
-        messageType: 'success',
         message: (
           <span>
             <b>{name}</b> {`has been successfully created!`}
@@ -72,16 +77,27 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
   };
 
   const onSubmit: SubmitHandler<AddGoalForm> = async values => {
-    const resp = await goalCreator({
-      ...values,
-      connectionType: values.connectionType as ConnectionType,
-      environmentId: currentEnvironment.id
-    });
-    if (resp.goal) addSuccess(values.name);
+    try {
+      const resp = await goalCreator({
+        ...values,
+        connectionType: values.connectionType as ConnectionType,
+        environmentId: currentEnvironment.id
+      });
+      if (resp.goal) addSuccess(values.name);
+    } catch (error) {
+      const { status, message } = error as AxiosError;
+      notify({
+        messageType: 'error',
+        message:
+          status === 409
+            ? 'The Goal ID already exists.'
+            : message || 'Something went wrong.'
+      });
+    }
   };
 
   const {
-    formState: { isValid, isDirty, isSubmitting }
+    formState: { isDirty, isSubmitting }
   } = form;
 
   return (
@@ -177,7 +193,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                       <div className="flex items-center gap-x-2">
                         <RadioGroupItem
                           id="operations-connection"
-                          value="operations"
+                          value="OPERATION"
                         />
                         <label
                           htmlFor="operations-connection"
@@ -202,7 +218,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isValid || !isDirty || isSubmitting}
+                    disabled={!isDirty || isSubmitting}
                     loading={isSubmitting}
                   >
                     {t(`submit`)}
