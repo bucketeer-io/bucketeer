@@ -21,9 +21,11 @@ const GoalActions = ({
   return (
     <div className="flex flex-col w-full p-5 gap-y-5 shadow-card rounded-lg bg-white">
       <p className="text-gray-800 typo-head-bold-small">{title}</p>
-      <p className="typo-para-small leading-[14px] text-gray-600">
-        {description}
-      </p>
+      {description && (
+        <p className="typo-para-small leading-[14px] text-gray-600">
+          {description}
+        </p>
+      )}
       {children}
       <Button
         className="w-fit"

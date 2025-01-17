@@ -1,6 +1,6 @@
 import { CollectionStatusType, OrderBy, OrderDirection } from '@types';
 
-export type GoalActions = 'ARCHIVE' | 'CONNECTION';
+export type GoalActions = 'ARCHIVE' | 'UNARCHIVE' | 'CONNECTION';
 
 export interface GoalFilters {
   page: number;

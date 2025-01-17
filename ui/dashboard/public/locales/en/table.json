@@ -25,7 +25,9 @@
     "edit-push": "Edit Push",
     "disable-push": "Disable Push",
     "enable-push": "Enable Push",
-    "delete-goal": "Delete Goal"
+    "delete-goal": "Delete Goal",
+    "archive-goal": "Archive Goal",
+    "unarchive-goal": "Unarchive Goal"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -75,6 +77,9 @@
     "connections": "Connections",
     "experiment": "Experiment",
     "experiment-status": "Experiment Status",
-    "goal-status": "Goal Status"
+    "goal-status": "Goal Status",
+    "delete-goal-desc": "The goal \"<bold>{{name}}</bold>\" will be deleted permanently. Are you sure you want to proceed?",
+    "confirm-archive-desc": "The goal \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
+    "confirm-unarchive-desc": "The goal \"<bold>{{name}}</bold>\" will be unarchived. Are you sure you want to proceed?"
   }
 }

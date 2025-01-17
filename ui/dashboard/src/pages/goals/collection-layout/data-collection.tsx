@@ -13,6 +13,7 @@ import { ConnectionType, Goal } from '@types';
 import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import { copyToClipBoard } from 'utils/function';
+import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
 import { IconCopy } from '@icons';
 import Icon from 'components/icon';
@@ -55,6 +56,7 @@ export const useColumns = ({
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
   const { notify } = useToast();
+  const { searchOptions } = useSearchParams();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
@@ -156,11 +158,17 @@ export const useColumns = ({
         return (
           <Popover
             options={compact([
-              {
-                label: `${t('archive-goal')}`,
-                icon: IconArchiveOutlined,
-                value: 'ARCHIVE'
-              }
+              searchOptions.archived === 'true'
+                ? {
+                    label: `${t('table:popover.unarchive-goal')}`,
+                    icon: IconArchiveOutlined,
+                    value: 'UNARCHIVE'
+                  }
+                : {
+                    label: `${t('table:popover.archive-goal')}`,
+                    icon: IconArchiveOutlined,
+                    value: 'ARCHIVE'
+                  }
             ])}
             icon={IconMoreHorizOutlined}
             onClick={value => onActions(goal, value as GoalActions)}
