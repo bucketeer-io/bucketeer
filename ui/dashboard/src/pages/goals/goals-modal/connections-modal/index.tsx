@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
 import { Trans } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { Goal } from '@types';
 import { IconExperimentsConnected, IconOperationsConnected } from '@icons';
@@ -16,6 +19,9 @@ export type ConfirmModalProps = {
 
 const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
   const { t } = useTranslation(['common']);
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
   const connectionType = useMemo(() => goal?.connectionType, [goal]);
 
   return (
@@ -58,7 +64,12 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
                 className="flex items-center gap-x-2 typo-para-medium leading-4 text-primary-500"
               >
                 <p>{index + 1}.</p>
-                <p className="underline">{item.name}</p>
+                <Link
+                  className="underline line-clamp-1 break-all"
+                  to={`/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${item.id}`}
+                >
+                  {item.name}
+                </Link>
               </div>
             ))}
           </div>

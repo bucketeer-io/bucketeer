@@ -83,26 +83,11 @@ const CardDescription = ({
   );
 };
 
-const OverviewCard = ({
-  icon,
-  color,
-  title,
-  count,
-  description,
-  highlightText,
-  highlightType,
-  showArrow
-}: Props) => {
+const OverviewCard = ({ icon, color, showArrow, ...props }: Props) => {
   return (
     <div className="flex flex-1 items-center p-4 gap-x-4 w-full min-w-[300px] bg-white shadow-card rounded-2xl overflow-hidden">
       <CardIcon icon={icon} color={color} />
-      <CardDescription
-        title={title}
-        count={count}
-        description={description}
-        highlightText={highlightText}
-        highlightType={highlightType}
-      />
+      <CardDescription {...props} />
       {showArrow && (
         <Icon icon={IconChevronRight} size={'md'} color="gray-500" />
       )}

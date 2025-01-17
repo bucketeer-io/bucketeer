@@ -1,3 +1,6 @@
+import { Link } from 'react-router-dom';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { Goal } from '@types';
 import { cn } from 'utils/style';
@@ -11,13 +14,15 @@ interface Props {
 
 const GoalConnections = ({ goal }: Props) => {
   const { t } = useTranslation(['common', 'table']);
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const gridRowCls = 'grid grid-cols-12 w-full gap-x-4';
-  const headerCls =
-    'typo-para-small leading-[14px] font-medium text-gray-500 uppercase whitespace-nowrap';
-  const experimentCls = 'col-span-4 min-w-[200px]';
-  const experimentStatusCls = 'col-span-3 min-w-[150px]';
-  const goalStatusCls = 'col-span-5 min-w-[300px]';
+  const gridRowCls = 'grid grid-cols-12 w-full gap-x-4',
+    headerCls =
+      'typo-para-small leading-[14px] font-medium text-gray-500 uppercase whitespace-nowrap',
+    experimentCls = 'col-span-4 min-w-[200px] truncate',
+    experimentStatusCls = 'col-span-3 min-w-[150px]',
+    goalStatusCls = 'col-span-5 min-w-[300px]';
 
   return (
     <div className="flex flex-col w-full min-w-[780px] p-5 gap-y-5 shadow-card rounded-lg bg-white">
@@ -40,13 +45,15 @@ const GoalConnections = ({ goal }: Props) => {
         <div className="flex flex-col w-full gap-y-2">
           {goal?.experiments?.map((item, index) => (
             <div key={index} className={gridRowCls}>
-              <div
-                className={cn(
-                  experimentCls,
-                  'typo-para-medium text-primary-500 underline truncate'
-                )}
-              >
-                {item?.name}
+              <div className={experimentCls}>
+                <Link
+                  to={`/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${item.id}`}
+                  className={cn(
+                    'w-fit typo-para-medium text-primary-500 underline'
+                  )}
+                >
+                  {item?.name}
+                </Link>
               </div>
               <div className={experimentStatusCls}>
                 <Status
