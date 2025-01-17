@@ -7,6 +7,11 @@ import { useIntl } from 'react-intl';
 import { messages } from '../../lang/messages';
 import { useIsOwner } from '../../modules/me';
 import { Option, Select } from '../Select';
+import { CreatableSelect } from '../CreatableSelect';
+import { Tag } from '../../proto/tag/tag_pb';
+import { shallowEqual, useSelector } from 'react-redux';
+import { AppState } from '../../modules';
+import { selectAll as selectAllTags } from '../../modules/tags';
 
 export interface AccountUpdateFormProps {
   onSubmit: () => void;
@@ -23,6 +28,15 @@ export const AccountUpdateForm: FC<AccountUpdateFormProps> = memo(
       control,
       formState: { errors, isSubmitting, isDirty, isValid }
     } = methods;
+
+    const tagsList = useSelector<AppState, Tag.AsObject[]>(
+      (state) => selectAllTags(state.tags),
+      shallowEqual
+    );
+
+    const accountTagsList = tagsList.filter(
+      (tag) => tag.entityType === Tag.EntityType.ACCOUNT
+    );
 
     return (
       <div className="w-[500px]">
@@ -126,6 +140,42 @@ export const AccountUpdateForm: FC<AccountUpdateFormProps> = memo(
                       )}
                     </p>
                   </div>
+                </div>
+                <div className="">
+                  <label htmlFor="tags">
+                    <span className="input-label">
+                      {f(messages.tags.title)}
+                    </span>
+                  </label>
+                  <Controller
+                    name="tags"
+                    control={control}
+                    render={({ field }) => {
+                      return (
+                        <CreatableSelect
+                          options={accountTagsList.map((tag) => ({
+                            label: tag.name,
+                            value: tag.name
+                          }))}
+                          defaultValues={field.value.map((tag) => {
+                            return {
+                              value: tag,
+                              label: tag
+                            };
+                          })}
+                          onChange={(options: Option[]) => {
+                            field.onChange(options.map((o) => o.value));
+                          }}
+                          closeMenuOnSelect={false}
+                        />
+                      );
+                    }}
+                  />
+                  <p className="input-error">
+                    {errors.tags && (
+                      <span role="alert">{errors.tags.message}</span>
+                    )}
+                  </p>
                 </div>
               </div>
             </div>

@@ -200,7 +200,8 @@ proto.bucketeer.tag.Tag.serializeBinaryToWriter = function (message, writer) {
  */
 proto.bucketeer.tag.Tag.EntityType = {
   UNKNOWN: 0,
-  FEATURE_FLAG: 1
+  FEATURE_FLAG: 1,
+  ACCOUNT: 2
 };
 
 /**

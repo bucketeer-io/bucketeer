@@ -514,6 +514,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 			Locale: localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(
 				locale.ChangedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.AccountTags),
+			),
+		}
+	case proto.Event_ACCOUNT_V2_TAGS_CHANGED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.ChangedTemplate,
 				localizer.MustLocalizeWithTemplate(locale.AccountAvatarImageURL),
 			),
 		}

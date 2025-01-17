@@ -1,5 +1,5 @@
 import { PlusIcon } from '@heroicons/react/solid';
-import { FC, memo } from 'react';
+import { FC, memo, useCallback, useState } from 'react';
 import { useIntl } from 'react-intl';
 
 import { intl } from '../../lang';
@@ -14,10 +14,14 @@ import {
 } from '../../types/list';
 import { classNames } from '../../utils/css';
 import { FilterChip } from '../FilterChip';
-import { Option } from '../FilterPopover';
+import { FilterPopover, Option } from '../FilterPopover';
 import { FilterRemoveAllButtonProps } from '../FilterRemoveAllButton';
 import { SearchInput } from '../SearchInput';
 import { SortItem, SortSelect } from '../SortSelect';
+import { shallowEqual, useSelector } from 'react-redux';
+import { AppState } from '../../modules';
+import { Tag } from '../../proto/tag/tag_pb';
+import { selectAll as selectAllTags } from '../../modules/tags';
 
 const sortItems: SortItem[] = [
   {
@@ -39,18 +43,13 @@ const sortItems: SortItem[] = [
 ];
 
 export enum FilterTypes {
-  ROLE = 'role',
-  ENABLED = 'enabled'
+  TAGS = 'tags'
 }
 
 export const filterOptions: Option[] = [
   {
-    value: FilterTypes.ROLE,
-    label: intl.formatMessage(messages.account.filter.role)
-  },
-  {
-    value: FilterTypes.ENABLED,
-    label: intl.formatMessage(messages.account.filter.enabled)
+    value: FilterTypes.TAGS,
+    label: intl.formatMessage(messages.tags.title)
   }
 ];
 
@@ -90,11 +89,44 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
   ({ options, onChange, onAdd }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsOwner();
+    const [filterValues, setFilterValues] = useState<Option[]>([]);
+
+    const tagsList = useSelector<AppState, Tag.AsObject[]>(
+      (state) => selectAllTags(state.tags),
+      shallowEqual
+    );
+    const accountTagsList = tagsList.filter(
+      (tag) => tag.entityType === Tag.EntityType.ACCOUNT
+    );
 
     const handleUpdateOption = (
       optionPart: Partial<AccountSearchOptions>
     ): void => {
       onChange({ ...options, ...optionPart });
+    };
+
+    const handleFilterKeyChange = useCallback(
+      (key: string): void => {
+        switch (key) {
+          case FilterTypes.TAGS:
+            setFilterValues(
+              accountTagsList.map((tag) => ({
+                value: tag.name,
+                label: tag.name
+              }))
+            );
+            return;
+        }
+      },
+      [setFilterValues, accountTagsList]
+    );
+
+    const handleMultiFilterAdd = (key: string, value: string[]): void => {
+      if (key === FilterTypes.TAGS) {
+        handleUpdateOption({
+          tagIds: value
+        });
+      }
     };
 
     return (
@@ -117,15 +149,15 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
               }
             />
           </div>
-          {/* TODO: BEcause we switched to account api V2, the filter won't work until we create the console 3.0
           <div className="flex-none mx-2">
             <FilterPopover
               keys={filterOptions}
               values={filterValues}
               onChangeKey={handleFilterKeyChange}
-              onAdd={handleFilterAdd}
+              onAdd={() => {}}
+              onAddMulti={handleMultiFilterAdd}
             />
-          </div> */}
+          </div>
           <div className="flex-grow" />
           <div className="flex-none -mr-2">
             <SortSelect
@@ -152,7 +184,7 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
             </div>
           )}
         </div>
-        {(options.enabled || options.role) && (
+        {(options.enabled || options.role || options.tagIds?.length > 0) && (
           <div className="flex space-x-2 pt-2">
             {options.role && (
               <FilterChip
@@ -181,12 +213,35 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
                 }
               />
             )}
-            {(options.enabled || options.role) && (
+            {typeof options.tagIds === 'string' && (
+              <FilterChip
+                label={`${f(messages.tags.title)}: ${options.tagIds}`}
+                onRemove={() =>
+                  handleUpdateOption({
+                    tagIds: null
+                  })
+                }
+              />
+            )}
+            {Array.isArray(options.tagIds) &&
+              options.tagIds.map((tagId) => (
+                <FilterChip
+                  key={tagId}
+                  label={`${f(messages.tags.title)}: ${tagId}`}
+                  onRemove={() =>
+                    handleUpdateOption({
+                      tagIds: options.tagIds.filter((tId) => tId !== tagId)
+                    })
+                  }
+                />
+              ))}
+            {(options.enabled || options.role || options.tagIds) && (
               <FilterRemoveAllButtonProps
                 onClick={() =>
                   handleUpdateOption({
                     enabled: null,
-                    role: null
+                    role: null,
+                    tagIds: null
                   })
                 }
               />

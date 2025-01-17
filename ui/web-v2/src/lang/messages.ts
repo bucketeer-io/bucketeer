@@ -2038,10 +2038,6 @@ export const messages = {
         id: 'feature.filter.tags',
         defaultMessage: 'Tags'
       }),
-      tagsPlaceholder: defineMessage({
-        id: 'feature.filter.tags.placeholder',
-        defaultMessage: 'Select one or more tags'
-      }),
       hasPrerequisites: defineMessage({
         id: 'feature.filter.hasPrerequisites',
         defaultMessage: 'Has prerequisites'
@@ -2767,10 +2763,16 @@ export const messages = {
       defaultMessage: 'Logout'
     })
   },
-  tags: defineMessage({
-    id: 'tags',
-    defaultMessage: 'Tags'
-  }),
+  tags: {
+    title: defineMessage({
+      id: 'tags.title',
+      defaultMessage: 'Tags'
+    }),
+    tagsPlaceholder: defineMessage({
+      id: 'tags.placeholder',
+      defaultMessage: 'Select one or more tags'
+    })
+  },
   readMore: defineMessage({
     id: 'readMore',
     defaultMessage: 'Read more'

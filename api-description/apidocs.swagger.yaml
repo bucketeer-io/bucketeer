@@ -750,6 +750,7 @@ paths:
             - ENVIRONMENT_COUNT
             - LAST_SEEN
             - STATE
+            - TAGS
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -1563,6 +1564,7 @@ definitions:
       - ENVIRONMENT_COUNT
       - LAST_SEEN
       - STATE
+      - TAGS
     default: DEFAULT
   accountListAccountsV2RequestOrderDirection:
     type: string

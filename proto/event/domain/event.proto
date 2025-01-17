@@ -138,6 +138,7 @@ message Event {
     ACCOUNT_V2_LAST_NAME_CHANGED = 319;
     ACCOUNT_V2_LANGUAGE_CHANGED = 320;
     ACCOUNT_V2_UPDATED = 321;
+    ACCOUNT_V2_TAGS_CHANGED = 322;
     APIKEY_CREATED = 400;
     APIKEY_NAME_CHANGED = 401;
     APIKEY_ENABLED = 402;
@@ -592,6 +593,7 @@ message AccountV2CreatedEvent {
   string first_name = 10;
   string last_name = 11;
   string language = 12;
+  repeated string tags = 13;
 }
 
 message AccountV2UpdatedEvent {
@@ -607,6 +609,11 @@ message AccountV2NameChangedEvent {
 message AccountV2AvatarImageURLChangedEvent {
   string email = 1;
   string avatar_image_url = 2;
+}
+
+message AccountV2TagsChangedEvent {
+  string email = 1;
+  repeated string tags = 2;
 }
 
 message AccountV2OrganizationRoleChangedEvent {
