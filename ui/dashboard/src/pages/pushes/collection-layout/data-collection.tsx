@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   IconEditOutlined,
   IconMoreHorizOutlined
@@ -12,7 +11,7 @@ import { useFormatDateTime } from 'utils/date-time';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
-import { renderTag } from '../../../elements/tag';
+import ExpandableTag from 'elements/expandable-tag';
 import TruncationWithTooltip from '../../../elements/truncation-with-tooltip';
 import { PushActionsType } from '../types';
 
@@ -22,16 +21,7 @@ export const useColumns = ({
   onActions: (item: Push, type: PushActionsType) => void;
 }): ColumnDef<Push>[] => {
   const { t } = useTranslation(['common', 'table']);
-  const [expandedTags, setExpandedTags] = useState<string[]>([]);
   const formatDateTime = useFormatDateTime();
-
-  const handleExpandTag = (pushId: string) => {
-    setExpandedTags(
-      expandedTags.includes(pushId)
-        ? expandedTags.filter(item => item !== pushId)
-        : [...expandedTags, pushId]
-    );
-  };
 
   return [
     {
@@ -72,12 +62,13 @@ export const useColumns = ({
       cell: ({ row }) => {
         const push = row.original;
 
-        return renderTag({
-          tags: push.tags,
-          isExpanded: expandedTags.includes(push.id),
-          className: '!max-w-[250px] truncate',
-          onExpand: () => handleExpandTag(push.id)
-        });
+        return (
+          <ExpandableTag
+            tags={push.tags}
+            rowId={push.id}
+            className="!max-w-[250px] truncate"
+          />
+        );
       }
     },
     {

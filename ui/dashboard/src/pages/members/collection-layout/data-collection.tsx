@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   IconEditOutlined,
   IconMoreHorizOutlined
@@ -15,7 +14,7 @@ import { IconTrash } from '@icons';
 import { AvatarImage } from 'components/avatar';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
-import { renderTag } from 'elements/tag';
+import ExpandableTag from 'elements/expandable-tag';
 import TruncationWithTooltip from 'elements/truncation-with-tooltip';
 import { MemberActionsType } from '../types';
 
@@ -29,16 +28,6 @@ export const useColumns = ({
   const { consoleAccount } = useAuth();
   const isOrganizationAdmin =
     consoleAccount?.organizationRole === 'Organization_ADMIN';
-
-  const [expandedTags, setExpandedTags] = useState<string[]>([]);
-
-  const handleExpandTag = (email: string) => {
-    setExpandedTags(
-      expandedTags.includes(email)
-        ? expandedTags.filter(item => item !== email)
-        : [...expandedTags, email]
-    );
-  };
 
   return compact([
     {
@@ -110,13 +99,13 @@ export const useColumns = ({
       size: 300,
       cell: ({ row }) => {
         const account = row.original;
-
-        return renderTag({
-          tags: account.tags,
-          isExpanded: expandedTags.includes(account.email),
-          className: '!max-w-[250px] truncate',
-          onExpand: () => handleExpandTag(account.email)
-        });
+        return (
+          <ExpandableTag
+            tags={account.tags}
+            rowId={account.email}
+            className="!max-w-[250px] truncate"
+          />
+        );
       }
     },
     {
