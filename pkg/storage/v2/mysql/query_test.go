@@ -276,7 +276,7 @@ func TestConstructWhereSQLString(t *testing.T) {
 				NewFilter("name", "=", "feature"),
 				NewJSONFilter("enums", JSONContainsNumber, []interface{}{1, 3}),
 			},
-			expectedSQL:  "WHERE name = ? AND JSON_CONTAINS(enums, ?)",
+			expectedSQL:  "WHERE name = ? AND JSON_CONTAINS(enums, ?) ",
 			expectedArgs: []interface{}{"feature", "[1, 3]"},
 		},
 	}
