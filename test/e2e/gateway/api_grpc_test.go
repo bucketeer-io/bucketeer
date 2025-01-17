@@ -58,7 +58,7 @@ var (
 	gatewayPort      = flag.Int("gateway-port", 443, "Gateway endpoint port")
 	gatewayCert      = flag.String("gateway-cert", "", "Gateway crt file")
 	serviceTokenPath = flag.String("service-token", "", "Service token path")
-	environmentId    = flag.String("environment-id", "", "Environment id")
+	environmentID    = flag.String("environment-id", "", "Environment id")
 	organizationID   = flag.String("organization-id", "", "Organization ID")
 	testID           = flag.String("test-id", "", "test ID")
 )
@@ -1075,7 +1075,7 @@ func createFeature(
 	t.Helper()
 	createReq := &featureproto.CreateFeatureRequest{
 		Command:       cmd,
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1089,7 +1089,7 @@ func getFeature(t *testing.T, featureID string, client featureclient.Client) *fe
 	t.Helper()
 	getReq := &featureproto.GetFeatureRequest{
 		Id:            featureID,
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1107,7 +1107,7 @@ func addTag(t *testing.T, tag string, featureID string, client featureclient.Cli
 		AddTagCommands: []*featureproto.AddTagCommand{
 			{Tag: tag},
 		},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1128,7 +1128,7 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 	enableReq := &featureproto.EnableFeatureRequest{
 		Id:            featureID,
 		Command:       &featureproto.EnableFeatureCommand{},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1142,7 +1142,7 @@ func archiveFeature(t *testing.T, featureID string, client featureclient.Client)
 	req := &featureproto.ArchiveFeatureRequest{
 		Id:            featureID,
 		Command:       &featureproto.ArchiveFeatureCommand{},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1279,7 +1279,7 @@ func updateFeatureTargeting(t *testing.T, client featureclient.Client, cmd *any.
 		Commands: []*featureproto.Command{
 			{Command: cmd},
 		},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		From:          featureproto.UpdateFeatureTargetingRequest_USER,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)

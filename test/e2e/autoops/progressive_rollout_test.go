@@ -157,7 +157,7 @@ func TestStopProgressiveRollout(t *testing.T) {
 	}
 	stopProgressiveRollout(t, autoOpsClient, progressiveRollouts[0].Id)
 	resp, err := autoOpsClient.GetProgressiveRollout(ctx, &autoopsproto.GetProgressiveRolloutRequest{
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		Id:            progressiveRollouts[0].Id,
 	})
 	assert.NoError(t, err)
@@ -196,7 +196,7 @@ func TestDeleteProgressiveRollout(t *testing.T) {
 	}
 	deleteProgressiveRollout(t, autoOpsClient, progressiveRollouts[0].Id)
 	resp, err := autoOpsClient.GetProgressiveRollout(ctx, &autoopsproto.GetProgressiveRolloutRequest{
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		Id:            progressiveRollouts[0].Id,
 	})
 	if resp != nil {
@@ -240,7 +240,7 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 	}
 	clause := unmarshalProgressiveRolloutManualClause(t, progressiveRollouts[0].Clause)
 	_, err := autoOpsClient.ExecuteProgressiveRollout(ctx, &autoopsproto.ExecuteProgressiveRolloutRequest{
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		Id:            progressiveRollouts[0].Id,
 		ChangeProgressiveRolloutTriggeredAtCommand: &autoopsproto.ChangeProgressiveRolloutScheduleTriggeredAtCommand{
 			ScheduleId: clause.Schedules[0].ScheduleId,
@@ -374,7 +374,7 @@ func createProgressiveRollout(
 		ProgressiveRolloutTemplateScheduleClause: template,
 	}
 	_, err := client.CreateProgressiveRollout(ctx, &autoopsproto.CreateProgressiveRolloutRequest{
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		Command:       cmd,
 	})
 	if err != nil {
@@ -387,7 +387,7 @@ func listProgressiveRollouts(t *testing.T, client autoopsclient.Client, featureI
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	resp, err := client.ListProgressiveRollouts(ctx, &autoopsproto.ListProgressiveRolloutsRequest{
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		PageSize:      0,
 		FeatureIds:    []string{featureID},
 	})
@@ -430,7 +430,7 @@ func getProgressiveRollout(t *testing.T, id string) *autoopsproto.ProgressiveRol
 	c := newAutoOpsClient(t)
 	defer c.Close()
 	resp, err := c.GetProgressiveRollout(ctx, &autoopsproto.GetProgressiveRolloutRequest{
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		Id:            id,
 	})
 	if err != nil {
@@ -444,7 +444,7 @@ func stopProgressiveRollout(t *testing.T, client autoopsclient.Client, id string
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	_, err := client.StopProgressiveRollout(ctx, &autoopsproto.StopProgressiveRolloutRequest{
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		Id:            id,
 		Command: &autoopsproto.StopProgressiveRolloutCommand{
 			StoppedBy: autoopsproto.ProgressiveRollout_USER,
@@ -460,7 +460,7 @@ func deleteProgressiveRollout(t *testing.T, client autoopsclient.Client, id stri
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	_, err := client.DeleteProgressiveRollout(ctx, &autoopsproto.DeleteProgressiveRolloutRequest{
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		Id:            id,
 		Command:       &autoopsproto.DeleteProgressiveRolloutCommand{},
 	})

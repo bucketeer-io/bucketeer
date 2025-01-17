@@ -56,7 +56,7 @@ var (
 	gatewayPort      = flag.Int("gateway-port", 443, "Gateway endpoint port")
 	gatewayCert      = flag.String("gateway-cert", "", "Gateway crt file")
 	serviceTokenPath = flag.String("service-token", "", "Service token path")
-	environmentId    = flag.String("environment-id", "", "Environment id")
+	environmentID    = flag.String("environment-id", "", "Environment id")
 	testID           = flag.String("test-id", "", "test ID")
 	organizationID   = flag.String("organization-id", "", "Organization ID")
 
@@ -108,7 +108,7 @@ func TestArchiveFeature(t *testing.T) {
 	req := &feature.ArchiveFeatureRequest{
 		Id:            featureID,
 		Command:       &feature.ArchiveFeatureCommand{},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -135,7 +135,7 @@ func TestUnarchiveFeature(t *testing.T) {
 	req := &feature.ArchiveFeatureRequest{
 		Id:            featureID,
 		Command:       &feature.ArchiveFeatureCommand{},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	if _, err := client.ArchiveFeature(ctx, req); err != nil {
 		t.Fatal(err)
@@ -143,7 +143,7 @@ func TestUnarchiveFeature(t *testing.T) {
 	reqUnarchive := &feature.UnarchiveFeatureRequest{
 		Id:            featureID,
 		Command:       &feature.UnarchiveFeatureCommand{},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	if _, err := client.UnarchiveFeature(ctx, reqUnarchive); err != nil {
 		t.Fatal(err)
@@ -166,7 +166,7 @@ func TestDeleteFeature(t *testing.T) {
 	deleteReq := &feature.DeleteFeatureRequest{
 		Id:            featureID,
 		Command:       &feature.DeleteFeatureCommand{},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -310,7 +310,7 @@ func TestDisableFeature(t *testing.T) {
 	disableReq := &feature.DisableFeatureRequest{
 		Id:            cmd.Id,
 		Command:       &feature.DisableFeatureCommand{},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	if _, err := client.DisableFeature(ctx, disableReq); err != nil {
 		t.Fatal(err)
@@ -387,7 +387,7 @@ func TestListArchivedFeatures(t *testing.T) {
 	req := &feature.ArchiveFeatureRequest{
 		Id:            featureID,
 		Command:       &feature.ArchiveFeatureCommand{},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -397,7 +397,7 @@ func TestListArchivedFeatures(t *testing.T) {
 	listReq := &feature.ListFeaturesRequest{
 		PageSize:      size,
 		Archived:      &wrappers.BoolValue{Value: true},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	response, err := client.ListFeatures(ctx, listReq)
 	if err != nil {
@@ -416,7 +416,7 @@ func TestListFeaturesPageSize(t *testing.T) {
 	createRandomIDFeatures(t, 2, client)
 	listReq := &feature.ListFeaturesRequest{
 		PageSize:      size,
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -437,7 +437,7 @@ func TestListFeaturesCursor(t *testing.T) {
 	size := int64(1)
 	listReq := &feature.ListFeaturesRequest{
 		PageSize:      size,
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -452,7 +452,7 @@ func TestListFeaturesCursor(t *testing.T) {
 	listReq = &feature.ListFeaturesRequest{
 		PageSize:      size,
 		Cursor:        response.Cursor,
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	response, err = client.ListFeatures(ctx, listReq)
 	if err != nil {
@@ -488,7 +488,7 @@ func TestListFeaturesOrderByName(t *testing.T) {
 			PageSize:       size,
 			OrderBy:        feature.ListFeaturesRequest_NAME,
 			OrderDirection: tc.orderDirection,
-			EnvironmentId:  *environmentId,
+			EnvironmentId:  *environmentID,
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
@@ -531,7 +531,7 @@ func TestListFeaturesOrderByCreatedAt(t *testing.T) {
 			PageSize:       size,
 			OrderBy:        feature.ListFeaturesRequest_CREATED_AT,
 			OrderDirection: tc.orderDirection,
-			EnvironmentId:  *environmentId,
+			EnvironmentId:  *environmentID,
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
@@ -574,7 +574,7 @@ func TestListFeaturesOrderByUpdatedAt(t *testing.T) {
 			PageSize:       size,
 			OrderBy:        feature.ListFeaturesRequest_UPDATED_AT,
 			OrderDirection: tc.orderDirection,
-			EnvironmentId:  *environmentId,
+			EnvironmentId:  *environmentID,
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
@@ -601,7 +601,7 @@ func TestListEnabledFeaturesPageSize(t *testing.T) {
 	size := int64(2)
 	listReq := &feature.ListEnabledFeaturesRequest{
 		PageSize:      size,
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -625,7 +625,7 @@ func TestListEnabledFeaturesCursor(t *testing.T) {
 	size := int64(2)
 	listReq := &feature.ListEnabledFeaturesRequest{
 		PageSize:      size,
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -645,7 +645,7 @@ func TestListEnabledFeaturesCursor(t *testing.T) {
 	listReq = &feature.ListEnabledFeaturesRequest{
 		PageSize:      size,
 		Cursor:        response.Cursor,
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	response, err = client.ListEnabledFeatures(ctx, listReq)
 	if err != nil {
@@ -668,7 +668,7 @@ func TestRename(t *testing.T) {
 	updateReq := &feature.UpdateFeatureDetailsRequest{
 		Id:                   cmd.Id,
 		RenameFeatureCommand: &feature.RenameFeatureCommand{Name: expected},
-		EnvironmentId:        *environmentId,
+		EnvironmentId:        *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -693,7 +693,7 @@ func TestChangeDescription(t *testing.T) {
 	updateReq := &feature.UpdateFeatureDetailsRequest{
 		Id:                       cmd.Id,
 		ChangeDescriptionCommand: &feature.ChangeDescriptionCommand{Description: expected},
-		EnvironmentId:            *environmentId,
+		EnvironmentId:            *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -722,7 +722,7 @@ func TestAddTags(t *testing.T) {
 			{Tag: newTags[1]},
 			{Tag: newTags[2]},
 		},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -751,7 +751,7 @@ func TestRemoveTags(t *testing.T) {
 	removeReq := &feature.UpdateFeatureDetailsRequest{
 		Id:                cmd.Id,
 		RemoveTagCommands: removeTargetTags,
-		EnvironmentId:     *environmentId,
+		EnvironmentId:     *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1733,7 +1733,7 @@ func createFeature(t *testing.T, client featureclient.Client, cmd *feature.Creat
 	t.Helper()
 	createReq := &feature.CreateFeatureRequest{
 		Command:       cmd,
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1746,7 +1746,7 @@ func getFeature(t *testing.T, featureID string, client featureclient.Client) *fe
 	t.Helper()
 	getReq := &feature.GetFeatureRequest{
 		Id:            featureID,
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1786,7 +1786,7 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 	enableReq := &feature.EnableFeatureRequest{
 		Id:            featureID,
 		Command:       &feature.EnableFeatureCommand{},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1822,7 +1822,7 @@ func updateVariations(t *testing.T, featureID string, commands []*feature.Comman
 	updateReq := &feature.UpdateFeatureVariationsRequest{
 		Id:            featureID,
 		Commands:      commands,
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1963,7 +1963,7 @@ func updateFeatureTargeting(t *testing.T, client featureclient.Client, cmd *any.
 		Commands: []*feature.Command{
 			{Command: cmd},
 		},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		From:          feature.UpdateFeatureTargetingRequest_USER,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -1989,7 +1989,7 @@ func evaluateFeatures(t *testing.T, client featureclient.Client, userID, tag str
 	t.Helper()
 	req := &feature.EvaluateFeaturesRequest{
 		User:          &userproto.User{Id: userID},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		Tag:           tag,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -2017,7 +2017,7 @@ func createProgressiveRollout(
 		ProgressiveRolloutTemplateScheduleClause: template,
 	}
 	_, err := client.CreateProgressiveRollout(ctx, &aoproto.CreateProgressiveRolloutRequest{
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		Command:       cmd,
 	})
 	if err != nil {
@@ -2030,7 +2030,7 @@ func listProgressiveRollouts(t *testing.T, client aoclient.Client, featureID str
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	resp, err := client.ListProgressiveRollouts(ctx, &aoproto.ListProgressiveRolloutsRequest{
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		PageSize:      0,
 		FeatureIds:    []string{featureID},
 	})
@@ -2045,7 +2045,7 @@ func getProgressiveRollout(t *testing.T, client aoclient.Client, id string) *aop
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	resp, err := client.GetProgressiveRollout(ctx, &aoproto.GetProgressiveRolloutRequest{
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		Id:            id,
 	})
 	if err != nil {

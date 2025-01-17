@@ -44,7 +44,7 @@ var (
 	gatewayPort      = flag.Int("gateway-port", 443, "Gateway endpoint port")
 	gatewayCert      = flag.String("gateway-cert", "", "Gateway crt file")
 	serviceTokenPath = flag.String("service-token", "", "Service token path")
-	environmentId    = flag.String("environment-id", "", "Environment id")
+	environmentID    = flag.String("environment-id", "", "Environment id")
 	testID           = flag.String("test-id", "", "test ID")
 	organizationID   = flag.String("organization-id", "", "Organization ID")
 )
@@ -91,7 +91,7 @@ func TestDeleteTag(t *testing.T) {
 	// Create tag
 	createReq := &tagproto.CreateTagRequest{
 		Name:          newTagName(t),
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		EntityType:    tagproto.Tag_FEATURE_FLAG,
 	}
 	resp, err := client.CreateTag(ctx, createReq)
@@ -101,7 +101,7 @@ func TestDeleteTag(t *testing.T) {
 	// Delete tag
 	req := &tagproto.DeleteTagRequest{
 		Id:            resp.Tag.Id,
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	defer cancel()
 	if _, err := client.DeleteTag(ctx, req); err != nil {
@@ -120,7 +120,7 @@ func listTags(ctx context.Context, t *testing.T, client tagclient.Client) []*tag
 	t.Helper()
 	resp, err := client.ListTags(ctx, &tagproto.ListTagsRequest{
 		PageSize:      0,
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	})
 	if err != nil {
 		t.Fatal("Failed to list tags", err)
@@ -185,7 +185,7 @@ func createTag(
 	t.Helper()
 	createReq := &tagproto.CreateTagRequest{
 		Name:          tag,
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 		EntityType:    entityType,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)

@@ -37,7 +37,7 @@ type command struct {
 	webGatewayAddress *string
 	email             *string
 	role              *string
-	environmentId     *string
+	environmentID     *string
 	organizationID    *string
 }
 
@@ -50,7 +50,7 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		webGatewayAddress: cmd.Flag("web-gateway", "Address of web-gateway.").Required().String(),
 		email:             cmd.Flag("email", "The email of an account.").Required().String(),
 		role:              cmd.Flag("role", "The role of an environment.").Required().Enum("VIEWER", "EDITOR"),
-		environmentId: cmd.Flag(
+		environmentID: cmd.Flag(
 			"environment-id",
 			"The environment id for Datestore namespace",
 		).Required().String(),
@@ -74,7 +74,7 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	err = c.createAccount(ctx, client, accountproto.AccountV2_Role_Environment(role))
 	if err != nil {
 		logger.Error("Failed to create account", zap.Error(err),
-			zap.String("environmentId", *c.environmentId))
+			zap.String("environmentId", *c.environmentID))
 		return err
 	}
 	logger.Info("Account created")
@@ -88,7 +88,7 @@ func (c *command) createAccount(
 ) error {
 	envRoles := []*accountproto.AccountV2_EnvironmentRole{
 		{
-			EnvironmentId: *c.environmentId,
+			EnvironmentId: *c.environmentID,
 			Role:          role,
 		},
 	}

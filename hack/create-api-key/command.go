@@ -38,7 +38,7 @@ type command struct {
 	name              *string
 	role              *string
 	output            *string
-	environmentId     *string
+	environmentID     *string
 }
 
 func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
@@ -52,7 +52,7 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		role: cmd.Flag(
 			"role", "The role of key.").Default("SDK_CLIENT").Enum("UNKNOWN", "SDK_CLIENT", "SDK_SERVER"),
 		output: cmd.Flag("output", "Path of file to write api key.").Required().String(),
-		environmentId: cmd.Flag(
+		environmentID: cmd.Flag(
 			"environment-id",
 			"The environment id to store api key",
 		).Required().String(),
@@ -77,7 +77,7 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 			Name: *c.name,
 			Role: accountproto.APIKey_Role(role),
 		},
-		EnvironmentId: *c.environmentId,
+		EnvironmentId: *c.environmentID,
 	})
 	if err != nil {
 		logger.Error("Failed to create api key", zap.Error(err))

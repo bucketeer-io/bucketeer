@@ -86,7 +86,7 @@ func listTags(ctx context.Context, t *testing.T, client featureclient.Client) []
 	t.Helper()
 	resp, err := client.ListTags(ctx, &feature.ListTagsRequest{
 		PageSize:      int64(500),
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	})
 	if err != nil {
 		t.Fatal("failed to list tags", err)
@@ -101,7 +101,7 @@ func addTag(t *testing.T, tag string, featureID string, client featureclient.Cli
 		AddTagCommands: []*feature.AddTagCommand{
 			{Tag: tag},
 		},
-		EnvironmentId: *environmentId,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

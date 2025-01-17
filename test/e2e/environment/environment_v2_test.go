@@ -42,7 +42,7 @@ var (
 	gatewayPort      = flag.Int("gateway-port", 443, "Gateway endpoint port")
 	gatewayCert      = flag.String("gateway-cert", "", "Gateway crt file")
 	serviceTokenPath = flag.String("service-token", "", "Service token path")
-	environmentId    = flag.String("environment-id", "", "Environment id")
+	environmentID    = flag.String("environment-id", "", "Environment id")
 	organizationID   = flag.String("organization-id", "", "Organization ID")
 	testID           = flag.String("test-id", "", "test ID")
 )
@@ -135,10 +135,10 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 
 func getEnvironmentID(t *testing.T) string {
 	t.Helper()
-	if *environmentId == "" {
+	if *environmentID == "" {
 		return "production"
 	}
-	return *environmentId
+	return *environmentID
 }
 
 func newEnvironmentClient(t *testing.T) environmentclient.Client {
