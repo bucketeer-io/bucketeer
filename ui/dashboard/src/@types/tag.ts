@@ -1,4 +1,4 @@
-export type EntityType = 'UNKNOWN' | 'FEATURE_FLAG';
+export type EntityType = 'UNSPECIFIED' | 'FEATURE_FLAG' | 'ACCOUNT';
 
 export interface Tag {
   id: string;

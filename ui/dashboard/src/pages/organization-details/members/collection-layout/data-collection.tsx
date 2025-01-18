@@ -7,6 +7,7 @@ import { useFormatDateTime } from 'utils/date-time';
 import { joinName } from 'utils/name';
 import { AvatarImage } from 'components/avatar';
 import Icon from 'components/icon';
+import ExpandableTag from 'elements/expandable-tag';
 
 export const useColumns = ({
   onActions
@@ -64,6 +65,21 @@ export const useColumns = ({
           <div className="text-gray-700 typo-para-medium">
             {String(account.organizationRole).split('_')[1]}
           </div>
+        );
+      }
+    },
+    {
+      accessorKey: 'tags',
+      header: `${t('tags')}`,
+      size: 300,
+      cell: ({ row }) => {
+        const account = row.original;
+        return (
+          <ExpandableTag
+            tags={account.tags}
+            rowId={account.email}
+            className="!max-w-[250px] truncate"
+          />
         );
       }
     },

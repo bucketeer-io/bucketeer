@@ -102,7 +102,8 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
     params: {
       cursor: String(0),
       pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id
+      environmentId: currentEnvironment.id,
+      entityType: 'ACCOUNT'
     }
   });
   const tagOptions = tagCollection?.tags || [];
@@ -236,7 +237,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                     {t('tags')}
                     <Tooltip
                       align="start"
-                      alignOffset={-44}
+                      alignOffset={-130}
                       trigger={
                         <div className="flex-center absolute top-0 -right-6">
                           <Icon icon={IconInfo} size={'sm'} color="gray-600" />
@@ -251,7 +252,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                       disabled={isLoadingTags}
                       placeholder={t(`form:placeholder-tags`)}
                       options={tagOptions?.map(tag => ({
-                        label: tag.id,
+                        label: tag.name,
                         value: tag.id
                       }))}
                       onChange={value =>

@@ -64,7 +64,8 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
     params: {
       cursor: String(0),
       pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id
+      environmentId: currentEnvironment.id,
+      entityType: 'FEATURE_FLAG'
     }
   });
   const environments = (collection?.environments || []).filter(item => item.id);

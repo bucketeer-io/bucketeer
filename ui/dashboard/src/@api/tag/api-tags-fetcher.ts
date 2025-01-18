@@ -1,11 +1,12 @@
 import axiosClient from '@api/axios-client';
 import pickBy from 'lodash/pickBy';
-import { TagCollection, CollectionParams } from '@types';
+import { TagCollection, CollectionParams, EntityType } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams } from 'utils/search-params';
 
 export interface TagsFetcherParams extends CollectionParams {
   environmentId?: string;
+  entityType?: EntityType;
 }
 
 export const tagsFetcher = async (

@@ -58,7 +58,8 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
     params: {
       cursor: String(0),
       pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id
+      environmentId: currentEnvironment.id,
+      entityType: 'FEATURE_FLAG'
     }
   });
   const tagOptions = tagCollection?.tags || [];
