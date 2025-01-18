@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { EnvironmentRoleItem } from '@api/account/account-creator';
 import { accountUpdater } from '@api/account/account-updater';
@@ -93,6 +94,17 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   });
   const tagOptions = tagCollection?.tags || [];
 
+  const defaultTagsValue = useMemo(() => {
+    const tags = member.tags?.map(tag => {
+      const _tag = tagOptions.find(item => item.id === tag);
+      return {
+        label: _tag?.name || tag,
+        value: _tag?.id || tag
+      };
+    });
+    return tags;
+  }, [tagOptions, member]);
+
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
@@ -101,7 +113,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
       language: member.language,
       role: member.organizationRole,
       environmentRoles: member.environmentRoles,
-      tags: member.tags || []
+      tags: defaultTagsValue || []
     }
   });
 
@@ -308,10 +320,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                   </Form.Label>
                   <Form.Control>
                     <CreatableSelect
-                      defaultValues={field.value?.map(tag => ({
-                        label: tag,
-                        value: tag
-                      }))}
+                      defaultValues={field.value}
                       disabled={isLoadingTags}
                       placeholder={t(`form:placeholder-tags`)}
                       options={tagOptions?.map(tag => ({

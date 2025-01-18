@@ -1,9 +1,11 @@
 import { useCallback } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { MultiValue } from 'react-select';
 import {
   accountCreator,
   EnvironmentRoleItem
 } from '@api/account/account-creator';
+import { tagCreator } from '@api/tag';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
 import { useQueryTags } from '@queries/tags';
@@ -18,7 +20,7 @@ import { IconInfo } from '@icons';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import { CreatableSelect } from 'components/creatable-select';
+import { CreatableSelect, Option } from 'components/creatable-select';
 import Divider from 'components/divider';
 import {
   DropdownMenu,
@@ -113,7 +115,8 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
     defaultValues: {
       email: '',
       role: undefined,
-      environmentRoles: [defaultEnvironmentRole]
+      environmentRoles: [defaultEnvironmentRole],
+      tags: []
     }
   });
 
@@ -137,6 +140,21 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
     }
     return false;
   }, [dirtyFields, isValid, memberEnvironments]);
+
+  const handleChangeTags = async (tags: MultiValue<Option>) => {
+    const currentTags = form.getValues('tags');
+    form.setValue(
+      'tags',
+      tags.map(tag => tag.value)
+    );
+    if (tags.length > currentTags.length) {
+      await tagCreator({
+        name: tags.at(-1)?.label as string,
+        entityType: 'ACCOUNT',
+        environmentId: currentEnvironment.id
+      });
+    }
+  };
 
   const onSubmit: SubmitHandler<AddMemberForm> = values => {
     return accountCreator({
@@ -231,7 +249,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
             <Form.Field
               control={form.control}
               name={`tags`}
-              render={({ field }) => (
+              render={() => (
                 <Form.Item className="py-2">
                   <Form.Label required className="relative w-fit">
                     {t('tags')}
@@ -255,9 +273,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                         label: tag.name,
                         value: tag.id
                       }))}
-                      onChange={value =>
-                        field.onChange(value.map(tag => tag.value))
-                      }
+                      onChange={handleChangeTags}
                     />
                   </Form.Control>
                   <Form.Message />

@@ -1,6 +1,9 @@
 import { IconMoreHorizOutlined } from 'react-icons-material-design';
+import { useQueryTags } from '@queries/tags';
 import type { ColumnDef } from '@tanstack/react-table';
 import primaryAvatar from 'assets/avatars/primary.svg';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { LIST_PAGE_SIZE } from 'constants/app';
 import { useTranslation } from 'i18n';
 import { Account } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
@@ -16,6 +19,19 @@ export const useColumns = ({
 }): ColumnDef<Account>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const { data: tagCollection } = useQueryTags({
+    params: {
+      cursor: String(0),
+      pageSize: LIST_PAGE_SIZE,
+      environmentId: currentEnvironment.id,
+      entityType: 'ACCOUNT'
+    }
+  });
+
+  const tagList = tagCollection?.tags || [];
 
   return [
     {
@@ -74,9 +90,13 @@ export const useColumns = ({
       size: 300,
       cell: ({ row }) => {
         const account = row.original;
+        const formattedTags = account.tags?.map(
+          item => tagList.find(tag => tag.id === item)?.name || item
+        );
+
         return (
           <ExpandableTag
-            tags={account.tags}
+            tags={formattedTags}
             rowId={account.email}
             className="!max-w-[250px] truncate"
           />

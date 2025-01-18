@@ -48,7 +48,7 @@ const MemberDetailsModal = ({
       onClose={onClose}
     >
       {isLoading ? (
-        <div className="w-full flex-center py-12  ">
+        <div className="w-full flex-center py-12">
           <Spinner />
         </div>
       ) : (
@@ -76,7 +76,7 @@ const MemberDetailsModal = ({
               {member?.tags.map(tagId => (
                 <Tag
                   key={tagId}
-                  tooltipCls={'!w-full'}
+                  tooltipCls={'!max-w-[450px]'}
                   tagId={tagId}
                   maxSize={487}
                   value={tagList?.find(tag => tag.id === tagId)?.name || tagId}
