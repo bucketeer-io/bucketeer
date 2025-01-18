@@ -1,4 +1,6 @@
+import { useQueryTags } from '@queries/tags';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { LIST_PAGE_SIZE } from 'constants/app';
 import { useTranslation } from 'i18n';
 import { Account } from '@types';
 import { joinName } from 'utils/name';
@@ -6,6 +8,7 @@ import { useFetchEnvironments } from 'pages/project-details/environments/collect
 import Divider from 'components/divider';
 import SlideModal from 'components/modal/slide';
 import Spinner from 'components/spinner';
+import { Tag } from 'elements/expandable-tag';
 
 interface MemberDetailsModalProps {
   isOpen: boolean;
@@ -25,7 +28,18 @@ const MemberDetailsModal = ({
   const { data: collection, isLoading } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
+
+  const { data: tagCollection } = useQueryTags({
+    params: {
+      cursor: String(0),
+      pageSize: LIST_PAGE_SIZE,
+      environmentId: currentEnvironment.id,
+      entityType: 'ACCOUNT'
+    }
+  });
+
   const environments = collection?.environments || [];
+  const tagList = tagCollection?.tags || [];
 
   return (
     <SlideModal
@@ -54,6 +68,20 @@ const MemberDetailsModal = ({
               <p className="text-gray-700 mt-1 typo-para-medium break-all">
                 {member.email}
               </p>
+            </div>
+          </div>
+          <div className="flex flex-col w-full gap-y-1">
+            <p className="typo-para-small text-gray-600">{t('tags')}</p>
+            <div className="flex items-center flex-wrap w-full max-w-full gap-2">
+              {member?.tags.map(tagId => (
+                <Tag
+                  key={tagId}
+                  tooltipCls={'!w-full'}
+                  tagId={tagId}
+                  maxSize={487}
+                  value={tagList?.find(tag => tag.id === tagId)?.name || tagId}
+                />
+              ))}
             </div>
           </div>
           <Divider />

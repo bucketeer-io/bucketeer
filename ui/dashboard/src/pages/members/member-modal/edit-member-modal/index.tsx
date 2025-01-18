@@ -57,8 +57,20 @@ export const formSchema = yup.object().shape({
     .required()
     .of(
       yup.object().shape({
-        environmentId: yup.string().required(),
-        role: yup.mixed<EnvironmentRoleType>().required()
+        environmentId: yup
+          .string()
+          .required(`Environment is a required field.`),
+        role: yup
+          .mixed<EnvironmentRoleType>()
+          .required()
+          .test('isUnassigned', (value, context) => {
+            if (value === 'Environment_UNASSIGNED')
+              return context.createError({
+                message: 'Role is a required field.',
+                path: context.path
+              });
+            return true;
+          })
       })
     ),
   tags: yup.array().min(1).required()
@@ -95,7 +107,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
 
   const {
     watch,
-    formState: { isDirty, isSubmitting, isValid }
+    formState: { isDirty, isSubmitting }
   } = form;
   const memberEnvironments = watch('environmentRoles');
 
@@ -343,7 +355,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isDirty || !isValid}
+                    disabled={!isDirty}
                     loading={isSubmitting}
                   >
                     {t(`save`)}

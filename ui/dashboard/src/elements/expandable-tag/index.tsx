@@ -7,17 +7,21 @@ import TruncationWithTooltip from 'elements/truncation-with-tooltip';
 export const Tag = ({
   tagId,
   value,
-  className
+  className,
+  tooltipCls,
+  maxSize = 250
 }: {
   tagId?: string;
   value: string;
   className?: string;
+  tooltipCls?: string;
+  maxSize?: number;
 }) => (
   <TruncationWithTooltip
     elementId={tagId || ''}
     content={value}
-    maxSize={250}
-    className="!w-fit"
+    maxSize={maxSize}
+    className={cn('!w-fit', tooltipCls)}
   >
     <div
       id={tagId}
