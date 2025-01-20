@@ -63,7 +63,8 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
     });
     const {
       handleSubmit,
-      formState: { dirtyFields }
+      formState: { dirtyFields },
+      reset
     } = methods;
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
@@ -127,7 +128,15 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
               environmentId: currentEnvironment.id,
               id: featureId
             })
-          );
+          ).then((res) => {
+            const featurePayload = res.payload as Feature.AsObject;
+            reset({
+              name: featurePayload.name,
+              description: featurePayload.description,
+              tags: featurePayload.tagsList,
+              comment: ''
+            });
+          });
         });
       },
       [dispatch, dirtyFields]
