@@ -44,7 +44,7 @@ const ProjectEnvironments = () => {
         ? environmentArchive
         : environmentUnarchive;
 
-      return archiveMutation({ id, command: {} });
+      return archiveMutation({ id });
     },
     onSuccess: () => {
       onCloseConfirmModal();

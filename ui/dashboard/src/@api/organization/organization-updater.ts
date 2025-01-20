@@ -2,15 +2,9 @@ import axiosClient from '@api/axios-client';
 
 export interface OrganizationUpdateParams {
   id: string;
-  renameCommand: {
-    name: string;
-  };
-  changeDescriptionCommand: {
-    description?: string;
-  };
-  changeOwnerEmailCommand: {
-    ownerEmail: string;
-  };
+  name: string;
+  description?: string;
+  ownerEmail: string;
 }
 
 export const organizationUpdater = async (

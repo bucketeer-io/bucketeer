@@ -1,19 +1,15 @@
 import axiosClient from '@api/axios-client';
 import { Project } from '@types';
 
-export interface ProjectCreatorCommand {
+export interface ProjectCreatorParams {
   name: string;
   urlCode: string;
   organizationId: string;
   description?: string;
 }
 
-export interface ProjectCreatorParams {
-  command: ProjectCreatorCommand;
-}
-
 export interface ProjectResponse {
-  project: Array<Project>;
+  project: Project;
 }
 
 export const projectCreator = async (

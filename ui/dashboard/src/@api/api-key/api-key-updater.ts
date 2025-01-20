@@ -10,7 +10,7 @@ export interface APIKeyUpdaterParams {
 }
 
 export interface APIKeyUpdaterResponse {
-  apiKey: Array<APIKey>;
+  apiKey: APIKey;
 }
 
 export const apiKeyUpdater = async (

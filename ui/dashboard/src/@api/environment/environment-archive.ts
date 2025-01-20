@@ -1,9 +1,7 @@
 import axiosClient from '@api/axios-client';
-import { AnyObject } from 'yup';
 
 export interface EnvironmentArchiveParams {
   id: string;
-  command: AnyObject;
 }
 
 export const environmentArchive = async (params?: EnvironmentArchiveParams) => {

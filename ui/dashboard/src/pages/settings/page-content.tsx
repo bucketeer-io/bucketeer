@@ -57,29 +57,32 @@ const PageContent = ({ organization }: { organization: Organization }) => {
     }
   });
 
-  const onSubmit: SubmitHandler<PageContentForm> = values => {
-    return organizationUpdater({
-      id: currenEnvironment.organizationId,
-      changeDescriptionCommand: {
-        description: values.description
-      },
-      renameCommand: {
-        name: values.name
-      },
-      changeOwnerEmailCommand: {
+  const onSubmit: SubmitHandler<PageContentForm> = async values => {
+    try {
+      const resp = await organizationUpdater({
+        id: currenEnvironment.organizationId,
+        description: values.description,
+        name: values.name,
         ownerEmail: values.ownerEmail
+      });
+      if (resp) {
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: (
+            <span>
+              <b>{values.name}</b> {`has been successfully updated!`}
+            </span>
+          )
+        });
       }
-    }).then(() => {
+    } catch (error) {
       notify({
         toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {`has been successfully updated!`}
-          </span>
-        )
+        messageType: 'error',
+        message: (error as Error)?.message || 'Something went wrong.'
       });
-    });
+    }
   };
 
   return (

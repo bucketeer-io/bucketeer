@@ -57,22 +57,33 @@ const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
     }
   });
 
-  const onSubmit: SubmitHandler<AddProjectForm> = values => {
-    return projectCreator({
-      command: { ...values, organizationId: currentEnvironment.organizationId }
-    }).then(() => {
+  const onSubmit: SubmitHandler<AddProjectForm> = async values => {
+    try {
+      const resp = await projectCreator({
+        ...values,
+        organizationId: currentEnvironment.organizationId
+      });
+
+      if (resp) {
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: (
+            <span>
+              <b>{values.name}</b> {`has been successfully created!`}
+            </span>
+          )
+        });
+        invalidateProjects(queryClient);
+        onClose();
+      }
+    } catch (error) {
       notify({
         toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {`has been successfully created!`}
-          </span>
-        )
+        messageType: 'error',
+        message: (error as Error)?.message
       });
-      invalidateProjects(queryClient);
-      onClose();
-    });
+    }
   };
 
   return (

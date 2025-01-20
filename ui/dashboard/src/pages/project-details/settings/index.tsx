@@ -44,28 +44,33 @@ const ProjectSettings = ({ project }: { project: Project }) => {
     }
   });
 
-  const onSubmit: SubmitHandler<ProjectSettingsForm> = values => {
-    return projectUpdater({
-      id: projectDetailsId,
-      changeDescriptionCommand: {
-        description: values.description
-      },
-      renameCommand: {
+  const onSubmit: SubmitHandler<ProjectSettingsForm> = async values => {
+    try {
+      const resp = await projectUpdater({
+        id: projectDetailsId,
+        description: values.description,
         name: values.name
+      });
+      if (resp) {
+        invalidateProjectDetails(queryClient, { id: projectDetailsId });
+        invalidateAccounts(queryClient);
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: (
+            <span>
+              <b>{values.name}</b> {`has been successfully updated!`}
+            </span>
+          )
+        });
       }
-    }).then(() => {
-      invalidateProjectDetails(queryClient, { id: projectDetailsId });
-      invalidateAccounts(queryClient);
+    } catch (error) {
       notify({
         toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {`has been successfully updated!`}
-          </span>
-        )
+        messageType: 'error',
+        message: (error as Error)?.message
       });
-    });
+    }
   };
 
   return (

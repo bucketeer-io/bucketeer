@@ -70,22 +70,31 @@ const AddEnvironmentModal = ({ isOpen, onClose }: AddEnvironmentModalProps) => {
     }
   });
 
-  const onSubmit: SubmitHandler<AddEnvironmentForm> = values => {
-    return environmentCreator({
-      command: { ...values }
-    }).then(() => {
+  const onSubmit: SubmitHandler<AddEnvironmentForm> = async values => {
+    try {
+      const resp = await environmentCreator({
+        ...values
+      });
+      if (resp) {
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: (
+            <span>
+              <b>{values.name}</b> {`has been successfully created!`}
+            </span>
+          )
+        });
+        invalidateEnvironments(queryClient);
+        onClose();
+      }
+    } catch (error) {
       notify({
         toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {`has been successfully created!`}
-          </span>
-        )
+        messageType: 'error',
+        message: (error as Error)?.message
       });
-      invalidateEnvironments(queryClient);
-      onClose();
-    });
+    }
   };
 
   return (
