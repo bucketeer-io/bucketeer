@@ -617,6 +617,62 @@ func TestCreateListGoalsNoCommand(t *testing.T) {
 	}
 }
 
+func TestCreateUpdateGoalNoCommand(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	c := newExperimentClient(t)
+	defer c.Close()
+	goalID := createGoalID(t)
+	createGoalResp, err := c.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
+		EnvironmentId: *environmentNamespace,
+		Id:            goalID,
+		Name:          fmt.Sprintf("%s-goal-name", goalID),
+		Description:   fmt.Sprintf("%s-goal-description", goalID),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.NotNil(t, createGoalResp)
+
+	expectedName := fmt.Sprintf("%s-goal-new-name-%s", prefixTestName, newUUID(t))
+	expectedDescription := fmt.Sprintf("%s-goal-new-description-%s", prefixTestName, newUUID(t))
+	updateGoalResp, err := c.UpdateGoal(ctx, &experimentproto.UpdateGoalRequest{
+		EnvironmentId: *environmentNamespace,
+		Id:            goalID,
+		Name:          wrapperspb.String(expectedName),
+		Description:   wrapperspb.String(expectedDescription),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.NotNil(t, createGoalResp)
+
+	assert.Equal(t, expectedName, updateGoalResp.Goal.Name)
+	assert.Equal(t, expectedDescription, updateGoalResp.Goal.Description)
+
+	getGoalResp, err := c.GetGoal(ctx, &experimentproto.GetGoalRequest{
+		Id:            goalID,
+		EnvironmentId: *environmentNamespace,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.NotNil(t, getGoalResp)
+
+	assert.Equal(t, expectedName, getGoalResp.Goal.Name)
+	assert.Equal(t, expectedDescription, getGoalResp.Goal.Description)
+
+	_, err = c.UpdateGoal(ctx, &experimentproto.UpdateGoalRequest{
+		Id:            goalID,
+		EnvironmentId: *environmentNamespace,
+		Deleted:       wrapperspb.Bool(true),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func createGoal(ctx context.Context, t *testing.T, client experimentclient.Client) string {
 	t.Helper()
 	goalID := createGoalID(t)

@@ -643,7 +643,7 @@ func (s *experimentService) updateGoalNoCommand(
 			if err != nil {
 				return err
 			}
-			updated, err := goal.UpdateGoal(nil, nil, nil, wrapperspb.Bool(true))
+			updated, err := goal.Update(nil, nil, nil, wrapperspb.Bool(true))
 			if err != nil {
 				return err
 			}
@@ -672,7 +672,7 @@ func (s *experimentService) updateGoalNoCommand(
 			if err != nil {
 				return err
 			}
-			updated, err := goal.UpdateGoal(
+			updated, err := goal.Update(
 				req.Name,
 				req.Description,
 				req.Archived,

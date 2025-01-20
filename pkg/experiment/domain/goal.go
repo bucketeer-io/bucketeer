@@ -42,7 +42,7 @@ func NewGoal(
 	}}, nil
 }
 
-func (g *Goal) UpdateGoal(
+func (g *Goal) Update(
 	name *wrapperspb.StringValue,
 	description *wrapperspb.StringValue,
 	archived *wrapperspb.BoolValue,
