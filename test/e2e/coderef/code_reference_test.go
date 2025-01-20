@@ -36,18 +36,18 @@ const (
 )
 
 var (
-	webGatewayAddr       = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
-	webGatewayPort       = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
-	webGatewayCert       = flag.String("web-gateway-cert", "", "Web gateway crt file")
-	apiKeyPath           = flag.String("api-key", "", "Client SDK API key for api-gateway")
-	apiKeyServerPath     = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
-	gatewayAddr          = flag.String("gateway-addr", "", "Gateway endpoint address")
-	gatewayPort          = flag.Int("gateway-port", 443, "Gateway endpoint port")
-	gatewayCert          = flag.String("gateway-cert", "", "Gateway crt file")
-	serviceTokenPath     = flag.String("service-token", "", "Service token path")
-	environmentNamespace = flag.String("environment-namespace", "", "Environment namespace")
-	testID               = flag.String("test-id", "", "test ID")
-	organizationID       = flag.String("organization-id", "", "Organization ID")
+	webGatewayAddr   = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
+	webGatewayPort   = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
+	webGatewayCert   = flag.String("web-gateway-cert", "", "Web gateway crt file")
+	apiKeyPath       = flag.String("api-key", "", "Client SDK API key for api-gateway")
+	apiKeyServerPath = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
+	gatewayAddr      = flag.String("gateway-addr", "", "Gateway endpoint address")
+	gatewayPort      = flag.Int("gateway-port", 443, "Gateway endpoint port")
+	gatewayCert      = flag.String("gateway-cert", "", "Gateway crt file")
+	serviceTokenPath = flag.String("service-token", "", "Service token path")
+	environmentID    = flag.String("environment-id", "", "Environment id")
+	testID           = flag.String("test-id", "", "test ID")
+	organizationID   = flag.String("organization-id", "", "Organization ID")
 )
 
 func TestCreateCodeReference(t *testing.T) {
@@ -91,7 +91,7 @@ func TestUpdateCodeReference(t *testing.T) {
 	// Update code reference
 	updateReq := &coderefproto.UpdateCodeReferenceRequest{
 		Id:               createResp.CodeReference.Id,
-		EnvironmentId:    *environmentNamespace,
+		EnvironmentId:    *environmentID,
 		FilePath:         "updated/path/to/file.go",
 		LineNumber:       200,
 		CodeSnippet:      "updated code snippet",
@@ -108,7 +108,7 @@ func TestUpdateCodeReference(t *testing.T) {
 	// Get and verify update
 	getResp := getCodeReference(t, client, &coderefproto.GetCodeReferenceRequest{
 		Id:            createResp.CodeReference.Id,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	})
 	assert.Equal(t, updateReq.FilePath, getResp.CodeReference.FilePath)
 	assert.Equal(t, updateReq.LineNumber, getResp.CodeReference.LineNumber)
@@ -140,7 +140,7 @@ func TestListCodeReferences(t *testing.T) {
 	// List code references
 	listReq := &coderefproto.ListCodeReferencesRequest{
 		FeatureId:      featureID,
-		EnvironmentId:  *environmentNamespace,
+		EnvironmentId:  *environmentID,
 		PageSize:       10,
 		Cursor:         "0",
 		OrderBy:        coderefproto.ListCodeReferencesRequest_CREATED_AT,
@@ -167,7 +167,7 @@ func TestDeleteCodeReference(t *testing.T) {
 	// Delete code reference
 	deleteReq := &coderefproto.DeleteCodeReferenceRequest{
 		Id:            createResp.CodeReference.Id,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	_, err := client.DeleteCodeReference(context.Background(), deleteReq)
 	assert.NoError(t, err)
@@ -175,7 +175,7 @@ func TestDeleteCodeReference(t *testing.T) {
 	// Verify deletion
 	getReq := &coderefproto.GetCodeReferenceRequest{
 		Id:            createResp.CodeReference.Id,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	_, err = client.GetCodeReference(context.Background(), getReq)
 	assert.Error(t, err) // Should return error as code reference is deleted
@@ -183,7 +183,7 @@ func TestDeleteCodeReference(t *testing.T) {
 
 func newCreateCodeReferenceRequest(featureID string) *coderefproto.CreateCodeReferenceRequest {
 	return &coderefproto.CreateCodeReferenceRequest{
-		EnvironmentId:    *environmentNamespace,
+		EnvironmentId:    *environmentID,
 		FeatureId:        featureID,
 		FilePath:         "path/to/file.go",
 		LineNumber:       100,
@@ -275,7 +275,7 @@ func createFeature(t *testing.T, client featureclient.Client, featureID string) 
 	}
 	createReq := &featureproto.CreateFeatureRequest{
 		Command:       cmd,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
