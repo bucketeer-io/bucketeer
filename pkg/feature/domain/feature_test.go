@@ -281,14 +281,16 @@ func TestRemoveTag(t *testing.T) {
 	f.AddTag(tag1)
 	f.AddTag(tag2)
 	f.RemoveTag(tag1)
+	f.RemoveTag("not-exist-tag")
 	if f.Tags[0] == tag1 {
 		t.Fatalf("Failed to remove tag %s. Tags: %v", tag1, f.Tags)
 	}
 	if len(f.Tags) != 1 {
 		t.Fatalf("Failed to remove tag. It should remove only 1: %v", f.Tags)
 	}
-	if err := f.RemoveTag(tag2); err != errTagsMustHaveAtLeastOneTag {
-		t.Fatalf("Failed to remove tag. It must keep at least 1 tag %v", f.Tags)
+	f.RemoveTag(tag2)
+	if len(f.Tags) != 0 {
+		t.Fatalf("Failed to remove tag. It should remove: %s. Actual: %v", tag2, f.Tags)
 	}
 }
 
