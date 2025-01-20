@@ -38,18 +38,18 @@ const (
 )
 
 var (
-	webGatewayAddr       = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
-	webGatewayPort       = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
-	webGatewayCert       = flag.String("web-gateway-cert", "", "Web gateway crt file")
-	apiKeyPath           = flag.String("api-key", "", "Client SDK API key for api-gateway")
-	apiKeyServerPath     = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
-	gatewayAddr          = flag.String("gateway-addr", "", "Gateway endpoint address")
-	gatewayPort          = flag.Int("gateway-port", 443, "Gateway endpoint port")
-	gatewayCert          = flag.String("gateway-cert", "", "Gateway crt file")
-	serviceTokenPath     = flag.String("service-token", "", "Service token path")
-	environmentNamespace = flag.String("environment-namespace", "", "Environment namespace")
-	organizationID       = flag.String("organization-id", "", "Organization ID")
-	testID               = flag.String("test-id", "", "test ID")
+	webGatewayAddr   = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
+	webGatewayPort   = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
+	webGatewayCert   = flag.String("web-gateway-cert", "", "Web gateway crt file")
+	apiKeyPath       = flag.String("api-key", "", "Client SDK API key for api-gateway")
+	apiKeyServerPath = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
+	gatewayAddr      = flag.String("gateway-addr", "", "Gateway endpoint address")
+	gatewayPort      = flag.Int("gateway-port", 443, "Gateway endpoint port")
+	gatewayCert      = flag.String("gateway-cert", "", "Gateway crt file")
+	serviceTokenPath = flag.String("service-token", "", "Service token path")
+	environmentID    = flag.String("environment-id", "", "Environment id")
+	organizationID   = flag.String("organization-id", "", "Organization ID")
+	testID           = flag.String("test-id", "", "test ID")
 
 	fcmServiceAccountDummy = `{
 		"type": "service_account",
@@ -183,7 +183,7 @@ func TestUpdatePush(t *testing.T) {
 	// Update the push
 	updateReq := &pushproto.UpdatePushRequest{
 		Id:            push.Id,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 		Name:          &wrappers.StringValue{Value: newName},
 		Tags:          []string{newTag},
 		Disabled:      wrapperspb.Bool(true),
@@ -242,7 +242,7 @@ func createFeature(ctx context.Context, t *testing.T, client featureclient.Clien
 	cmd := newCreateFeatureCommand(featureID, tag)
 	createReq := &featureproto.CreateFeatureRequest{
 		Command:       cmd,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	if _, err := client.CreateFeature(ctx, createReq); err != nil {
 		t.Fatal(err)
@@ -255,7 +255,7 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 	enableReq := &featureproto.EnableFeatureRequest{
 		Id:            featureID,
 		Command:       &featureproto.EnableFeatureCommand{},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -325,7 +325,7 @@ func createPush(
 	t.Helper()
 	cmd := newCreatePushCommand(t, fcmServiceAccount, []string{tag})
 	createReq := &pushproto.CreatePushRequest{
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 		Command:       cmd,
 	}
 	if _, err := client.CreatePush(ctx, createReq); err != nil {
@@ -342,7 +342,7 @@ func createPushNoCommand(
 ) {
 	t.Helper()
 	createReq := &pushproto.CreatePushRequest{
-		EnvironmentId:     *environmentNamespace,
+		EnvironmentId:     *environmentID,
 		Name:              newPushName(t),
 		Tags:              []string{tag},
 		FcmServiceAccount: fcmServiceAccount,
@@ -365,7 +365,7 @@ func listPushes(t *testing.T, client pushclient.Client) []*pushproto.Push {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	resp, err := client.ListPushes(ctx, &pushproto.ListPushesRequest{
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 		PageSize:      int64(500),
 	})
 	if err != nil {

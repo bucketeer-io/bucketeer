@@ -47,18 +47,18 @@ const (
 
 var (
 	// FIXME: To avoid compiling the test many times, webGatewayAddr, webGatewayPort & apiKey has been also added here to prevent from getting: "flag provided but not defined" error during the test. These 3 are being use  in the Gateway test
-	webGatewayAddr       = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
-	webGatewayPort       = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
-	webGatewayCert       = flag.String("web-gateway-cert", "", "Web gateway crt file")
-	apiKeyPath           = flag.String("api-key", "", "Client SDK API key for api-gateway")
-	apiKeyServerPath     = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
-	gatewayAddr          = flag.String("gateway-addr", "", "Gateway endpoint address")
-	gatewayPort          = flag.Int("gateway-port", 443, "Gateway endpoint port")
-	gatewayCert          = flag.String("gateway-cert", "", "Gateway crt file")
-	serviceTokenPath     = flag.String("service-token", "", "Service token path")
-	environmentNamespace = flag.String("environment-namespace", "", "Environment namespace")
-	testID               = flag.String("test-id", "", "test ID")
-	organizationID       = flag.String("organization-id", "", "Organization ID")
+	webGatewayAddr   = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
+	webGatewayPort   = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
+	webGatewayCert   = flag.String("web-gateway-cert", "", "Web gateway crt file")
+	apiKeyPath       = flag.String("api-key", "", "Client SDK API key for api-gateway")
+	apiKeyServerPath = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
+	gatewayAddr      = flag.String("gateway-addr", "", "Gateway endpoint address")
+	gatewayPort      = flag.Int("gateway-port", 443, "Gateway endpoint port")
+	gatewayCert      = flag.String("gateway-cert", "", "Gateway crt file")
+	serviceTokenPath = flag.String("service-token", "", "Service token path")
+	environmentID    = flag.String("environment-id", "", "Environment id")
+	testID           = flag.String("test-id", "", "test ID")
+	organizationID   = flag.String("organization-id", "", "Organization ID")
 
 	tags = []string{"e2e-test-tag-1", "e2e-test-tag-2", "e2e-test-tag-3"}
 )
@@ -108,7 +108,7 @@ func TestArchiveFeature(t *testing.T) {
 	req := &feature.ArchiveFeatureRequest{
 		Id:            featureID,
 		Command:       &feature.ArchiveFeatureCommand{},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -135,7 +135,7 @@ func TestUnarchiveFeature(t *testing.T) {
 	req := &feature.ArchiveFeatureRequest{
 		Id:            featureID,
 		Command:       &feature.ArchiveFeatureCommand{},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	if _, err := client.ArchiveFeature(ctx, req); err != nil {
 		t.Fatal(err)
@@ -143,7 +143,7 @@ func TestUnarchiveFeature(t *testing.T) {
 	reqUnarchive := &feature.UnarchiveFeatureRequest{
 		Id:            featureID,
 		Command:       &feature.UnarchiveFeatureCommand{},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	if _, err := client.UnarchiveFeature(ctx, reqUnarchive); err != nil {
 		t.Fatal(err)
@@ -166,7 +166,7 @@ func TestDeleteFeature(t *testing.T) {
 	deleteReq := &feature.DeleteFeatureRequest{
 		Id:            featureID,
 		Command:       &feature.DeleteFeatureCommand{},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -310,7 +310,7 @@ func TestDisableFeature(t *testing.T) {
 	disableReq := &feature.DisableFeatureRequest{
 		Id:            cmd.Id,
 		Command:       &feature.DisableFeatureCommand{},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	if _, err := client.DisableFeature(ctx, disableReq); err != nil {
 		t.Fatal(err)
@@ -387,7 +387,7 @@ func TestListArchivedFeatures(t *testing.T) {
 	req := &feature.ArchiveFeatureRequest{
 		Id:            featureID,
 		Command:       &feature.ArchiveFeatureCommand{},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -397,7 +397,7 @@ func TestListArchivedFeatures(t *testing.T) {
 	listReq := &feature.ListFeaturesRequest{
 		PageSize:      size,
 		Archived:      &wrappers.BoolValue{Value: true},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	response, err := client.ListFeatures(ctx, listReq)
 	if err != nil {
@@ -416,7 +416,7 @@ func TestListFeaturesPageSize(t *testing.T) {
 	createRandomIDFeatures(t, 2, client)
 	listReq := &feature.ListFeaturesRequest{
 		PageSize:      size,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -437,7 +437,7 @@ func TestListFeaturesCursor(t *testing.T) {
 	size := int64(1)
 	listReq := &feature.ListFeaturesRequest{
 		PageSize:      size,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -452,7 +452,7 @@ func TestListFeaturesCursor(t *testing.T) {
 	listReq = &feature.ListFeaturesRequest{
 		PageSize:      size,
 		Cursor:        response.Cursor,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	response, err = client.ListFeatures(ctx, listReq)
 	if err != nil {
@@ -488,7 +488,7 @@ func TestListFeaturesOrderByName(t *testing.T) {
 			PageSize:       size,
 			OrderBy:        feature.ListFeaturesRequest_NAME,
 			OrderDirection: tc.orderDirection,
-			EnvironmentId:  *environmentNamespace,
+			EnvironmentId:  *environmentID,
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
@@ -531,7 +531,7 @@ func TestListFeaturesOrderByCreatedAt(t *testing.T) {
 			PageSize:       size,
 			OrderBy:        feature.ListFeaturesRequest_CREATED_AT,
 			OrderDirection: tc.orderDirection,
-			EnvironmentId:  *environmentNamespace,
+			EnvironmentId:  *environmentID,
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
@@ -574,7 +574,7 @@ func TestListFeaturesOrderByUpdatedAt(t *testing.T) {
 			PageSize:       size,
 			OrderBy:        feature.ListFeaturesRequest_UPDATED_AT,
 			OrderDirection: tc.orderDirection,
-			EnvironmentId:  *environmentNamespace,
+			EnvironmentId:  *environmentID,
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
 		defer cancel()
@@ -601,7 +601,7 @@ func TestListEnabledFeaturesPageSize(t *testing.T) {
 	size := int64(2)
 	listReq := &feature.ListEnabledFeaturesRequest{
 		PageSize:      size,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -625,7 +625,7 @@ func TestListEnabledFeaturesCursor(t *testing.T) {
 	size := int64(2)
 	listReq := &feature.ListEnabledFeaturesRequest{
 		PageSize:      size,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -645,7 +645,7 @@ func TestListEnabledFeaturesCursor(t *testing.T) {
 	listReq = &feature.ListEnabledFeaturesRequest{
 		PageSize:      size,
 		Cursor:        response.Cursor,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	response, err = client.ListEnabledFeatures(ctx, listReq)
 	if err != nil {
@@ -668,7 +668,7 @@ func TestRename(t *testing.T) {
 	updateReq := &feature.UpdateFeatureDetailsRequest{
 		Id:                   cmd.Id,
 		RenameFeatureCommand: &feature.RenameFeatureCommand{Name: expected},
-		EnvironmentId:        *environmentNamespace,
+		EnvironmentId:        *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -693,7 +693,7 @@ func TestChangeDescription(t *testing.T) {
 	updateReq := &feature.UpdateFeatureDetailsRequest{
 		Id:                       cmd.Id,
 		ChangeDescriptionCommand: &feature.ChangeDescriptionCommand{Description: expected},
-		EnvironmentId:            *environmentNamespace,
+		EnvironmentId:            *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -722,7 +722,7 @@ func TestAddTags(t *testing.T) {
 			{Tag: newTags[1]},
 			{Tag: newTags[2]},
 		},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -751,7 +751,7 @@ func TestRemoveTags(t *testing.T) {
 	removeReq := &feature.UpdateFeatureDetailsRequest{
 		Id:                cmd.Id,
 		RemoveTagCommands: removeTargetTags,
-		EnvironmentId:     *environmentNamespace,
+		EnvironmentId:     *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1448,14 +1448,14 @@ func TestCloneFeature(t *testing.T) {
 	targetEnvironmentId := newUUID(t)
 	c := newEnvironmentClient(t)
 	defer c.Close()
-	envCmd := newEnvironmentCommand(targetEnvironmentNamespace)
+	envCmd := newEnvironmentCommand(targetenvironmentId)
 	createEnvironment(t, c, envCmd)
 	req := &feature.CloneFeatureRequest{
 		Id: featureID,
 		Command: &feature.CloneFeatureCommand{
-			EnvironmentNamespace: targetEnvironmentNamespace,
+			environmentId: targetenvironmentId,
 		},
-		EnvironmentNamespace: *environmentNamespace,
+		environmentId: *environmentId,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1463,7 +1463,7 @@ func TestCloneFeature(t *testing.T) {
 		t.Fatal(err)
 	}
 	f = getFeature(t, featureID, client)
-	cf := getClonedFeature(t, featureID, targetEnvironmentNamespace, client)
+	cf := getClonedFeature(t, featureID, targetenvironmentId, client)
 	if cf.Id != f.Id {
 		t.Fatalf("Different ids. Expected: %s actual: %s", f.Id, cf.Id)
 	}
@@ -1543,23 +1543,23 @@ func TestCloneFeature(t *testing.T) {
 	})
 	require.NoError(t, err)
 	updateFeatureTargeting(t, client, changeCmd, featureID)
-	anotherTargetEnvironmentNamespace := newUUID(t)
+	anotherTargetenvironmentId := newUUID(t)
 	c = newEnvironmentClient(t)
 	defer c.Close()
-	envCmd = newEnvironmentCommand(anotherTargetEnvironmentNamespace)
+	envCmd = newEnvironmentCommand(anotherTargetenvironmentId)
 	createEnvironment(t, c, envCmd)
 	req = &feature.CloneFeatureRequest{
 		Id: featureID,
 		Command: &feature.CloneFeatureCommand{
-			EnvironmentNamespace: anotherTargetEnvironmentNamespace,
+			environmentId: anotherTargetenvironmentId,
 		},
-		EnvironmentNamespace: *environmentNamespace,
+		environmentId: *environmentId,
 	}
 	if _, err := client.CloneFeature(ctx, req); err != nil {
 		t.Fatal(err)
 	}
 	f = getFeature(t, featureID, client)
-	cf = getClonedFeature(t, featureID, anotherTargetEnvironmentNamespace, client)
+	cf = getClonedFeature(t, featureID, anotherTargetenvironmentId, client)
 	for i := range cf.Rules {
 		for idx := range cf.Rules[i].Strategy.RolloutStrategy.Variations {
 			if cf.Rules[i].Strategy.RolloutStrategy.Variations[idx].Weight != f.Rules[i].Strategy.RolloutStrategy.Variations[idx].Weight {
@@ -1733,7 +1733,7 @@ func createFeature(t *testing.T, client featureclient.Client, cmd *feature.Creat
 	t.Helper()
 	createReq := &feature.CreateFeatureRequest{
 		Command:       cmd,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1746,7 +1746,7 @@ func getFeature(t *testing.T, featureID string, client featureclient.Client) *fe
 	t.Helper()
 	getReq := &feature.GetFeatureRequest{
 		Id:            featureID,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1762,7 +1762,7 @@ func getClonedFeature(t *testing.T, featureID, en string, client featureclient.C
 	t.Helper()
 	getReq := &feature.GetFeatureRequest{
 		Id:                   featureID,
-		EnvironmentNamespace: en,
+		environmentId: en,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1786,7 +1786,7 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 	enableReq := &feature.EnableFeatureRequest{
 		Id:            featureID,
 		Command:       &feature.EnableFeatureCommand{},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1822,7 +1822,7 @@ func updateVariations(t *testing.T, featureID string, commands []*feature.Comman
 	updateReq := &feature.UpdateFeatureVariationsRequest{
 		Id:            featureID,
 		Commands:      commands,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1963,7 +1963,7 @@ func updateFeatureTargeting(t *testing.T, client featureclient.Client, cmd *any.
 		Commands: []*feature.Command{
 			{Command: cmd},
 		},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 		From:          feature.UpdateFeatureTargetingRequest_USER,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -1989,7 +1989,7 @@ func evaluateFeatures(t *testing.T, client featureclient.Client, userID, tag str
 	t.Helper()
 	req := &feature.EvaluateFeaturesRequest{
 		User:          &userproto.User{Id: userID},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 		Tag:           tag,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -2017,7 +2017,7 @@ func createProgressiveRollout(
 		ProgressiveRolloutTemplateScheduleClause: template,
 	}
 	_, err := client.CreateProgressiveRollout(ctx, &aoproto.CreateProgressiveRolloutRequest{
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 		Command:       cmd,
 	})
 	if err != nil {
@@ -2030,7 +2030,7 @@ func listProgressiveRollouts(t *testing.T, client aoclient.Client, featureID str
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	resp, err := client.ListProgressiveRollouts(ctx, &aoproto.ListProgressiveRolloutsRequest{
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 		PageSize:      0,
 		FeatureIds:    []string{featureID},
 	})
@@ -2045,7 +2045,7 @@ func getProgressiveRollout(t *testing.T, client aoclient.Client, id string) *aop
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	resp, err := client.GetProgressiveRollout(ctx, &aoproto.GetProgressiveRolloutRequest{
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 		Id:            id,
 	})
 	if err != nil {
@@ -2097,8 +2097,8 @@ func newEnvironmentCommand(id string) *environment.CreateEnvironmentCommand {
 	namespace := strings.Replace(id, "-", "", -1)
 	return &environment.CreateEnvironmentCommand{
 		Namespace:   namespace,
-		Name:        "e2e-test-environment-namespace",
-		Description: "e2e-test-environment-namespace-description",
+		Name:        "e2e-test-environment-id",
+		Description: "e2e-test-environment-id-description",
 		Id:          id,
 		ProjectId:   defaultProjectID,
 	}
