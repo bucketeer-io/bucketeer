@@ -538,7 +538,8 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
           environmentId: currentEnvironment.id,
           id: data.id,
           name: data.name,
-          description: data.description
+          description: data.description,
+          connectionType: Goal.ConnectionType.OPERATION
         })
       ).then(() => {
         setOpen(false);

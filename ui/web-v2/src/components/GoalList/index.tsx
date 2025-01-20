@@ -72,6 +72,8 @@ export const GoalList: FC<GoalListProps> = memo(
       return items;
     };
 
+    console.log({ goals });
+
     return (
       <div className="w-full bg-white border border-gray-300 rounded-md">
         <div>
