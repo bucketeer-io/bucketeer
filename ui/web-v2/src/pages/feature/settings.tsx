@@ -71,7 +71,7 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
       dispatch(
         listTags({
           environmentId: currentEnvironment.id,
-          pageSize: 99999,
+          pageSize: 0,
           cursor: '',
           orderBy: ListTagsRequest.OrderBy.DEFAULT,
           orderDirection: ListTagsRequest.OrderDirection.ASC,

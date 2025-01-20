@@ -108,7 +108,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
       dispatch(
         listGoals({
           environmentId: currentEnvironment.id,
-          pageSize: 99999,
+          pageSize: 0,
           cursor: '',
           searchKeyword: null,
           status: null,
@@ -120,7 +120,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
       dispatch(
         listFeatures({
           environmentId: currentEnvironment.id,
-          pageSize: 99999,
+          pageSize: 0,
           cursor: '',
           tags: [],
           searchKeyword: null,
