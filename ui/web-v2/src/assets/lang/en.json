@@ -391,6 +391,7 @@
   "goal.addNewGoal": "Add New Goal",
   "goal.confirm.archive.description": "We recommend removing the code references to \"{goalId}\" from your application before archiving.",
   "goal.confirm.archive.title": "Archive goal",
+  "goal.connections": "Connections",
   "goal.createGoal": "Create Goal",
   "goal.filter.archived": "Archived",
   "goal.filter.status": "Status",

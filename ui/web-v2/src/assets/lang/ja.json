@@ -391,6 +391,7 @@
   "goal.addNewGoal": "ゴールを作成する",
   "goal.confirm.archive.description": "アーカイブする前に、アプリケーションから「{goalId}」を使用した部分のコードを削除することをお勧めします。",
   "goal.confirm.archive.title": "ゴールのアーカイブ",
+  "goal.connections": "",
   "goal.createGoal": "ゴールを作成する",
   "goal.filter.archived": "アーカイブ",
   "goal.filter.status": "ステータス",

@@ -5,6 +5,7 @@ import { useIntl } from 'react-intl';
 
 import { messages } from '../../lang/messages';
 import { useIsEditable } from '../../modules/me';
+import { Goal } from '../../proto/experiment/goal_pb';
 
 export interface GoalUpdateFormProps {
   onSubmit: () => void;
@@ -18,7 +19,8 @@ export const GoalUpdateForm: FC<GoalUpdateFormProps> = memo(
     const methods = useFormContext();
     const {
       register,
-      formState: { errors, isSubmitting, isDirty, isValid }
+      formState: { errors, isSubmitting, isDirty, isValid },
+      getValues
     } = methods;
 
     return (
@@ -114,6 +116,44 @@ export const GoalUpdateForm: FC<GoalUpdateFormProps> = memo(
                         <span role="alert">{errors.description.message}</span>
                       )}
                     </p>
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="connections">
+                    <span className="input-label">
+                      {f(messages.goal.connections)}
+                    </span>
+                  </label>
+                  <div className="mt-1">
+                    {[
+                      {
+                        label: 'Experiments',
+                        value: Goal.ConnectionType.EXPERIMENT
+                      },
+                      {
+                        label: 'Operations',
+                        value: Goal.ConnectionType.OPERATION
+                      }
+                    ].map(({ label, value }) => (
+                      <div
+                        key={value}
+                        className="flex items-center py-2 space-x-3"
+                      >
+                        <input
+                          id={label}
+                          type="radio"
+                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300 opacity-70 cursor-not-allowed"
+                          checked={getValues('connectionType') === value}
+                          disabled
+                        />
+                        <label
+                          htmlFor={label}
+                          className="text-base text-gray-500 cursor-not-allowed"
+                        >
+                          {label}
+                        </label>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

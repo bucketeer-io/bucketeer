@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 
 import { messages } from '../../lang/messages';
+import { Goal } from '../../proto/experiment/goal_pb';
 
 export interface GoalAddFormProps {
   onSubmit: () => void;
@@ -16,7 +17,8 @@ export const GoalAddForm: FC<GoalAddFormProps> = memo(
     const methods = useFormContext();
     const {
       register,
-      formState: { errors, isSubmitting, isValid }
+      formState: { errors, isSubmitting, isValid },
+      getValues
     } = methods;
 
     return (
@@ -109,6 +111,46 @@ export const GoalAddForm: FC<GoalAddFormProps> = memo(
                         <span role="alert">{errors.description.message}</span>
                       )}
                     </p>
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="connections">
+                    <span className="input-label">
+                      {f(messages.goal.connections)}
+                    </span>
+                  </label>
+                  <div className="mt-1">
+                    {[
+                      {
+                        label: 'Experiments',
+                        value: Goal.ConnectionType.EXPERIMENT
+                      },
+                      {
+                        label: 'Operations',
+                        value: Goal.ConnectionType.OPERATION
+                      }
+                    ].map(({ label, value }) => (
+                      <div
+                        key={value}
+                        className="flex items-center py-2 space-x-3"
+                      >
+                        <input
+                          {...register('connectionType')}
+                          key={value}
+                          id={label}
+                          type="radio"
+                          value={value}
+                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                          defaultChecked={getValues('connectionType') === value}
+                        />
+                        <label
+                          htmlFor={label}
+                          className="cursor-pointer text-base text-gray-500"
+                        >
+                          {label}
+                        </label>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
