@@ -53,6 +53,9 @@ export class CodeReference extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getSourceUrl(): string;
+  setSourceUrl(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CodeReference.AsObject;
   static toObject(
@@ -91,6 +94,7 @@ export namespace CodeReference {
     environmentId: string;
     createdAt: number;
     updatedAt: number;
+    sourceUrl: string;
   };
 
   export interface RepositoryTypeMap {

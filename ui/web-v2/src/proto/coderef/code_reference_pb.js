@@ -118,7 +118,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         commitHash: jspb.Message.getFieldWithDefault(msg, 12, ''),
         environmentId: jspb.Message.getFieldWithDefault(msg, 13, ''),
         createdAt: jspb.Message.getFieldWithDefault(msg, 14, 0),
-        updatedAt: jspb.Message.getFieldWithDefault(msg, 15, 0)
+        updatedAt: jspb.Message.getFieldWithDefault(msg, 15, 0),
+        sourceUrl: jspb.Message.getFieldWithDefault(msg, 16, '')
       };
 
     if (includeInstance) {
@@ -222,6 +223,10 @@ proto.bucketeer.coderef.CodeReference.deserializeBinaryFromReader = function (
         var value = /** @type {number} */ (reader.readInt64());
         msg.setUpdatedAt(value);
         break;
+      case 16:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setSourceUrl(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -311,6 +316,10 @@ proto.bucketeer.coderef.CodeReference.serializeBinaryToWriter = function (
   f = message.getUpdatedAt();
   if (f !== 0) {
     writer.writeInt64(15, f);
+  }
+  f = message.getSourceUrl();
+  if (f.length > 0) {
+    writer.writeString(16, f);
   }
 };
 
@@ -621,6 +630,24 @@ proto.bucketeer.coderef.CodeReference.prototype.setUpdatedAt = function (
   value
 ) {
   return jspb.Message.setProto3IntField(this, 15, value);
+};
+
+/**
+ * optional string source_url = 16;
+ * @return {string}
+ */
+proto.bucketeer.coderef.CodeReference.prototype.getSourceUrl = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 16, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.CodeReference} returns this
+ */
+proto.bucketeer.coderef.CodeReference.prototype.setSourceUrl = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 16, value);
 };
 
 goog.object.extend(exports, proto.bucketeer.coderef);

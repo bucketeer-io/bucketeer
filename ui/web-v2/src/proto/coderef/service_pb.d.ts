@@ -111,6 +111,9 @@ export class ListCodeReferencesRequest extends jspb.Message {
     value: ListCodeReferencesRequest.OrderDirectionMap[keyof ListCodeReferencesRequest.OrderDirectionMap]
   ): void;
 
+  getFileExtension(): string;
+  setFileExtension(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListCodeReferencesRequest.AsObject;
   static toObject(
@@ -144,6 +147,7 @@ export namespace ListCodeReferencesRequest {
     pageSize: number;
     orderBy: ListCodeReferencesRequest.OrderByMap[keyof ListCodeReferencesRequest.OrderByMap];
     orderDirection: ListCodeReferencesRequest.OrderDirectionMap[keyof ListCodeReferencesRequest.OrderDirectionMap];
+    fileExtension: string;
   };
 
   export interface OrderByMap {

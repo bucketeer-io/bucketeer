@@ -1587,6 +1587,11 @@ paths:
             - ASC
             - DESC
           default: ASC
+        - name: fileExtension
+          description: File extension to filter code references (e.g., ".js", ".go", ".py")
+          in: query
+          required: false
+          type: string
       tags:
         - Code Reference
     post:
@@ -5827,6 +5832,9 @@ definitions:
       updatedAt:
         type: string
         format: int64
+      sourceUrl:
+        type: string
+        title: URL to view the code in the repository
   coderefCreateCodeReferenceRequest:
     type: object
     properties:

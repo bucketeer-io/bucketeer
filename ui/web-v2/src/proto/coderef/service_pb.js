@@ -726,7 +726,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         cursor: jspb.Message.getFieldWithDefault(msg, 7, ''),
         pageSize: jspb.Message.getFieldWithDefault(msg, 8, 0),
         orderBy: jspb.Message.getFieldWithDefault(msg, 9, 0),
-        orderDirection: jspb.Message.getFieldWithDefault(msg, 10, 0)
+        orderDirection: jspb.Message.getFieldWithDefault(msg, 10, 0),
+        fileExtension: jspb.Message.getFieldWithDefault(msg, 11, '')
       };
 
     if (includeInstance) {
@@ -816,6 +817,10 @@ proto.bucketeer.coderef.ListCodeReferencesRequest.deserializeBinaryFromReader =
             );
           msg.setOrderDirection(value);
           break;
+        case 11:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setFileExtension(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -887,6 +892,10 @@ proto.bucketeer.coderef.ListCodeReferencesRequest.serializeBinaryToWriter =
     f = message.getOrderDirection();
     if (f !== 0.0) {
       writer.writeEnum(10, f);
+    }
+    f = message.getFileExtension();
+    if (f.length > 0) {
+      writer.writeString(11, f);
     }
   };
 
@@ -1103,6 +1112,26 @@ proto.bucketeer.coderef.ListCodeReferencesRequest.prototype.getOrderDirection =
 proto.bucketeer.coderef.ListCodeReferencesRequest.prototype.setOrderDirection =
   function (value) {
     return jspb.Message.setProto3EnumField(this, 10, value);
+  };
+
+/**
+ * optional string file_extension = 11;
+ * @return {string}
+ */
+proto.bucketeer.coderef.ListCodeReferencesRequest.prototype.getFileExtension =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 11, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.ListCodeReferencesRequest} returns this
+ */
+proto.bucketeer.coderef.ListCodeReferencesRequest.prototype.setFileExtension =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 11, value);
   };
 
 /**

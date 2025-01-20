@@ -50,6 +50,8 @@ message ListCodeReferencesRequest {
   int64 page_size = 8;
   OrderBy order_by = 9;
   OrderDirection order_direction = 10;
+  // File extension to filter code references (e.g., ".js", ".go", ".py")
+  string file_extension = 11;
 }
 
 message ListCodeReferencesResponse {

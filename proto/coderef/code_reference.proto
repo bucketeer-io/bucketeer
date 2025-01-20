@@ -41,4 +41,6 @@ message CodeReference {
   string environment_id = 13;
   int64 created_at = 14;
   int64 updated_at = 15;
+  // URL to view the code in the repository
+  string source_url = 16;
 }

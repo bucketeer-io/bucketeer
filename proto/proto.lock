@@ -8035,6 +8035,11 @@
                 "id": 15,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 16,
+                "name": "source_url",
+                "type": "string"
               }
             ]
           }
@@ -8161,6 +8166,11 @@
                 "id": 10,
                 "name": "order_direction",
                 "type": "OrderDirection"
+              },
+              {
+                "id": 11,
+                "name": "file_extension",
+                "type": "string"
               }
             ]
           },

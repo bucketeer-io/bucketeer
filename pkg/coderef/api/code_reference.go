@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"go.uber.org/zap"
@@ -33,6 +34,35 @@ import (
 	proto "github.com/bucketeer-io/bucketeer/proto/coderef"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
+
+// generateSourceURL generates a URL to view the code in the repository web interface
+func generateSourceURL(codeRef *proto.CodeReference) string {
+	switch codeRef.RepositoryType {
+	case proto.CodeReference_GITHUB:
+		return fmt.Sprintf("https://github.com/%s/%s/blob/%s/%s#L%d",
+			codeRef.RepositoryOwner,
+			codeRef.RepositoryName,
+			codeRef.CommitHash,
+			codeRef.FilePath,
+			codeRef.LineNumber)
+	case proto.CodeReference_GITLAB:
+		return fmt.Sprintf("https://gitlab.com/%s/%s/-/blob/%s/%s#L%d",
+			codeRef.RepositoryOwner,
+			codeRef.RepositoryName,
+			codeRef.CommitHash,
+			codeRef.FilePath,
+			codeRef.LineNumber)
+	case proto.CodeReference_BITBUCKET:
+		return fmt.Sprintf("https://bitbucket.org/%s/%s/src/%s/%s#lines-%d",
+			codeRef.RepositoryOwner,
+			codeRef.RepositoryName,
+			codeRef.CommitHash,
+			codeRef.FilePath,
+			codeRef.LineNumber)
+	default:
+		return ""
+	}
+}
 
 func (s *CodeReferenceService) GetCodeReference(
 	ctx context.Context,
@@ -81,6 +111,7 @@ func (s *CodeReferenceService) GetCodeReference(
 		}
 		return nil, dt.Err()
 	}
+	codeRef.CodeReference.SourceUrl = generateSourceURL(&codeRef.CodeReference)
 	return &proto.GetCodeReferenceResponse{CodeReference: &codeRef.CodeReference}, nil
 }
 
@@ -118,6 +149,9 @@ func (s *CodeReferenceService) ListCodeReferences(
 	}
 	if req.RepositoryBranch != "" {
 		whereParts = append(whereParts, mysql.NewFilter("repository_branch", "=", req.RepositoryBranch))
+	}
+	if req.FileExtension != "" {
+		whereParts = append(whereParts, mysql.NewFilter("file_path", "LIKE", "%"+req.FileExtension))
 	}
 	orders := []*mysql.Order{mysql.NewOrder("id", mysql.OrderDirectionAsc)}
 	switch req.OrderBy {
@@ -169,6 +203,7 @@ func (s *CodeReferenceService) ListCodeReferences(
 	}
 	protoRefs := make([]*proto.CodeReference, 0, len(codeRefs))
 	for _, ref := range codeRefs {
+		ref.CodeReference.SourceUrl = generateSourceURL(&ref.CodeReference)
 		protoRefs = append(protoRefs, &ref.CodeReference)
 	}
 	return &proto.ListCodeReferencesResponse{

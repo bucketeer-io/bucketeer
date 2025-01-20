@@ -2234,6 +2234,9 @@ definitions:
       updatedAt:
         type: string
         format: int64
+      sourceUrl:
+        type: string
+        title: URL to view the code in the repository
   coderefListCodeReferencesRequestOrderBy:
     type: string
     enum:
