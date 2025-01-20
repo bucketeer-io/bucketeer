@@ -62,7 +62,7 @@ const UserMenu = () => {
   };
 
   const menuItems = compact([
-    {
+    !consoleAccount?.isSystemAdmin && {
       label: t(`navigation.user-profile`),
       icon: IconUser,
       onClick: onOpenProfileModal

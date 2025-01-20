@@ -78,37 +78,38 @@ const UserProfileModal = ({
   const { trigger } = form;
 
   const onSubmit: SubmitHandler<UserInfoForm> = async values => {
-    const environmentRoles = consoleAccount?.environmentRoles.map(item => ({
-      environmentId: item.environment.id,
-      role: item.role
-    }));
-
     try {
-      const resp = await accountUpdater({
-        organizationId: currentEnvironment.organizationId,
-        email: consoleAccount?.email!,
-        firstName: values.firstName,
-        lastName: values.lastName,
-        language: values.language,
-        organizationRole: {
-          role: consoleAccount?.organizationRole!
-        },
-        environmentRoles,
-        ...(selectedAvatar && isNotEmptyObject(selectedAvatar)
-          ? {
-              avatar: selectedAvatar
-            }
-          : {})
-      });
-
-      if (resp) {
-        notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: `Profile has been successfully updated!`
+      if (consoleAccount) {
+        const environmentRoles = consoleAccount?.environmentRoles.map(item => ({
+          environmentId: item.environment.id,
+          role: item.role
+        }));
+        const resp = await accountUpdater({
+          organizationId: currentEnvironment.organizationId,
+          email: consoleAccount.email,
+          firstName: values.firstName,
+          lastName: values.lastName,
+          language: values.language,
+          organizationRole: {
+            role: consoleAccount.organizationRole
+          },
+          environmentRoles,
+          ...(selectedAvatar && isNotEmptyObject(selectedAvatar)
+            ? {
+                avatar: selectedAvatar
+              }
+            : {})
         });
-        onMeFetcher({ organizationId: currentEnvironment.organizationId });
-        onClose();
+
+        if (resp) {
+          notify({
+            toastType: 'toast',
+            messageType: 'success',
+            message: `Profile has been successfully updated!`
+          });
+          onMeFetcher({ organizationId: currentEnvironment.organizationId });
+          onClose();
+        }
       }
     } catch (error) {
       notify({
