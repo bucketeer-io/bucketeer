@@ -9,7 +9,7 @@ export type PushCreatorPayload = {
 };
 
 export interface PushCreatorResponse {
-  apiKey: Array<Push>;
+  push: Push;
 }
 
 export const pushCreator = async (

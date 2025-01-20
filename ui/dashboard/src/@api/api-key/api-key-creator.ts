@@ -9,7 +9,7 @@ export interface APIKeyCreatorParams {
 }
 
 export interface APIKeyCreatorResponse {
-  apiKey: Array<APIKey>;
+  apiKey: APIKey;
 }
 
 export const apiKeyCreator = async (
