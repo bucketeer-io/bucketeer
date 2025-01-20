@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
-import React, { FC, memo, useCallback, useState } from 'react';
+import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
@@ -27,6 +27,8 @@ import { Feature } from '../../proto/feature/feature_pb';
 import { AppDispatch } from '../../store';
 
 import { settingsFormSchema } from './formSchema';
+import { listTags } from '../../modules/tags';
+import { ListTagsRequest } from '../../proto/tag/service_pb';
 
 interface FeatureSettingsPageProps {
   featureId: string;
@@ -61,9 +63,23 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
     });
     const {
       handleSubmit,
-      formState: { dirtyFields }
+      formState: { dirtyFields },
+      reset
     } = methods;
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+
+    useEffect(() => {
+      dispatch(
+        listTags({
+          environmentId: currentEnvironment.id,
+          pageSize: 0,
+          cursor: '',
+          orderBy: ListTagsRequest.OrderBy.DEFAULT,
+          orderDirection: ListTagsRequest.OrderDirection.ASC,
+          searchKeyword: null
+        })
+      );
+    }, [dispatch]);
 
     const handleUpdate = useCallback(
       async (data) => {
@@ -112,7 +128,15 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
               environmentId: currentEnvironment.id,
               id: featureId
             })
-          );
+          ).then((res) => {
+            const featurePayload = res.payload as Feature.AsObject;
+            reset({
+              name: featurePayload.name,
+              description: featurePayload.description,
+              tags: featurePayload.tagsList,
+              comment: ''
+            });
+          });
         });
       },
       [dispatch, dirtyFields]

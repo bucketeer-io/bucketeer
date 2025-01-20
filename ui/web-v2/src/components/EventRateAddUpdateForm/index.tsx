@@ -98,7 +98,7 @@ export const EventRateAddUpdateForm: FC<EventRateAddUpdateFormProps> = memo(
       dispatch(
         listGoals({
           environmentId: currentEnvironment.id,
-          pageSize: 99999,
+          pageSize: 0,
           cursor: '',
           searchKeyword: '',
           status: null,
@@ -546,7 +546,7 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
         dispatch(
           listGoals({
             environmentId: currentEnvironment.id,
-            pageSize: 99999,
+            pageSize: 0,
             cursor: '',
             searchKeyword: '',
             status: null,
