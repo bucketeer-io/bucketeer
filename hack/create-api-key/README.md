@@ -8,7 +8,7 @@ go run ./hack/create-api-key create \
   --name=key-name \
   --role=key-role \
   --output=full-path-to-output-file \
-  --environment-namespace=environment-namespace \
+  --environment-id=environment-id \
   --no-profile \
   --no-gcp-trace-enabled
 ```

@@ -81,7 +81,7 @@ func CheckEnvironmentRole(
 	if token.IsSystemAdmin {
 		return checkRole(token.Email, token.Name, accountproto.AccountV2_Role_Environment_EDITOR, requiredRole, true)
 	}
-	// get account for the environment namespace
+	// get account for the environment id
 	account, err := getAccountFunc(token.Email)
 	if err != nil {
 		if code := status.Code(err); code == codes.NotFound {
