@@ -151,7 +151,7 @@ export const GoalAddForm: FC<GoalAddFormProps> = memo(
                         />
                         <label
                           htmlFor={value}
-                          className="cursor-pointer text-base text-gray-500"
+                          className="cursor-pointer text-sm text-gray-500"
                         >
                           {label}
                         </label>

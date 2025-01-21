@@ -148,7 +148,7 @@ export const GoalUpdateForm: FC<GoalUpdateFormProps> = memo(
                         />
                         <label
                           htmlFor={label}
-                          className="text-base text-gray-500 cursor-not-allowed"
+                          className="text-sm text-gray-500 cursor-not-allowed"
                         >
                           {label}
                         </label>
