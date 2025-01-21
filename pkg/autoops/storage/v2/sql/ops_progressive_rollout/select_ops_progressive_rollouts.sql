@@ -10,4 +10,3 @@ SELECT
     updated_at
 FROM
     ops_progressive_rollout
-%s %s %s
