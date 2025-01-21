@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"go.uber.org/zap"
@@ -57,7 +58,7 @@ func (s *experimentService) GetExperiment(
 	experimentStorage := v2es.NewExperimentStorage(s.mysqlClient)
 	experiment, err := experimentStorage.GetExperiment(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
-		if err == v2es.ErrExperimentNotFound {
+		if errors.Is(err, v2es.ErrExperimentNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -205,11 +206,11 @@ func (s *experimentService) newExperimentListOrders(
 	switch orderBy {
 	case proto.ListExperimentsRequest_DEFAULT,
 		proto.ListExperimentsRequest_NAME:
-		column = "name"
+		column = "ex.name"
 	case proto.ListExperimentsRequest_CREATED_AT:
-		column = "created_at"
+		column = "ex.created_at"
 	case proto.ListExperimentsRequest_UPDATED_AT:
-		column = "updated_at"
+		column = "ex.updated_at"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

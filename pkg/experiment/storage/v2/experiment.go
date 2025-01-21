@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
@@ -29,6 +30,9 @@ var (
 	ErrExperimentAlreadyExists          = errors.New("experiment: already exists")
 	ErrExperimentNotFound               = errors.New("experiment: not found")
 	ErrExperimentUnexpectedAffectedRows = errors.New("experiment: unexpected affected rows")
+
+	//go:embed sql/experiment/select_experiments.sql
+	selectExperimentsSQL string
 )
 
 type ExperimentStorage interface {
@@ -244,7 +248,7 @@ func (s *experimentStorage) GetExperiment(
 		&status,
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrExperimentNotFound
 		}
 		return nil, err
@@ -262,32 +266,7 @@ func (s *experimentStorage) ListExperiments(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			goal_id,
-			feature_id,
-			feature_version,
-			variations,
-			start_at,
-			stop_at,
-			stopped,
-			stopped_at,
-			created_at,
-			updated_at,
-			archived,
-			deleted,
-			goal_ids,
-			name,
-			description,
-			base_variation_id,
-			maintainer,
-			status
-		FROM
-			experiment
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(selectExperimentsSQL, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -317,6 +296,7 @@ func (s *experimentStorage) ListExperiments(
 			&experiment.BaseVariationId,
 			&experiment.Maintainer,
 			&status,
+			&mysql.JSONObject{Val: &experiment.Goals},
 		)
 		if err != nil {
 			return nil, 0, 0, err
