@@ -2,7 +2,7 @@ import { cn } from 'utils/style';
 import { IconInfo } from '@icons';
 import Icon from 'components/icon';
 
-const Polygon = ({ className }: { className: string }) => (
+export const Polygon = ({ className }: { className: string }) => (
   <div
     className={cn(
       'flex-center size-[14px] border rounded-sm rotate-45',
