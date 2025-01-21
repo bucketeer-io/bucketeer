@@ -39,6 +39,8 @@ var (
 	countGoalSQL string
 	//go:embed sql/goal/insert_goal.sql
 	insertGoalSQL string
+	//go:embed sql/goal/update_goal.sql
+	updateGoalSQL string
 )
 
 type GoalStorage interface {
@@ -87,23 +89,9 @@ func (s *goalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmen
 }
 
 func (s *goalStorage) UpdateGoal(ctx context.Context, g *domain.Goal, environmentId string) error {
-	query := `
-		UPDATE 
-			goal
-		SET
-			name = ?,
-			description = ?,
-			archived = ?,
-			deleted = ?,
-			created_at = ?,
-			updated_at = ?
-		WHERE
-			id = ? AND
-			environment_id = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
+		updateGoalSQL,
 		g.Name,
 		g.Description,
 		g.Archived,

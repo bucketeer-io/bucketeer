@@ -24,6 +24,8 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -561,6 +563,111 @@ func TestStatusUpdateFromWaitingToStopped(t *testing.T) {
 		}
 		time.Sleep(time.Second)
 	}
+}
+
+func TestCreateListGoalsNoCommand(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	c := newExperimentClient(t)
+	defer c.Close()
+	goalID := createGoalID(t)
+	createGoalResp, err := c.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
+		EnvironmentId: *environmentID,
+		Id:            goalID,
+		Name:          fmt.Sprintf("%s-goal-name", goalID),
+		Description:   fmt.Sprintf("%s-goal-description", goalID),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.NotNil(t, createGoalResp)
+
+	listGoalsResp, err := c.ListGoals(ctx, &experimentproto.ListGoalsRequest{
+		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if listGoalsResp == nil || len(listGoalsResp.Goals) == 0 {
+		t.Fatal("No goals")
+	}
+
+	var pbGoal *experimentproto.Goal
+	for _, goal := range listGoalsResp.Goals {
+		if goal.Id == createGoalResp.Goal.Id {
+			pbGoal = goal
+			break
+		}
+	}
+	if pbGoal == nil {
+		t.Fatalf("Goal not found: %s", createGoalResp.Goal.Id)
+	}
+	assert.Equal(t, createGoalResp.Goal.Id, pbGoal.Id)
+	assert.Equal(t, createGoalResp.Goal.Name, pbGoal.Name)
+	assert.Equal(t, createGoalResp.Goal.Description, pbGoal.Description)
+
+	_, err = c.DeleteGoal(ctx, &experimentproto.DeleteGoalRequest{
+		Id:            goalID,
+		Command:       &experimentproto.DeleteGoalCommand{},
+		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCreateUpdateGoalNoCommand(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	c := newExperimentClient(t)
+	defer c.Close()
+	goalID := createGoalID(t)
+	createGoalResp, err := c.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
+		EnvironmentId: *environmentID,
+		Id:            goalID,
+		Name:          fmt.Sprintf("%s-goal-name", goalID),
+		Description:   fmt.Sprintf("%s-goal-description", goalID),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.NotNil(t, createGoalResp)
+
+	expectedName := fmt.Sprintf("%s-goal-new-name-%s", prefixTestName, newUUID(t))
+	expectedDescription := fmt.Sprintf("%s-goal-new-description-%s", prefixTestName, newUUID(t))
+	updateGoalResp, err := c.UpdateGoal(ctx, &experimentproto.UpdateGoalRequest{
+		EnvironmentId: *environmentID,
+		Id:            goalID,
+		Name:          wrapperspb.String(expectedName),
+		Description:   wrapperspb.String(expectedDescription),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.NotNil(t, createGoalResp)
+
+	assert.Equal(t, expectedName, updateGoalResp.Goal.Name)
+	assert.Equal(t, expectedDescription, updateGoalResp.Goal.Description)
+
+	getGoalResp, err := c.GetGoal(ctx, &experimentproto.GetGoalRequest{
+		Id:            goalID,
+		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.NotNil(t, getGoalResp)
+
+	assert.Equal(t, expectedName, getGoalResp.Goal.Name)
+	assert.Equal(t, expectedDescription, getGoalResp.Goal.Description)
+
+	_, err = c.DeleteGoal(ctx, &experimentproto.DeleteGoalRequest{
+		Id:            goalID,
+		Command:       &experimentproto.DeleteGoalCommand{},
+		EnvironmentId: *environmentID,
+	})
 }
 
 func createGoal(ctx context.Context, t *testing.T, client experimentclient.Client) string {
