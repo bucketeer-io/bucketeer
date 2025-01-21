@@ -18,8 +18,11 @@ export const GoalAddForm: FC<GoalAddFormProps> = memo(
     const {
       register,
       formState: { errors, isSubmitting, isValid },
-      getValues
+      setValue,
+      watch
     } = methods;
+
+    const watchConnectionType = watch('connectionType');
 
     return (
       <div className="w-[500px]">
@@ -123,11 +126,11 @@ export const GoalAddForm: FC<GoalAddFormProps> = memo(
                     {[
                       {
                         label: f(messages.goal.experiments),
-                        value: Goal.ConnectionType.EXPERIMENT
+                        value: Goal.ConnectionType.EXPERIMENT.toString()
                       },
                       {
                         label: f(messages.goal.autoOperations),
-                        value: Goal.ConnectionType.OPERATION
+                        value: Goal.ConnectionType.OPERATION.toString()
                       }
                     ].map(({ label, value }) => (
                       <div
@@ -135,22 +138,32 @@ export const GoalAddForm: FC<GoalAddFormProps> = memo(
                         className="flex items-center py-2 space-x-3"
                       >
                         <input
-                          {...register('connectionType')}
-                          key={value}
-                          id={label}
+                          id={value}
                           type="radio"
                           value={value}
                           className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
-                          defaultChecked={getValues('connectionType') === value}
+                          onChange={(e) =>
+                            setValue('connectionType', e.target.value, {
+                              shouldValidate: true
+                            })
+                          }
+                          checked={watchConnectionType === value}
                         />
                         <label
-                          htmlFor={label}
+                          htmlFor={value}
                           className="cursor-pointer text-base text-gray-500"
                         >
                           {label}
                         </label>
                       </div>
                     ))}
+                    <p className="input-error">
+                      {errors.connectionType && (
+                        <span role="alert">
+                          {errors.connectionType.message}
+                        </span>
+                      )}
+                    </p>
                   </div>
                 </div>
               </div>
