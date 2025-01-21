@@ -563,7 +563,14 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.bucketeer.experiment.CreateExperimentRequest = function (opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.experiment.CreateExperimentRequest.repeatedFields_,
+    null
+  );
 };
 goog.inherits(proto.bucketeer.experiment.CreateExperimentRequest, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -4719,6 +4726,13 @@ proto.bucketeer.experiment.ListExperimentsResponse.prototype.setTotalCount =
     return jspb.Message.setProto3IntField(this, 3, value);
   };
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.repeatedFields_ = [7];
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -4761,7 +4775,15 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        featureId: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        startAt: jspb.Message.getFieldWithDefault(msg, 5, 0),
+        stopAt: jspb.Message.getFieldWithDefault(msg, 6, 0),
+        goalIdsList:
+          (f = jspb.Message.getRepeatedField(msg, 7)) == null ? undefined : f,
+        name: jspb.Message.getFieldWithDefault(msg, 8, ''),
+        description: jspb.Message.getFieldWithDefault(msg, 9, ''),
+        baseVariationId: jspb.Message.getFieldWithDefault(msg, 10, '')
       };
 
     if (includeInstance) {
@@ -4814,6 +4836,34 @@ proto.bucketeer.experiment.CreateExperimentRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setFeatureId(value);
+          break;
+        case 5:
+          var value = /** @type {number} */ (reader.readInt64());
+          msg.setStartAt(value);
+          break;
+        case 6:
+          var value = /** @type {number} */ (reader.readInt64());
+          msg.setStopAt(value);
+          break;
+        case 7:
+          var value = /** @type {string} */ (reader.readString());
+          msg.addGoalIds(value);
+          break;
+        case 8:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setName(value);
+          break;
+        case 9:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setDescription(value);
+          break;
+        case 10:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setBaseVariationId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -4858,6 +4908,34 @@ proto.bucketeer.experiment.CreateExperimentRequest.serializeBinaryToWriter =
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(3, f);
+    }
+    f = message.getFeatureId();
+    if (f.length > 0) {
+      writer.writeString(4, f);
+    }
+    f = message.getStartAt();
+    if (f !== 0) {
+      writer.writeInt64(5, f);
+    }
+    f = message.getStopAt();
+    if (f !== 0) {
+      writer.writeInt64(6, f);
+    }
+    f = message.getGoalIdsList();
+    if (f.length > 0) {
+      writer.writeRepeatedString(7, f);
+    }
+    f = message.getName();
+    if (f.length > 0) {
+      writer.writeString(8, f);
+    }
+    f = message.getDescription();
+    if (f.length > 0) {
+      writer.writeString(9, f);
+    }
+    f = message.getBaseVariationId();
+    if (f.length > 0) {
+      writer.writeString(10, f);
     }
   };
 
@@ -4921,6 +4999,161 @@ proto.bucketeer.experiment.CreateExperimentRequest.prototype.getEnvironmentId =
 proto.bucketeer.experiment.CreateExperimentRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+/**
+ * optional string feature_id = 4;
+ * @return {string}
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.getFeatureId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.experiment.CreateExperimentRequest} returns this
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.setFeatureId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
+  };
+
+/**
+ * optional int64 start_at = 5;
+ * @return {number}
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.getStartAt =
+  function () {
+    return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
+  };
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.experiment.CreateExperimentRequest} returns this
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.setStartAt =
+  function (value) {
+    return jspb.Message.setProto3IntField(this, 5, value);
+  };
+
+/**
+ * optional int64 stop_at = 6;
+ * @return {number}
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.getStopAt =
+  function () {
+    return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 6, 0));
+  };
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.experiment.CreateExperimentRequest} returns this
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.setStopAt =
+  function (value) {
+    return jspb.Message.setProto3IntField(this, 6, value);
+  };
+
+/**
+ * repeated string goal_ids = 7;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.getGoalIdsList =
+  function () {
+    return /** @type {!Array<string>} */ (
+      jspb.Message.getRepeatedField(this, 7)
+    );
+  };
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.experiment.CreateExperimentRequest} returns this
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.setGoalIdsList =
+  function (value) {
+    return jspb.Message.setField(this, 7, value || []);
+  };
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.experiment.CreateExperimentRequest} returns this
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.addGoalIds =
+  function (value, opt_index) {
+    return jspb.Message.addToRepeatedField(this, 7, value, opt_index);
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.experiment.CreateExperimentRequest} returns this
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.clearGoalIdsList =
+  function () {
+    return this.setGoalIdsList([]);
+  };
+
+/**
+ * optional string name = 8;
+ * @return {string}
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.getName =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 8, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.experiment.CreateExperimentRequest} returns this
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.setName =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 8, value);
+  };
+
+/**
+ * optional string description = 9;
+ * @return {string}
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.getDescription =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 9, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.experiment.CreateExperimentRequest} returns this
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.setDescription =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 9, value);
+  };
+
+/**
+ * optional string base_variation_id = 10;
+ * @return {string}
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.getBaseVariationId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 10, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.experiment.CreateExperimentRequest} returns this
+ */
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.setBaseVariationId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 10, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

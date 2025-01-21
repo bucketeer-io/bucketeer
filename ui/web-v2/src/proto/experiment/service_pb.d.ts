@@ -750,6 +750,29 @@ export class CreateExperimentRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getStartAt(): number;
+  setStartAt(value: number): void;
+
+  getStopAt(): number;
+  setStopAt(value: number): void;
+
+  clearGoalIdsList(): void;
+  getGoalIdsList(): Array<string>;
+  setGoalIdsList(value: Array<string>): void;
+  addGoalIds(value: string, index?: number): string;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getBaseVariationId(): string;
+  setBaseVariationId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateExperimentRequest.AsObject;
   static toObject(
@@ -775,6 +798,13 @@ export namespace CreateExperimentRequest {
   export type AsObject = {
     command?: proto_experiment_command_pb.CreateExperimentCommand.AsObject;
     environmentId: string;
+    featureId: string;
+    startAt: number;
+    stopAt: number;
+    goalIdsList: Array<string>;
+    name: string;
+    description: string;
+    baseVariationId: string;
   };
 }
 
