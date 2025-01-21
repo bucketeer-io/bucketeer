@@ -54,5 +54,29 @@
   "update-user-segment": "Updating this field will replace the current list with the new one.",
   "update-user-segment-warning": "<p>The user ID list can't be updated because {{count}} flag is using it. Remove the segment from the flag before updating it.</p>",
   "placeholder-enter-user-ids": "Enter IDs separated by commas (E.g., userId1, userId2, userId3,...)",
-  "accept-file-types": "{{type}}"
+  "accept-file-types": "{{type}}",
+  "experiments": {
+    "experiment-id": "Experiment ID",
+    "placeholder-id": "Enter Experiment ID",
+    "define-audience": {
+      "title": "Define Audience",
+      "rule-defines": "defines your experiment audience from the selected flag.",
+      "any-traffic": "Any traffic that does not match other targeting rules for the feature flag",
+      "audience-amount": "Set the audience amount to be included in the experiment",
+      "in-this-experiment": "In this experiment",
+      "not-in-experiment": "Not in this experiment",
+      "unused-traffic": "Unused traffic",
+      "not-in-experiment-served": "Not in this experiment: <highlight>{{percent}}</highlight> will be served",
+      "in-experiment-target": "<highlight>{{percent}}</highlight> of the target audience will be in this experiment",
+      "advanced-prevent-variation": "Prevent variation reassignment when traffic increases",
+      "advanced-context-remain": "User contexts remain assigned to their experiment variations during an iteration."
+    },
+    "link-flag": "Link Flag",
+    "link-goal": "Link Goal",
+    "select-flag": "Select Flag",
+    "select-goal": "Select Goal",
+    "select-rule": "Select Rule"
+  },
+  "advanced": "Advanced",
+  "link": "Link"
 }

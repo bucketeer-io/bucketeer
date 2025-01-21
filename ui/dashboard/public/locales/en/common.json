@@ -147,5 +147,7 @@
   "status": "Status",
   "flags-connected": "Flags Connected",
   "flags-connected-desc": "This user segment is currently connected to the following feature flags:",
-  "close": "Close"
+  "close": "Close",
+  "experiments-subtitle": "You can use goals to start experiments that will provide data of a feature flag linked to it",
+  "new-experiment": "New Experiment"
 }

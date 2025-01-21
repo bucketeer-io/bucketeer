@@ -46,7 +46,9 @@
     "push-title": "No registered pushes",
     "push-desc": "There are no registered pushes. Add a new one to start managing.",
     "user-segments-title": "No registered user segments",
-    "user-segments-desc": "There are no registered user segments. Add a new one to start managing."
+    "user-segments-desc": "There are no registered user segments. Add a new one to start managing.",
+    "experiment-title": "No registered experiments",
+    "experiment-desc": "There are no registered experiments. Add a new one to start managing."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
