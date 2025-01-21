@@ -3122,9 +3122,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
         archived:
           (f = msg.getArchived()) &&
-          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
-        deleted:
-          (f = msg.getDeleted()) &&
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
       };
 
@@ -3217,14 +3214,6 @@ proto.bucketeer.experiment.UpdateGoalRequest.deserializeBinaryFromReader =
           );
           msg.setArchived(value);
           break;
-        case 9:
-          var value = new google_protobuf_wrappers_pb.BoolValue();
-          reader.readMessage(
-            value,
-            google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
-          );
-          msg.setDeleted(value);
-          break;
         default:
           reader.skipField();
           break;
@@ -3302,14 +3291,6 @@ proto.bucketeer.experiment.UpdateGoalRequest.serializeBinaryToWriter =
     if (f != null) {
       writer.writeMessage(
         8,
-        f,
-        google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
-      );
-    }
-    f = message.getDeleted();
-    if (f != null) {
-      writer.writeMessage(
-        9,
         f,
         google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
       );
@@ -3561,49 +3542,6 @@ proto.bucketeer.experiment.UpdateGoalRequest.prototype.clearArchived =
 proto.bucketeer.experiment.UpdateGoalRequest.prototype.hasArchived =
   function () {
     return jspb.Message.getField(this, 8) != null;
-  };
-
-/**
- * optional google.protobuf.BoolValue deleted = 9;
- * @return {?proto.google.protobuf.BoolValue}
- */
-proto.bucketeer.experiment.UpdateGoalRequest.prototype.getDeleted =
-  function () {
-    return /** @type{?proto.google.protobuf.BoolValue} */ (
-      jspb.Message.getWrapperField(
-        this,
-        google_protobuf_wrappers_pb.BoolValue,
-        9
-      )
-    );
-  };
-
-/**
- * @param {?proto.google.protobuf.BoolValue|undefined} value
- * @return {!proto.bucketeer.experiment.UpdateGoalRequest} returns this
- */
-proto.bucketeer.experiment.UpdateGoalRequest.prototype.setDeleted = function (
-  value
-) {
-  return jspb.Message.setWrapperField(this, 9, value);
-};
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.experiment.UpdateGoalRequest} returns this
- */
-proto.bucketeer.experiment.UpdateGoalRequest.prototype.clearDeleted =
-  function () {
-    return this.setDeleted(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.experiment.UpdateGoalRequest.prototype.hasDeleted =
-  function () {
-    return jspb.Message.getField(this, 9) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

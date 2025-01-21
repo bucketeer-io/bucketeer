@@ -46,7 +46,6 @@ func (g *Goal) Update(
 	name *wrapperspb.StringValue,
 	description *wrapperspb.StringValue,
 	archived *wrapperspb.BoolValue,
-	deleted *wrapperspb.BoolValue,
 ) (*Goal, error) {
 	updated := &Goal{}
 	if err := copier.Copy(updated, g); err != nil {
@@ -61,9 +60,6 @@ func (g *Goal) Update(
 	}
 	if archived != nil {
 		updated.Goal.Archived = archived.Value
-	}
-	if deleted != nil {
-		updated.Goal.Deleted = deleted.Value
 	}
 	updated.Goal.UpdatedAt = time.Now().Unix()
 	return updated, nil

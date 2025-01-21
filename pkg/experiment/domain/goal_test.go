@@ -83,19 +83,12 @@ func TestUpdateGoal(t *testing.T) {
 			archived: wrapperspb.Bool(true),
 			deleted:  nil,
 		},
-		{
-			desc:     "delete goal",
-			newName:  nil,
-			newDesc:  nil,
-			archived: nil,
-			deleted:  wrapperspb.Bool(true),
-		},
 	}
 	for i := range tests {
 		tt := tests[i]
 		t.Run(tt.desc, func(t *testing.T) {
 			t.Parallel()
-			updated, err := g.Update(tt.newName, tt.newDesc, tt.archived, tt.deleted)
+			updated, err := g.Update(tt.newName, tt.newDesc, tt.archived)
 			require.NoError(t, err)
 			if tt.newName != nil {
 				assert.Equal(t, tt.newName.Value, updated.Name)

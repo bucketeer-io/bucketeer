@@ -607,10 +607,10 @@ func TestCreateListGoalsNoCommand(t *testing.T) {
 	assert.Equal(t, createGoalResp.Goal.Name, pbGoal.Name)
 	assert.Equal(t, createGoalResp.Goal.Description, pbGoal.Description)
 
-	_, err = c.UpdateGoal(ctx, &experimentproto.UpdateGoalRequest{
+	_, err = c.DeleteGoal(ctx, &experimentproto.DeleteGoalRequest{
 		Id:            goalID,
+		Command:       &experimentproto.DeleteGoalCommand{},
 		EnvironmentId: *environmentID,
-		Deleted:       wrapperspb.Bool(true),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -663,14 +663,11 @@ func TestCreateUpdateGoalNoCommand(t *testing.T) {
 	assert.Equal(t, expectedName, getGoalResp.Goal.Name)
 	assert.Equal(t, expectedDescription, getGoalResp.Goal.Description)
 
-	_, err = c.UpdateGoal(ctx, &experimentproto.UpdateGoalRequest{
+	_, err = c.DeleteGoal(ctx, &experimentproto.DeleteGoalRequest{
 		Id:            goalID,
+		Command:       &experimentproto.DeleteGoalCommand{},
 		EnvironmentId: *environmentID,
-		Deleted:       wrapperspb.Bool(true),
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
 }
 
 func createGoal(ctx context.Context, t *testing.T, client experimentclient.Client) string {

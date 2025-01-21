@@ -6253,9 +6253,6 @@ definitions:
       archived:
         type: boolean
         description: if true, the goal will be archived
-      deleted:
-        type: boolean
-        description: if true, the goal will be deleted, and other fields will be ignored
     required:
       - id
       - environmentId

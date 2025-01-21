@@ -20966,22 +20966,6 @@
                     ]
                   }
                 ]
-              },
-              {
-                "id": 9,
-                "name": "deleted",
-                "type": "google.protobuf.BoolValue",
-                "options": [
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "if true, the goal will be deleted, and other fields will be ignored"
-                      }
-                    ]
-                  }
-                ]
               }
             ],
             "reserved_ids": [

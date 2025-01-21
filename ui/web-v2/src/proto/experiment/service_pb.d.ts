@@ -464,11 +464,6 @@ export class UpdateGoalRequest extends jspb.Message {
   getArchived(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setArchived(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
-  hasDeleted(): boolean;
-  clearDeleted(): void;
-  getDeleted(): google_protobuf_wrappers_pb.BoolValue | undefined;
-  setDeleted(value?: google_protobuf_wrappers_pb.BoolValue): void;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateGoalRequest.AsObject;
   static toObject(
@@ -499,7 +494,6 @@ export namespace UpdateGoalRequest {
     name?: google_protobuf_wrappers_pb.StringValue.AsObject;
     description?: google_protobuf_wrappers_pb.StringValue.AsObject;
     archived?: google_protobuf_wrappers_pb.BoolValue.AsObject;
-    deleted?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 }
 

@@ -535,21 +535,6 @@ func TestUpdateGoalNoCommandMySQL(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		{
-			desc: "success: delete goal",
-			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-			},
-			req: &experimentproto.UpdateGoalRequest{
-				Id:            "id-1",
-				Deleted:       wrapperspb.Bool(true),
-				EnvironmentId: "ns0",
-			},
-			expectedErr: nil,
-		},
 	}
 	for _, p := range patterns {
 		service := createExperimentService(mockController, nil, nil, nil)

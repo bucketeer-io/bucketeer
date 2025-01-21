@@ -23,7 +23,6 @@ import (
 	pb "github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/command"
@@ -636,82 +635,50 @@ func (s *experimentService) updateGoalNoCommand(
 		return nil, dt.Err()
 	}
 	var updatedGoal *proto.Goal
-	if req.Deleted != nil && req.Deleted.Value {
-		err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-			goalStorage := v2es.NewGoalStorage(tx)
-			goal, err := goalStorage.GetGoal(ctx, req.Id, req.EnvironmentId)
-			if err != nil {
-				return err
-			}
-			updated, err := goal.Update(nil, nil, nil, wrapperspb.Bool(true))
-			if err != nil {
-				return err
-			}
-			e, err := domainevent.NewEvent(
-				editor,
-				eventproto.Event_GOAL,
-				goal.Id,
-				eventproto.Event_GOAL_UPDATED,
-				&eventproto.GoalDeletedEvent{Id: goal.Id},
-				req.EnvironmentId,
-				updated.Goal,
-				goal.Goal,
-			)
-			if err != nil {
-				return err
-			}
-			if err = s.publisher.Publish(ctx, e); err != nil {
-				return err
-			}
-			return goalStorage.UpdateGoal(ctx, updated, req.EnvironmentId)
-		})
-	} else {
-		err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-			goalStorage := v2es.NewGoalStorage(tx)
-			goal, err := goalStorage.GetGoal(ctx, req.Id, req.EnvironmentId)
-			if err != nil {
-				return err
-			}
-			updated, err := goal.Update(
-				req.Name,
-				req.Description,
-				req.Archived,
-				nil,
-			)
-			if err != nil {
-				return err
-			}
-			updatedGoal = updated.Goal
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		goalStorage := v2es.NewGoalStorage(tx)
+		goal, err := goalStorage.GetGoal(ctx, req.Id, req.EnvironmentId)
+		if err != nil {
+			return err
+		}
+		updated, err := goal.Update(
+			req.Name,
+			req.Description,
+			req.Archived,
+		)
+		if err != nil {
+			return err
+		}
+		updatedGoal = updated.Goal
 
-			var event pb.Message
-			if req.Archived != nil && req.Archived.Value {
-				event = &eventproto.GoalArchivedEvent{Id: goal.Id}
-			} else {
-				event = &eventproto.GoalUpdatedEvent{
-					Id:          goal.Id,
-					Name:        req.Name,
-					Description: req.Description,
-				}
+		var event pb.Message
+		if req.Archived != nil && req.Archived.Value {
+			event = &eventproto.GoalArchivedEvent{Id: goal.Id}
+		} else {
+			event = &eventproto.GoalUpdatedEvent{
+				Id:          goal.Id,
+				Name:        req.Name,
+				Description: req.Description,
 			}
-			e, err := domainevent.NewEvent(
-				editor,
-				eventproto.Event_GOAL,
-				goal.Id,
-				eventproto.Event_GOAL_UPDATED,
-				event,
-				req.EnvironmentId,
-				updated.Goal,
-				goal.Goal,
-			)
-			if err != nil {
-				return err
-			}
-			if err = s.publisher.Publish(ctx, e); err != nil {
-				return err
-			}
-			return goalStorage.UpdateGoal(ctx, updated, req.EnvironmentId)
-		})
-	}
+		}
+		e, err := domainevent.NewEvent(
+			editor,
+			eventproto.Event_GOAL,
+			goal.Id,
+			eventproto.Event_GOAL_UPDATED,
+			event,
+			req.EnvironmentId,
+			updated.Goal,
+			goal.Goal,
+		)
+		if err != nil {
+			return err
+		}
+		if err = s.publisher.Publish(ctx, e); err != nil {
+			return err
+		}
+		return goalStorage.UpdateGoal(ctx, updated, req.EnvironmentId)
+	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrGoalNotFound) || errors.Is(err, v2es.ErrGoalUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -750,9 +717,6 @@ func (s *experimentService) validateUpdateGoalNoCommandRequest(
 			return statusInternal.Err()
 		}
 		return dt.Err()
-	}
-	if req.Deleted != nil && req.Deleted.Value {
-		return nil
 	}
 	if req.Name != nil && req.Name.Value == "" {
 		dt, err := statusGoalNameRequired.WithDetails(&errdetails.LocalizedMessage{

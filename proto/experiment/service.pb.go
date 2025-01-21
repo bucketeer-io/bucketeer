@@ -860,7 +860,6 @@ type UpdateGoalRequest struct {
 	Name                     *wrapperspb.StringValue       `protobuf:"bytes,6,opt,name=name,proto3" json:"name"`
 	Description              *wrapperspb.StringValue       `protobuf:"bytes,7,opt,name=description,proto3" json:"description"`
 	Archived                 *wrapperspb.BoolValue         `protobuf:"bytes,8,opt,name=archived,proto3" json:"archived"`
-	Deleted                  *wrapperspb.BoolValue         `protobuf:"bytes,9,opt,name=deleted,proto3" json:"deleted"`
 }
 
 func (x *UpdateGoalRequest) Reset() {
@@ -942,13 +941,6 @@ func (x *UpdateGoalRequest) GetDescription() *wrapperspb.StringValue {
 func (x *UpdateGoalRequest) GetArchived() *wrapperspb.BoolValue {
 	if x != nil {
 		return x.Archived
-	}
-	return nil
-}
-
-func (x *UpdateGoalRequest) GetDeleted() *wrapperspb.BoolValue {
-	if x != nil {
-		return x.Deleted
 	}
 	return nil
 }
@@ -2161,7 +2153,7 @@ var file_proto_experiment_service_proto_rawDesc = []byte{
 	0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09,
 	0x52, 0x0d, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x4a,
 	0x04, 0x08, 0x03, 0x10, 0x04, 0x22, 0x14, 0x0a, 0x12, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x47,
-	0x6f, 0x61, 0x6c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x96, 0x05, 0x0a, 0x11,
+	0x6f, 0x61, 0x6c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x96, 0x04, 0x0a, 0x11,
 	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x47, 0x6f, 0x61, 0x6c, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
 	0x74, 0x12, 0x13, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x42, 0x03, 0xe0,
 	0x41, 0x02, 0x52, 0x02, 0x69, 0x64, 0x12, 0x61, 0x0a, 0x0e, 0x72, 0x65, 0x6e, 0x61, 0x6d, 0x65,
@@ -2194,15 +2186,7 @@ var file_proto_experiment_service_proto_rawDesc = []byte{
 	0x66, 0x2e, 0x42, 0x6f, 0x6f, 0x6c, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x42, 0x27, 0x92, 0x41, 0x24,
 	0x32, 0x22, 0x69, 0x66, 0x20, 0x74, 0x72, 0x75, 0x65, 0x2c, 0x20, 0x74, 0x68, 0x65, 0x20, 0x67,
 	0x6f, 0x61, 0x6c, 0x20, 0x77, 0x69, 0x6c, 0x6c, 0x20, 0x62, 0x65, 0x20, 0x61, 0x72, 0x63, 0x68,
-	0x69, 0x76, 0x65, 0x64, 0x52, 0x08, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x64, 0x12, 0x7e,
-	0x0a, 0x07, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x09, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75,
-	0x66, 0x2e, 0x42, 0x6f, 0x6f, 0x6c, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x42, 0x48, 0x92, 0x41, 0x45,
-	0x32, 0x43, 0x69, 0x66, 0x20, 0x74, 0x72, 0x75, 0x65, 0x2c, 0x20, 0x74, 0x68, 0x65, 0x20, 0x67,
-	0x6f, 0x61, 0x6c, 0x20, 0x77, 0x69, 0x6c, 0x6c, 0x20, 0x62, 0x65, 0x20, 0x64, 0x65, 0x6c, 0x65,
-	0x74, 0x65, 0x64, 0x2c, 0x20, 0x61, 0x6e, 0x64, 0x20, 0x6f, 0x74, 0x68, 0x65, 0x72, 0x20, 0x66,
-	0x69, 0x65, 0x6c, 0x64, 0x73, 0x20, 0x77, 0x69, 0x6c, 0x6c, 0x20, 0x62, 0x65, 0x20, 0x69, 0x67,
-	0x6e, 0x6f, 0x72, 0x65, 0x64, 0x52, 0x07, 0x64, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x4a, 0x04,
+	0x69, 0x76, 0x65, 0x64, 0x52, 0x08, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x64, 0x4a, 0x04,
 	0x08, 0x04, 0x10, 0x05, 0x22, 0x44, 0x0a, 0x12, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x47, 0x6f,
 	0x61, 0x6c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2e, 0x0a, 0x04, 0x67, 0x6f,
 	0x61, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65,
@@ -2687,61 +2671,60 @@ var file_proto_experiment_service_proto_depIdxs = []int32{
 	42, // 13: bucketeer.experiment.UpdateGoalRequest.name:type_name -> google.protobuf.StringValue
 	42, // 14: bucketeer.experiment.UpdateGoalRequest.description:type_name -> google.protobuf.StringValue
 	35, // 15: bucketeer.experiment.UpdateGoalRequest.archived:type_name -> google.protobuf.BoolValue
-	35, // 16: bucketeer.experiment.UpdateGoalRequest.deleted:type_name -> google.protobuf.BoolValue
-	34, // 17: bucketeer.experiment.UpdateGoalResponse.goal:type_name -> bucketeer.experiment.Goal
-	43, // 18: bucketeer.experiment.GetExperimentResponse.experiment:type_name -> bucketeer.experiment.Experiment
-	44, // 19: bucketeer.experiment.ListExperimentsRequest.feature_version:type_name -> google.protobuf.Int32Value
-	44, // 20: bucketeer.experiment.ListExperimentsRequest.status:type_name -> google.protobuf.Int32Value
-	2,  // 21: bucketeer.experiment.ListExperimentsRequest.order_by:type_name -> bucketeer.experiment.ListExperimentsRequest.OrderBy
-	3,  // 22: bucketeer.experiment.ListExperimentsRequest.order_direction:type_name -> bucketeer.experiment.ListExperimentsRequest.OrderDirection
-	35, // 23: bucketeer.experiment.ListExperimentsRequest.archived:type_name -> google.protobuf.BoolValue
-	45, // 24: bucketeer.experiment.ListExperimentsRequest.statuses:type_name -> bucketeer.experiment.Experiment.Status
-	43, // 25: bucketeer.experiment.ListExperimentsResponse.experiments:type_name -> bucketeer.experiment.Experiment
-	46, // 26: bucketeer.experiment.CreateExperimentRequest.command:type_name -> bucketeer.experiment.CreateExperimentCommand
-	43, // 27: bucketeer.experiment.CreateExperimentResponse.experiment:type_name -> bucketeer.experiment.Experiment
-	47, // 28: bucketeer.experiment.UpdateExperimentRequest.change_experiment_period_command:type_name -> bucketeer.experiment.ChangeExperimentPeriodCommand
-	48, // 29: bucketeer.experiment.UpdateExperimentRequest.change_name_command:type_name -> bucketeer.experiment.ChangeExperimentNameCommand
-	49, // 30: bucketeer.experiment.UpdateExperimentRequest.change_description_command:type_name -> bucketeer.experiment.ChangeExperimentDescriptionCommand
-	50, // 31: bucketeer.experiment.StartExperimentRequest.command:type_name -> bucketeer.experiment.StartExperimentCommand
-	51, // 32: bucketeer.experiment.FinishExperimentRequest.command:type_name -> bucketeer.experiment.FinishExperimentCommand
-	52, // 33: bucketeer.experiment.StopExperimentRequest.command:type_name -> bucketeer.experiment.StopExperimentCommand
-	53, // 34: bucketeer.experiment.ArchiveExperimentRequest.command:type_name -> bucketeer.experiment.ArchiveExperimentCommand
-	54, // 35: bucketeer.experiment.DeleteExperimentRequest.command:type_name -> bucketeer.experiment.DeleteExperimentCommand
-	4,  // 36: bucketeer.experiment.ExperimentService.GetGoal:input_type -> bucketeer.experiment.GetGoalRequest
-	6,  // 37: bucketeer.experiment.ExperimentService.ListGoals:input_type -> bucketeer.experiment.ListGoalsRequest
-	8,  // 38: bucketeer.experiment.ExperimentService.CreateGoal:input_type -> bucketeer.experiment.CreateGoalRequest
-	14, // 39: bucketeer.experiment.ExperimentService.UpdateGoal:input_type -> bucketeer.experiment.UpdateGoalRequest
-	10, // 40: bucketeer.experiment.ExperimentService.ArchiveGoal:input_type -> bucketeer.experiment.ArchiveGoalRequest
-	12, // 41: bucketeer.experiment.ExperimentService.DeleteGoal:input_type -> bucketeer.experiment.DeleteGoalRequest
-	16, // 42: bucketeer.experiment.ExperimentService.GetExperiment:input_type -> bucketeer.experiment.GetExperimentRequest
-	18, // 43: bucketeer.experiment.ExperimentService.ListExperiments:input_type -> bucketeer.experiment.ListExperimentsRequest
-	20, // 44: bucketeer.experiment.ExperimentService.CreateExperiment:input_type -> bucketeer.experiment.CreateExperimentRequest
-	22, // 45: bucketeer.experiment.ExperimentService.UpdateExperiment:input_type -> bucketeer.experiment.UpdateExperimentRequest
-	24, // 46: bucketeer.experiment.ExperimentService.StartExperiment:input_type -> bucketeer.experiment.StartExperimentRequest
-	26, // 47: bucketeer.experiment.ExperimentService.FinishExperiment:input_type -> bucketeer.experiment.FinishExperimentRequest
-	28, // 48: bucketeer.experiment.ExperimentService.StopExperiment:input_type -> bucketeer.experiment.StopExperimentRequest
-	30, // 49: bucketeer.experiment.ExperimentService.ArchiveExperiment:input_type -> bucketeer.experiment.ArchiveExperimentRequest
-	32, // 50: bucketeer.experiment.ExperimentService.DeleteExperiment:input_type -> bucketeer.experiment.DeleteExperimentRequest
-	5,  // 51: bucketeer.experiment.ExperimentService.GetGoal:output_type -> bucketeer.experiment.GetGoalResponse
-	7,  // 52: bucketeer.experiment.ExperimentService.ListGoals:output_type -> bucketeer.experiment.ListGoalsResponse
-	9,  // 53: bucketeer.experiment.ExperimentService.CreateGoal:output_type -> bucketeer.experiment.CreateGoalResponse
-	15, // 54: bucketeer.experiment.ExperimentService.UpdateGoal:output_type -> bucketeer.experiment.UpdateGoalResponse
-	11, // 55: bucketeer.experiment.ExperimentService.ArchiveGoal:output_type -> bucketeer.experiment.ArchiveGoalResponse
-	13, // 56: bucketeer.experiment.ExperimentService.DeleteGoal:output_type -> bucketeer.experiment.DeleteGoalResponse
-	17, // 57: bucketeer.experiment.ExperimentService.GetExperiment:output_type -> bucketeer.experiment.GetExperimentResponse
-	19, // 58: bucketeer.experiment.ExperimentService.ListExperiments:output_type -> bucketeer.experiment.ListExperimentsResponse
-	21, // 59: bucketeer.experiment.ExperimentService.CreateExperiment:output_type -> bucketeer.experiment.CreateExperimentResponse
-	23, // 60: bucketeer.experiment.ExperimentService.UpdateExperiment:output_type -> bucketeer.experiment.UpdateExperimentResponse
-	25, // 61: bucketeer.experiment.ExperimentService.StartExperiment:output_type -> bucketeer.experiment.StartExperimentResponse
-	27, // 62: bucketeer.experiment.ExperimentService.FinishExperiment:output_type -> bucketeer.experiment.FinishExperimentResponse
-	29, // 63: bucketeer.experiment.ExperimentService.StopExperiment:output_type -> bucketeer.experiment.StopExperimentResponse
-	31, // 64: bucketeer.experiment.ExperimentService.ArchiveExperiment:output_type -> bucketeer.experiment.ArchiveExperimentResponse
-	33, // 65: bucketeer.experiment.ExperimentService.DeleteExperiment:output_type -> bucketeer.experiment.DeleteExperimentResponse
-	51, // [51:66] is the sub-list for method output_type
-	36, // [36:51] is the sub-list for method input_type
-	36, // [36:36] is the sub-list for extension type_name
-	36, // [36:36] is the sub-list for extension extendee
-	0,  // [0:36] is the sub-list for field type_name
+	34, // 16: bucketeer.experiment.UpdateGoalResponse.goal:type_name -> bucketeer.experiment.Goal
+	43, // 17: bucketeer.experiment.GetExperimentResponse.experiment:type_name -> bucketeer.experiment.Experiment
+	44, // 18: bucketeer.experiment.ListExperimentsRequest.feature_version:type_name -> google.protobuf.Int32Value
+	44, // 19: bucketeer.experiment.ListExperimentsRequest.status:type_name -> google.protobuf.Int32Value
+	2,  // 20: bucketeer.experiment.ListExperimentsRequest.order_by:type_name -> bucketeer.experiment.ListExperimentsRequest.OrderBy
+	3,  // 21: bucketeer.experiment.ListExperimentsRequest.order_direction:type_name -> bucketeer.experiment.ListExperimentsRequest.OrderDirection
+	35, // 22: bucketeer.experiment.ListExperimentsRequest.archived:type_name -> google.protobuf.BoolValue
+	45, // 23: bucketeer.experiment.ListExperimentsRequest.statuses:type_name -> bucketeer.experiment.Experiment.Status
+	43, // 24: bucketeer.experiment.ListExperimentsResponse.experiments:type_name -> bucketeer.experiment.Experiment
+	46, // 25: bucketeer.experiment.CreateExperimentRequest.command:type_name -> bucketeer.experiment.CreateExperimentCommand
+	43, // 26: bucketeer.experiment.CreateExperimentResponse.experiment:type_name -> bucketeer.experiment.Experiment
+	47, // 27: bucketeer.experiment.UpdateExperimentRequest.change_experiment_period_command:type_name -> bucketeer.experiment.ChangeExperimentPeriodCommand
+	48, // 28: bucketeer.experiment.UpdateExperimentRequest.change_name_command:type_name -> bucketeer.experiment.ChangeExperimentNameCommand
+	49, // 29: bucketeer.experiment.UpdateExperimentRequest.change_description_command:type_name -> bucketeer.experiment.ChangeExperimentDescriptionCommand
+	50, // 30: bucketeer.experiment.StartExperimentRequest.command:type_name -> bucketeer.experiment.StartExperimentCommand
+	51, // 31: bucketeer.experiment.FinishExperimentRequest.command:type_name -> bucketeer.experiment.FinishExperimentCommand
+	52, // 32: bucketeer.experiment.StopExperimentRequest.command:type_name -> bucketeer.experiment.StopExperimentCommand
+	53, // 33: bucketeer.experiment.ArchiveExperimentRequest.command:type_name -> bucketeer.experiment.ArchiveExperimentCommand
+	54, // 34: bucketeer.experiment.DeleteExperimentRequest.command:type_name -> bucketeer.experiment.DeleteExperimentCommand
+	4,  // 35: bucketeer.experiment.ExperimentService.GetGoal:input_type -> bucketeer.experiment.GetGoalRequest
+	6,  // 36: bucketeer.experiment.ExperimentService.ListGoals:input_type -> bucketeer.experiment.ListGoalsRequest
+	8,  // 37: bucketeer.experiment.ExperimentService.CreateGoal:input_type -> bucketeer.experiment.CreateGoalRequest
+	14, // 38: bucketeer.experiment.ExperimentService.UpdateGoal:input_type -> bucketeer.experiment.UpdateGoalRequest
+	10, // 39: bucketeer.experiment.ExperimentService.ArchiveGoal:input_type -> bucketeer.experiment.ArchiveGoalRequest
+	12, // 40: bucketeer.experiment.ExperimentService.DeleteGoal:input_type -> bucketeer.experiment.DeleteGoalRequest
+	16, // 41: bucketeer.experiment.ExperimentService.GetExperiment:input_type -> bucketeer.experiment.GetExperimentRequest
+	18, // 42: bucketeer.experiment.ExperimentService.ListExperiments:input_type -> bucketeer.experiment.ListExperimentsRequest
+	20, // 43: bucketeer.experiment.ExperimentService.CreateExperiment:input_type -> bucketeer.experiment.CreateExperimentRequest
+	22, // 44: bucketeer.experiment.ExperimentService.UpdateExperiment:input_type -> bucketeer.experiment.UpdateExperimentRequest
+	24, // 45: bucketeer.experiment.ExperimentService.StartExperiment:input_type -> bucketeer.experiment.StartExperimentRequest
+	26, // 46: bucketeer.experiment.ExperimentService.FinishExperiment:input_type -> bucketeer.experiment.FinishExperimentRequest
+	28, // 47: bucketeer.experiment.ExperimentService.StopExperiment:input_type -> bucketeer.experiment.StopExperimentRequest
+	30, // 48: bucketeer.experiment.ExperimentService.ArchiveExperiment:input_type -> bucketeer.experiment.ArchiveExperimentRequest
+	32, // 49: bucketeer.experiment.ExperimentService.DeleteExperiment:input_type -> bucketeer.experiment.DeleteExperimentRequest
+	5,  // 50: bucketeer.experiment.ExperimentService.GetGoal:output_type -> bucketeer.experiment.GetGoalResponse
+	7,  // 51: bucketeer.experiment.ExperimentService.ListGoals:output_type -> bucketeer.experiment.ListGoalsResponse
+	9,  // 52: bucketeer.experiment.ExperimentService.CreateGoal:output_type -> bucketeer.experiment.CreateGoalResponse
+	15, // 53: bucketeer.experiment.ExperimentService.UpdateGoal:output_type -> bucketeer.experiment.UpdateGoalResponse
+	11, // 54: bucketeer.experiment.ExperimentService.ArchiveGoal:output_type -> bucketeer.experiment.ArchiveGoalResponse
+	13, // 55: bucketeer.experiment.ExperimentService.DeleteGoal:output_type -> bucketeer.experiment.DeleteGoalResponse
+	17, // 56: bucketeer.experiment.ExperimentService.GetExperiment:output_type -> bucketeer.experiment.GetExperimentResponse
+	19, // 57: bucketeer.experiment.ExperimentService.ListExperiments:output_type -> bucketeer.experiment.ListExperimentsResponse
+	21, // 58: bucketeer.experiment.ExperimentService.CreateExperiment:output_type -> bucketeer.experiment.CreateExperimentResponse
+	23, // 59: bucketeer.experiment.ExperimentService.UpdateExperiment:output_type -> bucketeer.experiment.UpdateExperimentResponse
+	25, // 60: bucketeer.experiment.ExperimentService.StartExperiment:output_type -> bucketeer.experiment.StartExperimentResponse
+	27, // 61: bucketeer.experiment.ExperimentService.FinishExperiment:output_type -> bucketeer.experiment.FinishExperimentResponse
+	29, // 62: bucketeer.experiment.ExperimentService.StopExperiment:output_type -> bucketeer.experiment.StopExperimentResponse
+	31, // 63: bucketeer.experiment.ExperimentService.ArchiveExperiment:output_type -> bucketeer.experiment.ArchiveExperimentResponse
+	33, // 64: bucketeer.experiment.ExperimentService.DeleteExperiment:output_type -> bucketeer.experiment.DeleteExperimentResponse
+	50, // [50:65] is the sub-list for method output_type
+	35, // [35:50] is the sub-list for method input_type
+	35, // [35:35] is the sub-list for extension type_name
+	35, // [35:35] is the sub-list for extension extendee
+	0,  // [0:35] is the sub-list for field type_name
 }
 
 func init() { file_proto_experiment_service_proto_init() }
