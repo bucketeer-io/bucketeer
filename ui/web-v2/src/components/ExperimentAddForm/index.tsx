@@ -31,6 +31,7 @@ import { DatetimePicker } from '../DatetimePicker';
 import { DetailSkeleton } from '../DetailSkeleton';
 import { Option, Select } from '../Select';
 import { OptionFeatureFlag, SelectFeatureFlag } from '../SelectFeatureFlag';
+import { AddGoalSelect } from '../AddGoalSelect';
 
 export interface ExperimentAddFormProps {
   onSubmit: () => void;
@@ -43,6 +44,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
       isFeatureHasRunningProgressiveRollout,
       setIsFeatureHasRunningProgressiveRollout
     ] = useState<boolean>(false);
+
     const { formatMessage: f } = useIntl();
     const dispatch = useDispatch<AppDispatch>();
     const currentEnvironment = useCurrentEnvironment();
@@ -335,18 +337,24 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
                     name="goalIds"
                     control={control}
                     render={({ field }) => {
+                      const value = goalOptions.filter((o) =>
+                        field.value?.includes(o.value)
+                      );
                       return (
-                        <Select
+                        <AddGoalSelect
+                          name="goalIds"
                           isMulti
-                          options={goalOptions}
-                          className="w-full"
                           onChange={(e) => {
                             field.onChange(e.map((o) => o.value));
                           }}
+                          options={goalOptions}
+                          value={value}
+                          connectionType={Goal.ConnectionType.EXPERIMENT}
                         />
                       );
                     }}
                   />
+
                   <p className="input-error">
                     {errors.goalIds?.message && (
                       <span role="alert">{errors.goalIds?.message}</span>
