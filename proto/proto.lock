@@ -33066,6 +33066,22 @@
                 "type": "string"
               }
             ]
+          },
+          {
+            "name": "EnvironmentTag",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "tags",
+                "type": "Tag",
+                "is_repeated": true
+              }
+            ]
           }
         ],
         "package": {
