@@ -30,3 +30,8 @@ message Tag {
   EntityType entity_type = 5;
   string environment_id = 6;
 }
+
+message EnvironmentTag {
+  string environment_id = 1;
+  repeated Tag tags = 2;
+}
