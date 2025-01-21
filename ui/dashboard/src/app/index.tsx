@@ -36,7 +36,6 @@ import { getTokenStorage } from 'storage/token';
 import { v4 as uuid } from 'uuid';
 import { ConsoleAccount } from '@types';
 import APIKeysPage from 'pages/api-keys';
-import ExperimentsPage from 'pages/experiments';
 import FeatureFlagsPage from 'pages/feature-flags';
 import MembersPage from 'pages/members';
 import NotFoundPage from 'pages/not-found';
@@ -49,7 +48,7 @@ import SelectOrganizationPage from 'pages/signin/organization';
 import UserSegmentsPage from 'pages/user-segments';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
-import { OrganizationsRoot, ProjectsRoot } from './routers';
+import { ExperimentsRoot, OrganizationsRoot, ProjectsRoot } from './routers';
 
 export const AppLoading = () => (
   <div className="flex items-center justify-center h-screen w-full">
@@ -173,8 +172,8 @@ export const EnvironmentRoot = memo(
           element={<UserSegmentsPage />}
         />
         <Route
-          path={`${PAGE_PATH_EXPERIMENTS}`}
-          element={<ExperimentsPage />}
+          path={`${PAGE_PATH_EXPERIMENTS}/*`}
+          element={<ExperimentsRoot />}
         />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

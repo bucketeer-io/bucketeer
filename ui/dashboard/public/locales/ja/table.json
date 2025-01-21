@@ -77,5 +77,14 @@
   },
   "user-segment": {
     "delete-user-segment-desc": "The <bold>{{name}}</bold> is going to be deleted permanently. Are you sure you want to proceed?"
+  },
+  "metrics": {
+    "variation": "Variation",
+    "evaluation-user": "Evaluation User",
+    "goal-total": "Goal Total",
+    "goal-user": "Goal User",
+    "conversion-rate": "Conversion Rate",
+    "value-total": "Value Total",
+    "value-user": "Value/ User"
   }
 }

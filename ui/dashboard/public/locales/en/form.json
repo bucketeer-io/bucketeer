@@ -81,5 +81,6 @@
   "link": "Link",
   "select-date": "Select date",
   "start-at": "Start At",
-  "end-at": "End At"
+  "end-at": "End At",
+  "select-evaluation": "Select Evaluation"
 }
