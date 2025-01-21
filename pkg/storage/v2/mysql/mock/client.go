@@ -277,6 +277,20 @@ func (mr *MockClientMockRecorder) ExecContext(ctx, query any, args ...any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecContext", reflect.TypeOf((*MockClient)(nil).ExecContext), varargs...)
 }
 
+// Qe mocks base method.
+func (m *MockClient) Qe(ctx context.Context) mysql.QueryExecer {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Qe", ctx)
+	ret0, _ := ret[0].(mysql.QueryExecer)
+	return ret0
+}
+
+// Qe indicates an expected call of Qe.
+func (mr *MockClientMockRecorder) Qe(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Qe", reflect.TypeOf((*MockClient)(nil).Qe), ctx)
+}
+
 // QueryContext mocks base method.
 func (m *MockClient) QueryContext(ctx context.Context, query string, args ...any) (mysql.Rows, error) {
 	m.ctrl.T.Helper()
@@ -328,4 +342,18 @@ func (m *MockClient) RunInTransaction(ctx context.Context, tx mysql.Transaction,
 func (mr *MockClientMockRecorder) RunInTransaction(ctx, tx, f any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunInTransaction", reflect.TypeOf((*MockClient)(nil).RunInTransaction), ctx, tx, f)
+}
+
+// RunInTransactionV2 mocks base method.
+func (m *MockClient) RunInTransactionV2(ctx context.Context, f func(context.Context, mysql.Transaction) error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RunInTransactionV2", ctx, f)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RunInTransactionV2 indicates an expected call of RunInTransactionV2.
+func (mr *MockClientMockRecorder) RunInTransactionV2(ctx, f any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunInTransactionV2", reflect.TypeOf((*MockClient)(nil).RunInTransactionV2), ctx, f)
 }
