@@ -79,26 +79,9 @@ func (s *NotificationService) CreateSubscription(
 		return nil, dt.Err()
 	}
 	var handler command.Handler = command.NewEmptySubscriptionCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		subscriptionStorage := v2ss.NewSubscriptionStorage(tx)
-		if err := subscriptionStorage.CreateSubscription(ctx, subscription, req.EnvironmentId); err != nil {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
+		if err := subscriptionStorage.CreateSubscription(contextWithTx, subscription, req.EnvironmentId); err != nil {
 			return err
 		}
 		handler, err = command.NewSubscriptionCommandHandler(editor, subscription, req.EnvironmentId)
@@ -185,27 +168,9 @@ func (s *NotificationService) createSubscriptionNoCommand(
 		}
 		return nil, dt.Err()
 	}
-
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		subscriptionStorage := v2ss.NewSubscriptionStorage(tx)
-		return subscriptionStorage.CreateSubscription(ctx, subscription, req.EnvironmentId)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
+		return subscriptionStorage.CreateSubscription(contextWithTx, subscription, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2ss.ErrSubscriptionAlreadyExists) {
@@ -424,26 +389,9 @@ func (s *NotificationService) updateSubscription(
 	localizer locale.Localizer,
 ) error {
 	var handler command.Handler = command.NewEmptySubscriptionCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		subscriptionStorage := v2ss.NewSubscriptionStorage(tx)
-		subscription, err := subscriptionStorage.GetSubscription(ctx, id, environmentId)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
+		subscription, err := subscriptionStorage.GetSubscription(contextWithTx, id, environmentId)
 		if err != nil {
 			return err
 		}
@@ -456,7 +404,7 @@ func (s *NotificationService) updateSubscription(
 				return err
 			}
 		}
-		if err = subscriptionStorage.UpdateSubscription(ctx, subscription, environmentId); err != nil {
+		if err = subscriptionStorage.UpdateSubscription(contextWithTx, subscription, environmentId); err != nil {
 			return err
 		}
 		return nil
@@ -518,30 +466,11 @@ func (s *NotificationService) updateSubscriptionMySQLNoCommand(
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
 ) (*notificationproto.Subscription, error) {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-
-	var subscription *domain.Subscription
 	var updatedSubscription *notificationproto.Subscription
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		subscriptionStorage := v2ss.NewSubscriptionStorage(tx)
-		subscription, err = subscriptionStorage.GetSubscription(ctx, ID, environmentID)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
+		subscription, err := subscriptionStorage.GetSubscription(contextWithTx, ID, environmentID)
 		if err != nil {
 			return err
 		}
@@ -568,7 +497,7 @@ func (s *NotificationService) updateSubscriptionMySQLNoCommand(
 		if err != nil {
 			return err
 		}
-		return subscriptionStorage.UpdateSubscription(ctx, updated, environmentID)
+		return subscriptionStorage.UpdateSubscription(contextWithTx, updated, environmentID)
 	})
 	if err != nil {
 		if errors.Is(err, v2ss.ErrSubscriptionNotFound) || errors.Is(err, v2ss.ErrSubscriptionUnexpectedAffectedRows) {
@@ -635,29 +564,12 @@ func (s *NotificationService) DeleteSubscription(
 	if err := validateDeleteSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
 
 	var subscription *domain.Subscription
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		subscriptionStorage := v2ss.NewSubscriptionStorage(tx)
-		subscription, err = subscriptionStorage.GetSubscription(ctx, req.Id, req.EnvironmentId)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
+		subscription, err = subscriptionStorage.GetSubscription(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -675,7 +587,7 @@ func (s *NotificationService) DeleteSubscription(
 			subscription.Subscription,
 			prev,
 		)
-		if err = subscriptionStorage.DeleteSubscription(ctx, req.Id, req.EnvironmentId); err != nil {
+		if err = subscriptionStorage.DeleteSubscription(contextWithTx, req.Id, req.EnvironmentId); err != nil {
 			return err
 		}
 		return nil

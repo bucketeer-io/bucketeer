@@ -59,11 +59,11 @@ type SubscriptionStorage interface {
 }
 
 type subscriptionStorage struct {
-	qe mysql.QueryExecer
+	client mysql.Client
 }
 
-func NewSubscriptionStorage(qe mysql.QueryExecer) SubscriptionStorage {
-	return &subscriptionStorage{qe}
+func NewSubscriptionStorage(client mysql.Client) SubscriptionStorage {
+	return &subscriptionStorage{client}
 }
 
 func (s *subscriptionStorage) CreateSubscription(
@@ -71,7 +71,7 @@ func (s *subscriptionStorage) CreateSubscription(
 	e *domain.Subscription,
 	environmentId string,
 ) error {
-	_, err := s.qe.ExecContext(
+	_, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		insertSubscriptionV2SQLQuery,
 		e.Id,
@@ -97,7 +97,7 @@ func (s *subscriptionStorage) UpdateSubscription(
 	e *domain.Subscription,
 	environmentId string,
 ) error {
-	result, err := s.qe.ExecContext(
+	result, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		updateSubscriptionV2SQLQuery,
 		e.UpdatedAt,
@@ -125,7 +125,7 @@ func (s *subscriptionStorage) DeleteSubscription(
 	ctx context.Context,
 	id, environmentId string,
 ) error {
-	result, err := s.qe.ExecContext(
+	result, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		deleteSubscriptionV2SQLQuery,
 		id,
@@ -149,7 +149,7 @@ func (s *subscriptionStorage) GetSubscription(
 	id, environmentId string,
 ) (*domain.Subscription, error) {
 	subscription := proto.Subscription{}
-	err := s.qe.QueryRowContext(
+	err := s.client.Qe(ctx).QueryRowContext(
 		ctx,
 		selectSubscriptionV2SQLQuery,
 		id,
@@ -184,7 +184,7 @@ func (s *subscriptionStorage) ListSubscriptions(
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectSubscriptionV2AnySQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -214,7 +214,7 @@ func (s *subscriptionStorage) ListSubscriptions(
 	nextOffset := offset + len(subscriptions)
 	var totalCount int64
 	countQuery := fmt.Sprintf(selectSubscriptionV2CountSQLQuery, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

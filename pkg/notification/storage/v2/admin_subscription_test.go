@@ -19,20 +19,19 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
-
 	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	proto "github.com/bucketeer-io/bucketeer/proto/notification"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestNewAdminSubscriptionStorage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	storage := NewAdminSubscriptionStorage(mock.NewMockQueryExecer(mockController))
+	storage := NewAdminSubscriptionStorage(mock.NewMockClient(mockController))
 	assert.IsType(t, &adminSubscriptionStorage{}, storage)
 }
 
@@ -54,7 +53,12 @@ func TestCreateAdminSubscription(t *testing.T) {
 		{
 			desc: "ErrAdminSubscriptionAlreadyExists",
 			setup: func(s *adminSubscriptionStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, mysql.ErrDuplicateEntry)
 			},
@@ -66,7 +70,12 @@ func TestCreateAdminSubscription(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *adminSubscriptionStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 
@@ -79,7 +88,12 @@ func TestCreateAdminSubscription(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *adminSubscriptionStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
 					id, int64(1), int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name,
@@ -123,7 +137,12 @@ func TestUpdateAdminSubscription(t *testing.T) {
 			setup: func(s *adminSubscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -135,7 +154,12 @@ func TestUpdateAdminSubscription(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *adminSubscriptionStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 
@@ -150,7 +174,12 @@ func TestUpdateAdminSubscription(t *testing.T) {
 			setup: func(s *adminSubscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
 					int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name, id,
@@ -189,7 +218,12 @@ func TestDeleteAdminSubscription(t *testing.T) {
 			setup: func(s *adminSubscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -199,7 +233,12 @@ func TestDeleteAdminSubscription(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *adminSubscriptionStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 
@@ -212,7 +251,12 @@ func TestDeleteAdminSubscription(t *testing.T) {
 			setup: func(s *adminSubscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
 					"id-0",
@@ -249,7 +293,12 @@ func TestGetAdminSubscription(t *testing.T) {
 			setup: func(s *adminSubscriptionStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -261,7 +310,12 @@ func TestGetAdminSubscription(t *testing.T) {
 			setup: func(s *adminSubscriptionStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 
@@ -274,7 +328,12 @@ func TestGetAdminSubscription(t *testing.T) {
 			setup: func(s *adminSubscriptionStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(),
 					gomock.Any(),
 					"id-0",
@@ -325,7 +384,12 @@ func TestListAdminSubscriptions(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *adminSubscriptionStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -349,14 +413,19 @@ func TestListAdminSubscriptions(t *testing.T) {
 				}).Times(getSize + 1)
 				rows.EXPECT().Err().Return(nil)
 				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(getSize)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe).AnyTimes()
+
+				qe.EXPECT().QueryContext(
 					gomock.Any(),
 					gomock.Any(),
 					updatedAt, disable,
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(),
 					gomock.Any(),
 					updatedAt, disable,
@@ -383,14 +452,19 @@ func TestListAdminSubscriptions(t *testing.T) {
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe).AnyTimes()
+
+				qe.EXPECT().QueryContext(
 					gomock.Any(),
 					gomock.Any(),
 					[]interface{}{},
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(),
 					gomock.Any(),
 					[]interface{}{},
@@ -430,5 +504,5 @@ func TestListAdminSubscriptions(t *testing.T) {
 
 func newAdminSubscriptionStorageWithMock(t *testing.T, mockController *gomock.Controller) *adminSubscriptionStorage {
 	t.Helper()
-	return &adminSubscriptionStorage{mock.NewMockQueryExecer(mockController)}
+	return &adminSubscriptionStorage{mock.NewMockClient(mockController)}
 }
