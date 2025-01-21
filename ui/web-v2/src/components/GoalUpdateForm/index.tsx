@@ -121,17 +121,17 @@ export const GoalUpdateForm: FC<GoalUpdateFormProps> = memo(
                 <div>
                   <label htmlFor="connections">
                     <span className="input-label">
-                      {f(messages.goal.connections)}
+                      {f(messages.goal.connection)}
                     </span>
                   </label>
                   <div className="mt-1">
                     {[
                       {
-                        label: 'Experiments',
+                        label: f(messages.goal.experiments),
                         value: Goal.ConnectionType.EXPERIMENT
                       },
                       {
-                        label: 'Operations',
+                        label: f(messages.goal.autoOperations),
                         value: Goal.ConnectionType.OPERATION
                       }
                     ].map(({ label, value }) => (
