@@ -34,6 +34,7 @@ const CollectionLoader = ({
     isError
   } = useFetchGoals({
     ...filters,
+    archived: filters.status === 'ARCHIVED',
     environmentId: currentEnvironment.id
   });
 

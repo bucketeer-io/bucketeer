@@ -1,5 +1,7 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { GoalUpdaterPayload } from '@api/goal/goal-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Goal } from '@types';
@@ -20,8 +22,17 @@ const formSchema = yup.object().shape({
   description: yup.string()
 });
 
-const GoalUpdateForm = ({ goal }: { goal: Goal }) => {
+const GoalUpdateForm = ({
+  goal,
+  onSubmit
+}: {
+  goal: Goal;
+  onSubmit: (payload: GoalUpdaterPayload) => Promise<void>;
+}) => {
   const { t } = useTranslation(['common', 'form']);
+
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -32,9 +43,21 @@ const GoalUpdateForm = ({ goal }: { goal: Goal }) => {
     }
   });
 
-  const onSubmit: SubmitHandler<GoalDetailsForm> = async values => {
-    console.log(values);
-  };
+  const handleOnSubmit: SubmitHandler<GoalDetailsForm> = values =>
+    onSubmit({
+      ...values,
+      environmentId: currentEnvironment.id
+    }).finally(() =>
+      form.reset({
+        name: values.name,
+        id: values.id,
+        description: values.description
+      })
+    );
+
+  const {
+    formState: { isValid, isDirty, isSubmitting }
+  } = form;
 
   return (
     <div className="p-5 shadow-card rounded-lg bg-white">
@@ -42,7 +65,7 @@ const GoalUpdateForm = ({ goal }: { goal: Goal }) => {
         {t('form:general-info')}
       </p>
       <FormProvider {...form}>
-        <Form onSubmit={form.handleSubmit(onSubmit)}>
+        <Form onSubmit={form.handleSubmit(handleOnSubmit)}>
           <Form.Field
             control={form.control}
             name="name"
@@ -95,8 +118,8 @@ const GoalUpdateForm = ({ goal }: { goal: Goal }) => {
           />
 
           <Button
-            loading={form.formState.isSubmitting}
-            disabled={!form.formState.isDirty}
+            loading={isSubmitting}
+            disabled={!isValid || !isDirty}
             type="submit"
             className="w-fit"
             variant={'secondary'}

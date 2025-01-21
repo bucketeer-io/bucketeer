@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -12,8 +12,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from 'components/tabs';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
-import Overview from './overview';
 import { GoalActions, GoalFilters } from './types';
+
+// import Overview from './overview';
 
 const PageContent = ({
   onAdd,
@@ -31,15 +32,11 @@ const PageContent = ({
     page: 1,
     orderBy: 'CREATED_AT',
     orderDirection: 'DESC',
+    status: 'ACTIVE',
     ...searchFilters
   } as GoalFilters;
 
   const [filters, setFilters] = usePartialState<GoalFilters>(defaultFilters);
-
-  const tabValue = useMemo(
-    () => (filters.archived ? 'ARCHIVED' : 'ACTIVE'),
-    [filters]
-  );
 
   const onChangeFilters = (values: Partial<GoalFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
@@ -55,7 +52,7 @@ const PageContent = ({
 
   return (
     <PageLayout.Content>
-      <Overview />
+      {/* <Overview /> */}
       <Filter
         action={
           <Button className="flex-1 lg:flex-none" onClick={onAdd}>
@@ -68,12 +65,12 @@ const PageContent = ({
       />
       <Tabs
         className="flex-1 flex h-full flex-col mt-6"
-        value={tabValue}
+        value={filters.status}
         onValueChange={value => {
           const status = value as CollectionStatusType;
           onChangeFilters({
             searchQuery: '',
-            archived: status === 'ARCHIVED'
+            status
           });
         }}
       >
@@ -82,7 +79,7 @@ const PageContent = ({
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value={tabValue}>
+        <TabsContent value={filters.status}>
           <CollectionLoader
             onAdd={onAdd}
             filters={filters}

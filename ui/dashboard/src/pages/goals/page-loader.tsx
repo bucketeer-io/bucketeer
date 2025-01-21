@@ -1,9 +1,14 @@
 import { useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
+import { goalUpdater, GoalUpdaterPayload } from '@api/goal/goal-updater';
+import { invalidateGoals } from '@queries/goals';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_GOALS } from 'constants/routing';
-import { useToggleOpen } from 'hooks';
+import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { Goal } from '@types';
+import ConfirmModal from 'elements/confirm-modal';
 import PageLayout from 'elements/page-layout';
 import { EmptyCollection } from './collection-layout/empty-collection';
 import { useFetchGoals } from './collection-loader/use-fetch-goals';
@@ -13,6 +18,10 @@ import PageContent from './page-content';
 import { GoalActions } from './types';
 
 const PageLoader = () => {
+  const { t } = useTranslation(['common', 'table']);
+  const { notify } = useToast();
+  const queryClient = useQueryClient();
+
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
@@ -35,12 +44,42 @@ const PageLoader = () => {
   const [isOpenConnectionModal, onOpenConnectionModal, onCloseConnectionModal] =
     useToggleOpen(false);
 
+  const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
+    useToggleOpen(false);
+
   const onHandleActions = (goal: Goal, type: GoalActions) => {
     setSelectedGoal(goal);
     if (type === 'CONNECTION') {
       return onOpenConnectionModal();
     }
+    if (['ARCHIVE', 'UNARCHIVE'].includes(type)) onOpenConfirmModal();
   };
+
+  const mutationState = useMutation({
+    mutationFn: async (payload: GoalUpdaterPayload) => {
+      return goalUpdater(payload);
+    },
+    onSuccess: data => {
+      onCloseConfirmModal();
+      invalidateGoals(queryClient);
+      notify({
+        message: (
+          <span>
+            <b>{data?.goal?.name}</b> {`has been successfully updated!`}
+          </span>
+        )
+      });
+      mutationState.reset();
+    },
+    onError: error =>
+      notify({
+        messageType: 'error',
+        message: error?.message || 'Something went wrong.'
+      })
+  });
+
+  const onUpdateGoal = async (payload: GoalUpdaterPayload) =>
+    mutationState.mutate(payload);
 
   const isEmpty = collection?.goals.length === 0;
 
@@ -64,6 +103,38 @@ const PageLoader = () => {
           isOpen={isOpenConnectionModal}
           goal={selectedGoal}
           onClose={onCloseConnectionModal}
+        />
+      )}
+      {openConfirmModal && selectedGoal && (
+        <ConfirmModal
+          isOpen={openConfirmModal}
+          loading={mutationState.isPending}
+          title={
+            selectedGoal.archived
+              ? t(`table:popover.unarchive-goal`)
+              : t(`table:popover.archive-goal`)
+          }
+          description={
+            <Trans
+              i18nKey={
+                selectedGoal.archived
+                  ? 'table:goals.confirm-unarchive-desc'
+                  : 'table:goals.confirm-archive-desc'
+              }
+              values={{ name: selectedGoal?.name }}
+              components={{ bold: <strong /> }}
+            />
+          }
+          onClose={onCloseConfirmModal}
+          onSubmit={() =>
+            onUpdateGoal({
+              id: selectedGoal.id,
+              name: selectedGoal.name,
+              environmentId: currentEnvironment.id,
+              description: selectedGoal.description,
+              archived: selectedGoal.archived ? false : true
+            })
+          }
         />
       )}
     </>
