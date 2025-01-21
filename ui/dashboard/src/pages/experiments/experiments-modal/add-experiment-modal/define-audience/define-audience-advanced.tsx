@@ -13,7 +13,7 @@ const DefineAudienceAdvanced = ({ field }: DefineAudienceProps) => {
     useToggleOpen(false);
 
   return (
-    <div className="flex flex-col w-full gap-y-5">
+    <div className="flex flex-col w-full gap-y-5 select-none">
       <div
         className="flex items-center gap-x-2 cursor-pointer"
         onClick={isOpenAdvanced ? onCloseAdvanced : onOpenAdvanced}

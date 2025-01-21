@@ -78,5 +78,8 @@
     "select-rule": "Select Rule"
   },
   "advanced": "Advanced",
-  "link": "Link"
+  "link": "Link",
+  "select-date": "Select date",
+  "start-at": "Start At",
+  "end-at": "End At"
 }

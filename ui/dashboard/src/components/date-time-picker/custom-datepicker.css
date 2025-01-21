@@ -1,0 +1,9 @@
+.react-datepicker__day--selected,
+.react-datepicker__day--selected:hover,
+.react-datepicker__time-list-item--selected {
+  @apply !bg-primary-500;
+}
+
+.react-datepicker__time-list-item {
+  @apply flex-center
+}

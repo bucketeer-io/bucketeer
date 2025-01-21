@@ -1,4 +1,5 @@
 import IconBackspace from './customized-icons/backspace.svg?react';
+import IconCalendar from './customized-icons/calendar.svg?react';
 import IconChecked from './customized-icons/checked.svg?react';
 import IconChevronRight from './customized-icons/chevron-right.svg?react';
 import IconClose from './customized-icons/close.svg?react';
@@ -77,6 +78,7 @@ export {
   IconDisable,
   IconCopy,
   IconUpload,
+  IconCalendar,
   // Special icons
   IconGoal,
   IconGoogle,

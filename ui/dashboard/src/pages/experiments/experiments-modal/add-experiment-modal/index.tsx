@@ -11,6 +11,7 @@ import * as yup from 'yup';
 import { IconInfo } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
+import { ReactDatePicker } from 'components/date-time-picker';
 import Divider from 'components/divider';
 import {
   DropdownMenu,
@@ -34,6 +35,8 @@ export interface AddExperimentForm {
   id: string;
   name: string;
   description?: string;
+  startAt: string;
+  endAt: string;
   audience: {
     inExperiment: number;
     notInExperiment: number;
@@ -52,6 +55,8 @@ export type DefineAudienceField = ControllerRenderProps<
 export const formSchema = yup.object().shape({
   id: yup.string().required(),
   name: yup.string().required(),
+  startAt: yup.string().required(),
+  endAt: yup.string().required(),
   description: yup.string(),
   audience: yup.mixed(),
   linkFlag: yup.string().required(),
@@ -90,6 +95,8 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
       id: '',
       name: '',
       description: '',
+      startAt: '1602829513',
+      endAt: '1737508939',
       audience: {
         inExperiment: 5,
         notInExperiment: 95,
@@ -174,10 +181,10 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
               name="description"
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label optional>{t('form:description')}</Form.Label>
+                  <Form.Label optional>{t('description')}</Form.Label>
                   <Form.Control>
                     <TextArea
-                      placeholder={t('form:placeholder-desc')}
+                      placeholder={t('placeholder-desc')}
                       rows={4}
                       {...field}
                     />
@@ -186,6 +193,54 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                 </Form.Item>
               )}
             />
+            <div className="flex items-center w-full gap-x-4 mb-3">
+              <Form.Field
+                control={form.control}
+                name="startAt"
+                render={({ field }) => (
+                  <Form.Item className="flex flex-col flex-1">
+                    <Form.Label required>{t('start-at')}</Form.Label>
+                    <Form.Control>
+                      <ReactDatePicker
+                        selected={
+                          field.value ? new Date(+field.value * 1000) : null
+                        }
+                        onChange={date => {
+                          if (date) {
+                            const timestamp = new Date(date)?.getTime();
+                            field.onChange(timestamp / 1000);
+                          }
+                        }}
+                      />
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+              <Form.Field
+                control={form.control}
+                name="endAt"
+                render={({ field }) => (
+                  <Form.Item className="flex flex-col flex-1">
+                    <Form.Label required>{t('end-at')}</Form.Label>
+                    <Form.Control>
+                      <ReactDatePicker
+                        selected={
+                          field.value ? new Date(+field.value * 1000) : null
+                        }
+                        onChange={date => {
+                          if (date) {
+                            const timestamp = new Date(date)?.getTime();
+                            field.onChange(timestamp / 1000);
+                          }
+                        }}
+                      />
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+            </div>
             <Divider className="mb-5" />
             <div className="mb-3">
               <p className="text-gray-800 typo-head-bold-small mb-3">
