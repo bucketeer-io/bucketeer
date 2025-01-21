@@ -106,6 +106,7 @@ message Event {
     GOAL_DESCRIPTION_CHANGED = 102;
     GOAL_DELETED = 103;
     GOAL_ARCHIVED = 104;
+    GOAL_UPDATED = 105;
     EXPERIMENT_CREATED = 200;
     EXPERIMENT_STOPPED = 201;
     EXPERIMENT_START_AT_CHANGED = 202;
@@ -501,6 +502,12 @@ message GoalCreatedEvent {
   int64 created_at = 5;
   int64 updated_at = 6;
   bucketeer.experiment.Goal.ConnectionType connection_type = 7;
+}
+
+message GoalUpdatedEvent {
+  string id = 1;
+  google.protobuf.StringValue name = 2;
+  google.protobuf.StringValue description = 3;
 }
 
 message GoalRenamedEvent {
