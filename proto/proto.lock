@@ -32426,6 +32426,11 @@
                 "id": 8,
                 "name": "environment_url_code",
                 "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "entity_data",
+                "type": "string"
               }
             ],
             "reserved_ids": [
