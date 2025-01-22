@@ -97,6 +97,7 @@ func (td *tagDeleter) Run(ctx context.Context) (lastErr error) {
 					deletedCount, err := td.deleteUnusedTags(ctx, envTag.Tags, envFt.Features)
 					if err != nil {
 						lastErr = err
+						continue
 					}
 					deletedSize += deletedCount
 				}
