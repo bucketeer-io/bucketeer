@@ -16464,6 +16464,10 @@
                 "integer": 1007
               },
               {
+                "name": "SUBSCRIPTION_FEATURE_FLAG_TAGS_UPDATED",
+                "integer": 1008
+              },
+              {
                 "name": "ADMIN_SUBSCRIPTION_CREATED",
                 "integer": 1100
               },
@@ -19024,6 +19028,12 @@
                 "id": 3,
                 "name": "name",
                 "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -19069,6 +19079,17 @@
             ]
           },
           {
+            "name": "SubscriptionFeatureFlagTagsUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "SubscriptionUpdatedEvent",
             "fields": [
               {
@@ -19091,6 +19112,12 @@
                 "id": 4,
                 "name": "disabled",
                 "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 5,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },

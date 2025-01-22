@@ -34,8 +34,9 @@ func TestNewNotification(t *testing.T) {
 		Type:                  proto.Recipient_SlackChannel,
 		SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
 	}
+	tags := []string{"tag"}
 	name := "sname"
-	actual, err := NewSubscription(name, sourceTypes, recipient)
+	actual, err := NewSubscription(name, sourceTypes, recipient, tags)
 	assert.NoError(t, err)
 	assert.IsType(t, &Subscription{}, actual)
 	assert.NotEqual(t, "", actual.Id)
@@ -45,15 +46,17 @@ func TestNewNotification(t *testing.T) {
 	assert.NotEqual(t, 0, actual.CreatedAt)
 	assert.NotEqual(t, 0, actual.UpdatedAt)
 	assert.Equal(t, name, actual.Name)
+	assert.Equal(t, tags, actual.FeatureFlagTags)
 }
 
 func TestUpdateNotification(t *testing.T) {
 	t.Parallel()
 
 	type input struct {
-		name        *wrapperspb.StringValue
-		sourceTypes []proto.Subscription_SourceType
-		disabled    *wrapperspb.BoolValue
+		name            *wrapperspb.StringValue
+		sourceTypes     []proto.Subscription_SourceType
+		disabled        *wrapperspb.BoolValue
+		featureFlagTags []string
 	}
 
 	patterns := []struct {
@@ -146,10 +149,84 @@ func TestUpdateNotification(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "err: update subscription's feature flag tags with no feature source type",
+			origin: &Subscription{
+				&proto.Subscription{
+					Id:   "id",
+					Name: "origin",
+					SourceTypes: []proto.Subscription_SourceType{
+						proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					},
+					Recipient: &proto.Recipient{
+						Type: proto.Recipient_SlackChannel,
+						SlackChannelRecipient: &proto.SlackChannelRecipient{
+							WebhookUrl: "https://slack-hooks.exp",
+						},
+					},
+					Disabled:        false,
+					FeatureFlagTags: []string{"tag"},
+				},
+			},
+			inputData: &input{
+				featureFlagTags: []string{"update-tag"},
+			},
+			expected:    nil,
+			expectedErr: ErrCannotUpdateFeatureFlagTags,
+		},
+		{
+			desc: "update subscription's feature flag tags",
+			origin: &Subscription{
+				&proto.Subscription{
+					Id:   "id",
+					Name: "origin",
+					SourceTypes: []proto.Subscription_SourceType{
+						proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+						proto.Subscription_DOMAIN_EVENT_FEATURE,
+					},
+					Recipient: &proto.Recipient{
+						Type: proto.Recipient_SlackChannel,
+						SlackChannelRecipient: &proto.SlackChannelRecipient{
+							WebhookUrl: "https://slack-hooks.exp",
+						},
+					},
+					Disabled:        false,
+					FeatureFlagTags: []string{"tag"},
+				},
+			},
+			inputData: &input{
+				featureFlagTags: []string{"update-tag"},
+			},
+			expected: &Subscription{
+				&proto.Subscription{
+					Id:   "id",
+					Name: "origin",
+					SourceTypes: []proto.Subscription_SourceType{
+						proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+						proto.Subscription_DOMAIN_EVENT_FEATURE,
+					},
+					Recipient: &proto.Recipient{
+						Type: proto.Recipient_SlackChannel,
+						SlackChannelRecipient: &proto.SlackChannelRecipient{
+							WebhookUrl: "https://slack-hooks.exp",
+						},
+					},
+					Disabled:        false,
+					UpdatedAt:       time.Now().Unix(),
+					FeatureFlagTags: []string{"update-tag"},
+				},
+			},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual, err := p.origin.UpdateSubscription(p.inputData.name, p.inputData.sourceTypes, p.inputData.disabled)
+			actual, err := p.origin.UpdateSubscription(
+				p.inputData.name,
+				p.inputData.sourceTypes,
+				p.inputData.disabled,
+				p.inputData.featureFlagTags,
+			)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -199,6 +276,56 @@ func TestAddSourceTypes(t *testing.T) {
 			err := p.origin.AddSourceTypes(p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, p.origin.SourceTypes)
+		})
+	}
+}
+
+func TestUpdateFeatureFlagTags(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc        string
+		tags        []string
+		sourceTypes []proto.Subscription_SourceType
+		expected    []string
+		expectedErr error
+	}{
+		{
+			desc: "err: update subscription's feature flag tags with no feature source type",
+			tags: []string{"android", "ios"},
+			sourceTypes: []proto.Subscription_SourceType{
+				proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+			},
+			expected:    []string{"android", "ios", "web"},
+			expectedErr: ErrCannotUpdateFeatureFlagTags,
+		},
+		{
+			desc: "success",
+			tags: []string{"android", "ios"},
+			sourceTypes: []proto.Subscription_SourceType{
+				proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+				proto.Subscription_DOMAIN_EVENT_FEATURE,
+			},
+			expected:    []string{"android", "ios", "web"},
+			expectedErr: ErrCannotUpdateFeatureFlagTags,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual := &Subscription{&proto.Subscription{
+				SourceTypes:     p.sourceTypes,
+				FeatureFlagTags: p.tags,
+			}}
+			err := actual.UpdateFeatureFlagTags(p.expected)
+			if err != nil {
+				assert.Equal(t, p.expectedErr, err)
+				assert.Equal(t, p.tags, actual.FeatureFlagTags)
+				assert.Zero(t, actual.UpdatedAt)
+			} else {
+				assert.Equal(t, p.expected, actual.FeatureFlagTags)
+				assert.NotZero(t, actual.UpdatedAt)
+			}
 		})
 	}
 }

@@ -45,6 +45,26 @@ func (s *NotificationService) validateCreateSubscriptionRequest(
 		}
 		return dt.Err()
 	}
+	// We should only save the tags if the Feature source type is in the list
+	if req.Command.FeatureFlagTags != nil {
+		var found bool
+		for _, sourceType := range req.Command.SourceTypes {
+			if sourceType == notificationproto.Subscription_DOMAIN_EVENT_FEATURE {
+				found = true
+				break
+			}
+		}
+		if !found {
+			dt, err := statusSourceTypesRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "SourceTypes"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+	}
 	if err := s.validateRecipient(req.Command.Recipient, localizer); err != nil {
 		return err
 	}
@@ -74,6 +94,26 @@ func (s *NotificationService) validateCreateSubscriptionNoCommandRequest(
 			return statusInternal.Err()
 		}
 		return dt.Err()
+	}
+	// We should only save the tags if the Feature source type is in the list
+	if req.FeatureFlagTags != nil {
+		var found bool
+		for _, sourceType := range req.SourceTypes {
+			if sourceType == notificationproto.Subscription_DOMAIN_EVENT_FEATURE {
+				found = true
+				break
+			}
+		}
+		if !found {
+			dt, err := statusSourceTypesRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "SourceTypes"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
 	}
 	if err := s.validateRecipient(req.Recipient, localizer); err != nil {
 		return err

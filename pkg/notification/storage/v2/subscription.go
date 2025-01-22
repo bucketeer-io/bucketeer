@@ -81,6 +81,7 @@ func (s *subscriptionStorage) CreateSubscription(
 		mysql.JSONObject{Val: e.SourceTypes},
 		mysql.JSONObject{Val: e.Recipient},
 		e.Name,
+		mysql.JSONObject{Val: e.FeatureFlagTags},
 		environmentId,
 	)
 	if err != nil {
@@ -105,6 +106,7 @@ func (s *subscriptionStorage) UpdateSubscription(
 		mysql.JSONObject{Val: e.SourceTypes},
 		mysql.JSONObject{Val: e.Recipient},
 		e.Name,
+		mysql.JSONObject{Val: e.FeatureFlagTags},
 		e.Id,
 		environmentId,
 	)
@@ -162,6 +164,7 @@ func (s *subscriptionStorage) GetSubscription(
 		&mysql.JSONObject{Val: &subscription.SourceTypes},
 		&mysql.JSONObject{Val: &subscription.Recipient},
 		&subscription.Name,
+		&mysql.JSONObject{Val: &subscription.FeatureFlagTags},
 		&subscription.EnvironmentId,
 		&subscription.EnvironmentName,
 	)
@@ -200,6 +203,7 @@ func (s *subscriptionStorage) ListSubscriptions(
 			&mysql.JSONObject{Val: &subscription.SourceTypes},
 			&mysql.JSONObject{Val: &subscription.Recipient},
 			&subscription.Name,
+			&mysql.JSONObject{Val: &subscription.FeatureFlagTags},
 			&subscription.EnvironmentId,
 			&subscription.EnvironmentName,
 		)
