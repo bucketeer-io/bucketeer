@@ -32162,6 +32162,12 @@
                 "id": 3,
                 "name": "name",
                 "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -32183,6 +32189,17 @@
                 "id": 1,
                 "name": "source_types",
                 "type": "Subscription.SourceType",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "UpdateSubscriptionFeatureFlagTagsCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_flag_tags",
+                "type": "string",
                 "is_repeated": true
               }
             ]
@@ -33068,6 +33085,12 @@
                     "value": "REQUIRED"
                   }
                 ]
+              },
+              {
+                "id": 7,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
               }
             ],
             "reserved_ids": [
@@ -33279,6 +33302,32 @@
                       {
                         "name": "description",
                         "value": "if true, the subscription is disabled, otherwise enabled."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 10,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "update_subscription_feature_tags_command",
+                "type": "UpdateSubscriptionFeatureFlagTagsCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "Deprecated. Use feature_flag_tags instead."
                       }
                     ]
                   }
@@ -34063,6 +34112,12 @@
                 "id": 9,
                 "name": "environment_name",
                 "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           }
@@ -35813,9 +35868,6 @@
           },
           {
             "path": "google/api/field_behavior.proto"
-          },
-          {
-            "path": "google/protobuf/wrappers.proto"
           },
           {
             "path": "protoc-gen-openapiv2/options/annotations.proto"
