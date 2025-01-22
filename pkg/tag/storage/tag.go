@@ -36,6 +36,8 @@ var (
 	selectTagSQL string
 	//go:embed sql/select_tags.sql
 	selectTagsSQL string
+	//go:embed sql/select_all_environment_tags.sql
+	selectAllEnvironmentTagsSQL string
 	//go:embed sql/count_tags.sql
 	countTagsSQL string
 	//go:embed sql/delete_tag.sql
@@ -51,6 +53,7 @@ type TagStorage interface {
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.Tag, int, int64, error)
+	ListAllEnvironmentTags(ctx context.Context) ([]*proto.EnvironmentTag, error)
 	DeleteTag(ctx context.Context, id, environmentId string) error
 }
 
@@ -149,6 +152,46 @@ func (s *tagStorage) ListTags(
 		return nil, 0, 0, err
 	}
 	return tags, nextOffset, totalCount, nil
+}
+
+func (s *tagStorage) ListAllEnvironmentTags(ctx context.Context) ([]*proto.EnvironmentTag, error) {
+	rows, err := s.qe.QueryContext(ctx, selectAllEnvironmentTagsSQL)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	envTags := map[string][]*proto.Tag{}
+	for rows.Next() {
+		var entityType int32
+		var envID string
+		tag := proto.Tag{}
+		err := rows.Scan(
+			&envID,
+			&tag.Id,
+			&tag.Name,
+			&tag.CreatedAt,
+			&tag.UpdatedAt,
+			&entityType,
+			&tag.EnvironmentId,
+		)
+		if err != nil {
+			return nil, err
+		}
+		tag.EntityType = proto.Tag_EntityType(entityType)
+		envTags[envID] = append(envTags[envID], &tag)
+	}
+	if rows.Err() != nil {
+		return nil, err
+	}
+	environmentTags := make([]*proto.EnvironmentTag, 0, len(envTags))
+	for key, tags := range envTags {
+		envTag := &proto.EnvironmentTag{
+			EnvironmentId: key,
+			Tags:          tags,
+		}
+		environmentTags = append(environmentTags, envTag)
+	}
+	return environmentTags, nil
 }
 
 func (s *tagStorage) DeleteTag(ctx context.Context, id, environmentId string) error {
