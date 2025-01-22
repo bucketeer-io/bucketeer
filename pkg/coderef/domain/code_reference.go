@@ -17,6 +17,7 @@ package domain
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 
 	proto "github.com/bucketeer-io/bucketeer/proto/coderef"
@@ -27,7 +28,6 @@ type CodeReference struct {
 }
 
 func NewCodeReference(
-	id string,
 	featureId string,
 	filePath string,
 	lineNumber int32,
@@ -40,11 +40,15 @@ func NewCodeReference(
 	repositoryBranch string,
 	commitHash string,
 	environmentId string,
-) *CodeReference {
+) (*CodeReference, error) {
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return nil, err
+	}
 	now := time.Now().Unix()
 	return &CodeReference{
 		CodeReference: proto.CodeReference{
-			Id:               id,
+			Id:               id.String(),
 			FeatureId:        featureId,
 			FilePath:         filePath,
 			LineNumber:       lineNumber,
@@ -60,7 +64,7 @@ func NewCodeReference(
 			CreatedAt:        now,
 			UpdatedAt:        now,
 		},
-	}
+	}, nil
 }
 
 func (c *CodeReference) Update(

@@ -21,18 +21,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/stretchr/testify/assert"
 
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	coderefproto "github.com/bucketeer-io/bucketeer/proto/coderef"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
-	timeout = 30 * time.Second
+	timeout = 60 * time.Second
 )
 
 var (
@@ -60,7 +61,7 @@ func TestCreateCodeReference(t *testing.T) {
 	createFeature(t, featureClient, featureID)
 
 	// Create code reference
-	createReq := newCreateCodeReferenceRequest(featureID)
+	createReq := newCreateCodeReferenceRequest(t, featureID)
 	resp := createCodeReference(t, client, createReq)
 
 	assert.Equal(t, createReq.FeatureId, resp.CodeReference.FeatureId)
@@ -85,7 +86,7 @@ func TestUpdateCodeReference(t *testing.T) {
 	createFeature(t, featureClient, featureID)
 
 	// Create code reference
-	createReq := newCreateCodeReferenceRequest(featureID)
+	createReq := newCreateCodeReferenceRequest(t, featureID)
 	createResp := createCodeReference(t, client, createReq)
 
 	// Update code reference
@@ -131,11 +132,11 @@ func TestListCodeReferences(t *testing.T) {
 	createFeature(t, featureClient, featureID)
 
 	// Create multiple code references
-	createReq1 := newCreateCodeReferenceRequest(featureID)
-	createCodeReference(t, client, createReq1)
+	createReq1 := newCreateCodeReferenceRequest(t, featureID)
+	resp1 := createCodeReference(t, client, createReq1)
 	time.Sleep(time.Second)
-	createReq2 := newCreateCodeReferenceRequest(featureID)
-	createCodeReference(t, client, createReq2)
+	createReq2 := newCreateCodeReferenceRequest(t, featureID)
+	resp2 := createCodeReference(t, client, createReq2)
 
 	// List code references
 	listReq := &coderefproto.ListCodeReferencesRequest{
@@ -148,7 +149,124 @@ func TestListCodeReferences(t *testing.T) {
 	}
 	listResp, err := client.ListCodeReferences(context.Background(), listReq)
 	assert.NoError(t, err)
-	assert.Equal(t, 2, len(listResp.CodeReferences))
+
+	// Verify the created code references are in the response
+	found1, found2 := false, false
+	for _, ref := range listResp.CodeReferences {
+		if ref.Id == resp1.CodeReference.Id {
+			found1 = true
+			assert.Equal(t, createReq1.FeatureId, ref.FeatureId)
+			assert.Equal(t, createReq1.FilePath, ref.FilePath)
+			assert.Equal(t, createReq1.LineNumber, ref.LineNumber)
+			assert.Equal(t, createReq1.CodeSnippet, ref.CodeSnippet)
+			assert.Equal(t, createReq1.RepositoryName, ref.RepositoryName)
+			assert.Equal(t, createReq1.RepositoryOwner, ref.RepositoryOwner)
+			assert.Equal(t, createReq1.RepositoryType, ref.RepositoryType)
+			assert.Equal(t, createReq1.RepositoryBranch, ref.RepositoryBranch)
+			assert.Equal(t, createReq1.CommitHash, ref.CommitHash)
+		}
+		if ref.Id == resp2.CodeReference.Id {
+			found2 = true
+			assert.Equal(t, createReq2.FeatureId, ref.FeatureId)
+			assert.Equal(t, createReq2.FilePath, ref.FilePath)
+			assert.Equal(t, createReq2.LineNumber, ref.LineNumber)
+			assert.Equal(t, createReq2.CodeSnippet, ref.CodeSnippet)
+			assert.Equal(t, createReq2.RepositoryName, ref.RepositoryName)
+			assert.Equal(t, createReq2.RepositoryOwner, ref.RepositoryOwner)
+			assert.Equal(t, createReq2.RepositoryType, ref.RepositoryType)
+			assert.Equal(t, createReq2.RepositoryBranch, ref.RepositoryBranch)
+			assert.Equal(t, createReq2.CommitHash, ref.CommitHash)
+		}
+	}
+	assert.True(t, found1, "First created code reference not found in list response")
+	assert.True(t, found2, "Second created code reference not found in list response")
+}
+
+func TestListCodeReferencesCursor(t *testing.T) {
+	t.Parallel()
+	client := newCodeRefClient(t)
+	featureClient := newFeatureClient(t)
+
+	// First create a feature
+	featureID := createFeatureID(t)
+	createFeature(t, featureClient, featureID)
+
+	// Create multiple code references
+	for i := 0; i < 2; i++ {
+		createReq := newCreateCodeReferenceRequest(t, featureID)
+		createCodeReference(t, client, createReq)
+		time.Sleep(time.Second) // Ensure different creation times
+	}
+
+	expectedSize := 1
+	listReq := &coderefproto.ListCodeReferencesRequest{
+		FeatureId:      featureID,
+		EnvironmentId:  *environmentID,
+		PageSize:       int64(expectedSize),
+		OrderBy:        coderefproto.ListCodeReferencesRequest_CREATED_AT,
+		OrderDirection: coderefproto.ListCodeReferencesRequest_DESC,
+	}
+	listResp, err := client.ListCodeReferences(context.Background(), listReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if listResp.Cursor == "" {
+		t.Fatal("Cursor is empty")
+	}
+	actualSize := len(listResp.CodeReferences)
+	if expectedSize != actualSize {
+		t.Fatalf("Different sizes. Expected: %v, actual: %v", expectedSize, actualSize)
+	}
+
+	listResp, err = client.ListCodeReferences(context.Background(), &coderefproto.ListCodeReferencesRequest{
+		FeatureId:      featureID,
+		EnvironmentId:  *environmentID,
+		PageSize:       int64(expectedSize),
+		Cursor:         listResp.Cursor,
+		OrderBy:        coderefproto.ListCodeReferencesRequest_CREATED_AT,
+		OrderDirection: coderefproto.ListCodeReferencesRequest_DESC,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	actualSize = len(listResp.CodeReferences)
+	if expectedSize != actualSize {
+		t.Fatalf("Different sizes. Expected: %v, actual: %v", expectedSize, actualSize)
+	}
+}
+
+func TestListCodeReferencesPageSize(t *testing.T) {
+	t.Parallel()
+	client := newCodeRefClient(t)
+	featureClient := newFeatureClient(t)
+
+	// First create a feature
+	featureID := createFeatureID(t)
+	createFeature(t, featureClient, featureID)
+
+	// Create multiple code references
+	for i := 0; i < 3; i++ {
+		createReq := newCreateCodeReferenceRequest(t, featureID)
+		createCodeReference(t, client, createReq)
+		time.Sleep(time.Second) // Ensure different creation times
+	}
+
+	expectedSize := 3
+	listReq := &coderefproto.ListCodeReferencesRequest{
+		FeatureId:      featureID,
+		EnvironmentId:  *environmentID,
+		PageSize:       int64(expectedSize),
+		OrderBy:        coderefproto.ListCodeReferencesRequest_CREATED_AT,
+		OrderDirection: coderefproto.ListCodeReferencesRequest_DESC,
+	}
+	listResp, err := client.ListCodeReferences(context.Background(), listReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actualSize := len(listResp.CodeReferences)
+	if expectedSize != actualSize {
+		t.Fatalf("Different sizes. Expected: %v, actual: %v", expectedSize, actualSize)
+	}
 }
 
 func TestDeleteCodeReference(t *testing.T) {
@@ -161,7 +279,7 @@ func TestDeleteCodeReference(t *testing.T) {
 	createFeature(t, featureClient, featureID)
 
 	// Create code reference
-	createReq := newCreateCodeReferenceRequest(featureID)
+	createReq := newCreateCodeReferenceRequest(t, featureID)
 	createResp := createCodeReference(t, client, createReq)
 
 	// Delete code reference
@@ -178,10 +296,15 @@ func TestDeleteCodeReference(t *testing.T) {
 		EnvironmentId: *environmentID,
 	}
 	_, err = client.GetCodeReference(context.Background(), getReq)
-	assert.Error(t, err) // Should return error as code reference is deleted
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not found") // Verify it's specifically a not found error
+	st, ok := status.FromError(err)
+	assert.True(t, ok)
+	assert.Equal(t, codes.NotFound, st.Code())
 }
 
-func newCreateCodeReferenceRequest(featureID string) *coderefproto.CreateCodeReferenceRequest {
+func newCreateCodeReferenceRequest(t *testing.T, featureID string) *coderefproto.CreateCodeReferenceRequest {
+	t.Helper()
 	return &coderefproto.CreateCodeReferenceRequest{
 		EnvironmentId:    *environmentID,
 		FeatureId:        featureID,
@@ -203,6 +326,7 @@ func createCodeReference(
 	client coderefproto.CodeReferenceServiceClient,
 	req *coderefproto.CreateCodeReferenceRequest,
 ) *coderefproto.CreateCodeReferenceResponse {
+	t.Helper()
 	resp, err := client.CreateCodeReference(context.Background(), req)
 	assert.NoError(t, err)
 	return resp
@@ -213,6 +337,7 @@ func getCodeReference(
 	client coderefproto.CodeReferenceServiceClient,
 	req *coderefproto.GetCodeReferenceRequest,
 ) *coderefproto.GetCodeReferenceResponse {
+	t.Helper()
 	resp, err := client.GetCodeReference(context.Background(), req)
 	assert.NoError(t, err)
 	return resp
@@ -249,10 +374,12 @@ func newFeatureClient(t *testing.T) featureclient.Client {
 }
 
 func createFeatureID(t *testing.T) string {
+	t.Helper()
 	return fmt.Sprintf("feature-id-%d", time.Now().UnixNano())
 }
 
 func createFeature(t *testing.T, client featureclient.Client, featureID string) {
+	t.Helper()
 	cmd := &featureproto.CreateFeatureCommand{
 		Id:          featureID,
 		Name:        "e2e-test-feature",

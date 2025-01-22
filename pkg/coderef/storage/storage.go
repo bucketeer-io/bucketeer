@@ -13,7 +13,7 @@
 // limitations under the License.
 
 //go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
-package v2
+package storage
 
 import (
 	"context"
@@ -26,14 +26,14 @@ type CodeReferenceStorage interface {
 	RunInTransaction(ctx context.Context, f func() error) error
 	CreateCodeReference(ctx context.Context, codeRef *domain.CodeReference) error
 	UpdateCodeReference(ctx context.Context, codeRef *domain.CodeReference) error
-	GetCodeReference(ctx context.Context, id, environmentID string) (*domain.CodeReference, error)
+	GetCodeReference(ctx context.Context, id string) (*domain.CodeReference, error)
 	ListCodeReferences(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*domain.CodeReference, int, int64, error)
-	DeleteCodeReference(ctx context.Context, id, environmentID string) error
+	DeleteCodeReference(ctx context.Context, id string) error
 }
 
 const transactionKey = "transaction"

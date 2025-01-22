@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v2
+package storage
 
 import (
 	"context"
@@ -128,14 +128,13 @@ func (s *codeReferenceStorage) UpdateCodeReference(ctx context.Context, cr *doma
 
 func (s *codeReferenceStorage) GetCodeReference(
 	ctx context.Context,
-	id, environmentID string,
+	id string,
 ) (*domain.CodeReference, error) {
 	codeRef := &domain.CodeReference{}
 	row := s.qe(ctx).QueryRowContext(
 		ctx,
 		selectCodeReferenceSQL,
 		id,
-		environmentID,
 	)
 	err := row.Scan(
 		&codeRef.Id,
@@ -216,8 +215,8 @@ func (s *codeReferenceStorage) ListCodeReferences(
 	return codeRefs, nextOffset, total, nil
 }
 
-func (s *codeReferenceStorage) DeleteCodeReference(ctx context.Context, id, environmentID string) error {
-	result, err := s.qe(ctx).ExecContext(ctx, deleteCodeReferenceSQL, id, environmentID)
+func (s *codeReferenceStorage) DeleteCodeReference(ctx context.Context, id string) error {
+	result, err := s.qe(ctx).ExecContext(ctx, deleteCodeReferenceSQL, id)
 	if err != nil {
 		return err
 	}

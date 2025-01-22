@@ -24,12 +24,11 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/pkg/coderef/domain"
-	v2 "github.com/bucketeer-io/bucketeer/pkg/coderef/storage/v2"
+	"github.com/bucketeer-io/bucketeer/pkg/coderef/storage"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/proto/coderef"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
@@ -81,10 +80,10 @@ func (s *CodeReferenceService) GetCodeReference(
 	if err := validateGetCodeReferenceRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	codeRefStorage := v2.NewCodeReferenceStorage(s.mysqlClient)
-	codeRef, err := codeRefStorage.GetCodeReference(ctx, req.Id, req.EnvironmentId)
+	codeRefStorage := storage.NewCodeReferenceStorage(s.mysqlClient)
+	codeRef, err := codeRefStorage.GetCodeReference(ctx, req.Id)
 	if err != nil {
-		if errors.Is(err, v2.ErrCodeReferenceNotFound) {
+		if errors.Is(err, storage.ErrCodeReferenceNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -176,7 +175,7 @@ func (s *CodeReferenceService) ListCodeReferences(
 		}
 		cursor = c
 	}
-	codeRefStorage := v2.NewCodeReferenceStorage(s.mysqlClient)
+	codeRefStorage := storage.NewCodeReferenceStorage(s.mysqlClient)
 	codeRefs, nextCursor, totalCount, err := codeRefStorage.ListCodeReferences(
 		ctx,
 		whereParts,
@@ -230,25 +229,7 @@ func (s *CodeReferenceService) CreateCodeReference(
 	if err := validateCreateCodeReferenceRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	id, err := uuid.NewUUID()
-	if err != nil {
-		s.logger.Error(
-			"Failed to generate uuid",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	codeRef := domain.NewCodeReference(
-		id.String(),
+	codeRef, err := domain.NewCodeReference(
 		req.FeatureId,
 		req.FilePath,
 		req.LineNumber,
@@ -262,13 +243,29 @@ func (s *CodeReferenceService) CreateCodeReference(
 		req.CommitHash,
 		req.EnvironmentId,
 	)
-	codeRefStorage := v2.NewCodeReferenceStorage(s.mysqlClient)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create code reference",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	codeRefStorage := storage.NewCodeReferenceStorage(s.mysqlClient)
 	if err := codeRefStorage.CreateCodeReference(ctx, codeRef); err != nil {
 		s.logger.Error(
 			"Failed to create code reference",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("id", id.String()),
+				zap.String("id", codeRef.Id),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -358,14 +355,14 @@ func (s *CodeReferenceService) UpdateCodeReference(
 	if err := validateUpdateCodeReferenceRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	codeRefStorage := v2.NewCodeReferenceStorage(s.mysqlClient)
+	codeRefStorage := storage.NewCodeReferenceStorage(s.mysqlClient)
 	var codeRef *domain.CodeReference
 	var updatedCodeRef *domain.CodeReference
 	err = codeRefStorage.RunInTransaction(ctx, func() error {
 		var err error
-		codeRef, err = codeRefStorage.GetCodeReference(ctx, req.Id, req.EnvironmentId)
+		codeRef, err = codeRefStorage.GetCodeReference(ctx, req.Id)
 		if err != nil {
-			if errors.Is(err, v2.ErrCodeReferenceNotFound) {
+			if errors.Is(err, storage.ErrCodeReferenceNotFound) {
 				dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 					Locale:  localizer.GetLocale(),
 					Message: localizer.MustLocalize(locale.NotFoundError),
@@ -403,7 +400,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 		)
 		if err != nil {
 			s.logger.Error(
-				"Failed to update code reference",
+				"Failed to update code reference domain object",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", req.Id),
@@ -513,10 +510,10 @@ func (s *CodeReferenceService) DeleteCodeReference(
 	if err := validateDeleteCodeReferenceRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	codeRefStorage := v2.NewCodeReferenceStorage(s.mysqlClient)
-	codeRef, err := codeRefStorage.GetCodeReference(ctx, req.Id, req.EnvironmentId)
+	codeRefStorage := storage.NewCodeReferenceStorage(s.mysqlClient)
+	codeRef, err := codeRefStorage.GetCodeReference(ctx, req.Id)
 	if err != nil {
-		if errors.Is(err, v2.ErrCodeReferenceNotFound) {
+		if errors.Is(err, storage.ErrCodeReferenceNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -543,7 +540,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 		}
 		return nil, dt.Err()
 	}
-	if err := codeRefStorage.DeleteCodeReference(ctx, codeRef.Id, codeRef.EnvironmentId); err != nil {
+	if err := codeRefStorage.DeleteCodeReference(ctx, codeRef.Id); err != nil {
 		s.logger.Error(
 			"Failed to delete code reference",
 			log.FieldsFromImcomingContext(ctx).AddFields(
