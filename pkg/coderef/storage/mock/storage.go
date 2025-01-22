@@ -57,32 +57,32 @@ func (mr *MockCodeReferenceStorageMockRecorder) CreateCodeReference(ctx, codeRef
 }
 
 // DeleteCodeReference mocks base method.
-func (m *MockCodeReferenceStorage) DeleteCodeReference(ctx context.Context, id, environmentID string) error {
+func (m *MockCodeReferenceStorage) DeleteCodeReference(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteCodeReference", ctx, id, environmentID)
+	ret := m.ctrl.Call(m, "DeleteCodeReference", ctx, id)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteCodeReference indicates an expected call of DeleteCodeReference.
-func (mr *MockCodeReferenceStorageMockRecorder) DeleteCodeReference(ctx, id, environmentID any) *gomock.Call {
+func (mr *MockCodeReferenceStorageMockRecorder) DeleteCodeReference(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCodeReference", reflect.TypeOf((*MockCodeReferenceStorage)(nil).DeleteCodeReference), ctx, id, environmentID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCodeReference", reflect.TypeOf((*MockCodeReferenceStorage)(nil).DeleteCodeReference), ctx, id)
 }
 
 // GetCodeReference mocks base method.
-func (m *MockCodeReferenceStorage) GetCodeReference(ctx context.Context, id, environmentID string) (*domain.CodeReference, error) {
+func (m *MockCodeReferenceStorage) GetCodeReference(ctx context.Context, id string) (*domain.CodeReference, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCodeReference", ctx, id, environmentID)
+	ret := m.ctrl.Call(m, "GetCodeReference", ctx, id)
 	ret0, _ := ret[0].(*domain.CodeReference)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetCodeReference indicates an expected call of GetCodeReference.
-func (mr *MockCodeReferenceStorageMockRecorder) GetCodeReference(ctx, id, environmentID any) *gomock.Call {
+func (mr *MockCodeReferenceStorageMockRecorder) GetCodeReference(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCodeReference", reflect.TypeOf((*MockCodeReferenceStorage)(nil).GetCodeReference), ctx, id, environmentID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCodeReference", reflect.TypeOf((*MockCodeReferenceStorage)(nil).GetCodeReference), ctx, id)
 }
 
 // ListCodeReferences mocks base method.
