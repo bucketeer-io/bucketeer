@@ -71,6 +71,7 @@ Variation: "バリエーション"
 Webhook: "Webhook"
 WebhookRule: "Webhookのルール"
 FlagTrigger: "フラグトリガー"
+CodeReference: "コードリファレンス"
 
 # Error sentences
 RequiredField: "{{ .Field_1 }}は必須です"

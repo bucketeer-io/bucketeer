@@ -7928,6 +7928,1297 @@
       }
     },
     {
+      "protopath": "coderef:/:code_reference.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "CodeReference.RepositoryType",
+            "enum_fields": [
+              {
+                "name": "REPOSITORY_TYPE_UNSPECIFIED"
+              },
+              {
+                "name": "GITHUB",
+                "integer": 1
+              },
+              {
+                "name": "GITLAB",
+                "integer": 2
+              },
+              {
+                "name": "BITBUCKET",
+                "integer": 3
+              },
+              {
+                "name": "CUSTOM",
+                "integer": 4
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "CodeReference",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "file_path",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "line_number",
+                "type": "int32"
+              },
+              {
+                "id": 5,
+                "name": "code_snippet",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "content_hash",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "aliases",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "repository_name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "repository_owner",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "repository_type",
+                "type": "RepositoryType"
+              },
+              {
+                "id": 11,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "commit_hash",
+                "type": "string"
+              },
+              {
+                "id": 13,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 14,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 15,
+                "name": "updated_at",
+                "type": "int64"
+              },
+              {
+                "id": 16,
+                "name": "source_url",
+                "type": "string"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.coderef"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/coderef"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "coderef:/:service.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "ListCodeReferencesRequest.OrderBy",
+            "enum_fields": [
+              {
+                "name": "DEFAULT"
+              },
+              {
+                "name": "CREATED_AT",
+                "integer": 1
+              },
+              {
+                "name": "UPDATED_AT",
+                "integer": 2
+              }
+            ]
+          },
+          {
+            "name": "ListCodeReferencesRequest.OrderDirection",
+            "enum_fields": [
+              {
+                "name": "ASC"
+              },
+              {
+                "name": "DESC",
+                "integer": 1
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "GetCodeReferenceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetCodeReferenceResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code_reference",
+                "type": "CodeReference"
+              }
+            ]
+          },
+          {
+            "name": "ListCodeReferencesRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "repository_name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "repository_owner",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "repository_type",
+                "type": "CodeReference.RepositoryType"
+              },
+              {
+                "id": 6,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "order_by",
+                "type": "OrderBy"
+              },
+              {
+                "id": 10,
+                "name": "order_direction",
+                "type": "OrderDirection"
+              },
+              {
+                "id": 11,
+                "name": "file_extension",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListCodeReferencesResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code_references",
+                "type": "CodeReference",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "CreateCodeReferenceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "file_path",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "line_number",
+                "type": "int32"
+              },
+              {
+                "id": 5,
+                "name": "code_snippet",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "content_hash",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "aliases",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "repository_name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "repository_owner",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "repository_type",
+                "type": "CodeReference.RepositoryType"
+              },
+              {
+                "id": 11,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "commit_hash",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "CreateCodeReferenceResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code_reference",
+                "type": "CodeReference"
+              }
+            ]
+          },
+          {
+            "name": "UpdateCodeReferenceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "file_path",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "line_number",
+                "type": "int32"
+              },
+              {
+                "id": 5,
+                "name": "code_snippet",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "content_hash",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "aliases",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "repository_name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "repository_owner",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "repository_type",
+                "type": "CodeReference.RepositoryType"
+              },
+              {
+                "id": 11,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "commit_hash",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "UpdateCodeReferenceResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code_reference",
+                "type": "CodeReference"
+              }
+            ]
+          },
+          {
+            "name": "DeleteCodeReferenceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "DeleteCodeReferenceResponse"
+          }
+        ],
+        "services": [
+          {
+            "name": "CodeReferenceService",
+            "rpcs": [
+              {
+                "name": "GetCodeReference",
+                "in_type": "GetCodeReferenceRequest",
+                "out_type": "GetCodeReferenceResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/code_references/{id}"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get a code reference by ID."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Code Reference"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.code_reference.get"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request does not have permission to access the resource."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"not authorized\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListCodeReferences",
+                "in_type": "ListCodeReferencesRequest",
+                "out_type": "ListCodeReferencesResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/code_references"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List code references with optional filtering."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Code Reference"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.code_reference.list"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "CreateCodeReference",
+                "in_type": "CreateCodeReferenceRequest",
+                "out_type": "CreateCodeReferenceResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/code_references"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a new code reference. To call this API, you need a `WRITE` role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Code Reference"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.code_reference.create"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request does not have permission to access the resource."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"not authorized\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpdateCodeReference",
+                "in_type": "UpdateCodeReferenceRequest",
+                "out_type": "UpdateCodeReferenceResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/code_references/{id}"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update an existing code reference. To call this API, you need a `WRITE` role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Code Reference"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.code_reference.update"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request does not have permission to access the resource."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"not authorized\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DeleteCodeReference",
+                "in_type": "DeleteCodeReferenceRequest",
+                "out_type": "DeleteCodeReferenceResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/code_references/{id}"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete a code reference. To call this API, you need a `WRITE` role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Code Reference"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.code_reference.delete"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request does not have permission to access the resource."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"not authorized\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/coderef/code_reference.proto"
+          },
+          {
+            "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "protoc-gen-openapiv2/options/annotations.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.coderef"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/coderef"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "environment:/:command.proto",
       "def": {
         "messages": [
@@ -14417,6 +15708,10 @@
               {
                 "name": "TAG",
                 "integer": 17
+              },
+              {
+                "name": "CODEREF",
+                "integer": 18
               }
             ],
             "reserved_ids": [
@@ -15178,6 +16473,18 @@
               {
                 "name": "TAG_DELETED",
                 "integer": 1702
+              },
+              {
+                "name": "CODE_REFERENCE_CREATED",
+                "integer": 1800
+              },
+              {
+                "name": "CODE_REFERENCE_UPDATED",
+                "integer": 1801
+              },
+              {
+                "name": "CODE_REFERENCE_DELETED",
+                "integer": 1802
               }
             ],
             "reserved_ids": [
@@ -18441,6 +19748,158 @@
                 "type": "string"
               }
             ]
+          },
+          {
+            "name": "CodeReferenceCreatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "file_path",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "line_number",
+                "type": "int32"
+              },
+              {
+                "id": 5,
+                "name": "code_snippet",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "content_hash",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "aliases",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "repository_name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "repository_owner",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "repository_type",
+                "type": "bucketeer.coderef.CodeReference.RepositoryType"
+              },
+              {
+                "id": 11,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "commit_hash",
+                "type": "string"
+              },
+              {
+                "id": 13,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 14,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 15,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "CodeReferenceUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "file_path",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "line_number",
+                "type": "int32"
+              },
+              {
+                "id": 4,
+                "name": "code_snippet",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "content_hash",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "aliases",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "commit_hash",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "CodeReferenceDeletedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
           }
         ],
         "imports": [
@@ -18506,6 +19965,9 @@
           },
           {
             "path": "proto/experiment/goal.proto"
+          },
+          {
+            "path": "proto/coderef/code_reference.proto"
           }
         ],
         "package": {
@@ -27624,6 +29086,227 @@
                 "type": "int64"
               }
             ]
+          },
+          {
+            "name": "GetCodeReferenceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetCodeReferenceResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code_reference",
+                "type": "bucketeer.coderef.CodeReference"
+              }
+            ]
+          },
+          {
+            "name": "ListCodeReferencesRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "order_by",
+                "type": "bucketeer.coderef.ListCodeReferencesRequest.OrderBy"
+              },
+              {
+                "id": 4,
+                "name": "order_direction",
+                "type": "bucketeer.coderef.ListCodeReferencesRequest.OrderDirection"
+              },
+              {
+                "id": 5,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "feature_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListCodeReferencesResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code_references",
+                "type": "bucketeer.coderef.CodeReference",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "CreateCodeReferenceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "file_path",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "line_number",
+                "type": "int32"
+              },
+              {
+                "id": 5,
+                "name": "code_snippet",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "content_hash",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "aliases",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "repository_name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "repository_owner",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "repository_type",
+                "type": "bucketeer.coderef.CodeReference.RepositoryType"
+              },
+              {
+                "id": 11,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "commit_hash",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "CreateCodeReferenceResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code_reference",
+                "type": "bucketeer.coderef.CodeReference"
+              }
+            ]
+          },
+          {
+            "name": "UpdateCodeReferenceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "file_path",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "line_number",
+                "type": "int32"
+              },
+              {
+                "id": 4,
+                "name": "code_snippet",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "content_hash",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "aliases",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "commit_hash",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "UpdateCodeReferenceResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code_reference",
+                "type": "bucketeer.coderef.CodeReference"
+              }
+            ]
+          },
+          {
+            "name": "DeleteCodeReferenceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "DeleteCodeReferenceResponse"
           }
         ],
         "services": [
@@ -28973,6 +30656,329 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "GetCodeReference",
+                "in_type": "GetCodeReferenceRequest",
+                "out_type": "GetCodeReferenceResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/code_references/{id}"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get a code reference. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Code References"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.code_references.get"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListCodeReferences",
+                "in_type": "ListCodeReferencesRequest",
+                "out_type": "ListCodeReferencesResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/code_references"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List code references. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Code References"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.code_references.list"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "CreateCodeReference",
+                "in_type": "CreateCodeReferenceRequest",
+                "out_type": "CreateCodeReferenceResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/code_references"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a new code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Code References"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.code_references.create"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpdateCodeReference",
+                "in_type": "UpdateCodeReferenceRequest",
+                "out_type": "UpdateCodeReferenceResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/code_references/{id}"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update a code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Code References"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.code_references.update"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DeleteCodeReference",
+                "in_type": "DeleteCodeReferenceRequest",
+                "out_type": "DeleteCodeReferenceResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/code_references/{id}"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete a code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Code References"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.code_references.delete"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -29031,6 +31037,12 @@
           },
           {
             "path": "proto/event/client/event.proto"
+          },
+          {
+            "path": "proto/coderef/code_reference.proto"
+          },
+          {
+            "path": "proto/coderef/service.proto"
           }
         ],
         "package": {
@@ -31181,6 +33193,10 @@
               {
                 "name": "DOMAIN_EVENT_TAG",
                 "integer": 17
+              },
+              {
+                "name": "DOMAIN_EVENT_CODEREF",
+                "integer": 18
               },
               {
                 "name": "FEATURE_STALE",
