@@ -183,26 +183,9 @@ func (s *PushService) CreatePush(
 		}
 		return nil, dt.Err()
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		pushStorage := v2ps.NewPushStorage(tx)
-		if err := pushStorage.CreatePush(ctx, push, req.EnvironmentId); err != nil {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		pushStorage := v2ps.NewPushStorage(s.mysqlClient)
+		if err := pushStorage.CreatePush(contextWithTx, push, req.EnvironmentId); err != nil {
 			return err
 		}
 		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentId)
@@ -330,26 +313,9 @@ func (s *PushService) createPushNoCommand(
 	}
 
 	var event *eventproto.Event
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		pushStorage := v2ps.NewPushStorage(tx)
-		if err := pushStorage.CreatePush(ctx, push, req.EnvironmentId); err != nil {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		pushStorage := v2ps.NewPushStorage(s.mysqlClient)
+		if err := pushStorage.CreatePush(contextWithTx, push, req.EnvironmentId); err != nil {
 			return err
 		}
 		prev := &domain.Push{}
@@ -506,26 +472,9 @@ func (s *PushService) UpdatePush(
 
 	var updatedPushPb *pushproto.Push
 	commands := s.createUpdatePushCommands(req)
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		pushStorage := v2ps.NewPushStorage(tx)
-		push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentId)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		pushStorage := v2ps.NewPushStorage(s.mysqlClient)
+		push, err := pushStorage.GetPush(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -539,7 +488,7 @@ func (s *PushService) UpdatePush(
 			}
 		}
 		updatedPushPb = push.Push
-		return pushStorage.UpdatePush(ctx, push, req.EnvironmentId)
+		return pushStorage.UpdatePush(contextWithTx, push, req.EnvironmentId)
 	})
 	if err != nil {
 		switch {
@@ -599,26 +548,9 @@ func (s *PushService) updatePushNoCommand(
 	}
 	var updatedPushPb *pushproto.Push
 	var updatePushEvent *eventproto.Event
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		pushStorage := v2ps.NewPushStorage(tx)
-		push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentId)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		pushStorage := v2ps.NewPushStorage(s.mysqlClient)
+		push, err := pushStorage.GetPush(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -648,7 +580,7 @@ func (s *PushService) updatePushNoCommand(
 		}
 		updatedPushPb = updated.Push
 
-		return pushStorage.UpdatePush(ctx, updated, req.EnvironmentId)
+		return pushStorage.UpdatePush(contextWithTx, updated, req.EnvironmentId)
 	})
 	if err != nil {
 		switch {
@@ -842,26 +774,9 @@ func (s *PushService) DeletePush(
 	}
 
 	var event *eventproto.Event
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		pushStorage := v2ps.NewPushStorage(tx)
-		push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentId)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		pushStorage := v2ps.NewPushStorage(s.mysqlClient)
+		push, err := pushStorage.GetPush(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -890,7 +805,7 @@ func (s *PushService) DeletePush(
 		if err = s.publisher.Publish(ctx, event); err != nil {
 			return err
 		}
-		return pushStorage.UpdatePush(ctx, push, req.EnvironmentId)
+		return pushStorage.UpdatePush(contextWithTx, push, req.EnvironmentId)
 	})
 	if err != nil {
 		switch {
