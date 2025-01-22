@@ -1488,6 +1488,351 @@ paths:
             $ref: '#/definitions/authSignInRequest'
       tags:
         - Authentication
+  /v1/code_references:
+    get:
+      summary: List
+      description: List code references with optional filtering.
+      operationId: web.v1.code_reference.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/coderefListCodeReferencesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+        - name: featureId
+          in: query
+          required: false
+          type: string
+        - name: repositoryName
+          in: query
+          required: false
+          type: string
+        - name: repositoryOwner
+          in: query
+          required: false
+          type: string
+        - name: repositoryType
+          in: query
+          required: false
+          type: string
+          enum:
+            - REPOSITORY_TYPE_UNSPECIFIED
+            - GITHUB
+            - GITLAB
+            - BITBUCKET
+            - CUSTOM
+          default: REPOSITORY_TYPE_UNSPECIFIED
+        - name: repositoryBranch
+          in: query
+          required: false
+          type: string
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: fileExtension
+          description: File extension to filter code references (e.g., ".js", ".go", ".py")
+          in: query
+          required: false
+          type: string
+      tags:
+        - Code Reference
+    post:
+      summary: Create
+      description: Create a new code reference. To call this API, you need a `WRITE` role.
+      operationId: web.v1.code_reference.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/coderefCreateCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/coderefCreateCodeReferenceRequest'
+      tags:
+        - Code Reference
+  /v1/code_references/{id}:
+    get:
+      summary: Get
+      description: Get a code reference by ID.
+      operationId: web.v1.code_reference.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/coderefGetCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - Code Reference
+    delete:
+      summary: Delete
+      description: Delete a code reference. To call this API, you need a `WRITE` role.
+      operationId: web.v1.code_reference.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/coderefDeleteCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - Code Reference
+    patch:
+      summary: Update
+      description: Update an existing code reference. To call this API, you need a `WRITE` role.
+      operationId: web.v1.code_reference.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/coderefUpdateCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/CodeReferenceServiceUpdateCodeReferenceBody'
+      tags:
+        - Code Reference
   /v1/environment/archive_environment:
     post:
       summary: Archive
@@ -4368,6 +4713,7 @@ paths:
               - DOMAIN_EVENT_ORGANIZATION
               - DOMAIN_EVENT_FLAG_TRIGGER
               - DOMAIN_EVENT_TAG
+              - DOMAIN_EVENT_CODEREF
               - FEATURE_STALE
               - EXPERIMENT_RUNNING
               - MAU_COUNT
@@ -4637,6 +4983,43 @@ definitions:
       - WriteType_OVERRIDE
       - WriteType_PATCH
     default: WriteType_UNSPECIFIED
+  CodeReferenceRepositoryType:
+    type: string
+    enum:
+      - REPOSITORY_TYPE_UNSPECIFIED
+      - GITHUB
+      - GITLAB
+      - BITBUCKET
+      - CUSTOM
+    default: REPOSITORY_TYPE_UNSPECIFIED
+  CodeReferenceServiceUpdateCodeReferenceBody:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      filePath:
+        type: string
+      lineNumber:
+        type: integer
+        format: int32
+      codeSnippet:
+        type: string
+      contentHash:
+        type: string
+      aliases:
+        type: array
+        items:
+          type: string
+      repositoryName:
+        type: string
+      repositoryOwner:
+        type: string
+      repositoryType:
+        $ref: '#/definitions/CodeReferenceRepositoryType'
+      repositoryBranch:
+        type: string
+      commitHash:
+        type: string
   ExperimentGoalReference:
     type: object
     properties:
@@ -4707,6 +5090,7 @@ definitions:
       - DOMAIN_EVENT_ORGANIZATION
       - DOMAIN_EVENT_FLAG_TRIGGER
       - DOMAIN_EVENT_TAG
+      - DOMAIN_EVENT_CODEREF
       - FEATURE_STALE
       - EXPERIMENT_RUNNING
       - MAU_COUNT
@@ -5689,6 +6073,120 @@ definitions:
         $ref: '#/definitions/TagEntityType'
       environmentId:
         type: string
+  coderefCodeReference:
+    type: object
+    properties:
+      id:
+        type: string
+      featureId:
+        type: string
+      filePath:
+        type: string
+      lineNumber:
+        type: integer
+        format: int32
+      codeSnippet:
+        type: string
+      contentHash:
+        type: string
+      aliases:
+        type: array
+        items:
+          type: string
+      repositoryName:
+        type: string
+      repositoryOwner:
+        type: string
+      repositoryType:
+        $ref: '#/definitions/CodeReferenceRepositoryType'
+      repositoryBranch:
+        type: string
+      commitHash:
+        type: string
+      environmentId:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      sourceUrl:
+        type: string
+        title: URL to view the code in the repository
+  coderefCreateCodeReferenceRequest:
+    type: object
+    properties:
+      featureId:
+        type: string
+      environmentId:
+        type: string
+      filePath:
+        type: string
+      lineNumber:
+        type: integer
+        format: int32
+      codeSnippet:
+        type: string
+      contentHash:
+        type: string
+      aliases:
+        type: array
+        items:
+          type: string
+      repositoryName:
+        type: string
+      repositoryOwner:
+        type: string
+      repositoryType:
+        $ref: '#/definitions/CodeReferenceRepositoryType'
+      repositoryBranch:
+        type: string
+      commitHash:
+        type: string
+  coderefCreateCodeReferenceResponse:
+    type: object
+    properties:
+      codeReference:
+        $ref: '#/definitions/coderefCodeReference'
+  coderefDeleteCodeReferenceResponse:
+    type: object
+  coderefGetCodeReferenceResponse:
+    type: object
+    properties:
+      codeReference:
+        $ref: '#/definitions/coderefCodeReference'
+  coderefListCodeReferencesRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  coderefListCodeReferencesRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  coderefListCodeReferencesResponse:
+    type: object
+    properties:
+      codeReferences:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/coderefCodeReference'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  coderefUpdateCodeReferenceResponse:
+    type: object
+    properties:
+      codeReference:
+        $ref: '#/definitions/coderefCodeReference'
   environmentArchiveEnvironmentV2Command:
     type: object
   environmentArchiveEnvironmentV2Request:

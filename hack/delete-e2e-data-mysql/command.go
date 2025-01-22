@@ -47,6 +47,7 @@ var (
 		{table: "tag", targetField: "name"},
 		{table: "ops_progressive_rollout", targetField: "feature_id"},
 		{table: "flag_trigger", targetField: "description"},
+		{table: "code_reference", targetField: "feature_id"},
 		{table: "feature", targetField: "id"},
 		{table: "api_key", targetField: "name"},
 	}

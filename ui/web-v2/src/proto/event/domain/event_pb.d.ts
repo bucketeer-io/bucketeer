@@ -23,6 +23,7 @@ import * as proto_feature_flag_trigger_pb from '../../../proto/feature/flag_trig
 import * as proto_account_search_filter_pb from '../../../proto/account/search_filter_pb';
 import * as proto_tag_tag_pb from '../../../proto/tag/tag_pb';
 import * as proto_experiment_goal_pb from '../../../proto/experiment/goal_pb';
+import * as proto_coderef_code_reference_pb from '../../../proto/coderef/code_reference_pb';
 
 export class Event extends jspb.Message {
   getId(): string;
@@ -119,6 +120,7 @@ export namespace Event {
     ORGANIZATION: 15;
     FLAG_TRIGGER: 16;
     TAG: 17;
+    CODEREF: 18;
   }
 
   export const EntityType: EntityTypeMap;
@@ -299,6 +301,9 @@ export namespace Event {
     FLAG_TRIGGER_USAGE_UPDATED: 1607;
     TAG_CREATED: 1701;
     TAG_DELETED: 1702;
+    CODE_REFERENCE_CREATED: 1800;
+    CODE_REFERENCE_UPDATED: 1801;
+    CODE_REFERENCE_DELETED: 1802;
   }
 
   export const Type: TypeMap;
@@ -7139,6 +7144,201 @@ export class TagDeletedEvent extends jspb.Message {
 }
 
 export namespace TagDeletedEvent {
+  export type AsObject = {
+    id: string;
+    environmentId: string;
+  };
+}
+
+export class CodeReferenceCreatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getFilePath(): string;
+  setFilePath(value: string): void;
+
+  getLineNumber(): number;
+  setLineNumber(value: number): void;
+
+  getCodeSnippet(): string;
+  setCodeSnippet(value: string): void;
+
+  getContentHash(): string;
+  setContentHash(value: string): void;
+
+  clearAliasesList(): void;
+  getAliasesList(): Array<string>;
+  setAliasesList(value: Array<string>): void;
+  addAliases(value: string, index?: number): string;
+
+  getRepositoryName(): string;
+  setRepositoryName(value: string): void;
+
+  getRepositoryOwner(): string;
+  setRepositoryOwner(value: string): void;
+
+  getRepositoryType(): proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap[keyof proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap];
+  setRepositoryType(
+    value: proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap[keyof proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap]
+  ): void;
+
+  getRepositoryBranch(): string;
+  setRepositoryBranch(value: string): void;
+
+  getCommitHash(): string;
+  setCommitHash(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  getCreatedAt(): number;
+  setCreatedAt(value: number): void;
+
+  getUpdatedAt(): number;
+  setUpdatedAt(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CodeReferenceCreatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: CodeReferenceCreatedEvent
+  ): CodeReferenceCreatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: CodeReferenceCreatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): CodeReferenceCreatedEvent;
+  static deserializeBinaryFromReader(
+    message: CodeReferenceCreatedEvent,
+    reader: jspb.BinaryReader
+  ): CodeReferenceCreatedEvent;
+}
+
+export namespace CodeReferenceCreatedEvent {
+  export type AsObject = {
+    id: string;
+    featureId: string;
+    filePath: string;
+    lineNumber: number;
+    codeSnippet: string;
+    contentHash: string;
+    aliasesList: Array<string>;
+    repositoryName: string;
+    repositoryOwner: string;
+    repositoryType: proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap[keyof proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap];
+    repositoryBranch: string;
+    commitHash: string;
+    environmentId: string;
+    createdAt: number;
+    updatedAt: number;
+  };
+}
+
+export class CodeReferenceUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getFilePath(): string;
+  setFilePath(value: string): void;
+
+  getLineNumber(): number;
+  setLineNumber(value: number): void;
+
+  getCodeSnippet(): string;
+  setCodeSnippet(value: string): void;
+
+  getContentHash(): string;
+  setContentHash(value: string): void;
+
+  clearAliasesList(): void;
+  getAliasesList(): Array<string>;
+  setAliasesList(value: Array<string>): void;
+  addAliases(value: string, index?: number): string;
+
+  getRepositoryBranch(): string;
+  setRepositoryBranch(value: string): void;
+
+  getCommitHash(): string;
+  setCommitHash(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  getUpdatedAt(): number;
+  setUpdatedAt(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CodeReferenceUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: CodeReferenceUpdatedEvent
+  ): CodeReferenceUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: CodeReferenceUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): CodeReferenceUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: CodeReferenceUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): CodeReferenceUpdatedEvent;
+}
+
+export namespace CodeReferenceUpdatedEvent {
+  export type AsObject = {
+    id: string;
+    filePath: string;
+    lineNumber: number;
+    codeSnippet: string;
+    contentHash: string;
+    aliasesList: Array<string>;
+    repositoryBranch: string;
+    commitHash: string;
+    environmentId: string;
+    updatedAt: number;
+  };
+}
+
+export class CodeReferenceDeletedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CodeReferenceDeletedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: CodeReferenceDeletedEvent
+  ): CodeReferenceDeletedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: CodeReferenceDeletedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): CodeReferenceDeletedEvent;
+  static deserializeBinaryFromReader(
+    message: CodeReferenceDeletedEvent,
+    reader: jspb.BinaryReader
+  ): CodeReferenceDeletedEvent;
+}
+
+export namespace CodeReferenceDeletedEvent {
   export type AsObject = {
     id: string;
     environmentId: string;
