@@ -274,6 +274,22 @@ func (s *NotificationService) validateUpdateSubscriptionRequest(
 		}
 		return dt.Err()
 	}
+	if req.UpdateSubscriptionFeatureTagsCommand != nil {
+		if req.DeleteSourceTypesCommand != nil {
+			for _, st := range req.DeleteSourceTypesCommand.SourceTypes {
+				if st == notificationproto.Subscription_DOMAIN_EVENT_FEATURE {
+					dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
+						Locale:  localizer.GetLocale(),
+						Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "feature_flag_tags"),
+					})
+					if err != nil {
+						return statusInternal.Err()
+					}
+					return dt.Err()
+				}
+			}
+		}
+	}
 	return nil
 }
 

@@ -157,6 +157,7 @@ func TestUpdateNotification(t *testing.T) {
 					Name: "origin",
 					SourceTypes: []proto.Subscription_SourceType{
 						proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+						proto.Subscription_DOMAIN_EVENT_FEATURE,
 					},
 					Recipient: &proto.Recipient{
 						Type: proto.Recipient_SlackChannel,
@@ -169,13 +170,61 @@ func TestUpdateNotification(t *testing.T) {
 				},
 			},
 			inputData: &input{
+				sourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+				},
 				featureFlagTags: []string{"update-tag"},
 			},
 			expected:    nil,
 			expectedErr: ErrCannotUpdateFeatureFlagTags,
 		},
 		{
-			desc: "update subscription's feature flag tags",
+			desc: "success: reset feature flag tags when the feature source type is also being deleted",
+			origin: &Subscription{
+				&proto.Subscription{
+					Id:   "id",
+					Name: "origin",
+					SourceTypes: []proto.Subscription_SourceType{
+						proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+						proto.Subscription_DOMAIN_EVENT_FEATURE,
+					},
+					Recipient: &proto.Recipient{
+						Type: proto.Recipient_SlackChannel,
+						SlackChannelRecipient: &proto.SlackChannelRecipient{
+							WebhookUrl: "https://slack-hooks.exp",
+						},
+					},
+					Disabled:        false,
+					FeatureFlagTags: []string{"tag"},
+				},
+			},
+			inputData: &input{
+				sourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+				},
+			},
+			expected: &Subscription{
+				&proto.Subscription{
+					Id:   "id",
+					Name: "origin",
+					SourceTypes: []proto.Subscription_SourceType{
+						proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					},
+					Recipient: &proto.Recipient{
+						Type: proto.Recipient_SlackChannel,
+						SlackChannelRecipient: &proto.SlackChannelRecipient{
+							WebhookUrl: "https://slack-hooks.exp",
+						},
+					},
+					Disabled:        false,
+					UpdatedAt:       time.Now().Unix(),
+					FeatureFlagTags: []string{},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: update subscription's feature flag tags",
 			origin: &Subscription{
 				&proto.Subscription{
 					Id:   "id",

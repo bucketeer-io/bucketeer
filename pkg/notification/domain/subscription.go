@@ -92,6 +92,14 @@ func (s *Subscription) UpdateSubscription(
 		updated.Name = name.Value
 	}
 	if len(sourceTypes) > 0 {
+		// We must check the feature source type is being deleted.
+		// If so, we must reset the tags
+		for _, sourceType := range updated.SourceTypes {
+			if sourceType == proto.Subscription_DOMAIN_EVENT_FEATURE {
+				updated.FeatureFlagTags = []string{}
+				break
+			}
+		}
 		updated.SourceTypes = sourceTypes
 	}
 	if disabled != nil {
@@ -158,6 +166,10 @@ func (s *Subscription) DeleteSourceTypes(sourceTypes []proto.Subscription_Source
 		return ErrSourceTypesMustHaveAtLeastOne
 	}
 	for _, nt := range sourceTypes {
+		// Reset the tags if the feature source type is being deleted
+		if nt == proto.Subscription_DOMAIN_EVENT_FEATURE {
+			s.FeatureFlagTags = []string{}
+		}
 		idx, err := indexSourceType(nt, s.SourceTypes)
 		if err != nil {
 			return err
