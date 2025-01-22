@@ -24,12 +24,13 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	coderefproto "github.com/bucketeer-io/bucketeer/proto/coderef"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 const (
