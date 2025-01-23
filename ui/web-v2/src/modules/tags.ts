@@ -26,6 +26,7 @@ export type OrderBy =
   ListTagsRequest.OrderByMap[keyof ListTagsRequest.OrderByMap];
 export type OrderDirection =
   ListTagsRequest.OrderDirectionMap[keyof ListTagsRequest.OrderDirectionMap];
+export type TagEntityType = Tag.EntityTypeMap[keyof Tag.EntityTypeMap];
 
 export interface ListTagsParams {
   environmentId: string;
@@ -34,6 +35,7 @@ export interface ListTagsParams {
   orderBy: OrderBy;
   orderDirection: OrderDirection;
   searchKeyword: string;
+  entityType: TagEntityType;
 }
 
 export const listTags = createAsyncThunk<
@@ -48,6 +50,7 @@ export const listTags = createAsyncThunk<
   request.setOrderBy(params.orderBy);
   request.setOrderDirection(params.orderDirection);
   request.setSearchKeyword(params.searchKeyword);
+  request.setEntityType(params.entityType);
 
   const result = await tagsGrpc.listTags(request);
   return result.response.toObject();
