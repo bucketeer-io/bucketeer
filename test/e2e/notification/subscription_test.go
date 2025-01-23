@@ -242,6 +242,9 @@ func TestCreateGetDeleteSubscription(t *testing.T) {
 	if subscription.SourceTypes[0] != sourceTypes[0] {
 		t.Fatalf("Incorrect notification type. Expected: %s actual: %s", sourceTypes[0], subscription.SourceTypes[0])
 	}
+	if !reflect.DeepEqual(subscription.FeatureFlagTags, featureFlagTags) {
+		t.Fatalf("Incorrect tags. Expected: %v actual: %s", featureFlagTags, subscription.FeatureFlagTags)
+	}
 	if subscription.Recipient.Type != proto.Recipient_SlackChannel {
 		t.Fatalf("Incorrect recipient type. Expected: %s actual: %s", proto.Recipient_SlackChannel, subscription.Recipient.Type)
 	}
@@ -313,6 +316,9 @@ func TestCreateListDeleteSubscription(t *testing.T) {
 	}
 	if subscription.SourceTypes[0] != sourceTypes[0] {
 		t.Fatalf("Incorrect notification type. Expected: %s actual: %s", sourceTypes[0], subscription.SourceTypes[0])
+	}
+	if !reflect.DeepEqual(subscription.FeatureFlagTags, featureFlagTags) {
+		t.Fatalf("Incorrect tags. Expected: %v actual: %s", featureFlagTags, subscription.FeatureFlagTags)
 	}
 	if subscription.Recipient.Type != proto.Recipient_SlackChannel {
 		t.Fatalf("Incorrect recipient type. Expected: %s actual: %s", proto.Recipient_SlackChannel, subscription.Recipient.Type)
@@ -419,6 +425,9 @@ func TestUpdateSubscription(t *testing.T) {
 			proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT,
 		}
 		t.Fatalf("Incorrect notification type. Expected: %v actual: %sv", expected, subscription.SourceTypes)
+	}
+	if !reflect.DeepEqual(subscription.FeatureFlagTags, updatedFeatureFlagTags) {
+		t.Fatalf("Incorrect tags. Expected: %v actual: %s", updatedFeatureFlagTags, subscription.FeatureFlagTags)
 	}
 	if subscription.Recipient.Type != proto.Recipient_SlackChannel {
 		t.Fatalf("Incorrect recipient type. Expected: %s actual: %s", proto.Recipient_SlackChannel, subscription.Recipient.Type)
