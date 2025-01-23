@@ -168,7 +168,7 @@ func (s *experimentService) ListExperiments(
 		return nil, dt.Err()
 	}
 	experimentStorage := v2es.NewExperimentStorage(s.mysqlClient)
-	experiments, nextCursor, totalCount, err := experimentStorage.ListExperiments(
+	experiments, nextCursor, totalCount, summary, err := experimentStorage.ListExperiments(
 		ctx,
 		whereParts,
 		orders,
@@ -196,6 +196,7 @@ func (s *experimentService) ListExperiments(
 		Experiments: experiments,
 		Cursor:      strconv.Itoa(nextCursor),
 		TotalCount:  totalCount,
+		Summary:     summary,
 	}, nil
 }
 

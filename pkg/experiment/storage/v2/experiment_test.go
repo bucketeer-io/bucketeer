@@ -247,7 +247,7 @@ func TestListExperiments(t *testing.T) {
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		experiments, cursor, _, err := storage.ListExperiments(
+		experiments, cursor, _, _, err := storage.ListExperiments(
 			context.Background(),
 			p.whereParts,
 			p.orders,

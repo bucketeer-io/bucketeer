@@ -169,9 +169,15 @@ message ListExperimentsRequest {
 }
 
 message ListExperimentsResponse {
+  message Summary {
+    int64 total_waiting_count = 1;
+    int64 total_running_count = 2;
+    int64 total_stopped_count = 3;
+  }
   repeated Experiment experiments = 1;
   string cursor = 2;
   int64 total_count = 3;
+  Summary summary = 4;
 }
 
 message CreateExperimentRequest {
@@ -183,13 +189,13 @@ message CreateExperimentRequest {
   ];
   reserved 2;
   string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
-  string feature_id = 4;
-  int64 start_at = 5;
-  int64 stop_at = 6;
-  repeated string goal_ids = 7;
-  string name = 8;
+  string feature_id = 4 [(google.api.field_behavior) = REQUIRED];
+  int64 start_at = 5 [(google.api.field_behavior) = REQUIRED];
+  int64 stop_at = 6 [(google.api.field_behavior) = REQUIRED];
+  repeated string goal_ids = 7 [(google.api.field_behavior) = REQUIRED];
+  string name = 8 [(google.api.field_behavior) = REQUIRED];
   string description = 9;
-  string base_variation_id = 10;
+  string base_variation_id = 10 [(google.api.field_behavior) = REQUIRED];
 }
 
 message CreateExperimentResponse {

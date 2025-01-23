@@ -33,6 +33,8 @@ var (
 
 	//go:embed sql/experiment/select_experiments.sql
 	selectExperimentsSQL string
+	//go:embed sql/experiment/count_experiment.sql
+	countExperimentSQL string
 )
 
 type ExperimentStorage interface {
@@ -44,7 +46,7 @@ type ExperimentStorage interface {
 		whereParts []mysql.WherePart,
 		orders []*mysql.Order,
 		limit, offset int,
-	) ([]*proto.Experiment, int, int64, error)
+	) ([]*proto.Experiment, int, int64, *proto.ListExperimentsResponse_Summary, error)
 }
 
 type experimentStorage struct {
@@ -262,14 +264,14 @@ func (s *experimentStorage) ListExperiments(
 	whereParts []mysql.WherePart,
 	orders []*mysql.Order,
 	limit, offset int,
-) ([]*proto.Experiment, int, int64, error) {
+) ([]*proto.Experiment, int, int64, *proto.ListExperimentsResponse_Summary, error) {
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectExperimentsSQL, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
-		return nil, 0, 0, err
+		return nil, 0, 0, nil, err
 	}
 	defer rows.Close()
 	experiments := make([]*proto.Experiment, 0, limit)
@@ -299,27 +301,26 @@ func (s *experimentStorage) ListExperiments(
 			&mysql.JSONObject{Val: &experiment.Goals},
 		)
 		if err != nil {
-			return nil, 0, 0, err
+			return nil, 0, 0, nil, err
 		}
 		experiment.Status = proto.Experiment_Status(status)
 		experiments = append(experiments, &experiment)
 	}
 	if rows.Err() != nil {
-		return nil, 0, 0, err
+		return nil, 0, 0, nil, err
 	}
 	nextOffset := offset + len(experiments)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(1)
-		FROM
-			experiment
-		%s
-		`, whereSQL,
+	summary := &proto.ListExperimentsResponse_Summary{}
+	countQuery := fmt.Sprintf(countExperimentSQL, whereSQL)
+	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(
+		&totalCount,
+		&summary.TotalWaitingCount,
+		&summary.TotalRunningCount,
+		&summary.TotalStoppedCount,
 	)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
-		return nil, 0, 0, err
+		return nil, 0, 0, nil, err
 	}
-	return experiments, nextOffset, totalCount, nil
+	return experiments, nextOffset, totalCount, summary, nil
 }

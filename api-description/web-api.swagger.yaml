@@ -5049,6 +5049,18 @@ definitions:
       - EXPERIMENT
       - OPERATION
     default: UNKNOWN
+  ListExperimentsResponseSummary:
+    type: object
+    properties:
+      totalWaitingCount:
+        type: string
+        format: int64
+      totalRunningCount:
+        type: string
+        format: int64
+      totalStoppedCount:
+        type: string
+        format: int64
   ListFlagTriggersResponseFlagTriggerWithUrl:
     type: object
     properties:
@@ -6763,6 +6775,12 @@ definitions:
         type: string
     required:
       - environmentId
+      - featureId
+      - startAt
+      - stopAt
+      - goalIds
+      - name
+      - baseVariationId
   experimentCreateExperimentResponse:
     type: object
     properties:
@@ -6952,6 +6970,8 @@ definitions:
       totalCount:
         type: string
         format: int64
+      summary:
+        $ref: '#/definitions/ListExperimentsResponseSummary'
   experimentListGoalsRequestOrderBy:
     type: string
     enum:

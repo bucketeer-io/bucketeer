@@ -737,6 +737,11 @@ export class ListExperimentsResponse extends jspb.Message {
   getTotalCount(): number;
   setTotalCount(value: number): void;
 
+  hasSummary(): boolean;
+  clearSummary(): void;
+  getSummary(): ListExperimentsResponse.Summary | undefined;
+  setSummary(value?: ListExperimentsResponse.Summary): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListExperimentsResponse.AsObject;
   static toObject(
@@ -763,7 +768,44 @@ export namespace ListExperimentsResponse {
     experimentsList: Array<proto_experiment_experiment_pb.Experiment.AsObject>;
     cursor: string;
     totalCount: number;
+    summary?: ListExperimentsResponse.Summary.AsObject;
   };
+
+  export class Summary extends jspb.Message {
+    getTotalWaitingCount(): number;
+    setTotalWaitingCount(value: number): void;
+
+    getTotalRunningCount(): number;
+    setTotalRunningCount(value: number): void;
+
+    getTotalStoppedCount(): number;
+    setTotalStoppedCount(value: number): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): Summary.AsObject;
+    static toObject(includeInstance: boolean, msg: Summary): Summary.AsObject;
+    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+    static extensionsBinary: {
+      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+    };
+    static serializeBinaryToWriter(
+      message: Summary,
+      writer: jspb.BinaryWriter
+    ): void;
+    static deserializeBinary(bytes: Uint8Array): Summary;
+    static deserializeBinaryFromReader(
+      message: Summary,
+      reader: jspb.BinaryReader
+    ): Summary;
+  }
+
+  export namespace Summary {
+    export type AsObject = {
+      totalWaitingCount: number;
+      totalRunningCount: number;
+      totalStoppedCount: number;
+    };
+  }
 }
 
 export class CreateExperimentRequest extends jspb.Message {
