@@ -34585,6 +34585,11 @@
                 "id": 8,
                 "name": "organization_id",
                 "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "entity_type",
+                "type": "Tag.EntityType"
               }
             ],
             "reserved_ids": [
@@ -35013,6 +35018,9 @@
             "path": "google/api/field_behavior.proto"
           },
           {
+            "path": "google/protobuf/wrappers.proto"
+          },
+          {
             "path": "protoc-gen-openapiv2/options/annotations.proto"
           },
           {
@@ -35038,7 +35046,7 @@
             "name": "Tag.EntityType",
             "enum_fields": [
               {
-                "name": "UNKNOWN"
+                "name": "UNSPECIFIED"
               },
               {
                 "name": "FEATURE_FLAG",
