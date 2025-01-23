@@ -33,7 +33,6 @@ import (
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	proto "github.com/bucketeer-io/bucketeer/proto/notification"
@@ -729,15 +728,13 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.mysqlClient.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id: "key-0",
+					},
+				}, nil)
 			},
 			isSystemAdmin: true,
 			input:         &proto.GetAdminSubscriptionRequest{Id: "key-0"},
@@ -798,22 +795,10 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.mysqlClient.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe).AnyTimes()
-				qe.EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				qe.EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().ListAdminSubscriptions(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*proto.Subscription{}, 0, int64(0), nil)
+
 			},
 			isSystemAdmin: true,
 			input: &proto.ListAdminSubscriptionsRequest{
@@ -880,22 +865,9 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.mysqlClient.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe).AnyTimes()
-				qe.EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				qe.EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().ListAdminSubscriptions(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*proto.Subscription{}, 1, int64(1), nil)
 			},
 			isSystemAdmin: true,
 			input: &proto.ListEnabledAdminSubscriptionsRequest{

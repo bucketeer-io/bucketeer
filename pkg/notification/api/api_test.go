@@ -109,10 +109,12 @@ func newNotificationService(c *gomock.Controller, specifiedEnvironmentId *string
 	p := publishermock.NewMockPublisher(c)
 	p.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	return &NotificationService{
-		mysqlClient:          mysqlClient,
-		accountClient:        accountClientMock,
-		domainEventPublisher: publishermock.NewMockPublisher(c),
-		logger:               zap.NewNop(),
+		mysqlClient:              mysqlClient,
+		adminSubscriptionStorage: v2mock.NewMockAdminSubscriptionStorage(c),
+		subscriptionStorage:      v2mock.NewMockSubscriptionStorage(c),
+		accountClient:            accountClientMock,
+		domainEventPublisher:     publishermock.NewMockPublisher(c),
+		logger:                   zap.NewNop(),
 	}
 }
 

@@ -32,7 +32,6 @@ import (
 	storagemock "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/proto/notification"
@@ -964,15 +963,13 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *NotificationService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.mysqlClient.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().QueryRowContext(
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id: "key-0",
+					},
+				}, nil)
 			},
 			input:       &proto.GetSubscriptionRequest{Id: "key-0", EnvironmentId: "ns0"},
 			expectedErr: nil,
@@ -1048,22 +1045,9 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *NotificationService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.mysqlClient.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe).AnyTimes()
-				qe.EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				qe.EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().ListSubscriptions(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*proto.Subscription{}, 0, int64(0), nil)
 			},
 			input: &proto.ListSubscriptionsRequest{
 				PageSize: 2,
@@ -1146,22 +1130,9 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *NotificationService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.mysqlClient.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe).AnyTimes()
-				qe.EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				qe.EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().ListSubscriptions(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*proto.Subscription{}, 1, int64(1), nil)
 			},
 			input: &proto.ListEnabledSubscriptionsRequest{
 				PageSize: 2,
