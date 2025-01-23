@@ -631,7 +631,8 @@ func (s *NotificationService) updateSubscriptionMySQLNoCommand(
 func (s *NotificationService) isNoUpdateSubscriptionCommand(req *notificationproto.UpdateSubscriptionRequest) bool {
 	return req.AddSourceTypesCommand == nil &&
 		req.DeleteSourceTypesCommand == nil &&
-		req.RenameSubscriptionCommand == nil
+		req.RenameSubscriptionCommand == nil &&
+		req.UpdateSubscriptionFeatureTagsCommand == nil
 }
 
 func (s *NotificationService) DeleteSubscription(
