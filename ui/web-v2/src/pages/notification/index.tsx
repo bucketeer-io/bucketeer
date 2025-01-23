@@ -223,10 +223,11 @@ export const NotificationIndexPage: FC = memo(() => {
   const handleOnClickUpdate = useCallback(
     (s: Subscription.AsObject) => {
       setOpen(true);
+      const sourceTypes = [...s.sourceTypesList].sort().map((v) => String(v));
       resetUpdate({
         name: s.name,
         webhookUrl: s.recipient.slackChannelRecipient.webhookUrl,
-        sourceTypes: [...s.sourceTypesList].sort(),
+        sourceTypes,
         featureFlagTagsList: s.featureFlagTagsList
       });
       history.push({
@@ -253,13 +254,6 @@ export const NotificationIndexPage: FC = memo(() => {
       if (dirtyFields.featureFlagTagsList) {
         featureFlagTagsList = data.featureFlagTagsList;
       }
-
-      console.log({
-        data,
-        dirtyFields,
-        sourceTypes,
-        featureFlagTagsList
-      });
 
       dispatch(
         updateNotification({

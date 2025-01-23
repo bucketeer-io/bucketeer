@@ -22,8 +22,11 @@ export const NotificationUpdateForm: FC<NotificationUpdateFormProps> = memo(
       register,
       control,
       getValues,
-      formState: { errors, isValid, isDirty, isSubmitted }
+      formState: { errors, isValid, isDirty, isSubmitted },
+      watch
     } = methods;
+
+    console.log('watch', watch('sourceTypes'));
 
     const [defaultValues] = useState(() =>
       SOURCE_TYPE_ITEMS.filter((item) =>
@@ -89,7 +92,9 @@ export const NotificationUpdateForm: FC<NotificationUpdateFormProps> = memo(
                               const convList = values.map((value) =>
                                 Number(value)
                               );
-                              field.onChange(convList.sort());
+                              field.onChange(
+                                convList.sort().map((v) => String(v))
+                              );
                             }}
                             disabled={!editable || isSubmitted}
                             defaultValues={defaultValues}

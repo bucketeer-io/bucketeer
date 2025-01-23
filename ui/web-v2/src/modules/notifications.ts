@@ -32,6 +32,7 @@ import {
 import { Subscription } from '../proto/notification/subscription_pb';
 
 import { AppState } from '.';
+import { add } from 'date-fns';
 
 const MODULE_NAME = 'notifications';
 
@@ -152,36 +153,44 @@ export const updateNotification = createAsyncThunk<
     request.setRenameSubscriptionCommand(cmd);
   }
 
-  const addList = params.sourceTypes.filter(
-    (type) => !params.currentSourceTypes.includes(type)
-  );
-  // DOMAIN_EVENT_FEATURE must be included in sourceTypes if featureFlagTagsList is set
-  // if (
-  //   params.featureFlagTagsList &&
-  //   !params.sourceTypes.includes(Subscription.SourceType.DOMAIN_EVENT_FEATURE)
-  // ) {
-  //   addList.push(Subscription.SourceType.DOMAIN_EVENT_FEATURE);
-  // }
-  if (addList.length > 0) {
+  // let addList = [];
+  if (params.sourceTypes.length > 0) {
+    const addList = params.sourceTypes.filter(
+      (type) => !params.currentSourceTypes.includes(type)
+    );
+
     const cmd = new AddSourceTypesCommand();
     cmd.setSourceTypesList(addList);
     request.setAddSourceTypesCommand(cmd);
+
+    const deleteList = params.currentSourceTypes.filter(
+      (type) => !params.sourceTypes.includes(type)
+    );
+    if (deleteList.length > 0) {
+      const cmd = new DeleteSourceTypesCommand();
+      cmd.setSourceTypesList(deleteList);
+      request.setDeleteSourceTypesCommand(cmd);
+    }
   }
-  const deleteList = params.currentSourceTypes.filter(
-    (type) => !params.sourceTypes.includes(type)
-  );
-  if (deleteList.length > 0) {
-    const cmd = new DeleteSourceTypesCommand();
-    cmd.setSourceTypesList(deleteList);
-    request.setDeleteSourceTypesCommand(cmd);
-  }
-  console.log({ params, addList, deleteList });
 
   if (params.featureFlagTagsList) {
+    // DOMAIN_EVENT_FEATURE must be included in sourceTypes if featureFlagTagsList is set
+    // if (
+    //   !params.sourceTypes.includes(Subscription.SourceType.DOMAIN_EVENT_FEATURE)
+    // ) {
+    //   addList.push(Subscription.SourceType.DOMAIN_EVENT_FEATURE);
+    // }
+
     const cmd = new UpdateSubscriptionFeatureFlagTagsCommand();
     cmd.setFeatureFlagTagsList(params.featureFlagTagsList);
     request.setUpdateSubscriptionFeatureTagsCommand(cmd);
   }
+
+  // if (addList.length > 0) {
+  //   const cmd = new AddSourceTypesCommand();
+  //   cmd.setSourceTypesList(addList);
+  //   request.setAddSourceTypesCommand(cmd);
+  // }
 
   await subscriptionGrpc.updateSubscription(request);
 });

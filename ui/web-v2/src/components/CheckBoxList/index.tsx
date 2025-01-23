@@ -133,8 +133,8 @@ export const CheckBoxList: FC<CheckBoxListProps> = memo(
                               return (
                                 <div
                                   className={classNames(
-                                    'border shadow-sm bg-white text-gray-500 p-1',
-                                    'text-xs rounded whitespace-normal break-words w-64'
+                                    'border shadow-sm bg-gray-900 text-white p-1',
+                                    'text-xs rounded whitespace-normal break-words w-80'
                                   )}
                                 >
                                   {f(messages.notification.tagsTooltipMessage)}
