@@ -177,7 +177,7 @@ func (s *TagService) validateCreateTagRquest(req *proto.CreateTagRequest, locali
 		}
 		return dt.Err()
 	}
-	if req.EntityType == proto.Tag_UNKNOWN {
+	if req.EntityType == proto.Tag_UNSPECIFIED {
 		dt, err := statusEntityTypeRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "entity_type"),
@@ -211,6 +211,9 @@ func (s *TagService) ListTags(
 	}
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"tag.name"}, req.SearchKeyword))
+	}
+	if req.EntityType != proto.Tag_UNSPECIFIED {
+		whereParts = append(whereParts, mysql.NewFilter("tag.entity_type", "=", req.EntityType))
 	}
 	orders, err := s.newListTagsOrdersMySQL(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -436,6 +439,8 @@ func (s *TagService) newListTagsOrdersMySQL(
 		column = "tag.created_at"
 	case proto.ListTagsRequest_UPDATED_AT:
 		column = "tag.updated_at"
+	case proto.ListTagsRequest_ENTITY_TYPE:
+		column = "tag.entity_type"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

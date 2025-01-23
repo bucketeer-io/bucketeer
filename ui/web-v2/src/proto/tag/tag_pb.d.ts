@@ -48,7 +48,7 @@ export namespace Tag {
   };
 
   export interface EntityTypeMap {
-    UNKNOWN: 0;
+    UNSPECIFIED: 0;
     FEATURE_FLAG: 1;
     ACCOUNT: 2;
   }
