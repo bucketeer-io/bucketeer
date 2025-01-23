@@ -62,6 +62,7 @@ func WithLogger(l *zap.Logger) Option {
 
 type PushService struct {
 	mysqlClient      mysql.Client
+	pushStorage      v2ps.PushStorage
 	featureClient    featureclient.Client
 	experimentClient experimentclient.Client
 	accountClient    accountclient.Client
@@ -86,6 +87,7 @@ func NewPushService(
 	}
 	return &PushService{
 		mysqlClient:      mysqlClient,
+		pushStorage:      v2ps.NewPushStorage(mysqlClient),
 		featureClient:    featureClient,
 		experimentClient: experimentClient,
 		accountClient:    accountClient,
@@ -184,8 +186,7 @@ func (s *PushService) CreatePush(
 		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		pushStorage := v2ps.NewPushStorage(s.mysqlClient)
-		if err := pushStorage.CreatePush(contextWithTx, push, req.EnvironmentId); err != nil {
+		if err := s.pushStorage.CreatePush(contextWithTx, push, req.EnvironmentId); err != nil {
 			return err
 		}
 		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentId)
@@ -314,8 +315,7 @@ func (s *PushService) createPushNoCommand(
 
 	var event *eventproto.Event
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		pushStorage := v2ps.NewPushStorage(s.mysqlClient)
-		if err := pushStorage.CreatePush(contextWithTx, push, req.EnvironmentId); err != nil {
+		if err := s.pushStorage.CreatePush(contextWithTx, push, req.EnvironmentId); err != nil {
 			return err
 		}
 		prev := &domain.Push{}
@@ -473,8 +473,7 @@ func (s *PushService) UpdatePush(
 	var updatedPushPb *pushproto.Push
 	commands := s.createUpdatePushCommands(req)
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		pushStorage := v2ps.NewPushStorage(s.mysqlClient)
-		push, err := pushStorage.GetPush(contextWithTx, req.Id, req.EnvironmentId)
+		push, err := s.pushStorage.GetPush(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -488,7 +487,7 @@ func (s *PushService) UpdatePush(
 			}
 		}
 		updatedPushPb = push.Push
-		return pushStorage.UpdatePush(contextWithTx, push, req.EnvironmentId)
+		return s.pushStorage.UpdatePush(contextWithTx, push, req.EnvironmentId)
 	})
 	if err != nil {
 		switch {
@@ -549,8 +548,7 @@ func (s *PushService) updatePushNoCommand(
 	var updatedPushPb *pushproto.Push
 	var updatePushEvent *eventproto.Event
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		pushStorage := v2ps.NewPushStorage(s.mysqlClient)
-		push, err := pushStorage.GetPush(contextWithTx, req.Id, req.EnvironmentId)
+		push, err := s.pushStorage.GetPush(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -580,7 +578,7 @@ func (s *PushService) updatePushNoCommand(
 		}
 		updatedPushPb = updated.Push
 
-		return pushStorage.UpdatePush(contextWithTx, updated, req.EnvironmentId)
+		return s.pushStorage.UpdatePush(contextWithTx, updated, req.EnvironmentId)
 	})
 	if err != nil {
 		switch {
@@ -775,8 +773,7 @@ func (s *PushService) DeletePush(
 
 	var event *eventproto.Event
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		pushStorage := v2ps.NewPushStorage(s.mysqlClient)
-		push, err := pushStorage.GetPush(contextWithTx, req.Id, req.EnvironmentId)
+		push, err := s.pushStorage.GetPush(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -805,7 +802,7 @@ func (s *PushService) DeletePush(
 		if err = s.publisher.Publish(ctx, event); err != nil {
 			return err
 		}
-		return pushStorage.UpdatePush(contextWithTx, push, req.EnvironmentId)
+		return s.pushStorage.UpdatePush(contextWithTx, push, req.EnvironmentId)
 	})
 	if err != nil {
 		switch {
@@ -850,8 +847,7 @@ func (s *PushService) GetPush(
 		return nil, err
 	}
 
-	pushStorage := v2ps.NewPushStorage(s.mysqlClient)
-	push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentId)
+	push, err := s.pushStorage.GetPush(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2ps.ErrPushNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -1181,8 +1177,7 @@ func (s *PushService) listPushes(
 		}
 		return nil, "", 0, dt.Err()
 	}
-	pushStorage := v2ps.NewPushStorage(s.mysqlClient)
-	pushes, nextCursor, totalCount, err := pushStorage.ListPushes(
+	pushes, nextCursor, totalCount, err := s.pushStorage.ListPushes(
 		ctx,
 		whereParts,
 		orders,
