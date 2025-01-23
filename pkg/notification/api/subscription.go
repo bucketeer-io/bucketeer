@@ -80,8 +80,7 @@ func (s *NotificationService) CreateSubscription(
 	}
 	var handler command.Handler = command.NewEmptySubscriptionCommandHandler()
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
-		if err := subscriptionStorage.CreateSubscription(contextWithTx, subscription, req.EnvironmentId); err != nil {
+		if err := s.subscriptionStorage.CreateSubscription(contextWithTx, subscription, req.EnvironmentId); err != nil {
 			return err
 		}
 		handler, err = command.NewSubscriptionCommandHandler(editor, subscription, req.EnvironmentId)
@@ -169,8 +168,7 @@ func (s *NotificationService) createSubscriptionNoCommand(
 		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
-		return subscriptionStorage.CreateSubscription(contextWithTx, subscription, req.EnvironmentId)
+		return s.subscriptionStorage.CreateSubscription(contextWithTx, subscription, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2ss.ErrSubscriptionAlreadyExists) {
@@ -390,8 +388,7 @@ func (s *NotificationService) updateSubscription(
 ) error {
 	var handler command.Handler = command.NewEmptySubscriptionCommandHandler()
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
-		subscription, err := subscriptionStorage.GetSubscription(contextWithTx, id, environmentId)
+		subscription, err := s.subscriptionStorage.GetSubscription(contextWithTx, id, environmentId)
 		if err != nil {
 			return err
 		}
@@ -404,7 +401,7 @@ func (s *NotificationService) updateSubscription(
 				return err
 			}
 		}
-		if err = subscriptionStorage.UpdateSubscription(contextWithTx, subscription, environmentId); err != nil {
+		if err = s.subscriptionStorage.UpdateSubscription(contextWithTx, subscription, environmentId); err != nil {
 			return err
 		}
 		return nil
@@ -469,8 +466,7 @@ func (s *NotificationService) updateSubscriptionMySQLNoCommand(
 	var updatedSubscription *notificationproto.Subscription
 	var event *eventproto.Event
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
-		subscription, err := subscriptionStorage.GetSubscription(contextWithTx, ID, environmentID)
+		subscription, err := s.subscriptionStorage.GetSubscription(contextWithTx, ID, environmentID)
 		if err != nil {
 			return err
 		}
@@ -497,7 +493,7 @@ func (s *NotificationService) updateSubscriptionMySQLNoCommand(
 		if err != nil {
 			return err
 		}
-		return subscriptionStorage.UpdateSubscription(contextWithTx, updated, environmentID)
+		return s.subscriptionStorage.UpdateSubscription(contextWithTx, updated, environmentID)
 	})
 	if err != nil {
 		if errors.Is(err, v2ss.ErrSubscriptionNotFound) || errors.Is(err, v2ss.ErrSubscriptionUnexpectedAffectedRows) {
@@ -568,8 +564,7 @@ func (s *NotificationService) DeleteSubscription(
 	var subscription *domain.Subscription
 	var event *eventproto.Event
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
-		subscription, err = subscriptionStorage.GetSubscription(contextWithTx, req.Id, req.EnvironmentId)
+		subscription, err = s.subscriptionStorage.GetSubscription(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -587,7 +582,7 @@ func (s *NotificationService) DeleteSubscription(
 			subscription.Subscription,
 			prev,
 		)
-		if err = subscriptionStorage.DeleteSubscription(contextWithTx, req.Id, req.EnvironmentId); err != nil {
+		if err = s.subscriptionStorage.DeleteSubscription(contextWithTx, req.Id, req.EnvironmentId); err != nil {
 			return err
 		}
 		return nil
@@ -666,8 +661,7 @@ func (s *NotificationService) GetSubscription(
 	if err := validateGetSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
-	subscription, err := subscriptionStorage.GetSubscription(ctx, req.Id, req.EnvironmentId)
+	subscription, err := s.subscriptionStorage.GetSubscription(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2ss.ErrSubscriptionNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -863,8 +857,7 @@ func (s *NotificationService) listSubscriptionsMySQL(
 		}
 		return nil, "", 0, dt.Err()
 	}
-	subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
-	subscriptions, nextCursor, totalCount, err := subscriptionStorage.ListSubscriptions(
+	subscriptions, nextCursor, totalCount, err := s.subscriptionStorage.ListSubscriptions(
 		ctx,
 		whereParts,
 		orders,

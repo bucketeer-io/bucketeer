@@ -66,8 +66,7 @@ func (s *NotificationService) CreateAdminSubscription(
 	}
 	var handler command.Handler = command.NewEmptyAdminSubscriptionCommandHandler()
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		adminSubscriptionStorage := v2ss.NewAdminSubscriptionStorage(s.mysqlClient)
-		if err := adminSubscriptionStorage.CreateAdminSubscription(contextWithTx, subscription); err != nil {
+		if err := s.adminSubscriptionStorage.CreateAdminSubscription(contextWithTx, subscription); err != nil {
 			return err
 		}
 		handler, err = command.NewAdminSubscriptionCommandHandler(editor, subscription)
@@ -372,8 +371,7 @@ func (s *NotificationService) updateAdminSubscription(
 ) error {
 	var handler command.Handler = command.NewEmptyAdminSubscriptionCommandHandler()
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		adminSubscriptionStorage := v2ss.NewAdminSubscriptionStorage(s.mysqlClient)
-		subscription, err := adminSubscriptionStorage.GetAdminSubscription(contextWithTx, id)
+		subscription, err := s.adminSubscriptionStorage.GetAdminSubscription(contextWithTx, id)
 		if err != nil {
 			return err
 		}
@@ -386,7 +384,7 @@ func (s *NotificationService) updateAdminSubscription(
 				return err
 			}
 		}
-		if err = adminSubscriptionStorage.UpdateAdminSubscription(contextWithTx, subscription); err != nil {
+		if err = s.adminSubscriptionStorage.UpdateAdminSubscription(contextWithTx, subscription); err != nil {
 			return err
 		}
 		return nil
@@ -452,8 +450,7 @@ func (s *NotificationService) DeleteAdminSubscription(
 	}
 	var handler command.Handler = command.NewEmptyAdminSubscriptionCommandHandler()
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		adminSubscriptionStorage := v2ss.NewAdminSubscriptionStorage(s.mysqlClient)
-		subscription, err := adminSubscriptionStorage.GetAdminSubscription(contextWithTx, req.Id)
+		subscription, err := s.adminSubscriptionStorage.GetAdminSubscription(contextWithTx, req.Id)
 		if err != nil {
 			return err
 		}
@@ -464,7 +461,7 @@ func (s *NotificationService) DeleteAdminSubscription(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		if err = adminSubscriptionStorage.DeleteAdminSubscription(contextWithTx, req.Id); err != nil {
+		if err = s.adminSubscriptionStorage.DeleteAdminSubscription(contextWithTx, req.Id); err != nil {
 			return err
 		}
 		return nil
@@ -571,8 +568,7 @@ func (s *NotificationService) GetAdminSubscription(
 	if err := validateGetAdminSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	adminSubscriptionStorage := v2ss.NewAdminSubscriptionStorage(s.mysqlClient)
-	subscription, err := adminSubscriptionStorage.GetAdminSubscription(ctx, req.Id)
+	subscription, err := s.adminSubscriptionStorage.GetAdminSubscription(ctx, req.Id)
 	if err != nil {
 		if err == v2ss.ErrAdminSubscriptionNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -764,8 +760,7 @@ func (s *NotificationService) listAdminSubscriptionsMySQL(
 		}
 		return nil, "", 0, dt.Err()
 	}
-	adminSubscriptionStorage := v2ss.NewAdminSubscriptionStorage(s.mysqlClient)
-	subscriptions, nextCursor, totalCount, err := adminSubscriptionStorage.ListAdminSubscriptions(
+	subscriptions, nextCursor, totalCount, err := s.adminSubscriptionStorage.ListAdminSubscriptions(
 		ctx,
 		whereParts,
 		orders,
