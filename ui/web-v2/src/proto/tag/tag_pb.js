@@ -229,7 +229,7 @@ proto.bucketeer.tag.Tag.serializeBinaryToWriter = function (message, writer) {
  * @enum {number}
  */
 proto.bucketeer.tag.Tag.EntityType = {
-  UNKNOWN: 0,
+  UNSPECIFIED: 0,
   FEATURE_FLAG: 1,
   ACCOUNT: 2
 };

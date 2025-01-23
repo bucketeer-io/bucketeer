@@ -11056,7 +11056,7 @@ func (x *TagCreatedEvent) GetEntityType() tag.Tag_EntityType {
 	if x != nil {
 		return x.EntityType
 	}
-	return tag.Tag_UNKNOWN
+	return tag.Tag_UNSPECIFIED
 }
 
 func (x *TagCreatedEvent) GetEnvironmentId() string {

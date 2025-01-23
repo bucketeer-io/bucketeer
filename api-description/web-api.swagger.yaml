@@ -4939,6 +4939,15 @@ paths:
           in: query
           required: false
           type: string
+        - name: entityType
+          in: query
+          required: false
+          type: string
+          enum:
+            - UNSPECIFIED
+            - FEATURE_FLAG
+            - ACCOUNT
+          default: UNSPECIFIED
       tags:
         - tag
   /webhook/triggers/{token}:
@@ -5110,10 +5119,10 @@ definitions:
   TagEntityType:
     type: string
     enum:
-      - UNKNOWN
+      - UNSPECIFIED
       - FEATURE_FLAG
       - ACCOUNT
-    default: UNKNOWN
+    default: UNSPECIFIED
   UpdateAccountV2RequestAccountV2Avatar:
     type: object
     properties:

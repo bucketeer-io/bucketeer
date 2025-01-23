@@ -30,6 +30,7 @@ import (
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	cacher "github.com/bucketeer-io/bucketeer/pkg/batch/jobs/cacher"
+	deleter "github.com/bucketeer-io/bucketeer/pkg/batch/jobs/deleter"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/experiment"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/mau"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
@@ -843,6 +844,7 @@ func newBatchService(t *testing.T,
 			autoOpsRulesMockClient,
 			redisMockClient,
 		),
+		deleter.NewTagDeleter(mysqlMockClient),
 		logger,
 	)
 	return service

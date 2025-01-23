@@ -30,6 +30,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	cacher "github.com/bucketeer-io/bucketeer/pkg/batch/jobs/cacher"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/calculator"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/deleter"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/experiment"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/mau"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
@@ -557,6 +558,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			// Because the event-perister-ops uses persistent redis
 			// We must use the same instance for caching.
 			cachev3.NewRedisCache(persistentRedisClient),
+			jobs.WithLogger(logger),
+		),
+		deleter.NewTagDeleter(
+			mysqlClient,
+			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
 		),
 		logger,
