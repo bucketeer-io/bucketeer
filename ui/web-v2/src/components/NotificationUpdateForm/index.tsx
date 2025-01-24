@@ -100,9 +100,7 @@ export const NotificationUpdateForm: FC<NotificationUpdateFormProps> = memo(
                               const convList = values.map((value) =>
                                 Number(value)
                               );
-                              field.onChange(
-                                convList.sort().map((v) => String(v))
-                              );
+                              field.onChange(convList.sort().map(String));
                             }}
                             disabled={!editable || isSubmitted}
                             defaultValues={defaultSourceTypesValues}

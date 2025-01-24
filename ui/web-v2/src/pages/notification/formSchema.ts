@@ -7,7 +7,6 @@ import {
 } from '../../constants/notification';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
-import { Subscription } from '../../proto/notification/subscription_pb';
 
 yup.setLocale(yupLocale);
 
@@ -22,25 +21,6 @@ const sourceTypesSchema = yup
 
 const webhookUrlSchema = yup.string().required().url();
 const featureFlagTagsListSchema = yup.array().of(yup.string());
-// .test(
-//   'tags-required-for-flag',
-//   intl.formatMessage(messages.input.error.required),
-//   function (featureFlagTagsList) {
-//     const { sourceTypes } = this.parent;
-//     const hasFlag = sourceTypes?.includes(
-//       Subscription.SourceType.DOMAIN_EVENT_FEATURE.toString()
-//     );
-
-//     // If 'Flag' is selected, ensure tags are present and not empty.
-//     if (
-//       hasFlag &&
-//       (!featureFlagTagsList || featureFlagTagsList.length === 0)
-//     ) {
-//       return false;
-//     }
-//     return true;
-//   }
-// );
 
 export const addFormSchema = yup.object().shape({
   name: nameSchema,

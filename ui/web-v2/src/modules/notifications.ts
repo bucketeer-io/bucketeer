@@ -157,9 +157,11 @@ export const updateNotification = createAsyncThunk<
       (type) => !params.currentSourceTypes.map(Number).includes(Number(type))
     );
 
-    const cmd = new AddSourceTypesCommand();
-    cmd.setSourceTypesList(addList);
-    request.setAddSourceTypesCommand(cmd);
+    if (addList.length > 0) {
+      const cmd = new AddSourceTypesCommand();
+      cmd.setSourceTypesList(addList);
+      request.setAddSourceTypesCommand(cmd);
+    }
 
     const deleteList = params.currentSourceTypes.filter(
       (type) => !params.sourceTypes.map(Number).includes(Number(type))
