@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { EnvironmentRoleItem } from '@api/account/account-creator';
 import { accountUpdater } from '@api/account/account-updater';
+import { tagCreator } from '@api/tag';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
 import { useQueryTags } from '@queries/tags';
@@ -327,9 +328,16 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                         label: tag.name,
                         value: tag.id
                       }))}
-                      onChange={value =>
-                        field.onChange(value.map(tag => tag.value))
-                      }
+                      onChange={async tags => {
+                        field.onChange(tags.map(tag => tag?.value));
+                        if (tags.length > field.value?.length) {
+                          await tagCreator({
+                            name: tags.at(-1)?.label as string,
+                            entityType: 'ACCOUNT',
+                            environmentId: currentEnvironment.id
+                          });
+                        }
+                      }}
                     />
                   </Form.Control>
                   <Form.Message />
