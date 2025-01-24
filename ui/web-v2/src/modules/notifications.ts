@@ -152,10 +152,9 @@ export const updateNotification = createAsyncThunk<
     request.setRenameSubscriptionCommand(cmd);
   }
 
-  // let addList = [];
   if (params.sourceTypes.length > 0) {
     const addList = params.sourceTypes.filter(
-      (type) => !params.currentSourceTypes.includes(type)
+      (type) => !params.currentSourceTypes.map(Number).includes(Number(type))
     );
 
     const cmd = new AddSourceTypesCommand();
@@ -163,7 +162,7 @@ export const updateNotification = createAsyncThunk<
     request.setAddSourceTypesCommand(cmd);
 
     const deleteList = params.currentSourceTypes.filter(
-      (type) => !params.sourceTypes.includes(type)
+      (type) => !params.sourceTypes.map(Number).includes(Number(type))
     );
     if (deleteList.length > 0) {
       const cmd = new DeleteSourceTypesCommand();
@@ -173,23 +172,10 @@ export const updateNotification = createAsyncThunk<
   }
 
   if (params.featureFlagTagsList) {
-    // DOMAIN_EVENT_FEATURE must be included in sourceTypes if featureFlagTagsList is set
-    // if (
-    //   !params.sourceTypes.includes(Subscription.SourceType.DOMAIN_EVENT_FEATURE)
-    // ) {
-    //   addList.push(Subscription.SourceType.DOMAIN_EVENT_FEATURE);
-    // }
-
     const cmd = new UpdateSubscriptionFeatureFlagTagsCommand();
     cmd.setFeatureFlagTagsList(params.featureFlagTagsList);
     request.setUpdateSubscriptionFeatureTagsCommand(cmd);
   }
-
-  // if (addList.length > 0) {
-  //   const cmd = new AddSourceTypesCommand();
-  //   cmd.setSourceTypesList(addList);
-  //   request.setAddSourceTypesCommand(cmd);
-  // }
 
   await subscriptionGrpc.updateSubscription(request);
 });

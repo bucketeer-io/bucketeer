@@ -1,5 +1,5 @@
 import { Dialog } from '@headlessui/react';
-import { FC, memo, useState } from 'react';
+import { FC, memo, useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 
@@ -7,6 +7,7 @@ import { CheckBoxList } from '../CheckBoxList';
 import { SOURCE_TYPE_ITEMS } from '../../constants/notification';
 import { messages } from '../../lang/messages';
 import { useIsEditable } from '../../modules/me';
+import { Option } from '../Select';
 
 export interface NotificationUpdateFormProps {
   onSubmit: () => void;
@@ -22,17 +23,24 @@ export const NotificationUpdateForm: FC<NotificationUpdateFormProps> = memo(
       register,
       control,
       getValues,
-      formState: { errors, isValid, isDirty, isSubmitted },
-      watch
+      formState: { errors, isValid, isDirty, isSubmitted }
     } = methods;
 
-    console.log('watch', watch('sourceTypes'));
+    const [defaultSourceTypesValues, setDefaultSourceTypesValues] = useState<
+      Option[]
+    >([]);
 
-    const [defaultValues] = useState(() =>
-      SOURCE_TYPE_ITEMS.filter((item) =>
-        getValues()?.sourceTypes?.includes(Number(item.value))
-      )
-    );
+    useEffect(() => {
+      setDefaultSourceTypesValues(
+        SOURCE_TYPE_ITEMS.filter((item) =>
+          getValues()?.sourceTypes?.includes(item.value)
+        )
+      );
+    }, [getValues()?.sourceTypes, setDefaultSourceTypesValues]);
+
+    if (!defaultSourceTypesValues.length) {
+      return null;
+    }
 
     return (
       <div className="w-[500px]">
@@ -97,7 +105,7 @@ export const NotificationUpdateForm: FC<NotificationUpdateFormProps> = memo(
                               );
                             }}
                             disabled={!editable || isSubmitted}
-                            defaultValues={defaultValues}
+                            defaultValues={defaultSourceTypesValues}
                           />
                         );
                       }}

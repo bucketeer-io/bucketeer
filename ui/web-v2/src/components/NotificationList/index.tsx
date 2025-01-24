@@ -52,10 +52,6 @@ export const NotificationList: FC<NotificationListProps> = memo(
       shallowEqual
     );
 
-    console.log({
-      notificationList
-    });
-
     return (
       <div className="w-full">
         <div className="flex items-stretch mb-8 text-sm">

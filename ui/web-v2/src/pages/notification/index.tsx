@@ -204,7 +204,7 @@ export const NotificationIndexPage: FC = memo(() => {
         createNotification({
           environmentId: currentEnvironment.id,
           name: data.name,
-          sourceTypes: data.sourceTypes.map((sourceType) => Number(sourceType)),
+          sourceTypes: data.sourceTypes,
           webhookUrl: data.webhookUrl,
           featureFlagTagsList
         })
@@ -223,11 +223,10 @@ export const NotificationIndexPage: FC = memo(() => {
   const handleOnClickUpdate = useCallback(
     (s: Subscription.AsObject) => {
       setOpen(true);
-      const sourceTypes = [...s.sourceTypesList].sort().map((v) => String(v));
       resetUpdate({
         name: s.name,
         webhookUrl: s.recipient.slackChannelRecipient.webhookUrl,
-        sourceTypes,
+        sourceTypes: s.sourceTypesList.map(String),
         featureFlagTagsList: s.featureFlagTagsList
       });
       history.push({
@@ -372,7 +371,7 @@ export const NotificationIndexPage: FC = memo(() => {
       resetUpdate({
         name: notification.name,
         webhookUrl: notification.recipient.slackChannelRecipient.webhookUrl,
-        sourceTypes: [...notification.sourceTypesList].sort(),
+        sourceTypes: [...notification.sourceTypesList].sort().map(String),
         featureFlagTagsList: notification.featureFlagTagsList
       });
     }

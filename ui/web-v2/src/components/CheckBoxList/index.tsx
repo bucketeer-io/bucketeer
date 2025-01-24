@@ -51,14 +51,13 @@ export const CheckBoxList: FC<CheckBoxListProps> = memo(
       (tag) => tag.entityType === Tag.EntityType.FEATURE_FLAG
     );
 
-    const [checkedItems] = useState(() => {
-      const items = new Map();
-      defaultValues &&
-        defaultValues.forEach((item) => {
-          items.set(item.value, item.value);
-        });
-      return items;
-    });
+    const [checkedItems, setCheckedItems] = useState<Option[]>([]);
+
+    useEffect(() => {
+      if (defaultValues) {
+        setCheckedItems(defaultValues);
+      }
+    }, [defaultValues, setCheckedItems]);
 
     useEffect(() => {
       dispatch(
@@ -68,22 +67,20 @@ export const CheckBoxList: FC<CheckBoxListProps> = memo(
           cursor: '',
           orderBy: ListTagsRequest.OrderBy.DEFAULT,
           orderDirection: ListTagsRequest.OrderDirection.ASC,
-          searchKeyword: null
+          searchKeyword: null,
+          entityType: Tag.EntityType.FEATURE_FLAG
         })
       );
     }, [dispatch]);
 
     const handleOnChange = (value: string, checked: boolean) => {
-      if (checked) {
-        checkedItems.set(value, value);
-      } else {
-        checkedItems.delete(value);
-      }
-      const valueList = [];
-      checkedItems.forEach((v) => {
-        valueList.push(v);
-      });
-      onChange(valueList);
+      const valueList = checked
+        ? [...checkedItems, options.find((o) => o.value === value)]
+        : checkedItems.filter((v) => v.value !== value);
+
+      setCheckedItems(valueList);
+
+      onChange(valueList.map((v) => v.value));
     };
 
     return (
@@ -111,15 +108,19 @@ export const CheckBoxList: FC<CheckBoxListProps> = memo(
                         id={`id_${index}`}
                         value={item.value}
                         onChange={handleOnChange}
-                        defaultChecked={checkedItems.has(item.value)}
+                        defaultChecked={defaultValues?.some(
+                          (v) => v.value === item.value
+                        )}
                         disabled={disabled}
                       />
                     </div>
                   </div>
                   {item.value ===
                     Subscription.SourceType.DOMAIN_EVENT_FEATURE.toString() &&
-                    checkedItems.has(
-                      Subscription.SourceType.DOMAIN_EVENT_FEATURE.toString()
+                    checkedItems.some(
+                      (item) =>
+                        item.value ===
+                        Subscription.SourceType.DOMAIN_EVENT_FEATURE.toString()
                     ) && (
                       <div className="mb-4">
                         <div className="flex space-x-1 items-center">
