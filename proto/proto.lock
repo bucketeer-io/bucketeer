@@ -35760,6 +35760,11 @@
                 "id": 6,
                 "name": "environment_id",
                 "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "environment_name",
+                "type": "string"
               }
             ]
           },

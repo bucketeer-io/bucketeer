@@ -22,6 +22,9 @@ export class Tag extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getEnvironmentName(): string;
+  setEnvironmentName(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Tag.AsObject;
   static toObject(includeInstance: boolean, msg: Tag): Tag.AsObject;
@@ -45,6 +48,7 @@ export namespace Tag {
     updatedAt: number;
     entityType: Tag.EntityTypeMap[keyof Tag.EntityTypeMap];
     environmentId: string;
+    environmentName: string;
   };
 
   export interface EntityTypeMap {
