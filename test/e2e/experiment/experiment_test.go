@@ -408,22 +408,16 @@ func TestDeleteGoal(t *testing.T) {
 	goalID := createGoal(ctx, t, c)
 	_, err := c.DeleteGoal(ctx, &experimentproto.DeleteGoalRequest{
 		Id:            goalID,
-		Command:       &experimentproto.DeleteGoalCommand{},
 		EnvironmentId: *environmentID,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	getResp, err := c.GetGoal(ctx, &experimentproto.GetGoalRequest{
+	_, err = c.GetGoal(ctx, &experimentproto.GetGoalRequest{
 		Id:            goalID,
 		EnvironmentId: *environmentID,
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !getResp.Goal.Deleted {
-		t.Fatal("Goal deleted flag is false")
-	}
+	assert.Equal(t, err.Error(), "rpc error: code = NotFound desc = experiment: not found")
 }
 
 func TestStatusUpdateFromWaitingToRunning(t *testing.T) {
@@ -609,7 +603,6 @@ func TestCreateListGoalsNoCommand(t *testing.T) {
 
 	_, err = c.DeleteGoal(ctx, &experimentproto.DeleteGoalRequest{
 		Id:            goalID,
-		Command:       &experimentproto.DeleteGoalCommand{},
 		EnvironmentId: *environmentID,
 	})
 	if err != nil {
@@ -665,7 +658,6 @@ func TestCreateUpdateGoalNoCommand(t *testing.T) {
 
 	_, err = c.DeleteGoal(ctx, &experimentproto.DeleteGoalRequest{
 		Id:            goalID,
-		Command:       &experimentproto.DeleteGoalCommand{},
 		EnvironmentId: *environmentID,
 	})
 }

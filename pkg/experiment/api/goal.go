@@ -804,33 +804,51 @@ func (s *experimentService) DeleteGoal(
 		}
 		return nil, dt.Err()
 	}
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		experimentStorage := v2es.NewGoalStorage(s.mysqlClient)
+		goal, err := experimentStorage.GetGoal(ctxWithTx, req.Id, req.EnvironmentId)
+		if err != nil {
+			return err
+		}
+		e, err := domainevent.NewEvent(
+			editor,
+			eventproto.Event_GOAL,
+			goal.Id,
+			eventproto.Event_GOAL_DELETED,
+			&eventproto.GoalDeletedEvent{
+				Id: goal.Id,
+			},
+			req.EnvironmentId,
+			goal.Goal,
+			&domain.Goal{},
+		)
+		if err != nil {
+			return err
+		}
+		if err := s.publisher.Publish(ctxWithTx, e); err != nil {
+			return err
+		}
+		return experimentStorage.DeleteGoal(ctxWithTx, req.Id, req.EnvironmentId)
+	})
+	if err != nil {
+		if errors.Is(err, v2es.ErrGoalNotFound) || errors.Is(err, v2es.ErrGoalUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
 		if err != nil {
 			return nil, statusInternal.Err()
 		}
 		return nil, dt.Err()
-	}
-	err = s.updateGoal(
-		ctx,
-		editor,
-		req.EnvironmentId,
-		req.Id,
-		[]command.Command{req.Command},
-		localizer,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to delete goal",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, err
 	}
 	return &proto.DeleteGoalResponse{}, nil
 }

@@ -94,10 +94,15 @@ message ArchiveGoalRequest {
 message ArchiveGoalResponse {}
 
 message DeleteGoalRequest {
-  string id = 1;
-  DeleteGoalCommand command = 2;
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  DeleteGoalCommand command = 2 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   reserved 3;
-  string environment_id = 4;
+  string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
 message DeleteGoalResponse {}
@@ -398,7 +403,39 @@ service ExperimentService {
     };
   }
   rpc ArchiveGoal(ArchiveGoalRequest) returns (ArchiveGoalResponse) {}
-  rpc DeleteGoal(DeleteGoalRequest) returns (DeleteGoalResponse) {}
+  rpc DeleteGoal(DeleteGoalRequest) returns (DeleteGoalResponse) {
+    option (google.api.http) = {
+      delete: "/v1/goal"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete"
+      description: "Delete a goal."
+      tags: "goal"
+      operation_id: "web.v1.goal.delete"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 
   rpc GetExperiment(GetExperimentRequest) returns (GetExperimentResponse) {
     option (google.api.http) = {

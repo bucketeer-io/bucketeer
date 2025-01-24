@@ -41,6 +41,8 @@ var (
 	insertGoalSQL string
 	//go:embed sql/goal/update_goal.sql
 	updateGoalSQL string
+	//go:embed sql/goal/delete_goal.sql
+	deleteGoalSQL string
 )
 
 type GoalStorage interface {
@@ -55,6 +57,7 @@ type GoalStorage interface {
 		isInUseStatus *bool,
 		environmentId string,
 	) ([]*proto.Goal, int, int64, error)
+	DeleteGoal(ctx context.Context, id, environmentId string) error
 }
 
 type goalStorage struct {
@@ -210,4 +213,24 @@ func (s *goalStorage) ListGoals(
 		return nil, 0, 0, err
 	}
 	return goals, nextOffset, totalCount, nil
+}
+
+func (s *goalStorage) DeleteGoal(ctx context.Context, id, environmentId string) error {
+	result, err := s.qe.ExecContext(
+		ctx,
+		deleteGoalSQL,
+		id,
+		environmentId,
+	)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected != 1 {
+		return ErrGoalUnexpectedAffectedRows
+	}
+	return nil
 }
