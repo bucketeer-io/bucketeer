@@ -42,7 +42,6 @@ import (
 	storagemock "github.com/bucketeer-io/bucketeer/pkg/push/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
@@ -911,13 +910,9 @@ func TestListPushesMySQL(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *PushService) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe).AnyTimes()
-				qe.EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), errors.New("error"))
 			},
 			input:       &pushproto.ListPushesRequest{EnvironmentId: "ns0"},
 			expected:    nil,
@@ -936,22 +931,9 @@ func TestListPushesMySQL(t *testing.T) {
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *PushService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe).AnyTimes()
-				qe.EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				qe.EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*proto.Push{}, 0, int64(0), nil)
 			},
 			input:       &pushproto.ListPushesRequest{PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
 			expected:    &pushproto.ListPushesResponse{Pushes: []*pushproto.Push{}, Cursor: "0"},
@@ -1005,15 +987,9 @@ func TestGetPushMySQL(t *testing.T) {
 		{
 			desc: "err: ErrNotFound",
 			setup: func(s *PushService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(v2ps.ErrPushNotFound)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().QueryRowContext(
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(nil, v2ps.ErrPushNotFound)
 			},
 			req: &pushproto.GetPushRequest{
 				EnvironmentId: "ns0",
@@ -1024,15 +1000,13 @@ func TestGetPushMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *PushService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().QueryRowContext(
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(&domain.Push{
+					Push: &proto.Push{
+						Id: "key-1",
+					},
+				}, nil)
 			},
 			req: &pushproto.GetPushRequest{
 				EnvironmentId: "ns0",
