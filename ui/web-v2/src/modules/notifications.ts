@@ -32,7 +32,6 @@ import {
 import { Subscription } from '../proto/notification/subscription_pb';
 
 import { AppState } from '.';
-import { add } from 'date-fns';
 
 const MODULE_NAME = 'notifications';
 
