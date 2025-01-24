@@ -170,19 +170,37 @@ message ListExperimentsRequest {
   string search_keyword = 12;
   google.protobuf.BoolValue archived = 13;
   repeated Experiment.Status statuses = 14;
-  string environment_id = 15;
+  string environment_id = 15 [(google.api.field_behavior) = REQUIRED];
 }
 
 message ListExperimentsResponse {
+  message Summary {
+    int64 total_waiting_count = 1;
+    int64 total_running_count = 2;
+    int64 total_stopped_count = 3;
+  }
   repeated Experiment experiments = 1;
   string cursor = 2;
   int64 total_count = 3;
+  Summary summary = 4;
 }
 
 message CreateExperimentRequest {
-  CreateExperimentCommand command = 1;
+  CreateExperimentCommand command = 1 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   reserved 2;
-  string environment_id = 3;
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 4 [(google.api.field_behavior) = REQUIRED];
+  int64 start_at = 5 [(google.api.field_behavior) = REQUIRED];
+  int64 stop_at = 6 [(google.api.field_behavior) = REQUIRED];
+  repeated string goal_ids = 7 [(google.api.field_behavior) = REQUIRED];
+  string name = 8 [(google.api.field_behavior) = REQUIRED];
+  string description = 9;
+  string base_variation_id = 10 [(google.api.field_behavior) = REQUIRED];
 }
 
 message CreateExperimentResponse {
@@ -419,11 +437,108 @@ service ExperimentService {
     };
   }
 
-  rpc GetExperiment(GetExperimentRequest) returns (GetExperimentResponse) {}
+  rpc GetExperiment(GetExperimentRequest) returns (GetExperimentResponse) {
+    option (google.api.http) = {
+      get: "/v1/experiment"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get"
+      description: "Get an experiment."
+      tags: "experiment"
+      operation_id: "web.v1.experiment.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ListExperiments(ListExperimentsRequest)
-      returns (ListExperimentsResponse) {}
+      returns (ListExperimentsResponse) {
+    option (google.api.http) = {
+      get: "/v1/experiments"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List"
+      description: "List experiments."
+      tags: "experiment"
+      operation_id: "web.v1.experiment.list"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc CreateExperiment(CreateExperimentRequest)
-      returns (CreateExperimentResponse) {}
+      returns (CreateExperimentResponse) {
+    option (google.api.http) = {
+      post: "/v1/experiment"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create"
+      description: "Create an experiment."
+      tags: "experiment"
+      operation_id: "web.v1.experiment.create"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc UpdateExperiment(UpdateExperimentRequest)
       returns (UpdateExperimentResponse) {}
   rpc StartExperiment(StartExperimentRequest)

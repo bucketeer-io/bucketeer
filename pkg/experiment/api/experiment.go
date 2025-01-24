@@ -16,13 +16,16 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/command"
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
@@ -57,7 +60,7 @@ func (s *experimentService) GetExperiment(
 	experimentStorage := v2es.NewExperimentStorage(s.mysqlClient)
 	experiment, err := experimentStorage.GetExperiment(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
-		if err == v2es.ErrExperimentNotFound {
+		if errors.Is(err, v2es.ErrExperimentNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -165,7 +168,7 @@ func (s *experimentService) ListExperiments(
 		return nil, dt.Err()
 	}
 	experimentStorage := v2es.NewExperimentStorage(s.mysqlClient)
-	experiments, nextCursor, totalCount, err := experimentStorage.ListExperiments(
+	experiments, nextCursor, totalCount, summary, err := experimentStorage.ListExperiments(
 		ctx,
 		whereParts,
 		orders,
@@ -193,6 +196,7 @@ func (s *experimentService) ListExperiments(
 		Experiments: experiments,
 		Cursor:      strconv.Itoa(nextCursor),
 		TotalCount:  totalCount,
+		Summary:     summary,
 	}, nil
 }
 
@@ -205,11 +209,11 @@ func (s *experimentService) newExperimentListOrders(
 	switch orderBy {
 	case proto.ListExperimentsRequest_DEFAULT,
 		proto.ListExperimentsRequest_NAME:
-		column = "name"
+		column = "ex.name"
 	case proto.ListExperimentsRequest_CREATED_AT:
-		column = "created_at"
+		column = "ex.created_at"
 	case proto.ListExperimentsRequest_UPDATED_AT:
-		column = "updated_at"
+		column = "ex.updated_at"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -237,6 +241,9 @@ func (s *experimentService) CreateExperiment(
 		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
+	}
+	if req.Command == nil {
+		return s.createExperimentNoCommand(ctx, req, editor, localizer)
 	}
 	if err := validateCreateExperimentRequest(req, localizer); err != nil {
 		return nil, err
@@ -275,7 +282,7 @@ func (s *experimentService) CreateExperiment(
 	for _, gid := range req.Command.GoalIds {
 		_, err := s.getGoalMySQL(ctx, gid, req.EnvironmentId)
 		if err != nil {
-			if err == v2es.ErrGoalNotFound {
+			if errors.Is(err, v2es.ErrGoalNotFound) {
 				dt, err := statusGoalNotFound.WithDetails(&errdetails.LocalizedMessage{
 					Locale:  localizer.GetLocale(),
 					Message: localizer.MustLocalize(locale.NotFoundError),
@@ -358,7 +365,148 @@ func (s *experimentService) CreateExperiment(
 		return experimentStorage.CreateExperiment(ctx, experiment, req.EnvironmentId)
 	})
 	if err != nil {
-		if err == v2es.ErrExperimentAlreadyExists {
+		if errors.Is(err, v2es.ErrExperimentAlreadyExists) {
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to create experiment",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &proto.CreateExperimentResponse{
+		Experiment: experiment.Experiment,
+	}, nil
+}
+
+func (s *experimentService) createExperimentNoCommand(
+	ctx context.Context,
+	req *proto.CreateExperimentRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*proto.CreateExperimentResponse, error) {
+	err := validateCreateExperimentRequestNoCommand(req, localizer)
+	if err != nil {
+		return nil, err
+	}
+	getFeatureResp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
+		Id:            req.FeatureId,
+		EnvironmentId: req.EnvironmentId,
+	})
+	if err != nil {
+		if code := status.Code(err); code == codes.NotFound {
+			dt, err := statusFeatureNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to get feature",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	experiment, err := domain.NewExperiment(
+		req.FeatureId,
+		getFeatureResp.Feature.Version,
+		getFeatureResp.Feature.Variations,
+		req.GoalIds,
+		req.StartAt,
+		req.StopAt,
+		req.Name,
+		req.Description,
+		req.BaseVariationId,
+		editor.Email,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create a new experiment",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		experimentStorage := v2es.NewExperimentStorage(s.mysqlClient)
+		prev := &domain.Experiment{}
+		if err = copier.Copy(prev, experiment); err != nil {
+			return err
+		}
+		e, err := domainevent.NewEvent(
+			editor,
+			eventproto.Event_EXPERIMENT,
+			experiment.Id,
+			eventproto.Event_EXPERIMENT_CREATED,
+			&eventproto.ExperimentCreatedEvent{
+				Id:              experiment.Id,
+				FeatureId:       experiment.FeatureId,
+				FeatureVersion:  experiment.FeatureVersion,
+				Variations:      experiment.Variations,
+				GoalIds:         experiment.GoalIds,
+				StartAt:         experiment.StartAt,
+				StopAt:          experiment.StopAt,
+				StoppedAt:       experiment.StoppedAt,
+				CreatedAt:       experiment.CreatedAt,
+				UpdatedAt:       experiment.UpdatedAt,
+				Name:            experiment.Name,
+				Description:     experiment.Description,
+				BaseVariationId: experiment.BaseVariationId,
+			},
+			req.EnvironmentId,
+			experiment.Experiment,
+			prev,
+		)
+		if err != nil {
+			return err
+		}
+		err = s.publisher.Publish(ctx, e)
+		if err != nil {
+			return err
+		}
+		return experimentStorage.CreateExperiment(ctxWithTx, experiment, req.EnvironmentId)
+	})
+	if err != nil {
+		if errors.Is(err, v2es.ErrExperimentAlreadyExists) {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
@@ -390,16 +538,6 @@ func (s *experimentService) CreateExperiment(
 }
 
 func validateCreateExperimentRequest(req *proto.CreateExperimentRequest, localizer locale.Localizer) error {
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	if req.Command.FeatureId == "" {
 		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -436,6 +574,58 @@ func validateCreateExperimentRequest(req *proto.CreateExperimentRequest, localiz
 		return err
 	}
 	// TODO: validate name empty check
+	return nil
+}
+
+func validateCreateExperimentRequestNoCommand(
+	req *proto.CreateExperimentRequest,
+	localizer locale.Localizer,
+) error {
+	if req.FeatureId == "" {
+		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if len(req.GoalIds) == 0 {
+		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	for _, gid := range req.GoalIds {
+		if gid == "" {
+			dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+	}
+	if err := validateExperimentPeriod(req.StartAt, req.StopAt, localizer); err != nil {
+		return err
+	}
+	if req.Name == "" {
+		dt, err := statusExperimentNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
 	return nil
 }
 
