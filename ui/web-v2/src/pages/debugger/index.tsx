@@ -85,9 +85,6 @@ export const DebuggerIndexPage: FC = memo(() => {
         );
 
         Promise.all(featureDetailsPromises).then((detailedEvaluations) => {
-          console.log({
-            allEvaluations: detailedEvaluations // Now includes feature details
-          });
           setUserEvaluations(detailedEvaluations);
           setShowResults(true);
         });

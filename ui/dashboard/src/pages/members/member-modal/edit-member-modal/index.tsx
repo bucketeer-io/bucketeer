@@ -1,20 +1,24 @@
 import { useMemo } from 'react';
-import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import {
+  FormProvider,
+  Resolver,
+  SubmitHandler,
+  useForm
+} from 'react-hook-form';
 import { EnvironmentRoleItem } from '@api/account/account-creator';
 import { accountUpdater } from '@api/account/account-updater';
-import { tagCreator } from '@api/tag';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
-import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
+import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { Account, EnvironmentRoleType, OrganizationRole } from '@types';
 import { joinName } from 'utils/name';
 import { IconInfo } from '@icons';
+import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -75,7 +79,7 @@ export const formSchema = yup.object().shape({
           })
       })
     ),
-  tags: yup.array().min(1).required()
+  tags: yup.array().of(yup.string())
 });
 
 const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
@@ -85,36 +89,20 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
-    params: {
-      cursor: String(0),
-      pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id,
-      entityType: 'ACCOUNT'
-    }
+  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
+    organizationId: currentEnvironment.organizationId
   });
-  const tagOptions = tagCollection?.tags || [];
+  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
 
-  const defaultTagsValue = useMemo(() => {
-    const tags = member.tags?.map(tag => {
-      const _tag = tagOptions.find(item => item.id === tag);
-      return {
-        label: _tag?.name || tag,
-        value: _tag?.id || tag
-      };
-    });
-    return tags;
-  }, [tagOptions, member]);
-
-  const form = useForm({
-    resolver: yupResolver(formSchema),
+  const form = useForm<EditMemberForm>({
+    resolver: yupResolver(formSchema) as Resolver<EditMemberForm>,
     defaultValues: {
       firstName: member.firstName,
       lastName: member.lastName,
       language: member.language,
       role: member.organizationRole,
       environmentRoles: member.environmentRoles,
-      tags: defaultTagsValue || []
+      tags: member.tags
     }
   });
 
@@ -128,6 +116,17 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
     organizationId: currentEnvironment.organizationId
   });
   const environments = collection?.environments || [];
+
+  const defaultTagsValue = useMemo(() => {
+    const tags = member.tags?.map(tag => {
+      const tagItem = tagOptions.find(item => item.id === tag);
+      return {
+        label: tagItem?.name || tag,
+        value: tagItem?.id || tag
+      };
+    });
+    return tags;
+  }, [tagOptions, member]);
 
   const onSubmit: SubmitHandler<EditMemberForm> = values => {
     return accountUpdater({
@@ -305,7 +304,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
               name={`tags`}
               render={({ field }) => (
                 <Form.Item className="py-2">
-                  <Form.Label required className="relative w-fit">
+                  <Form.Label className="relative w-fit">
                     {t('tags')}
                     <Tooltip
                       align="start"
@@ -321,23 +320,16 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                   </Form.Label>
                   <Form.Control>
                     <CreatableSelect
-                      defaultValues={field.value}
+                      defaultValues={defaultTagsValue}
                       disabled={isLoadingTags}
                       placeholder={t(`form:placeholder-tags`)}
                       options={tagOptions?.map(tag => ({
                         label: tag.name,
                         value: tag.id
                       }))}
-                      onChange={async tags => {
-                        field.onChange(tags.map(tag => tag?.value));
-                        if (tags.length > field.value?.length) {
-                          await tagCreator({
-                            name: tags.at(-1)?.label as string,
-                            entityType: 'ACCOUNT',
-                            environmentId: currentEnvironment.id
-                          });
-                        }
-                      }}
+                      onChange={tags =>
+                        field.onChange(tags.map(tag => tag?.value))
+                      }
                     />
                   </Form.Control>
                   <Form.Message />

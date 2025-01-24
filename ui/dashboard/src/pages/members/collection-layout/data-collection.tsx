@@ -2,11 +2,9 @@ import {
   IconEditOutlined,
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
-import { useQueryTags } from '@queries/tags';
 import type { ColumnDef } from '@tanstack/react-table';
 import primaryAvatar from 'assets/avatars/primary.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { Account } from '@types';
@@ -18,6 +16,7 @@ import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import ExpandableTag from 'elements/expandable-tag';
 import TruncationWithTooltip from 'elements/truncation-with-tooltip';
+import { useFetchTags } from '../collection-loader';
 import { MemberActionsType } from '../types';
 
 export const useColumns = ({
@@ -32,13 +31,8 @@ export const useColumns = ({
   const isOrganizationAdmin =
     consoleAccount?.organizationRole === 'Organization_ADMIN';
 
-  const { data: tagCollection } = useQueryTags({
-    params: {
-      cursor: String(0),
-      pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id,
-      entityType: 'ACCOUNT'
-    }
+  const { data: tagCollection } = useFetchTags({
+    organizationId: currentEnvironment.organizationId
   });
 
   const tagList = tagCollection?.tags || [];

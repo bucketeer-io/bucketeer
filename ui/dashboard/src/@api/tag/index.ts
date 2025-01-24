@@ -1,2 +1,2 @@
-export * from './api-tags-fetcher';
+export * from './tags-fetcher';
 export * from './tag-creator';

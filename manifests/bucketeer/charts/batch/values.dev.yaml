@@ -103,6 +103,9 @@ cronjob:
     - name: mau-partition-creator
       jobId: MauPartitionCreator
       schedule: "0 2 2 * *"
+    - name: tag-deleter
+      jobId: TagDeleter
+      schedule: "* * * * *"
 
 subscribers:
   # This is the processor's name. It must match the same name defined in the

@@ -6,6 +6,7 @@ import { stringifyParams } from 'utils/search-params';
 
 export interface TagsFetcherParams extends CollectionParams {
   environmentId?: string;
+  organizationId?: string;
   entityType?: EntityType;
 }
 

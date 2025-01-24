@@ -86,6 +86,9 @@ spec:
         - name: envoy-batch-descriptor-secret
           secret:
             secretName: {{ template "web.fullname" . }}-batch
+        - name: envoy-code-reference-descriptor-secret
+          secret:
+            secretName: {{ template "web.fullname" . }}-code-reference
       {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "web.fullname" . }}
       {{- end }}
@@ -171,6 +174,8 @@ spec:
               value: "{{ .Values.env.webConsoleServicePort }}"
             - name: BUCKETEER_WEB_DASHBOARD_SERVICE_PORT
               value: "{{ .Values.env.dashboardServicePort }}"
+            - name: BUCKETEER_WEB_CODE_REFERENCE_SERVICE_PORT
+              value: "{{ .Values.env.coderefServicePort }}"
             - name: BUCKETEER_WEB_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_WEB_AUTH_SERVICE
@@ -185,6 +190,8 @@ spec:
               value: "{{ .Values.env.featureService }}"
             - name: BUCKETEER_WEB_AUTO_OPS_SERVICE
               value: "{{ .Values.env.autoOpsService }}"
+            - name: BUCKETEER_WEB_CODE_REFERENCE_SERVICE
+              value: "{{ .Values.env.coderefService }}"
             - name: BUCKETEER_WEB_TIMEZONE
               value: "{{ .Values.env.timezone }}"
             - name: BUCKETEER_WEB_METRICS_PORT
@@ -314,6 +321,9 @@ spec:
               readOnly: true
             - name: envoy-batch-descriptor-secret
               mountPath: /usr/local/batch-secret
+              readOnly: true
+            - name: envoy-code-reference-descriptor-secret
+              mountPath: /usr/local/code-reference-secret
               readOnly: true
             - name: service-cert-secret
               mountPath: /usr/local/certs/service

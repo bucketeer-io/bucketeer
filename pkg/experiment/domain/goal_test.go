@@ -17,9 +17,11 @@ package domain
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	proto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
 
 func TestRenameGoal(t *testing.T) {
@@ -56,9 +58,51 @@ func TestSetDeletedGoal(t *testing.T) {
 	assert.True(t, g.Deleted)
 }
 
+func TestUpdateGoal(t *testing.T) {
+	t.Parallel()
+	g := newGoal(t)
+
+	tests := []struct {
+		desc     string
+		newName  *wrapperspb.StringValue
+		newDesc  *wrapperspb.StringValue
+		archived *wrapperspb.BoolValue
+		deleted  *wrapperspb.BoolValue
+	}{
+		{
+			desc:     "update goal",
+			newName:  wrapperspb.String("newName"),
+			newDesc:  wrapperspb.String("newDesc"),
+			archived: nil,
+			deleted:  nil,
+		},
+		{
+			desc:     "archive goal",
+			newName:  nil,
+			newDesc:  nil,
+			archived: wrapperspb.Bool(true),
+			deleted:  nil,
+		},
+	}
+	for i := range tests {
+		tt := tests[i]
+		t.Run(tt.desc, func(t *testing.T) {
+			t.Parallel()
+			updated, err := g.Update(tt.newName, tt.newDesc, tt.archived)
+			require.NoError(t, err)
+			if tt.newName != nil {
+				assert.Equal(t, tt.newName.Value, updated.Name)
+			}
+			if tt.newDesc != nil {
+				assert.Equal(t, tt.newDesc.Value, updated.Description)
+			}
+		})
+	}
+}
+
 func newGoal(t *testing.T) *Goal {
 	t.Helper()
-	g, err := NewGoal("gID", "gName", "gDesc")
+	g, err := NewGoal("gID", "gName", "gDesc", proto.Goal_OPERATION)
 	require.NoError(t, err)
 	return g
 }

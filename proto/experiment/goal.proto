@@ -17,7 +17,15 @@ syntax = "proto3";
 package bucketeer.experiment;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/experiment";
 
+import "proto/experiment/experiment.proto";
+import "proto/autoops/auto_ops_rule.proto";
+
 message Goal {
+  enum ConnectionType {
+    UNKNOWN = 0;
+    EXPERIMENT = 1;
+    OPERATION = 2;
+  }
   string id = 1;
   string name = 2;
   string description = 3;
@@ -26,4 +34,7 @@ message Goal {
   int64 updated_at = 6;
   bool is_in_use_status = 7;  // This field is set only when APIs return.
   bool archived = 8;
+  ConnectionType connection_type = 9;
+  repeated Experiment experiments = 10;
+  repeated autoops.AutoOpsRule auto_ops_rules = 11;
 }

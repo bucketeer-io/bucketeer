@@ -38,6 +38,8 @@ import "proto/autoops/progressive_rollout.proto";
 import "proto/feature/flag_trigger.proto";
 import "proto/account/search_filter.proto";
 import "proto/tag/tag.proto";
+import "proto/experiment/goal.proto";
+import "proto/coderef/code_reference.proto";
 
 message Event {
   enum EntityType {
@@ -59,6 +61,7 @@ message Event {
     ORGANIZATION = 15;
     FLAG_TRIGGER = 16;
     TAG = 17;
+    CODEREF = 18;
   }
   enum Type {
     UNKNOWN = 0;
@@ -105,6 +108,7 @@ message Event {
     GOAL_DESCRIPTION_CHANGED = 102;
     GOAL_DELETED = 103;
     GOAL_ARCHIVED = 104;
+    GOAL_UPDATED = 105;
     EXPERIMENT_CREATED = 200;
     EXPERIMENT_STOPPED = 201;
     EXPERIMENT_START_AT_CHANGED = 202;
@@ -241,6 +245,9 @@ message Event {
     FLAG_TRIGGER_USAGE_UPDATED = 1607;
     TAG_CREATED = 1701;
     TAG_DELETED = 1702;
+    CODE_REFERENCE_CREATED = 1800;
+    CODE_REFERENCE_UPDATED = 1801;
+    CODE_REFERENCE_DELETED = 1802;
   }
   string id = 1;
   int64 timestamp = 2;
@@ -499,6 +506,13 @@ message GoalCreatedEvent {
   bool deleted = 4;
   int64 created_at = 5;
   int64 updated_at = 6;
+  bucketeer.experiment.Goal.ConnectionType connection_type = 7;
+}
+
+message GoalUpdatedEvent {
+  string id = 1;
+  google.protobuf.StringValue name = 2;
+  google.protobuf.StringValue description = 3;
 }
 
 message GoalRenamedEvent {
@@ -1217,4 +1231,40 @@ message TagCreatedEvent {
 message TagDeletedEvent {
   string id = 1;
   string environment_id = 6;
+}
+
+message CodeReferenceCreatedEvent {
+  string id = 1;
+  string feature_id = 2;
+  string file_path = 3;
+  int32 line_number = 4;
+  string code_snippet = 5;
+  string content_hash = 6;
+  repeated string aliases = 7;
+  string repository_name = 8;
+  string repository_owner = 9;
+  bucketeer.coderef.CodeReference.RepositoryType repository_type = 10;
+  string repository_branch = 11;
+  string commit_hash = 12;
+  string environment_id = 13;
+  int64 created_at = 14;
+  int64 updated_at = 15;
+}
+
+message CodeReferenceUpdatedEvent {
+  string id = 1;
+  string file_path = 2;
+  int32 line_number = 3;
+  string code_snippet = 4;
+  string content_hash = 5;
+  repeated string aliases = 6;
+  string repository_branch = 7;
+  string commit_hash = 8;
+  string environment_id = 9;
+  int64 updated_at = 10;
+}
+
+message CodeReferenceDeletedEvent {
+  string id = 1;
+  string environment_id = 2;
 }

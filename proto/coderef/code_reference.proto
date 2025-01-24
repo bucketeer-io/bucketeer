@@ -1,0 +1,46 @@
+// Copyright 2025 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.coderef;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/coderef";
+
+message CodeReference {
+  enum RepositoryType {
+    REPOSITORY_TYPE_UNSPECIFIED = 0;
+    GITHUB = 1;
+    GITLAB = 2;
+    BITBUCKET = 3;
+    CUSTOM = 4;
+  }
+
+  string id = 1;
+  string feature_id = 2;
+  string file_path = 3;
+  int32 line_number = 4;
+  string code_snippet = 5;
+  string content_hash = 6;
+  repeated string aliases = 7;
+  string repository_name = 8;
+  string repository_owner = 9;
+  RepositoryType repository_type = 10;
+  string repository_branch = 11;
+  string commit_hash = 12;
+  string environment_id = 13;
+  int64 created_at = 14;
+  int64 updated_at = 15;
+  // URL to view the code in the repository
+  string source_url = 16;
+}

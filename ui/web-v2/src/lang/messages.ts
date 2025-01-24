@@ -1369,6 +1369,18 @@ export const messages = {
     createGoal: defineMessage({
       id: 'goal.createGoal',
       defaultMessage: 'Create Goal'
+    }),
+    connection: defineMessage({
+      id: 'goal.connection',
+      defaultMessage: 'Connection'
+    }),
+    experiments: defineMessage({
+      id: 'goal.experiments',
+      defaultMessage: 'Experiments'
+    }),
+    autoOperations: defineMessage({
+      id: 'goal.autoOperations',
+      defaultMessage: 'Auto Operations'
     })
   },
   experiment: {

@@ -1,26 +1,29 @@
 import { useCallback } from 'react';
-import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { MultiValue } from 'react-select';
+import {
+  FormProvider,
+  Resolver,
+  SubmitHandler,
+  useForm
+} from 'react-hook-form';
 import {
   accountCreator,
   EnvironmentRoleItem
 } from '@api/account/account-creator';
-import { tagCreator } from '@api/tag';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
-import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { Language, useTranslation } from 'i18n';
+import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { EnvironmentRoleType, OrganizationRole } from '@types';
 import { IconInfo } from '@icons';
+import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import { CreatableSelect, Option } from 'components/creatable-select';
+import { CreatableSelect } from 'components/creatable-select';
 import Divider from 'components/divider';
 import {
   DropdownMenu,
@@ -40,7 +43,7 @@ interface AddMemberModalProps {
   onClose: () => void;
 }
 
-interface organizationRoleOption {
+interface OrganizationRoleOption {
   value: OrganizationRole;
   label: string;
 }
@@ -50,7 +53,7 @@ export const defaultEnvironmentRole: EnvironmentRoleItem = {
   role: 'Environment_UNASSIGNED'
 };
 
-export const organizationRoles: organizationRoleOption[] = [
+export const organizationRoles: OrganizationRoleOption[] = [
   {
     value: 'Organization_MEMBER',
     label: 'Member'
@@ -90,7 +93,7 @@ export const formSchema = yup.object().shape({
         role: yup.mixed<EnvironmentRoleType>().required()
       })
     ),
-  tags: yup.array().min(1).required()
+  tags: yup.array().of(yup.string())
 });
 
 const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
@@ -100,18 +103,13 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
-    params: {
-      cursor: String(0),
-      pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id,
-      entityType: 'ACCOUNT'
-    }
+  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
+    organizationId: currentEnvironment.organizationId
   });
-  const tagOptions = tagCollection?.tags || [];
+  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
 
-  const form = useForm({
-    resolver: yupResolver(formSchema),
+  const form = useForm<AddMemberForm>({
+    resolver: yupResolver(formSchema) as Resolver<AddMemberForm>,
     defaultValues: {
       email: '',
       role: undefined,
@@ -141,21 +139,6 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
     return false;
   }, [dirtyFields, isValid, memberEnvironments]);
 
-  const handleChangeTags = async (tags: MultiValue<Option>) => {
-    const currentTags = form.getValues('tags');
-    form.setValue(
-      'tags',
-      tags.map(tag => tag.value)
-    );
-    if (tags.length > currentTags.length) {
-      await tagCreator({
-        name: tags.at(-1)?.label as string,
-        entityType: 'ACCOUNT',
-        environmentId: currentEnvironment.id
-      });
-    }
-  };
-
   const onSubmit: SubmitHandler<AddMemberForm> = values => {
     return accountCreator({
       organizationId: currentEnvironment.organizationId,
@@ -163,7 +146,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
         email: values.email,
         organizationRole: values.role,
         environmentRoles: values.environmentRoles,
-        tags: values.tags
+        tags: values.tags ?? []
       }
     }).then(() => {
       notify({
@@ -171,7 +154,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
         messageType: 'success',
         message: (
           <span>
-            <b>{values.email}</b> {` has been successfully created!`}{' '}
+            <b>{values.email}</b> {` has been successfully created!`}
           </span>
         )
       });
@@ -249,9 +232,9 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
             <Form.Field
               control={form.control}
               name={`tags`}
-              render={() => (
+              render={({ field }) => (
                 <Form.Item className="py-2">
-                  <Form.Label required className="relative w-fit">
+                  <Form.Label className="relative w-fit">
                     {t('tags')}
                     <Tooltip
                       align="start"
@@ -273,7 +256,9 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                         label: tag.name,
                         value: tag.id
                       }))}
-                      onChange={handleChangeTags}
+                      onChange={value =>
+                        field.onChange(value.map(tag => tag.value))
+                      }
                     />
                   </Form.Control>
                   <Form.Message />

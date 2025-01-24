@@ -73,14 +73,15 @@ func (mr *MockExperimentStorageMockRecorder) GetExperiment(ctx, id, environmentI
 }
 
 // ListExperiments mocks base method.
-func (m *MockExperimentStorage) ListExperiments(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*experiment.Experiment, int, int64, error) {
+func (m *MockExperimentStorage) ListExperiments(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*experiment.Experiment, int, int64, *experiment.ListExperimentsResponse_Summary, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListExperiments", ctx, whereParts, orders, limit, offset)
 	ret0, _ := ret[0].([]*experiment.Experiment)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
-	ret3, _ := ret[3].(error)
-	return ret0, ret1, ret2, ret3
+	ret3, _ := ret[3].(*experiment.ListExperimentsResponse_Summary)
+	ret4, _ := ret[4].(error)
+	return ret0, ret1, ret2, ret3, ret4
 }
 
 // ListExperiments indicates an expected call of ListExperiments.

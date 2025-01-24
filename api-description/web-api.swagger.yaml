@@ -1488,6 +1488,351 @@ paths:
             $ref: '#/definitions/authSignInRequest'
       tags:
         - Authentication
+  /v1/code_references:
+    get:
+      summary: List
+      description: List code references with optional filtering.
+      operationId: web.v1.code_reference.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/coderefListCodeReferencesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+        - name: featureId
+          in: query
+          required: false
+          type: string
+        - name: repositoryName
+          in: query
+          required: false
+          type: string
+        - name: repositoryOwner
+          in: query
+          required: false
+          type: string
+        - name: repositoryType
+          in: query
+          required: false
+          type: string
+          enum:
+            - REPOSITORY_TYPE_UNSPECIFIED
+            - GITHUB
+            - GITLAB
+            - BITBUCKET
+            - CUSTOM
+          default: REPOSITORY_TYPE_UNSPECIFIED
+        - name: repositoryBranch
+          in: query
+          required: false
+          type: string
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: fileExtension
+          description: File extension to filter code references (e.g., ".js", ".go", ".py")
+          in: query
+          required: false
+          type: string
+      tags:
+        - Code Reference
+    post:
+      summary: Create
+      description: Create a new code reference. To call this API, you need a `WRITE` role.
+      operationId: web.v1.code_reference.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/coderefCreateCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/coderefCreateCodeReferenceRequest'
+      tags:
+        - Code Reference
+  /v1/code_references/{id}:
+    get:
+      summary: Get
+      description: Get a code reference by ID.
+      operationId: web.v1.code_reference.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/coderefGetCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - Code Reference
+    delete:
+      summary: Delete
+      description: Delete a code reference. To call this API, you need a `WRITE` role.
+      operationId: web.v1.code_reference.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/coderefDeleteCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - Code Reference
+    patch:
+      summary: Update
+      description: Update an existing code reference. To call this API, you need a `WRITE` role.
+      operationId: web.v1.code_reference.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/coderefUpdateCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/CodeReferenceServiceUpdateCodeReferenceBody'
+      tags:
+        - Code Reference
   /v1/environment/archive_environment:
     post:
       summary: Archive
@@ -3049,6 +3394,230 @@ paths:
             $ref: '#/definitions/environmentUpdateProjectRequest'
       tags:
         - Project
+  /v1/experiment:
+    get:
+      summary: Get
+      description: Get an experiment.
+      operationId: web.v1.experiment.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/experimentGetExperimentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: false
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - experiment
+    post:
+      summary: Create
+      description: Create an experiment.
+      operationId: web.v1.experiment.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/experimentCreateExperimentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/experimentCreateExperimentRequest'
+      tags:
+        - experiment
+  /v1/experiments:
+    get:
+      summary: List
+      description: List experiments.
+      operationId: web.v1.experiment.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/experimentListExperimentsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: featureId
+          in: query
+          required: false
+          type: string
+        - name: featureVersion
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: from
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: to
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: status
+          description: '[deprecated = true];'
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: maintainer
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: archived
+          in: query
+          required: false
+          type: boolean
+        - name: statuses
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - WAITING
+              - RUNNING
+              - STOPPED
+              - FORCE_STOPPED
+          collectionFormat: multi
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - experiment
   /v1/goal:
     get:
       summary: Get
@@ -3059,6 +3628,57 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/experimentGetGoalResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - goal
+    delete:
+      summary: Delete
+      description: Delete a goal.
+      operationId: web.v1.goal.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/experimentDeleteGoalResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -3149,6 +3769,54 @@ paths:
             $ref: '#/definitions/experimentCreateGoalRequest'
       tags:
         - goal
+    patch:
+      summary: Update
+      description: Update a goal.
+      operationId: web.v1.goal.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/experimentUpdateGoalResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/experimentUpdateGoalRequest'
+      tags:
+        - goal
   /v1/goals:
     get:
       summary: List
@@ -3209,6 +3877,7 @@ paths:
             - NAME
             - CREATED_AT
             - UPDATED_AT
+            - CONNECTION_TYPE
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -4095,6 +4764,7 @@ paths:
               - DOMAIN_EVENT_ORGANIZATION
               - DOMAIN_EVENT_FLAG_TRIGGER
               - DOMAIN_EVENT_TAG
+              - DOMAIN_EVENT_CODEREF
               - FEATURE_STALE
               - EXPERIMENT_RUNNING
               - MAU_COUNT
@@ -4320,6 +4990,15 @@ paths:
           in: query
           required: false
           type: string
+        - name: entityType
+          in: query
+          required: false
+          type: string
+          enum:
+            - UNSPECIFIED
+            - FEATURE_FLAG
+            - ACCOUNT
+          default: UNSPECIFIED
       tags:
         - tag
   /webhook/triggers/{token}:
@@ -4364,24 +5043,50 @@ definitions:
       - WriteType_OVERRIDE
       - WriteType_PATCH
     default: WriteType_UNSPECIFIED
-  ClauseOperator:
+  CodeReferenceRepositoryType:
     type: string
     enum:
-      - EQUALS
-      - IN
-      - ENDS_WITH
-      - STARTS_WITH
-      - SEGMENT
-      - GREATER
-      - GREATER_OR_EQUAL
-      - LESS
-      - LESS_OR_EQUAL
-      - BEFORE
-      - AFTER
-      - FEATURE_FLAG
-      - PARTIALLY_MATCH
-    default: EQUALS
-    description: ' - FEATURE_FLAG: Attribute is feature ID, and value is variation ID.'
+      - REPOSITORY_TYPE_UNSPECIFIED
+      - GITHUB
+      - GITLAB
+      - BITBUCKET
+      - CUSTOM
+    default: REPOSITORY_TYPE_UNSPECIFIED
+  CodeReferenceServiceUpdateCodeReferenceBody:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      filePath:
+        type: string
+      lineNumber:
+        type: integer
+        format: int32
+      codeSnippet:
+        type: string
+      contentHash:
+        type: string
+      aliases:
+        type: array
+        items:
+          type: string
+      repositoryName:
+        type: string
+      repositoryOwner:
+        type: string
+      repositoryType:
+        $ref: '#/definitions/CodeReferenceRepositoryType'
+      repositoryBranch:
+        type: string
+      commitHash:
+        type: string
+  ExperimentGoalReference:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
   FeatureVariationType:
     type: string
     enum:
@@ -4397,6 +5102,25 @@ definitions:
       - Action_ON
       - Action_OFF
     default: Action_UNKNOWN
+  GoalConnectionType:
+    type: string
+    enum:
+      - UNKNOWN
+      - EXPERIMENT
+      - OPERATION
+    default: UNKNOWN
+  ListExperimentsResponseSummary:
+    type: object
+    properties:
+      totalWaitingCount:
+        type: string
+        format: int64
+      totalRunningCount:
+        type: string
+        format: int64
+      totalStoppedCount:
+        type: string
+        format: int64
   ListFlagTriggersResponseFlagTriggerWithUrl:
     type: object
     properties:
@@ -4438,6 +5162,7 @@ definitions:
       - DOMAIN_EVENT_ORGANIZATION
       - DOMAIN_EVENT_FLAG_TRIGGER
       - DOMAIN_EVENT_TAG
+      - DOMAIN_EVENT_CODEREF
       - FEATURE_STALE
       - EXPERIMENT_RUNNING
       - MAU_COUNT
@@ -4445,10 +5170,10 @@ definitions:
   TagEntityType:
     type: string
     enum:
-      - UNKNOWN
+      - UNSPECIFIED
       - FEATURE_FLAG
       - ACCOUNT
-    default: UNKNOWN
+    default: UNSPECIFIED
   UpdateAccountV2RequestAccountV2Avatar:
     type: object
     properties:
@@ -5215,6 +5940,61 @@ definitions:
       expiry:
         type: string
         format: int64
+  autoopsActionType:
+    type: string
+    enum:
+      - UNKNOWN
+      - ENABLE
+      - DISABLE
+    default: UNKNOWN
+  autoopsAutoOpsRule:
+    type: object
+    properties:
+      id:
+        type: string
+      featureId:
+        type: string
+      opsType:
+        $ref: '#/definitions/autoopsOpsType'
+      clauses:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerautoopsClause'
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      deleted:
+        type: boolean
+      autoOpsStatus:
+        $ref: '#/definitions/autoopsAutoOpsStatus'
+  autoopsAutoOpsStatus:
+    type: string
+    enum:
+      - WAITING
+      - RUNNING
+      - FINISHED
+      - STOPPED
+    default: WAITING
+  autoopsOpsType:
+    type: string
+    enum:
+      - TYPE_UNKNOWN
+      - SCHEDULE
+      - EVENT_RATE
+    default: TYPE_UNKNOWN
+  bucketeerautoopsClause:
+    type: object
+    properties:
+      id:
+        type: string
+      clause:
+        $ref: '#/definitions/protobufAny'
+      actionType:
+        $ref: '#/definitions/autoopsActionType'
   bucketeerenvironmentOrganization:
     type: object
     properties:
@@ -5252,6 +6032,19 @@ definitions:
         format: int32
       ownerEmail:
         type: string
+  bucketeerfeatureClause:
+    type: object
+    properties:
+      id:
+        type: string
+      attribute:
+        type: string
+      operator:
+        $ref: '#/definitions/featureClauseOperator'
+      values:
+        type: array
+        items:
+          type: string
   bucketeerfeatureListTagsRequestOrderBy:
     type: string
     enum:
@@ -5352,6 +6145,120 @@ definitions:
         $ref: '#/definitions/TagEntityType'
       environmentId:
         type: string
+  coderefCodeReference:
+    type: object
+    properties:
+      id:
+        type: string
+      featureId:
+        type: string
+      filePath:
+        type: string
+      lineNumber:
+        type: integer
+        format: int32
+      codeSnippet:
+        type: string
+      contentHash:
+        type: string
+      aliases:
+        type: array
+        items:
+          type: string
+      repositoryName:
+        type: string
+      repositoryOwner:
+        type: string
+      repositoryType:
+        $ref: '#/definitions/CodeReferenceRepositoryType'
+      repositoryBranch:
+        type: string
+      commitHash:
+        type: string
+      environmentId:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      sourceUrl:
+        type: string
+        title: URL to view the code in the repository
+  coderefCreateCodeReferenceRequest:
+    type: object
+    properties:
+      featureId:
+        type: string
+      environmentId:
+        type: string
+      filePath:
+        type: string
+      lineNumber:
+        type: integer
+        format: int32
+      codeSnippet:
+        type: string
+      contentHash:
+        type: string
+      aliases:
+        type: array
+        items:
+          type: string
+      repositoryName:
+        type: string
+      repositoryOwner:
+        type: string
+      repositoryType:
+        $ref: '#/definitions/CodeReferenceRepositoryType'
+      repositoryBranch:
+        type: string
+      commitHash:
+        type: string
+  coderefCreateCodeReferenceResponse:
+    type: object
+    properties:
+      codeReference:
+        $ref: '#/definitions/coderefCodeReference'
+  coderefDeleteCodeReferenceResponse:
+    type: object
+  coderefGetCodeReferenceResponse:
+    type: object
+    properties:
+      codeReference:
+        $ref: '#/definitions/coderefCodeReference'
+  coderefListCodeReferencesRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  coderefListCodeReferencesRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  coderefListCodeReferencesResponse:
+    type: object
+    properties:
+      codeReferences:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/coderefCodeReference'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  coderefUpdateCodeReferenceResponse:
+    type: object
+    properties:
+      codeReference:
+        $ref: '#/definitions/coderefCodeReference'
   environmentArchiveEnvironmentV2Command:
     type: object
   environmentArchiveEnvironmentV2Request:
@@ -5900,6 +6807,40 @@ definitions:
         type: string
       baseVariationId:
         type: string
+  experimentCreateExperimentRequest:
+    type: object
+    properties:
+      command:
+        $ref: '#/definitions/experimentCreateExperimentCommand'
+        description: deprecated
+      environmentId:
+        type: string
+      featureId:
+        type: string
+      startAt:
+        type: string
+        format: int64
+      stopAt:
+        type: string
+        format: int64
+      goalIds:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      description:
+        type: string
+      baseVariationId:
+        type: string
+    required:
+      - environmentId
+      - featureId
+      - startAt
+      - stopAt
+      - goalIds
+      - name
+      - baseVariationId
   experimentCreateExperimentResponse:
     type: object
     properties:
@@ -5914,6 +6855,8 @@ definitions:
         type: string
       description:
         type: string
+      connectionType:
+        $ref: '#/definitions/GoalConnectionType'
   experimentCreateGoalRequest:
     type: object
     properties:
@@ -5928,6 +6871,8 @@ definitions:
         type: string
       description:
         type: string
+      connectionType:
+        $ref: '#/definitions/GoalConnectionType'
     required:
       - environmentId
       - id
@@ -5997,6 +6942,11 @@ definitions:
         type: string
       archived:
         type: boolean
+      goals:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/ExperimentGoalReference'
   experimentExperimentStatus:
     type: string
     enum:
@@ -6041,6 +6991,18 @@ definitions:
         description: This field is set only when APIs return.
       archived:
         type: boolean
+      connectionType:
+        $ref: '#/definitions/GoalConnectionType'
+      experiments:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/experimentExperiment'
+      autoOpsRules:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/autoopsAutoOpsRule'
   experimentListExperimentsRequestOrderBy:
     type: string
     enum:
@@ -6068,6 +7030,8 @@ definitions:
       totalCount:
         type: string
         format: int64
+      summary:
+        $ref: '#/definitions/ListExperimentsResponseSummary'
   experimentListGoalsRequestOrderBy:
     type: string
     enum:
@@ -6075,6 +7039,7 @@ definitions:
       - NAME
       - CREATED_AT
       - UPDATED_AT
+      - CONNECTION_TYPE
     default: DEFAULT
   experimentListGoalsRequestOrderDirection:
     type: string
@@ -6110,8 +7075,34 @@ definitions:
     type: object
   experimentUpdateExperimentResponse:
     type: object
+  experimentUpdateGoalRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      renameCommand:
+        $ref: '#/definitions/experimentRenameGoalCommand'
+        description: deprecated
+      changeDescriptionCommand:
+        $ref: '#/definitions/experimentChangeDescriptionGoalCommand'
+        description: deprecated
+      environmentId:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      archived:
+        type: boolean
+        description: if true, the goal will be archived
+    required:
+      - id
+      - environmentId
   experimentUpdateGoalResponse:
     type: object
+    properties:
+      goal:
+        $ref: '#/definitions/experimentGoal'
   featureAddSegmentUserCommand:
     type: object
     properties:
@@ -6176,19 +7167,24 @@ definitions:
     properties:
       description:
         type: string
-  featureClause:
-    type: object
-    properties:
-      id:
-        type: string
-      attribute:
-        type: string
-      operator:
-        $ref: '#/definitions/ClauseOperator'
-      values:
-        type: array
-        items:
-          type: string
+  featureClauseOperator:
+    type: string
+    enum:
+      - EQUALS
+      - IN
+      - ENDS_WITH
+      - STARTS_WITH
+      - SEGMENT
+      - GREATER
+      - GREATER_OR_EQUAL
+      - LESS
+      - LESS_OR_EQUAL
+      - BEFORE
+      - AFTER
+      - FEATURE_FLAG
+      - PARTIALLY_MATCH
+    default: EQUALS
+    description: ' - FEATURE_FLAG: Attribute is feature ID, and value is variation ID.'
   featureCloneFeatureCommand:
     type: object
     properties:
@@ -6675,7 +7671,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/featureClause'
+          $ref: '#/definitions/bucketeerfeatureClause'
   featureSegment:
     type: object
     properties:

@@ -12,11 +12,13 @@ yup.setLocale(yupLocale);
 const idSchema = yup.string().required().max(GOAL_ID_MAX_LENGTH);
 const nameSchema = yup.string().required().max(GOAL_NAME_MAX_LENGTH);
 const descriptionSchema = yup.string().max(GOAL_DESCRIPTION_MAX_LENGTH);
+const connectionTypeSchema = yup.string().required();
 
 export const addFormSchema = yup.object().shape({
   id: idSchema,
   name: nameSchema,
-  description: descriptionSchema
+  description: descriptionSchema,
+  connectionType: connectionTypeSchema
 });
 
 export const updateFormSchema = yup.object().shape({

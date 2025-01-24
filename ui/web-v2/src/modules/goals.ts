@@ -98,6 +98,7 @@ interface CreateGoalParams {
   id: string;
   name: string;
   description: string;
+  connectionType: Goal.ConnectionTypeMap[keyof Goal.ConnectionTypeMap];
 }
 
 export const createGoal = createAsyncThunk<
@@ -111,6 +112,7 @@ export const createGoal = createAsyncThunk<
   command.setId(params.id);
   command.setName(params.name);
   command.setDescription(params.description);
+  params.connectionType && command.setConnectionType(params.connectionType);
   request.setCommand(command);
   await grpc.createGoal(request);
 });

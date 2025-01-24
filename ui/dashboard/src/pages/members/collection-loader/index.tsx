@@ -12,6 +12,8 @@ import { EmptyCollection } from '../collection-layout/empty-collection';
 import { MemberActionsType, MembersFilters } from '../types';
 import { useFetchMembers } from './use-fetch-members';
 
+export * from './use-fetch-tags';
+
 const CollectionLoader = ({
   filters,
   setFilters,

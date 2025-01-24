@@ -33,7 +33,7 @@ func TestHandleRenameGoalCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	g, err := domain.NewGoal("gId", "gName", "gDesc")
+	g, err := domain.NewGoal("gId", "gName", "gDesc", experimentproto.Goal_UNKNOWN)
 	assert.NoError(t, err)
 
 	h := newGoalCommandHandler(t, publisher, g)
@@ -50,7 +50,7 @@ func TestHandleChangeDescriptionGoalCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	g, err := domain.NewGoal("gId", "gName", "gDesc")
+	g, err := domain.NewGoal("gId", "gName", "gDesc", experimentproto.Goal_UNKNOWN)
 	assert.NoError(t, err)
 
 	h := newGoalCommandHandler(t, publisher, g)
@@ -67,7 +67,7 @@ func TestHandleArchiveGoalCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	g, err := domain.NewGoal("gId", "gName", "gDesc")
+	g, err := domain.NewGoal("gId", "gName", "gDesc", experimentproto.Goal_UNKNOWN)
 	assert.NoError(t, err)
 
 	h := newGoalCommandHandler(t, publisher, g)
@@ -83,7 +83,7 @@ func TestHandleDeleteGoalCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	g, err := domain.NewGoal("gId", "gName", "gDesc")
+	g, err := domain.NewGoal("gId", "gName", "gDesc", experimentproto.Goal_UNKNOWN)
 	assert.NoError(t, err)
 
 	h := newGoalCommandHandler(t, publisher, g)

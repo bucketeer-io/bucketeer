@@ -19,6 +19,7 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/tag";
 
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
+import "google/protobuf/wrappers.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/tag/tag.proto";
@@ -61,6 +62,7 @@ message ListTagsRequest {
   string search_keyword = 6;
   string environment_id = 7;
   string organization_id = 8;
+  Tag.EntityType entity_type = 9;
 }
 
 message ListTagsResponse {

@@ -277,6 +277,7 @@ export const operationFormSchema = yup.object().shape({
 export type OperationForm = yup.InferType<typeof operationFormSchema>;
 
 const tagsSchema = yup.array().min(FEATURE_TAG_MIN_SIZE).of(yup.string());
+const settingsTagsSchema = yup.array().of(yup.string());
 
 export const switchEnabledFormSchema = (requireComment: boolean) => {
   return yup.object().shape({
@@ -339,7 +340,7 @@ export const settingsFormSchema = (requireComment: boolean) =>
   yup.object().shape({
     name: nameSchema,
     description: descriptionSchema,
-    tags: tagsSchema,
+    tags: settingsTagsSchema,
     comment: requireComment ? commentSchema : yup.string()
   });
 

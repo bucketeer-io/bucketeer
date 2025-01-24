@@ -25,6 +25,7 @@ import (
 	md "google.golang.org/grpc/metadata"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
+	autoopsclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -40,12 +41,14 @@ func TestNewExperimentService(t *testing.T) {
 	defer mockController.Finish()
 	featureClientMock := featureclientmock.NewMockClient(mockController)
 	accountClientMock := accountclientmock.NewMockClient(mockController)
+	autoOpsClientMock := autoopsclientmock.NewMockClient(mockController)
 	mysqlClient := mysqlmock.NewMockClient(mockController)
 	p := publishermock.NewMockPublisher(mockController)
 	logger := zap.NewNop()
 	s := NewExperimentService(
 		featureClientMock,
 		accountClientMock,
+		autoOpsClientMock,
 		mysqlClient,
 		p,
 		WithLogger(logger),
@@ -104,10 +107,11 @@ func createExperimentService(c *gomock.Controller, specifiedEnvironmentId *strin
 		},
 	}
 	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	autoOpsClientMock := autoopsclientmock.NewMockClient(c)
 	mysqlClient := mysqlmock.NewMockClient(c)
 	p := publishermock.NewMockPublisher(c)
 	p.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-	es := NewExperimentService(featureClientMock, accountClientMock, mysqlClient, p)
+	es := NewExperimentService(featureClientMock, accountClientMock, autoOpsClientMock, mysqlClient, p)
 	return es.(*experimentService)
 }
 

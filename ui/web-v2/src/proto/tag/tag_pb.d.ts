@@ -48,10 +48,47 @@ export namespace Tag {
   };
 
   export interface EntityTypeMap {
-    UNKNOWN: 0;
+    UNSPECIFIED: 0;
     FEATURE_FLAG: 1;
     ACCOUNT: 2;
   }
 
   export const EntityType: EntityTypeMap;
+}
+
+export class EnvironmentTag extends jspb.Message {
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  clearTagsList(): void;
+  getTagsList(): Array<Tag>;
+  setTagsList(value: Array<Tag>): void;
+  addTags(value?: Tag, index?: number): Tag;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnvironmentTag.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: EnvironmentTag
+  ): EnvironmentTag.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: EnvironmentTag,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): EnvironmentTag;
+  static deserializeBinaryFromReader(
+    message: EnvironmentTag,
+    reader: jspb.BinaryReader
+  ): EnvironmentTag;
+}
+
+export namespace EnvironmentTag {
+  export type AsObject = {
+    environmentId: string;
+    tagsList: Array<Tag.AsObject>;
+  };
 }

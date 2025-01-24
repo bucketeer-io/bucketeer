@@ -1,11 +1,11 @@
 import axiosClient from '@api/axios-client';
 import { EntityType, Tag } from '@types';
 
-export type TagCreatorPayload = {
+export interface TagCreatorPayload {
   name: string;
   environmentId: string;
   entityType: EntityType;
-};
+}
 
 export interface TagCreatorResponse {
   tag: Tag;

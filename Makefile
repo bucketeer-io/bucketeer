@@ -235,7 +235,7 @@ create-api-key:
 		--name=${API_KEY_NAME} \
 		--role=${API_KEY_ROLE} \
 		--output=${API_KEY_PATH} \
-		--environment-namespace=${ENVIRONMENT_NAMESPACE} \
+		--environment-id=${ENVIRONMENT_ID} \
 		--no-profile \
 		--no-gcp-trace-enabled
 
@@ -250,7 +250,7 @@ e2e-l4:
 		-gateway-port=9000 \
 		-gateway-cert=${GATEWAY_CERT_PATH} \
 		-service-token=${SERVICE_TOKEN_PATH} \
-		-environment-namespace=${ENVIRONMENT_NAMESPACE} \
+		-environment-id=${ENVIRONMENT_ID} \
 		-test-id=${TEST_ID}
 
 .PHONY: e2e
@@ -265,7 +265,7 @@ e2e:
 		-gateway-port=443 \
 		-gateway-cert=${GATEWAY_CERT_PATH} \
 		-service-token=${SERVICE_TOKEN_PATH} \
-		-environment-namespace=${ENVIRONMENT_NAMESPACE} \
+		-environment-id=${ENVIRONMENT_ID} \
 		-organization-id=${ORGANIZATION_ID} \
 		-test-id=${TEST_ID}	
 

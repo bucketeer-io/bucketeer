@@ -2,14 +2,14 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { pushUpdater } from '@api/push';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidatePushes } from '@queries/pushes';
-import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
+import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { Push } from '@types';
+import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -54,15 +54,11 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
     organizationId: currentEnvironment.organizationId
   });
 
-  const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
-    params: {
-      cursor: String(0),
-      pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id,
-      entityType: 'FEATURE_FLAG'
-    }
+  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
+    organizationId: currentEnvironment.organizationId,
+    entityType: 'FEATURE_FLAG'
   });
-  const tagOptions = tagCollection?.tags || [];
+  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
   const environments = (collection?.environments || []).filter(item => item.id);
 
   const form = useForm({

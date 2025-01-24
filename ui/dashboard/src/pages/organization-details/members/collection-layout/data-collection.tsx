@@ -1,13 +1,12 @@
 import { IconMoreHorizOutlined } from 'react-icons-material-design';
-import { useQueryTags } from '@queries/tags';
 import type { ColumnDef } from '@tanstack/react-table';
 import primaryAvatar from 'assets/avatars/primary.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { useTranslation } from 'i18n';
 import { Account } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { joinName } from 'utils/name';
+import { useFetchTags } from 'pages/members/collection-loader';
 import { AvatarImage } from 'components/avatar';
 import Icon from 'components/icon';
 import ExpandableTag from 'elements/expandable-tag';
@@ -22,13 +21,8 @@ export const useColumns = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const { data: tagCollection } = useQueryTags({
-    params: {
-      cursor: String(0),
-      pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id,
-      entityType: 'ACCOUNT'
-    }
+  const { data: tagCollection } = useFetchTags({
+    organizationId: currentEnvironment.organizationId
   });
 
   const tagList = tagCollection?.tags || [];

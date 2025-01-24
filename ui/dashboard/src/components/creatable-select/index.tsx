@@ -20,6 +20,7 @@ export interface CreatableSelectProps {
   ) => void;
   value?: MultiValue<Option>;
   placeholder?: string;
+  onCreateOption?: (v: string) => void;
 }
 
 const textColor = '#475569';
@@ -98,7 +99,8 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
     defaultValues,
     closeMenuOnSelect,
     value,
-    placeholder = ''
+    placeholder = '',
+    onCreateOption
   }) => {
     return (
       <ReactCreatableSelect
@@ -115,6 +117,7 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
         isSearchable={isSearchable}
         value={value}
         defaultValue={defaultValues}
+        onCreateOption={onCreateOption}
         onChange={(newValue, actionMeta) =>
           onChange(newValue as MultiValue<Option>, actionMeta)
         }

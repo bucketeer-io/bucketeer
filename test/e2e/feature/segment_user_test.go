@@ -105,7 +105,7 @@ func TestListSegmentUsersPageSize(t *testing.T) {
 		PageSize:      pageSize,
 		SegmentId:     segmentID,
 		State:         &wrappersproto.Int32Value{Value: int32(featureproto.SegmentUser_INCLUDED)},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, pageSize, int64(len(res.Users)))
@@ -129,7 +129,7 @@ func TestListSegmentUsersCursor(t *testing.T) {
 			Cursor:        cursor,
 			SegmentId:     segmentID,
 			State:         state,
-			EnvironmentId: *environmentNamespace,
+			EnvironmentId: *environmentID,
 		})
 		assert.NoError(t, err)
 		assert.NotEmpty(t, res.Cursor)
@@ -177,7 +177,7 @@ func TestBulkUploadAndDownloadSegmentUsers(t *testing.T) {
 	sort.Strings(uids)
 	userIDs := []byte(fmt.Sprintf("%s\n%s\n%s\n", uids[0], uids[1], uids[2]))
 	uploadRes, err := client.BulkUploadSegmentUsers(ctx, &featureproto.BulkUploadSegmentUsersRequest{
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 		SegmentId:     segmentID,
 		Command: &featureproto.BulkUploadSegmentUsersCommand{
 			Data:  userIDs,
@@ -207,7 +207,7 @@ func addSegmentUser(ctx context.Context, t *testing.T, client featureclient.Clie
 			UserIds: userIDs,
 			State:   state,
 		},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	res, err := client.AddSegmentUser(ctx, req)
 	assert.NotNil(t, res)
@@ -221,7 +221,7 @@ func deleteSegmentUser(ctx context.Context, t *testing.T, client featureclient.C
 			UserIds: userIDs,
 			State:   state,
 		},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	res, err := client.DeleteSegmentUser(ctx, req)
 	assert.NotNil(t, res)
@@ -234,7 +234,7 @@ func getSegmentUser(ctx context.Context, t *testing.T, client featureclient.Clie
 		SegmentId:     segmentID,
 		UserId:        userID,
 		State:         state,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	res, err := client.GetSegmentUser(ctx, req)
 	assert.NoError(t, err)
@@ -246,7 +246,7 @@ func listSegmentUsers(ctx context.Context, t *testing.T, client featureclient.Cl
 	req := &featureproto.ListSegmentUsersRequest{
 		SegmentId:     segmentID,
 		State:         state,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	res, err := client.ListSegmentUsers(ctx, req)
 	assert.NoError(t, err)
@@ -282,7 +282,7 @@ func bulkDownloadSegmentUsers(t *testing.T, client featureclient.Client, segment
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	return client.BulkDownloadSegmentUsers(ctx, &featureproto.BulkDownloadSegmentUsersRequest{
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 		SegmentId:     segmentID,
 		State:         featureproto.SegmentUser_INCLUDED,
 	})

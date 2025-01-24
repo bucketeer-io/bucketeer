@@ -1,9 +1,8 @@
-import { useQueryTags } from '@queries/tags';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { useTranslation } from 'i18n';
 import { Account } from '@types';
 import { joinName } from 'utils/name';
+import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Divider from 'components/divider';
 import SlideModal from 'components/modal/slide';
@@ -29,13 +28,8 @@ const MemberDetailsModal = ({
     organizationId: currentEnvironment.organizationId
   });
 
-  const { data: tagCollection } = useQueryTags({
-    params: {
-      cursor: String(0),
-      pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id,
-      entityType: 'ACCOUNT'
-    }
+  const { data: tagCollection } = useFetchTags({
+    organizationId: currentEnvironment.organizationId
   });
 
   const environments = collection?.environments || [];
