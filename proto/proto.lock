@@ -15949,6 +15949,10 @@
                 "integer": 210
               },
               {
+                "name": "EXPERIMENT_UPDATED",
+                "integer": 211
+              },
+              {
                 "name": "ACCOUNT_CREATED",
                 "integer": 300,
                 "options": [
@@ -17678,6 +17682,41 @@
                 "id": 2,
                 "name": "description",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ExperimentUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "start_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "stop_at",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "status",
+                "type": "experiment.Experiment.Status"
               }
             ]
           },
@@ -19969,6 +20008,9 @@
           },
           {
             "path": "proto/experiment/goal.proto"
+          },
+          {
+            "path": "proto/experiment/experiment.proto"
           },
           {
             "path": "proto/coderef/code_reference.proto"
@@ -22610,37 +22652,154 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 5,
                 "name": "change_experiment_period_command",
-                "type": "ChangeExperimentPeriodCommand"
+                "type": "ChangeExperimentPeriodCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 6,
                 "name": "change_name_command",
-                "type": "ChangeExperimentNameCommand"
+                "type": "ChangeExperimentNameCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 7,
                 "name": "change_description_command",
-                "type": "ChangeExperimentDescriptionCommand"
+                "type": "ChangeExperimentDescriptionCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 8,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 9,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 10,
+                "name": "description",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 11,
+                "name": "start_at",
+                "type": "google.protobuf.Int64Value"
+              },
+              {
+                "id": 12,
+                "name": "stop_at",
+                "type": "google.protobuf.Int64Value"
+              },
+              {
+                "id": 13,
+                "name": "archived",
+                "type": "google.protobuf.BoolValue",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "if true, the experiment will be archived"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 14,
+                "name": "status",
+                "type": "UpdatedStatus"
               }
             ],
             "reserved_ids": [
               2,
               3,
               4
+            ],
+            "messages": [
+              {
+                "name": "UpdatedStatus",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "status",
+                    "type": "Experiment.Status"
+                  }
+                ]
+              }
             ]
           },
           {
-            "name": "UpdateExperimentResponse"
+            "name": "UpdateExperimentResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "experiment",
+                "type": "Experiment"
+              }
+            ]
           },
           {
             "name": "StartExperimentRequest",

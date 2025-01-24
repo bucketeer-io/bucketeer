@@ -870,6 +870,36 @@ export class UpdateExperimentRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasStartAt(): boolean;
+  clearStartAt(): void;
+  getStartAt(): google_protobuf_wrappers_pb.Int64Value | undefined;
+  setStartAt(value?: google_protobuf_wrappers_pb.Int64Value): void;
+
+  hasStopAt(): boolean;
+  clearStopAt(): void;
+  getStopAt(): google_protobuf_wrappers_pb.Int64Value | undefined;
+  setStopAt(value?: google_protobuf_wrappers_pb.Int64Value): void;
+
+  hasArchived(): boolean;
+  clearArchived(): void;
+  getArchived(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setArchived(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  hasStatus(): boolean;
+  clearStatus(): void;
+  getStatus(): UpdateExperimentRequest.UpdatedStatus | undefined;
+  setStatus(value?: UpdateExperimentRequest.UpdatedStatus): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateExperimentRequest.AsObject;
   static toObject(
@@ -898,10 +928,54 @@ export namespace UpdateExperimentRequest {
     changeNameCommand?: proto_experiment_command_pb.ChangeExperimentNameCommand.AsObject;
     changeDescriptionCommand?: proto_experiment_command_pb.ChangeExperimentDescriptionCommand.AsObject;
     environmentId: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    startAt?: google_protobuf_wrappers_pb.Int64Value.AsObject;
+    stopAt?: google_protobuf_wrappers_pb.Int64Value.AsObject;
+    archived?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    status?: UpdateExperimentRequest.UpdatedStatus.AsObject;
   };
+
+  export class UpdatedStatus extends jspb.Message {
+    getStatus(): proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap];
+    setStatus(
+      value: proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap]
+    ): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UpdatedStatus.AsObject;
+    static toObject(
+      includeInstance: boolean,
+      msg: UpdatedStatus
+    ): UpdatedStatus.AsObject;
+    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+    static extensionsBinary: {
+      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+    };
+    static serializeBinaryToWriter(
+      message: UpdatedStatus,
+      writer: jspb.BinaryWriter
+    ): void;
+    static deserializeBinary(bytes: Uint8Array): UpdatedStatus;
+    static deserializeBinaryFromReader(
+      message: UpdatedStatus,
+      reader: jspb.BinaryReader
+    ): UpdatedStatus;
+  }
+
+  export namespace UpdatedStatus {
+    export type AsObject = {
+      status: proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap];
+    };
+  }
 }
 
 export class UpdateExperimentResponse extends jspb.Message {
+  hasExperiment(): boolean;
+  clearExperiment(): void;
+  getExperiment(): proto_experiment_experiment_pb.Experiment | undefined;
+  setExperiment(value?: proto_experiment_experiment_pb.Experiment): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateExperimentResponse.AsObject;
   static toObject(
@@ -924,7 +998,9 @@ export class UpdateExperimentResponse extends jspb.Message {
 }
 
 export namespace UpdateExperimentResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    experiment?: proto_experiment_experiment_pb.Experiment.AsObject;
+  };
 }
 
 export class StartExperimentRequest extends jspb.Message {

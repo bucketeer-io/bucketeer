@@ -25,6 +25,7 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 
@@ -382,6 +383,101 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 				Id:                "id-1",
 				ChangeNameCommand: &experimentproto.ChangeExperimentNameCommand{Name: "test-name"},
 				EnvironmentId:     "ns0",
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		service := createExperimentService(mockController, nil, nil, nil)
+		if p.setup != nil {
+			p.setup(service)
+		}
+		_, err := service.UpdateExperiment(ctx, p.req)
+		assert.Equal(t, p.expectedErr, err)
+	}
+}
+
+func TestUpdateExperimentNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithTokenAndMetadata(metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*experimentService)
+		req         *experimentproto.UpdateExperimentRequest
+		expectedErr error
+	}{
+		{
+			desc:  "error id required",
+			setup: nil,
+			req: &experimentproto.UpdateExperimentRequest{
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc:  "period too long",
+			setup: nil,
+			req: &experimentproto.UpdateExperimentRequest{
+				Id:            "id-1",
+				StartAt:       wrapperspb.Int64(time.Now().Unix()),
+				StopAt:        wrapperspb.Int64(time.Now().AddDate(0, 0, 31).Unix()),
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusPeriodTooLong, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "period")),
+		},
+		{
+			desc:  "invalid period input",
+			setup: nil,
+			req: &experimentproto.UpdateExperimentRequest{
+				Id:            "id-1",
+				StartAt:       wrapperspb.Int64(time.Now().Unix()),
+				StopAt:        nil,
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusPeriodInvalid, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "period")),
+		},
+		{
+			desc: "experiment not found",
+			setup: func(s *experimentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(v2es.ErrExperimentNotFound)
+			},
+			req: &experimentproto.UpdateExperimentRequest{
+				Id:            "id-0",
+				EnvironmentId: "ns0",
+				Name:          wrapperspb.String("new-name"),
+			},
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *experimentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &experimentproto.UpdateExperimentRequest{
+				Id:            "id-1",
+				Name:          wrapperspb.String("new-name"),
+				StartAt:       wrapperspb.Int64(time.Now().Unix()),
+				StopAt:        wrapperspb.Int64(time.Now().AddDate(0, 0, 1).Unix()),
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},

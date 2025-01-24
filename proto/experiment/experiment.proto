@@ -22,7 +22,7 @@ import "proto/feature/variation.proto";
 message Experiment {
   enum Status {
     WAITING = 0;
-    RUNNING = 1;
+    ®RUNNING = 1;
     STOPPED = 2;
     FORCE_STOPPED = 3;
   }

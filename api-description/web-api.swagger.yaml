@@ -4893,6 +4893,11 @@ definitions:
     properties:
       role:
         $ref: '#/definitions/AccountV2RoleOrganization'
+  UpdateExperimentRequestUpdatedStatus:
+    type: object
+    properties:
+      status:
+        $ref: '#/definitions/experimentExperimentStatus'
   UpdateFeatureTargetingRequestFrom:
     type: string
     enum:
@@ -6740,6 +6745,9 @@ definitions:
     type: object
   experimentUpdateExperimentResponse:
     type: object
+    properties:
+      experiment:
+        $ref: '#/definitions/experimentExperiment'
   experimentUpdateGoalRequest:
     type: object
     properties:

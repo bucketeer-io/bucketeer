@@ -185,19 +185,48 @@ message CreateExperimentResponse {
 }
 
 message UpdateExperimentRequest {
-  string id = 1;
+  message UpdatedStatus {
+    Experiment.Status status = 1;
+  }
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
   reserved 2;  // ChangeStartAtExperimentCommand change_start_at_command = 2
                // [deprecated = true];
   reserved 3;  // ChangeStopAtExperimentCommand change_stop_at_command = 3
                // [deprecated = true];
   reserved 4;
-  ChangeExperimentPeriodCommand change_experiment_period_command = 5;
-  ChangeExperimentNameCommand change_name_command = 6;
-  ChangeExperimentDescriptionCommand change_description_command = 7;
-  string environment_id = 8;
+  ChangeExperimentPeriodCommand change_experiment_period_command = 5 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  ChangeExperimentNameCommand change_name_command = 6 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  ChangeExperimentDescriptionCommand change_description_command = 7 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  string environment_id = 8 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.StringValue name = 9;
+  google.protobuf.StringValue description = 10;
+  google.protobuf.Int64Value start_at = 11;
+  google.protobuf.Int64Value stop_at = 12;
+  google.protobuf.BoolValue archived = 13
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "if true, the experiment will be archived"
+      }];
+  UpdatedStatus status = 14;
 }
 
-message UpdateExperimentResponse {}
+message UpdateExperimentResponse {
+  Experiment experiment = 1;
+}
 
 message StartExperimentRequest {
   reserved 1;
