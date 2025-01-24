@@ -47,34 +47,86 @@ Response Ex：
 
 
 ## Correction points
-### Point1：Add a response using ErrorInfo in case of error
-Add `ErrorInfo` with `Status.WithDetails()` when an error occurs.
+### Point1: Add common functions that generate errors
+Create `NewError()` for each package.
+
+Ex: account Package
+```go
+func NewError(status *gstatus.Status, anoterDetailData ...map[string]string) error {
+	domain := "account.bucketeer.io"
+	var details []*errdetails.ErrorInfo
+	var reason string
+	var messageKey string
+	var metadatas []map[string]string
+	if status == statusEmailIsEmpty {
+		reason = "INVALID"
+		messageKey = "account.invalid.empty"
+		metadatas = []map[string]string{
+			{
+				"messageKey": messageKey,
+				"feild":      "email",
+			},
+		}
+	} else if status == statusInvalidEmail {
+		reason = "INVALID"
+		messageKey = "account.invalid.format"
+		metadatas = []map[string]string{
+			{
+				"messageKey": messageKey,
+				"feild":      "email",
+			},
+		}
+	} else if {
+          ...
+        }
+
+        // when adding multiple details
+	for _, md := range anoterDetailData {
+		for k, v := range md {
+			metadatas = append(metadatas, map[string]string{
+				"messageKey": messageKey,
+				k:            v,
+			})
+		}
+	}
+
+	for _, md := range metadatas {
+		details = append(details, &errdetails.ErrorInfo{
+			Reason:   reason,
+			Domain:   domain,
+			Metadata: md,
+		})
+	}
+
+	detailMessages := make([]protoiface.MessageV1, len(details))
+	for i, d := range details {
+		detailMessages[i] = d
+	}
+	dt, err := status.WithDetails(detailMessages...)
+	if err != nil {
+		return statusInternal.Err()
+	}
+	return dt.Err()
+}
+```
+
+### Point2：Add a response using NewError() in case of error
+If an error occurs, use `NewError()` and pass the status that occurred. 
+
+If we want to add information, pass anoterDetailData as necessary.
 ```go
 func validateGetAccountV2Request(req *accountproto.GetAccountV2Request, localizer locale.Localizer) error {
-	if req.Email == "" {
-		dt, err := statusEmailIsEmpty.WithDetails(
-			&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
-			},
-                        // Add
-			&errdetails.ErrorInfo{
-				Reason: "INVALID",
-				Domain: "account.bucketeer.io",
-				Metadata: map[string]string{
-					"messageKey": "account.invalid.empty",
-					"feild":      "email",
-				},
-			})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+	if !verifyEmailFormat(req.Command.Email) {
+		return NewError(statusInvalidEmail,
+                                map[string]string{
+                                  "value": req.Command.Email,
+                                }
+                       )
 	}
 ...
 ```
 
-### Point２：Remove localize massage code
+### Point３：Remove localize massage code
 Removed `LocalizedMessage` return code in case of error.
 
 ```go
