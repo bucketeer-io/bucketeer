@@ -19,6 +19,7 @@ import (
 	"errors"
 	"strconv"
 
+	pb "github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -772,6 +773,13 @@ func (s *experimentService) updateExperimentNoCommand(
 ) (*proto.UpdateExperimentResponse, error) {
 	err := validateUpdateExperimentNoCommandRequest(req, localizer)
 	if err != nil {
+		s.logger.Error(
+			"Failed validate update experiment no command req",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
 		return nil, err
 	}
 
@@ -787,34 +795,42 @@ func (s *experimentService) updateExperimentNoCommand(
 			req.StartAt,
 			req.StopAt,
 			req.Status,
-			nil,
+			req.Archived,
 		)
 		if err != nil {
-			return nil
+			return err
 		}
 
-		event, err := domainevent.NewEvent(
-			editor,
-			eventproto.Event_EXPERIMENT,
-			experiment.Id,
-			eventproto.Event_EXPERIMENT_UPDATED,
-			&eventproto.ExperimentUpdatedEvent{
+		var eventMsg pb.Message
+		if req.Archived != nil {
+			eventMsg = &eventproto.ExperimentArchivedEvent{
+				Id: req.Id,
+			}
+		} else {
+			eventMsg = &eventproto.ExperimentUpdatedEvent{
 				Id:          experiment.Id,
 				Name:        updated.Name,
 				Description: updated.Description,
 				StartAt:     updated.StartAt,
 				StopAt:      updated.StopAt,
 				Status:      updated.Status,
-			},
+			}
+		}
+		event, err := domainevent.NewEvent(
+			editor,
+			eventproto.Event_EXPERIMENT,
+			experiment.Id,
+			eventproto.Event_EXPERIMENT_UPDATED,
+			eventMsg,
 			req.EnvironmentId,
 			updated,
 			experiment,
 		)
 		if err != nil {
-			return nil
+			return err
 		}
 		if err := s.publisher.Publish(ctxWithTx, event); err != nil {
-			return nil
+			return err
 		}
 		return experimentStorage.UpdateExperiment(ctxWithTx, updated, req.EnvironmentId)
 	})
