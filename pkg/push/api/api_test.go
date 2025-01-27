@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/push"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -29,6 +28,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	proto "github.com/bucketeer-io/bucketeer/proto/push"
 
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 
