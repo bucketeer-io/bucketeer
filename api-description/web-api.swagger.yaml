@@ -3394,6 +3394,278 @@ paths:
             $ref: '#/definitions/environmentUpdateProjectRequest'
       tags:
         - Project
+  /v1/experiment:
+    get:
+      summary: Get
+      description: Get an experiment.
+      operationId: web.v1.experiment.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/experimentGetExperimentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: false
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - experiment
+    post:
+      summary: Create
+      description: Create an experiment.
+      operationId: web.v1.experiment.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/experimentCreateExperimentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/experimentCreateExperimentRequest'
+      tags:
+        - experiment
+    patch:
+      summary: Update
+      description: Update an experiment.
+      operationId: web.v1.experiment.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/experimentUpdateExperimentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/experimentUpdateExperimentRequest'
+      tags:
+        - experiment
+  /v1/experiments:
+    get:
+      summary: List
+      description: List experiments.
+      operationId: web.v1.experiment.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/experimentListExperimentsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: featureId
+          in: query
+          required: false
+          type: string
+        - name: featureVersion
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: from
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: to
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: status
+          description: '[deprecated = true];'
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: maintainer
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: archived
+          in: query
+          required: false
+          type: boolean
+        - name: statuses
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - WAITING
+              - RUNNING
+              - STOPPED
+              - FORCE_STOPPED
+          collectionFormat: multi
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - experiment
   /v1/goal:
     get:
       summary: Get
@@ -3404,6 +3676,57 @@ paths:
           description: A successful response.
           schema:
             $ref: '#/definitions/experimentGetGoalResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - goal
+    delete:
+      summary: Delete
+      description: Delete a goal.
+      operationId: web.v1.goal.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/experimentDeleteGoalResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -4805,6 +5128,13 @@ definitions:
         type: string
       commitHash:
         type: string
+  ExperimentGoalReference:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
   FeatureVariationType:
     type: string
     enum:
@@ -4827,6 +5157,18 @@ definitions:
       - EXPERIMENT
       - OPERATION
     default: UNKNOWN
+  ListExperimentsResponseSummary:
+    type: object
+    properties:
+      totalWaitingCount:
+        type: string
+        format: int64
+      totalRunningCount:
+        type: string
+        format: int64
+      totalStoppedCount:
+        type: string
+        format: int64
   ListFlagTriggersResponseFlagTriggerWithUrl:
     type: object
     properties:
@@ -6518,6 +6860,40 @@ definitions:
         type: string
       baseVariationId:
         type: string
+  experimentCreateExperimentRequest:
+    type: object
+    properties:
+      command:
+        $ref: '#/definitions/experimentCreateExperimentCommand'
+        description: deprecated
+      environmentId:
+        type: string
+      featureId:
+        type: string
+      startAt:
+        type: string
+        format: int64
+      stopAt:
+        type: string
+        format: int64
+      goalIds:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      description:
+        type: string
+      baseVariationId:
+        type: string
+    required:
+      - environmentId
+      - featureId
+      - startAt
+      - stopAt
+      - goalIds
+      - name
+      - baseVariationId
   experimentCreateExperimentResponse:
     type: object
     properties:
@@ -6619,6 +6995,11 @@ definitions:
         type: string
       archived:
         type: boolean
+      goals:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/ExperimentGoalReference'
   experimentExperimentStatus:
     type: string
     enum:
@@ -6702,6 +7083,8 @@ definitions:
       totalCount:
         type: string
         format: int64
+      summary:
+        $ref: '#/definitions/ListExperimentsResponseSummary'
   experimentListGoalsRequestOrderBy:
     type: string
     enum:
@@ -6743,6 +7126,40 @@ definitions:
     type: object
   experimentStopExperimentResponse:
     type: object
+  experimentUpdateExperimentRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      changeExperimentPeriodCommand:
+        $ref: '#/definitions/experimentChangeExperimentPeriodCommand'
+        description: deprecated
+      changeNameCommand:
+        $ref: '#/definitions/experimentChangeExperimentNameCommand'
+        description: deprecated
+      changeDescriptionCommand:
+        $ref: '#/definitions/experimentChangeExperimentDescriptionCommand'
+        description: deprecated
+      environmentId:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      startAt:
+        type: string
+        format: int64
+      stopAt:
+        type: string
+        format: int64
+      archived:
+        type: boolean
+        description: if true, the experiment will be archived
+      status:
+        $ref: '#/definitions/UpdateExperimentRequestUpdatedStatus'
+    required:
+      - id
+      - environmentId
   experimentUpdateExperimentResponse:
     type: object
     properties:

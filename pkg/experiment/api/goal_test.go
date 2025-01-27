@@ -654,37 +654,25 @@ func TestDeleteGoalMySQL(t *testing.T) {
 			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
 		},
 		{
-			setup: nil,
-			req: &experimentproto.DeleteGoalRequest{
-				Id:            "id-0",
-				EnvironmentId: "ns0",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
-		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrGoalNotFound)
 			},
 			req: &experimentproto.DeleteGoalRequest{
 				Id:            "id-0",
-				Command:       &experimentproto.DeleteGoalCommand{},
 				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &experimentproto.DeleteGoalRequest{
 				Id:            "id-1",
-				Command:       &experimentproto.DeleteGoalCommand{},
 				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
