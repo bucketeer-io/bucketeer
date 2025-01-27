@@ -1,12 +1,15 @@
 SELECT 
-    id,
-    name,
-    created_at,
-    updated_at,
-    entity_type,
-    environment_id
+    tag.id,
+    tag.name,
+    tag.created_at,
+    tag.updated_at,
+    tag.entity_type,
+    tag.environment_id,
+    env.name as environment_name
 FROM
     tag
+JOIN
+    environment_v2 env ON tag.environment_id = env.id
 WHERE
     id = ? AND
     environment_id = ?

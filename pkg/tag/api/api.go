@@ -201,8 +201,13 @@ func (s *TagService) ListTags(
 	if err != nil {
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("tag.environment_id", "=", req.EnvironmentId),
+	whereParts := []mysql.WherePart{}
+	if req.OrganizationId != "" {
+		// New console
+		whereParts = append(whereParts, mysql.NewFilter("env.organization_id", "=", req.OrganizationId))
+	} else {
+		// Current console
+		whereParts = append(whereParts, mysql.NewFilter("tag.environment_id", "=", req.EnvironmentId))
 	}
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"tag.name"}, req.SearchKeyword))
