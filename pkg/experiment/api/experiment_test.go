@@ -468,6 +468,9 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 			req: &experimentproto.UpdateExperimentRequest{
 				Id:            "id-0",
 				EnvironmentId: "ns0",
+				ChangeNameCommand: &experimentproto.ChangeExperimentNameCommand{
+					Name: "new-name",
+				},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
