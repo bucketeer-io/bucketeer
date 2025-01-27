@@ -11,5 +11,5 @@ FROM
 JOIN
     environment_v2 env ON tag.environment_id = env.id
 WHERE
-    id = ? AND
-    environment_id = ?
+    tag.id = ? AND
+    tag.environment_id = ?

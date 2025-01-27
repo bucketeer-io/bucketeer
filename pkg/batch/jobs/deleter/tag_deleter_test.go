@@ -92,7 +92,7 @@ func TestRun(t *testing.T) {
 					nil,
 				)
 				td.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(
-					gomock.Any(), "tag-id-1", "env-id-1").Return(errors.New("internal error"))
+					gomock.Any(), "tag-id-1").Return(errors.New("internal error"))
 			},
 			expected: errInternal,
 		},
@@ -167,9 +167,9 @@ func TestRun(t *testing.T) {
 					nil,
 				)
 				td.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(
-					gomock.Any(), "tag-id-2", "env-id-1").Return(nil)
+					gomock.Any(), "tag-id-2").Return(nil)
 				td.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(
-					gomock.Any(), "tag-id-4", "env-id-2").Return(nil)
+					gomock.Any(), "tag-id-4").Return(nil)
 			},
 			expected: nil,
 		},
@@ -221,15 +221,15 @@ func TestRun(t *testing.T) {
 					nil,
 				)
 				td.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(
-					gomock.Any(), "tag-id-1", "env-id-1").Return(nil)
+					gomock.Any(), "tag-id-1").Return(nil)
 				td.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(
-					gomock.Any(), "tag-id-2", "env-id-1").Return(nil)
+					gomock.Any(), "tag-id-2").Return(nil)
 				td.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(
-					gomock.Any(), "tag-id-3", "env-id-1").Return(nil)
+					gomock.Any(), "tag-id-3").Return(nil)
 				td.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(
-					gomock.Any(), "tag-id-4", "env-id-2").Return(nil)
+					gomock.Any(), "tag-id-4").Return(nil)
 				td.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(
-					gomock.Any(), "tag-id-5", "env-id-2").Return(nil)
+					gomock.Any(), "tag-id-5").Return(nil)
 			},
 			expected: nil,
 		},
@@ -264,8 +264,8 @@ func TestDeleteUnusedTags(t *testing.T) {
 		{
 			desc: "err: internal error while deleting 2 entries, but only 1 one is deleted",
 			setup: func(td *tagDeleter) {
-				td.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(ctx, "tag-id-2", "env-id").Return(nil)
-				td.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(ctx, "tag-id-3", "env-id").
+				td.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(ctx, "tag-id-2").Return(nil)
+				td.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(ctx, "tag-id-3").
 					Return(errors.New("internal error"))
 			},
 			inputTags: []*tagproto.Tag{
@@ -297,7 +297,7 @@ func TestDeleteUnusedTags(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(td *tagDeleter) {
-				td.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(ctx, "tag-id-2", "env-id").Return(nil)
+				td.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().DeleteTag(ctx, "tag-id-2").Return(nil)
 			},
 			inputTags: []*tagproto.Tag{
 				{
