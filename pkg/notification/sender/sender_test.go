@@ -422,9 +422,10 @@ func TestCheckForFeatureDomainEvent(t *testing.T) {
 			desc: "err: failed to unmarshal",
 			input: inputTest{
 				subscription: &notificationproto.Subscription{
-					Id:            "sub-id",
-					Name:          "sub-name",
-					EnvironmentId: "env-id",
+					Id:              "sub-id",
+					Name:            "sub-name",
+					EnvironmentId:   "env-id",
+					FeatureFlagTags: []string{"ios"},
 				},
 				sourceType: notificationproto.Subscription_DOMAIN_EVENT_FEATURE,
 				entityData: "random-string",
@@ -478,6 +479,20 @@ func TestCheckForFeatureDomainEvent(t *testing.T) {
 					FeatureFlagTags: []string{"ios"},
 				},
 				sourceType: notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,
+			},
+			expected:    true,
+			expectedErr: nil,
+		},
+		{
+			desc: "success: no feature flag tags configured",
+			input: inputTest{
+				subscription: &notificationproto.Subscription{
+					Id:              "sub-id",
+					Name:            "sub-name",
+					EnvironmentId:   "env-id",
+					FeatureFlagTags: []string{},
+				},
+				sourceType: notificationproto.Subscription_DOMAIN_EVENT_FEATURE,
 			},
 			expected:    true,
 			expectedErr: nil,

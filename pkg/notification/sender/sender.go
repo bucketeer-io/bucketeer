@@ -240,6 +240,18 @@ func (s *sender) checkForFeatureDomainEvent(
 		)
 		return true, nil
 	}
+	// No tags configured
+	if len(sub.FeatureFlagTags) == 0 {
+		s.logger.Debug(
+			"Skipping notification. No feature flag tags configured.",
+			zap.String("environmentId", sub.EnvironmentId),
+			zap.String("subscriptionId", sub.Id),
+			zap.String("subscriptionName", sub.Name),
+			zap.Strings("subscriptionTags", sub.FeatureFlagTags),
+			zap.String("entityData", entityData),
+		)
+		return true, nil
+	}
 	// Unmarshal the JSON string into the Feature message
 	var feature ftproto.Feature
 	if err := protojson.Unmarshal([]byte(entityData), &feature); err != nil {
