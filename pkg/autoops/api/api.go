@@ -60,6 +60,7 @@ func WithLogger(l *zap.Logger) Option {
 
 type AutoOpsService struct {
 	mysqlClient      mysql.Client
+	opsCountStorage  v2os.OpsCountStorage
 	featureClient    featureclient.Client
 	experimentClient experimentclient.Client
 	accountClient    accountclient.Client
@@ -86,6 +87,7 @@ func NewAutoOpsService(
 	}
 	return &AutoOpsService{
 		mysqlClient:      mysqlClient,
+		opsCountStorage:  v2os.NewOpsCountStorage(mysqlClient),
 		featureClient:    featureClient,
 		experimentClient: experimentClient,
 		accountClient:    accountClient,
@@ -1481,8 +1483,7 @@ func (s *AutoOpsService) listOpsCounts(
 		return nil, "", dt.Err()
 
 	}
-	opsCountStorage := v2os.NewOpsCountStorage(s.mysqlClient)
-	opsCounts, nextCursor, err := opsCountStorage.ListOpsCounts(
+	opsCounts, nextCursor, err := s.opsCountStorage.ListOpsCounts(
 		ctx,
 		whereParts,
 		nil,

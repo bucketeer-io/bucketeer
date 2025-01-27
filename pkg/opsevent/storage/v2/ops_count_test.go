@@ -32,7 +32,7 @@ func TestNewOpsEventStorage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	db := NewOpsCountStorage(mock.NewMockQueryExecer(mockController))
+	db := NewOpsCountStorage(mock.NewMockClient(mockController))
 	assert.IsType(t, &opsCountStorage{}, db)
 }
 
@@ -49,10 +49,13 @@ func TestUpsertOpsCount(t *testing.T) {
 	}{
 		{
 			setup: func(s *opsCountStorage) {
-				result := mock.NewMockResult(mockController)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(result, nil)
+				).Return(nil, nil)
 			},
 			input:         &domain.OpsCount{OpsCount: &proto.OpsCount{}},
 			environmentId: "ns",
@@ -85,7 +88,11 @@ func TestListOpsCounts(t *testing.T) {
 	}{
 		{
 			setup: func(s *opsCountStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -103,7 +110,11 @@ func TestListOpsCounts(t *testing.T) {
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
@@ -140,5 +151,5 @@ func TestListOpsCounts(t *testing.T) {
 
 func newOpsCountStorageWithMock(t *testing.T, mockController *gomock.Controller) *opsCountStorage {
 	t.Helper()
-	return &opsCountStorage{mock.NewMockQueryExecer(mockController)}
+	return &opsCountStorage{mock.NewMockClient(mockController)}
 }

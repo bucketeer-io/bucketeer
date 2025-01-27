@@ -33,6 +33,7 @@ import (
 	experimentclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	mockOpsCountStorage "github.com/bucketeer-io/bucketeer/pkg/opsevent/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
@@ -410,7 +411,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := createAutoOpsService(mockController, nil)
+			s := createAutoOpsService(mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -620,7 +621,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := createAutoOpsService(mockController, nil)
+			s := createAutoOpsService(mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -684,7 +685,7 @@ func TestStopAutoOpsRuleMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := createAutoOpsService(mockController, nil)
+			s := createAutoOpsService(mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -748,7 +749,7 @@ func TestDeleteAutoOpsRuleMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := createAutoOpsService(mockController, nil)
+			s := createAutoOpsService(mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -786,13 +787,13 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 	}{
 		{
 			desc:        "err: ErrIDRequired",
-			service:     createAutoOpsService(mockController, nil),
+			service:     createAutoOpsService(mockController),
 			req:         &autoopsproto.GetAutoOpsRuleRequest{EnvironmentId: "ns0"},
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			desc:    "err: ErrNotFound",
-			service: createAutoOpsService(mockController, nil),
+			service: createAutoOpsService(mockController),
 			setup: func(s *AutoOpsService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -816,7 +817,7 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success",
-			service: createAutoOpsService(mockController, nil),
+			service: createAutoOpsService(mockController),
 			setup: func(s *AutoOpsService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -889,7 +890,7 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 	}{
 		{
 			desc:    "success",
-			service: createAutoOpsService(mockController, nil),
+			service: createAutoOpsService(mockController),
 			setup: func(s *AutoOpsService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -973,15 +974,11 @@ func TestListOpsCountsMySQL(t *testing.T) {
 	}{
 		{
 			desc:    "success",
-			service: createAutoOpsService(mockController, nil),
+			service: createAutoOpsService(mockController),
 			setup: func(s *AutoOpsService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
+				s.opsCountStorage.(*mockOpsCountStorage.MockOpsCountStorage).EXPECT().ListOpsCounts(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*autoopsproto.OpsCount{}, 0, nil)
 			},
 			req:         &autoopsproto.ListOpsCountsRequest{EnvironmentId: "ns0", Cursor: ""},
 			expectedErr: nil,
@@ -997,13 +994,9 @@ func TestListOpsCountsMySQL(t *testing.T) {
 			desc:    "success with view ",
 			service: createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *AutoOpsService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
+				s.opsCountStorage.(*mockOpsCountStorage.MockOpsCountStorage).EXPECT().ListOpsCounts(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*autoopsproto.OpsCount{}, 0, nil)
 			},
 			req:         &autoopsproto.ListOpsCountsRequest{EnvironmentId: "ns0", Cursor: ""},
 			expectedErr: nil,
@@ -1119,7 +1112,7 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := createAutoOpsService(mockController, nil)
+			s := createAutoOpsService(mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -1171,7 +1164,7 @@ func TestExistGoal(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := createAutoOpsService(mockController, nil)
+			s := createAutoOpsService(mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -1182,7 +1175,7 @@ func TestExistGoal(t *testing.T) {
 	}
 }
 
-func createAutoOpsService(c *gomock.Controller, db storage.Client) *AutoOpsService {
+func createAutoOpsService(c *gomock.Controller) *AutoOpsService {
 	mysqlClientMock := mysqlmock.NewMockClient(c)
 	featureClientMock := featureclientmock.NewMockClient(c)
 	accountClientMock := accountclientmock.NewMockClient(c)
@@ -1207,15 +1200,19 @@ func createAutoOpsService(c *gomock.Controller, db storage.Client) *AutoOpsServi
 	authClientMock := authclientmock.NewMockClient(c)
 	p := publishermock.NewMockPublisher(c)
 	logger := zap.NewNop()
-	return NewAutoOpsService(
-		mysqlClientMock,
-		featureClientMock,
-		experimentClientMock,
-		accountClientMock,
-		authClientMock,
-		p,
-		WithLogger(logger),
-	)
+	return &AutoOpsService{
+		mysqlClient:      mysqlClientMock,
+		opsCountStorage:  mockOpsCountStorage.NewMockOpsCountStorage(c),
+		featureClient:    featureClientMock,
+		experimentClient: experimentClientMock,
+		accountClient:    accountClientMock,
+		authClient:       authClientMock,
+		publisher:        p,
+		opts: &options{
+			logger: zap.NewNop(),
+		},
+		logger: logger,
+	}
 }
 
 func createServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, ro accountproto.AccountV2_Role_Organization, re accountproto.AccountV2_Role_Environment) *AutoOpsService {
@@ -1239,15 +1236,19 @@ func createServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, ro accou
 	authClientMock := authclientmock.NewMockClient(c)
 	p := publishermock.NewMockPublisher(c)
 	logger := zap.NewNop()
-	return NewAutoOpsService(
-		mysqlClientMock,
-		featureClientMock,
-		experimentClientMock,
-		accountClientMock,
-		authClientMock,
-		p,
-		WithLogger(logger),
-	)
+	return &AutoOpsService{
+		mysqlClient:      mysqlClientMock,
+		opsCountStorage:  mockOpsCountStorage.NewMockOpsCountStorage(c),
+		featureClient:    featureClientMock,
+		experimentClient: experimentClientMock,
+		accountClient:    accountClientMock,
+		authClient:       authClientMock,
+		publisher:        p,
+		opts: &options{
+			logger: zap.NewNop(),
+		},
+		logger: logger,
+	}
 }
 
 func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
