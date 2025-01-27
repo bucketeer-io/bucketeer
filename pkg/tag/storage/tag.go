@@ -97,6 +97,7 @@ func (s *tagStorage) GetTag(ctx context.Context, id, environmentId string) (*dom
 		&tag.UpdatedAt,
 		&entityType,
 		&tag.EnvironmentId,
+		&tag.EnvironmentName,
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
@@ -135,6 +136,7 @@ func (s *tagStorage) ListTags(
 			&tag.UpdatedAt,
 			&entityType,
 			&tag.EnvironmentId,
+			&tag.EnvironmentName,
 		)
 		if err != nil {
 			return nil, 0, 0, err
@@ -173,6 +175,7 @@ func (s *tagStorage) ListAllEnvironmentTags(ctx context.Context) ([]*proto.Envir
 			&tag.UpdatedAt,
 			&entityType,
 			&tag.EnvironmentId,
+			&tag.EnvironmentName,
 		)
 		if err != nil {
 			return nil, err
