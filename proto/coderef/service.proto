@@ -19,11 +19,12 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/coderef";
 
 import "proto/coderef/code_reference.proto";
 import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 message GetCodeReferenceRequest {
-  string id = 1;
-  string environment_id = 2;
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 message GetCodeReferenceResponse {
@@ -40,8 +41,8 @@ message ListCodeReferencesRequest {
     ASC = 0;
     DESC = 1;
   }
-  string environment_id = 1;
-  string feature_id = 2;
+  string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 2 [(google.api.field_behavior) = REQUIRED];
   string repository_name = 3;
   string repository_owner = 4;
   CodeReference.RepositoryType repository_type = 5;
@@ -61,16 +62,17 @@ message ListCodeReferencesResponse {
 }
 
 message CreateCodeReferenceRequest {
-  string feature_id = 1;
-  string environment_id = 2;
-  string file_path = 3;
-  int32 line_number = 4;
-  string code_snippet = 5;
-  string content_hash = 6;
+  string feature_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string file_path = 3 [(google.api.field_behavior) = REQUIRED];
+  int32 line_number = 4 [(google.api.field_behavior) = REQUIRED];
+  string code_snippet = 5 [(google.api.field_behavior) = REQUIRED];
+  string content_hash = 6 [(google.api.field_behavior) = REQUIRED];
   repeated string aliases = 7;
-  string repository_name = 8;
-  string repository_owner = 9;
-  CodeReference.RepositoryType repository_type = 10;
+  string repository_name = 8 [(google.api.field_behavior) = REQUIRED];
+  string repository_owner = 9 [(google.api.field_behavior) = REQUIRED];
+  CodeReference.RepositoryType repository_type = 10
+      [(google.api.field_behavior) = REQUIRED];
   string repository_branch = 11;
   string commit_hash = 12;
 }
@@ -80,12 +82,12 @@ message CreateCodeReferenceResponse {
 }
 
 message UpdateCodeReferenceRequest {
-  string id = 1;
-  string environment_id = 2;
-  string file_path = 3;
-  int32 line_number = 4;
-  string code_snippet = 5;
-  string content_hash = 6;
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string file_path = 3 [(google.api.field_behavior) = REQUIRED];
+  int32 line_number = 4 [(google.api.field_behavior) = REQUIRED];
+  string code_snippet = 5 [(google.api.field_behavior) = REQUIRED];
+  string content_hash = 6 [(google.api.field_behavior) = REQUIRED];
   repeated string aliases = 7;
   string repository_name = 8;
   string repository_owner = 9;
@@ -99,8 +101,8 @@ message UpdateCodeReferenceResponse {
 }
 
 message DeleteCodeReferenceRequest {
-  string id = 1;
-  string environment_id = 2;
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 message DeleteCodeReferenceResponse {}
