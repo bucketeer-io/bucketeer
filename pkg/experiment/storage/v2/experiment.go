@@ -57,11 +57,11 @@ type ExperimentStorage interface {
 }
 
 type experimentStorage struct {
-	qe mysql.QueryExecer
+	client mysql.Client
 }
 
-func NewExperimentStorage(qe mysql.QueryExecer) ExperimentStorage {
-	return &experimentStorage{qe: qe}
+func NewExperimentStorage(client mysql.Client) ExperimentStorage {
+	return &experimentStorage{client: client}
 }
 
 func (s *experimentStorage) CreateExperiment(
@@ -69,7 +69,7 @@ func (s *experimentStorage) CreateExperiment(
 	e *domain.Experiment,
 	environmentId string,
 ) error {
-	_, err := s.qe.ExecContext(
+	_, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		insertExperimentSQL,
 		e.Id,
@@ -107,7 +107,7 @@ func (s *experimentStorage) UpdateExperiment(
 	e *domain.Experiment,
 	environmentId string,
 ) error {
-	result, err := s.qe.ExecContext(
+	result, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		updateExperimentSQL,
 		e.GoalId,
@@ -150,7 +150,7 @@ func (s *experimentStorage) GetExperiment(
 ) (*domain.Experiment, error) {
 	experiment := proto.Experiment{}
 	var status int32
-	err := s.qe.QueryRowContext(
+	err := s.client.Qe(ctx).QueryRowContext(
 		ctx,
 		selectExperimentSQL,
 		id,
@@ -197,7 +197,7 @@ func (s *experimentStorage) ListExperiments(
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectExperimentsSQL, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, nil, err
 	}
@@ -241,7 +241,7 @@ func (s *experimentStorage) ListExperiments(
 	var totalCount int64
 	summary := &proto.ListExperimentsResponse_Summary{}
 	countQuery := fmt.Sprintf(countExperimentSQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(
+	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(
 		&totalCount,
 		&summary.TotalWaitingCount,
 		&summary.TotalRunningCount,
