@@ -1532,7 +1532,7 @@ paths:
       parameters:
         - name: environmentId
           in: query
-          required: false
+          required: true
           type: string
         - name: featureId
           in: query
@@ -1708,7 +1708,7 @@ paths:
           type: string
         - name: environmentId
           in: query
-          required: false
+          required: true
           type: string
       tags:
         - Code Reference
@@ -1768,7 +1768,7 @@ paths:
           type: string
         - name: environmentId
           in: query
-          required: false
+          required: true
           type: string
       tags:
         - Code Reference
@@ -5080,6 +5080,12 @@ definitions:
         type: string
       commitHash:
         type: string
+    required:
+      - environmentId
+      - filePath
+      - lineNumber
+      - codeSnippet
+      - contentHash
   ExperimentGoalReference:
     type: object
     properties:
@@ -6218,6 +6224,16 @@ definitions:
         type: string
       commitHash:
         type: string
+    required:
+      - featureId
+      - environmentId
+      - filePath
+      - lineNumber
+      - codeSnippet
+      - contentHash
+      - repositoryName
+      - repositoryOwner
+      - repositoryType
   coderefCreateCodeReferenceResponse:
     type: object
     properties:
