@@ -42,7 +42,7 @@ message ListCodeReferencesRequest {
     DESC = 1;
   }
   string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
-  string feature_id = 2;
+  string feature_id = 2 [(google.api.field_behavior) = REQUIRED];
   string repository_name = 3;
   string repository_owner = 4;
   CodeReference.RepositoryType repository_type = 5;
