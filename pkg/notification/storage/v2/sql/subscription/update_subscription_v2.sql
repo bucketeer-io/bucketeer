@@ -3,7 +3,8 @@ UPDATE subscription SET
     disabled = ?,
     source_types = ?,
     recipient = ?,
-    name = ?
+    name = ?,
+    feature_flag_tags = ?
 WHERE
     id = ? AND
     environment_id = ?

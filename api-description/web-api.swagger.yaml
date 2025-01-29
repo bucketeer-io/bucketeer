@@ -7893,6 +7893,10 @@ definitions:
         $ref: '#/definitions/notificationRecipient'
       name:
         type: string
+      featureFlagTags:
+        type: array
+        items:
+          type: string
   notificationCreateSubscriptionRequest:
     type: object
     properties:
@@ -7908,6 +7912,10 @@ definitions:
           $ref: '#/definitions/SubscriptionSourceType'
       recipient:
         $ref: '#/definitions/notificationRecipient'
+      featureFlagTags:
+        type: array
+        items:
+          type: string
     required:
       - environmentId
       - name
@@ -8096,8 +8104,19 @@ definitions:
         type: string
       environmentName:
         type: string
+      featureFlagTags:
+        type: array
+        items:
+          type: string
   notificationUpdateAdminSubscriptionResponse:
     type: object
+  notificationUpdateSubscriptionFeatureFlagTagsCommand:
+    type: object
+    properties:
+      featureFlagTags:
+        type: array
+        items:
+          type: string
   notificationUpdateSubscriptionRequest:
     type: object
     properties:
@@ -8124,6 +8143,13 @@ definitions:
         type: boolean
         description: if true, the subscription is disabled, otherwise enabled.
         title: disabled
+      featureFlagTags:
+        type: array
+        items:
+          type: string
+      updateSubscriptionFeatureTagsCommand:
+        $ref: '#/definitions/notificationUpdateSubscriptionFeatureFlagTagsCommand'
+        description: Deprecated. Use feature_flag_tags instead.
     required:
       - id
       - environmentId

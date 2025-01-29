@@ -33,6 +33,8 @@ var (
 	ErrSourceTypeNotFound            = errors.New("subscription: notification not found")
 	ErrAlreadyEnabled                = errors.New("subscription: already enabled")
 	ErrAlreadyDisabled               = errors.New("subscription: already disabled")
+	ErrCannotUpdateFeatureFlagTags   = errors.New(
+		"subscription: cannot update the feature flag tags when there is feature source type")
 )
 
 type Subscription struct {
@@ -42,7 +44,9 @@ type Subscription struct {
 func NewSubscription(
 	name string,
 	sourceTypes []proto.Subscription_SourceType,
-	recipient *proto.Recipient) (*Subscription, error) {
+	recipient *proto.Recipient,
+	featureFlagTags []string,
+) (*Subscription, error) {
 
 	sid, err := ID(recipient)
 	if err != nil {
@@ -50,12 +54,13 @@ func NewSubscription(
 	}
 	now := time.Now().Unix()
 	s := &Subscription{&proto.Subscription{
-		Name:        name,
-		CreatedAt:   now,
-		UpdatedAt:   now,
-		Id:          sid,
-		SourceTypes: sourceTypes,
-		Recipient:   recipient,
+		Id:              sid,
+		Name:            name,
+		SourceTypes:     sourceTypes,
+		Recipient:       recipient,
+		FeatureFlagTags: featureFlagTags,
+		CreatedAt:       now,
+		UpdatedAt:       now,
 	}}
 	return s, nil
 }
@@ -76,6 +81,7 @@ func (s *Subscription) UpdateSubscription(
 	name *wrapperspb.StringValue,
 	sourceTypes []proto.Subscription_SourceType,
 	disabled *wrapperspb.BoolValue,
+	featureFlagTags []string,
 ) (*Subscription, error) {
 	updated := &Subscription{}
 	if err := copier.Copy(updated, s); err != nil {
@@ -86,10 +92,34 @@ func (s *Subscription) UpdateSubscription(
 		updated.Name = name.Value
 	}
 	if len(sourceTypes) > 0 {
+		// We must check the feature source type is being deleted.
+		// If so, we must reset the tags
+		for _, sourceType := range updated.SourceTypes {
+			if sourceType == proto.Subscription_DOMAIN_EVENT_FEATURE {
+				updated.FeatureFlagTags = []string{}
+				break
+			}
+		}
 		updated.SourceTypes = sourceTypes
 	}
 	if disabled != nil {
 		updated.Disabled = disabled.Value
+	}
+	// The tags updating must be updated after the source types updating
+	if featureFlagTags != nil {
+		var found bool
+		for _, sourceType := range updated.SourceTypes {
+			// Because the feature flag tags belong to the feature domain event
+			// we must ensure the feature source type is in the list.
+			if sourceType == proto.Subscription_DOMAIN_EVENT_FEATURE {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, ErrCannotUpdateFeatureFlagTags
+		}
+		updated.FeatureFlagTags = featureFlagTags
 	}
 	updated.UpdatedAt = time.Now().Unix()
 	return updated, nil
@@ -136,6 +166,10 @@ func (s *Subscription) DeleteSourceTypes(sourceTypes []proto.Subscription_Source
 		return ErrSourceTypesMustHaveAtLeastOne
 	}
 	for _, nt := range sourceTypes {
+		// Reset the tags if the feature source type is being deleted
+		if nt == proto.Subscription_DOMAIN_EVENT_FEATURE {
+			s.FeatureFlagTags = []string{}
+		}
 		idx, err := indexSourceType(nt, s.SourceTypes)
 		if err != nil {
 			return err
@@ -143,6 +177,25 @@ func (s *Subscription) DeleteSourceTypes(sourceTypes []proto.Subscription_Source
 		s.SourceTypes = append(s.SourceTypes[:idx], s.SourceTypes[idx+1:]...)
 	}
 	sortSourceType(s.SourceTypes)
+	s.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+// The tags updating must be updated after the source types updating
+func (s *Subscription) UpdateFeatureFlagTags(tags []string) error {
+	var found bool
+	for _, sourceType := range s.SourceTypes {
+		// Because the feature flag tags belong to the feature domain event
+		// we must ensure the feature source type is in the list.
+		if sourceType == proto.Subscription_DOMAIN_EVENT_FEATURE {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return ErrCannotUpdateFeatureFlagTags
+	}
+	s.FeatureFlagTags = tags
 	s.UpdatedAt = time.Now().Unix()
 	return nil
 }

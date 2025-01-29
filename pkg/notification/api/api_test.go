@@ -166,7 +166,7 @@ func putSubscription(t *testing.T, s storage.Client, kind, namespace string, dis
 		Type:                  proto.Recipient_SlackChannel,
 		SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
 	}
-	subscription, err := domain.NewSubscription("sname", sourceTypes, recipient)
+	subscription, err := domain.NewSubscription("sname", sourceTypes, recipient, []string{"tag"})
 	subscription.Disabled = disabled
 	require.NoError(t, err)
 	err = s.Put(context.Background(), key, subscription.Subscription)

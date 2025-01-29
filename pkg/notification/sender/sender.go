@@ -17,12 +17,15 @@ package sender
 
 import (
 	"context"
+	"errors"
 
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender/notifier"
+	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
 	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
 )
@@ -37,6 +40,9 @@ const (
 )
 
 var (
+	errFailedToUnmarshal      = errors.New("sender: failed to unmarshal")
+	errFeatureFlagTagNotFound = errors.New("sender: feature flag tag not found")
+
 	defaultOptions = options{
 		logger: zap.NewNop(),
 	}
@@ -111,6 +117,20 @@ func (s *sender) Send(ctx context.Context, notificationEvent *senderproto.Notifi
 	}
 	var lastErr error
 	for _, subscription := range subscriptions {
+		// When a flag changes it must be checked before sending notifications
+		send, err := s.checkForFeatureDomainEvent(
+			subscription,
+			notificationEvent.SourceType,
+			notificationEvent.Notification.DomainEventNotification.EntityData,
+		)
+		if err != nil {
+			return err
+		}
+		// Check if the subcription tag is configured in the feature flag
+		// If not, we skip the notification
+		if !send {
+			continue
+		}
 		if err := s.send(
 			ctx,
 			notificationEvent.Notification,
@@ -200,4 +220,61 @@ func (s *sender) listEnabledAdminSubscriptions(
 		}
 		cursor = resp.Cursor
 	}
+}
+
+// When a flag changes it must be checked before sending notifications
+func (s *sender) checkForFeatureDomainEvent(
+	sub *notificationproto.Subscription,
+	sourceType notificationproto.Subscription_SourceType,
+	entityData string,
+) (bool, error) {
+	// Different domain event
+	if sourceType != notificationproto.Subscription_DOMAIN_EVENT_FEATURE ||
+		len(sub.FeatureFlagTags) == 0 {
+		s.logger.Debug(
+			"Skipping notification. Different domain event",
+			zap.String("environmentId", sub.EnvironmentId),
+			zap.String("subscriptionId", sub.Id),
+			zap.String("subscriptionName", sub.Name),
+			zap.Strings("subscriptionTags", sub.FeatureFlagTags),
+			zap.String("entityData", entityData),
+		)
+		return true, nil
+	}
+	// Unmarshal the JSON string into the Feature message
+	var feature ftproto.Feature
+	if err := protojson.Unmarshal([]byte(entityData), &feature); err != nil {
+		s.logger.Error("Failed to unmarshal feature message", zap.Error(err),
+			zap.String("environmentId", sub.EnvironmentId),
+			zap.String("subscriptionId", sub.Id),
+			zap.String("subscriptionName", sub.Name),
+			zap.String("entityData", entityData),
+		)
+		return false, errFailedToUnmarshal
+	}
+	// Check if the subcription tag is configured in the feature flag
+	// If not, we skip the notification
+	if containsTags(sub.FeatureFlagTags, feature.Tags) {
+		s.logger.Debug(
+			"Skipping notification. Flag doesn't contain any of the tags configured in the subscription",
+			zap.String("environmentId", sub.EnvironmentId),
+			zap.String("subscriptionId", sub.Id),
+			zap.String("subscriptionName", sub.Name),
+			zap.Strings("subscriptionTags", sub.FeatureFlagTags),
+			zap.String("entityData", entityData),
+		)
+		return true, nil
+	}
+	return false, errFeatureFlagTagNotFound
+}
+
+func containsTags(subTags []string, ftTags []string) bool {
+	for _, subTag := range subTags {
+		for _, ftTag := range ftTags {
+			if subTag == ftTag {
+				return true
+			}
+		}
+	}
+	return false
 }

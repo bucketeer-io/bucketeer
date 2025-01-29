@@ -87,7 +87,7 @@ func (d domainEventInformer) handleMessage(msg *puller.Message) {
 		msg.Ack()
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	environmentName := ""
 	// TODO: The environmentURLCode will be dynamic when the console v3 is ready.
@@ -156,6 +156,7 @@ func (d domainEventInformer) createNotificationEvent(
 				Editor:             event.Editor,
 				EntityType:         event.EntityType,
 				EntityId:           event.EntityId,
+				EntityData:         event.EntityData,
 				Type:               event.Type,
 			},
 		},
