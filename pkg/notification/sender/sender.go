@@ -232,7 +232,7 @@ func (s *sender) checkForFeatureDomainEvent(
 	if sourceType != notificationproto.Subscription_DOMAIN_EVENT_FEATURE ||
 		len(sub.FeatureFlagTags) == 0 {
 		s.logger.Debug(
-			"Skipping notification. Different domain event",
+			"Sending notification. The source type is not a feature domain event or the subscription's tags are empty",
 			zap.String("environmentId", sub.EnvironmentId),
 			zap.String("subscriptionId", sub.Id),
 			zap.String("subscriptionName", sub.Name),
@@ -256,7 +256,7 @@ func (s *sender) checkForFeatureDomainEvent(
 	// If not, we skip the notification
 	if containsTags(sub.FeatureFlagTags, feature.Tags) {
 		s.logger.Debug(
-			"Skipping notification. Flag doesn't contain any of the tags configured in the subscription",
+			"Sending notification. Flag's tag matched with the tags configured in the subscription",
 			zap.String("environmentId", sub.EnvironmentId),
 			zap.String("subscriptionId", sub.Id),
 			zap.String("subscriptionName", sub.Name),
