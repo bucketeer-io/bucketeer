@@ -265,6 +265,14 @@ func (s *sender) checkForFeatureDomainEvent(
 		)
 		return true, nil
 	}
+	s.logger.Debug(
+		"Skipping notification. Subscription's tags weren't found in the Flag's tags",
+		zap.String("environmentId", sub.EnvironmentId),
+		zap.String("subscriptionId", sub.Id),
+		zap.String("subscriptionName", sub.Name),
+		zap.Strings("subscriptionTags", sub.FeatureFlagTags),
+		zap.String("entityData", entityData),
+	)
 	return false, errFeatureFlagTagNotFound
 }
 
