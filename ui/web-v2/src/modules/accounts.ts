@@ -20,7 +20,8 @@ import {
   ChangeSearchFilterNameCommand,
   ChangeSearchFilterQueryCommand,
   ChangeDefaultSearchFilterCommand,
-  DeleteSearchFilterCommand
+  DeleteSearchFilterCommand,
+  ChangeAccountV2TagsCommand
 } from '../proto/account/command_pb';
 import {
   ListAccountsV2Request,
@@ -69,6 +70,7 @@ interface ListAccountsParams {
   searchKeyword?: string;
   role?: number;
   disabled?: boolean;
+  tags?: Array<string>;
 }
 
 export const listAccounts = createAsyncThunk<
@@ -86,6 +88,7 @@ export const listAccounts = createAsyncThunk<
   request.setSearchKeyword(params.searchKeyword);
   params.disabled != null &&
     request.setDisabled(new BoolValue().setValue(params.disabled));
+  params.tags != null && request.setTagsList(params.tags);
   const result = await accountGrpc.listAccounts(request);
   return result.response.toObject();
 });
@@ -168,6 +171,7 @@ export interface CreateAccountParams {
   organizationRole: AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap];
   environmentRole: AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap];
   environmentId: string;
+  tagsList: Array<string>;
 }
 
 export const createAccount = createAsyncThunk<
@@ -184,6 +188,7 @@ export const createAccount = createAsyncThunk<
   cmd.setName(params.name);
   cmd.setEmail(params.email);
   cmd.setOrganizationRole(params.organizationRole);
+  cmd.setTagsList(params.tagsList);
   request.setCommand(cmd);
   request.setOrganizationId(params.organizationId);
   await accountGrpc.createAccount(request);
@@ -196,6 +201,7 @@ export interface UpdateAccountParams {
   environmentId: string;
   environmentRole: AccountV2.Role.EnvironmentMap[keyof AccountV2.Role.EnvironmentMap];
   organizationRole: AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap];
+  tagsList: Array<string>;
 }
 
 export const updateAccount = createAsyncThunk<
@@ -220,6 +226,11 @@ export const updateAccount = createAsyncThunk<
     const cmd = new ChangeAccountV2NameCommand();
     cmd.setName(params.name);
     request.setChangeNameCommand(cmd);
+  }
+  if (params.tagsList) {
+    const cmd = new ChangeAccountV2TagsCommand();
+    cmd.setTagsList(params.tagsList);
+    request.setChangeTagsCommand(cmd);
   }
   request.setEmail(params.email);
   request.setOrganizationId(params.organizationId);

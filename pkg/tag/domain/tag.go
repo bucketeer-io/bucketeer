@@ -17,6 +17,7 @@ package domain
 import (
 	"time"
 
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/tag"
 )
 
@@ -24,15 +25,20 @@ type Tag struct {
 	*proto.Tag
 }
 
-func NewTag(id, environmentID string, entityType proto.Tag_EntityType) *Tag {
+func NewTag(name, environmentID string, entityType proto.Tag_EntityType) (*Tag, error) {
 	now := time.Now().Unix()
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return nil, err
+	}
 	return &Tag{
 		Tag: &proto.Tag{
-			Id:            id,
+			Id:            id.String(),
+			Name:          name,
 			CreatedAt:     now,
 			UpdatedAt:     now,
 			EntityType:    entityType,
 			EnvironmentId: environmentID,
 		},
-	}
+	}, nil
 }

@@ -73,12 +73,13 @@ func (h *goalCommandHandler) Handle(ctx context.Context, cmd Command) error {
 
 func (h *goalCommandHandler) create(ctx context.Context, cmd *proto.CreateGoalCommand) error {
 	return h.send(ctx, eventproto.Event_GOAL_CREATED, &eventproto.GoalCreatedEvent{
-		Id:          h.goal.Id,
-		Name:        h.goal.Name,
-		Description: h.goal.Description,
-		Deleted:     h.goal.Deleted,
-		CreatedAt:   h.goal.CreatedAt,
-		UpdatedAt:   h.goal.UpdatedAt,
+		Id:             h.goal.Id,
+		Name:           h.goal.Name,
+		Description:    h.goal.Description,
+		ConnectionType: h.goal.ConnectionType,
+		Deleted:        h.goal.Deleted,
+		CreatedAt:      h.goal.CreatedAt,
+		UpdatedAt:      h.goal.UpdatedAt,
 	})
 }
 

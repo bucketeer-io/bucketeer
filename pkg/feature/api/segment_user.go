@@ -700,7 +700,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 	segmentStorage := v2fs.NewSegmentStorage(s.mysqlClient)
 	segment, _, err := segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentId)
 	if err != nil {
-		if err == v2fs.ErrSegmentNotFound {
+		if errors.Is(err, v2fs.ErrSegmentNotFound) {
 			dt, err := statusSegmentNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),

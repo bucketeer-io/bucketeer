@@ -57,7 +57,6 @@ var (
 	errVariationInUse                = errors.New("feature: variation in use")
 	errVariationNotFound             = errors.New("feature: variation not found")
 	errVariationTypeUnmatched        = errors.New("feature: variation value and type are unmatched")
-	errTagsMustHaveAtLeastOneTag     = errors.New("feature: tags must have at least one tag set")
 	errUnsupportedStrategy           = errors.New("feature: unsupported strategy")
 	errPrerequisiteNotFound          = errors.New("feature: prerequisite not found")
 	ErrAlreadyEnabled                = errors.New("feature: already enabled")
@@ -161,14 +160,15 @@ func (f *Feature) AddTag(tag string) error {
 }
 
 func (f *Feature) RemoveTag(tag string) error {
-	if len(f.Tags) <= 1 {
-		return errTagsMustHaveAtLeastOneTag
-	}
 	idx, err := index(tag, f.Tags)
 	if err != nil {
 		return err
 	}
-	f.Tags = append(f.Tags[:idx], f.Tags[idx+1:]...)
+	if len(f.Tags) == 1 {
+		f.Tags = []string{}
+	} else {
+		f.Tags = append(f.Tags[:idx], f.Tags[idx+1:]...)
+	}
 	f.UpdatedAt = time.Now().Unix()
 	return nil
 }
@@ -1115,9 +1115,6 @@ func validateRules(rules []*feature.Rule, variations []*feature.Variation) error
 func validate(f *feature.Feature) error {
 	if f.Name == "" {
 		return errNameEmpty
-	}
-	if len(f.Tags) == 0 {
-		return errTagsMustHaveAtLeastOneTag
 	}
 	if err := validateVariations(f.VariationType, f.Variations); err != nil {
 		return err

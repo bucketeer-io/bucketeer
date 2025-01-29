@@ -17,6 +17,9 @@ package domain
 import (
 	"time"
 
+	"github.com/jinzhu/copier"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	proto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
 
@@ -24,15 +27,42 @@ type Goal struct {
 	*proto.Goal
 }
 
-func NewGoal(id, name, description string) (*Goal, error) {
+func NewGoal(
+	id, name, description string,
+	connectionType proto.Goal_ConnectionType,
+) (*Goal, error) {
 	now := time.Now().Unix()
 	return &Goal{&proto.Goal{
-		Id:          id,
-		Name:        name,
-		Description: description,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		Id:             id,
+		Name:           name,
+		Description:    description,
+		ConnectionType: connectionType,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}}, nil
+}
+
+func (g *Goal) Update(
+	name *wrapperspb.StringValue,
+	description *wrapperspb.StringValue,
+	archived *wrapperspb.BoolValue,
+) (*Goal, error) {
+	updated := &Goal{}
+	if err := copier.Copy(updated, g); err != nil {
+		return nil, err
+	}
+
+	if name != nil {
+		updated.Goal.Name = name.Value
+	}
+	if description != nil {
+		updated.Goal.Description = description.Value
+	}
+	if archived != nil {
+		updated.Goal.Archived = archived.Value
+	}
+	updated.Goal.UpdatedAt = time.Now().Unix()
+	return updated, nil
 }
 
 func (g *Goal) Rename(name string) error {

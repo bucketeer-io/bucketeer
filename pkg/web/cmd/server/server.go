@@ -37,6 +37,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
+	coderefapi "github.com/bucketeer-io/bucketeer/pkg/coderef/api"
 	environmentapi "github.com/bucketeer-io/bucketeer/pkg/environment/api"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	eventcounterapi "github.com/bucketeer-io/bucketeer/pkg/eventcounter/api"
@@ -57,6 +58,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	tagapi "github.com/bucketeer-io/bucketeer/pkg/tag/api"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 )
 
@@ -100,26 +102,29 @@ type server struct {
 	domainTopic                   *string
 	bulkSegmentUsersReceivedTopic *string
 	// Port
-	accountServicePort      *int
-	authServicePort         *int
-	auditLogServicePort     *int
-	autoOpsServicePort      *int
-	environmentServicePort  *int
-	eventCounterServicePort *int
-	experimentServicePort   *int
-	featureServicePort      *int
-	notificationServicePort *int
-	pushServicePort         *int
-	webConsoleServicePort   *int
-	dashboardServicePort    *int
+	accountServicePort       *int
+	authServicePort          *int
+	auditLogServicePort      *int
+	autoOpsServicePort       *int
+	environmentServicePort   *int
+	eventCounterServicePort  *int
+	experimentServicePort    *int
+	featureServicePort       *int
+	notificationServicePort  *int
+	pushServicePort          *int
+	webConsoleServicePort    *int
+	dashboardServicePort     *int
+	tagServicePort           *int
+	codeReferenceServicePort *int
 	// Service
-	accountService     *string
-	authService        *string
-	batchService       *string
-	environmentService *string
-	experimentService  *string
-	featureService     *string
-	autoOpsService     *string
+	accountService       *string
+	authService          *string
+	batchService         *string
+	environmentService   *string
+	experimentService    *string
+	featureService       *string
+	autoOpsService       *string
+	codeReferenceService *string
 	// auth
 	emailFilter         *string
 	oauthConfigPath     *string
@@ -233,6 +238,14 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"dashboard-service-port",
 			"Port to bind to dashboard service.",
 		).Default("9103").Int(),
+		tagServicePort: cmd.Flag(
+			"tag-service-port",
+			"Port to bind to tag service.",
+		).Default("9104").Int(),
+		codeReferenceServicePort: cmd.Flag(
+			"code-reference-service-port",
+			"Port to bind to code reference service.",
+		).Default("9105").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -260,6 +273,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		autoOpsService: cmd.Flag(
 			"autoops-service",
 			"bucketeer-autoops-service address.",
+		).Default("localhost:9001").String(),
+		codeReferenceService: cmd.Flag(
+			"code-reference-service",
+			"bucketeer-code-reference-service address.",
 		).Default("localhost:9001").String(),
 		timezone:         cmd.Flag("timezone", "Time zone").Required().String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
@@ -568,6 +585,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	experimentService := experimentapi.NewExperimentService(
 		featureClient,
 		accountClient,
+		autoOpsClient,
 		mysqlClient,
 		domainTopicPublisher,
 		experimentapi.WithLogger(logger),
@@ -637,6 +655,21 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go pushServer.Run()
+	// tagService
+	tagService := tagapi.NewTagService(
+		mysqlClient,
+		accountClient,
+		domainTopicPublisher,
+		tagapi.WithLogger(logger),
+	)
+	tagServer := rpc.NewServer(tagService, *s.certPath, *s.keyPath,
+		"tag-server",
+		rpc.WithPort(*s.tagServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	go tagServer.Run()
 	webConsoleServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
 		rest.WithLogger(logger),
@@ -653,6 +686,21 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rest.WithMetrics(registerer),
 	)
 	go dashboardServer.Run()
+	// codeReferenceService
+	codeReferenceService := coderefapi.NewCodeReferenceService(
+		accountClient,
+		mysqlClient,
+		domainTopicPublisher,
+		coderefapi.WithLogger(logger),
+	)
+	codeReferenceServer := rpc.NewServer(codeReferenceService, *s.certPath, *s.keyPath,
+		"code-reference-server",
+		rpc.WithPort(*s.codeReferenceServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	go codeReferenceServer.Run()
 	// To detach this pod from Kubernetes Service before the app servers stop, we stop the health check service first.
 	// Then, after 10 seconds of sleep, the app servers can be shut down, as no new requests are expected to be sent.
 	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.
@@ -669,7 +717,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go featureServer.Stop(serverShutDownTimeout)
 		go notificationServer.Stop(serverShutDownTimeout)
 		go pushServer.Stop(serverShutDownTimeout)
+		go tagServer.Stop(serverShutDownTimeout)
 		go webConsoleServer.Stop(serverShutDownTimeout)
+		go codeReferenceServer.Stop(serverShutDownTimeout)
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()

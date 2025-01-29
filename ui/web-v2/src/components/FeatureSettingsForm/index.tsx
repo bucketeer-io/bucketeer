@@ -1,5 +1,5 @@
 import { AppState } from '../../modules';
-import { Tag } from '../../proto/feature/feature_pb';
+import { Tag } from '../../proto/tag/tag_pb';
 import { FC, memo } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { useIntl } from 'react-intl';
@@ -30,6 +30,10 @@ export const FeatureSettingsForm: FC<FeatureSettingsFormProps> = memo(
     const tagsList = useSelector<AppState, Tag.AsObject[]>(
       (state) => selectAllTags(state.tags),
       shallowEqual
+    );
+
+    const featureFlagTagsList = tagsList.filter(
+      (tag) => tag.entityType === Tag.EntityType.FEATURE_FLAG
     );
 
     return (
@@ -83,7 +87,7 @@ export const FeatureSettingsForm: FC<FeatureSettingsFormProps> = memo(
             </div>
             <div className="col-span-1">
               <label htmlFor="tags" className="input-label">
-                {f(messages.tags)}
+                {f(messages.tags.title)}
               </label>
               <Controller
                 name="tags"
@@ -91,7 +95,7 @@ export const FeatureSettingsForm: FC<FeatureSettingsFormProps> = memo(
                 render={({ field }) => {
                   return (
                     <CreatableSelect
-                      options={tagsList.map((tag) => ({
+                      options={featureFlagTagsList.map((tag) => ({
                         label: tag.name,
                         value: tag.name
                       }))}

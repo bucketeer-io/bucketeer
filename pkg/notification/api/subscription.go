@@ -58,7 +58,12 @@ func (s *NotificationService) CreateSubscription(
 	if err := s.validateCreateSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	subscription, err := domain.NewSubscription(req.Command.Name, req.Command.SourceTypes, req.Command.Recipient)
+	subscription, err := domain.NewSubscription(
+		req.Command.Name,
+		req.Command.SourceTypes,
+		req.Command.Recipient,
+		req.Command.FeatureFlagTags,
+	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new subscription",
@@ -165,7 +170,12 @@ func (s *NotificationService) createSubscriptionNoCommand(
 	if err := s.validateCreateSubscriptionNoCommandRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	subscription, err := domain.NewSubscription(req.Name, req.SourceTypes, req.Recipient)
+	subscription, err := domain.NewSubscription(
+		req.Name,
+		req.SourceTypes,
+		req.Recipient,
+		req.FeatureFlagTags,
+	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new subscription",
@@ -241,9 +251,10 @@ func (s *NotificationService) createSubscriptionNoCommand(
 		subscription.Id,
 		eventproto.Event_SUBSCRIPTION_CREATED,
 		&eventproto.SubscriptionCreatedEvent{
-			SourceTypes: subscription.SourceTypes,
-			Recipient:   subscription.Recipient,
-			Name:        subscription.Name,
+			SourceTypes:     subscription.SourceTypes,
+			Recipient:       subscription.Recipient,
+			Name:            subscription.Name,
+			FeatureFlagTags: subscription.FeatureFlagTags,
 		},
 		req.EnvironmentId,
 		subscription.Subscription,
@@ -330,6 +341,7 @@ func (s *NotificationService) updateSubscriptionNoCommand(
 		req.Name,
 		req.SourceTypes,
 		req.Disabled,
+		req.FeatureFlagTags,
 		editor,
 		localizer,
 	)
@@ -515,6 +527,7 @@ func (s *NotificationService) updateSubscriptionMySQLNoCommand(
 	name *wrapperspb.StringValue,
 	sourceTypes []notificationproto.Subscription_SourceType,
 	disabled *wrapperspb.BoolValue,
+	featureFlagTags []string,
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
 ) (*notificationproto.Subscription, error) {
@@ -545,7 +558,7 @@ func (s *NotificationService) updateSubscriptionMySQLNoCommand(
 		if err != nil {
 			return err
 		}
-		updated, err := subscription.UpdateSubscription(name, sourceTypes, disabled)
+		updated, err := subscription.UpdateSubscription(name, sourceTypes, disabled, featureFlagTags)
 		if err != nil {
 			return err
 		}
@@ -556,10 +569,11 @@ func (s *NotificationService) updateSubscriptionMySQLNoCommand(
 			subscription.Id,
 			eventproto.Event_SUBSCRIPTION_UPDATED,
 			&eventproto.SubscriptionUpdatedEvent{
-				Id:          ID,
-				SourceTypes: sourceTypes,
-				Name:        name,
-				Disabled:    disabled,
+				Id:              ID,
+				SourceTypes:     sourceTypes,
+				Name:            name,
+				Disabled:        disabled,
+				FeatureFlagTags: featureFlagTags,
 			},
 			ID,
 			updatedSubscription,
@@ -617,7 +631,8 @@ func (s *NotificationService) updateSubscriptionMySQLNoCommand(
 func (s *NotificationService) isNoUpdateSubscriptionCommand(req *notificationproto.UpdateSubscriptionRequest) bool {
 	return req.AddSourceTypesCommand == nil &&
 		req.DeleteSourceTypesCommand == nil &&
-		req.RenameSubscriptionCommand == nil
+		req.RenameSubscriptionCommand == nil &&
+		req.UpdateSubscriptionFeatureTagsCommand == nil
 }
 
 func (s *NotificationService) DeleteSubscription(
@@ -735,6 +750,9 @@ func (s *NotificationService) createUpdateSubscriptionCommands(
 	}
 	if req.RenameSubscriptionCommand != nil {
 		commands = append(commands, req.RenameSubscriptionCommand)
+	}
+	if req.UpdateSubscriptionFeatureTagsCommand != nil {
+		commands = append(commands, req.UpdateSubscriptionFeatureTagsCommand)
 	}
 	return commands
 }

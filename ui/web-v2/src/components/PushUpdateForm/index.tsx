@@ -1,5 +1,5 @@
 import { AppState } from '../../modules';
-import { Tag } from '../../proto/feature/feature_pb';
+import { Tag } from '../../proto/tag/tag_pb';
 import { Dialog } from '@headlessui/react';
 import { FC, memo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -9,7 +9,10 @@ import { shallowEqual, useSelector } from 'react-redux';
 import { messages } from '../../lang/messages';
 import { useIsEditable } from '../../modules/me';
 import { selectAll as selectAllTags } from '../../modules/tags';
-import { CreatableSelect, Option } from '../CreatableSelect';
+import { Option } from '../CreatableSelect';
+import { Select } from '../Select';
+import { Push } from '../../proto/push/push_pb';
+import { selectAll as selectAllPushes } from '../../modules/pushes';
 
 export interface PushUpdateFormProps {
   onSubmit: () => void;
@@ -27,9 +30,20 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
       formState: { errors, isValid, isDirty, isSubmitted }
     } = methods;
 
+    const pushList = useSelector<AppState, Push.AsObject[]>(
+      (state) => selectAllPushes(state.push),
+      shallowEqual
+    );
     const tagsList = useSelector<AppState, Tag.AsObject[]>(
       (state) => selectAllTags(state.tags),
       shallowEqual
+    );
+    const featureFlagTagsList = tagsList.filter(
+      (tag) => tag.entityType === Tag.EntityType.FEATURE_FLAG
+    );
+    // Filter out tags that are already used in existing pushes
+    const filteredTagsList = featureFlagTagsList.filter(
+      (tag) => !pushList.some((push) => push.tagsList.includes(tag.name))
     );
 
     return (
@@ -72,14 +86,17 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
                 </div>
                 <div className="">
                   <label htmlFor="tags">
-                    <span className="input-label">{f(messages.tags)}</span>
+                    <span className="input-label">
+                      {f(messages.tags.title)}
+                    </span>
                   </label>
                   <Controller
                     name="tags"
                     control={control}
                     render={({ field }) => {
                       return (
-                        <CreatableSelect
+                        <Select
+                          isMulti
                           onChange={(options: Option[]) => {
                             field.onChange(options.map((o) => o.value));
                           }}
@@ -90,11 +107,12 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
                               label: tag
                             };
                           })}
-                          options={tagsList.map((tag) => ({
+                          options={filteredTagsList.map((tag) => ({
                             label: tag.name,
                             value: tag.name
                           }))}
                           closeMenuOnSelect={false}
+                          placeholder={f(messages.tags.tagsPlaceholder)}
                         />
                       );
                     }}

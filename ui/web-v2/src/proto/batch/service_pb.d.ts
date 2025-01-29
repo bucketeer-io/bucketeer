@@ -79,6 +79,7 @@ export interface BatchJobMap {
   APIKEYCACHER: 15;
   AUTOOPSRULESCACHER: 16;
   EXPERIMENTCACHER: 17;
+  TAGDELETER: 18;
 }
 
 export const BatchJob: BatchJobMap;

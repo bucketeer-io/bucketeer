@@ -36,6 +36,7 @@ import IconDelete from './special-icons/delete.svg?react';
 import IconExperiment from './special-icons/experiment.svg?react';
 import IconExperimentsConnected from './special-icons/experiments-connected.svg?react';
 import IconFCM from './special-icons/fcm.svg?react';
+import IconFlagConnected from './special-icons/flag-connected.svg?react';
 import IconGithub from './special-icons/github.svg?react';
 import IconGoal from './special-icons/goal.svg?react';
 import IconGoogle from './special-icons/google.svg?react';
@@ -96,5 +97,6 @@ export {
   IconOperation,
   IconNotInUse,
   IconExperimentsConnected,
-  IconOperationsConnected
+  IconOperationsConnected,
+  IconFlagConnected
 };

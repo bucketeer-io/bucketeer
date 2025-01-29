@@ -45,7 +45,7 @@ func (s *NotificationService) CreateAdminSubscription(
 	if err := s.validateCreateAdminSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	subscription, err := domain.NewSubscription(req.Command.Name, req.Command.SourceTypes, req.Command.Recipient)
+	subscription, err := domain.NewSubscription(req.Command.Name, req.Command.SourceTypes, req.Command.Recipient, nil)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new admin subscription",

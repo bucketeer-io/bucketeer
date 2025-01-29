@@ -36,6 +36,7 @@ enum BatchJob {
   ApiKeyCacher = 15;
   AutoOpsRulesCacher = 16;
   ExperimentCacher = 17;
+  TagDeleter = 18;
 }
 
 message BatchJobRequest {

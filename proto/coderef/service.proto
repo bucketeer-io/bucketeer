@@ -1,0 +1,327 @@
+// Copyright 2025 The Bucketeer Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package bucketeer.coderef;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/coderef";
+
+import "proto/coderef/code_reference.proto";
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+message GetCodeReferenceRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetCodeReferenceResponse {
+  CodeReference code_reference = 1;
+}
+
+message ListCodeReferencesRequest {
+  enum OrderBy {
+    DEFAULT = 0;
+    CREATED_AT = 1;
+    UPDATED_AT = 2;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string repository_name = 3;
+  string repository_owner = 4;
+  CodeReference.RepositoryType repository_type = 5;
+  string repository_branch = 6;
+  string cursor = 7;
+  int64 page_size = 8;
+  OrderBy order_by = 9;
+  OrderDirection order_direction = 10;
+  // File extension to filter code references (e.g., ".js", ".go", ".py")
+  string file_extension = 11;
+}
+
+message ListCodeReferencesResponse {
+  repeated CodeReference code_references = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message CreateCodeReferenceRequest {
+  string feature_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string file_path = 3 [(google.api.field_behavior) = REQUIRED];
+  int32 line_number = 4 [(google.api.field_behavior) = REQUIRED];
+  string code_snippet = 5 [(google.api.field_behavior) = REQUIRED];
+  string content_hash = 6 [(google.api.field_behavior) = REQUIRED];
+  repeated string aliases = 7;
+  string repository_name = 8 [(google.api.field_behavior) = REQUIRED];
+  string repository_owner = 9 [(google.api.field_behavior) = REQUIRED];
+  CodeReference.RepositoryType repository_type = 10
+      [(google.api.field_behavior) = REQUIRED];
+  string repository_branch = 11;
+  string commit_hash = 12;
+}
+
+message CreateCodeReferenceResponse {
+  CodeReference code_reference = 1;
+}
+
+message UpdateCodeReferenceRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string file_path = 3 [(google.api.field_behavior) = REQUIRED];
+  int32 line_number = 4 [(google.api.field_behavior) = REQUIRED];
+  string code_snippet = 5 [(google.api.field_behavior) = REQUIRED];
+  string content_hash = 6 [(google.api.field_behavior) = REQUIRED];
+  repeated string aliases = 7;
+  string repository_name = 8;
+  string repository_owner = 9;
+  CodeReference.RepositoryType repository_type = 10;
+  string repository_branch = 11;
+  string commit_hash = 12;
+}
+
+message UpdateCodeReferenceResponse {
+  CodeReference code_reference = 1;
+}
+
+message DeleteCodeReferenceRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DeleteCodeReferenceResponse {}
+
+service CodeReferenceService {
+  rpc GetCodeReference(GetCodeReferenceRequest)
+      returns (GetCodeReferenceResponse) {
+    option (google.api.http) = {
+      get: "/v1/code_references/{id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get a code reference by ID.",
+      tags: "Code Reference",
+      operation_id: "web.v1.code_reference.get",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc ListCodeReferences(ListCodeReferencesRequest)
+      returns (ListCodeReferencesResponse) {
+    option (google.api.http) = {
+      get: "/v1/code_references"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "List code references with optional filtering.",
+      tags: "Code Reference",
+      operation_id: "web.v1.code_reference.list",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc CreateCodeReference(CreateCodeReferenceRequest)
+      returns (CreateCodeReferenceResponse) {
+    option (google.api.http) = {
+      post: "/v1/code_references"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create",
+      description: "Create a new code reference. To call this API, you need a `WRITE` role.",
+      tags: "Code Reference",
+      operation_id: "web.v1.code_reference.create",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc UpdateCodeReference(UpdateCodeReferenceRequest)
+      returns (UpdateCodeReferenceResponse) {
+    option (google.api.http) = {
+      patch: "/v1/code_references/{id}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update",
+      description: "Update an existing code reference. To call this API, you need a `WRITE` role.",
+      tags: "Code Reference",
+      operation_id: "web.v1.code_reference.update",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc DeleteCodeReference(DeleteCodeReferenceRequest)
+      returns (DeleteCodeReferenceResponse) {
+    option (google.api.http) = {
+      delete: "/v1/code_references/{id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete",
+      description: "Delete a code reference. To call this API, you need a `WRITE` role.",
+      tags: "Code Reference",
+      operation_id: "web.v1.code_reference.delete",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+}

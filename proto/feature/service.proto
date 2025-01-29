@@ -263,6 +263,8 @@ message ListSegmentsRequest {
     NAME = 1;
     CREATED_AT = 2;
     UPDATED_AT = 3;
+    CONNECTIONS = 4;
+    USERS = 5;
   }
   enum OrderDirection {
     ASC = 0;
@@ -383,9 +385,9 @@ message BulkUploadSegmentUsersResponse {}
 
 message BulkDownloadSegmentUsersRequest {
   reserved 1;
-  string segment_id = 2;
+  string segment_id = 2 [(google.api.field_behavior) = REQUIRED];
   SegmentUser.State state = 3;
-  string environment_id = 4;
+  string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
 message BulkDownloadSegmentUsersResponse {
@@ -779,18 +781,15 @@ service FeatureService {
     };
   }
   rpc BulkDownloadSegmentUsers(BulkDownloadSegmentUsersRequest)
-      returns (BulkDownloadSegmentUsersResponse) {}
-  rpc EvaluateFeatures(EvaluateFeaturesRequest)
-      returns (EvaluateFeaturesResponse) {}
-  rpc ListTags(ListTagsRequest) returns (ListTagsResponse) {
+      returns (BulkDownloadSegmentUsersResponse) {
     option (google.api.http) = {
-      get: "/v1/tags"
+      get: "/v1/segment_users/bulk_download"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "List",
-      description: "List tags."
-      tags: "tag"
-      operation_id: "web.v1.tag.list"
+      summary: "Bulk download",
+      description: "Bulk download segment users."
+      tags: "segment"
+      operation_id: "web.v1.segment_users.bulk_download"
       responses: {
         key: "400"
         value: {
@@ -815,6 +814,9 @@ service FeatureService {
       }
     };
   }
+  rpc EvaluateFeatures(EvaluateFeaturesRequest)
+      returns (EvaluateFeaturesResponse) {}
+  rpc ListTags(ListTagsRequest) returns (ListTagsResponse) {}
   rpc CreateFlagTrigger(CreateFlagTriggerRequest)
       returns (CreateFlagTriggerResponse) {}
   rpc UpdateFlagTrigger(UpdateFlagTriggerRequest)

@@ -370,6 +370,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.Goal),
 			),
 		}
+	case proto.Event_GOAL_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.UpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Goal),
+			),
+		}
 	case proto.Event_EXPERIMENT_CREATED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),
@@ -510,6 +518,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 			),
 		}
 	case proto.Event_ACCOUNT_V2_AVATAR_IMAGE_URL_CHANGED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.ChangedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.AccountTags),
+			),
+		}
+	case proto.Event_ACCOUNT_V2_TAGS_CHANGED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(
@@ -1098,6 +1114,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.Notification),
 			),
 		}
+	case proto.Event_SUBSCRIPTION_FEATURE_FLAG_TAGS_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.FeatureFlagTagsUpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Notification),
+			),
+		}
 	case proto.Event_SUBSCRIPTION_UPDATED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),
@@ -1370,6 +1394,46 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 			Message: localizer.MustLocalizeWithTemplate(
 				locale.UpdatedTemplate,
 				localizer.MustLocalizeWithTemplate(locale.FlagTrigger),
+			),
+		}
+	case proto.Event_TAG_CREATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.CreatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Tag),
+			),
+		}
+	case proto.Event_TAG_DELETED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.DeletedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Tag),
+			),
+		}
+	case proto.Event_CODE_REFERENCE_CREATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.CreatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.CodeReference),
+			),
+		}
+	case proto.Event_CODE_REFERENCE_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.UpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.CodeReference),
+			),
+		}
+	case proto.Event_CODE_REFERENCE_DELETED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.DeletedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.CodeReference),
 			),
 		}
 	}

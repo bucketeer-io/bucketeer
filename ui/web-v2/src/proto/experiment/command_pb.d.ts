@@ -2,6 +2,7 @@
 // file: proto/experiment/command.proto
 
 import * as jspb from 'google-protobuf';
+import * as proto_experiment_goal_pb from '../../proto/experiment/goal_pb';
 
 export class CreateGoalCommand extends jspb.Message {
   getId(): string;
@@ -12,6 +13,11 @@ export class CreateGoalCommand extends jspb.Message {
 
   getDescription(): string;
   setDescription(value: string): void;
+
+  getConnectionType(): proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap];
+  setConnectionType(
+    value: proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap]
+  ): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateGoalCommand.AsObject;
@@ -39,6 +45,7 @@ export namespace CreateGoalCommand {
     id: string;
     name: string;
     description: string;
+    connectionType: proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap];
   };
 }
 

@@ -87,7 +87,7 @@ func (d domainEventInformer) handleMessage(msg *puller.Message) {
 		msg.Ack()
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	environmentName := ""
 	// TODO: The environmentURLCode will be dynamic when the console v3 is ready.
@@ -156,6 +156,7 @@ func (d domainEventInformer) createNotificationEvent(
 				Editor:             event.Editor,
 				EntityType:         event.EntityType,
 				EntityId:           event.EntityId,
+				EntityData:         event.EntityData,
 				Type:               event.Type,
 			},
 		},
@@ -228,6 +229,10 @@ func (d domainEventInformer) convSourceType(
 		return notificationproto.Subscription_DOMAIN_EVENT_ORGANIZATION, nil
 	case domaineventproto.Event_FLAG_TRIGGER:
 		return notificationproto.Subscription_DOMAIN_EVENT_FLAG_TRIGGER, nil
+	case domaineventproto.Event_TAG:
+		return notificationproto.Subscription_DOMAIN_EVENT_TAG, nil
+	case domaineventproto.Event_CODEREF:
+		return notificationproto.Subscription_DOMAIN_EVENT_CODEREF, nil
 	}
 	return notificationproto.Subscription_SourceType(0), ErrUnknownSourceType
 }

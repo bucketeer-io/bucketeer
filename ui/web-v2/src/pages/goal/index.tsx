@@ -102,12 +102,14 @@ export const GoalIndexPage: FC = memo(() => {
     (state) => [selectGoalById(state.goals, goalId), state.goals.getGoalError],
     shallowEqual
   );
+
   const addMethod = useForm({
     resolver: yupResolver(addFormSchema),
     defaultValues: {
       id: '',
       name: '',
-      description: ''
+      description: '',
+      connectionType: null
     },
     mode: 'onChange'
   });
@@ -120,7 +122,8 @@ export const GoalIndexPage: FC = memo(() => {
           environmentId: currentEnvironment.id,
           id: data.id,
           name: data.name,
-          description: data.description
+          description: data.description,
+          connectionType: data.connectionType
         })
       ).then(() => {
         setOpen(false);
@@ -244,7 +247,8 @@ export const GoalIndexPage: FC = memo(() => {
       resetUpdate({
         id: g.id,
         name: g.name,
-        description: g.description
+        description: g.description,
+        connectionType: g.connectionType
       });
       history.push({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_GOALS}/${g.id}`,
@@ -313,7 +317,8 @@ export const GoalIndexPage: FC = memo(() => {
         resetUpdate({
           id: goal.id,
           name: goal.name,
-          description: goal.description
+          description: goal.description,
+          connectionType: goal.connectionType
         });
       });
     }

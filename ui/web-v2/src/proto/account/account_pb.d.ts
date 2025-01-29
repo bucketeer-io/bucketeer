@@ -140,6 +140,11 @@ export class AccountV2 extends jspb.Message {
   getEnvironmentCount(): number;
   setEnvironmentCount(value: number): void;
 
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AccountV2.AsObject;
   static toObject(includeInstance: boolean, msg: AccountV2): AccountV2.AsObject;
@@ -177,6 +182,7 @@ export namespace AccountV2 {
     avatarFileType: string;
     avatarImage: Uint8Array | string;
     environmentCount: number;
+    tagsList: Array<string>;
   };
 
   export class Role extends jspb.Message {

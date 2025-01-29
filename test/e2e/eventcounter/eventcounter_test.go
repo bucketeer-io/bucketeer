@@ -61,19 +61,19 @@ const (
 const defaultVariationID = "default"
 
 var (
-	webGatewayAddr       = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
-	webGatewayPort       = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
-	webGatewayCert       = flag.String("web-gateway-cert", "", "Web gateway crt file")
-	apiKeyPath           = flag.String("api-key", "", "Client SDK API key for api-gateway")
-	apiKeyServerPath     = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
-	gatewayAddr          = flag.String("gateway-addr", "", "Gateway endpoint address")
-	gatewayPort          = flag.Int("gateway-port", 443, "Gateway endpoint port")
-	gatewayCert          = flag.String("gateway-cert", "", "Gateway crt file")
-	serviceTokenPath     = flag.String("service-token", "", "Service token path")
-	environmentNamespace = flag.String("environment-namespace", "", "Environment namespace")
-	organizationID       = flag.String("organization-id", "", "Organization ID")
-	testID               = flag.String("test-id", "", "test ID")
-	compareFloatOpt      = cmpopts.EquateApprox(0, 0.0001)
+	webGatewayAddr   = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
+	webGatewayPort   = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
+	webGatewayCert   = flag.String("web-gateway-cert", "", "Web gateway crt file")
+	apiKeyPath       = flag.String("api-key", "", "Client SDK API key for api-gateway")
+	apiKeyServerPath = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
+	gatewayAddr      = flag.String("gateway-addr", "", "Gateway endpoint address")
+	gatewayPort      = flag.Int("gateway-port", 443, "Gateway endpoint port")
+	gatewayCert      = flag.String("gateway-cert", "", "Gateway crt file")
+	serviceTokenPath = flag.String("service-token", "", "Service token path")
+	environmentID    = flag.String("environment-id", "", "Environment id")
+	organizationID   = flag.String("organization-id", "", "Organization ID")
+	testID           = flag.String("test-id", "", "test ID")
+	compareFloatOpt  = cmpopts.EquateApprox(0, 0.0001)
 )
 
 func TestGrpcExperimentGoalCount(t *testing.T) {
@@ -1603,7 +1603,7 @@ func createGoals(ctx context.Context, t *testing.T, client experimentclient.Clie
 		}
 		_, err := client.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
 			Command:       cmd,
-			EnvironmentId: *environmentNamespace,
+			EnvironmentId: *environmentID,
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -1633,13 +1633,13 @@ func createExperimentWithMultiGoals(
 	}
 	resp, err := client.CreateExperiment(ctx, &experimentproto.CreateExperimentRequest{
 		Command:       cmd,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	_, err = client.StartExperiment(ctx, &experimentproto.StartExperimentRequest{
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 		Id:            resp.Experiment.Id,
 		Command:       &experimentproto.StartExperimentCommand{},
 	})
@@ -2055,7 +2055,7 @@ func createFeature(
 	cmd := newCreateFeatureCommand(featureID, []string{variationA, variationB})
 	createReq := &featureproto.CreateFeatureRequest{
 		Command:       cmd,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -2073,7 +2073,7 @@ func addTag(t *testing.T, tag string, featureID string, client featureclient.Cli
 		AddTagCommands: []*featureproto.AddTagCommand{
 			{Tag: tag},
 		},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -2087,7 +2087,7 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 	enableReq := &featureproto.EnableFeatureRequest{
 		Id:            featureID,
 		Command:       &featureproto.EnableFeatureCommand{},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -2111,7 +2111,7 @@ func addFeatureIndividualTargeting(t *testing.T, featureID, userID, variationID 
 				Command: cmd,
 			},
 		},
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 		From:          featureproto.UpdateFeatureTargetingRequest_USER,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -2157,7 +2157,7 @@ func getExperiment(t *testing.T, c experimentclient.Client, id string) (*experim
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	req := &experimentproto.GetExperimentRequest{
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 		Id:            id,
 	}
 	var response *experimentproto.GetExperimentResponse
@@ -2187,7 +2187,7 @@ func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) (
 	defer cancel()
 	req := &ecproto.GetExperimentResultRequest{
 		ExperimentId:  experimentID,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	var response *ecproto.GetExperimentResultResponse
 	var err error
@@ -2219,7 +2219,7 @@ func getExperimentEvaluationCount(
 	defer cancel()
 	now := time.Now()
 	req := &ecproto.GetExperimentEvaluationCountRequest{
-		EnvironmentId:  *environmentNamespace,
+		EnvironmentId:  *environmentID,
 		StartAt:        now.Add(-30 * 24 * time.Hour).Unix(),
 		EndAt:          now.Unix(),
 		FeatureId:      featureID,
@@ -2256,7 +2256,7 @@ func getExperimentGoalCount(
 	defer cancel()
 	now := time.Now()
 	req := &ecproto.GetExperimentGoalCountRequest{
-		EnvironmentId:  *environmentNamespace,
+		EnvironmentId:  *environmentID,
 		StartAt:        now.Add(-30 * 24 * time.Hour).Unix(),
 		EndAt:          now.Unix(),
 		GoalId:         goalID,
@@ -2290,7 +2290,7 @@ func getFeature(t *testing.T, client featureclient.Client, featureID string) (*f
 	t.Helper()
 	getReq := &featureproto.GetFeatureRequest{
 		Id:            featureID,
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -2322,7 +2322,7 @@ func getEvaluationTimeseriesCount(
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	req := &ecproto.GetEvaluationTimeseriesCountRequest{
-		EnvironmentId: *environmentNamespace,
+		EnvironmentId: *environmentID,
 		FeatureId:     featureID,
 		TimeRange:     timeRange,
 	}

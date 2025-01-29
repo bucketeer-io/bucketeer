@@ -6,6 +6,7 @@
   "scripts": {
     "start": "vite --host",
     "build": "tsc -b && vite build",
+    "postbuild": "touch ./build/DONT-EDIT-FILES-IN-THIS-DIRECTORY",
     "preview": "vite preview",
     "style:all": "tsc && yarn run style:lint && yarn run style:prettier",
     "style:lint": "tsc && eslint '**/src/**/*.{js,jsx,ts,tsx}' --fix",

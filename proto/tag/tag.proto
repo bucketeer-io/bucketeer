@@ -19,12 +19,20 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/tag";
 
 message Tag {
   enum EntityType {
-    UNKNOWN = 0;
+    UNSPECIFIED = 0;
     FEATURE_FLAG = 1;
+    ACCOUNT = 2;
   }
   string id = 1;
-  int64 created_at = 2;
-  int64 updated_at = 3;
-  EntityType entity_type = 4;
-  string environment_id = 5;
+  string name = 2;
+  int64 created_at = 3;
+  int64 updated_at = 4;
+  EntityType entity_type = 5;
+  string environment_id = 6;
+  string environment_name = 7;
+}
+
+message EnvironmentTag {
+  string environment_id = 1;
+  repeated Tag tags = 2;
 }
