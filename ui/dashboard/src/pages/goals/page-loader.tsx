@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
+import { goalDeleter } from '@api/goal';
 import { goalUpdater, GoalUpdaterPayload } from '@api/goal/goal-updater';
 import { invalidateGoals } from '@queries/goals';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,6 +9,7 @@ import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { Goal } from '@types';
+import DeleteGoalModal from 'pages/goal-details/elements/delete-goal-modal';
 import ConfirmModal from 'elements/confirm-modal';
 import PageLayout from 'elements/page-layout';
 import { EmptyCollection } from './collection-layout/empty-collection';
@@ -44,15 +46,52 @@ const PageLoader = () => {
   const [isOpenConnectionModal, onOpenConnectionModal, onCloseConnectionModal] =
     useToggleOpen(false);
 
+  const [isOpenDeleteModal, onOpenDeleteModal, onCloseDeleteModal] =
+    useToggleOpen(false);
+
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
 
   const onHandleActions = (goal: Goal, type: GoalActions) => {
     setSelectedGoal(goal);
     if (type === 'CONNECTION') {
-      return onOpenConnectionModal();
+      onOpenConnectionModal();
     }
-    if (['ARCHIVE', 'UNARCHIVE'].includes(type)) onOpenConfirmModal();
+    if (type === 'DELETE') {
+      onOpenDeleteModal();
+    }
+    if (['ARCHIVE', 'UNARCHIVE'].includes(type)) {
+      onOpenConfirmModal();
+    }
+  };
+
+  const mutation = useMutation({
+    mutationFn: async (goal: Goal) => {
+      return goalDeleter({
+        id: goal.id,
+        environmentId: currentEnvironment.id
+      });
+    },
+    onSuccess: () => {
+      onCloseDeleteModal();
+      invalidateGoals(queryClient);
+      notify({
+        toastType: 'toast',
+        messageType: 'success',
+        message: (
+          <span>
+            <b>{selectedGoal?.name}</b>
+            {` has been deleted successfully!`}
+          </span>
+        )
+      });
+    }
+  });
+
+  const onDeleteGoal = () => {
+    if (selectedGoal?.id) {
+      mutation.mutate(selectedGoal);
+    }
   };
 
   const mutationState = useMutation({
@@ -103,6 +142,15 @@ const PageLoader = () => {
           isOpen={isOpenConnectionModal}
           goal={selectedGoal}
           onClose={onCloseConnectionModal}
+        />
+      )}
+      {isOpenDeleteModal && (
+        <DeleteGoalModal
+          goal={selectedGoal!}
+          isOpen={isOpenDeleteModal}
+          loading={mutation.isPending}
+          onClose={onCloseDeleteModal}
+          onSubmit={onDeleteGoal}
         />
       )}
       {openConfirmModal && selectedGoal && (

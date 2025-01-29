@@ -124,7 +124,7 @@ const GoalUpdateForm = ({
             className="w-fit"
             variant={'secondary'}
           >
-            {t(`save-with-comment`)}
+            {t(`save`)}
           </Button>
         </Form>
       </FormProvider>

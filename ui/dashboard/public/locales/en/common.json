@@ -139,7 +139,6 @@
   "new-push-subtitle": "Every time a feature flag is updated, a push notification is sent to the SDK client allowing you to update the SDK cache in real-time.",
   "tags": "Tags",
   "fcm-api-key": "Firebase Service Account",
-<<<<<<< HEAD
   "goals": "Goals",
   "goals-subtitle": "You can set goals and use them to start experiments within your feature flags",
   "new-goal": "New Goal",
@@ -151,8 +150,7 @@
   "archive-goal": "Archive Goal",
   "delete-goal": "Delete Goal",
   "goal-connections": "Goal Connections",
-  "in-use": "In Use"
-=======
+  "in-use": "In Use",
   "user-segments": "User Segments",
   "user-segments-subtitle": "You can create segments to help you start testing feature flags for specifics type of users",
   "new-user-segment": "New User Segment",
@@ -161,7 +159,5 @@
   "connections": "Connections",
   "status": "Status",
   "flags-connected": "Flags Connected",
-  "flags-connected-desc": "This user segment is currently connected to the following feature flags:",
-  "close": "Close"
->>>>>>> main
+  "flags-connected-desc": "This user segment is currently connected to the following feature flags:"
 }

@@ -15,36 +15,23 @@ import { useFormatDateTime } from 'utils/date-time';
 import { copyToClipBoard } from 'utils/function';
 import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
-import { IconCopy } from '@icons';
+import { IconArrowDown, IconCopy, IconTrash } from '@icons';
 import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
 import { GoalActions } from '../types';
 
-const Tag = ({
-  tag,
-  type,
-  className,
-  onClick
-}: {
-  tag: string;
-  type: ConnectionType;
-  className?: string;
-  onClick?: () => void;
-}) => {
+const Tag = ({ tag, type }: { tag: string; type: ConnectionType }) => {
   return (
     <div
       className={cn(
-        'flex-center w-fit px-2 py-1.5 typo-para-small leading-[14px] text-center rounded-[3px] capitalize cursor-pointer',
+        'flex-center w-fit px-2 py-1.5 typo-para-small leading-[14px] text-center rounded-[3px] capitalize',
         {
-          'px-[19.5px] text-gray-600 bg-gray-100 cursor-default':
-            type === 'UNKNOWN',
+          'px-4 text-gray-600 bg-gray-100': type === 'UNKNOWN',
           'text-primary-500 bg-primary-50': type === 'EXPERIMENT',
           'text-accent-pink-500 bg-accent-pink-50': type === 'OPERATION'
-        },
-        className
+        }
       )}
-      onClick={onClick}
     >
       {tag}
     </div>
@@ -112,18 +99,30 @@ export const useColumns = ({
       size: 150,
       cell: ({ row }) => {
         const goal = row.original;
-        const experimentLength = goal.experiments?.length;
-        const { connectionType } = goal;
+
+        const connectionCount =
+          goal.connectionType === 'EXPERIMENT'
+            ? goal.experiments?.length
+            : goal?.autoOpsRules?.length;
 
         if (!goal.isInUseStatus && goal.connectionType === 'UNKNOWN')
           return <Tag tag={'not in use'} type="UNKNOWN" />;
         return (
-          <Tag
-            tag={`${experimentLength} ${connectionType === 'EXPERIMENT' ? 'Experiment' : 'Operation'}${experimentLength === 0 || experimentLength > 1 ? 's' : ''}`}
-            type={connectionType}
-            className={!experimentLength ? 'cursor-default' : ''}
-            onClick={() => experimentLength && onActions(goal, 'CONNECTION')}
-          />
+          <button
+            disabled={!connectionCount}
+            onClick={() => connectionCount && onActions(goal, 'CONNECTION')}
+            className="flex items-center gap-1"
+          >
+            <Tag
+              tag={
+                goal.connectionType === 'EXPERIMENT'
+                  ? t('form:experiment', { count: connectionCount })
+                  : t('form:operation', { count: connectionCount })
+              }
+              type={goal.connectionType}
+            />
+            {connectionCount > 0 && <IconArrowDown />}
+          </button>
         );
       }
     },
@@ -162,7 +161,7 @@ export const useColumns = ({
         return (
           <Popover
             options={compact([
-              searchOptions.archived === 'true'
+              searchOptions.status === 'ARCHIVED'
                 ? {
                     label: `${t('table:popover.unarchive-goal')}`,
                     icon: IconArchiveOutlined,
@@ -171,8 +170,21 @@ export const useColumns = ({
                 : {
                     label: `${t('table:popover.archive-goal')}`,
                     icon: IconArchiveOutlined,
-                    value: 'ARCHIVE'
-                  }
+                    value: 'ARCHIVE',
+                    disabled: goal.isInUseStatus,
+                    tooltip: goal.isInUseStatus
+                      ? t('form:goal-details.archive-warning-desc')
+                      : ''
+                  },
+              {
+                label: `${t('table:popover.delete-goal')}`,
+                icon: IconTrash,
+                value: 'DELETE',
+                disabled: goal.isInUseStatus,
+                tooltip: goal.isInUseStatus
+                  ? t('form:goal-details.delete-warning-desc')
+                  : ''
+              }
             ])}
             icon={IconMoreHorizOutlined}
             onClick={value => onActions(goal, value as GoalActions)}

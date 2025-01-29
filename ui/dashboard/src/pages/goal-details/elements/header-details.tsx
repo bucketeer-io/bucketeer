@@ -31,7 +31,7 @@ const HeaderDetails = ({ goal }: { goal: Goal }) => {
           {goal.name}
         </h1>
         <Status
-          text={t(goal?.isInUseStatus ? 'in-use' : 'not-in-use')}
+          text={t(goal.isInUseStatus ? 'in-use' : 'not-in-use')}
           isInUseStatus={goal.isInUseStatus}
         />
       </div>

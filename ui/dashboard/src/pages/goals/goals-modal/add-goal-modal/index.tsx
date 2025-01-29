@@ -9,6 +9,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { ConnectionType } from '@types';
+import { onGenerateSlug } from 'utils/converts';
 import { IconInfo } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -118,6 +119,15 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                     <Input
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
+                      onChange={value => {
+                        const isIdDirty = form.getFieldState('id').isDirty;
+                        const id = form.getValues('id');
+                        field.onChange(value);
+                        form.setValue(
+                          'id',
+                          isIdDirty ? id : onGenerateSlug(value)
+                        );
+                      }}
                     />
                   </Form.Control>
                   <Form.Message />

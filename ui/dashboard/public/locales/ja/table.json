@@ -25,13 +25,12 @@
     "edit-push": "Edit Push",
     "disable-push": "Disable Push",
     "enable-push": "Enable Push",
-<<<<<<< HEAD
-    "delete-goal": "Delete Goal"
-=======
+    "delete-goal": "Delete Goal",
+    "archive-goal": "Archive Goal",
+    "unarchive-goal": "Unarchive Goal",
     "edit-segment": "Edit User Segment",
     "delete-segment": "Delete User Segment",
     "download-segment": "Download User Segment"
->>>>>>> main
   },
   "empty": {
     "project-title": "No registered projects",
@@ -49,13 +48,10 @@
     "notification-desc": "There are no registered notifications. Add a new one to start managing.",
     "push-title": "No registered pushes",
     "push-desc": "There are no registered pushes. Add a new one to start managing.",
-<<<<<<< HEAD
     "goal-title": "No registered goals",
-    "goal-desc": "There are no registered goals. Add a new one to start managing."
-=======
+    "goal-desc": "There are no registered goals. Add a new one to start managing.",
     "user-segments-title": "No registered user segments",
     "user-segments-desc": "There are no registered user segments. Add a new one to start managing."
->>>>>>> main
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
@@ -82,18 +78,18 @@
     "confirm-enable-desc": "The Push \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
     "confirm-disable-desc": "The Push \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
   },
-<<<<<<< HEAD
   "goals": {
     "connections": "Connections",
+    "auto-operations": "Auto Operations",
+    "operation-status": "Operation Status",
     "experiment": "Experiment",
     "experiment-status": "Experiment Status",
     "goal-status": "Goal Status",
     "delete-goal-desc": "The goal \"<bold>{{name}}</bold>\" will be deleted permanently. Are you sure you want to proceed?",
-    "confirm-archive-desc": "The goal \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
+    "confirm-archive-desc": "This goal \"<bold>{{name}}</bold>\" will be archived and will only show on the list page when clicking on the Archived tab. Are you sure you want to proceed?",
     "confirm-unarchive-desc": "The goal \"<bold>{{name}}</bold>\" will be unarchived. Are you sure you want to proceed?"
-=======
+  },
   "user-segment": {
     "delete-user-segment-desc": "The <bold>{{name}}</bold> is going to be deleted permanently. Are you sure you want to proceed?"
->>>>>>> main
   }
 }

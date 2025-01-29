@@ -46,7 +46,6 @@
     "account": "Get notified when someone adds or updates an account",
     "notification": "Get notified when someone adds or updates a notification"
   },
-<<<<<<< HEAD
   "upload-files": "Drop your file here, or <underline>{{text}}</underline>",
   "accept-file-types": "{{type}}",
   "goal-id": "Goal ID",
@@ -54,20 +53,21 @@
   "connections": "Connections",
   "experiments": "Experiments",
   "operations": "Operations",
+  "experiment_one": "{{count}} Experiment",
+  "experiment_other": "{{count}} Experiments",
+  "operation_one": "{{count}} Operation",
+  "operation_other": "{{count}} Operations",
   "goal-details": {
-    "archive-desc": "This goal will be archived across all environments and will only appear in your list when filtered for",
-    "delete-desc": "Permanently delete this goal across all environments in this project",
-    "delete-warning-desc": "You cannot delete a goal when your goal has connections"
-  }
-=======
+    "archive-desc": "Once the goal is archived, it will only show on the list page when clicking on the Archived tab.",
+    "delete-desc": "Permanently delete this goal.",
+    "delete-warning-desc": "You cannot delete a goal when it has connections.",
+    "archive-warning-desc": "You cannot archive a goal when it has connections."
+  },
   "placeholder-search-user-segments": "Search user segment",
   "list-of-users-ids": "List Of Users IDs",
   "browse-files": "Browse files",
   "enter-user-ids": "Enter user IDs",
-  "upload-files": "Drop your files here, or <underline>{{text}}</underline>",
   "update-user-segment": "Updating this field will replace the current list with the new one.",
   "update-user-segment-warning": "<p>The user ID list can't be updated because {{count}} flag is using it. Remove the segment from the flag before updating it.</p>",
-  "placeholder-enter-user-ids": "Enter IDs separated by commas (E.g., userId1, userId2, userId3,...)",
-  "accept-file-types": "{{type}}"
->>>>>>> main
+  "placeholder-enter-user-ids": "Enter IDs separated by commas (E.g., userId1, userId2, userId3,...)"
 }

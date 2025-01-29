@@ -2,7 +2,11 @@ import { useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
+import {
+  PAGE_PATH_EXPERIMENTS,
+  PAGE_PATH_FEATURE_AUTOOPS,
+  PAGE_PATH_FEATURES
+} from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { Goal } from '@types';
 import { IconExperimentsConnected, IconOperationsConnected } from '@icons';
@@ -23,14 +27,14 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const connectionType = useMemo(() => goal?.connectionType, [goal]);
+  const isExprimentType = connectionType === 'EXPERIMENT';
+  const connections = isExprimentType ? goal.experiments : goal.autoOpsRules;
 
   return (
     <DialogModal
       className="w-[500px]"
       title={
-        connectionType === 'EXPERIMENT'
-          ? t(`experiments-connected`)
-          : t(`operations-connected`)
+        isExprimentType ? t(`experiments-connected`) : t(`operations-connected`)
       }
       isOpen={isOpen}
       onClose={onClose}
@@ -39,7 +43,7 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
         <div className="flex-center w-full">
           <Icon
             icon={
-              connectionType === 'EXPERIMENT'
+              isExprimentType
                 ? IconExperimentsConnected
                 : IconOperationsConnected
             }
@@ -52,13 +56,12 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
             <Trans
               i18nKey="goal-connected-desc"
               values={{
-                type:
-                  connectionType === 'EXPERIMENT' ? 'Experiment' : 'Operation'
+                type: isExprimentType ? 'Experiment' : 'Operation'
               }}
             />
           </div>
           <div className="flex flex-col w-full p-4 gap-y-5 rounded bg-gray-100 max-h-[300px] overflow-auto">
-            {goal.experiments?.map((item, index) => (
+            {connections?.map((item, index) => (
               <div
                 key={index}
                 className="flex items-center gap-x-2 typo-para-medium leading-4 text-primary-500"
@@ -66,9 +69,13 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
                 <p>{index + 1}.</p>
                 <Link
                   className="underline line-clamp-1 break-all"
-                  to={`/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${item.id}`}
+                  to={
+                    isExprimentType
+                      ? `/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${item.id}`
+                      : `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${item.featureId}${PAGE_PATH_FEATURE_AUTOOPS}`
+                  }
                 >
-                  {item.name}
+                  {item.featureName}
                 </Link>
               </div>
             ))}

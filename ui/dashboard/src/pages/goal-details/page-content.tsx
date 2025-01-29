@@ -1,21 +1,25 @@
 import { Trans } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { goalDeleter } from '@api/goal';
 import { goalUpdater, GoalUpdaterPayload } from '@api/goal/goal-updater';
 import { invalidateGoalDetails } from '@queries/goal-details';
 import { invalidateGoals } from '@queries/goals';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Goal } from '@types';
+import InfoMessage from 'components/info-message';
 import ConfirmModal from 'elements/confirm-modal';
 import PageLayout from 'elements/page-layout';
-import DeleteWarning from './elements/delete-warning';
+import DeleteGoalModal from './elements/delete-goal-modal';
 import GoalActions from './elements/goal-actions';
 import GoalConnections from './elements/goal-connections';
 import GoalUpdateForm from './elements/goal-update-form';
-import DeleteGoalModal from './goal-details-modal/delete-goal-modal';
 
 const PageContent = ({ goal }: { goal: Goal }) => {
+  const navigate = useNavigate();
   const { t } = useTranslation(['common', 'form', 'table']);
 
   const { notify } = useToast();
@@ -28,6 +32,30 @@ const PageContent = ({ goal }: { goal: Goal }) => {
     useToggleOpen(false);
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      return goalDeleter({
+        id: goal.id,
+        environmentId: currentEnvironment.id
+      });
+    },
+    onSuccess: () => {
+      onCloseDeleteModal();
+      invalidateGoals(queryClient);
+      notify({
+        toastType: 'toast',
+        messageType: 'success',
+        message: (
+          <span>
+            <b>{goal?.name}</b>
+            {` has been deleted successfully!`}
+          </span>
+        )
+      });
+      navigate(`/${currentEnvironment.urlCode}/${PAGE_PATH_GOALS}`);
+    }
+  });
 
   const mutationState = useMutation({
     mutationFn: async (payload: GoalUpdaterPayload) => {
@@ -58,11 +86,12 @@ const PageContent = ({ goal }: { goal: Goal }) => {
 
   const onUpdateGoal = async (payload: GoalUpdaterPayload) =>
     mutationState.mutate(payload);
+  const connections = goal.experiments?.length || goal.autoOpsRules?.length;
 
   return (
     <PageLayout.Content className="gap-y-6 overflow-auto">
       <GoalUpdateForm goal={goal} onSubmit={onUpdateGoal} />
-      {goal.experiments?.length > 0 && <GoalConnections goal={goal} />}
+      {connections > 0 && <GoalConnections goal={goal} />}
       <GoalActions
         title={
           goal.archived
@@ -76,7 +105,14 @@ const PageContent = ({ goal }: { goal: Goal }) => {
             : t(`table:popover.archive-goal`)
         }
         onClick={onOpenConfirmModal}
-      />
+        disabled={goal.isInUseStatus}
+      >
+        {(goal.experiments?.length > 0 || goal.isInUseStatus) && (
+          <InfoMessage
+            description={t('form:goal-details.archive-warning-desc')}
+          />
+        )}
+      </GoalActions>
       <GoalActions
         title={t('delete-goal')}
         description={t('form:goal-details.delete-desc')}
@@ -85,16 +121,18 @@ const PageContent = ({ goal }: { goal: Goal }) => {
         onClick={onOpenDeleteModal}
       >
         {(goal.experiments?.length > 0 || goal.isInUseStatus) && (
-          <DeleteWarning />
+          <InfoMessage
+            description={t('form:goal-details.delete-warning-desc')}
+          />
         )}
       </GoalActions>
       {isOpenDeleteModal && (
         <DeleteGoalModal
           goal={goal}
           isOpen={isOpenDeleteModal}
-          loading={false}
+          loading={mutation.isPending}
           onClose={onCloseDeleteModal}
-          onSubmit={() => {}}
+          onSubmit={() => mutation.mutate()}
         />
       )}
       {openConfirmModal && (
