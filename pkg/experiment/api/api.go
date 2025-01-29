@@ -56,6 +56,7 @@ type experimentService struct {
 	autoOpsClient     autoopsclient.Client
 	mysqlClient       mysql.Client
 	experimentStorage storage.ExperimentStorage
+	goalStorage       storage.GoalStorage
 	publisher         publisher.Publisher
 	opts              *options
 	logger            *zap.Logger
@@ -81,6 +82,7 @@ func NewExperimentService(
 		autoOpsClient:     autoOpsClient,
 		mysqlClient:       mysqlClient,
 		experimentStorage: storage.NewExperimentStorage(mysqlClient),
+		goalStorage:       storage.NewGoalStorage(mysqlClient),
 		publisher:         publisher,
 		opts:              dopts,
 		logger:            dopts.logger.Named("api"),

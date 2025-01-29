@@ -170,13 +170,7 @@ func TestCreateExperimentMySQL(t *testing.T) {
 	}{
 		{
 			setup: func(s *experimentService) {
-				// for goal storage
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Goal{}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
@@ -282,6 +276,7 @@ func TestCreateExperimentNoCommandMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *experimentService) {
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Goal{}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {

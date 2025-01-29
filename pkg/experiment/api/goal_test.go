@@ -18,6 +18,16 @@ import (
 	"context"
 	"testing"
 
+	autoopsclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
+	v2es "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
+	storagemock "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -25,15 +35,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-
-	autoopsclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
-	v2es "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
-	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
 
 func TestGetGoalMySQL(t *testing.T) {
@@ -74,11 +75,9 @@ func TestGetGoalMySQL(t *testing.T) {
 		{
 			desc: "error: ErrNotFound",
 			setup: func(s *experimentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(nil, v2es.ErrGoalNotFound)
 			},
 			id:            "id-0",
 			environmentId: "ns0",
@@ -97,15 +96,17 @@ func TestGetGoalMySQL(t *testing.T) {
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *experimentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
 				s.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ListAutoOpsRules(
 					gomock.Any(), gomock.Any(),
 				).Return(&autoopsproto.ListAutoOpsRulesResponse{
 					AutoOpsRules: []*autoopsproto.AutoOpsRule{},
+				}, nil)
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{
+						Id: "id-1",
+					},
 				}, nil)
 			},
 			id:            "id-1",
@@ -165,18 +166,10 @@ func TestListGoalMySQL(t *testing.T) {
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *experimentService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().ListGoals(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return([]*experimentproto.Goal{}, 0, int64(0), nil)
 				s.autoOpsClient.(*autoopsclientmock.MockClient).EXPECT().ListAutoOpsRules(
 					gomock.Any(), gomock.Any(),
 				).Return(&autoopsproto.ListAutoOpsRulesResponse{
@@ -248,9 +241,8 @@ func TestCreateGoalMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrGoalAlreadyExists)
 			},
 			req: &experimentproto.CreateGoalRequest{
@@ -261,8 +253,12 @@ func TestCreateGoalMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().CreateGoal(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -340,9 +336,8 @@ func TestCreateGoalNoCommandMySQL(t *testing.T) {
 		{
 			desc: "error: ErrGoalAlreadyExists",
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrGoalAlreadyExists)
 			},
 			req: &experimentproto.CreateGoalRequest{
@@ -355,8 +350,12 @@ func TestCreateGoalNoCommandMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().CreateGoal(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -410,9 +409,8 @@ func TestUpdateGoalMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrGoalNotFound)
 			},
 			req: &experimentproto.UpdateGoalRequest{
@@ -424,8 +422,19 @@ func TestUpdateGoalMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{
+						Id: "id-1",
+					},
+				}, nil)
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().UpdateGoal(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -492,9 +501,8 @@ func TestUpdateGoalNoCommandMySQL(t *testing.T) {
 		{
 			desc: "error: not found",
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrGoalNotFound)
 			},
 			req: &experimentproto.UpdateGoalRequest{
@@ -507,8 +515,19 @@ func TestUpdateGoalNoCommandMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{
+						Id: "id-1",
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().UpdateGoal(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -523,8 +542,19 @@ func TestUpdateGoalNoCommandMySQL(t *testing.T) {
 		{
 			desc: "success: archived goal",
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{
+						Id: "id-1",
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().UpdateGoal(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -586,9 +616,8 @@ func TestArchiveGoalMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrGoalNotFound)
 			},
 			req: &experimentproto.ArchiveGoalRequest{
@@ -600,8 +629,19 @@ func TestArchiveGoalMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{
+						Id: "id-1",
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().UpdateGoal(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -667,8 +707,20 @@ func TestDeleteGoalMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{
+						Id: "id-1",
+					},
+				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().DeleteGoal(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &experimentproto.DeleteGoalRequest{

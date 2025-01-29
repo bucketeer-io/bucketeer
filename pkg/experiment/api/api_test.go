@@ -118,6 +118,7 @@ func createExperimentService(c *gomock.Controller, specifiedEnvironmentId *strin
 		autoOpsClient:     autoOpsClientMock,
 		mysqlClient:       mysqlClient,
 		experimentStorage: storagemock.NewMockExperimentStorage(c),
+		goalStorage:       storagemock.NewMockGoalStorage(c),
 		publisher:         p,
 		logger:            zap.NewNop().Named("api"),
 	}
