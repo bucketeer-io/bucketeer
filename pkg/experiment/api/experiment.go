@@ -450,6 +450,29 @@ func (s *experimentService) createExperimentNoCommand(
 		}
 		return nil, dt.Err()
 	}
+	for _, gid := range req.GoalIds {
+		_, err := s.getGoalMySQL(ctx, gid, req.EnvironmentId)
+		if err != nil {
+			if errors.Is(err, v2es.ErrGoalNotFound) {
+				dt, err := statusGoalNotFound.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalize(locale.NotFoundError),
+				})
+				if err != nil {
+					return nil, statusInternal.Err()
+				}
+				return nil, dt.Err()
+			}
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+	}
 	experiment, err := domain.NewExperiment(
 		req.FeatureId,
 		getFeatureResp.Feature.Version,
