@@ -45,6 +45,8 @@ export const AuditLogList: FC<AuditLogListProps> = memo(
       shallowEqual
     );
 
+    console.log({ auditLogs });
+
     return (
       <div className="min-w-max bg-white border border-gray-300 rounded-md">
         <div>

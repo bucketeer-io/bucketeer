@@ -30,6 +30,7 @@ import {
 
 import { FeatureHeader } from '../../components/FeatureHeader';
 import {
+  PAGE_PATH_CODE_REFS,
   PAGE_PATH_FEATURES,
   PAGE_PATH_FEATURE_AUTOOPS,
   PAGE_PATH_FEATURE_EVALUATION,
@@ -57,6 +58,7 @@ import { FeatureAutoOpsPage } from './autoops';
 import { FeatureEvaluationPage } from './evaluation';
 import { FeatureExperimentsPage } from './experiments';
 import { FeatureHistoryPage } from './history';
+import { FeatureCodeRefsPage } from './coderefs';
 import { FeatureSettingsPage } from './settings';
 import { FeatureTargetingPage } from './targeting';
 import { FeatureTriggerPage } from './triggers';
@@ -231,6 +233,9 @@ export const FeatureDetailPage: FC = memo(() => {
         <Route exact path={`${url}${PAGE_PATH_FEATURE_HISTORY}`}>
           <FeatureHistoryPage featureId={featureId} />
         </Route>
+        <Route exact path={`${url}${PAGE_PATH_CODE_REFS}`}>
+          <FeatureCodeRefsPage featureId={featureId} />
+        </Route>
       </Switch>
     </div>
   );
@@ -270,6 +275,10 @@ const createTabs = (): Array<TabItem> => {
     {
       message: intl.formatMessage(messages.feature.tab.history),
       to: PAGE_PATH_FEATURE_HISTORY
+    },
+    {
+      message: 'Code Refs',
+      to: PAGE_PATH_CODE_REFS
     },
     {
       message: intl.formatMessage(messages.feature.tab.settings),
