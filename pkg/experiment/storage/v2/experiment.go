@@ -30,6 +30,7 @@ var (
 	ErrExperimentAlreadyExists          = errors.New("experiment: already exists")
 	ErrExperimentNotFound               = errors.New("experiment: not found")
 	ErrExperimentUnexpectedAffectedRows = errors.New("experiment: unexpected affected rows")
+	ErrExperimentCannotBeArchived       = errors.New("experiment: cannot be archived")
 
 	//go:embed sql/experiment/select_experiment.sql
 	selectExperimentSQL string
@@ -174,6 +175,7 @@ func (s *experimentStorage) GetExperiment(
 		&experiment.BaseVariationId,
 		&experiment.Maintainer,
 		&status,
+		&mysql.JSONObject{Val: &experiment.Goals},
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
