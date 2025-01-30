@@ -5043,6 +5043,24 @@ definitions:
       - WriteType_OVERRIDE
       - WriteType_PATCH
     default: WriteType_UNSPECIFIED
+  ClauseOperator:
+    type: string
+    enum:
+      - EQUALS
+      - IN
+      - ENDS_WITH
+      - STARTS_WITH
+      - SEGMENT
+      - GREATER
+      - GREATER_OR_EQUAL
+      - LESS
+      - LESS_OR_EQUAL
+      - BEFORE
+      - AFTER
+      - FEATURE_FLAG
+      - PARTIALLY_MATCH
+    default: EQUALS
+    description: ' - FEATURE_FLAG: Attribute is feature ID, and value is variation ID.'
   CodeReferenceRepositoryType:
     type: string
     enum:
@@ -5108,6 +5126,13 @@ definitions:
       - Action_ON
       - Action_OFF
     default: Action_UNKNOWN
+  GoalAutoOpsRuleReference:
+    type: object
+    properties:
+      id:
+        type: string
+      featureId:
+        type: string
   GoalConnectionType:
     type: string
     enum:
@@ -5115,6 +5140,15 @@ definitions:
       - EXPERIMENT
       - OPERATION
     default: UNKNOWN
+  GoalExperimentReference:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      featureId:
+        type: string
   ListExperimentsResponseSummary:
     type: object
     properties:
@@ -5946,61 +5980,6 @@ definitions:
       expiry:
         type: string
         format: int64
-  autoopsActionType:
-    type: string
-    enum:
-      - UNKNOWN
-      - ENABLE
-      - DISABLE
-    default: UNKNOWN
-  autoopsAutoOpsRule:
-    type: object
-    properties:
-      id:
-        type: string
-      featureId:
-        type: string
-      opsType:
-        $ref: '#/definitions/autoopsOpsType'
-      clauses:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/bucketeerautoopsClause'
-      createdAt:
-        type: string
-        format: int64
-      updatedAt:
-        type: string
-        format: int64
-      deleted:
-        type: boolean
-      autoOpsStatus:
-        $ref: '#/definitions/autoopsAutoOpsStatus'
-  autoopsAutoOpsStatus:
-    type: string
-    enum:
-      - WAITING
-      - RUNNING
-      - FINISHED
-      - STOPPED
-    default: WAITING
-  autoopsOpsType:
-    type: string
-    enum:
-      - TYPE_UNKNOWN
-      - SCHEDULE
-      - EVENT_RATE
-    default: TYPE_UNKNOWN
-  bucketeerautoopsClause:
-    type: object
-    properties:
-      id:
-        type: string
-      clause:
-        $ref: '#/definitions/protobufAny'
-      actionType:
-        $ref: '#/definitions/autoopsActionType'
   bucketeerenvironmentOrganization:
     type: object
     properties:
@@ -6038,19 +6017,6 @@ definitions:
         format: int32
       ownerEmail:
         type: string
-  bucketeerfeatureClause:
-    type: object
-    properties:
-      id:
-        type: string
-      attribute:
-        type: string
-      operator:
-        $ref: '#/definitions/featureClauseOperator'
-      values:
-        type: array
-        items:
-          type: string
   bucketeerfeatureListTagsRequestOrderBy:
     type: string
     enum:
@@ -7015,12 +6981,12 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/experimentExperiment'
+          $ref: '#/definitions/GoalExperimentReference'
       autoOpsRules:
         type: array
         items:
           type: object
-          $ref: '#/definitions/autoopsAutoOpsRule'
+          $ref: '#/definitions/GoalAutoOpsRuleReference'
   experimentListExperimentsRequestOrderBy:
     type: string
     enum:
@@ -7185,24 +7151,19 @@ definitions:
     properties:
       description:
         type: string
-  featureClauseOperator:
-    type: string
-    enum:
-      - EQUALS
-      - IN
-      - ENDS_WITH
-      - STARTS_WITH
-      - SEGMENT
-      - GREATER
-      - GREATER_OR_EQUAL
-      - LESS
-      - LESS_OR_EQUAL
-      - BEFORE
-      - AFTER
-      - FEATURE_FLAG
-      - PARTIALLY_MATCH
-    default: EQUALS
-    description: ' - FEATURE_FLAG: Attribute is feature ID, and value is variation ID.'
+  featureClause:
+    type: object
+    properties:
+      id:
+        type: string
+      attribute:
+        type: string
+      operator:
+        $ref: '#/definitions/ClauseOperator'
+      values:
+        type: array
+        items:
+          type: string
   featureCloneFeatureCommand:
     type: object
     properties:
@@ -7689,7 +7650,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/bucketeerfeatureClause'
+          $ref: '#/definitions/featureClause'
   featureSegment:
     type: object
     properties:

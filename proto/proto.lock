@@ -22168,24 +22168,53 @@
               {
                 "id": 10,
                 "name": "experiments",
-                "type": "Experiment",
+                "type": "ExperimentReference",
                 "is_repeated": true
               },
               {
                 "id": 11,
                 "name": "auto_ops_rules",
-                "type": "autoops.AutoOpsRule",
+                "type": "AutoOpsRuleReference",
                 "is_repeated": true
               }
+            ],
+            "messages": [
+              {
+                "name": "ExperimentReference",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "id",
+                    "type": "string"
+                  },
+                  {
+                    "id": 2,
+                    "name": "name",
+                    "type": "string"
+                  },
+                  {
+                    "id": 3,
+                    "name": "feature_id",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "name": "AutoOpsRuleReference",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "id",
+                    "type": "string"
+                  },
+                  {
+                    "id": 2,
+                    "name": "feature_id",
+                    "type": "string"
+                  }
+                ]
+              }
             ]
-          }
-        ],
-        "imports": [
-          {
-            "path": "proto/experiment/experiment.proto"
-          },
-          {
-            "path": "proto/autoops/auto_ops_rule.proto"
           }
         ],
         "package": {
