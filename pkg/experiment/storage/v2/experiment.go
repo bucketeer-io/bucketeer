@@ -30,7 +30,10 @@ var (
 	ErrExperimentAlreadyExists          = errors.New("experiment: already exists")
 	ErrExperimentNotFound               = errors.New("experiment: not found")
 	ErrExperimentUnexpectedAffectedRows = errors.New("experiment: unexpected affected rows")
+	ErrExperimentCannotBeArchived       = errors.New("experiment: cannot be archived")
 
+	//go:embed sql/experiment/select_experiment.sql
+	selectExperimentSQL string
 	//go:embed sql/experiment/select_experiments.sql
 	selectExperimentsSQL string
 	//go:embed sql/experiment/count_experiment.sql
@@ -147,36 +150,9 @@ func (s *experimentStorage) GetExperiment(
 ) (*domain.Experiment, error) {
 	experiment := proto.Experiment{}
 	var status int32
-	query := `
-		SELECT
-			id,
-			goal_id,
-			feature_id,
-			feature_version,
-			variations,
-			start_at,
-			stop_at,
-			stopped,
-			stopped_at,
-			created_at,
-			updated_at,
-			archived,
-			deleted,
-			goal_ids,
-			name,
-			description,
-			base_variation_id,
-			maintainer,
-			status
-		FROM
-			experiment
-		WHERE
-			id = ? AND
-			environment_id = ?
-	`
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
+		selectExperimentSQL,
 		id,
 		environmentId,
 	).Scan(
@@ -199,6 +175,7 @@ func (s *experimentStorage) GetExperiment(
 		&experiment.BaseVariationId,
 		&experiment.Maintainer,
 		&status,
+		&mysql.JSONObject{Val: &experiment.Goals},
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {

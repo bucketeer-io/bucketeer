@@ -681,6 +681,7 @@ func (s *experimentService) UpdateExperiment(
 		}
 		return nil, dt.Err()
 	}
+	var experimentPb *proto.Experiment
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		experimentStorage := v2es.NewExperimentStorage(tx)
 		experiment, err := experimentStorage.GetExperiment(ctx, req.Id, req.EnvironmentId)
@@ -733,6 +734,7 @@ func (s *experimentService) UpdateExperiment(
 				return err
 			}
 		}
+		experimentPb = experiment.Experiment
 		return experimentStorage.UpdateExperiment(ctx, experiment, req.EnvironmentId)
 	})
 	if err != nil {
@@ -762,7 +764,9 @@ func (s *experimentService) UpdateExperiment(
 		}
 		return nil, dt.Err()
 	}
-	return &proto.UpdateExperimentResponse{}, nil
+	return &proto.UpdateExperimentResponse{
+		Experiment: experimentPb,
+	}, nil
 }
 
 func (s *experimentService) updateExperimentNoCommand(
@@ -783,6 +787,7 @@ func (s *experimentService) updateExperimentNoCommand(
 		return nil, err
 	}
 
+	var experimentPb *proto.Experiment
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		experimentStorage := v2es.NewExperimentStorage(s.mysqlClient)
 		experiment, err := experimentStorage.GetExperiment(ctxWithTx, req.Id, req.EnvironmentId)
@@ -803,6 +808,9 @@ func (s *experimentService) updateExperimentNoCommand(
 
 		var eventMsg pb.Message
 		if req.Archived != nil {
+			if experiment.Status == proto.Experiment_RUNNING {
+				return v2es.ErrExperimentCannotBeArchived
+			}
 			eventMsg = &eventproto.ExperimentArchivedEvent{
 				Id: req.Id,
 			}
@@ -832,6 +840,7 @@ func (s *experimentService) updateExperimentNoCommand(
 		if err := s.publisher.Publish(ctxWithTx, event); err != nil {
 			return err
 		}
+		experimentPb = updated.Experiment
 		return experimentStorage.UpdateExperiment(ctxWithTx, updated, req.EnvironmentId)
 	})
 	if err != nil {
@@ -861,7 +870,9 @@ func (s *experimentService) updateExperimentNoCommand(
 		}
 		return nil, dt.Err()
 	}
-	return &proto.UpdateExperimentResponse{}, nil
+	return &proto.UpdateExperimentResponse{
+		Experiment: experimentPb,
+	}, nil
 }
 
 func validateUpdateExperimentRequest(req *proto.UpdateExperimentRequest, localizer locale.Localizer) error {
@@ -1216,7 +1227,7 @@ func (s *experimentService) updateExperiment(
 		return experimentStorage.UpdateExperiment(ctx, experiment, environmentId)
 	})
 	if err != nil {
-		if err == v2es.ErrExperimentNotFound || err == v2es.ErrExperimentUnexpectedAffectedRows {
+		if errors.Is(err, v2es.ErrExperimentNotFound) || errors.Is(err, v2es.ErrExperimentUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),

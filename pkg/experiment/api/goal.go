@@ -253,7 +253,7 @@ func (s *experimentService) mapConnectedOperations(
 		return err
 	}
 	autoOpsRules := listAutoOpRulesResp.AutoOpsRules
-	goalOpsMap := make(map[string][]*autoopsproto.AutoOpsRule)
+	goalOpsMap := make(map[string][]*proto.Goal_AutoOpsRuleReference)
 	for _, rule := range autoOpsRules {
 		for _, clause := range rule.Clauses {
 			if clause.Clause.MessageIs(&autoopsproto.OpsEventRateClause{}) {
@@ -264,7 +264,10 @@ func (s *experimentService) mapConnectedOperations(
 				if c.GoalId == "" {
 					continue
 				}
-				goalOpsMap[c.GoalId] = append(goalOpsMap[c.GoalId], rule)
+				goalOpsMap[c.GoalId] = append(goalOpsMap[c.GoalId], &proto.Goal_AutoOpsRuleReference{
+					Id:        rule.Id,
+					FeatureId: rule.FeatureId,
+				})
 			}
 		}
 	}
