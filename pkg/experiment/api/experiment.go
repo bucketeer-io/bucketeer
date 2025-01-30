@@ -19,6 +19,7 @@ import (
 	"errors"
 	"strconv"
 
+	pb "github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -655,6 +656,11 @@ func (s *experimentService) UpdateExperiment(
 	if err != nil {
 		return nil, err
 	}
+	if req.ChangeExperimentPeriodCommand == nil &&
+		req.ChangeNameCommand == nil &&
+		req.ChangeDescriptionCommand == nil {
+		return s.updateExperimentNoCommand(ctx, req, editor, localizer)
+	}
 	if err := validateUpdateExperimentRequest(req, localizer); err != nil {
 		return nil, err
 	}
@@ -730,7 +736,106 @@ func (s *experimentService) UpdateExperiment(
 		return experimentStorage.UpdateExperiment(ctx, experiment, req.EnvironmentId)
 	})
 	if err != nil {
-		if err == v2es.ErrExperimentNotFound || err == v2es.ErrExperimentUnexpectedAffectedRows {
+		if errors.Is(err, v2es.ErrExperimentNotFound) || errors.Is(err, v2es.ErrExperimentUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to update experiment",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &proto.UpdateExperimentResponse{}, nil
+}
+
+func (s *experimentService) updateExperimentNoCommand(
+	ctx context.Context,
+	req *proto.UpdateExperimentRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*proto.UpdateExperimentResponse, error) {
+	err := validateUpdateExperimentNoCommandRequest(req, localizer)
+	if err != nil {
+		s.logger.Error(
+			"Failed validate update experiment no command req",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, err
+	}
+
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		experimentStorage := v2es.NewExperimentStorage(s.mysqlClient)
+		experiment, err := experimentStorage.GetExperiment(ctxWithTx, req.Id, req.EnvironmentId)
+		if err != nil {
+			return err
+		}
+		updated, err := experiment.Update(
+			req.Name,
+			req.Description,
+			req.StartAt,
+			req.StopAt,
+			req.Status,
+			req.Archived,
+		)
+		if err != nil {
+			return err
+		}
+
+		var eventMsg pb.Message
+		if req.Archived != nil {
+			eventMsg = &eventproto.ExperimentArchivedEvent{
+				Id: req.Id,
+			}
+		} else {
+			eventMsg = &eventproto.ExperimentUpdatedEvent{
+				Id:          experiment.Id,
+				Name:        updated.Name,
+				Description: updated.Description,
+				StartAt:     updated.StartAt,
+				StopAt:      updated.StopAt,
+				Status:      updated.Status,
+			}
+		}
+		event, err := domainevent.NewEvent(
+			editor,
+			eventproto.Event_EXPERIMENT,
+			experiment.Id,
+			eventproto.Event_EXPERIMENT_UPDATED,
+			eventMsg,
+			req.EnvironmentId,
+			updated,
+			experiment,
+		)
+		if err != nil {
+			return err
+		}
+		if err := s.publisher.Publish(ctxWithTx, event); err != nil {
+			return err
+		}
+		return experimentStorage.UpdateExperiment(ctxWithTx, updated, req.EnvironmentId)
+	})
+	if err != nil {
+		if errors.Is(err, v2es.ErrExperimentNotFound) || errors.Is(err, v2es.ErrExperimentUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -774,6 +879,53 @@ func validateUpdateExperimentRequest(req *proto.UpdateExperimentRequest, localiz
 		if err := validateExperimentPeriod(
 			req.ChangeExperimentPeriodCommand.StartAt,
 			req.ChangeExperimentPeriodCommand.StopAt,
+			localizer,
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateUpdateExperimentNoCommandRequest(
+	req *proto.UpdateExperimentRequest,
+	localizer locale.Localizer,
+) error {
+	if req.Id == "" {
+		dt, err := statusExperimentIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Name != nil && req.Name.Value == "" {
+		dt, err := statusExperimentNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if (req.StartAt != nil && req.StopAt == nil) ||
+		(req.StartAt == nil && req.StopAt != nil) {
+		dt, err := statusPeriodInvalid.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "period"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.StartAt != nil && req.StopAt != nil {
+		if err := validateExperimentPeriod(
+			req.StartAt.Value,
+			req.StopAt.Value,
 			localizer,
 		); err != nil {
 			return err
@@ -1064,7 +1216,7 @@ func (s *experimentService) updateExperiment(
 		return experimentStorage.UpdateExperiment(ctx, experiment, environmentId)
 	})
 	if err != nil {
-		if err == v2es.ErrExperimentNotFound || err == v2es.ErrExperimentUnexpectedAffectedRows {
+		if errors.Is(err, v2es.ErrExperimentNotFound) || errors.Is(err, v2es.ErrExperimentUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),

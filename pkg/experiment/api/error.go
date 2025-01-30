@@ -30,6 +30,7 @@ var (
 	statusInvalidGoalID          = gstatus.New(codes.InvalidArgument, "experiment: invalid goal id")
 	statusGoalNameRequired       = gstatus.New(codes.InvalidArgument, "experiment: goal name must be specified")
 	statusPeriodTooLong          = gstatus.New(codes.InvalidArgument, "experiment: period too long")
+	statusPeriodInvalid          = gstatus.New(codes.InvalidArgument, "experiment: period is invalid")
 	statusInvalidOrderBy         = gstatus.New(codes.InvalidArgument, "expriment: order_by is invalid")
 	statusNotFound               = gstatus.New(codes.NotFound, "experiment: not found")
 	statusGoalNotFound           = gstatus.New(codes.NotFound, "experiment: goal not found")

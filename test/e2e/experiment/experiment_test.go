@@ -244,6 +244,59 @@ func TestUpdateExperiment(t *testing.T) {
 	}
 }
 
+func TestUpdateExperimentNoCommand(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	c := newExperimentClient(t)
+	defer c.Close()
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureID)
+	goalIDs := createGoals(ctx, t, c, 1)
+	now := time.Now()
+	feature := getFeature(ctx, t, featureID)
+	startAt := time.Now()
+	stopAt := startAt.Local().Add(time.Hour * 1)
+	e := createExperimentWithMultiGoals(ctx, t, c, featureID, feature.Variations[0].Id, goalIDs, startAt, stopAt)
+	startAt = now.Local().Add(time.Minute * 30)
+	stopAt = now.Local().Add(time.Minute * 60)
+	newName := fmt.Sprintf("%s-new-exp-name-%s", prefixTestName, newUUID(t))
+	if _, err := c.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
+		Id:            e.Id,
+		Name:          wrapperspb.String(newName),
+		StartAt:       wrapperspb.Int64(startAt.Unix()),
+		StopAt:        wrapperspb.Int64(stopAt.Unix()),
+		EnvironmentId: *environmentID,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	getResp, err := c.GetExperiment(ctx, &experimentproto.GetExperimentRequest{
+		Id:            e.Id,
+		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if startAt.Unix() != getResp.Experiment.StartAt {
+		t.Fatalf("StartAt is not equal. Expected: %d, actual: %d", startAt.Unix(), getResp.Experiment.StartAt)
+	}
+	if stopAt.Unix() != getResp.Experiment.StopAt {
+		t.Fatalf("StopAt is not equal. Expected: %d, actual: %d", stopAt.Unix(), getResp.Experiment.StopAt)
+	}
+	if newName != getResp.Experiment.Name {
+		t.Fatalf("Name is not equal. Expected: %s, actual: %s", newName, getResp.Experiment.Name)
+	}
+
+	_, err = c.DeleteExperiment(ctx, &experimentproto.DeleteExperimentRequest{
+		Id:            e.Id,
+		Command:       &experimentproto.DeleteExperimentCommand{},
+		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestCreateAndGetGoal(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -514,6 +567,73 @@ func TestStatusUpdateFromRunningToStopped(t *testing.T) {
 			t.Fatalf(fmt.Sprintf("retry timeout: %s", resp.Experiment.Name))
 		}
 		time.Sleep(time.Second)
+	}
+}
+
+func TestStatusUpdateFromRunningToStoppedNoCommand(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	c := newExperimentClient(t)
+	defer c.Close()
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureID)
+	goalIDs := createGoals(ctx, t, c, 1)
+	now := time.Now()
+	startAt := now.Local().Add(-4 * 24 * time.Hour)
+	stopAt := now.Local().Add(-3 * 24 * time.Hour)
+	feature := getFeature(ctx, t, featureID)
+	expected := createExperimentWithMultiGoals(ctx, t, c, featureID, feature.Variations[0].Id, goalIDs, startAt, stopAt)
+	resp, err := c.GetExperiment(ctx, &experimentproto.GetExperimentRequest{
+		Id:            expected.Id,
+		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Experiment.Status != experimentproto.Experiment_WAITING {
+		t.Fatalf("Experiment status is not waiting. actual: %d", resp.Experiment.Status)
+	}
+	if _, err = c.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
+		Id: expected.Id,
+		Status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+			Status: experimentproto.Experiment_RUNNING,
+		},
+		EnvironmentId: *environmentID,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	resp, err = c.GetExperiment(ctx, &experimentproto.GetExperimentRequest{
+		Id:            expected.Id,
+		EnvironmentId: *environmentID,
+	})
+	if resp.Experiment.Status != experimentproto.Experiment_RUNNING {
+		t.Fatalf("Experiment status is not running. actual: %d", resp.Experiment.Status)
+	}
+	for i := 0; i < retryTimes; i++ {
+		resp, err = c.GetExperiment(ctx, &experimentproto.GetExperimentRequest{
+			Id:            expected.Id,
+			EnvironmentId: *environmentID,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if resp.Experiment.Status == experimentproto.Experiment_STOPPED {
+			break
+		}
+		if i == retryTimes-1 {
+			t.Fatalf(fmt.Sprintf("retry timeout: %s", resp.Experiment.Name))
+		}
+		time.Sleep(time.Second)
+	}
+
+	_, err = c.DeleteExperiment(ctx, &experimentproto.DeleteExperimentRequest{
+		Id:            resp.Experiment.Id,
+		Command:       &experimentproto.DeleteExperimentCommand{},
+		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
