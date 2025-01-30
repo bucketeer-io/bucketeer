@@ -299,12 +299,20 @@ func (s *TagService) DeleteTag(
 	tagStorage := tagstorage.NewTagStorage(s.mysqlClient)
 	tag, err := tagStorage.GetTag(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
+		s.logger.Error(
+			"Failed to get tag",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.Any("tag", tag),
+			)...,
+		)
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
 	}
 	// Delete it from DB
-	if err := tagStorage.DeleteTag(ctx, req.Id, req.EnvironmentId); err != nil {
+	if err := tagStorage.DeleteTag(ctx, req.Id); err != nil {
 		s.logger.Error(
-			"Failed to store the tag",
+			"Failed to delete the tag",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),

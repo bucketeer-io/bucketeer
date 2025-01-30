@@ -45,6 +45,7 @@ func TestCreateSubscription(t *testing.T) {
 	sourceTypes := []proto.Subscription_SourceType{5}
 	recipient := &proto.Recipient{Type: 0, SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "slack"}}
 	name := "name-0"
+	featureFlagTags := []string{"tag"}
 	envNamespace := "ns"
 	patterns := []struct {
 		desc          string
@@ -86,11 +87,19 @@ func TestCreateSubscription(t *testing.T) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
-					id, int64(1), int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name, envNamespace,
+					id, int64(1), int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name, mysql.JSONObject{Val: featureFlagTags}, envNamespace,
 				).Return(nil, nil)
 			},
 			input: &domain.Subscription{
-				Subscription: &proto.Subscription{Id: id, CreatedAt: 1, UpdatedAt: 2, Disabled: false, SourceTypes: sourceTypes, Recipient: recipient, Name: name},
+				Subscription: &proto.Subscription{
+					Id:          id,
+					CreatedAt:   1,
+					UpdatedAt:   2,
+					Disabled:    false,
+					SourceTypes: sourceTypes,
+					Recipient:   recipient,
+					Name:        name, FeatureFlagTags: featureFlagTags,
+				},
 			},
 			environmentId: envNamespace,
 			expectedErr:   nil,
@@ -117,6 +126,7 @@ func TestUpdateSubscription(t *testing.T) {
 	sourceTypes := []proto.Subscription_SourceType{5}
 	recipient := &proto.Recipient{Type: 0, SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "slack"}}
 	name := "name-0"
+	featureFlagTags := []string{"tag"}
 	envNamespace := "ns"
 	patterns := []struct {
 		desc          string
@@ -162,11 +172,20 @@ func TestUpdateSubscription(t *testing.T) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
-					int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name, id, envNamespace,
+					int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name, mysql.JSONObject{Val: featureFlagTags}, id, envNamespace,
 				).Return(result, nil)
 			},
 			input: &domain.Subscription{
-				Subscription: &proto.Subscription{Id: id, CreatedAt: 1, UpdatedAt: 2, Disabled: false, SourceTypes: sourceTypes, Recipient: recipient, Name: name},
+				Subscription: &proto.Subscription{
+					Id:              id,
+					CreatedAt:       1,
+					UpdatedAt:       2,
+					Disabled:        false,
+					SourceTypes:     sourceTypes,
+					Recipient:       recipient,
+					Name:            name,
+					FeatureFlagTags: featureFlagTags,
+				},
 			},
 			environmentId: envNamespace,
 			expectedErr:   nil,

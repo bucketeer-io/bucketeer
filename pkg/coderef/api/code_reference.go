@@ -133,9 +133,7 @@ func (s *CodeReferenceService) ListCodeReferences(
 	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
-	}
-	if req.FeatureId != "" {
-		whereParts = append(whereParts, mysql.NewFilter("feature_id", "=", req.FeatureId))
+		mysql.NewFilter("feature_id", "=", req.FeatureId),
 	}
 	if req.RepositoryName != "" {
 		whereParts = append(whereParts, mysql.NewFilter("repository_name", "=", req.RepositoryName))

@@ -267,6 +267,7 @@ export namespace Event {
     SUBSCRIPTION_SOURCE_TYPE_DELETED: 1005;
     SUBSCRIPTION_RENAMED: 1006;
     SUBSCRIPTION_UPDATED: 1007;
+    SUBSCRIPTION_FEATURE_FLAG_TAGS_UPDATED: 1008;
     ADMIN_SUBSCRIPTION_CREATED: 1100;
     ADMIN_SUBSCRIPTION_DELETED: 1101;
     ADMIN_SUBSCRIPTION_ENABLED: 1102;
@@ -5243,6 +5244,11 @@ export class SubscriptionCreatedEvent extends jspb.Message {
   getName(): string;
   setName(value: string): void;
 
+  clearFeatureFlagTagsList(): void;
+  getFeatureFlagTagsList(): Array<string>;
+  setFeatureFlagTagsList(value: Array<string>): void;
+  addFeatureFlagTags(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SubscriptionCreatedEvent.AsObject;
   static toObject(
@@ -5271,6 +5277,7 @@ export namespace SubscriptionCreatedEvent {
     >;
     recipient?: proto_notification_recipient_pb.Recipient.AsObject;
     name: string;
+    featureFlagTagsList: Array<string>;
   };
 }
 
@@ -5479,6 +5486,43 @@ export namespace SubscriptionRenamedEvent {
   };
 }
 
+export class SubscriptionFeatureFlagTagsUpdatedEvent extends jspb.Message {
+  clearFeatureFlagTagsList(): void;
+  getFeatureFlagTagsList(): Array<string>;
+  setFeatureFlagTagsList(value: Array<string>): void;
+  addFeatureFlagTags(value: string, index?: number): string;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): SubscriptionFeatureFlagTagsUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SubscriptionFeatureFlagTagsUpdatedEvent
+  ): SubscriptionFeatureFlagTagsUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SubscriptionFeatureFlagTagsUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): SubscriptionFeatureFlagTagsUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: SubscriptionFeatureFlagTagsUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): SubscriptionFeatureFlagTagsUpdatedEvent;
+}
+
+export namespace SubscriptionFeatureFlagTagsUpdatedEvent {
+  export type AsObject = {
+    featureFlagTagsList: Array<string>;
+  };
+}
+
 export class SubscriptionUpdatedEvent extends jspb.Message {
   getId(): string;
   setId(value: string): void;
@@ -5506,6 +5550,11 @@ export class SubscriptionUpdatedEvent extends jspb.Message {
   clearDisabled(): void;
   getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  clearFeatureFlagTagsList(): void;
+  getFeatureFlagTagsList(): Array<string>;
+  setFeatureFlagTagsList(value: Array<string>): void;
+  addFeatureFlagTags(value: string, index?: number): string;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SubscriptionUpdatedEvent.AsObject;
@@ -5536,6 +5585,7 @@ export namespace SubscriptionUpdatedEvent {
       proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap]
     >;
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    featureFlagTagsList: Array<string>;
   };
 }
 

@@ -1122,6 +1122,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.Notification),
 			),
 		}
+	case proto.Event_SUBSCRIPTION_FEATURE_FLAG_TAGS_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.FeatureFlagTagsUpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Notification),
+			),
+		}
 	case proto.Event_SUBSCRIPTION_UPDATED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),

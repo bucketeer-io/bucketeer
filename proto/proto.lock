@@ -8099,12 +8099,24 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 2,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ]
           },
@@ -8124,12 +8136,24 @@
               {
                 "id": 1,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 2,
                 "name": "feature_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
@@ -8205,32 +8229,68 @@
               {
                 "id": 1,
                 "name": "feature_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 2,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "file_path",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "line_number",
-                "type": "int32"
+                "type": "int32",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 5,
                 "name": "code_snippet",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 6,
                 "name": "content_hash",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 7,
@@ -8241,17 +8301,35 @@
               {
                 "id": 8,
                 "name": "repository_name",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 9,
                 "name": "repository_owner",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 10,
                 "name": "repository_type",
-                "type": "CodeReference.RepositoryType"
+                "type": "CodeReference.RepositoryType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 11,
@@ -8281,32 +8359,68 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 2,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "file_path",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "line_number",
-                "type": "int32"
+                "type": "int32",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 5,
                 "name": "code_snippet",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 6,
                 "name": "content_hash",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 7,
@@ -8357,12 +8471,24 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 2,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ]
           },
@@ -9206,6 +9332,9 @@
           },
           {
             "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/api/field_behavior.proto"
           },
           {
             "path": "protoc-gen-openapiv2/options/annotations.proto"
@@ -16339,6 +16468,10 @@
                 "integer": 1007
               },
               {
+                "name": "SUBSCRIPTION_FEATURE_FLAG_TAGS_UPDATED",
+                "integer": 1008
+              },
+              {
                 "name": "ADMIN_SUBSCRIPTION_CREATED",
                 "integer": 1100
               },
@@ -18934,6 +19067,12 @@
                 "id": 3,
                 "name": "name",
                 "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -18979,6 +19118,17 @@
             ]
           },
           {
+            "name": "SubscriptionFeatureFlagTagsUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "SubscriptionUpdatedEvent",
             "fields": [
               {
@@ -19001,6 +19151,12 @@
                 "id": 4,
                 "name": "disabled",
                 "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 5,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -32318,6 +32474,12 @@
                 "id": 3,
                 "name": "name",
                 "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -32339,6 +32501,17 @@
                 "id": 1,
                 "name": "source_types",
                 "type": "Subscription.SourceType",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "UpdateSubscriptionFeatureFlagTagsCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_flag_tags",
+                "type": "string",
                 "is_repeated": true
               }
             ]
@@ -32537,6 +32710,11 @@
               {
                 "id": 8,
                 "name": "environment_url_code",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "entity_data",
                 "type": "string"
               }
             ],
@@ -33224,6 +33402,12 @@
                     "value": "REQUIRED"
                   }
                 ]
+              },
+              {
+                "id": 7,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
               }
             ],
             "reserved_ids": [
@@ -33435,6 +33619,32 @@
                       {
                         "name": "description",
                         "value": "if true, the subscription is disabled, otherwise enabled."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 10,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "update_subscription_feature_tags_command",
+                "type": "UpdateSubscriptionFeatureFlagTagsCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "Deprecated. Use feature_flag_tags instead."
                       }
                     ]
                   }
@@ -34219,6 +34429,12 @@
                 "id": 9,
                 "name": "environment_name",
                 "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "feature_flag_tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           }
@@ -35969,9 +36185,6 @@
           },
           {
             "path": "google/api/field_behavior.proto"
-          },
-          {
-            "path": "google/protobuf/wrappers.proto"
           },
           {
             "path": "protoc-gen-openapiv2/options/annotations.proto"
