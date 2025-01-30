@@ -35,6 +35,10 @@ var (
 	selectExperimentsSQL string
 	//go:embed sql/experiment/count_experiment.sql
 	countExperimentSQL string
+	//go:embed sql/experiment/update_experiment.sql
+	updateExperimentSQL string
+	//go:embed sql/experiment/insert_experiment.sql
+	insertExperimentSQL string
 )
 
 type ExperimentStorage interface {
@@ -62,36 +66,9 @@ func (s *experimentStorage) CreateExperiment(
 	e *domain.Experiment,
 	environmentId string,
 ) error {
-	query := `
-		INSERT INTO experiment (
-			id,
-			goal_id,
-			feature_id,
-			feature_version,
-			variations,
-			start_at,
-			stop_at,
-			stopped,
-			stopped_at,
-			created_at,
-			updated_at,
-			archived,
-			deleted,
-			goal_ids,
-			name,
-			description,
-			base_variation_id,
-			status,
-			maintainer,
-			environment_id
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-		)
-	`
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
+		insertExperimentSQL,
 		e.Id,
 		e.GoalId,
 		e.FeatureId,
@@ -127,35 +104,9 @@ func (s *experimentStorage) UpdateExperiment(
 	e *domain.Experiment,
 	environmentId string,
 ) error {
-	query := `
-		UPDATE 
-			experiment
-		SET
-			goal_id = ?,
-			feature_id = ?,
-			feature_version = ?,
-			variations = ?,
-			start_at = ?,
-			stop_at = ?,
-			stopped = ?,
-			stopped_at = ?,
-			created_at = ?,
-			updated_at = ?,
-			archived = ?,
-			deleted = ?,
-			goal_ids = ?,
-			name = ?,
-			description = ?,
-			base_variation_id = ?,
-			maintainer = ?,
-			status = ?
-		WHERE
-			id = ? AND
-			environment_id = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
+		updateExperimentSQL,
 		e.GoalId,
 		e.FeatureId,
 		e.FeatureVersion,

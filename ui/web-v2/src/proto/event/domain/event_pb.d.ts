@@ -23,6 +23,7 @@ import * as proto_feature_flag_trigger_pb from '../../../proto/feature/flag_trig
 import * as proto_account_search_filter_pb from '../../../proto/account/search_filter_pb';
 import * as proto_tag_tag_pb from '../../../proto/tag/tag_pb';
 import * as proto_experiment_goal_pb from '../../../proto/experiment/goal_pb';
+import * as proto_experiment_experiment_pb from '../../../proto/experiment/experiment_pb';
 import * as proto_coderef_code_reference_pb from '../../../proto/coderef/code_reference_pb';
 
 export class Event extends jspb.Message {
@@ -182,6 +183,7 @@ export namespace Event {
     EXPERIMENT_STARTED: 208;
     EXPERIMENT_FINISHED: 209;
     EXPERIMENT_ARCHIVED: 210;
+    EXPERIMENT_UPDATED: 211;
     ACCOUNT_CREATED: 300;
     ACCOUNT_ROLE_CHANGED: 301;
     ACCOUNT_ENABLED: 302;
@@ -2541,6 +2543,59 @@ export namespace ExperimentDescriptionChangedEvent {
   export type AsObject = {
     id: string;
     description: string;
+  };
+}
+
+export class ExperimentUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getStartAt(): number;
+  setStartAt(value: number): void;
+
+  getStopAt(): number;
+  setStopAt(value: number): void;
+
+  getStatus(): proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap];
+  setStatus(
+    value: proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap]
+  ): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ExperimentUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ExperimentUpdatedEvent
+  ): ExperimentUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ExperimentUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ExperimentUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: ExperimentUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): ExperimentUpdatedEvent;
+}
+
+export namespace ExperimentUpdatedEvent {
+  export type AsObject = {
+    id: string;
+    name: string;
+    description: string;
+    startAt: number;
+    stopAt: number;
+    status: proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap];
   };
 }
 

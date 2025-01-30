@@ -22,6 +22,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -480,6 +481,121 @@ func TestIsNotFinished(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			assert.Equal(t, p.expected, p.experiment.IsNotFinished(p.input))
+		})
+	}
+}
+
+func TestUpdateExperiment(t *testing.T) {
+	t.Parallel()
+	experiment := newExperiment(t)
+	now := time.Now().Unix()
+
+	patterns := []struct {
+		desc        string
+		experiment  *Experiment
+		setup       func(*Experiment)
+		name        *wrapperspb.StringValue
+		description *wrapperspb.StringValue
+		startAt     *wrapperspb.Int64Value
+		stopAt      *wrapperspb.Int64Value
+		status      *experimentproto.UpdateExperimentRequest_UpdatedStatus
+		archived    *wrapperspb.BoolValue
+		expected    *Experiment
+		expectedErr error
+	}{
+		{
+			desc:        "success",
+			experiment:  experiment,
+			setup:       nil,
+			name:        wrapperspb.String("newName"),
+			description: wrapperspb.String("newDesc"),
+			expected: &Experiment{
+				Experiment: &experimentproto.Experiment{
+					Id:          experiment.Id,
+					Name:        "newName",
+					Description: "newDesc",
+					Status:      experiment.Status,
+					StartAt:     experiment.StartAt,
+					StopAt:      experiment.StopAt,
+					StoppedAt:   experiment.StoppedAt,
+					CreatedAt:   experiment.CreatedAt,
+					UpdatedAt:   experiment.UpdatedAt,
+					Archived:    experiment.Archived,
+					Deleted:     experiment.Deleted,
+				},
+			},
+		},
+		{
+			desc:       "success update status",
+			experiment: experiment,
+			setup: func(e *Experiment) {
+				e.Status = experimentproto.Experiment_RUNNING
+			},
+			status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+				Status: experimentproto.Experiment_STOPPED,
+			},
+			expected: &Experiment{
+				Experiment: &experimentproto.Experiment{
+					Id:          experiment.Id,
+					Name:        experiment.Name,
+					Description: experiment.Description,
+					Status:      experimentproto.Experiment_STOPPED,
+					StartAt:     experiment.StartAt,
+					StopAt:      experiment.StopAt,
+					StoppedAt:   experiment.StoppedAt,
+					CreatedAt:   experiment.CreatedAt,
+					UpdatedAt:   experiment.UpdatedAt,
+					Archived:    experiment.Archived,
+					Deleted:     experiment.Deleted,
+				},
+			},
+		},
+		{
+			desc:       "error invalid status",
+			experiment: experiment,
+			setup: func(e *Experiment) {
+				e.Status = experimentproto.Experiment_STOPPED
+			},
+			status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+				Status: experimentproto.Experiment_WAITING,
+			},
+			expected:    nil,
+			expectedErr: ErrExperimentStatusInvalid,
+		},
+		{
+			desc:        "error start at after stop at",
+			experiment:  experiment,
+			startAt:     wrapperspb.Int64(now),
+			stopAt:      wrapperspb.Int64(now - 1000),
+			expected:    nil,
+			expectedErr: ErrExperimentStartIsAfterStop,
+		},
+		{
+			desc:        "error before now",
+			experiment:  experiment,
+			startAt:     wrapperspb.Int64(now - 1000),
+			stopAt:      wrapperspb.Int64(now - 1),
+			expected:    nil,
+			expectedErr: ErrExperimentStopIsBeforeNow,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			if p.setup != nil {
+				p.setup(p.experiment)
+			}
+			updated, err := p.experiment.Update(p.name, p.description, p.startAt, p.stopAt, p.status, p.archived)
+			if p.expectedErr != nil {
+				assert.Equal(t, p.expectedErr, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, p.expected.Name, updated.Name)
+				assert.Equal(t, p.expected.Description, updated.Description)
+				assert.Equal(t, p.expected.Status, updated.Status)
+				assert.Equal(t, p.expected.StartAt, updated.StartAt)
+				assert.Equal(t, p.expected.StopAt, updated.StopAt)
+				assert.Equal(t, p.expected.StoppedAt, updated.StoppedAt)
+			}
 		})
 	}
 }

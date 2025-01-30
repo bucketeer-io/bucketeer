@@ -39,6 +39,7 @@ import "proto/feature/flag_trigger.proto";
 import "proto/account/search_filter.proto";
 import "proto/tag/tag.proto";
 import "proto/experiment/goal.proto";
+import "proto/experiment/experiment.proto";
 import "proto/coderef/code_reference.proto";
 
 message Event {
@@ -120,6 +121,7 @@ message Event {
     EXPERIMENT_STARTED = 208;
     EXPERIMENT_FINISHED = 209;
     EXPERIMENT_ARCHIVED = 210;
+    EXPERIMENT_UPDATED = 211;
     ACCOUNT_CREATED = 300 [deprecated = true];
     ACCOUNT_ROLE_CHANGED = 301 [deprecated = true];
     ACCOUNT_ENABLED = 302 [deprecated = true];
@@ -589,6 +591,15 @@ message ExperimentNameChangedEvent {
 message ExperimentDescriptionChangedEvent {
   string id = 1;
   string description = 2;
+}
+
+message ExperimentUpdatedEvent {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int64 start_at = 4;
+  int64 stop_at = 5;
+  experiment.Experiment.Status status = 6;
 }
 
 message ExperimentStartedEvent {}
