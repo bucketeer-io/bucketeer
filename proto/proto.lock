@@ -8044,6 +8044,11 @@
                 "id": 16,
                 "name": "source_url",
                 "type": "string"
+              },
+              {
+                "id": 17,
+                "name": "branch_url",
+                "type": "string"
               }
             ]
           }

@@ -2237,6 +2237,8 @@ definitions:
       sourceUrl:
         type: string
         title: URL to view the code in the repository
+      branchUrl:
+        type: string
   coderefListCodeReferencesRequestOrderBy:
     type: string
     enum:
