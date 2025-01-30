@@ -63,6 +63,29 @@ func generateSourceURL(codeRef *proto.CodeReference) string {
 	}
 }
 
+// generateBranchURL generates a URL to view the branch in the repository web interface
+func generateBranchURL(codeRef *proto.CodeReference) string {
+	switch codeRef.RepositoryType {
+	case proto.CodeReference_GITHUB:
+		return fmt.Sprintf("https://github.com/%s/%s/tree/%s",
+			codeRef.RepositoryOwner,
+			codeRef.RepositoryName,
+			codeRef.RepositoryBranch)
+	case proto.CodeReference_GITLAB:
+		return fmt.Sprintf("https://gitlab.com/%s/%s/-/tree/%s",
+			codeRef.RepositoryOwner,
+			codeRef.RepositoryName,
+			codeRef.RepositoryBranch)
+	case proto.CodeReference_BITBUCKET:
+		return fmt.Sprintf("https://bitbucket.org/%s/%s/src/%s",
+			codeRef.RepositoryOwner,
+			codeRef.RepositoryName,
+			codeRef.RepositoryBranch)
+	default:
+		return ""
+	}
+}
+
 func (s *CodeReferenceService) GetCodeReference(
 	ctx context.Context,
 	req *proto.GetCodeReferenceRequest,
@@ -111,6 +134,7 @@ func (s *CodeReferenceService) GetCodeReference(
 		return nil, dt.Err()
 	}
 	codeRef.CodeReference.SourceUrl = generateSourceURL(&codeRef.CodeReference)
+	codeRef.CodeReference.BranchUrl = generateBranchURL(&codeRef.CodeReference)
 	return &proto.GetCodeReferenceResponse{CodeReference: &codeRef.CodeReference}, nil
 }
 
@@ -201,6 +225,7 @@ func (s *CodeReferenceService) ListCodeReferences(
 	protoRefs := make([]*proto.CodeReference, 0, len(codeRefs))
 	for _, ref := range codeRefs {
 		ref.CodeReference.SourceUrl = generateSourceURL(&ref.CodeReference)
+		ref.CodeReference.BranchUrl = generateBranchURL(&ref.CodeReference)
 		protoRefs = append(protoRefs, &ref.CodeReference)
 	}
 	return &proto.ListCodeReferencesResponse{
