@@ -24,7 +24,8 @@ SELECT
             JSON_ARRAYAGG(JSON_OBJECT(
                     'id', ex2.id,
                     'name', ex2.name,
-                    'feature_id', ex2.feature_id))
+                    'feature_id', ex2.feature_id,
+                    'status', ex2.status))
         from experiment ex2
         where json_contains(ex2.goal_ids, concat('"', goal.id, '"'), '$')
     ) as experiments

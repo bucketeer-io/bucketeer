@@ -23,6 +23,8 @@ var global =
   }.call(null) ||
   Function('return this')();
 
+var proto_experiment_experiment_pb = require('../../proto/experiment/experiment_pb.js');
+goog.object.extend(proto, proto_experiment_experiment_pb);
 goog.exportSymbol('proto.bucketeer.experiment.Goal', null, global);
 goog.exportSymbol(
   'proto.bucketeer.experiment.Goal.AutoOpsRuleReference',
@@ -406,7 +408,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
         name: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        featureId: jspb.Message.getFieldWithDefault(msg, 3, '')
+        featureId: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        status: jspb.Message.getFieldWithDefault(msg, 4, 0)
       };
 
     if (includeInstance) {
@@ -458,6 +461,13 @@ proto.bucketeer.experiment.Goal.ExperimentReference.deserializeBinaryFromReader 
           var value = /** @type {string} */ (reader.readString());
           msg.setFeatureId(value);
           break;
+        case 4:
+          var value =
+            /** @type {!proto.bucketeer.experiment.Experiment.Status} */ (
+              reader.readEnum()
+            );
+          msg.setStatus(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -501,6 +511,10 @@ proto.bucketeer.experiment.Goal.ExperimentReference.serializeBinaryToWriter =
     f = message.getFeatureId();
     if (f.length > 0) {
       writer.writeString(3, f);
+    }
+    f = message.getStatus();
+    if (f !== 0.0) {
+      writer.writeEnum(4, f);
     }
   };
 
@@ -563,6 +577,26 @@ proto.bucketeer.experiment.Goal.ExperimentReference.prototype.getFeatureId =
 proto.bucketeer.experiment.Goal.ExperimentReference.prototype.setFeatureId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+/**
+ * optional Experiment.Status status = 4;
+ * @return {!proto.bucketeer.experiment.Experiment.Status}
+ */
+proto.bucketeer.experiment.Goal.ExperimentReference.prototype.getStatus =
+  function () {
+    return /** @type {!proto.bucketeer.experiment.Experiment.Status} */ (
+      jspb.Message.getFieldWithDefault(this, 4, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.experiment.Experiment.Status} value
+ * @return {!proto.bucketeer.experiment.Goal.ExperimentReference} returns this
+ */
+proto.bucketeer.experiment.Goal.ExperimentReference.prototype.setStatus =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 4, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
