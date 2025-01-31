@@ -25,6 +25,7 @@ import (
 	"go.uber.org/zap"
 
 	acmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
+	storagemock "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -77,9 +78,12 @@ func newEnvironmentService(t *testing.T, mockController *gomock.Controller, s st
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
 	return &EnvironmentService{
-		accountClient: acmock.NewMockClient(mockController),
-		mysqlClient:   mysqlmock.NewMockClient(mockController),
-		publisher:     publishermock.NewMockPublisher(mockController),
-		logger:        logger.Named("api"),
+		accountClient:      acmock.NewMockClient(mockController),
+		mysqlClient:        mysqlmock.NewMockClient(mockController),
+		orgStorage:         storagemock.NewMockOrganizationStorage(mockController),
+		projectStorage:     storagemock.NewMockProjectStorage(mockController),
+		environmentStorage: storagemock.NewMockEnvironmentStorage(mockController),
+		publisher:          publishermock.NewMockPublisher(mockController),
+		logger:             logger.Named("api"),
 	}
 }

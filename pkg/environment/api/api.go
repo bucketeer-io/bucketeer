@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	v2 "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
@@ -47,11 +48,14 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type EnvironmentService struct {
-	accountClient accountclient.Client
-	mysqlClient   mysql.Client
-	publisher     publisher.Publisher
-	opts          *options
-	logger        *zap.Logger
+	accountClient      accountclient.Client
+	mysqlClient        mysql.Client
+	projectStorage     v2.ProjectStorage
+	orgStorage         v2.OrganizationStorage
+	environmentStorage v2.EnvironmentStorage
+	publisher          publisher.Publisher
+	opts               *options
+	logger             *zap.Logger
 }
 
 func NewEnvironmentService(
@@ -67,11 +71,14 @@ func NewEnvironmentService(
 		opt(dopts)
 	}
 	return &EnvironmentService{
-		accountClient: ac,
-		mysqlClient:   mysqlClient,
-		publisher:     publisher,
-		opts:          dopts,
-		logger:        dopts.logger.Named("api"),
+		accountClient:      ac,
+		mysqlClient:        mysqlClient,
+		projectStorage:     v2.NewProjectStorage(mysqlClient),
+		orgStorage:         v2.NewOrganizationStorage(mysqlClient),
+		environmentStorage: v2.NewEnvironmentStorage(mysqlClient),
+		publisher:          publisher,
+		opts:               dopts,
+		logger:             dopts.logger.Named("api"),
 	}
 }
 
