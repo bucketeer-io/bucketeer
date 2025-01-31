@@ -67,6 +67,7 @@ func TestCreateCodeReference(t *testing.T) {
 
 	assert.Equal(t, createReq.FeatureId, resp.CodeReference.FeatureId)
 	assert.Equal(t, createReq.FilePath, resp.CodeReference.FilePath)
+	assert.Equal(t, createReq.FileExtension, resp.CodeReference.FileExtension)
 	assert.Equal(t, createReq.LineNumber, resp.CodeReference.LineNumber)
 	assert.Equal(t, createReq.CodeSnippet, resp.CodeReference.CodeSnippet)
 	assert.Equal(t, createReq.RepositoryName, resp.CodeReference.RepositoryName)
@@ -94,7 +95,8 @@ func TestUpdateCodeReference(t *testing.T) {
 	updateReq := &coderefproto.UpdateCodeReferenceRequest{
 		Id:               createResp.CodeReference.Id,
 		EnvironmentId:    *environmentID,
-		FilePath:         "updated/path/to/file.go",
+		FilePath:         "updated/path/to/file.ts",
+		FileExtension:    "ts",
 		LineNumber:       200,
 		CodeSnippet:      "updated code snippet",
 		ContentHash:      "updated-hash-123",
@@ -113,6 +115,7 @@ func TestUpdateCodeReference(t *testing.T) {
 		EnvironmentId: *environmentID,
 	})
 	assert.Equal(t, updateReq.FilePath, getResp.CodeReference.FilePath)
+	assert.Equal(t, updateReq.FileExtension, getResp.CodeReference.FileExtension)
 	assert.Equal(t, updateReq.LineNumber, getResp.CodeReference.LineNumber)
 	assert.Equal(t, updateReq.CodeSnippet, getResp.CodeReference.CodeSnippet)
 	assert.Equal(t, updateReq.ContentHash, getResp.CodeReference.ContentHash)
@@ -158,6 +161,7 @@ func TestListCodeReferences(t *testing.T) {
 			found1 = true
 			assert.Equal(t, createReq1.FeatureId, ref.FeatureId)
 			assert.Equal(t, createReq1.FilePath, ref.FilePath)
+			assert.Equal(t, createReq1.FileExtension, ref.FileExtension)
 			assert.Equal(t, createReq1.LineNumber, ref.LineNumber)
 			assert.Equal(t, createReq1.CodeSnippet, ref.CodeSnippet)
 			assert.Equal(t, createReq1.RepositoryName, ref.RepositoryName)
@@ -170,6 +174,7 @@ func TestListCodeReferences(t *testing.T) {
 			found2 = true
 			assert.Equal(t, createReq2.FeatureId, ref.FeatureId)
 			assert.Equal(t, createReq2.FilePath, ref.FilePath)
+			assert.Equal(t, createReq2.FileExtension, ref.FileExtension)
 			assert.Equal(t, createReq2.LineNumber, ref.LineNumber)
 			assert.Equal(t, createReq2.CodeSnippet, ref.CodeSnippet)
 			assert.Equal(t, createReq2.RepositoryName, ref.RepositoryName)
@@ -310,6 +315,7 @@ func newCreateCodeReferenceRequest(t *testing.T, featureID string) *coderefproto
 		EnvironmentId:    *environmentID,
 		FeatureId:        featureID,
 		FilePath:         "path/to/file.go",
+		FileExtension:    "go",
 		LineNumber:       100,
 		CodeSnippet:      "if (feature.enabled) { doSomething() }",
 		ContentHash:      "abc123",
