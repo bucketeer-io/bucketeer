@@ -1588,7 +1588,7 @@ paths:
             - DESC
           default: ASC
         - name: fileExtension
-          description: File extension to filter code references (e.g., ".js", ".go", ".py")
+          description: File extension to filter code references (e.g., "js", "go", "py")
           in: query
           required: false
           type: string
@@ -5155,6 +5155,8 @@ definitions:
         type: string
       commitHash:
         type: string
+      fileExtension:
+        type: string
     required:
       - environmentId
       - filePath
@@ -6226,6 +6228,9 @@ definitions:
         title: URL to view the code in the repository
       branchUrl:
         type: string
+      fileExtension:
+        type: string
+        title: File extension (e.g., go, ts, cpp)
   coderefCreateCodeReferenceRequest:
     type: object
     properties:
@@ -6256,6 +6261,8 @@ definitions:
         type: string
       commitHash:
         type: string
+      fileExtension:
+        type: string
     required:
       - featureId
       - environmentId
@@ -6266,6 +6273,7 @@ definitions:
       - repositoryName
       - repositoryOwner
       - repositoryType
+      - fileExtension
   coderefCreateCodeReferenceResponse:
     type: object
     properties:

@@ -2,6 +2,7 @@ INSERT INTO code_reference (
     id,
     feature_id,
     file_path,
+    file_extension,
     line_number,
     code_snippet,
     content_hash,
@@ -14,4 +15,4 @@ INSERT INTO code_reference (
     environment_id,
     created_at,
     updated_at
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 

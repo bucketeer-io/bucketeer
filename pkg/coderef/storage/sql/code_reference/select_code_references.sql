@@ -2,6 +2,7 @@ SELECT
     id,
     feature_id,
     file_path,
+    file_extension,
     line_number,
     code_snippet,
     content_hash,

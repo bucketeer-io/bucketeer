@@ -51,7 +51,7 @@ message ListCodeReferencesRequest {
   int64 page_size = 8;
   OrderBy order_by = 9;
   OrderDirection order_direction = 10;
-  // File extension to filter code references (e.g., ".js", ".go", ".py")
+  // File extension to filter code references (e.g., "js", "go", "py")
   string file_extension = 11;
 }
 
@@ -75,6 +75,7 @@ message CreateCodeReferenceRequest {
       [(google.api.field_behavior) = REQUIRED];
   string repository_branch = 11;
   string commit_hash = 12;
+  string file_extension = 13 [(google.api.field_behavior) = REQUIRED];
 }
 
 message CreateCodeReferenceResponse {
@@ -94,6 +95,7 @@ message UpdateCodeReferenceRequest {
   CodeReference.RepositoryType repository_type = 10;
   string repository_branch = 11;
   string commit_hash = 12;
+  string file_extension = 13;
 }
 
 message UpdateCodeReferenceResponse {

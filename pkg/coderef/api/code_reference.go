@@ -172,7 +172,7 @@ func (s *CodeReferenceService) ListCodeReferences(
 		whereParts = append(whereParts, mysql.NewFilter("repository_branch", "=", req.RepositoryBranch))
 	}
 	if req.FileExtension != "" {
-		whereParts = append(whereParts, mysql.NewFilter("file_path", "LIKE", "%"+req.FileExtension))
+		whereParts = append(whereParts, mysql.NewFilter("file_extension", "=", req.FileExtension))
 	}
 	orders := []*mysql.Order{mysql.NewOrder("id", mysql.OrderDirectionAsc)}
 	switch req.OrderBy {
@@ -255,6 +255,7 @@ func (s *CodeReferenceService) CreateCodeReference(
 	codeRef, err := domain.NewCodeReference(
 		req.FeatureId,
 		req.FilePath,
+		req.FileExtension,
 		req.LineNumber,
 		req.CodeSnippet,
 		req.ContentHash,
@@ -414,6 +415,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 		}
 		updatedCodeRef, err = codeRef.Update(
 			req.FilePath,
+			req.FileExtension,
 			req.LineNumber,
 			req.CodeSnippet,
 			req.ContentHash,

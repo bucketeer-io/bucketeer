@@ -254,6 +254,9 @@ export class CreateCodeReferenceRequest extends jspb.Message {
   getCommitHash(): string;
   setCommitHash(value: string): void;
 
+  getFileExtension(): string;
+  setFileExtension(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateCodeReferenceRequest.AsObject;
   static toObject(
@@ -289,6 +292,7 @@ export namespace CreateCodeReferenceRequest {
     repositoryType: proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap[keyof proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap];
     repositoryBranch: string;
     commitHash: string;
+    fileExtension: string;
   };
 }
 
@@ -366,6 +370,9 @@ export class UpdateCodeReferenceRequest extends jspb.Message {
   getCommitHash(): string;
   setCommitHash(value: string): void;
 
+  getFileExtension(): string;
+  setFileExtension(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateCodeReferenceRequest.AsObject;
   static toObject(
@@ -401,6 +408,7 @@ export namespace UpdateCodeReferenceRequest {
     repositoryType: proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap[keyof proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap];
     repositoryBranch: string;
     commitHash: string;
+    fileExtension: string;
   };
 }
 
