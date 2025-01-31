@@ -92,8 +92,7 @@ func (s *EnvironmentService) getOrganization(
 	id string,
 	localizer locale.Localizer,
 ) (*domain.Organization, error) {
-	orgStorage := v2es.NewOrganizationStorage(s.mysqlClient)
-	org, err := orgStorage.GetOrganization(ctx, id)
+	org, err := s.orgStorage.GetOrganization(ctx, id)
 	if err != nil {
 		if errors.Is(err, v2es.ErrOrganizationNotFound) {
 			dt, err := statusOrganizationNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -168,8 +167,7 @@ func (s *EnvironmentService) ListOrganizations(
 		}
 		return nil, dt.Err()
 	}
-	orgStorage := v2es.NewOrganizationStorage(s.mysqlClient)
-	organizations, nextCursor, totalCount, err := orgStorage.ListOrganizations(ctx, whereParts, orders, limit, offset)
+	organizations, nextCursor, totalCount, err := s.orgStorage.ListOrganizations(ctx, whereParts, orders, limit, offset)
 	if err != nil {
 		s.logger.Error(
 			"failed to list organizations",
@@ -389,11 +387,10 @@ func (s *EnvironmentService) createOrganizationNoCommand(
 		}
 		return nil, dt.Err()
 	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		orgStorage := v2es.NewOrganizationStorage(tx)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		// Check if there is already a system admin organization
 		if organization.Organization.SystemAdmin {
-			org, err := orgStorage.GetSystemAdminOrganization(ctx)
+			org, err := s.orgStorage.GetSystemAdminOrganization(contextWithTx)
 			if err != nil {
 				return err
 			}
@@ -401,13 +398,12 @@ func (s *EnvironmentService) createOrganizationNoCommand(
 				return v2es.ErrOrganizationAlreadyExists
 			}
 		}
-		if err := orgStorage.CreateOrganization(ctx, organization); err != nil {
+		if err := s.orgStorage.CreateOrganization(contextWithTx, organization); err != nil {
 			return err
 		}
 		// Create a default project
 		project, err := s.createDefaultProject(
-			ctx,
-			tx,
+			contextWithTx,
 			organization.Id,
 			organization.OwnerEmail,
 		)
@@ -422,8 +418,7 @@ func (s *EnvironmentService) createOrganizationNoCommand(
 		}
 		// Create default environments
 		envRoles, err = s.createDefaultEnvironments(
-			ctx,
-			tx,
+			contextWithTx,
 			organization.Id,
 			project,
 		)
@@ -574,27 +569,9 @@ func (s *EnvironmentService) createOrganization(
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
 ) error {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		orgStorage := v2es.NewOrganizationStorage(tx)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		if organization.Organization.SystemAdmin {
-			org, err := orgStorage.GetSystemAdminOrganization(ctx)
+			org, err := s.orgStorage.GetSystemAdminOrganization(contextWithTx)
 			if err != nil {
 				return err
 			}
@@ -609,7 +586,7 @@ func (s *EnvironmentService) createOrganization(
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
-		return orgStorage.CreateOrganization(ctx, organization)
+		return s.orgStorage.CreateOrganization(contextWithTx, organization)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrOrganizationAlreadyExists) {
@@ -646,7 +623,6 @@ func (s *EnvironmentService) createOrganization(
 // To create it we need the project, so we can also create the environment.
 func (s *EnvironmentService) createDefaultProject(
 	ctx context.Context,
-	tx mysql.Transaction,
 	organizationID, email string,
 ) (*domain.Project, error) {
 	project, err := domain.NewProject(
@@ -660,8 +636,7 @@ func (s *EnvironmentService) createDefaultProject(
 	if err != nil {
 		return nil, err
 	}
-	projectStorage := v2es.NewProjectStorage(tx)
-	if err := projectStorage.CreateProject(ctx, project); err != nil {
+	if err := s.projectStorage.CreateProject(ctx, project); err != nil {
 		return nil, err
 	}
 	return project, nil
@@ -673,7 +648,6 @@ func (s *EnvironmentService) createDefaultProject(
 // and to create it we need the organization and environment roles.
 func (s *EnvironmentService) createDefaultEnvironments(
 	ctx context.Context,
-	tx mysql.Transaction,
 	organizationID string,
 	project *domain.Project,
 ) ([]*accountproto.AccountV2_EnvironmentRole, error) {
@@ -696,8 +670,7 @@ func (s *EnvironmentService) createDefaultEnvironments(
 		if err != nil {
 			return nil, err
 		}
-		environmentStorage := v2es.NewEnvironmentStorage(tx)
-		if err := environmentStorage.CreateEnvironmentV2(ctx, env); err != nil {
+		if err := s.environmentStorage.CreateEnvironmentV2(ctx, env); err != nil {
 			return nil, err
 		}
 		envRoles = append(envRoles, &accountproto.AccountV2_EnvironmentRole{
@@ -1000,28 +973,10 @@ func (s *EnvironmentService) updateOrganization(
 	localizer locale.Localizer,
 	commands ...command.Command,
 ) error {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	var prevOwnerEmail string
 	var newOwnerEmail string
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		orgStorage := v2es.NewOrganizationStorage(tx)
-		organization, err := orgStorage.GetOrganization(ctx, id)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		organization, err := s.orgStorage.GetOrganization(contextWithTx, id)
 		if err != nil {
 			return err
 		}
@@ -1039,7 +994,7 @@ func (s *EnvironmentService) updateOrganization(
 		if prevOwnerEmail != organization.OwnerEmail {
 			newOwnerEmail = organization.OwnerEmail
 		}
-		return orgStorage.UpdateOrganization(ctx, organization)
+		return s.orgStorage.UpdateOrganization(contextWithTx, organization)
 	})
 	if err != nil {
 		return s.reportUpdateOrganizationError(ctx, err, localizer)
