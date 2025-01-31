@@ -1,6 +1,7 @@
 UPDATE code_reference
 SET
     file_path = ?,
+    file_extension = ?,
     line_number = ?,
     code_snippet = ?,
     content_hash = ?,
