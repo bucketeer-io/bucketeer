@@ -90,6 +90,9 @@ type authService struct {
 	signer              token.Signer
 	config              *auth.OAuthConfig
 	mysqlClient         mysql.Client
+	organizationStorage envstotage.OrganizationStorage
+	projectStorage      envstotage.ProjectStorage
+	environmentStorage  envstotage.EnvironmentStorage
 	accountClient       accountclient.Client
 	verifier            token.Verifier
 	googleAuthenticator auth.Authenticator
@@ -113,13 +116,15 @@ func NewAuthService(
 	}
 	logger := options.logger.Named("api")
 	service := &authService{
-		issuer:        issuer,
-		audience:      audience,
-		signer:        signer,
-		config:        config,
-		mysqlClient:   mysqlClient,
-		accountClient: accountClient,
-		verifier:      verifier,
+		issuer:              issuer,
+		audience:            audience,
+		signer:              signer,
+		config:              config,
+		mysqlClient:         mysqlClient,
+		organizationStorage: envstotage.NewOrganizationStorage(mysqlClient),
+		projectStorage:      envstotage.NewProjectStorage(mysqlClient),
+		accountClient:       accountClient,
+		verifier:            verifier,
 		googleAuthenticator: google.NewAuthenticator(
 			&config.GoogleConfig, logger,
 		),
@@ -800,19 +805,14 @@ func (s *authService) PrepareDemoUser() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error("Create mysql tx error", zap.Error(err))
-		return
-	}
 	now := time.Now()
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+	var err error
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		// Create a demo organization if not exists
-		organizationStorage := envstotage.NewOrganizationStorage(tx)
-		_, err = organizationStorage.GetOrganization(ctx, config.OrganizationId)
+		_, err = s.organizationStorage.GetOrganization(contextWithTx, config.OrganizationId)
 		if err != nil {
 			if errors.Is(err, envstotage.ErrOrganizationNotFound) {
-				err = organizationStorage.CreateOrganization(ctx, &envdomain.Organization{
+				err = s.organizationStorage.CreateOrganization(contextWithTx, &envdomain.Organization{
 					Organization: &envproto.Organization{
 						Id:          config.OrganizationId,
 						Name:        "Demo organization",
@@ -833,11 +833,10 @@ func (s *authService) PrepareDemoUser() {
 			}
 		}
 		// Create a demo project if not exists
-		projectStorage := envstotage.NewProjectStorage(tx)
-		_, err = projectStorage.GetProject(ctx, config.ProjectId)
+		_, err = s.projectStorage.GetProject(contextWithTx, config.ProjectId)
 		if err != nil {
 			if errors.Is(err, envstotage.ErrProjectNotFound) {
-				err = projectStorage.CreateProject(ctx, &envdomain.Project{
+				err = s.projectStorage.CreateProject(contextWithTx, &envdomain.Project{
 					Project: &envproto.Project{
 						Id:             config.ProjectId,
 						Description:    "This project is for demo users",
@@ -857,11 +856,10 @@ func (s *authService) PrepareDemoUser() {
 			}
 		}
 		// Create a demo environment if not exists
-		environmentStorage := envstotage.NewEnvironmentStorage(tx)
-		_, err = environmentStorage.GetEnvironmentV2(ctx, config.EnvironmentId)
+		_, err = s.environmentStorage.GetEnvironmentV2(contextWithTx, config.EnvironmentId)
 		if err != nil {
 			if errors.Is(err, envstotage.ErrEnvironmentNotFound) {
-				err = environmentStorage.CreateEnvironmentV2(ctx, &envdomain.EnvironmentV2{
+				err = s.environmentStorage.CreateEnvironmentV2(contextWithTx, &envdomain.EnvironmentV2{
 					EnvironmentV2: &envproto.EnvironmentV2{
 						Id:             config.EnvironmentId,
 						Name:           "Demo",
