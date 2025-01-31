@@ -623,25 +623,8 @@ func (s *experimentService) updateGoalNoCommand(
 		return nil, err
 	}
 
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
 	var updatedGoal *proto.Goal
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
 		goalStorage := v2es.NewGoalStorage(tx)
 		goal, err := goalStorage.GetGoal(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -811,7 +794,7 @@ func (s *experimentService) DeleteGoal(
 		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		experimentStorage := v2es.NewGoalStorage(s.mysqlClient)
+		experimentStorage := v2es.NewGoalStorage(tx)
 		goal, err := experimentStorage.GetGoal(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -866,24 +849,7 @@ func (s *experimentService) updateGoal(
 	commands []command.Command,
 	localizer locale.Localizer,
 ) error {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
 		goalStorage := v2es.NewGoalStorage(tx)
 		goal, err := goalStorage.GetGoal(ctx, goalID, environmentId)
 		if err != nil {
