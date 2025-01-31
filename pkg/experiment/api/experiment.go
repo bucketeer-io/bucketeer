@@ -468,6 +468,15 @@ func (s *experimentService) createExperimentNoCommand(
 		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		for _, gid := range req.GoalIds {
+			goal, err := s.getGoalMySQL(ctxWithTx, gid, req.EnvironmentId)
+			if err != nil {
+				return err
+			}
+			if goal.ConnectionType != proto.Goal_EXPERIMENT {
+				return statusGoalTypeMismatch.Err()
+			}
+		}
 		experimentStorage := v2es.NewExperimentStorage(s.mysqlClient)
 		prev := &domain.Experiment{}
 		if err = copier.Copy(prev, experiment); err != nil {
@@ -507,6 +516,26 @@ func (s *experimentService) createExperimentNoCommand(
 		return experimentStorage.CreateExperiment(ctxWithTx, experiment, req.EnvironmentId)
 	})
 	if err != nil {
+		if errors.Is(err, v2es.ErrGoalNotFound) {
+			dt, err := statusInvalidGoalID.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "goal_ids"),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		if errors.Is(err, statusGoalTypeMismatch.Err()) {
+			dt, err := statusGoalTypeMismatch.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "goal_ids"),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
 		if errors.Is(err, v2es.ErrExperimentAlreadyExists) {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),

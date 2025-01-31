@@ -27,6 +27,7 @@ var (
 	statusExperimentIDRequired   = gstatus.New(codes.InvalidArgument, "experiment: experiment id must be specified")
 	statusExperimentNameRequired = gstatus.New(codes.InvalidArgument, "experiment: experiment name must be specified")
 	statusGoalIDRequired         = gstatus.New(codes.InvalidArgument, "experiment: goal id must be specified")
+	statusGoalTypeMismatch       = gstatus.New(codes.InvalidArgument, "experiment: goal type mismatch")
 	statusInvalidGoalID          = gstatus.New(codes.InvalidArgument, "experiment: invalid goal id")
 	statusGoalNameRequired       = gstatus.New(codes.InvalidArgument, "experiment: goal name must be specified")
 	statusPeriodTooLong          = gstatus.New(codes.InvalidArgument, "experiment: period too long")

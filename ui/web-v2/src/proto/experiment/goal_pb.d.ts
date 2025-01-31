@@ -2,6 +2,7 @@
 // file: proto/experiment/goal.proto
 
 import * as jspb from 'google-protobuf';
+import * as proto_experiment_experiment_pb from '../../proto/experiment/experiment_pb';
 
 export class Goal extends jspb.Message {
   getId(): string;
@@ -92,6 +93,11 @@ export namespace Goal {
     getFeatureId(): string;
     setFeatureId(value: string): void;
 
+    getStatus(): proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap];
+    setStatus(
+      value: proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap]
+    ): void;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ExperimentReference.AsObject;
     static toObject(
@@ -118,6 +124,7 @@ export namespace Goal {
       id: string;
       name: string;
       featureId: string;
+      status: proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap];
     };
   }
 

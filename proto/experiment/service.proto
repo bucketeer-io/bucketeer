@@ -57,6 +57,7 @@ message ListGoalsRequest {
   google.protobuf.BoolValue is_in_use_status = 7;
   google.protobuf.BoolValue archived = 8;
   string environment_id = 9 [(google.api.field_behavior) = REQUIRED];
+  Goal.ConnectionType connection_type = 10;
 }
 
 message ListGoalsResponse {

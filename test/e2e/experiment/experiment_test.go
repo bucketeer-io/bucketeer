@@ -22,7 +22,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -78,9 +77,19 @@ func TestCreateAndGetExperiment(t *testing.T) {
 		t.Fatal(err)
 	}
 	actual := getResp.Experiment
-	if !proto.Equal(expected, actual) {
-		t.Fatalf("Experiment is not equal. Expected: %v, actual: %v", expected, actual)
-	}
+	assert.Equal(t, expected.Id, actual.Id)
+	assert.Equal(t, expected.Name, actual.Name)
+	assert.Equal(t, expected.Description, actual.Description)
+	assert.Equal(t, expected.FeatureId, actual.FeatureId)
+	assert.Equal(t, expected.FeatureVersion, actual.FeatureVersion)
+	assert.Equal(t, expected.BaseVariationId, actual.BaseVariationId)
+	assert.Equal(t, expected.StartAt, actual.StartAt)
+	assert.Equal(t, expected.StopAt, actual.StopAt)
+	assert.Equal(t, expected.Status, actual.Status)
+	assert.Equal(t, expected.GoalIds, actual.GoalIds)
+	assert.Equal(t, expected.Deleted, actual.Deleted)
+	assert.Equal(t, expected.Archived, actual.Archived)
+	assert.Equal(t, expected.Maintainer, actual.Maintainer)
 }
 
 func TestListExperiments(t *testing.T) {
@@ -257,7 +266,7 @@ func TestUpdateExperimentNoCommand(t *testing.T) {
 	feature := getFeature(ctx, t, featureID)
 	startAt := time.Now()
 	stopAt := startAt.Local().Add(time.Hour * 1)
-	e := createExperimentWithMultiGoals(ctx, t, c, featureID, feature.Variations[0].Id, goalIDs, startAt, stopAt)
+	e := createExperimentWithMultiGoalsNoCommand(ctx, t, c, featureID, feature.Variations[0].Id, goalIDs, startAt, stopAt)
 	startAt = now.Local().Add(time.Minute * 30)
 	stopAt = now.Local().Add(time.Minute * 60)
 	newName := fmt.Sprintf("%s-new-exp-name-%s", prefixTestName, newUUID(t))
@@ -583,7 +592,7 @@ func TestStatusUpdateFromRunningToStoppedNoCommand(t *testing.T) {
 	startAt := now.Local().Add(-4 * 24 * time.Hour)
 	stopAt := now.Local().Add(-3 * 24 * time.Hour)
 	feature := getFeature(ctx, t, featureID)
-	expected := createExperimentWithMultiGoals(ctx, t, c, featureID, feature.Variations[0].Id, goalIDs, startAt, stopAt)
+	expected := createExperimentWithMultiGoalsNoCommand(ctx, t, c, featureID, feature.Variations[0].Id, goalIDs, startAt, stopAt)
 	resp, err := c.GetExperiment(ctx, &experimentproto.GetExperimentRequest{
 		Id:            expected.Id,
 		EnvironmentId: *environmentID,
@@ -687,10 +696,11 @@ func TestCreateListGoalsNoCommand(t *testing.T) {
 	defer c.Close()
 	goalID := createGoalID(t)
 	createGoalResp, err := c.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
-		EnvironmentId: *environmentID,
-		Id:            goalID,
-		Name:          fmt.Sprintf("%s-goal-name", goalID),
-		Description:   fmt.Sprintf("%s-goal-description", goalID),
+		EnvironmentId:  *environmentID,
+		Id:             goalID,
+		Name:           fmt.Sprintf("%s-goal-name", goalID),
+		Description:    fmt.Sprintf("%s-goal-description", goalID),
+		ConnectionType: experimentproto.Goal_EXPERIMENT,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -738,10 +748,11 @@ func TestCreateUpdateGoalNoCommand(t *testing.T) {
 	defer c.Close()
 	goalID := createGoalID(t)
 	createGoalResp, err := c.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
-		EnvironmentId: *environmentID,
-		Id:            goalID,
-		Name:          fmt.Sprintf("%s-goal-name", goalID),
-		Description:   fmt.Sprintf("%s-goal-description", goalID),
+		EnvironmentId:  *environmentID,
+		Id:             goalID,
+		Name:           fmt.Sprintf("%s-goal-name", goalID),
+		Description:    fmt.Sprintf("%s-goal-description", goalID),
+		ConnectionType: experimentproto.Goal_OPERATION,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -786,9 +797,10 @@ func createGoal(ctx context.Context, t *testing.T, client experimentclient.Clien
 	t.Helper()
 	goalID := createGoalID(t)
 	cmd := &experimentproto.CreateGoalCommand{
-		Id:          goalID,
-		Name:        fmt.Sprintf("%s-goal-name", goalID),
-		Description: fmt.Sprintf("%s-goal-description", goalID),
+		Id:             goalID,
+		Name:           fmt.Sprintf("%s-goal-name", goalID),
+		Description:    fmt.Sprintf("%s-goal-description", goalID),
+		ConnectionType: experimentproto.Goal_EXPERIMENT,
 	}
 	_, err := client.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
 		Command:       cmd,
@@ -844,6 +856,29 @@ func createExperimentWithMultiGoals(
 	resp, err := client.CreateExperiment(ctx, &experimentproto.CreateExperimentRequest{
 		Command:       cmd,
 		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return resp.Experiment
+}
+
+func createExperimentWithMultiGoalsNoCommand(
+	ctx context.Context,
+	t *testing.T,
+	client experimentclient.Client,
+	featureID, baseVariationID string,
+	goalIDs []string,
+	startAt, stopAt time.Time,
+) *experimentproto.Experiment {
+	resp, err := client.CreateExperiment(ctx, &experimentproto.CreateExperimentRequest{
+		FeatureId:       featureID,
+		StartAt:         startAt.Unix(),
+		StopAt:          stopAt.Unix(),
+		GoalIds:         goalIDs,
+		Name:            strings.Join(goalIDs, ","),
+		BaseVariationId: baseVariationID,
+		EnvironmentId:   *environmentID,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -975,9 +1010,19 @@ func compareExperiments(t *testing.T, expected []*experimentproto.Experiment, ac
 		t.Fatalf("Different sizes. Expected: %d, actual: %d", len(expected), len(actual))
 	}
 	for i := 0; i < len(expected); i++ {
-		if !proto.Equal(actual[i], expected[i]) {
-			t.Fatalf("Experiments do not match. Expected: %v, actual: %v", expected[i], actual[i])
-		}
+		assert.Equal(t, expected[i].Id, actual[i].Id)
+		assert.Equal(t, expected[i].Name, actual[i].Name)
+		assert.Equal(t, expected[i].Description, actual[i].Description)
+		assert.Equal(t, expected[i].FeatureId, actual[i].FeatureId)
+		assert.Equal(t, expected[i].FeatureVersion, actual[i].FeatureVersion)
+		assert.Equal(t, expected[i].BaseVariationId, actual[i].BaseVariationId)
+		assert.Equal(t, expected[i].StartAt, actual[i].StartAt)
+		assert.Equal(t, expected[i].StopAt, actual[i].StopAt)
+		assert.Equal(t, expected[i].Status, actual[i].Status)
+		assert.Equal(t, expected[i].GoalIds, actual[i].GoalIds)
+		assert.Equal(t, expected[i].Deleted, actual[i].Deleted)
+		assert.Equal(t, expected[i].Archived, actual[i].Archived)
+		assert.Equal(t, expected[i].Maintainer, actual[i].Maintainer)
 	}
 }
 

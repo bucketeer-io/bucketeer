@@ -17,11 +17,14 @@ syntax = "proto3";
 package bucketeer.experiment;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/experiment";
 
+import "proto/experiment/experiment.proto";
+
 message Goal {
   message ExperimentReference {
     string id = 1;
     string name = 2;
     string feature_id = 3;
+    experiment.Experiment.Status status = 4;
   }
   message AutoOpsRuleReference {
     string id = 1;

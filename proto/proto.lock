@@ -22264,6 +22264,11 @@
                     "id": 3,
                     "name": "feature_id",
                     "type": "string"
+                  },
+                  {
+                    "id": 4,
+                    "name": "status",
+                    "type": "experiment.Experiment.Status"
                   }
                 ]
               },
@@ -22283,6 +22288,11 @@
                 ]
               }
             ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/experiment/experiment.proto"
           }
         ],
         "package": {
@@ -22458,6 +22468,11 @@
                     "value": "REQUIRED"
                   }
                 ]
+              },
+              {
+                "id": 10,
+                "name": "connection_type",
+                "type": "Goal.ConnectionType"
               }
             ],
             "reserved_ids": [
