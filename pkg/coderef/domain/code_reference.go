@@ -30,6 +30,7 @@ type CodeReference struct {
 func NewCodeReference(
 	featureId string,
 	filePath string,
+	fileExtension string,
 	lineNumber int32,
 	codeSnippet string,
 	contentHash string,
@@ -51,6 +52,7 @@ func NewCodeReference(
 			Id:               id.String(),
 			FeatureId:        featureId,
 			FilePath:         filePath,
+			FileExtension:    fileExtension,
 			LineNumber:       lineNumber,
 			CodeSnippet:      codeSnippet,
 			ContentHash:      contentHash,
@@ -69,6 +71,7 @@ func NewCodeReference(
 
 func (c *CodeReference) Update(
 	filePath string,
+	fileExtension string,
 	lineNumber int32,
 	codeSnippet string,
 	contentHash string,
@@ -82,6 +85,9 @@ func (c *CodeReference) Update(
 	}
 	if filePath != "" {
 		updated.FilePath = filePath
+	}
+	if fileExtension != "" {
+		updated.FileExtension = fileExtension
 	}
 	if lineNumber != 0 {
 		updated.LineNumber = lineNumber

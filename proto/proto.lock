@@ -8049,6 +8049,11 @@
                 "id": 17,
                 "name": "branch_url",
                 "type": "string"
+              },
+              {
+                "id": 18,
+                "name": "file_extension",
+                "type": "string"
               }
             ]
           }
@@ -8345,6 +8350,17 @@
                 "id": 12,
                 "name": "commit_hash",
                 "type": "string"
+              },
+              {
+                "id": 13,
+                "name": "file_extension",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ]
           },
@@ -8456,6 +8472,11 @@
               {
                 "id": 12,
                 "name": "commit_hash",
+                "type": "string"
+              },
+              {
+                "id": 13,
+                "name": "file_extension",
                 "type": "string"
               }
             ]
@@ -30373,6 +30394,11 @@
                 "id": 12,
                 "name": "commit_hash",
                 "type": "string"
+              },
+              {
+                "id": 13,
+                "name": "file_extension",
+                "type": "string"
               }
             ]
           },
@@ -30428,6 +30454,11 @@
               {
                 "id": 8,
                 "name": "commit_hash",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "file_extension",
                 "type": "string"
               }
             ]
