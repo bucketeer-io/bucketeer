@@ -45,6 +45,13 @@ var (
 	deleteGoalSQL string
 )
 
+type experimentRef struct {
+	Id        string `json:"id"`
+	Name      string `json:"name"`
+	FeatureId string `json:"feature_id"`
+	Status    int32  `json:"status"`
+}
+
 type GoalStorage interface {
 	CreateGoal(ctx context.Context, g *domain.Goal, environmentId string) error
 	UpdateGoal(ctx context.Context, g *domain.Goal, environmentId string) error
@@ -119,6 +126,8 @@ func (s *goalStorage) UpdateGoal(ctx context.Context, g *domain.Goal, environmen
 
 func (s *goalStorage) GetGoal(ctx context.Context, id, environmentId string) (*domain.Goal, error) {
 	goal := proto.Goal{}
+	var connectionType int32
+	var experiments []experimentRef
 	err := s.qe.QueryRowContext(
 		ctx,
 		selectGoalSQL,
@@ -129,7 +138,7 @@ func (s *goalStorage) GetGoal(ctx context.Context, id, environmentId string) (*d
 		&goal.Id,
 		&goal.Name,
 		&goal.Description,
-		&goal.ConnectionType,
+		&connectionType,
 		&goal.Archived,
 		&goal.Deleted,
 		&goal.CreatedAt,
@@ -142,6 +151,15 @@ func (s *goalStorage) GetGoal(ctx context.Context, id, environmentId string) (*d
 			return nil, ErrGoalNotFound
 		}
 		return nil, err
+	}
+	goal.ConnectionType = proto.Goal_ConnectionType(connectionType)
+	for i := range experiments {
+		goal.Experiments = append(goal.Experiments, &proto.Goal_ExperimentReference{
+			Id:        experiments[i].Id,
+			Name:      experiments[i].Name,
+			FeatureId: experiments[i].FeatureId,
+			Status:    proto.Experiment_Status(experiments[i].Status),
+		})
 	}
 	return &domain.Goal{Goal: &goal}, nil
 }
@@ -175,22 +193,34 @@ func (s *goalStorage) ListGoals(
 	}
 	defer rows.Close()
 	goals := make([]*proto.Goal, 0, limit)
+
 	for rows.Next() {
 		goal := proto.Goal{}
+		var connectionType int32
+		var experiments []experimentRef
 		err := rows.Scan(
 			&goal.Id,
 			&goal.Name,
 			&goal.Description,
-			&goal.ConnectionType,
+			&connectionType,
 			&goal.Archived,
 			&goal.Deleted,
 			&goal.CreatedAt,
 			&goal.UpdatedAt,
 			&goal.IsInUseStatus,
-			&mysql.JSONObject{Val: &goal.Experiments},
+			&mysql.JSONObject{Val: &experiments},
 		)
 		if err != nil {
 			return nil, 0, 0, err
+		}
+		goal.ConnectionType = proto.Goal_ConnectionType(connectionType)
+		for i := range experiments {
+			goal.Experiments = append(goal.Experiments, &proto.Goal_ExperimentReference{
+				Id:        experiments[i].Id,
+				Name:      experiments[i].Name,
+				FeatureId: experiments[i].FeatureId,
+				Status:    proto.Experiment_Status(experiments[i].Status),
+			})
 		}
 		goals = append(goals, &goal)
 	}

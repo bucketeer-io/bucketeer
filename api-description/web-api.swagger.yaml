@@ -3951,6 +3951,15 @@ paths:
           in: query
           required: true
           type: string
+        - name: connectionType
+          in: query
+          required: false
+          type: string
+          enum:
+            - UNKNOWN
+            - EXPERIMENT
+            - OPERATION
+          default: UNKNOWN
       tags:
         - goal
   /v1/push:

@@ -133,6 +133,9 @@ func (s *experimentService) ListGoals(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "description"}, req.SearchKeyword))
 	}
+	if req.ConnectionType != proto.Goal_UNKNOWN {
+		whereParts = append(whereParts, mysql.NewFilter("connection_type", "=", req.ConnectionType))
+	}
 	orders, err := s.newGoalListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(

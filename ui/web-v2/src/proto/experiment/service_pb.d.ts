@@ -111,6 +111,11 @@ export class ListGoalsRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getConnectionType(): proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap];
+  setConnectionType(
+    value: proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap]
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListGoalsRequest.AsObject;
   static toObject(
@@ -142,6 +147,7 @@ export namespace ListGoalsRequest {
     isInUseStatus?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     archived?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     environmentId: string;
+    connectionType: proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap];
   };
 
   export interface OrderByMap {

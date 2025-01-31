@@ -1331,7 +1331,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         archived:
           (f = msg.getArchived()) &&
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 9, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 9, ''),
+        connectionType: jspb.Message.getFieldWithDefault(msg, 10, 0)
       };
 
     if (includeInstance) {
@@ -1418,6 +1419,13 @@ proto.bucketeer.experiment.ListGoalsRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 10:
+          var value =
+            /** @type {!proto.bucketeer.experiment.Goal.ConnectionType} */ (
+              reader.readEnum()
+            );
+          msg.setConnectionType(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -1491,6 +1499,10 @@ proto.bucketeer.experiment.ListGoalsRequest.serializeBinaryToWriter = function (
   f = message.getEnvironmentId();
   if (f.length > 0) {
     writer.writeString(9, f);
+  }
+  f = message.getConnectionType();
+  if (f !== 0.0) {
+    writer.writeEnum(10, f);
   }
 };
 
@@ -1713,6 +1725,26 @@ proto.bucketeer.experiment.ListGoalsRequest.prototype.getEnvironmentId =
 proto.bucketeer.experiment.ListGoalsRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 9, value);
+  };
+
+/**
+ * optional Goal.ConnectionType connection_type = 10;
+ * @return {!proto.bucketeer.experiment.Goal.ConnectionType}
+ */
+proto.bucketeer.experiment.ListGoalsRequest.prototype.getConnectionType =
+  function () {
+    return /** @type {!proto.bucketeer.experiment.Goal.ConnectionType} */ (
+      jspb.Message.getFieldWithDefault(this, 10, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.experiment.Goal.ConnectionType} value
+ * @return {!proto.bucketeer.experiment.ListGoalsRequest} returns this
+ */
+proto.bucketeer.experiment.ListGoalsRequest.prototype.setConnectionType =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 10, value);
   };
 
 /**

@@ -20,15 +20,15 @@ SELECT
         ELSE FALSE
     END AS is_in_use_status,
     (
-        select
+        SELECT
             JSON_ARRAYAGG(JSON_OBJECT(
                     'id', ex2.id,
                     'name', ex2.name,
                     'feature_id', ex2.feature_id,
                     'status', ex2.status))
-        from experiment ex2
-        where json_contains(ex2.goal_ids, concat('"', goal.id, '"'), '$')
-    ) as experiments
+        FROM experiment ex2
+        WHERE JSON_CONTAINS(ex2.goal_ids, CONCAT('"', goal.id, '"'), '$')
+    ) AS experiments
 FROM
     goal
     %s %s %s %s

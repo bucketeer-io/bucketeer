@@ -22447,6 +22447,11 @@
                     "value": "REQUIRED"
                   }
                 ]
+              },
+              {
+                "id": 10,
+                "name": "connection_type",
+                "type": "Goal.ConnectionType"
               }
             ],
             "reserved_ids": [

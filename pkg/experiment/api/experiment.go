@@ -281,7 +281,7 @@ func (s *experimentService) CreateExperiment(
 		return nil, dt.Err()
 	}
 	for _, gid := range req.Command.GoalIds {
-		_, err := s.getGoalMySQL(ctx, gid, req.EnvironmentId)
+		goal, err := s.getGoalMySQL(ctx, gid, req.EnvironmentId)
 		if err != nil {
 			if errors.Is(err, v2es.ErrGoalNotFound) {
 				dt, err := statusGoalNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -296,6 +296,16 @@ func (s *experimentService) CreateExperiment(
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		if goal.ConnectionType != proto.Goal_EXPERIMENT {
+			dt, err := statusGoalTypeMismatch.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "goal_ids"),
 			})
 			if err != nil {
 				return nil, statusInternal.Err()
@@ -437,6 +447,39 @@ func (s *experimentService) createExperimentNoCommand(
 			return nil, statusInternal.Err()
 		}
 		return nil, dt.Err()
+	}
+	for _, gid := range req.GoalIds {
+		goal, err := s.getGoalMySQL(ctx, gid, req.EnvironmentId)
+		if err != nil {
+			if errors.Is(err, v2es.ErrGoalNotFound) {
+				dt, err := statusGoalNotFound.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalize(locale.NotFoundError),
+				})
+				if err != nil {
+					return nil, statusInternal.Err()
+				}
+				return nil, dt.Err()
+			}
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		if goal.ConnectionType != proto.Goal_EXPERIMENT {
+			dt, err := statusGoalTypeMismatch.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "goal_ids"),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
 	}
 	experiment, err := domain.NewExperiment(
 		req.FeatureId,
