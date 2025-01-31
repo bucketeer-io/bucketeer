@@ -56,15 +56,15 @@ type EnvironmentStorage interface {
 }
 
 type environmentStorage struct {
-	qe mysql.QueryExecer
+	client mysql.Client
 }
 
-func NewEnvironmentStorage(qe mysql.QueryExecer) EnvironmentStorage {
-	return &environmentStorage{qe}
+func NewEnvironmentStorage(client mysql.Client) EnvironmentStorage {
+	return &environmentStorage{client}
 }
 
 func (s *environmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.EnvironmentV2) error {
-	_, err := s.qe.ExecContext(
+	_, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		insertEnvironmentSQL,
 		e.Id,
@@ -88,7 +88,7 @@ func (s *environmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.
 }
 
 func (s *environmentStorage) UpdateEnvironmentV2(ctx context.Context, e *domain.EnvironmentV2) error {
-	result, err := s.qe.ExecContext(
+	result, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		updateEnvironmentSQL,
 		e.Name,
@@ -114,7 +114,7 @@ func (s *environmentStorage) UpdateEnvironmentV2(ctx context.Context, e *domain.
 
 func (s *environmentStorage) GetEnvironmentV2(ctx context.Context, id string) (*domain.EnvironmentV2, error) {
 	environment := proto.EnvironmentV2{}
-	err := s.qe.QueryRowContext(
+	err := s.client.Qe(ctx).QueryRowContext(
 		ctx,
 		selectEnvironmentSQL,
 		id,
@@ -149,7 +149,7 @@ func (s *environmentStorage) ListEnvironmentsV2(
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectEnvironmentsSQL, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -181,7 +181,7 @@ func (s *environmentStorage) ListEnvironmentsV2(
 	nextOffset := offset + len(environments)
 	var totalCount int64
 	countQuery := fmt.Sprintf(countEnvironmentsSQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
