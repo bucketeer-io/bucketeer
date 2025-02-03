@@ -56,10 +56,6 @@ export const listCodeRefs = createAsyncThunk<
 >(`${MODULE_NAME}/list`, async (params) => {
   const request = new ListCodeReferencesRequest();
 
-  console.log({
-    params
-  });
-
   request.setEnvironmentId(params.environmentId);
   request.setFeatureId(params.featureId);
   request.setPageSize(params.pageSize);
@@ -184,7 +180,12 @@ const initialState = codeRefsAdapter.getInitialState<{
 export const codeRefsSlice = createSlice({
   name: MODULE_NAME,
   initialState,
-  reducers: {},
+  reducers: {
+    clearCodeRefs: (state) => {
+      codeRefsAdapter.removeAll(state);
+      state.totalCount = 0;
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(listCodeRefs.pending, (state) => {
@@ -225,3 +226,5 @@ export const codeRefsSlice = createSlice({
       .addCase(updateAPIKey.rejected, () => {});
   }
 });
+
+export const { clearCodeRefs } = codeRefsSlice.actions;
