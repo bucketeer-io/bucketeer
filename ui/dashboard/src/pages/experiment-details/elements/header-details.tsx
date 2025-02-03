@@ -1,6 +1,6 @@
 import { Experiment } from '@types';
 import { cn } from 'utils/style';
-import { IconInfo } from '@icons';
+import { IconChevronRight, IconInfo } from '@icons';
 import { ExperimentStatuses } from 'pages/experiments/collection-layout/data-collection';
 import Icon from 'components/icon';
 
@@ -34,6 +34,12 @@ const HeaderDetails = ({ experiment }: { experiment: Experiment }) => {
       <div className="flex items-center gap-x-2">
         <h1 className="text-gray-900 typo-head-bold-huge">{experiment.name}</h1>
         <ExperimentStatuses status={experiment.status} />
+        <Icon
+          icon={IconChevronRight}
+          className="rotate-90"
+          color="gray-500"
+          size={'sm'}
+        />
       </div>
     </div>
   );

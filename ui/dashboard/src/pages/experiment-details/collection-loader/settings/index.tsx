@@ -216,6 +216,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                   <Form.Label required>{t('start-at')}</Form.Label>
                   <Form.Control>
                     <ReactDatePicker
+                      disabled
                       selected={
                         field.value ? new Date(+field.value * 1000) : null
                       }
@@ -240,6 +241,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                   <Form.Label required>{t('end-at')}</Form.Label>
                   <Form.Control>
                     <ReactDatePicker
+                      disabled
                       selected={
                         field.value ? new Date(+field.value * 1000) : null
                       }

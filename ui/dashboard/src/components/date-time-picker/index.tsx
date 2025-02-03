@@ -45,7 +45,7 @@ export const ReactDatePicker: FC<ReactDatetimePickerProps> = memo(
               toggleCalendarOnIconClick && ref.current?.setOpen(true)
             }
             className={cn('flex-center', {
-              'cursor-pointer': toggleCalendarOnIconClick
+              'cursor-pointer': toggleCalendarOnIconClick && !disabled
             })}
           >
             {icon}
@@ -55,7 +55,10 @@ export const ReactDatePicker: FC<ReactDatetimePickerProps> = memo(
           'flex-center top-1/2 -translate-y-1/2 right-1',
           calendarIconClassName
         )}
-        className={cn('!py-[11px] !pl-4 !pr-10 w-full', className)}
+        className={cn(
+          '!py-[11px] !pl-4 !pr-10 w-full disabled:border-gray-400 disabled:bg-gray-100',
+          className
+        )}
         timeIntervals={timeIntervals}
         placeholderText={placeholderText || t('select-date')}
         wrapperClassName={cn('flex items-center w-full', wrapperClassName)}

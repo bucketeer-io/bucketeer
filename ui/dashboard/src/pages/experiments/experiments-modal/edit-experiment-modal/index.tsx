@@ -38,7 +38,7 @@ import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
 import FormLoading from 'elements/form-loading';
 import { experimentFormSchema } from '../add-experiment-modal';
-import DefineAudience from './define-audience';
+import DefineAudience from '../add-experiment-modal/define-audience';
 
 interface EditExperimentModalProps {
   isOpen: boolean;
@@ -297,6 +297,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                       <Form.Label required>{t('start-at')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
+                          disabled
                           selected={
                             field.value ? new Date(+field.value * 1000) : null
                           }
@@ -321,6 +322,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                       <Form.Label required>{t('end-at')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
+                          disabled
                           selected={
                             field.value ? new Date(+field.value * 1000) : null
                           }
