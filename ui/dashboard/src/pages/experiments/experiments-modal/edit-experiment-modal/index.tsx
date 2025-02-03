@@ -21,6 +21,7 @@ import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
 import { IconInfo } from '@icons';
+import { experimentFormSchema } from 'pages/experiments/form-schema';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import { ReactDatePicker } from 'components/date-time-picker';
@@ -37,7 +38,6 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
 import FormLoading from 'elements/form-loading';
-import { experimentFormSchema } from '../add-experiment-modal';
 import DefineAudience from '../add-experiment-modal/define-audience';
 
 interface EditExperimentModalProps {

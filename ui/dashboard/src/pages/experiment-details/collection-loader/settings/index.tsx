@@ -17,7 +17,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Experiment } from '@types';
 import { IconInfo } from '@icons';
-import { experimentFormSchema } from 'pages/experiments/experiments-modal/add-experiment-modal';
+import { experimentFormSchema } from 'pages/experiments/form-schema';
 import Button from 'components/button';
 import { ReactDatePicker } from 'components/date-time-picker';
 import {
