@@ -36,7 +36,7 @@ export const ExperimentStatuses = ({
       }
     )}
   >
-    {status.toLowerCase()}
+    {status.replace('_', ' ').toLowerCase()}
   </div>
 );
 
@@ -45,7 +45,7 @@ export const useColumns = ({
 }: {
   onActions: (item: Experiment, type: ExperimentActionsType) => void;
 }): ColumnDef<Experiment>[] => {
-  const { t } = useTranslation(['common', 'table']);
+  const { t } = useTranslation(['common', 'table', 'form']);
   const { searchOptions } = useSearchParams();
 
   const { consoleAccount } = useAuth();

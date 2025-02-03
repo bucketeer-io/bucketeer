@@ -6,6 +6,7 @@ import { cn } from 'utils/style';
 import { IconCalendar } from '@icons';
 import Icon from 'components/icon';
 import './custom-datepicker.css';
+import CustomizeHeader from './customize-header';
 
 type ReactDatetimePickerProps = DatePickerProps;
 
@@ -61,6 +62,7 @@ export const ReactDatePicker: FC<ReactDatetimePickerProps> = memo(
         disabled={disabled}
         popperPlacement={popperPlacement}
         toggleCalendarOnIconClick={toggleCalendarOnIconClick}
+        renderCustomHeader={props => <CustomizeHeader {...props} />}
         {...props}
       />
     );

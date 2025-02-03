@@ -20,7 +20,6 @@ import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
-import * as yup from 'yup';
 import { IconInfo } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -38,6 +37,7 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
 import FormLoading from 'elements/form-loading';
+import { experimentFormSchema } from '../add-experiment-modal';
 import DefineAudience from './define-audience';
 
 interface EditExperimentModalProps {
@@ -47,6 +47,7 @@ interface EditExperimentModalProps {
 
 export interface EditExperimentForm {
   id: string;
+  baseVariationId: string;
   name: string;
   description?: string;
   startAt: string;
@@ -66,17 +67,6 @@ export type DefineAudienceField = ControllerRenderProps<
   EditExperimentForm,
   'audience'
 >;
-
-export const formSchema = yup.object().shape({
-  id: yup.string().required(),
-  name: yup.string().required(),
-  startAt: yup.string().required(),
-  stopAt: yup.string().required(),
-  description: yup.string(),
-  audience: yup.mixed(),
-  featureId: yup.string().required(),
-  goalIds: yup.array().min(1).required()
-});
 
 const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
   const { t } = useTranslation(['form', 'common']);
@@ -135,10 +125,11 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
   ];
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(experimentFormSchema),
     defaultValues: {
       id: '',
       name: '',
+      baseVariationId: '',
       description: '',
       startAt: '',
       stopAt: '',
@@ -155,7 +146,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
   });
 
   const {
-    formState: { isDirty, isValid, isSubmitting }
+    formState: { isDirty, isSubmitting }
   } = form;
 
   const onSubmit: SubmitHandler<EditExperimentForm> = async values => {
@@ -189,10 +180,19 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
 
   useEffect(() => {
     if (experiment) {
-      const { id, name, description, startAt, stopAt, featureId, goalIds } =
-        experiment;
+      const {
+        id,
+        baseVariationId,
+        name,
+        description,
+        startAt,
+        stopAt,
+        featureId,
+        goalIds
+      } = experiment;
       form.reset({
-        id: id,
+        id,
+        baseVariationId,
         name,
         description,
         startAt,
@@ -225,7 +225,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
       {experimentLoading ? (
         <FormLoading />
       ) : (
-        <div className="p-5 pb-28">
+        <div className="p-5 pb-28 relative">
           <p className="text-gray-800 typo-head-bold-small">
             {t('general-info')}
           </p>
@@ -249,7 +249,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
               />
               <Form.Field
                 control={form.control}
-                name="id"
+                name="baseVariationId"
                 render={({ field }) => (
                   <Form.Item>
                     <Form.Label required className="relative w-fit">
@@ -293,7 +293,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                   control={form.control}
                   name="startAt"
                   render={({ field }) => (
-                    <Form.Item className="flex flex-col flex-1">
+                    <Form.Item className="flex flex-col flex-1 h-full self-stretch">
                       <Form.Label required>{t('start-at')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
@@ -304,6 +304,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                             if (date) {
                               const timestamp = new Date(date)?.getTime();
                               field.onChange(timestamp / 1000);
+                              form.trigger('startAt');
                             }
                           }}
                         />
@@ -316,7 +317,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                   control={form.control}
                   name="stopAt"
                   render={({ field }) => (
-                    <Form.Item className="flex flex-col flex-1">
+                    <Form.Item className="flex flex-col flex-1 h-full self-stretch">
                       <Form.Label required>{t('end-at')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
@@ -327,6 +328,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                             if (date) {
                               const timestamp = new Date(date)?.getTime();
                               field.onChange(timestamp / 1000);
+                              form.trigger('stopAt');
                             }
                           }}
                         />
@@ -453,7 +455,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                   secondaryButton={
                     <Button
                       type="submit"
-                      disabled={!isValid || !isDirty}
+                      disabled={!isDirty}
                       loading={isSubmitting}
                     >
                       {t(`common:submit`)}

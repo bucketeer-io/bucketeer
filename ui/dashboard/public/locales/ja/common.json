@@ -155,5 +155,6 @@
   "metrics": "Metrics",
   "evaluation": "Evaluation",
   "conversion-rate": "Conversion Rate",
-  "completed": "Completed"
+  "completed": "Completed",
+  "variations": "Variations"
 }

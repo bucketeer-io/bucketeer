@@ -1,13 +1,14 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
+import { Experiment } from '@types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
 
 export type ExperimentDetailsTab = 'results' | 'settings';
 
-const PageContent = () => {
+const PageContent = ({ experiment }: { experiment: Experiment }) => {
   const { t } = useTranslation(['common']);
   const { tab: currentTab, envUrlCode, experimentId } = useParams();
   const navigate = useNavigate();
@@ -29,7 +30,10 @@ const PageContent = () => {
         </TabsList>
 
         <TabsContent value={currentTab as ExperimentDetailsTab}>
-          <CollectionLoader currentTab={currentTab as ExperimentDetailsTab} />
+          <CollectionLoader
+            currentTab={currentTab as ExperimentDetailsTab}
+            experiment={experiment}
+          />
         </TabsContent>
       </Tabs>
     </PageLayout.Content>

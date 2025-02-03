@@ -172,11 +172,10 @@ const RowItem = ({
     >
       {isFirstItem && (
         <Polygon
-          className={
-            value
-              ? 'bg-accent-blue-500 border-none size-3'
-              : 'bg-accent-pink-500 border-none size-3'
-          }
+          className={cn('border-none size-3', {
+            'bg-accent-blue-500': value,
+            'bg-accent-pink-500': !value
+          })}
         />
       )}
       <p className="typo-para-medium leading-4 text-gray-800">

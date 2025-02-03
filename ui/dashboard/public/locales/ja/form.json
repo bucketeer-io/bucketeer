@@ -58,6 +58,12 @@
   "experiments": {
     "experiment-id": "Experiment ID",
     "placeholder-id": "Enter Experiment ID",
+    "audience": "Audience",
+    "audience-included": "Audience Included",
+    "settings": {
+      "in-this-experiment": "<highlight>{{percent}}</highlight> of the target audience is in this experiment",
+      "not-in-experiment": "<highlight>{{percent}}</highlight> is not in this experiment and is served"
+    },
     "define-audience": {
       "title": "Define Audience",
       "rule-defines": "defines your experiment audience from the selected flag.",
@@ -82,5 +88,6 @@
   "select-date": "Select date",
   "start-at": "Start At",
   "end-at": "End At",
-  "select-evaluation": "Select Evaluation"
+  "select-evaluation": "Select Evaluation",
+  "save-with-comment": "Save With Comment"
 }

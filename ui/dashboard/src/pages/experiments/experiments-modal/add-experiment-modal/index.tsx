@@ -16,6 +16,13 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { IconInfo } from '@icons';
+import {
+  EXPERIMENT_DESCRIPTION_MAX_LENGTH,
+  EXPERIMENT_GOAL_MAX_LENGTH,
+  EXPERIMENT_GOAL_MIN_LENGTH,
+  EXPERIMENT_NAME_MAX_LENGTH,
+  EXPERIMENT_START_AT_OLDEST_DAYS
+} from 'pages/experiments/constants';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import { ReactDatePicker } from 'components/date-time-picker';
@@ -60,15 +67,64 @@ export type DefineAudienceField = ControllerRenderProps<
   'audience'
 >;
 
-export const formSchema = yup.object().shape({
-  baseVariationId: yup.string().required(),
+export const experimentFormSchema = yup.object().shape({
+  id: yup.string().required().max(EXPERIMENT_NAME_MAX_LENGTH),
   name: yup.string().required(),
-  startAt: yup.string().required(),
-  stopAt: yup.string().required(),
-  description: yup.string(),
+  baseVariationId: yup.string().required(),
+  startAt: yup
+    .string()
+    .required()
+    .test(
+      'laterThanStartAt',
+      `This must be later than or equal to ${EXPERIMENT_START_AT_OLDEST_DAYS} days ago.`,
+      function (value) {
+        const startDate = new Date(+value * 1000);
+        const d = new Date();
+        d.setDate(d.getDate() - EXPERIMENT_START_AT_OLDEST_DAYS);
+        return startDate >= d;
+      }
+    ),
+  stopAt: yup
+    .string()
+    .required()
+    .test('laterThanStartAt', (value, context) => {
+      const endDate = new Date(+value * 1000);
+      const startAtValue = context?.from && context?.from[0]?.value?.startAt;
+      const startDate = new Date(+startAtValue * 1000);
+      const startTime = startDate.getTime();
+      const endTime = endDate.getTime();
+      if (startTime && endTime && endTime < startTime) {
+        return context.createError({
+          message: 'Stop at must be later than the start at.',
+          path: context.path
+        });
+      }
+      return true;
+    })
+    .test('lessThanOrEquals30Days', (value, context) => {
+      const maxPeriodSeconds = 60 * 60 * 24 * 30;
+      const startAtValue = context?.from && context?.from[0]?.value?.startAt;
+      const startDate = new Date(+startAtValue * 1000);
+      const endDate = new Date(+value * 1000);
+      const startTime = startDate.getTime();
+      const endTime = endDate.getTime();
+      if (endTime / 1000 - startTime / 1000 <= maxPeriodSeconds) {
+        return context.createError({
+          message: `The period must be less than or equals to ${EXPERIMENT_START_AT_OLDEST_DAYS} days.`,
+          path: context.path
+        });
+      }
+
+      return true;
+    }),
+  description: yup.string().max(EXPERIMENT_DESCRIPTION_MAX_LENGTH),
   audience: yup.mixed(),
   featureId: yup.string().required(),
-  goalIds: yup.array().min(1).required()
+  goalIds: yup
+    .array()
+    .min(EXPERIMENT_GOAL_MIN_LENGTH)
+    .max(EXPERIMENT_GOAL_MAX_LENGTH)
+    .required()
 });
 
 const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
@@ -108,7 +164,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
   ];
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(experimentFormSchema),
     defaultValues: {
       baseVariationId: '',
       name: '',
@@ -128,7 +184,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
   });
 
   const {
-    formState: { isValid, isSubmitting }
+    formState: { isDirty, isValid, isSubmitting }
   } = form;
 
   const onSubmit: SubmitHandler<AddExperimentForm> = async values => {
@@ -163,7 +219,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
       }
     } catch (error) {
       const errorMessage = (error as Error)?.message;
-      console.log(error)
+      console.log(error);
       notify({
         toastType: 'toast',
         messageType: 'error',
@@ -178,7 +234,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
       isOpen={isOpen}
       onClose={onClose}
     >
-      <div className="p-5 pb-28">
+      <div className="p-5 pb-28 relative">
         <p className="text-gray-800 typo-head-bold-small">
           {t('general-info')}
         </p>
@@ -245,7 +301,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                 control={form.control}
                 name="startAt"
                 render={({ field }) => (
-                  <Form.Item className="flex flex-col flex-1">
+                  <Form.Item className="flex flex-col flex-1 h-full self-stretch">
                     <Form.Label required>{t('start-at')}</Form.Label>
                     <Form.Control>
                       <ReactDatePicker
@@ -256,6 +312,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                           if (date) {
                             const timestamp = new Date(date)?.getTime();
                             field.onChange(timestamp / 1000);
+                            form.trigger('startAt');
                           }
                         }}
                       />
@@ -268,7 +325,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                 control={form.control}
                 name="stopAt"
                 render={({ field }) => (
-                  <Form.Item className="flex flex-col flex-1">
+                  <Form.Item className="flex flex-col flex-1 h-full self-stretch">
                     <Form.Label required>{t('end-at')}</Form.Label>
                     <Form.Control>
                       <ReactDatePicker
@@ -279,6 +336,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                           if (date) {
                             const timestamp = new Date(date)?.getTime();
                             field.onChange(timestamp / 1000);
+                            form.trigger('stopAt');
                           }
                         }}
                       />
@@ -399,7 +457,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isValid}
+                    disabled={!isValid || !isDirty}
                     loading={isSubmitting}
                   >
                     {t(`common:submit`)}
