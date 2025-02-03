@@ -150,6 +150,7 @@
   "close": "Close",
   "experiments-subtitle": "You can use goals to start experiments that will provide data of a feature flag linked to it",
   "new-experiment": "New Experiment",
+  "edit-experiment": "Edit Experiment",
   "results": "Results",
   "metrics": "Metrics",
   "evaluation": "Evaluation",

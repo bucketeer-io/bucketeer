@@ -218,7 +218,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
 
   return (
     <SlideModal
-      title={t('common:new-experiment')}
+      title={t('common:edit-experiment')}
       isOpen={isOpen}
       onClose={onClose}
     >
