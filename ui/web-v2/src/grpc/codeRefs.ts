@@ -1,25 +1,9 @@
 import { Nullable, isNotNull, isNull } from 'option-t/lib/Nullable/Nullable';
-
 import { urls } from '../config';
 import {
-  ChangeAPIKeyNameRequest,
-  ChangeAPIKeyNameResponse,
-  CreateAPIKeyRequest,
-  CreateAPIKeyResponse,
-  DisableAPIKeyRequest,
-  DisableAPIKeyResponse,
-  EnableAPIKeyRequest,
-  EnableAPIKeyResponse,
-  GetAPIKeyRequest,
-  GetAPIKeyResponse,
-  ListAPIKeysRequest,
-  ListAPIKeysResponse
-} from '../proto/account/service_pb';
-import {
-  AccountServiceClient,
+  CodeReferenceServiceClient,
   ServiceError
-} from '../proto/account/service_pb_service';
-import { CodeReferenceServiceClient } from '../proto/coderef/service_pb_service';
+} from '../proto/coderef/service_pb_service';
 
 import { extractErrorMessage } from './messages';
 import {
@@ -28,8 +12,6 @@ import {
 } from './utils';
 import { UNAUTHENTICATED_ERROR } from '../middlewares/thunkErrorHandler';
 import {
-  GetCodeReferenceRequest,
-  GetCodeReferenceResponse,
   ListCodeReferencesRequest,
   ListCodeReferencesResponse
 } from '../proto/coderef/service_pb';
@@ -59,37 +41,6 @@ export class CodeRefsServiceError<Request> extends Error {
 }
 
 const client = new CodeReferenceServiceClient(urls.GRPC);
-
-export interface GetCodeReferenceResult {
-  request: GetCodeReferenceRequest;
-  response: GetCodeReferenceResponse;
-}
-
-export function getCodeRef(
-  request: GetCodeReferenceRequest
-): Promise<GetCodeReferenceResult> {
-  return new Promise(
-    (resolve: (result: GetCodeReferenceResult) => void, reject): void => {
-      client.getCodeReference(
-        request,
-        getMetaData(),
-        (error, response): void => {
-          if (isNotNull(error) || isNull(response)) {
-            reject(
-              new CodeRefsServiceError(
-                extractErrorMessage(error),
-                request,
-                error
-              )
-            );
-          } else {
-            resolve({ request, response });
-          }
-        }
-      );
-    }
-  );
-}
 
 export interface ListCodeRefsResult {
   request: ListCodeReferencesRequest;
