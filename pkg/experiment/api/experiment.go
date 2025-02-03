@@ -830,12 +830,14 @@ func (s *experimentService) updateExperimentNoCommand(
 			req.StopAt,
 			req.Status,
 			req.Archived,
+			req.Deleted,
 		)
 		if err != nil {
 			return err
 		}
 
 		var eventMsg pb.Message
+		var eventType eventproto.Event_Type
 		if req.Archived != nil {
 			if experiment.Status == proto.Experiment_RUNNING {
 				return v2es.ErrExperimentCannotBeArchived
@@ -843,6 +845,12 @@ func (s *experimentService) updateExperimentNoCommand(
 			eventMsg = &eventproto.ExperimentArchivedEvent{
 				Id: req.Id,
 			}
+			eventType = eventproto.Event_EXPERIMENT_ARCHIVED
+		} else if req.Deleted != nil && req.Deleted.Value {
+			eventMsg = &eventproto.ExperimentDeletedEvent{
+				Id: req.Id,
+			}
+			eventType = eventproto.Event_EXPERIMENT_DELETED
 		} else {
 			eventMsg = &eventproto.ExperimentUpdatedEvent{
 				Id:          experiment.Id,
@@ -852,12 +860,13 @@ func (s *experimentService) updateExperimentNoCommand(
 				StopAt:      updated.StopAt,
 				Status:      updated.Status,
 			}
+			eventType = eventproto.Event_EXPERIMENT_UPDATED
 		}
 		event, err := domainevent.NewEvent(
 			editor,
 			eventproto.Event_EXPERIMENT,
 			experiment.Id,
-			eventproto.Event_EXPERIMENT_UPDATED,
+			eventType,
 			eventMsg,
 			req.EnvironmentId,
 			updated,

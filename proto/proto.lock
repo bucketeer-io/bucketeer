@@ -23173,6 +23173,22 @@
                 "id": 14,
                 "name": "status",
                 "type": "UpdatedStatus"
+              },
+              {
+                "id": 15,
+                "name": "deleted",
+                "type": "google.protobuf.BoolValue",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "if true, the experiment will be deleted"
+                      }
+                    ]
+                  }
+                ]
               }
             ],
             "reserved_ids": [

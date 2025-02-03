@@ -978,6 +978,11 @@ export class UpdateExperimentRequest extends jspb.Message {
   getStatus(): UpdateExperimentRequest.UpdatedStatus | undefined;
   setStatus(value?: UpdateExperimentRequest.UpdatedStatus): void;
 
+  hasDeleted(): boolean;
+  clearDeleted(): void;
+  getDeleted(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDeleted(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateExperimentRequest.AsObject;
   static toObject(
@@ -1012,6 +1017,7 @@ export namespace UpdateExperimentRequest {
     stopAt?: google_protobuf_wrappers_pb.Int64Value.AsObject;
     archived?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     status?: UpdateExperimentRequest.UpdatedStatus.AsObject;
+    deleted?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 
   export class UpdatedStatus extends jspb.Message {

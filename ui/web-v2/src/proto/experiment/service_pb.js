@@ -5993,7 +5993,10 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto.bucketeer.experiment.UpdateExperimentRequest.UpdatedStatus.toObject(
             includeInstance,
             f
-          )
+          ),
+        deleted:
+          (f = msg.getDeleted()) &&
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -6121,6 +6124,14 @@ proto.bucketeer.experiment.UpdateExperimentRequest.deserializeBinaryFromReader =
           );
           msg.setStatus(value);
           break;
+        case 15:
+          var value = new google_protobuf_wrappers_pb.BoolValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
+          );
+          msg.setDeleted(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -6235,6 +6246,14 @@ proto.bucketeer.experiment.UpdateExperimentRequest.serializeBinaryToWriter =
         f,
         proto.bucketeer.experiment.UpdateExperimentRequest.UpdatedStatus
           .serializeBinaryToWriter
+      );
+    }
+    f = message.getDeleted();
+    if (f != null) {
+      writer.writeMessage(
+        15,
+        f,
+        google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
       );
     }
   };
@@ -6796,6 +6815,48 @@ proto.bucketeer.experiment.UpdateExperimentRequest.prototype.clearStatus =
 proto.bucketeer.experiment.UpdateExperimentRequest.prototype.hasStatus =
   function () {
     return jspb.Message.getField(this, 14) != null;
+  };
+
+/**
+ * optional google.protobuf.BoolValue deleted = 15;
+ * @return {?proto.google.protobuf.BoolValue}
+ */
+proto.bucketeer.experiment.UpdateExperimentRequest.prototype.getDeleted =
+  function () {
+    return /** @type{?proto.google.protobuf.BoolValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.BoolValue,
+        15
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.BoolValue|undefined} value
+ * @return {!proto.bucketeer.experiment.UpdateExperimentRequest} returns this
+ */
+proto.bucketeer.experiment.UpdateExperimentRequest.prototype.setDeleted =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 15, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.experiment.UpdateExperimentRequest} returns this
+ */
+proto.bucketeer.experiment.UpdateExperimentRequest.prototype.clearDeleted =
+  function () {
+    return this.setDeleted(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.experiment.UpdateExperimentRequest.prototype.hasDeleted =
+  function () {
+    return jspb.Message.getField(this, 15) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

@@ -196,10 +196,10 @@ func TestDeleteExperiment(t *testing.T) {
 	startAt := time.Now()
 	stopAt := startAt.Local().Add(time.Hour * 1)
 	e := createExperimentWithMultiGoals(ctx, t, c, featureID, feature.Variations[0].Id, goalIDs, startAt, stopAt)
-	if _, err := c.DeleteExperiment(ctx, &experimentproto.DeleteExperimentRequest{
+	if _, err := c.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
 		Id:            e.Id,
-		Command:       &experimentproto.DeleteExperimentCommand{},
 		EnvironmentId: *environmentID,
+		Deleted:       wrapperspb.Bool(true),
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -296,10 +296,10 @@ func TestUpdateExperimentNoCommand(t *testing.T) {
 		t.Fatalf("Name is not equal. Expected: %s, actual: %s", newName, getResp.Experiment.Name)
 	}
 
-	_, err = c.DeleteExperiment(ctx, &experimentproto.DeleteExperimentRequest{
+	_, err = c.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
 		Id:            e.Id,
-		Command:       &experimentproto.DeleteExperimentCommand{},
 		EnvironmentId: *environmentID,
+		Deleted:       wrapperspb.Bool(true),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -636,10 +636,10 @@ func TestStatusUpdateFromRunningToStoppedNoCommand(t *testing.T) {
 		time.Sleep(time.Second)
 	}
 
-	_, err = c.DeleteExperiment(ctx, &experimentproto.DeleteExperimentRequest{
+	_, err = c.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
 		Id:            resp.Experiment.Id,
-		Command:       &experimentproto.DeleteExperimentCommand{},
 		EnvironmentId: *environmentID,
+		Deleted:       wrapperspb.Bool(true),
 	})
 	if err != nil {
 		t.Fatal(err)

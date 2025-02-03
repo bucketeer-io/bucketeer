@@ -99,6 +99,7 @@ func (e *Experiment) Update(
 	stopAt *wrapperspb.Int64Value,
 	status *experimentproto.UpdateExperimentRequest_UpdatedStatus,
 	archived *wrapperspb.BoolValue,
+	deleted *wrapperspb.BoolValue,
 ) (*Experiment, error) {
 	updated := &Experiment{}
 	err := copier.Copy(&updated, e)
@@ -134,6 +135,10 @@ func (e *Experiment) Update(
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if deleted != nil {
+		updated.Experiment.Deleted = deleted.Value
 	}
 
 	updated.UpdatedAt = now

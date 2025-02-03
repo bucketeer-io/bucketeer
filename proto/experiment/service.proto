@@ -246,6 +246,10 @@ message UpdateExperimentRequest {
         description: "if true, the experiment will be archived"
       }];
   UpdatedStatus status = 14;
+  google.protobuf.BoolValue deleted = 15
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "if true, the experiment will be deleted"
+      }];
 }
 
 message UpdateExperimentResponse {

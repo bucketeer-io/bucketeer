@@ -501,12 +501,15 @@ func TestUpdateExperiment(t *testing.T) {
 		status      *experimentproto.UpdateExperimentRequest_UpdatedStatus
 		archived    *wrapperspb.BoolValue
 		expected    *Experiment
+		deleted     *wrapperspb.BoolValue
 		expectedErr error
 	}{
 		{
-			desc:        "success",
-			experiment:  experiment,
-			setup:       nil,
+			desc:       "success",
+			experiment: experiment,
+			setup: func(e *Experiment) {
+				e.Status = experimentproto.Experiment_WAITING
+			},
 			name:        wrapperspb.String("newName"),
 			description: wrapperspb.String("newDesc"),
 			expected: &Experiment{
@@ -563,20 +566,49 @@ func TestUpdateExperiment(t *testing.T) {
 			expectedErr: ErrExperimentStatusInvalid,
 		},
 		{
-			desc:        "error start at after stop at",
-			experiment:  experiment,
+			desc:       "error start at after stop at",
+			experiment: experiment,
+			setup: func(e *Experiment) {
+				e.Status = experimentproto.Experiment_WAITING
+			},
 			startAt:     wrapperspb.Int64(now),
 			stopAt:      wrapperspb.Int64(now - 1000),
 			expected:    nil,
 			expectedErr: ErrExperimentStartIsAfterStop,
 		},
 		{
-			desc:        "error before now",
-			experiment:  experiment,
+			desc:       "error before now",
+			experiment: experiment,
+			setup: func(e *Experiment) {
+				e.Status = experimentproto.Experiment_WAITING
+			},
 			startAt:     wrapperspb.Int64(now - 1000),
 			stopAt:      wrapperspb.Int64(now - 1),
 			expected:    nil,
 			expectedErr: ErrExperimentStopIsBeforeNow,
+		},
+		{
+			desc:       "success deleted",
+			experiment: experiment,
+			setup: func(e *Experiment) {
+				e.Status = experimentproto.Experiment_WAITING
+			},
+			deleted: wrapperspb.Bool(true),
+			expected: &Experiment{
+				Experiment: &experimentproto.Experiment{
+					Id:          experiment.Id,
+					Name:        experiment.Name,
+					Description: experiment.Description,
+					Status:      experiment.Status,
+					StartAt:     experiment.StartAt,
+					StopAt:      experiment.StopAt,
+					StoppedAt:   experiment.StoppedAt,
+					CreatedAt:   experiment.CreatedAt,
+					UpdatedAt:   experiment.UpdatedAt,
+					Archived:    experiment.Archived,
+					Deleted:     true,
+				},
+			},
 		},
 	}
 	for _, p := range patterns {
@@ -584,7 +616,15 @@ func TestUpdateExperiment(t *testing.T) {
 			if p.setup != nil {
 				p.setup(p.experiment)
 			}
-			updated, err := p.experiment.Update(p.name, p.description, p.startAt, p.stopAt, p.status, p.archived)
+			updated, err := p.experiment.Update(
+				p.name,
+				p.description,
+				p.startAt,
+				p.stopAt,
+				p.status,
+				p.archived,
+				p.deleted,
+			)
 			if p.expectedErr != nil {
 				assert.Equal(t, p.expectedErr, err)
 			} else {

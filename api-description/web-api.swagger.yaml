@@ -7162,6 +7162,9 @@ definitions:
         description: if true, the experiment will be archived
       status:
         $ref: '#/definitions/UpdateExperimentRequestUpdatedStatus'
+      deleted:
+        type: boolean
+        description: if true, the experiment will be deleted
     required:
       - id
       - environmentId
