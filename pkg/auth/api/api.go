@@ -122,6 +122,7 @@ func NewAuthService(
 		config:              config,
 		mysqlClient:         mysqlClient,
 		organizationStorage: envstotage.NewOrganizationStorage(mysqlClient),
+		environmentStorage:  envstotage.NewEnvironmentStorage(mysqlClient),
 		projectStorage:      envstotage.NewProjectStorage(mysqlClient),
 		accountClient:       accountClient,
 		verifier:            verifier,
