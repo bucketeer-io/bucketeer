@@ -5100,24 +5100,6 @@ definitions:
       - WriteType_OVERRIDE
       - WriteType_PATCH
     default: WriteType_UNSPECIFIED
-  ClauseOperator:
-    type: string
-    enum:
-      - EQUALS
-      - IN
-      - ENDS_WITH
-      - STARTS_WITH
-      - SEGMENT
-      - GREATER
-      - GREATER_OR_EQUAL
-      - LESS
-      - LESS_OR_EQUAL
-      - BEFORE
-      - AFTER
-      - FEATURE_FLAG
-      - PARTIALLY_MATCH
-    default: EQUALS
-    description: ' - FEATURE_FLAG: Attribute is feature ID, and value is variation ID.'
   CodeReferenceRepositoryType:
     type: string
     enum:
@@ -5192,6 +5174,8 @@ definitions:
         type: string
       featureId:
         type: string
+      autoOpsStatus:
+        $ref: '#/definitions/autoopsAutoOpsStatus'
   GoalConnectionType:
     type: string
     enum:
@@ -6046,6 +6030,14 @@ definitions:
       expiry:
         type: string
         format: int64
+  autoopsAutoOpsStatus:
+    type: string
+    enum:
+      - WAITING
+      - RUNNING
+      - FINISHED
+      - STOPPED
+    default: WAITING
   bucketeerenvironmentOrganization:
     type: object
     properties:
@@ -6083,6 +6075,19 @@ definitions:
         format: int32
       ownerEmail:
         type: string
+  bucketeerfeatureClause:
+    type: object
+    properties:
+      id:
+        type: string
+      attribute:
+        type: string
+      operator:
+        $ref: '#/definitions/featureClauseOperator'
+      values:
+        type: array
+        items:
+          type: string
   bucketeerfeatureListTagsRequestOrderBy:
     type: string
     enum:
@@ -7262,19 +7267,24 @@ definitions:
     properties:
       description:
         type: string
-  featureClause:
-    type: object
-    properties:
-      id:
-        type: string
-      attribute:
-        type: string
-      operator:
-        $ref: '#/definitions/ClauseOperator'
-      values:
-        type: array
-        items:
-          type: string
+  featureClauseOperator:
+    type: string
+    enum:
+      - EQUALS
+      - IN
+      - ENDS_WITH
+      - STARTS_WITH
+      - SEGMENT
+      - GREATER
+      - GREATER_OR_EQUAL
+      - LESS
+      - LESS_OR_EQUAL
+      - BEFORE
+      - AFTER
+      - FEATURE_FLAG
+      - PARTIALLY_MATCH
+    default: EQUALS
+    description: ' - FEATURE_FLAG: Attribute is feature ID, and value is variation ID.'
   featureCloneFeatureCommand:
     type: object
     properties:
@@ -7761,7 +7771,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/featureClause'
+          $ref: '#/definitions/bucketeerfeatureClause'
   featureSegment:
     type: object
     properties:

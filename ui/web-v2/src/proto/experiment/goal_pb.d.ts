@@ -3,6 +3,7 @@
 
 import * as jspb from 'google-protobuf';
 import * as proto_experiment_experiment_pb from '../../proto/experiment/experiment_pb';
+import * as proto_autoops_auto_ops_rule_pb from '../../proto/autoops/auto_ops_rule_pb';
 
 export class Goal extends jspb.Message {
   getId(): string;
@@ -135,6 +136,11 @@ export namespace Goal {
     getFeatureId(): string;
     setFeatureId(value: string): void;
 
+    getAutoOpsStatus(): proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap];
+    setAutoOpsStatus(
+      value: proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap]
+    ): void;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): AutoOpsRuleReference.AsObject;
     static toObject(
@@ -160,6 +166,7 @@ export namespace Goal {
     export type AsObject = {
       id: string;
       featureId: string;
+      autoOpsStatus: proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap];
     };
   }
 
