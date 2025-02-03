@@ -369,24 +369,6 @@ func (s *EnvironmentService) createOrganizationNoCommand(
 		return nil, statusInternal.Err()
 	}
 	var envRoles []*accountproto.AccountV2_EnvironmentRole
-	// Begin the SQL transaction
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		// Check if there is already a system admin organization
 		if organization.Organization.SystemAdmin {
