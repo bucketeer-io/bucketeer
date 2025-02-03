@@ -7,7 +7,6 @@ import { listAPIKeys } from '../../modules/apiKeys';
 import { getOrganizationId } from '../../storage/organizationId';
 import { APIKEY_LIST_PAGE_SIZE } from '../../constants/apiKey';
 import {
-  clearCodeRefs,
   listCodeRefs,
   selectAll as selectAllCodeRefs
 } from '../../modules/codeRefs';
@@ -197,12 +196,6 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
       }
     }, [codeRefs]);
 
-    useEffect(() => {
-      return () => {
-        dispatch(clearCodeRefs());
-      };
-    }, []);
-
     const fetchCodeRefs = async ({
       fileExtension = null,
       repositoryBranch = null,
@@ -263,100 +256,98 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
     }
 
     return (
-      <div className="p-10">
-        <div>
-          <div className="flex justify-between">
-            <div className="h-full">
-              <p className="font-semibold text-gray-900">Code Refs</p>
-              <p className="text-sm text-gray-500">
-                References to this feature flag found in your codebase
-              </p>
-            </div>
-            <div className="flex space-x-4">
-              <Select
-                placeholder={f(messages.all)}
-                options={repositoryOptions}
-                className={classNames('flex-none w-[200px]')}
-                value={selectedRepository}
-                onChange={setSelectedRepository}
-                customControl={(props) => (
-                  <ControlComponent {...props} name="Repository" />
-                )}
-              />
-              <Select
-                placeholder={f(messages.all)}
-                options={branchOptions}
-                className={classNames('flex-none w-[200px]')}
-                value={selectedBranch}
-                onChange={setSelectedBranch}
-                customControl={(props) => (
-                  <ControlComponent {...props} name="Branch" />
-                )}
-              />
-              <Select
-                placeholder={f(messages.all)}
-                options={fileExtensionOptions}
-                className={classNames('flex-none w-[210px]')}
-                value={selectedFileExtension}
-                onChange={setSelectedFileExtension}
-                customControl={(props) => (
-                  <ControlComponent {...props} name="File Extensions" />
-                )}
-              />
-            </div>
+      <div className="p-10 bg-white">
+        <div className="flex justify-between">
+          <div className="h-full">
+            <p className="font-semibold text-gray-900">Code Refs</p>
+            <p className="text-sm text-gray-500">
+              References to this feature flag found in your codebase
+            </p>
           </div>
-          <div className="mt-10">
-            {isLoadingCodeRefs ? (
-              <ListSkeleton />
-            ) : codeRefs.length === 0 ? (
-              <div className="my-10 flex justify-center">
-                <div className="w-[600px] text-gray-700 text-center space-y-1">
-                  <h1 className="text-lg font-medium">
-                    No registered code references
-                  </h1>
-                  <p className="text-sm">
-                    There are no code references in your codebase yet.
-                  </p>
-                  <p className="text-sm">
-                    When a reference is added, it will appear here.
-                  </p>
-                </div>
+          <div className="flex space-x-4">
+            <Select
+              placeholder={f(messages.all)}
+              options={repositoryOptions}
+              className={classNames('flex-none w-[200px]')}
+              value={selectedRepository}
+              onChange={setSelectedRepository}
+              customControl={(props) => (
+                <ControlComponent {...props} name="Repository" />
+              )}
+            />
+            <Select
+              placeholder={f(messages.all)}
+              options={branchOptions}
+              className={classNames('flex-none w-[200px]')}
+              value={selectedBranch}
+              onChange={setSelectedBranch}
+              customControl={(props) => (
+                <ControlComponent {...props} name="Branch" />
+              )}
+            />
+            <Select
+              placeholder={f(messages.all)}
+              options={fileExtensionOptions}
+              className={classNames('flex-none w-[210px]')}
+              value={selectedFileExtension}
+              onChange={setSelectedFileExtension}
+              customControl={(props) => (
+                <ControlComponent {...props} name="File Extensions" />
+              )}
+            />
+          </div>
+        </div>
+        <div className="mt-10">
+          {isLoadingCodeRefs ? (
+            <ListSkeleton />
+          ) : codeRefs.length === 0 ? (
+            <div className="my-10 flex justify-center">
+              <div className="w-[600px] text-gray-700 text-center space-y-1">
+                <h1 className="text-lg font-medium">
+                  No registered code references
+                </h1>
+                <p className="text-sm">
+                  There are no code references in your codebase yet.
+                </p>
+                <p className="text-sm">
+                  When a reference is added, it will appear here.
+                </p>
               </div>
-            ) : (
-              <div className="space-y-6">
-                {codeRefs.map((codeRef) => (
-                  <div
-                    key={codeRef.id}
-                    className="rounded-md bg-white shadow p-4 border border-gray-200"
-                  >
-                    <div className="flex py-1">
-                      <RepositoryType codeRef={codeRef} />
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {codeRefs.map((codeRef) => (
+                <div
+                  key={codeRef.id}
+                  className="rounded-md bg-white shadow p-4 border border-gray-200"
+                >
+                  <div className="flex py-1">
+                    <RepositoryType codeRef={codeRef} />
 
-                      <p className="text-gray-500">
-                        {countOccurrences(codeRef.codeSnippet, featureId)}{' '}
-                        reference
-                        {countOccurrences(codeRef.codeSnippet, featureId) > 1
-                          ? '(s)'
-                          : ''}{' '}
-                        found in{' '}
-                        <a
-                          href={codeRef.branchUrl}
-                          className="text-primary underline"
-                          target="_blank"
-                        >
-                          {codeRef.repositoryBranch}
-                        </a>{' '}
-                        on the <a href="#">default</a> branch
-                      </p>
-                    </div>
-                    <div className="mt-4">
-                      <CodeAccordion codeRef={codeRef} featureId={featureId} />
-                    </div>
+                    <p className="text-gray-500">
+                      {countOccurrences(codeRef.codeSnippet, featureId)}{' '}
+                      reference
+                      {countOccurrences(codeRef.codeSnippet, featureId) > 1
+                        ? '(s)'
+                        : ''}{' '}
+                      found in{' '}
+                      <a
+                        href={codeRef.branchUrl}
+                        className="text-primary underline"
+                        target="_blank"
+                      >
+                        {codeRef.repositoryBranch}
+                      </a>{' '}
+                      on the <a href="#">default</a> branch
+                    </p>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  <div className="mt-4">
+                    <CodeAccordion codeRef={codeRef} featureId={featureId} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     );

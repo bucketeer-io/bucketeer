@@ -1,21 +1,3 @@
-import {
-  listAutoOpsRules,
-  selectAll as selectAllAutoOpsRules
-} from '../../modules/autoOpsRules';
-import {
-  listFlagTriggers,
-  selectAll as selectAllFlagTriggers
-} from '../../modules/flagTriggers';
-import {
-  listProgressiveRollout,
-  selectAll as selectAllProgressiveRollouts
-} from '../../modules/porgressiveRollout';
-import {
-  AutoOpsRule,
-  AutoOpsStatus,
-  OpsType
-} from '../../proto/autoops/auto_ops_rule_pb';
-import { ListFlagTriggersResponse } from '../../proto/feature/service_pb';
 import { SerializedError } from '@reduxjs/toolkit';
 import { FC, memo, useEffect } from 'react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -63,8 +45,11 @@ import { FeatureSettingsPage } from './settings';
 import { FeatureTargetingPage } from './targeting';
 import { FeatureTriggerPage } from './triggers';
 import { FeatureVariationsPage } from './variations';
-import { ProgressiveRollout } from '../../proto/autoops/progressive_rollout_pb';
-import { isProgressiveRolloutsRunningWaiting } from '../../components/ProgressiveRolloutAddForm';
+import {
+  listCodeRefs,
+  selectAll as selectAllCodeRefs
+} from '../../modules/codeRefs';
+import { CodeReference } from '../../proto/coderef/code_reference_pb';
 
 export const FeatureDetailPage: FC = memo(() => {
   const dispatch = useDispatch<AppDispatch>();
@@ -82,27 +67,11 @@ export const FeatureDetailPage: FC = memo(() => {
     shallowEqual
   );
 
-  const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
-    (state) =>
-      selectAllAutoOpsRules(state.autoOpsRules).filter(
-        (rule) => rule.featureId === featureId
-      ),
+  const codeRefs = useSelector<AppState, CodeReference.AsObject[]>(
+    (state) => selectAllCodeRefs(state.codeRefs),
     shallowEqual
   );
-  const flagTriggers = useSelector<
-    AppState,
-    ListFlagTriggersResponse.FlagTriggerWithUrl.AsObject[]
-  >((state) => selectAllFlagTriggers(state.flagTriggers), shallowEqual);
-  const progressiveRollout = useSelector<
-    AppState,
-    ProgressiveRollout.AsObject[]
-  >(
-    (state) =>
-      selectAllProgressiveRollouts(state.progressiveRollout).filter(
-        (rule) => rule.featureId === featureId
-      ),
-    shallowEqual
-  );
+
   useEffect(() => {
     if (featureId) {
       dispatch(
@@ -112,21 +81,13 @@ export const FeatureDetailPage: FC = memo(() => {
         })
       );
       dispatch(
-        listAutoOpsRules({
+        listCodeRefs({
+          environmentId: currentEnvironment.id,
           featureId: featureId,
-          environmentId: currentEnvironment.id
-        })
-      );
-      dispatch(
-        listFlagTriggers({
-          featureId: featureId,
-          environmentId: currentEnvironment.id
-        })
-      );
-      dispatch(
-        listProgressiveRollout({
-          featureId: featureId,
-          environmentId: currentEnvironment.id
+          pageSize: 0,
+          fileExtension: null,
+          repositoryBranch: null,
+          repositoryType: null
         })
       );
     }
@@ -143,25 +104,6 @@ export const FeatureDetailPage: FC = memo(() => {
         <div className="hidden sm:block">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             {createTabs().map((tab, idx) => {
-              let length;
-
-              if (tab.to === PAGE_PATH_FEATURE_AUTOOPS) {
-                length = [
-                  ...autoOpsRules.filter(
-                    (rule) =>
-                      (rule.autoOpsStatus === AutoOpsStatus.RUNNING ||
-                        rule.autoOpsStatus === AutoOpsStatus.WAITING) &&
-                      (rule.opsType === OpsType.SCHEDULE ||
-                        rule.opsType === OpsType.EVENT_RATE)
-                  ),
-                  ...progressiveRollout.filter((p) =>
-                    isProgressiveRolloutsRunningWaiting(p.status)
-                  )
-                ].length;
-              } else if (tab.to === PAGE_PATH_FEATURE_TRIGGER) {
-                length = flagTriggers.length;
-              }
-
               return (
                 <NavLink
                   key={idx}
@@ -176,12 +118,14 @@ export const FeatureDetailPage: FC = memo(() => {
                   to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${tab.to}`}
                 >
                   {tab.message}
-                  {length === 0 && (
-                    <div className="rounded-sm bg-[#F3F9FD] text-[#399CE4] px-2 py-[6px] text-sm inline-block ml-3">
-                      New
-                    </div>
-                  )}
-                  {length > 0 && <span className="ml-1">({length})</span>}
+                  {tab.to === PAGE_PATH_CODE_REFS &&
+                    (codeRefs.length === 0 ? (
+                      <div className="rounded-sm bg-[#F3F9FD] text-[#399CE4] px-2 py-[6px] text-sm inline-block ml-3">
+                        New
+                      </div>
+                    ) : (
+                      <span className="ml-1">({codeRefs.length})</span>
+                    ))}
                 </NavLink>
               );
             })}
