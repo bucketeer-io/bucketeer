@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToggleOpen } from 'hooks';
 import PageLayout from 'elements/page-layout';
 import { EmptyCollection } from './collection-layout/empty-collection';
+import { useFetchExperiments } from './collection-loader/use-fetch-experiment';
 import AddExperimentModal from './experiments-modal/add-experiment-modal';
 import PageContent from './page-content';
 
@@ -10,23 +12,31 @@ const PageLoader = ({
 }: {
   setTotalCount: (value: string | number) => void;
 }) => {
+  const { consoleAccount } = useAuth();
+  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+
   const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
     useToggleOpen(false);
 
-  const isLoading = false,
-    isError = false,
-    isEmpty = true;
+  const {
+    data: collection,
+    isLoading,
+    refetch,
+    isError
+  } = useFetchExperiments({ environmentId: currenEnvironment.id });
+
+  const isEmpty = collection?.experiments?.length === 0;
 
   useEffect(() => {
-    setTotalCount(25);
-  }, []);
+    if (collection?.experiments) setTotalCount(collection?.experiments?.length);
+  }, [collection]);
 
   return (
     <>
       {isLoading ? (
         <PageLayout.LoadingState />
       ) : isError ? (
-        <PageLayout.ErrorState onRetry={() => {}} />
+        <PageLayout.ErrorState onRetry={refetch} />
       ) : isEmpty ? (
         <PageLayout.EmptyState>
           <EmptyCollection onAdd={onOpenAddModal} />

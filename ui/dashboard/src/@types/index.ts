@@ -10,3 +10,4 @@ export * from './notification';
 export * from './push';
 export * from './tag';
 export * from './user-segment';
+export * from './experiment';

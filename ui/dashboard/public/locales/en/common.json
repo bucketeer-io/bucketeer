@@ -153,5 +153,6 @@
   "results": "Results",
   "metrics": "Metrics",
   "evaluation": "Evaluation",
-  "conversion-rate": "Conversion Rate"
+  "conversion-rate": "Conversion Rate",
+  "completed": "Completed"
 }

@@ -4,7 +4,9 @@ import {
   SubmitHandler,
   useForm
 } from 'react-hook-form';
+import { experimentCreator } from '@api/experiment';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -32,19 +34,20 @@ interface AddExperimentModalProps {
 }
 
 export interface AddExperimentForm {
-  id: string;
+  baseVariationId: string;
   name: string;
   description?: string;
   startAt: string;
-  endAt: string;
+  stopAt: string;
   audience: {
+    rule: string;
     inExperiment: number;
     notInExperiment: number;
     served: boolean;
     variationReassignment: boolean;
   };
-  linkFlag: string;
-  linkGoal: string;
+  featureId: string;
+  goalIds: string[];
 }
 
 export type DefineAudienceField = ControllerRenderProps<
@@ -53,19 +56,22 @@ export type DefineAudienceField = ControllerRenderProps<
 >;
 
 export const formSchema = yup.object().shape({
-  id: yup.string().required(),
+  baseVariationId: yup.string().required(),
   name: yup.string().required(),
   startAt: yup.string().required(),
-  endAt: yup.string().required(),
+  stopAt: yup.string().required(),
   description: yup.string(),
   audience: yup.mixed(),
-  linkFlag: yup.string().required(),
-  linkGoal: yup.string().required()
+  featureId: yup.string().required(),
+  goalIds: yup.array().min(1).required()
 });
 
 const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
   const { t } = useTranslation(['form', 'common']);
   const { notify } = useToast();
+
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const flagOptions = [
     {
@@ -92,19 +98,20 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
-      id: '',
+      baseVariationId: '',
       name: '',
       description: '',
       startAt: '1602829513',
-      endAt: '1737508939',
+      stopAt: '1737508939',
       audience: {
+        rule: '',
         inExperiment: 5,
         notInExperiment: 95,
         served: true,
         variationReassignment: false
       },
-      linkFlag: '',
-      linkGoal: ''
+      featureId: '',
+      goalIds: []
     }
   });
 
@@ -115,6 +122,11 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
   const onSubmit: SubmitHandler<AddExperimentForm> = async values => {
     try {
       console.log(values);
+      const { audience, ...rest } = values;
+      const resp = await experimentCreator({
+        ...rest,
+        environmentId: currentEnvironment.id
+      });
     } catch (error) {
       const errorMessage = (error as Error)?.message;
       notify({
@@ -131,7 +143,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
       isOpen={isOpen}
       onClose={onClose}
     >
-      <div className="w-[542px] p-5 pb-28">
+      <div className="p-5 pb-28">
         <p className="text-gray-800 typo-head-bold-small">
           {t('general-info')}
         </p>
@@ -155,7 +167,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
             />
             <Form.Field
               control={form.control}
-              name="id"
+              name="baseVariationId"
               render={({ field }) => (
                 <Form.Item>
                   <Form.Label required className="relative w-fit">
@@ -219,7 +231,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
               />
               <Form.Field
                 control={form.control}
-                name="endAt"
+                name="stopAt"
                 render={({ field }) => (
                   <Form.Item className="flex flex-col flex-1">
                     <Form.Label required>{t('end-at')}</Form.Label>
@@ -262,7 +274,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
             </p>
             <Form.Field
               control={form.control}
-              name={`linkFlag`}
+              name={`featureId`}
               render={({ field }) => (
                 <Form.Item className="py-2">
                   <Form.Label required>{t('experiments.link-flag')}</Form.Label>
@@ -270,7 +282,10 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         placeholder={t(`experiments.select-flag`)}
-                        label={''}
+                        label={
+                          flagOptions.find(item => item.value === field.value)
+                            ?.label || ''
+                        }
                         variant="secondary"
                         className="w-full"
                       />
@@ -299,7 +314,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
             />
             <Form.Field
               control={form.control}
-              name={`linkGoal`}
+              name={`goalIds`}
               render={({ field }) => (
                 <Form.Item className="py-2">
                   <Form.Label required>{t('experiments.link-goal')}</Form.Label>
@@ -307,7 +322,11 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         placeholder={t(`experiments.select-goal`)}
-                        label={''}
+                        label={
+                          goalOptions.find(
+                            item => item.value === field.value[0]
+                          )?.label
+                        }
                         variant="secondary"
                         className="w-full"
                       />
@@ -323,7 +342,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                             value={item.value}
                             label={item.label}
                             onSelectOption={value => {
-                              field.onChange(value);
+                              field.onChange([value]);
                             }}
                           />
                         ))}

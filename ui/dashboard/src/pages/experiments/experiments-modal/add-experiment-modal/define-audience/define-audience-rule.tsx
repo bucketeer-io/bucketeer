@@ -10,37 +10,43 @@ import { DefineAudienceProps } from '.';
 const DefineAudienceRule = ({ field }: DefineAudienceProps) => {
   const { t } = useTranslation(['form', 'common']);
 
-  const flagOptions = [
+  const ruleOptions = [
     {
-      label: 'Flag 1',
-      value: 'flag-1'
+      label: 'Rule 1',
+      value: 'rule-1'
     },
     {
-      label: 'Flag 2',
-      value: 'flag-2'
+      label: 'Rule 2',
+      value: 'rule-2'
     }
   ];
-  
+
   return (
     <div className="flex flex-col w-full gap-y-3 typo-para-small leading-[14px] text-gray-600">
       <div className="flex items-center w-full gap-x-2">
         <p>The</p>
         <DropdownMenu>
           <DropdownMenuTrigger
-            placeholder={t(`experiments.select-flag`)}
-            label={''}
+            placeholder={t(`experiments.select-rule`)}
+            label={
+              ruleOptions.find(item => item.value === field.value.rule)
+                ?.label || ''
+            }
             variant="secondary"
             className="w-full"
           />
           <DropdownMenuContent className="w-[502px]" align="start" {...field}>
-            {flagOptions.map((item, index) => (
+            {ruleOptions.map((item, index) => (
               <DropdownMenuItem
                 {...field}
                 key={index}
                 value={item.value}
                 label={item.label}
                 onSelectOption={value => {
-                  field.onChange(value);
+                  field.onChange({
+                    ...field.value,
+                    rule: value
+                  });
                 }}
               />
             ))}
