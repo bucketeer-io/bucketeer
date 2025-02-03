@@ -5194,6 +5194,8 @@ definitions:
         type: string
       featureId:
         type: string
+      featureName:
+        type: string
       status:
         $ref: '#/definitions/experimentExperimentStatus'
   ListExperimentsResponseSummary:

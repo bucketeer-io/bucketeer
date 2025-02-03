@@ -22272,6 +22272,11 @@
                   },
                   {
                     "id": 4,
+                    "name": "feature_name",
+                    "type": "string"
+                  },
+                  {
+                    "id": 5,
                     "name": "status",
                     "type": "experiment.Experiment.Status"
                   }

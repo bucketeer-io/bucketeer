@@ -94,6 +94,9 @@ export namespace Goal {
     getFeatureId(): string;
     setFeatureId(value: string): void;
 
+    getFeatureName(): string;
+    setFeatureName(value: string): void;
+
     getStatus(): proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap];
     setStatus(
       value: proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap]
@@ -125,6 +128,7 @@ export namespace Goal {
       id: string;
       name: string;
       featureId: string;
+      featureName: string;
       status: proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap];
     };
   }

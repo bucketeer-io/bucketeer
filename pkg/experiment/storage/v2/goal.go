@@ -46,10 +46,11 @@ var (
 )
 
 type experimentRef struct {
-	Id        string `json:"id"`
-	Name      string `json:"name"`
-	FeatureId string `json:"feature_id"`
-	Status    int32  `json:"status"`
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	FeatureId   string `json:"feature_id"`
+	FeatureName string `json:"feature_name"`
+	Status      int32  `json:"status"`
 }
 
 type GoalStorage interface {
@@ -155,10 +156,11 @@ func (s *goalStorage) GetGoal(ctx context.Context, id, environmentId string) (*d
 	goal.ConnectionType = proto.Goal_ConnectionType(connectionType)
 	for i := range experiments {
 		goal.Experiments = append(goal.Experiments, &proto.Goal_ExperimentReference{
-			Id:        experiments[i].Id,
-			Name:      experiments[i].Name,
-			FeatureId: experiments[i].FeatureId,
-			Status:    proto.Experiment_Status(experiments[i].Status),
+			Id:          experiments[i].Id,
+			Name:        experiments[i].Name,
+			FeatureId:   experiments[i].FeatureId,
+			FeatureName: experiments[i].FeatureName,
+			Status:      proto.Experiment_Status(experiments[i].Status),
 		})
 	}
 	return &domain.Goal{Goal: &goal}, nil
@@ -216,10 +218,11 @@ func (s *goalStorage) ListGoals(
 		goal.ConnectionType = proto.Goal_ConnectionType(connectionType)
 		for i := range experiments {
 			goal.Experiments = append(goal.Experiments, &proto.Goal_ExperimentReference{
-				Id:        experiments[i].Id,
-				Name:      experiments[i].Name,
-				FeatureId: experiments[i].FeatureId,
-				Status:    proto.Experiment_Status(experiments[i].Status),
+				Id:          experiments[i].Id,
+				Name:        experiments[i].Name,
+				FeatureId:   experiments[i].FeatureId,
+				FeatureName: experiments[i].FeatureName,
+				Status:      proto.Experiment_Status(experiments[i].Status),
 			})
 		}
 		goals = append(goals, &goal)

@@ -25,7 +25,8 @@ message Goal {
     string id = 1;
     string name = 2;
     string feature_id = 3;
-    experiment.Experiment.Status status = 4;
+    string feature_name = 4;
+    experiment.Experiment.Status status = 5;
   }
   message AutoOpsRuleReference {
     string id = 1;
