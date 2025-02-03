@@ -32,10 +32,6 @@ import { Highlight, themes, Prism } from 'prism-react-renderer';
 (typeof global !== 'undefined' ? global : window).Prism = Prism;
 require('prismjs/components/prism-dart');
 
-/*
-  Code Refs
-*/
-
 const repositoryOptions = [
   {
     label: 'All',
@@ -338,7 +334,7 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
                       >
                         {codeRef.repositoryBranch}
                       </a>{' '}
-                      on the <a href="#">default</a> branch
+                      branch
                     </p>
                   </div>
                   <div className="mt-4">

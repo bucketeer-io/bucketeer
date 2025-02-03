@@ -98,4 +98,3 @@ h1 {
 .spinner {
   @apply w-6 h-6 border-4 border-t-primary rounded-full animate-spin;
 }
-
