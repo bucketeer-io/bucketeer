@@ -180,12 +180,7 @@ const initialState = codeRefsAdapter.getInitialState<{
 export const codeRefsSlice = createSlice({
   name: MODULE_NAME,
   initialState,
-  reducers: {
-    clearCodeRefs: (state) => {
-      codeRefsAdapter.removeAll(state);
-      state.totalCount = 0;
-    }
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(listCodeRefs.pending, (state) => {
@@ -226,5 +221,3 @@ export const codeRefsSlice = createSlice({
       .addCase(updateAPIKey.rejected, () => {});
   }
 });
-
-export const { clearCodeRefs } = codeRefsSlice.actions;
