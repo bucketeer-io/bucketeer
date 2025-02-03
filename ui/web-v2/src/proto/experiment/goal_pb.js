@@ -25,6 +25,8 @@ var global =
 
 var proto_experiment_experiment_pb = require('../../proto/experiment/experiment_pb.js');
 goog.object.extend(proto, proto_experiment_experiment_pb);
+var proto_autoops_auto_ops_rule_pb = require('../../proto/autoops/auto_ops_rule_pb.js');
+goog.object.extend(proto, proto_autoops_auto_ops_rule_pb);
 goog.exportSymbol('proto.bucketeer.experiment.Goal', null, global);
 goog.exportSymbol(
   'proto.bucketeer.experiment.Goal.AutoOpsRuleReference',
@@ -636,7 +638,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        featureId: jspb.Message.getFieldWithDefault(msg, 2, '')
+        featureId: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        autoOpsStatus: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {
@@ -684,6 +687,12 @@ proto.bucketeer.experiment.Goal.AutoOpsRuleReference.deserializeBinaryFromReader
           var value = /** @type {string} */ (reader.readString());
           msg.setFeatureId(value);
           break;
+        case 3:
+          var value = /** @type {!proto.bucketeer.autoops.AutoOpsStatus} */ (
+            reader.readEnum()
+          );
+          msg.setAutoOpsStatus(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -723,6 +732,10 @@ proto.bucketeer.experiment.Goal.AutoOpsRuleReference.serializeBinaryToWriter =
     f = message.getFeatureId();
     if (f.length > 0) {
       writer.writeString(2, f);
+    }
+    f = message.getAutoOpsStatus();
+    if (f !== 0.0) {
+      writer.writeEnum(3, f);
     }
   };
 
@@ -764,6 +777,26 @@ proto.bucketeer.experiment.Goal.AutoOpsRuleReference.prototype.getFeatureId =
 proto.bucketeer.experiment.Goal.AutoOpsRuleReference.prototype.setFeatureId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 2, value);
+  };
+
+/**
+ * optional bucketeer.autoops.AutoOpsStatus auto_ops_status = 3;
+ * @return {!proto.bucketeer.autoops.AutoOpsStatus}
+ */
+proto.bucketeer.experiment.Goal.AutoOpsRuleReference.prototype.getAutoOpsStatus =
+  function () {
+    return /** @type {!proto.bucketeer.autoops.AutoOpsStatus} */ (
+      jspb.Message.getFieldWithDefault(this, 3, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.autoops.AutoOpsStatus} value
+ * @return {!proto.bucketeer.experiment.Goal.AutoOpsRuleReference} returns this
+ */
+proto.bucketeer.experiment.Goal.AutoOpsRuleReference.prototype.setAutoOpsStatus =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 3, value);
   };
 
 /**

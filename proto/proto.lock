@@ -22284,6 +22284,11 @@
                     "id": 2,
                     "name": "feature_id",
                     "type": "string"
+                  },
+                  {
+                    "id": 3,
+                    "name": "auto_ops_status",
+                    "type": "autoops.AutoOpsStatus"
                   }
                 ]
               }
@@ -22293,6 +22298,9 @@
         "imports": [
           {
             "path": "proto/experiment/experiment.proto"
+          },
+          {
+            "path": "proto/autoops/auto_ops_rule.proto"
           }
         ],
         "package": {
