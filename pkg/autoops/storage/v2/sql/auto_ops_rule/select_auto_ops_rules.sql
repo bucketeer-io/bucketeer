@@ -1,12 +1,15 @@
 SELECT
-    id,
-    feature_id,
-    ops_type,
-    clauses,
-    created_at,
-    updated_at,
-    deleted,
-    status
+    aor.id,
+    aor.feature_id,
+    aor.ops_type,
+    aor.clauses,
+    aor.created_at,
+    aor.updated_at,
+    aor.deleted,
+    aor.status,
+    ft.name
 FROM
-    auto_ops_rule
+    auto_ops_rule as aor
+JOIN
+    feature ft ON aor.feature_id = ft.id
 %s %s %s

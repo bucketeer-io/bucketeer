@@ -6562,6 +6562,11 @@
                 "id": 10,
                 "name": "auto_ops_status",
                 "type": "AutoOpsStatus"
+              },
+              {
+                "id": 11,
+                "name": "feature_name",
+                "type": "string"
               }
             ],
             "reserved_ids": [
@@ -22287,6 +22292,11 @@
                   },
                   {
                     "id": 3,
+                    "name": "feature_name",
+                    "type": "string"
+                  },
+                  {
+                    "id": 4,
                     "name": "auto_ops_status",
                     "type": "autoops.AutoOpsStatus"
                   }
