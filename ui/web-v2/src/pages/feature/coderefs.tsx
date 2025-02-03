@@ -1,4 +1,4 @@
-import React, { FC, memo, useEffect, useRef, useState } from 'react';
+import React, { FC, memo, useEffect, useState } from 'react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { useCurrentEnvironment } from '../../modules/me';
@@ -7,6 +7,7 @@ import { listAPIKeys } from '../../modules/apiKeys';
 import { getOrganizationId } from '../../storage/organizationId';
 import { APIKEY_LIST_PAGE_SIZE } from '../../constants/apiKey';
 import {
+  clearCodeRefs,
   listCodeRefs,
   selectAll as selectAllCodeRefs
 } from '../../modules/codeRefs';
@@ -27,8 +28,14 @@ import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
 import { useIntl } from 'react-intl';
 import { messages } from '../../lang/messages';
 import { ListSkeleton } from '../../components/ListSkeleton';
-import SyntaxHighlighter from 'react-syntax-highlighter';
-import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { Highlight, themes, Prism } from 'prism-react-renderer';
+
+(typeof global !== 'undefined' ? global : window).Prism = Prism;
+require('prismjs/components/prism-dart');
+
+/*
+  Code Refs
+*/
 
 const repositoryOptions = [
   {
@@ -47,13 +54,6 @@ const repositoryOptions = [
     label: 'Bitbucket',
     value: CodeReference.RepositoryType.BITBUCKET.toString()
   }
-];
-
-const fileExtensionOptions = [
-  { label: 'All', value: null },
-  { label: '.js', value: '.js' },
-  { label: '.jsx', value: '.jsx' },
-  { label: '.ts', value: '.ts' }
 ];
 
 interface FeatureCodeRefsPageProps {
@@ -77,6 +77,9 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
       useState<Option | null>(null);
 
     const [branchOptions, setBranchOptions] = useState<Option[]>([]);
+    const [fileExtensionOptions, setFileExtensionOptions] = useState<Option[]>(
+      []
+    );
 
     const isLoadingCodeRefs = useSelector<AppState, boolean>(
       (state) => state.codeRefs.loading,
@@ -163,18 +166,42 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
     ]);
 
     useEffect(() => {
-      if (branchOptions.length === 0 && codeRefs.length > 0) {
-        setBranchOptions([
+      if (codeRefs.length > 0) {
+        const uniqueBranches = [
+          ...new Set(codeRefs.map((codeRef) => codeRef.repositoryBranch))
+        ];
+        const formattedBranches = uniqueBranches.map((branch) => ({
+          label: branch.charAt(0).toUpperCase() + branch.slice(1),
+          value: branch
+        }));
+
+        if (branchOptions.length === 0) {
+          setBranchOptions([
+            { label: 'All', value: null },
+            ...formattedBranches
+          ]);
+        }
+
+        const uniqueFileExtensions = [
+          ...new Set(
+            codeRefs.map((codeRef) => codeRef.fileExtension).filter(Boolean)
+          )
+        ];
+        setFileExtensionOptions([
           { label: 'All', value: null },
-          ...codeRefs.map((codeRef) => ({
-            label:
-              codeRef.repositoryBranch.charAt(0).toUpperCase() +
-              codeRef.repositoryBranch.slice(1),
-            value: codeRef.repositoryBranch
+          ...uniqueFileExtensions.map((fileExtension) => ({
+            label: fileExtension,
+            value: fileExtension
           }))
         ]);
       }
     }, [codeRefs]);
+
+    useEffect(() => {
+      return () => {
+        dispatch(clearCodeRefs());
+      };
+    }, []);
 
     const fetchCodeRefs = async ({
       fileExtension = null,
@@ -269,7 +296,7 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
               <Select
                 placeholder={f(messages.all)}
                 options={fileExtensionOptions}
-                className={classNames('flex-none w-[200px]')}
+                className={classNames('flex-none w-[210px]')}
                 value={selectedFileExtension}
                 onChange={setSelectedFileExtension}
                 customControl={(props) => (
@@ -370,30 +397,16 @@ interface CodeAccordionProps {
   featureId: string;
 }
 
+const supportedExtensions = ['kt', 'swift', 'go', 'dart', 'js', 'ts'];
+
 const CodeAccordion = ({ codeRef, featureId }: CodeAccordionProps) => {
   const [isOpen, setIsOpen] = useState(true);
 
-  const ref = useRef(null);
+  let language = codeRef.fileExtension.replace('.', '');
 
-  const lineHighlights = highlightLine({
-    codeSnippet: codeRef.codeSnippet,
-    text: featureId,
-    lineNumber: codeRef.lineNumber
-  });
-
-  useEffect(() => {
-    if (ref.current) {
-      const html = ref.current.innerHTML;
-
-      // Use a regex to replace the featureId with a styled span
-      const highlightedHtml = html.replace(
-        new RegExp(`\\b${featureId}\\b`, 'g'),
-        `<span style="background-color: #5d3597; color: white; font-weight: bold;">${featureId}</span>`
-      );
-
-      ref.current.innerHTML = highlightedHtml;
-    }
-  }, [featureId]);
+  if (!supportedExtensions.includes(language)) {
+    language = 'js';
+  }
 
   return (
     <div className="rounded-md bg-[#F8FAFC]">
@@ -417,115 +430,88 @@ const CodeAccordion = ({ codeRef, featureId }: CodeAccordionProps) => {
           )}
         </div>
       </button>
-
-      <div ref={ref}>
-        <SyntaxHighlighter
-          showLineNumbers
-          startingLineNumber={codeRef.lineNumber}
-          wrapLines
-          lineProps={(lineNumber) => {
-            const line = lineHighlights.find(
-              (item) => item.lineNumber === lineNumber
-            );
-            const lineStyle = line ? line.style : {};
-            return {
-              style: {
-                ...lineStyle,
-                display: 'block',
-                width: '100%'
-              }
-            };
-          }}
-          codeTagProps={{
-            style: {
-              display: 'block',
-              width: '100%',
-              padding: '0.5rem 0'
-            }
-          }}
-          style={docco}
-          customStyle={{
-            backgroundColor: '#F8FAFC',
-            padding: 0
-          }}
-          lineNumberStyle={{
-            paddingLeft: '1.5rem'
-          }}
-        >
-          {codeRef.codeSnippet}
-        </SyntaxHighlighter>
-      </div>
-      {/* <div
+      <div
         className={classNames(
-          'transition-all duration-300 ease-in-out overflow-hidden overflow-y-scroll',
-          isOpen ? 'max-h-60 border-t' : 'max-h-0'
+          'overflow-x-auto transition-all duration-300 ease-in-out overflow-hidden overflow-y-scroll rounded-b-md',
+          isOpen ? 'max-h-60 border-t border-gray-300' : 'max-h-0'
         )}
       >
-        <div
-          style={{
-            backgroundColor: '#F8FAFC',
-            borderRadius: '8px',
-            position: 'relative',
-            overflowX: 'auto' // Enable horizontal scrolling
-          }}
+        <Highlight
+          theme={themes.vsLight}
+          code={codeRef.codeSnippet}
+          language={language}
         >
-          <pre
-            style={{
-              margin: 0,
-              color: '#666666',
-              fontFamily: 'monospace',
-              whiteSpace: 'pre', // Prevent wrapping
-              display: 'block',
-              padding: '1rem 0',
-              minWidth: '100%',
-              width: 'max-content'
-            }}
-          >
-            {codeRef.codeSnippet.split('\n').map((line, index) => (
-              <div
-                key={index}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  paddingLeft: '1.25rem',
-                  backgroundColor: line.includes(featureId)
-                    ? '#E8E4F1'
-                    : 'transparent'
-                }}
-              >
-                <span
-                  style={{
-                    width: '2rem', // Ensure enough space for line numbers
-                    textAlign: 'left',
-                    flexShrink: 0 // Prevent shrinking of line numbers
-                  }}
-                >
-                  {codeRef.lineNumber + index}
-                </span>
-                <code>{line}</code>
-              </div>
-            ))}
-          </pre>
-        </div>
-      </div> */}
+          {({ style, tokens, getLineProps, getTokenProps }) => (
+            <pre
+              className="w-max min-w-full"
+              style={{
+                ...style,
+                backgroundColor: '#F8FAFC'
+              }}
+            >
+              {tokens.map((line, i) => {
+                const lineProps = getLineProps({ line, key: i });
+
+                return (
+                  <div
+                    {...lineProps}
+                    style={{
+                      backgroundColor: line.some((token) =>
+                        token.content.includes(featureId)
+                      )
+                        ? '#E8E4F1'
+                        : 'transparent'
+                    }}
+                  >
+                    <span
+                      className={classNames(
+                        'inline-block w-16 text-right pr-4 select-none bg-primary text-white text-opacity-90',
+                        i === 0 && 'pt-3',
+                        i === tokens.length - 1 && 'pb-3'
+                      )}
+                    >
+                      {codeRef.lineNumber + i}
+                    </span>
+                    {line.map((token, key) => {
+                      const tokenProps = getTokenProps({ token, key });
+
+                      const tokenContent = token.content;
+
+                      // Split token content to highlight matched substring
+                      const parts = tokenContent.split(
+                        new RegExp(`(${featureId})`, 'gi')
+                      );
+
+                      return (
+                        <span {...tokenProps} style={{ ...tokenProps.style }}>
+                          {parts.map((part, index) =>
+                            part.toLowerCase() === featureId.toLowerCase() ? (
+                              <span
+                                key={index}
+                                style={{
+                                  backgroundColor: '#D6CFE5'
+                                }}
+                              >
+                                {part}
+                              </span>
+                            ) : (
+                              <span key={index} className="">
+                                {part}
+                              </span>
+                            )
+                          )}
+                        </span>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </pre>
+          )}
+        </Highlight>
+      </div>
     </div>
   );
-};
-
-const highlightLine = ({
-  codeSnippet,
-  text,
-  lineNumber
-}: {
-  codeSnippet: string;
-  text: string;
-  lineNumber: number;
-}) => {
-  const lines = codeSnippet.split('\n');
-  return lines.map((line, index) => ({
-    lineNumber: index + lineNumber,
-    style: line.includes(text) ? { backgroundColor: '#E8E4F1' } : {} // Style the line containing the text
-  }));
 };
 
 const countOccurrences = (str: string, subStr: string) => {
