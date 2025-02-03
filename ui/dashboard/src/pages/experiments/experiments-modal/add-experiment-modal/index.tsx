@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   ControllerRenderProps,
   FormProvider,
@@ -6,7 +7,11 @@ import {
 } from 'react-hook-form';
 import { experimentCreator } from '@api/experiment';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { invalidateExperiments } from '@queries/experiments';
+import { useQueryGoals } from '@queries/goals';
+import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -39,7 +44,7 @@ export interface AddExperimentForm {
   description?: string;
   startAt: string;
   stopAt: string;
-  audience: {
+  audience?: {
     rule: string;
     inExperiment: number;
     notInExperiment: number;
@@ -72,6 +77,24 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const queryClient = useQueryClient();
+
+  const { data: goalCollection } = useQueryGoals({
+    params: {
+      cursor: String(0),
+      pageSize: LIST_PAGE_SIZE,
+      environmentId: currentEnvironment.id
+    }
+  });
+
+  const goalOptions = useMemo(() => {
+    return (
+      goalCollection?.goals?.map(item => ({
+        label: item.name,
+        value: item.id
+      })) || []
+    );
+  }, [goalCollection]);
 
   const flagOptions = [
     {
@@ -81,17 +104,6 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
     {
       label: 'Flag 2',
       value: 'flag-2'
-    }
-  ];
-
-  const goalOptions = [
-    {
-      label: 'Goal 1',
-      value: 'goal-1'
-    },
-    {
-      label: 'Goal 2',
-      value: 'goal-2'
     }
   ];
 
@@ -121,14 +133,25 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
 
   const onSubmit: SubmitHandler<AddExperimentForm> = async values => {
     try {
-      console.log(values);
       const { audience, ...rest } = values;
+      console.log({ audience });
       const resp = await experimentCreator({
         ...rest,
+        featureId: 'test',
         environmentId: currentEnvironment.id
       });
+      if (resp) {
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: 'Experiment created successfully.'
+        });
+        invalidateExperiments(queryClient);
+        onClose();
+      }
     } catch (error) {
       const errorMessage = (error as Error)?.message;
+      console.log(error)
       notify({
         toastType: 'toast',
         messageType: 'error',

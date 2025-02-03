@@ -76,7 +76,7 @@ export const useColumns = ({
     },
     {
       accessorKey: 'goalIds',
-      header: `${t('goals')}`,
+      header: `${t('navigation.goals')}`,
       size: 150,
       cell: ({ row }) => {
         const experiment = row.original;
