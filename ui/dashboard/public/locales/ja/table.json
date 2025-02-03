@@ -29,7 +29,8 @@
     "delete-segment": "Delete User Segment",
     "download-segment": "Download User Segment",
     "edit-experiment": "Edit Experiment",
-    "archive-experiment": "Archive Experiment"
+    "archive-experiment": "Archive Experiment",
+    "unarchive-experiment": "Unarchive Experiment"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -79,6 +80,10 @@
   },
   "user-segment": {
     "delete-user-segment-desc": "The <bold>{{name}}</bold> is going to be deleted permanently. Are you sure you want to proceed?"
+  },
+  "experiment": {
+    "confirm-archive-desc": "The experiment \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
+    "confirm-unarchive-desc": "The experiment \"<bold>{{name}}</bold>\" will be unarchived. Are you sure you want to proceed?"
   },
   "metrics": {
     "variation": "Variation",

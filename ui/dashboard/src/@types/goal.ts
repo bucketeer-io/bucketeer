@@ -1,4 +1,4 @@
-import { Experiment } from "./experiment";
+import { Experiment } from './experiment';
 
 export type ConnectionType = 'UNKNOWN' | 'EXPERIMENT' | 'OPERATION';
 

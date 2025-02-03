@@ -2,7 +2,7 @@ import axiosClient from '@api/axios-client';
 import { Experiment, ExperimentStatus } from '@types';
 
 export interface ExperimentUpdaterParams {
-  id: string;
+  id?: string;
   environmentId: string;
   name?: string;
   description?: string;

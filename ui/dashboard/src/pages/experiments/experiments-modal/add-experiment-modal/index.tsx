@@ -113,8 +113,8 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
       baseVariationId: '',
       name: '',
       description: '',
-      startAt: '1602829513',
-      stopAt: '1737508939',
+      startAt: '',
+      stopAt: '',
       audience: {
         rule: '',
         inExperiment: 5,
@@ -133,11 +133,23 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
 
   const onSubmit: SubmitHandler<AddExperimentForm> = async values => {
     try {
-      const { audience, ...rest } = values;
-      console.log({ audience });
+      const {
+        baseVariationId,
+        featureId,
+        goalIds,
+        name,
+        startAt,
+        stopAt,
+        description
+      } = values;
       const resp = await experimentCreator({
-        ...rest,
-        featureId: 'test',
+        baseVariationId,
+        featureId,
+        goalIds,
+        name,
+        startAt,
+        stopAt,
+        description,
         environmentId: currentEnvironment.id
       });
       if (resp) {

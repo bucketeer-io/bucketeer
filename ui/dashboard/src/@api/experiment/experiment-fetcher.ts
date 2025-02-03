@@ -9,7 +9,7 @@ export interface ExperimentFetcherParams {
 }
 
 export interface ExperimentResponse {
-  experiment: Array<Experiment>;
+  experiment: Experiment;
 }
 
 export const experimentFetcher = async (

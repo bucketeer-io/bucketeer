@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
-import { usePartialState, useToggleOpen } from 'hooks';
+import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
-import { CollectionStatusType } from '@types';
+import { CollectionStatusType, Experiment } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
@@ -12,14 +12,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
-import { ExperimentFilters } from './types';
+import { ExperimentActionsType, ExperimentFilters } from './types';
 
 const PageContent = ({
   onAdd,
   onHandleActions
 }: {
   onAdd: () => void;
-  onHandleActions: () => void;
+  onHandleActions: (item: Experiment, type: ExperimentActionsType) => void;
 }) => {
   const { t } = useTranslation(['common']);
 
@@ -36,9 +36,6 @@ const PageContent = ({
   const [filters, setFilters] =
     usePartialState<ExperimentFilters>(defaultFilters);
 
-  const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
-    useToggleOpen(false);
-
   const onChangeFilters = (values: Partial<ExperimentFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
@@ -54,7 +51,7 @@ const PageContent = ({
   return (
     <PageLayout.Content>
       <Filter
-        onOpenFilter={onOpenFilterModal}
+        onOpenFilter={() => {}}
         action={
           <Button className="flex-1 lg:flex-none" onClick={onAdd}>
             <Icon icon={IconAddOutlined} size="sm" />
@@ -75,7 +72,7 @@ const PageContent = ({
       >
         <TabsList>
           <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
-          <TabsTrigger value="COMPLETE">{t(`completed`)}</TabsTrigger>
+          <TabsTrigger value="COMPLETED">{t(`completed`)}</TabsTrigger>
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
 
