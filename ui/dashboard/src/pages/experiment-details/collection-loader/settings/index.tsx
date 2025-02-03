@@ -33,7 +33,7 @@ import TextArea from 'components/textarea';
 import DefineAudience from './define-audience';
 
 export interface ExperimentSettingsForm {
-  id: string;
+  id?: string;
   baseVariationId: string;
   name: string;
   description?: string;
@@ -135,7 +135,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
         });
         invalidateExperiments(queryClient);
         invalidateExperimentDetails(queryClient, {
-          id,
+          id: id!,
           environmentId: currentEnvironment.id
         });
       }
@@ -321,10 +321,12 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                     <DropdownMenuTrigger
                       disabled
                       placeholder={t(`experiments.select-goal`)}
-                      label={
-                        goalOptions.find(item => item.value === field.value[0])
-                          ?.label
-                      }
+                      label={field.value
+                        .map(
+                          item =>
+                            goalOptions.find(opt => opt.value === item)?.label
+                        )
+                        .join(', ')}
                       variant="secondary"
                       className="w-full"
                     />
@@ -336,11 +338,16 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                       {goalOptions.map((item, index) => (
                         <DropdownMenuItem
                           {...field}
+                          isMultiselect
+                          isSelected={field.value.includes(item.value)}
                           key={index}
                           value={item.value}
                           label={item.label}
                           onSelectOption={value => {
-                            field.onChange([value]);
+                            const newValue = field.value.includes(value)
+                              ? field.value.filter(item => item !== value)
+                              : [...field.value, value];
+                            field.onChange(newValue);
                           }}
                         />
                       ))}

@@ -46,7 +46,7 @@ interface EditExperimentModalProps {
 }
 
 export interface EditExperimentForm {
-  id: string;
+  id?: string;
   baseVariationId: string;
   name: string;
   description?: string;
@@ -413,11 +413,13 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                         <DropdownMenuTrigger
                           disabled
                           placeholder={t(`experiments.select-goal`)}
-                          label={
-                            goalOptions.find(
-                              item => item.value === field.value[0]
-                            )?.label
-                          }
+                          label={field.value
+                            .map(
+                              item =>
+                                goalOptions.find(opt => opt.value === item)
+                                  ?.label
+                            )
+                            .join(', ')}
                           variant="secondary"
                           className="w-full"
                         />
@@ -429,11 +431,16 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                           {goalOptions.map((item, index) => (
                             <DropdownMenuItem
                               {...field}
+                              isMultiselect
+                              isSelected={field.value.includes(item.value)}
                               key={index}
                               value={item.value}
                               label={item.label}
                               onSelectOption={value => {
-                                field.onChange([value]);
+                                const newValue = field.value.includes(value)
+                                  ? field.value.filter(item => item !== value)
+                                  : [...field.value, value];
+                                field.onChange(newValue);
                               }}
                             />
                           ))}

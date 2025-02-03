@@ -66,6 +66,6 @@
   @apply typo-para-small text-gray-600;
 }
 
-.react-datepicker-popper[data-placement^=bottom] .react-datepicker__triangle {
-  @apply !fill-gray-50 !text-gray-50 !stroke-gray-200
+.react-datepicker-popper[data-placement^='bottom'] .react-datepicker__triangle {
+  @apply !fill-gray-50 !stroke-gray-200 !text-gray-50;
 }

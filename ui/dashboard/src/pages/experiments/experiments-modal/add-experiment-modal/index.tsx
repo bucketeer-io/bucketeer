@@ -68,7 +68,7 @@ export type DefineAudienceField = ControllerRenderProps<
 >;
 
 export const experimentFormSchema = yup.object().shape({
-  id: yup.string().required().max(EXPERIMENT_NAME_MAX_LENGTH),
+  id: yup.string().max(EXPERIMENT_NAME_MAX_LENGTH),
   name: yup.string().required(),
   baseVariationId: yup.string().required(),
   startAt: yup
@@ -219,7 +219,6 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
       }
     } catch (error) {
       const errorMessage = (error as Error)?.message;
-      console.log(error);
       notify({
         toastType: 'toast',
         messageType: 'error',
@@ -415,11 +414,12 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         placeholder={t(`experiments.select-goal`)}
-                        label={
-                          goalOptions.find(
-                            item => item.value === field.value[0]
-                          )?.label
-                        }
+                        label={field.value
+                          .map(
+                            item =>
+                              goalOptions.find(opt => opt.value === item)?.label
+                          )
+                          .join(', ')}
                         variant="secondary"
                         className="w-full"
                       />
@@ -431,11 +431,16 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                         {goalOptions.map((item, index) => (
                           <DropdownMenuItem
                             {...field}
+                            isMultiselect
+                            isSelected={field.value.includes(item.value)}
                             key={index}
                             value={item.value}
                             label={item.label}
                             onSelectOption={value => {
-                              field.onChange([value]);
+                              const newValue = field.value.includes(value)
+                                ? field.value.filter(item => item !== value)
+                                : [...field.value, value];
+                              field.onChange(newValue);
                             }}
                           />
                         ))}
