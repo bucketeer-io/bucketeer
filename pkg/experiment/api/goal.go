@@ -270,6 +270,7 @@ func (s *experimentService) mapConnectedOperations(
 				goalOpsMap[c.GoalId] = append(goalOpsMap[c.GoalId], &proto.Goal_AutoOpsRuleReference{
 					Id:            rule.Id,
 					FeatureId:     rule.FeatureId,
+					FeatureName:   rule.FeatureName,
 					AutoOpsStatus: rule.AutoOpsStatus,
 				})
 			}

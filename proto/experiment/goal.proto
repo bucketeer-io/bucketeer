@@ -25,12 +25,14 @@ message Goal {
     string id = 1;
     string name = 2;
     string feature_id = 3;
-    experiment.Experiment.Status status = 4;
+    string feature_name = 4;
+    experiment.Experiment.Status status = 5;
   }
   message AutoOpsRuleReference {
     string id = 1;
     string feature_id = 2;
-    autoops.AutoOpsStatus auto_ops_status = 3;
+    string feature_name = 3;
+    autoops.AutoOpsStatus auto_ops_status = 4;
   }
   enum ConnectionType {
     UNKNOWN = 0;

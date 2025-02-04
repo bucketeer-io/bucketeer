@@ -5174,6 +5174,8 @@ definitions:
         type: string
       featureId:
         type: string
+      featureName:
+        type: string
       autoOpsStatus:
         $ref: '#/definitions/autoopsAutoOpsStatus'
   GoalConnectionType:
@@ -5191,6 +5193,8 @@ definitions:
       name:
         type: string
       featureId:
+        type: string
+      featureName:
         type: string
       status:
         $ref: '#/definitions/experimentExperimentStatus'

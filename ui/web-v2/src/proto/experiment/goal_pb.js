@@ -411,7 +411,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
         name: jspb.Message.getFieldWithDefault(msg, 2, ''),
         featureId: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        status: jspb.Message.getFieldWithDefault(msg, 4, 0)
+        featureName: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        status: jspb.Message.getFieldWithDefault(msg, 5, 0)
       };
 
     if (includeInstance) {
@@ -464,6 +465,10 @@ proto.bucketeer.experiment.Goal.ExperimentReference.deserializeBinaryFromReader 
           msg.setFeatureId(value);
           break;
         case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setFeatureName(value);
+          break;
+        case 5:
           var value =
             /** @type {!proto.bucketeer.experiment.Experiment.Status} */ (
               reader.readEnum()
@@ -514,9 +519,13 @@ proto.bucketeer.experiment.Goal.ExperimentReference.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(3, f);
     }
+    f = message.getFeatureName();
+    if (f.length > 0) {
+      writer.writeString(4, f);
+    }
     f = message.getStatus();
     if (f !== 0.0) {
-      writer.writeEnum(4, f);
+      writer.writeEnum(5, f);
     }
   };
 
@@ -582,13 +591,33 @@ proto.bucketeer.experiment.Goal.ExperimentReference.prototype.setFeatureId =
   };
 
 /**
- * optional Experiment.Status status = 4;
+ * optional string feature_name = 4;
+ * @return {string}
+ */
+proto.bucketeer.experiment.Goal.ExperimentReference.prototype.getFeatureName =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.experiment.Goal.ExperimentReference} returns this
+ */
+proto.bucketeer.experiment.Goal.ExperimentReference.prototype.setFeatureName =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
+  };
+
+/**
+ * optional Experiment.Status status = 5;
  * @return {!proto.bucketeer.experiment.Experiment.Status}
  */
 proto.bucketeer.experiment.Goal.ExperimentReference.prototype.getStatus =
   function () {
     return /** @type {!proto.bucketeer.experiment.Experiment.Status} */ (
-      jspb.Message.getFieldWithDefault(this, 4, 0)
+      jspb.Message.getFieldWithDefault(this, 5, 0)
     );
   };
 
@@ -598,7 +627,7 @@ proto.bucketeer.experiment.Goal.ExperimentReference.prototype.getStatus =
  */
 proto.bucketeer.experiment.Goal.ExperimentReference.prototype.setStatus =
   function (value) {
-    return jspb.Message.setProto3EnumField(this, 4, value);
+    return jspb.Message.setProto3EnumField(this, 5, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -639,7 +668,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
         featureId: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        autoOpsStatus: jspb.Message.getFieldWithDefault(msg, 3, 0)
+        featureName: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        autoOpsStatus: jspb.Message.getFieldWithDefault(msg, 4, 0)
       };
 
     if (includeInstance) {
@@ -688,6 +718,10 @@ proto.bucketeer.experiment.Goal.AutoOpsRuleReference.deserializeBinaryFromReader
           msg.setFeatureId(value);
           break;
         case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setFeatureName(value);
+          break;
+        case 4:
           var value = /** @type {!proto.bucketeer.autoops.AutoOpsStatus} */ (
             reader.readEnum()
           );
@@ -733,9 +767,13 @@ proto.bucketeer.experiment.Goal.AutoOpsRuleReference.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(2, f);
     }
+    f = message.getFeatureName();
+    if (f.length > 0) {
+      writer.writeString(3, f);
+    }
     f = message.getAutoOpsStatus();
     if (f !== 0.0) {
-      writer.writeEnum(3, f);
+      writer.writeEnum(4, f);
     }
   };
 
@@ -780,13 +818,33 @@ proto.bucketeer.experiment.Goal.AutoOpsRuleReference.prototype.setFeatureId =
   };
 
 /**
- * optional bucketeer.autoops.AutoOpsStatus auto_ops_status = 3;
+ * optional string feature_name = 3;
+ * @return {string}
+ */
+proto.bucketeer.experiment.Goal.AutoOpsRuleReference.prototype.getFeatureName =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.experiment.Goal.AutoOpsRuleReference} returns this
+ */
+proto.bucketeer.experiment.Goal.AutoOpsRuleReference.prototype.setFeatureName =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+/**
+ * optional bucketeer.autoops.AutoOpsStatus auto_ops_status = 4;
  * @return {!proto.bucketeer.autoops.AutoOpsStatus}
  */
 proto.bucketeer.experiment.Goal.AutoOpsRuleReference.prototype.getAutoOpsStatus =
   function () {
     return /** @type {!proto.bucketeer.autoops.AutoOpsStatus} */ (
-      jspb.Message.getFieldWithDefault(this, 3, 0)
+      jspb.Message.getFieldWithDefault(this, 4, 0)
     );
   };
 
@@ -796,7 +854,7 @@ proto.bucketeer.experiment.Goal.AutoOpsRuleReference.prototype.getAutoOpsStatus 
  */
 proto.bucketeer.experiment.Goal.AutoOpsRuleReference.prototype.setAutoOpsStatus =
   function (value) {
-    return jspb.Message.setProto3EnumField(this, 3, value);
+    return jspb.Message.setProto3EnumField(this, 4, value);
   };
 
 /**

@@ -46,10 +46,11 @@ var (
 )
 
 type experimentRef struct {
-	Id        string `json:"id"`
-	Name      string `json:"name"`
-	FeatureId string `json:"feature_id"`
-	Status    int32  `json:"status"`
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	FeatureId   string `json:"feature_id"`
+	FeatureName string `json:"feature_name"`
+	Status      int32  `json:"status"`
 }
 
 type GoalStorage interface {
@@ -131,7 +132,8 @@ func (s *goalStorage) GetGoal(ctx context.Context, id, environmentId string) (*d
 	err := s.qe.QueryRowContext(
 		ctx,
 		selectGoalSQL,
-		environmentId,
+		environmentId, // Case query
+		environmentId, // Subquery
 		id,
 		environmentId,
 	).Scan(
@@ -155,10 +157,11 @@ func (s *goalStorage) GetGoal(ctx context.Context, id, environmentId string) (*d
 	goal.ConnectionType = proto.Goal_ConnectionType(connectionType)
 	for i := range experiments {
 		goal.Experiments = append(goal.Experiments, &proto.Goal_ExperimentReference{
-			Id:        experiments[i].Id,
-			Name:      experiments[i].Name,
-			FeatureId: experiments[i].FeatureId,
-			Status:    proto.Experiment_Status(experiments[i].Status),
+			Id:          experiments[i].Id,
+			Name:        experiments[i].Name,
+			FeatureId:   experiments[i].FeatureId,
+			FeatureName: experiments[i].FeatureName,
+			Status:      proto.Experiment_Status(experiments[i].Status),
 		})
 	}
 	return &domain.Goal{Goal: &goal}, nil
@@ -173,8 +176,9 @@ func (s *goalStorage) ListGoals(
 	environmentId string,
 ) ([]*proto.Goal, int, int64, error) {
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	prepareArgs := make([]interface{}, 0, len(whereArgs)+1)
-	prepareArgs = append(prepareArgs, environmentId)
+	prepareArgs := make([]interface{}, 0, len(whereArgs)+2)
+	prepareArgs = append(prepareArgs, environmentId) // Case query
+	prepareArgs = append(prepareArgs, environmentId) // Subquery
 	prepareArgs = append(prepareArgs, whereArgs...)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
@@ -216,10 +220,11 @@ func (s *goalStorage) ListGoals(
 		goal.ConnectionType = proto.Goal_ConnectionType(connectionType)
 		for i := range experiments {
 			goal.Experiments = append(goal.Experiments, &proto.Goal_ExperimentReference{
-				Id:        experiments[i].Id,
-				Name:      experiments[i].Name,
-				FeatureId: experiments[i].FeatureId,
-				Status:    proto.Experiment_Status(experiments[i].Status),
+				Id:          experiments[i].Id,
+				Name:        experiments[i].Name,
+				FeatureId:   experiments[i].FeatureId,
+				FeatureName: experiments[i].FeatureName,
+				Status:      proto.Experiment_Status(experiments[i].Status),
 			})
 		}
 		goals = append(goals, &goal)
@@ -237,8 +242,11 @@ func (s *goalStorage) ListGoals(
 			countConditionSQL = "> 0 THEN NULL ELSE 1"
 		}
 	}
+	prepareCountArgs := make([]interface{}, 0, len(whereArgs)+1)
+	prepareCountArgs = append(prepareCountArgs, environmentId)
+	prepareCountArgs = append(prepareCountArgs, whereArgs...)
 	countQuery := fmt.Sprintf(countGoalSQL, countConditionSQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, prepareArgs...).Scan(&totalCount)
+	err = s.qe.QueryRowContext(ctx, countQuery, prepareCountArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
