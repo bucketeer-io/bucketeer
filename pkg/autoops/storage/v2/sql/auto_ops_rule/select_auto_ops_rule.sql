@@ -10,8 +10,9 @@ SELECT
     ft.name
 FROM
     auto_ops_rule as aor
-JOIN
-    feature ft ON aor.feature_id = ft.id
+JOIN feature ft ON
+    aor.feature_id = ft.id AND
+    aor.environment_id = ft.environment_id
 WHERE
     aor.id = ? AND
     aor.environment_id = ?
