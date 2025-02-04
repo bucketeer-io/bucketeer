@@ -20,27 +20,19 @@ SELECT
         SELECT JSON_ARRAYAGG(
             JSON_OBJECT(
                 'id', ex2.id,
-                'name', ex2.experiment_name, -- alias in the subquery
+                'name', ex2.name,
                 'feature_id', ex2.feature_id,
-                'feature_name', ex2.feature_name, -- alias in the subquery
+                'feature_name', ft.name,
                 'status', ex2.status
             )
         )
-        FROM (
-            SELECT DISTINCT
-                ex2.id,
-                ex2.name AS experiment_name, -- alias experiment name
-                ex2.feature_id,
-                ex2.status,
-                ft.name AS feature_name -- alias feature name
-            FROM experiment ex2
-            JOIN feature ft
-                ON ex2.feature_id = ft.id
-                AND ft.environment_id = ex2.environment_id
-            WHERE
-                ex2.environment_id = ? AND
-                JSON_CONTAINS(ex2.goal_ids, CONCAT('"', goal.id, '"'), '$')
-        ) AS ex2
+        FROM experiment ex2
+        JOIN feature ft
+            ON ex2.feature_id = ft.id
+            AND ex2.environment_id = ft.environment_id
+        WHERE
+            ex2.environment_id = ? AND
+            JSON_CONTAINS(ex2.goal_ids, CONCAT('"', goal.id, '"'), '$')
     ) AS experiments
 FROM
     goal
