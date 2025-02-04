@@ -34,9 +34,13 @@ SELECT
                 ex2.status,
                 ft.name AS feature_name -- alias feature name
             FROM experiment ex2
-            JOIN feature ft ON ex2.feature_id = ft.id
-            WHERE JSON_CONTAINS(ex2.goal_ids, CONCAT('"', goal.id, '"'), '$')
-        ) AS ex2 -- alias the subquery to avoid outer reference conflict
+            JOIN feature ft
+                ON ex2.feature_id = ft.id
+                AND ft.environment_id = ex2.environment_id
+            WHERE
+                ex2.environment_id = ? AND
+                JSON_CONTAINS(ex2.goal_ids, CONCAT('"', goal.id, '"'), '$')
+        ) AS ex2
     ) AS experiments
 FROM
     goal

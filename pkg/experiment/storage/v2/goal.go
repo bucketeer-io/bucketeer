@@ -132,7 +132,8 @@ func (s *goalStorage) GetGoal(ctx context.Context, id, environmentId string) (*d
 	err := s.qe.QueryRowContext(
 		ctx,
 		selectGoalSQL,
-		environmentId,
+		environmentId, // Case query
+		environmentId, // Subquery
 		id,
 		environmentId,
 	).Scan(
@@ -175,8 +176,9 @@ func (s *goalStorage) ListGoals(
 	environmentId string,
 ) ([]*proto.Goal, int, int64, error) {
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	prepareArgs := make([]interface{}, 0, len(whereArgs)+1)
-	prepareArgs = append(prepareArgs, environmentId)
+	prepareArgs := make([]interface{}, 0, len(whereArgs)+2)
+	prepareArgs = append(prepareArgs, environmentId) // Case query
+	prepareArgs = append(prepareArgs, environmentId) // Subquery
 	prepareArgs = append(prepareArgs, whereArgs...)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
@@ -240,8 +242,11 @@ func (s *goalStorage) ListGoals(
 			countConditionSQL = "> 0 THEN NULL ELSE 1"
 		}
 	}
+	prepareCountArgs := make([]interface{}, 0, len(whereArgs)+1)
+	prepareCountArgs = append(prepareCountArgs, environmentId)
+	prepareCountArgs = append(prepareCountArgs, whereArgs...)
 	countQuery := fmt.Sprintf(countGoalSQL, countConditionSQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, prepareArgs...).Scan(&totalCount)
+	err = s.qe.QueryRowContext(ctx, countQuery, prepareCountArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
