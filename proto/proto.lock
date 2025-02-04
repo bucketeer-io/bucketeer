@@ -25663,6 +25663,12 @@
                 "id": 22,
                 "name": "sampling_seed",
                 "type": "string"
+              },
+              {
+                "id": 23,
+                "name": "schedule_update",
+                "type": "ScheduleUpdate",
+                "is_repeated": true
               }
             ]
           },
@@ -25720,6 +25726,21 @@
                 "id": 4,
                 "name": "name",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ScheduleUpdate",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature",
+                "type": "Feature"
+              },
+              {
+                "id": 2,
+                "name": "update_at",
+                "type": "int64"
               }
             ]
           }
