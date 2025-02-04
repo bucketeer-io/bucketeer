@@ -711,12 +711,6 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 				).Return(&domain.Project{
 					Project: &proto.Project{Id: "id-0"},
 				}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrProjectAlreadyExists)
 			},
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Name: "id-0", Email: "test@example.com"},
