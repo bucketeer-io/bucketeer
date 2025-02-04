@@ -32,24 +32,20 @@ import { Highlight, themes, Prism } from 'prism-react-renderer';
 (typeof global !== 'undefined' ? global : window).Prism = Prism;
 require('prismjs/components/prism-dart');
 
-const repositoryOptions = [
-  {
-    label: 'All',
-    value: CodeReference.RepositoryType.REPOSITORY_TYPE_UNSPECIFIED.toString()
+const repositoryTypeMap = {
+  [CodeReference.RepositoryType.GITHUB]: {
+    label: 'Github',
+    icon: <GithubIcon className="w-5 h-5" />
   },
-  {
-    label: 'GitHub',
-    value: CodeReference.RepositoryType.GITHUB.toString()
+  [CodeReference.RepositoryType.GITLAB]: {
+    label: 'Gitlab',
+    icon: <GitlabIcon className="w-5 h-5" />
   },
-  {
-    label: 'GitLab',
-    value: CodeReference.RepositoryType.GITLAB.toString()
-  },
-  {
+  [CodeReference.RepositoryType.BITBUCKET]: {
     label: 'Bitbucket',
-    value: CodeReference.RepositoryType.BITBUCKET.toString()
+    icon: <BitbucketIcon className="w-5 h-5" />
   }
-];
+};
 
 interface FeatureCodeRefsPageProps {
   featureId: string;
@@ -64,6 +60,7 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
 
     const [isLoading, setIsLoading] = React.useState<boolean>(true);
     const [hasValidApiKey, setHasValidApiKey] = React.useState<boolean>(false);
+
     const [selectedRepository, setSelectedRepository] = useState<Option | null>(
       null
     );
@@ -71,6 +68,7 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
     const [selectedFileExtension, setSelectedFileExtension] =
       useState<Option | null>(null);
 
+    const [repositoryOptions, setRepositoryOptions] = useState<Option[]>([]);
     const [branchOptions, setBranchOptions] = useState<Option[]>([]);
     const [fileExtensionOptions, setFileExtensionOptions] = useState<Option[]>(
       []
@@ -162,33 +160,52 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
 
     useEffect(() => {
       if (codeRefs.length > 0) {
-        const uniqueBranches = [
-          ...new Set(codeRefs.map((codeRef) => codeRef.repositoryBranch))
-        ];
-        const formattedBranches = uniqueBranches.map((branch) => ({
-          label: branch.charAt(0).toUpperCase() + branch.slice(1),
-          value: branch
-        }));
-
         if (branchOptions.length === 0) {
+          const uniqueBranches = [
+            ...new Set(codeRefs.map((codeRef) => codeRef.repositoryBranch))
+          ];
+          const formattedBranches = uniqueBranches.map((branch) => ({
+            label: branch.charAt(0).toUpperCase() + branch.slice(1),
+            value: branch
+          }));
           setBranchOptions([
             { label: 'All', value: null },
             ...formattedBranches
           ]);
         }
 
-        const uniqueFileExtensions = [
-          ...new Set(
-            codeRefs.map((codeRef) => codeRef.fileExtension).filter(Boolean)
-          )
-        ];
-        setFileExtensionOptions([
-          { label: 'All', value: null },
-          ...uniqueFileExtensions.map((fileExtension) => ({
-            label: fileExtension,
-            value: fileExtension
-          }))
-        ]);
+        if (fileExtensionOptions.length === 0) {
+          const uniqueFileExtensions = [
+            ...new Set(
+              codeRefs.map((codeRef) => codeRef.fileExtension).filter(Boolean)
+            )
+          ];
+          setFileExtensionOptions([
+            { label: 'All', value: null },
+            ...uniqueFileExtensions.map((fileExtension) => ({
+              label: fileExtension,
+              value: fileExtension
+            }))
+          ]);
+        }
+
+        if (repositoryOptions.length === 0) {
+          const uniqueRepositoryOptions = [
+            ...new Set(
+              codeRefs.map((codeRef) => codeRef.repositoryType).filter(Boolean)
+            )
+          ];
+          setRepositoryOptions([
+            {
+              label: 'All',
+              value: null
+            },
+            ...uniqueRepositoryOptions.map((repositoryType) => ({
+              label: repositoryTypeMap[repositoryType]?.label,
+              value: repositoryType.toString()
+            }))
+          ]);
+        }
       }
     }, [codeRefs]);
 
@@ -226,13 +243,11 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
         <div className="my-20 flex justify-center">
           <div className="w-[600px] text-gray-700 text-center">
             <div className="space-y-1">
-              <h1 className="text-lg font-medium">Enable code references</h1>
+              <h1 className="text-lg font-medium">
+                {f(messages.codeRefs.enableCodeRefs)}
+              </h1>
               <p className="text-sm text-gray-500">
-                with direct links from Bucketeer to the platform of your choice.
-              </p>
-              <p className="text-sm text-gray-500">
-                Quickly see instances of feature flags being leveraged in your
-                codebase,
+                {f(messages.codeRefs.enableCodeRefsDescription)}
               </p>
             </div>
             <button
@@ -244,8 +259,26 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
                 );
               }}
             >
-              Create API Key
+              {f(messages.apiKey.add.header.title)}
             </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (
+      !selectedBranch &&
+      !selectedFileExtension &&
+      !selectedRepository &&
+      codeRefs.length === 0
+    ) {
+      return (
+        <div className="my-10 flex justify-center">
+          <div className="w-[600px] text-gray-700 text-center space-y-1">
+            <h1 className="text-lg font-medium">
+              {f(messages.codeRefs.noRegisteredRefs)}
+            </h1>
+            <p className="text-sm">{f(messages.codeRefs.noRefsInCodebase)}</p>
           </div>
         </div>
       );
@@ -255,9 +288,11 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
       <div className="p-10 bg-white">
         <div className="flex justify-between">
           <div className="h-full">
-            <p className="font-semibold text-gray-900">Code Refs</p>
+            <p className="font-semibold text-gray-900">
+              {f(messages.feature.tab.codeRefs)}
+            </p>
             <p className="text-sm text-gray-500">
-              References to this feature flag found in your codebase
+              {f(messages.codeRefs.description)}
             </p>
           </div>
           <div className="flex space-x-4">
@@ -268,7 +303,10 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
               value={selectedRepository}
               onChange={setSelectedRepository}
               customControl={(props) => (
-                <ControlComponent {...props} name="Repository" />
+                <ControlComponent
+                  {...props}
+                  name={f(messages.codeRefs.repository)}
+                />
               )}
             />
             <Select
@@ -278,7 +316,10 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
               value={selectedBranch}
               onChange={setSelectedBranch}
               customControl={(props) => (
-                <ControlComponent {...props} name="Branch" />
+                <ControlComponent
+                  {...props}
+                  name={f(messages.codeRefs.branch)}
+                />
               )}
             />
             <Select
@@ -288,7 +329,10 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
               value={selectedFileExtension}
               onChange={setSelectedFileExtension}
               customControl={(props) => (
-                <ControlComponent {...props} name="File Extensions" />
+                <ControlComponent
+                  {...props}
+                  name={f(messages.codeRefs.fileExtensions)}
+                />
               )}
             />
           </div>
@@ -296,52 +340,57 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
         <div className="mt-10">
           {isLoadingCodeRefs ? (
             <ListSkeleton />
-          ) : codeRefs.length === 0 ? (
-            <div className="my-10 flex justify-center">
-              <div className="w-[600px] text-gray-700 text-center space-y-1">
-                <h1 className="text-lg font-medium">
-                  No registered code references
-                </h1>
-                <p className="text-sm">
-                  There are no code references in your codebase yet.
-                </p>
-                <p className="text-sm">
-                  When a reference is added, it will appear here.
-                </p>
-              </div>
-            </div>
           ) : (
             <div className="space-y-6">
-              {codeRefs.map((codeRef) => (
-                <div
-                  key={codeRef.id}
-                  className="rounded-md bg-white shadow p-4 border border-gray-200"
-                >
-                  <div className="flex py-1">
-                    <RepositoryType codeRef={codeRef} />
+              {codeRefs.map((codeRef) => {
+                const occurrenceCount = countOccurrences(
+                  codeRef.codeSnippet,
+                  featureId
+                );
+                const branchLink = (
+                  <a
+                    href={codeRef.branchUrl}
+                    className="text-primary underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {codeRef.repositoryBranch}
+                  </a>
+                );
 
-                    <p className="text-gray-500">
-                      {countOccurrences(codeRef.codeSnippet, featureId)}{' '}
-                      reference
-                      {countOccurrences(codeRef.codeSnippet, featureId) > 1
-                        ? '(s)'
-                        : ''}{' '}
-                      found in{' '}
-                      <a
-                        href={codeRef.branchUrl}
-                        className="text-primary underline"
-                        target="_blank"
-                      >
-                        {codeRef.repositoryBranch}
-                      </a>{' '}
-                      branch
-                    </p>
+                return (
+                  <div
+                    key={codeRef.id}
+                    className="rounded bg-white shadow p-4 border border-gray-100"
+                  >
+                    <div className="flex py-1">
+                      <div className="flex">
+                        <div className="flex space-x-3 items-center">
+                          {repositoryTypeMap[codeRef.repositoryType]?.icon}
+                          <span>
+                            {repositoryTypeMap[codeRef.repositoryType]?.label}
+                          </span>
+                        </div>
+                        <div className="h-6 mx-4 border-l"></div>
+                      </div>
+                      <p className="text-gray-500">
+                        {occurrenceCount > 1
+                          ? f(messages.codeRefs.multipleReferenceFound, {
+                              value: occurrenceCount,
+                              branchLink
+                            })
+                          : f(messages.codeRefs.referenceFound, {
+                              value: occurrenceCount,
+                              branchLink
+                            })}
+                      </p>
+                    </div>
+                    <div className="mt-4">
+                      <CodeAccordion codeRef={codeRef} featureId={featureId} />
+                    </div>
                   </div>
-                  <div className="mt-4">
-                    <CodeAccordion codeRef={codeRef} featureId={featureId} />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -349,35 +398,6 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
     );
   }
 );
-
-const RepositoryType = ({ codeRef }: { codeRef: CodeReference.AsObject }) => {
-  let icon = null;
-  let type = null;
-  if (codeRef.repositoryType === CodeReference.RepositoryType.GITHUB) {
-    icon = <GithubIcon className="w-5 h-5" />;
-    type = 'Github';
-  } else if (codeRef.repositoryType === CodeReference.RepositoryType.GITLAB) {
-    icon = <GitlabIcon className="w-5 h-5" />;
-    type = 'GitLab';
-  } else if (
-    codeRef.repositoryType === CodeReference.RepositoryType.BITBUCKET
-  ) {
-    icon = <BitbucketIcon className="w-5 h-5" />;
-    type = 'Bitbucket';
-  } else {
-    return null;
-  }
-
-  return (
-    <div className="flex">
-      <div className="flex space-x-3 items-center">
-        {icon}
-        <span>{type}</span>
-      </div>
-      <div className="h-6 mx-4 border-l"></div>
-    </div>
-  );
-};
 
 interface CodeAccordionProps {
   codeRef: CodeReference.AsObject;
@@ -387,6 +407,7 @@ interface CodeAccordionProps {
 const supportedExtensions = ['kt', 'swift', 'go', 'dart', 'js', 'ts'];
 
 const CodeAccordion = ({ codeRef, featureId }: CodeAccordionProps) => {
+  const { formatMessage: f } = useIntl();
   const [isOpen, setIsOpen] = useState(true);
 
   let language = codeRef.fileExtension.replace('.', '');
@@ -408,7 +429,7 @@ const CodeAccordion = ({ codeRef, featureId }: CodeAccordionProps) => {
             className="text-primary underline"
             target="_blank"
           >
-            View in source
+            {f(messages.codeRefs.viewInSource)}
           </a>
           {isOpen ? (
             <ChevronUpIcon width={16} />
@@ -419,7 +440,7 @@ const CodeAccordion = ({ codeRef, featureId }: CodeAccordionProps) => {
       </button>
       <div
         className={classNames(
-          'overflow-x-auto transition-all duration-300 ease-in-out overflow-hidden overflow-y-scroll rounded-b-md',
+          'overflow-x-auto transition-all duration-300 ease-in-out overflow-hidden overflow-y-auto rounded-b-md',
           isOpen ? 'max-h-60 border-t border-gray-300' : 'max-h-0'
         )}
       >

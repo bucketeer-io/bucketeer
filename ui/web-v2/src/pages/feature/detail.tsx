@@ -221,7 +221,7 @@ const createTabs = (): Array<TabItem> => {
       to: PAGE_PATH_FEATURE_HISTORY
     },
     {
-      message: 'Code Refs',
+      message: intl.formatMessage(messages.feature.tab.codeRefs),
       to: PAGE_PATH_CODE_REFS
     },
     {
