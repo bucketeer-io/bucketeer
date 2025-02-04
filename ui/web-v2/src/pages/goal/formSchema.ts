@@ -25,3 +25,9 @@ export const updateFormSchema = yup.object().shape({
   name: nameSchema,
   description: descriptionSchema
 });
+
+export const addGoalModalFormSchema = yup.object().shape({
+  id: idSchema,
+  name: nameSchema,
+  description: descriptionSchema
+});
