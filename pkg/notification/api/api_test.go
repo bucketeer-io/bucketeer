@@ -29,6 +29,7 @@ import (
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
+	v2mock "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -61,10 +62,12 @@ func newNotificationServiceWithMock(
 ) *NotificationService {
 	t.Helper()
 	return &NotificationService{
-		mysqlClient:          mysqlmock.NewMockClient(c),
-		accountClient:        accountclientmock.NewMockClient(c),
-		domainEventPublisher: publishermock.NewMockPublisher(c),
-		logger:               zap.NewNop(),
+		mysqlClient:              mysqlmock.NewMockClient(c),
+		adminSubscriptionStorage: v2mock.NewMockAdminSubscriptionStorage(c),
+		subscriptionStorage:      v2mock.NewMockSubscriptionStorage(c),
+		accountClient:            accountclientmock.NewMockClient(c),
+		domainEventPublisher:     publishermock.NewMockPublisher(c),
+		logger:                   zap.NewNop(),
 	}
 }
 
@@ -106,10 +109,12 @@ func newNotificationService(c *gomock.Controller, specifiedEnvironmentId *string
 	p := publishermock.NewMockPublisher(c)
 	p.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	return &NotificationService{
-		mysqlClient:          mysqlClient,
-		accountClient:        accountClientMock,
-		domainEventPublisher: publishermock.NewMockPublisher(c),
-		logger:               zap.NewNop(),
+		mysqlClient:              mysqlClient,
+		adminSubscriptionStorage: v2mock.NewMockAdminSubscriptionStorage(c),
+		subscriptionStorage:      v2mock.NewMockSubscriptionStorage(c),
+		accountClient:            accountClientMock,
+		domainEventPublisher:     publishermock.NewMockPublisher(c),
+		logger:                   zap.NewNop(),
 	}
 }
 

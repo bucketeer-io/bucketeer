@@ -65,26 +65,8 @@ func (s *NotificationService) CreateAdminSubscription(
 		return nil, dt.Err()
 	}
 	var handler command.Handler = command.NewEmptyAdminSubscriptionCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		adminSubscriptionStorage := v2ss.NewAdminSubscriptionStorage(tx)
-		if err := adminSubscriptionStorage.CreateAdminSubscription(ctx, subscription); err != nil {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		if err := s.adminSubscriptionStorage.CreateAdminSubscription(contextWithTx, subscription); err != nil {
 			return err
 		}
 		handler, err = command.NewAdminSubscriptionCommandHandler(editor, subscription)
@@ -388,26 +370,8 @@ func (s *NotificationService) updateAdminSubscription(
 	localizer locale.Localizer,
 ) error {
 	var handler command.Handler = command.NewEmptyAdminSubscriptionCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		adminSubscriptionStorage := v2ss.NewAdminSubscriptionStorage(tx)
-		subscription, err := adminSubscriptionStorage.GetAdminSubscription(ctx, id)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		subscription, err := s.adminSubscriptionStorage.GetAdminSubscription(contextWithTx, id)
 		if err != nil {
 			return err
 		}
@@ -420,7 +384,7 @@ func (s *NotificationService) updateAdminSubscription(
 				return err
 			}
 		}
-		if err = adminSubscriptionStorage.UpdateAdminSubscription(ctx, subscription); err != nil {
+		if err = s.adminSubscriptionStorage.UpdateAdminSubscription(contextWithTx, subscription); err != nil {
 			return err
 		}
 		return nil
@@ -485,26 +449,8 @@ func (s *NotificationService) DeleteAdminSubscription(
 		return nil, err
 	}
 	var handler command.Handler = command.NewEmptyAdminSubscriptionCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		adminSubscriptionStorage := v2ss.NewAdminSubscriptionStorage(tx)
-		subscription, err := adminSubscriptionStorage.GetAdminSubscription(ctx, req.Id)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		subscription, err := s.adminSubscriptionStorage.GetAdminSubscription(contextWithTx, req.Id)
 		if err != nil {
 			return err
 		}
@@ -515,7 +461,7 @@ func (s *NotificationService) DeleteAdminSubscription(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		if err = adminSubscriptionStorage.DeleteAdminSubscription(ctx, req.Id); err != nil {
+		if err = s.adminSubscriptionStorage.DeleteAdminSubscription(contextWithTx, req.Id); err != nil {
 			return err
 		}
 		return nil
@@ -622,8 +568,7 @@ func (s *NotificationService) GetAdminSubscription(
 	if err := validateGetAdminSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	adminSubscriptionStorage := v2ss.NewAdminSubscriptionStorage(s.mysqlClient)
-	subscription, err := adminSubscriptionStorage.GetAdminSubscription(ctx, req.Id)
+	subscription, err := s.adminSubscriptionStorage.GetAdminSubscription(ctx, req.Id)
 	if err != nil {
 		if err == v2ss.ErrAdminSubscriptionNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -815,8 +760,7 @@ func (s *NotificationService) listAdminSubscriptionsMySQL(
 		}
 		return nil, "", 0, dt.Err()
 	}
-	adminSubscriptionStorage := v2ss.NewAdminSubscriptionStorage(s.mysqlClient)
-	subscriptions, nextCursor, totalCount, err := adminSubscriptionStorage.ListAdminSubscriptions(
+	subscriptions, nextCursor, totalCount, err := s.adminSubscriptionStorage.ListAdminSubscriptions(
 		ctx,
 		whereParts,
 		orders,
