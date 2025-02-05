@@ -239,7 +239,8 @@ const AddGoalModal: FC<AddGoalModalProps> = ({
             searchKeyword: '',
             status: null,
             orderBy: ListGoalsRequest.OrderBy.NAME,
-            orderDirection: ListGoalsRequest.OrderDirection.ASC
+            orderDirection: ListGoalsRequest.OrderDirection.ASC,
+            connectionType
           })
         ).then(() => {
           setValue(name, isMulti ? [...watchGoalIds, data.id] : data.id, {
