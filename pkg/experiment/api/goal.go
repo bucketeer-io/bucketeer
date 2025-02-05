@@ -279,6 +279,7 @@ func (s *experimentService) mapConnectedOperations(
 	for _, goal := range goals {
 		if ops, ok := goalOpsMap[goal.Id]; ok {
 			goal.AutoOpsRules = ops
+			goal.IsInUseStatus = true
 		}
 	}
 	return nil
