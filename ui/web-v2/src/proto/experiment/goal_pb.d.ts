@@ -94,6 +94,9 @@ export namespace Goal {
     getFeatureId(): string;
     setFeatureId(value: string): void;
 
+    getFeatureName(): string;
+    setFeatureName(value: string): void;
+
     getStatus(): proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap];
     setStatus(
       value: proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap]
@@ -125,6 +128,7 @@ export namespace Goal {
       id: string;
       name: string;
       featureId: string;
+      featureName: string;
       status: proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap];
     };
   }
@@ -135,6 +139,9 @@ export namespace Goal {
 
     getFeatureId(): string;
     setFeatureId(value: string): void;
+
+    getFeatureName(): string;
+    setFeatureName(value: string): void;
 
     getAutoOpsStatus(): proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap];
     setAutoOpsStatus(
@@ -166,6 +173,7 @@ export namespace Goal {
     export type AsObject = {
       id: string;
       featureId: string;
+      featureName: string;
       autoOpsStatus: proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap];
     };
   }

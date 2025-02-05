@@ -2420,11 +2420,6 @@ definitions:
           $ref: '#/definitions/featurePrerequisite'
       samplingSeed:
         type: string
-      scheduleUpdate:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureScheduleUpdate'
   featureFeatureLastUsedInfo:
     type: object
     properties:
@@ -2516,14 +2511,6 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureClause'
-  featureScheduleUpdate:
-    type: object
-    properties:
-      feature:
-        $ref: '#/definitions/featureFeature'
-      updateAt:
-        type: string
-        format: int64
   featureSegmentUser:
     type: object
     properties:
