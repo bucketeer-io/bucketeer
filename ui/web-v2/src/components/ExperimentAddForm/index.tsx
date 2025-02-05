@@ -76,9 +76,10 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
     const goalOptions = goals.map((goal) => {
       return {
         value: goal.id,
-        label: `${goal.id}(${goal.name})`
+        label: `${goal.id} (${goal.name})`
       };
     });
+
     const methods = useFormContext();
     const {
       register,
@@ -116,7 +117,8 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
           status: null,
           orderBy: ListGoalsRequest.OrderBy.DEFAULT,
           orderDirection: ListGoalsRequest.OrderDirection.ASC,
-          archived: false
+          archived: false,
+          connectionType: Goal.ConnectionType.EXPERIMENT
         })
       );
       dispatch(

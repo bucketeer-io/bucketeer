@@ -87,7 +87,8 @@ export const EventRateAddUpdateForm: FC<EventRateAddUpdateFormProps> = memo(
           searchKeyword: '',
           status: null,
           orderBy: ListGoalsRequest.OrderBy.NAME,
-          orderDirection: ListGoalsRequest.OrderDirection.ASC
+          orderDirection: ListGoalsRequest.OrderDirection.ASC,
+          connectionType: Goal.ConnectionType.OPERATION
         })
       );
     }, [dispatch, featureId, currentEnvironment]);
@@ -151,7 +152,7 @@ export const EventRateAddUpdateForm: FC<EventRateAddUpdateFormProps> = memo(
     const goalOptions = goals.map((goal) => {
       return {
         value: goal.id,
-        label: goal.id
+        label: `${goal.id} (${goal.name})`
       };
     });
 
