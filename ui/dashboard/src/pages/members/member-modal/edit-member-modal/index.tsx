@@ -117,17 +117,6 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   });
   const environments = collection?.environments || [];
 
-  const defaultTagsValue = useMemo(() => {
-    const tags = member.tags?.map(tag => {
-      const tagItem = tagOptions.find(item => item.id === tag);
-      return {
-        label: tagItem?.name || tag,
-        value: tagItem?.id || tag
-      };
-    });
-    return tags;
-  }, [tagOptions, member]);
-
   const onSubmit: SubmitHandler<EditMemberForm> = values => {
     return accountUpdater({
       organizationId: currentEnvironment.organizationId,
@@ -166,6 +155,17 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
       onClose();
     });
   };
+
+  const defaultTagsValue = useMemo(() => {
+    const tags = member.tags?.map(tag => {
+      const tagItem = tagOptions.find(item => item.id === tag);
+      return {
+        label: tagItem?.name || tag,
+        value: tagItem?.id || tag
+      };
+    });
+    return tags;
+  }, [tagOptions, member]);
 
   return (
     <SlideModal title={t('update-member')} isOpen={isOpen} onClose={onClose}>
@@ -322,6 +322,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                     <CreatableSelect
                       defaultValues={defaultTagsValue}
                       disabled={isLoadingTags}
+                      loading={isLoadingTags}
                       placeholder={t(`form:placeholder-tags`)}
                       options={tagOptions?.map(tag => ({
                         label: tag.name,

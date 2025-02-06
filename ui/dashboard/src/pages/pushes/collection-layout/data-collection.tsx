@@ -5,7 +5,7 @@ import {
 import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
-import { Push } from '@types';
+import { Push, Tag } from '@types';
 import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import { Popover } from 'components/popover';
@@ -16,9 +16,11 @@ import TruncationWithTooltip from '../../../elements/truncation-with-tooltip';
 import { PushActionsType } from '../types';
 
 export const useColumns = ({
-  onActions
+  onActions,
+  tags
 }: {
   onActions: (item: Push, type: PushActionsType) => void;
+  tags: Tag[];
 }): ColumnDef<Push>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
@@ -61,10 +63,13 @@ export const useColumns = ({
       size: 350,
       cell: ({ row }) => {
         const push = row.original;
+        const formattedTags = push.tags?.map(
+          item => tags.find(tag => tag.id === item)?.name || item
+        );
 
         return (
           <ExpandableTag
-            tags={push.tags}
+            tags={formattedTags}
             rowId={push.id}
             className="!max-w-[250px] truncate"
           />

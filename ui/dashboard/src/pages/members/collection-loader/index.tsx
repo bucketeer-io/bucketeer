@@ -11,6 +11,7 @@ import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { MemberActionsType, MembersFilters } from '../types';
 import { useFetchMembers } from './use-fetch-members';
+import { useFetchTags } from './use-fetch-tags';
 
 export * from './use-fetch-tags';
 
@@ -28,7 +29,11 @@ const CollectionLoader = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const columns = useColumns({ onActions });
+  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
+    organizationId: currentEnvironment.organizationId
+  });
+  const tagList = tagCollection?.tags || [];
+  const columns = useColumns({ onActions, tags: tagList });
 
   const {
     data: collection,
@@ -69,7 +74,7 @@ const CollectionLoader = ({
   ) : (
     <>
       <DataTable
-        isLoading={isLoading}
+        isLoading={isLoading || isLoadingTags}
         data={accounts}
         columns={columns}
         onSortingChange={onSortingChangeHandler}

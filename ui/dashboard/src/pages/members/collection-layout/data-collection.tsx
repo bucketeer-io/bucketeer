@@ -4,10 +4,10 @@ import {
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import primaryAvatar from 'assets/avatars/primary.svg';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
-import { Account } from '@types';
+import { Account, Tag } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { joinName } from 'utils/name';
 import { IconTrash } from '@icons';
@@ -16,26 +16,20 @@ import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import ExpandableTag from 'elements/expandable-tag';
 import TruncationWithTooltip from 'elements/truncation-with-tooltip';
-import { useFetchTags } from '../collection-loader';
 import { MemberActionsType } from '../types';
 
 export const useColumns = ({
-  onActions
+  onActions,
+  tags
 }: {
   onActions: (item: Account, type: MemberActionsType) => void;
+  tags: Tag[];
 }): ColumnDef<Account>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
   const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const isOrganizationAdmin =
     consoleAccount?.organizationRole === 'Organization_ADMIN';
-
-  const { data: tagCollection } = useFetchTags({
-    organizationId: currentEnvironment.organizationId
-  });
-
-  const tagList = tagCollection?.tags || [];
 
   return compact([
     {
@@ -108,7 +102,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const account = row.original;
         const formattedTags = account.tags?.map(
-          item => tagList.find(tag => tag.id === item)?.name || item
+          item => tags.find(tag => tag.id === item)?.name || item
         );
         return (
           <ExpandableTag

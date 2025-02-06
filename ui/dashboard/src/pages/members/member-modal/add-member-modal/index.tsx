@@ -106,7 +106,6 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
     organizationId: currentEnvironment.organizationId
   });
-  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
 
   const form = useForm<AddMemberForm>({
     resolver: yupResolver(formSchema) as Resolver<AddMemberForm>,
@@ -123,6 +122,10 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
     formState: { dirtyFields, isValid, isSubmitting }
   } = form;
   const memberEnvironments = watch('environmentRoles');
+
+  const tagOptions = uniqBy(tagCollection?.tags || [], 'name')?.filter(tag =>
+    memberEnvironments.find(env => env.environmentId === tag.environmentId)
+  );
 
   const { data: collection } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
@@ -251,6 +254,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                   <Form.Control>
                     <CreatableSelect
                       disabled={isLoadingTags}
+                      loading={isLoadingTags}
                       placeholder={t(`form:placeholder-tags`)}
                       options={tagOptions?.map(tag => ({
                         label: tag.name,

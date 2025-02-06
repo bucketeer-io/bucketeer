@@ -1,6 +1,7 @@
 import { FC, memo } from 'react';
 import { StylesConfig, ActionMeta, MultiValue } from 'react-select';
 import ReactCreatableSelect from 'react-select/creatable';
+import Spinner from 'components/spinner';
 
 export interface Option {
   value: string;
@@ -8,6 +9,7 @@ export interface Option {
 }
 
 export interface CreatableSelectProps {
+  loading?: boolean;
   options?: Option[];
   disabled?: boolean;
   isSearchable?: boolean;
@@ -91,6 +93,7 @@ export const colourStyles: StylesConfig<Option, true> = {
 
 export const CreatableSelect: FC<CreatableSelectProps> = memo(
   ({
+    loading = false,
     disabled,
     isSearchable,
     className,
@@ -111,9 +114,11 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
         classNamePrefix="react-select"
         styles={colourStyles}
         components={{
-          DropdownIndicator: null
+          DropdownIndicator: null,
+          LoadingIndicator: () => <Spinner className="size-5 mr-4" />
         }}
         isDisabled={disabled}
+        isLoading={loading}
         isSearchable={isSearchable}
         value={value}
         defaultValue={defaultValues}
