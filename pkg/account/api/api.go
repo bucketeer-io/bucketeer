@@ -25,6 +25,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	v2 "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	auditlogstorage "github.com/bucketeer-io/bucketeer/pkg/auditlog/storage/v2"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -62,6 +63,7 @@ type AccountService struct {
 	mysqlClient       mysql.Client
 	accountStorage    v2.AccountStorage
 	tagStorage        tagstorage.TagStorage
+	auditlogStorage   auditlogstorage.AuditLogStorage
 	publisher         publisher.Publisher
 	opts              *options
 	logger            *zap.Logger
@@ -82,6 +84,7 @@ func NewAccountService(
 		mysqlClient:       mysqlClient,
 		accountStorage:    v2.NewAccountStorage(mysqlClient),
 		tagStorage:        tagstorage.NewTagStorage(mysqlClient),
+		auditlogStorage:   auditlogstorage.NewAuditLogStorage(mysqlClient),
 		publisher:         publisher,
 		opts:              &options,
 		logger:            options.logger.Named("api"),

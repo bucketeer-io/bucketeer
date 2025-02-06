@@ -24,6 +24,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
+	domainauditlog "github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
+	auditlogstorage "github.com/bucketeer-io/bucketeer/pkg/auditlog/storage/v2"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/command"
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
@@ -387,7 +389,7 @@ func (s *experimentService) createGoalNoCommand(
 		}
 		return nil, dt.Err()
 	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
 		prev := &domain.Goal{}
 		e, err := domainevent.NewEvent(
 			editor,
@@ -411,6 +413,11 @@ func (s *experimentService) createGoalNoCommand(
 			return err
 		}
 		if err := s.publisher.Publish(ctx, e); err != nil {
+			return err
+		}
+		auditlogstorage := auditlogstorage.NewAuditLogStorage(tx)
+		err = auditlogstorage.CreateAuditLog(ctx, domainauditlog.NewAuditLog(e, req.EnvironmentId))
+		if err != nil {
 			return err
 		}
 		return s.goalStorage.CreateGoal(ctxWithTx, goal, req.EnvironmentId)

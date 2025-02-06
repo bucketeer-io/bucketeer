@@ -29,6 +29,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	domainauditlog "github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -224,7 +225,14 @@ func (s *AccountService) createAccountV2NoCommand(
 		if err != nil {
 			return err
 		}
-		return s.accountStorage.CreateAccountV2(contextWithTx, account)
+		err = s.accountStorage.CreateAccountV2(contextWithTx, account)
+		if err != nil {
+			return err
+		}
+		return s.auditlogStorage.CreateAuditLog(
+			ctx,
+			domainauditlog.NewAuditLog(createAccountEvent, storage.AdminEnvironmentID),
+		)
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountAlreadyExists) {
@@ -331,7 +339,7 @@ func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
 	if err != nil {
 		return err
 	}
-	return nil
+	return s.auditlogStorage.CreateAuditLog(ctx, domainauditlog.NewAuditLog(updateAccountEvent, storage.AdminEnvironmentID))
 }
 
 func (s *AccountService) upsertTags(
@@ -784,6 +792,7 @@ func (s *AccountService) updateAccountV2MySQL(
 ) (*accountproto.AccountV2, error) {
 	var updatedAccountPb *accountproto.AccountV2
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		println("kaki updateAccountV2MySQL RunInTransactionV2")
 		account, err := s.accountStorage.GetAccountV2(contextWithTx, email, organizationID)
 		if err != nil {
 			return err
@@ -815,9 +824,11 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 	environmentRoles []*accountproto.AccountV2_EnvironmentRole,
 	isDisabled *wrapperspb.BoolValue,
 ) (*accountproto.AccountV2, error) {
+	println("kaki updateAccountV2NoCommandMysql")
 	var updatedAccountPb *accountproto.AccountV2
 	var updateAccountV2Event *eventproto.Event
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		println("kaki updateAccountV2NoCommandMysql 1")
 		account, err := s.accountStorage.GetAccountV2(contextWithTx, email, organizationID)
 		if err != nil {
 			return err

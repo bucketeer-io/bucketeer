@@ -78,6 +78,56 @@ func (h *autoOpsRuleCommandHandler) Handle(ctx context.Context, cmd Command) err
 	return errUnknownCommand
 }
 
+func (h *autoOpsRuleCommandHandler) NewEvent(ctx context.Context, cmd Command) (*eventproto.Event, error) {
+	var eventType eventproto.Event_Type
+	var event pb.Message
+	switch c := cmd.(type) {
+	case *proto.CreateAutoOpsRuleCommand:
+		eventType = eventproto.Event_AUTOOPS_RULE_CREATED
+		event = &eventproto.AutoOpsRuleCreatedEvent{
+			FeatureId: h.autoOpsRule.FeatureId,
+			OpsType:   h.autoOpsRule.OpsType,
+			Clauses:   h.autoOpsRule.Clauses,
+			CreatedAt: h.autoOpsRule.CreatedAt,
+			UpdatedAt: h.autoOpsRule.UpdatedAt,
+			OpsStatus: h.autoOpsRule.AutoOpsStatus,
+		}
+	case *proto.DeleteAutoOpsRuleCommand:
+		//		return h.delete(ctx, c)
+	case *proto.AddOpsEventRateClauseCommand:
+		//		return h.addOpsEventRateClause(ctx, c)
+	case *proto.ChangeOpsEventRateClauseCommand:
+		//		return h.changeOpsEventRateClause(ctx, c)
+	case *proto.StopAutoOpsRuleCommand:
+		//		return h.stop(ctx, c)
+	case *proto.DeleteClauseCommand:
+		//		return h.deleteClause(ctx, c)
+	case *proto.AddDatetimeClauseCommand:
+		//		return h.addDatetimeClause(ctx, c)
+	case *proto.ChangeDatetimeClauseCommand:
+		//		return h.changeDatetimeClause(ctx, c)
+	case *proto.ChangeAutoOpsStatusCommand:
+		//		return h.changeAutoOpsStatus(ctx, c)
+	}
+
+	var prev *proto.AutoOpsRule
+	if h.previousAutoOpsRule != nil && h.previousAutoOpsRule.AutoOpsRule != nil {
+		prev = h.previousAutoOpsRule.AutoOpsRule
+	}
+	e, err := domainevent.NewEvent(
+		h.editor,
+		eventproto.Event_AUTOOPS_RULE,
+		h.autoOpsRule.Id,
+		eventType,
+		event,
+		h.environmentId,
+		h.autoOpsRule.AutoOpsRule,
+		prev,
+	)
+
+	return nil, errUnknownCommand
+}
+
 func (h *autoOpsRuleCommandHandler) create(ctx context.Context, cmd *proto.CreateAutoOpsRuleCommand) error {
 	return h.send(ctx, eventproto.Event_AUTOOPS_RULE_CREATED, &eventproto.AutoOpsRuleCreatedEvent{
 		FeatureId: h.autoOpsRule.FeatureId,
