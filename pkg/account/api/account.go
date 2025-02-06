@@ -792,7 +792,6 @@ func (s *AccountService) updateAccountV2MySQL(
 ) (*accountproto.AccountV2, error) {
 	var updatedAccountPb *accountproto.AccountV2
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		println("kaki updateAccountV2MySQL RunInTransactionV2")
 		account, err := s.accountStorage.GetAccountV2(contextWithTx, email, organizationID)
 		if err != nil {
 			return err
@@ -824,11 +823,9 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 	environmentRoles []*accountproto.AccountV2_EnvironmentRole,
 	isDisabled *wrapperspb.BoolValue,
 ) (*accountproto.AccountV2, error) {
-	println("kaki updateAccountV2NoCommandMysql")
 	var updatedAccountPb *accountproto.AccountV2
 	var updateAccountV2Event *eventproto.Event
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		println("kaki updateAccountV2NoCommandMysql 1")
 		account, err := s.accountStorage.GetAccountV2(contextWithTx, email, organizationID)
 		if err != nil {
 			return err
