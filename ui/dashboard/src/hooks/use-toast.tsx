@@ -6,8 +6,8 @@ type ToastType = 'toast' | 'info-message' | 'prerequisite-message';
 type MessageType = 'success' | 'info' | 'warning' | 'error';
 
 export type NotifyProps = {
-  toastType: ToastType;
-  messageType: MessageType;
+  toastType?: ToastType;
+  messageType?: MessageType;
   message: ReactNode;
   t?: Toast;
   duration?: number;
@@ -16,8 +16,8 @@ export type NotifyProps = {
 
 export const useToast = () => {
   const notify = ({
-    toastType,
-    messageType,
+    toastType = 'toast',
+    messageType = 'success',
     message,
     duration = 5000,
     toastChildren

@@ -20,6 +20,7 @@ import {
   PAGE_PATH_AUTH_CALLBACK,
   PAGE_PATH_AUTH_SIGNIN,
   PAGE_PATH_FEATURES,
+  PAGE_PATH_GOALS,
   PAGE_PATH_MEMBERS,
   PAGE_PATH_NEW,
   PAGE_PATH_NOTIFICATIONS,
@@ -47,7 +48,7 @@ import SelectOrganizationPage from 'pages/signin/organization';
 import UserSegmentsPage from 'pages/user-segments';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
-import { OrganizationsRoot, ProjectsRoot } from './routers';
+import { GoalsRoot, OrganizationsRoot, ProjectsRoot } from './routers';
 
 export const AppLoading = () => (
   <div className="flex items-center justify-center h-screen w-full">
@@ -166,6 +167,7 @@ export const EnvironmentRoot = memo(
           element={<NotificationsPage />}
         />
         <Route path={`${PAGE_PATH_PUSHES}`} element={<PushesPage />} />
+        <Route path={`${PAGE_PATH_GOALS}/*`} element={<GoalsRoot />} />
         <Route
           path={`${PAGE_PATH_USER_SEGMENTS}`}
           element={<UserSegmentsPage />}
