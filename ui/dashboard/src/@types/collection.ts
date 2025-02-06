@@ -20,6 +20,7 @@ export type OrderBy =
   | 'LAST_SEEN'
   | 'CREATOR_EMAIL'
   | 'ENVIRONMENT'
+  | 'CONNECTION_TYPE'
   | 'CONNECTIONS'
   | 'USERS';
 
