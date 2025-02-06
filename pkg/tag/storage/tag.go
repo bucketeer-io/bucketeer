@@ -54,7 +54,7 @@ type TagStorage interface {
 		limit, offset int,
 	) ([]*proto.Tag, int, int64, error)
 	ListAllEnvironmentTags(ctx context.Context) ([]*proto.EnvironmentTag, error)
-	DeleteTag(ctx context.Context, id, environmentId string) error
+	DeleteTag(ctx context.Context, id string) error
 }
 
 type tagStorage struct {
@@ -97,6 +97,7 @@ func (s *tagStorage) GetTag(ctx context.Context, id, environmentId string) (*dom
 		&tag.UpdatedAt,
 		&entityType,
 		&tag.EnvironmentId,
+		&tag.EnvironmentName,
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
@@ -135,6 +136,7 @@ func (s *tagStorage) ListTags(
 			&tag.UpdatedAt,
 			&entityType,
 			&tag.EnvironmentId,
+			&tag.EnvironmentName,
 		)
 		if err != nil {
 			return nil, 0, 0, err
@@ -173,6 +175,7 @@ func (s *tagStorage) ListAllEnvironmentTags(ctx context.Context) ([]*proto.Envir
 			&tag.UpdatedAt,
 			&entityType,
 			&tag.EnvironmentId,
+			&tag.EnvironmentName,
 		)
 		if err != nil {
 			return nil, err
@@ -194,7 +197,7 @@ func (s *tagStorage) ListAllEnvironmentTags(ctx context.Context) ([]*proto.Envir
 	return environmentTags, nil
 }
 
-func (s *tagStorage) DeleteTag(ctx context.Context, id, environmentId string) error {
+func (s *tagStorage) DeleteTag(ctx context.Context, id string) error {
 	result, err := s.qe.ExecContext(ctx, deleteTagSQL, id)
 	if err != nil {
 		return err

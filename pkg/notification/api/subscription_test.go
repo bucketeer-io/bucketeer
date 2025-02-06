@@ -27,8 +27,11 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
 	v2ss "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2"
+	storagemock "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/proto/notification"
@@ -138,12 +141,16 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
 					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().CreateSubscription(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.CreateSubscriptionRequest{
@@ -269,12 +276,16 @@ func TestCreateSubscriptionNoCommandMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().CreateSubscription(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.CreateSubscriptionRequest{
@@ -354,10 +365,14 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "err: ErrNotFound",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(v2ss.ErrSubscriptionNotFound)
+				).Return(nil, v2ss.ErrSubscriptionNotFound)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(v2ss.ErrSubscriptionNotFound)
 			},
 			input: &proto.UpdateSubscriptionRequest{
 				Id: "key-1",
@@ -373,12 +388,28 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success: addSourceTypes",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id: "key-0",
+						SourceTypes: []proto.Subscription_SourceType{
+							proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+							proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT,
+						},
+					},
+				}, nil)
+
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
 					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().UpdateSubscription(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.UpdateSubscriptionRequest{
@@ -394,12 +425,27 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success: deleteSourceTypes",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id: "key-0",
+						SourceTypes: []proto.Subscription_SourceType{
+							proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+							proto.Subscription_DOMAIN_EVENT_FEATURE,
+						},
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
 					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().UpdateSubscription(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.UpdateSubscriptionRequest{
@@ -415,12 +461,26 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success: all commands",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id: "key-0",
+						SourceTypes: []proto.Subscription_SourceType{
+							proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+						},
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
 					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().UpdateSubscription(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.UpdateSubscriptionRequest{
@@ -489,10 +549,14 @@ func TestUpdateSubscriptionMySQLNoCommand(t *testing.T) {
 		{
 			desc: "err: ErrNotFound",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(v2ss.ErrSubscriptionNotFound)
+				).Return(nil, v2ss.ErrSubscriptionNotFound)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(v2ss.ErrSubscriptionNotFound)
 			},
 			input: &proto.UpdateSubscriptionRequest{
 				Id: "key-1",
@@ -506,12 +570,26 @@ func TestUpdateSubscriptionMySQLNoCommand(t *testing.T) {
 		{
 			desc: "success: update SourceTypes",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id: "key-0",
+						SourceTypes: []proto.Subscription_SourceType{
+							proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+						},
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().UpdateSubscription(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.UpdateSubscriptionRequest{
@@ -526,12 +604,27 @@ func TestUpdateSubscriptionMySQLNoCommand(t *testing.T) {
 		{
 			desc: "success: rename",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id: "key-0",
+						SourceTypes: []proto.Subscription_SourceType{
+							proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+						},
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().UpdateSubscription(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.UpdateSubscriptionRequest{
@@ -547,12 +640,27 @@ func TestUpdateSubscriptionMySQLNoCommand(t *testing.T) {
 		{
 			desc: "success: disable",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id: "key-0",
+						SourceTypes: []proto.Subscription_SourceType{
+							proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+						},
+						Disabled: false,
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().UpdateSubscription(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.UpdateSubscriptionRequest{
@@ -615,12 +723,25 @@ func TestEnableSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id:       "key-0",
+						Disabled: true,
+					},
+				}, nil)
+
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
 					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().UpdateSubscription(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.EnableSubscriptionRequest{
@@ -683,12 +804,24 @@ func TestDisableSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id:       "key-0",
+						Disabled: false,
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
 					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().UpdateSubscription(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.DisableSubscriptionRequest{
@@ -744,12 +877,23 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id: "key-0",
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().DeleteSubscription(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.DeleteSubscriptionRequest{
@@ -819,11 +963,13 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *NotificationService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().GetSubscription(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id: "key-0",
+					},
+				}, nil)
 			},
 			input:       &proto.GetSubscriptionRequest{Id: "key-0", EnvironmentId: "ns0"},
 			expectedErr: nil,
@@ -899,18 +1045,9 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *NotificationService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().ListSubscriptions(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*proto.Subscription{}, 0, int64(0), nil)
 			},
 			input: &proto.ListSubscriptionsRequest{
 				PageSize: 2,
@@ -993,18 +1130,9 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *NotificationService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().ListSubscriptions(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*proto.Subscription{}, 1, int64(1), nil)
 			},
 			input: &proto.ListEnabledSubscriptionsRequest{
 				PageSize: 2,

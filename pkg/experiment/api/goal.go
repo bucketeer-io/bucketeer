@@ -133,6 +133,9 @@ func (s *experimentService) ListGoals(
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "description"}, req.SearchKeyword))
 	}
+	if req.ConnectionType != proto.Goal_UNKNOWN {
+		whereParts = append(whereParts, mysql.NewFilter("connection_type", "=", req.ConnectionType))
+	}
 	orders, err := s.newGoalListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
@@ -253,7 +256,7 @@ func (s *experimentService) mapConnectedOperations(
 		return err
 	}
 	autoOpsRules := listAutoOpRulesResp.AutoOpsRules
-	goalOpsMap := make(map[string][]*autoopsproto.AutoOpsRule)
+	goalOpsMap := make(map[string][]*proto.Goal_AutoOpsRuleReference)
 	for _, rule := range autoOpsRules {
 		for _, clause := range rule.Clauses {
 			if clause.Clause.MessageIs(&autoopsproto.OpsEventRateClause{}) {
@@ -264,13 +267,19 @@ func (s *experimentService) mapConnectedOperations(
 				if c.GoalId == "" {
 					continue
 				}
-				goalOpsMap[c.GoalId] = append(goalOpsMap[c.GoalId], rule)
+				goalOpsMap[c.GoalId] = append(goalOpsMap[c.GoalId], &proto.Goal_AutoOpsRuleReference{
+					Id:            rule.Id,
+					FeatureId:     rule.FeatureId,
+					FeatureName:   rule.FeatureName,
+					AutoOpsStatus: rule.AutoOpsStatus,
+				})
 			}
 		}
 	}
 	for _, goal := range goals {
 		if ops, ok := goalOpsMap[goal.Id]; ok {
 			goal.AutoOpsRules = ops
+			goal.IsInUseStatus = true
 		}
 	}
 	return nil

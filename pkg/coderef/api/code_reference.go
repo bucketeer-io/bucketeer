@@ -63,6 +63,29 @@ func generateSourceURL(codeRef *proto.CodeReference) string {
 	}
 }
 
+// generateBranchURL generates a URL to view the branch in the repository web interface
+func generateBranchURL(codeRef *proto.CodeReference) string {
+	switch codeRef.RepositoryType {
+	case proto.CodeReference_GITHUB:
+		return fmt.Sprintf("https://github.com/%s/%s/tree/%s",
+			codeRef.RepositoryOwner,
+			codeRef.RepositoryName,
+			codeRef.RepositoryBranch)
+	case proto.CodeReference_GITLAB:
+		return fmt.Sprintf("https://gitlab.com/%s/%s/-/tree/%s",
+			codeRef.RepositoryOwner,
+			codeRef.RepositoryName,
+			codeRef.RepositoryBranch)
+	case proto.CodeReference_BITBUCKET:
+		return fmt.Sprintf("https://bitbucket.org/%s/%s/src/%s",
+			codeRef.RepositoryOwner,
+			codeRef.RepositoryName,
+			codeRef.RepositoryBranch)
+	default:
+		return ""
+	}
+}
+
 func (s *CodeReferenceService) GetCodeReference(
 	ctx context.Context,
 	req *proto.GetCodeReferenceRequest,
@@ -111,6 +134,7 @@ func (s *CodeReferenceService) GetCodeReference(
 		return nil, dt.Err()
 	}
 	codeRef.CodeReference.SourceUrl = generateSourceURL(&codeRef.CodeReference)
+	codeRef.CodeReference.BranchUrl = generateBranchURL(&codeRef.CodeReference)
 	return &proto.GetCodeReferenceResponse{CodeReference: &codeRef.CodeReference}, nil
 }
 
@@ -133,9 +157,7 @@ func (s *CodeReferenceService) ListCodeReferences(
 	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
-	}
-	if req.FeatureId != "" {
-		whereParts = append(whereParts, mysql.NewFilter("feature_id", "=", req.FeatureId))
+		mysql.NewFilter("feature_id", "=", req.FeatureId),
 	}
 	if req.RepositoryName != "" {
 		whereParts = append(whereParts, mysql.NewFilter("repository_name", "=", req.RepositoryName))
@@ -150,7 +172,7 @@ func (s *CodeReferenceService) ListCodeReferences(
 		whereParts = append(whereParts, mysql.NewFilter("repository_branch", "=", req.RepositoryBranch))
 	}
 	if req.FileExtension != "" {
-		whereParts = append(whereParts, mysql.NewFilter("file_path", "LIKE", "%"+req.FileExtension))
+		whereParts = append(whereParts, mysql.NewFilter("file_extension", "=", req.FileExtension))
 	}
 	orders := []*mysql.Order{mysql.NewOrder("id", mysql.OrderDirectionAsc)}
 	switch req.OrderBy {
@@ -203,6 +225,7 @@ func (s *CodeReferenceService) ListCodeReferences(
 	protoRefs := make([]*proto.CodeReference, 0, len(codeRefs))
 	for _, ref := range codeRefs {
 		ref.CodeReference.SourceUrl = generateSourceURL(&ref.CodeReference)
+		ref.CodeReference.BranchUrl = generateBranchURL(&ref.CodeReference)
 		protoRefs = append(protoRefs, &ref.CodeReference)
 	}
 	return &proto.ListCodeReferencesResponse{
@@ -232,6 +255,7 @@ func (s *CodeReferenceService) CreateCodeReference(
 	codeRef, err := domain.NewCodeReference(
 		req.FeatureId,
 		req.FilePath,
+		req.FileExtension,
 		req.LineNumber,
 		req.CodeSnippet,
 		req.ContentHash,
@@ -391,6 +415,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 		}
 		updatedCodeRef, err = codeRef.Update(
 			req.FilePath,
+			req.FileExtension,
 			req.LineNumber,
 			req.CodeSnippet,
 			req.ContentHash,

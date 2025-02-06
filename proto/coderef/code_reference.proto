@@ -43,4 +43,6 @@ message CodeReference {
   int64 updated_at = 15;
   // URL to view the code in the repository
   string source_url = 16;
+  string branch_url = 17;
+  string file_extension = 18;  // File extension (e.g., go, ts, cpp)
 }

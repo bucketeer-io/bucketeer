@@ -27,6 +27,8 @@ var proto_coderef_code_reference_pb = require('../../proto/coderef/code_referenc
 goog.object.extend(proto, proto_coderef_code_reference_pb);
 var google_api_annotations_pb = require('../../google/api/annotations_pb.js');
 goog.object.extend(proto, google_api_annotations_pb);
+var google_api_field_behavior_pb = require('../../google/api/field_behavior_pb.js');
+goog.object.extend(proto, google_api_field_behavior_pb);
 var protoc$gen$openapiv2_options_annotations_pb = require('../../protoc-gen-openapiv2/options/annotations_pb.js');
 goog.object.extend(proto, protoc$gen$openapiv2_options_annotations_pb);
 goog.exportSymbol(
@@ -1432,7 +1434,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         repositoryOwner: jspb.Message.getFieldWithDefault(msg, 9, ''),
         repositoryType: jspb.Message.getFieldWithDefault(msg, 10, 0),
         repositoryBranch: jspb.Message.getFieldWithDefault(msg, 11, ''),
-        commitHash: jspb.Message.getFieldWithDefault(msg, 12, '')
+        commitHash: jspb.Message.getFieldWithDefault(msg, 12, ''),
+        fileExtension: jspb.Message.getFieldWithDefault(msg, 13, '')
       };
 
     if (includeInstance) {
@@ -1523,6 +1526,10 @@ proto.bucketeer.coderef.CreateCodeReferenceRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setCommitHash(value);
           break;
+        case 13:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setFileExtension(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -1602,6 +1609,10 @@ proto.bucketeer.coderef.CreateCodeReferenceRequest.serializeBinaryToWriter =
     f = message.getCommitHash();
     if (f.length > 0) {
       writer.writeString(12, f);
+    }
+    f = message.getFileExtension();
+    if (f.length > 0) {
+      writer.writeString(13, f);
     }
   };
 
@@ -1862,6 +1873,26 @@ proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.setCommitHash =
     return jspb.Message.setProto3StringField(this, 12, value);
   };
 
+/**
+ * optional string file_extension = 13;
+ * @return {string}
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.getFileExtension =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 13, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.CreateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.setFileExtension =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 13, value);
+  };
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -2091,7 +2122,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         repositoryOwner: jspb.Message.getFieldWithDefault(msg, 9, ''),
         repositoryType: jspb.Message.getFieldWithDefault(msg, 10, 0),
         repositoryBranch: jspb.Message.getFieldWithDefault(msg, 11, ''),
-        commitHash: jspb.Message.getFieldWithDefault(msg, 12, '')
+        commitHash: jspb.Message.getFieldWithDefault(msg, 12, ''),
+        fileExtension: jspb.Message.getFieldWithDefault(msg, 13, '')
       };
 
     if (includeInstance) {
@@ -2182,6 +2214,10 @@ proto.bucketeer.coderef.UpdateCodeReferenceRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setCommitHash(value);
           break;
+        case 13:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setFileExtension(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -2261,6 +2297,10 @@ proto.bucketeer.coderef.UpdateCodeReferenceRequest.serializeBinaryToWriter =
     f = message.getCommitHash();
     if (f.length > 0) {
       writer.writeString(12, f);
+    }
+    f = message.getFileExtension();
+    if (f.length > 0) {
+      writer.writeString(13, f);
     }
   };
 
@@ -2520,6 +2560,26 @@ proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.getCommitHash =
 proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.setCommitHash =
   function (value) {
     return jspb.Message.setProto3StringField(this, 12, value);
+  };
+
+/**
+ * optional string file_extension = 13;
+ * @return {string}
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.getFileExtension =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 13, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.UpdateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.setFileExtension =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 13, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

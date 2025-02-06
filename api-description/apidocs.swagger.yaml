@@ -1671,6 +1671,8 @@ definitions:
         type: string
       commitHash:
         type: string
+      fileExtension:
+        type: string
   GatewayUpdateFeatureBody:
     type: object
     properties:
@@ -2023,6 +2025,8 @@ definitions:
         type: string
       commitHash:
         type: string
+      fileExtension:
+        type: string
   bucketeergatewayCreateCodeReferenceResponse:
     type: object
     properties:
@@ -2237,6 +2241,11 @@ definitions:
       sourceUrl:
         type: string
         title: URL to view the code in the repository
+      branchUrl:
+        type: string
+      fileExtension:
+        type: string
+        title: File extension (e.g., go, ts, cpp)
   coderefListCodeReferencesRequestOrderBy:
     type: string
     enum:

@@ -1,4 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
+import GoalDetailsPage from 'pages/goal-details';
+import GoalsPage from 'pages/goals';
 import OrganizationDetailPage from 'pages/organization-details';
 import OrganizationsPage from 'pages/organizations';
 import ProjectDetailsPage from 'pages/project-details';
@@ -18,6 +20,16 @@ export const ProjectsRoot = () => {
     <Routes>
       <Route index element={<ProjectsPage />} />
       <Route path=":projectId/*" element={<ProjectDetailsPage />} />
+    </Routes>
+  );
+};
+
+export const GoalsRoot = () => {
+  return (
+    <Routes>
+      <Route index element={<GoalsPage />} />
+      <Route path="new" element={<GoalsPage />} />
+      <Route path=":goalId/*" element={<GoalDetailsPage />} />
     </Routes>
   );
 };

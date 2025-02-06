@@ -27,9 +27,12 @@ import (
 	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
 	v2ss "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2"
+	staragemock "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	proto "github.com/bucketeer-io/bucketeer/proto/notification"
@@ -163,9 +166,13 @@ func TestCreateAdminSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().CreateAdminSubscription(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
 					gomock.Any(), gomock.Any(),
@@ -272,10 +279,14 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "err: ErrNotFound",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(v2ss.ErrAdminSubscriptionNotFound)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2ss.ErrAdminSubscriptionNotFound)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(v2ss.ErrAdminSubscriptionNotFound)
 			},
 			isSystemAdmin: true,
 			input: &proto.UpdateAdminSubscriptionRequest{
@@ -292,11 +303,22 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success: addSourceTypes",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id: "key-0",
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().UpdateAdminSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -314,11 +336,26 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success: deleteSourceTypes",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id: "key-0",
+						SourceTypes: []proto.Subscription_SourceType{
+							proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+							proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT,
+						},
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().UpdateAdminSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -336,11 +373,26 @@ func TestUpdateAdminSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success: all commands",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id: "key-0",
+						SourceTypes: []proto.Subscription_SourceType{
+							proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+							proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT,
+						},
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().UpdateAdminSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -426,11 +478,23 @@ func TestEnableAdminSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id:       "key-0",
+						Disabled: true,
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().UpdateAdminSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -499,11 +563,23 @@ func TestDisableAdminSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id:       "key-0",
+						Disabled: false,
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().UpdateAdminSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -571,11 +647,22 @@ func TestDeleteAdminSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id: "key-0",
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().DeleteAdminSubscription(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -641,11 +728,13 @@ func TestGetAdminSubscriptionMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().GetAdminSubscription(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Subscription{
+					Subscription: &proto.Subscription{
+						Id: "key-0",
+					},
+				}, nil)
 			},
 			isSystemAdmin: true,
 			input:         &proto.GetAdminSubscriptionRequest{Id: "key-0"},
@@ -706,18 +795,10 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().ListAdminSubscriptions(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*proto.Subscription{}, 0, int64(0), nil)
+
 			},
 			isSystemAdmin: true,
 			input: &proto.ListAdminSubscriptionsRequest{
@@ -784,18 +865,9 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *NotificationService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().ListAdminSubscriptions(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*proto.Subscription{}, 1, int64(1), nil)
 			},
 			isSystemAdmin: true,
 			input: &proto.ListEnabledAdminSubscriptionsRequest{

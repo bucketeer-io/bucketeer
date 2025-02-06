@@ -359,6 +359,7 @@ message CreateCodeReferenceRequest {
   bucketeer.coderef.CodeReference.RepositoryType repository_type = 10;
   string repository_branch = 11;
   string commit_hash = 12;
+  string file_extension = 13;
 }
 
 message CreateCodeReferenceResponse {
@@ -374,6 +375,7 @@ message UpdateCodeReferenceRequest {
   repeated string aliases = 6;
   string repository_branch = 7;
   string commit_hash = 8;
+  string file_extension = 9;
 }
 
 message UpdateCodeReferenceResponse {

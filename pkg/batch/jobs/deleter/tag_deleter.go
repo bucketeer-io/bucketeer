@@ -149,7 +149,7 @@ func (td *tagDeleter) deleteUnusedTags(
 }
 
 func (td *tagDeleter) deleteTag(ctx context.Context, tag *tagproto.Tag) error {
-	if err := td.tagStorage.DeleteTag(ctx, tag.Id, tag.EnvironmentId); err != nil {
+	if err := td.tagStorage.DeleteTag(ctx, tag.Id); err != nil {
 		td.logger.Error("Failed to delete the tag",
 			zap.Error(err),
 			zap.String("tagId", tag.Id),

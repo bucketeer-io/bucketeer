@@ -29,6 +29,7 @@ message Tag {
   int64 updated_at = 4;
   EntityType entity_type = 5;
   string environment_id = 6;
+  string environment_name = 7;
 }
 
 message EnvironmentTag {

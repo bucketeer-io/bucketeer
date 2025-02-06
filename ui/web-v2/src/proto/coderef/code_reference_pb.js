@@ -119,7 +119,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         environmentId: jspb.Message.getFieldWithDefault(msg, 13, ''),
         createdAt: jspb.Message.getFieldWithDefault(msg, 14, 0),
         updatedAt: jspb.Message.getFieldWithDefault(msg, 15, 0),
-        sourceUrl: jspb.Message.getFieldWithDefault(msg, 16, '')
+        sourceUrl: jspb.Message.getFieldWithDefault(msg, 16, ''),
+        branchUrl: jspb.Message.getFieldWithDefault(msg, 17, ''),
+        fileExtension: jspb.Message.getFieldWithDefault(msg, 18, '')
       };
 
     if (includeInstance) {
@@ -227,6 +229,14 @@ proto.bucketeer.coderef.CodeReference.deserializeBinaryFromReader = function (
         var value = /** @type {string} */ (reader.readString());
         msg.setSourceUrl(value);
         break;
+      case 17:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setBranchUrl(value);
+        break;
+      case 18:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setFileExtension(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -320,6 +330,14 @@ proto.bucketeer.coderef.CodeReference.serializeBinaryToWriter = function (
   f = message.getSourceUrl();
   if (f.length > 0) {
     writer.writeString(16, f);
+  }
+  f = message.getBranchUrl();
+  if (f.length > 0) {
+    writer.writeString(17, f);
+  }
+  f = message.getFileExtension();
+  if (f.length > 0) {
+    writer.writeString(18, f);
   }
 };
 
@@ -648,6 +666,42 @@ proto.bucketeer.coderef.CodeReference.prototype.setSourceUrl = function (
   value
 ) {
   return jspb.Message.setProto3StringField(this, 16, value);
+};
+
+/**
+ * optional string branch_url = 17;
+ * @return {string}
+ */
+proto.bucketeer.coderef.CodeReference.prototype.getBranchUrl = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 17, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.CodeReference} returns this
+ */
+proto.bucketeer.coderef.CodeReference.prototype.setBranchUrl = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 17, value);
+};
+
+/**
+ * optional string file_extension = 18;
+ * @return {string}
+ */
+proto.bucketeer.coderef.CodeReference.prototype.getFileExtension = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 18, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.CodeReference} returns this
+ */
+proto.bucketeer.coderef.CodeReference.prototype.setFileExtension = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 18, value);
 };
 
 goog.object.extend(exports, proto.bucketeer.coderef);

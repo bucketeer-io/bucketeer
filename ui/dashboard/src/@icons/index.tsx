@@ -1,4 +1,5 @@
 import IconAngleDown from './customized-icons/angle-down.svg?react';
+import IconArrowDown from './customized-icons/arrow-down.svg?react';
 import IconBackspace from './customized-icons/backspace.svg?react';
 import IconChecked from './customized-icons/checked.svg?react';
 import IconChevronDown from './customized-icons/chevron-down.svg?react';
@@ -7,6 +8,7 @@ import IconClose from './customized-icons/close.svg?react';
 import IconCopy from './customized-icons/copy.svg?react';
 import IconDisable from './customized-icons/disable.svg?react';
 import IconEmail from './customized-icons/email.svg?react';
+import IconInfoFilled from './customized-icons/info-filled.svg?react';
 import IconInfo from './customized-icons/info.svg?react';
 import IconSearch from './customized-icons/search.svg?react';
 import IconSortingDown from './customized-icons/sorting-down.svg?react';
@@ -34,6 +36,8 @@ import IconSwitch from './sidebar-icons/switch.svg?react';
 import IconUsage from './sidebar-icons/usage.svg?react';
 import IconUser from './sidebar-icons/user.svg?react';
 import IconDelete from './special-icons/delete.svg?react';
+import IconExperiment from './special-icons/experiment.svg?react';
+import IconExperimentsConnected from './special-icons/experiments-connected.svg?react';
 import IconFCM from './special-icons/fcm.svg?react';
 import IconFlagConnected from './special-icons/flag-connected.svg?react';
 import IconGithub from './special-icons/github.svg?react';
@@ -41,6 +45,9 @@ import IconGoal from './special-icons/goal.svg?react';
 import IconGoogle from './special-icons/google.svg?react';
 import IconLogoutConfirm from './special-icons/logout.svg?react';
 import IconNoData from './special-icons/no-data.svg?react';
+import IconNotInUse from './special-icons/not-in-use.svg?react';
+import IconOperation from './special-icons/operation.svg?react';
+import IconOperationsConnected from './special-icons/operations-connected.svg?react';
 import IconSlack from './special-icons/slack.svg?react';
 
 export {
@@ -81,6 +88,8 @@ export {
   IconUpload,
   IconChevronDown,
   IconAngleDown,
+  IconInfoFilled,
+  IconArrowDown,
   // Special icons
   IconGoal,
   IconGoogle,
@@ -90,5 +99,10 @@ export {
   IconNoData,
   IconLogoutConfirm,
   IconDelete,
+  IconExperiment,
+  IconOperation,
+  IconNotInUse,
+  IconExperimentsConnected,
+  IconOperationsConnected,
   IconFlagConnected
 };

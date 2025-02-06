@@ -9,7 +9,7 @@ import { AppDispatch } from '../../store';
 import { useCurrentEnvironment } from '../../modules/me';
 import { useForm, useFormContext } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { addFormSchema } from '../../pages/goal/formSchema';
+import { addGoalModalFormSchema } from '../../pages/goal/formSchema';
 import { createGoal, listGoals } from '../../modules/goals';
 import { Goal } from '../../proto/experiment/goal_pb';
 import { ListGoalsRequest } from '../../proto/experiment/service_pb';
@@ -204,7 +204,7 @@ const AddGoalModal: FC<AddGoalModalProps> = ({
     formState: { errors, isValid, isSubmitting },
     reset: resetAdd
   } = useForm({
-    resolver: yupResolver(addFormSchema),
+    resolver: yupResolver(addGoalModalFormSchema),
     defaultValues: {
       id: '',
       name: '',
@@ -239,7 +239,8 @@ const AddGoalModal: FC<AddGoalModalProps> = ({
             searchKeyword: '',
             status: null,
             orderBy: ListGoalsRequest.OrderBy.NAME,
-            orderDirection: ListGoalsRequest.OrderDirection.ASC
+            orderDirection: ListGoalsRequest.OrderDirection.ASC,
+            connectionType
           })
         ).then(() => {
           setValue(name, isMulti ? [...watchGoalIds, data.id] : data.id, {

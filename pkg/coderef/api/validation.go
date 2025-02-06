@@ -218,6 +218,16 @@ func validateGetCodeReferenceRequest(req *proto.GetCodeReferenceRequest, localiz
 }
 
 func validateListCodeReferencesRequest(req *proto.ListCodeReferencesRequest, localizer locale.Localizer) error {
+	if req.FeatureId == "" {
+		dt, err := statusMissingFeatureID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
 	if req.EnvironmentId == "" {
 		dt, err := statusMissingEnvironmentID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

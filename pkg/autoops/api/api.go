@@ -1048,15 +1048,15 @@ func (s *AutoOpsService) listAutoOpsRules(
 	storage v2as.AutoOpsRuleStorage,
 ) ([]*autoopsproto.AutoOpsRule, string, error) {
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_id", "=", environmentId),
+		mysql.NewFilter("aor.deleted", "=", false),
+		mysql.NewFilter("aor.environment_id", "=", environmentId),
 	}
 	fIDs := make([]interface{}, 0, len(featureIds))
 	for _, fID := range featureIds {
 		fIDs = append(fIDs, fID)
 	}
 	if len(fIDs) > 0 {
-		whereParts = append(whereParts, mysql.NewInFilter("feature_id", fIDs))
+		whereParts = append(whereParts, mysql.NewInFilter("aor.feature_id", fIDs))
 	}
 	limit := int(pageSize)
 	if cursor == "" {

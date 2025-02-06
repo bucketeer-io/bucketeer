@@ -39,6 +39,7 @@ import "proto/feature/flag_trigger.proto";
 import "proto/account/search_filter.proto";
 import "proto/tag/tag.proto";
 import "proto/experiment/goal.proto";
+import "proto/experiment/experiment.proto";
 import "proto/coderef/code_reference.proto";
 
 message Event {
@@ -120,6 +121,7 @@ message Event {
     EXPERIMENT_STARTED = 208;
     EXPERIMENT_FINISHED = 209;
     EXPERIMENT_ARCHIVED = 210;
+    EXPERIMENT_UPDATED = 211;
     ACCOUNT_CREATED = 300 [deprecated = true];
     ACCOUNT_ROLE_CHANGED = 301 [deprecated = true];
     ACCOUNT_ENABLED = 302 [deprecated = true];
@@ -203,6 +205,7 @@ message Event {
     SUBSCRIPTION_SOURCE_TYPE_DELETED = 1005;
     SUBSCRIPTION_RENAMED = 1006;
     SUBSCRIPTION_UPDATED = 1007;
+    SUBSCRIPTION_FEATURE_FLAG_TAGS_UPDATED = 1008;
     ADMIN_SUBSCRIPTION_CREATED = 1100;
     ADMIN_SUBSCRIPTION_DELETED = 1101;
     ADMIN_SUBSCRIPTION_ENABLED = 1102;
@@ -590,6 +593,15 @@ message ExperimentDescriptionChangedEvent {
   string description = 2;
 }
 
+message ExperimentUpdatedEvent {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int64 start_at = 4;
+  int64 stop_at = 5;
+  experiment.Experiment.Status status = 6;
+}
+
 message ExperimentStartedEvent {}
 
 message ExperimentFinishedEvent {}
@@ -964,6 +976,7 @@ message SubscriptionCreatedEvent {
   repeated bucketeer.notification.Subscription.SourceType source_types = 1;
   bucketeer.notification.Recipient recipient = 2;
   string name = 3;
+  repeated string feature_flag_tags = 4;
 }
 
 message SubscriptionDeletedEvent {}
@@ -984,11 +997,16 @@ message SubscriptionRenamedEvent {
   string name = 1;
 }
 
+message SubscriptionFeatureFlagTagsUpdatedEvent {
+  repeated string feature_flag_tags = 1;
+}
+
 message SubscriptionUpdatedEvent {
   string id = 1;
   google.protobuf.StringValue name = 2;
   repeated bucketeer.notification.Subscription.SourceType source_types = 3;
   google.protobuf.BoolValue disabled = 4;
+  repeated string feature_flag_tags = 5;
 }
 
 message AdminSubscriptionCreatedEvent {

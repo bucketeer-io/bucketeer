@@ -53,4 +53,5 @@ message Subscription {
   string name = 7;
   string environment_id = 8;
   string environment_name = 9;
+  repeated string feature_flag_tags = 10;
 }

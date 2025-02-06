@@ -23,6 +23,7 @@ import * as proto_feature_flag_trigger_pb from '../../../proto/feature/flag_trig
 import * as proto_account_search_filter_pb from '../../../proto/account/search_filter_pb';
 import * as proto_tag_tag_pb from '../../../proto/tag/tag_pb';
 import * as proto_experiment_goal_pb from '../../../proto/experiment/goal_pb';
+import * as proto_experiment_experiment_pb from '../../../proto/experiment/experiment_pb';
 import * as proto_coderef_code_reference_pb from '../../../proto/coderef/code_reference_pb';
 
 export class Event extends jspb.Message {
@@ -182,6 +183,7 @@ export namespace Event {
     EXPERIMENT_STARTED: 208;
     EXPERIMENT_FINISHED: 209;
     EXPERIMENT_ARCHIVED: 210;
+    EXPERIMENT_UPDATED: 211;
     ACCOUNT_CREATED: 300;
     ACCOUNT_ROLE_CHANGED: 301;
     ACCOUNT_ENABLED: 302;
@@ -265,6 +267,7 @@ export namespace Event {
     SUBSCRIPTION_SOURCE_TYPE_DELETED: 1005;
     SUBSCRIPTION_RENAMED: 1006;
     SUBSCRIPTION_UPDATED: 1007;
+    SUBSCRIPTION_FEATURE_FLAG_TAGS_UPDATED: 1008;
     ADMIN_SUBSCRIPTION_CREATED: 1100;
     ADMIN_SUBSCRIPTION_DELETED: 1101;
     ADMIN_SUBSCRIPTION_ENABLED: 1102;
@@ -2540,6 +2543,59 @@ export namespace ExperimentDescriptionChangedEvent {
   export type AsObject = {
     id: string;
     description: string;
+  };
+}
+
+export class ExperimentUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getStartAt(): number;
+  setStartAt(value: number): void;
+
+  getStopAt(): number;
+  setStopAt(value: number): void;
+
+  getStatus(): proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap];
+  setStatus(
+    value: proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap]
+  ): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ExperimentUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ExperimentUpdatedEvent
+  ): ExperimentUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ExperimentUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ExperimentUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: ExperimentUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): ExperimentUpdatedEvent;
+}
+
+export namespace ExperimentUpdatedEvent {
+  export type AsObject = {
+    id: string;
+    name: string;
+    description: string;
+    startAt: number;
+    stopAt: number;
+    status: proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap];
   };
 }
 
@@ -5188,6 +5244,11 @@ export class SubscriptionCreatedEvent extends jspb.Message {
   getName(): string;
   setName(value: string): void;
 
+  clearFeatureFlagTagsList(): void;
+  getFeatureFlagTagsList(): Array<string>;
+  setFeatureFlagTagsList(value: Array<string>): void;
+  addFeatureFlagTags(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SubscriptionCreatedEvent.AsObject;
   static toObject(
@@ -5216,6 +5277,7 @@ export namespace SubscriptionCreatedEvent {
     >;
     recipient?: proto_notification_recipient_pb.Recipient.AsObject;
     name: string;
+    featureFlagTagsList: Array<string>;
   };
 }
 
@@ -5424,6 +5486,43 @@ export namespace SubscriptionRenamedEvent {
   };
 }
 
+export class SubscriptionFeatureFlagTagsUpdatedEvent extends jspb.Message {
+  clearFeatureFlagTagsList(): void;
+  getFeatureFlagTagsList(): Array<string>;
+  setFeatureFlagTagsList(value: Array<string>): void;
+  addFeatureFlagTags(value: string, index?: number): string;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): SubscriptionFeatureFlagTagsUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SubscriptionFeatureFlagTagsUpdatedEvent
+  ): SubscriptionFeatureFlagTagsUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SubscriptionFeatureFlagTagsUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): SubscriptionFeatureFlagTagsUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: SubscriptionFeatureFlagTagsUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): SubscriptionFeatureFlagTagsUpdatedEvent;
+}
+
+export namespace SubscriptionFeatureFlagTagsUpdatedEvent {
+  export type AsObject = {
+    featureFlagTagsList: Array<string>;
+  };
+}
+
 export class SubscriptionUpdatedEvent extends jspb.Message {
   getId(): string;
   setId(value: string): void;
@@ -5451,6 +5550,11 @@ export class SubscriptionUpdatedEvent extends jspb.Message {
   clearDisabled(): void;
   getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  clearFeatureFlagTagsList(): void;
+  getFeatureFlagTagsList(): Array<string>;
+  setFeatureFlagTagsList(value: Array<string>): void;
+  addFeatureFlagTags(value: string, index?: number): string;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SubscriptionUpdatedEvent.AsObject;
@@ -5481,6 +5585,7 @@ export namespace SubscriptionUpdatedEvent {
       proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap]
     >;
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    featureFlagTagsList: Array<string>;
   };
 }
 

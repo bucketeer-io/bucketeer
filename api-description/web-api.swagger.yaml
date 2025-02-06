@@ -1532,11 +1532,11 @@ paths:
       parameters:
         - name: environmentId
           in: query
-          required: false
+          required: true
           type: string
         - name: featureId
           in: query
-          required: false
+          required: true
           type: string
         - name: repositoryName
           in: query
@@ -1588,7 +1588,7 @@ paths:
             - DESC
           default: ASC
         - name: fileExtension
-          description: File extension to filter code references (e.g., ".js", ".go", ".py")
+          description: File extension to filter code references (e.g., "js", "go", "py")
           in: query
           required: false
           type: string
@@ -1708,7 +1708,7 @@ paths:
           type: string
         - name: environmentId
           in: query
-          required: false
+          required: true
           type: string
       tags:
         - Code Reference
@@ -1768,7 +1768,7 @@ paths:
           type: string
         - name: environmentId
           in: query
-          required: false
+          required: true
           type: string
       tags:
         - Code Reference
@@ -3494,6 +3494,54 @@ paths:
             $ref: '#/definitions/experimentCreateExperimentRequest'
       tags:
         - experiment
+    patch:
+      summary: Update
+      description: Update an experiment.
+      operationId: web.v1.experiment.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/experimentUpdateExperimentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/experimentUpdateExperimentRequest'
+      tags:
+        - experiment
   /v1/experiments:
     get:
       summary: List
@@ -3903,6 +3951,15 @@ paths:
           in: query
           required: true
           type: string
+        - name: connectionType
+          in: query
+          required: false
+          type: string
+          enum:
+            - UNKNOWN
+            - EXPERIMENT
+            - OPERATION
+          default: UNKNOWN
       tags:
         - goal
   /v1/push:
@@ -5080,6 +5137,14 @@ definitions:
         type: string
       commitHash:
         type: string
+      fileExtension:
+        type: string
+    required:
+      - environmentId
+      - filePath
+      - lineNumber
+      - codeSnippet
+      - contentHash
   ExperimentGoalReference:
     type: object
     properties:
@@ -5102,6 +5167,17 @@ definitions:
       - Action_ON
       - Action_OFF
     default: Action_UNKNOWN
+  GoalAutoOpsRuleReference:
+    type: object
+    properties:
+      id:
+        type: string
+      featureId:
+        type: string
+      featureName:
+        type: string
+      autoOpsStatus:
+        $ref: '#/definitions/autoopsAutoOpsStatus'
   GoalConnectionType:
     type: string
     enum:
@@ -5109,6 +5185,19 @@ definitions:
       - EXPERIMENT
       - OPERATION
     default: UNKNOWN
+  GoalExperimentReference:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      featureId:
+        type: string
+      featureName:
+        type: string
+      status:
+        $ref: '#/definitions/experimentExperimentStatus'
   ListExperimentsResponseSummary:
     type: object
     properties:
@@ -5187,6 +5276,11 @@ definitions:
     properties:
       role:
         $ref: '#/definitions/AccountV2RoleOrganization'
+  UpdateExperimentRequestUpdatedStatus:
+    type: object
+    properties:
+      status:
+        $ref: '#/definitions/experimentExperimentStatus'
   UpdateFeatureTargetingRequestFrom:
     type: string
     enum:
@@ -5940,37 +6034,6 @@ definitions:
       expiry:
         type: string
         format: int64
-  autoopsActionType:
-    type: string
-    enum:
-      - UNKNOWN
-      - ENABLE
-      - DISABLE
-    default: UNKNOWN
-  autoopsAutoOpsRule:
-    type: object
-    properties:
-      id:
-        type: string
-      featureId:
-        type: string
-      opsType:
-        $ref: '#/definitions/autoopsOpsType'
-      clauses:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/bucketeerautoopsClause'
-      createdAt:
-        type: string
-        format: int64
-      updatedAt:
-        type: string
-        format: int64
-      deleted:
-        type: boolean
-      autoOpsStatus:
-        $ref: '#/definitions/autoopsAutoOpsStatus'
   autoopsAutoOpsStatus:
     type: string
     enum:
@@ -5979,22 +6042,6 @@ definitions:
       - FINISHED
       - STOPPED
     default: WAITING
-  autoopsOpsType:
-    type: string
-    enum:
-      - TYPE_UNKNOWN
-      - SCHEDULE
-      - EVENT_RATE
-    default: TYPE_UNKNOWN
-  bucketeerautoopsClause:
-    type: object
-    properties:
-      id:
-        type: string
-      clause:
-        $ref: '#/definitions/protobufAny'
-      actionType:
-        $ref: '#/definitions/autoopsActionType'
   bucketeerenvironmentOrganization:
     type: object
     properties:
@@ -6145,6 +6192,8 @@ definitions:
         $ref: '#/definitions/TagEntityType'
       environmentId:
         type: string
+      environmentName:
+        type: string
   coderefCodeReference:
     type: object
     properties:
@@ -6186,6 +6235,11 @@ definitions:
       sourceUrl:
         type: string
         title: URL to view the code in the repository
+      branchUrl:
+        type: string
+      fileExtension:
+        type: string
+        title: File extension (e.g., go, ts, cpp)
   coderefCreateCodeReferenceRequest:
     type: object
     properties:
@@ -6216,6 +6270,19 @@ definitions:
         type: string
       commitHash:
         type: string
+      fileExtension:
+        type: string
+    required:
+      - featureId
+      - environmentId
+      - filePath
+      - lineNumber
+      - codeSnippet
+      - contentHash
+      - repositoryName
+      - repositoryOwner
+      - repositoryType
+      - fileExtension
   coderefCreateCodeReferenceResponse:
     type: object
     properties:
@@ -6997,12 +7064,12 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/experimentExperiment'
+          $ref: '#/definitions/GoalExperimentReference'
       autoOpsRules:
         type: array
         items:
           type: object
-          $ref: '#/definitions/autoopsAutoOpsRule'
+          $ref: '#/definitions/GoalAutoOpsRuleReference'
   experimentListExperimentsRequestOrderBy:
     type: string
     enum:
@@ -7073,8 +7140,45 @@ definitions:
     type: object
   experimentStopExperimentResponse:
     type: object
+  experimentUpdateExperimentRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      changeExperimentPeriodCommand:
+        $ref: '#/definitions/experimentChangeExperimentPeriodCommand'
+        description: deprecated
+      changeNameCommand:
+        $ref: '#/definitions/experimentChangeExperimentNameCommand'
+        description: deprecated
+      changeDescriptionCommand:
+        $ref: '#/definitions/experimentChangeExperimentDescriptionCommand'
+        description: deprecated
+      environmentId:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      startAt:
+        type: string
+        format: int64
+      stopAt:
+        type: string
+        format: int64
+      archived:
+        type: boolean
+        description: if true, the experiment will be archived
+      status:
+        $ref: '#/definitions/UpdateExperimentRequestUpdatedStatus'
+    required:
+      - id
+      - environmentId
   experimentUpdateExperimentResponse:
     type: object
+    properties:
+      experiment:
+        $ref: '#/definitions/experimentExperiment'
   experimentUpdateGoalRequest:
     type: object
     properties:
@@ -7875,6 +7979,10 @@ definitions:
         $ref: '#/definitions/notificationRecipient'
       name:
         type: string
+      featureFlagTags:
+        type: array
+        items:
+          type: string
   notificationCreateSubscriptionRequest:
     type: object
     properties:
@@ -7890,6 +7998,10 @@ definitions:
           $ref: '#/definitions/SubscriptionSourceType'
       recipient:
         $ref: '#/definitions/notificationRecipient'
+      featureFlagTags:
+        type: array
+        items:
+          type: string
     required:
       - environmentId
       - name
@@ -8078,8 +8190,19 @@ definitions:
         type: string
       environmentName:
         type: string
+      featureFlagTags:
+        type: array
+        items:
+          type: string
   notificationUpdateAdminSubscriptionResponse:
     type: object
+  notificationUpdateSubscriptionFeatureFlagTagsCommand:
+    type: object
+    properties:
+      featureFlagTags:
+        type: array
+        items:
+          type: string
   notificationUpdateSubscriptionRequest:
     type: object
     properties:
@@ -8106,6 +8229,13 @@ definitions:
         type: boolean
         description: if true, the subscription is disabled, otherwise enabled.
         title: disabled
+      featureFlagTags:
+        type: array
+        items:
+          type: string
+      updateSubscriptionFeatureTagsCommand:
+        $ref: '#/definitions/notificationUpdateSubscriptionFeatureFlagTagsCommand'
+        description: Deprecated. Use feature_flag_tags instead.
     required:
       - id
       - environmentId

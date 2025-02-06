@@ -4,6 +4,7 @@
 import * as jspb from 'google-protobuf';
 import * as proto_coderef_code_reference_pb from '../../proto/coderef/code_reference_pb';
 import * as google_api_annotations_pb from '../../google/api/annotations_pb';
+import * as google_api_field_behavior_pb from '../../google/api/field_behavior_pb';
 import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-openapiv2/options/annotations_pb';
 
 export class GetCodeReferenceRequest extends jspb.Message {
@@ -253,6 +254,9 @@ export class CreateCodeReferenceRequest extends jspb.Message {
   getCommitHash(): string;
   setCommitHash(value: string): void;
 
+  getFileExtension(): string;
+  setFileExtension(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateCodeReferenceRequest.AsObject;
   static toObject(
@@ -288,6 +292,7 @@ export namespace CreateCodeReferenceRequest {
     repositoryType: proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap[keyof proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap];
     repositoryBranch: string;
     commitHash: string;
+    fileExtension: string;
   };
 }
 
@@ -365,6 +370,9 @@ export class UpdateCodeReferenceRequest extends jspb.Message {
   getCommitHash(): string;
   setCommitHash(value: string): void;
 
+  getFileExtension(): string;
+  setFileExtension(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateCodeReferenceRequest.AsObject;
   static toObject(
@@ -400,6 +408,7 @@ export namespace UpdateCodeReferenceRequest {
     repositoryType: proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap[keyof proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap];
     repositoryBranch: string;
     commitHash: string;
+    fileExtension: string;
   };
 }
 
