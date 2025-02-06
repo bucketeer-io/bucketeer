@@ -17,7 +17,6 @@ package v2
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -25,7 +24,6 @@ import (
 )
 
 type AccountStorage interface {
-	RunInTransaction(ctx context.Context, f func() error) error
 	CreateAccountV2(ctx context.Context, a *domain.AccountV2) error
 	UpdateAccountV2(ctx context.Context, a *domain.AccountV2) error
 	DeleteAccountV2(ctx context.Context, a *domain.AccountV2) error
@@ -53,29 +51,10 @@ type AccountStorage interface {
 	) ([]*proto.APIKey, int, int64, error)
 }
 
-const transactionKey = "transaction"
-
 type accountStorage struct {
 	client mysql.Client
 }
 
 func NewAccountStorage(client mysql.Client) AccountStorage {
 	return &accountStorage{client}
-}
-
-func (s *accountStorage) RunInTransaction(ctx context.Context, f func() error) error {
-	tx, err := s.client.BeginTx(ctx)
-	if err != nil {
-		return fmt.Errorf("account: begin tx: %w", err)
-	}
-	ctx = context.WithValue(ctx, transactionKey, tx)
-	return s.client.RunInTransaction(ctx, tx, f)
-}
-
-func (s *accountStorage) qe(ctx context.Context) mysql.QueryExecer {
-	tx, ok := ctx.Value(transactionKey).(mysql.Transaction)
-	if ok {
-		return tx
-	}
-	return s.client
 }
