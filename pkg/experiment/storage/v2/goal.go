@@ -246,7 +246,7 @@ func (s *goalStorage) ListGoals(
 	prepareCountArgs = append(prepareCountArgs, environmentId)
 	prepareCountArgs = append(prepareCountArgs, whereArgs...)
 	countQuery := fmt.Sprintf(countGoalSQL, countConditionSQL, whereSQL)
-	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, prepareArgs...).Scan(&totalCount)
+	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, prepareCountArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

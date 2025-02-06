@@ -276,7 +276,9 @@ func TestCreateExperimentNoCommandMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *experimentService) {
-				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Goal{}, nil)
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{Id: "goalId", ConnectionType: experimentproto.Goal_EXPERIMENT},
+				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
