@@ -339,7 +339,10 @@ func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
 	if err != nil {
 		return err
 	}
-	return s.auditlogStorage.CreateAuditLog(ctx, domainauditlog.NewAuditLog(updateAccountEvent, storage.AdminEnvironmentID))
+	return s.auditlogStorage.CreateAuditLog(
+		ctx,
+		domainauditlog.NewAuditLog(updateAccountEvent, storage.AdminEnvironmentID),
+	)
 }
 
 func (s *AccountService) upsertTags(
