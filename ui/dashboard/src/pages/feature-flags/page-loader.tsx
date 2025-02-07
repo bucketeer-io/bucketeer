@@ -12,6 +12,7 @@ import AddFlagModal from './flags-modal/add-flag-modal';
 import ArchiveModal from './flags-modal/archive-modal';
 import ArchiveWarning from './flags-modal/archive-modal/archive-warning';
 import CloneFlagModal from './flags-modal/clone-flag-modal';
+import ConfirmationRequiredModal from './flags-modal/confirm-required-modal';
 import PageContent from './page-content';
 import { FlagActionType, FlagsTemp } from './types';
 
@@ -35,6 +36,13 @@ const PageLoader = () => {
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
+
+  const [
+    openConfirmRequiredModal,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    onOpenConfirmRequiredModal,
+    onCloseConfirmRequiredModal
+  ] = useToggleOpen(true);
 
   const onHandleActions = (flag: FlagsTemp, type: FlagActionType) => {
     if (type === 'CLONE') {
@@ -91,6 +99,13 @@ const PageLoader = () => {
       {isAdd && <AddFlagModal isOpen={isAdd} onClose={onCloseActionModal} />}
       {isClone && (
         <CloneFlagModal isOpen={isClone} onClose={onCloseActionModal} />
+      )}
+      {openConfirmRequiredModal && (
+        <ConfirmationRequiredModal
+          isOpen={openConfirmRequiredModal}
+          onClose={onCloseConfirmRequiredModal}
+          onSubmit={() => {}}
+        />
       )}
     </>
   );

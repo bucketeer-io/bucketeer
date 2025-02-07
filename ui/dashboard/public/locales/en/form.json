@@ -88,5 +88,6 @@
     "active-now": "Active now",
     "schedule": "Schedule",
     "start-at": "Start at"
-  }
+  },
+  "select-date": "Select date"
 }
