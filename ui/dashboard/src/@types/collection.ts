@@ -22,7 +22,8 @@ export type OrderBy =
   | 'ENVIRONMENT'
   | 'CONNECTION_TYPE'
   | 'CONNECTIONS'
-  | 'USERS';
+  | 'USERS'
+  | 'TAGS';
 
 export type OrderDirection = 'ASC' | 'DESC';
 

@@ -24,5 +24,6 @@ export const sortingListFields: SortingListFields = {
   environment: 'ENVIRONMENT',
   connectionType: 'CONNECTION_TYPE',
   connections: 'CONNECTIONS',
-  users: 'USERS'
+  users: 'USERS',
+  tags: 'TAGS'
 };
