@@ -419,15 +419,16 @@ const CodeAccordion = ({ codeRef, featureId }: CodeAccordionProps) => {
   return (
     <div className="rounded-md bg-[#F8FAFC]">
       <button
-        className="w-full flex justify-between items-center px-5 py-4 text-gray-700 cursor-pointer"
+        className="w-full flex justify-between items-center px-5 h-14 text-gray-700 cursor-pointer"
         onClick={() => setIsOpen(!isOpen)}
       >
         <span>{codeRef.filePath}</span>
-        <div className="flex items-center space-x-5">
+        <div className="flex items-center space-x-4">
           <a
             href={codeRef.sourceUrl}
-            className="text-primary underline"
+            className="text-primary underline px-2 py-1"
             target="_blank"
+            onClick={(e) => e.stopPropagation()}
           >
             {f(messages.codeRefs.viewInSource)}
           </a>
