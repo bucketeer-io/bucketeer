@@ -49,7 +49,7 @@ export const FlagIconWrapper = ({
   </div>
 );
 
-const FlagStatus = ({ status }: { status: FlagStatusType }) => (
+export const FlagStatus = ({ status }: { status: FlagStatusType }) => (
   <div
     className={cn(
       'flex items-center w-fit min-w-fit gap-x-1 px-2 py-1.5 rounded-[3px] relative',

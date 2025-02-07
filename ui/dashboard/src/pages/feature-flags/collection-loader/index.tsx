@@ -8,7 +8,7 @@ import { EmptyCollection } from '../collection-layout/empty-collection';
 import GridViewCollection from '../collection-layout/grid-view-collection';
 import { FlagActionType, FlagsTemp, FlagsViewType } from '../types';
 
-const mockFlags: FlagsTemp[] = [
+export const mockFlags: FlagsTemp[] = [
   {
     id: 'flag-1',
     name: 'Flag using boolean',

@@ -87,7 +87,14 @@
     "placeholder-variation": "Enter variation",
     "active-now": "Active now",
     "schedule": "Schedule",
-    "start-at": "Start at"
+    "start-at": "Start at",
+    "situation": "Situation",
+    "conditioner": "Conditioner",
+    "value-type": "{{type}} Value",
+    "date": "Date",
+    "compare": "Compare",
+    "user-segment": "User Segment",
+    "feature-flag": "Feature Flag"
   },
   "select-date": "Select date"
 }

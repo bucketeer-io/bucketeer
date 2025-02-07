@@ -55,7 +55,7 @@ export const useColumns = ({
 
         return (
           <FlagNameElement
-            link={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${id}`}
+            link={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${id}/targeting`}
             name={name}
             id={id}
             icon={getDataTypeIcon(type)}

@@ -342,7 +342,7 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
                 name={`serveOn`}
                 render={({ field }) => (
                   <Form.Item className="py-2.5 flex-1">
-                    <Form.Label required className="!mb-2">
+                    <Form.Label className="!mb-2">
                       <Trans
                         i18nKey={'form:feature-flags.serve-targeting'}
                         values={{
@@ -413,7 +413,7 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
                 name={`serveOff`}
                 render={({ field }) => (
                   <Form.Item className="py-2.5 flex-1">
-                    <Form.Label required className="!mb-2">
+                    <Form.Label className="!mb-2">
                       <Trans
                         i18nKey={'form:feature-flags.serve-targeting'}
                         values={{

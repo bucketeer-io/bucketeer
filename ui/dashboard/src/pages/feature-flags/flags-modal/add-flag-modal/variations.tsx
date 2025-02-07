@@ -54,8 +54,6 @@ const Variations = ({
 
   return (
     <>
-      <p className="text-gray-800 typo-head-bold-small">{t('environment')}</p>
-
       {variations.map((item, variationIndex) => (
         <div key={variationIndex} className="flex flex-col w-full">
           <Form.Field
@@ -113,7 +111,7 @@ const Variations = ({
                 name={`variations.${variationIndex}.name`}
                 render={({ field }) => (
                   <Form.Item className="py-0">
-                    <Form.Label required>{t('name')}</Form.Label>
+                    <Form.Label>{t('name')}</Form.Label>
                     <Form.Control>
                       <Input
                         {...field}
@@ -130,7 +128,7 @@ const Variations = ({
                 name={`variations.${variationIndex}.description`}
                 render={({ field }) => (
                   <Form.Item className="py-0">
-                    <Form.Label required>{t('form:description')}</Form.Label>
+                    <Form.Label>{t('form:description')}</Form.Label>
                     <Form.Control>
                       <TextArea
                         {...field}
