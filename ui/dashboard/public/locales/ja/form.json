@@ -69,5 +69,24 @@
   "enter-user-ids": "Enter user IDs",
   "update-user-segment": "Updating this field will replace the current list with the new one.",
   "update-user-segment-warning": "<p>The user ID list can't be updated because {{count}} flag is using it. Remove the segment from the flag before updating it.</p>",
-  "placeholder-enter-user-ids": "Enter IDs separated by commas (E.g., userId1, userId2, userId3,...)"
+  "placeholder-enter-user-ids": "Enter IDs separated by commas (E.g., userId1, userId2, userId3,...)",
+  "comment-for-update": "Comment for update",
+  "placeholder-comment": "Enter comment",
+  "origin-env": "Origin Environment",
+  "destination-env": "Destination Environment",
+  "feature-flags": {
+    "clone-title": "Clone Feature Flag",
+    "clone-desc": "It will copy the full targeting configuration, including on/off variation from the original flag to the new flag.",
+    "flag-id": "Flag ID",
+    "placeholder-flag": "Enter flag id",
+    "flag-variations": "Flag Variations",
+    "flag-type": "Flag Type",
+    "variation": "Variation {{index}}",
+    "add-variation": "Add Variation",
+    "serve-targeting": "Serve when targeting is {{state}}",
+    "placeholder-variation": "Enter variation",
+    "active-now": "Active now",
+    "schedule": "Schedule",
+    "start-at": "Start at"
+  }
 }

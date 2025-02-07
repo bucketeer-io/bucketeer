@@ -1,4 +1,5 @@
 export const ID_NEW = 'new';
+export const ID_CLONE = 'clone';
 
 export const PAGE_PATH_ROOT = '/';
 export const PAGE_PATH_NEW = '/' + ID_NEW;
@@ -22,7 +23,7 @@ export const PAGE_PATH_PROJECTS = '/projects';
 export const PAGE_PATH_ORGANIZATIONS = '/organizations';
 export const PAGE_PATH_ENVIRONMENTS = '/environments';
 
-export const PAGE_PATH_FEATURE_CLONE = '/clone';
+export const PAGE_PATH_FEATURE_CLONE = '/' + ID_CLONE;
 export const PAGE_PATH_FEATURE_TARGETING = '/targeting';
 export const PAGE_PATH_FEATURE_VARIATION = '/variation';
 export const PAGE_PATH_FEATURE_SETTING = '/setting';

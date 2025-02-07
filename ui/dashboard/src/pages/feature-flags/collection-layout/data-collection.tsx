@@ -1,6 +1,7 @@
 import {
   IconArchiveOutlined,
-  IconMoreHorizOutlined
+  IconMoreHorizOutlined,
+  IconSaveAsFilled
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -13,13 +14,12 @@ import {
   IconFlagSwitch,
   IconFlagJSON,
   IconFlagNumber,
-  IconFlagString,
-  IconTrash
+  IconFlagString
 } from '@icons';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
-import { FlagsTemp, FlagDataType } from '../types';
+import { FlagsTemp, FlagDataType, FlagActionType } from '../types';
 import {
   FlagNameElement,
   FlagOperationsElement,
@@ -37,7 +37,7 @@ export const getDataTypeIcon = (type: FlagDataType) => {
 export const useColumns = ({
   onActions
 }: {
-  onActions: (item: FlagsTemp, type: unknown) => void;
+  onActions: (item: FlagsTemp, type: FlagActionType) => void;
 }): ColumnDef<FlagsTemp>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
@@ -130,30 +130,30 @@ export const useColumns = ({
       },
       enableSorting: false,
       cell: ({ row }) => {
-        const goal = row.original;
+        const flag = row.original;
 
         return (
           <Popover
             options={compact([
               searchOptions.status === 'ARCHIVED'
                 ? {
-                    label: `${t('table:popover.unarchive-goal')}`,
+                    label: `${t('table:popover.unarchive-flag')}`,
                     icon: IconArchiveOutlined,
                     value: 'UNARCHIVE'
                   }
                 : {
-                    label: `${t('table:popover.archive-goal')}`,
+                    label: `${t('table:popover.archive-flag')}`,
                     icon: IconArchiveOutlined,
                     value: 'ARCHIVE'
                   },
               {
-                label: `${t('table:popover.delete-goal')}`,
-                icon: IconTrash,
-                value: 'DELETE'
+                label: `${t('table:popover.clone-flag')}`,
+                icon: IconSaveAsFilled,
+                value: 'CLONE'
               }
             ])}
             icon={IconMoreHorizOutlined}
-            onClick={value => onActions(goal, value as unknown)}
+            onClick={value => onActions(flag, value as FlagActionType)}
             align="end"
           />
         );

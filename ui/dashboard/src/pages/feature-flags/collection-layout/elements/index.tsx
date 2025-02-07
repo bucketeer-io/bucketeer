@@ -90,7 +90,7 @@ export const FlagVariationPolygon = ({
 }) => (
   <div
     className={cn(
-      'flex-center size-[14px] border border-white rounded-sm rotate-45',
+      'flex-center size-[14px] border border-white rounded rotate-45',
       {
         'bg-accent-blue-500': color === 'blue',
         'bg-accent-pink-500': color === 'pink',
@@ -125,7 +125,9 @@ export const FlagNameElement = ({
         <FlagIconWrapper icon={IconUserSettings} />
         <FlagStatus status={status} />
       </div>
-      <p className="typo-para-tiny leading-[14px] text-gray-500 truncate">{id}</p>
+      <p className="typo-para-tiny leading-[14px] text-gray-500 truncate">
+        {id}
+      </p>
     </div>
   </div>
 );

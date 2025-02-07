@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
-import { FlagTabType, FlagsViewType } from './types';
+import { FlagActionType, FlagTabType, FlagsTemp, FlagsViewType } from './types';
 
 const GridSwitchButton = ({
   icon,
@@ -46,7 +46,13 @@ const GridSwitchButton = ({
   );
 };
 
-const PageContent = ({ onAdd }: { onAdd: () => void }) => {
+const PageContent = ({
+  onAdd,
+  onHandleActions
+}: {
+  onAdd: () => void;
+  onHandleActions: (item: FlagsTemp, type: FlagActionType) => void;
+}) => {
   const { t } = useTranslation(['common']);
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<AnyObject> = searchOptions;
@@ -124,7 +130,10 @@ const PageContent = ({ onAdd }: { onAdd: () => void }) => {
         </TabsList>
 
         <TabsContent value={filters.status}>
-          <CollectionLoader viewType={viewType} />
+          <CollectionLoader
+            viewType={viewType}
+            onHandleActions={onHandleActions}
+          />
         </TabsContent>
       </Tabs>
     </PageLayout.Content>

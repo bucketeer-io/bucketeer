@@ -31,8 +31,9 @@
     "edit-segment": "Edit User Segment",
     "delete-segment": "Delete User Segment",
     "download-segment": "Download User Segment",
-    "archive-flags": "Archive Flags",
-    "clone-flags": "Clone Flags"
+    "archive-flag": "Archive Feature Flag",
+    "unarchive-flag": "Unarchive Feature Flag",
+    "clone-flag": "Clone Feature Flag"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -95,5 +96,12 @@
   },
   "user-segment": {
     "delete-user-segment-desc": "The <bold>{{name}}</bold> is going to be deleted permanently. Are you sure you want to proceed?"
+  },
+  "feature-flags": {
+    "confirm-archive-desc": "This will archive and return the default value defined in your code for all users. We recommend removing the code references to \"<text>{{name}}</text>\" from your application before archiving.",
+    "confirm-unarchive-desc": "Are you sure you want to unarchive the feature flag \"<text>{{name}}</text>\"?",
+    "archive-warning": "It is receiving one more requests in the last <text>{{days}}.</text>",
+    "confirm-required": "Confirmation Required",
+    "confirm-required-desc": "This will make changes to the flag and increment the version."
   }
 }

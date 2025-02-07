@@ -6,7 +6,7 @@ import PageLayout from 'elements/page-layout';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import GridViewCollection from '../collection-layout/grid-view-collection';
-import { FlagsTemp, FlagsViewType } from '../types';
+import { FlagActionType, FlagsTemp, FlagsViewType } from '../types';
 
 const mockFlags: FlagsTemp[] = [
   {
@@ -59,8 +59,14 @@ const mockFlags: FlagsTemp[] = [
   }
 ];
 
-const CollectionLoader = ({ viewType }: { viewType: FlagsViewType }) => {
-  const columns = useColumns({ onActions: () => {} });
+const CollectionLoader = ({
+  viewType,
+  onHandleActions
+}: {
+  viewType: FlagsViewType;
+  onHandleActions: (item: FlagsTemp, type: FlagActionType) => void;
+}) => {
+  const columns = useColumns({ onActions: onHandleActions });
 
   const isError = false,
     isLoading = false;
@@ -96,7 +102,7 @@ const CollectionLoader = ({ viewType }: { viewType: FlagsViewType }) => {
       )} */}
         </>
       ) : (
-        <GridViewCollection data={mockFlags} />
+        <GridViewCollection data={mockFlags} onActions={onHandleActions} />
       )}
     </>
   );

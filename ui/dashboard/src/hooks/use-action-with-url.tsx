@@ -15,10 +15,13 @@ const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
   const navigate = useNavigate();
   const { notify } = useToast();
   const location = useLocation();
-
   const { state } = location;
   const isAdd = useMemo(() => action === ID_NEW, [action]);
-  const isEdit = useMemo(() => action && !isAdd, [action, isAdd]);
+  const isClone = useMemo(() => action?.includes('clone'), [action]);
+  const isEdit = useMemo(
+    () => action && !isAdd && !isClone,
+    [action, isAdd, isClone]
+  );
 
   const onOpenAddModal = () =>
     navigate(addPath || `${location.pathname}/${ID_NEW}`);
@@ -43,6 +46,7 @@ const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
     id: action,
     isAdd,
     isEdit,
+    isClone,
     state,
     onOpenAddModal,
     onOpenEditModal,

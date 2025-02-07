@@ -36,7 +36,6 @@ import { getTokenStorage } from 'storage/token';
 import { v4 as uuid } from 'uuid';
 import { ConsoleAccount } from '@types';
 import APIKeysPage from 'pages/api-keys';
-import FeatureFlagsPage from 'pages/feature-flags';
 import MembersPage from 'pages/members';
 import NotFoundPage from 'pages/not-found';
 import NotificationsPage from 'pages/notifications';
@@ -48,7 +47,12 @@ import SelectOrganizationPage from 'pages/signin/organization';
 import UserSegmentsPage from 'pages/user-segments';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
-import { GoalsRoot, OrganizationsRoot, ProjectsRoot } from './routers';
+import {
+  FeatureFlagsRoot,
+  GoalsRoot,
+  OrganizationsRoot,
+  ProjectsRoot
+} from './routers';
 
 export const AppLoading = () => (
   <div className="flex items-center justify-center h-screen w-full">
@@ -157,7 +161,11 @@ export const EnvironmentRoot = memo(
             <h3>{`403 Access denied`}</h3>
           </Route>
         )}
-        <Route path={`${PAGE_PATH_FEATURES}`} element={<FeatureFlagsPage />} />
+
+        <Route
+          path={`${PAGE_PATH_FEATURES}/*`}
+          element={<FeatureFlagsRoot />}
+        />
         <Route path={`${PAGE_PATH_SETTINGS}`} element={<SettingsPage />} />
         <Route path={`${PAGE_PATH_PROJECTS}/*`} element={<ProjectsRoot />} />
         <Route path={`${PAGE_PATH_APIKEYS}`} element={<APIKeysPage />} />
