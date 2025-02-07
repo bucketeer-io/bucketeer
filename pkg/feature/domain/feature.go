@@ -957,13 +957,13 @@ func updateStrategyVariationID(varID, uID string, s *feature.Strategy) error {
 // Update returns a new Feature with the updated values.
 func (f *Feature) Update(
 	name, description *wrapperspb.StringValue,
-	tags []string,
+	tags *feature.StringListValue,
 	enabled *wrapperspb.BoolValue,
 	archived *wrapperspb.BoolValue,
-	variations []*feature.Variation,
-	prerequisites []*feature.Prerequisite,
-	targets []*feature.Target,
-	rules []*feature.Rule,
+	variations *feature.VariationListValue,
+	prerequisites *feature.PrerequisiteListValue,
+	targets *feature.TargetListValue,
+	rules *feature.RuleListValue,
 	defaultStrategy *feature.Strategy,
 	offVariation *wrapperspb.StringValue,
 ) (*Feature, error) {
@@ -979,7 +979,7 @@ func (f *Feature) Update(
 		updated.Description = description.Value
 	}
 	if tags != nil {
-		updated.Tags = tags
+		updated.Tags = tags.Values
 		incVersion = true
 	}
 	if enabled != nil {
@@ -1007,19 +1007,19 @@ func (f *Feature) Update(
 		incVersion = true
 	}
 	if variations != nil {
-		updated.Variations = variations
+		updated.Variations = variations.Values
 		incVersion = true
 	}
 	if prerequisites != nil {
-		updated.Prerequisites = prerequisites
+		updated.Prerequisites = prerequisites.Values
 		incVersion = true
 	}
 	if targets != nil {
-		updated.Targets = targets
+		updated.Targets = targets.Values
 		incVersion = true
 	}
 	if rules != nil {
-		updated.Rules = rules
+		updated.Rules = rules.Values
 		incVersion = true
 	}
 	if defaultStrategy != nil {

@@ -47,3 +47,36 @@ export namespace Rule {
     clausesList: Array<proto_feature_clause_pb.Clause.AsObject>;
   };
 }
+
+export class RuleListValue extends jspb.Message {
+  clearValuesList(): void;
+  getValuesList(): Array<Rule>;
+  setValuesList(value: Array<Rule>): void;
+  addValues(value?: Rule, index?: number): Rule;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): RuleListValue.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: RuleListValue
+  ): RuleListValue.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: RuleListValue,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): RuleListValue;
+  static deserializeBinaryFromReader(
+    message: RuleListValue,
+    reader: jspb.BinaryReader
+  ): RuleListValue;
+}
+
+export namespace RuleListValue {
+  export type AsObject = {
+    valuesList: Array<Rule.AsObject>;
+  };
+}

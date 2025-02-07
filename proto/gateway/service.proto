@@ -26,11 +26,11 @@ import "proto/feature/evaluation.proto";
 import "proto/feature/feature.proto";
 import "proto/feature/service.proto";
 import "proto/feature/variation.proto";
+import "proto/feature/strategy.proto";
 import "proto/feature/prerequisite.proto";
 import "proto/feature/rule.proto";
-import "proto/feature/strategy.proto";
-import "proto/feature/target.proto";
 import "proto/feature/segment.proto";
+import "proto/feature/target.proto";
 import "proto/push/push.proto";
 import "proto/push/service.proto";
 import "proto/account/service.proto";
@@ -168,18 +168,19 @@ message ListFeaturesResponse {
 
 message UpdateFeatureRequest {
   string comment = 1;
-  string id = 2;
-  google.protobuf.StringValue name = 3;
-  google.protobuf.StringValue description = 4;
-  repeated string tags = 5;
-  google.protobuf.BoolValue enabled = 6;
-  google.protobuf.BoolValue archived = 7;
-  repeated feature.Variation variations = 8;
-  repeated feature.Prerequisite prerequisites = 9;
-  repeated feature.Target targets = 10;
-  repeated feature.Rule rules = 11;
-  feature.Strategy default_strategy = 12;
-  google.protobuf.StringValue off_variation = 13;
+  string environment_id = 2;
+  string id = 3;
+  google.protobuf.StringValue name = 4;
+  google.protobuf.StringValue description = 5;
+  feature.StringListValue tags = 6;
+  google.protobuf.BoolValue enabled = 7;
+  google.protobuf.BoolValue archived = 8;
+  feature.VariationListValue variations = 9;
+  feature.PrerequisiteListValue prerequisites = 10;
+  feature.TargetListValue targets = 11;
+  feature.RuleListValue rules = 12;
+  feature.Strategy default_strategy = 13;
+  google.protobuf.StringValue off_variation = 14;
 }
 
 message UpdateFeatureResponse {

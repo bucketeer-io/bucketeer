@@ -71,3 +71,7 @@ message Tag {
   int64 updated_at = 3;
   string name = 4;
 }
+
+message StringListValue {
+  repeated string values = 1;
+}

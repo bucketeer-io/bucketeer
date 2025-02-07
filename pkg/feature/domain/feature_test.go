@@ -1940,12 +1940,12 @@ func TestUpdate(t *testing.T) {
 		name            *wrapperspb.StringValue
 		description     *wrapperspb.StringValue
 		enabled         *wrapperspb.BoolValue
-		tags            []string
+		tags            *proto.StringListValue
 		archived        *wrapperspb.BoolValue
-		variations      []*proto.Variation
-		prerequisites   []*proto.Prerequisite
-		targets         []*proto.Target
-		rules           []*proto.Rule
+		variations      *proto.VariationListValue
+		prerequisites   *proto.PrerequisiteListValue
+		targets         *proto.TargetListValue
+		rules           *proto.RuleListValue
 		defaultStrategy *proto.Strategy
 		offVariation    *wrapperspb.StringValue
 		expectedFunc    func() *Feature
@@ -1993,17 +1993,19 @@ func TestUpdate(t *testing.T) {
 			description: &wrapperspb.StringValue{Value: "d2"},
 			enabled:     &wrapperspb.BoolValue{Value: true},
 			archived:    &wrapperspb.BoolValue{Value: true},
-			tags:        []string{"t3"},
-			variations: []*feature.Variation{
+			tags:        &proto.StringListValue{Values: []string{"t3"}},
+			variations: &proto.VariationListValue{Values: []*feature.Variation{
 				{Id: id1.String(), Value: "true", Name: "n3"},
 				{Id: id2.String(), Value: "false", Name: "n4"},
-			},
-			prerequisites: []*feature.Prerequisite{{FeatureId: "f1", VariationId: "v1"}},
-			targets: []*feature.Target{
+			}},
+			prerequisites: &proto.PrerequisiteListValue{Values: []*feature.Prerequisite{
+				{FeatureId: "f1", VariationId: "v1"},
+			}},
+			targets: &proto.TargetListValue{Values: []*feature.Target{
 				{Variation: id1.String(), Users: []string{"uid1"}},
 				{Variation: id2.String(), Users: []string{"uid2"}},
-			},
-			rules: []*feature.Rule{
+			}},
+			rules: &proto.RuleListValue{Values: []*feature.Rule{
 				{
 					Id: id3.String(),
 					Strategy: &feature.Strategy{
@@ -2019,7 +2021,7 @@ func TestUpdate(t *testing.T) {
 						},
 					},
 				},
-			},
+			}},
 			defaultStrategy: &feature.Strategy{
 				Type: feature.Strategy_ROLLOUT,
 				RolloutStrategy: &feature.RolloutStrategy{

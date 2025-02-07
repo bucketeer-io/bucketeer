@@ -1678,38 +1678,26 @@ definitions:
     properties:
       comment:
         type: string
+      environmentId:
+        type: string
       name:
         type: string
       description:
         type: string
       tags:
-        type: array
-        items:
-          type: string
+        $ref: '#/definitions/featureStringListValue'
       enabled:
         type: boolean
       archived:
         type: boolean
       variations:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/bucketeerfeatureVariation'
+        $ref: '#/definitions/featureVariationListValue'
       prerequisites:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featurePrerequisite'
+        $ref: '#/definitions/featurePrerequisiteListValue'
       targets:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureTarget'
+        $ref: '#/definitions/featureTargetListValue'
       rules:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureRule'
+        $ref: '#/definitions/featureRuleListValue'
       defaultStrategy:
         $ref: '#/definitions/featureStrategy'
       offVariation:
@@ -2466,6 +2454,14 @@ definitions:
         type: string
       variationId:
         type: string
+  featurePrerequisiteListValue:
+    type: object
+    properties:
+      values:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featurePrerequisite'
   featureReason:
     type: object
     properties:
@@ -2511,6 +2507,14 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureClause'
+  featureRuleListValue:
+    type: object
+    properties:
+      values:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureRule'
   featureSegmentUser:
     type: object
     properties:
@@ -2558,6 +2562,13 @@ definitions:
       - FIXED
       - ROLLOUT
     default: FIXED
+  featureStringListValue:
+    type: object
+    properties:
+      values:
+        type: array
+        items:
+          type: string
   featureTarget:
     type: object
     properties:
@@ -2567,6 +2578,14 @@ definitions:
         type: array
         items:
           type: string
+  featureTargetListValue:
+    type: object
+    properties:
+      values:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureTarget'
   featureUserEvaluations:
     type: object
     properties:
@@ -2593,6 +2612,14 @@ definitions:
       - PARTIAL
       - FULL
     default: QUEUED
+  featureVariationListValue:
+    type: object
+    properties:
+      values:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerfeatureVariation'
   gatewayGetEvaluationRequest:
     type: object
     properties:
