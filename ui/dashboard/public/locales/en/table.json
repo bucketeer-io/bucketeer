@@ -56,7 +56,8 @@
     "user-segments-title": "No registered user segments",
     "user-segments-desc": "There are no registered user segments. Add a new one to start managing.",
     "feature-flags-title": "No registered feature flags",
-    "feature-flags-desc": "There are no registered feature flags. Add a new one to start managing."
+    "feature-flags-desc": "There are no registered feature flags. Add a new one to start managing.",
+    "notifications": "No notifications to show just yet, but don't worry, we're here to keep you in the loop."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
@@ -102,6 +103,15 @@
     "confirm-unarchive-desc": "Are you sure you want to unarchive the feature flag \"<text>{{name}}</text>\"?",
     "archive-warning": "It is receiving one more requests in the last <text>{{days}}.</text>",
     "confirm-required": "Confirmation Required",
-    "confirm-required-desc": "This will make changes to the flag and increment the version."
+    "confirm-required-desc": "This will make changes to the flag and increment the version.",
+    "targeting": "Targeting",
+    "variation": "Variation",
+    "evaluation": "Evaluation",
+    "operations": "Operations",
+    "trigger": "Trigger",
+    "experiments": "Experiments",
+    "history": "History",
+    "when-targeting": "When targeting is {{state}}",
+    "serve": "Serve"
   }
 }

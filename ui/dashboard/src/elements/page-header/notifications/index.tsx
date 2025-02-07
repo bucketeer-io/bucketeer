@@ -1,5 +1,5 @@
 import { useTranslation } from 'i18n';
-import { IconChecked } from '@icons';
+import { IconChecked, IconNotifications } from '@icons';
 import Icon from 'components/icon';
 
 interface NotificationItemProps {
@@ -39,35 +39,47 @@ const NotificationItem = ({
 };
 
 const Notifications = () => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'table']);
+  const isEmpty = true;
   return (
     <div className="flex flex-col w-full max-h-[500px]">
       <div className="flex items-center w-full p-5 border-b border-gray-200">
         <h1 className="typo-head-bold-huge leading-6">{t('notifications')}</h1>
       </div>
       <div className="flex flex-col w-full py-8 px-5 gap-y-4 overflow-auto">
-        <NotificationItem
-          title="Experiment Updated"
-          date="2d"
-          description="Changes were made to the"
-          highlightText="“Experiment Name 2”"
-        />
-        <NotificationItem
-          title="Changes Saved"
-          date="2d"
-          description="Changes were saved successfully!"
-        />
-        <NotificationItem
-          title="Experiment Updated"
-          date="2d"
-          description="Changes were made to the"
-          highlightText="“Experiment Name 2”"
-        />
-        <NotificationItem
-          title="Changes Saved"
-          date="2d"
-          description="Changes were saved successfully!"
-        />
+        {isEmpty ? (
+          <div className="flex flex-col items-center gap-y-4 px-[59.5px]">
+            <Icon icon={IconNotifications} size={'fit'} />
+            <p className="typo-para-big text-gray-700 text-center">
+              {t('table:empty.notifications')}
+            </p>
+          </div>
+        ) : (
+          <>
+            <NotificationItem
+              title="Experiment Updated"
+              date="2d"
+              description="Changes were made to the"
+              highlightText="“Experiment Name 2”"
+            />
+            <NotificationItem
+              title="Changes Saved"
+              date="2d"
+              description="Changes were saved successfully!"
+            />
+            <NotificationItem
+              title="Experiment Updated"
+              date="2d"
+              description="Changes were made to the"
+              highlightText="“Experiment Name 2”"
+            />
+            <NotificationItem
+              title="Changes Saved"
+              date="2d"
+              description="Changes were saved successfully!"
+            />
+          </>
+        )}
       </div>
     </div>
   );

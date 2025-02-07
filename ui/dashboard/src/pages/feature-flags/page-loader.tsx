@@ -42,7 +42,7 @@ const PageLoader = () => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     onOpenConfirmRequiredModal,
     onCloseConfirmRequiredModal
-  ] = useToggleOpen(true);
+  ] = useToggleOpen(false);
 
   const onHandleActions = (flag: FlagsTemp, type: FlagActionType) => {
     if (type === 'CLONE') {

@@ -55,6 +55,7 @@ import IconGoogle from './special-icons/google.svg?react';
 import IconLogoutConfirm from './special-icons/logout.svg?react';
 import IconNoData from './special-icons/no-data.svg?react';
 import IconNotInUse from './special-icons/not-in-use.svg?react';
+import IconNotifications from './special-icons/notifications.svg?react';
 import IconOperation from './special-icons/operation.svg?react';
 import IconOperationsConnected from './special-icons/operations-connected.svg?react';
 import IconSlack from './special-icons/slack.svg?react';
@@ -122,5 +123,6 @@ export {
   IconNotInUse,
   IconExperimentsConnected,
   IconOperationsConnected,
-  IconFlagConnected
+  IconFlagConnected,
+  IconNotifications
 };
