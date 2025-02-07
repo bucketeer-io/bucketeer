@@ -21,7 +21,6 @@ import (
 
 var (
 	errUnknownCommand = errors.New("command: unknown command")
-	errUnknownEvent   = errors.New("event: unknown event")
 )
 
 type Command interface{}
