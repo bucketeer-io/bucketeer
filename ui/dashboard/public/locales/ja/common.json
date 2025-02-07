@@ -159,5 +159,11 @@
   "connections": "Connections",
   "status": "Status",
   "flags-connected": "Flags Connected",
-  "flags-connected-desc": "This user segment is currently connected to the following feature flags:"
+  "flags-connected-desc": "This user segment is currently connected to the following feature flags:",
+  "feature-flags": "Feature Flags",
+  "feature-flags-subtitle": "Select a flag to manage the environment-specific targeting and rollout rules",
+  "new-flag": "New Flag",
+  "variations": "Variations",
+  "operations": "Operations",
+  "favorites": "Favorites"
 }

@@ -30,7 +30,9 @@
     "unarchive-goal": "Unarchive Goal",
     "edit-segment": "Edit User Segment",
     "delete-segment": "Delete User Segment",
-    "download-segment": "Download User Segment"
+    "download-segment": "Download User Segment",
+    "archive-flags": "Archive Flags",
+    "clone-flags": "Clone Flags"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -51,7 +53,9 @@
     "goal-title": "No registered goals",
     "goal-desc": "There are no registered goals. Add a new one to start managing.",
     "user-segments-title": "No registered user segments",
-    "user-segments-desc": "There are no registered user segments. Add a new one to start managing."
+    "user-segments-desc": "There are no registered user segments. Add a new one to start managing.",
+    "feature-flags-title": "No registered feature flags",
+    "feature-flags-desc": "There are no registered feature flags. Add a new one to start managing."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",

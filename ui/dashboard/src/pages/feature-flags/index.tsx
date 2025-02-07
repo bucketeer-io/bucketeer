@@ -1,13 +1,18 @@
+import { useTranslation } from 'i18n';
 import PageHeader from 'elements/page-header';
+import PageLayout from 'elements/page-layout';
+import PageLoader from './page-loader';
 
 const FeatureFlagsPage = () => {
+  const { t } = useTranslation(['common']);
   return (
-    <div className="flex flex-col size-full overflow-auto">
+    <PageLayout.Root title={t('goals')}>
       <PageHeader
-        title="Feature Flags"
-        description="Select a flag to manage the environment-specific targeting and rollout rules"
+        title={t('feature-flags')}
+        description={t('feature-flags-subtitle')}
       />
-    </div>
+      <PageLoader />
+    </PageLayout.Root>
   );
 };
 

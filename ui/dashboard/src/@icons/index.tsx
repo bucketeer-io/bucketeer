@@ -1,17 +1,26 @@
 import IconArrowDown from './customized-icons/arrow-down.svg?react';
 import IconBackspace from './customized-icons/backspace.svg?react';
+import IconCalendar from './customized-icons/calendar.svg?react';
 import IconChecked from './customized-icons/checked.svg?react';
 import IconChevronRight from './customized-icons/chevron-right.svg?react';
 import IconClose from './customized-icons/close.svg?react';
 import IconCopy from './customized-icons/copy.svg?react';
 import IconDisable from './customized-icons/disable.svg?react';
 import IconEmail from './customized-icons/email.svg?react';
+import IconGridView from './customized-icons/grid-view.svg?react';
 import IconInfoFilled from './customized-icons/info-filled.svg?react';
 import IconInfo from './customized-icons/info.svg?react';
+import IconFlagJSON from './customized-icons/json.svg?react';
+import IconListView from './customized-icons/list-view.svg?react';
+import IconFlagNumber from './customized-icons/number.svg?react';
+import IconOperationArrow from './customized-icons/operation-arrow.svg?react';
+import IconFlagOperation from './customized-icons/operation.svg?react';
 import IconSearch from './customized-icons/search.svg?react';
 import IconSortingDown from './customized-icons/sorting-down.svg?react';
 import IconSortingUp from './customized-icons/sorting-up.svg?react';
 import IconSorting from './customized-icons/sorting.svg?react';
+import IconFlagString from './customized-icons/string.svg?react';
+import IconFlagSwitch from './customized-icons/switch.svg?react';
 import IconToastError from './customized-icons/toast-error.svg?react';
 import IconToastInfo from './customized-icons/toast-info.svg?react';
 import IconToastSuccess from './customized-icons/toast-success.svg?react';
@@ -19,6 +28,8 @@ import IconToastWarning from './customized-icons/toast-warning.svg?react';
 import IconTrash from './customized-icons/trash.svg?react';
 import IconUnion from './customized-icons/union.svg?react';
 import IconUpload from './customized-icons/upload.svg?react';
+import IconUserSettings from './customized-icons/user-settings.svg?react';
+import IconWatch from './customized-icons/watch.svg?react';
 import IconBuilding from './sidebar-icons/building.svg?react';
 import IconDebugger from './sidebar-icons/debugger.svg?react';
 import IconFolder from './sidebar-icons/folder.svg?react';
@@ -86,6 +97,17 @@ export {
   IconUpload,
   IconInfoFilled,
   IconArrowDown,
+  IconListView,
+  IconGridView,
+  IconCalendar,
+  IconUserSettings,
+  IconFlagOperation,
+  IconOperationArrow,
+  IconFlagSwitch,
+  IconFlagNumber,
+  IconFlagString,
+  IconFlagJSON,
+  IconWatch,
   // Special icons
   IconGoal,
   IconGoogle,
