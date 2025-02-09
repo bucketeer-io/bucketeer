@@ -160,7 +160,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     const handleUpdate = useCallback(
       async (data, saveFeatureType) => {
         if (saveFeatureType === SaveFeatureType.SCHEDULE) {
-          console.log({ dirtyFields });
+          // console.log({ dirtyFields });
 
           const hasDirtyPrerequisites = dirtyFields.prerequisites?.some(
             (item) => Object.values(item).includes(true)
@@ -211,7 +211,23 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
               defaultStrategy: hasDirtyDefaultStrategy && data.defaultStrategy,
               offVariation: hasDirtyOffVariation && data.offVariation
             })
-          ).then(() => setIsConfirmDialogOpen(false));
+          ).then(() => {
+            setIsConfirmDialogOpen(false);
+            dispatch(
+              getFeature({
+                environmentId: currentEnvironment.id,
+                id: featureId
+              })
+            ).then((response) => {
+              const featurePayload = response.payload as Feature.AsObject;
+              reset(
+                getDefaultValues(
+                  featurePayload,
+                  currentEnvironment.requireComment
+                )
+              );
+            });
+          });
         } else if (saveFeatureType === SaveFeatureType.UPDATE_NOW) {
           const commands: Array<Command> = [];
           const defaultValues = getDefaultValues(
