@@ -46,9 +46,12 @@ import {
 } from '../proto/feature/service_pb';
 import { Variation } from '../proto/feature/variation_pb';
 import { AppState } from '.';
-import { Target } from '../proto/feature/target_pb';
-import { Prerequisite } from '../proto/feature/prerequisite_pb';
-import { Rule } from '../proto/feature/rule_pb';
+import { Target, TargetListValue } from '../proto/feature/target_pb';
+import {
+  Prerequisite,
+  PrerequisiteListValue
+} from '../proto/feature/prerequisite_pb';
+import { Rule, RuleListValue } from '../proto/feature/rule_pb';
 import { Clause } from '../proto/feature/clause_pb';
 import {
   FixedStrategy,
@@ -340,14 +343,15 @@ export const updateFeature = createAsyncThunk<
 
   if (params.prerequisitesList) {
     console.log('pre-requisites set');
-    request.setPrerequisitesList(
-      params.prerequisitesList.map((prerequisite) => {
-        const p = new Prerequisite();
-        p.setFeatureId(prerequisite.featureId);
-        p.setVariationId(prerequisite.variationId);
-        return p;
-      })
-    );
+    const prerequisiteList = params.prerequisitesList.map((prerequisite) => {
+      const p = new Prerequisite();
+      p.setFeatureId(prerequisite.featureId);
+      p.setVariationId(prerequisite.variationId);
+      return p;
+    });
+    const prerequisiteListValue = new PrerequisiteListValue();
+    prerequisiteListValue.setValuesList(prerequisiteList);
+    request.setPrerequisites(prerequisiteListValue);
   }
 
   if (params.targets) {
@@ -359,7 +363,9 @@ export const updateFeature = createAsyncThunk<
       t.setUsersList(target.users);
       return t;
     });
-    request.setTargetsList(targets);
+    const targetsListValue = new TargetListValue();
+    targetsListValue.setValuesList(targets);
+    request.setTargets(targetsListValue);
   }
 
   if (params.rules) {
@@ -406,7 +412,9 @@ export const updateFeature = createAsyncThunk<
 
       return r;
     });
-    request.setRulesList(rules);
+    const rulesListValue = new RuleListValue();
+    rulesListValue.setValuesList(rules);
+    request.setRules(rulesListValue);
   }
 
   if (params.defaultStrategy) {
