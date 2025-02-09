@@ -159,7 +159,7 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
         {isConfirmDialogOpen && (
           <FeatureConfirmDialog
             open={isConfirmDialogOpen}
-            handleSubmit={handleSubmit(handleUpdate)}
+            handleSubmit={() => handleSubmit(handleUpdate)}
             onClose={() => setIsConfirmDialogOpen(false)}
             title={f(messages.feature.confirm.title)}
             description={f(messages.feature.confirm.description)}

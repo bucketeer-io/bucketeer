@@ -26,7 +26,8 @@ export const Switch: FC<SwitchProps> = ({
       className={classNames(
         enabled ? 'bg-primary' : 'bg-gray-200',
         size === 'small' ? 'w-[3.3rem] h-[1.6rem]' : 'w-[4.29rem] h-[2.08rem]',
-        `relative inline-flex items-center rounded-full text-gray-700`
+        `relative inline-flex items-center rounded-full text-gray-700`,
+        readOnly && 'cursor-not-allowed opacity-90'
       )}
     >
       <span className="sr-only">Switch</span>

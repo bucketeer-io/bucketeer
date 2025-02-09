@@ -573,6 +573,18 @@ export const FeatureIndexPage: FC = memo(() => {
           </FormProvider>
         )}
       </Overlay>
+      {/* <FormProvider {...switchEnabledMethod}>
+        <FeatureConfirmDialog
+          featureId={switchEnabledGetValues('featureId')}
+          isSwitchEnabledConfirm={true}
+          isEnabled={!switchEnabledGetValues('enabled')}
+          open={true}
+          handleSubmit={switchEnableHandleSubmit(handleSwitchEnabled)}
+          onClose={() => setIsSwitchEnableConfirmDialogOpen(false)}
+          title={f(messages.feature.confirm.title)}
+          description={f(messages.feature.confirm.description)}
+        />
+      </FormProvider> */}
       {isSwitchEnableConfirmDialogOpen && (
         <FormProvider {...switchEnabledMethod}>
           <FeatureConfirmDialog
@@ -580,7 +592,7 @@ export const FeatureIndexPage: FC = memo(() => {
             isSwitchEnabledConfirm={true}
             isEnabled={!switchEnabledGetValues('enabled')}
             open={isSwitchEnableConfirmDialogOpen}
-            handleSubmit={switchEnableHandleSubmit(handleSwitchEnabled)}
+            handleSubmit={() => switchEnableHandleSubmit(handleSwitchEnabled)}
             onClose={() => setIsSwitchEnableConfirmDialogOpen(false)}
             title={f(messages.feature.confirm.title)}
             description={f(messages.feature.confirm.description)}
@@ -594,7 +606,7 @@ export const FeatureIndexPage: FC = memo(() => {
             featureId={archiveMethod.getValues().feature?.id}
             feature={archiveMethod.getValues().feature}
             open={isArchiveConfirmDialogOpen}
-            handleSubmit={archiveHandleSubmit(handleArchive)}
+            handleSubmit={() => archiveHandleSubmit(handleArchive)}
             onClose={() => setIsArchiveConfirmDialogOpen(false)}
             title={
               archiveMethod.getValues().feature &&

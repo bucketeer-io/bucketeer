@@ -6,7 +6,10 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { FeatureConfirmDialog } from '../../components/FeatureConfirmDialog';
+import {
+  FeatureConfirmDialog,
+  SaveFeatureType
+} from '../../components/FeatureConfirmDialog';
 import { FeatureTargetingForm } from '../../components/FeatureTargetingForm';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
@@ -15,7 +18,8 @@ import {
   selectById as selectFeatureById,
   updateFeatureTargeting,
   getFeature,
-  createCommand
+  createCommand,
+  updateFeature
 } from '../../modules/features';
 import { useCurrentEnvironment } from '../../modules/me';
 import { listSegments } from '../../modules/segments';
@@ -86,6 +90,8 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
       }
     );
 
+    console.log({ feature });
+
     const getDefaultValues = (
       feature: Feature.AsObject,
       requireComment: boolean
@@ -152,77 +158,131 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
     const handleUpdate = useCallback(
-      async (data) => {
-        const commands: Array<Command> = [];
-        const defaultValues = getDefaultValues(
-          feature,
-          currentEnvironment.requireComment
-        );
+      async (data, saveFeatureType) => {
+        if (saveFeatureType === SaveFeatureType.SCHEDULE) {
+          console.log({ dirtyFields });
 
-        dirtyFields.enabled &&
-          commands.push(...createEnabledCommands(defaultValues, data));
-        dirtyFields.targets &&
-          commands.push(
-            ...createTargetCommands(defaultValues.targets, data.targets)
+          const hasDirtyPrerequisites = dirtyFields.prerequisites?.some(
+            (item) => Object.values(item).includes(true)
           );
-        dirtyFields.rules &&
-          commands.push(...createRuleCommands(defaultValues.rules, data.rules));
-        dirtyFields.rules &&
-          commands.push(
-            ...createClauseCommands(defaultValues.rules, data.rules)
+          const hasDirtyTargets = dirtyFields.targets?.some((item) =>
+            Object.values(item).includes(true)
           );
-        dirtyFields.rules &&
-          commands.push(
-            ...createStrategyCommands(defaultValues.rules, data.rules)
-          );
-        dirtyFields.defaultStrategy &&
-          commands.push(
-            ...createDefaultStrategyCommands(
-              defaultValues.defaultStrategy,
-              data.defaultStrategy
-            )
-          );
-        dirtyFields.offVariation &&
-          commands.push(
-            ...createOffVariationCommands(
-              defaultValues.offVariation,
-              data.offVariation
-            )
-          );
-        data.resetSampling && commands.push(createResetSampleSeedCommand());
+          // const hasDirtyDefaultStrategy =
+          //   dirtyFields.defaultStrategy &&
+          //   ((typeof dirtyFields.defaultStrategy.option === 'boolean' &&
+          //     dirtyFields.defaultStrategy.option === true) ||
+          //     (typeof dirtyFields.defaultStrategy.option === 'object' &&
+          //       Object.values(dirtyFields.defaultStrategy.option).includes(
+          //         true
+          //       )) ||
+          //     dirtyFields.defaultStrategy.rolloutStrategy.some((strategy) =>
+          //       Object.values(strategy).includes(true)
+          //     ));
 
-        dirtyFields.prerequisites &&
-          commands.push(
-            ...createPrerequisitesCommands(
-              defaultValues.prerequisites,
-              data.prerequisites
-            )
-          );
+          const hasDirtyDefaultStrategy =
+            dirtyFields.defaultStrategy &&
+            JSON.stringify(dirtyFields.defaultStrategy).includes('true');
 
-        dispatch(
-          updateFeatureTargeting({
-            environmentId: currentEnvironment.id,
-            id: feature.id,
-            comment: data.comment,
-            commands: commands
-          })
-        ).then(() => {
-          setIsConfirmDialogOpen(false);
+          const hasDirtyOffVariation =
+            dirtyFields.offVariation &&
+            JSON.stringify(dirtyFields.offVariation).includes('true');
+
+          // const hasDirtyOffVariation =
+          //   dirtyFields.offVariation &&
+          //   ((typeof dirtyFields.offVariation === 'boolean' &&
+          //     dirtyFields.offVariation === true) ||
+          //     (typeof dirtyFields.offVariation === 'object' &&
+          //       Object.values(dirtyFields.offVariation).includes(true)));
+
+          const hasDirtyRules =
+            dirtyFields.rules &&
+            JSON.stringify(dirtyFields.rules).includes('true');
+
           dispatch(
-            getFeature({
+            updateFeature({
               environmentId: currentEnvironment.id,
-              id: featureId
+              id: featureId,
+              comment: data.comment,
+              enabled: dirtyFields.enabled && data.enabled,
+              prerequisitesList: hasDirtyPrerequisites && data.prerequisites,
+              targets: hasDirtyTargets && data.targets,
+              rules: hasDirtyRules && data.rules,
+              defaultStrategy: hasDirtyDefaultStrategy && data.defaultStrategy,
+              offVariation: hasDirtyOffVariation && data.offVariation
             })
-          ).then((response) => {
-            const featurePayload = response.payload as Feature.AsObject;
-            reset(
-              getDefaultValues(
-                featurePayload,
-                currentEnvironment.requireComment
+          ).then(() => setIsConfirmDialogOpen(false));
+        } else if (saveFeatureType === SaveFeatureType.UPDATE_NOW) {
+          const commands: Array<Command> = [];
+          const defaultValues = getDefaultValues(
+            feature,
+            currentEnvironment.requireComment
+          );
+          dirtyFields.enabled &&
+            commands.push(...createEnabledCommands(defaultValues, data));
+          dirtyFields.targets &&
+            commands.push(
+              ...createTargetCommands(defaultValues.targets, data.targets)
+            );
+          dirtyFields.rules &&
+            commands.push(
+              ...createRuleCommands(defaultValues.rules, data.rules)
+            );
+          dirtyFields.rules &&
+            commands.push(
+              ...createClauseCommands(defaultValues.rules, data.rules)
+            );
+          dirtyFields.rules &&
+            commands.push(
+              ...createStrategyCommands(defaultValues.rules, data.rules)
+            );
+          dirtyFields.defaultStrategy &&
+            commands.push(
+              ...createDefaultStrategyCommands(
+                defaultValues.defaultStrategy,
+                data.defaultStrategy
               )
             );
+          dirtyFields.offVariation &&
+            commands.push(
+              ...createOffVariationCommands(
+                defaultValues.offVariation,
+                data.offVariation
+              )
+            );
+          data.resetSampling && commands.push(createResetSampleSeedCommand());
+          dirtyFields.prerequisites &&
+            commands.push(
+              ...createPrerequisitesCommands(
+                defaultValues.prerequisites,
+                data.prerequisites
+              )
+            );
+          dispatch(
+            updateFeatureTargeting({
+              environmentId: currentEnvironment.id,
+              id: feature.id,
+              comment: data.comment,
+              commands: commands
+            })
+          ).then(() => {
+            setIsConfirmDialogOpen(false);
+            dispatch(
+              getFeature({
+                environmentId: currentEnvironment.id,
+                id: featureId
+              })
+            ).then((response) => {
+              const featurePayload = response.payload as Feature.AsObject;
+              reset(
+                getDefaultValues(
+                  featurePayload,
+                  currentEnvironment.requireComment
+                )
+              );
+            });
           });
-        });
+        }
       },
       [dispatch, dirtyFields, feature]
     );
@@ -271,7 +331,9 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
         {isConfirmDialogOpen && (
           <FeatureConfirmDialog
             open={isConfirmDialogOpen}
-            handleSubmit={handleSubmit(handleUpdate)}
+            handleSubmit={(arg) => {
+              handleSubmit((data) => handleUpdate(data, arg))();
+            }}
             onClose={() => setIsConfirmDialogOpen(false)}
             title={f(messages.feature.confirm.title)}
             description={f(messages.feature.confirm.description)}
