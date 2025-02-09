@@ -48,7 +48,7 @@ import { Clause } from '../../proto/feature/clause_pb';
 
 interface FeatureConfirmDialogProps {
   open: boolean;
-  handleSubmit: () => void;
+  handleSubmit: (saveFeatureType?: SaveFeatureType) => void;
   onClose: () => void;
   title: string;
   description: string;
@@ -65,6 +65,11 @@ const SwitchEnabledType = {
   DISABLE_NOW: intl.formatMessage(messages.feature.confirm.disableNow),
   SCHEDULE: intl.formatMessage(messages.feature.confirm.schedule)
 };
+
+export enum SaveFeatureType {
+  UPDATE_NOW = 'updateNow',
+  SCHEDULE = 'schedule'
+}
 
 export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   open,
@@ -88,6 +93,10 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   const [isFlagActive, setIsFlagActive] = useState(false);
   const [selectedSwitchEnabledType, setSelectedSwitchEnabledType] = useState(
     isEnabled ? SwitchEnabledType.DISABLE_NOW : SwitchEnabledType.ENABLE_NOW
+  );
+
+  const [saveFeatureType, setSaveFeatureType] = useState(
+    SaveFeatureType.SCHEDULE
   );
   const [scheduleErrorMessage, setScheduleErrorMessage] = useState('');
 
@@ -119,7 +128,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
     if (currentEnvironment.requireComment) {
       document.getElementById('comment').focus();
     } else {
-      document.getElementById('comment').blur();
+      // document.getElementById('comment').blur();
     }
   }, []);
 
@@ -229,6 +238,34 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
       onClose();
     });
   };
+
+  // const handleScheduleSubmit = () => {
+  //   const command = new CreateAutoOpsRuleCommand();
+  //   command.setFeatureId(featureId);
+  //   const clause = new DatetimeClause();
+  //   command.setOpsType(OpsType.SCHEDULE);
+  //   if (isEnabled) {
+  //     clause.setActionType(ActionType.DISABLE);
+  //   } else {
+  //     clause.setActionType(ActionType.ENABLE);
+  //   }
+  //   clause.setTime(Math.round(datetime.getTime() / 1000));
+  //   command.setDatetimeClausesList([clause]);
+  //   dispatch(
+  //     createAutoOpsRule({
+  //       environmentId: currentEnvironment.id,
+  //       command: command
+  //     })
+  //   ).then(() => {
+  //     dispatch(
+  //       addToast({
+  //         message: f(messages.feature.successMessages.schedule),
+  //         severity: 'success'
+  //       })
+  //     );
+  //     onClose();
+  //   });
+  // };
 
   const checkSubmitBtnDisabled = () => {
     if (
@@ -498,6 +535,63 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
             </div>
           </div>
         )}
+      {!isArchive && (
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center space-x-2">
+            <input
+              id="enable-disable-now"
+              type="radio"
+              checked={saveFeatureType === SaveFeatureType.UPDATE_NOW}
+              className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+              onChange={() => setSaveFeatureType(SaveFeatureType.UPDATE_NOW)}
+            />
+            <label htmlFor="enable-disable-now">Update now</label>
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <input
+                id="schedule"
+                type="radio"
+                checked={saveFeatureType === SaveFeatureType.SCHEDULE}
+                className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                onChange={() => {
+                  setSaveFeatureType(SaveFeatureType.SCHEDULE);
+                }}
+              />
+              <label htmlFor="schedule">Schedule the updates</label>
+            </div>
+            {saveFeatureType === SaveFeatureType.SCHEDULE && (
+              <div className="mt-2">
+                <span className="input-label">Update at</span>
+                <ReactDatePicker
+                  dateFormat="yyyy-MM-dd HH:mm"
+                  showTimeSelect
+                  timeIntervals={60}
+                  placeholderText=""
+                  className={classNames('input-text w-full')}
+                  wrapperClassName="w-full"
+                  selected={datetime}
+                  onChange={(d) => {
+                    setDatetime(d);
+                    if (d.getTime() < new Date().getTime()) {
+                      setScheduleErrorMessage(
+                        f(messages.input.error.notLaterThanCurrentTime)
+                      );
+                    } else {
+                      setScheduleErrorMessage('');
+                    }
+                  }}
+                />
+                <p className="input-error">
+                  {scheduleErrorMessage && (
+                    <span role="alert">{scheduleErrorMessage}</span>
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <div className="pt-5">
         <div className="flex justify-end">
           <button
@@ -513,17 +607,24 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
             className="btn-submit"
             disabled={checkSubmitBtnDisabled()}
             onClick={() => {
-              if (
-                isSwitchEnabledConfirm &&
-                selectedSwitchEnabledType === SwitchEnabledType.SCHEDULE
-              ) {
-                handleScheduleSubmit();
-              } else {
-                handleSubmit();
-              }
+              handleSubmit(saveFeatureType);
+
+              // if (saveFeatureType === SaveFeatureType.SCHEDULE) {
+              //   handleScheduleSubmit();
+              // } else {
+              // }
+              // if (
+              //   isSwitchEnabledConfirm &&
+              //   selectedSwitchEnabledType === SwitchEnabledType.SCHEDULE
+              // ) {
+              //   handleScheduleSubmit();
+              // } else {
+              //   handleSubmit();
+              // }
             }}
           >
-            {getSubmitBtnLabel()}
+            {/* {getSubmitBtnLabel()} */}
+            Save
           </button>
         </div>
       </div>

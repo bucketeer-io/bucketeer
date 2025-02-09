@@ -18,8 +18,10 @@ import {
   ChevronUpIcon,
   PlusCircleIcon,
   ArrowUpIcon,
-  ArrowDownIcon
+  ArrowDownIcon,
+  CheckIcon
 } from '@heroicons/react/solid';
+import { PencilIcon, EyeIcon } from '@heroicons/react/outline';
 import { FileCopyOutlined } from '@material-ui/icons';
 import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, memo, useCallback, useState, useEffect } from 'react';
@@ -63,6 +65,10 @@ import { Option, Select } from '../Select';
 import { OptionFeatureFlag, SelectFeatureFlag } from '../SelectFeatureFlag';
 import { Switch } from '../Switch';
 import { TargetingForm, ruleClauseType } from '../../pages/feature/formSchema';
+import { CancelScheduleDialog } from '../CancelScheduleDialog';
+import { Dialog } from '@headlessui/react';
+import ProjectSvg from '../../assets/svg/project.svg';
+import { Overlay } from '../Overlay';
 
 interface FeatureTargetingFormProps {
   featureId: string;
@@ -177,8 +183,101 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       );
     };
 
+    const [open, setOpen] = useState(false);
+    const [isSeeChangesModalOpen, setIsSeeChangesModalOpen] = useState(false);
+
+    const disabled = false;
+
     return (
       <div className="p-10 bg-gray-100">
+        <CancelScheduleDialog open={open} onClose={() => setOpen(false)} />
+        <div className="bg-blue-50 p-4 border-l-4 border-blue-400 mb-7 inline-block">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <InformationCircleIcon
+                className="h-5 w-5 text-blue-400"
+                aria-hidden="true"
+              />
+            </div>
+            <div className="ml-3 flex-1 space-y-4">
+              <p className="flex text-sm text-blue-700">
+                Changes have been scheduled and will be applied on 01/21/2025 at
+                10:00
+              </p>
+              <div className="flex items-center">
+                <div className="flex items-center text-primary border-r border-gray-300 pr-4 space-x-2">
+                  <CheckIcon className="w-5 h-5" />
+                  <button className="text-sm font-normal">Apply Now</button>
+                </div>
+                <div className="flex items-center text-primary border-r border-gray-300 px-4 space-x-2">
+                  <PencilIcon className="w-4 h-4" />
+                  <button className="text-sm font-normal">Edit Schedule</button>
+                </div>
+                <div className="flex items-center text-primary border-r border-gray-300 px-4 space-x-2">
+                  <EyeIcon className="w-5 h-5" />
+                  <button
+                    className="text-sm font-normal"
+                    onClick={() => setIsSeeChangesModalOpen(true)}
+                  >
+                    See Changes
+                  </button>
+                </div>
+                <div className="flex items-center text-red-600 px-4 space-x-2">
+                  <XIcon className="w-5 h-5" />
+                  <button
+                    className="text-sm font-normal"
+                    onClick={() => setOpen(true)}
+                  >
+                    Cancel Schedule
+                  </button>
+                </div>
+
+                <button
+                  className="text-sm text-red-600 font-medium p-2"
+                  onClick={() => setOpen(true)}
+                ></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Overlay
+          open={isSeeChangesModalOpen}
+          onClose={() => setIsSeeChangesModalOpen(false)}
+        >
+          <div className="w-[500px] h-full">
+            <form className="flex flex-col h-full">
+              <div className="h-full flex flex-col">
+                <div className="flex items-center justify-between px-4 py-5 border-b">
+                  <p className="text-xl font-medium">Changes Details</p>
+                  <XIcon
+                    width={20}
+                    className="text-gray-400 cursor-pointer"
+                    onClick={() => setIsSeeChangesModalOpen(false)}
+                  />
+                </div>
+                <div className="flex-1 flex flex-col p-4">
+                  <div className="space-y-4 pb-4 pt-2 border-b border-gray-200">
+                    <div className="flex space-x-4 items-center">
+                      <div className="bg-purple-50 p-3 rounded">
+                        <ProjectSvg />
+                      </div>
+                      <p className="text-gray-500">
+                        <strong>John Tucker</strong> updated the flag{' '}
+                        <a href="#" className="text-primary underline">
+                          Flag Name
+                        </a>
+                      </p>
+                    </div>
+                    <p className="text-gray-400">August 2, 2023 - 1:32PM</p>
+                  </div>
+                  <div className="py-4 space-y-4">
+                    <p className="text-gray-400">PATCH</p>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </Overlay>
         <form className="">
           <div className="grid grid-cols-1 gap-y-6 gap-x-4">
             <div className="text-sm">{`${f(
@@ -191,7 +290,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                 <Switch
                   onChange={field.onChange}
                   size={'large'}
-                  readOnly={!editable}
+                  readOnly={!editable || disabled}
                   enabled={field.value}
                 />
               )}
@@ -322,7 +421,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                                       );
                                     }
                                   }}
-                                  disabled={!editable}
+                                  isDisabled={!editable || disabled}
                                 />
                               </div>
                             );
@@ -392,7 +491,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                 <StrategyInput
                   feature={feature}
                   strategyName={'defaultStrategy'}
-                  disabled={!!isProgressiveRolloutsRunning}
+                  disabled={!!isProgressiveRolloutsRunning || disabled}
                 />
                 <p className="input-error">
                   {errors.defaultStrategy?.rolloutStrategy?.message && (
@@ -415,7 +514,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                     <Select
                       onChange={field.onChange}
                       options={offVariationOptions}
-                      disabled={!editable}
+                      disabled={!editable || disabled}
                       value={offVariationOptions.find(
                         (o) => o.value === field.value.value
                       )}
@@ -636,6 +735,8 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
       return prerequisites.length === features.length - 1;
     }, [prerequisites, features]);
 
+    const disabled = false;
+
     return (
       <div className="">
         {prerequisites.length > 0 && (
@@ -691,6 +792,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
                           value={featureFlagOptions.find(
                             (o) => o.value === field.value
                           )}
+                          disabled={disabled}
                         />
                       );
                     }}
@@ -717,6 +819,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
                               (o) => o.value === p.variationId
                             ) ?? null
                           }
+                          disabled={disabled}
                         />
                       );
                     }}
@@ -729,6 +832,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
                           handleRemovePrerequisite(prerequisitesIdx)
                         }
                         className="minus-circle-icon"
+                        disabled={disabled}
                       >
                         <MinusCircleIcon aria-hidden="true" />
                       </button>
@@ -745,7 +849,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
               type="button"
               className="btn-submit"
               onClick={handleAddPrerequisite}
-              disabled={disableAddPrerequisite()}
+              disabled={disableAddPrerequisite() || disabled}
             >
               {f(messages.feature.addPrerequisites)}
             </button>
@@ -810,11 +914,12 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
 
   const handleRemoveRule = useCallback(
     (idx) => {
-      remove(idx);
+      remove(idx); // Remove the field
     },
     [remove]
   );
 
+  const disabled = false;
   return (
     <div>
       <div className="grid grid-cols-1 gap-2">
@@ -836,7 +941,13 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
                       <button
                         type="button"
                         onClick={() => handleRemoveRule(ruleIdx)}
-                        className="text-gray-500 hover:text-gray-800"
+                        disabled={disabled}
+                        className={classNames(
+                          'text-gray-500',
+                          disabled
+                            ? 'cursor-not-allowed opacity-80'
+                            : 'hover:text-gray-800'
+                        )}
                       >
                         <XIcon className="w-5 h-5" aria-hidden="true" />
                       </button>
@@ -844,8 +955,13 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
                         <button
                           type="button"
                           onClick={() => swap(ruleIdx, ruleIdx - 1)}
-                          className="text-gray-500 hover:text-gray-800"
-                          disabled={ruleIdx === 0}
+                          className={classNames(
+                            'text-gray-500',
+                            disabled
+                              ? 'cursor-not-allowed opacity-80'
+                              : 'hover:text-gray-800'
+                          )}
+                          disabled={ruleIdx === 0 || disabled}
                         >
                           <ArrowUpIcon width={18} />
                         </button>
@@ -854,8 +970,13 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
                         <button
                           type="button"
                           onClick={() => swap(ruleIdx, ruleIdx + 1)}
-                          className="text-gray-500 hover:text-gray-800"
-                          disabled={ruleIdx === rules.length - 1}
+                          className={classNames(
+                            'text-gray-500',
+                            disabled
+                              ? 'cursor-not-allowed opacity-80'
+                              : 'hover:text-gray-800'
+                          )}
+                          disabled={ruleIdx === rules.length - 1 || disabled}
                         >
                           <ArrowDownIcon width={18} />
                         </button>
@@ -863,11 +984,16 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
                     </div>
                   )}
                 </div>
-                <ClausesInput featureId={feature.id} ruleIdx={ruleIdx} />
+                <ClausesInput
+                  featureId={feature.id}
+                  ruleIdx={ruleIdx}
+                  disabled={disabled}
+                />
               </div>
               <StrategyInput
                 feature={feature}
                 strategyName={`rules.${ruleIdx}.strategy`}
+                disabled={disabled}
               />
               <p className="input-error">
                 {errors.rules?.[ruleIdx]?.strategy?.rolloutStrategy
@@ -886,7 +1012,12 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
       </div>
       {editable && (
         <div className="py-4 flex">
-          <button type="button" className="btn-submit" onClick={handleAddRule}>
+          <button
+            type="button"
+            className="btn-submit"
+            onClick={handleAddRule}
+            disabled={disabled}
+          >
             {f(messages.button.addRule)}
           </button>
         </div>
@@ -964,13 +1095,14 @@ export const clauseDateOperatorOptions: Option[] = [
   }
 ];
 
-export interface ClausesInputProps {
+interface ClausesInputProps {
   featureId: string;
   ruleIdx: number;
+  disabled: boolean;
 }
 
-export const ClausesInput: FC<ClausesInputProps> = memo(
-  ({ featureId, ruleIdx }) => {
+const ClausesInput: FC<ClausesInputProps> = memo(
+  ({ featureId, ruleIdx, disabled }) => {
     const { formatMessage: f } = useIntl();
     const dispatch = useDispatch<AppDispatch>();
     const editable = useIsEditable();
@@ -1174,7 +1306,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                     }}
                     className={classNames('flex-none w-[200px]')}
                     options={clauseTypeOptions}
-                    disabled={!editable}
+                    disabled={!editable || disabled}
                     isSearchable={false}
                     value={clauseTypeOptions.find((o) => o.value == c.type)}
                   />
@@ -1190,7 +1322,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                       type="text"
                       defaultValue={c.attribute}
                       className={classNames('input-text w-full')}
-                      disabled={!editable}
+                      disabled={!editable || disabled}
                     />
                     <p className="input-error">
                       {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.attribute
@@ -1213,7 +1345,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                           field.onChange(e.value);
                         }}
                         options={clauseCompareOperatorOptions}
-                        disabled={!editable}
+                        disabled={!editable || disabled}
                         value={clauseCompareOperatorOptions.find(
                           (o) => o.value === field.value
                         )}
@@ -1227,7 +1359,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                       render={({ field }) => {
                         return (
                           <CreatableSelect
-                            disabled={!editable}
+                            disabled={!editable || disabled}
                             defaultValues={field.value.map((v) => {
                               return {
                                 value: v,
@@ -1279,7 +1411,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                                   field.onChange([o.value]);
                                 }}
                                 options={segmentOptions}
-                                disabled={!editable}
+                                disabled={!editable || disabled}
                                 value={segmentOptions.find(
                                   (o) => o.value === field.value[0]
                                 )}
@@ -1319,7 +1451,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                       type="text"
                       defaultValue={c.attribute}
                       className={classNames('input-text w-full')}
-                      disabled={!editable}
+                      disabled={!editable || disabled}
                     />
                     <p className="input-error">
                       {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.attribute
@@ -1340,7 +1472,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                       <Select
                         onChange={(o: Option) => field.onChange(o.value)}
                         options={clauseDateOperatorOptions}
-                        disabled={!editable}
+                        disabled={!editable || disabled}
                         value={clauseDateOperatorOptions.find(
                           (o) => o.value === field.value
                         )}
@@ -1351,6 +1483,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                   <div className="col-span-2">
                     <DatetimePicker
                       name={`rules.${ruleIdx}.clauses.${clauseIdx}.values`}
+                      disabled={disabled}
                     />
                     <p className="input-error">
                       {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.values
@@ -1392,7 +1525,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                                   field.onChange(o.value);
                                 }}
                                 options={clauseFeatureOptions}
-                                disabled={!editable}
+                                disabled={!editable || disabled}
                                 value={featureOptions.find(
                                   (o) => o.value === field.value
                                 )}
@@ -1419,7 +1552,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                                   field.onChange([o.value]);
                                 }}
                                 options={variationOptions}
-                                disabled={!editable}
+                                disabled={!editable || disabled}
                                 value={variationOptions.find(
                                   (o) => o.value === field.value[0]
                                 )}
@@ -1455,7 +1588,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                     type="button"
                     onClick={() => handleRemove(clauseIdx)}
                     className="minus-circle-icon"
-                    disabled={clauses.length <= 1}
+                    disabled={clauses.length <= 1 || disabled}
                   >
                     <MinusCircleIcon aria-hidden="true" />
                   </button>
@@ -1467,7 +1600,12 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
 
         <div className="py-4 flex">
           {editable && (
-            <button type="button" className="btn-submit" onClick={handleAdd}>
+            <button
+              type="button"
+              className="btn-submit"
+              onClick={handleAdd}
+              disabled={disabled}
+            >
               {f(messages.button.addCondition)}
             </button>
           )}
@@ -1626,39 +1764,42 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
 
 export interface DatetimePickerProps {
   name: string;
+  disabled?: boolean;
 }
 
-export const DatetimePicker: FC<DatetimePickerProps> = memo(({ name }) => {
-  const editable = useIsEditable();
-  const methods = useFormContext();
-  const { control } = methods;
+export const DatetimePicker: FC<DatetimePickerProps> = memo(
+  ({ name, disabled }) => {
+    const editable = useIsEditable();
+    const methods = useFormContext();
+    const { control } = methods;
 
-  return (
-    <Controller
-      control={control}
-      name={name}
-      render={({ field }) => {
-        return (
-          <ReactDatePicker
-            dateFormat="yyyy-MM-dd HH:mm"
-            showTimeSelect
-            timeIntervals={60}
-            placeholderText=""
-            className={classNames('input-text w-full')}
-            wrapperClassName="w-full"
-            onChange={(v) => {
-              const data = [v.getTime() / 1000];
-              field.onChange(data);
-            }}
-            selected={(() => {
-              return field.value[0]
-                ? new Date(Number(field.value[0]) * 1000)
-                : null;
-            })()}
-            disabled={!editable}
-          />
-        );
-      }}
-    />
-  );
-});
+    return (
+      <Controller
+        control={control}
+        name={name}
+        render={({ field }) => {
+          return (
+            <ReactDatePicker
+              dateFormat="yyyy-MM-dd HH:mm"
+              showTimeSelect
+              timeIntervals={60}
+              placeholderText=""
+              className={classNames('input-text w-full')}
+              wrapperClassName="w-full"
+              onChange={(v) => {
+                const data = [v.getTime() / 1000];
+                field.onChange(data);
+              }}
+              selected={(() => {
+                return field.value[0]
+                  ? new Date(Number(field.value[0]) * 1000)
+                  : null;
+              })()}
+              disabled={!editable || disabled}
+            />
+          );
+        }}
+      />
+    );
+  }
+);

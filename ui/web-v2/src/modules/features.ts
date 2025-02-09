@@ -8,7 +8,8 @@ import { Message } from 'google-protobuf';
 import { Any } from 'google-protobuf/google/protobuf/any_pb';
 import {
   BoolValue,
-  Int32Value
+  Int32Value,
+  StringValue
 } from 'google-protobuf/google/protobuf/wrappers_pb';
 
 import * as featureGrpc from '../grpc/features';
@@ -40,11 +41,20 @@ import {
   UpdateFeatureTargetingRequest,
   UpdateFeatureVariationsRequest,
   ListTagsRequest,
-  ListTagsResponse
+  ListTagsResponse,
+  UpdateFeatureRequest
 } from '../proto/feature/service_pb';
 import { Variation } from '../proto/feature/variation_pb';
-
 import { AppState } from '.';
+import { Target } from '../proto/feature/target_pb';
+import { Prerequisite } from '../proto/feature/prerequisite_pb';
+import { Rule } from '../proto/feature/rule_pb';
+import { Clause } from '../proto/feature/clause_pb';
+import {
+  FixedStrategy,
+  RolloutStrategy,
+  Strategy
+} from '../proto/feature/strategy_pb';
 
 const MODULE_NAME = 'features';
 
@@ -261,6 +271,182 @@ export const updateFeatureDetails = createAsyncThunk<
   }
 
   await featureGrpc.updateFeatureDetails(request);
+});
+
+export interface UpdateFeatureParams {
+  environmentId: string;
+  id: string;
+  comment: string;
+  enabled?: boolean;
+  prerequisitesList?: {
+    featureId: string;
+    variationId: string;
+  }[];
+  targets?: {
+    variationId: string;
+    users: string[];
+  }[];
+  rules?: {
+    id: string;
+    clauses: {
+      id: string;
+      operator: Clause.OperatorMap[keyof Clause.OperatorMap];
+      attribute: string;
+      values: string[];
+    }[];
+    strategy: {
+      option: {
+        label: string;
+        value: string;
+      };
+      rolloutStrategy?: {
+        id: string;
+        percentage: number;
+      }[];
+    };
+  }[];
+  defaultStrategy?: {
+    option: {
+      label: string;
+      value: string;
+    };
+    rolloutStrategy: {
+      id: string;
+      percentage: number;
+    }[];
+  };
+  offVariation?: {
+    label: string;
+    value: string;
+  };
+}
+
+export const updateFeature = createAsyncThunk<
+  void,
+  UpdateFeatureParams | undefined,
+  { state: AppState }
+>(`${MODULE_NAME}/updateFeature`, async (params) => {
+  const request = new UpdateFeatureRequest();
+  request.setEnvironmentId(params.environmentId);
+  request.setId(params.id);
+  request.setComment(params.comment);
+
+  console.log('params', params);
+
+  // request.setName(new StringValue().setValue('test'));
+
+  params.enabled &&
+    request.setEnabled(new BoolValue().setValue(params.enabled));
+
+  if (params.prerequisitesList) {
+    console.log('pre-requisites set');
+    request.setPrerequisitesList(
+      params.prerequisitesList.map((prerequisite) => {
+        const p = new Prerequisite();
+        p.setFeatureId(prerequisite.featureId);
+        p.setVariationId(prerequisite.variationId);
+        return p;
+      })
+    );
+  }
+
+  if (params.targets) {
+    console.log('targets');
+    const targets = params.targets.map((target) => {
+      console.log({ target });
+      const t = new Target();
+      t.setVariation(target.variationId);
+      t.setUsersList(target.users);
+      return t;
+    });
+    request.setTargetsList(targets);
+  }
+
+  if (params.rules) {
+    console.log('rules');
+    const rules = params.rules.map((rule) => {
+      const r = new Rule();
+
+      const clausesList = rule.clauses.map((clause) => {
+        const c = new Clause();
+        c.setId(clause.id);
+        c.setOperator(clause.operator);
+        c.setAttribute(clause.attribute);
+        c.setValuesList(clause.values);
+        return c;
+      });
+
+      const strategy = new Strategy();
+
+      if (rule.strategy.option.value === Strategy.Type.ROLLOUT.toString()) {
+        console.log('rule rollout strategy');
+        strategy.setType(Strategy.Type.ROLLOUT);
+        const rolloutStrategy = new RolloutStrategy();
+
+        const variationList = rule.strategy.rolloutStrategy.map((rollout) => {
+          const rolloutStrategyVariation = new RolloutStrategy.Variation();
+          rolloutStrategyVariation.setVariation(rollout.id);
+          rolloutStrategyVariation.setWeight(rollout.percentage * 1000);
+          return rolloutStrategyVariation;
+        });
+        rolloutStrategy.setVariationsList(variationList);
+        strategy.setRolloutStrategy(rolloutStrategy);
+      } else {
+        console.log('rule fixed strategy');
+        strategy.setType(Strategy.Type.FIXED);
+        const fixedStrategy = new FixedStrategy();
+        fixedStrategy.setVariation(rule.strategy.option.value);
+
+        strategy.setFixedStrategy(fixedStrategy);
+      }
+
+      r.setId(rule.id);
+      r.setClausesList(clausesList);
+      r.setStrategy(strategy);
+
+      return r;
+    });
+    request.setRulesList(rules);
+  }
+
+  if (params.defaultStrategy) {
+    const strategy = new Strategy();
+    if (
+      params.defaultStrategy.option.value === Strategy.Type.ROLLOUT.toString()
+    ) {
+      strategy.setType(Strategy.Type.ROLLOUT);
+      console.log('set Default Strategy - Rollout');
+      const rolloutStrategy = new RolloutStrategy();
+
+      const variationList = params.defaultStrategy.rolloutStrategy.map(
+        (rollout) => {
+          const rolloutStrategyVariation = new RolloutStrategy.Variation();
+          rolloutStrategyVariation.setVariation(rollout.id);
+          rolloutStrategyVariation.setWeight(rollout.percentage * 1000);
+          return rolloutStrategyVariation;
+        }
+      );
+      rolloutStrategy.setVariationsList(variationList);
+      strategy.setRolloutStrategy(rolloutStrategy);
+    } else {
+      console.log('set Default Strategy - Fixed');
+      strategy.setType(Strategy.Type.FIXED);
+      const fixedStrategy = new FixedStrategy();
+      fixedStrategy.setVariation(params.defaultStrategy.option.value);
+
+      strategy.setFixedStrategy(fixedStrategy);
+    }
+    request.setDefaultStrategy(strategy);
+  }
+
+  if (params.offVariation) {
+    console.log('offVariation set');
+    const offVariation = new Variation();
+    offVariation.setValue(params.offVariation.value);
+    request.setOffVariation(offVariation);
+  }
+
+  await featureGrpc.updateFeature(request);
 });
 
 export interface UpdateFeatureTargetingParams {
