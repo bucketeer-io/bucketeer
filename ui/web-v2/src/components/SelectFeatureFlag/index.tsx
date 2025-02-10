@@ -15,10 +15,11 @@ export interface SelectFeatureFlagProps {
     | ((option: OptionFeatureFlag) => void)
     | ((option: OptionFeatureFlag[]) => void);
   placeholder?: string;
+  disabled?: boolean;
 }
 
 export const SelectFeatureFlag: FC<SelectFeatureFlagProps> = memo(
-  ({ className, onChange, options, value, placeholder }) => {
+  ({ className, onChange, options, value, placeholder, disabled }) => {
     const textColor = '#3F3F46';
     const textColorDisabled = '#6B7280';
     const backgroundColor = 'white';
@@ -100,6 +101,7 @@ export const SelectFeatureFlag: FC<SelectFeatureFlagProps> = memo(
         placeholder={placeholder ? placeholder : ''}
         value={value}
         onChange={onChange}
+        isDisabled={disabled}
       />
     );
   }

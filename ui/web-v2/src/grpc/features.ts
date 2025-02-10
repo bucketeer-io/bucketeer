@@ -27,7 +27,9 @@ import {
   ListTagsRequest,
   ListTagsResponse,
   EvaluateFeaturesRequest,
-  EvaluateFeaturesResponse
+  EvaluateFeaturesResponse,
+  UpdateFeatureRequest,
+  UpdateFeatureResponse
 } from '../proto/feature/service_pb';
 import {
   FeatureServiceClient,
@@ -269,6 +271,29 @@ export function listTags(request: ListTagsRequest): Promise<ListTagsResult> {
   return new Promise(
     (resolve: (result: ListTagsResult) => void, reject): void => {
       client.listTags(request, getMetaData(), (error, response): void => {
+        if (isNotNull(error) || isNull(response)) {
+          reject(
+            new FeatureServiceError(extractErrorMessage(error), request, error)
+          );
+        } else {
+          resolve({ request, response });
+        }
+      });
+    }
+  );
+}
+
+export interface UpdateFeatureResult {
+  request: UpdateFeatureRequest;
+  response: UpdateFeatureResponse;
+}
+
+export function updateFeature(
+  request: UpdateFeatureRequest
+): Promise<UpdateFeatureResult> {
+  return new Promise(
+    (resolve: (result: UpdateFeatureResult) => void, reject): void => {
+      client.updateFeature(request, getMetaData(), (error, response): void => {
         if (isNotNull(error) || isNull(response)) {
           reject(
             new FeatureServiceError(extractErrorMessage(error), request, error)

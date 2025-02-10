@@ -8,7 +8,8 @@ import { Message } from 'google-protobuf';
 import { Any } from 'google-protobuf/google/protobuf/any_pb';
 import {
   BoolValue,
-  Int32Value
+  Int32Value,
+  StringValue
 } from 'google-protobuf/google/protobuf/wrappers_pb';
 
 import * as featureGrpc from '../grpc/features';
@@ -40,11 +41,24 @@ import {
   UpdateFeatureTargetingRequest,
   UpdateFeatureVariationsRequest,
   ListTagsRequest,
-  ListTagsResponse
+  ListTagsResponse,
+  UpdateFeatureRequest
 } from '../proto/feature/service_pb';
-import { Variation } from '../proto/feature/variation_pb';
-
+import { Variation, VariationListValue } from '../proto/feature/variation_pb';
 import { AppState } from '.';
+import { Target, TargetListValue } from '../proto/feature/target_pb';
+import {
+  Prerequisite,
+  PrerequisiteListValue
+} from '../proto/feature/prerequisite_pb';
+import { Rule, RuleListValue } from '../proto/feature/rule_pb';
+import { Clause } from '../proto/feature/clause_pb';
+import {
+  FixedStrategy,
+  RolloutStrategy,
+  Strategy
+} from '../proto/feature/strategy_pb';
+import { StringListValue } from '../proto/common/string_pb';
 
 const MODULE_NAME = 'features';
 
@@ -262,6 +276,246 @@ export const updateFeatureDetails = createAsyncThunk<
 
   await featureGrpc.updateFeatureDetails(request);
 });
+
+export interface UpdateFeatureParams {
+  environmentId: string;
+  id: string;
+  comment: string;
+  enabled?: boolean;
+  prerequisitesList?: {
+    featureId: string;
+    variationId: string;
+  }[];
+  targets?: {
+    variationId: string;
+    users: string[];
+  }[];
+  rules?: {
+    id: string;
+    clauses: {
+      id: string;
+      operator: Clause.OperatorMap[keyof Clause.OperatorMap];
+      attribute: string;
+      values: string[];
+    }[];
+    strategy: {
+      option: {
+        label: string;
+        value: string;
+      };
+      rolloutStrategy?: {
+        id: string;
+        percentage: number;
+      }[];
+    };
+  }[];
+  defaultStrategy?: {
+    option: {
+      label: string;
+      value: string;
+    };
+    rolloutStrategy: {
+      id: string;
+      percentage: number;
+    }[];
+  };
+  offVariation?: {
+    label: string;
+    value: string;
+  };
+  variations?: {
+    id?: string;
+    value?: string;
+    name?: string;
+    description?: string;
+  }[];
+  name?: string;
+  description?: string;
+  tags?: string[];
+  archived?: boolean;
+  resetSampling?: boolean;
+}
+
+export const updateFeature = createAsyncThunk<
+  void,
+  UpdateFeatureParams | undefined,
+  { state: AppState }
+>(`${MODULE_NAME}/updateFeature`, async (params) => {
+  const request = new UpdateFeatureRequest();
+  request.setEnvironmentId(params.environmentId);
+  request.setId(params.id);
+  request.setComment(params.comment);
+
+  console.log('params', params);
+
+  if (params.enabled !== undefined) {
+    console.log('Enabled set');
+    request.setEnabled(new BoolValue().setValue(params.enabled));
+  }
+
+  if (params.prerequisitesList) {
+    console.log('pre-requisites set');
+    request.setPrerequisites(mapToPrerequisites(params.prerequisitesList));
+  }
+
+  if (params.targets) {
+    console.log('targets');
+    request.setTargets(mapToTargets(params.targets));
+  }
+
+  if (params.rules) {
+    console.log('rules');
+    request.setRules(mapToRules(params.rules));
+  }
+
+  if (params.defaultStrategy) {
+    console.log('defaultStrategy set');
+    request.setDefaultStrategy(mapToStrategy(params.defaultStrategy));
+  }
+
+  if (params.offVariation) {
+    console.log('offVariation set');
+    request.setOffVariation(mapOffVariation(params.offVariation));
+  }
+
+  if (params.variations) {
+    console.log('variations set');
+    request.setVariations(mapVariations(params.variations));
+  }
+
+  if (params.name) {
+    console.log('name set');
+    request.setName(new StringValue().setValue(params.name));
+  }
+
+  if (params.description !== undefined) {
+    console.log('description set');
+    request.setDescription(new StringValue().setValue(params.description));
+  }
+
+  if (params.tags) {
+    console.log('tags set');
+    request.setTags(mapTags(params.tags));
+  }
+
+  if (params.archived !== undefined) {
+    console.log('archived set');
+    request.setArchived(new BoolValue().setValue(params.archived));
+  }
+
+  if (params.resetSampling) {
+    console.log('resetSampling set');
+    request.setResetSamplingSeed(
+      new BoolValue().setValue(params.resetSampling)
+    );
+  }
+
+  await featureGrpc.updateFeature(request);
+});
+
+function mapToPrerequisites(
+  prerequisitesList: UpdateFeatureParams['prerequisitesList']
+): PrerequisiteListValue {
+  const prerequisiteList = prerequisitesList.map((prerequisite) => {
+    const p = new Prerequisite();
+    p.setFeatureId(prerequisite.featureId);
+    p.setVariationId(prerequisite.variationId);
+    return p;
+  });
+  const prerequisiteListValue = new PrerequisiteListValue();
+  prerequisiteListValue.setValuesList(prerequisiteList);
+  return prerequisiteListValue;
+}
+
+function mapToTargets(
+  targets: UpdateFeatureParams['targets']
+): TargetListValue {
+  const targetList = targets.map((target) => {
+    const t = new Target();
+    t.setVariation(target.variationId);
+    t.setUsersList(target.users);
+    return t;
+  });
+  const targetsListValue = new TargetListValue();
+  targetsListValue.setValuesList(targetList);
+  return targetsListValue;
+}
+
+function mapToStrategy(
+  strategy:
+    | UpdateFeatureParams['defaultStrategy']
+    | UpdateFeatureParams['rules'][number]['strategy']
+): Strategy {
+  const newStrategy = new Strategy();
+  if (strategy.option.value === Strategy.Type.ROLLOUT.toString()) {
+    newStrategy.setType(Strategy.Type.ROLLOUT);
+    const rolloutStrategy = new RolloutStrategy();
+    const variationList =
+      strategy.rolloutStrategy?.map((rollout) => {
+        const rolloutStrategyVariation = new RolloutStrategy.Variation();
+        rolloutStrategyVariation.setVariation(rollout.id);
+        rolloutStrategyVariation.setWeight(rollout.percentage * 1000);
+        return rolloutStrategyVariation;
+      }) || [];
+    rolloutStrategy.setVariationsList(variationList);
+    newStrategy.setRolloutStrategy(rolloutStrategy);
+  } else {
+    newStrategy.setType(Strategy.Type.FIXED);
+    const fixedStrategy = new FixedStrategy();
+    fixedStrategy.setVariation(strategy.option.value);
+    newStrategy.setFixedStrategy(fixedStrategy);
+  }
+  return newStrategy;
+}
+
+function mapToRules(rules: UpdateFeatureParams['rules']): RuleListValue {
+  const ruleList = rules.map((rule) => {
+    const r = new Rule();
+    const clausesList = rule.clauses.map((clause) => {
+      const c = new Clause();
+      c.setId(clause.id);
+      c.setOperator(clause.operator);
+      c.setAttribute(clause.attribute);
+      c.setValuesList(clause.values);
+      return c;
+    });
+    r.setId(rule.id);
+    r.setClausesList(clausesList);
+    r.setStrategy(mapToStrategy(rule.strategy));
+    return r;
+  });
+  const rulesListValue = new RuleListValue();
+  rulesListValue.setValuesList(ruleList);
+  return rulesListValue;
+}
+
+function mapOffVariation(offVariation: UpdateFeatureParams['offVariation']) {
+  const variation = new Variation();
+  variation.setValue(offVariation.value);
+  return variation;
+}
+
+function mapVariations(
+  variations: UpdateFeatureParams['variations']
+): VariationListValue {
+  const variationList = variations.map((v) => {
+    const variation = new Variation();
+    variation.setId(v.id);
+    variation.setName(v.name);
+    variation.setValue(v.value);
+    variation.setDescription(v.description);
+    return variation;
+  });
+  const variationListValue = new VariationListValue();
+  variationListValue.setValuesList(variationList);
+  return variationListValue;
+}
+
+function mapTags(tags: string[]): StringListValue {
+  const stringListValue = new StringListValue();
+  stringListValue.setValuesList(tags);
+  return stringListValue;
+}
 
 export interface UpdateFeatureTargetingParams {
   environmentId: string;
