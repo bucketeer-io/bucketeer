@@ -17,6 +17,11 @@ syntax = "proto3";
 package bucketeer.autoops;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/autoops";
 
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "google/protobuf/wrappers.proto";
+
 import "proto/autoops/auto_ops_rule.proto";
 import "proto/autoops/command.proto";
 import "proto/autoops/ops_count.proto";
@@ -24,8 +29,8 @@ import "proto/autoops/progressive_rollout.proto";
 
 message GetAutoOpsRuleRequest {
   reserved 1;
-  string id = 2;
-  string environment_id = 3;
+  string id = 2 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
 message GetAutoOpsRuleResponse {
@@ -45,7 +50,7 @@ message ListAutoOpsRulesRequest {
   int64 page_size = 2;
   string cursor = 3;
   repeated string feature_ids = 4;
-  string environment_id = 5;
+  string environment_id = 5 [(google.api.field_behavior) = REQUIRED];
 }
 
 message ListAutoOpsRulesResponse {
@@ -190,9 +195,73 @@ message ExecuteProgressiveRolloutRequest {
 message ExecuteProgressiveRolloutResponse {}
 
 service AutoOpsService {
-  rpc GetAutoOpsRule(GetAutoOpsRuleRequest) returns (GetAutoOpsRuleResponse) {}
+  rpc GetAutoOpsRule(GetAutoOpsRuleRequest) returns (GetAutoOpsRuleResponse) {
+    option (google.api.http) = {
+      get: "/v1/auto_ops_rule"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get"
+      description: "Get auto ops rule."
+      tags: "auto_ops_rule"
+      operation_id: "web.v1.auto_ops_rule.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ListAutoOpsRules(ListAutoOpsRulesRequest)
-      returns (ListAutoOpsRulesResponse) {}
+      returns (ListAutoOpsRulesResponse) {
+    option (google.api.http) = {
+      get: "/v1/auto_ops_rules"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List"
+      description: "List auto ops rules."
+      tags: "auto_ops_rule"
+      operation_id: "web.v1.auto_ops_rule.list"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc CreateAutoOpsRule(CreateAutoOpsRuleRequest)
       returns (CreateAutoOpsRuleResponse) {}
   rpc StopAutoOpsRule(StopAutoOpsRuleRequest)

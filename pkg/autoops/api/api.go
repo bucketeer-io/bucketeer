@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"time"
 
@@ -958,7 +959,7 @@ func (s *AutoOpsService) GetAutoOpsRule(
 	}
 	autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
-		if err == v2as.ErrAutoOpsRuleNotFound {
+		if errors.Is(err, v2as.ErrAutoOpsRuleNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
