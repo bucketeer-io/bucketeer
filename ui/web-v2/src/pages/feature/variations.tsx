@@ -80,19 +80,8 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
 
     const handleUpdate = useCallback(
       async (data: VariationForm, saveFeatureType) => {
-        if (saveFeatureType === SaveFeatureType.SCHEDULE) {
-          console.log({
-            dirtyFields,
-            data
-          });
-          dispatch(
-            updateFeature({
-              environmentId: currentEnvironment.id,
-              id: feature.id,
-              comment: data.comment,
-              variations: data.variations
-            })
-          ).then(() => {
+        const prepareUpdate = async (actionType, payload) => {
+          dispatch(actionType(payload)).then(() => {
             setIsConfirmDialogOpen(false);
             dispatch(
               getFeature({
@@ -109,43 +98,37 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
               });
             });
           });
+        };
+
+        if (saveFeatureType === SaveFeatureType.SCHEDULE) {
+          await prepareUpdate(updateFeature, {
+            environmentId: currentEnvironment.id,
+            id: feature.id,
+            comment: data.comment,
+            variations: data.variations
+          });
         } else {
           const commands: Array<Command> = [];
-          dirtyFields.variations &&
+          if (dirtyFields.variations) {
             commands.push(
               ...createVariationCommands(
                 feature.variationsList,
                 data.variations
               )
             );
-          data.resetSampling && commands.push(createResetSampleSeedCommand());
-          dispatch(
-            updateFeatureVariations({
-              environmentId: currentEnvironment.id,
-              id: feature.id,
-              comment: data.comment,
-              commands: commands
-            })
-          ).then(() => {
-            setIsConfirmDialogOpen(false);
-            dispatch(
-              getFeature({
-                environmentId: currentEnvironment.id,
-                id: featureId
-              })
-            ).then((response) => {
-              const featurePayload = response.payload as Feature.AsObject;
-              reset({
-                variationType: featurePayload.variationType.toString(),
-                variations: featurePayload.variationsList,
-                requireComment: currentEnvironment.requireComment,
-                comment: ''
-              });
-            });
+          }
+          if (data.resetSampling) {
+            commands.push(createResetSampleSeedCommand());
+          }
+          await prepareUpdate(updateFeatureVariations, {
+            environmentId: currentEnvironment.id,
+            id: feature.id,
+            comment: data.comment,
+            commands
           });
         }
       },
-      [feature, dispatch, dirtyFields]
+      [feature, dispatch, dirtyFields, featureId, reset, currentEnvironment]
     );
 
     if (isLoading) {
