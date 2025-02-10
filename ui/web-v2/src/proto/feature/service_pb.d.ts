@@ -6,6 +6,7 @@ import * as google_api_annotations_pb from '../../google/api/annotations_pb';
 import * as google_api_field_behavior_pb from '../../google/api/field_behavior_pb';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
 import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-openapiv2/options/annotations_pb';
+import * as proto_common_string_pb from '../../proto/common/string_pb';
 import * as proto_feature_command_pb from '../../proto/feature/command_pb';
 import * as proto_feature_feature_pb from '../../proto/feature/feature_pb';
 import * as proto_feature_evaluation_pb from '../../proto/feature/evaluation_pb';
@@ -485,10 +486,10 @@ export class UpdateFeatureRequest extends jspb.Message {
   getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
   setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
 
-  clearTagsList(): void;
-  getTagsList(): Array<string>;
-  setTagsList(value: Array<string>): void;
-  addTags(value: string, index?: number): string;
+  hasTags(): boolean;
+  clearTags(): void;
+  getTags(): proto_common_string_pb.StringListValue | undefined;
+  setTags(value?: proto_common_string_pb.StringListValue): void;
 
   hasEnabled(): boolean;
   clearEnabled(): void;
@@ -500,39 +501,29 @@ export class UpdateFeatureRequest extends jspb.Message {
   getArchived(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setArchived(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
-  clearVariationsList(): void;
-  getVariationsList(): Array<proto_feature_variation_pb.Variation>;
-  setVariationsList(value: Array<proto_feature_variation_pb.Variation>): void;
-  addVariations(
-    value?: proto_feature_variation_pb.Variation,
-    index?: number
-  ): proto_feature_variation_pb.Variation;
+  hasVariations(): boolean;
+  clearVariations(): void;
+  getVariations(): proto_feature_variation_pb.VariationListValue | undefined;
+  setVariations(value?: proto_feature_variation_pb.VariationListValue): void;
 
-  clearPrerequisitesList(): void;
-  getPrerequisitesList(): Array<proto_feature_prerequisite_pb.Prerequisite>;
-  setPrerequisitesList(
-    value: Array<proto_feature_prerequisite_pb.Prerequisite>
+  hasPrerequisites(): boolean;
+  clearPrerequisites(): void;
+  getPrerequisites():
+    | proto_feature_prerequisite_pb.PrerequisiteListValue
+    | undefined;
+  setPrerequisites(
+    value?: proto_feature_prerequisite_pb.PrerequisiteListValue
   ): void;
-  addPrerequisites(
-    value?: proto_feature_prerequisite_pb.Prerequisite,
-    index?: number
-  ): proto_feature_prerequisite_pb.Prerequisite;
 
-  clearTargetsList(): void;
-  getTargetsList(): Array<proto_feature_target_pb.Target>;
-  setTargetsList(value: Array<proto_feature_target_pb.Target>): void;
-  addTargets(
-    value?: proto_feature_target_pb.Target,
-    index?: number
-  ): proto_feature_target_pb.Target;
+  hasTargets(): boolean;
+  clearTargets(): void;
+  getTargets(): proto_feature_target_pb.TargetListValue | undefined;
+  setTargets(value?: proto_feature_target_pb.TargetListValue): void;
 
-  clearRulesList(): void;
-  getRulesList(): Array<proto_feature_rule_pb.Rule>;
-  setRulesList(value: Array<proto_feature_rule_pb.Rule>): void;
-  addRules(
-    value?: proto_feature_rule_pb.Rule,
-    index?: number
-  ): proto_feature_rule_pb.Rule;
+  hasRules(): boolean;
+  clearRules(): void;
+  getRules(): proto_feature_rule_pb.RuleListValue | undefined;
+  setRules(value?: proto_feature_rule_pb.RuleListValue): void;
 
   hasDefaultStrategy(): boolean;
   clearDefaultStrategy(): void;
@@ -543,6 +534,9 @@ export class UpdateFeatureRequest extends jspb.Message {
   clearOffVariation(): void;
   getOffVariation(): google_protobuf_wrappers_pb.StringValue | undefined;
   setOffVariation(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  getResetSamplingSeed(): boolean;
+  setResetSamplingSeed(value: boolean): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFeatureRequest.AsObject;
@@ -572,15 +566,16 @@ export namespace UpdateFeatureRequest {
     id: string;
     name?: google_protobuf_wrappers_pb.StringValue.AsObject;
     description?: google_protobuf_wrappers_pb.StringValue.AsObject;
-    tagsList: Array<string>;
+    tags?: proto_common_string_pb.StringListValue.AsObject;
     enabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     archived?: google_protobuf_wrappers_pb.BoolValue.AsObject;
-    variationsList: Array<proto_feature_variation_pb.Variation.AsObject>;
-    prerequisitesList: Array<proto_feature_prerequisite_pb.Prerequisite.AsObject>;
-    targetsList: Array<proto_feature_target_pb.Target.AsObject>;
-    rulesList: Array<proto_feature_rule_pb.Rule.AsObject>;
+    variations?: proto_feature_variation_pb.VariationListValue.AsObject;
+    prerequisites?: proto_feature_prerequisite_pb.PrerequisiteListValue.AsObject;
+    targets?: proto_feature_target_pb.TargetListValue.AsObject;
+    rules?: proto_feature_rule_pb.RuleListValue.AsObject;
     defaultStrategy?: proto_feature_strategy_pb.Strategy.AsObject;
     offVariation?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    resetSamplingSeed: boolean;
   };
 }
 
