@@ -211,7 +211,12 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                 </div>
                 <div className="flex items-center text-primary border-r border-gray-300 px-4 space-x-2">
                   <PencilIcon className="w-4 h-4" />
-                  <button className="text-sm font-normal">Edit Schedule</button>
+                  <button
+                    className="text-sm font-normal"
+                    onClick={onOpenConfirmDialog}
+                  >
+                    Edit Schedule
+                  </button>
                 </div>
                 <div className="flex items-center text-primary border-r border-gray-300 px-4 space-x-2">
                   <EyeIcon className="w-5 h-5" />
