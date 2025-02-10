@@ -6326,6 +6326,13 @@ definitions:
     properties:
       codeReference:
         $ref: '#/definitions/coderefCodeReference'
+  commonStringListValue:
+    type: object
+    properties:
+      values:
+        type: array
+        items:
+          type: string
   environmentArchiveEnvironmentV2Command:
     type: object
   environmentArchiveEnvironmentV2Request:
@@ -7875,13 +7882,6 @@ definitions:
       - FIXED
       - ROLLOUT
     default: FIXED
-  featureStringListValue:
-    type: object
-    properties:
-      values:
-        type: array
-        items:
-          type: string
   featureTarget:
     type: object
     properties:

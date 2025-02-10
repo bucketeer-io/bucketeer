@@ -6,6 +6,7 @@ import * as google_api_annotations_pb from '../../google/api/annotations_pb';
 import * as google_api_field_behavior_pb from '../../google/api/field_behavior_pb';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
 import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-openapiv2/options/annotations_pb';
+import * as proto_common_string_pb from '../../proto/common/string_pb';
 import * as proto_feature_command_pb from '../../proto/feature/command_pb';
 import * as proto_feature_feature_pb from '../../proto/feature/feature_pb';
 import * as proto_feature_evaluation_pb from '../../proto/feature/evaluation_pb';
@@ -487,8 +488,8 @@ export class UpdateFeatureRequest extends jspb.Message {
 
   hasTags(): boolean;
   clearTags(): void;
-  getTags(): proto_feature_feature_pb.StringListValue | undefined;
-  setTags(value?: proto_feature_feature_pb.StringListValue): void;
+  getTags(): proto_common_string_pb.StringListValue | undefined;
+  setTags(value?: proto_common_string_pb.StringListValue): void;
 
   hasEnabled(): boolean;
   clearEnabled(): void;
@@ -534,6 +535,9 @@ export class UpdateFeatureRequest extends jspb.Message {
   getOffVariation(): google_protobuf_wrappers_pb.StringValue | undefined;
   setOffVariation(value?: google_protobuf_wrappers_pb.StringValue): void;
 
+  getResetSamplingSeed(): boolean;
+  setResetSamplingSeed(value: boolean): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFeatureRequest.AsObject;
   static toObject(
@@ -562,7 +566,7 @@ export namespace UpdateFeatureRequest {
     id: string;
     name?: google_protobuf_wrappers_pb.StringValue.AsObject;
     description?: google_protobuf_wrappers_pb.StringValue.AsObject;
-    tags?: proto_feature_feature_pb.StringListValue.AsObject;
+    tags?: proto_common_string_pb.StringListValue.AsObject;
     enabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     archived?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     variations?: proto_feature_variation_pb.VariationListValue.AsObject;
@@ -571,6 +575,7 @@ export namespace UpdateFeatureRequest {
     rules?: proto_feature_rule_pb.RuleListValue.AsObject;
     defaultStrategy?: proto_feature_strategy_pb.Strategy.AsObject;
     offVariation?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    resetSamplingSeed: boolean;
   };
 }
 

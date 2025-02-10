@@ -21,6 +21,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/wrappers.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
+import "proto/common/string.proto";
 import "proto/user/user.proto";
 import "proto/feature/evaluation.proto";
 import "proto/feature/feature.proto";
@@ -172,7 +173,7 @@ message UpdateFeatureRequest {
   string id = 3;
   google.protobuf.StringValue name = 4;
   google.protobuf.StringValue description = 5;
-  feature.StringListValue tags = 6;
+  common.StringListValue tags = 6;
   google.protobuf.BoolValue enabled = 7;
   google.protobuf.BoolValue archived = 8;
   feature.VariationListValue variations = 9;

@@ -22,6 +22,7 @@ import "google/api/field_behavior.proto";
 import "google/protobuf/wrappers.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
+import "proto/common/string.proto";
 import "proto/feature/command.proto";
 import "proto/feature/feature.proto";
 import "proto/feature/evaluation.proto";
@@ -117,7 +118,7 @@ message UpdateFeatureRequest {
   string id = 3 [(google.api.field_behavior) = REQUIRED];
   google.protobuf.StringValue name = 4;
   google.protobuf.StringValue description = 5;
-  StringListValue tags = 6;
+  common.StringListValue tags = 6;
   google.protobuf.BoolValue enabled = 7;
   google.protobuf.BoolValue archived = 8;
   VariationListValue variations = 9;
@@ -126,6 +127,7 @@ message UpdateFeatureRequest {
   RuleListValue rules = 12;
   Strategy default_strategy = 13;
   google.protobuf.StringValue off_variation = 14;
+  bool reset_sampling_seed = 15;
 }
 
 message UpdateFeatureResponse {

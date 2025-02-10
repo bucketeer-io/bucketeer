@@ -9383,6 +9383,33 @@
       }
     },
     {
+      "protopath": "common:/:string.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "StringListValue",
+            "fields": [
+              {
+                "id": 1,
+                "name": "values",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.common"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/common"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "environment:/:command.proto",
       "def": {
         "messages": [
@@ -25721,17 +25748,6 @@
                 "type": "string"
               }
             ]
-          },
-          {
-            "name": "StringListValue",
-            "fields": [
-              {
-                "id": 1,
-                "name": "values",
-                "type": "string",
-                "is_repeated": true
-              }
-            ]
           }
         ],
         "imports": [
@@ -26718,7 +26734,7 @@
               {
                 "id": 6,
                 "name": "tags",
-                "type": "StringListValue"
+                "type": "common.StringListValue"
               },
               {
                 "id": 7,
@@ -26759,6 +26775,11 @@
                 "id": 14,
                 "name": "off_variation",
                 "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 15,
+                "name": "reset_sampling_seed",
+                "type": "bool"
               }
             ]
           },
@@ -29115,6 +29136,9 @@
             "path": "protoc-gen-openapiv2/options/annotations.proto"
           },
           {
+            "path": "proto/common/string.proto"
+          },
+          {
             "path": "proto/feature/command.proto"
           },
           {
@@ -29830,7 +29854,7 @@
               {
                 "id": 6,
                 "name": "tags",
-                "type": "feature.StringListValue"
+                "type": "common.StringListValue"
               },
               {
                 "id": 7,
@@ -32270,6 +32294,9 @@
           },
           {
             "path": "protoc-gen-openapiv2/options/annotations.proto"
+          },
+          {
+            "path": "proto/common/string.proto"
           },
           {
             "path": "proto/user/user.proto"

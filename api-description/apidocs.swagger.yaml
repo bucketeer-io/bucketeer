@@ -1685,7 +1685,7 @@ definitions:
       description:
         type: string
       tags:
-        $ref: '#/definitions/featureStringListValue'
+        $ref: '#/definitions/commonStringListValue'
       enabled:
         type: boolean
       archived:
@@ -2247,6 +2247,13 @@ definitions:
       - ASC
       - DESC
     default: ASC
+  commonStringListValue:
+    type: object
+    properties:
+      values:
+        type: array
+        items:
+          type: string
   environmentEnvironmentV2:
     type: object
     properties:
@@ -2562,13 +2569,6 @@ definitions:
       - FIXED
       - ROLLOUT
     default: FIXED
-  featureStringListValue:
-    type: object
-    properties:
-      values:
-        type: array
-        items:
-          type: string
   featureTarget:
     type: object
     properties:

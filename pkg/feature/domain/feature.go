@@ -25,6 +25,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	"github.com/bucketeer-io/bucketeer/proto/common"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -957,7 +958,7 @@ func updateStrategyVariationID(varID, uID string, s *feature.Strategy) error {
 // Update returns a new Feature with the updated values.
 func (f *Feature) Update(
 	name, description *wrapperspb.StringValue,
-	tags *feature.StringListValue,
+	tags *common.StringListValue,
 	enabled *wrapperspb.BoolValue,
 	archived *wrapperspb.BoolValue,
 	variations *feature.VariationListValue,
@@ -966,6 +967,7 @@ func (f *Feature) Update(
 	rules *feature.RuleListValue,
 	defaultStrategy *feature.Strategy,
 	offVariation *wrapperspb.StringValue,
+	resetSamplingSeed bool,
 ) (*Feature, error) {
 	updated := &Feature{}
 	if err := copier.Copy(updated, f); err != nil {
@@ -1028,6 +1030,12 @@ func (f *Feature) Update(
 	}
 	if offVariation != nil {
 		updated.OffVariation = offVariation.Value
+		incVersion = true
+	}
+	if resetSamplingSeed {
+		if err := updated.ResetSamplingSeed(); err != nil {
+			return nil, err
+		}
 		incVersion = true
 	}
 	if incVersion {
