@@ -422,6 +422,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 			nil, nil, nil, nil, nil,
 			defaultStrategy,
 			nil,
+			false,
 		)
 		if err != nil {
 			return err

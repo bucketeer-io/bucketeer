@@ -14,17 +14,9 @@
 
 syntax = "proto3";
 
-package bucketeer.feature;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/feature";
+package bucketeer.common;
+option go_package = "github.com/bucketeer-io/bucketeer/proto/common";
 
-message Variation {
-  string id = 1;
-  string value = 2;  // this is called value because it could be a string,
-                     // number or even json object
-  string name = 3;
-  string description = 4;
-}
-
-message VariationListValue {
-  repeated Variation values = 1;
+message StringListValue {
+  repeated string values = 1;
 }
