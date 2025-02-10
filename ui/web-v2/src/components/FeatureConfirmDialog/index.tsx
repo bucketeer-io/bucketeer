@@ -399,7 +399,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
           )}
         </div>
       )}
-      {isSwitchEnabledConfirm && (
+      {/* {isSwitchEnabledConfirm && (
         <div className="mt-4 space-y-2">
           <div className="flex items-center space-x-2">
             <input
@@ -494,7 +494,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
             )}
           </div>
         </div>
-      )}
+      )} */}
       {isSwitchEnabledConfirm &&
         isEnabled &&
         progressiveRollout.find((p) =>

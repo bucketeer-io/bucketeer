@@ -162,6 +162,8 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
         if (saveFeatureType === SaveFeatureType.SCHEDULE) {
           // console.log({ dirtyFields });
 
+          // FIXME: Reset sampling not found
+
           const hasDirtyPrerequisites = dirtyFields.prerequisites?.some(
             (item) => Object.values(item).includes(true)
           );
