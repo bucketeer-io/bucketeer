@@ -268,15 +268,15 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   //   });
   // };
 
-  const checkSubmitBtnDisabled = () => {
-    // if (
-    //   // selectedSwitchEnabledType === SwitchEnabledType.SCHEDULE &&
-    //   saveFeatureType === SaveFeatureType.SCHEDULE &&
-    //   !scheduleErrorMessage
-    // ) {
-    //   return false;
-    // }
-  };
+  // const checkSubmitBtnDisabled = () => {
+  // if (
+  //   // selectedSwitchEnabledType === SwitchEnabledType.SCHEDULE &&
+  //   saveFeatureType === SaveFeatureType.SCHEDULE &&
+  //   !scheduleErrorMessage
+  // ) {
+  //   return false;
+  // }
+  // };
 
   return (
     <Modal
@@ -293,7 +293,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
       <div className="mt-2">
         <p className="text-sm text-gray-500">{description}</p>
       </div>
-      {flagList.length > 0 && (
+      {flagList.length > 0 && !feature?.archived && (
         <div className="rounded-md bg-red-50 p-4 mt-4">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -366,7 +366,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
             id="comment"
             rows={3}
             className="input-text w-full"
-            disabled={flagList.length > 0}
+            disabled={flagList.length > 0 && !feature?.archived}
           />
           <p className="input-error">
             {errors.comment && (
@@ -536,7 +536,8 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
             </div>
           )
       }
-      {!isArchive && (
+      {/* {!isArchive && ( */}
+      {flagList.length > 0 && !feature?.archived ? null : (
         <div className="mt-4 space-y-2">
           <div className="flex items-center space-x-2">
             <input

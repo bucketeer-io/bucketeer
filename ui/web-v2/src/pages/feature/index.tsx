@@ -470,9 +470,28 @@ export const FeatureIndexPage: FC = memo(() => {
   );
 
   const handleArchive = useCallback(
-    async (data) => {
-      dispatch(
-        data.feature.archived
+    async (data, saveFeatureType) => {
+      const handleDispatch = async (action) => {
+        await dispatch(action);
+        archiveReset();
+        setIsArchiveConfirmDialogOpen(false);
+        history.replace(
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`
+        );
+        updateFeatureList(null, 1);
+      };
+
+      if (saveFeatureType === SaveFeatureType.SCHEDULE) {
+        handleDispatch(
+          updateFeature({
+            environmentId: currentEnvironment.id,
+            id: data.feature.id,
+            comment: data.comment,
+            archived: !data.feature.archived
+          })
+        );
+      } else {
+        const action = data.feature.archived
           ? unarchiveFeature({
               environmentId: currentEnvironment.id,
               id: data.feature.id,
@@ -482,15 +501,10 @@ export const FeatureIndexPage: FC = memo(() => {
               environmentId: currentEnvironment.id,
               id: data.feature.id,
               comment: data.comment
-            })
-      ).then(() => {
-        archiveReset();
-        setIsArchiveConfirmDialogOpen(false);
-        history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`
-        );
-        updateFeatureList(null, 1);
-      });
+            });
+
+        handleDispatch(action);
+      }
     },
     [dispatch, archiveReset, setIsArchiveConfirmDialogOpen]
   );
@@ -620,8 +634,8 @@ export const FeatureIndexPage: FC = memo(() => {
             featureId={archiveMethod.getValues().feature?.id}
             feature={archiveMethod.getValues().feature}
             open={isArchiveConfirmDialogOpen}
-            handleSubmit={() => {
-              archiveHandleSubmit(handleArchive)();
+            handleSubmit={(arg) => {
+              archiveHandleSubmit((data) => handleArchive(data, arg))();
             }}
             onClose={() => setIsArchiveConfirmDialogOpen(false)}
             title={

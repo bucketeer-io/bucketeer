@@ -26,7 +26,7 @@ import {
   UnarchiveFeatureCommand,
   Command
 } from '../proto/feature/command_pb';
-import { Feature, StringListValue } from '../proto/feature/feature_pb';
+import { Feature } from '../proto/feature/feature_pb';
 import {
   ArchiveFeatureRequest,
   CreateFeatureRequest,
@@ -58,6 +58,7 @@ import {
   RolloutStrategy,
   Strategy
 } from '../proto/feature/strategy_pb';
+import { StringListValue } from '../proto/common/string_pb';
 
 const MODULE_NAME = 'features';
 
@@ -331,6 +332,8 @@ export interface UpdateFeatureParams {
   name?: string;
   description?: string;
   tags?: string[];
+  archived?: boolean;
+  resetSampling?: boolean;
 }
 
 export const updateFeature = createAsyncThunk<
@@ -393,6 +396,18 @@ export const updateFeature = createAsyncThunk<
   if (params.tags) {
     console.log('tags set');
     request.setTags(mapTags(params.tags));
+  }
+
+  if (params.archived !== undefined) {
+    console.log('archived set');
+    request.setArchived(new BoolValue().setValue(params.archived));
+  }
+
+  if (params.resetSampling) {
+    console.log('resetSampling set');
+    request.setResetSamplingSeed(
+      new BoolValue().setValue(params.resetSampling)
+    );
   }
 
   await featureGrpc.updateFeature(request);

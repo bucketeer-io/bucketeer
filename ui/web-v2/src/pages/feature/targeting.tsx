@@ -181,26 +181,21 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
           field && JSON.stringify(field).includes('true');
 
         if (saveFeatureType === SaveFeatureType.SCHEDULE) {
-          const hasDirtyPrerequisites = dirtyFields.prerequisites?.some(
-            (item) => Object.values(item).includes(true)
-          );
-          const hasDirtyTargets = dirtyFields.targets?.some((item) =>
-            Object.values(item).includes(true)
-          );
-
           const updatePayload = {
             environmentId: currentEnvironment.id,
             id: featureId,
             comment: data.comment,
             enabled: dirtyFields.enabled ? data.enabled : undefined,
-            prerequisitesList: hasDirtyPrerequisites && data.prerequisites,
-            targets: hasDirtyTargets && data.targets,
+            prerequisitesList:
+              hasDirtyField(dirtyFields.prerequisites) && data.prerequisites,
+            targets: hasDirtyField(dirtyFields.targets) && data.targets,
             rules: hasDirtyField(dirtyFields.rules) && data.rules,
             defaultStrategy:
               hasDirtyField(dirtyFields.defaultStrategy) &&
               data.defaultStrategy,
             offVariation:
-              hasDirtyField(dirtyFields.offVariation) && data.offVariation
+              hasDirtyField(dirtyFields.offVariation) && data.offVariation,
+            resetSampling: data.resetSampling
           };
 
           await prepareUpdate(updateFeature, updatePayload);
