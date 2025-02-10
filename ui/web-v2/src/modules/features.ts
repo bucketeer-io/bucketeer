@@ -346,135 +346,38 @@ export const updateFeature = createAsyncThunk<
   console.log('params', params);
 
   if (params.enabled !== undefined) {
+    console.log('Enabled set');
     request.setEnabled(new BoolValue().setValue(params.enabled));
   }
 
   if (params.prerequisitesList) {
     console.log('pre-requisites set');
-    const prerequisiteList = params.prerequisitesList.map((prerequisite) => {
-      const p = new Prerequisite();
-      p.setFeatureId(prerequisite.featureId);
-      p.setVariationId(prerequisite.variationId);
-      return p;
-    });
-    const prerequisiteListValue = new PrerequisiteListValue();
-    prerequisiteListValue.setValuesList(prerequisiteList);
-    request.setPrerequisites(prerequisiteListValue);
+    request.setPrerequisites(mapToPrerequisites(params.prerequisitesList));
   }
 
   if (params.targets) {
     console.log('targets');
-    const targets = params.targets.map((target) => {
-      console.log({ target });
-      const t = new Target();
-      t.setVariation(target.variationId);
-      t.setUsersList(target.users);
-      return t;
-    });
-    const targetsListValue = new TargetListValue();
-    targetsListValue.setValuesList(targets);
-    request.setTargets(targetsListValue);
+    request.setTargets(mapToTargets(params.targets));
   }
 
   if (params.rules) {
     console.log('rules');
-    const rules = params.rules.map((rule) => {
-      const r = new Rule();
-
-      const clausesList = rule.clauses.map((clause) => {
-        const c = new Clause();
-        c.setId(clause.id);
-        c.setOperator(clause.operator);
-        c.setAttribute(clause.attribute);
-        c.setValuesList(clause.values);
-        return c;
-      });
-
-      const strategy = new Strategy();
-
-      if (rule.strategy.option.value === Strategy.Type.ROLLOUT.toString()) {
-        console.log('rule rollout strategy');
-        strategy.setType(Strategy.Type.ROLLOUT);
-        const rolloutStrategy = new RolloutStrategy();
-
-        const variationList = rule.strategy.rolloutStrategy.map((rollout) => {
-          const rolloutStrategyVariation = new RolloutStrategy.Variation();
-          rolloutStrategyVariation.setVariation(rollout.id);
-          rolloutStrategyVariation.setWeight(rollout.percentage * 1000);
-          return rolloutStrategyVariation;
-        });
-        rolloutStrategy.setVariationsList(variationList);
-        strategy.setRolloutStrategy(rolloutStrategy);
-      } else {
-        console.log('rule fixed strategy');
-        strategy.setType(Strategy.Type.FIXED);
-        const fixedStrategy = new FixedStrategy();
-        fixedStrategy.setVariation(rule.strategy.option.value);
-
-        strategy.setFixedStrategy(fixedStrategy);
-      }
-
-      r.setId(rule.id);
-      r.setClausesList(clausesList);
-      r.setStrategy(strategy);
-
-      return r;
-    });
-    const rulesListValue = new RuleListValue();
-    rulesListValue.setValuesList(rules);
-    request.setRules(rulesListValue);
+    request.setRules(mapToRules(params.rules));
   }
 
   if (params.defaultStrategy) {
-    const strategy = new Strategy();
-    if (
-      params.defaultStrategy.option.value === Strategy.Type.ROLLOUT.toString()
-    ) {
-      strategy.setType(Strategy.Type.ROLLOUT);
-      console.log('set Default Strategy - Rollout');
-      const rolloutStrategy = new RolloutStrategy();
-
-      const variationList = params.defaultStrategy.rolloutStrategy.map(
-        (rollout) => {
-          const rolloutStrategyVariation = new RolloutStrategy.Variation();
-          rolloutStrategyVariation.setVariation(rollout.id);
-          rolloutStrategyVariation.setWeight(rollout.percentage * 1000);
-          return rolloutStrategyVariation;
-        }
-      );
-      rolloutStrategy.setVariationsList(variationList);
-      strategy.setRolloutStrategy(rolloutStrategy);
-    } else {
-      console.log('set Default Strategy - Fixed');
-      strategy.setType(Strategy.Type.FIXED);
-      const fixedStrategy = new FixedStrategy();
-      fixedStrategy.setVariation(params.defaultStrategy.option.value);
-
-      strategy.setFixedStrategy(fixedStrategy);
-    }
-    request.setDefaultStrategy(strategy);
+    console.log('defaultStrategy set');
+    request.setDefaultStrategy(mapToStrategy(params.defaultStrategy));
   }
 
   if (params.offVariation) {
     console.log('offVariation set');
-    const offVariation = new Variation();
-    offVariation.setValue(params.offVariation.value);
-    request.setOffVariation(offVariation);
+    request.setOffVariation(mapOffVariation(params.offVariation));
   }
 
   if (params.variations) {
     console.log('variations set');
-    const variations = params.variations.map((v) => {
-      const variation = new Variation();
-      variation.setId(v.id);
-      variation.setName(v.name);
-      variation.setValue(v.value);
-      variation.setDescription(v.description);
-      return variation;
-    });
-    const variationListValue = new VariationListValue();
-    variationListValue.setValuesList(variations);
-    request.setVariations(variationListValue);
+    request.setVariations(mapVariations(params.variations));
   }
 
   if (params.name) {
@@ -482,20 +385,122 @@ export const updateFeature = createAsyncThunk<
     request.setName(new StringValue().setValue(params.name));
   }
 
-  if (params.description) {
+  if (params.description !== undefined) {
     console.log('description set');
     request.setDescription(new StringValue().setValue(params.description));
   }
 
   if (params.tags) {
     console.log('tags set');
-    const stringListValue = new StringListValue();
-    stringListValue.setValuesList(params.tags);
-    request.setTags(stringListValue);
+    request.setTags(mapTags(params.tags));
   }
 
   await featureGrpc.updateFeature(request);
 });
+
+function mapToPrerequisites(
+  prerequisitesList: UpdateFeatureParams['prerequisitesList']
+): PrerequisiteListValue {
+  const prerequisiteList = prerequisitesList.map((prerequisite) => {
+    const p = new Prerequisite();
+    p.setFeatureId(prerequisite.featureId);
+    p.setVariationId(prerequisite.variationId);
+    return p;
+  });
+  const prerequisiteListValue = new PrerequisiteListValue();
+  prerequisiteListValue.setValuesList(prerequisiteList);
+  return prerequisiteListValue;
+}
+
+function mapToTargets(
+  targets: UpdateFeatureParams['targets']
+): TargetListValue {
+  const targetList = targets.map((target) => {
+    const t = new Target();
+    t.setVariation(target.variationId);
+    t.setUsersList(target.users);
+    return t;
+  });
+  const targetsListValue = new TargetListValue();
+  targetsListValue.setValuesList(targetList);
+  return targetsListValue;
+}
+
+function mapToStrategy(
+  strategy:
+    | UpdateFeatureParams['defaultStrategy']
+    | UpdateFeatureParams['rules'][number]['strategy']
+): Strategy {
+  const newStrategy = new Strategy();
+  if (strategy.option.value === Strategy.Type.ROLLOUT.toString()) {
+    newStrategy.setType(Strategy.Type.ROLLOUT);
+    const rolloutStrategy = new RolloutStrategy();
+    const variationList =
+      strategy.rolloutStrategy?.map((rollout) => {
+        const rolloutStrategyVariation = new RolloutStrategy.Variation();
+        rolloutStrategyVariation.setVariation(rollout.id);
+        rolloutStrategyVariation.setWeight(rollout.percentage * 1000);
+        return rolloutStrategyVariation;
+      }) || [];
+    rolloutStrategy.setVariationsList(variationList);
+    newStrategy.setRolloutStrategy(rolloutStrategy);
+  } else {
+    newStrategy.setType(Strategy.Type.FIXED);
+    const fixedStrategy = new FixedStrategy();
+    fixedStrategy.setVariation(strategy.option.value);
+    newStrategy.setFixedStrategy(fixedStrategy);
+  }
+  return newStrategy;
+}
+
+function mapToRules(rules: UpdateFeatureParams['rules']): RuleListValue {
+  const ruleList = rules.map((rule) => {
+    const r = new Rule();
+    const clausesList = rule.clauses.map((clause) => {
+      const c = new Clause();
+      c.setId(clause.id);
+      c.setOperator(clause.operator);
+      c.setAttribute(clause.attribute);
+      c.setValuesList(clause.values);
+      return c;
+    });
+    r.setId(rule.id);
+    r.setClausesList(clausesList);
+    r.setStrategy(mapToStrategy(rule.strategy));
+    return r;
+  });
+  const rulesListValue = new RuleListValue();
+  rulesListValue.setValuesList(ruleList);
+  return rulesListValue;
+}
+
+function mapOffVariation(offVariation: UpdateFeatureParams['offVariation']) {
+  const variation = new Variation();
+  variation.setValue(offVariation.value);
+  return variation;
+}
+
+function mapVariations(
+  variations: UpdateFeatureParams['variations']
+): VariationListValue {
+  const variationList = variations.map((v) => {
+    const variation = new Variation();
+    variation.setId(v.id);
+    variation.setName(v.name);
+    variation.setValue(v.value);
+    variation.setDescription(v.description);
+    return variation;
+  });
+  const variationListValue = new VariationListValue();
+  variationListValue.setValuesList(variationList);
+  return variationListValue;
+}
+
+function mapTags(tags: string[]): StringListValue {
+  const stringListValue = new StringListValue();
+  stringListValue.setValuesList(tags);
+  return stringListValue;
+}
 
 export interface UpdateFeatureTargetingParams {
   environmentId: string;

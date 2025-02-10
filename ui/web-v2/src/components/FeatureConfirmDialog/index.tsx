@@ -53,7 +53,7 @@ interface FeatureConfirmDialogProps {
   title: string;
   description: string;
   displayResetSampling?: boolean;
-  isSwitchEnabledConfirm?: boolean;
+  // isSwitchEnabledConfirm?: boolean;
   isEnabled?: boolean;
   isArchive?: boolean;
   featureId?: string;
@@ -78,7 +78,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   title,
   description,
   displayResetSampling,
-  isSwitchEnabledConfirm,
+  // isSwitchEnabledConfirm,
   isEnabled,
   isArchive,
   featureId,
@@ -91,12 +91,12 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   const history = useHistory();
   const [flagList, setFlagList] = useState([]);
   const [isFlagActive, setIsFlagActive] = useState(false);
-  const [selectedSwitchEnabledType, setSelectedSwitchEnabledType] = useState(
-    isEnabled ? SwitchEnabledType.DISABLE_NOW : SwitchEnabledType.ENABLE_NOW
-  );
+  // const [selectedSwitchEnabledType, setSelectedSwitchEnabledType] = useState(
+  //   isEnabled ? SwitchEnabledType.DISABLE_NOW : SwitchEnabledType.ENABLE_NOW
+  // );
 
   const [saveFeatureType, setSaveFeatureType] = useState(
-    SaveFeatureType.SCHEDULE
+    SaveFeatureType.UPDATE_NOW
   );
   const [scheduleErrorMessage, setScheduleErrorMessage] = useState('');
 
@@ -128,12 +128,13 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
     if (currentEnvironment.requireComment) {
       document.getElementById('comment').focus();
     } else {
-      // document.getElementById('comment').blur();
+      document.getElementById('comment').blur();
     }
   }, []);
 
   useEffect(() => {
-    if (isSwitchEnabledConfirm && isEnabled) {
+    // if (isSwitchEnabledConfirm && isEnabled) {
+    if (isEnabled) {
       dispatch(
         listProgressiveRollout({
           featureId: featureId,
@@ -200,44 +201,44 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
     }
   }, [isArchive, open, feature]);
 
-  const getSubmitBtnLabel = () => {
-    if (isSwitchEnabledConfirm) {
-      return selectedSwitchEnabledType === SwitchEnabledType.ENABLE_NOW
-        ? f(messages.button.enable)
-        : selectedSwitchEnabledType === SwitchEnabledType.DISABLE_NOW
-          ? f(messages.button.disable)
-          : f(messages.button.schedule);
-    }
-    return f(messages.button.submit);
-  };
+  // const getSubmitBtnLabel = () => {
+  //   if (isSwitchEnabledConfirm) {
+  //     return selectedSwitchEnabledType === SwitchEnabledType.ENABLE_NOW
+  //       ? f(messages.button.enable)
+  //       : selectedSwitchEnabledType === SwitchEnabledType.DISABLE_NOW
+  //         ? f(messages.button.disable)
+  //         : f(messages.button.schedule);
+  //   }
+  //   return f(messages.button.submit);
+  // };
 
-  const handleScheduleSubmit = () => {
-    const command = new CreateAutoOpsRuleCommand();
-    command.setFeatureId(featureId);
-    const clause = new DatetimeClause();
-    command.setOpsType(OpsType.SCHEDULE);
-    if (isEnabled) {
-      clause.setActionType(ActionType.DISABLE);
-    } else {
-      clause.setActionType(ActionType.ENABLE);
-    }
-    clause.setTime(Math.round(datetime.getTime() / 1000));
-    command.setDatetimeClausesList([clause]);
-    dispatch(
-      createAutoOpsRule({
-        environmentId: currentEnvironment.id,
-        command: command
-      })
-    ).then(() => {
-      dispatch(
-        addToast({
-          message: f(messages.feature.successMessages.schedule),
-          severity: 'success'
-        })
-      );
-      onClose();
-    });
-  };
+  // const handleScheduleSubmit = () => {
+  //   const command = new CreateAutoOpsRuleCommand();
+  //   command.setFeatureId(featureId);
+  //   const clause = new DatetimeClause();
+  //   command.setOpsType(OpsType.SCHEDULE);
+  //   if (isEnabled) {
+  //     clause.setActionType(ActionType.DISABLE);
+  //   } else {
+  //     clause.setActionType(ActionType.ENABLE);
+  //   }
+  //   clause.setTime(Math.round(datetime.getTime() / 1000));
+  //   command.setDatetimeClausesList([clause]);
+  //   dispatch(
+  //     createAutoOpsRule({
+  //       environmentId: currentEnvironment.id,
+  //       command: command
+  //     })
+  //   ).then(() => {
+  //     dispatch(
+  //       addToast({
+  //         message: f(messages.feature.successMessages.schedule),
+  //         severity: 'success'
+  //       })
+  //     );
+  //     onClose();
+  //   });
+  // };
 
   // const handleScheduleSubmit = () => {
   //   const command = new CreateAutoOpsRuleCommand();
@@ -268,20 +269,20 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   // };
 
   const checkSubmitBtnDisabled = () => {
-    if (
-      selectedSwitchEnabledType === SwitchEnabledType.SCHEDULE &&
-      !scheduleErrorMessage
-    ) {
-      return false;
-    }
-    return !isValid || isSubmitting;
+    // if (
+    //   // selectedSwitchEnabledType === SwitchEnabledType.SCHEDULE &&
+    //   saveFeatureType === SaveFeatureType.SCHEDULE &&
+    //   !scheduleErrorMessage
+    // ) {
+    //   return false;
+    // }
   };
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      overflowVisible={isSwitchEnabledConfirm}
+      // overflowVisible={isSwitchEnabledConfirm}
     >
       <Dialog.Title
         as="h3"
@@ -340,65 +341,63 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
           </div>
         </div>
       )}
-      {selectedSwitchEnabledType !== SwitchEnabledType.SCHEDULE && (
-        <div className="mt-5">
-          <div className="flex items-center space-x-1">
-            <label
-              htmlFor="updateComment"
-              className="block text-sm font-medium text-gray-700"
-            >
-              {f(messages.feature.updateComment)}
-            </label>
-            <label
-              htmlFor="required/optional"
-              className="block text-sm text-gray-500"
-            >
-              {currentEnvironment.requireComment
-                ? f(messages.input.required)
-                : f(messages.input.optional)}
-            </label>
-          </div>
-          <div className="mt-1">
-            <textarea
-              {...register('comment', {
-                maxLength: FEATURE_UPDATE_COMMENT_MAX_LENGTH
-              })}
-              id="comment"
-              rows={3}
-              className="input-text w-full"
-              disabled={flagList.length > 0}
-            />
-            <p className="input-error">
-              {errors.comment && (
-                <span role="alert">{errors.comment.message}</span>
-              )}
-            </p>
-          </div>
-          {displayResetSampling && (
-            <div className="mt-3 flex space-x-2 items-center">
-              <Controller
-                name="resetSampling"
-                control={control}
-                render={({ field }) => {
-                  return (
-                    <CheckBox
-                      id="resample"
-                      value={'resample'}
-                      onChange={(_: string, checked: boolean): void =>
-                        field.onChange(checked)
-                      }
-                      defaultChecked={false}
-                    />
-                  );
-                }}
-              />
-              <label htmlFor="resample" className={classNames('input-label')}>
-                {f(messages.feature.resetRandomSampling)}
-              </label>
-            </div>
-          )}
+      <div className="mt-5">
+        <div className="flex items-center space-x-1">
+          <label
+            htmlFor="updateComment"
+            className="block text-sm font-medium text-gray-700"
+          >
+            {f(messages.feature.updateComment)}
+          </label>
+          <label
+            htmlFor="required/optional"
+            className="block text-sm text-gray-500"
+          >
+            {currentEnvironment.requireComment
+              ? f(messages.input.required)
+              : f(messages.input.optional)}
+          </label>
         </div>
-      )}
+        <div className="mt-1">
+          <textarea
+            {...register('comment', {
+              maxLength: FEATURE_UPDATE_COMMENT_MAX_LENGTH
+            })}
+            id="comment"
+            rows={3}
+            className="input-text w-full"
+            disabled={flagList.length > 0}
+          />
+          <p className="input-error">
+            {errors.comment && (
+              <span role="alert">{errors.comment.message}</span>
+            )}
+          </p>
+        </div>
+        {displayResetSampling && (
+          <div className="mt-3 flex space-x-2 items-center">
+            <Controller
+              name="resetSampling"
+              control={control}
+              render={({ field }) => {
+                return (
+                  <CheckBox
+                    id="resample"
+                    value={'resample'}
+                    onChange={(_: string, checked: boolean): void =>
+                      field.onChange(checked)
+                    }
+                    defaultChecked={false}
+                  />
+                );
+              }}
+            />
+            <label htmlFor="resample" className={classNames('input-label')}>
+              {f(messages.feature.resetRandomSampling)}
+            </label>
+          </div>
+        )}
+      </div>
       {/* {isSwitchEnabledConfirm && (
         <div className="mt-4 space-y-2">
           <div className="flex items-center space-x-2">
@@ -495,46 +494,48 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
           </div>
         </div>
       )} */}
-      {isSwitchEnabledConfirm &&
+      {
+        // isSwitchEnabledConfirm &&
         isEnabled &&
-        progressiveRollout.find((p) =>
-          isProgressiveRolloutsRunningWaiting(p.status)
-        ) && (
-          <div className="bg-yellow-50 p-4 mt-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <ExclamationIcon
-                  className="h-5 w-5 text-yellow-400"
-                  aria-hidden="true"
-                />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-yellow-700">
-                  {f(
-                    messages.autoOps.progressiveRolloutWarningMessages
-                      .progressiveRolloutInProgress,
-                    {
-                      link: (
-                        <span
-                          onClick={() => {
-                            history.push(
-                              `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_AUTOOPS}`
-                            );
-                          }}
-                          className="underline text-primary cursor-pointer ml-1"
-                        >
-                          <span>
-                            {f(messages.sourceType.progressiveRollout)}
+          progressiveRollout.find((p) =>
+            isProgressiveRolloutsRunningWaiting(p.status)
+          ) && (
+            <div className="bg-yellow-50 p-4 mt-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <ExclamationIcon
+                    className="h-5 w-5 text-yellow-400"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-yellow-700">
+                    {f(
+                      messages.autoOps.progressiveRolloutWarningMessages
+                        .progressiveRolloutInProgress,
+                      {
+                        link: (
+                          <span
+                            onClick={() => {
+                              history.push(
+                                `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_AUTOOPS}`
+                              );
+                            }}
+                            className="underline text-primary cursor-pointer ml-1"
+                          >
+                            <span>
+                              {f(messages.sourceType.progressiveRollout)}
+                            </span>
                           </span>
-                        </span>
-                      )
-                    }
-                  )}
-                </p>
+                        )
+                      }
+                    )}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )
+      }
       {!isArchive && (
         <div className="mt-4 space-y-2">
           <div className="flex items-center space-x-2">
@@ -605,7 +606,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
           <button
             type="button"
             className="btn-submit"
-            disabled={checkSubmitBtnDisabled()}
+            disabled={!isValid || isSubmitting || !!scheduleErrorMessage}
             onClick={() => {
               handleSubmit(saveFeatureType);
 
@@ -624,7 +625,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
             }}
           >
             {/* {getSubmitBtnLabel()} */}
-            Save
+            {f(messages.button.save)}
           </button>
         </div>
       </div>

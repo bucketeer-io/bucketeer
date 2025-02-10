@@ -89,17 +89,8 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
 
     const handleUpdate = useCallback(
       async (data, saveFeatureType) => {
-        if (saveFeatureType === SaveFeatureType.SCHEDULE) {
-          dispatch(
-            updateFeature({
-              environmentId: currentEnvironment.id,
-              id: feature.id,
-              comment: data.comment,
-              name: dirtyFields.name && data.name,
-              description: dirtyFields.description && data.description,
-              tags: dirtyFields.tags && data.tags
-            })
-          ).then(() => {
+        const prepareUpdate = async (updateAction, payload) => {
+          dispatch(updateAction(payload)).then(() => {
             setIsConfirmDialogOpen(false);
             dispatch(
               getFeature({
@@ -116,31 +107,48 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
               });
             });
           });
+        };
+
+        if (saveFeatureType === SaveFeatureType.SCHEDULE) {
+          await prepareUpdate(updateFeature, {
+            environmentId: currentEnvironment.id,
+            id: feature.id,
+            comment: data.comment,
+            name: dirtyFields.name ? data.name : undefined,
+            description: dirtyFields.description ? data.description : undefined,
+            tags: dirtyFields.tags ? data.tags : undefined
+          });
         } else {
           const commands: UpdateDetailCommands = {};
+
           if (dirtyFields.name) {
-            commands.renameCommand = new RenameFeatureCommand();
-            commands.renameCommand.setName(data.name);
+            const renameCommand = new RenameFeatureCommand();
+            renameCommand.setName(data.name);
+            commands.renameCommand = renameCommand;
           }
+
           if (dirtyFields.description) {
-            commands.changeDescriptionCommand = new ChangeDescriptionCommand();
-            commands.changeDescriptionCommand.setDescription(data.description);
+            const descriptionCommand = new ChangeDescriptionCommand();
+            descriptionCommand.setDescription(data.description);
+            commands.changeDescriptionCommand = descriptionCommand;
           }
+
           if (dirtyFields.tags) {
             const addTags = data.tags?.filter(
               (tag) => !feature.tagsList.includes(tag)
             );
-            if (addTags.length) {
+            if (addTags?.length) {
               commands.addTagCommands = addTags.map((tag) => {
                 const addTagCommand = new AddTagCommand();
                 addTagCommand.setTag(tag);
                 return addTagCommand;
               });
             }
+
             const removeTags = feature.tagsList.filter(
               (tag) => !data.tags?.includes(tag)
             );
-            if (removeTags.length) {
+            if (removeTags?.length) {
               commands.removeTagCommands = removeTags.map((tag) => {
                 const removeTagCommand = new RemoveTagCommand();
                 removeTagCommand.setTag(tag);
@@ -148,33 +156,16 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
               });
             }
           }
-          dispatch(
-            updateFeatureDetails({
-              environmentId: currentEnvironment.id,
-              id: feature.id,
-              comment: data.comment,
-              updateDetailCommands: commands
-            })
-          ).then(() => {
-            setIsConfirmDialogOpen(false);
-            dispatch(
-              getFeature({
-                environmentId: currentEnvironment.id,
-                id: featureId
-              })
-            ).then((res) => {
-              const featurePayload = res.payload as Feature.AsObject;
-              reset({
-                name: featurePayload.name,
-                description: featurePayload.description,
-                tags: featurePayload.tagsList,
-                comment: ''
-              });
-            });
+
+          await prepareUpdate(updateFeatureDetails, {
+            environmentId: currentEnvironment.id,
+            id: feature.id,
+            comment: data.comment,
+            updateDetailCommands: commands
           });
         }
       },
-      [dispatch, dirtyFields]
+      [dispatch, dirtyFields, currentEnvironment, featureId, feature, reset]
     );
 
     if (isLoading) {

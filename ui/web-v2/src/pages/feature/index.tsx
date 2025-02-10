@@ -399,80 +399,50 @@ export const FeatureIndexPage: FC = memo(() => {
 
   const handleSwitchEnabled = useCallback(
     async (data, saveFeatureType) => {
+      const handleToast = (enabled) => {
+        const message = enabled
+          ? f(messages.feature.successMessages.flagEnabled)
+          : f(messages.feature.successMessages.flagDisabled);
+        dispatch(addToast({ message, severity: 'success' }));
+      };
+
+      const prepareUpdate = async (action) => {
+        dispatch(action).then(() => {
+          handleToast(data.enabled);
+          switchEnabledReset();
+          setIsSwitchEnableConfirmDialogOpen(false);
+          dispatch(
+            getFeature({
+              environmentId: currentEnvironment.id,
+              id: data.featureId
+            })
+          );
+        });
+      };
+
       if (saveFeatureType === SaveFeatureType.SCHEDULE) {
-        dispatch(
+        await prepareUpdate(
           updateFeature({
             environmentId: currentEnvironment.id,
             id: data.featureId,
             comment: data.comment,
             enabled: data.enabled
           })
-        ).then(() => {
-          if (data.enabled) {
-            dispatch(
-              addToast({
-                message: f(messages.feature.successMessages.flagEnabled),
-                severity: 'success'
-              })
-            );
-          } else {
-            dispatch(
-              addToast({
-                message: f(messages.feature.successMessages.flagDisabled),
-                severity: 'success'
-              })
-            );
-          }
-          switchEnabledReset();
-          setIsSwitchEnableConfirmDialogOpen(false);
-          dispatch(
-            getFeature({
-              environmentId: currentEnvironment.id,
-              id: data.featureId
-            })
-          );
-        });
+        );
       } else {
-        dispatch(
-          (() => {
-            if (data.enabled) {
-              return enableFeature({
-                environmentId: currentEnvironment.id,
-                id: data.featureId,
-                comment: data.comment
-              });
-            }
-            return disableFeature({
+        const action = data.enabled
+          ? enableFeature({
+              environmentId: currentEnvironment.id,
+              id: data.featureId,
+              comment: data.comment
+            })
+          : disableFeature({
               environmentId: currentEnvironment.id,
               id: data.featureId,
               comment: data.comment
             });
-          })()
-        ).then(() => {
-          if (data.enabled) {
-            dispatch(
-              addToast({
-                message: f(messages.feature.successMessages.flagEnabled),
-                severity: 'success'
-              })
-            );
-          } else {
-            dispatch(
-              addToast({
-                message: f(messages.feature.successMessages.flagDisabled),
-                severity: 'success'
-              })
-            );
-          }
-          switchEnabledReset();
-          setIsSwitchEnableConfirmDialogOpen(false);
-          dispatch(
-            getFeature({
-              environmentId: currentEnvironment.id,
-              id: data.featureId
-            })
-          );
-        });
+
+        await prepareUpdate(action);
       }
     },
     [dispatch, switchEnabledReset, setIsSwitchEnableConfirmDialogOpen]
@@ -628,7 +598,7 @@ export const FeatureIndexPage: FC = memo(() => {
         <FormProvider {...switchEnabledMethod}>
           <FeatureConfirmDialog
             featureId={switchEnabledGetValues('featureId')}
-            isSwitchEnabledConfirm={true}
+            // isSwitchEnabledConfirm={true}
             isEnabled={!switchEnabledGetValues('enabled')}
             open={isSwitchEnableConfirmDialogOpen}
             // handleSubmit={() => switchEnableHandleSubmit(handleSwitchEnabled)}
