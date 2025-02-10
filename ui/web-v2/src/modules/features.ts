@@ -26,7 +26,7 @@ import {
   UnarchiveFeatureCommand,
   Command
 } from '../proto/feature/command_pb';
-import { Feature } from '../proto/feature/feature_pb';
+import { Feature, StringListValue } from '../proto/feature/feature_pb';
 import {
   ArchiveFeatureRequest,
   CreateFeatureRequest,
@@ -44,7 +44,7 @@ import {
   ListTagsResponse,
   UpdateFeatureRequest
 } from '../proto/feature/service_pb';
-import { Variation } from '../proto/feature/variation_pb';
+import { Variation, VariationListValue } from '../proto/feature/variation_pb';
 import { AppState } from '.';
 import { Target, TargetListValue } from '../proto/feature/target_pb';
 import {
@@ -322,6 +322,15 @@ export interface UpdateFeatureParams {
     label: string;
     value: string;
   };
+  variations?: {
+    id?: string;
+    value?: string;
+    name?: string;
+    description?: string;
+  }[];
+  name?: string;
+  description?: string;
+  tags?: string[];
 }
 
 export const updateFeature = createAsyncThunk<
@@ -336,10 +345,9 @@ export const updateFeature = createAsyncThunk<
 
   console.log('params', params);
 
-  // request.setName(new StringValue().setValue('test'));
-
-  params.enabled &&
+  if (params.enabled !== undefined) {
     request.setEnabled(new BoolValue().setValue(params.enabled));
+  }
 
   if (params.prerequisitesList) {
     console.log('pre-requisites set');
@@ -452,6 +460,38 @@ export const updateFeature = createAsyncThunk<
     const offVariation = new Variation();
     offVariation.setValue(params.offVariation.value);
     request.setOffVariation(offVariation);
+  }
+
+  if (params.variations) {
+    console.log('variations set');
+    const variations = params.variations.map((v) => {
+      const variation = new Variation();
+      variation.setId(v.id);
+      variation.setName(v.name);
+      variation.setValue(v.value);
+      variation.setDescription(v.description);
+      return variation;
+    });
+    const variationListValue = new VariationListValue();
+    variationListValue.setValuesList(variations);
+    request.setVariations(variationListValue);
+  }
+
+  if (params.name) {
+    console.log('name set');
+    request.setName(new StringValue().setValue(params.name));
+  }
+
+  if (params.description) {
+    console.log('description set');
+    request.setDescription(new StringValue().setValue(params.description));
+  }
+
+  if (params.tags) {
+    console.log('tags set');
+    const stringListValue = new StringListValue();
+    stringListValue.setValuesList(params.tags);
+    request.setTags(stringListValue);
   }
 
   await featureGrpc.updateFeature(request);

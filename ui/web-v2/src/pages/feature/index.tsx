@@ -12,7 +12,10 @@ import { v4 as uuid } from 'uuid';
 
 import { FeatureAddForm } from '../../components/FeatureAddForm';
 import { FeatureCloneForm } from '../../components/FeatureCloneForm';
-import { FeatureConfirmDialog } from '../../components/FeatureConfirmDialog';
+import {
+  FeatureConfirmDialog,
+  SaveFeatureType
+} from '../../components/FeatureConfirmDialog';
 import { FeatureList } from '../../components/FeatureList';
 import { Header } from '../../components/Header';
 import { Overlay } from '../../components/Overlay';
@@ -39,7 +42,8 @@ import {
   getFeature,
   listFeatures,
   OrderBy,
-  OrderDirection
+  OrderDirection,
+  updateFeature
 } from '../../modules/features';
 import { useCurrentEnvironment, useEnvironments } from '../../modules/me';
 import { Feature } from '../../proto/feature/feature_pb';
@@ -394,47 +398,82 @@ export const FeatureIndexPage: FC = memo(() => {
   );
 
   const handleSwitchEnabled = useCallback(
-    async (data) => {
-      dispatch(
-        (() => {
+    async (data, saveFeatureType) => {
+      if (saveFeatureType === SaveFeatureType.SCHEDULE) {
+        dispatch(
+          updateFeature({
+            environmentId: currentEnvironment.id,
+            id: data.featureId,
+            comment: data.comment,
+            enabled: data.enabled
+          })
+        ).then(() => {
           if (data.enabled) {
-            return enableFeature({
+            dispatch(
+              addToast({
+                message: f(messages.feature.successMessages.flagEnabled),
+                severity: 'success'
+              })
+            );
+          } else {
+            dispatch(
+              addToast({
+                message: f(messages.feature.successMessages.flagDisabled),
+                severity: 'success'
+              })
+            );
+          }
+          switchEnabledReset();
+          setIsSwitchEnableConfirmDialogOpen(false);
+          dispatch(
+            getFeature({
+              environmentId: currentEnvironment.id,
+              id: data.featureId
+            })
+          );
+        });
+      } else {
+        dispatch(
+          (() => {
+            if (data.enabled) {
+              return enableFeature({
+                environmentId: currentEnvironment.id,
+                id: data.featureId,
+                comment: data.comment
+              });
+            }
+            return disableFeature({
               environmentId: currentEnvironment.id,
               id: data.featureId,
               comment: data.comment
             });
+          })()
+        ).then(() => {
+          if (data.enabled) {
+            dispatch(
+              addToast({
+                message: f(messages.feature.successMessages.flagEnabled),
+                severity: 'success'
+              })
+            );
+          } else {
+            dispatch(
+              addToast({
+                message: f(messages.feature.successMessages.flagDisabled),
+                severity: 'success'
+              })
+            );
           }
-          return disableFeature({
-            environmentId: currentEnvironment.id,
-            id: data.featureId,
-            comment: data.comment
-          });
-        })()
-      ).then(() => {
-        if (data.enabled) {
+          switchEnabledReset();
+          setIsSwitchEnableConfirmDialogOpen(false);
           dispatch(
-            addToast({
-              message: f(messages.feature.successMessages.flagEnabled),
-              severity: 'success'
+            getFeature({
+              environmentId: currentEnvironment.id,
+              id: data.featureId
             })
           );
-        } else {
-          dispatch(
-            addToast({
-              message: f(messages.feature.successMessages.flagDisabled),
-              severity: 'success'
-            })
-          );
-        }
-        switchEnabledReset();
-        setIsSwitchEnableConfirmDialogOpen(false);
-        dispatch(
-          getFeature({
-            environmentId: currentEnvironment.id,
-            id: data.featureId
-          })
-        );
-      });
+        });
+      }
     },
     [dispatch, switchEnabledReset, setIsSwitchEnableConfirmDialogOpen]
   );
@@ -592,7 +631,12 @@ export const FeatureIndexPage: FC = memo(() => {
             isSwitchEnabledConfirm={true}
             isEnabled={!switchEnabledGetValues('enabled')}
             open={isSwitchEnableConfirmDialogOpen}
-            handleSubmit={() => switchEnableHandleSubmit(handleSwitchEnabled)}
+            // handleSubmit={() => switchEnableHandleSubmit(handleSwitchEnabled)}
+            handleSubmit={(arg) => {
+              switchEnableHandleSubmit((data) =>
+                handleSwitchEnabled(data, arg)
+              )();
+            }}
             onClose={() => setIsSwitchEnableConfirmDialogOpen(false)}
             title={f(messages.feature.confirm.title)}
             description={f(messages.feature.confirm.description)}
@@ -606,7 +650,9 @@ export const FeatureIndexPage: FC = memo(() => {
             featureId={archiveMethod.getValues().feature?.id}
             feature={archiveMethod.getValues().feature}
             open={isArchiveConfirmDialogOpen}
-            handleSubmit={() => archiveHandleSubmit(handleArchive)}
+            handleSubmit={() => {
+              archiveHandleSubmit(handleArchive)();
+            }}
             onClose={() => setIsArchiveConfirmDialogOpen(false)}
             title={
               archiveMethod.getValues().feature &&

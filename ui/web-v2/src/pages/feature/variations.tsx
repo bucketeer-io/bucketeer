@@ -6,7 +6,10 @@ import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
 import { DetailSkeleton } from '../../components/DetailSkeleton';
-import { FeatureConfirmDialog } from '../../components/FeatureConfirmDialog';
+import {
+  FeatureConfirmDialog,
+  SaveFeatureType
+} from '../../components/FeatureConfirmDialog';
 import { FeatureVariationsForm } from '../../components/FeatureVariationsForm';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
@@ -14,7 +17,8 @@ import {
   selectById as selectFeatureById,
   updateFeatureVariations,
   getFeature,
-  createCommand
+  createCommand,
+  updateFeature
 } from '../../modules/features';
 import { useCurrentEnvironment } from '../../modules/me';
 import {
@@ -75,37 +79,71 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
     const handleUpdate = useCallback(
-      async (data: VariationForm) => {
-        const commands: Array<Command> = [];
-        dirtyFields.variations &&
-          commands.push(
-            ...createVariationCommands(feature.variationsList, data.variations)
-          );
-        data.resetSampling && commands.push(createResetSampleSeedCommand());
-        dispatch(
-          updateFeatureVariations({
-            environmentId: currentEnvironment.id,
-            id: feature.id,
-            comment: data.comment,
-            commands: commands
-          })
-        ).then(() => {
-          setIsConfirmDialogOpen(false);
+      async (data: VariationForm, saveFeatureType) => {
+        if (saveFeatureType === SaveFeatureType.SCHEDULE) {
+          console.log({
+            dirtyFields,
+            data
+          });
           dispatch(
-            getFeature({
+            updateFeature({
               environmentId: currentEnvironment.id,
-              id: featureId
+              id: feature.id,
+              comment: data.comment,
+              variations: data.variations
             })
-          ).then((response) => {
-            const featurePayload = response.payload as Feature.AsObject;
-            reset({
-              variationType: featurePayload.variationType.toString(),
-              variations: featurePayload.variationsList,
-              requireComment: currentEnvironment.requireComment,
-              comment: ''
+          ).then(() => {
+            setIsConfirmDialogOpen(false);
+            dispatch(
+              getFeature({
+                environmentId: currentEnvironment.id,
+                id: featureId
+              })
+            ).then((response) => {
+              const featurePayload = response.payload as Feature.AsObject;
+              reset({
+                variationType: featurePayload.variationType.toString(),
+                variations: featurePayload.variationsList,
+                requireComment: currentEnvironment.requireComment,
+                comment: ''
+              });
             });
           });
-        });
+        } else {
+          const commands: Array<Command> = [];
+          dirtyFields.variations &&
+            commands.push(
+              ...createVariationCommands(
+                feature.variationsList,
+                data.variations
+              )
+            );
+          data.resetSampling && commands.push(createResetSampleSeedCommand());
+          dispatch(
+            updateFeatureVariations({
+              environmentId: currentEnvironment.id,
+              id: feature.id,
+              comment: data.comment,
+              commands: commands
+            })
+          ).then(() => {
+            setIsConfirmDialogOpen(false);
+            dispatch(
+              getFeature({
+                environmentId: currentEnvironment.id,
+                id: featureId
+              })
+            ).then((response) => {
+              const featurePayload = response.payload as Feature.AsObject;
+              reset({
+                variationType: featurePayload.variationType.toString(),
+                variations: featurePayload.variationsList,
+                requireComment: currentEnvironment.requireComment,
+                comment: ''
+              });
+            });
+          });
+        }
       },
       [feature, dispatch, dirtyFields]
     );
@@ -126,7 +164,9 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
         {isConfirmDialogOpen && (
           <FeatureConfirmDialog
             open={isConfirmDialogOpen}
-            handleSubmit={() => handleSubmit(handleUpdate)}
+            handleSubmit={(arg) => {
+              handleSubmit((data) => handleUpdate(data, arg))();
+            }}
             onClose={() => setIsConfirmDialogOpen(false)}
             title={f(messages.feature.confirm.title)}
             description={f(messages.feature.confirm.description)}
