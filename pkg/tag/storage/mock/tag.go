@@ -44,17 +44,17 @@ func (m *MockTagStorage) EXPECT() *MockTagStorageMockRecorder {
 }
 
 // DeleteTag mocks base method.
-func (m *MockTagStorage) DeleteTag(ctx context.Context, id, environmentId string) error {
+func (m *MockTagStorage) DeleteTag(ctx context.Context, id string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteTag", ctx, id, environmentId)
+	ret := m.ctrl.Call(m, "DeleteTag", ctx, id)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteTag indicates an expected call of DeleteTag.
-func (mr *MockTagStorageMockRecorder) DeleteTag(ctx, id, environmentId any) *gomock.Call {
+func (mr *MockTagStorageMockRecorder) DeleteTag(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTag", reflect.TypeOf((*MockTagStorage)(nil).DeleteTag), ctx, id, environmentId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTag", reflect.TypeOf((*MockTagStorage)(nil).DeleteTag), ctx, id)
 }
 
 // GetTag mocks base method.
@@ -70,6 +70,21 @@ func (m *MockTagStorage) GetTag(ctx context.Context, id, environmentId string) (
 func (mr *MockTagStorageMockRecorder) GetTag(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTag", reflect.TypeOf((*MockTagStorage)(nil).GetTag), ctx, id, environmentId)
+}
+
+// ListAllEnvironmentTags mocks base method.
+func (m *MockTagStorage) ListAllEnvironmentTags(ctx context.Context) ([]*tag.EnvironmentTag, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAllEnvironmentTags", ctx)
+	ret0, _ := ret[0].([]*tag.EnvironmentTag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAllEnvironmentTags indicates an expected call of ListAllEnvironmentTags.
+func (mr *MockTagStorageMockRecorder) ListAllEnvironmentTags(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllEnvironmentTags", reflect.TypeOf((*MockTagStorage)(nil).ListAllEnvironmentTags), ctx)
 }
 
 // ListTags mocks base method.

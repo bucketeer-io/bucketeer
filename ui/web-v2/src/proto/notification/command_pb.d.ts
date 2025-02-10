@@ -287,6 +287,11 @@ export class CreateSubscriptionCommand extends jspb.Message {
   getName(): string;
   setName(value: string): void;
 
+  clearFeatureFlagTagsList(): void;
+  getFeatureFlagTagsList(): Array<string>;
+  setFeatureFlagTagsList(value: Array<string>): void;
+  addFeatureFlagTags(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateSubscriptionCommand.AsObject;
   static toObject(
@@ -315,6 +320,7 @@ export namespace CreateSubscriptionCommand {
     >;
     recipient?: proto_notification_recipient_pb.Recipient.AsObject;
     name: string;
+    featureFlagTagsList: Array<string>;
   };
 }
 
@@ -403,6 +409,43 @@ export namespace DeleteSourceTypesCommand {
     sourceTypesList: Array<
       proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap]
     >;
+  };
+}
+
+export class UpdateSubscriptionFeatureFlagTagsCommand extends jspb.Message {
+  clearFeatureFlagTagsList(): void;
+  getFeatureFlagTagsList(): Array<string>;
+  setFeatureFlagTagsList(value: Array<string>): void;
+  addFeatureFlagTags(value: string, index?: number): string;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): UpdateSubscriptionFeatureFlagTagsCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: UpdateSubscriptionFeatureFlagTagsCommand
+  ): UpdateSubscriptionFeatureFlagTagsCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: UpdateSubscriptionFeatureFlagTagsCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): UpdateSubscriptionFeatureFlagTagsCommand;
+  static deserializeBinaryFromReader(
+    message: UpdateSubscriptionFeatureFlagTagsCommand,
+    reader: jspb.BinaryReader
+  ): UpdateSubscriptionFeatureFlagTagsCommand;
+}
+
+export namespace UpdateSubscriptionFeatureFlagTagsCommand {
+  export type AsObject = {
+    featureFlagTagsList: Array<string>;
   };
 }
 

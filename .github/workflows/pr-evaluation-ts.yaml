@@ -1,0 +1,133 @@
+name: pr-evaluation-ts
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "evaluation/typescript/**"
+      - "!**/**.md"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 20
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN || '' }}
+  EVALUATION_DIRECTORY: "evaluation/typescript"
+
+jobs:
+  install-dependencies:
+    name: Install dependencies
+    defaults:
+      run:
+        working-directory: ${{ env.EVALUATION_DIRECTORY }}
+    runs-on: ubuntu-latest
+    outputs:
+      YARN_CACHE_DIR: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Set yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn cache dir)" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v4
+        id: yarn-cache
+        with:
+          path: |
+            **/node_modules
+            **/.eslintcache
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      - name: Init
+        run: make init
+        
+  lint:
+    name: Lint
+    defaults:
+      run:
+        working-directory: ${{ env.EVALUATION_DIRECTORY }}
+    needs: install-dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/cache@v4
+        id: yarn-cache
+        with:
+          path: |
+            **/node_modules
+            **/.eslintcache
+            ${{ needs.install-dependencies.outputs.YARN_CACHE_DIR }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      - name: Format
+        run: make fmt
+      - name: Lint
+        run: make lint
+
+  unit-test:
+    name: Unit test
+    defaults:
+      run:
+        working-directory: ${{ env.EVALUATION_DIRECTORY }}
+    needs: install-dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/cache@v4
+        id: yarn-cache
+        with:
+          path: |
+            **/node_modules
+            **/.eslintcache
+            ${{ needs.install-dependencies.outputs.YARN_CACHE_DIR }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+      - name: Generated proto code
+        run: make gen_proto
+      - name: Unit test
+        run: make test
+
+  build:
+    name: Build
+    defaults:
+      run:
+        working-directory: ${{ env.EVALUATION_DIRECTORY }}
+    needs: install-dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/cache@v4
+        id: yarn-cache
+        with:
+          path: |
+            **/node_modules
+            **/.eslintcache
+            ${{ needs.install-dependencies.outputs.YARN_CACHE_DIR }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+      - name: Generated proto code
+        run: make gen_proto
+      - name: Package Build
+        run: make build

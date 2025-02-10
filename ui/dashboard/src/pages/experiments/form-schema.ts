@@ -1,11 +1,11 @@
-import * as yup from 'yup';
 import {
   EXPERIMENT_DESCRIPTION_MAX_LENGTH,
   EXPERIMENT_GOAL_MAX_LENGTH,
   EXPERIMENT_GOAL_MIN_LENGTH,
   EXPERIMENT_NAME_MAX_LENGTH,
   EXPERIMENT_START_AT_OLDEST_DAYS
-} from './constants';
+} from 'constants/experiment';
+import * as yup from 'yup';
 
 export const experimentFormSchema = yup.object().shape({
   id: yup.string().max(EXPERIMENT_NAME_MAX_LENGTH),

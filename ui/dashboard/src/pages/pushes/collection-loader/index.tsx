@@ -3,6 +3,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { sortingListFields } from 'constants/collection';
 import { Push } from '@types';
+import { useFetchTags } from 'pages/members/collection-loader';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
@@ -23,9 +24,16 @@ const CollectionLoader = ({
   onAdd: () => void;
   onActions: (item: Push, type: PushActionsType) => void;
 }) => {
-  const columns = useColumns({ onActions });
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
+    organizationId: currentEnvironment.organizationId,
+    entityType: 'FEATURE_FLAG'
+  });
+
+  const tagList = tagCollection?.tags || [];
+  const columns = useColumns({ onActions, tags: tagList });
 
   const {
     data: collection,
@@ -34,7 +42,7 @@ const CollectionLoader = ({
     isError
   } = useFetchPushes({
     ...filters,
-    organizationId: currenEnvironment.organizationId
+    organizationId: currentEnvironment.organizationId
   });
 
   const onSortingChangeHandler = (sorting: SortingState) => {
@@ -66,7 +74,7 @@ const CollectionLoader = ({
   ) : (
     <>
       <DataTable
-        isLoading={isLoading}
+        isLoading={isLoading || isLoadingTags}
         data={pushes}
         columns={columns}
         onSortingChange={onSortingChangeHandler}

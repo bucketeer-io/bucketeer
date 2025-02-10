@@ -57,6 +57,7 @@ import {
 import { addFormSchema, updateFormSchema } from './formSchema';
 import { listTags } from '../../modules/tags';
 import { ListTagsRequest } from '../../proto/tag/service_pb';
+import { Tag } from '../../proto/tag/tag_pb';
 
 interface Sort {
   orderBy: OrderBy;
@@ -448,7 +449,8 @@ export const AccountIndexPage: FC = memo(() => {
         cursor: '',
         orderBy: ListTagsRequest.OrderBy.DEFAULT,
         orderDirection: ListTagsRequest.OrderDirection.ASC,
-        searchKeyword: null
+        searchKeyword: null,
+        entityType: Tag.EntityType.ACCOUNT
       })
     );
   }, [dispatch]);

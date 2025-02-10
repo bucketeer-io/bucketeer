@@ -25,7 +25,7 @@ export const ExperimentStatuses = ({
 }) => (
   <div
     className={cn(
-      'flex-center w-fit px-2 py-1.5 typo-para-small leading-[14px] rounded whitespace-nowrap capitalize',
+      'flex-center w-fit px-2 py-1.5 typo-para-small rounded whitespace-nowrap capitalize',
       {
         'bg-accent-green-50 text-accent-green-500': status === 'RUNNING',
         'bg-accent-orange-50 text-accent-orange-500': status === 'WAITING',

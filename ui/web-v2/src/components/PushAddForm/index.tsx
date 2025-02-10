@@ -12,6 +12,8 @@ import { selectAll as selectAllTags } from '../../modules/tags';
 import { Option } from '../CreatableSelect';
 import { classNames } from '../../utils/css';
 import { Select } from '../Select';
+import { Push } from '../../proto/push/push_pb';
+import { selectAll as selectAllPushes } from '../../modules/pushes';
 
 export interface PushAddFormProps {
   onSubmit: () => void;
@@ -30,12 +32,22 @@ export const PushAddForm: FC<PushAddFormProps> = memo(
     } = methods;
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+    const pushList = useSelector<AppState, Push.AsObject[]>(
+      (state) => selectAllPushes(state.push),
+      shallowEqual
+    );
+
     const tagsList = useSelector<AppState, Tag.AsObject[]>(
       (state) => selectAllTags(state.tags),
       shallowEqual
     );
     const featureFlagTagsList = tagsList.filter(
       (tag) => tag.entityType === Tag.EntityType.FEATURE_FLAG
+    );
+
+    // Filter out tags that are already used in existing pushes
+    const filteredTagsList = featureFlagTagsList.filter(
+      (tag) => !pushList.some((push) => push.tagsList.includes(tag.name))
     );
 
     const onFileInput = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -103,7 +115,7 @@ export const PushAddForm: FC<PushAddFormProps> = memo(
                             field.onChange(options.map((o) => o.value));
                           }}
                           disabled={isSubmitted}
-                          options={featureFlagTagsList.map((tag) => ({
+                          options={filteredTagsList.map((tag) => ({
                             label: tag.name,
                             value: tag.name
                           }))}
