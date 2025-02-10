@@ -5,19 +5,20 @@ import {
   SubmitHandler,
   useForm
 } from 'react-hook-form';
-import { experimentUpdater } from '@api/experiment';
+import { Trans } from 'react-i18next';
+import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateExperimentDetails } from '@queries/experiment-details';
 import { invalidateExperiments } from '@queries/experiments';
 import { useQueryGoals } from '@queries/goals';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
-import { useToast } from 'hooks';
+import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Experiment } from '@types';
-import { IconInfo } from '@icons';
 import { experimentFormSchema } from 'pages/experiments/form-schema';
+import GoalActions from 'pages/goal-details/elements/goal-actions';
 import Button from 'components/button';
 import { ReactDatePicker } from 'components/date-time-picker';
 import {
@@ -27,10 +28,10 @@ import {
   DropdownMenuTrigger
 } from 'components/dropdown';
 import Form from 'components/form';
-import Icon from 'components/icon';
+import InfoMessage from 'components/info-message';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
-import DefineAudience from './define-audience';
+import ConfirmModal from 'elements/confirm-modal';
 
 export interface ExperimentSettingsForm {
   id?: string;
@@ -56,12 +57,15 @@ export type DefineAudienceField = ControllerRenderProps<
 >;
 
 const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
-  const { t } = useTranslation(['form', 'common']);
+  const { t } = useTranslation(['form', 'common', 'table']);
   const { notify } = useToast();
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
+
+  const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
+    useToggleOpen(false);
 
   const { data: goalCollection } = useQueryGoals({
     params: {
@@ -117,36 +121,46 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   } = form;
 
   const onSubmit: SubmitHandler<ExperimentSettingsForm> = async values => {
-    try {
-      const { id, name, description, startAt, stopAt } = values;
-      const resp = await experimentUpdater({
-        id,
-        name,
-        description,
-        startAt,
-        stopAt,
+    const { id, name, description, startAt, stopAt } = values;
+    return onUpdateExperiment({
+      id,
+      name,
+      description,
+      startAt,
+      stopAt,
+      environmentId: currentEnvironment.id
+    });
+  };
+
+  const mutationState = useMutation({
+    mutationFn: async (params: ExperimentUpdaterParams) => {
+      return experimentUpdater(params);
+    },
+    onSuccess: data => {
+      onCloseConfirmModal();
+      invalidateExperimentDetails(queryClient, {
+        id: data.experiment.id,
         environmentId: currentEnvironment.id
       });
-      if (resp) {
-        notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: 'Experiment updated successfully.'
-        });
-        invalidateExperiments(queryClient);
-        invalidateExperimentDetails(queryClient, {
-          id: id!,
-          environmentId: currentEnvironment.id
-        });
-      }
-    } catch (error) {
+      invalidateExperiments(queryClient);
       notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message || 'Something went wrong.'
+        message: (
+          <span>
+            <b>{data?.experiment?.name}</b> {`has been successfully updated!`}
+          </span>
+        )
       });
-    }
-  };
+      mutationState.reset();
+    },
+    onError: error =>
+      notify({
+        messageType: 'error',
+        message: error?.message || 'Something went wrong.'
+      })
+  });
+
+  const onUpdateExperiment = async (payload: ExperimentUpdaterParams) =>
+    mutationState.mutate(payload);
 
   return (
     <div className="p-5">
@@ -161,30 +175,6 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                 <Form.Label required>{t('common:name')}</Form.Label>
                 <Form.Control>
                   <Input placeholder={`${t('placeholder-name')}`} {...field} />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Form.Field
-            control={form.control}
-            name="baseVariationId"
-            render={({ field }) => (
-              <Form.Item className="py-2.5">
-                <Form.Label required className="relative w-fit">
-                  {t('experiments.experiment-id')}
-                  <Icon
-                    icon={IconInfo}
-                    className="absolute -right-8"
-                    size={'sm'}
-                  />
-                </Form.Label>
-                <Form.Control>
-                  <Input
-                    disabled={true}
-                    placeholder={`${t('experiments.placeholder-id')}`}
-                    {...field}
-                  />
                 </Form.Control>
                 <Form.Message />
               </Form.Item>
@@ -259,15 +249,6 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
               )}
             />
           </div>
-          <Form.Field
-            control={form.control}
-            name={`audience`}
-            render={({ field }) => (
-              <Form.Item className="flex flex-col w-full py-0">
-                <DefineAudience field={field as DefineAudienceField} />
-              </Form.Item>
-            )}
-          />
           <p className="text-gray-800 typo-head-bold-small mt-5 mb-2.5">
             {t('link')}
           </p>
@@ -361,15 +342,77 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
             )}
           />
           <Button
-            className="mt-2.5"
+            className="mt-2.5 mb-5"
             variant="secondary"
             disabled={!isDirty}
             loading={isSubmitting}
           >
             {t('common:save')}
           </Button>
+          <GoalActions
+            title={
+              experiment.archived
+                ? t(`table:popover.unarchive-experiment`)
+                : t(`table:popover.archive-experiment`)
+            }
+            description={
+              experiment?.archived ? '' : t('form:experiments.archive-desc')
+            }
+            btnText={
+              experiment.archived
+                ? t(`table:popover.unarchive-experiment`)
+                : t(`table:popover.archive-experiment`)
+            }
+            onClick={onOpenConfirmModal}
+            disabled={experiment.status === 'RUNNING'}
+          >
+            {experiment.status === 'RUNNING' && (
+              <InfoMessage
+                description={t('form:experiments.archive-warning-desc')}
+              />
+            )}
+          </GoalActions>
+          {/* <Form.Field
+            control={form.control}
+            name={`audience`}
+            render={({ field }) => (
+              <Form.Item className="flex flex-col w-full py-0">
+                <DefineAudience field={field as DefineAudienceField} />
+              </Form.Item>
+            )}
+          /> */}
         </Form>
       </FormProvider>
+      {openConfirmModal && (
+        <ConfirmModal
+          isOpen={openConfirmModal}
+          loading={mutationState.isPending}
+          title={
+            experiment.archived
+              ? t(`table:popover.unarchive-experiment`)
+              : t(`table:popover.archive-experiment`)
+          }
+          description={
+            <Trans
+              i18nKey={
+                experiment.archived
+                  ? 'table:experiment.confirm-unarchive-desc'
+                  : 'table:experiment.confirm-archive-desc'
+              }
+              values={{ name: experiment?.name }}
+              components={{ bold: <strong /> }}
+            />
+          }
+          onClose={onCloseConfirmModal}
+          onSubmit={() =>
+            onUpdateExperiment({
+              id: experiment.id,
+              environmentId: currentEnvironment.id,
+              archived: !experiment.archived
+            })
+          }
+        />
+      )}
     </div>
   );
 };

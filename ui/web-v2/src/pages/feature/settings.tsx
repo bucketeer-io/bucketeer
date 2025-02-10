@@ -29,6 +29,7 @@ import { AppDispatch } from '../../store';
 import { settingsFormSchema } from './formSchema';
 import { listTags } from '../../modules/tags';
 import { ListTagsRequest } from '../../proto/tag/service_pb';
+import { Tag } from '../../proto/tag/tag_pb';
 
 interface FeatureSettingsPageProps {
   featureId: string;
@@ -76,7 +77,8 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
           cursor: '',
           orderBy: ListTagsRequest.OrderBy.DEFAULT,
           orderDirection: ListTagsRequest.OrderDirection.ASC,
-          searchKeyword: null
+          searchKeyword: null,
+          entityType: Tag.EntityType.FEATURE_FLAG
         })
       );
     }, [dispatch]);

@@ -39,6 +39,7 @@ message Subscription {
     DOMAIN_EVENT_ORGANIZATION = 15;
     DOMAIN_EVENT_FLAG_TRIGGER = 16;
     DOMAIN_EVENT_TAG = 17;
+    DOMAIN_EVENT_CODEREF = 18;
     FEATURE_STALE = 100;
     EXPERIMENT_RUNNING = 200;
     MAU_COUNT = 300;
@@ -52,4 +53,5 @@ message Subscription {
   string name = 7;
   string environment_id = 8;
   string environment_name = 9;
+  repeated string feature_flag_tags = 10;
 }

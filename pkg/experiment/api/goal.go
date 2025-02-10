@@ -20,6 +20,7 @@ import (
 	"regexp"
 	"strconv"
 
+	pb "github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
@@ -131,6 +132,9 @@ func (s *experimentService) ListGoals(
 	}
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "description"}, req.SearchKeyword))
+	}
+	if req.ConnectionType != proto.Goal_UNKNOWN {
+		whereParts = append(whereParts, mysql.NewFilter("connection_type", "=", req.ConnectionType))
 	}
 	orders, err := s.newGoalListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -252,7 +256,7 @@ func (s *experimentService) mapConnectedOperations(
 		return err
 	}
 	autoOpsRules := listAutoOpRulesResp.AutoOpsRules
-	goalOpsMap := make(map[string][]*autoopsproto.AutoOpsRule)
+	goalOpsMap := make(map[string][]*proto.Goal_AutoOpsRuleReference)
 	for _, rule := range autoOpsRules {
 		for _, clause := range rule.Clauses {
 			if clause.Clause.MessageIs(&autoopsproto.OpsEventRateClause{}) {
@@ -263,13 +267,19 @@ func (s *experimentService) mapConnectedOperations(
 				if c.GoalId == "" {
 					continue
 				}
-				goalOpsMap[c.GoalId] = append(goalOpsMap[c.GoalId], rule)
+				goalOpsMap[c.GoalId] = append(goalOpsMap[c.GoalId], &proto.Goal_AutoOpsRuleReference{
+					Id:            rule.Id,
+					FeatureId:     rule.FeatureId,
+					FeatureName:   rule.FeatureName,
+					AutoOpsStatus: rule.AutoOpsStatus,
+				})
 			}
 		}
 	}
 	for _, goal := range goals {
 		if ops, ok := goalOpsMap[goal.Id]; ok {
 			goal.AutoOpsRules = ops
+			goal.IsInUseStatus = true
 		}
 	}
 	return nil
@@ -554,6 +564,9 @@ func (s *experimentService) UpdateGoal(
 	if err != nil {
 		return nil, err
 	}
+	if req.ChangeDescriptionCommand == nil && req.RenameCommand == nil {
+		return s.updateGoalNoCommand(ctx, req, editor, localizer)
+	}
 	if req.Id == "" {
 		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -600,6 +613,131 @@ func (s *experimentService) UpdateGoal(
 		return nil, err
 	}
 	return &proto.UpdateGoalResponse{}, nil
+}
+
+func (s *experimentService) updateGoalNoCommand(
+	ctx context.Context,
+	req *proto.UpdateGoalRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*proto.UpdateGoalResponse, error) {
+	err := s.validateUpdateGoalNoCommandRequest(req, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	var updatedGoal *proto.Goal
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		goalStorage := v2es.NewGoalStorage(tx)
+		goal, err := goalStorage.GetGoal(ctx, req.Id, req.EnvironmentId)
+		if err != nil {
+			return err
+		}
+		updated, err := goal.Update(
+			req.Name,
+			req.Description,
+			req.Archived,
+		)
+		if err != nil {
+			return err
+		}
+		updatedGoal = updated.Goal
+
+		var event pb.Message
+		if req.Archived != nil && req.Archived.Value {
+			event = &eventproto.GoalArchivedEvent{Id: goal.Id}
+		} else {
+			event = &eventproto.GoalUpdatedEvent{
+				Id:          goal.Id,
+				Name:        req.Name,
+				Description: req.Description,
+			}
+		}
+		e, err := domainevent.NewEvent(
+			editor,
+			eventproto.Event_GOAL,
+			goal.Id,
+			eventproto.Event_GOAL_UPDATED,
+			event,
+			req.EnvironmentId,
+			updated.Goal,
+			goal.Goal,
+		)
+		if err != nil {
+			return err
+		}
+		if err = s.publisher.Publish(ctx, e); err != nil {
+			return err
+		}
+		return goalStorage.UpdateGoal(ctx, updated, req.EnvironmentId)
+	})
+	if err != nil {
+		if errors.Is(err, v2es.ErrGoalNotFound) || errors.Is(err, v2es.ErrGoalUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &proto.UpdateGoalResponse{
+		Goal: updatedGoal,
+	}, nil
+}
+
+func (s *experimentService) validateUpdateGoalNoCommandRequest(
+	req *proto.UpdateGoalRequest,
+	localizer locale.Localizer,
+) error {
+	if req.Id == "" {
+		dt, err := statusGoalIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Name != nil && req.Name.Value == "" {
+		dt, err := statusGoalNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
 }
 
 func (s *experimentService) ArchiveGoal(
@@ -675,33 +813,51 @@ func (s *experimentService) DeleteGoal(
 		}
 		return nil, dt.Err()
 	}
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		experimentStorage := v2es.NewGoalStorage(s.mysqlClient)
+		goal, err := experimentStorage.GetGoal(ctxWithTx, req.Id, req.EnvironmentId)
+		if err != nil {
+			return err
+		}
+		e, err := domainevent.NewEvent(
+			editor,
+			eventproto.Event_GOAL,
+			goal.Id,
+			eventproto.Event_GOAL_DELETED,
+			&eventproto.GoalDeletedEvent{
+				Id: goal.Id,
+			},
+			req.EnvironmentId,
+			goal.Goal,
+			&domain.Goal{},
+		)
+		if err != nil {
+			return err
+		}
+		if err := s.publisher.Publish(ctxWithTx, e); err != nil {
+			return err
+		}
+		return experimentStorage.DeleteGoal(ctxWithTx, req.Id, req.EnvironmentId)
+	})
+	if err != nil {
+		if errors.Is(err, v2es.ErrGoalNotFound) || errors.Is(err, v2es.ErrGoalUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
 		if err != nil {
 			return nil, statusInternal.Err()
 		}
 		return nil, dt.Err()
-	}
-	err = s.updateGoal(
-		ctx,
-		editor,
-		req.EnvironmentId,
-		req.Id,
-		[]command.Command{req.Command},
-		localizer,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to delete goal",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, err
 	}
 	return &proto.DeleteGoalResponse{}, nil
 }
@@ -748,7 +904,7 @@ func (s *experimentService) updateGoal(
 		return goalStorage.UpdateGoal(ctx, goal, environmentId)
 	})
 	if err != nil {
-		if err == v2es.ErrGoalNotFound || err == v2es.ErrGoalUnexpectedAffectedRows {
+		if errors.Is(err, v2es.ErrGoalNotFound) || errors.Is(err, v2es.ErrGoalUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),

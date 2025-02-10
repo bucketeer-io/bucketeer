@@ -5704,7 +5704,7 @@ proto.bucketeer.notification.ListEnabledSubscriptionsResponse.prototype.setCurso
  * @private {!Array<number>}
  * @const
  */
-proto.bucketeer.notification.CreateSubscriptionRequest.repeatedFields_ = [5];
+proto.bucketeer.notification.CreateSubscriptionRequest.repeatedFields_ = [5, 7];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -5754,7 +5754,12 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           (f = jspb.Message.getRepeatedField(msg, 5)) == null ? undefined : f,
         recipient:
           (f = msg.getRecipient()) &&
-          proto_notification_recipient_pb.Recipient.toObject(includeInstance, f)
+          proto_notification_recipient_pb.Recipient.toObject(
+            includeInstance,
+            f
+          ),
+        featureFlagTagsList:
+          (f = jspb.Message.getRepeatedField(msg, 7)) == null ? undefined : f
       };
 
     if (includeInstance) {
@@ -5832,6 +5837,10 @@ proto.bucketeer.notification.CreateSubscriptionRequest.deserializeBinaryFromRead
           );
           msg.setRecipient(value);
           break;
+        case 7:
+          var value = /** @type {string} */ (reader.readString());
+          msg.addFeatureFlagTags(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -5892,6 +5901,10 @@ proto.bucketeer.notification.CreateSubscriptionRequest.serializeBinaryToWriter =
         f,
         proto_notification_recipient_pb.Recipient.serializeBinaryToWriter
       );
+    }
+    f = message.getFeatureFlagTagsList();
+    if (f.length > 0) {
+      writer.writeRepeatedString(7, f);
     }
   };
 
@@ -6056,6 +6069,45 @@ proto.bucketeer.notification.CreateSubscriptionRequest.prototype.clearRecipient 
 proto.bucketeer.notification.CreateSubscriptionRequest.prototype.hasRecipient =
   function () {
     return jspb.Message.getField(this, 6) != null;
+  };
+
+/**
+ * repeated string feature_flag_tags = 7;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.notification.CreateSubscriptionRequest.prototype.getFeatureFlagTagsList =
+  function () {
+    return /** @type {!Array<string>} */ (
+      jspb.Message.getRepeatedField(this, 7)
+    );
+  };
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.notification.CreateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.CreateSubscriptionRequest.prototype.setFeatureFlagTagsList =
+  function (value) {
+    return jspb.Message.setField(this, 7, value || []);
+  };
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.notification.CreateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.CreateSubscriptionRequest.prototype.addFeatureFlagTags =
+  function (value, opt_index) {
+    return jspb.Message.addToRepeatedField(this, 7, value, opt_index);
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.notification.CreateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.CreateSubscriptionRequest.prototype.clearFeatureFlagTagsList =
+  function () {
+    return this.setFeatureFlagTagsList([]);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -7263,7 +7315,9 @@ proto.bucketeer.notification.DisableSubscriptionResponse.serializeBinaryToWriter
  * @private {!Array<number>}
  * @const
  */
-proto.bucketeer.notification.UpdateSubscriptionRequest.repeatedFields_ = [7];
+proto.bucketeer.notification.UpdateSubscriptionRequest.repeatedFields_ = [
+  7, 10
+];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -7328,7 +7382,15 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
         disabled:
           (f = msg.getDisabled()) &&
-          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
+        featureFlagTagsList:
+          (f = jspb.Message.getRepeatedField(msg, 10)) == null ? undefined : f,
+        updateSubscriptionFeatureTagsCommand:
+          (f = msg.getUpdateSubscriptionFeatureTagsCommand()) &&
+          proto_notification_command_pb.UpdateSubscriptionFeatureFlagTagsCommand.toObject(
+            includeInstance,
+            f
+          )
       };
 
     if (includeInstance) {
@@ -7432,6 +7494,21 @@ proto.bucketeer.notification.UpdateSubscriptionRequest.deserializeBinaryFromRead
           );
           msg.setDisabled(value);
           break;
+        case 10:
+          var value = /** @type {string} */ (reader.readString());
+          msg.addFeatureFlagTags(value);
+          break;
+        case 11:
+          var value =
+            new proto_notification_command_pb.UpdateSubscriptionFeatureFlagTagsCommand();
+          reader.readMessage(
+            value,
+            proto_notification_command_pb
+              .UpdateSubscriptionFeatureFlagTagsCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setUpdateSubscriptionFeatureTagsCommand(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -7517,6 +7594,19 @@ proto.bucketeer.notification.UpdateSubscriptionRequest.serializeBinaryToWriter =
         9,
         f,
         google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getFeatureFlagTagsList();
+    if (f.length > 0) {
+      writer.writeRepeatedString(10, f);
+    }
+    f = message.getUpdateSubscriptionFeatureTagsCommand();
+    if (f != null) {
+      writer.writeMessage(
+        11,
+        f,
+        proto_notification_command_pb.UpdateSubscriptionFeatureFlagTagsCommand
+          .serializeBinaryToWriter
       );
     }
   };
@@ -7808,6 +7898,87 @@ proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.clearDisabled =
 proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.hasDisabled =
   function () {
     return jspb.Message.getField(this, 9) != null;
+  };
+
+/**
+ * repeated string feature_flag_tags = 10;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.getFeatureFlagTagsList =
+  function () {
+    return /** @type {!Array<string>} */ (
+      jspb.Message.getRepeatedField(this, 10)
+    );
+  };
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.notification.UpdateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.setFeatureFlagTagsList =
+  function (value) {
+    return jspb.Message.setField(this, 10, value || []);
+  };
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.notification.UpdateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.addFeatureFlagTags =
+  function (value, opt_index) {
+    return jspb.Message.addToRepeatedField(this, 10, value, opt_index);
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.notification.UpdateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.clearFeatureFlagTagsList =
+  function () {
+    return this.setFeatureFlagTagsList([]);
+  };
+
+/**
+ * optional UpdateSubscriptionFeatureFlagTagsCommand update_subscription_feature_tags_command = 11;
+ * @return {?proto.bucketeer.notification.UpdateSubscriptionFeatureFlagTagsCommand}
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.getUpdateSubscriptionFeatureTagsCommand =
+  function () {
+    return /** @type{?proto.bucketeer.notification.UpdateSubscriptionFeatureFlagTagsCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_notification_command_pb.UpdateSubscriptionFeatureFlagTagsCommand,
+        11
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.notification.UpdateSubscriptionFeatureFlagTagsCommand|undefined} value
+ * @return {!proto.bucketeer.notification.UpdateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.setUpdateSubscriptionFeatureTagsCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 11, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.notification.UpdateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.clearUpdateSubscriptionFeatureTagsCommand =
+  function () {
+    return this.setUpdateSubscriptionFeatureTagsCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.hasUpdateSubscriptionFeatureTagsCommand =
+  function () {
+    return jspb.Message.getField(this, 11) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

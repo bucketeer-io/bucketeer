@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
-import { usePartialState } from 'hooks';
+import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
-import { CollectionStatusType, Experiment } from '@types';
+import { Experiment } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
@@ -12,7 +12,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
-import { ExperimentActionsType, ExperimentFilters } from './types';
+import FilterExperimentModal from './experiments-modal/filter-experiment-modal';
+import Overview from './overview';
+import {
+  ExperimentActionsType,
+  ExperimentFilters,
+  ExperimentTab
+} from './types';
 
 const PageContent = ({
   onAdd,
@@ -36,6 +42,9 @@ const PageContent = ({
   const [filters, setFilters] =
     usePartialState<ExperimentFilters>(defaultFilters);
 
+  const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
+    useToggleOpen(false);
+
   const onChangeFilters = (values: Partial<ExperimentFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
@@ -50,8 +59,9 @@ const PageContent = ({
 
   return (
     <PageLayout.Content>
+      <Overview />
       <Filter
-        onOpenFilter={() => {}}
+        onOpenFilter={onOpenFilterModal}
         action={
           <Button className="flex-1 lg:flex-none" onClick={onAdd}>
             <Icon icon={IconAddOutlined} size="sm" />
@@ -62,17 +72,36 @@ const PageContent = ({
         filterCount={isNotEmpty(filters.archived) ? 1 : undefined}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
+      {openFilterModal && (
+        <FilterExperimentModal
+          isOpen={openFilterModal}
+          filters={filters}
+          onClose={onCloseFilterModal}
+          onSubmit={value => {
+            onChangeFilters(value);
+            onCloseFilterModal();
+          }}
+          onClearFilters={() => {
+            onChangeFilters({ archived: undefined, statuses: undefined });
+            onCloseFilterModal();
+          }}
+        />
+      )}
       <Tabs
         className="flex-1 flex h-full flex-col mt-6"
         value={filters.status}
         onValueChange={value => {
-          const status = value as CollectionStatusType;
-          onChangeFilters({ status, searchQuery: '' });
+          const status = value as ExperimentTab;
+          onChangeFilters({
+            status,
+            searchQuery: '',
+            statuses: status === 'FINISHED' ? 'RUNNING' : undefined
+          });
         }}
       >
         <TabsList>
           <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
-          <TabsTrigger value="COMPLETED">{t(`completed`)}</TabsTrigger>
+          <TabsTrigger value="FINISHED">{t(`finished`)}</TabsTrigger>
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
 

@@ -12,8 +12,6 @@ import { Experiment, ExperimentStatus } from '@types';
 import { formatLongDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
-import { IconChevronRight } from '@icons';
-import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
 import { ExperimentActionsType } from '../types';
@@ -25,7 +23,7 @@ export const ExperimentStatuses = ({
 }) => (
   <div
     className={cn(
-      'flex-center w-fit px-2 py-1.5 typo-para-small leading-[14px] rounded whitespace-nowrap capitalize',
+      'flex-center w-fit px-2 py-1.5 typo-para-small rounded whitespace-nowrap capitalize',
       {
         'bg-accent-green-50 text-accent-green-500': status === 'RUNNING',
         'bg-accent-orange-50 text-accent-orange-500': status === 'WAITING',
@@ -62,7 +60,7 @@ export const useColumns = ({
         return (
           <div className="flex flex-col gap-0.5">
             <Link
-              to={`/${currenEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${experiment.id}/results`}
+              to={`/${currenEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${experiment.id}/settings`}
               className="underline text-primary-500 typo-para-medium text-left w-fit max-w-full line-clamp-1 break-all"
             >
               {experiment.name}
@@ -103,11 +101,17 @@ export const useColumns = ({
         return (
           <DateTooltip
             trigger={
-              <div className="text-gray-700 typo-para-medium">
+              <div className="text-gray-700 typo-para-medium min-w-[150px]">
                 {formatLongDateTime({
-                  value: experiment.startAt,
-                  overrideOptions: { month: 'numeric' },
-                  locale: 'en-CA'
+                  value: experiment.stopAt,
+                  overrideOptions: {
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  },
+                  locale: 'ja-JP'
                 })}
               </div>
             }
@@ -125,11 +129,17 @@ export const useColumns = ({
         return (
           <DateTooltip
             trigger={
-              <div className="text-gray-700 typo-para-medium">
+              <div className="text-gray-700 typo-para-medium min-w-[150px]">
                 {formatLongDateTime({
                   value: experiment.stopAt,
-                  overrideOptions: { month: 'numeric' },
-                  locale: 'en-CA'
+                  overrideOptions: {
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  },
+                  locale: 'ja-JP'
                 })}
               </div>
             }
@@ -145,17 +155,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const experiment = row.original;
 
-        return (
-          <div className="flex items-center gap-x-2">
-            <ExperimentStatuses status={experiment.status} />
-            <Icon
-              icon={IconChevronRight}
-              className="rotate-90"
-              color="gray-500"
-              size={'sm'}
-            />
-          </div>
-        );
+        return <ExperimentStatuses status={experiment.status} />;
       }
     },
     {

@@ -16,4 +16,4 @@ export interface ExperimentFilters {
 }
 
 export type ExperimentActionsType = 'EDIT' | 'STOP' | 'ARCHIVE' | 'UNARCHIVE';
-export type ExperimentTab = 'ACTIVE' | 'ARCHIVED' | 'COMPLETE';
+export type ExperimentTab = 'ACTIVE' | 'ARCHIVED' | 'FINISHED';

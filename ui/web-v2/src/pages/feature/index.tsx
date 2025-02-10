@@ -47,6 +47,7 @@ import {
   ListFeaturesRequest,
   ListTagsRequest
 } from '../../proto/feature/service_pb';
+import { Tag } from '../../proto/tag/tag_pb';
 import { AppDispatch } from '../../store';
 import { isFeatureSortOption, FeatureSortOption } from '../../types/feature';
 import {
@@ -529,7 +530,8 @@ export const FeatureIndexPage: FC = memo(() => {
         cursor: '',
         orderBy: ListTagsRequest.OrderBy.DEFAULT,
         orderDirection: ListTagsRequest.OrderDirection.ASC,
-        searchKeyword: null
+        searchKeyword: null,
+        entityType: Tag.EntityType.FEATURE_FLAG
       })
     );
   }, [dispatch, updateFeatureList]);

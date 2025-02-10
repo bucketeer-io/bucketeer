@@ -14,7 +14,7 @@ export interface ExperimentsFetcherParams extends CollectionParams {
   featureVersion?: number;
   from?: string;
   to?: string;
-  statuses?: ExperimentStatus;
+  statuses?: ExperimentStatus[];
   maintainer?: string;
   archived?: boolean;
 }

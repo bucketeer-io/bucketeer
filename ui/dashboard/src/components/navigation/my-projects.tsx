@@ -31,16 +31,16 @@ const MyProjects = () => {
 
   const uniqueProjects = getUniqueProjects(environmentRoles);
   const [projects, setProjects] = useState(uniqueProjects);
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const initialProject = unwrapUndefinable(
-    environmentRoles.find(role => role.environment.id == currenEnvironment.id)
+    environmentRoles.find(role => role.environment.id == currentEnvironment.id)
   ).project;
 
   const [selectedProject, setSelectedProject] =
     useState<Project>(initialProject);
   const [selectedEnvironment, setSelectedEnvironment] =
-    useState<Environment>(currenEnvironment);
+    useState<Environment>(currentEnvironment);
 
   const environments = getEnvironmentsByProjectId(
     environmentRoles,

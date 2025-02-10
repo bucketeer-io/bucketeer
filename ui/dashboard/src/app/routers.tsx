@@ -1,6 +1,8 @@
 import { Route, Routes } from 'react-router-dom';
 import ExperimentDetailsPage from 'pages/experiment-details';
 import ExperimentsPage from 'pages/experiments';
+import GoalDetailsPage from 'pages/goal-details';
+import GoalsPage from 'pages/goals';
 import OrganizationDetailPage from 'pages/organization-details';
 import OrganizationsPage from 'pages/organizations';
 import ProjectDetailsPage from 'pages/project-details';
@@ -31,6 +33,16 @@ export const ExperimentsRoot = () => {
       <Route path="new" element={<ExperimentsPage />} />
       <Route path=":experimentId" element={<ExperimentsPage />} />
       <Route path=":experimentId/:tab" element={<ExperimentDetailsPage />} />
+    </Routes>
+  );
+};
+
+export const GoalsRoot = () => {
+  return (
+    <Routes>
+      <Route index element={<GoalsPage />} />
+      <Route path="new" element={<GoalsPage />} />
+      <Route path=":goalId/*" element={<GoalDetailsPage />} />
     </Routes>
   );
 };

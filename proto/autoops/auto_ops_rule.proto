@@ -29,6 +29,7 @@ message AutoOpsRule {
   int64 updated_at = 8;
   bool deleted = 9;
   AutoOpsStatus auto_ops_status = 10;
+  string feature_name = 11;
 }
 
 enum OpsType {

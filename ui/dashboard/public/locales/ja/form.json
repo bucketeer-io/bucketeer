@@ -46,15 +46,29 @@
     "account": "Get notified when someone adds or updates an account",
     "notification": "Get notified when someone adds or updates a notification"
   },
+  "upload-files": "Drop your file here, or <underline>{{text}}</underline>",
+  "accept-file-types": "{{type}}",
+  "goal-id": "Goal ID",
+  "placeholder-goal-id": "Enter Goal ID",
+  "connections": "Connections",
+  "operations": "Operations",
+  "experiment_one": "{{count}} Experiment",
+  "experiment_other": "{{count}} Experiments",
+  "operation_one": "{{count}} Operation",
+  "operation_other": "{{count}} Operations",
+  "goal-details": {
+    "archive-desc": "Once the goal is archived, it will only show on the list page when clicking on the Archived tab.",
+    "delete-desc": "Permanently delete this goal.",
+    "delete-warning-desc": "You cannot delete a goal when it has connections.",
+    "archive-warning-desc": "You cannot archive a goal when it has connections."
+  },
   "placeholder-search-user-segments": "Search user segment",
   "list-of-users-ids": "List Of Users IDs",
   "browse-files": "Browse files",
   "enter-user-ids": "Enter user IDs",
-  "upload-files": "Drop your files here, or <underline>{{text}}</underline>",
   "update-user-segment": "Updating this field will replace the current list with the new one.",
   "update-user-segment-warning": "<p>The user ID list can't be updated because {{count}} flag is using it. Remove the segment from the flag before updating it.</p>",
   "placeholder-enter-user-ids": "Enter IDs separated by commas (E.g., userId1, userId2, userId3,...)",
-  "accept-file-types": "{{type}}",
   "experiments": {
     "experiment-id": "Experiment ID",
     "placeholder-id": "Enter Experiment ID",
@@ -81,7 +95,9 @@
     "link-goal": "Link Goal",
     "select-flag": "Select Flag",
     "select-goal": "Select Goal",
-    "select-rule": "Select Rule"
+    "select-rule": "Select Rule",
+    "archive-desc": "Once the experiment is archived, it will only show on the list page when clicking on the Archived tab.",
+    "archive-warning-desc": "You cannot archive the experiment when it is running"
   },
   "advanced": "Advanced",
   "link": "Link",
@@ -89,5 +105,8 @@
   "start-at": "Start At",
   "end-at": "End At",
   "select-evaluation": "Select Evaluation",
-  "save-with-comment": "Save With Comment"
+  "save-with-comment": "Save With Comment",
+  "member-tags-tooltip": "Tags can be used to group members making it easier when listing them on the list page",
+  "feature-flag-tags": "Feature Flag Tags",
+  "no-tags-found": "No tags were found"
 }

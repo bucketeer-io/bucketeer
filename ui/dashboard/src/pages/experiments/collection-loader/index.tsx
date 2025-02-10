@@ -34,6 +34,7 @@ const CollectionLoader = ({
     isError
   } = useFetchExperiments({
     ...filters,
+    statuses: filters?.statuses ? [filters?.statuses] : [],
     environmentId: currenEnvironment.id
   });
 

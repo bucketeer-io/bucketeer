@@ -14,7 +14,7 @@ export const ReactDatePicker: FC<ReactDatetimePickerProps> = memo(
   ({
     selected,
     disabled,
-    dateFormat = 'yyyy-MM-dd HH:mm',
+    dateFormat = 'yyyy/MM/dd HH:mm',
     timeIntervals = 60,
     showIcon = true,
     showTimeSelect = true,

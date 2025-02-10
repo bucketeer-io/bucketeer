@@ -1,9 +1,7 @@
-import { Experiment } from './experiment';
+import { ExperimentStatus } from './experiment';
 
 export type ConnectionType = 'UNKNOWN' | 'EXPERIMENT' | 'OPERATION';
-
-export type OpsType = 'TYPE_UNKNOWN' | 'SCHEDULE' | 'EVENT_RATE';
-export type AutoOpsRuleStatus = 'WAITING' | 'RUNNING' | 'FINISHED' | 'STOPPED';
+export type OperationStatus = 'WAITING' | 'RUNNING' | 'STOPPED' | 'FINISHED';
 
 export interface Goal {
   id: string;
@@ -15,23 +13,23 @@ export interface Goal {
   isInUseStatus: boolean;
   archived: boolean;
   connectionType: ConnectionType;
-  experiments: Experiment[];
-  autoOpsRules: AutoOpsRules[];
+  experiments: GoalExperiment[];
+  autoOpsRules: GoalAutoOpsRule[];
 }
 
-export interface AutoOpsRules {
+export interface GoalAutoOpsRule {
   id: string;
   featureId: string;
-  opsType: OpsType;
-  clauses: {
-    id: string;
-    clause: unknown;
-    actionType: 'UNKNOWN' | 'ENABLE' | 'DISABLE';
-  }[];
-  createdAt: string;
-  updatedAt: string;
-  deleted: boolean;
-  autoOpsStatus: AutoOpsRuleStatus;
+  featureName: string;
+  autoOpsStatus: OperationStatus;
+}
+
+export interface GoalExperiment {
+  id: string;
+  name: string;
+  featureId: string;
+  featureName: string;
+  status: ExperimentStatus;
 }
 
 export interface GoalCollection {

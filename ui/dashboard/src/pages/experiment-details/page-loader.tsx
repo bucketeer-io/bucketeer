@@ -28,6 +28,7 @@ const PageLoader = () => {
 
   const experiment = experimentCollection?.experiment;
   const isErrorState = isError || !experiment;
+
   if (params?.tab && !['results', 'settings'].includes(params.tab))
     return <NotFoundPage />;
 

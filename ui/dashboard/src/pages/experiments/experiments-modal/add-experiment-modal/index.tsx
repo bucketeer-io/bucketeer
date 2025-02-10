@@ -14,7 +14,6 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
-import { IconInfo } from '@icons';
 import { experimentFormSchema } from 'pages/experiments/form-schema';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -27,11 +26,9 @@ import {
   DropdownMenuTrigger
 } from 'components/dropdown';
 import Form from 'components/form';
-import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
-import DefineAudience from './define-audience';
 
 interface AddExperimentModalProps {
   isOpen: boolean;
@@ -166,7 +163,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
       isOpen={isOpen}
       onClose={onClose}
     >
-      <div className="p-5 pb-28 relative">
+      <div className="p-5 pb-28">
         <p className="text-gray-800 typo-head-bold-small">
           {t('general-info')}
         </p>
@@ -181,29 +178,6 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                   <Form.Control>
                     <Input
                       placeholder={`${t('placeholder-name')}`}
-                      {...field}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-            <Form.Field
-              control={form.control}
-              name="baseVariationId"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Label required className="relative w-fit">
-                    {t('experiments.experiment-id')}
-                    <Icon
-                      icon={IconInfo}
-                      className="absolute -right-8"
-                      size={'sm'}
-                    />
-                  </Form.Label>
-                  <Form.Control>
-                    <Input
-                      placeholder={`${t('experiments.placeholder-id')}`}
                       {...field}
                     />
                   </Form.Control>
@@ -279,21 +253,6 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
               />
             </div>
             <Divider className="mb-5" />
-            <div className="mb-3">
-              <p className="text-gray-800 typo-head-bold-small mb-3">
-                {t('experiments.define-audience.title')}
-              </p>
-              <Form.Field
-                control={form.control}
-                name={`audience`}
-                render={({ field }) => (
-                  <Form.Item className="flex flex-col w-full py-2 gap-y-5">
-                    <DefineAudience field={field as DefineAudienceField} />
-                  </Form.Item>
-                )}
-              />
-            </div>
-            <Divider className="mb-5" />
             <p className="text-gray-800 typo-head-bold-small mb-3">
               {t('link')}
             </p>
@@ -301,7 +260,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
               control={form.control}
               name={`featureId`}
               render={({ field }) => (
-                <Form.Item className="py-2">
+                <Form.Item>
                   <Form.Label required>{t('experiments.link-flag')}</Form.Label>
                   <Form.Control>
                     <DropdownMenu>
@@ -341,7 +300,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
               control={form.control}
               name={`goalIds`}
               render={({ field }) => (
-                <Form.Item className="py-2">
+                <Form.Item>
                   <Form.Label required>{t('experiments.link-goal')}</Form.Label>
                   <Form.Control>
                     <DropdownMenu>
@@ -384,6 +343,22 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                 </Form.Item>
               )}
             />
+
+            {/* <Divider className="mt-4 mb-5" />
+            <div className="mb-3">
+              <p className="text-gray-800 typo-head-bold-small mb-3">
+                {t('experiments.define-audience.title')}
+              </p>
+              <Form.Field
+                control={form.control}
+                name={`audience`}
+                render={({ field }) => (
+                  <Form.Item className="flex flex-col w-full py-2 gap-y-5">
+                    <DefineAudience field={field as DefineAudienceField} />
+                  </Form.Item>
+                )}
+              />
+            </div> */}
 
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar

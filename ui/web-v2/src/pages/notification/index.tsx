@@ -172,20 +172,41 @@ export const NotificationIndexPage: FC = memo(() => {
     defaultValues: {
       name: '',
       webhookUrl: '',
-      sourceTypes: null
+      sourceTypes: null,
+      featureFlagTagsList: []
     },
     mode: 'onChange'
   });
   const { handleSubmit: handleAddSubmit, reset: resetAdd } = addMethod;
 
+  const updateMethod = useForm({
+    resolver: yupResolver(updateFormSchema),
+    mode: 'onChange'
+  });
+
+  const {
+    handleSubmit: handleUpdateSubmit,
+    formState: { dirtyFields },
+    reset: resetUpdate
+  } = updateMethod;
+
   const add = useCallback(
     async (data) => {
+      let featureFlagTagsList: string[];
+      if (
+        data.sourceTypes.includes(
+          Subscription.SourceType.DOMAIN_EVENT_FEATURE.toString()
+        )
+      ) {
+        featureFlagTagsList = data.featureFlagTagsList;
+      }
       dispatch(
         createNotification({
           environmentId: currentEnvironment.id,
           name: data.name,
           sourceTypes: data.sourceTypes,
-          webhookUrl: data.webhookUrl
+          webhookUrl: data.webhookUrl,
+          featureFlagTagsList
         })
       ).then(() => {
         setOpen(false);
@@ -205,7 +226,8 @@ export const NotificationIndexPage: FC = memo(() => {
       resetUpdate({
         name: s.name,
         webhookUrl: s.recipient.slackChannelRecipient.webhookUrl,
-        sourceTypes: [...s.sourceTypesList].sort()
+        sourceTypes: s.sourceTypesList.map(String),
+        featureFlagTagsList: s.featureFlagTagsList
       });
       history.push({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_NOTIFICATIONS}/${s.id}`,
@@ -215,36 +237,31 @@ export const NotificationIndexPage: FC = memo(() => {
     [setOpen, history, notification, location]
   );
 
-  const updateMethod = useForm({
-    resolver: yupResolver(updateFormSchema),
-    mode: 'onChange'
-  });
-
-  const {
-    handleSubmit: handleUpdateSubmit,
-    formState: { dirtyFields },
-    reset: resetUpdate
-  } = updateMethod;
-
   const update = useCallback(
     async (data) => {
       let name: string;
       let sourceTypes: Array<
         Subscription.SourceTypeMap[keyof Subscription.SourceTypeMap]
-      >;
+      > = [];
+      let featureFlagTagsList: string[];
       if (dirtyFields.name) {
         name = data.name;
       }
       if (dirtyFields.sourceTypes) {
         sourceTypes = data.sourceTypes;
       }
+      if (dirtyFields.featureFlagTagsList) {
+        featureFlagTagsList = data.featureFlagTagsList;
+      }
+
       dispatch(
         updateNotification({
           environmentId: currentEnvironment.id,
           id: notificationId,
           name: name,
           currentSourceTypes: notification.sourceTypesList,
-          sourceTypes: sourceTypes
+          sourceTypes: sourceTypes,
+          featureFlagTagsList: featureFlagTagsList
         })
       ).then(() => {
         updateNotificationList(
@@ -354,7 +371,8 @@ export const NotificationIndexPage: FC = memo(() => {
       resetUpdate({
         name: notification.name,
         webhookUrl: notification.recipient.slackChannelRecipient.webhookUrl,
-        sourceTypes: [...notification.sourceTypesList].sort()
+        sourceTypes: [...notification.sourceTypesList].sort().map(String),
+        featureFlagTagsList: notification.featureFlagTagsList
       });
     }
   }, [notification]);

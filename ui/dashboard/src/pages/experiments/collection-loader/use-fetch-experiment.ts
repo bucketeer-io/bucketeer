@@ -23,7 +23,7 @@ export const useFetchExperiments = ({
   featureVersion?: number;
   from?: string;
   to?: string;
-  statuses?: ExperimentStatus;
+  statuses?: ExperimentStatus[];
   maintainer?: string;
   status?: ExperimentTab;
 }) => {
