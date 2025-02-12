@@ -23,6 +23,7 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 import "google/protobuf/wrappers.proto";
 
 import "proto/autoops/auto_ops_rule.proto";
+import "proto/autoops/clause.proto";
 import "proto/autoops/command.proto";
 import "proto/autoops/ops_count.proto";
 import "proto/autoops/progressive_rollout.proto";
@@ -39,11 +40,17 @@ message GetAutoOpsRuleResponse {
 
 message CreateAutoOpsRuleRequest {
   reserved 1;
-  CreateAutoOpsRuleCommand command = 2;
-  string environment_id = 3;
+  CreateAutoOpsRuleCommand command = 2 [deprecated = true];
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 4;
+  OpsType ops_type = 5;
+  repeated OpsEventRateClause ops_event_rate_clauses = 6;
+  repeated DatetimeClause datetime_clauses = 7;
 }
 
-message CreateAutoOpsRuleResponse {}
+message CreateAutoOpsRuleResponse {
+  AutoOpsRule auto_ops_rule = 1;
+}
 
 message ListAutoOpsRulesRequest {
   reserved 1;
@@ -263,7 +270,40 @@ service AutoOpsService {
     };
   }
   rpc CreateAutoOpsRule(CreateAutoOpsRuleRequest)
-      returns (CreateAutoOpsRuleResponse) {}
+      returns (CreateAutoOpsRuleResponse) {
+    option (google.api.http) = {
+      post: "/v1/auto_ops_rule"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create"
+      description: "Create auto ops rule."
+      tags: "auto_ops_rule"
+      operation_id: "web.v1.auto_ops_rule.create"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc StopAutoOpsRule(StopAutoOpsRuleRequest)
       returns (StopAutoOpsRuleResponse) {}
   rpc DeleteAutoOpsRule(DeleteAutoOpsRuleRequest)

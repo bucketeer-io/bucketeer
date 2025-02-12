@@ -7276,12 +7276,46 @@
               {
                 "id": 2,
                 "name": "command",
-                "type": "CreateAutoOpsRuleCommand"
+                "type": "CreateAutoOpsRuleCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "feature_id",
                 "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "ops_type",
+                "type": "OpsType"
+              },
+              {
+                "id": 6,
+                "name": "ops_event_rate_clauses",
+                "type": "OpsEventRateClause",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "datetime_clauses",
+                "type": "DatetimeClause",
+                "is_repeated": true
               }
             ],
             "reserved_ids": [
@@ -7289,7 +7323,14 @@
             ]
           },
           {
-            "name": "CreateAutoOpsRuleResponse"
+            "name": "CreateAutoOpsRuleResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "auto_ops_rule",
+                "type": "AutoOpsRule"
+              }
+            ]
           },
           {
             "name": "ListAutoOpsRulesRequest",
@@ -7990,7 +8031,133 @@
               {
                 "name": "CreateAutoOpsRule",
                 "in_type": "CreateAutoOpsRuleRequest",
-                "out_type": "CreateAutoOpsRuleResponse"
+                "out_type": "CreateAutoOpsRuleResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auto_ops_rule"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create auto ops rule."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "auto_ops_rule"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auto_ops_rule.create"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "StopAutoOpsRule",
@@ -8065,6 +8232,9 @@
           },
           {
             "path": "proto/autoops/auto_ops_rule.proto"
+          },
+          {
+            "path": "proto/autoops/clause.proto"
           },
           {
             "path": "proto/autoops/command.proto"
