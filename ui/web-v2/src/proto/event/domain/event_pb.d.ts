@@ -15,6 +15,7 @@ import * as proto_account_account_pb from '../../../proto/account/account_pb';
 import * as proto_account_api_key_pb from '../../../proto/account/api_key_pb';
 import * as proto_autoops_auto_ops_rule_pb from '../../../proto/autoops/auto_ops_rule_pb';
 import * as proto_autoops_clause_pb from '../../../proto/autoops/clause_pb';
+import * as proto_autoops_service_pb from '../../../proto/autoops/service_pb';
 import * as proto_notification_subscription_pb from '../../../proto/notification/subscription_pb';
 import * as proto_notification_recipient_pb from '../../../proto/notification/recipient_pb';
 import * as proto_feature_prerequisite_pb from '../../../proto/feature/prerequisite_pb';
@@ -253,6 +254,7 @@ export namespace Event {
     DATETIME_CLAUSE_CHANGED: 808;
     AUTOOPS_RULE_STOPPED: 809;
     AUTOOPS_RULE_OPS_STATUS_CHANGED: 810;
+    AUTOOPS_RULE_UPDATED: 811;
     PUSH_CREATED: 900;
     PUSH_DELETED: 901;
     PUSH_TAGS_ADDED: 902;
@@ -4945,6 +4947,59 @@ export namespace DatetimeClauseAddedEvent {
   export type AsObject = {
     clauseId: string;
     datetimeClause?: proto_autoops_clause_pb.DatetimeClause.AsObject;
+  };
+}
+
+export class AutoOpsRuleUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  clearUpdateOpsEventRateClausesList(): void;
+  getUpdateOpsEventRateClausesList(): Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause>;
+  setUpdateOpsEventRateClausesList(
+    value: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause>
+  ): void;
+  addUpdateOpsEventRateClauses(
+    value?: proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause,
+    index?: number
+  ): proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause;
+
+  clearUpdateDatetimeClausesList(): void;
+  getUpdateDatetimeClausesList(): Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause>;
+  setUpdateDatetimeClausesList(
+    value: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause>
+  ): void;
+  addUpdateDatetimeClauses(
+    value?: proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause,
+    index?: number
+  ): proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AutoOpsRuleUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: AutoOpsRuleUpdatedEvent
+  ): AutoOpsRuleUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: AutoOpsRuleUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): AutoOpsRuleUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: AutoOpsRuleUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): AutoOpsRuleUpdatedEvent;
+}
+
+export namespace AutoOpsRuleUpdatedEvent {
+  export type AsObject = {
+    id: string;
+    updateOpsEventRateClausesList: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.AsObject>;
+    updateDatetimeClausesList: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.AsObject>;
   };
 }
 

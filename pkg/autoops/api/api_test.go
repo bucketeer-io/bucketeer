@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	authclientmock "github.com/bucketeer-io/bucketeer/pkg/auth/client/mock"
@@ -801,14 +802,6 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc: "err: ErrNoCommand",
-			req: &autoopsproto.UpdateAutoOpsRuleRequest{
-				Id: "aid1",
-			},
-			expected:    nil,
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
-		{
 			desc: "err: ErrOpsEventRateClauseRequired",
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
 				Id:                            "aid1",
@@ -976,6 +969,217 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 							ActionType: autoopsproto.ActionType_DISABLE,
 							Time:       time.Now().AddDate(0, 0, 2).Unix(),
 						},
+					},
+				},
+			},
+			expected:    &autoopsproto.UpdateAutoOpsRuleResponse{},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createAutoOpsService(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			_, err := s.UpdateAutoOpsRule(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithTokenRoleOwner(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AutoOpsService)
+		req         *autoopsproto.UpdateAutoOpsRuleRequest
+		expected    *autoopsproto.UpdateAutoOpsRuleResponse
+		expectedErr error
+	}{
+		{
+			desc:        "err: ErrIDRequired",
+			req:         &autoopsproto.UpdateAutoOpsRuleRequest{},
+			expected:    nil,
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc: "err: ErrOpsEventRateClauseRequired",
+			req: &autoopsproto.UpdateAutoOpsRuleRequest{
+				Id:                        "aid1",
+				UpdateOpsEventRateClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateOpsEventRateClause{{}},
+			},
+			expected:    nil,
+			expectedErr: createError(statusOpsEventRateClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_event_rate_clause")),
+		},
+		{
+			desc: "err: DeleteClause ErrClauseIdRequired",
+			req: &autoopsproto.UpdateAutoOpsRuleRequest{
+				Id: "aid1",
+				UpdateOpsEventRateClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateOpsEventRateClause{{
+					Deleted: wrapperspb.Bool(true),
+				}},
+			},
+			expected:    nil,
+			expectedErr: createError(statusClauseIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
+		},
+		{
+			desc: "err: ChangeOpsEventRateClauseCommand: ErrOpsEventRateClauseRequired",
+			req: &autoopsproto.UpdateAutoOpsRuleRequest{
+				Id: "aid1",
+				UpdateOpsEventRateClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateOpsEventRateClause{{
+					Id: "aid",
+				}},
+			},
+			expected:    nil,
+			expectedErr: createError(statusOpsEventRateClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_event_rate_clause")),
+		},
+		{
+			desc: "err: ErrDatetimeClauseRequired",
+			req: &autoopsproto.UpdateAutoOpsRuleRequest{
+				Id:                    "aid1",
+				UpdateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{{}},
+			},
+			expected:    nil,
+			expectedErr: createError(statusDatetimeClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "datetime_clause")),
+		},
+		{
+			desc: "err: ChangeDatetimeClause: ErrDatetimeClauseInvalidTime",
+			req: &autoopsproto.UpdateAutoOpsRuleRequest{
+				Id: "aid1",
+				UpdateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{{
+					Id:             "aid",
+					DatetimeClause: &autoopsproto.DatetimeClause{Time: 0},
+				}},
+			},
+			expected:    nil,
+			expectedErr: createError(statusDatetimeClauseInvalidTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
+		},
+		{
+			desc: "err: ChangeDatetimeClause: ErrDatetimeClauseDuplicateTime",
+			req: &autoopsproto.UpdateAutoOpsRuleRequest{
+				Id: "aid1",
+				UpdateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{
+					{
+						Id:             "aid",
+						DatetimeClause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+					},
+					{
+						Id:             "aid2",
+						DatetimeClause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+					},
+				},
+			},
+			expected:    nil,
+			expectedErr: createError(statusDatetimeClauseDuplicateTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
+		},
+		{
+			desc: "err: AddDatetimeClause: ErrDatetimeClauseInvalidTime",
+			req: &autoopsproto.UpdateAutoOpsRuleRequest{
+				Id: "aid1",
+				UpdateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{
+					{
+						DatetimeClause: &autoopsproto.DatetimeClause{Time: 0, ActionType: autoopsproto.ActionType_DISABLE},
+					},
+				},
+			},
+			expected:    nil,
+			expectedErr: createError(statusDatetimeClauseInvalidTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
+		},
+		{
+			desc: "err: AddDatetimeClause: ErrDatetimeClauseDuplicateTime",
+			req: &autoopsproto.UpdateAutoOpsRuleRequest{
+				Id: "aid1",
+				UpdateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{
+					{
+						DatetimeClause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_DISABLE},
+					},
+					{
+						DatetimeClause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_DISABLE},
+					},
+				},
+			},
+			expected:    nil,
+			expectedErr: createError(statusDatetimeClauseDuplicateTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
+		},
+		{
+			desc: "err: AddDatetimeClauses: ErrDatetimeClauseDuplicateTime",
+			req: &autoopsproto.UpdateAutoOpsRuleRequest{
+				Id: "aid1",
+				UpdateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{
+					{
+						DatetimeClause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_DISABLE},
+					},
+					{
+						Id:             "aid",
+						DatetimeClause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_DISABLE},
+					},
+				},
+			},
+			expected:    nil,
+			expectedErr: createError(statusDatetimeClauseDuplicateTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
+		},
+		{
+			desc: "success",
+			setup: func(s *AutoOpsService) {
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.All(),
+				).Return(&domain.AutoOpsRule{
+					AutoOpsRule: &autoopsproto.AutoOpsRule{
+						Id: "aid1", OpsType: autoopsproto.OpsType_SCHEDULE, AutoOpsStatus: autoopsproto.AutoOpsStatus_RUNNING, Deleted: false, Clauses: []*autoopsproto.Clause{
+							{Id: "cid", ActionType: autoopsproto.ActionType_ENABLE, Clause: &anypb.Any{}},
+							{Id: "cid2", ActionType: autoopsproto.ActionType_ENABLE, Clause: &anypb.Any{}},
+						}},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil).AnyTimes()
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().UpdateAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &autoopsproto.UpdateAutoOpsRuleRequest{
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+				UpdateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{
+					{
+						DatetimeClause: &autoopsproto.DatetimeClause{
+							ActionType: autoopsproto.ActionType_ENABLE,
+							Time:       time.Now().AddDate(0, 0, 1).Unix(),
+						},
+					},
+					{
+						Id: "cid2",
+						DatetimeClause: &autoopsproto.DatetimeClause{
+							ActionType: autoopsproto.ActionType_DISABLE,
+							Time:       time.Now().AddDate(0, 0, 2).Unix(),
+						},
+					},
+					{
+						Id:      "cid",
+						Deleted: wrapperspb.Bool(true),
 					},
 				},
 			},

@@ -40,7 +40,12 @@ message GetAutoOpsRuleResponse {
 
 message CreateAutoOpsRuleRequest {
   reserved 1;
-  CreateAutoOpsRuleCommand command = 2 [deprecated = true];
+  CreateAutoOpsRuleCommand command = 2 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
   string feature_id = 4;
   OpsType ops_type = 5;
@@ -84,21 +89,74 @@ message DeleteAutoOpsRuleRequest {
 message DeleteAutoOpsRuleResponse {}
 
 message UpdateAutoOpsRuleRequest {
+  message UpdateOpsEventRateClause {
+    string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options
+                        .openapiv2_field) = {
+      description: "The ID of the clause, if not set, a new event rate clause will be created."
+    }];
+    google.protobuf.BoolValue deleted = 2
+        [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+          description: "If true, the clause is deleted."
+        }];
+    OpsEventRateClause ops_event_rate_clause = 3;
+  }
+
+  message UpdateDatetimeClause {
+    string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options
+                        .openapiv2_field) = {
+      description: "The ID of the clause, if not set, a new date time clause will be created."
+    }];
+    google.protobuf.BoolValue deleted = 2
+        [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+          description: "If true, the clause is deleted."
+        }];
+    DatetimeClause datetime_clause = 3;
+  }
+
   reserved 1;
   string id = 2;
   // ChangeAutoOpsRuleOpsTypeCommand change_auto_ops_rule_ops_type_command = 3
   // [deprecated = true];
   reserved 3;
-  repeated AddOpsEventRateClauseCommand add_ops_event_rate_clause_commands = 4;
+  repeated AddOpsEventRateClauseCommand add_ops_event_rate_clause_commands = 4 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   repeated ChangeOpsEventRateClauseCommand
-      change_ops_event_rate_clause_commands = 5;
-  repeated DeleteClauseCommand delete_clause_commands = 6;
-  repeated AddDatetimeClauseCommand add_datetime_clause_commands = 7;
-  repeated ChangeDatetimeClauseCommand change_datetime_clause_commands = 8;
-  string environment_id = 9;
+      change_ops_event_rate_clause_commands = 5 [
+        deprecated = true,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+          description: "deprecated"
+        }
+      ];
+  repeated DeleteClauseCommand delete_clause_commands = 6 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  repeated AddDatetimeClauseCommand add_datetime_clause_commands = 7 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  repeated ChangeDatetimeClauseCommand change_datetime_clause_commands = 8 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  string environment_id = 9 [(google.api.field_behavior) = REQUIRED];
+  repeated UpdateOpsEventRateClause update_ops_event_rate_clauses = 10;
+  repeated UpdateDatetimeClause update_datetime_clauses = 11;
 }
 
-message UpdateAutoOpsRuleResponse {}
+message UpdateAutoOpsRuleResponse {
+  AutoOpsRule auto_ops_rule = 1;
+}
 
 message ExecuteAutoOpsRequest {
   reserved 1;
