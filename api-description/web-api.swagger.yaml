@@ -7812,6 +7812,14 @@ definitions:
       updateAt:
         type: string
         format: int64
+  featureScheduleUpdateListValue:
+    type: object
+    properties:
+      value:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureScheduleUpdate'
   featureSegment:
     type: object
     properties:

@@ -538,6 +538,18 @@ export class UpdateFeatureRequest extends jspb.Message {
   getResetSamplingSeed(): boolean;
   setResetSamplingSeed(value: boolean): void;
 
+  getApplyScheduleUpdate(): boolean;
+  setApplyScheduleUpdate(value: boolean): void;
+
+  hasScheduleUpdates(): boolean;
+  clearScheduleUpdates(): void;
+  getScheduleUpdates():
+    | proto_feature_feature_pb.ScheduleUpdateListValue
+    | undefined;
+  setScheduleUpdates(
+    value?: proto_feature_feature_pb.ScheduleUpdateListValue
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFeatureRequest.AsObject;
   static toObject(
@@ -576,6 +588,8 @@ export namespace UpdateFeatureRequest {
     defaultStrategy?: proto_feature_strategy_pb.Strategy.AsObject;
     offVariation?: google_protobuf_wrappers_pb.StringValue.AsObject;
     resetSamplingSeed: boolean;
+    applyScheduleUpdate: boolean;
+    scheduleUpdates?: proto_feature_feature_pb.ScheduleUpdateListValue.AsObject;
   };
 }
 
