@@ -4708,7 +4708,18 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg,
           15,
           false
-        )
+        ),
+        applyScheduleUpdate: jspb.Message.getBooleanFieldWithDefault(
+          msg,
+          16,
+          false
+        ),
+        scheduleUpdates:
+          (f = msg.getScheduleUpdates()) &&
+          proto_feature_feature_pb.ScheduleUpdateListValue.toObject(
+            includeInstance,
+            f
+          )
       };
 
     if (includeInstance) {
@@ -4855,6 +4866,19 @@ proto.bucketeer.feature.UpdateFeatureRequest.deserializeBinaryFromReader =
           var value = /** @type {boolean} */ (reader.readBool());
           msg.setResetSamplingSeed(value);
           break;
+        case 16:
+          var value = /** @type {boolean} */ (reader.readBool());
+          msg.setApplyScheduleUpdate(value);
+          break;
+        case 17:
+          var value = new proto_feature_feature_pb.ScheduleUpdateListValue();
+          reader.readMessage(
+            value,
+            proto_feature_feature_pb.ScheduleUpdateListValue
+              .deserializeBinaryFromReader
+          );
+          msg.setScheduleUpdates(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -4991,6 +5015,18 @@ proto.bucketeer.feature.UpdateFeatureRequest.serializeBinaryToWriter =
     f = message.getResetSamplingSeed();
     if (f) {
       writer.writeBool(15, f);
+    }
+    f = message.getApplyScheduleUpdate();
+    if (f) {
+      writer.writeBool(16, f);
+    }
+    f = message.getScheduleUpdates();
+    if (f != null) {
+      writer.writeMessage(
+        17,
+        f,
+        proto_feature_feature_pb.ScheduleUpdateListValue.serializeBinaryToWriter
+      );
     }
   };
 
@@ -5523,6 +5559,68 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getResetSamplingSeed =
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.setResetSamplingSeed =
   function (value) {
     return jspb.Message.setProto3BooleanField(this, 15, value);
+  };
+
+/**
+ * optional bool apply_schedule_update = 16;
+ * @return {boolean}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.getApplyScheduleUpdate =
+  function () {
+    return /** @type {boolean} */ (
+      jspb.Message.getBooleanFieldWithDefault(this, 16, false)
+    );
+  };
+
+/**
+ * @param {boolean} value
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.setApplyScheduleUpdate =
+  function (value) {
+    return jspb.Message.setProto3BooleanField(this, 16, value);
+  };
+
+/**
+ * optional ScheduleUpdateListValue schedule_updates = 17;
+ * @return {?proto.bucketeer.feature.ScheduleUpdateListValue}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.getScheduleUpdates =
+  function () {
+    return /** @type{?proto.bucketeer.feature.ScheduleUpdateListValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_feature_feature_pb.ScheduleUpdateListValue,
+        17
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.feature.ScheduleUpdateListValue|undefined} value
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.setScheduleUpdates =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 17, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearScheduleUpdates =
+  function () {
+    return this.setScheduleUpdates(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasScheduleUpdates =
+  function () {
+    return jspb.Message.getField(this, 17) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
