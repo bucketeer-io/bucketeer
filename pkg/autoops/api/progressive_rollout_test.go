@@ -831,7 +831,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := createAutoOpsService(mockController, nil)
+			s := createAutoOpsService(mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -910,7 +910,7 @@ func TestGetProgressiveRolloutMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := createAutoOpsService(mockController, nil)
+			s := createAutoOpsService(mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -1022,7 +1022,7 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := createAutoOpsService(mockController, nil)
+			s := createAutoOpsService(mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -1115,7 +1115,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := createAutoOpsService(mockController, nil)
+			s := createAutoOpsService(mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -1209,7 +1209,7 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := createAutoOpsService(mockController, nil)
+			service := createAutoOpsService(mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -1287,7 +1287,7 @@ func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := createAutoOpsService(mockController, nil)
+			s := createAutoOpsService(mockController)
 			if p.setup != nil {
 				p.setup(s)
 			}

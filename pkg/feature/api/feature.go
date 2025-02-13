@@ -769,6 +769,7 @@ func (s *FeatureService) UpdateFeature(
 			req.Rules,
 			req.DefaultStrategy,
 			req.OffVariation,
+			req.ResetSamplingSeed,
 		)
 		if err != nil {
 			return err

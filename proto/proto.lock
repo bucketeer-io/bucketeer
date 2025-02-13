@@ -9383,6 +9383,33 @@
       }
     },
     {
+      "protopath": "common:/:string.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "StringListValue",
+            "fields": [
+              {
+                "id": 1,
+                "name": "values",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.common"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/common"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "environment:/:command.proto",
       "def": {
         "messages": [
@@ -25953,6 +25980,17 @@
                 "type": "string"
               }
             ]
+          },
+          {
+            "name": "PrerequisiteListValue",
+            "fields": [
+              {
+                "id": 1,
+                "name": "values",
+                "type": "Prerequisite",
+                "is_repeated": true
+              }
+            ]
           }
         ],
         "package": {
@@ -26048,6 +26086,17 @@
                 "id": 3,
                 "name": "clauses",
                 "type": "Clause",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "RuleListValue",
+            "fields": [
+              {
+                "id": 1,
+                "name": "values",
+                "type": "Rule",
                 "is_repeated": true
               }
             ]
@@ -26669,12 +26718,24 @@
               {
                 "id": 2,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 4,
@@ -26689,8 +26750,7 @@
               {
                 "id": 6,
                 "name": "tags",
-                "type": "string",
-                "is_repeated": true
+                "type": "common.StringListValue"
               },
               {
                 "id": 7,
@@ -26705,26 +26765,22 @@
               {
                 "id": 9,
                 "name": "variations",
-                "type": "Variation",
-                "is_repeated": true
+                "type": "VariationListValue"
               },
               {
                 "id": 10,
                 "name": "prerequisites",
-                "type": "Prerequisite",
-                "is_repeated": true
+                "type": "PrerequisiteListValue"
               },
               {
                 "id": 11,
                 "name": "targets",
-                "type": "Target",
-                "is_repeated": true
+                "type": "TargetListValue"
               },
               {
                 "id": 12,
                 "name": "rules",
-                "type": "Rule",
-                "is_repeated": true
+                "type": "RuleListValue"
               },
               {
                 "id": 13,
@@ -26735,6 +26791,11 @@
                 "id": 14,
                 "name": "off_variation",
                 "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 15,
+                "name": "reset_sampling_seed",
+                "type": "bool"
               }
             ]
           },
@@ -29091,6 +29152,9 @@
             "path": "protoc-gen-openapiv2/options/annotations.proto"
           },
           {
+            "path": "proto/common/string.proto"
+          },
+          {
             "path": "proto/feature/command.proto"
           },
           {
@@ -29242,6 +29306,17 @@
                 "is_repeated": true
               }
             ]
+          },
+          {
+            "name": "TargetListValue",
+            "fields": [
+              {
+                "id": 1,
+                "name": "values",
+                "type": "Target",
+                "is_repeated": true
+              }
+            ]
           }
         ],
         "package": {
@@ -29281,6 +29356,17 @@
                 "id": 4,
                 "name": "description",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "VariationListValue",
+            "fields": [
+              {
+                "id": 1,
+                "name": "values",
+                "type": "Variation",
+                "is_repeated": true
               }
             ]
           }
@@ -29763,66 +29849,66 @@
               },
               {
                 "id": 2,
-                "name": "id",
+                "name": "environment_id",
                 "type": "string"
               },
               {
                 "id": 3,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 4,
                 "name": "name",
                 "type": "google.protobuf.StringValue"
               },
               {
-                "id": 4,
+                "id": 5,
                 "name": "description",
                 "type": "google.protobuf.StringValue"
               },
               {
-                "id": 5,
+                "id": 6,
                 "name": "tags",
-                "type": "string",
-                "is_repeated": true
+                "type": "common.StringListValue"
               },
               {
-                "id": 6,
+                "id": 7,
                 "name": "enabled",
                 "type": "google.protobuf.BoolValue"
               },
               {
-                "id": 7,
+                "id": 8,
                 "name": "archived",
                 "type": "google.protobuf.BoolValue"
               },
               {
-                "id": 8,
-                "name": "variations",
-                "type": "feature.Variation",
-                "is_repeated": true
-              },
-              {
                 "id": 9,
-                "name": "prerequisites",
-                "type": "feature.Prerequisite",
-                "is_repeated": true
+                "name": "variations",
+                "type": "feature.VariationListValue"
               },
               {
                 "id": 10,
-                "name": "targets",
-                "type": "feature.Target",
-                "is_repeated": true
+                "name": "prerequisites",
+                "type": "feature.PrerequisiteListValue"
               },
               {
                 "id": 11,
-                "name": "rules",
-                "type": "feature.Rule",
-                "is_repeated": true
+                "name": "targets",
+                "type": "feature.TargetListValue"
               },
               {
                 "id": 12,
+                "name": "rules",
+                "type": "feature.RuleListValue"
+              },
+              {
+                "id": 13,
                 "name": "default_strategy",
                 "type": "feature.Strategy"
               },
               {
-                "id": 13,
+                "id": 14,
                 "name": "off_variation",
                 "type": "google.protobuf.StringValue"
               }
@@ -32226,6 +32312,9 @@
             "path": "protoc-gen-openapiv2/options/annotations.proto"
           },
           {
+            "path": "proto/common/string.proto"
+          },
+          {
             "path": "proto/user/user.proto"
           },
           {
@@ -32241,19 +32330,19 @@
             "path": "proto/feature/variation.proto"
           },
           {
+            "path": "proto/feature/strategy.proto"
+          },
+          {
             "path": "proto/feature/prerequisite.proto"
           },
           {
             "path": "proto/feature/rule.proto"
           },
           {
-            "path": "proto/feature/strategy.proto"
+            "path": "proto/feature/segment.proto"
           },
           {
             "path": "proto/feature/target.proto"
-          },
-          {
-            "path": "proto/feature/segment.proto"
           },
           {
             "path": "proto/push/push.proto"

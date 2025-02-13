@@ -56,7 +56,7 @@
   "organization-subtitle": "You can see all your clients data",
   "setting-subtitle": "Manage settings about the current organization",
   "project-subtitle": "Manage all projects for this environment.",
-  "member-subtitle": "Manage all members for this environment.",
+  "member-subtitle": "Manage all members in your organization. Select a member to manage the role settings and tags, or invite a new one.",
   "organization-settings": "Organization settings",
   "navigation": {
     "my-projects": "My projects",

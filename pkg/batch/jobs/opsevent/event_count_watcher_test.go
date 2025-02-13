@@ -292,7 +292,11 @@ func TestRunCountWatcher(t *testing.T) {
 						},
 					}, nil)
 
-				w.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+				qe := mysqlmock.NewMockQueryExecer(mockController)
+				w.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().ExecContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 					nil, nil,
 				)
 

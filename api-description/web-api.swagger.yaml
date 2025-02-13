@@ -6326,6 +6326,13 @@ definitions:
     properties:
       codeReference:
         $ref: '#/definitions/coderefCodeReference'
+  commonStringListValue:
+    type: object
+    properties:
+      values:
+        type: array
+        items:
+          type: string
   environmentArchiveEnvironmentV2Command:
     type: object
   environmentArchiveEnvironmentV2Request:
@@ -7715,6 +7722,14 @@ definitions:
         type: string
       variationId:
         type: string
+  featurePrerequisiteListValue:
+    type: object
+    properties:
+      values:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featurePrerequisite'
   featureReason:
     type: object
     properties:
@@ -7779,6 +7794,14 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/bucketeerfeatureClause'
+  featureRuleListValue:
+    type: object
+    properties:
+      values:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureRule'
   featureSegment:
     type: object
     properties:
@@ -7871,6 +7894,14 @@ definitions:
         type: array
         items:
           type: string
+  featureTargetListValue:
+    type: object
+    properties:
+      values:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureTarget'
   featureUnarchiveFeatureCommand:
     type: object
   featureUnarchiveFeatureResponse:
@@ -7931,6 +7962,14 @@ definitions:
           type: string
       forceUpdate:
         type: boolean
+  featureVariationListValue:
+    type: object
+    properties:
+      values:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerfeatureVariation'
   googlerpcStatus:
     type: object
     properties:

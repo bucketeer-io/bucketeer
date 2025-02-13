@@ -10,7 +10,8 @@ export const useFetchMembers = ({
   orderDirection,
   organizationId,
   environmentId,
-  disabled
+  disabled,
+  organizationRole
 }: {
   pageSize?: number;
   page?: number;
@@ -20,6 +21,7 @@ export const useFetchMembers = ({
   organizationId?: string;
   environmentId?: string;
   disabled?: boolean;
+  organizationRole?: number;
 } = {}) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
 
@@ -32,7 +34,8 @@ export const useFetchMembers = ({
       searchKeyword: searchQuery,
       organizationId,
       environmentId,
-      disabled
+      disabled,
+      organizationRole
     }
   });
 };
