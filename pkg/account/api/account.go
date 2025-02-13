@@ -230,7 +230,7 @@ func (s *AccountService) createAccountV2NoCommand(
 			return err
 		}
 		return s.auditlogStorage.CreateAuditLog(
-			ctx,
+			contextWithTx,
 			domainauditlog.NewAuditLog(createAccountEvent, storage.AdminEnvironmentID),
 		)
 	})
