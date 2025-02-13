@@ -30,11 +30,11 @@ type MAUSummaryStorage interface {
 }
 
 type mauSummaryStorage struct {
-	qe mysql.QueryExecer
+	client mysql.Client
 }
 
-func NewMAUSummaryStorage(qe mysql.QueryExecer) MAUSummaryStorage {
-	return &mauSummaryStorage{qe: qe}
+func NewMAUSummaryStorage(client mysql.Client) MAUSummaryStorage {
+	return &mauSummaryStorage{client: client}
 }
 
 func (s *mauSummaryStorage) UpsertMAUSummary(
@@ -64,7 +64,7 @@ func (s *mauSummaryStorage) UpsertMAUSummary(
 			is_finished = VALUES(is_finished),
 			updated_at = VALUES(updated_at)
 	`
-	_, err := s.qe.ExecContext(
+	_, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		query,
 		m.Yearmonth,

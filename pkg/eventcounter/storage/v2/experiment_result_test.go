@@ -30,7 +30,7 @@ func TestNewExperimentResultStorage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	storage := NewExperimentResultStorage(mock.NewMockQueryExecer(mockController))
+	storage := NewExperimentResultStorage(mock.NewMockClient(mockController))
 	assert.IsType(t, &experimentResultStorage{}, storage)
 }
 
@@ -50,7 +50,9 @@ func TestGetExperimentResult(t *testing.T) {
 			setup: func(s *experimentResultStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(gomock.Any()).Return(qe)
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -63,7 +65,9 @@ func TestGetExperimentResult(t *testing.T) {
 			setup: func(s *experimentResultStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(gomock.Any()).Return(qe)
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 
@@ -77,7 +81,9 @@ func TestGetExperimentResult(t *testing.T) {
 			setup: func(s *experimentResultStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(gomock.Any()).Return(qe)
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -100,5 +106,5 @@ func TestGetExperimentResult(t *testing.T) {
 
 func newExperimentResultStorageWithMock(t *testing.T, mockController *gomock.Controller) *experimentResultStorage {
 	t.Helper()
-	return &experimentResultStorage{mock.NewMockQueryExecer(mockController)}
+	return &experimentResultStorage{mock.NewMockClient(mockController)}
 }

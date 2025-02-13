@@ -31,11 +31,11 @@ type ExperimentResultStorage interface {
 }
 
 type experimentResultStorage struct {
-	qe mysql.QueryExecer
+	client mysql.Client
 }
 
-func NewExperimentResultStorage(qe mysql.QueryExecer) ExperimentResultStorage {
-	return &experimentResultStorage{qe}
+func NewExperimentResultStorage(client mysql.Client) ExperimentResultStorage {
+	return &experimentResultStorage{client}
 }
 
 func (s *experimentResultStorage) GetExperimentResult(
@@ -56,7 +56,7 @@ func (s *experimentResultStorage) GetExperimentResult(
 			id = ? AND
 			environment_id = ?
 	`
-	err := s.qe.QueryRowContext(
+	err := s.client.Qe(ctx).QueryRowContext(
 		ctx,
 		query,
 		id,
