@@ -416,6 +416,20 @@ const CodeAccordion = ({ codeRef, featureId }: CodeAccordionProps) => {
     language = 'js';
   }
 
+  // Split the code snippet into lines
+  const codeLines = codeRef.codeSnippet.split('\n');
+
+  // Find the index of the line containing featureId
+  const featureLineIndex = codeLines.findIndex((line) =>
+    line.includes(featureId)
+  );
+
+  // Adjust the starting line number
+  const startingLineNumber =
+    featureLineIndex !== -1
+      ? codeRef.lineNumber - featureLineIndex
+      : codeRef.lineNumber;
+
   return (
     <div className="rounded-md bg-[#F8FAFC]">
       <button
@@ -479,7 +493,7 @@ const CodeAccordion = ({ codeRef, featureId }: CodeAccordionProps) => {
                         i === tokens.length - 1 && 'pb-3'
                       )}
                     >
-                      {codeRef.lineNumber + i}
+                      {startingLineNumber + i}
                     </span>
                     {line.map((token, key) => {
                       const tokenProps = getTokenProps({ token, key });
