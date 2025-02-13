@@ -241,7 +241,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                     {t('tags')}
                     <Tooltip
                       align="start"
-                      alignOffset={-130}
+                      alignOffset={-30}
                       trigger={
                         <div className="flex-center absolute top-0 -right-6">
                           <Icon icon={IconInfo} size={'sm'} color="gray-600" />
