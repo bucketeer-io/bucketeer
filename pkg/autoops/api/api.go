@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"time"
 
@@ -30,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
@@ -117,6 +119,11 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 	if err != nil {
 		return nil, err
 	}
+
+	if req.Command == nil {
+		return s.createAutoOpsRuleNoCommand(ctx, req, editor, localizer)
+	}
+
 	if err := s.validateCreateAutoOpsRuleRequest(ctx, req, localizer); err != nil {
 		return nil, err
 	}
@@ -200,7 +207,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 		return s.autoOpsStorage.CreateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId)
 	})
 	if err != nil {
-		if err == v2as.ErrAutoOpsRuleAlreadyExists {
+		if errors.Is(err, v2as.ErrAutoOpsRuleAlreadyExists) {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
@@ -226,7 +233,146 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 		}
 		return nil, dt.Err()
 	}
-	return &autoopsproto.CreateAutoOpsRuleResponse{}, nil
+	return &autoopsproto.CreateAutoOpsRuleResponse{
+		AutoOpsRule: autoOpsRule.AutoOpsRule,
+	}, nil
+}
+
+func (s *AutoOpsService) createAutoOpsRuleNoCommand(
+	ctx context.Context,
+	req *autoopsproto.CreateAutoOpsRuleRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*autoopsproto.CreateAutoOpsRuleResponse, error) {
+	if err := s.validateCreateAutoOpsRuleRequestNoCommand(ctx, req, localizer); err != nil {
+		return nil, err
+	}
+
+	autoOpsRule, err := domain.NewAutoOpsRule(
+		req.FeatureId,
+		req.OpsType,
+		req.OpsEventRateClauses,
+		req.DatetimeClauses,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create a new autoOpsRule",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	opsEventRateClauses, err := autoOpsRule.ExtractOpsEventRateClauses()
+	if err != nil {
+		s.logger.Error(
+			"Failed to extract opsEventRateClauses",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	for _, c := range opsEventRateClauses {
+		exist, err := s.existGoal(ctx, req.EnvironmentId, c.GoalId)
+		if err != nil {
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		if !exist {
+			s.logger.Error(
+				"Goal does not exist",
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.String("environmentId", req.EnvironmentId))...,
+			)
+			dt, err := statusOpsEventRateClauseGoalNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+	}
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		prev := &domain.AutoOpsRule{}
+		e, err := domainevent.NewEvent(
+			editor,
+			eventproto.Event_AUTOOPS_RULE,
+			autoOpsRule.Id,
+			eventproto.Event_AUTOOPS_RULE_CREATED,
+			&eventproto.AutoOpsRuleCreatedEvent{
+				FeatureId: autoOpsRule.FeatureId,
+				OpsType:   autoOpsRule.OpsType,
+				Clauses:   autoOpsRule.Clauses,
+				CreatedAt: autoOpsRule.CreatedAt,
+				UpdatedAt: autoOpsRule.UpdatedAt,
+				OpsStatus: autoOpsRule.AutoOpsStatus,
+			},
+			req.EnvironmentId,
+			autoOpsRule.AutoOpsRule,
+			prev,
+		)
+		if err != nil {
+			return err
+		}
+		if err := s.publisher.Publish(ctx, e); err != nil {
+			return err
+		}
+		return s.autoOpsStorage.CreateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId)
+	})
+	if err != nil {
+		if errors.Is(err, v2as.ErrAutoOpsRuleAlreadyExists) {
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to create autoOps",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &autoopsproto.CreateAutoOpsRuleResponse{
+		AutoOpsRule: autoOpsRule.AutoOpsRule,
+	}, nil
 }
 
 func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
@@ -234,16 +380,6 @@ func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
 	req *autoopsproto.CreateAutoOpsRuleRequest,
 	localizer locale.Localizer,
 ) error {
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	if req.Command.FeatureId == "" {
 		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -323,6 +459,95 @@ func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
 		return err
 	}
 	if err := s.validateDatetimeClauses(req.Command.DatetimeClauses, localizer); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AutoOpsService) validateCreateAutoOpsRuleRequestNoCommand(
+	ctx context.Context,
+	req *autoopsproto.CreateAutoOpsRuleRequest,
+	localizer locale.Localizer,
+) error {
+	if req.FeatureId == "" {
+		dt, err := statusFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if len(req.OpsEventRateClauses) == 0 &&
+		len(req.DatetimeClauses) == 0 {
+		dt, err := statusClauseRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.OpsType == autoopsproto.OpsType_TYPE_UNKNOWN {
+		dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.OpsType == autoopsproto.OpsType_EVENT_RATE {
+		if len(req.OpsEventRateClauses) == 0 {
+			dt, err := statusClauseRequiredForEventDate.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		if len(req.DatetimeClauses) > 0 {
+			dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+	}
+	if req.OpsType == autoopsproto.OpsType_SCHEDULE {
+		if len(req.DatetimeClauses) == 0 {
+			dt, err := statusClauseRequiredForDateTime.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		if len(req.OpsEventRateClauses) > 0 {
+			dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+	}
+	if err := s.validateOpsEventRateClauses(req.OpsEventRateClauses, localizer); err != nil {
+		return err
+	}
+	if err := s.validateDatetimeClauses(req.DatetimeClauses, localizer); err != nil {
 		return err
 	}
 	return nil
@@ -958,7 +1183,7 @@ func (s *AutoOpsService) GetAutoOpsRule(
 	}
 	autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
-		if err == v2as.ErrAutoOpsRuleNotFound {
+		if errors.Is(err, v2as.ErrAutoOpsRuleNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -1504,7 +1729,7 @@ func (s *AutoOpsService) listOpsCounts(
 func (s *AutoOpsService) existGoal(ctx context.Context, environmentId string, goalID string) (bool, error) {
 	_, err := s.getGoal(ctx, environmentId, goalID)
 	if err != nil {
-		if err == storage.ErrKeyNotFound {
+		if errors.Is(err, storage.ErrKeyNotFound) {
 			return false, nil
 		}
 		return false, err

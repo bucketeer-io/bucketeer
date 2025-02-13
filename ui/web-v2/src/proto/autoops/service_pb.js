@@ -23,8 +23,18 @@ var global =
   }.call(null) ||
   Function('return this')();
 
+var google_api_annotations_pb = require('../../google/api/annotations_pb.js');
+goog.object.extend(proto, google_api_annotations_pb);
+var google_api_field_behavior_pb = require('../../google/api/field_behavior_pb.js');
+goog.object.extend(proto, google_api_field_behavior_pb);
+var protoc$gen$openapiv2_options_annotations_pb = require('../../protoc-gen-openapiv2/options/annotations_pb.js');
+goog.object.extend(proto, protoc$gen$openapiv2_options_annotations_pb);
+var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
+goog.object.extend(proto, google_protobuf_wrappers_pb);
 var proto_autoops_auto_ops_rule_pb = require('../../proto/autoops/auto_ops_rule_pb.js');
 goog.object.extend(proto, proto_autoops_auto_ops_rule_pb);
+var proto_autoops_clause_pb = require('../../proto/autoops/clause_pb.js');
+goog.object.extend(proto, proto_autoops_clause_pb);
 var proto_autoops_command_pb = require('../../proto/autoops/command_pb.js');
 goog.object.extend(proto, proto_autoops_command_pb);
 var proto_autoops_ops_count_pb = require('../../proto/autoops/ops_count_pb.js');
@@ -232,7 +242,14 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.bucketeer.autoops.CreateAutoOpsRuleRequest = function (opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.autoops.CreateAutoOpsRuleRequest.repeatedFields_,
+    null
+  );
 };
 goog.inherits(proto.bucketeer.autoops.CreateAutoOpsRuleRequest, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -1224,6 +1241,13 @@ proto.bucketeer.autoops.GetAutoOpsRuleResponse.prototype.hasAutoOpsRule =
     return jspb.Message.getField(this, 1) != null;
   };
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleRequest.repeatedFields_ = [6, 7];
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -1266,7 +1290,19 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        featureId: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        opsType: jspb.Message.getFieldWithDefault(msg, 5, 0),
+        opsEventRateClausesList: jspb.Message.toObjectList(
+          msg.getOpsEventRateClausesList(),
+          proto_autoops_clause_pb.OpsEventRateClause.toObject,
+          includeInstance
+        ),
+        datetimeClausesList: jspb.Message.toObjectList(
+          msg.getDatetimeClausesList(),
+          proto_autoops_clause_pb.DatetimeClause.toObject,
+          includeInstance
+        )
       };
 
     if (includeInstance) {
@@ -1320,6 +1356,33 @@ proto.bucketeer.autoops.CreateAutoOpsRuleRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setFeatureId(value);
+          break;
+        case 5:
+          var value = /** @type {!proto.bucketeer.autoops.OpsType} */ (
+            reader.readEnum()
+          );
+          msg.setOpsType(value);
+          break;
+        case 6:
+          var value = new proto_autoops_clause_pb.OpsEventRateClause();
+          reader.readMessage(
+            value,
+            proto_autoops_clause_pb.OpsEventRateClause
+              .deserializeBinaryFromReader
+          );
+          msg.addOpsEventRateClauses(value);
+          break;
+        case 7:
+          var value = new proto_autoops_clause_pb.DatetimeClause();
+          reader.readMessage(
+            value,
+            proto_autoops_clause_pb.DatetimeClause.deserializeBinaryFromReader
+          );
+          msg.addDatetimeClauses(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -1364,6 +1427,30 @@ proto.bucketeer.autoops.CreateAutoOpsRuleRequest.serializeBinaryToWriter =
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(3, f);
+    }
+    f = message.getFeatureId();
+    if (f.length > 0) {
+      writer.writeString(4, f);
+    }
+    f = message.getOpsType();
+    if (f !== 0.0) {
+      writer.writeEnum(5, f);
+    }
+    f = message.getOpsEventRateClausesList();
+    if (f.length > 0) {
+      writer.writeRepeatedMessage(
+        6,
+        f,
+        proto_autoops_clause_pb.OpsEventRateClause.serializeBinaryToWriter
+      );
+    }
+    f = message.getDatetimeClausesList();
+    if (f.length > 0) {
+      writer.writeRepeatedMessage(
+        7,
+        f,
+        proto_autoops_clause_pb.DatetimeClause.serializeBinaryToWriter
+      );
     }
   };
 
@@ -1429,6 +1516,144 @@ proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.setEnvironmentId =
     return jspb.Message.setProto3StringField(this, 3, value);
   };
 
+/**
+ * optional string feature_id = 4;
+ * @return {string}
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.getFeatureId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.CreateAutoOpsRuleRequest} returns this
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.setFeatureId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
+  };
+
+/**
+ * optional OpsType ops_type = 5;
+ * @return {!proto.bucketeer.autoops.OpsType}
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.getOpsType =
+  function () {
+    return /** @type {!proto.bucketeer.autoops.OpsType} */ (
+      jspb.Message.getFieldWithDefault(this, 5, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.autoops.OpsType} value
+ * @return {!proto.bucketeer.autoops.CreateAutoOpsRuleRequest} returns this
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.setOpsType =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 5, value);
+  };
+
+/**
+ * repeated OpsEventRateClause ops_event_rate_clauses = 6;
+ * @return {!Array<!proto.bucketeer.autoops.OpsEventRateClause>}
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.getOpsEventRateClausesList =
+  function () {
+    return /** @type{!Array<!proto.bucketeer.autoops.OpsEventRateClause>} */ (
+      jspb.Message.getRepeatedWrapperField(
+        this,
+        proto_autoops_clause_pb.OpsEventRateClause,
+        6
+      )
+    );
+  };
+
+/**
+ * @param {!Array<!proto.bucketeer.autoops.OpsEventRateClause>} value
+ * @return {!proto.bucketeer.autoops.CreateAutoOpsRuleRequest} returns this
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.setOpsEventRateClausesList =
+  function (value) {
+    return jspb.Message.setRepeatedWrapperField(this, 6, value);
+  };
+
+/**
+ * @param {!proto.bucketeer.autoops.OpsEventRateClause=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.autoops.OpsEventRateClause}
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.addOpsEventRateClauses =
+  function (opt_value, opt_index) {
+    return jspb.Message.addToRepeatedWrapperField(
+      this,
+      6,
+      opt_value,
+      proto.bucketeer.autoops.OpsEventRateClause,
+      opt_index
+    );
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.autoops.CreateAutoOpsRuleRequest} returns this
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.clearOpsEventRateClausesList =
+  function () {
+    return this.setOpsEventRateClausesList([]);
+  };
+
+/**
+ * repeated DatetimeClause datetime_clauses = 7;
+ * @return {!Array<!proto.bucketeer.autoops.DatetimeClause>}
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.getDatetimeClausesList =
+  function () {
+    return /** @type{!Array<!proto.bucketeer.autoops.DatetimeClause>} */ (
+      jspb.Message.getRepeatedWrapperField(
+        this,
+        proto_autoops_clause_pb.DatetimeClause,
+        7
+      )
+    );
+  };
+
+/**
+ * @param {!Array<!proto.bucketeer.autoops.DatetimeClause>} value
+ * @return {!proto.bucketeer.autoops.CreateAutoOpsRuleRequest} returns this
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.setDatetimeClausesList =
+  function (value) {
+    return jspb.Message.setRepeatedWrapperField(this, 7, value);
+  };
+
+/**
+ * @param {!proto.bucketeer.autoops.DatetimeClause=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.autoops.DatetimeClause}
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.addDatetimeClauses =
+  function (opt_value, opt_index) {
+    return jspb.Message.addToRepeatedWrapperField(
+      this,
+      7,
+      opt_value,
+      proto.bucketeer.autoops.DatetimeClause,
+      opt_index
+    );
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.autoops.CreateAutoOpsRuleRequest} returns this
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.clearDatetimeClausesList =
+  function () {
+    return this.setDatetimeClausesList([]);
+  };
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -1464,7 +1689,14 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        autoOpsRule:
+          (f = msg.getAutoOpsRule()) &&
+          proto_autoops_auto_ops_rule_pb.AutoOpsRule.toObject(
+            includeInstance,
+            f
+          )
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -1504,6 +1736,15 @@ proto.bucketeer.autoops.CreateAutoOpsRuleResponse.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
+        case 1:
+          var value = new proto_autoops_auto_ops_rule_pb.AutoOpsRule();
+          reader.readMessage(
+            value,
+            proto_autoops_auto_ops_rule_pb.AutoOpsRule
+              .deserializeBinaryFromReader
+          );
+          msg.setAutoOpsRule(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -1536,6 +1777,56 @@ proto.bucketeer.autoops.CreateAutoOpsRuleResponse.prototype.serializeBinary =
 proto.bucketeer.autoops.CreateAutoOpsRuleResponse.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
+    f = message.getAutoOpsRule();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_autoops_auto_ops_rule_pb.AutoOpsRule.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional AutoOpsRule auto_ops_rule = 1;
+ * @return {?proto.bucketeer.autoops.AutoOpsRule}
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleResponse.prototype.getAutoOpsRule =
+  function () {
+    return /** @type{?proto.bucketeer.autoops.AutoOpsRule} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_autoops_auto_ops_rule_pb.AutoOpsRule,
+        1
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.autoops.AutoOpsRule|undefined} value
+ * @return {!proto.bucketeer.autoops.CreateAutoOpsRuleResponse} returns this
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleResponse.prototype.setAutoOpsRule =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 1, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.autoops.CreateAutoOpsRuleResponse} returns this
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleResponse.prototype.clearAutoOpsRule =
+  function () {
+    return this.setAutoOpsRule(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleResponse.prototype.hasAutoOpsRule =
+  function () {
+    return jspb.Message.getField(this, 1) != null;
   };
 
 /**

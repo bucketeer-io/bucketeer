@@ -98,11 +98,6 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:        "err: ErrNoCommand",
-			req:         &autoopsproto.CreateAutoOpsRuleRequest{},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
-		{
 			desc: "err: ErrFeatureIDRequired",
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{},
@@ -424,6 +419,338 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					DatetimeClauses: []*autoopsproto.DatetimeClause{
 						{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
 					},
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createAutoOpsService(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			_, err := s.CreateAutoOpsRule(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestCreateAutoOpsRuleMySQLNoCommand(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithTokenRoleOwner(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AutoOpsService)
+		req         *autoopsproto.CreateAutoOpsRuleRequest
+		expectedErr error
+	}{
+		{
+			desc: "err: ErrFeatureIDRequired",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				EnvironmentId: "env-id",
+			},
+			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+		},
+		{
+			desc: "err: ErrClauseRequired",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_SCHEDULE,
+			},
+			expectedErr: createError(statusClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause")),
+		},
+		{
+			desc: "err: ErrIncompatibleOpsType",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_TYPE_UNKNOWN,
+				OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+					{
+						VariationId:     "",
+						GoalId:          "gid",
+						MinCount:        10,
+						ThreadsholdRate: 0.5,
+						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+					},
+				},
+			},
+			expectedErr: createError(statusIncompatibleOpsType, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type")),
+		},
+		{
+			desc: "err: ErrOpsEventRateClauseVariationIDRequired",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_EVENT_RATE,
+				OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+					{
+						VariationId:     "",
+						GoalId:          "gid1",
+						MinCount:        10,
+						ThreadsholdRate: 0.5,
+						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+					},
+				},
+			},
+			expectedErr: createError(statusOpsEventRateClauseVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+		},
+		{
+			desc: "err: ErrOpsEventRateClauseGoalIDRequired",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_EVENT_RATE,
+				OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+					{
+						VariationId:     "vid",
+						GoalId:          "",
+						MinCount:        10,
+						ThreadsholdRate: 0.5,
+						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+					},
+				},
+			},
+			expectedErr: createError(statusOpsEventRateClauseGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+		},
+		{
+			desc: "err: ErrOpsEventRateClauseMinCountRequired",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_EVENT_RATE,
+				OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+					{
+						VariationId:     "vid",
+						GoalId:          "gid",
+						MinCount:        0,
+						ThreadsholdRate: 0.5,
+						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+					},
+				},
+			},
+			expectedErr: createError(statusOpsEventRateClauseMinCountRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "min_count")),
+		},
+		{
+			desc: "err: ErrOpsEventRateClauseInvalidThredshold: less",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_EVENT_RATE,
+				OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+					{
+						VariationId:     "vid",
+						GoalId:          "gid",
+						MinCount:        10,
+						ThreadsholdRate: -0.1,
+						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+					},
+				},
+			},
+			expectedErr: createError(statusOpsEventRateClauseInvalidThredshold, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "threshold")),
+		},
+		{
+			desc: "err: ErrOpsEventRateClauseInvalidThredshold: greater",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_EVENT_RATE,
+				OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+					{
+						VariationId:     "vid",
+						GoalId:          "gid",
+						MinCount:        10,
+						ThreadsholdRate: 1.1,
+						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+					},
+				},
+			},
+			expectedErr: createError(statusOpsEventRateClauseInvalidThredshold, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "threshold")),
+		},
+		{
+			desc: "err: ErrDatetimeClauseInvalidTime",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_SCHEDULE,
+				DatetimeClauses: []*autoopsproto.DatetimeClause{
+					{Time: 0},
+				},
+			},
+			expectedErr: createError(statusDatetimeClauseInvalidTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
+		},
+		{
+			desc: "err: ErrDatetimeClauseDuplicateTime",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_SCHEDULE,
+				DatetimeClauses: []*autoopsproto.DatetimeClause{
+					{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+					{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+				},
+			},
+			expectedErr: createError(statusDatetimeClauseDuplicateTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
+		},
+		{
+			desc: "err: ErrDatetimeClauseMustSpecified",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId:       "fid",
+				OpsType:         autoopsproto.OpsType_SCHEDULE,
+				DatetimeClauses: nil,
+				OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+					{
+						VariationId:     "vid",
+						GoalId:          "gid",
+						MinCount:        10,
+						ThreadsholdRate: 0.5,
+						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+						ActionType:      autoopsproto.ActionType_DISABLE,
+					},
+				},
+			},
+			expectedErr: createError(statusClauseRequiredForDateTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause")),
+		},
+		{
+			desc: "err: ErrDatetimeClauseMustSpecified",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_SCHEDULE,
+				DatetimeClauses: []*autoopsproto.DatetimeClause{
+					{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+				},
+				OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+					{
+						VariationId:     "vid",
+						GoalId:          "gid",
+						MinCount:        10,
+						ThreadsholdRate: 0.5,
+						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+						ActionType:      autoopsproto.ActionType_DISABLE,
+					},
+				},
+			},
+			expectedErr: createError(statusIncompatibleOpsType, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type")),
+		},
+		{
+			desc: "err: ErrOpsEventRateClauseMustSpecified",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_EVENT_RATE,
+				DatetimeClauses: []*autoopsproto.DatetimeClause{
+					{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+				},
+				OpsEventRateClauses: nil,
+			},
+			expectedErr: createError(statusClauseRequiredForEventDate, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause")),
+		},
+		{
+			desc: "err: ErrDatetimeClauseMustNotBeSpecified",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_EVENT_RATE,
+				DatetimeClauses: []*autoopsproto.DatetimeClause{
+					{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+				},
+				OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+					{
+						VariationId:     "vid",
+						GoalId:          "gid",
+						MinCount:        10,
+						ThreadsholdRate: 0.5,
+						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+						ActionType:      autoopsproto.ActionType_DISABLE,
+					},
+				},
+			},
+			expectedErr: createError(statusIncompatibleOpsType, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type")),
+		},
+		{
+			desc: "err: internal error",
+			setup: func(s *AutoOpsService) {
+				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().GetGoal(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+			},
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_EVENT_RATE,
+				OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+					{
+						VariationId:     "vid",
+						GoalId:          "gid",
+						MinCount:        10,
+						ThreadsholdRate: 0.5,
+						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+						ActionType:      autoopsproto.ActionType_DISABLE,
+					},
+				},
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success event rate",
+			setup: func(s *AutoOpsService) {
+				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().GetGoal(
+					gomock.Any(), gomock.Any(),
+				).Return(&experimentproto.GetGoalResponse{}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().CreateAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_EVENT_RATE,
+				OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+					{
+						VariationId:     "vid",
+						GoalId:          "gid",
+						MinCount:        10,
+						ThreadsholdRate: 0.5,
+						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+						ActionType:      autoopsproto.ActionType_DISABLE,
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success schedule",
+			setup: func(s *AutoOpsService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().CreateAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				FeatureId: "fid",
+				OpsType:   autoopsproto.OpsType_SCHEDULE,
+				DatetimeClauses: []*autoopsproto.DatetimeClause{
+					{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
 				},
 			},
 			expectedErr: nil,

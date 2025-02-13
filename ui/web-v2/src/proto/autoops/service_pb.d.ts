@@ -2,7 +2,12 @@
 // file: proto/autoops/service.proto
 
 import * as jspb from 'google-protobuf';
+import * as google_api_annotations_pb from '../../google/api/annotations_pb';
+import * as google_api_field_behavior_pb from '../../google/api/field_behavior_pb';
+import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-openapiv2/options/annotations_pb';
+import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
 import * as proto_autoops_auto_ops_rule_pb from '../../proto/autoops/auto_ops_rule_pb';
+import * as proto_autoops_clause_pb from '../../proto/autoops/clause_pb';
 import * as proto_autoops_command_pb from '../../proto/autoops/command_pb';
 import * as proto_autoops_ops_count_pb from '../../proto/autoops/ops_count_pb';
 import * as proto_autoops_progressive_rollout_pb from '../../proto/autoops/progressive_rollout_pb';
@@ -84,6 +89,34 @@ export class CreateAutoOpsRuleRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getOpsType(): proto_autoops_auto_ops_rule_pb.OpsTypeMap[keyof proto_autoops_auto_ops_rule_pb.OpsTypeMap];
+  setOpsType(
+    value: proto_autoops_auto_ops_rule_pb.OpsTypeMap[keyof proto_autoops_auto_ops_rule_pb.OpsTypeMap]
+  ): void;
+
+  clearOpsEventRateClausesList(): void;
+  getOpsEventRateClausesList(): Array<proto_autoops_clause_pb.OpsEventRateClause>;
+  setOpsEventRateClausesList(
+    value: Array<proto_autoops_clause_pb.OpsEventRateClause>
+  ): void;
+  addOpsEventRateClauses(
+    value?: proto_autoops_clause_pb.OpsEventRateClause,
+    index?: number
+  ): proto_autoops_clause_pb.OpsEventRateClause;
+
+  clearDatetimeClausesList(): void;
+  getDatetimeClausesList(): Array<proto_autoops_clause_pb.DatetimeClause>;
+  setDatetimeClausesList(
+    value: Array<proto_autoops_clause_pb.DatetimeClause>
+  ): void;
+  addDatetimeClauses(
+    value?: proto_autoops_clause_pb.DatetimeClause,
+    index?: number
+  ): proto_autoops_clause_pb.DatetimeClause;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAutoOpsRuleRequest.AsObject;
   static toObject(
@@ -109,10 +142,19 @@ export namespace CreateAutoOpsRuleRequest {
   export type AsObject = {
     command?: proto_autoops_command_pb.CreateAutoOpsRuleCommand.AsObject;
     environmentId: string;
+    featureId: string;
+    opsType: proto_autoops_auto_ops_rule_pb.OpsTypeMap[keyof proto_autoops_auto_ops_rule_pb.OpsTypeMap];
+    opsEventRateClausesList: Array<proto_autoops_clause_pb.OpsEventRateClause.AsObject>;
+    datetimeClausesList: Array<proto_autoops_clause_pb.DatetimeClause.AsObject>;
   };
 }
 
 export class CreateAutoOpsRuleResponse extends jspb.Message {
+  hasAutoOpsRule(): boolean;
+  clearAutoOpsRule(): void;
+  getAutoOpsRule(): proto_autoops_auto_ops_rule_pb.AutoOpsRule | undefined;
+  setAutoOpsRule(value?: proto_autoops_auto_ops_rule_pb.AutoOpsRule): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAutoOpsRuleResponse.AsObject;
   static toObject(
@@ -135,7 +177,9 @@ export class CreateAutoOpsRuleResponse extends jspb.Message {
 }
 
 export namespace CreateAutoOpsRuleResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    autoOpsRule?: proto_autoops_auto_ops_rule_pb.AutoOpsRule.AsObject;
+  };
 }
 
 export class ListAutoOpsRulesRequest extends jspb.Message {
