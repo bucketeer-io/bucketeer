@@ -208,7 +208,7 @@ service AutoOpsService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get"
-      description: "Get auto ops rule."
+      description: "Get an auto ops rule."
       tags: "auto_ops_rule"
       operation_id: "web.v1.auto_ops_rule.get"
       responses: {
@@ -277,7 +277,7 @@ service AutoOpsService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Create"
-      description: "Create auto ops rule."
+      description: "Create an auto ops rule."
       tags: "auto_ops_rule"
       operation_id: "web.v1.auto_ops_rule.create"
       responses: {

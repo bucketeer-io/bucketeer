@@ -7797,7 +7797,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Get auto ops rule."
+                        "value": "Get an auto ops rule."
                       },
                       {
                         "name": "tags",
@@ -8055,7 +8055,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Create auto ops rule."
+                        "value": "Create an auto ops rule."
                       },
                       {
                         "name": "tags",
