@@ -145,10 +145,22 @@ func (s *authService) GetAuthenticationURL(
 	// Client compares the returned state to the one generated before,
 	// if the values match then send a new request to ExchangeToken, else deny it.
 	if err := validateGetAuthenticationURLRequest(req, localizer); err != nil {
+		s.logger.Error("Failed to validate the get authentication url request",
+			zap.Error(err),
+			zap.Any("type", req.Type),
+			zap.String("state", req.State),
+			zap.String("redirect_url", req.RedirectUrl),
+		)
 		return nil, err
 	}
 	authenticator, err := s.getAuthenticator(req.Type, localizer)
 	if err != nil {
+		s.logger.Error("Failed to get the authenticator",
+			zap.Error(err),
+			zap.Any("type", req.Type),
+			zap.String("state", req.State),
+			zap.String("redirect_url", req.RedirectUrl),
+		)
 		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
@@ -160,9 +172,10 @@ func (s *authService) GetAuthenticationURL(
 	}
 	loginURL, err := authenticator.Login(ctx, req.State, req.RedirectUrl)
 	if err != nil {
-		s.logger.Error(
-			"Failed to get authentication",
+		s.logger.Error("Failed to get the login url",
 			zap.Error(err),
+			zap.Any("type", req.Type),
+			zap.String("state", req.State),
 			zap.String("redirect_url", req.RedirectUrl),
 		)
 		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -183,10 +196,22 @@ func (s *authService) ExchangeToken(
 ) (*authproto.ExchangeTokenResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
 	if err := validateExchangeTokenRequest(req, localizer); err != nil {
+		s.logger.Error("Failed to validate the exchange token request",
+			zap.Error(err),
+			zap.Any("type", req.Type),
+			zap.String("code", req.Code),
+			zap.String("redirect_url", req.RedirectUrl),
+		)
 		return nil, err
 	}
 	authenticator, err := s.getAuthenticator(req.Type, localizer)
 	if err != nil {
+		s.logger.Error("Failed to get the authenticator",
+			zap.Error(err),
+			zap.Any("type", req.Type),
+			zap.String("code", req.Code),
+			zap.String("redirect_url", req.RedirectUrl),
+		)
 		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
@@ -198,6 +223,12 @@ func (s *authService) ExchangeToken(
 	}
 	userInfo, err := authenticator.Exchange(ctx, req.Code, req.RedirectUrl)
 	if err != nil {
+		s.logger.Error("Failed to exchange",
+			zap.Error(err),
+			zap.Any("type", req.Type),
+			zap.String("code", req.Code),
+			zap.String("redirect_url", req.RedirectUrl),
+		)
 		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
@@ -210,6 +241,12 @@ func (s *authService) ExchangeToken(
 
 	organizations, err := s.getOrganizationsByEmail(ctx, userInfo.Email, localizer)
 	if err != nil {
+		s.logger.Error("Failed to get organizations by email",
+			zap.Error(err),
+			zap.Any("type", req.Type),
+			zap.String("code", req.Code),
+			zap.String("redirect_url", req.RedirectUrl),
+		)
 		return nil, err
 	}
 
@@ -217,6 +254,12 @@ func (s *authService) ExchangeToken(
 
 	token, err := s.generateToken(ctx, userInfo.Email, organizations, localizer)
 	if err != nil {
+		s.logger.Error("Failed to generate token",
+			zap.Error(err),
+			zap.Any("type", req.Type),
+			zap.String("code", req.Code),
+			zap.String("redirect_url", req.RedirectUrl),
+		)
 		return nil, err
 	}
 
@@ -229,6 +272,10 @@ func (s *authService) RefreshToken(
 ) (*authproto.RefreshTokenResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
 	if err := validateRefreshTokenRequest(req, localizer); err != nil {
+		s.logger.Error("Failed to validate refresh token request",
+			zap.Error(err),
+			zap.String("refresh_token", req.RefreshToken),
+		)
 		return nil, err
 	}
 	refreshToken, err := s.verifier.VerifyRefreshToken(req.RefreshToken)
@@ -245,6 +292,11 @@ func (s *authService) RefreshToken(
 	}
 	organizations, err := s.getOrganizationsByEmail(ctx, refreshToken.Email, localizer)
 	if err != nil {
+		s.logger.Error("Failed to get organizations by email",
+			zap.Error(err),
+			zap.String("email", refreshToken.Email),
+			zap.String("refresh_token", req.RefreshToken),
+		)
 		return nil, err
 	}
 	newToken, err := s.generateToken(ctx, refreshToken.Email, organizations, localizer)
@@ -252,6 +304,8 @@ func (s *authService) RefreshToken(
 		s.logger.Error(
 			"Failed to generate token",
 			zap.Error(err),
+			zap.String("email", refreshToken.Email),
+			zap.Any("organizations", organizations),
 			zap.Any("refresh_token", refreshToken),
 		)
 		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
