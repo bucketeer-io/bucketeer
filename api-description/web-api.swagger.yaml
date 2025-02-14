@@ -7748,6 +7748,12 @@ definitions:
       - CLIENT
       - OFF_VARIATION
       - PREREQUISITE
+      - ERROR_NO_EVALUATIONS
+      - ERROR_FLAG_NOT_FOUND
+      - ERROR_WRONG_TYPE
+      - ERROR_USER_ID_NOT_SPECIFIED
+      - ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED
+      - ERROR_EXCEPTION
     default: TARGET
   featureRemoveTagCommand:
     type: object
