@@ -26563,6 +26563,17 @@
                 "type": "int64"
               }
             ]
+          },
+          {
+            "name": "ScheduleUpdateListValue",
+            "fields": [
+              {
+                "id": 1,
+                "name": "value",
+                "type": "ScheduleUpdate",
+                "is_repeated": true
+              }
+            ]
           }
         ],
         "imports": [
@@ -27595,6 +27606,16 @@
                 "id": 15,
                 "name": "reset_sampling_seed",
                 "type": "bool"
+              },
+              {
+                "id": 16,
+                "name": "apply_schedule_update",
+                "type": "bool"
+              },
+              {
+                "id": 17,
+                "name": "schedule_updates",
+                "type": "ScheduleUpdateListValue"
               }
             ]
           },

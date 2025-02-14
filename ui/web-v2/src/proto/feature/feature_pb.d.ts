@@ -314,3 +314,36 @@ export namespace ScheduleUpdate {
     updateAt: number;
   };
 }
+
+export class ScheduleUpdateListValue extends jspb.Message {
+  clearValueList(): void;
+  getValueList(): Array<ScheduleUpdate>;
+  setValueList(value: Array<ScheduleUpdate>): void;
+  addValue(value?: ScheduleUpdate, index?: number): ScheduleUpdate;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ScheduleUpdateListValue.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ScheduleUpdateListValue
+  ): ScheduleUpdateListValue.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ScheduleUpdateListValue,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ScheduleUpdateListValue;
+  static deserializeBinaryFromReader(
+    message: ScheduleUpdateListValue,
+    reader: jspb.BinaryReader
+  ): ScheduleUpdateListValue;
+}
+
+export namespace ScheduleUpdateListValue {
+  export type AsObject = {
+    valueList: Array<ScheduleUpdate.AsObject>;
+  };
+}

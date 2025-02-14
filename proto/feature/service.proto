@@ -128,6 +128,8 @@ message UpdateFeatureRequest {
   Strategy default_strategy = 13;
   google.protobuf.StringValue off_variation = 14;
   bool reset_sampling_seed = 15;
+  bool apply_schedule_update = 16;
+  ScheduleUpdateListValue schedule_updates = 17;
 }
 
 message UpdateFeatureResponse {
