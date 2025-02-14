@@ -523,14 +523,10 @@ export namespace UpdateAutoOpsRuleRequest {
     getDeleted(): google_protobuf_wrappers_pb.BoolValue | undefined;
     setDeleted(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
-    hasOpsEventRateClause(): boolean;
-    clearOpsEventRateClause(): void;
-    getOpsEventRateClause():
-      | proto_autoops_clause_pb.OpsEventRateClause
-      | undefined;
-    setOpsEventRateClause(
-      value?: proto_autoops_clause_pb.OpsEventRateClause
-    ): void;
+    hasClause(): boolean;
+    clearClause(): void;
+    getClause(): proto_autoops_clause_pb.OpsEventRateClause | undefined;
+    setClause(value?: proto_autoops_clause_pb.OpsEventRateClause): void;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): UpdateOpsEventRateClause.AsObject;
@@ -557,7 +553,7 @@ export namespace UpdateAutoOpsRuleRequest {
     export type AsObject = {
       id: string;
       deleted?: google_protobuf_wrappers_pb.BoolValue.AsObject;
-      opsEventRateClause?: proto_autoops_clause_pb.OpsEventRateClause.AsObject;
+      clause?: proto_autoops_clause_pb.OpsEventRateClause.AsObject;
     };
   }
 
@@ -570,10 +566,10 @@ export namespace UpdateAutoOpsRuleRequest {
     getDeleted(): google_protobuf_wrappers_pb.BoolValue | undefined;
     setDeleted(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
-    hasDatetimeClause(): boolean;
-    clearDatetimeClause(): void;
-    getDatetimeClause(): proto_autoops_clause_pb.DatetimeClause | undefined;
-    setDatetimeClause(value?: proto_autoops_clause_pb.DatetimeClause): void;
+    hasClause(): boolean;
+    clearClause(): void;
+    getClause(): proto_autoops_clause_pb.DatetimeClause | undefined;
+    setClause(value?: proto_autoops_clause_pb.DatetimeClause): void;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): UpdateDatetimeClause.AsObject;
@@ -600,7 +596,7 @@ export namespace UpdateAutoOpsRuleRequest {
     export type AsObject = {
       id: string;
       deleted?: google_protobuf_wrappers_pb.BoolValue.AsObject;
-      datetimeClause?: proto_autoops_clause_pb.DatetimeClause.AsObject;
+      clause?: proto_autoops_clause_pb.DatetimeClause.AsObject;
     };
   }
 }

@@ -97,16 +97,16 @@ func (a *AutoOpsRule) Update(
 			}
 		}
 		if c.Id == "" {
-			ac, err := anypb.New(c.OpsEventRateClause)
+			ac, err := anypb.New(c.Clause)
 			if err != nil {
 				return nil, err
 			}
-			_, err = updated.addClause(ac, c.OpsEventRateClause.ActionType)
+			_, err = updated.addClause(ac, c.Clause.ActionType)
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			err := updated.changeClause(c.Id, c.OpsEventRateClause, c.OpsEventRateClause.ActionType)
+			err := updated.changeClause(c.Id, c.Clause, c.Clause.ActionType)
 			if err != nil {
 				return nil, err
 			}
@@ -121,16 +121,16 @@ func (a *AutoOpsRule) Update(
 			continue
 		}
 		if c.Id == "" {
-			ac, err := anypb.New(c.DatetimeClause)
+			ac, err := anypb.New(c.Clause)
 			if err != nil {
 				return nil, err
 			}
-			_, err = updated.addClause(ac, c.DatetimeClause.ActionType)
+			_, err = updated.addClause(ac, c.Clause.ActionType)
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			err := updated.changeClause(c.Id, c.DatetimeClause, c.DatetimeClause.ActionType)
+			err := updated.changeClause(c.Id, c.Clause, c.Clause.ActionType)
 			if err != nil {
 				return nil, err
 			}

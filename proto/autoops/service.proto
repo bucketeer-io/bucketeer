@@ -98,7 +98,7 @@ message UpdateAutoOpsRuleRequest {
         [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
           description: "If true, the clause is deleted."
         }];
-    OpsEventRateClause ops_event_rate_clause = 3;
+    OpsEventRateClause clause = 3;
   }
 
   message UpdateDatetimeClause {
@@ -110,7 +110,7 @@ message UpdateAutoOpsRuleRequest {
         [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
           description: "If true, the clause is deleted."
         }];
-    DatetimeClause datetime_clause = 3;
+    DatetimeClause clause = 3;
   }
 
   reserved 1;
@@ -367,7 +367,40 @@ service AutoOpsService {
   rpc DeleteAutoOpsRule(DeleteAutoOpsRuleRequest)
       returns (DeleteAutoOpsRuleResponse) {}
   rpc UpdateAutoOpsRule(UpdateAutoOpsRuleRequest)
-      returns (UpdateAutoOpsRuleResponse) {}
+      returns (UpdateAutoOpsRuleResponse) {
+    option (google.api.http) = {
+      patch: "/v1/auto_ops_rule"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update"
+      description: "Update an auto ops rule."
+      tags: "auto_ops_rule"
+      operation_id: "web.v1.auto_ops_rule.update"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ExecuteAutoOps(ExecuteAutoOpsRequest) returns (ExecuteAutoOpsResponse) {}
   rpc ListOpsCounts(ListOpsCountsRequest) returns (ListOpsCountsResponse) {}
   rpc CreateProgressiveRollout(CreateProgressiveRolloutRequest)

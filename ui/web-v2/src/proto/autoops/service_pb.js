@@ -3385,8 +3385,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           deleted:
             (f = msg.getDeleted()) &&
             google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
-          opsEventRateClause:
-            (f = msg.getOpsEventRateClause()) &&
+          clause:
+            (f = msg.getClause()) &&
             proto_autoops_clause_pb.OpsEventRateClause.toObject(
               includeInstance,
               f
@@ -3450,7 +3450,7 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.deseri
             proto_autoops_clause_pb.OpsEventRateClause
               .deserializeBinaryFromReader
           );
-          msg.setOpsEventRateClause(value);
+          msg.setClause(value);
           break;
         default:
           reader.skipField();
@@ -3496,7 +3496,7 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.serial
         google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
       );
     }
-    f = message.getOpsEventRateClause();
+    f = message.getClause();
     if (f != null) {
       writer.writeMessage(
         3,
@@ -3569,10 +3569,10 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.protot
   };
 
 /**
- * optional OpsEventRateClause ops_event_rate_clause = 3;
+ * optional OpsEventRateClause clause = 3;
  * @return {?proto.bucketeer.autoops.OpsEventRateClause}
  */
-proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.prototype.getOpsEventRateClause =
+proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.prototype.getClause =
   function () {
     return /** @type{?proto.bucketeer.autoops.OpsEventRateClause} */ (
       jspb.Message.getWrapperField(
@@ -3587,7 +3587,7 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.protot
  * @param {?proto.bucketeer.autoops.OpsEventRateClause|undefined} value
  * @return {!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause} returns this
  */
-proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.prototype.setOpsEventRateClause =
+proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.prototype.setClause =
   function (value) {
     return jspb.Message.setWrapperField(this, 3, value);
   };
@@ -3596,16 +3596,16 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.protot
  * Clears the message field making it undefined.
  * @return {!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause} returns this
  */
-proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.prototype.clearOpsEventRateClause =
+proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.prototype.clearClause =
   function () {
-    return this.setOpsEventRateClause(undefined);
+    return this.setClause(undefined);
   };
 
 /**
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.prototype.hasOpsEventRateClause =
+proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.prototype.hasClause =
   function () {
     return jspb.Message.getField(this, 3) != null;
   };
@@ -3648,8 +3648,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           deleted:
             (f = msg.getDeleted()) &&
             google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
-          datetimeClause:
-            (f = msg.getDatetimeClause()) &&
+          clause:
+            (f = msg.getClause()) &&
             proto_autoops_clause_pb.DatetimeClause.toObject(includeInstance, f)
         };
 
@@ -3709,7 +3709,7 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.deserializ
             value,
             proto_autoops_clause_pb.DatetimeClause.deserializeBinaryFromReader
           );
-          msg.setDatetimeClause(value);
+          msg.setClause(value);
           break;
         default:
           reader.skipField();
@@ -3755,7 +3755,7 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.serializeB
         google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
       );
     }
-    f = message.getDatetimeClause();
+    f = message.getClause();
     if (f != null) {
       writer.writeMessage(
         3,
@@ -3828,10 +3828,10 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.prototype.
   };
 
 /**
- * optional DatetimeClause datetime_clause = 3;
+ * optional DatetimeClause clause = 3;
  * @return {?proto.bucketeer.autoops.DatetimeClause}
  */
-proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.prototype.getDatetimeClause =
+proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.prototype.getClause =
   function () {
     return /** @type{?proto.bucketeer.autoops.DatetimeClause} */ (
       jspb.Message.getWrapperField(
@@ -3846,7 +3846,7 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.prototype.
  * @param {?proto.bucketeer.autoops.DatetimeClause|undefined} value
  * @return {!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause} returns this
  */
-proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.prototype.setDatetimeClause =
+proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.prototype.setClause =
   function (value) {
     return jspb.Message.setWrapperField(this, 3, value);
   };
@@ -3855,16 +3855,16 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.prototype.
  * Clears the message field making it undefined.
  * @return {!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause} returns this
  */
-proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.prototype.clearDatetimeClause =
+proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.prototype.clearClause =
   function () {
-    return this.setDatetimeClause(undefined);
+    return this.setClause(undefined);
   };
 
 /**
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.prototype.hasDatetimeClause =
+proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.prototype.hasClause =
   function () {
     return jspb.Message.getField(this, 3) != null;
   };

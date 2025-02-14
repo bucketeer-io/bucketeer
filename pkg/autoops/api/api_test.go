@@ -1065,8 +1065,8 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
 				Id: "aid1",
 				UpdateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{{
-					Id:             "aid",
-					DatetimeClause: &autoopsproto.DatetimeClause{Time: 0},
+					Id:     "aid",
+					Clause: &autoopsproto.DatetimeClause{Time: 0},
 				}},
 			},
 			expected:    nil,
@@ -1078,12 +1078,12 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 				Id: "aid1",
 				UpdateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{
 					{
-						Id:             "aid",
-						DatetimeClause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+						Id:     "aid",
+						Clause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
 					},
 					{
-						Id:             "aid2",
-						DatetimeClause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+						Id:     "aid2",
+						Clause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
 					},
 				},
 			},
@@ -1096,7 +1096,7 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 				Id: "aid1",
 				UpdateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{
 					{
-						DatetimeClause: &autoopsproto.DatetimeClause{Time: 0, ActionType: autoopsproto.ActionType_DISABLE},
+						Clause: &autoopsproto.DatetimeClause{Time: 0, ActionType: autoopsproto.ActionType_DISABLE},
 					},
 				},
 			},
@@ -1109,10 +1109,10 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 				Id: "aid1",
 				UpdateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{
 					{
-						DatetimeClause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_DISABLE},
+						Clause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_DISABLE},
 					},
 					{
-						DatetimeClause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_DISABLE},
+						Clause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_DISABLE},
 					},
 				},
 			},
@@ -1125,11 +1125,11 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 				Id: "aid1",
 				UpdateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{
 					{
-						DatetimeClause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_DISABLE},
+						Clause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_DISABLE},
 					},
 					{
-						Id:             "aid",
-						DatetimeClause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_DISABLE},
+						Id:     "aid",
+						Clause: &autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_DISABLE},
 					},
 				},
 			},
@@ -1165,14 +1165,14 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 				EnvironmentId: "ns0",
 				UpdateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{
 					{
-						DatetimeClause: &autoopsproto.DatetimeClause{
+						Clause: &autoopsproto.DatetimeClause{
 							ActionType: autoopsproto.ActionType_ENABLE,
 							Time:       time.Now().AddDate(0, 0, 1).Unix(),
 						},
 					},
 					{
 						Id: "cid2",
-						DatetimeClause: &autoopsproto.DatetimeClause{
+						Clause: &autoopsproto.DatetimeClause{
 							ActionType: autoopsproto.ActionType_DISABLE,
 							Time:       time.Now().AddDate(0, 0, 2).Unix(),
 						},

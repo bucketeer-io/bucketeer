@@ -1036,7 +1036,7 @@ func (s *AutoOpsService) updateAutoOpsRuleNoCommand(
 		if c.Deleted != nil && c.Deleted.Value {
 			continue
 		}
-		goal, err := s.getGoal(ctx, req.EnvironmentId, c.OpsEventRateClause.GoalId)
+		goal, err := s.getGoal(ctx, req.EnvironmentId, c.Clause.GoalId)
 		if err != nil {
 			return nil, err
 		}
@@ -1097,9 +1097,9 @@ func (s *AutoOpsService) updateAutoOpsRuleNoCommand(
 
 			// Check if there is a schedule with the same date and time.
 			for _, c := range req.UpdateDatetimeClauses {
-				if c.DatetimeClause != nil && (c.Deleted == nil || !c.Deleted.Value) {
-					actionType, hasSameTime := checkTimes[c.DatetimeClause.Time]
-					if hasSameTime && actionType == c.DatetimeClause.ActionType {
+				if c.Clause != nil && (c.Deleted == nil || !c.Deleted.Value) {
+					actionType, hasSameTime := checkTimes[c.Clause.Time]
+					if hasSameTime && actionType == c.Clause.ActionType {
 						dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
 							Locale:  localizer.GetLocale(),
 							Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
@@ -1328,7 +1328,7 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequestNoCommand(
 			}
 			return dt.Err()
 		}
-		if (c.Deleted == nil || !c.Deleted.Value) && c.OpsEventRateClause == nil {
+		if (c.Deleted == nil || !c.Deleted.Value) && c.Clause == nil {
 			dt, err := statusOpsEventRateClauseRequired.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_event_rate_clause"),
@@ -1338,7 +1338,7 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequestNoCommand(
 			}
 			return dt.Err()
 		}
-		if err := s.validateOpsEventRateClause(c.OpsEventRateClause, localizer); err != nil {
+		if err := s.validateOpsEventRateClause(c.Clause, localizer); err != nil {
 			return err
 		}
 	}
@@ -1355,7 +1355,7 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequestNoCommand(
 			}
 			return dt.Err()
 		}
-		if (c.Deleted == nil || !c.Deleted.Value) && c.DatetimeClause == nil {
+		if (c.Deleted == nil || !c.Deleted.Value) && c.Clause == nil {
 			dt, err := statusDatetimeClauseRequired.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "datetime_clause"),
@@ -1366,7 +1366,7 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequestNoCommand(
 			return dt.Err()
 		}
 		if c.Deleted == nil || !c.Deleted.Value {
-			checkDatetimeClauses = append(checkDatetimeClauses, c.DatetimeClause)
+			checkDatetimeClauses = append(checkDatetimeClauses, c.Clause)
 		}
 	}
 	if err := s.validateDatetimeClauses(checkDatetimeClauses, localizer); err != nil {
