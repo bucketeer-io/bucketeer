@@ -26834,7 +26834,13 @@
               },
               {
                 "name": "CLIENT",
-                "integer": 4
+                "integer": 4,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "OFF_VARIATION",
@@ -26843,6 +26849,30 @@
               {
                 "name": "PREREQUISITE",
                 "integer": 6
+              },
+              {
+                "name": "ERROR_NO_EVALUATIONS",
+                "integer": 20
+              },
+              {
+                "name": "ERROR_FLAG_NOT_FOUND",
+                "integer": 21
+              },
+              {
+                "name": "ERROR_WRONG_TYPE",
+                "integer": 22
+              },
+              {
+                "name": "ERROR_USER_ID_NOT_SPECIFIED",
+                "integer": 23
+              },
+              {
+                "name": "ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED",
+                "integer": 24
+              },
+              {
+                "name": "ERROR_EXCEPTION",
+                "integer": 25
               }
             ]
           }
