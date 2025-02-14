@@ -69,15 +69,15 @@ type GoalStorage interface {
 }
 
 type goalStorage struct {
-	qe mysql.QueryExecer
+	client mysql.Client
 }
 
-func NewGoalStorage(qe mysql.QueryExecer) GoalStorage {
-	return &goalStorage{qe: qe}
+func NewGoalStorage(client mysql.Client) GoalStorage {
+	return &goalStorage{client: client}
 }
 
 func (s *goalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmentId string) error {
-	_, err := s.qe.ExecContext(
+	_, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		insertGoalSQL,
 		g.Id,
@@ -100,7 +100,7 @@ func (s *goalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmen
 }
 
 func (s *goalStorage) UpdateGoal(ctx context.Context, g *domain.Goal, environmentId string) error {
-	result, err := s.qe.ExecContext(
+	result, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		updateGoalSQL,
 		g.Name,
@@ -129,7 +129,7 @@ func (s *goalStorage) GetGoal(ctx context.Context, id, environmentId string) (*d
 	goal := proto.Goal{}
 	var connectionType int32
 	var experiments []experimentRef
-	err := s.qe.QueryRowContext(
+	err := s.client.Qe(ctx).QueryRowContext(
 		ctx,
 		selectGoalSQL,
 		environmentId, // Case query
@@ -191,7 +191,7 @@ func (s *goalStorage) ListGoals(
 		}
 	}
 	query := fmt.Sprintf(selectGoalsSQL, whereSQL, isInUseStatusSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.qe.QueryContext(ctx, query, prepareArgs...)
+	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, prepareArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -246,7 +246,7 @@ func (s *goalStorage) ListGoals(
 	prepareCountArgs = append(prepareCountArgs, environmentId)
 	prepareCountArgs = append(prepareCountArgs, whereArgs...)
 	countQuery := fmt.Sprintf(countGoalSQL, countConditionSQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, prepareCountArgs...).Scan(&totalCount)
+	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, prepareCountArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -254,7 +254,7 @@ func (s *goalStorage) ListGoals(
 }
 
 func (s *goalStorage) DeleteGoal(ctx context.Context, id, environmentId string) error {
-	result, err := s.qe.ExecContext(
+	result, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		deleteGoalSQL,
 		id,

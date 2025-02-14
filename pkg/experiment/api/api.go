@@ -25,6 +25,7 @@ import (
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
+	storage "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -50,13 +51,15 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type experimentService struct {
-	featureClient featureclient.Client
-	accountClient accountclient.Client
-	autoOpsClient autoopsclient.Client
-	mysqlClient   mysql.Client
-	publisher     publisher.Publisher
-	opts          *options
-	logger        *zap.Logger
+	featureClient     featureclient.Client
+	accountClient     accountclient.Client
+	autoOpsClient     autoopsclient.Client
+	mysqlClient       mysql.Client
+	experimentStorage storage.ExperimentStorage
+	goalStorage       storage.GoalStorage
+	publisher         publisher.Publisher
+	opts              *options
+	logger            *zap.Logger
 }
 
 func NewExperimentService(
@@ -74,13 +77,15 @@ func NewExperimentService(
 		opt(dopts)
 	}
 	return &experimentService{
-		featureClient: featureClient,
-		accountClient: accountClient,
-		autoOpsClient: autoOpsClient,
-		mysqlClient:   mysqlClient,
-		publisher:     publisher,
-		opts:          dopts,
-		logger:        dopts.logger.Named("api"),
+		featureClient:     featureClient,
+		accountClient:     accountClient,
+		autoOpsClient:     autoOpsClient,
+		mysqlClient:       mysqlClient,
+		experimentStorage: storage.NewExperimentStorage(mysqlClient),
+		goalStorage:       storage.NewGoalStorage(mysqlClient),
+		publisher:         publisher,
+		opts:              dopts,
+		logger:            dopts.logger.Named("api"),
 	}
 }
 
