@@ -39,11 +39,11 @@ type UserCountStorage interface {
 }
 
 type userCountStorage struct {
-	qe mysql.QueryExecer
+	client mysql.Client
 }
 
-func NewUserCountStorage(qe mysql.QueryExecer) UserCountStorage {
-	return &userCountStorage{qe: qe}
+func NewUserCountStorage(client mysql.Client) UserCountStorage {
+	return &userCountStorage{client: client}
 }
 
 func (s *userCountStorage) GetMAUCount(
@@ -61,7 +61,7 @@ func (s *userCountStorage) GetMAUCount(
 			yearmonth = ?
 	`
 	var userCount, eventCount int64
-	err := s.qe.QueryRowContext(
+	err := s.client.Qe(ctx).QueryRowContext(
 		ctx,
 		query,
 		environmentId,
@@ -93,7 +93,7 @@ func (s *userCountStorage) GetMAUCounts(
 		GROUP BY
 			environment_id
 	`
-	rows, err := s.qe.QueryContext(
+	rows, err := s.client.Qe(ctx).QueryContext(
 		ctx,
 		query,
 		yearMonth,
@@ -141,7 +141,7 @@ func (s *userCountStorage) GetMAUCountsGroupBySourceID(
 			environment_id,
 			source_id
 	`
-	rows, err := s.qe.QueryContext(
+	rows, err := s.client.Qe(ctx).QueryContext(
 		ctx,
 		query,
 		yearMonth,
