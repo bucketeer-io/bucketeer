@@ -19,6 +19,7 @@ import {
   PAGE_PATH_APIKEYS,
   PAGE_PATH_AUTH_CALLBACK,
   PAGE_PATH_AUTH_SIGNIN,
+  PAGE_PATH_EXPERIMENTS,
   PAGE_PATH_FEATURES,
   PAGE_PATH_GOALS,
   PAGE_PATH_MEMBERS,
@@ -48,7 +49,12 @@ import SelectOrganizationPage from 'pages/signin/organization';
 import UserSegmentsPage from 'pages/user-segments';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
-import { GoalsRoot, OrganizationsRoot, ProjectsRoot } from './routers';
+import {
+  ExperimentsRoot,
+  OrganizationsRoot,
+  ProjectsRoot,
+  GoalsRoot
+} from './routers';
 
 export const AppLoading = () => (
   <div className="flex items-center justify-center h-screen w-full">
@@ -171,6 +177,10 @@ export const EnvironmentRoot = memo(
         <Route
           path={`${PAGE_PATH_USER_SEGMENTS}`}
           element={<UserSegmentsPage />}
+        />
+        <Route
+          path={`${PAGE_PATH_EXPERIMENTS}/*`}
+          element={<ExperimentsRoot />}
         />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

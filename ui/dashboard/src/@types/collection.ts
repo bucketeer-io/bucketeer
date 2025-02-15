@@ -23,7 +23,8 @@ export type OrderBy =
   | 'CONNECTION_TYPE'
   | 'CONNECTIONS'
   | 'USERS'
-  | 'TAGS';
+  | 'TAGS'
+  | 'GOALS';
 
 export type OrderDirection = 'ASC' | 'DESC';
 

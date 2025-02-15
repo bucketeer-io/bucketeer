@@ -1,6 +1,7 @@
 import IconAngleDown from './customized-icons/angle-down.svg?react';
 import IconArrowDown from './customized-icons/arrow-down.svg?react';
 import IconBackspace from './customized-icons/backspace.svg?react';
+import IconCalendar from './customized-icons/calendar.svg?react';
 import IconChecked from './customized-icons/checked.svg?react';
 import IconChevronDown from './customized-icons/chevron-down.svg?react';
 import IconChevronRight from './customized-icons/chevron-right.svg?react';
@@ -49,6 +50,8 @@ import IconNotInUse from './special-icons/not-in-use.svg?react';
 import IconOperation from './special-icons/operation.svg?react';
 import IconOperationsConnected from './special-icons/operations-connected.svg?react';
 import IconSlack from './special-icons/slack.svg?react';
+import IconStoppedExperiment from './special-icons/stopped-experiment.svg?react';
+import IconWaitingExperiment from './special-icons/waiting-experment.svg?react';
 
 export {
   // Sidebar icons
@@ -86,6 +89,7 @@ export {
   IconDisable,
   IconCopy,
   IconUpload,
+  IconCalendar,
   IconChevronDown,
   IconAngleDown,
   IconInfoFilled,
@@ -104,5 +108,7 @@ export {
   IconNotInUse,
   IconExperimentsConnected,
   IconOperationsConnected,
-  IconFlagConnected
+  IconFlagConnected,
+  IconStoppedExperiment,
+  IconWaitingExperiment
 };

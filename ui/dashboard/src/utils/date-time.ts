@@ -50,20 +50,32 @@ export const getDateTimeLocale = (language: Language) => {
   return locales[language];
 };
 
-export const formatLongDateTime = (
-  date: Date,
-  overrideOptions?: Intl.DateTimeFormatOptions
-) => {
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: 'short',
+export const formatLongDateTime = ({
+  value,
+  overrideOptions = {
     month: 'long',
-    day: 'numeric',
-    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true,
-    ...overrideOptions
-  };
+    weekday: 'short',
+    hour12: true
+  },
+  locale = 'en-US'
+}: {
+  value: string;
+  overrideOptions?: Intl.DateTimeFormatOptions;
+  locale?: Intl.LocalesArgument;
+}) => {
+  try {
+    const date = new Date(Number(value) * 1000);
 
-  return new Intl.DateTimeFormat('en-US', options).format(date);
+    const options: Intl.DateTimeFormatOptions = {
+      day: 'numeric',
+      year: 'numeric',
+      ...overrideOptions
+    };
+    return new Intl.DateTimeFormat(locale, options).format(date);
+  } catch (error) {
+    console.error(error);
+    return value;
+  }
 };

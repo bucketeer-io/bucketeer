@@ -30,7 +30,10 @@
     "unarchive-goal": "Unarchive Goal",
     "edit-segment": "Edit User Segment",
     "delete-segment": "Delete User Segment",
-    "download-segment": "Download User Segment"
+    "download-segment": "Download User Segment",
+    "edit-experiment": "Edit Experiment",
+    "archive-experiment": "Archive Experiment",
+    "unarchive-experiment": "Unarchive Experiment"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -51,7 +54,9 @@
     "goal-title": "No registered goals",
     "goal-desc": "There are no registered goals. Add a new one to start managing.",
     "user-segments-title": "No registered user segments",
-    "user-segments-desc": "There are no registered user segments. Add a new one to start managing."
+    "user-segments-desc": "There are no registered user segments. Add a new one to start managing.",
+    "experiment-title": "No registered experiments",
+    "experiment-desc": "There are no registered experiments. Add a new one to start managing."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
@@ -91,5 +96,21 @@
   },
   "user-segment": {
     "delete-user-segment-desc": "The <bold>{{name}}</bold> is going to be deleted permanently. Are you sure you want to proceed?"
+  },
+  "experiment": {
+    "confirm-archive-desc": "The experiment \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
+    "confirm-unarchive-desc": "The experiment \"<bold>{{name}}</bold>\" will be unarchived. Are you sure you want to proceed?",
+    "waiting-experiments": "Waiting Experiments",
+    "running-experiments": "Running Experiments",
+    "stopped-experiments": "Stopped Experiments"
+  },
+  "metrics": {
+    "variation": "Variation",
+    "evaluation-user": "Evaluation User",
+    "goal-total": "Goal Total",
+    "goal-user": "Goal User",
+    "conversion-rate": "Conversion Rate",
+    "value-total": "Value Total",
+    "value-user": "Value/ User"
   }
 }
