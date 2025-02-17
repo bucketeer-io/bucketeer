@@ -72,9 +72,14 @@ message ListAutoOpsRulesResponse {
 
 message StopAutoOpsRuleRequest {
   reserved 1;
-  string id = 2;
-  StopAutoOpsRuleCommand command = 3;
-  string environment_id = 4;
+  string id = 2 [(google.api.field_behavior) = REQUIRED];
+  StopAutoOpsRuleCommand command = 3 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
 message StopAutoOpsRuleResponse {}
@@ -160,12 +165,14 @@ message UpdateAutoOpsRuleResponse {
 
 message ExecuteAutoOpsRequest {
   reserved 1;
-  string id = 2;
+  string id = 2 [(google.api.field_behavior) = REQUIRED];
   // ChangeAutoOpsRuleTriggeredAtCommand
   // change_auto_ops_rule_triggered_at_command = 3 [deprecated = true];
   reserved 3;
-  ExecuteAutoOpsRuleCommand execute_auto_ops_rule_command = 4;
-  string environment_id = 5;
+  ExecuteAutoOpsRuleCommand execute_auto_ops_rule_command = 4
+      [deprecated = true];
+  string environment_id = 5 [(google.api.field_behavior) = REQUIRED];
+  string clause_id = 6 [(google.api.field_behavior) = REQUIRED];
 }
 
 message ExecuteAutoOpsResponse {
@@ -363,7 +370,40 @@ service AutoOpsService {
     };
   }
   rpc StopAutoOpsRule(StopAutoOpsRuleRequest)
-      returns (StopAutoOpsRuleResponse) {}
+      returns (StopAutoOpsRuleResponse) {
+    option (google.api.http) = {
+      patch: "/v1/auto_ops_rule/stop"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Stop"
+      description: "Stop an auto ops rule."
+      tags: "auto_ops_rule"
+      operation_id: "web.v1.auto_ops_rule.stop"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc DeleteAutoOpsRule(DeleteAutoOpsRuleRequest)
       returns (DeleteAutoOpsRuleResponse) {}
   rpc UpdateAutoOpsRule(UpdateAutoOpsRuleRequest)
@@ -401,7 +441,40 @@ service AutoOpsService {
       }
     };
   }
-  rpc ExecuteAutoOps(ExecuteAutoOpsRequest) returns (ExecuteAutoOpsResponse) {}
+  rpc ExecuteAutoOps(ExecuteAutoOpsRequest) returns (ExecuteAutoOpsResponse) {
+    option (google.api.http) = {
+      post: "/v1/auto_ops_rule/execute"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Execute"
+      description: "Execute an auto ops rule."
+      tags: "auto_ops_rule"
+      operation_id: "web.v1.auto_ops_rule.execute"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ListOpsCounts(ListOpsCountsRequest) returns (ListOpsCountsResponse) {}
   rpc CreateProgressiveRollout(CreateProgressiveRolloutRequest)
       returns (CreateProgressiveRolloutResponse) {}

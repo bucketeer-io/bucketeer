@@ -4470,7 +4470,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 5, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 5, ''),
+        clauseId: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {
@@ -4528,6 +4529,10 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 6:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setClauseId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -4576,6 +4581,10 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.serializeBinaryToWriter =
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(5, f);
+    }
+    f = message.getClauseId();
+    if (f.length > 0) {
+      writer.writeString(6, f);
     }
   };
 
@@ -4658,6 +4667,27 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 5, value);
   };
+
+/**
+ * optional string clause_id = 6;
+ * @return {string}
+ */
+proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.getClauseId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 6, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.ExecuteAutoOpsRequest} returns this
+ */
+proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.setClauseId = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 6, value);
+};
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**

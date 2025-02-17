@@ -82,12 +82,17 @@ func NewAutoOpsRule(
 }
 
 func (a *AutoOpsRule) Update(
+	autoOpsStatus *proto.AutoOpsStatus,
 	updateOpsEventRateClauses []*proto.UpdateAutoOpsRuleRequest_UpdateOpsEventRateClause,
 	updateDatetimeClauses []*proto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause,
 ) (*AutoOpsRule, error) {
 	updated := &AutoOpsRule{}
 	if err := copier.Copy(updated, a); err != nil {
 		return nil, err
+	}
+
+	if autoOpsStatus != nil {
+		updated.AutoOpsRule.AutoOpsStatus = *autoOpsStatus
 	}
 
 	for _, c := range updateOpsEventRateClauses {

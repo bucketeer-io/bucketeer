@@ -650,6 +650,9 @@ export class ExecuteAutoOpsRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getClauseId(): string;
+  setClauseId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ExecuteAutoOpsRequest.AsObject;
   static toObject(
@@ -676,6 +679,7 @@ export namespace ExecuteAutoOpsRequest {
     id: string;
     executeAutoOpsRuleCommand?: proto_autoops_command_pb.ExecuteAutoOpsRuleCommand.AsObject;
     environmentId: string;
+    clauseId: string;
   };
 }
 

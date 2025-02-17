@@ -669,7 +669,7 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			aor := p.setup()
-			_, err := aor.Update(p.updateOpsEventRateClauses, p.updateDatetimeClauses)
+			_, err := aor.Update(nil, p.updateOpsEventRateClauses, p.updateDatetimeClauses)
 			if p.expectedErr != nil {
 				require.Equal(t, p.expectedErr, err)
 				return

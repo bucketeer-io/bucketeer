@@ -1230,13 +1230,6 @@ func TestStopAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc: "err: ErrNoCommand",
-			req: &autoopsproto.StopAutoOpsRuleRequest{
-				Id: "aid1",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
-		{
 			desc: "success",
 			setup: func(s *AutoOpsService) {
 				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
@@ -1620,13 +1613,6 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc: "err: ErrNoCommand",
-			req: &autoopsproto.ExecuteAutoOpsRequest{
-				Id: "aid",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
-		{
 			desc: "err: ErrNoExecuteAutoOpsRuleCommand_ClauseId",
 			req: &autoopsproto.ExecuteAutoOpsRequest{
 				Id:            "aid1",
@@ -1675,6 +1661,95 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
 					ClauseId: "testClauseId",
 				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createAutoOpsService(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			_, err := s.ExecuteAutoOps(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestExecuteAutoOpsRuleNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithTokenRoleOwner(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AutoOpsService)
+		req         *autoopsproto.ExecuteAutoOpsRequest
+		expectedErr error
+	}{
+		{
+			desc:        "err: ErrIDRequired",
+			req:         &autoopsproto.ExecuteAutoOpsRequest{},
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc: "err: ErrNoExecuteAutoOpsRuleCommand_ClauseId",
+			req: &autoopsproto.ExecuteAutoOpsRequest{
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+				ClauseId:      "",
+			},
+			expectedErr: createError(statusClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
+		},
+		{
+			desc: "err: ErrNotFound",
+			setup: func(s *AutoOpsService) {
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, v2ao.ErrAutoOpsRuleNotFound)
+			},
+			req: &autoopsproto.ExecuteAutoOpsRequest{
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+				ClauseId:      "id",
+			},
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *AutoOpsService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().GetAutoOpsRule(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AutoOpsRule{
+					AutoOpsRule: &autoopsproto.AutoOpsRule{
+						Id: "aid1", OpsType: autoopsproto.OpsType_SCHEDULE, AutoOpsStatus: autoopsproto.AutoOpsStatus_RUNNING, Deleted: false, Clauses: []*autoopsproto.Clause{
+							{Id: "testClauseId", ActionType: autoopsproto.ActionType_ENABLE, Clause: &anypb.Any{}},
+						}},
+				}, nil).AnyTimes()
+			},
+			req: &autoopsproto.ExecuteAutoOpsRequest{
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+				ClauseId:      "testClauseId",
 			},
 			expectedErr: nil,
 		},

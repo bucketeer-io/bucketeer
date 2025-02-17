@@ -516,6 +516,54 @@ func TestExecuteAutoOpsRule(t *testing.T) {
 	}
 }
 
+func TestExecuteAutoOpsRuleNoCommand(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+	experimentClient := newExperimentClient(t)
+	defer experimentClient.Close()
+
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureClient, featureID)
+	feature := getFeature(t, featureClient, featureID)
+	goalID := createGoal(ctx, t, experimentClient)
+	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
+	createAutoOpsRule(
+		ctx,
+		t,
+		autoOpsClient,
+		featureID,
+		autoopsproto.OpsType_EVENT_RATE,
+		[]*autoopsproto.OpsEventRateClause{clause},
+		nil,
+	)
+	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+	if len(autoOpsRules) != 1 {
+		t.Fatal("not enough rules")
+	}
+	_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
+		EnvironmentId: *environmentID,
+		Id:            autoOpsRules[0].Id,
+		ClauseId:      autoOpsRules[0].Clauses[0].Id,
+	})
+	if err != nil {
+		t.Fatalf("failed to execute auto ops: %s", err.Error())
+	}
+	feature = getFeature(t, featureClient, featureID)
+	if feature.Enabled == true {
+		t.Fatalf("feature is enabled")
+	}
+	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+	aor := autoOpsRules[0]
+	if aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING && aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_FINISHED {
+		t.Fatalf("The operation has been executed, but there is a problem with the status. Status: %v", aor.AutoOpsStatus)
+	}
+}
+
 func TestExecuteAutoOpsRuleForMultiSchedule(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -1233,7 +1281,6 @@ func stopAutoOpsRule(t *testing.T, client autoopsclient.Client, id string) {
 	_, err := client.StopAutoOpsRule(ctx, &autoopsproto.StopAutoOpsRuleRequest{
 		EnvironmentId: *environmentID,
 		Id:            id,
-		Command:       &autoopsproto.StopAutoOpsRuleCommand{},
 	})
 	if err != nil {
 		t.Fatal("failed to stop auto ops rules", err)
