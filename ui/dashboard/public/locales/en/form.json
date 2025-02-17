@@ -94,7 +94,9 @@
     "date": "Date",
     "compare": "Compare",
     "user-segment": "User Segment",
-    "feature-flag": "Feature Flag"
+    "feature-flag": "Feature Flag",
+    "add-condition": "Add Condition",
+    "value": "Value"
   },
   "select-date": "Select date"
 }

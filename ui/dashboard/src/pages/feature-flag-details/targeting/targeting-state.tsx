@@ -28,7 +28,7 @@ const TargetingState = () => {
           checked={isTargetingOn}
           onCheckedChange={value => setIsTargetingOn(value)}
         />
-        <Button>{t('submit')}</Button>
+        <Button type="submit">{t('submit')}</Button>
       </div>
     </div>
   );

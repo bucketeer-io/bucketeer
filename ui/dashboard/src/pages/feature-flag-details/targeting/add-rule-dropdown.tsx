@@ -14,8 +14,13 @@ import {
   DropdownMenuTrigger
 } from 'components/dropdown';
 import Icon from 'components/icon';
+import { RuleCategory } from './types';
 
-const AddRuleDropdown = () => {
+interface Props {
+  onAddRule: (type: RuleCategory) => void;
+}
+
+const AddRuleDropdown = ({ onAddRule }: Props) => {
   const { t } = useTranslation(['table']);
 
   const options = [
@@ -40,7 +45,7 @@ const AddRuleDropdown = () => {
     <DropdownMenu>
       <DropdownMenuTrigger
         trigger={
-          <Button>
+          <Button type="button">
             <Icon
               icon={IconPlus}
               size={'sm'}
@@ -55,7 +60,7 @@ const AddRuleDropdown = () => {
           </Button>
         }
         showArrow={false}
-        className="!border-none !shadow-none"
+        className="!border-none !shadow-none p-0"
       />
       <DropdownMenuContent align="start" sideOffset={2}>
         {options.map((item, index) => (
@@ -65,6 +70,7 @@ const AddRuleDropdown = () => {
             label={item.label}
             value={item.value}
             className="!text-gray-600"
+            onSelectOption={value => onAddRule(value as RuleCategory)}
           />
         ))}
       </DropdownMenuContent>

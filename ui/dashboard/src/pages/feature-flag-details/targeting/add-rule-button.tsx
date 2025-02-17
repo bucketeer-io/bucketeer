@@ -17,7 +17,7 @@ const AddRuleButton = ({ isCenter }: Props) => {
           isCenter
       })}
     >
-      <Button variant={'text'} className="gap-x-2 h-6 !p-0">
+      <Button type="button" variant={'text'} className="gap-x-2 h-6 !p-0">
         <Icon
           icon={IconPlus}
           color="primary-500"
