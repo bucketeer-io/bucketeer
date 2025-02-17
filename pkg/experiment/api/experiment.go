@@ -172,6 +172,7 @@ func (s *experimentService) ListExperiments(
 	experiments, nextCursor, totalCount, summary, err := experimentStorage.ListExperiments(
 		ctx,
 		whereParts,
+		req.EnvironmentId,
 		orders,
 		limit,
 		offset,
@@ -215,6 +216,14 @@ func (s *experimentService) newExperimentListOrders(
 		column = "ex.created_at"
 	case proto.ListExperimentsRequest_UPDATED_AT:
 		column = "ex.updated_at"
+	case proto.ListExperimentsRequest_START_AT:
+		column = "ex.start_at"
+	case proto.ListExperimentsRequest_STOP_AT:
+		column = "ex.stop_at"
+	case proto.ListExperimentsRequest_STATUS:
+		column = "ex.status"
+	case proto.ListExperimentsRequest_GOALS_COUNT:
+		column = "JSON_LENGTH(ex.goal_ids)"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

@@ -38,6 +38,8 @@ var (
 	selectExperimentsSQL string
 	//go:embed sql/experiment/count_experiment.sql
 	countExperimentSQL string
+	//go:embed sql/experiment/summarize_experiment.sql
+	summarizeExperimentSQL string
 	//go:embed sql/experiment/update_experiment.sql
 	updateExperimentSQL string
 	//go:embed sql/experiment/insert_experiment.sql
@@ -51,6 +53,7 @@ type ExperimentStorage interface {
 	ListExperiments(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
+		environmentID string,
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.Experiment, int, int64, *proto.ListExperimentsResponse_Summary, error)
@@ -94,7 +97,7 @@ func (s *experimentStorage) CreateExperiment(
 		environmentId,
 	)
 	if err != nil {
-		if err == mysql.ErrDuplicateEntry {
+		if errors.Is(err, mysql.ErrDuplicateEntry) {
 			return ErrExperimentAlreadyExists
 		}
 		return err
@@ -190,6 +193,7 @@ func (s *experimentStorage) GetExperiment(
 func (s *experimentStorage) ListExperiments(
 	ctx context.Context,
 	whereParts []mysql.WherePart,
+	environmentID string,
 	orders []*mysql.Order,
 	limit, offset int,
 ) ([]*proto.Experiment, int, int64, *proto.ListExperimentsResponse_Summary, error) {
@@ -243,6 +247,12 @@ func (s *experimentStorage) ListExperiments(
 	countQuery := fmt.Sprintf(countExperimentSQL, whereSQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(
 		&totalCount,
+	)
+	if err != nil {
+		return nil, 0, 0, nil, err
+	}
+
+	err = s.qe.QueryRowContext(ctx, summarizeExperimentSQL, environmentID).Scan(
 		&summary.TotalWaitingCount,
 		&summary.TotalRunningCount,
 		&summary.TotalStoppedCount,
@@ -250,5 +260,6 @@ func (s *experimentStorage) ListExperiments(
 	if err != nil {
 		return nil, 0, 0, nil, err
 	}
+
 	return experiments, nextOffset, totalCount, summary, nil
 }

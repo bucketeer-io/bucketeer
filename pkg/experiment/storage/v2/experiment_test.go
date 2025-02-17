@@ -228,6 +228,10 @@ func TestListExperiments(t *testing.T) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
 			},
 			whereParts: []mysql.WherePart{
 				mysql.NewFilter("num", ">=", 5),
@@ -250,6 +254,7 @@ func TestListExperiments(t *testing.T) {
 		experiments, cursor, _, _, err := storage.ListExperiments(
 			context.Background(),
 			p.whereParts,
+			"ns0",
 			p.orders,
 			p.limit,
 			p.offset,

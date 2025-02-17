@@ -4446,7 +4446,11 @@ proto.bucketeer.experiment.ListExperimentsRequest.OrderBy = {
   DEFAULT: 0,
   NAME: 1,
   CREATED_AT: 2,
-  UPDATED_AT: 3
+  UPDATED_AT: 3,
+  START_AT: 4,
+  STOP_AT: 5,
+  STATUS: 6,
+  GOALS_COUNT: 7
 };
 
 /**
