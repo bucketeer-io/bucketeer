@@ -169,10 +169,9 @@ func (s *experimentService) ListExperiments(
 		return nil, dt.Err()
 	}
 	experimentStorage := v2es.NewExperimentStorage(s.mysqlClient)
-	experiments, nextCursor, totalCount, summary, err := experimentStorage.ListExperiments(
+	experiments, nextCursor, totalCount, err := experimentStorage.ListExperiments(
 		ctx,
 		whereParts,
-		req.EnvironmentId,
 		orders,
 		limit,
 		offset,
@@ -194,11 +193,35 @@ func (s *experimentService) ListExperiments(
 		}
 		return nil, dt.Err()
 	}
+
+	summary, err := experimentStorage.GetExperimentSummary(ctx, req.EnvironmentId)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get experiment summary",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId",
+					req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
 	return &proto.ListExperimentsResponse{
 		Experiments: experiments,
 		Cursor:      strconv.Itoa(nextCursor),
 		TotalCount:  totalCount,
-		Summary:     summary,
+		Summary: &proto.ListExperimentsResponse_Summary{
+			TotalWaitingCount: summary.TotalWaitingCount,
+			TotalRunningCount: summary.TotalRunningCount,
+			TotalStoppedCount: summary.TotalStoppedCount,
+		},
 	}, nil
 }
 

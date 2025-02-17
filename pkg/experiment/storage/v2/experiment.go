@@ -53,10 +53,17 @@ type ExperimentStorage interface {
 	ListExperiments(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
-		environmentID string,
 		orders []*mysql.Order,
 		limit, offset int,
-	) ([]*proto.Experiment, int, int64, *proto.ListExperimentsResponse_Summary, error)
+	) ([]*proto.Experiment, int, int64, error)
+	// GetExperimentSummary returns the total count of experiments by status.
+	GetExperimentSummary(ctx context.Context, environmentID string) (*ExperimentSummary, error)
+}
+
+type ExperimentSummary struct {
+	TotalWaitingCount int64
+	TotalRunningCount int64
+	TotalStoppedCount int64
 }
 
 type experimentStorage struct {
@@ -193,17 +200,16 @@ func (s *experimentStorage) GetExperiment(
 func (s *experimentStorage) ListExperiments(
 	ctx context.Context,
 	whereParts []mysql.WherePart,
-	environmentID string,
 	orders []*mysql.Order,
 	limit, offset int,
-) ([]*proto.Experiment, int, int64, *proto.ListExperimentsResponse_Summary, error) {
+) ([]*proto.Experiment, int, int64, error) {
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectExperimentsSQL, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
-		return nil, 0, 0, nil, err
+		return nil, 0, 0, err
 	}
 	defer rows.Close()
 	experiments := make([]*proto.Experiment, 0, limit)
@@ -233,33 +239,39 @@ func (s *experimentStorage) ListExperiments(
 			&mysql.JSONObject{Val: &experiment.Goals},
 		)
 		if err != nil {
-			return nil, 0, 0, nil, err
+			return nil, 0, 0, err
 		}
 		experiment.Status = proto.Experiment_Status(status)
 		experiments = append(experiments, &experiment)
 	}
 	if rows.Err() != nil {
-		return nil, 0, 0, nil, err
+		return nil, 0, 0, err
 	}
 	nextOffset := offset + len(experiments)
 	var totalCount int64
-	summary := &proto.ListExperimentsResponse_Summary{}
 	countQuery := fmt.Sprintf(countExperimentSQL, whereSQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(
 		&totalCount,
 	)
 	if err != nil {
-		return nil, 0, 0, nil, err
+		return nil, 0, 0, err
 	}
 
-	err = s.qe.QueryRowContext(ctx, summarizeExperimentSQL, environmentID).Scan(
+	return experiments, nextOffset, totalCount, nil
+}
+
+func (s *experimentStorage) GetExperimentSummary(
+	ctx context.Context,
+	environmentID string,
+) (*ExperimentSummary, error) {
+	summary := &ExperimentSummary{}
+	err := s.qe.QueryRowContext(ctx, summarizeExperimentSQL, environmentID).Scan(
 		&summary.TotalWaitingCount,
 		&summary.TotalRunningCount,
 		&summary.TotalStoppedCount,
 	)
 	if err != nil {
-		return nil, 0, 0, nil, err
+		return nil, err
 	}
-
-	return experiments, nextOffset, totalCount, summary, nil
+	return summary, nil
 }
