@@ -1524,8 +1524,8 @@ func TestAssignUserSamplingSeed(t *testing.T) {
 	if reason.Type != ftproto.Reason_DEFAULT {
 		t.Fatalf("Failed to assign user. Reason type does not match. Current: %s, target: %v", reason.Type, ftproto.Reason_DEFAULT)
 	}
-	if variation.Id != f.DefaultStrategy.RolloutStrategy.Variations[1].Variation {
-		t.Fatalf("Failed to assign user. Variation id does not match. Current: %s, target: %s", variation.Id, f.DefaultStrategy.RolloutStrategy.Variations[1].Variation)
+	if variation.Id != f.DefaultStrategy.RolloutStrategy.Variations[2].Variation {
+		t.Fatalf("Failed to assign user. Variation id does not match. Current: %s, target: %s", variation.Id, f.DefaultStrategy.RolloutStrategy.Variations[2].Variation)
 	}
 	// Channge sampling seed to change assigned variation.
 	f.SamplingSeed = "test"
