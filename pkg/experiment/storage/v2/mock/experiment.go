@@ -16,6 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
+	v2 "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
 	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	experiment "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
@@ -72,16 +73,30 @@ func (mr *MockExperimentStorageMockRecorder) GetExperiment(ctx, id, environmentI
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExperiment", reflect.TypeOf((*MockExperimentStorage)(nil).GetExperiment), ctx, id, environmentId)
 }
 
+// GetExperimentSummary mocks base method.
+func (m *MockExperimentStorage) GetExperimentSummary(ctx context.Context, environmentID string) (*v2.ExperimentSummary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetExperimentSummary", ctx, environmentID)
+	ret0, _ := ret[0].(*v2.ExperimentSummary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetExperimentSummary indicates an expected call of GetExperimentSummary.
+func (mr *MockExperimentStorageMockRecorder) GetExperimentSummary(ctx, environmentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExperimentSummary", reflect.TypeOf((*MockExperimentStorage)(nil).GetExperimentSummary), ctx, environmentID)
+}
+
 // ListExperiments mocks base method.
-func (m *MockExperimentStorage) ListExperiments(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*experiment.Experiment, int, int64, *experiment.ListExperimentsResponse_Summary, error) {
+func (m *MockExperimentStorage) ListExperiments(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*experiment.Experiment, int, int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListExperiments", ctx, whereParts, orders, limit, offset)
 	ret0, _ := ret[0].([]*experiment.Experiment)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
-	ret3, _ := ret[3].(*experiment.ListExperimentsResponse_Summary)
-	ret4, _ := ret[4].(error)
-	return ret0, ret1, ret2, ret3, ret4
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
 }
 
 // ListExperiments indicates an expected call of ListExperiments.

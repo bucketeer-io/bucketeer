@@ -3631,6 +3631,10 @@ paths:
             - NAME
             - CREATED_AT
             - UPDATED_AT
+            - START_AT
+            - STOP_AT
+            - STATUS
+            - GOALS_COUNT
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -7084,6 +7088,10 @@ definitions:
       - NAME
       - CREATED_AT
       - UPDATED_AT
+      - START_AT
+      - STOP_AT
+      - STATUS
+      - GOALS_COUNT
     default: DEFAULT
   experimentListExperimentsRequestOrderDirection:
     type: string

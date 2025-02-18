@@ -22857,6 +22857,22 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "START_AT",
+                "integer": 4
+              },
+              {
+                "name": "STOP_AT",
+                "integer": 5
+              },
+              {
+                "name": "STATUS",
+                "integer": 6
+              },
+              {
+                "name": "GOALS_COUNT",
+                "integer": 7
               }
             ]
           },
