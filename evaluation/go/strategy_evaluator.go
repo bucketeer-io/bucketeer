@@ -15,9 +15,9 @@
 package evaluation
 
 import (
-	"crypto/sha256"
-	"encoding/binary"
 	"fmt"
+
+	"github.com/spaolacci/murmur3"
 
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -49,7 +49,7 @@ func (e *strategyEvaluator) rollout(
 	strategy *feature.RolloutStrategy,
 	userID, featureID, samplingSeed string,
 ) (string, error) {
-	bucket := e.bucketSHA256(featureID, userID, samplingSeed)
+	bucket := e.bucket(featureID, userID, samplingSeed)
 	sum := 0.0
 	for i := range strategy.Variations {
 		sum += float64(strategy.Variations[i].Weight) / 100000.0
@@ -60,17 +60,17 @@ func (e *strategyEvaluator) rollout(
 	return "", ErrVariationNotFound
 }
 
-// SHA-256 Bucketing Function
-func (e *strategyEvaluator) bucketSHA256(featureID, userID, samplingSeed string) float64 {
+// MurmurHash3 (128-bit) Bucketing
+func (e *strategyEvaluator) bucket(featureID, userID, samplingSeed string) float64 {
 	// Format input string correctly
 	input := fmt.Sprintf("%s-%s-%s", featureID, userID, samplingSeed)
 
-	// Compute SHA-256 hash
-	hash := sha256.Sum256([]byte(input))
-
-	// Convert the first 8 bytes to a uint64 using BigEndian
-	num := binary.BigEndian.Uint64(hash[:8])
+	// Compute MurmurHash3 (128-bit) hash
+	// Murmur3 returns two 64-bit hashes (first64bitHash and second64bitHash),
+	// but since we only need the first 8 bytes (64 bits), we use the first 64-bit hash.
+	first64bitHash, _ := murmur3.Sum128([]byte(input))
 
 	// Normalize to [0,1) range
-	return float64(num) / float64(^uint64(0)) // 2^64 - 1
+	// The range is normalized using 2^64 - 1 as the maximum value for a 64-bit unsigned integer
+	return float64(first64bitHash) / float64(^uint64(0)) // 2^64 - 1
 }
