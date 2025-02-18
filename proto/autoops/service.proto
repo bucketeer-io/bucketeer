@@ -47,8 +47,8 @@ message CreateAutoOpsRuleRequest {
     }
   ];
   string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
-  string feature_id = 4;
-  OpsType ops_type = 5;
+  string feature_id = 4 [(google.api.field_behavior) = REQUIRED];
+  OpsType ops_type = 5 [(google.api.field_behavior) = REQUIRED];
   repeated OpsEventRateClause ops_event_rate_clauses = 6;
   repeated DatetimeClause datetime_clauses = 7;
 }
@@ -97,11 +97,11 @@ message UpdateAutoOpsRuleRequest {
   message UpdateOpsEventRateClause {
     string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options
                         .openapiv2_field) = {
-      description: "The ID of the clause, if not set, a new event rate clause will be created."
+      description: "The clause ID, if not set, a new event rate clause will be created."
     }];
     google.protobuf.BoolValue deleted = 2
         [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-          description: "If true, the clause is deleted."
+          description: "If true, the clause will be deleted."
         }];
     OpsEventRateClause clause = 3;
   }
@@ -109,11 +109,11 @@ message UpdateAutoOpsRuleRequest {
   message UpdateDatetimeClause {
     string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options
                         .openapiv2_field) = {
-      description: "The ID of the clause, if not set, a new date time clause will be created."
+      description: "The clause ID, if not set, a new date time clause will be created."
     }];
     google.protobuf.BoolValue deleted = 2
         [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-          description: "If true, the clause is deleted."
+          description: "If true, the clause will be deleted."
         }];
     DatetimeClause clause = 3;
   }

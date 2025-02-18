@@ -7307,12 +7307,24 @@
               {
                 "id": 4,
                 "name": "feature_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 5,
                 "name": "ops_type",
-                "type": "OpsType"
+                "type": "OpsType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 6,
@@ -7626,7 +7638,7 @@
                         "aggregated": [
                           {
                             "name": "description",
-                            "value": "The ID of the clause, if not set, a new event rate clause will be created."
+                            "value": "The clause ID, if not set, a new event rate clause will be created."
                           }
                         ]
                       }
@@ -7642,7 +7654,7 @@
                         "aggregated": [
                           {
                             "name": "description",
-                            "value": "If true, the clause is deleted."
+                            "value": "If true, the clause will be deleted."
                           }
                         ]
                       }
@@ -7668,7 +7680,7 @@
                         "aggregated": [
                           {
                             "name": "description",
-                            "value": "The ID of the clause, if not set, a new date time clause will be created."
+                            "value": "The clause ID, if not set, a new date time clause will be created."
                           }
                         ]
                       }
@@ -7684,7 +7696,7 @@
                         "aggregated": [
                           {
                             "name": "description",
-                            "value": "If true, the clause is deleted."
+                            "value": "If true, the clause will be deleted."
                           }
                         ]
                       }
