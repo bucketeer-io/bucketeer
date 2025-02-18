@@ -7,3 +7,4 @@ FROM
 WHERE
     environment_id = ?
     AND deleted = false
+    AND archived = false
