@@ -36,7 +36,7 @@ var (
 func (s *accountStorage) GetSystemAdminAccountV2(ctx context.Context, email string) (*domain.AccountV2, error) {
 	account := proto.AccountV2{}
 	var organizationRole int32
-	err := s.qe(ctx).QueryRowContext(
+	err := s.client.Qe(ctx).QueryRowContext(
 		ctx,
 		selectSystemAdminAccountV2SQL,
 		email,
