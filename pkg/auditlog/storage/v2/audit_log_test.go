@@ -32,7 +32,7 @@ func TestNewSubscriptionStorage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	storage := NewAuditLogStorage(mock.NewMockQueryExecer(mockController))
+	storage := NewAuditLogStorage(mock.NewMockClient(mockController))
 	assert.IsType(t, &auditLogStorage{}, storage)
 }
 
@@ -52,7 +52,9 @@ func TestCreateAuditLogs(t *testing.T) {
 		{
 			desc: "ErrAuditLogAlreadyExists",
 			setup: func(s *auditLogStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(gomock.All()).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, mysql.ErrDuplicateEntry)
 			},
@@ -65,7 +67,9 @@ func TestCreateAuditLogs(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *auditLogStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(gomock.All()).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -84,7 +88,9 @@ func TestCreateAuditLogs(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *auditLogStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(gomock.All()).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
 					id0, int64(1), int32(2), "e0", int32(3), gomock.Any(), gomock.Any(), gomock.Any(), "ns0", gomock.Any(), gomock.Any(),
@@ -125,7 +131,9 @@ func TestCreateAuditLog(t *testing.T) {
 		{
 			desc: "ErrAuditLogAlreadyExists",
 			setup: func(s *auditLogStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(gomock.All()).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, mysql.ErrDuplicateEntry)
 			},
@@ -137,7 +145,9 @@ func TestCreateAuditLog(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *auditLogStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(gomock.All()).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -149,7 +159,9 @@ func TestCreateAuditLog(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *auditLogStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(gomock.All()).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
 					id0, int64(1), int32(2), "e0", int32(3), gomock.Any(), gomock.Any(), gomock.Any(), "ns0", gomock.Any(), gomock.Any(),
@@ -205,7 +217,9 @@ func TestListAuditLogs(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *auditLogStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(gomock.All()).Return(qe)
+				qe.EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -224,14 +238,16 @@ func TestListAuditLogs(t *testing.T) {
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(gomock.All()).Return(qe).AnyTimes()
+				qe.EXPECT().QueryContext(
 					gomock.Any(),
 					gomock.Any(),
 					[]interface{}{},
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(),
 					gomock.Any(),
 					[]interface{}{},
@@ -257,14 +273,16 @@ func TestListAuditLogs(t *testing.T) {
 				}).Times(getSize + 1)
 				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(getSize)
 				rows.EXPECT().Err().Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(gomock.All()).Return(qe).AnyTimes()
+				qe.EXPECT().QueryContext(
 					gomock.Any(),
 					gomock.Any(),
 					timestamp, entityType,
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(),
 					gomock.Any(),
 					timestamp, entityType,
@@ -310,5 +328,5 @@ func TestListAuditLogs(t *testing.T) {
 
 func newAuditLogStorageWithMock(t *testing.T, mockController *gomock.Controller) *auditLogStorage {
 	t.Helper()
-	return &auditLogStorage{mock.NewMockQueryExecer(mockController)}
+	return &auditLogStorage{mock.NewMockClient(mockController)}
 }

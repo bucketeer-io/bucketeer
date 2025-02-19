@@ -52,11 +52,11 @@ type AuditLogStorage interface {
 }
 
 type auditLogStorage struct {
-	qe mysql.QueryExecer
+	client mysql.Client
 }
 
-func NewAuditLogStorage(qe mysql.QueryExecer) AuditLogStorage {
-	return &auditLogStorage{qe}
+func NewAuditLogStorage(client mysql.Client) AuditLogStorage {
+	return &auditLogStorage{client}
 }
 
 func (s *auditLogStorage) CreateAuditLogs(ctx context.Context, auditLogs []*domain.AuditLog) error {
@@ -87,7 +87,7 @@ func (s *auditLogStorage) CreateAuditLogs(ctx context.Context, auditLogs []*doma
 			al.PreviousEntityData,
 		)
 	}
-	_, err := s.qe.ExecContext(ctx, query.String(), args...)
+	_, err := s.client.Qe(ctx).ExecContext(ctx, query.String(), args...)
 	if err != nil {
 		if err == mysql.ErrDuplicateEntry {
 			return ErrAuditLogAlreadyExists
@@ -98,7 +98,7 @@ func (s *auditLogStorage) CreateAuditLogs(ctx context.Context, auditLogs []*doma
 }
 
 func (s *auditLogStorage) CreateAuditLog(ctx context.Context, auditLog *domain.AuditLog) error {
-	_, err := s.qe.ExecContext(
+	_, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		insertAuditLogV2SQL,
 		auditLog.Id,
@@ -132,7 +132,7 @@ func (s *auditLogStorage) ListAuditLogs(
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectAuditLogV2SQL, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -167,7 +167,7 @@ func (s *auditLogStorage) ListAuditLogs(
 	nextOffset := offset + len(auditLogs)
 	var totalCount int64
 	countQuery := fmt.Sprintf(selectAuditLogV2CountSQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
