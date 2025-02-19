@@ -7281,6 +7281,15 @@
                   {
                     "name": "deprecated",
                     "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
                   }
                 ]
               },
@@ -7298,12 +7307,24 @@
               {
                 "id": 4,
                 "name": "feature_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 5,
                 "name": "ops_type",
-                "type": "OpsType"
+                "type": "OpsType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 6,
@@ -7389,17 +7410,44 @@
               {
                 "id": 2,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "command",
-                "type": "StopAutoOpsRuleCommand"
+                "type": "StopAutoOpsRuleCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -7447,45 +7495,231 @@
                 "id": 4,
                 "name": "add_ops_event_rate_clause_commands",
                 "type": "AddOpsEventRateClauseCommand",
-                "is_repeated": true
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 5,
                 "name": "change_ops_event_rate_clause_commands",
                 "type": "ChangeOpsEventRateClauseCommand",
-                "is_repeated": true
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 6,
                 "name": "delete_clause_commands",
                 "type": "DeleteClauseCommand",
-                "is_repeated": true
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 7,
                 "name": "add_datetime_clause_commands",
                 "type": "AddDatetimeClauseCommand",
-                "is_repeated": true
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 8,
                 "name": "change_datetime_clause_commands",
                 "type": "ChangeDatetimeClauseCommand",
-                "is_repeated": true
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 9,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 10,
+                "name": "update_ops_event_rate_clauses",
+                "type": "UpdateOpsEventRateClause",
+                "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "update_datetime_clauses",
+                "type": "UpdateDatetimeClause",
+                "is_repeated": true
               }
             ],
             "reserved_ids": [
               1,
               3
+            ],
+            "messages": [
+              {
+                "name": "UpdateOpsEventRateClause",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "id",
+                    "type": "string",
+                    "options": [
+                      {
+                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                        "aggregated": [
+                          {
+                            "name": "description",
+                            "value": "The clause ID, if not set, a new event rate clause will be created."
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": 2,
+                    "name": "deleted",
+                    "type": "google.protobuf.BoolValue",
+                    "options": [
+                      {
+                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                        "aggregated": [
+                          {
+                            "name": "description",
+                            "value": "If true, the clause will be deleted."
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": 3,
+                    "name": "clause",
+                    "type": "OpsEventRateClause"
+                  }
+                ]
+              },
+              {
+                "name": "UpdateDatetimeClause",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "id",
+                    "type": "string",
+                    "options": [
+                      {
+                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                        "aggregated": [
+                          {
+                            "name": "description",
+                            "value": "The clause ID, if not set, a new date time clause will be created."
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": 2,
+                    "name": "deleted",
+                    "type": "google.protobuf.BoolValue",
+                    "options": [
+                      {
+                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                        "aggregated": [
+                          {
+                            "name": "description",
+                            "value": "If true, the clause will be deleted."
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": 3,
+                    "name": "clause",
+                    "type": "DatetimeClause"
+                  }
+                ]
+              }
             ]
           },
           {
-            "name": "UpdateAutoOpsRuleResponse"
+            "name": "UpdateAutoOpsRuleResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "auto_ops_rule",
+                "type": "AutoOpsRule"
+              }
+            ]
           },
           {
             "name": "ExecuteAutoOpsRequest",
@@ -7493,17 +7727,46 @@
               {
                 "id": 2,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "execute_auto_ops_rule_command",
-                "type": "ExecuteAutoOpsRuleCommand"
+                "type": "ExecuteAutoOpsRuleCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 5,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 6,
+                "name": "clause_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -8162,7 +8425,133 @@
               {
                 "name": "StopAutoOpsRule",
                 "in_type": "StopAutoOpsRuleRequest",
-                "out_type": "StopAutoOpsRuleResponse"
+                "out_type": "StopAutoOpsRuleResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/auto_ops_rule/stop"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Stop"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Stop an auto ops rule."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "auto_ops_rule"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auto_ops_rule.stop"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "DeleteAutoOpsRule",
@@ -8172,12 +8561,264 @@
               {
                 "name": "UpdateAutoOpsRule",
                 "in_type": "UpdateAutoOpsRuleRequest",
-                "out_type": "UpdateAutoOpsRuleResponse"
+                "out_type": "UpdateAutoOpsRuleResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/auto_ops_rule"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update an auto ops rule."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "auto_ops_rule"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auto_ops_rule.update"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "ExecuteAutoOps",
                 "in_type": "ExecuteAutoOpsRequest",
-                "out_type": "ExecuteAutoOpsResponse"
+                "out_type": "ExecuteAutoOpsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auto_ops_rule/execute"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Execute"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Execute an auto ops rule."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "auto_ops_rule"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.auto_ops_rule.execute"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "ListOpsCounts",
@@ -16914,6 +17555,10 @@
                 "integer": 810
               },
               {
+                "name": "AUTOOPS_RULE_UPDATED",
+                "integer": 811
+              },
+              {
                 "name": "PUSH_CREATED",
                 "integer": 900
               },
@@ -19451,6 +20096,28 @@
             ]
           },
           {
+            "name": "AutoOpsRuleUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "update_ops_event_rate_clauses",
+                "type": "autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause",
+                "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "update_datetime_clauses",
+                "type": "autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "DatetimeClauseChangedEvent",
             "fields": [
               {
@@ -20642,6 +21309,9 @@
           },
           {
             "path": "proto/autoops/clause.proto"
+          },
+          {
+            "path": "proto/autoops/service.proto"
           },
           {
             "path": "proto/notification/subscription.proto"

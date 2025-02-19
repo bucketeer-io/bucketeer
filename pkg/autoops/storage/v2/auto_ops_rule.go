@@ -144,7 +144,7 @@ func (s *autoOpsRuleStorage) GetAutoOpsRule(
 		&autoOpsRule.FeatureName,
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrAutoOpsRuleNotFound
 		}
 		return nil, err

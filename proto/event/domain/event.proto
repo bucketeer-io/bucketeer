@@ -31,6 +31,7 @@ import "proto/account/account.proto";
 import "proto/account/api_key.proto";
 import "proto/autoops/auto_ops_rule.proto";
 import "proto/autoops/clause.proto";
+import "proto/autoops/service.proto";
 import "proto/notification/subscription.proto";
 import "proto/notification/recipient.proto";
 import "proto/feature/prerequisite.proto";
@@ -191,6 +192,7 @@ message Event {
     DATETIME_CLAUSE_CHANGED = 808;
     AUTOOPS_RULE_STOPPED = 809;
     AUTOOPS_RULE_OPS_STATUS_CHANGED = 810;
+    AUTOOPS_RULE_UPDATED = 811;
     PUSH_CREATED = 900;
     PUSH_DELETED = 901;
     PUSH_TAGS_ADDED = 902;
@@ -935,6 +937,14 @@ message AutoOpsRuleClauseDeletedEvent {
 message DatetimeClauseAddedEvent {
   string clause_id = 1;
   bucketeer.autoops.DatetimeClause datetime_clause = 2;
+}
+
+message AutoOpsRuleUpdatedEvent {
+  string id = 1;
+  repeated autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause
+      update_ops_event_rate_clauses = 10;
+  repeated autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause
+      update_datetime_clauses = 11;
 }
 
 message DatetimeClauseChangedEvent {

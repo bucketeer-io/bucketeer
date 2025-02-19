@@ -40,10 +40,15 @@ message GetAutoOpsRuleResponse {
 
 message CreateAutoOpsRuleRequest {
   reserved 1;
-  CreateAutoOpsRuleCommand command = 2 [deprecated = true];
+  CreateAutoOpsRuleCommand command = 2 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
-  string feature_id = 4;
-  OpsType ops_type = 5;
+  string feature_id = 4 [(google.api.field_behavior) = REQUIRED];
+  OpsType ops_type = 5 [(google.api.field_behavior) = REQUIRED];
   repeated OpsEventRateClause ops_event_rate_clauses = 6;
   repeated DatetimeClause datetime_clauses = 7;
 }
@@ -67,9 +72,14 @@ message ListAutoOpsRulesResponse {
 
 message StopAutoOpsRuleRequest {
   reserved 1;
-  string id = 2;
-  StopAutoOpsRuleCommand command = 3;
-  string environment_id = 4;
+  string id = 2 [(google.api.field_behavior) = REQUIRED];
+  StopAutoOpsRuleCommand command = 3 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
 message StopAutoOpsRuleResponse {}
@@ -84,30 +94,85 @@ message DeleteAutoOpsRuleRequest {
 message DeleteAutoOpsRuleResponse {}
 
 message UpdateAutoOpsRuleRequest {
+  message UpdateOpsEventRateClause {
+    string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options
+                        .openapiv2_field) = {
+      description: "The clause ID, if not set, a new event rate clause will be created."
+    }];
+    google.protobuf.BoolValue deleted = 2
+        [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+          description: "If true, the clause will be deleted."
+        }];
+    OpsEventRateClause clause = 3;
+  }
+
+  message UpdateDatetimeClause {
+    string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options
+                        .openapiv2_field) = {
+      description: "The clause ID, if not set, a new date time clause will be created."
+    }];
+    google.protobuf.BoolValue deleted = 2
+        [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+          description: "If true, the clause will be deleted."
+        }];
+    DatetimeClause clause = 3;
+  }
+
   reserved 1;
   string id = 2;
   // ChangeAutoOpsRuleOpsTypeCommand change_auto_ops_rule_ops_type_command = 3
   // [deprecated = true];
   reserved 3;
-  repeated AddOpsEventRateClauseCommand add_ops_event_rate_clause_commands = 4;
+  repeated AddOpsEventRateClauseCommand add_ops_event_rate_clause_commands = 4 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   repeated ChangeOpsEventRateClauseCommand
-      change_ops_event_rate_clause_commands = 5;
-  repeated DeleteClauseCommand delete_clause_commands = 6;
-  repeated AddDatetimeClauseCommand add_datetime_clause_commands = 7;
-  repeated ChangeDatetimeClauseCommand change_datetime_clause_commands = 8;
-  string environment_id = 9;
+      change_ops_event_rate_clause_commands = 5 [
+        deprecated = true,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+          description: "deprecated"
+        }
+      ];
+  repeated DeleteClauseCommand delete_clause_commands = 6 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  repeated AddDatetimeClauseCommand add_datetime_clause_commands = 7 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  repeated ChangeDatetimeClauseCommand change_datetime_clause_commands = 8 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  string environment_id = 9 [(google.api.field_behavior) = REQUIRED];
+  repeated UpdateOpsEventRateClause update_ops_event_rate_clauses = 10;
+  repeated UpdateDatetimeClause update_datetime_clauses = 11;
 }
 
-message UpdateAutoOpsRuleResponse {}
+message UpdateAutoOpsRuleResponse {
+  AutoOpsRule auto_ops_rule = 1;
+}
 
 message ExecuteAutoOpsRequest {
   reserved 1;
-  string id = 2;
+  string id = 2 [(google.api.field_behavior) = REQUIRED];
   // ChangeAutoOpsRuleTriggeredAtCommand
   // change_auto_ops_rule_triggered_at_command = 3 [deprecated = true];
   reserved 3;
-  ExecuteAutoOpsRuleCommand execute_auto_ops_rule_command = 4;
-  string environment_id = 5;
+  ExecuteAutoOpsRuleCommand execute_auto_ops_rule_command = 4
+      [deprecated = true];
+  string environment_id = 5 [(google.api.field_behavior) = REQUIRED];
+  string clause_id = 6 [(google.api.field_behavior) = REQUIRED];
 }
 
 message ExecuteAutoOpsResponse {
@@ -305,12 +370,111 @@ service AutoOpsService {
     };
   }
   rpc StopAutoOpsRule(StopAutoOpsRuleRequest)
-      returns (StopAutoOpsRuleResponse) {}
+      returns (StopAutoOpsRuleResponse) {
+    option (google.api.http) = {
+      patch: "/v1/auto_ops_rule/stop"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Stop"
+      description: "Stop an auto ops rule."
+      tags: "auto_ops_rule"
+      operation_id: "web.v1.auto_ops_rule.stop"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc DeleteAutoOpsRule(DeleteAutoOpsRuleRequest)
       returns (DeleteAutoOpsRuleResponse) {}
   rpc UpdateAutoOpsRule(UpdateAutoOpsRuleRequest)
-      returns (UpdateAutoOpsRuleResponse) {}
-  rpc ExecuteAutoOps(ExecuteAutoOpsRequest) returns (ExecuteAutoOpsResponse) {}
+      returns (UpdateAutoOpsRuleResponse) {
+    option (google.api.http) = {
+      patch: "/v1/auto_ops_rule"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update"
+      description: "Update an auto ops rule."
+      tags: "auto_ops_rule"
+      operation_id: "web.v1.auto_ops_rule.update"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc ExecuteAutoOps(ExecuteAutoOpsRequest) returns (ExecuteAutoOpsResponse) {
+    option (google.api.http) = {
+      post: "/v1/auto_ops_rule/execute"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Execute"
+      description: "Execute an auto ops rule."
+      tags: "auto_ops_rule"
+      operation_id: "web.v1.auto_ops_rule.execute"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ListOpsCounts(ListOpsCountsRequest) returns (ListOpsCountsResponse) {}
   rpc CreateProgressiveRollout(CreateProgressiveRolloutRequest)
       returns (CreateProgressiveRolloutResponse) {}
