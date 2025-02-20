@@ -140,7 +140,11 @@ func TestListExperimentsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return([]*experimentproto.Experiment{
 					{Id: "id-1"},
-				}, 0, int64(0), nil, nil)
+				}, 0, int64(0), nil)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperimentSummary(
+					gomock.Any(), gomock.Any(),
+				).Return(&v2es.ExperimentSummary{}, nil)
+
 			},
 			req:         &experimentproto.ListExperimentsRequest{FeatureId: "id-0", EnvironmentId: "ns0"},
 			expectedErr: nil,

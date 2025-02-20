@@ -308,7 +308,11 @@ func TestCountExperimentByStatus(t *testing.T) {
 			setup: func(s *experimentStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe).AnyTimes()
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -320,7 +324,11 @@ func TestCountExperimentByStatus(t *testing.T) {
 			setup: func(s *experimentStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe).AnyTimes()
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},

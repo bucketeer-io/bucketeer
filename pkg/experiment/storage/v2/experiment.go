@@ -265,7 +265,7 @@ func (s *experimentStorage) GetExperimentSummary(
 	environmentID string,
 ) (*ExperimentSummary, error) {
 	summary := &ExperimentSummary{}
-	err := s.qe.QueryRowContext(ctx, summarizeExperimentSQL, environmentID).Scan(
+	err := s.client.Qe(ctx).QueryRowContext(ctx, summarizeExperimentSQL, environmentID).Scan(
 		&summary.TotalWaitingCount,
 		&summary.TotalRunningCount,
 		&summary.TotalStoppedCount,

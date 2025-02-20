@@ -192,7 +192,7 @@ func (s *experimentService) ListExperiments(
 		return nil, dt.Err()
 	}
 
-	summary, err := experimentStorage.GetExperimentSummary(ctx, req.EnvironmentId)
+	summary, err := s.experimentStorage.GetExperimentSummary(ctx, req.EnvironmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get experiment summary",
