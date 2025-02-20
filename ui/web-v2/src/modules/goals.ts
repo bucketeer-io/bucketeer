@@ -67,6 +67,7 @@ interface ListGoalsParams {
   archived?: boolean;
   orderBy: OrderBy;
   orderDirection: OrderDirection;
+  connectionType?: Goal.ConnectionTypeMap[keyof Goal.ConnectionTypeMap];
 }
 
 export const listGoals = createAsyncThunk<
@@ -81,6 +82,8 @@ export const listGoals = createAsyncThunk<
   request.setOrderBy(params.orderBy);
   request.setOrderDirection(params.orderDirection);
   request.setSearchKeyword(params.searchKeyword);
+  params.connectionType && request.setConnectionType(params.connectionType);
+
   if (params.status != null) {
     const boolValue = new BoolValue();
     boolValue.setValue(params.status);
@@ -98,6 +101,7 @@ interface CreateGoalParams {
   id: string;
   name: string;
   description: string;
+  connectionType: Goal.ConnectionTypeMap[keyof Goal.ConnectionTypeMap];
 }
 
 export const createGoal = createAsyncThunk<
@@ -111,6 +115,7 @@ export const createGoal = createAsyncThunk<
   command.setId(params.id);
   command.setName(params.name);
   command.setDescription(params.description);
+  params.connectionType && command.setConnectionType(params.connectionType);
   request.setCommand(command);
   await grpc.createGoal(request);
 });

@@ -1,7 +1,7 @@
 import axiosClient from '@api/axios-client';
 import { APIKey, APIKeyRole } from '@types';
 
-export interface APIKeyCreatorParams {
+export interface APIKeyCreatorPayload {
   environmentId: string;
   name: string;
   role: APIKeyRole;
@@ -13,7 +13,7 @@ export interface APIKeyCreatorResponse {
 }
 
 export const apiKeyCreator = async (
-  params?: APIKeyCreatorParams
+  params?: APIKeyCreatorPayload
 ): Promise<APIKeyCreatorResponse> => {
   return axiosClient
     .post<APIKeyCreatorResponse>('/v1/account/create_api_key', params)

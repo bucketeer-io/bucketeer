@@ -1,7 +1,7 @@
 import axiosClient from '@api/axios-client';
 import { Project } from '@types';
 
-export interface ProjectCreatorParams {
+export interface ProjectCreatorPayload {
   name: string;
   urlCode: string;
   organizationId: string;
@@ -13,7 +13,7 @@ export interface ProjectResponse {
 }
 
 export const projectCreator = async (
-  params?: ProjectCreatorParams
+  params?: ProjectCreatorPayload
 ): Promise<ProjectResponse> => {
   return axiosClient
     .post<ProjectResponse>('/v1/environment/create_project', params)

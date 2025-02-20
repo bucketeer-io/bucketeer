@@ -7,23 +7,26 @@ import primaryAvatar from 'assets/avatars/primary.svg';
 import { useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
-import { Account } from '@types';
+import { Account, Tag } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { joinName } from 'utils/name';
 import { IconTrash } from '@icons';
 import { AvatarImage } from 'components/avatar';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
+import ExpandableTag from 'elements/expandable-tag';
+import TruncationWithTooltip from 'elements/truncation-with-tooltip';
 import { MemberActionsType } from '../types';
 
 export const useColumns = ({
-  onActions
+  onActions,
+  tags
 }: {
   onActions: (item: Account, type: MemberActionsType) => void;
+  tags: Tag[];
 }): ColumnDef<Account>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
-
   const { consoleAccount } = useAuth();
   const isOrganizationAdmin =
     consoleAccount?.organizationRole === 'Organization_ADMIN';
@@ -55,9 +58,20 @@ export const useColumns = ({
                     account.name}
                 </button>
               )}
-              <div className="typo-para-medium text-gray-700">
-                {account.email}
-              </div>
+              <TruncationWithTooltip
+                content={account.email}
+                maxSize={320}
+                elementId={`email-${account.email}`}
+                className="w-fit"
+                additionalClassName={['line-clamp-1', 'break-all']}
+              >
+                <div
+                  id={`email-${account.email}`}
+                  className="typo-para-medium text-gray-700"
+                >
+                  {account.email}
+                </div>
+              </TruncationWithTooltip>
               {isPendingInvite && (
                 <div className="py-[3px] px-2 w-fit rounded bg-accent-orange-50 typo-para-small text-accent-orange-500">
                   {`Pending invite`}
@@ -78,6 +92,24 @@ export const useColumns = ({
           <div className="text-gray-700 typo-para-medium">
             {String(account.organizationRole).split('_')[1]}
           </div>
+        );
+      }
+    },
+    {
+      accessorKey: 'tags',
+      header: `${t('tags')}`,
+      size: 300,
+      cell: ({ row }) => {
+        const account = row.original;
+        const formattedTags = account.tags?.map(
+          item => tags.find(tag => tag.id === item)?.name || item
+        );
+        return (
+          <ExpandableTag
+            tags={formattedTags}
+            rowId={account.email}
+            className="!max-w-[250px] truncate"
+          />
         );
       }
     },

@@ -73,6 +73,8 @@ func (h *subscriptionCommandHandler) Handle(ctx context.Context, cmd Command) er
 		return h.disable(ctx, c)
 	case *proto.RenameSubscriptionCommand:
 		return h.rename(ctx, c)
+	case *proto.UpdateSubscriptionFeatureFlagTagsCommand:
+		return h.updateFeatureFlagTags(ctx, c)
 	}
 	return errUnknownCommand
 }
@@ -138,6 +140,21 @@ func (h *subscriptionCommandHandler) rename(ctx context.Context, cmd *proto.Rena
 		return err
 	}
 	return h.createEvent(ctx, eventproto.Event_SUBSCRIPTION_RENAMED, &eventproto.SubscriptionRenamedEvent{Name: cmd.Name})
+}
+
+func (h *subscriptionCommandHandler) updateFeatureFlagTags(
+	ctx context.Context,
+	cmd *proto.UpdateSubscriptionFeatureFlagTagsCommand,
+) error {
+	err := h.subscription.UpdateFeatureFlagTags(cmd.FeatureFlagTags)
+	if err != nil {
+		return err
+	}
+	return h.createEvent(
+		ctx,
+		eventproto.Event_SUBSCRIPTION_FEATURE_FLAG_TAGS_UPDATED,
+		&eventproto.SubscriptionFeatureFlagTagsUpdatedEvent{FeatureFlagTags: cmd.FeatureFlagTags},
+	)
 }
 
 func (h *subscriptionCommandHandler) createEvent(

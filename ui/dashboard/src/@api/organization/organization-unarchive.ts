@@ -1,11 +1,11 @@
 import axiosClient from '@api/axios-client';
 
-export interface OrganizationUnarchiveParams {
+export interface OrganizationUnarchivePayload {
   id: string;
 }
 
 export const organizationUnarchive = async (
-  params?: OrganizationUnarchiveParams
+  params?: OrganizationUnarchivePayload
 ) => {
   return axiosClient
     .post('/v1/environment/unarchive_organization', params)

@@ -20,7 +20,7 @@ const PageLoader = () => {
   const { t } = useTranslation(['table']);
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const {
     data: collection,
@@ -29,7 +29,7 @@ const PageLoader = () => {
     isError
   } = useFetchAPIKeys({
     pageSize: 1,
-    organizationId: currenEnvironment.organizationId
+    organizationId: currentEnvironment.organizationId
   });
 
   const [selectedAPIKey, setSelectedAPIKey] = useState<APIKey>();
@@ -61,7 +61,7 @@ const PageLoader = () => {
     mutationFn: async (id: string) => {
       return apiKeyUpdater({
         id,
-        environmentId: currenEnvironment.id,
+        environmentId: currentEnvironment.id,
         disabled: isDisabling
       });
     },

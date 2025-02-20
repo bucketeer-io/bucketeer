@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from 'assets/logos/logo-white.svg';
 import { useAuth, getCurrentEnvironment } from 'auth';
 import * as ROUTING from 'constants/routing';
@@ -17,6 +17,7 @@ import UserMenu from './user-menu';
 const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
   const { t } = useTranslation(['common']);
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { consoleAccount } = useAuth();
 
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -146,7 +147,10 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
             )}
           >
             <button
-              onClick={onCloseSetting}
+              onClick={() => {
+                onCloseSetting();
+                navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`);
+              }}
               className="flex items-center gap-x-2 text-primary-50"
             >
               <Icon icon={IconSystem.IconBackspace} />
@@ -189,7 +193,16 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
 
         <div className="flex items-center justify-between">
           <UserMenu />
-          <button onClick={onOpenSetting}>
+          <button
+            onClick={() => {
+              onOpenSetting();
+              if (consoleAccount?.isSystemAdmin) {
+                navigate(ROUTING.PAGE_PATH_ORGANIZATIONS);
+              } else {
+                navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_SETTINGS}`);
+              }
+            }}
+          >
             <Icon icon={IconSystem.IconSetting} color="primary-50" />
           </button>
         </div>

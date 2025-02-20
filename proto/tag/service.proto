@@ -61,6 +61,7 @@ message ListTagsRequest {
   string search_keyword = 6;
   string environment_id = 7;
   string organization_id = 8;
+  Tag.EntityType entity_type = 9;
 }
 
 message ListTagsResponse {

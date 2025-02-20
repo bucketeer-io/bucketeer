@@ -30,6 +30,7 @@ import (
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	cacher "github.com/bucketeer-io/bucketeer/pkg/batch/jobs/cacher"
+	deleter "github.com/bucketeer-io/bucketeer/pkg/batch/jobs/deleter"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/experiment"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/mau"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
@@ -73,6 +74,7 @@ type setupMockFunc func(
 	mysqlMockClient *mysqlmock.MockClient,
 	mysqlMockRows *mysqlmock.MockRows,
 	redisMockClient *redismock.MockMultiGetCache,
+	qe *mysqlmock.MockQueryExecer,
 )
 
 func TestExperimentStatusUpdater(t *testing.T) {
@@ -90,6 +92,7 @@ func TestExperimentStatusUpdater(t *testing.T) {
 		mysqlMockClient *mysqlmock.MockClient,
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
+		qe *mysqlmock.MockQueryExecer,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -143,6 +146,7 @@ func TestExperimentRunningWatcher(t *testing.T) {
 		mysqlMockClient *mysqlmock.MockClient,
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
+		qe *mysqlmock.MockQueryExecer,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -186,6 +190,7 @@ func TestFeatureStaleWatcher(t *testing.T) {
 		mysqlMockClient *mysqlmock.MockClient,
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
+		qe *mysqlmock.MockQueryExecer,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -229,6 +234,7 @@ func TestMAUCountWatcher(t *testing.T) {
 		mysqlMockClient *mysqlmock.MockClient,
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
+		qe *mysqlmock.MockQueryExecer,
 	) {
 		environmentMockClient.EXPECT().
 			ListProjects(gomock.Any(), gomock.Any()).
@@ -282,6 +288,7 @@ func TestDatetimeWatcher(t *testing.T) {
 		mysqlMockClient *mysqlmock.MockClient,
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
+		qe *mysqlmock.MockQueryExecer,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -333,6 +340,7 @@ func TestEventCountWatcher(t *testing.T) {
 		mysqlMockClient *mysqlmock.MockClient,
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
+		qe *mysqlmock.MockQueryExecer,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -403,12 +411,13 @@ func TestEventCountWatcher(t *testing.T) {
 				},
 				nil,
 			)
-		mysqlMockClient.EXPECT().
-			ExecContext(
-				gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			Times(2).
-			Return(nil, nil)
+		mysqlMockClient.EXPECT().Qe(
+			gomock.Any(),
+		).AnyTimes().Return(qe)
+		qe.EXPECT().ExecContext(
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+		).AnyTimes().Return(nil, nil)
 		mockAutoOpsExecutor.EXPECT().
 			Execute(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			Times(2).
@@ -435,6 +444,7 @@ func TestProgressiveRolloutWatcher(t *testing.T) {
 		mysqlMockClient *mysqlmock.MockClient,
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
+		qe *mysqlmock.MockQueryExecer,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -501,6 +511,7 @@ func TestFeatureFlagCacher(t *testing.T) {
 		mysqlMockClient *mysqlmock.MockClient,
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
+		qe *mysqlmock.MockQueryExecer,
 	) {
 		mysqlMockRows.EXPECT().Close().Return(nil)
 		mysqlMockRows.EXPECT().Next().Return(false)
@@ -530,6 +541,7 @@ func TestSegmentUserCacher(t *testing.T) {
 		mysqlMockClient *mysqlmock.MockClient,
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
+		qe *mysqlmock.MockQueryExecer,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -589,6 +601,7 @@ func TestAPIKeyCacher(t *testing.T) {
 		mysqlMockClient *mysqlmock.MockClient,
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
+		qe *mysqlmock.MockQueryExecer,
 	) {
 		mysqlMockRows.EXPECT().Close().Return(nil)
 		mysqlMockRows.EXPECT().Next().Return(false)
@@ -618,6 +631,7 @@ func TestExperimentCacher(t *testing.T) {
 		mysqlMockClient *mysqlmock.MockClient,
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
+		qe *mysqlmock.MockQueryExecer,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -664,6 +678,7 @@ func TestAutoOpsRulesCacher(t *testing.T) {
 		mysqlMockClient *mysqlmock.MockClient,
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
+		qe *mysqlmock.MockQueryExecer,
 	) {
 		environmentMockClient.EXPECT().
 			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
@@ -726,6 +741,7 @@ func newBatchService(t *testing.T,
 	mysqlMockClient := mysqlmock.NewMockClient(mockController)
 	mysqlMockRows := mysqlmock.NewMockRows(mockController)
 	redisMockClient := redismock.NewMockMultiGetCache(mockController)
+	qe := mysqlmock.NewMockQueryExecer(mockController)
 
 	setupMock(
 		accountMockClient,
@@ -740,6 +756,7 @@ func newBatchService(t *testing.T,
 		mysqlMockClient,
 		mysqlMockRows,
 		redisMockClient,
+		qe,
 	)
 
 	service := NewBatchService(
@@ -843,6 +860,7 @@ func newBatchService(t *testing.T,
 			autoOpsRulesMockClient,
 			redisMockClient,
 		),
+		deleter.NewTagDeleter(mysqlMockClient),
 		logger,
 	)
 	return service

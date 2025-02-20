@@ -21,21 +21,24 @@ import "google/api/annotations.proto";
 import "google/protobuf/wrappers.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
+import "proto/common/string.proto";
 import "proto/user/user.proto";
 import "proto/feature/evaluation.proto";
 import "proto/feature/feature.proto";
 import "proto/feature/service.proto";
 import "proto/feature/variation.proto";
+import "proto/feature/strategy.proto";
 import "proto/feature/prerequisite.proto";
 import "proto/feature/rule.proto";
-import "proto/feature/strategy.proto";
-import "proto/feature/target.proto";
 import "proto/feature/segment.proto";
+import "proto/feature/target.proto";
 import "proto/push/push.proto";
 import "proto/push/service.proto";
 import "proto/account/service.proto";
 import "proto/account/account.proto";
 import "proto/event/client/event.proto";
+import "proto/coderef/code_reference.proto";
+import "proto/coderef/service.proto";
 
 message PingRequest {}
 
@@ -166,18 +169,19 @@ message ListFeaturesResponse {
 
 message UpdateFeatureRequest {
   string comment = 1;
-  string id = 2;
-  google.protobuf.StringValue name = 3;
-  google.protobuf.StringValue description = 4;
-  repeated string tags = 5;
-  google.protobuf.BoolValue enabled = 6;
-  google.protobuf.BoolValue archived = 7;
-  repeated feature.Variation variations = 8;
-  repeated feature.Prerequisite prerequisites = 9;
-  repeated feature.Target targets = 10;
-  repeated feature.Rule rules = 11;
-  feature.Strategy default_strategy = 12;
-  google.protobuf.StringValue off_variation = 13;
+  string environment_id = 2;
+  string id = 3;
+  google.protobuf.StringValue name = 4;
+  google.protobuf.StringValue description = 5;
+  common.StringListValue tags = 6;
+  google.protobuf.BoolValue enabled = 7;
+  google.protobuf.BoolValue archived = 8;
+  feature.VariationListValue variations = 9;
+  feature.PrerequisiteListValue prerequisites = 10;
+  feature.TargetListValue targets = 11;
+  feature.RuleListValue rules = 12;
+  feature.Strategy default_strategy = 13;
+  google.protobuf.StringValue off_variation = 14;
 }
 
 message UpdateFeatureResponse {
@@ -319,6 +323,72 @@ message ListAccountsV2Response {
   string cursor = 2;
   int64 total_count = 3;
 }
+
+message GetCodeReferenceRequest {
+  string id = 1;
+}
+
+message GetCodeReferenceResponse {
+  bucketeer.coderef.CodeReference code_reference = 1;
+}
+
+message ListCodeReferencesRequest {
+  int64 page_size = 1;
+  string cursor = 2;
+  bucketeer.coderef.ListCodeReferencesRequest.OrderBy order_by = 3;
+  bucketeer.coderef.ListCodeReferencesRequest.OrderDirection order_direction =
+      4;
+  string search_keyword = 5;
+  string feature_id = 6;
+}
+
+message ListCodeReferencesResponse {
+  repeated bucketeer.coderef.CodeReference code_references = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message CreateCodeReferenceRequest {
+  string feature_id = 1;
+  string environment_id = 2;
+  string file_path = 3;
+  int32 line_number = 4;
+  string code_snippet = 5;
+  string content_hash = 6;
+  repeated string aliases = 7;
+  string repository_name = 8;
+  string repository_owner = 9;
+  bucketeer.coderef.CodeReference.RepositoryType repository_type = 10;
+  string repository_branch = 11;
+  string commit_hash = 12;
+  string file_extension = 13;
+}
+
+message CreateCodeReferenceResponse {
+  bucketeer.coderef.CodeReference code_reference = 1;
+}
+
+message UpdateCodeReferenceRequest {
+  string id = 1;
+  string file_path = 2;
+  int32 line_number = 3;
+  string code_snippet = 4;
+  string content_hash = 5;
+  repeated string aliases = 6;
+  string repository_branch = 7;
+  string commit_hash = 8;
+  string file_extension = 9;
+}
+
+message UpdateCodeReferenceResponse {
+  bucketeer.coderef.CodeReference code_reference = 1;
+}
+
+message DeleteCodeReferenceRequest {
+  string id = 1;
+}
+
+message DeleteCodeReferenceResponse {}
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: { title: "Bucketeer Gateway Service" version: "1.0" }
@@ -777,6 +847,108 @@ service Gateway {
       description: "Get list Accounts. To call this API, you need a `READ` API Key role.",
       tags: "Account",
       operation_id: "api.gateway.v1.account.list",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc GetCodeReference(GetCodeReferenceRequest)
+      returns (GetCodeReferenceResponse) {
+    option (google.api.http) = {
+      get: "/v1/code_references/{id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get a code reference. To call this API, you need a `READ` API Key role.",
+      tags: "Code References",
+      operation_id: "api.gateway.v1.code_references.get",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc ListCodeReferences(ListCodeReferencesRequest)
+      returns (ListCodeReferencesResponse) {
+    option (google.api.http) = {
+      get: "/v1/code_references"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "List code references. To call this API, you need a `READ` API Key role.",
+      tags: "Code References",
+      operation_id: "api.gateway.v1.code_references.list",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc CreateCodeReference(CreateCodeReferenceRequest)
+      returns (CreateCodeReferenceResponse) {
+    option (google.api.http) = {
+      post: "/v1/code_references"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create",
+      description: "Create a new code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Code References",
+      operation_id: "api.gateway.v1.code_references.create",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc UpdateCodeReference(UpdateCodeReferenceRequest)
+      returns (UpdateCodeReferenceResponse) {
+    option (google.api.http) = {
+      patch: "/v1/code_references/{id}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update",
+      description: "Update a code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Code References",
+      operation_id: "api.gateway.v1.code_references.update",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc DeleteCodeReference(DeleteCodeReferenceRequest)
+      returns (DeleteCodeReferenceResponse) {
+    option (google.api.http) = {
+      delete: "/v1/code_references/{id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete",
+      description: "Delete a code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Code References",
+      operation_id: "api.gateway.v1.code_references.delete",
       parameters: {
         headers: {
           name: "authorization"

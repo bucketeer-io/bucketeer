@@ -56,11 +56,11 @@ type AutoOpsRuleStorage interface {
 }
 
 type autoOpsRuleStorage struct {
-	qe mysql.QueryExecer
+	client mysql.Client
 }
 
-func NewAutoOpsRuleStorage(qe mysql.QueryExecer) AutoOpsRuleStorage {
-	return &autoOpsRuleStorage{qe: qe}
+func NewAutoOpsRuleStorage(client mysql.Client) AutoOpsRuleStorage {
+	return &autoOpsRuleStorage{client: client}
 }
 
 func (s *autoOpsRuleStorage) CreateAutoOpsRule(
@@ -68,7 +68,7 @@ func (s *autoOpsRuleStorage) CreateAutoOpsRule(
 	e *domain.AutoOpsRule,
 	environmentId string,
 ) error {
-	_, err := s.qe.ExecContext(
+	_, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		insertAutoOpsRuleSQL,
 		e.Id,
@@ -95,7 +95,7 @@ func (s *autoOpsRuleStorage) UpdateAutoOpsRule(
 	e *domain.AutoOpsRule,
 	environmentId string,
 ) error {
-	result, err := s.qe.ExecContext(
+	result, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		updateAutoOpsRuleSQL,
 		e.FeatureId,
@@ -127,7 +127,7 @@ func (s *autoOpsRuleStorage) GetAutoOpsRule(
 ) (*domain.AutoOpsRule, error) {
 	autoOpsRule := proto.AutoOpsRule{}
 	var opsType int32
-	err := s.qe.QueryRowContext(
+	err := s.client.Qe(ctx).QueryRowContext(
 		ctx,
 		selectAutoOpsRuleSQL,
 		id,
@@ -141,9 +141,10 @@ func (s *autoOpsRuleStorage) GetAutoOpsRule(
 		&autoOpsRule.UpdatedAt,
 		&autoOpsRule.Deleted,
 		&autoOpsRule.AutoOpsStatus,
+		&autoOpsRule.FeatureName,
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrAutoOpsRuleNotFound
 		}
 		return nil, err
@@ -162,7 +163,7 @@ func (s *autoOpsRuleStorage) ListAutoOpsRules(
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectAutoOpsRulesSQL, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -180,6 +181,7 @@ func (s *autoOpsRuleStorage) ListAutoOpsRules(
 			&autoOpsRule.UpdatedAt,
 			&autoOpsRule.Deleted,
 			&autoOpsRule.AutoOpsStatus,
+			&autoOpsRule.FeatureName,
 		)
 		if err != nil {
 			return nil, 0, err

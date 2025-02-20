@@ -57,6 +57,20 @@ func (mr *MockGoalStorageMockRecorder) CreateGoal(ctx, g, environmentId any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGoal", reflect.TypeOf((*MockGoalStorage)(nil).CreateGoal), ctx, g, environmentId)
 }
 
+// DeleteGoal mocks base method.
+func (m *MockGoalStorage) DeleteGoal(ctx context.Context, id, environmentId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteGoal", ctx, id, environmentId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteGoal indicates an expected call of DeleteGoal.
+func (mr *MockGoalStorageMockRecorder) DeleteGoal(ctx, id, environmentId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteGoal", reflect.TypeOf((*MockGoalStorage)(nil).DeleteGoal), ctx, id, environmentId)
+}
+
 // GetGoal mocks base method.
 func (m *MockGoalStorage) GetGoal(ctx context.Context, id, environmentId string) (*domain.Goal, error) {
 	m.ctrl.T.Helper()

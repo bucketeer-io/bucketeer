@@ -1,4 +1,10 @@
-import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { useMemo } from 'react';
+import {
+  FormProvider,
+  Resolver,
+  SubmitHandler,
+  useForm
+} from 'react-hook-form';
 import { EnvironmentRoleItem } from '@api/account/account-creator';
 import { accountUpdater } from '@api/account/account-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -7,12 +13,16 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
+import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { Account, EnvironmentRoleType, OrganizationRole } from '@types';
 import { joinName } from 'utils/name';
+import { IconInfo } from '@icons';
+import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
+import { CreatableSelect } from 'components/creatable-select';
 import Divider from 'components/divider';
 import {
   DropdownMenu,
@@ -21,8 +31,10 @@ import {
   DropdownMenuTrigger
 } from 'components/dropdown';
 import Form from 'components/form';
+import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
+import { Tooltip } from 'components/tooltip';
 import { languageList, organizationRoles } from '../add-member-modal';
 import EnvironmentRoles from '../add-member-modal/environment-roles';
 
@@ -38,6 +50,7 @@ export interface EditMemberForm {
   language: string;
   role: string;
   environmentRoles: EnvironmentRoleItem[];
+  tags: string[];
 }
 
 export const formSchema = yup.object().shape({
@@ -50,10 +63,23 @@ export const formSchema = yup.object().shape({
     .required()
     .of(
       yup.object().shape({
-        environmentId: yup.string().required(),
-        role: yup.mixed<EnvironmentRoleType>().required()
+        environmentId: yup
+          .string()
+          .required(`Environment is a required field.`),
+        role: yup
+          .mixed<EnvironmentRoleType>()
+          .required()
+          .test('isUnassigned', (value, context) => {
+            if (value === 'Environment_UNASSIGNED')
+              return context.createError({
+                message: 'Role is a required field.',
+                path: context.path
+              });
+            return true;
+          })
       })
-    )
+    ),
+  tags: yup.array().of(yup.string())
 });
 
 const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
@@ -63,20 +89,26 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const form = useForm({
-    resolver: yupResolver(formSchema),
+  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
+    organizationId: currentEnvironment.organizationId
+  });
+  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
+
+  const form = useForm<EditMemberForm>({
+    resolver: yupResolver(formSchema) as Resolver<EditMemberForm>,
     defaultValues: {
       firstName: member.firstName,
       lastName: member.lastName,
       language: member.language,
       role: member.organizationRole,
-      environmentRoles: member.environmentRoles
+      environmentRoles: member.environmentRoles,
+      tags: member.tags
     }
   });
 
   const {
     watch,
-    formState: { isDirty, isSubmitting, isValid }
+    formState: { isDirty, isSubmitting }
   } = form;
   const memberEnvironments = watch('environmentRoles');
 
@@ -89,22 +121,14 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
     return accountUpdater({
       organizationId: currentEnvironment.organizationId,
       email: member.email,
-      changeOrganizationRoleCommand: {
+      organizationRole: {
         role: values.role as OrganizationRole
       },
-      changeEnvironmentRolesCommand: {
-        roles: values.environmentRoles,
-        writeType: 'WriteType_OVERRIDE'
-      },
-      changeFirstNameCommand: {
-        firstName: values.firstName
-      },
-      changeLastNameCommand: {
-        lastName: values.lastName
-      },
-      changeLanguageCommand: {
-        language: values.language
-      }
+      environmentRoles: values.environmentRoles,
+      firstName: values.firstName,
+      lastName: values.lastName,
+      language: values.language,
+      tags: values.tags
     }).then(() => {
       notify({
         toastType: 'toast',
@@ -120,6 +144,17 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
       onClose();
     });
   };
+
+  const defaultTagsValue = useMemo(() => {
+    const tags = member.tags?.map(tag => {
+      const tagItem = tagOptions.find(item => item.id === tag);
+      return {
+        label: tagItem?.name || tag,
+        value: tagItem?.id || tag
+      };
+    });
+    return tags;
+  }, [tagOptions, member]);
 
   return (
     <SlideModal title={t('update-member')} isOpen={isOpen} onClose={onClose}>
@@ -253,6 +288,44 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                 </Form.Item>
               )}
             />
+            <Form.Field
+              control={form.control}
+              name={`tags`}
+              render={({ field }) => (
+                <Form.Item className="py-2">
+                  <Form.Label className="relative w-fit">
+                    {t('tags')}
+                    <Tooltip
+                      align="start"
+                      alignOffset={-130}
+                      trigger={
+                        <div className="flex-center absolute top-0 -right-6">
+                          <Icon icon={IconInfo} size={'sm'} color="gray-600" />
+                        </div>
+                      }
+                      content={t('form:member-tags-tooltip')}
+                      className="!z-[100] max-w-[400px]"
+                    />
+                  </Form.Label>
+                  <Form.Control>
+                    <CreatableSelect
+                      defaultValues={defaultTagsValue}
+                      disabled={isLoadingTags}
+                      loading={isLoadingTags}
+                      placeholder={t(`form:placeholder-tags`)}
+                      options={tagOptions?.map(tag => ({
+                        label: tag.name,
+                        value: tag.id
+                      }))}
+                      onChange={tags =>
+                        field.onChange(tags.map(tag => tag?.value))
+                      }
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
             <Divider className="mt-1 mb-3" />
             <Form.Field
               control={form.control}
@@ -281,7 +354,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isDirty || !isValid}
+                    disabled={!isDirty}
                     loading={isSubmitting}
                   >
                     {t(`save`)}

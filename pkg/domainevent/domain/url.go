@@ -22,6 +22,7 @@ import (
 )
 
 const (
+	urlTemplateCodeRef      = "%s/%s/coderefs/%s"
 	urlTemplateFeature      = "%s/%s/features/%s"
 	urlTemplateGoal         = "%s/%s/goals/%s"
 	urlTemplateExperiment   = "%s/%s/experiments/%s"
@@ -78,6 +79,8 @@ func URL(entityType proto.Event_EntityType, url, envURLCode, id string) (string,
 		return fmt.Sprintf(urlTemplateFeature, url, envURLCode, id), nil
 	case proto.Event_TAG:
 		return fmt.Sprintf(urlTemplateTag, url, envURLCode, id), nil
+	case proto.Event_CODEREF:
+		return fmt.Sprintf(urlTemplateCodeRef, url, envURLCode, id), nil
 	}
 	return "", ErrUnknownEntityType
 }

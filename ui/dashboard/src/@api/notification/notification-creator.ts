@@ -6,6 +6,7 @@ export interface NotificationCreatorPayload {
   name: string;
   sourceTypes: SourceType[];
   recipient: NotificationRecipient;
+  featureFlagTags: string[];
 }
 
 export interface NotificationCreatorResponse {

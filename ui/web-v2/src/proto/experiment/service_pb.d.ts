@@ -111,6 +111,11 @@ export class ListGoalsRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getConnectionType(): proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap];
+  setConnectionType(
+    value: proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap]
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListGoalsRequest.AsObject;
   static toObject(
@@ -142,6 +147,7 @@ export namespace ListGoalsRequest {
     isInUseStatus?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     archived?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     environmentId: string;
+    connectionType: proto_experiment_goal_pb.Goal.ConnectionTypeMap[keyof proto_experiment_goal_pb.Goal.ConnectionTypeMap];
   };
 
   export interface OrderByMap {
@@ -449,6 +455,21 @@ export class UpdateGoalRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasArchived(): boolean;
+  clearArchived(): void;
+  getArchived(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setArchived(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateGoalRequest.AsObject;
   static toObject(
@@ -476,10 +497,18 @@ export namespace UpdateGoalRequest {
     renameCommand?: proto_experiment_command_pb.RenameGoalCommand.AsObject;
     changeDescriptionCommand?: proto_experiment_command_pb.ChangeDescriptionGoalCommand.AsObject;
     environmentId: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    archived?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 }
 
 export class UpdateGoalResponse extends jspb.Message {
+  hasGoal(): boolean;
+  clearGoal(): void;
+  getGoal(): proto_experiment_goal_pb.Goal | undefined;
+  setGoal(value?: proto_experiment_goal_pb.Goal): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateGoalResponse.AsObject;
   static toObject(
@@ -502,7 +531,9 @@ export class UpdateGoalResponse extends jspb.Message {
 }
 
 export namespace UpdateGoalResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    goal?: proto_experiment_goal_pb.Goal.AsObject;
+  };
 }
 
 export class GetExperimentRequest extends jspb.Message {
@@ -683,6 +714,10 @@ export namespace ListExperimentsRequest {
     NAME: 1;
     CREATED_AT: 2;
     UPDATED_AT: 3;
+    START_AT: 4;
+    STOP_AT: 5;
+    STATUS: 6;
+    GOALS_COUNT: 7;
   }
 
   export const OrderBy: OrderByMap;
@@ -712,6 +747,11 @@ export class ListExperimentsResponse extends jspb.Message {
   getTotalCount(): number;
   setTotalCount(value: number): void;
 
+  hasSummary(): boolean;
+  clearSummary(): void;
+  getSummary(): ListExperimentsResponse.Summary | undefined;
+  setSummary(value?: ListExperimentsResponse.Summary): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListExperimentsResponse.AsObject;
   static toObject(
@@ -738,7 +778,44 @@ export namespace ListExperimentsResponse {
     experimentsList: Array<proto_experiment_experiment_pb.Experiment.AsObject>;
     cursor: string;
     totalCount: number;
+    summary?: ListExperimentsResponse.Summary.AsObject;
   };
+
+  export class Summary extends jspb.Message {
+    getTotalWaitingCount(): number;
+    setTotalWaitingCount(value: number): void;
+
+    getTotalRunningCount(): number;
+    setTotalRunningCount(value: number): void;
+
+    getTotalStoppedCount(): number;
+    setTotalStoppedCount(value: number): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): Summary.AsObject;
+    static toObject(includeInstance: boolean, msg: Summary): Summary.AsObject;
+    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+    static extensionsBinary: {
+      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+    };
+    static serializeBinaryToWriter(
+      message: Summary,
+      writer: jspb.BinaryWriter
+    ): void;
+    static deserializeBinary(bytes: Uint8Array): Summary;
+    static deserializeBinaryFromReader(
+      message: Summary,
+      reader: jspb.BinaryReader
+    ): Summary;
+  }
+
+  export namespace Summary {
+    export type AsObject = {
+      totalWaitingCount: number;
+      totalRunningCount: number;
+      totalStoppedCount: number;
+    };
+  }
 }
 
 export class CreateExperimentRequest extends jspb.Message {
@@ -749,6 +826,29 @@ export class CreateExperimentRequest extends jspb.Message {
 
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
+
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getStartAt(): number;
+  setStartAt(value: number): void;
+
+  getStopAt(): number;
+  setStopAt(value: number): void;
+
+  clearGoalIdsList(): void;
+  getGoalIdsList(): Array<string>;
+  setGoalIdsList(value: Array<string>): void;
+  addGoalIds(value: string, index?: number): string;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getBaseVariationId(): string;
+  setBaseVariationId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateExperimentRequest.AsObject;
@@ -775,6 +875,13 @@ export namespace CreateExperimentRequest {
   export type AsObject = {
     command?: proto_experiment_command_pb.CreateExperimentCommand.AsObject;
     environmentId: string;
+    featureId: string;
+    startAt: number;
+    stopAt: number;
+    goalIdsList: Array<string>;
+    name: string;
+    description: string;
+    baseVariationId: string;
   };
 }
 
@@ -845,6 +952,36 @@ export class UpdateExperimentRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasStartAt(): boolean;
+  clearStartAt(): void;
+  getStartAt(): google_protobuf_wrappers_pb.Int64Value | undefined;
+  setStartAt(value?: google_protobuf_wrappers_pb.Int64Value): void;
+
+  hasStopAt(): boolean;
+  clearStopAt(): void;
+  getStopAt(): google_protobuf_wrappers_pb.Int64Value | undefined;
+  setStopAt(value?: google_protobuf_wrappers_pb.Int64Value): void;
+
+  hasArchived(): boolean;
+  clearArchived(): void;
+  getArchived(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setArchived(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  hasStatus(): boolean;
+  clearStatus(): void;
+  getStatus(): UpdateExperimentRequest.UpdatedStatus | undefined;
+  setStatus(value?: UpdateExperimentRequest.UpdatedStatus): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateExperimentRequest.AsObject;
   static toObject(
@@ -873,10 +1010,54 @@ export namespace UpdateExperimentRequest {
     changeNameCommand?: proto_experiment_command_pb.ChangeExperimentNameCommand.AsObject;
     changeDescriptionCommand?: proto_experiment_command_pb.ChangeExperimentDescriptionCommand.AsObject;
     environmentId: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    startAt?: google_protobuf_wrappers_pb.Int64Value.AsObject;
+    stopAt?: google_protobuf_wrappers_pb.Int64Value.AsObject;
+    archived?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    status?: UpdateExperimentRequest.UpdatedStatus.AsObject;
   };
+
+  export class UpdatedStatus extends jspb.Message {
+    getStatus(): proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap];
+    setStatus(
+      value: proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap]
+    ): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UpdatedStatus.AsObject;
+    static toObject(
+      includeInstance: boolean,
+      msg: UpdatedStatus
+    ): UpdatedStatus.AsObject;
+    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+    static extensionsBinary: {
+      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+    };
+    static serializeBinaryToWriter(
+      message: UpdatedStatus,
+      writer: jspb.BinaryWriter
+    ): void;
+    static deserializeBinary(bytes: Uint8Array): UpdatedStatus;
+    static deserializeBinaryFromReader(
+      message: UpdatedStatus,
+      reader: jspb.BinaryReader
+    ): UpdatedStatus;
+  }
+
+  export namespace UpdatedStatus {
+    export type AsObject = {
+      status: proto_experiment_experiment_pb.Experiment.StatusMap[keyof proto_experiment_experiment_pb.Experiment.StatusMap];
+    };
+  }
 }
 
 export class UpdateExperimentResponse extends jspb.Message {
+  hasExperiment(): boolean;
+  clearExperiment(): void;
+  getExperiment(): proto_experiment_experiment_pb.Experiment | undefined;
+  setExperiment(value?: proto_experiment_experiment_pb.Experiment): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateExperimentResponse.AsObject;
   static toObject(
@@ -899,7 +1080,9 @@ export class UpdateExperimentResponse extends jspb.Message {
 }
 
 export namespace UpdateExperimentResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    experiment?: proto_experiment_experiment_pb.Experiment.AsObject;
+  };
 }
 
 export class StartExperimentRequest extends jspb.Message {
