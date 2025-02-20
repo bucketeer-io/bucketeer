@@ -1528,7 +1528,7 @@ func TestAssignUserSamplingSeed(t *testing.T) {
 		t.Fatalf("Failed to assign user. Variation id does not match. Current: %s, target: %s", variation.Id, f.DefaultStrategy.RolloutStrategy.Variations[2].Variation)
 	}
 	// Channge sampling seed to change assigned variation.
-	f.SamplingSeed = "test"
+	f.SamplingSeed = "sampling-seed-test"
 	reason, variation, err = evaluator.assignUser(f, user, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to assign user. Error: %v", err)
