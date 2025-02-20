@@ -1,5 +1,5 @@
 import test from 'ava';
-import Bucketeer from '../../bucketeer';
+import { Bucketeer } from '../../bucketeer';
 
 test('murmur128 should return correct high and low values', (t) => {
   const bucketeer = new Bucketeer();

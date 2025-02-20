@@ -1,6 +1,6 @@
 import murmurHash3 from 'murmurhash3js';
 
-export default class Bucketeer {
+class Bucketeer {
   // Calculate the input hash of the target property and map it to a float64 between [0,1]
   bucket(input: string): number {
     const { high, low } = this.murmur128(input);
