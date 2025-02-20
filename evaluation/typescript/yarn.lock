@@ -1431,6 +1431,11 @@
   resolved "https://registry.npmjs.org/@types/json-schema/-/json-schema-7.0.15.tgz"
   integrity sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==
 
+"@types/murmurhash3js@^3.0.7":
+  version "3.0.7"
+  resolved "https://registry.yarnpkg.com/@types/murmurhash3js/-/murmurhash3js-3.0.7.tgz#5c3589180f13aac082857932ffb353251e7f296b"
+  integrity sha512-jN3Z37nILIW1DZyP6N/NK+aw/zjFHPVb7hjrmdw7jx7FayrhKgkNpo6ZDwAsH8HSANjebBOxoXXtA39gKwyeGw==
+
 "@types/mute-stream@^0.0.4":
   version "0.0.4"
   resolved "https://registry.npmjs.org/@types/mute-stream/-/mute-stream-0.0.4.tgz"
@@ -4308,6 +4313,11 @@ msw@^2.3.5:
     strict-event-emitter "^0.5.1"
     type-fest "^4.9.0"
     yargs "^17.7.2"
+
+murmurhash3js@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/murmurhash3js/-/murmurhash3js-3.0.1.tgz#3e983e5b47c2a06f43a713174e7e435ca044b998"
+  integrity sha512-KL8QYUaxq7kUbcl0Yto51rMcYt7E/4N4BG3/c96Iqw1PQrTRspu8Cpx4TZ4Nunib1d4bEkIH3gjCYlP2RLBdow==
 
 mute-stream@0.0.8:
   version "0.0.8"

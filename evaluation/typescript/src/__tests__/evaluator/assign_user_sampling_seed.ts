@@ -24,10 +24,10 @@ test('assign user with sampling seed', (t) => {
   const evalator = new Evaluator();
   let [reason, variation] = evalator.assignUser(f, user, [], {});
   t.is(reason.getType(), Reason.Type.DEFAULT);
-  t.is(variation.getId(), 'variation-B'); //rolloutStrategy.getVariationsList()[1].getVariation()
+  t.is(variation.getId(), 'variation-C'); //rolloutStrategy.getVariationsList()[2].getVariation()
 
   // Channge sampling seed to change assigned variation.
-  f.setSamplingSeed('test');
+  f.setSamplingSeed('sampling-seed');
   [reason, variation] = evalator.assignUser(f, user, [], {});
   t.is(reason.getType(), Reason.Type.DEFAULT);
   t.is(variation.getId(), 'variation-A'); //rolloutStrategy.getVariationsList()[0].getVariation()
