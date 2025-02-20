@@ -6,9 +6,15 @@ vault:
       enabled: true
       devRootToken: "root"
 
+redis-cluster:
+  # Configure the cluster
+  cluster:
+    nodes: 6  # Minimum required nodes for Redis Cluster (3 masters + 3 replicas)
+    replicas: 1  # Number of replicas for each master
+
 redis:
   architecture: "standalone"
-  auth: 
+  auth:
     enabled: false
 
 nginx:
@@ -44,7 +50,7 @@ bq:
     httpNodePort: 31000
   image:
     repository: ghcr.io/bucketeer-io/bigquery-emulator
-    
-pubsub: 
-  image: 
+
+pubsub:
+  image:
     tag: "449.0.0"

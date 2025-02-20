@@ -9,6 +9,9 @@ dependencies:
 - name: bq
   version: "0.1.0"
   repository: "file://./dependencies/bq"
+- name: redis-cluster
+  version: "11.4.2"
+  repository: "https://charts.bitnami.com/bitnami"
 - name: redis
   version: "17.7.5"
   repository: "https://charts.bitnami.com/bitnami"
