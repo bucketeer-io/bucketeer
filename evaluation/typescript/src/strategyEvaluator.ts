@@ -1,8 +1,6 @@
-import * as crypto from 'crypto';
+import { Bucketeer } from './bucketeer';
 import { RolloutStrategy, Strategy } from './proto/feature/strategy_pb';
 import { Variation } from './proto/feature/variation_pb';
-//
-const MAX = 0xffffffffffffffffn;
 
 class StrategyEvaluator {
   evaluate(
@@ -33,34 +31,18 @@ class StrategyEvaluator {
     featureID: string,
     samplingSeed: string,
   ): string {
-    const bucket = this.bucket(userID, featureID, samplingSeed);
+    const input = `${featureID}-${userID}-${samplingSeed}`;
+    const bucketeer = new Bucketeer();
+    const bucket = bucketeer.bucket(input);
 
-    let sum = 0.0;
+    let rangeEnd = 0.0;
     for (const variation of strategy.getVariationsList()) {
-      sum += variation.getWeight() / 100000.0;
-      if (bucket < sum) {
+      rangeEnd += variation.getWeight() / 100000.0;
+      if (bucket < rangeEnd) {
         return variation.getVariation();
       }
     }
     throw new Error('Variation not found');
-  }
-
-  private bucket(userID: string, featureID: string, samplingSeed: string): number {
-    try {
-      const hash = this.hash(userID, featureID, samplingSeed);
-      const intVal = BigInt('0x' + hash.slice(0, 16)); // Convert the first 16 hex characters to BigInt
-
-      // Divide the BigInt value by `max` and convert it to a number. Use Number() since we need a float.
-      return Number(intVal) / Number(MAX);
-    } catch (error) {
-      console.error('Failed to calculate bucket value:', error);
-      throw error;
-    }
-  }
-
-  private hash(userID: string, featureID: string, samplingSeed: string): string {
-    const concat = `${featureID}-${userID}${samplingSeed}`;
-    return crypto.createHash('md5').update(concat).digest('hex');
   }
 
   private findVariation(variationID: string, variations: Variation[]): Variation {
