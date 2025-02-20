@@ -53,6 +53,8 @@
     "js-cookie": "^3.0.5",
     "jstat": "1.9.4",
     "option-t": "23.0.2",
+    "prism-react-renderer": "^2.4.1",
+    "prismjs": "^1.29.0",
     "prop-types": "^15.6.0",
     "query-string": "7.0.1",
     "react": "17.0.2",
