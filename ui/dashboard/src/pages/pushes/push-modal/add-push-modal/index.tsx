@@ -3,15 +3,15 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { pushCreator } from '@api/push';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidatePushes } from '@queries/pushes';
-import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
+import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { covertFileToByteString } from 'utils/converts';
 import { IconInfo } from '@icons';
+import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -60,15 +60,7 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
     organizationId: currentEnvironment.organizationId
   });
 
-  const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
-    params: {
-      cursor: String(0),
-      pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id
-    }
-  });
   const environments = (collection?.environments || []).filter(item => item.id);
-  const tagOptions = tagCollection?.tags || [];
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -81,9 +73,22 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
   });
 
   const {
+    watch,
     getValues,
     formState: { isValid, isSubmitting }
   } = form;
+
+  const isEnabledTags = !!watch('environmentId');
+
+  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
+    entityType: 'FEATURE_FLAG',
+    environmentId: watch('environmentId'),
+    options: {
+      enabled: isEnabledTags
+    }
+  });
+
+  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
 
   const onSubmit: SubmitHandler<AddPushForm> = async values => {
     try {
@@ -111,6 +116,8 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
       });
     }
   };
+
+  console.log('form', form.getValues('tags'));
 
   return (
     <SlideModal title={t('new-push')} isOpen={isOpen} onClose={onClose}>
@@ -205,6 +212,7 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                             label={item.name}
                             onSelectOption={value => {
                               field.onChange(value);
+                              form.setValue('tags', []);
                             }}
                           />
                         ))}
@@ -221,14 +229,23 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
               name={`tags`}
               render={({ field }) => (
                 <Form.Item className="py-2">
-                  <Form.Label required>{t('tags')}</Form.Label>
+                  <Form.Label required>
+                    {t('form:feature-flag-tags')}
+                  </Form.Label>
                   <Form.Control>
                     <CreatableSelect
-                      disabled={isLoadingTags}
-                      placeholder={t(`form:placeholder-tags`)}
+                      disabled={
+                        isLoadingTags || !isEnabledTags || !tagOptions.length
+                      }
+                      loading={isLoadingTags}
+                      placeholder={t(
+                        isEnabledTags && !tagOptions.length && !isLoadingTags
+                          ? `form:no-tags-found`
+                          : `form:placeholder-tags`
+                      )}
                       options={tagOptions?.map(tag => ({
                         label: tag.name,
-                        value: tag.name
+                        value: tag.id
                       }))}
                       onChange={value =>
                         field.onChange(value.map(tag => tag.value))

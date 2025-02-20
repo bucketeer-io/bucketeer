@@ -18,15 +18,19 @@ const sourceTypesSchema = yup
     NOTIFICATION_SOURCE_TYPES_MIN_LENGTH,
     intl.formatMessage(messages.input.error.minSelectOptionLength)
   );
+
 const webhookUrlSchema = yup.string().required().url();
+const featureFlagTagsListSchema = yup.array().of(yup.string());
 
 export const addFormSchema = yup.object().shape({
   name: nameSchema,
   sourceTypes: sourceTypesSchema,
-  webhookUrl: webhookUrlSchema
+  webhookUrl: webhookUrlSchema,
+  featureFlagTagsList: featureFlagTagsListSchema
 });
 
 export const updateFormSchema = yup.object().shape({
   name: nameSchema,
-  sourceTypes: sourceTypesSchema
+  sourceTypes: sourceTypesSchema,
+  featureFlagTagsList: featureFlagTagsListSchema
 });

@@ -109,7 +109,10 @@ export const DataTable = <TData, TValue>({
               {row.getVisibleCells().map(cell => (
                 <Table.Cell
                   key={cell.id}
-                  style={{ width: cell.column.columnDef.size }}
+                  style={{
+                    width: cell.column.columnDef.size,
+                    maxWidth: cell.column.columnDef.maxSize
+                  }}
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </Table.Cell>

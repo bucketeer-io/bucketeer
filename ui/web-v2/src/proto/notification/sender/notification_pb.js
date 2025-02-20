@@ -666,7 +666,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           entityId: jspb.Message.getFieldWithDefault(msg, 4, ''),
           type: jspb.Message.getFieldWithDefault(msg, 5, 0),
           environmentName: jspb.Message.getFieldWithDefault(msg, 7, ''),
-          environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 8, '')
+          environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 8, ''),
+          entityData: jspb.Message.getFieldWithDefault(msg, 9, '')
         };
 
       if (includeInstance) {
@@ -739,6 +740,10 @@ proto.bucketeer.notification.sender.DomainEventNotification.deserializeBinaryFro
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentUrlCode(value);
           break;
+        case 9:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEntityData(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -798,6 +803,10 @@ proto.bucketeer.notification.sender.DomainEventNotification.serializeBinaryToWri
     f = message.getEnvironmentUrlCode();
     if (f.length > 0) {
       writer.writeString(8, f);
+    }
+    f = message.getEntityData();
+    if (f.length > 0) {
+      writer.writeString(9, f);
     }
   };
 
@@ -937,6 +946,26 @@ proto.bucketeer.notification.sender.DomainEventNotification.prototype.getEnviron
 proto.bucketeer.notification.sender.DomainEventNotification.prototype.setEnvironmentUrlCode =
   function (value) {
     return jspb.Message.setProto3StringField(this, 8, value);
+  };
+
+/**
+ * optional string entity_data = 9;
+ * @return {string}
+ */
+proto.bucketeer.notification.sender.DomainEventNotification.prototype.getEntityData =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 9, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.notification.sender.DomainEventNotification} returns this
+ */
+proto.bucketeer.notification.sender.DomainEventNotification.prototype.setEntityData =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 9, value);
   };
 
 /**

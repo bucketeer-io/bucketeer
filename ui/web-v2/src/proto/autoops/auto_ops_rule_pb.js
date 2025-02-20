@@ -143,7 +143,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         createdAt: jspb.Message.getFieldWithDefault(msg, 7, 0),
         updatedAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
         deleted: jspb.Message.getBooleanFieldWithDefault(msg, 9, false),
-        autoOpsStatus: jspb.Message.getFieldWithDefault(msg, 10, 0)
+        autoOpsStatus: jspb.Message.getFieldWithDefault(msg, 10, 0),
+        featureName: jspb.Message.getFieldWithDefault(msg, 11, '')
       };
 
     if (includeInstance) {
@@ -224,6 +225,10 @@ proto.bucketeer.autoops.AutoOpsRule.deserializeBinaryFromReader = function (
         );
         msg.setAutoOpsStatus(value);
         break;
+      case 11:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setFeatureName(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -289,6 +294,10 @@ proto.bucketeer.autoops.AutoOpsRule.serializeBinaryToWriter = function (
   f = message.getAutoOpsStatus();
   if (f !== 0.0) {
     writer.writeEnum(10, f);
+  }
+  f = message.getFeatureName();
+  if (f.length > 0) {
+    writer.writeString(11, f);
   }
 };
 
@@ -460,6 +469,24 @@ proto.bucketeer.autoops.AutoOpsRule.prototype.setAutoOpsStatus = function (
   value
 ) {
   return jspb.Message.setProto3EnumField(this, 10, value);
+};
+
+/**
+ * optional string feature_name = 11;
+ * @return {string}
+ */
+proto.bucketeer.autoops.AutoOpsRule.prototype.getFeatureName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 11, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.AutoOpsRule} returns this
+ */
+proto.bucketeer.autoops.AutoOpsRule.prototype.setFeatureName = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 11, value);
 };
 
 /**

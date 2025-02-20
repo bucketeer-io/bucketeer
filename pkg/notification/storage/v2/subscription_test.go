@@ -32,7 +32,8 @@ func TestNewSubscriptionStorage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	storage := NewSubscriptionStorage(mock.NewMockQueryExecer(mockController))
+	client := mock.NewMockClient(mockController)
+	storage := NewSubscriptionStorage(client)
 	assert.IsType(t, &subscriptionStorage{}, storage)
 }
 
@@ -45,6 +46,7 @@ func TestCreateSubscription(t *testing.T) {
 	sourceTypes := []proto.Subscription_SourceType{5}
 	recipient := &proto.Recipient{Type: 0, SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "slack"}}
 	name := "name-0"
+	featureFlagTags := []string{"tag"}
 	envNamespace := "ns"
 	patterns := []struct {
 		desc          string
@@ -56,9 +58,14 @@ func TestCreateSubscription(t *testing.T) {
 		{
 			desc: "ErrSubscriptionAlreadyExists",
 			setup: func(s *subscriptionStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, mysql.ErrDuplicateEntry)
+
 			},
 			input: &domain.Subscription{
 				Subscription: &proto.Subscription{Id: id},
@@ -69,7 +76,11 @@ func TestCreateSubscription(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *subscriptionStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 
@@ -83,14 +94,26 @@ func TestCreateSubscription(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *subscriptionStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
-					id, int64(1), int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name, envNamespace,
+					id, int64(1), int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name, mysql.JSONObject{Val: featureFlagTags}, envNamespace,
 				).Return(nil, nil)
 			},
 			input: &domain.Subscription{
-				Subscription: &proto.Subscription{Id: id, CreatedAt: 1, UpdatedAt: 2, Disabled: false, SourceTypes: sourceTypes, Recipient: recipient, Name: name},
+				Subscription: &proto.Subscription{
+					Id:          id,
+					CreatedAt:   1,
+					UpdatedAt:   2,
+					Disabled:    false,
+					SourceTypes: sourceTypes,
+					Recipient:   recipient,
+					Name:        name, FeatureFlagTags: featureFlagTags,
+				},
 			},
 			environmentId: envNamespace,
 			expectedErr:   nil,
@@ -117,6 +140,7 @@ func TestUpdateSubscription(t *testing.T) {
 	sourceTypes := []proto.Subscription_SourceType{5}
 	recipient := &proto.Recipient{Type: 0, SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "slack"}}
 	name := "name-0"
+	featureFlagTags := []string{"tag"}
 	envNamespace := "ns"
 	patterns := []struct {
 		desc          string
@@ -130,7 +154,12 @@ func TestUpdateSubscription(t *testing.T) {
 			setup: func(s *subscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -143,7 +172,12 @@ func TestUpdateSubscription(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *subscriptionStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 
@@ -159,14 +193,27 @@ func TestUpdateSubscription(t *testing.T) {
 			setup: func(s *subscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
-					int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name, id, envNamespace,
+					int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name, mysql.JSONObject{Val: featureFlagTags}, id, envNamespace,
 				).Return(result, nil)
 			},
 			input: &domain.Subscription{
-				Subscription: &proto.Subscription{Id: id, CreatedAt: 1, UpdatedAt: 2, Disabled: false, SourceTypes: sourceTypes, Recipient: recipient, Name: name},
+				Subscription: &proto.Subscription{
+					Id:              id,
+					CreatedAt:       1,
+					UpdatedAt:       2,
+					Disabled:        false,
+					SourceTypes:     sourceTypes,
+					Recipient:       recipient,
+					Name:            name,
+					FeatureFlagTags: featureFlagTags,
+				},
 			},
 			environmentId: envNamespace,
 			expectedErr:   nil,
@@ -203,7 +250,11 @@ func TestDeleteSubscription(t *testing.T) {
 			setup: func(s *subscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -214,7 +265,12 @@ func TestDeleteSubscription(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *subscriptionStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 
@@ -228,7 +284,13 @@ func TestDeleteSubscription(t *testing.T) {
 			setup: func(s *subscriptionStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
 					id, envNamespace,
@@ -270,7 +332,12 @@ func TestGetSubscription(t *testing.T) {
 			setup: func(s *subscriptionStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -283,7 +350,11 @@ func TestGetSubscription(t *testing.T) {
 			setup: func(s *subscriptionStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 
@@ -297,7 +368,11 @@ func TestGetSubscription(t *testing.T) {
 			setup: func(s *subscriptionStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(),
 					gomock.Any(),
 					id, envNamespace,
@@ -344,7 +419,12 @@ func TestListSubscriptions(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *subscriptionStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -368,18 +448,22 @@ func TestListSubscriptions(t *testing.T) {
 				}).Times(getSize + 1)
 				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(getSize)
 				rows.EXPECT().Err().Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe).AnyTimes()
+				qe.EXPECT().QueryContext(
 					gomock.Any(),
 					gomock.Any(),
 					updatedAt, disable,
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(),
 					gomock.Any(),
 					updatedAt, disable,
 				).Return(row)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
 			},
 			whereParts: []mysql.WherePart{
 				mysql.NewFilter("updated_at", ">=", updatedAt),
@@ -402,14 +486,18 @@ func TestListSubscriptions(t *testing.T) {
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe).AnyTimes()
+				qe.EXPECT().QueryContext(
 					gomock.Any(),
 					gomock.Any(),
 					[]interface{}{},
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(),
 					gomock.Any(),
 					[]interface{}{},
@@ -449,5 +537,5 @@ func TestListSubscriptions(t *testing.T) {
 
 func newsubscriptionStorageWithMock(t *testing.T, mockController *gomock.Controller) *subscriptionStorage {
 	t.Helper()
-	return &subscriptionStorage{mock.NewMockQueryExecer(mockController)}
+	return &subscriptionStorage{mock.NewMockClient(mockController)}
 }

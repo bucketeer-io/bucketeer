@@ -95,6 +95,9 @@ export class DomainEventNotification extends jspb.Message {
   getEnvironmentUrlCode(): string;
   setEnvironmentUrlCode(value: string): void;
 
+  getEntityData(): string;
+  setEntityData(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DomainEventNotification.AsObject;
   static toObject(
@@ -124,6 +127,7 @@ export namespace DomainEventNotification {
     type: proto_event_domain_event_pb.Event.TypeMap[keyof proto_event_domain_event_pb.Event.TypeMap];
     environmentName: string;
     environmentUrlCode: string;
+    entityData: string;
   };
 }
 

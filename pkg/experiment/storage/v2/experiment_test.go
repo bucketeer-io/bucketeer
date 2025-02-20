@@ -260,6 +260,54 @@ func TestListExperiments(t *testing.T) {
 	}
 }
 
+func TestCountExperimentByStatus(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	patterns := []struct {
+		desc        string
+		setup       func(*experimentStorage)
+		expected    *ExperimentSummary
+		expectedErr error
+	}{
+		{
+			desc: "error",
+			setup: func(s *experimentStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			expected:    nil,
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "success",
+			setup: func(s *experimentStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			expected:    &ExperimentSummary{},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := newExperimentStorageWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			summary, err := storage.GetExperimentSummary(context.Background(), "ns0")
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expected, summary)
+		})
+	}
+}
+
 func newExperimentStorageWithMock(t *testing.T, mockController *gomock.Controller) *experimentStorage {
 	t.Helper()
 	return &experimentStorage{mock.NewMockQueryExecer(mockController)}

@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 
 import { messages } from '../../lang/messages';
+import { Goal } from '../../proto/experiment/goal_pb';
 
 export interface GoalAddFormProps {
   onSubmit: () => void;
@@ -16,8 +17,12 @@ export const GoalAddForm: FC<GoalAddFormProps> = memo(
     const methods = useFormContext();
     const {
       register,
-      formState: { errors, isSubmitting, isValid }
+      formState: { errors, isSubmitting, isValid },
+      setValue,
+      watch
     } = methods;
+
+    const watchConnectionType = watch('connectionType');
 
     return (
       <div className="w-[500px]">
@@ -107,6 +112,56 @@ export const GoalAddForm: FC<GoalAddFormProps> = memo(
                     <p className="input-error">
                       {errors.description && (
                         <span role="alert">{errors.description.message}</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="connections">
+                    <span className="input-label">
+                      {f(messages.goal.connection)}
+                    </span>
+                  </label>
+                  <div className="mt-1">
+                    {[
+                      {
+                        label: f(messages.goal.experiments),
+                        value: Goal.ConnectionType.EXPERIMENT.toString()
+                      },
+                      {
+                        label: f(messages.goal.autoOperations),
+                        value: Goal.ConnectionType.OPERATION.toString()
+                      }
+                    ].map(({ label, value }) => (
+                      <div
+                        key={value}
+                        className="flex items-center py-2 space-x-3"
+                      >
+                        <input
+                          id={value}
+                          type="radio"
+                          value={value}
+                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                          onChange={(e) =>
+                            setValue('connectionType', e.target.value, {
+                              shouldValidate: true
+                            })
+                          }
+                          checked={watchConnectionType === value}
+                        />
+                        <label
+                          htmlFor={value}
+                          className="cursor-pointer text-sm text-gray-500"
+                        >
+                          {label}
+                        </label>
+                      </div>
+                    ))}
+                    <p className="input-error">
+                      {errors.connectionType && (
+                        <span role="alert">
+                          {errors.connectionType.message}
+                        </span>
                       )}
                     </p>
                   </div>

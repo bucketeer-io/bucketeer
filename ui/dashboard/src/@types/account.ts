@@ -31,6 +31,7 @@ export interface Account {
       defaultFilter: boolean;
     }
   ];
+  tags: string[];
 }
 
 export interface AccountCollection {

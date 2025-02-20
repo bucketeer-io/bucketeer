@@ -845,7 +845,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         orderDirection: jspb.Message.getFieldWithDefault(msg, 5, 0),
         searchKeyword: jspb.Message.getFieldWithDefault(msg, 6, ''),
         environmentId: jspb.Message.getFieldWithDefault(msg, 7, ''),
-        organizationId: jspb.Message.getFieldWithDefault(msg, 8, '')
+        organizationId: jspb.Message.getFieldWithDefault(msg, 8, ''),
+        entityType: jspb.Message.getFieldWithDefault(msg, 9, 0)
       };
 
     if (includeInstance) {
@@ -920,6 +921,12 @@ proto.bucketeer.tag.ListTagsRequest.deserializeBinaryFromReader = function (
         var value = /** @type {string} */ (reader.readString());
         msg.setOrganizationId(value);
         break;
+      case 9:
+        var value = /** @type {!proto.bucketeer.tag.Tag.EntityType} */ (
+          reader.readEnum()
+        );
+        msg.setEntityType(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -977,6 +984,10 @@ proto.bucketeer.tag.ListTagsRequest.serializeBinaryToWriter = function (
   f = message.getOrganizationId();
   if (f.length > 0) {
     writer.writeString(8, f);
+  }
+  f = message.getEntityType();
+  if (f !== 0.0) {
+    writer.writeEnum(9, f);
   }
 };
 
@@ -1122,6 +1133,24 @@ proto.bucketeer.tag.ListTagsRequest.prototype.setOrganizationId = function (
   value
 ) {
   return jspb.Message.setProto3StringField(this, 8, value);
+};
+
+/**
+ * optional Tag.EntityType entity_type = 9;
+ * @return {!proto.bucketeer.tag.Tag.EntityType}
+ */
+proto.bucketeer.tag.ListTagsRequest.prototype.getEntityType = function () {
+  return /** @type {!proto.bucketeer.tag.Tag.EntityType} */ (
+    jspb.Message.getFieldWithDefault(this, 9, 0)
+  );
+};
+
+/**
+ * @param {!proto.bucketeer.tag.Tag.EntityType} value
+ * @return {!proto.bucketeer.tag.ListTagsRequest} returns this
+ */
+proto.bucketeer.tag.ListTagsRequest.prototype.setEntityType = function (value) {
+  return jspb.Message.setProto3EnumField(this, 9, value);
 };
 
 /**

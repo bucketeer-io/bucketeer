@@ -43,6 +43,11 @@ export class Subscription extends jspb.Message {
   getEnvironmentName(): string;
   setEnvironmentName(value: string): void;
 
+  clearFeatureFlagTagsList(): void;
+  getFeatureFlagTagsList(): Array<string>;
+  setFeatureFlagTagsList(value: Array<string>): void;
+  addFeatureFlagTags(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Subscription.AsObject;
   static toObject(
@@ -77,6 +82,7 @@ export namespace Subscription {
     name: string;
     environmentId: string;
     environmentName: string;
+    featureFlagTagsList: Array<string>;
   };
 
   export interface SourceTypeMap {
@@ -98,6 +104,7 @@ export namespace Subscription {
     DOMAIN_EVENT_ORGANIZATION: 15;
     DOMAIN_EVENT_FLAG_TRIGGER: 16;
     DOMAIN_EVENT_TAG: 17;
+    DOMAIN_EVENT_CODEREF: 18;
     FEATURE_STALE: 100;
     EXPERIMENT_RUNNING: 200;
     MAU_COUNT: 300;

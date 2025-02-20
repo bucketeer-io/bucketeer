@@ -16,6 +16,7 @@ import (
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
+	v2 "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
 	mysql "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	experiment "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
@@ -70,6 +71,21 @@ func (m *MockExperimentStorage) GetExperiment(ctx context.Context, id, environme
 func (mr *MockExperimentStorageMockRecorder) GetExperiment(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExperiment", reflect.TypeOf((*MockExperimentStorage)(nil).GetExperiment), ctx, id, environmentId)
+}
+
+// GetExperimentSummary mocks base method.
+func (m *MockExperimentStorage) GetExperimentSummary(ctx context.Context, environmentID string) (*v2.ExperimentSummary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetExperimentSummary", ctx, environmentID)
+	ret0, _ := ret[0].(*v2.ExperimentSummary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetExperimentSummary indicates an expected call of GetExperimentSummary.
+func (mr *MockExperimentStorageMockRecorder) GetExperimentSummary(ctx, environmentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExperimentSummary", reflect.TypeOf((*MockExperimentStorage)(nil).GetExperimentSummary), ctx, environmentID)
 }
 
 // ListExperiments mocks base method.

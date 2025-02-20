@@ -66,7 +66,7 @@ if (goog.DEBUG && !COMPILED) {
  * @private {!Array<number>}
  * @const
  */
-proto.bucketeer.notification.Subscription.repeatedFields_ = [5];
+proto.bucketeer.notification.Subscription.repeatedFields_ = [5, 10];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -119,7 +119,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           ),
         name: jspb.Message.getFieldWithDefault(msg, 7, ''),
         environmentId: jspb.Message.getFieldWithDefault(msg, 8, ''),
-        environmentName: jspb.Message.getFieldWithDefault(msg, 9, '')
+        environmentName: jspb.Message.getFieldWithDefault(msg, 9, ''),
+        featureFlagTagsList:
+          (f = jspb.Message.getRepeatedField(msg, 10)) == null ? undefined : f
       };
 
     if (includeInstance) {
@@ -206,6 +208,10 @@ proto.bucketeer.notification.Subscription.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentName(value);
           break;
+        case 10:
+          var value = /** @type {string} */ (reader.readString());
+          msg.addFeatureFlagTags(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -280,6 +286,10 @@ proto.bucketeer.notification.Subscription.serializeBinaryToWriter = function (
   if (f.length > 0) {
     writer.writeString(9, f);
   }
+  f = message.getFeatureFlagTagsList();
+  if (f.length > 0) {
+    writer.writeRepeatedString(10, f);
+  }
 };
 
 /**
@@ -304,6 +314,7 @@ proto.bucketeer.notification.Subscription.SourceType = {
   DOMAIN_EVENT_ORGANIZATION: 15,
   DOMAIN_EVENT_FLAG_TRIGGER: 16,
   DOMAIN_EVENT_TAG: 17,
+  DOMAIN_EVENT_CODEREF: 18,
   FEATURE_STALE: 100,
   EXPERIMENT_RUNNING: 200,
   MAU_COUNT: 300
@@ -517,6 +528,45 @@ proto.bucketeer.notification.Subscription.prototype.getEnvironmentName =
 proto.bucketeer.notification.Subscription.prototype.setEnvironmentName =
   function (value) {
     return jspb.Message.setProto3StringField(this, 9, value);
+  };
+
+/**
+ * repeated string feature_flag_tags = 10;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.notification.Subscription.prototype.getFeatureFlagTagsList =
+  function () {
+    return /** @type {!Array<string>} */ (
+      jspb.Message.getRepeatedField(this, 10)
+    );
+  };
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.notification.Subscription} returns this
+ */
+proto.bucketeer.notification.Subscription.prototype.setFeatureFlagTagsList =
+  function (value) {
+    return jspb.Message.setField(this, 10, value || []);
+  };
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.notification.Subscription} returns this
+ */
+proto.bucketeer.notification.Subscription.prototype.addFeatureFlagTags =
+  function (value, opt_index) {
+    return jspb.Message.addToRepeatedField(this, 10, value, opt_index);
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.notification.Subscription} returns this
+ */
+proto.bucketeer.notification.Subscription.prototype.clearFeatureFlagTagsList =
+  function () {
+    return this.setFeatureFlagTagsList([]);
   };
 
 goog.object.extend(exports, proto.bucketeer.notification);

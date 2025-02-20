@@ -41,6 +41,7 @@ export interface Notification {
   name: string;
   environmentName: string;
   environmentId: string;
+  featureFlagTags: string[];
 }
 
 export interface NotificationsCollection {

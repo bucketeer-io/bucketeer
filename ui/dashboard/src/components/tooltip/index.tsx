@@ -3,9 +3,13 @@ import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { cn } from 'utils/style';
 
 export type TooltipProps = {
+  align?: 'start' | 'center' | 'end';
+  delayDuration?: number;
+  hidden?: boolean;
   content?: string;
   trigger: ReactNode;
   className?: string;
+  alignOffset?: number;
 };
 
 const TooltipProvider = TooltipPrimitive.Provider;
@@ -25,7 +29,7 @@ const TooltipContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        'data-[state=delayed-open]:data-[side=top]:animate-slideDownAndFade data-[state=delayed-open]:data-[side=right]:animate-slideLeftAndFade data-[state=delayed-open]:data-[side=left]:animate-slideRightAndFade data-[state=delayed-open]:data-[side=bottom]:animate-slideUpAndFade select-none rounded-md px-3 py-1.5 text-para-medium will-change-[transform,opacity] bg-additional-gray-150 text-white',
+        'data-[state=delayed-open]:data-[side=top]:animate-slideDownAndFade data-[state=delayed-open]:data-[side=right]:animate-slideLeftAndFade data-[state=delayed-open]:data-[side=left]:animate-slideRightAndFade data-[state=delayed-open]:data-[side=bottom]:animate-slideUpAndFade select-none rounded px-3 py-1.5 text-para-medium will-change-[transform,opacity] bg-gray-700 text-white',
         className
       )}
       {...props}
@@ -35,17 +39,35 @@ const TooltipContent = React.forwardRef<
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
 const Tooltip = forwardRef(
-  ({ content, trigger, className }: TooltipProps, ref: Ref<HTMLDivElement>) => {
+  (
+    {
+      delayDuration = 700,
+      align = 'center',
+      hidden,
+      content,
+      trigger,
+      className,
+      alignOffset = 0
+    }: TooltipProps,
+    ref: Ref<HTMLDivElement>
+  ) => {
     return (
-      <TooltipProvider>
+      <TooltipProvider delayDuration={delayDuration}>
         <TooltipRoot>
           <TooltipTrigger type="button" asChild>
             {trigger}
           </TooltipTrigger>
           {content && (
-            <TooltipContent ref={ref} className={className} sideOffset={5}>
+            <TooltipContent
+              hidden={hidden}
+              ref={ref}
+              className={className}
+              sideOffset={5}
+              alignOffset={alignOffset}
+              align={align}
+            >
               {content}
-              <TooltipArrow className="fill-additional-gray-150" />
+              <TooltipArrow className="fill-gray-700" />
             </TooltipContent>
           )}
         </TooltipRoot>

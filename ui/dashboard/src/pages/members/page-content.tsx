@@ -67,7 +67,11 @@ const PageContent = ({
           )
         }
         searchValue={filters.searchQuery}
-        filterCount={isNotEmpty(filters.disabled) ? 1 : undefined}
+        filterCount={
+          isNotEmpty(filters.disabled || filters.organizationRole)
+            ? 1
+            : undefined
+        }
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
       {openFilterModal && (
@@ -80,7 +84,10 @@ const PageContent = ({
             onCloseFilterModal();
           }}
           onClearFilters={() => {
-            onChangeFilters({ disabled: undefined });
+            onChangeFilters({
+              disabled: undefined,
+              organizationRole: undefined
+            });
             onCloseFilterModal();
           }}
         />

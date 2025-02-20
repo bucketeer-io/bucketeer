@@ -189,7 +189,7 @@ func newSubscription(t *testing.T, disabled bool) *domain.Subscription {
 		Type:                  proto.Recipient_SlackChannel,
 		SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
 	}
-	s, err := domain.NewSubscription("sname", sourceTypes, recipient)
+	s, err := domain.NewSubscription("sname", sourceTypes, recipient, nil)
 	s.Disabled = disabled
 	require.NoError(t, err)
 	return s

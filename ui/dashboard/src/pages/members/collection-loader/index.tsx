@@ -11,6 +11,9 @@ import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { MemberActionsType, MembersFilters } from '../types';
 import { useFetchMembers } from './use-fetch-members';
+import { useFetchTags } from './use-fetch-tags';
+
+export * from './use-fetch-tags';
 
 const CollectionLoader = ({
   filters,
@@ -23,9 +26,14 @@ const CollectionLoader = ({
   onAdd?: () => void;
   onActions: (item: Account, type: MemberActionsType) => void;
 }) => {
-  const columns = useColumns({ onActions });
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
+    organizationId: currentEnvironment.organizationId
+  });
+  const tagList = tagCollection?.tags || [];
+  const columns = useColumns({ onActions, tags: tagList });
 
   const {
     data: collection,
@@ -34,7 +42,7 @@ const CollectionLoader = ({
     isError
   } = useFetchMembers({
     ...filters,
-    organizationId: currenEnvironment.organizationId
+    organizationId: currentEnvironment.organizationId
   });
 
   const onSortingChangeHandler = (sorting: SortingState) => {
@@ -66,7 +74,7 @@ const CollectionLoader = ({
   ) : (
     <>
       <DataTable
-        isLoading={isLoading}
+        isLoading={isLoading || isLoadingTags}
         data={accounts}
         columns={columns}
         onSortingChange={onSortingChangeHandler}

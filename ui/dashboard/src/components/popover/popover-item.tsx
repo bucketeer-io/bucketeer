@@ -65,8 +65,8 @@ const PopoverItem = ({
       {icon && (
         <span
           className={cn(
-            'flex size-5 items-center justify-center text-gray-600',
-            { 'text-gray-400': disabled }
+            'flex size-5 items-center justify-center',
+            disabled ? 'text-gray-400' : 'text-gray-600'
           )}
         >
           <Icon icon={icon} size={type === 'item' ? 'xxs' : 'sm'} />

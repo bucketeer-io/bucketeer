@@ -39,6 +39,9 @@ export interface AccountUpdaterParams {
     avatarImage: string;
     avatarFileType: string;
   };
+  changeTagsCommand?: {
+    tags: string[];
+  };
 }
 
 export const accountUpdater = async (params?: AccountUpdaterParams) => {

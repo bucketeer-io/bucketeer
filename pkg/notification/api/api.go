@@ -26,6 +26,7 @@ import (
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
+	v2 "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/pkg/role"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -47,11 +48,13 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type NotificationService struct {
-	mysqlClient          mysql.Client
-	accountClient        accountclient.Client
-	domainEventPublisher publisher.Publisher
-	opts                 *options
-	logger               *zap.Logger
+	mysqlClient              mysql.Client
+	adminSubscriptionStorage v2.AdminSubscriptionStorage
+	subscriptionStorage      v2.SubscriptionStorage
+	accountClient            accountclient.Client
+	domainEventPublisher     publisher.Publisher
+	opts                     *options
+	logger                   *zap.Logger
 }
 
 func NewNotificationService(
@@ -67,11 +70,13 @@ func NewNotificationService(
 		opt(dopts)
 	}
 	return &NotificationService{
-		mysqlClient:          mysqlClient,
-		accountClient:        accountClient,
-		domainEventPublisher: domainEventPublisher,
-		opts:                 dopts,
-		logger:               dopts.logger.Named("api"),
+		mysqlClient:              mysqlClient,
+		adminSubscriptionStorage: v2.NewAdminSubscriptionStorage(mysqlClient),
+		subscriptionStorage:      v2.NewSubscriptionStorage(mysqlClient),
+		accountClient:            accountClient,
+		domainEventPublisher:     domainEventPublisher,
+		opts:                     dopts,
+		logger:                   dopts.logger.Named("api"),
 	}
 }
 

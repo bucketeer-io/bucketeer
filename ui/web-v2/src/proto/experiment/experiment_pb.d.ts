@@ -69,6 +69,14 @@ export class Experiment extends jspb.Message {
   getArchived(): boolean;
   setArchived(value: boolean): void;
 
+  clearGoalsList(): void;
+  getGoalsList(): Array<Experiment.GoalReference>;
+  setGoalsList(value: Array<Experiment.GoalReference>): void;
+  addGoals(
+    value?: Experiment.GoalReference,
+    index?: number
+  ): Experiment.GoalReference;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Experiment.AsObject;
   static toObject(
@@ -111,7 +119,43 @@ export namespace Experiment {
     status: Experiment.StatusMap[keyof Experiment.StatusMap];
     maintainer: string;
     archived: boolean;
+    goalsList: Array<Experiment.GoalReference.AsObject>;
   };
+
+  export class GoalReference extends jspb.Message {
+    getId(): string;
+    setId(value: string): void;
+
+    getName(): string;
+    setName(value: string): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): GoalReference.AsObject;
+    static toObject(
+      includeInstance: boolean,
+      msg: GoalReference
+    ): GoalReference.AsObject;
+    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+    static extensionsBinary: {
+      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+    };
+    static serializeBinaryToWriter(
+      message: GoalReference,
+      writer: jspb.BinaryWriter
+    ): void;
+    static deserializeBinary(bytes: Uint8Array): GoalReference;
+    static deserializeBinaryFromReader(
+      message: GoalReference,
+      reader: jspb.BinaryReader
+    ): GoalReference;
+  }
+
+  export namespace GoalReference {
+    export type AsObject = {
+      id: string;
+      name: string;
+    };
+  }
 
   export interface StatusMap {
     WAITING: 0;

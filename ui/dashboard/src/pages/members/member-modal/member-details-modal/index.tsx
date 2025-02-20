@@ -2,10 +2,12 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { Account } from '@types';
 import { joinName } from 'utils/name';
+import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Divider from 'components/divider';
 import SlideModal from 'components/modal/slide';
 import Spinner from 'components/spinner';
+import { Tag } from 'elements/expandable-tag';
 
 interface MemberDetailsModalProps {
   isOpen: boolean;
@@ -25,7 +27,13 @@ const MemberDetailsModal = ({
   const { data: collection, isLoading } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
+
+  const { data: tagCollection } = useFetchTags({
+    organizationId: currentEnvironment.organizationId
+  });
+
   const environments = collection?.environments || [];
+  const tagList = tagCollection?.tags || [];
 
   return (
     <SlideModal
@@ -34,7 +42,7 @@ const MemberDetailsModal = ({
       onClose={onClose}
     >
       {isLoading ? (
-        <div className="w-full flex-center py-12  ">
+        <div className="w-full flex-center py-12">
           <Spinner />
         </div>
       ) : (
@@ -54,6 +62,20 @@ const MemberDetailsModal = ({
               <p className="text-gray-700 mt-1 typo-para-medium break-all">
                 {member.email}
               </p>
+            </div>
+          </div>
+          <div className="flex flex-col w-full gap-y-1">
+            <p className="typo-para-small text-gray-600">{t('tags')}</p>
+            <div className="flex items-center flex-wrap w-full max-w-full gap-2">
+              {member?.tags.map(tagId => (
+                <Tag
+                  key={tagId}
+                  tooltipCls={'!max-w-[450px]'}
+                  tagId={tagId}
+                  maxSize={487}
+                  value={tagList?.find(tag => tag.id === tagId)?.name || tagId}
+                />
+              ))}
             </div>
           </div>
           <Divider />

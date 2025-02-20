@@ -2,13 +2,13 @@ import { tagsFetcher, TagsFetcherParams } from '@api/tag';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { TagCollection, QueryOptionsRespond } from '@types';
 
-type QueryOptions = QueryOptionsRespond<TagCollection> & {
+export type TagQueryOptions = QueryOptionsRespond<TagCollection> & {
   params?: TagsFetcherParams;
 };
 
 export const TAGS_QUERY_KEY = 'tags';
 
-export const useQueryTags = (options?: QueryOptions) => {
+export const useQueryTags = (options?: TagQueryOptions) => {
   const { params, ...queryOptions } = options || {};
   const query = useQuery({
     queryKey: [TAGS_QUERY_KEY, params],
@@ -20,7 +20,7 @@ export const useQueryTags = (options?: QueryOptions) => {
   return query;
 };
 
-export const usePrefetchTags = (options?: QueryOptions) => {
+export const usePrefetchTags = (options?: TagQueryOptions) => {
   const { params, ...queryOptions } = options || {};
   const queryClient = useQueryClient();
   queryClient.prefetchQuery({
@@ -34,7 +34,7 @@ export const usePrefetchTags = (options?: QueryOptions) => {
 
 export const prefetchTags = (
   queryClient: QueryClient,
-  options?: QueryOptions
+  options?: TagQueryOptions
 ) => {
   const { params, ...queryOptions } = options || {};
   queryClient.prefetchQuery({

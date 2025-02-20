@@ -37,13 +37,13 @@ export interface PageContentForm {
 const PageContent = ({ organization }: { organization: Organization }) => {
   const { notify } = useToast();
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { t } = useTranslation(['common', 'form']);
   const { data: accounts, isLoading: isLoadingAccounts } = useQueryAccounts({
     params: {
       cursor: String(0),
       pageSize: LIST_PAGE_SIZE,
-      organizationId: currenEnvironment.organizationId
+      organizationId: currentEnvironment.organizationId
     }
   });
 
@@ -60,7 +60,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
   const onSubmit: SubmitHandler<PageContentForm> = async values => {
     try {
       const resp = await organizationUpdater({
-        id: currenEnvironment.organizationId,
+        id: currentEnvironment.organizationId,
         description: values.description,
         name: values.name,
         ownerEmail: values.ownerEmail

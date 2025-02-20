@@ -5,33 +5,22 @@ import {
 import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
-import { Push } from '@types';
+import { Push, Tag } from '@types';
 import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
+import ExpandableTag from 'elements/expandable-tag';
+import TruncationWithTooltip from '../../../elements/truncation-with-tooltip';
 import { PushActionsType } from '../types';
 
-export const Tag = ({ value }: { value: string }) => (
-  <div className="flex-center px-2 py-1.5 bg-primary-100/70 text-primary-500 typo-para-small leading-[14px] rounded whitespace-nowrap">
-    {value}
-  </div>
-);
-
-export const renderTag = (tags: string[]) => {
-  return (
-    <div className="flex items-center gap-2 max-w-fit">
-      {tags.slice(0, 3)?.map((tag, index) => <Tag value={tag} key={index} />)}
-      {tags.length > 3 && <Tag value={`+${tags.length - 3}`} />}
-    </div>
-  );
-};
-
 export const useColumns = ({
-  onActions
+  onActions,
+  tags
 }: {
   onActions: (item: Push, type: PushActionsType) => void;
+  tags: Tag[];
 }): ColumnDef<Push>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
@@ -45,14 +34,23 @@ export const useColumns = ({
         const push = row.original;
 
         return (
-          <div className="flex flex-col gap-0.5 max-w-fit">
-            <button
-              onClick={() => onActions(push, 'EDIT')}
-              className="underline text-primary-500 break-all line-clamp-2 typo-para-medium text-left"
+          <div className="flex flex-col gap-0.5 max-w-fit min-w-[300px]">
+            <TruncationWithTooltip
+              elementId={`name-${push.id}`}
+              content={push.name}
+              maxSize={300}
+              additionalClassName={['max-w-full']}
+              tooltipWrapperCls="left-0 translate-x-0"
             >
-              {push.name}
-            </button>
-            <div className="typo-para-tiny text-gray-500">
+              <button
+                id={`name-${push.id}`}
+                onClick={() => onActions(push, 'EDIT')}
+                className="underline text-primary-500 break-all line-clamp-1 typo-para-medium text-left"
+              >
+                {push.name}
+              </button>
+            </TruncationWithTooltip>
+            <div className="typo-para-tiny text-gray-500 break-all line-clamp-1">
               {truncateTextCenter(push.name)}
             </div>
           </div>
@@ -65,20 +63,39 @@ export const useColumns = ({
       size: 350,
       cell: ({ row }) => {
         const push = row.original;
+        const formattedTags = push.tags?.map(
+          item => tags.find(tag => tag.id === item)?.name || item
+        );
 
-        return renderTag(push.tags);
+        return (
+          <ExpandableTag
+            tags={formattedTags}
+            rowId={push.id}
+            className="!max-w-[250px] truncate"
+          />
+        );
       }
     },
     {
       accessorKey: 'environment',
       header: `${t('environment')}`,
       size: 250,
+      maxSize: 250,
       cell: ({ row }) => {
         const push = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {push.environmentName}
-          </div>
+          <TruncationWithTooltip
+            elementId={`env-${push.id}`}
+            maxSize={250}
+            content={push.environmentName}
+          >
+            <div
+              id={`env-${push.id}`}
+              className={'text-gray-700 typo-para-medium w-fit'}
+            >
+              {push.environmentName}
+            </div>
+          </TruncationWithTooltip>
         );
       }
     },

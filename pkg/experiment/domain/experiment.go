@@ -19,6 +19,9 @@ import (
 	"math"
 	"time"
 
+	"github.com/jinzhu/copier"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -87,6 +90,84 @@ func removeDuplicated(args []string) []string {
 		}
 	}
 	return results
+}
+
+func (e *Experiment) Update(
+	name *wrapperspb.StringValue,
+	description *wrapperspb.StringValue,
+	startAt *wrapperspb.Int64Value,
+	stopAt *wrapperspb.Int64Value,
+	status *experimentproto.UpdateExperimentRequest_UpdatedStatus,
+	archived *wrapperspb.BoolValue,
+) (*Experiment, error) {
+	updated := &Experiment{}
+	err := copier.Copy(&updated, e)
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now().Unix()
+
+	if name != nil {
+		updated.Experiment.Name = name.Value
+	}
+
+	if description != nil {
+		updated.Experiment.Description = description.Value
+	}
+
+	if startAt != nil && stopAt != nil {
+		err = e.validatePeriod(startAt.Value, stopAt.Value)
+		if err != nil {
+			return nil, err
+		}
+		updated.Experiment.StartAt = startAt.Value
+		updated.Experiment.StopAt = stopAt.Value
+	}
+
+	if archived != nil {
+		updated.Experiment.Archived = archived.Value
+	}
+
+	if status != nil {
+		err = updated.updateStatus(status.Status, now)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	updated.UpdatedAt = now
+
+	return updated, nil
+}
+
+func (e *Experiment) updateStatus(status experimentproto.Experiment_Status, now int64) error {
+	switch status {
+	case experimentproto.Experiment_RUNNING:
+		if e.Status != experimentproto.Experiment_WAITING {
+			return ErrExperimentStatusInvalid
+		}
+		if e.StartAt > now {
+			return ErrExperimentBeforeStart
+		}
+		e.Status = experimentproto.Experiment_RUNNING
+	case experimentproto.Experiment_STOPPED:
+		if e.Status != experimentproto.Experiment_WAITING && e.Status != experimentproto.Experiment_RUNNING {
+			return ErrExperimentStatusInvalid
+		}
+		if e.StopAt > now {
+			return ErrExperimentBeforeStop
+		}
+		e.Status = experimentproto.Experiment_STOPPED
+	case experimentproto.Experiment_FORCE_STOPPED:
+		e.Status = experimentproto.Experiment_FORCE_STOPPED
+		e.StoppedAt = now
+		e.UpdatedAt = now
+	default:
+		return ErrExperimentStatusInvalid
+	}
+
+	return nil
 }
 
 func (e *Experiment) Start() error {

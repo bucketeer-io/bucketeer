@@ -10,6 +10,7 @@ export interface AccountCreatorCommand {
   email: string;
   organizationRole: OrganizationRole;
   environmentRoles: EnvironmentRoleItem[];
+  tags: string[];
 }
 
 export interface AccountCreatorParams {

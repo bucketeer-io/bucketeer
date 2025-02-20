@@ -25,6 +25,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	"github.com/bucketeer-io/bucketeer/proto/common"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -57,7 +58,6 @@ var (
 	errVariationInUse                = errors.New("feature: variation in use")
 	errVariationNotFound             = errors.New("feature: variation not found")
 	errVariationTypeUnmatched        = errors.New("feature: variation value and type are unmatched")
-	errTagsMustHaveAtLeastOneTag     = errors.New("feature: tags must have at least one tag set")
 	errUnsupportedStrategy           = errors.New("feature: unsupported strategy")
 	errPrerequisiteNotFound          = errors.New("feature: prerequisite not found")
 	ErrAlreadyEnabled                = errors.New("feature: already enabled")
@@ -161,14 +161,15 @@ func (f *Feature) AddTag(tag string) error {
 }
 
 func (f *Feature) RemoveTag(tag string) error {
-	if len(f.Tags) <= 1 {
-		return errTagsMustHaveAtLeastOneTag
-	}
 	idx, err := index(tag, f.Tags)
 	if err != nil {
 		return err
 	}
-	f.Tags = append(f.Tags[:idx], f.Tags[idx+1:]...)
+	if len(f.Tags) == 1 {
+		f.Tags = []string{}
+	} else {
+		f.Tags = append(f.Tags[:idx], f.Tags[idx+1:]...)
+	}
 	f.UpdatedAt = time.Now().Unix()
 	return nil
 }
@@ -957,15 +958,16 @@ func updateStrategyVariationID(varID, uID string, s *feature.Strategy) error {
 // Update returns a new Feature with the updated values.
 func (f *Feature) Update(
 	name, description *wrapperspb.StringValue,
-	tags []string,
+	tags *common.StringListValue,
 	enabled *wrapperspb.BoolValue,
 	archived *wrapperspb.BoolValue,
-	variations []*feature.Variation,
-	prerequisites []*feature.Prerequisite,
-	targets []*feature.Target,
-	rules []*feature.Rule,
+	variations *feature.VariationListValue,
+	prerequisites *feature.PrerequisiteListValue,
+	targets *feature.TargetListValue,
+	rules *feature.RuleListValue,
 	defaultStrategy *feature.Strategy,
 	offVariation *wrapperspb.StringValue,
+	resetSamplingSeed bool,
 ) (*Feature, error) {
 	updated := &Feature{}
 	if err := copier.Copy(updated, f); err != nil {
@@ -979,7 +981,7 @@ func (f *Feature) Update(
 		updated.Description = description.Value
 	}
 	if tags != nil {
-		updated.Tags = tags
+		updated.Tags = tags.Values
 		incVersion = true
 	}
 	if enabled != nil {
@@ -1007,19 +1009,19 @@ func (f *Feature) Update(
 		incVersion = true
 	}
 	if variations != nil {
-		updated.Variations = variations
+		updated.Variations = variations.Values
 		incVersion = true
 	}
 	if prerequisites != nil {
-		updated.Prerequisites = prerequisites
+		updated.Prerequisites = prerequisites.Values
 		incVersion = true
 	}
 	if targets != nil {
-		updated.Targets = targets
+		updated.Targets = targets.Values
 		incVersion = true
 	}
 	if rules != nil {
-		updated.Rules = rules
+		updated.Rules = rules.Values
 		incVersion = true
 	}
 	if defaultStrategy != nil {
@@ -1028,6 +1030,12 @@ func (f *Feature) Update(
 	}
 	if offVariation != nil {
 		updated.OffVariation = offVariation.Value
+		incVersion = true
+	}
+	if resetSamplingSeed {
+		if err := updated.ResetSamplingSeed(); err != nil {
+			return nil, err
+		}
 		incVersion = true
 	}
 	if incVersion {
@@ -1115,9 +1123,6 @@ func validateRules(rules []*feature.Rule, variations []*feature.Variation) error
 func validate(f *feature.Feature) error {
 	if f.Name == "" {
 		return errNameEmpty
-	}
-	if len(f.Tags) == 0 {
-		return errTagsMustHaveAtLeastOneTag
 	}
 	if err := validateVariations(f.VariationType, f.Variations); err != nil {
 		return err

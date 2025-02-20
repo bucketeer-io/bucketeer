@@ -237,6 +237,9 @@ batch-server:
       - name: auto-ops-rules-cacher
         jobId: AutoOpsRulesCacher
         schedule: "* * * * *"
+      - name: tag-deleter
+        jobId: TagDeleter
+        schedule: "* * * * *"
 
 subscriber:
   env:

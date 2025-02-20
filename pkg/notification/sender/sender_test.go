@@ -401,6 +401,118 @@ func TestListEnabledAdminSubscriptions(t *testing.T) {
 	}
 }
 
+func TestCheckForFeatureDomainEvent(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	type inputTest struct {
+		subscription *notificationproto.Subscription
+		sourceType   notificationproto.Subscription_SourceType
+		entityData   string
+	}
+
+	patterns := []struct {
+		desc        string
+		input       inputTest
+		expected    bool
+		expectedErr error
+	}{
+		{
+			desc: "err: failed to unmarshal",
+			input: inputTest{
+				subscription: &notificationproto.Subscription{
+					Id:              "sub-id",
+					Name:            "sub-name",
+					EnvironmentId:   "env-id",
+					FeatureFlagTags: []string{"ios"},
+				},
+				sourceType: notificationproto.Subscription_DOMAIN_EVENT_FEATURE,
+				entityData: "random-string",
+			},
+			expected:    false,
+			expectedErr: errFailedToUnmarshal,
+		},
+		{
+			desc: "err: feature flag tag not found",
+			input: inputTest{
+				subscription: &notificationproto.Subscription{
+					Id:              "sub-id",
+					Name:            "sub-name",
+					EnvironmentId:   "env-id",
+					FeatureFlagTags: []string{"web"},
+				},
+				sourceType: notificationproto.Subscription_DOMAIN_EVENT_FEATURE,
+				entityData: `{
+					"id": "feature-id-1",
+					"tags": ["android", "ios"]
+				}`,
+			},
+			expected:    false,
+			expectedErr: errFeatureFlagTagNotFound,
+		},
+		{
+			desc: "success: feature flag tag found",
+			input: inputTest{
+				subscription: &notificationproto.Subscription{
+					Id:              "sub-id",
+					Name:            "sub-name",
+					EnvironmentId:   "env-id",
+					FeatureFlagTags: []string{"ios"},
+				},
+				sourceType: notificationproto.Subscription_DOMAIN_EVENT_FEATURE,
+				entityData: `{
+					"id": "feature-id-1",
+					"tags": ["android", "ios"]
+				}`,
+			},
+			expected:    true,
+			expectedErr: nil,
+		},
+		{
+			desc: "success: not a feature domain event",
+			input: inputTest{
+				subscription: &notificationproto.Subscription{
+					Id:              "sub-id",
+					Name:            "sub-name",
+					EnvironmentId:   "env-id",
+					FeatureFlagTags: []string{"ios"},
+				},
+				sourceType: notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,
+			},
+			expected:    true,
+			expectedErr: nil,
+		},
+		{
+			desc: "success: no feature flag tags configured",
+			input: inputTest{
+				subscription: &notificationproto.Subscription{
+					Id:              "sub-id",
+					Name:            "sub-name",
+					EnvironmentId:   "env-id",
+					FeatureFlagTags: []string{},
+				},
+				sourceType: notificationproto.Subscription_DOMAIN_EVENT_FEATURE,
+			},
+			expected:    true,
+			expectedErr: nil,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			sender := createSender(t, mockController)
+			send, err := sender.checkForFeatureDomainEvent(
+				p.input.subscription,
+				p.input.sourceType,
+				p.input.entityData,
+			)
+			assert.Equal(t, p.expected, send)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func createSubscriptions(t *testing.T, size int) []*notificationproto.Subscription {
 	subscriptions := []*notificationproto.Subscription{}
 	for i := 0; i < size; i++ {

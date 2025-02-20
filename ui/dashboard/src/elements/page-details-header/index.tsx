@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import {
   IconAccessTimeOutlined,
   IconArrowBackFilled
@@ -8,12 +9,14 @@ import Icon from 'components/icon';
 export type PageDetailsHeaderProps = {
   title: string;
   description: string;
+  children?: ReactNode;
   onBack: () => void;
 };
 
 const PageDetailsHeader = ({
   title,
   description,
+  children,
   onBack
 }: PageDetailsHeaderProps) => {
   return (
@@ -31,7 +34,9 @@ const PageDetailsHeader = ({
         <Icon icon={IconAccessTimeOutlined} size="xxs" />
         <p className="typo-para-small">{description}</p>
       </div>
-      <h1 className="text-gray-900 typo-head-bold-huge mt-2">{title}</h1>
+      {children || (
+        <h1 className="text-gray-900 typo-head-bold-huge mt-2">{title}</h1>
+      )}
     </header>
   );
 };

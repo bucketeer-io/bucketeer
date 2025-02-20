@@ -25,13 +25,13 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
-
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	v2es "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 )
 
@@ -152,6 +152,10 @@ func TestListExperimentsMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
 			},
 			req:         &experimentproto.ListExperimentsRequest{FeatureId: "id-0", EnvironmentId: "ns0"},
 			expectedErr: nil,
@@ -204,6 +208,106 @@ func TestCreateExperimentMySQL(t *testing.T) {
 		},
 	}
 	ctx := createContextWithToken()
+	for _, p := range patterns {
+		service := createExperimentService(mockController, nil, nil, nil)
+		if p.setup != nil {
+			p.setup(service)
+		}
+		_, err := service.CreateExperiment(ctx, p.input)
+		assert.Equal(t, p.expectedErr, err)
+	}
+}
+
+func TestCreateExperimentNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(s *experimentService)
+		input       *experimentproto.CreateExperimentRequest
+		expectedErr error
+	}{
+		{
+			desc: "missing feature id",
+			input: &experimentproto.CreateExperimentRequest{
+				FeatureId:     "",
+				GoalIds:       []string{"gid"},
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+		},
+		{
+			desc: "missing goal id",
+			input: &experimentproto.CreateExperimentRequest{
+				FeatureId:     "fid",
+				GoalIds:       nil,
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+		},
+		{
+			desc: "empty goal id",
+			input: &experimentproto.CreateExperimentRequest{
+				FeatureId:     "fid",
+				GoalIds:       []string{""},
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+		},
+		{
+			desc: "empty goal id",
+			input: &experimentproto.CreateExperimentRequest{
+				FeatureId:     "fid",
+				GoalIds:       []string{"gid", ""},
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+		},
+		{
+			desc: "period too long",
+			input: &experimentproto.CreateExperimentRequest{
+				FeatureId:     "fid",
+				GoalIds:       []string{"gid0", "gid1"},
+				StartAt:       1,
+				StopAt:        30*24*60*60 + 2,
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusPeriodTooLong, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "period")),
+		},
+		{
+			desc: "success",
+			setup: func(s *experimentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			input: &experimentproto.CreateExperimentRequest{
+				FeatureId:     "fid",
+				GoalIds:       []string{"goalId"},
+				Name:          "exp0",
+				StartAt:       1,
+				StopAt:        10,
+				EnvironmentId: "ns0",
+			},
+			expectedErr: nil,
+		},
+	}
 	for _, p := range patterns {
 		service := createExperimentService(mockController, nil, nil, nil)
 		if p.setup != nil {
@@ -368,6 +472,9 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 			req: &experimentproto.UpdateExperimentRequest{
 				Id:            "id-0",
 				EnvironmentId: "ns0",
+				ChangeNameCommand: &experimentproto.ChangeExperimentNameCommand{
+					Name: "new-name",
+				},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -382,6 +489,101 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 				Id:                "id-1",
 				ChangeNameCommand: &experimentproto.ChangeExperimentNameCommand{Name: "test-name"},
 				EnvironmentId:     "ns0",
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		service := createExperimentService(mockController, nil, nil, nil)
+		if p.setup != nil {
+			p.setup(service)
+		}
+		_, err := service.UpdateExperiment(ctx, p.req)
+		assert.Equal(t, p.expectedErr, err)
+	}
+}
+
+func TestUpdateExperimentNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithTokenAndMetadata(metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*experimentService)
+		req         *experimentproto.UpdateExperimentRequest
+		expectedErr error
+	}{
+		{
+			desc:  "error id required",
+			setup: nil,
+			req: &experimentproto.UpdateExperimentRequest{
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc:  "period too long",
+			setup: nil,
+			req: &experimentproto.UpdateExperimentRequest{
+				Id:            "id-1",
+				StartAt:       wrapperspb.Int64(time.Now().Unix()),
+				StopAt:        wrapperspb.Int64(time.Now().AddDate(0, 0, 31).Unix()),
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusPeriodTooLong, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "period")),
+		},
+		{
+			desc:  "invalid period input",
+			setup: nil,
+			req: &experimentproto.UpdateExperimentRequest{
+				Id:            "id-1",
+				StartAt:       wrapperspb.Int64(time.Now().Unix()),
+				StopAt:        nil,
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusPeriodInvalid, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "period")),
+		},
+		{
+			desc: "experiment not found",
+			setup: func(s *experimentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(v2es.ErrExperimentNotFound)
+			},
+			req: &experimentproto.UpdateExperimentRequest{
+				Id:            "id-0",
+				EnvironmentId: "ns0",
+				Name:          wrapperspb.String("new-name"),
+			},
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *experimentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &experimentproto.UpdateExperimentRequest{
+				Id:            "id-1",
+				Name:          wrapperspb.String("new-name"),
+				StartAt:       wrapperspb.Int64(time.Now().Unix()),
+				StopAt:        wrapperspb.Int64(time.Now().AddDate(0, 0, 1).Unix()),
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},

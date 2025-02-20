@@ -6,5 +6,6 @@ INSERT INTO subscription (
     source_types,
     recipient,
     name,
+    feature_flag_tags,
     environment_id
-) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )
+) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?)

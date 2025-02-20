@@ -1,12 +1,15 @@
 import { IconMoreHorizOutlined } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import primaryAvatar from 'assets/avatars/primary.svg';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { Account } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { joinName } from 'utils/name';
+import { useFetchTags } from 'pages/members/collection-loader';
 import { AvatarImage } from 'components/avatar';
 import Icon from 'components/icon';
+import ExpandableTag from 'elements/expandable-tag';
 
 export const useColumns = ({
   onActions
@@ -15,6 +18,14 @@ export const useColumns = ({
 }): ColumnDef<Account>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const { data: tagCollection } = useFetchTags({
+    organizationId: currentEnvironment.organizationId
+  });
+
+  const tagList = tagCollection?.tags || [];
 
   return [
     {
@@ -64,6 +75,25 @@ export const useColumns = ({
           <div className="text-gray-700 typo-para-medium">
             {String(account.organizationRole).split('_')[1]}
           </div>
+        );
+      }
+    },
+    {
+      accessorKey: 'tags',
+      header: `${t('tags')}`,
+      size: 300,
+      cell: ({ row }) => {
+        const account = row.original;
+        const formattedTags = account.tags?.map(
+          item => tagList.find(tag => tag.id === item)?.name || item
+        );
+
+        return (
+          <ExpandableTag
+            tags={formattedTags}
+            rowId={account.email}
+            className="!max-w-[250px] truncate"
+          />
         );
       }
     },

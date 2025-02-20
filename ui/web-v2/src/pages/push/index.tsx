@@ -1,5 +1,6 @@
 import { listTags } from '../../modules/tags';
 import { ListTagsRequest } from '../../proto/feature/service_pb';
+import { Tag } from '../../proto/tag/tag_pb';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -322,11 +323,12 @@ export const PushIndexPage: FC = memo(() => {
     dispatch(
       listTags({
         environmentId: currentEnvironment.id,
-        pageSize: 99999,
+        pageSize: 0,
         cursor: '',
         orderBy: ListTagsRequest.OrderBy.DEFAULT,
         orderDirection: ListTagsRequest.OrderDirection.ASC,
-        searchKeyword: null
+        searchKeyword: null,
+        entityType: Tag.EntityType.FEATURE_FLAG
       })
     );
   }, []);

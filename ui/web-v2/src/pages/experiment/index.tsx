@@ -128,7 +128,7 @@ export const ExperimentIndexPage: FC = memo(() => {
     featureId: null,
     featureVersion: null,
     baselineVariation: null,
-    goalIds: null,
+    goalIds: [],
     startAt: null,
     stopAt: null
   };

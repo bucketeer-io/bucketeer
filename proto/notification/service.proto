@@ -169,6 +169,7 @@ message CreateSubscriptionRequest {
   repeated Subscription.SourceType source_types = 5
       [(google.api.field_behavior) = REQUIRED];
   Recipient recipient = 6 [(google.api.field_behavior) = REQUIRED];
+  repeated string feature_flag_tags = 7;
 }
 
 message CreateSubscriptionResponse {
@@ -231,6 +232,14 @@ message UpdateSubscriptionRequest {
         title: "disabled"
         description: "if true, the subscription is disabled, otherwise enabled."
       }];
+  repeated string feature_flag_tags = 10;
+  UpdateSubscriptionFeatureFlagTagsCommand
+      update_subscription_feature_tags_command = 11 [
+        deprecated = true,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+          description: "Deprecated. Use feature_flag_tags instead."
+        }
+      ];
 }
 
 message UpdateSubscriptionResponse {

@@ -1022,6 +1022,11 @@ export class CreateSubscriptionRequest extends jspb.Message {
   getRecipient(): proto_notification_recipient_pb.Recipient | undefined;
   setRecipient(value?: proto_notification_recipient_pb.Recipient): void;
 
+  clearFeatureFlagTagsList(): void;
+  getFeatureFlagTagsList(): Array<string>;
+  setFeatureFlagTagsList(value: Array<string>): void;
+  addFeatureFlagTags(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateSubscriptionRequest.AsObject;
   static toObject(
@@ -1052,6 +1057,7 @@ export namespace CreateSubscriptionRequest {
       proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap]
     >;
     recipient?: proto_notification_recipient_pb.Recipient.AsObject;
+    featureFlagTagsList: Array<string>;
   };
 }
 
@@ -1363,6 +1369,20 @@ export class UpdateSubscriptionRequest extends jspb.Message {
   getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
+  clearFeatureFlagTagsList(): void;
+  getFeatureFlagTagsList(): Array<string>;
+  setFeatureFlagTagsList(value: Array<string>): void;
+  addFeatureFlagTags(value: string, index?: number): string;
+
+  hasUpdateSubscriptionFeatureTagsCommand(): boolean;
+  clearUpdateSubscriptionFeatureTagsCommand(): void;
+  getUpdateSubscriptionFeatureTagsCommand():
+    | proto_notification_command_pb.UpdateSubscriptionFeatureFlagTagsCommand
+    | undefined;
+  setUpdateSubscriptionFeatureTagsCommand(
+    value?: proto_notification_command_pb.UpdateSubscriptionFeatureFlagTagsCommand
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateSubscriptionRequest.AsObject;
   static toObject(
@@ -1396,6 +1416,8 @@ export namespace UpdateSubscriptionRequest {
     >;
     name?: google_protobuf_wrappers_pb.StringValue.AsObject;
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    featureFlagTagsList: Array<string>;
+    updateSubscriptionFeatureTagsCommand?: proto_notification_command_pb.UpdateSubscriptionFeatureFlagTagsCommand.AsObject;
   };
 }
 

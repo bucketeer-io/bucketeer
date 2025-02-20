@@ -85,9 +85,6 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
         return JSON.stringify(left) === JSON.stringify(right);
       }
     );
-    const [isResetTargeting, setIsResetTargeting] = useState(false);
-
-    console.log({ feature });
 
     const getDefaultValues = (
       feature: Feature.AsObject,
@@ -216,8 +213,14 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
               environmentId: currentEnvironment.id,
               id: featureId
             })
-          ).then(() => {
-            setIsResetTargeting(true);
+          ).then((response) => {
+            const featurePayload = response.payload as Feature.AsObject;
+            reset(
+              getDefaultValues(
+                featurePayload,
+                currentEnvironment.requireComment
+              )
+            );
           });
         });
       },
@@ -232,13 +235,6 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
         })
       );
     }, [dispatch, currentEnvironment]);
-
-    useEffect(() => {
-      if (isResetTargeting) {
-        reset(getDefaultValues(feature, currentEnvironment.requireComment));
-        setIsResetTargeting(false);
-      }
-    }, [feature, isResetTargeting]);
 
     useEffect(() => {
       if (feature) {

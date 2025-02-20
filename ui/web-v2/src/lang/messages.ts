@@ -1369,6 +1369,18 @@ export const messages = {
     createGoal: defineMessage({
       id: 'goal.createGoal',
       defaultMessage: 'Create Goal'
+    }),
+    connection: defineMessage({
+      id: 'goal.connection',
+      defaultMessage: 'Connection'
+    }),
+    experiments: defineMessage({
+      id: 'goal.experiments',
+      defaultMessage: 'Experiments'
+    }),
+    autoOperations: defineMessage({
+      id: 'goal.autoOperations',
+      defaultMessage: 'Auto Operations'
     })
   },
   experiment: {
@@ -2377,6 +2389,11 @@ export const messages = {
         })
       }
     },
+    tagsTooltipMessage: defineMessage({
+      id: 'notification.tagsTooltipMessage',
+      defaultMessage:
+        'The configured tags in the Feature Flag when was created. It will only notify you if the tags match the tag configured in the Feature Flag. When empty, it will notify you of any changes to all the flags.'
+    }),
     slackIncomingWebhookUrl: defineMessage({
       id: 'notification.slackIncomingWebhookUrl',
       defaultMessage: 'Slack incoming webhook URL'
