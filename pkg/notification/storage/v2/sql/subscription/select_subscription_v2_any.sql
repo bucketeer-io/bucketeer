@@ -6,6 +6,7 @@ SELECT
     sub.source_types,
     sub.recipient,
     sub.name,
+    sub.feature_flag_tags,
     sub.environment_id,
     env.name as environment_name
 FROM

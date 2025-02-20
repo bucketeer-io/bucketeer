@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 )
@@ -525,6 +526,161 @@ func TestUnmarshalDatetimeClause(t *testing.T) {
 	dataTimeClause, err := aor.unmarshalDatetimeClause(aor.Clauses[0])
 	require.NoError(t, err)
 	assert.Equal(t, dtc.Time, dataTimeClause.Time)
+}
+
+func TestUpdateAutoOpsRule(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc                      string
+		setup                     func() *AutoOpsRule
+		updateOpsEventRateClauses []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateOpsEventRateClause
+		updateDatetimeClauses     []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause
+		expected                  func() *AutoOpsRule
+		expectedErr               error
+	}{
+		{
+			desc: "Error clause empty",
+			setup: func() *AutoOpsRule {
+				aor, err := NewAutoOpsRule(
+					"feature-id",
+					autoopsproto.OpsType_EVENT_RATE,
+					[]*autoopsproto.OpsEventRateClause{
+						{
+							GoalId:          "goal-01",
+							MinCount:        10,
+							ThreadsholdRate: 0.5,
+							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+						},
+					},
+					[]*autoopsproto.DatetimeClause{},
+				)
+				require.NoError(t, err)
+				aor.Clauses[0].Id = "id-0"
+				return aor
+			},
+			updateOpsEventRateClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateOpsEventRateClause{
+				{
+					Id:      "id-0",
+					Deleted: wrapperspb.Bool(true),
+				},
+			},
+			updateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{},
+			expectedErr:           errClauseEmpty,
+		},
+		{
+			desc: "Update OpsEventRateClause",
+			setup: func() *AutoOpsRule {
+				aor, err := NewAutoOpsRule(
+					"feature-id",
+					autoopsproto.OpsType_EVENT_RATE,
+					[]*autoopsproto.OpsEventRateClause{
+						{
+							GoalId:          "goal-01",
+							MinCount:        10,
+							ThreadsholdRate: 0.5,
+							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+						},
+					},
+					[]*autoopsproto.DatetimeClause{},
+				)
+				require.NoError(t, err)
+				aor.Clauses[0].Id = "id-0"
+				return aor
+			},
+			updateOpsEventRateClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateOpsEventRateClause{
+				{
+					Id: "id-0",
+					Clause: &autoopsproto.OpsEventRateClause{
+						GoalId:          "goal-02",
+						MinCount:        20,
+						ThreadsholdRate: 0.6,
+						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+					},
+				},
+			},
+			updateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{},
+			expected: func() *AutoOpsRule {
+				aor, err := NewAutoOpsRule(
+					"feature-id",
+					autoopsproto.OpsType_EVENT_RATE,
+					[]*autoopsproto.OpsEventRateClause{
+						{
+							GoalId:          "goal-02",
+							MinCount:        20,
+							ThreadsholdRate: 0.6,
+							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+						},
+					},
+					[]*autoopsproto.DatetimeClause{},
+				)
+				require.NoError(t, err)
+				aor.Clauses[0].Id = "id-0"
+				return aor
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "Update DatetimeClause",
+			setup: func() *AutoOpsRule {
+				aor, err := NewAutoOpsRule(
+					"feature-id",
+					autoopsproto.OpsType_SCHEDULE,
+					[]*autoopsproto.OpsEventRateClause{},
+					[]*autoopsproto.DatetimeClause{
+						{
+							Time:       1000000001,
+							ActionType: autoopsproto.ActionType_ENABLE,
+						},
+					},
+				)
+				require.NoError(t, err)
+				aor.Clauses[0].Id = "id-0"
+				return aor
+			},
+			updateOpsEventRateClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateOpsEventRateClause{},
+			updateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{
+				{
+					Id: "id-0",
+					Clause: &autoopsproto.DatetimeClause{
+						Time:       1000000002,
+						ActionType: autoopsproto.ActionType_ENABLE,
+					},
+				},
+			},
+			expected: func() *AutoOpsRule {
+				aor, err := NewAutoOpsRule(
+					"feature-id",
+					autoopsproto.OpsType_SCHEDULE,
+					[]*autoopsproto.OpsEventRateClause{},
+					[]*autoopsproto.DatetimeClause{
+						{
+							Time:       1000000002,
+							ActionType: autoopsproto.ActionType_ENABLE,
+						},
+					},
+				)
+				require.NoError(t, err)
+				aor.Clauses[0].Id = "id-0"
+				return aor
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			aor := p.setup()
+			_, err := aor.Update(nil, p.updateOpsEventRateClauses, p.updateDatetimeClauses)
+			if p.expectedErr != nil {
+				require.Equal(t, p.expectedErr, err)
+				return
+			}
+			expected := p.expected()
+
+			assert.Equal(t, expected.FeatureId, aor.FeatureId)
+			assert.Equal(t, expected.Clauses, aor.Clauses)
+			assert.Equal(t, expected.OpsType, aor.OpsType)
+		})
+	}
 }
 
 func newDateTimeClause(t *testing.T, c *autoopsproto.DatetimeClause) *autoopsproto.Clause {

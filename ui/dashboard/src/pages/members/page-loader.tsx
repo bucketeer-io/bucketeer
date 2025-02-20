@@ -24,7 +24,7 @@ const PageLoader = () => {
   const { t } = useTranslation(['table']);
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const {
     data: collection,
@@ -33,7 +33,7 @@ const PageLoader = () => {
     isError
   } = useFetchMembers({
     pageSize: 1,
-    organizationId: currenEnvironment.organizationId
+    organizationId: currentEnvironment.organizationId
   });
 
   const [selectedMember, setSelectedMember] = useState<Account>();
@@ -90,7 +90,7 @@ const PageLoader = () => {
 
       return archiveMutation({
         email,
-        organizationId: currenEnvironment.organizationId
+        organizationId: currentEnvironment.organizationId
       });
     },
     onSuccess: () => {

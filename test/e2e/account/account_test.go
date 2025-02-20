@@ -21,6 +21,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -42,18 +43,18 @@ const (
 )
 
 var (
-	webGatewayAddr       = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
-	webGatewayPort       = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
-	webGatewayCert       = flag.String("web-gateway-cert", "", "Web gateway crt file")
-	apiKeyPath           = flag.String("api-key", "", "Client SDK API key for api-gateway")
-	apiKeyServerPath     = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
-	gatewayAddr          = flag.String("gateway-addr", "", "Gateway endpoint address")
-	gatewayPort          = flag.Int("gateway-port", 443, "Gateway endpoint port")
-	gatewayCert          = flag.String("gateway-cert", "", "Gateway crt file")
-	serviceTokenPath     = flag.String("service-token", "", "Service token path")
-	environmentNamespace = flag.String("environment-namespace", "", "Environment namespace")
-	organizationID       = flag.String("organization-id", "", "Organization ID")
-	testID               = flag.String("test-id", "", "test ID")
+	webGatewayAddr   = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
+	webGatewayPort   = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
+	webGatewayCert   = flag.String("web-gateway-cert", "", "Web gateway crt file")
+	apiKeyPath       = flag.String("api-key", "", "Client SDK API key for api-gateway")
+	apiKeyServerPath = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
+	gatewayAddr      = flag.String("gateway-addr", "", "Gateway endpoint address")
+	gatewayPort      = flag.Int("gateway-port", 443, "Gateway endpoint port")
+	gatewayCert      = flag.String("gateway-cert", "", "Gateway crt file")
+	serviceTokenPath = flag.String("service-token", "", "Service token path")
+	environmentID    = flag.String("environment-id", "", "Environment id")
+	organizationID   = flag.String("organization-id", "", "Organization ID")
+	testID           = flag.String("test-id", "", "test ID")
 )
 
 func TestGetAccount(t *testing.T) {
@@ -72,6 +73,7 @@ func TestGetAccount(t *testing.T) {
 			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
+			Tags:             []string{"tag"},
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 				{
@@ -99,6 +101,83 @@ func TestGetAccount(t *testing.T) {
 	}
 }
 
+func TestCreateAccountV2(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	c := newAccountClient(t)
+	defer c.Close()
+	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+	firstName := fmt.Sprintf("first-name-%v", time.Now().Unix())
+	lastName := fmt.Sprintf("last-name-%v", time.Now().Unix())
+	avatarURL := fmt.Sprintf("https://example.com/avatar-%v.png", time.Now().Unix())
+	tags := []string{fmt.Sprintf("tag-%d", time.Now().Unix())}
+	envRole := &accountproto.AccountV2_EnvironmentRole{
+		Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+		EnvironmentId: "test",
+	}
+	resp, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+		OrganizationId: defaultOrganizationID,
+		Command: &accountproto.CreateAccountV2Command{
+			Name:             name,
+			Email:            email,
+			FirstName:        firstName,
+			LastName:         lastName,
+			Language:         language,
+			AvatarImageUrl:   avatarURL,
+			Tags:             tags,
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Account.Email != email {
+		t.Fatalf("different email, expected: %v, actual: %v", email, resp.Account.Email)
+	}
+	if resp.Account.OrganizationId != defaultOrganizationID {
+		t.Fatalf("different organization id, expected: %v, actual: %v", defaultOrganizationID, resp.Account.OrganizationId)
+	}
+	if resp.Account.Name != name {
+		t.Fatalf("different name, expected: %v, actual: %v", name, resp.Account.Name)
+	}
+	if resp.Account.FirstName != firstName {
+		t.Fatalf("different first name, expected: %v, actual: %v", firstName, resp.Account.FirstName)
+	}
+	if resp.Account.LastName != lastName {
+		t.Fatalf("different last name, expected: %v, actual: %v", lastName, resp.Account.LastName)
+	}
+	if resp.Account.Language != language {
+		t.Fatalf("different language, expected: %v, actual: %v", language, resp.Account.Language)
+	}
+	if resp.Account.AvatarImageUrl != avatarURL {
+		t.Fatalf("different avatar url, expected: %v, actual: %v", avatarURL, resp.Account.AvatarImageUrl)
+	}
+	if !reflect.DeepEqual(resp.Account.Tags, tags) {
+		t.Fatalf("different tags, expected: %v, actual: %v", tags, resp.Account.Tags)
+	}
+	if resp.Account.OrganizationRole != accountproto.AccountV2_Role_Organization_MEMBER {
+		t.Fatalf("different organization role, expected: %v, actual: %v",
+			accountproto.AccountV2_Role_Organization_MEMBER,
+			resp.Account.OrganizationRole,
+		)
+	}
+	if resp.Account.EnvironmentRoles[0].Role != envRole.Role {
+		t.Fatalf("different organization role, expected: %v, actual: %v",
+			envRole.Role,
+			resp.Account.EnvironmentRoles[0].Role,
+		)
+	}
+	if resp.Account.EnvironmentRoles[0].EnvironmentId != envRole.EnvironmentId {
+		t.Fatalf("different environment id, expected: %s, actual: %s",
+			envRole.EnvironmentId,
+			resp.Account.EnvironmentRoles[0].EnvironmentId,
+		)
+	}
+}
+
 func TestListAccounts(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -115,6 +194,7 @@ func TestListAccounts(t *testing.T) {
 			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
+			Tags:             []string{"tag"},
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 				{
@@ -157,6 +237,7 @@ func TestUpdateAccount(t *testing.T) {
 			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
+			Tags:             []string{"tag"},
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 				{
@@ -173,6 +254,7 @@ func TestUpdateAccount(t *testing.T) {
 	newFirstName := fmt.Sprintf("first-name-%v", time.Now().Unix())
 	newLastName := fmt.Sprintf("last-name-%v", time.Now().Unix())
 	newAvatarURL := fmt.Sprintf("https://example.com/avatar-%v.png", time.Now().Unix())
+	newTags := []string{fmt.Sprintf("tag-%d", time.Now().Unix())}
 	_, err = c.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
@@ -187,6 +269,9 @@ func TestUpdateAccount(t *testing.T) {
 		},
 		ChangeAvatarUrlCommand: &accountproto.ChangeAccountV2AvatarImageUrlCommand{
 			AvatarImageUrl: newAvatarURL,
+		},
+		ChangeTagsCommand: &accountproto.ChangeAccountV2TagsCommand{
+			Tags: newTags,
 		},
 	})
 	if err != nil {
@@ -216,6 +301,9 @@ func TestUpdateAccount(t *testing.T) {
 	}
 	if getResp.Account.AvatarImageUrl != newAvatarURL {
 		t.Fatalf("different avatar url, expected: %v, actual: %v", newAvatarURL, getResp.Account.AvatarImageUrl)
+	}
+	if !reflect.DeepEqual(getResp.Account.Tags, newTags) {
+		t.Fatalf("different tags, expected: %v, actual: %v", newTags, getResp.Account.Tags)
 	}
 }
 
@@ -363,6 +451,7 @@ func TestEnableAndDisableAccount(t *testing.T) {
 			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
+			Tags:             []string{"tag"},
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 				{
@@ -430,6 +519,7 @@ func TestDeleteAccount(t *testing.T) {
 			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
+			Tags:             []string{"tag"},
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 				{
@@ -482,6 +572,7 @@ func TestCreateSearchFilter(t *testing.T) {
 			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
+			Tags:             []string{"tag"},
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 				{
@@ -567,6 +658,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
+			Tags:             []string{"tag"},
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 				{
@@ -703,6 +795,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
+			Tags:             []string{"tag"},
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 				{

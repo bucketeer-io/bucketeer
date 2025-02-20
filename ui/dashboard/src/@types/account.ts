@@ -33,6 +33,7 @@ export interface Account {
   createdAt: string;
   updatedAt: string;
   searchFilters: SearchFilter[];
+  tags: string[];
 }
 
 export interface AccountCollection {

@@ -9,11 +9,11 @@ import Input from 'components/input';
 import AuthWrapper from './elements/auth-wrapper';
 
 const formSchema = yup.object().shape({
-  first_name: yup
+  firstName: yup
     .string()
     .required()
     .min(2, 'The first name you have provided must have at least 2 characters'),
-  last_name: yup
+  lastName: yup
     .string()
     .required()
     .min(2, 'The last name you have provided must have at least 2 characters'),
@@ -25,8 +25,8 @@ const UserInformation = () => {
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
-      first_name: '',
-      last_name: '',
+      firstName: '',
+      lastName: '',
       language: ''
     }
   });
@@ -51,7 +51,7 @@ const UserInformation = () => {
           <Form onSubmit={form.handleSubmit(onSubmit)} className="mt-8">
             <Form.Field
               control={form.control}
-              name="first_name"
+              name="firstName"
               render={({ field }) => (
                 <Form.Item>
                   <Form.Label required>{t(`first-name`)}</Form.Label>
@@ -67,7 +67,7 @@ const UserInformation = () => {
             />
             <Form.Field
               control={form.control}
-              name="last_name"
+              name="lastName"
               render={({ field }) => (
                 <Form.Item>
                   <Form.Label required>{t(`last-name`)}</Form.Label>

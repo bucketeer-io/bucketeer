@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
@@ -29,7 +30,28 @@ var (
 	ErrGoalAlreadyExists          = errors.New("goal: already exists")
 	ErrGoalNotFound               = errors.New("goal: not found")
 	ErrGoalUnexpectedAffectedRows = errors.New("goal: unexpected affected rows")
+
+	//go:embed sql/goal/select_goals.sql
+	selectGoalsSQL string
+	//go:embed sql/goal/select_goal.sql
+	selectGoalSQL string
+	//go:embed sql/goal/count_goals.sql
+	countGoalSQL string
+	//go:embed sql/goal/insert_goal.sql
+	insertGoalSQL string
+	//go:embed sql/goal/update_goal.sql
+	updateGoalSQL string
+	//go:embed sql/goal/delete_goal.sql
+	deleteGoalSQL string
 )
+
+type experimentRef struct {
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	FeatureId   string `json:"feature_id"`
+	FeatureName string `json:"feature_name"`
+	Status      int32  `json:"status"`
+}
 
 type GoalStorage interface {
 	CreateGoal(ctx context.Context, g *domain.Goal, environmentId string) error
@@ -43,6 +65,7 @@ type GoalStorage interface {
 		isInUseStatus *bool,
 		environmentId string,
 	) ([]*proto.Goal, int, int64, error)
+	DeleteGoal(ctx context.Context, id, environmentId string) error
 }
 
 type goalStorage struct {
@@ -54,26 +77,13 @@ func NewGoalStorage(qe mysql.QueryExecer) GoalStorage {
 }
 
 func (s *goalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmentId string) error {
-	query := `
-		INSERT INTO goal (
-			id,
-			name,
-			description,
-			archived,
-			deleted,
-			created_at,
-			updated_at,
-			environment_id
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?
-		)
-	`
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
+		insertGoalSQL,
 		g.Id,
 		g.Name,
 		g.Description,
+		g.ConnectionType,
 		g.Archived,
 		g.Deleted,
 		g.CreatedAt,
@@ -81,7 +91,7 @@ func (s *goalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmen
 		environmentId,
 	)
 	if err != nil {
-		if err == mysql.ErrDuplicateEntry {
+		if errors.Is(err, mysql.ErrDuplicateEntry) {
 			return ErrGoalAlreadyExists
 		}
 		return err
@@ -90,23 +100,9 @@ func (s *goalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmen
 }
 
 func (s *goalStorage) UpdateGoal(ctx context.Context, g *domain.Goal, environmentId string) error {
-	query := `
-		UPDATE 
-			goal
-		SET
-			name = ?,
-			description = ?,
-			archived = ?,
-			deleted = ?,
-			created_at = ?,
-			updated_at = ?
-		WHERE
-			id = ? AND
-			environment_id = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
+		updateGoalSQL,
 		g.Name,
 		g.Description,
 		g.Archived,
@@ -131,54 +127,42 @@ func (s *goalStorage) UpdateGoal(ctx context.Context, g *domain.Goal, environmen
 
 func (s *goalStorage) GetGoal(ctx context.Context, id, environmentId string) (*domain.Goal, error) {
 	goal := proto.Goal{}
-	query := `
-		SELECT
-			id,
-			name,
-			description,
-			archived,
-			deleted,
-			created_at,
-			updated_at,
-			CASE 
-				WHEN (
-					SELECT 
-						COUNT(1)
-					FROM 
-						experiment
-					WHERE
-						environment_id = ? AND
-						goal_ids LIKE concat("%", goal.id, "%")
-				) > 0 THEN TRUE 
-				ELSE FALSE 
-			END AS is_in_use_status
-		FROM
-			goal
-		WHERE
-			id = ? AND
-			environment_id = ?
-	`
+	var connectionType int32
+	var experiments []experimentRef
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
-		environmentId,
+		selectGoalSQL,
+		environmentId, // Case query
+		environmentId, // Subquery
 		id,
 		environmentId,
 	).Scan(
 		&goal.Id,
 		&goal.Name,
 		&goal.Description,
+		&connectionType,
 		&goal.Archived,
 		&goal.Deleted,
 		&goal.CreatedAt,
 		&goal.UpdatedAt,
 		&goal.IsInUseStatus,
+		&mysql.JSONObject{Val: &goal.Experiments},
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrGoalNotFound
 		}
 		return nil, err
+	}
+	goal.ConnectionType = proto.Goal_ConnectionType(connectionType)
+	for i := range experiments {
+		goal.Experiments = append(goal.Experiments, &proto.Goal_ExperimentReference{
+			Id:          experiments[i].Id,
+			Name:        experiments[i].Name,
+			FeatureId:   experiments[i].FeatureId,
+			FeatureName: experiments[i].FeatureName,
+			Status:      proto.Experiment_Status(experiments[i].Status),
+		})
 	}
 	return &domain.Goal{Goal: &goal}, nil
 }
@@ -192,8 +176,9 @@ func (s *goalStorage) ListGoals(
 	environmentId string,
 ) ([]*proto.Goal, int, int64, error) {
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	prepareArgs := make([]interface{}, 0, len(whereArgs)+1)
-	prepareArgs = append(prepareArgs, environmentId)
+	prepareArgs := make([]interface{}, 0, len(whereArgs)+2)
+	prepareArgs = append(prepareArgs, environmentId) // Case query
+	prepareArgs = append(prepareArgs, environmentId) // Subquery
 	prepareArgs = append(prepareArgs, whereArgs...)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
@@ -205,52 +190,42 @@ func (s *goalStorage) ListGoals(
 			isInUseStatusSQL = "HAVING is_in_use_status = FALSE"
 		}
 	}
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			name,
-			description,
-			archived,
-			deleted,
-			created_at,
-			updated_at,
-			CASE 
-				WHEN (
-					SELECT 
-						COUNT(1)
-					FROM 
-						experiment
-					WHERE
-						environment_id = ? AND
-						goal_ids LIKE concat("%%", goal.id, "%%")
-				) > 0 THEN TRUE 
-				ELSE FALSE 
-			END AS is_in_use_status
-		FROM
-			goal
-		%s %s %s %s
-		`, whereSQL, isInUseStatusSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(selectGoalsSQL, whereSQL, isInUseStatusSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, prepareArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
 	goals := make([]*proto.Goal, 0, limit)
+
 	for rows.Next() {
 		goal := proto.Goal{}
+		var connectionType int32
+		var experiments []experimentRef
 		err := rows.Scan(
 			&goal.Id,
 			&goal.Name,
 			&goal.Description,
+			&connectionType,
 			&goal.Archived,
 			&goal.Deleted,
 			&goal.CreatedAt,
 			&goal.UpdatedAt,
 			&goal.IsInUseStatus,
+			&mysql.JSONObject{Val: &experiments},
 		)
 		if err != nil {
 			return nil, 0, 0, err
+		}
+		goal.ConnectionType = proto.Goal_ConnectionType(connectionType)
+		for i := range experiments {
+			goal.Experiments = append(goal.Experiments, &proto.Goal_ExperimentReference{
+				Id:          experiments[i].Id,
+				Name:        experiments[i].Name,
+				FeatureId:   experiments[i].FeatureId,
+				FeatureName: experiments[i].FeatureName,
+				Status:      proto.Experiment_Status(experiments[i].Status),
+			})
 		}
 		goals = append(goals, &goal)
 	}
@@ -267,29 +242,33 @@ func (s *goalStorage) ListGoals(
 			countConditionSQL = "> 0 THEN NULL ELSE 1"
 		}
 	}
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(	
-				CASE 
-					WHEN (
-						SELECT 
-							COUNT(1)
-						FROM 
-							experiment
-						WHERE
-							environment_id = ? AND
-							goal_ids LIKE concat("%%", goal.id, "%%")
-					) %s
-				END
-			)
-		FROM
-			goal
-		%s
-		`, countConditionSQL, whereSQL,
-	)
-	err = s.qe.QueryRowContext(ctx, countQuery, prepareArgs...).Scan(&totalCount)
+	prepareCountArgs := make([]interface{}, 0, len(whereArgs)+1)
+	prepareCountArgs = append(prepareCountArgs, environmentId)
+	prepareCountArgs = append(prepareCountArgs, whereArgs...)
+	countQuery := fmt.Sprintf(countGoalSQL, countConditionSQL, whereSQL)
+	err = s.qe.QueryRowContext(ctx, countQuery, prepareCountArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	return goals, nextOffset, totalCount, nil
+}
+
+func (s *goalStorage) DeleteGoal(ctx context.Context, id, environmentId string) error {
+	result, err := s.qe.ExecContext(
+		ctx,
+		deleteGoalSQL,
+		id,
+		environmentId,
+	)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected != 1 {
+		return ErrGoalUnexpectedAffectedRows
+	}
+	return nil
 }

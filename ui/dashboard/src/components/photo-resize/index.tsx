@@ -20,7 +20,7 @@ const PhotoResize = forwardRef<PhotoResizeHandle, PhotoResizeProps>(
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area>();
 
     const onCropComplete = useCallback(
-      (newCroppedArea: Area, newCroppedAreaPixels: Area) => {
+      (_newCroppedArea: Area, newCroppedAreaPixels: Area) => {
         setCroppedAreaPixels(newCroppedAreaPixels);
       },
       []

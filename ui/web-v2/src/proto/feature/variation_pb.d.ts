@@ -42,3 +42,36 @@ export namespace Variation {
     description: string;
   };
 }
+
+export class VariationListValue extends jspb.Message {
+  clearValuesList(): void;
+  getValuesList(): Array<Variation>;
+  setValuesList(value: Array<Variation>): void;
+  addValues(value?: Variation, index?: number): Variation;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): VariationListValue.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: VariationListValue
+  ): VariationListValue.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: VariationListValue,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): VariationListValue;
+  static deserializeBinaryFromReader(
+    message: VariationListValue,
+    reader: jspb.BinaryReader
+  ): VariationListValue;
+}
+
+export namespace VariationListValue {
+  export type AsObject = {
+    valuesList: Array<Variation.AsObject>;
+  };
+}

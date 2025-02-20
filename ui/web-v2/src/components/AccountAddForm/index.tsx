@@ -5,6 +5,11 @@ import { Dialog } from '@headlessui/react';
 import React, { FC, memo } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { useIntl } from 'react-intl';
+import { CreatableSelect } from '../CreatableSelect';
+import { shallowEqual, useSelector } from 'react-redux';
+import { AppState } from '../../modules';
+import { Tag } from '../../proto/tag/tag_pb';
+import { selectAll as selectAllTags } from '../../modules/tags';
 
 export interface AccountAddFormProps {
   onSubmit: () => void;
@@ -20,6 +25,15 @@ export const AccountAddForm: FC<AccountAddFormProps> = memo(
       control,
       formState: { errors, isSubmitting, isValid }
     } = methods;
+
+    const tagsList = useSelector<AppState, Tag.AsObject[]>(
+      (state) => selectAllTags(state.tags),
+      shallowEqual
+    );
+
+    const accountTagsList = tagsList.filter(
+      (tag) => tag.entityType === Tag.EntityType.ACCOUNT
+    );
 
     return (
       <div className="w-[500px]">
@@ -118,6 +132,36 @@ export const AccountAddForm: FC<AccountAddFormProps> = memo(
                       )}
                     </p>
                   </div>
+                </div>
+                <div className="">
+                  <label htmlFor="tags">
+                    <span className="input-label">
+                      {f(messages.tags.title)}
+                    </span>
+                  </label>
+                  <Controller
+                    name="tags"
+                    control={control}
+                    render={({ field }) => {
+                      return (
+                        <CreatableSelect
+                          options={accountTagsList.map((tag) => ({
+                            label: tag.name,
+                            value: tag.name
+                          }))}
+                          onChange={(options: Option[]) => {
+                            field.onChange(options.map((o) => o.value));
+                          }}
+                          closeMenuOnSelect={false}
+                        />
+                      );
+                    }}
+                  />
+                  <p className="input-error">
+                    {errors.tags && (
+                      <span role="alert">{errors.tags.message}</span>
+                    )}
+                  </p>
                 </div>
               </div>
             </div>

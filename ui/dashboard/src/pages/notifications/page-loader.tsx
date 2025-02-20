@@ -20,7 +20,7 @@ const PageLoader = () => {
   const { t } = useTranslation(['table']);
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const {
     data: collection,
@@ -29,7 +29,7 @@ const PageLoader = () => {
     isError
   } = useFetchNotifications({
     pageSize: 1,
-    organizationId: currenEnvironment.organizationId
+    organizationId: currentEnvironment.organizationId
   });
   const [isDisabling, setIsDisabling] = useState<boolean>(false);
   const [selectedNotification, setSelectedNotification] =

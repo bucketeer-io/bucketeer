@@ -71,6 +71,7 @@ func (a Authenticator) Login(
 	state, redirectURL string,
 ) (string, error) {
 	if err := a.validateRedirectURL(redirectURL); err != nil {
+		a.logger.Error("auth/login: failed to validate redirect url", zap.Error(err))
 		return "", err
 	}
 	selectAccount := oauth2.SetAuthURLParam("prompt", "select_account")
@@ -82,6 +83,7 @@ func (a Authenticator) Exchange(
 	code, redirectURL string,
 ) (*auth.UserInfo, error) {
 	if err := a.validateRedirectURL(redirectURL); err != nil {
+		a.logger.Error("auth/google: failed to validate redirect url", zap.Error(err))
 		return nil, err
 	}
 	oauth2Config := a.oauth2Config(defaultScopes, redirectURL)
@@ -112,7 +114,7 @@ func (a Authenticator) getGoogleUserInfo(
 	client := config.Client(ctx, t)
 	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
-		a.logger.Error("Google: failed to get user info", zap.Error(err))
+		a.logger.Error("auth/google: failed to get user info", zap.Error(err))
 		return userInfo, err
 	}
 	defer func(Body io.ReadCloser) {

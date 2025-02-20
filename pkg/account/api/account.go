@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
@@ -33,8 +34,10 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	tagdomain "github.com/bucketeer-io/bucketeer/pkg/tag/domain"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
 )
 
 func (s *AccountService) CreateAccountV2(
@@ -71,6 +74,7 @@ func (s *AccountService) CreateAccountV2(
 		req.Command.LastName,
 		req.Command.Language,
 		req.Command.AvatarImageUrl,
+		req.Command.Tags,
 		req.OrganizationId,
 		req.Command.OrganizationRole,
 		req.Command.EnvironmentRoles,
@@ -121,6 +125,9 @@ func (s *AccountService) CreateAccountV2(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
+				zap.Any("environmentRoles", req.Command.EnvironmentRoles),
+				zap.String("email", req.Command.Email),
+				zap.Strings("tags", req.Command.Tags),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -131,6 +138,22 @@ func (s *AccountService) CreateAccountV2(
 			return nil, statusInternal.Err()
 		}
 		return nil, dt.Err()
+	}
+	// Upsert tags
+	for _, envRole := range req.Command.EnvironmentRoles {
+		if err := s.upsertTags(ctx, req.Command.Tags, envRole.EnvironmentId); err != nil {
+			s.logger.Error(
+				"Failed to upsert account tags",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationId", req.OrganizationId),
+					zap.String("environmentId", envRole.EnvironmentId),
+					zap.String("email", req.Command.Email),
+					zap.Strings("tags", req.Command.Tags),
+				)...,
+			)
+			return nil, statusInternal.Err()
+		}
 	}
 	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
 }
@@ -159,6 +182,7 @@ func (s *AccountService) createAccountV2NoCommand(
 		req.LastName,
 		req.Language,
 		req.AvatarImageUrl,
+		req.Tags,
 		req.OrganizationId,
 		req.OrganizationRole,
 		req.EnvironmentRoles,
@@ -193,7 +217,7 @@ func (s *AccountService) createAccountV2NoCommand(
 				CreatedAt:        account.CreatedAt,
 				UpdatedAt:        account.UpdatedAt,
 			},
-			storage.AdminEnvironmentNamespace,
+			storage.AdminEnvironmentID,
 			account,
 			nil,
 		)
@@ -242,7 +266,22 @@ func (s *AccountService) createAccountV2NoCommand(
 		)
 		return nil, err
 	}
-
+	// Upsert tags
+	for _, envRole := range req.EnvironmentRoles {
+		if err := s.upsertTags(ctx, req.Tags, envRole.EnvironmentId); err != nil {
+			s.logger.Error(
+				"Failed to upsert account tags",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationId", req.OrganizationId),
+					zap.String("environmentId", envRole.EnvironmentId),
+					zap.String("email", req.Email),
+					zap.Strings("tags", req.Tags),
+				)...,
+			)
+			return nil, statusInternal.Err()
+		}
+	}
 	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
 }
 
@@ -271,7 +310,7 @@ func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
 			Email:            updated.Email,
 			EnvironmentRoles: updated.EnvironmentRoles,
 		},
-		storage.AdminEnvironmentNamespace,
+		storage.AdminEnvironmentID,
 		updated,
 		account,
 	)
@@ -291,6 +330,35 @@ func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
 	err = s.accountStorage.UpdateAccountV2(ctx, updated)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (s *AccountService) upsertTags(
+	ctx context.Context,
+	tags []string,
+	environmentID string,
+) error {
+	for _, tag := range tags {
+		trimed := strings.TrimSpace(tag)
+		if trimed == "" {
+			continue
+		}
+		t, err := tagdomain.NewTag(trimed, environmentID, tagproto.Tag_ACCOUNT)
+		if err != nil {
+			s.logger.Error(
+				"Failed to create domain tag",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", environmentID),
+					zap.String("tagId", tag),
+				)...,
+			)
+			return err
+		}
+		if err := s.tagStorage.UpsertTag(ctx, t); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -390,6 +458,24 @@ func (s *AccountService) UpdateAccountV2(
 		}
 		return nil, dt.Err()
 	}
+	// Upsert tags
+	if req.ChangeTagsCommand != nil {
+		for _, envRole := range updatedAccountPb.EnvironmentRoles {
+			if err := s.upsertTags(ctx, req.ChangeTagsCommand.Tags, envRole.EnvironmentId); err != nil {
+				s.logger.Error(
+					"Failed to upsert account tags",
+					log.FieldsFromImcomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("organizationId", req.OrganizationId),
+						zap.String("environmentId", envRole.EnvironmentId),
+						zap.String("email", updatedAccountPb.Email),
+						zap.Strings("tags", req.ChangeTagsCommand.Tags),
+					)...,
+				)
+				return nil, statusInternal.Err()
+			}
+		}
+	}
 	return &accountproto.UpdateAccountV2Response{
 		Account: updatedAccountPb,
 	}, nil
@@ -438,6 +524,7 @@ func (s *AccountService) updateAccountV2NoCommand(
 		req.Language,
 		req.AvatarImageUrl,
 		req.Avatar,
+		req.Tags,
 		req.OrganizationRole,
 		req.EnvironmentRoles,
 		req.Disabled,
@@ -470,6 +557,24 @@ func (s *AccountService) updateAccountV2NoCommand(
 		}
 		return nil, dt.Err()
 	}
+	// Upsert tags
+	if req.Tags != nil {
+		for _, envRole := range updatedAccountPb.EnvironmentRoles {
+			if err := s.upsertTags(ctx, req.Tags, envRole.EnvironmentId); err != nil {
+				s.logger.Error(
+					"Failed to upsert account tags",
+					log.FieldsFromImcomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("organizationId", req.OrganizationId),
+						zap.String("environmentId", envRole.EnvironmentId),
+						zap.String("email", req.Email),
+						zap.Strings("tags", req.Tags),
+					)...,
+				)
+				return nil, statusInternal.Err()
+			}
+		}
+	}
 	return &accountproto.UpdateAccountV2Response{
 		Account: updatedAccountPb,
 	}, nil
@@ -482,6 +587,7 @@ func isNoUpdateAccountV2Command(req *accountproto.UpdateAccountV2Request) bool {
 		req.ChangeLanguageCommand == nil &&
 		req.ChangeAvatarUrlCommand == nil &&
 		req.ChangeAvatarCommand == nil &&
+		req.ChangeTagsCommand == nil &&
 		req.ChangeOrganizationRoleCommand == nil &&
 		req.ChangeEnvironmentRolesCommand == nil &&
 		req.ChangeLastSeenCommand == nil
@@ -506,6 +612,9 @@ func (s *AccountService) getUpdateAccountV2Commands(req *accountproto.UpdateAcco
 	}
 	if req.ChangeAvatarCommand != nil {
 		commands = append(commands, req.ChangeAvatarCommand)
+	}
+	if req.ChangeTagsCommand != nil {
+		commands = append(commands, req.ChangeTagsCommand)
 	}
 	if req.ChangeOrganizationRoleCommand != nil {
 		commands = append(commands, req.ChangeOrganizationRoleCommand)
@@ -555,6 +664,7 @@ func (s *AccountService) EnableAccountV2(
 		nil,
 		nil,
 		nil,
+		[]string{},
 		nil,
 		nil,
 		wrapperspb.Bool(false),
@@ -628,6 +738,7 @@ func (s *AccountService) DisableAccountV2(
 		nil,
 		nil,
 		nil,
+		[]string{},
 		nil,
 		nil,
 		wrapperspb.Bool(true),
@@ -699,6 +810,7 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 	email, organizationID string,
 	name, firstName, lastName, language, avatarImageURL *wrapperspb.StringValue,
 	avatar *accountproto.UpdateAccountV2Request_AccountV2Avatar,
+	tags []string,
 	organizationRole *accountproto.UpdateAccountV2Request_OrganizationRoleValue,
 	environmentRoles []*accountproto.AccountV2_EnvironmentRole,
 	isDisabled *wrapperspb.BoolValue,
@@ -717,6 +829,7 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 			language,
 			avatarImageURL,
 			avatar,
+			tags,
 			organizationRole,
 			environmentRoles,
 			isDisabled,
@@ -1002,6 +1115,16 @@ func (s *AccountService) ListAccountsV2(
 	if req.Disabled != nil {
 		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
 	}
+	tagValues := make([]interface{}, 0, len(req.Tags))
+	for _, tag := range req.Tags {
+		tagValues = append(tagValues, tag)
+	}
+	if len(tagValues) > 0 {
+		whereParts = append(
+			whereParts,
+			mysql.NewJSONFilter("tags", mysql.JSONContainsString, tagValues),
+		)
+	}
 	if req.OrganizationRole != nil {
 		whereParts = append(whereParts, mysql.NewFilter("organization_role", "=", req.OrganizationRole.Value))
 	}
@@ -1098,6 +1221,8 @@ func (s *AccountService) newAccountV2ListOrders(
 		column = "last_seen"
 	case accountproto.ListAccountsV2Request_STATE:
 		column = "disabled"
+	case accountproto.ListAccountsV2Request_TAGS:
+		column = "tags"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

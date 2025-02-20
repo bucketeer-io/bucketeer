@@ -316,7 +316,7 @@ func TestFilterKeysOlderThanThirtyOneDays(t *testing.T) {
 			expectedError:     errSubmatchStringNotFound,
 		},
 		{
-			desc:              "success: using empty environment namespace",
+			desc:              "success: using empty environment id",
 			inputEnvNamespace: "",
 			inputKind:         "uc",
 			inputKeys: []string{

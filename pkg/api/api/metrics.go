@@ -92,7 +92,7 @@ var (
 			// TODO: Remove project_id.
 		}, []string{
 			"project_id", "project_url_code",
-			"environment_namespace", "environment_url_code", "tag", "evaluation_type",
+			"environment_id", "environment_url_code", "tag", "evaluation_type",
 		})
 	getFeatureFlagsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -103,7 +103,7 @@ var (
 			// TODO: Remove project_id.
 		}, []string{
 			"project_id", "project_url_code",
-			"environment_namespace", "environment_url_code", "tag", "response_type",
+			"environment_id", "environment_url_code", "tag", "response_type",
 		})
 	getSegmentUsersCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -113,7 +113,7 @@ var (
 			Help:      "Total number of get segment users api requests",
 			// TODO: Remove project_id.
 		}, []string{
-			"project_id", "project_url_code", "environment_namespace", "environment_url_code",
+			"project_id", "project_url_code", "environment_id", "environment_url_code",
 			"source_id", "sdk_version", "response_type",
 		})
 	requestTotal = prometheus.NewCounterVec(
@@ -151,7 +151,7 @@ var (
 			Name:      "sdk_get_evaluations_handling_seconds",
 			Help:      "Histogram of get evaluations response latency (seconds).",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"environment_namespace", "tag", "state"})
+		}, []string{"environment_id", "tag", "state"})
 	// TODO: Remove after deleting api-gateway REST server
 	sdkGetEvaluationsSizeHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -160,7 +160,7 @@ var (
 			Name:      "sdk_get_evaluations_size",
 			Help:      "Histogram of get evaluations response size (byte).",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"environment_namespace", "tag", "state"})
+		}, []string{"environment_id", "tag", "state"})
 	// TODO: Remove after deleting api-gateway REST server
 	sdkTimeoutErrorCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -168,7 +168,7 @@ var (
 			Subsystem: "metrics_event",
 			Name:      "sdk_timeout_error_total",
 			Help:      "Total number of sdk timeout errors",
-		}, []string{"environment_namespace", "tag"})
+		}, []string{"environment_id", "tag"})
 	// TODO: Remove after deleting api-gateway REST server
 	sdkInternalErrorCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -176,7 +176,7 @@ var (
 			Subsystem: "metrics_event",
 			Name:      "sdk_internal_error_total",
 			Help:      "Total number of sdk internal errors",
-		}, []string{"environment_namespace", "tag"})
+		}, []string{"environment_id", "tag"})
 	sdkLatencyHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "bucketeer",
@@ -184,7 +184,7 @@ var (
 			Name:      "sdk_api_handling_seconds",
 			Help:      "Histogram of get evaluations response latency (seconds).",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"project_id", "environment_namespace", "tag", "api", "sdk_version", "source_id"})
+		}, []string{"project_id", "environment_id", "tag", "api", "sdk_version", "source_id"})
 	sdkSizeHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "bucketeer",
@@ -192,14 +192,14 @@ var (
 			Name:      "sdk_api_response_size",
 			Help:      "Histogram of get evaluations response size (byte).",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"project_id", "environment_namespace", "tag", "api", "sdk_version", "source_id"})
+		}, []string{"project_id", "environment_id", "tag", "api", "sdk_version", "source_id"})
 	sdkErrorCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
 			Subsystem: "metrics_event",
 			Name:      "sdk_api_error_total",
 			Help:      "Total number of sdk errors",
-		}, []string{"project_id", "environment_namespace", "tag", "error_type", "api", "sdk_version", "source_id"})
+		}, []string{"project_id", "environment_id", "tag", "error_type", "api", "sdk_version", "source_id"})
 )
 
 func registerMetrics(r metrics.Registerer) {

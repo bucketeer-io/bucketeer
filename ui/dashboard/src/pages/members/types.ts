@@ -8,6 +8,7 @@ export interface MembersFilters {
   disabled?: boolean;
   searchQuery: string;
   organizationId?: string;
+  organizationRole?: number;
 }
 
 export interface CollectionProps {

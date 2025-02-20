@@ -24,6 +24,7 @@ export interface AccountUpdaterParams {
     avatarFileType: string;
   };
   disabled?: boolean;
+  tags?: string[];
 }
 
 export const accountUpdater = async (params?: AccountUpdaterParams) => {

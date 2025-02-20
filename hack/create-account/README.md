@@ -7,7 +7,7 @@ go run ./hack/create-account create \
   --service-token=full-path-to-service-token-file \
   --email=email \
   --role=role \
-  --environment-namespace=environment-namespace \
+  --environment-id=environment-id \
   --is-admin(optional) \
   --no-profile \
   --no-gcp-trace-enabled

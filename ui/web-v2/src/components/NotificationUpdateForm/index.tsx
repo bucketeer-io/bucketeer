@@ -1,5 +1,5 @@
 import { Dialog } from '@headlessui/react';
-import { FC, memo, useState } from 'react';
+import { FC, memo, useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 
@@ -7,6 +7,7 @@ import { CheckBoxList } from '../CheckBoxList';
 import { SOURCE_TYPE_ITEMS } from '../../constants/notification';
 import { messages } from '../../lang/messages';
 import { useIsEditable } from '../../modules/me';
+import { Option } from '../Select';
 
 export interface NotificationUpdateFormProps {
   onSubmit: () => void;
@@ -25,11 +26,21 @@ export const NotificationUpdateForm: FC<NotificationUpdateFormProps> = memo(
       formState: { errors, isValid, isDirty, isSubmitted }
     } = methods;
 
-    const [defaultValues] = useState(() =>
-      SOURCE_TYPE_ITEMS.filter((item) =>
-        getValues()?.sourceTypes?.includes(Number(item.value))
-      )
-    );
+    const [defaultSourceTypesValues, setDefaultSourceTypesValues] = useState<
+      Option[]
+    >([]);
+
+    useEffect(() => {
+      setDefaultSourceTypesValues(
+        SOURCE_TYPE_ITEMS.filter((item) =>
+          getValues()?.sourceTypes?.includes(item.value)
+        )
+      );
+    }, [getValues()?.sourceTypes, setDefaultSourceTypesValues]);
+
+    if (!defaultSourceTypesValues.length) {
+      return null;
+    }
 
     return (
       <div className="w-[500px]">
@@ -89,10 +100,10 @@ export const NotificationUpdateForm: FC<NotificationUpdateFormProps> = memo(
                               const convList = values.map((value) =>
                                 Number(value)
                               );
-                              field.onChange(convList.sort());
+                              field.onChange(convList.sort().map(String));
                             }}
                             disabled={!editable || isSubmitted}
-                            defaultValues={defaultValues}
+                            defaultValues={defaultSourceTypesValues}
                           />
                         );
                       }}

@@ -609,7 +609,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
       return dispatch(
         listFeatures({
           environmentId: currentEnvironment.id,
-          pageSize: 99999,
+          pageSize: 0,
           cursor: '',
           tags: [],
           searchKeyword: null,
@@ -1087,7 +1087,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
             dispatch(
               listFeatures({
                 environmentId: currentEnvironment.id,
-                pageSize: 99999,
+                pageSize: 0,
                 cursor: '',
                 tags: [],
                 searchKeyword: null,
@@ -1127,7 +1127,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
       dispatch(
         listFeatures({
           environmentId: currentEnvironment.id,
-          pageSize: 99999,
+          pageSize: 0,
           cursor: '',
           tags: [],
           searchKeyword: null,

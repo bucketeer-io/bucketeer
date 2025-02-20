@@ -36,8 +36,8 @@ const toastVariants = cva(
 );
 
 const ToastMessage = ({
-  toastType,
-  messageType,
+  toastType = 'toast',
+  messageType = 'success',
   message,
   t,
   toastChildren

@@ -31,6 +31,7 @@ import "proto/account/account.proto";
 import "proto/account/api_key.proto";
 import "proto/autoops/auto_ops_rule.proto";
 import "proto/autoops/clause.proto";
+import "proto/autoops/service.proto";
 import "proto/notification/subscription.proto";
 import "proto/notification/recipient.proto";
 import "proto/feature/prerequisite.proto";
@@ -38,6 +39,9 @@ import "proto/autoops/progressive_rollout.proto";
 import "proto/feature/flag_trigger.proto";
 import "proto/account/search_filter.proto";
 import "proto/tag/tag.proto";
+import "proto/experiment/goal.proto";
+import "proto/experiment/experiment.proto";
+import "proto/coderef/code_reference.proto";
 
 message Event {
   enum EntityType {
@@ -59,6 +63,7 @@ message Event {
     ORGANIZATION = 15;
     FLAG_TRIGGER = 16;
     TAG = 17;
+    CODEREF = 18;
   }
   enum Type {
     UNKNOWN = 0;
@@ -105,6 +110,7 @@ message Event {
     GOAL_DESCRIPTION_CHANGED = 102;
     GOAL_DELETED = 103;
     GOAL_ARCHIVED = 104;
+    GOAL_UPDATED = 105;
     EXPERIMENT_CREATED = 200;
     EXPERIMENT_STOPPED = 201;
     EXPERIMENT_START_AT_CHANGED = 202;
@@ -116,6 +122,7 @@ message Event {
     EXPERIMENT_STARTED = 208;
     EXPERIMENT_FINISHED = 209;
     EXPERIMENT_ARCHIVED = 210;
+    EXPERIMENT_UPDATED = 211;
     ACCOUNT_CREATED = 300 [deprecated = true];
     ACCOUNT_ROLE_CHANGED = 301 [deprecated = true];
     ACCOUNT_ENABLED = 302 [deprecated = true];
@@ -138,6 +145,7 @@ message Event {
     ACCOUNT_V2_LAST_NAME_CHANGED = 319;
     ACCOUNT_V2_LANGUAGE_CHANGED = 320;
     ACCOUNT_V2_UPDATED = 321;
+    ACCOUNT_V2_TAGS_CHANGED = 322;
     APIKEY_CREATED = 400;
     APIKEY_NAME_CHANGED = 401;
     APIKEY_ENABLED = 402;
@@ -184,6 +192,7 @@ message Event {
     DATETIME_CLAUSE_CHANGED = 808;
     AUTOOPS_RULE_STOPPED = 809;
     AUTOOPS_RULE_OPS_STATUS_CHANGED = 810;
+    AUTOOPS_RULE_UPDATED = 811;
     PUSH_CREATED = 900;
     PUSH_DELETED = 901;
     PUSH_TAGS_ADDED = 902;
@@ -198,6 +207,7 @@ message Event {
     SUBSCRIPTION_SOURCE_TYPE_DELETED = 1005;
     SUBSCRIPTION_RENAMED = 1006;
     SUBSCRIPTION_UPDATED = 1007;
+    SUBSCRIPTION_FEATURE_FLAG_TAGS_UPDATED = 1008;
     ADMIN_SUBSCRIPTION_CREATED = 1100;
     ADMIN_SUBSCRIPTION_DELETED = 1101;
     ADMIN_SUBSCRIPTION_ENABLED = 1102;
@@ -240,6 +250,9 @@ message Event {
     FLAG_TRIGGER_USAGE_UPDATED = 1607;
     TAG_CREATED = 1701;
     TAG_DELETED = 1702;
+    CODE_REFERENCE_CREATED = 1800;
+    CODE_REFERENCE_UPDATED = 1801;
+    CODE_REFERENCE_DELETED = 1802;
   }
   string id = 1;
   int64 timestamp = 2;
@@ -498,6 +511,13 @@ message GoalCreatedEvent {
   bool deleted = 4;
   int64 created_at = 5;
   int64 updated_at = 6;
+  bucketeer.experiment.Goal.ConnectionType connection_type = 7;
+}
+
+message GoalUpdatedEvent {
+  string id = 1;
+  google.protobuf.StringValue name = 2;
+  google.protobuf.StringValue description = 3;
 }
 
 message GoalRenamedEvent {
@@ -575,6 +595,15 @@ message ExperimentDescriptionChangedEvent {
   string description = 2;
 }
 
+message ExperimentUpdatedEvent {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int64 start_at = 4;
+  int64 stop_at = 5;
+  experiment.Experiment.Status status = 6;
+}
+
 message ExperimentStartedEvent {}
 
 message ExperimentFinishedEvent {}
@@ -592,6 +621,7 @@ message AccountV2CreatedEvent {
   string first_name = 10;
   string last_name = 11;
   string language = 12;
+  repeated string tags = 13;
 }
 
 message AccountV2UpdatedEvent {
@@ -607,6 +637,11 @@ message AccountV2NameChangedEvent {
 message AccountV2AvatarImageURLChangedEvent {
   string email = 1;
   string avatar_image_url = 2;
+}
+
+message AccountV2TagsChangedEvent {
+  string email = 1;
+  repeated string tags = 2;
 }
 
 message AccountV2OrganizationRoleChangedEvent {
@@ -904,6 +939,14 @@ message DatetimeClauseAddedEvent {
   bucketeer.autoops.DatetimeClause datetime_clause = 2;
 }
 
+message AutoOpsRuleUpdatedEvent {
+  string id = 1;
+  repeated autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause
+      update_ops_event_rate_clauses = 10;
+  repeated autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause
+      update_datetime_clauses = 11;
+}
+
 message DatetimeClauseChangedEvent {
   string clause_id = 1;
   bucketeer.autoops.DatetimeClause datetime_clause = 2;
@@ -943,6 +986,7 @@ message SubscriptionCreatedEvent {
   repeated bucketeer.notification.Subscription.SourceType source_types = 1;
   bucketeer.notification.Recipient recipient = 2;
   string name = 3;
+  repeated string feature_flag_tags = 4;
 }
 
 message SubscriptionDeletedEvent {}
@@ -963,11 +1007,16 @@ message SubscriptionRenamedEvent {
   string name = 1;
 }
 
+message SubscriptionFeatureFlagTagsUpdatedEvent {
+  repeated string feature_flag_tags = 1;
+}
+
 message SubscriptionUpdatedEvent {
   string id = 1;
   google.protobuf.StringValue name = 2;
   repeated bucketeer.notification.Subscription.SourceType source_types = 3;
   google.protobuf.BoolValue disabled = 4;
+  repeated string feature_flag_tags = 5;
 }
 
 message AdminSubscriptionCreatedEvent {
@@ -1210,4 +1259,40 @@ message TagCreatedEvent {
 message TagDeletedEvent {
   string id = 1;
   string environment_id = 6;
+}
+
+message CodeReferenceCreatedEvent {
+  string id = 1;
+  string feature_id = 2;
+  string file_path = 3;
+  int32 line_number = 4;
+  string code_snippet = 5;
+  string content_hash = 6;
+  repeated string aliases = 7;
+  string repository_name = 8;
+  string repository_owner = 9;
+  bucketeer.coderef.CodeReference.RepositoryType repository_type = 10;
+  string repository_branch = 11;
+  string commit_hash = 12;
+  string environment_id = 13;
+  int64 created_at = 14;
+  int64 updated_at = 15;
+}
+
+message CodeReferenceUpdatedEvent {
+  string id = 1;
+  string file_path = 2;
+  int32 line_number = 3;
+  string code_snippet = 4;
+  string content_hash = 5;
+  repeated string aliases = 6;
+  string repository_branch = 7;
+  string commit_hash = 8;
+  string environment_id = 9;
+  int64 updated_at = 10;
+}
+
+message CodeReferenceDeletedEvent {
+  string id = 1;
+  string environment_id = 2;
 }

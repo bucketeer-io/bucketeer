@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import {
+  FormProvider,
+  Resolver,
+  SubmitHandler,
+  useForm
+} from 'react-hook-form';
 import { notificationCreator } from '@api/notification';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateNotifications } from '@queries/notifications';
@@ -8,13 +13,17 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { languageList } from 'constants/notification';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
+import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { NotificationLanguage, SourceType } from '@types';
-import { IconNoData } from '@icons';
+import { cn } from 'utils/style';
+import { IconInfo, IconNoData } from '@icons';
+import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
+import { CreatableSelect } from 'components/creatable-select';
 import Divider from 'components/divider';
 import {
   DropdownMenu,
@@ -23,9 +32,11 @@ import {
   DropdownMenuTrigger
 } from 'components/dropdown';
 import Form from 'components/form';
+import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import SearchInput from 'components/search-input';
+import { Tooltip } from 'components/tooltip';
 
 interface AddNotificationModalProps {
   isOpen: boolean;
@@ -42,6 +53,7 @@ export interface AddNotificationForm {
   name: string;
   url: string;
   environment: string;
+  tags: string[];
   language: NotificationLanguage;
   types: SourceType[];
 }
@@ -50,6 +62,7 @@ export const formSchema = yup.object().shape({
   name: yup.string().required(),
   url: yup.string().required().url('Must be a valid URL'),
   environment: yup.string().required(),
+  tags: yup.array(),
   language: yup.mixed<NotificationLanguage>().required(),
   types: yup.array().min(1, 'Required').required()
 });
@@ -137,14 +150,15 @@ const AddNotificationModal = ({
   });
   const environments = (collection?.environments || []).filter(item => item.id);
 
-  const form = useForm({
-    resolver: yupResolver(formSchema),
+  const form = useForm<AddNotificationForm>({
+    resolver: yupResolver(formSchema) as Resolver<AddNotificationForm>,
     defaultValues: {
       name: '',
       url: '',
       environment: '',
       language: undefined,
-      types: []
+      types: [],
+      tags: []
     }
   });
 
@@ -156,6 +170,16 @@ const AddNotificationModal = ({
   } = form;
 
   const checkedTypes = watch('types');
+  const isSelectedEnv = !!watch('environment');
+
+  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
+    entityType: 'FEATURE_FLAG',
+    environmentId: watch('environment'),
+    options: {
+      enabled: isSelectedEnv
+    }
+  });
+  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
 
   const onSearchTypes = (value: string) => {
     if (!value) {
@@ -180,7 +204,8 @@ const AddNotificationModal = ({
         type: 'SlackChannel',
         slackChannelRecipient: { webhookUrl: values.url },
         language: values.language
-      }
+      },
+      featureFlagTags: values.tags
     }).then(() => {
       notify({
         toastType: 'toast',
@@ -340,6 +365,7 @@ const AddNotificationModal = ({
 
             <SearchInput
               value={searchValue}
+              disabled={!isSelectedEnv}
               onChange={onSearchTypes}
               placeholder={t(`form:search-notification-type`)}
             />
@@ -360,6 +386,7 @@ const AddNotificationModal = ({
                         checked={
                           checkedTypes.length === SOURCE_TYPE_ITEMS.length
                         }
+                        disabled={!isSelectedEnv}
                         onCheckedChange={checked => {
                           if (checked) {
                             field.onChange(
@@ -374,36 +401,96 @@ const AddNotificationModal = ({
                     <Divider className="mt-3" />
 
                     {filteredTypes.map(item => (
-                      <div
-                        key={item.value}
-                        className="flex items-center py-3 gap-x-5"
-                      >
-                        <label
-                          htmlFor={item.value}
-                          className="flex-1 cursor-pointer"
-                        >
-                          <p className="typo-para-medium text-gray-800">
-                            {item.label}
-                          </p>
-                          <p className="typo-para-small text-gray-600 mt-0.5">
-                            {item.description}
-                          </p>
-                        </label>
-                        <Checkbox
-                          id={item.value}
-                          checked={checkedTypes.includes(item.value)}
-                          onCheckedChange={checked => {
-                            if (checked) {
-                              checkedTypes.push(item.value);
-                              field.onChange(checkedTypes);
-                            } else {
-                              const checkedItems = checkedTypes.filter(
-                                v => v !== item.value
-                              );
-                              field.onChange(checkedItems);
-                            }
-                          }}
-                        />
+                      <div key={item.value}>
+                        <div className="flex items-center py-3 gap-x-5">
+                          <label
+                            htmlFor={item.value}
+                            className={cn(
+                              'flex-1',
+                              !isSelectedEnv ? 'opacity-50' : 'cursor-pointer'
+                            )}
+                          >
+                            <p className="typo-para-medium text-gray-800">
+                              {item.label}
+                            </p>
+                            <p className="typo-para-small text-gray-600 mt-0.5">
+                              {item.description}
+                            </p>
+                          </label>
+                          <Checkbox
+                            id={item.value}
+                            checked={checkedTypes.includes(item.value)}
+                            disabled={!isSelectedEnv}
+                            onCheckedChange={checked => {
+                              if (checked) {
+                                checkedTypes.push(item.value);
+                                field.onChange(checkedTypes);
+                              } else {
+                                const checkedItems = checkedTypes.filter(
+                                  v => v !== item.value
+                                );
+                                field.onChange(checkedItems);
+                              }
+                            }}
+                          />
+                        </div>
+
+                        {item.value === 'DOMAIN_EVENT_FEATURE' &&
+                          checkedTypes.includes(item.value) && (
+                            <Form.Field
+                              control={form.control}
+                              name={`tags`}
+                              render={({ field }) => (
+                                <Form.Item className="-mt-2">
+                                  <Form.Label className="relative w-fit">
+                                    {t('tags')}
+                                    <Tooltip
+                                      align="start"
+                                      alignOffset={-30}
+                                      trigger={
+                                        <div className="flex-center absolute top-0 -right-6">
+                                          <Icon
+                                            icon={IconInfo}
+                                            size={'sm'}
+                                            color="gray-600"
+                                          />
+                                        </div>
+                                      }
+                                      content={t(
+                                        'form:tag-notifications-tooltip'
+                                      )}
+                                      className="!z-[100] max-w-[400px]"
+                                    />
+                                  </Form.Label>
+                                  <Form.Control>
+                                    <CreatableSelect
+                                      disabled={
+                                        isLoadingTags || !tagOptions.length
+                                      }
+                                      loading={isLoadingTags}
+                                      placeholder={t(
+                                        isSelectedEnv &&
+                                          !tagOptions.length &&
+                                          !isLoadingTags
+                                          ? `form:no-tags-found`
+                                          : `form:placeholder-tags`
+                                      )}
+                                      options={tagOptions?.map(tag => ({
+                                        label: tag.name,
+                                        value: tag.id
+                                      }))}
+                                      onChange={value =>
+                                        field.onChange(
+                                          value.map(tag => tag.value)
+                                        )
+                                      }
+                                    />
+                                  </Form.Control>
+                                  <Form.Message />
+                                </Form.Item>
+                              )}
+                            />
+                          )}
                       </div>
                     ))}
                   </>

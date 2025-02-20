@@ -20,6 +20,10 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/experiment";
 import "proto/feature/variation.proto";
 
 message Experiment {
+  message GoalReference {
+    string id = 1;
+    string name = 2;
+  }
   enum Status {
     WAITING = 0;
     RUNNING = 1;
@@ -46,6 +50,7 @@ message Experiment {
   Status status = 18;
   string maintainer = 19;
   bool archived = 20;
+  repeated GoalReference goals = 21;
 }
 
 message Experiments {
