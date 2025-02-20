@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"time"
 
@@ -54,19 +55,37 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 	if err != nil {
 		return nil, err
 	}
+
+	if req.Command == nil {
+		return s.CreateProgressiveRolloutNoCommand(ctx, req, localizer, editor)
+	}
+
 	if err := s.validateCreateProgressiveRolloutRequest(ctx, req, localizer); err != nil {
 		return nil, err
 	}
-
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
-		progressiveRollout, err := domain.NewProgressiveRollout(
-			req.Command.FeatureId,
-			req.Command.ProgressiveRolloutManualScheduleClause,
-			req.Command.ProgressiveRolloutTemplateScheduleClause,
+	progressiveRollout, err := domain.NewProgressiveRollout(
+		req.Command.FeatureId,
+		req.Command.ProgressiveRolloutManualScheduleClause,
+		req.Command.ProgressiveRolloutTemplateScheduleClause,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create domain ProgressiveRollout",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
 		)
+		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
 		if err != nil {
-			return err
+			return nil, statusProgressiveRolloutInternal.Err()
 		}
+		return nil, dt.Err()
+	}
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
 		storage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
 		handler, err := command.NewProgressiveRolloutCommandHandler(
 			editor,
@@ -83,8 +102,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 		return storage.CreateProgressiveRollout(contextWithTx, progressiveRollout, req.EnvironmentId)
 	})
 	if err != nil {
-		switch err {
-		case v2as.ErrProgressiveRolloutAlreadyExists:
+		if errors.Is(err, v2as.ErrProgressiveRolloutAlreadyExists) {
 			dt, err := statusProgressiveRolloutAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
@@ -110,7 +128,85 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 		}
 		return nil, dt.Err()
 	}
-	return &autoopsproto.CreateProgressiveRolloutResponse{}, nil
+	return &autoopsproto.CreateProgressiveRolloutResponse{
+		ProgressiveRollout: progressiveRollout.ProgressiveRollout,
+	}, nil
+}
+
+func (s *AutoOpsService) CreateProgressiveRolloutNoCommand(
+	ctx context.Context,
+	req *autoopsproto.CreateProgressiveRolloutRequest,
+	localizer locale.Localizer,
+	editor *eventproto.Editor,
+) (*autoopsproto.CreateProgressiveRolloutResponse, error) {
+	if err := s.validateCreateProgressiveRolloutRequestNoCommand(ctx, req, localizer); err != nil {
+		return nil, err
+	}
+	progressiveRollout, err := domain.NewProgressiveRollout(
+		req.FeatureId,
+		req.ProgressiveRolloutManualScheduleClause,
+		req.ProgressiveRolloutTemplateScheduleClause,
+	)
+	if err != nil {
+		return nil, err
+	}
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
+		storage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
+		event, err := domainevent.NewEvent(
+			editor,
+			eventproto.Event_AUTOOPS_RULE,
+			progressiveRollout.Id,
+			eventproto.Event_PROGRESSIVE_ROLLOUT_CREATED,
+			&eventproto.ProgressiveRolloutCreatedEvent{
+				Id:        progressiveRollout.Id,
+				FeatureId: progressiveRollout.FeatureId,
+				Clause:    progressiveRollout.Clause,
+				CreatedAt: progressiveRollout.CreatedAt,
+				UpdatedAt: progressiveRollout.UpdatedAt,
+				Type:      progressiveRollout.Type,
+			},
+			req.EnvironmentId,
+			progressiveRollout.ProgressiveRollout,
+			&autoopsproto.ProgressiveRollout{},
+		)
+		if err != nil {
+			return err
+		}
+		if err := s.publisher.Publish(ctx, event); err != nil {
+			return err
+		}
+		return storage.CreateProgressiveRollout(contextWithTx, progressiveRollout, req.EnvironmentId)
+	})
+	if err != nil {
+		if errors.Is(err, v2as.ErrProgressiveRolloutAlreadyExists) {
+			dt, err := statusProgressiveRolloutAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusProgressiveRolloutInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to create ProgressiveRollout",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusProgressiveRolloutInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &autoopsproto.CreateProgressiveRolloutResponse{
+		ProgressiveRollout: progressiveRollout.ProgressiveRollout,
+	}, nil
 }
 
 func (s *AutoOpsService) GetProgressiveRollout(
@@ -138,7 +234,7 @@ func (s *AutoOpsService) GetProgressiveRollout(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		if err == v2as.ErrProgressiveRolloutNotFound {
+		if errors.Is(err, v2as.ErrProgressiveRolloutNotFound) {
 			dt, err := statusProgressiveRolloutNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout),
@@ -324,6 +420,7 @@ func (s *AutoOpsService) ListProgressiveRollouts(
 	if err != nil {
 		return nil, err
 	}
+	s.logger.Info("List Progressive Rollouts", zap.Any("req", req))
 	progressiveRollout, totalCount, nextOffset, err := s.listProgressiveRollouts(
 		ctx,
 		req,
@@ -654,16 +751,6 @@ func (s *AutoOpsService) validateCreateProgressiveRolloutRequest(
 	req *autoopsproto.CreateProgressiveRolloutRequest,
 	localizer locale.Localizer,
 ) error {
-	if req.Command == nil {
-		dt, err := statusProgressiveRolloutNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
-	}
 	if req.Command.FeatureId == "" {
 		dt, err := statusProgressiveRolloutFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -723,6 +810,79 @@ func (s *AutoOpsService) validateCreateProgressiveRolloutRequest(
 	if req.Command.ProgressiveRolloutTemplateScheduleClause != nil {
 		if err := s.validateProgressiveRolloutTemplateScheduleClause(
 			req.Command.ProgressiveRolloutTemplateScheduleClause,
+			f,
+			localizer,
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *AutoOpsService) validateCreateProgressiveRolloutRequestNoCommand(
+	ctx context.Context,
+	req *autoopsproto.CreateProgressiveRolloutRequest,
+	localizer locale.Localizer,
+) error {
+	if req.FeatureId == "" {
+		dt, err := statusProgressiveRolloutFeatureIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
+	}
+	// This operation is not the atomic. We may have the problem.
+	f, err := s.getFeature(ctx, req, localizer)
+	if err != nil {
+		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
+	}
+	if err := s.validateTargetFeature(ctx, f, localizer); err != nil {
+		return err
+	}
+	if req.ProgressiveRolloutManualScheduleClause == nil &&
+		req.ProgressiveRolloutTemplateScheduleClause == nil {
+		dt, err := statusProgressiveRolloutClauseRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause"),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.ProgressiveRolloutManualScheduleClause != nil &&
+		req.ProgressiveRolloutTemplateScheduleClause != nil {
+		dt, err := statusIncorrectProgressiveRolloutClause.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause"),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.ProgressiveRolloutManualScheduleClause != nil {
+		if err := s.validateProgressiveRolloutManualScheduleClause(
+			req.ProgressiveRolloutManualScheduleClause,
+			f,
+			localizer,
+		); err != nil {
+			return err
+		}
+	}
+	if req.ProgressiveRolloutTemplateScheduleClause != nil {
+		if err := s.validateProgressiveRolloutTemplateScheduleClause(
+			req.ProgressiveRolloutTemplateScheduleClause,
 			f,
 			localizer,
 		); err != nil {
@@ -839,9 +999,13 @@ func (s *AutoOpsService) getFeature(
 	req *autoopsproto.CreateProgressiveRolloutRequest,
 	localizer locale.Localizer,
 ) (*featureproto.Feature, error) {
+	featureID := req.FeatureId
+	if req.Command != nil {
+		featureID = req.Command.FeatureId
+	}
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
 		EnvironmentId: req.EnvironmentId,
-		Id:            req.Command.FeatureId,
+		Id:            featureID,
 	})
 	if err != nil {
 		return nil, err

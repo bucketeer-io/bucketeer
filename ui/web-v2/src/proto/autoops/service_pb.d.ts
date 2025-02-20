@@ -818,6 +818,27 @@ export class CreateProgressiveRolloutRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  hasProgressiveRolloutManualScheduleClause(): boolean;
+  clearProgressiveRolloutManualScheduleClause(): void;
+  getProgressiveRolloutManualScheduleClause():
+    | proto_autoops_clause_pb.ProgressiveRolloutManualScheduleClause
+    | undefined;
+  setProgressiveRolloutManualScheduleClause(
+    value?: proto_autoops_clause_pb.ProgressiveRolloutManualScheduleClause
+  ): void;
+
+  hasProgressiveRolloutTemplateScheduleClause(): boolean;
+  clearProgressiveRolloutTemplateScheduleClause(): void;
+  getProgressiveRolloutTemplateScheduleClause():
+    | proto_autoops_clause_pb.ProgressiveRolloutTemplateScheduleClause
+    | undefined;
+  setProgressiveRolloutTemplateScheduleClause(
+    value?: proto_autoops_clause_pb.ProgressiveRolloutTemplateScheduleClause
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateProgressiveRolloutRequest.AsObject;
   static toObject(
@@ -843,10 +864,22 @@ export namespace CreateProgressiveRolloutRequest {
   export type AsObject = {
     command?: proto_autoops_command_pb.CreateProgressiveRolloutCommand.AsObject;
     environmentId: string;
+    featureId: string;
+    progressiveRolloutManualScheduleClause?: proto_autoops_clause_pb.ProgressiveRolloutManualScheduleClause.AsObject;
+    progressiveRolloutTemplateScheduleClause?: proto_autoops_clause_pb.ProgressiveRolloutTemplateScheduleClause.AsObject;
   };
 }
 
 export class CreateProgressiveRolloutResponse extends jspb.Message {
+  hasProgressiveRollout(): boolean;
+  clearProgressiveRollout(): void;
+  getProgressiveRollout():
+    | proto_autoops_progressive_rollout_pb.ProgressiveRollout
+    | undefined;
+  setProgressiveRollout(
+    value?: proto_autoops_progressive_rollout_pb.ProgressiveRollout
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(
     includeInstance?: boolean
@@ -871,7 +904,9 @@ export class CreateProgressiveRolloutResponse extends jspb.Message {
 }
 
 export namespace CreateProgressiveRolloutResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    progressiveRollout?: proto_autoops_progressive_rollout_pb.ProgressiveRollout.AsObject;
+  };
 }
 
 export class GetProgressiveRolloutRequest extends jspb.Message {

@@ -195,11 +195,23 @@ message ListOpsCountsResponse {
 
 message CreateProgressiveRolloutRequest {
   reserved 1;
-  CreateProgressiveRolloutCommand command = 2;
-  string environment_id = 3;
+  CreateProgressiveRolloutCommand command = 2 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 4 [(google.api.field_behavior) = REQUIRED];
+  optional ProgressiveRolloutManualScheduleClause
+      progressive_rollout_manual_schedule_clause = 5;
+  optional ProgressiveRolloutTemplateScheduleClause
+      progressive_rollout_template_schedule_clause = 6;
 }
 
-message CreateProgressiveRolloutResponse {}
+message CreateProgressiveRolloutResponse {
+  ProgressiveRollout progressive_rollout = 1;
+}
 
 message GetProgressiveRolloutRequest {
   reserved 1;
@@ -477,15 +489,112 @@ service AutoOpsService {
   }
   rpc ListOpsCounts(ListOpsCountsRequest) returns (ListOpsCountsResponse) {}
   rpc CreateProgressiveRollout(CreateProgressiveRolloutRequest)
-      returns (CreateProgressiveRolloutResponse) {}
+      returns (CreateProgressiveRolloutResponse) {
+    option (google.api.http) = {
+      post: "/v1/progressive_rollout"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create"
+      description: "Create a progressive rollout."
+      tags: "progressive_rollout"
+      operation_id: "web.v1.progressive_rollout.create"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc GetProgressiveRollout(GetProgressiveRolloutRequest)
-      returns (GetProgressiveRolloutResponse) {}
+      returns (GetProgressiveRolloutResponse) {
+    option (google.api.http) = {
+      get: "/v1/progressive_rollout"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get"
+      description: "Get a progressive rollout."
+      tags: "progressive_rollout"
+      operation_id: "web.v1.progressive_rollout.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc StopProgressiveRollout(StopProgressiveRolloutRequest)
       returns (StopProgressiveRolloutResponse) {}
   rpc DeleteProgressiveRollout(DeleteProgressiveRolloutRequest)
       returns (DeleteProgressiveRolloutResponse) {}
   rpc ListProgressiveRollouts(ListProgressiveRolloutsRequest)
-      returns (ListProgressiveRolloutsResponse) {}
+      returns (ListProgressiveRolloutsResponse) {
+    option (google.api.http) = {
+      get: "/v1/progressive_rollouts"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List"
+      description: "List progressive rollouts."
+      tags: "progressive_rollout"
+      operation_id: "web.v1.progressive_rollout.list"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ExecuteProgressiveRollout(ExecuteProgressiveRolloutRequest)
       returns (ExecuteProgressiveRolloutResponse) {}
 }

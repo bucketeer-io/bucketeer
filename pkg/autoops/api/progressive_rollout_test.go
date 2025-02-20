@@ -105,13 +105,6 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "err: ErrNoCommand",
-			req: &autoopsproto.CreateProgressiveRolloutRequest{
-				Command: nil,
-			},
-			expectedErr: createError(statusProgressiveRolloutNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
-		{
 			desc: "err: ErrFeatureIDRequired",
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{},
@@ -824,6 +817,762 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 						Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
 						Increments:  2,
 					},
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createAutoOpsService(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			_, err := s.CreateProgressiveRollout(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestCreateProgressiveRolloutNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithTokenRoleOwner(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	ti := time.Date(2020, 12, 15, 0, 0, 0, 0, time.UTC)
+	invalidSpanSchedules := []*autoopsproto.ProgressiveRolloutSchedule{
+		{
+			ScheduleId: "sid-1",
+			ExecuteAt:  ti.Unix(),
+			Weight:     20,
+		},
+		{
+			ScheduleId: "sid-1",
+			ExecuteAt:  ti.Add(time.Minute * 3).Unix(),
+			Weight:     40,
+		},
+	}
+
+	validSchedules := []*autoopsproto.ProgressiveRolloutSchedule{
+		{
+			ScheduleId: "sid-1",
+			ExecuteAt:  ti.Unix(),
+			Weight:     20,
+		},
+		{
+			ScheduleId: "sid-1",
+			ExecuteAt:  ti.AddDate(0, 0, 3).Unix(),
+			Weight:     40,
+		},
+	}
+
+	executedAtRequiredSchedules := []*autoopsproto.ProgressiveRolloutSchedule{
+		{
+			ScheduleId: "sid-1",
+			ExecuteAt:  0,
+		},
+	}
+
+	invalidWeightSchedules := []*autoopsproto.ProgressiveRolloutSchedule{
+		{
+			ScheduleId: "sid-1",
+			ExecuteAt:  ti.Unix(),
+			Weight:     -1,
+		},
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AutoOpsService)
+		req         *autoopsproto.CreateProgressiveRolloutRequest
+		expectedErr error
+	}{
+		{
+			desc: "err: ErrFeatureIDRequired",
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				EnvironmentId: "env-id",
+			},
+			expectedErr: createError(statusProgressiveRolloutFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
+		},
+		{
+			desc: "err: Internal",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+			},
+			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
+		},
+		{
+			desc: "err: InvalidVariationSize",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+						{
+							Id: "vid-3",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+			},
+			expectedErr: createError(statusProgressiveRolloutInvalidVariationSize, localizer.MustLocalizeWithTemplate(locale.AutoOpsInvalidVariationSize)),
+		},
+		{
+			desc: "err: ErrClauseRequired",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+			},
+			expectedErr: createError(statusProgressiveRolloutClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause")),
+		},
+		{
+			desc: "err: IncorrecctProgressiveRolloutClause",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId:                                "fid",
+				ProgressiveRolloutManualScheduleClause:   &autoopsproto.ProgressiveRolloutManualScheduleClause{},
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{},
+			},
+			expectedErr: createError(statusIncorrectProgressiveRolloutClause, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause")),
+		},
+		{
+			desc: "err: manual ErrVariationIdRequired",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId:                              "fid",
+				ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{},
+			},
+			expectedErr: createError(statusProgressiveRolloutClauseVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+		},
+		{
+			desc: "err: manual ErrInvalidVariationId",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+				ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+					VariationId: "invalid",
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutClauseInvalidVariationID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation_id")),
+		},
+		{
+			desc: "err: template ErrVariationIdRequired",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId:                                "fid",
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{},
+			},
+			expectedErr: createError(statusProgressiveRolloutClauseVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
+		},
+		{
+			desc: "err: manual ErrSchedulesRequired",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+				ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+					VariationId: "vid-1",
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutClauseSchedulesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "schedule")),
+		},
+		{
+			desc: "err: template ErrSchedulesRequired",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					VariationId: "vid-1",
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutClauseSchedulesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "schedule")),
+		},
+		{
+			desc: "err: template ErrInvalidIncrements",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					VariationId: "vid-1",
+					Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
+						{
+							ScheduleId: "sid-1",
+							ExecuteAt:  time.Now().AddDate(3, 0, 0).Unix(),
+							Weight:     60,
+						},
+					},
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutClauseInvalidIncrements, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "increments")),
+		},
+		{
+			desc: "err: template ErrUnknownInterval",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					VariationId: "vid-1",
+					Schedules: []*autoopsproto.ProgressiveRolloutSchedule{
+						{
+							ScheduleId: "sid-1",
+							ExecuteAt:  time.Now().AddDate(3, 0, 0).Unix(),
+							Weight:     60,
+						},
+					},
+					Increments: 30,
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutClauseUnknownInterval, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "interval")),
+		},
+		{
+			desc: "err: manual ErrExecutedAtRequired",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					VariationId: "vid-1",
+					Schedules:   executedAtRequiredSchedules,
+					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:  2,
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutScheduleExecutedAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "execute_at")),
+		},
+		{
+			desc: "err: manual ErrExecutedAtRequired",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+				ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+					VariationId: "vid-1",
+					Schedules:   executedAtRequiredSchedules,
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutScheduleExecutedAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "execute_at")),
+		},
+		{
+			desc: "err: manual ErrExecutedAtRequired",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					VariationId: "vid-1",
+					Schedules:   invalidWeightSchedules,
+					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:  2,
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutScheduleInvalidWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "weight")),
+		},
+		{
+			desc: "err: manual ErrExecutedAtRequired",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				Command: &autoopsproto.CreateProgressiveRolloutCommand{
+					FeatureId: "fid",
+					ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+						VariationId: "vid-1",
+						Schedules:   invalidWeightSchedules,
+					},
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutScheduleInvalidWeight, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "weight")),
+		},
+		{
+			desc: "err: template ErrInvalidScheduleSpans",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					VariationId: "vid-1",
+					Schedules:   invalidSpanSchedules,
+					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:  2,
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutInvalidScheduleSpans, localizer.MustLocalize(locale.AutoOpsInvalidScheduleSpans)),
+		},
+		{
+			desc: "err: manual ErrInvalidScheduleSpans",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+				ProgressiveRolloutManualScheduleClause: &autoopsproto.ProgressiveRolloutManualScheduleClause{
+					VariationId: "vid-1",
+					Schedules:   invalidSpanSchedules,
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutInvalidScheduleSpans, localizer.MustLocalize(locale.AutoOpsInvalidScheduleSpans)),
+		},
+		{
+			desc: "err: transaction error",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					VariationId: "vid-1",
+					Schedules:   validSchedules,
+					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:  2,
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "err: ErrProgressiveRolloutAlreadyExists",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(v2as.ErrProgressiveRolloutAlreadyExists)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					VariationId: "vid-1",
+					Schedules:   validSchedules,
+					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:  2,
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+		},
+		{
+			desc: "err: while listing experiments",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					nil,
+					errors.New("internal error"),
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					VariationId: "vid-1",
+					Schedules:   validSchedules,
+					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:  2,
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "err: AutoOpsWaitingOrRunningExperimentExists",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{
+						Experiments: []*experimentproto.Experiment{
+							{
+								Id: "experiment-id",
+							},
+						},
+					},
+					nil,
+				)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				FeatureId: "fid",
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					VariationId: "vid-1",
+					Schedules:   validSchedules,
+					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:  2,
+				},
+			},
+			expectedErr: createError(statusProgressiveRolloutWaitingOrRunningExperimentExists, localizer.MustLocalize(locale.AutoOpsWaitingOrRunningExperimentExists)),
+		},
+		{
+			desc: "success",
+			setup: func(aos *AutoOpsService) {
+				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.GetFeatureResponse{Feature: &featureproto.Feature{
+					Variations: []*featureproto.Variation{
+						{
+							Id: "vid-1",
+						},
+						{
+							Id: "vid-2",
+						},
+					},
+					Enabled: true,
+				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
+				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &autoopsproto.CreateProgressiveRolloutRequest{
+				EnvironmentId: "env-id",
+				FeatureId:     "fid",
+				ProgressiveRolloutTemplateScheduleClause: &autoopsproto.ProgressiveRolloutTemplateScheduleClause{
+					VariationId: "vid-1",
+					Schedules:   validSchedules,
+					Interval:    autoopsproto.ProgressiveRolloutTemplateScheduleClause_DAILY,
+					Increments:  2,
 				},
 			},
 			expectedErr: nil,

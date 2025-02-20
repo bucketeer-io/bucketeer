@@ -5389,7 +5389,20 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        featureId: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        progressiveRolloutManualScheduleClause:
+          (f = msg.getProgressiveRolloutManualScheduleClause()) &&
+          proto_autoops_clause_pb.ProgressiveRolloutManualScheduleClause.toObject(
+            includeInstance,
+            f
+          ),
+        progressiveRolloutTemplateScheduleClause:
+          (f = msg.getProgressiveRolloutTemplateScheduleClause()) &&
+          proto_autoops_clause_pb.ProgressiveRolloutTemplateScheduleClause.toObject(
+            includeInstance,
+            f
+          )
       };
 
     if (includeInstance) {
@@ -5443,6 +5456,30 @@ proto.bucketeer.autoops.CreateProgressiveRolloutRequest.deserializeBinaryFromRea
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setFeatureId(value);
+          break;
+        case 5:
+          var value =
+            new proto_autoops_clause_pb.ProgressiveRolloutManualScheduleClause();
+          reader.readMessage(
+            value,
+            proto_autoops_clause_pb.ProgressiveRolloutManualScheduleClause
+              .deserializeBinaryFromReader
+          );
+          msg.setProgressiveRolloutManualScheduleClause(value);
+          break;
+        case 6:
+          var value =
+            new proto_autoops_clause_pb.ProgressiveRolloutTemplateScheduleClause();
+          reader.readMessage(
+            value,
+            proto_autoops_clause_pb.ProgressiveRolloutTemplateScheduleClause
+              .deserializeBinaryFromReader
+          );
+          msg.setProgressiveRolloutTemplateScheduleClause(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -5487,6 +5524,28 @@ proto.bucketeer.autoops.CreateProgressiveRolloutRequest.serializeBinaryToWriter 
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(3, f);
+    }
+    f = message.getFeatureId();
+    if (f.length > 0) {
+      writer.writeString(4, f);
+    }
+    f = message.getProgressiveRolloutManualScheduleClause();
+    if (f != null) {
+      writer.writeMessage(
+        5,
+        f,
+        proto_autoops_clause_pb.ProgressiveRolloutManualScheduleClause
+          .serializeBinaryToWriter
+      );
+    }
+    f = message.getProgressiveRolloutTemplateScheduleClause();
+    if (f != null) {
+      writer.writeMessage(
+        6,
+        f,
+        proto_autoops_clause_pb.ProgressiveRolloutTemplateScheduleClause
+          .serializeBinaryToWriter
+      );
     }
   };
 
@@ -5552,6 +5611,110 @@ proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.setEnvironment
     return jspb.Message.setProto3StringField(this, 3, value);
   };
 
+/**
+ * optional string feature_id = 4;
+ * @return {string}
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.getFeatureId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.CreateProgressiveRolloutRequest} returns this
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.setFeatureId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
+  };
+
+/**
+ * optional ProgressiveRolloutManualScheduleClause progressive_rollout_manual_schedule_clause = 5;
+ * @return {?proto.bucketeer.autoops.ProgressiveRolloutManualScheduleClause}
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.getProgressiveRolloutManualScheduleClause =
+  function () {
+    return /** @type{?proto.bucketeer.autoops.ProgressiveRolloutManualScheduleClause} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_autoops_clause_pb.ProgressiveRolloutManualScheduleClause,
+        5
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.autoops.ProgressiveRolloutManualScheduleClause|undefined} value
+ * @return {!proto.bucketeer.autoops.CreateProgressiveRolloutRequest} returns this
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.setProgressiveRolloutManualScheduleClause =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 5, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.autoops.CreateProgressiveRolloutRequest} returns this
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.clearProgressiveRolloutManualScheduleClause =
+  function () {
+    return this.setProgressiveRolloutManualScheduleClause(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.hasProgressiveRolloutManualScheduleClause =
+  function () {
+    return jspb.Message.getField(this, 5) != null;
+  };
+
+/**
+ * optional ProgressiveRolloutTemplateScheduleClause progressive_rollout_template_schedule_clause = 6;
+ * @return {?proto.bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause}
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.getProgressiveRolloutTemplateScheduleClause =
+  function () {
+    return /** @type{?proto.bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_autoops_clause_pb.ProgressiveRolloutTemplateScheduleClause,
+        6
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause|undefined} value
+ * @return {!proto.bucketeer.autoops.CreateProgressiveRolloutRequest} returns this
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.setProgressiveRolloutTemplateScheduleClause =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 6, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.autoops.CreateProgressiveRolloutRequest} returns this
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.clearProgressiveRolloutTemplateScheduleClause =
+  function () {
+    return this.setProgressiveRolloutTemplateScheduleClause(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.hasProgressiveRolloutTemplateScheduleClause =
+  function () {
+    return jspb.Message.getField(this, 6) != null;
+  };
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -5587,7 +5750,14 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        progressiveRollout:
+          (f = msg.getProgressiveRollout()) &&
+          proto_autoops_progressive_rollout_pb.ProgressiveRollout.toObject(
+            includeInstance,
+            f
+          )
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -5626,6 +5796,16 @@ proto.bucketeer.autoops.CreateProgressiveRolloutResponse.deserializeBinaryFromRe
       }
       var field = reader.getFieldNumber();
       switch (field) {
+        case 1:
+          var value =
+            new proto_autoops_progressive_rollout_pb.ProgressiveRollout();
+          reader.readMessage(
+            value,
+            proto_autoops_progressive_rollout_pb.ProgressiveRollout
+              .deserializeBinaryFromReader
+          );
+          msg.setProgressiveRollout(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -5658,6 +5838,57 @@ proto.bucketeer.autoops.CreateProgressiveRolloutResponse.prototype.serializeBina
 proto.bucketeer.autoops.CreateProgressiveRolloutResponse.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
+    f = message.getProgressiveRollout();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_autoops_progressive_rollout_pb.ProgressiveRollout
+          .serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional ProgressiveRollout progressive_rollout = 1;
+ * @return {?proto.bucketeer.autoops.ProgressiveRollout}
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutResponse.prototype.getProgressiveRollout =
+  function () {
+    return /** @type{?proto.bucketeer.autoops.ProgressiveRollout} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_autoops_progressive_rollout_pb.ProgressiveRollout,
+        1
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.autoops.ProgressiveRollout|undefined} value
+ * @return {!proto.bucketeer.autoops.CreateProgressiveRolloutResponse} returns this
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutResponse.prototype.setProgressiveRollout =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 1, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.autoops.CreateProgressiveRolloutResponse} returns this
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutResponse.prototype.clearProgressiveRollout =
+  function () {
+    return this.setProgressiveRollout(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutResponse.prototype.hasProgressiveRollout =
+  function () {
+    return jspb.Message.getField(this, 1) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
