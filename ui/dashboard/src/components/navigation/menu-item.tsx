@@ -35,9 +35,9 @@ const MenuItemComponent = ({
       className={cn(textClsx, { 'justify-between': actIcon })}
       onClick={onClick}
     >
-      <div className="flex items-center gap-x-2">
+      <div className="flex items-center gap-x-2 truncate">
         {iconEl}
-        {label}
+        <div className="w-fit truncate">{label}</div>
       </div>
       {actIcon && <Icon color="primary-50" size="sm" icon={actIcon} />}
     </button>

@@ -58,8 +58,7 @@ const PageLoader = () => {
     mutationFn: async (member: Account) => {
       return accountDeleter({
         email: member.email,
-        organizationId: member.organizationId,
-        command: {}
+        organizationId: member.organizationId
       });
     },
     onSuccess: () => {
@@ -91,8 +90,7 @@ const PageLoader = () => {
 
       return archiveMutation({
         email,
-        organizationId: currentEnvironment.organizationId,
-        command: {}
+        organizationId: currentEnvironment.organizationId
       });
     },
     onSuccess: () => {
