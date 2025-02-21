@@ -469,7 +469,10 @@ func (c *client) PFMerge(dest string, expiration time.Duration, keys ...string) 
 		allHLLObjects := make([]string, 0, len(hllObjects))
 		for _, hllObj := range hllObjects {
 			if obj, ok := hllObj.([]byte); ok {
-				allHLLObjects = append(allHLLObjects, string(obj))
+				if len(obj) > 0 { // Only append non-empty HLL objects
+					c.logger.Debug("HLL object", zap.String("value", string(obj)))
+					allHLLObjects = append(allHLLObjects, string(obj))
+				}
 			}
 		}
 
