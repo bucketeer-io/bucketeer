@@ -417,12 +417,23 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 			return err
 		}
 		updated, err := feature.Update(
-			nil, nil, nil,
+			nil, // name
+			nil, // description
+			nil, // tags
 			enabled,
-			nil, nil, nil, nil, nil,
+			nil, // archived
 			defaultStrategy,
-			nil,
-			false,
+			nil,   // offVariation
+			false, // resetSamplingSeed
+			nil,   // prerequisites
+			nil,   // targets
+			nil,   // rules
+			nil,   // variations
+			nil,   // prerequisiteChanges
+			nil,   // targetChanges
+			nil,   // ruleChanges
+			nil,   // variationChanges
+			nil,   // tagChanges
 		)
 		if err != nil {
 			return err
