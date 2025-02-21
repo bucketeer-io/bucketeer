@@ -7,12 +7,13 @@ vault:
       devRootToken: "root"
 
 redis-cluster:
-  # Configure the cluster
+  nameOverride: redis-cluster
   cluster:
-    nodes: 3  # Minimum required nodes for Redis Cluster (3 masters + 3 replicas)
-    replicas: 0  # Number of replicas for each master
+    nodes: 3
+    replicas: 0
 
-redis:
+redis-single:
+  nameOverride: redis-single
   architecture: "standalone"
   auth:
     enabled: false
