@@ -280,18 +280,32 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 }
 
 func (p *evaluationCountEventPersister) countEvent(key string) error {
-	_, err := p.evaluationCountCacher.Increment(key)
+	count, err := p.evaluationCountCacher.Increment(key)
 	if err != nil {
+		p.logger.Error("Failed to increment event count",
+			zap.Error(err),
+			zap.String("key", key))
 		return err
 	}
+	p.logger.Debug("Successfully incremented event count",
+		zap.String("key", key),
+		zap.Int64("newCount", count))
 	return nil
 }
 
 func (p *evaluationCountEventPersister) countUser(key, userID string) error {
-	_, err := p.evaluationCountCacher.PFAdd(key, userID)
+	added, err := p.evaluationCountCacher.PFAdd(key, userID)
 	if err != nil {
+		p.logger.Error("Failed to add user to HyperLogLog",
+			zap.Error(err),
+			zap.String("key", key),
+			zap.String("userID", userID))
 		return err
 	}
+	p.logger.Debug("Attempted to add user to HyperLogLog",
+		zap.String("key", key),
+		zap.String("userID", userID),
+		zap.Int64("wasNewUser", added))
 	return nil
 }
 
