@@ -33,7 +33,9 @@
     "download-segment": "Download User Segment",
     "edit-experiment": "Edit Experiment",
     "archive-experiment": "Archive Experiment",
-    "unarchive-experiment": "Unarchive Experiment"
+    "unarchive-experiment": "Unarchive Experiment",
+    "stop-experiment": "Stop Experiment",
+    "start-experiment": "Start Experiment"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -102,7 +104,10 @@
     "confirm-unarchive-desc": "The experiment \"<bold>{{name}}</bold>\" will be unarchived. Are you sure you want to proceed?",
     "waiting-experiments": "Waiting Experiments",
     "running-experiments": "Running Experiments",
-    "stopped-experiments": "Stopped Experiments"
+    "stopped-experiments": "Stopped Experiments",
+    "running-experiment-desc": "The experiment is scheduled to stop on {{date}}",
+    "waiting-experiment-desc": "The experiment is scheduled to start on {{date}}",
+    "stopped-experiment-desc": "This experiment is currently stopped"
   },
   "metrics": {
     "variation": "Variation",

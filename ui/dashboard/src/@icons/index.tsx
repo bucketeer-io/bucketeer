@@ -15,6 +15,8 @@ import IconSearch from './customized-icons/search.svg?react';
 import IconSortingDown from './customized-icons/sorting-down.svg?react';
 import IconSortingUp from './customized-icons/sorting-up.svg?react';
 import IconSorting from './customized-icons/sorting.svg?react';
+import IconStartExperiment from './customized-icons/start-experiment.svg?react';
+import IconStopExperiment from './customized-icons/stop-experiment.svg?react';
 import IconToastError from './customized-icons/toast-error.svg?react';
 import IconToastInfo from './customized-icons/toast-info.svg?react';
 import IconToastSuccess from './customized-icons/toast-success.svg?react';
@@ -94,6 +96,8 @@ export {
   IconAngleDown,
   IconInfoFilled,
   IconArrowDown,
+  IconStopExperiment,
+  IconStartExperiment,
   // Special icons
   IconGoal,
   IconGoogle,

@@ -11,6 +11,7 @@ export const experimentFormSchema = yup.object().shape({
   id: yup.string().max(EXPERIMENT_NAME_MAX_LENGTH),
   name: yup.string().required(),
   baseVariationId: yup.string().required(),
+  startType: yup.string().oneOf(['manual', 'schedule']).required(),
   startAt: yup
     .string()
     .required()

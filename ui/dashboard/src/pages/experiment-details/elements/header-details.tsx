@@ -1,7 +1,6 @@
 import { Experiment } from '@types';
 import { cn } from 'utils/style';
 import { IconInfo } from '@icons';
-import { ExperimentStatuses } from 'pages/experiments/collection-layout/data-collection';
 import Icon from 'components/icon';
 
 export const Polygon = ({ className }: { className: string }) => (
@@ -31,9 +30,8 @@ const HeaderDetails = ({ experiment }: { experiment: Experiment }) => {
           className="flex-center"
         />
       </div>
-      <div className="flex items-center gap-x-2">
+      <div className="flex items-center">
         <h1 className="text-gray-900 typo-head-bold-huge">{experiment.name}</h1>
-        <ExperimentStatuses status={experiment.status} />
       </div>
     </div>
   );

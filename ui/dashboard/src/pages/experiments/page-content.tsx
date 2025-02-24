@@ -3,7 +3,7 @@ import { IconAddOutlined } from 'react-icons-material-design';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
-import { Experiment } from '@types';
+import { Experiment, ExperimentCollection } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
@@ -21,9 +21,11 @@ import {
 } from './types';
 
 const PageContent = ({
+  summary,
   onAdd,
   onHandleActions
 }: {
+  summary?: ExperimentCollection['summary'];
   onAdd: () => void;
   onHandleActions: (item: Experiment, type: ExperimentActionsType) => void;
 }) => {
@@ -36,6 +38,7 @@ const PageContent = ({
     orderBy: 'CREATED_AT',
     orderDirection: 'DESC',
     status: 'ACTIVE',
+    statuses: ['WAITING', 'RUNNING'],
     ...searchFilters
   } as ExperimentFilters;
 
@@ -59,7 +62,14 @@ const PageContent = ({
 
   return (
     <PageLayout.Content>
-      <Overview />
+      <Overview
+        summary={summary}
+        onChangeFilters={statuses =>
+          onChangeFilters({
+            statuses
+          })
+        }
+      />
       <Filter
         onOpenFilter={onOpenFilterModal}
         action={
@@ -69,7 +79,7 @@ const PageContent = ({
           </Button>
         }
         searchValue={filters.searchQuery}
-        filterCount={isNotEmpty(filters.archived) ? 1 : undefined}
+        filterCount={isNotEmpty(filters.isFilter) ? 1 : undefined}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
       {openFilterModal && (
@@ -82,7 +92,12 @@ const PageContent = ({
             onCloseFilterModal();
           }}
           onClearFilters={() => {
-            onChangeFilters({ archived: undefined, statuses: undefined });
+            onChangeFilters({
+              archived: undefined,
+              statuses: [],
+              isFilter: undefined,
+              status: 'ACTIVE'
+            });
             onCloseFilterModal();
           }}
         />
@@ -95,7 +110,13 @@ const PageContent = ({
           onChangeFilters({
             status,
             searchQuery: '',
-            statuses: status === 'FINISHED' ? 'RUNNING' : undefined
+            isFilter: undefined,
+            statuses:
+              status === 'FINISHED'
+                ? ['STOPPED', 'FORCE_STOPPED']
+                : status === 'ACTIVE'
+                  ? ['WAITING', 'RUNNING']
+                  : []
           });
         }}
       >

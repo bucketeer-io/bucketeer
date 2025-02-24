@@ -12,6 +12,14 @@ import { Experiment, ExperimentStatus } from '@types';
 import { formatLongDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
+import {
+  IconExperiment,
+  IconStartExperiment,
+  IconStopExperiment,
+  IconStoppedExperiment,
+  IconWaitingExperiment
+} from '@icons';
+import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
 import { ExperimentActionsType } from '../types';
@@ -20,23 +28,37 @@ export const ExperimentStatuses = ({
   status
 }: {
   status: ExperimentStatus;
-}) => (
-  <div
-    className={cn(
-      'flex-center w-fit px-2 py-1.5 typo-para-small rounded whitespace-nowrap capitalize',
-      {
-        'bg-accent-green-50 text-accent-green-500': status === 'RUNNING',
-        'bg-accent-orange-50 text-accent-orange-500': status === 'WAITING',
-        'bg-accent-red-50 text-accent-red-500': [
-          'STOPPED',
-          'FORCE_STOPPED'
-        ].includes(status)
-      }
-    )}
-  >
-    {status.replace('_', ' ').toLowerCase()}
-  </div>
-);
+}) => {
+  const isRunning = status === 'RUNNING',
+    isWaiting = status === 'WAITING',
+    isStopped = ['STOPPED', 'FORCE_STOPPED'].includes(status);
+
+  return (
+    <div
+      className={cn(
+        'flex-center w-fit gap-x-1 px-2 py-1.5 typo-para-small rounded whitespace-nowrap capitalize',
+        {
+          'bg-primary-50 text-primary-500': isRunning,
+          'bg-accent-orange-50 text-accent-orange-500': isWaiting,
+          'bg-accent-red-50 text-accent-red-500': isStopped
+        }
+      )}
+    >
+      <Icon
+        icon={
+          isRunning
+            ? IconExperiment
+            : isWaiting
+              ? IconWaitingExperiment
+              : IconStoppedExperiment
+        }
+        size={'xxs'}
+        className="flex-center [&>svg]:size-4"
+      />
+      {status.replace('_', ' ').toLowerCase()}
+    </div>
+  );
+};
 
 export const useColumns = ({
   onActions
@@ -86,6 +108,7 @@ export const useColumns = ({
                 'cursor-pointer': experiment.goalIds?.length
               }
             )}
+            onClick={() => onActions(experiment, 'GOALS-CONNECTION')}
           >
             {experiment?.goalIds?.length || 0}
           </div>
@@ -178,6 +201,17 @@ export const useColumns = ({
                 icon: IconEditOutlined,
                 value: 'EDIT'
               },
+              row.original.stopped
+                ? {
+                    label: `${t('table:popover.start-experiment')}`,
+                    icon: IconStartExperiment,
+                    value: 'START'
+                  }
+                : {
+                    label: `${t('table:popover.stop-experiment')}`,
+                    icon: IconStopExperiment,
+                    value: 'STOP'
+                  },
               searchOptions.status === 'ARCHIVED'
                 ? {
                     label: `${t('table:popover.unarchive-experiment')}`,
@@ -187,7 +221,8 @@ export const useColumns = ({
                 : {
                     label: `${t('table:popover.archive-experiment')}`,
                     icon: IconArchiveOutlined,
-                    value: 'ARCHIVE'
+                    value: 'ARCHIVE',
+                    disabled: !row.original.stopped
                   }
             ]}
             icon={IconMoreHorizOutlined}

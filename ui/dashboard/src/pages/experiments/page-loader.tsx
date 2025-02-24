@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Trans } from 'react-i18next';
-import { experimentUpdater } from '@api/experiment';
+import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
 import { invalidateExperiments } from '@queries/experiments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -15,6 +15,7 @@ import { EmptyCollection } from './collection-layout/empty-collection';
 import { useFetchExperiments } from './collection-loader/use-fetch-experiment';
 import AddExperimentModal from './experiments-modal/add-experiment-modal';
 import EditExperimentModal from './experiments-modal/edit-experiment-modal';
+import GoalsConnectionModal from './experiments-modal/goals-connection-modal';
 import PageContent from './page-content';
 import { ExperimentActionsType } from './types';
 
@@ -31,9 +32,17 @@ const PageLoader = ({
 
   const [selectedExperiment, setSelectedExperiment] = useState<Experiment>();
   const [isArchiving, setIsArchiving] = useState<boolean>();
+  const [isStop, setIsStop] = useState<boolean>();
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
+  const [openGoalsModal, onOpenGoalsModal, onCloseGoalsModal] =
+    useToggleOpen(false);
+  const [
+    openToggleExperimentModal,
+    onOpenToggleExperimentModal,
+    onCloseToggleExperimentModal
+  ] = useToggleOpen(false);
 
   const { isAdd, isEdit, onOpenAddModal, onOpenEditModal, onCloseActionModal } =
     useActionWithURL({
@@ -48,17 +57,15 @@ const PageLoader = ({
   } = useFetchExperiments({ environmentId: currentEnvironment.id });
 
   const isEmpty = collection?.experiments?.length === 0;
+  const summary = collection?.summary;
 
   const mutation = useMutation({
-    mutationFn: async (id: string) => {
-      return experimentUpdater({
-        id,
-        archived: isArchiving,
-        environmentId: currentEnvironment.id
-      });
+    mutationFn: async (params: ExperimentUpdaterParams) => {
+      return experimentUpdater(params);
     },
     onSuccess: () => {
       onCloseConfirmModal();
+      onCloseToggleExperimentModal();
       invalidateExperiments(queryClient);
       mutation.reset();
     },
@@ -73,7 +80,23 @@ const PageLoader = ({
 
   const onHandleArchive = () => {
     if (selectedExperiment?.id) {
-      mutation.mutate(selectedExperiment?.id);
+      mutation.mutate({
+        id: selectedExperiment?.id,
+        archived: isArchiving,
+        environmentId: currentEnvironment.id
+      });
+    }
+  };
+
+  const onToggleExperiment = () => {
+    if (selectedExperiment?.id) {
+      const stringCurrentTime = new Date().getTime.toString();
+      mutation.mutate({
+        id: selectedExperiment?.id,
+        environmentId: currentEnvironment.id,
+        ...(isStop ? { stopAt: stringCurrentTime } : {}),
+        ...(!isStop ? { startAt: stringCurrentTime } : {})
+      });
     }
   };
 
@@ -85,6 +108,17 @@ const PageLoader = ({
         );
       }
       setSelectedExperiment(item);
+      if (type === 'GOALS-CONNECTION') {
+        return onOpenGoalsModal();
+      }
+      if (type === 'STOP') {
+        setIsStop(true);
+        return onOpenToggleExperimentModal();
+      }
+      if (type === 'START') {
+        setIsStop(false);
+        return onOpenToggleExperimentModal();
+      }
       if (type === 'ARCHIVE') {
         setIsArchiving(true);
         return onOpenConfirmModal();
@@ -110,7 +144,11 @@ const PageLoader = ({
           <EmptyCollection onAdd={onOpenAddModal} />
         </PageLayout.EmptyState>
       ) : (
-        <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
+        <PageContent
+          summary={summary}
+          onAdd={onOpenAddModal}
+          onHandleActions={onHandleActions}
+        />
       )}
       {isAdd && (
         <AddExperimentModal isOpen={isAdd} onClose={onCloseActionModal} />
@@ -141,6 +179,37 @@ const PageLoader = ({
             />
           }
           loading={mutation.isPending}
+        />
+      )}
+      {openToggleExperimentModal && (
+        <ConfirmModal
+          isOpen={openToggleExperimentModal}
+          onClose={onCloseToggleExperimentModal}
+          onSubmit={onToggleExperiment}
+          title={
+            isStop
+              ? t(`table:popover.stop-experiment`)
+              : t(`table:popover.start-experiment`)
+          }
+          description={
+            <Trans
+              i18nKey={
+                isStop
+                  ? 'table:experiment.confirm-stop-desc'
+                  : 'table:experiment.confirm-start-desc'
+              }
+              values={{ name: selectedExperiment?.name }}
+              components={{ bold: <strong /> }}
+            />
+          }
+          loading={mutation.isPending}
+        />
+      )}
+      {openGoalsModal && selectedExperiment && (
+        <GoalsConnectionModal
+          isOpen={openGoalsModal}
+          experiment={selectedExperiment}
+          onClose={onCloseGoalsModal}
         />
       )}
     </>

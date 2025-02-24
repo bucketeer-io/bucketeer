@@ -5,7 +5,6 @@ import {
   SubmitHandler,
   useForm
 } from 'react-hook-form';
-import { Trans } from 'react-i18next';
 import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateExperimentDetails } from '@queries/experiment-details';
@@ -14,12 +13,20 @@ import { useQueryGoals } from '@queries/goals';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
-import { useToast, useToggleOpen } from 'hooks';
+import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Experiment } from '@types';
+import { IconInfo } from '@icons';
+import {
+  booleanVariations,
+  flagOptions,
+  jsonVariations,
+  numberVariations,
+  stringVariations
+} from 'pages/experiments/experiments-modal/mocks';
 import { experimentFormSchema } from 'pages/experiments/form-schema';
-import GoalActions from 'pages/goal-details/elements/goal-actions';
 import Button from 'components/button';
+import { CreatableSelect } from 'components/creatable-select';
 import { ReactDatePicker } from 'components/date-time-picker';
 import {
   DropdownMenu,
@@ -28,10 +35,10 @@ import {
   DropdownMenuTrigger
 } from 'components/dropdown';
 import Form from 'components/form';
-import InfoMessage from 'components/info-message';
+import Icon from 'components/icon';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
-import ConfirmModal from 'elements/confirm-modal';
+import ExperimentState from './experiment-state';
 
 export interface ExperimentSettingsForm {
   id?: string;
@@ -64,10 +71,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
 
-  const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
-    useToggleOpen(false);
-
-  const { data: goalCollection } = useQueryGoals({
+  const { data: goalCollection, isLoading: isLoadingGoals } = useQueryGoals({
     params: {
       cursor: String(0),
       pageSize: LIST_PAGE_SIZE,
@@ -84,17 +88,6 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
     );
   }, [goalCollection]);
 
-  const flagOptions = [
-    {
-      label: 'Flag 1',
-      value: 'flag-1'
-    },
-    {
-      label: 'Flag 2',
-      value: 'flag-2'
-    }
-  ];
-
   const form = useForm({
     resolver: yupResolver(experimentFormSchema),
     defaultValues: {
@@ -104,6 +97,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
       description: experiment.description,
       startAt: experiment.startAt,
       stopAt: experiment.stopAt,
+      startType: 'manual',
       audience: {
         rule: '',
         inExperiment: 5,
@@ -117,8 +111,22 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   });
 
   const {
+    watch,
     formState: { isDirty, isSubmitting }
   } = form;
+
+  const featureId = watch('featureId');
+  const isStringVariation = featureId.includes('string');
+  const isNumberVariation = featureId.includes('number');
+  const isBooleanVariation = featureId.includes('boolean');
+
+  const variationOptions = isStringVariation
+    ? stringVariations
+    : isNumberVariation
+      ? numberVariations
+      : isBooleanVariation
+        ? booleanVariations
+        : jsonVariations;
 
   const onSubmit: SubmitHandler<ExperimentSettingsForm> = async values => {
     const { id, name, description, startAt, stopAt } = values;
@@ -137,7 +145,6 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
       return experimentUpdater(params);
     },
     onSuccess: data => {
-      onCloseConfirmModal();
       invalidateExperimentDetails(queryClient, {
         id: data.experiment.id,
         environmentId: currentEnvironment.id
@@ -151,6 +158,12 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
         )
       });
       mutationState.reset();
+
+      form.reset({
+        ...form.getValues(),
+        name: data?.experiment?.name,
+        description: data?.experiment?.description
+      });
     },
     onError: error =>
       notify({
@@ -163,216 +176,317 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
     mutationState.mutate(payload);
 
   return (
-    <div className="p-5">
-      <p className="text-gray-800 typo-head-bold-small">{t('general-info')}</p>
+    <div className="flex flex-col w-full gap-y-6">
+      <ExperimentState experiment={experiment} />
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(onSubmit)}>
-          <Form.Field
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <Form.Item className="py-2.5">
-                <Form.Label required>{t('common:name')}</Form.Label>
-                <Form.Control>
-                  <Input placeholder={`${t('placeholder-name')}`} {...field} />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Form.Field
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <Form.Item className="py-2.5">
-                <Form.Label optional>{t('description')}</Form.Label>
-                <Form.Control>
-                  <TextArea
-                    placeholder={t('placeholder-desc')}
-                    rows={4}
-                    {...field}
-                  />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <div className="flex items-center w-full gap-x-4">
-            <Form.Field
-              control={form.control}
-              name="startAt"
-              render={({ field }) => (
-                <Form.Item className="flex flex-col flex-1 py-2.5 h-full self-stretch">
-                  <Form.Label required>{t('start-at')}</Form.Label>
-                  <Form.Control>
-                    <ReactDatePicker
-                      disabled
-                      selected={
-                        field.value ? new Date(+field.value * 1000) : null
-                      }
-                      onChange={date => {
-                        if (date) {
-                          const timestamp = new Date(date)?.getTime();
-                          field.onChange(timestamp / 1000);
-                          form.trigger('startAt');
-                        }
-                      }}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-            <Form.Field
-              control={form.control}
-              name="stopAt"
-              render={({ field }) => (
-                <Form.Item className="flex flex-col flex-1 py-2.5 h-full self-stretch">
-                  <Form.Label required>{t('end-at')}</Form.Label>
-                  <Form.Control>
-                    <ReactDatePicker
-                      disabled
-                      selected={
-                        field.value ? new Date(+field.value * 1000) : null
-                      }
-                      onChange={date => {
-                        if (date) {
-                          const timestamp = new Date(date)?.getTime();
-                          field.onChange(timestamp / 1000);
-                          form.trigger('stopAt');
-                        }
-                      }}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-          </div>
-          <p className="text-gray-800 typo-head-bold-small mt-5 mb-2.5">
-            {t('link')}
-          </p>
-          <Form.Field
-            control={form.control}
-            name={`featureId`}
-            render={({ field }) => (
-              <Form.Item className="py-2.5">
-                <Form.Label required>{t('experiments.link-flag')}</Form.Label>
-                <Form.Control>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      disabled
-                      placeholder={t(`experiments.select-flag`)}
-                      label={
-                        flagOptions.find(item => item.value === field.value)
-                          ?.label || ''
-                      }
-                      variant="secondary"
-                      className="w-full"
-                    />
-                    <DropdownMenuContent
-                      className="w-[502px]"
-                      align="start"
-                      {...field}
-                    >
-                      {flagOptions.map((item, index) => (
-                        <DropdownMenuItem
-                          {...field}
-                          key={index}
-                          value={item.value}
-                          label={item.label}
-                          onSelectOption={value => {
-                            field.onChange(value);
-                          }}
-                        />
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Form.Field
-            control={form.control}
-            name={`goalIds`}
-            render={({ field }) => (
-              <Form.Item className="py-2.5">
-                <Form.Label required>{t('experiments.link-goal')}</Form.Label>
-                <Form.Control>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      disabled
-                      placeholder={t(`experiments.select-goal`)}
-                      label={field.value
-                        .map(
-                          item =>
-                            goalOptions.find(opt => opt.value === item)?.label
-                        )
-                        .join(', ')}
-                      variant="secondary"
-                      className="w-full"
-                    />
-                    <DropdownMenuContent
-                      className="w-[502px]"
-                      align="start"
-                      {...field}
-                    >
-                      {goalOptions.map((item, index) => (
-                        <DropdownMenuItem
-                          {...field}
-                          isMultiselect
-                          isSelected={field.value.includes(item.value)}
-                          key={index}
-                          value={item.value}
-                          label={item.label}
-                          onSelectOption={value => {
-                            const newValue = field.value.includes(value)
-                              ? field.value.filter(item => item !== value)
-                              : [...field.value, value];
-                            field.onChange(newValue);
-                          }}
-                        />
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Button
-            className="mt-2.5 mb-5"
-            variant="secondary"
-            disabled={!isDirty}
-            loading={isSubmitting}
-          >
-            {t('common:save')}
-          </Button>
-          <GoalActions
-            title={
-              experiment.archived
-                ? t(`table:popover.unarchive-experiment`)
-                : t(`table:popover.archive-experiment`)
-            }
-            description={
-              experiment?.archived ? '' : t('form:experiments.archive-desc')
-            }
-            btnText={
-              experiment.archived
-                ? t(`table:popover.unarchive-experiment`)
-                : t(`table:popover.archive-experiment`)
-            }
-            onClick={onOpenConfirmModal}
-            disabled={experiment.status === 'RUNNING'}
-          >
-            {experiment.status === 'RUNNING' && (
-              <InfoMessage
-                description={t('form:experiments.archive-warning-desc')}
+          <div className="flex flex-col w-full gap-y-6">
+            <div className="flex items-center w-full justify-between">
+              <p className="text-gray-800 typo-head-bold-small">
+                {t('common:settings')}
+              </p>
+              <Button type="submit" disabled={!isDirty} loading={isSubmitting}>
+                {t('common:save')}
+              </Button>
+            </div>
+
+            <div className="flex flex-col w-full gap-y-5 p-5 shadow-card rounded-lg bg-white">
+              <p className="text-gray-800 typo-head-bold-small">
+                {t('general-info')}
+              </p>
+              <Form.Field
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <Form.Item className="py-0">
+                    <Form.Label required>{t('common:name')}</Form.Label>
+                    <Form.Control>
+                      <Input
+                        placeholder={`${t('placeholder-name')}`}
+                        {...field}
+                      />
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
               />
-            )}
-          </GoalActions>
-          {/* <Form.Field
+              <Form.Field
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <Form.Item className="py-0">
+                    <Form.Label optional>{t('description')}</Form.Label>
+                    <Form.Control>
+                      <TextArea
+                        placeholder={t('placeholder-desc')}
+                        rows={4}
+                        {...field}
+                      />
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+              <div className="flex items-center w-full gap-x-4">
+                <Form.Field
+                  control={form.control}
+                  name="startAt"
+                  render={({ field }) => (
+                    <Form.Item className="flex flex-col flex-1 h-full self-stretch py-0">
+                      <Form.Label required>{t('start-at')}</Form.Label>
+                      <Form.Control>
+                        <ReactDatePicker
+                          disabled={!!experiment?.startAt}
+                          dateFormat={'yyyy/MM/dd'}
+                          showTimeSelect={false}
+                          selected={
+                            field.value ? new Date(+field.value * 1000) : null
+                          }
+                          onChange={date => {
+                            if (date) {
+                              const timestamp = new Date(date)?.getTime();
+                              field.onChange(timestamp / 1000);
+                              form.trigger('startAt');
+                            }
+                          }}
+                        />
+                      </Form.Control>
+                      <Form.Message />
+                    </Form.Item>
+                  )}
+                />
+                <Form.Field
+                  control={form.control}
+                  name="startAt"
+                  render={({ field }) => (
+                    <Form.Item className="flex flex-col flex-1 h-full self-stretch py-0">
+                      <Form.Label required>{t('experiments.time')}</Form.Label>
+                      <Form.Control>
+                        <ReactDatePicker
+                          disabled={!!experiment?.startAt}
+                          dateFormat={'HH:mm'}
+                          showTimeSelect
+                          showTimeSelectOnly={true}
+                          selected={
+                            field.value ? new Date(+field.value * 1000) : null
+                          }
+                          onChange={date => {
+                            if (date) {
+                              const timestamp = new Date(date)?.getTime();
+                              field.onChange(timestamp / 1000);
+                              form.trigger('startAt');
+                            }
+                          }}
+                        />
+                      </Form.Control>
+                      <Form.Message />
+                    </Form.Item>
+                  )}
+                />
+              </div>
+              <div className="flex items-center w-full gap-x-4">
+                <Form.Field
+                  control={form.control}
+                  name="stopAt"
+                  render={({ field }) => (
+                    <Form.Item className="flex flex-col flex-1 h-full self-stretch py-0">
+                      <Form.Label required>{t('end-at')}</Form.Label>
+                      <Form.Control>
+                        <ReactDatePicker
+                          disabled={!!experiment?.stopAt}
+                          dateFormat={'yyyy/MM/dd'}
+                          showTimeSelect={false}
+                          selected={
+                            field.value ? new Date(+field.value * 1000) : null
+                          }
+                          onChange={date => {
+                            if (date) {
+                              const timestamp = new Date(date)?.getTime();
+                              field.onChange(timestamp / 1000);
+                              form.trigger('stopAt');
+                            }
+                          }}
+                        />
+                      </Form.Control>
+                      <Form.Message />
+                    </Form.Item>
+                  )}
+                />
+                <Form.Field
+                  control={form.control}
+                  name="stopAt"
+                  render={({ field }) => (
+                    <Form.Item className="flex flex-col flex-1 h-full self-stretch py-0">
+                      <Form.Label required>{t('experiments.time')}</Form.Label>
+                      <Form.Control>
+                        <ReactDatePicker
+                          disabled={!!experiment?.stopAt}
+                          dateFormat={'HH:mm'}
+                          showTimeSelect
+                          showTimeSelectOnly={true}
+                          selected={
+                            field.value ? new Date(+field.value * 1000) : null
+                          }
+                          onChange={date => {
+                            if (date) {
+                              const timestamp = new Date(date)?.getTime();
+                              field.onChange(timestamp / 1000);
+                              form.trigger('stopAt');
+                            }
+                          }}
+                        />
+                      </Form.Control>
+                      <Form.Message />
+                    </Form.Item>
+                  )}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col w-full gap-y-5 p-5 shadow-card rounded-lg bg-white">
+              <p className="text-gray-800 typo-head-bold-small">
+                {t('common:flag')}
+              </p>
+              <Form.Field
+                control={form.control}
+                name={`featureId`}
+                render={({ field }) => (
+                  <Form.Item className="flex flex-col flex-1 overflow-hidden py-0">
+                    <Form.Label required className="relative w-fit">
+                      {t('common:flag')}
+                      <Icon
+                        icon={IconInfo}
+                        size="xs"
+                        color="gray-500"
+                        className="absolute -right-6"
+                      />
+                    </Form.Label>
+                    <Form.Control>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          disabled
+                          placeholder={t(`experiments.select-flag`)}
+                          label={
+                            flagOptions.find(item => item.value === field.value)
+                              ?.label || ''
+                          }
+                          variant="secondary"
+                          className="w-full"
+                        />
+                        <DropdownMenuContent
+                          className="w-[502px]"
+                          align="start"
+                          {...field}
+                        >
+                          {flagOptions.map((item, index) => (
+                            <DropdownMenuItem
+                              {...field}
+                              key={index}
+                              value={item.value}
+                              label={item.label}
+                              onSelectOption={value => {
+                                field.onChange(value);
+                              }}
+                            />
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+              {featureId && (
+                <Form.Field
+                  control={form.control}
+                  name={`baseVariationId`}
+                  render={({ field }) => (
+                    <Form.Item className="flex flex-col flex-1 overflow-hidden py-0">
+                      <Form.Label required>
+                        {t('experiments.base-variation')}
+                      </Form.Label>
+                      <Form.Control>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            disabled
+                            placeholder={t(`experiments.select-flag`)}
+                            label={
+                              variationOptions.find(
+                                item => item.value === field.value
+                              )?.label || ''
+                            }
+                            variant="secondary"
+                            className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
+                          />
+                          <DropdownMenuContent
+                            className="w-[502px]"
+                            align="start"
+                            {...field}
+                          >
+                            {variationOptions.map((item, index) => (
+                              <DropdownMenuItem
+                                {...field}
+                                key={index}
+                                value={item.value}
+                                label={item.label}
+                                onSelectOption={value => {
+                                  field.onChange(value);
+                                }}
+                              />
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </Form.Control>
+                      <Form.Message />
+                    </Form.Item>
+                  )}
+                />
+              )}
+            </div>
+            <div className="flex flex-col w-full gap-y-5 p-5 shadow-card rounded-lg bg-white">
+              <p className="text-gray-800 typo-head-bold-small">
+                {t('common:goals')}
+              </p>
+              <Form.Field
+                control={form.control}
+                name={`goalIds`}
+                render={({ field }) => (
+                  <Form.Item className="py-0">
+                    <Form.Label required className="relative w-fit">
+                      {t('common:goals')}
+                      <Icon
+                        icon={IconInfo}
+                        size="xs"
+                        color="gray-500"
+                        className="absolute -right-6"
+                      />
+                    </Form.Label>
+                    <Form.Control>
+                      <Form.Control>
+                        <CreatableSelect
+                          disabled
+                          loading={isLoadingGoals}
+                          value={goalOptions.filter(item =>
+                            field.value.includes(item.value)
+                          )}
+                          placeholder={t(`experiments.select-goal`)}
+                          options={goalOptions?.map(goal => ({
+                            label: goal.label,
+                            value: goal.value
+                          }))}
+                          onChange={value =>
+                            field.onChange(value.map(goal => goal.value))
+                          }
+                          onCreateOption={() => {}}
+                        />
+                      </Form.Control>
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+            </div>
+
+            {/* <Form.Field
             control={form.control}
             name={`audience`}
             render={({ field }) => (
@@ -381,38 +495,9 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
               </Form.Item>
             )}
           /> */}
+          </div>
         </Form>
       </FormProvider>
-      {openConfirmModal && (
-        <ConfirmModal
-          isOpen={openConfirmModal}
-          loading={mutationState.isPending}
-          title={
-            experiment.archived
-              ? t(`table:popover.unarchive-experiment`)
-              : t(`table:popover.archive-experiment`)
-          }
-          description={
-            <Trans
-              i18nKey={
-                experiment.archived
-                  ? 'table:experiment.confirm-unarchive-desc'
-                  : 'table:experiment.confirm-archive-desc'
-              }
-              values={{ name: experiment?.name }}
-              components={{ bold: <strong /> }}
-            />
-          }
-          onClose={onCloseConfirmModal}
-          onSubmit={() =>
-            onUpdateExperiment({
-              id: experiment.id,
-              environmentId: currentEnvironment.id,
-              archived: !experiment.archived
-            })
-          }
-        />
-      )}
     </div>
   );
 };

@@ -28,6 +28,7 @@ type CardDescriptionProps = {
 type Props = CardIconProps &
   CardDescriptionProps & {
     showArrow?: boolean;
+    onClick?: () => void;
   };
 
 const cardIconVariants = cva('flex-center size-[88px] p-5 rounded-lg', {
@@ -87,9 +88,12 @@ const CardDescription = ({
   );
 };
 
-const OverviewCard = ({ icon, color, showArrow, ...props }: Props) => {
+const OverviewCard = ({ icon, color, showArrow, onClick, ...props }: Props) => {
   return (
-    <div className="flex flex-1 items-center p-4 gap-x-4 w-full min-w-[300px] bg-white shadow-card rounded-2xl overflow-hidden">
+    <div
+      className="flex flex-1 items-center p-4 gap-x-4 w-full min-w-[300px] bg-white shadow-card rounded-2xl overflow-hidden cursor-pointer hover:shadow-gray-300"
+      onClick={onClick}
+    >
       <CardIcon icon={icon} color={color} />
       <CardDescription {...props} />
       {showArrow && (
