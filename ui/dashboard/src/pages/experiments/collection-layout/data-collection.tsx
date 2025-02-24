@@ -86,6 +86,7 @@ export const useColumns = ({
                 'cursor-pointer': experiment.goalIds?.length
               }
             )}
+            onClick={() => onActions(experiment, 'GOALS-CONNECTION')}
           >
             {experiment?.goalIds?.length || 0}
           </div>

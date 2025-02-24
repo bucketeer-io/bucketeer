@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'i18n';
+import { ExperimentStatus } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { ExperimentFilters } from 'pages/experiments/types';
 import Button from 'components/button';
@@ -27,29 +28,32 @@ export interface Option {
 }
 
 export enum FilterTypes {
-  ARCHIVED = 'archived',
-  FINISHED = 'finished'
+  STATUS = 'status'
 }
 
 export const filterOptions: Option[] = [
   {
-    value: FilterTypes.ARCHIVED,
-    label: 'Archived'
-  },
-  {
-    value: FilterTypes.FINISHED,
-    label: 'Finished'
+    value: FilterTypes.STATUS,
+    label: 'Status'
   }
 ];
 
-export const archiveOptions: Option[] = [
+export const statusOptions: Option[] = [
   {
-    value: 'yes',
-    label: 'Yes'
+    value: 'WAITING',
+    label: 'Waiting'
   },
   {
-    value: 'no',
-    label: 'No'
+    value: 'RUNNING',
+    label: 'Running'
+  },
+  {
+    value: 'STOPPED',
+    label: 'Stopped'
+  },
+  {
+    value: 'FORCE_STOPPED',
+    label: 'Force Stopped'
   }
 ];
 
@@ -61,41 +65,26 @@ const FilterExperimentModal = ({
   filters
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
-  const [selectedFilterType, setSelectedFilterType] = useState<Option>();
-  const [selectedValue, setSelectedValue] = useState<Option>();
+  const [selectedStatuses, setSelectedStatuses] = useState<ExperimentStatus[]>(
+    []
+  );
 
-  const onConfirmHandler = () => {
-    switch (selectedFilterType?.value) {
-      case FilterTypes.ARCHIVED:
-        if (selectedValue) {
-          onSubmit({
-            archived: selectedValue?.value === 'yes',
-            statuses: undefined
-          });
-        }
-        return;
-      case FilterTypes.FINISHED:
-        if (selectedValue) {
-          onSubmit({
-            archived: undefined,
-            statuses: selectedValue?.value === 'yes' ? 'RUNNING' : undefined
-          });
-        }
-        return;
-    }
-  };
+  const onConfirmHandler = () =>
+    onSubmit({
+      archived: undefined,
+      isFilter: true,
+      statuses: selectedStatuses
+    });
 
   useEffect(() => {
-    if (isNotEmpty(filters?.archived || filters?.statuses)) {
-      setSelectedFilterType(
-        filters?.archived ? filterOptions[0] : filterOptions[1]
-      );
-      setSelectedValue(
-        archiveOptions[filters?.archived || filters?.statuses ? 0 : 1]
+    if (isNotEmpty(filters?.isFilter && filters?.statuses?.length)) {
+      setSelectedStatuses(
+        typeof filters!.statuses === 'string'
+          ? [filters!.statuses]
+          : (filters!.statuses as ExperimentStatus[])
       );
     } else {
-      setSelectedFilterType(undefined);
-      setSelectedValue(undefined);
+      setSelectedStatuses([]);
     }
   }, [filters]);
 
@@ -115,7 +104,7 @@ const FilterExperimentModal = ({
           <DropdownMenu>
             <DropdownMenuTrigger
               placeholder={t(`select-filter`)}
-              label={selectedFilterType?.label}
+              label={filterOptions[0].label}
               variant="secondary"
               className="w-full"
             />
@@ -125,7 +114,6 @@ const FilterExperimentModal = ({
                   key={index}
                   value={item.value}
                   label={item.label}
-                  onSelectOption={() => setSelectedFilterType(item)}
                 />
               ))}
             </DropdownMenuContent>
@@ -134,18 +122,37 @@ const FilterExperimentModal = ({
           <DropdownMenu>
             <DropdownMenuTrigger
               placeholder={t(`select-value`)}
-              label={selectedValue?.label}
+              label={
+                selectedStatuses?.length
+                  ? selectedStatuses
+                      ?.join(', ')
+                      ?.replace('_', ' ')
+                      ?.toLowerCase()
+                  : ''
+              }
               variant="secondary"
-              disabled={!selectedFilterType}
-              className="w-full"
+              className="w-full capitalize"
             />
             <DropdownMenuContent className="w-[235px]" align="start">
-              {archiveOptions.map((item, index) => (
+              {statusOptions.map((item, index) => (
                 <DropdownMenuItem
+                  isSelected={selectedStatuses.includes(
+                    item.value as ExperimentStatus
+                  )}
+                  isMultiselect
                   key={index}
                   value={item.value}
                   label={item.label}
-                  onSelectOption={() => setSelectedValue(item)}
+                  onSelectOption={value => {
+                    const isExisted = selectedStatuses?.find(
+                      item => item === value
+                    );
+                    setSelectedStatuses(
+                      isExisted
+                        ? selectedStatuses.filter(item => item !== value)
+                        : [...selectedStatuses, value as ExperimentStatus]
+                    );
+                  }}
                 />
               ))}
             </DropdownMenuContent>

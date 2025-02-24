@@ -1,6 +1,8 @@
 import { useQueryExperiments } from '@queries/experiments';
 import { LIST_PAGE_SIZE } from 'constants/app';
+import { pickBy } from 'lodash';
 import { ExperimentStatus, OrderBy, OrderDirection } from '@types';
+import { isNotEmpty } from 'utils/data-type';
 import { ExperimentTab } from '../types';
 
 export const useFetchExperiments = ({
@@ -28,6 +30,10 @@ export const useFetchExperiments = ({
   status?: ExperimentTab;
 }) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
+  const _params = pickBy(
+    { ...params },
+    (v, k) => k !== 'isFilter' && isNotEmpty(v)
+  );
 
   return useQueryExperiments({
     params: {
@@ -38,7 +44,7 @@ export const useFetchExperiments = ({
       searchKeyword: searchQuery,
       environmentId,
       archived: status === 'ARCHIVED',
-      ...params
+      ..._params
     }
   });
 };

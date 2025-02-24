@@ -11,9 +11,15 @@ export interface ExperimentFilters {
   from?: string;
   to?: string;
   status?: ExperimentTab;
-  statuses?: ExperimentStatus;
+  statuses?: ExperimentStatus[];
   maintainer?: string;
+  isFilter?: boolean;
 }
 
-export type ExperimentActionsType = 'EDIT' | 'STOP' | 'ARCHIVE' | 'UNARCHIVE';
+export type ExperimentActionsType =
+  | 'EDIT'
+  | 'STOP'
+  | 'ARCHIVE'
+  | 'UNARCHIVE'
+  | 'GOALS-CONNECTION';
 export type ExperimentTab = 'ACTIVE' | 'ARCHIVED' | 'FINISHED';

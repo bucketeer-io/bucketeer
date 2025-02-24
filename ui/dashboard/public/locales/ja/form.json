@@ -97,7 +97,9 @@
     "select-goal": "Select Goal",
     "select-rule": "Select Rule",
     "archive-desc": "Once the experiment is archived, it will only show on the list page when clicking on the Archived tab.",
-    "archive-warning-desc": "You cannot archive the experiment when it is running"
+    "archive-warning-desc": "You cannot archive the experiment when it is running",
+    "base-variation": "Base Variation",
+    "select-variation": "Select Variation"
   },
   "advanced": "Advanced",
   "link": "Link",

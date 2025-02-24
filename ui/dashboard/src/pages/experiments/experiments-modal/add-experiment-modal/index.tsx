@@ -29,6 +29,13 @@ import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import {
+  booleanVariations,
+  flagOptions,
+  jsonVariations,
+  numberVariations,
+  stringVariations
+} from '../mocks';
 
 interface AddExperimentModalProps {
   isOpen: boolean;
@@ -82,17 +89,6 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
     );
   }, [goalCollection]);
 
-  const flagOptions = [
-    {
-      label: 'Flag 1',
-      value: 'flag-1'
-    },
-    {
-      label: 'Flag 2',
-      value: 'flag-2'
-    }
-  ];
-
   const form = useForm({
     resolver: yupResolver(experimentFormSchema),
     defaultValues: {
@@ -114,8 +110,22 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
   });
 
   const {
+    watch,
     formState: { isDirty, isValid, isSubmitting }
   } = form;
+
+  const featureId = watch('featureId');
+  const isStringVariation = featureId.includes('string');
+  const isNumberVariation = featureId.includes('number');
+  const isBooleanVariation = featureId.includes('boolean');
+
+  const variationOptions = isStringVariation
+    ? stringVariations
+    : isNumberVariation
+      ? numberVariations
+      : isBooleanVariation
+        ? booleanVariations
+        : jsonVariations;
 
   const onSubmit: SubmitHandler<AddExperimentForm> = async values => {
     try {
@@ -256,52 +266,99 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
             <p className="text-gray-800 typo-head-bold-small mb-3">
               {t('link')}
             </p>
-            <Form.Field
-              control={form.control}
-              name={`featureId`}
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Label required>{t('experiments.link-flag')}</Form.Label>
-                  <Form.Control>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        placeholder={t(`experiments.select-flag`)}
-                        label={
-                          flagOptions.find(item => item.value === field.value)
-                            ?.label || ''
-                        }
-                        variant="secondary"
-                        className="w-full"
-                      />
-                      <DropdownMenuContent
-                        className="w-[502px]"
-                        align="start"
-                        {...field}
-                      >
-                        {flagOptions.map((item, index) => (
-                          <DropdownMenuItem
-                            {...field}
-                            key={index}
-                            value={item.value}
-                            label={item.label}
-                            onSelectOption={value => {
-                              field.onChange(value);
-                            }}
+            <div className="flex items-center w-full gap-x-4">
+              <Form.Field
+                control={form.control}
+                name={`featureId`}
+                render={({ field }) => (
+                  <Form.Item className="flex flex-col flex-1 overflow-hidden">
+                    <Form.Label required>{t('common:flag')}</Form.Label>
+                    <Form.Control>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          placeholder={t(`experiments.select-flag`)}
+                          label={
+                            flagOptions.find(item => item.value === field.value)
+                              ?.label || ''
+                          }
+                          variant="secondary"
+                          className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
+                        />
+                        <DropdownMenuContent
+                          className="w-[502px]"
+                          align="start"
+                          {...field}
+                        >
+                          {flagOptions.map((item, index) => (
+                            <DropdownMenuItem
+                              {...field}
+                              key={index}
+                              value={item.value}
+                              label={item.label}
+                              onSelectOption={value => {
+                                field.onChange(value);
+                              }}
+                            />
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
+              {featureId && (
+                <Form.Field
+                  control={form.control}
+                  name={`baseVariationId`}
+                  render={({ field }) => (
+                    <Form.Item className="flex flex-col flex-1 overflow-hidden">
+                      <Form.Label required>
+                        {t('experiments.base-variation')}
+                      </Form.Label>
+                      <Form.Control>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            placeholder={t(`experiments.select-flag`)}
+                            label={
+                              variationOptions.find(
+                                item => item.value === field.value
+                              )?.label || ''
+                            }
+                            variant="secondary"
+                            className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
                           />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
+                          <DropdownMenuContent
+                            className="w-[502px]"
+                            align="start"
+                            {...field}
+                          >
+                            {variationOptions.map((item, index) => (
+                              <DropdownMenuItem
+                                {...field}
+                                key={index}
+                                value={item.value}
+                                label={item.label}
+                                onSelectOption={value => {
+                                  field.onChange(value);
+                                }}
+                              />
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </Form.Control>
+                      <Form.Message />
+                    </Form.Item>
+                  )}
+                />
               )}
-            />
+            </div>
             <Form.Field
               control={form.control}
               name={`goalIds`}
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label required>{t('experiments.link-goal')}</Form.Label>
+                  <Form.Label required>{t('common:goal')}</Form.Label>
                   <Form.Control>
                     <DropdownMenu>
                       <DropdownMenuTrigger

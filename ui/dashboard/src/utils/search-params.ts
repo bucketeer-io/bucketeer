@@ -13,7 +13,7 @@ export function useSearchParams() {
   }, [location.search]);
 
   const onChangSearchParams = useCallback(
-    (options: Record<string, string | number | boolean>) => {
+    (options: Record<string, string | number | boolean | string[]>) => {
       navigate(`${location.pathname}?${stringifyParams(options)}`, {
         replace: true
       });

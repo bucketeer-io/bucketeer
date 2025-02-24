@@ -15,6 +15,7 @@ import { EmptyCollection } from './collection-layout/empty-collection';
 import { useFetchExperiments } from './collection-loader/use-fetch-experiment';
 import AddExperimentModal from './experiments-modal/add-experiment-modal';
 import EditExperimentModal from './experiments-modal/edit-experiment-modal';
+import GoalsConnectionModal from './experiments-modal/goals-connection-modal';
 import PageContent from './page-content';
 import { ExperimentActionsType } from './types';
 
@@ -34,6 +35,8 @@ const PageLoader = ({
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
+  const [openGoalsModal, onOpenGoalsModal, onCloseGoalsModal] =
+    useToggleOpen(false);
 
   const { isAdd, isEdit, onOpenAddModal, onOpenEditModal, onCloseActionModal } =
     useActionWithURL({
@@ -48,6 +51,7 @@ const PageLoader = ({
   } = useFetchExperiments({ environmentId: currentEnvironment.id });
 
   const isEmpty = collection?.experiments?.length === 0;
+  const summary = collection?.summary;
 
   const mutation = useMutation({
     mutationFn: async (id: string) => {
@@ -85,6 +89,9 @@ const PageLoader = ({
         );
       }
       setSelectedExperiment(item);
+      if (type === 'GOALS-CONNECTION') {
+        return onOpenGoalsModal();
+      }
       if (type === 'ARCHIVE') {
         setIsArchiving(true);
         return onOpenConfirmModal();
@@ -110,7 +117,11 @@ const PageLoader = ({
           <EmptyCollection onAdd={onOpenAddModal} />
         </PageLayout.EmptyState>
       ) : (
-        <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
+        <PageContent
+          summary={summary}
+          onAdd={onOpenAddModal}
+          onHandleActions={onHandleActions}
+        />
       )}
       {isAdd && (
         <AddExperimentModal isOpen={isAdd} onClose={onCloseActionModal} />
@@ -141,6 +152,13 @@ const PageLoader = ({
             />
           }
           loading={mutation.isPending}
+        />
+      )}
+      {openGoalsModal && selectedExperiment && (
+        <GoalsConnectionModal
+          isOpen={openGoalsModal}
+          experiment={selectedExperiment}
+          onClose={onCloseGoalsModal}
         />
       )}
     </>

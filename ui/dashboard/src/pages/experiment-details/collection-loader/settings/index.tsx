@@ -17,6 +17,13 @@ import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Experiment } from '@types';
+import {
+  booleanVariations,
+  flagOptions,
+  jsonVariations,
+  numberVariations,
+  stringVariations
+} from 'pages/experiments/experiments-modal/mocks';
 import { experimentFormSchema } from 'pages/experiments/form-schema';
 import GoalActions from 'pages/goal-details/elements/goal-actions';
 import Button from 'components/button';
@@ -84,17 +91,6 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
     );
   }, [goalCollection]);
 
-  const flagOptions = [
-    {
-      label: 'Flag 1',
-      value: 'flag-1'
-    },
-    {
-      label: 'Flag 2',
-      value: 'flag-2'
-    }
-  ];
-
   const form = useForm({
     resolver: yupResolver(experimentFormSchema),
     defaultValues: {
@@ -117,8 +113,22 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   });
 
   const {
+    watch,
     formState: { isDirty, isSubmitting }
   } = form;
+
+  const featureId = watch('featureId');
+  const isStringVariation = featureId.includes('string');
+  const isNumberVariation = featureId.includes('number');
+  const isBooleanVariation = featureId.includes('boolean');
+
+  const variationOptions = isStringVariation
+    ? stringVariations
+    : isNumberVariation
+      ? numberVariations
+      : isBooleanVariation
+        ? booleanVariations
+        : jsonVariations;
 
   const onSubmit: SubmitHandler<ExperimentSettingsForm> = async values => {
     const { id, name, description, startAt, stopAt } = values;
@@ -252,47 +262,96 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
           <p className="text-gray-800 typo-head-bold-small mt-5 mb-2.5">
             {t('link')}
           </p>
-          <Form.Field
-            control={form.control}
-            name={`featureId`}
-            render={({ field }) => (
-              <Form.Item className="py-2.5">
-                <Form.Label required>{t('experiments.link-flag')}</Form.Label>
-                <Form.Control>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      disabled
-                      placeholder={t(`experiments.select-flag`)}
-                      label={
-                        flagOptions.find(item => item.value === field.value)
-                          ?.label || ''
-                      }
-                      variant="secondary"
-                      className="w-full"
-                    />
-                    <DropdownMenuContent
-                      className="w-[502px]"
-                      align="start"
-                      {...field}
-                    >
-                      {flagOptions.map((item, index) => (
-                        <DropdownMenuItem
-                          {...field}
-                          key={index}
-                          value={item.value}
-                          label={item.label}
-                          onSelectOption={value => {
-                            field.onChange(value);
-                          }}
+          <div className="flex items-center w-full gap-x-4">
+            <Form.Field
+              control={form.control}
+              name={`featureId`}
+              render={({ field }) => (
+                <Form.Item className="flex flex-col flex-1 overflow-hidden py-2.5">
+                  <Form.Label required>{t('common:flag')}</Form.Label>
+                  <Form.Control>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        disabled
+                        placeholder={t(`experiments.select-flag`)}
+                        label={
+                          flagOptions.find(item => item.value === field.value)
+                            ?.label || ''
+                        }
+                        variant="secondary"
+                        className="w-full"
+                      />
+                      <DropdownMenuContent
+                        className="w-[502px]"
+                        align="start"
+                        {...field}
+                      >
+                        {flagOptions.map((item, index) => (
+                          <DropdownMenuItem
+                            {...field}
+                            key={index}
+                            value={item.value}
+                            label={item.label}
+                            onSelectOption={value => {
+                              field.onChange(value);
+                            }}
+                          />
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+            {featureId && (
+              <Form.Field
+                control={form.control}
+                name={`baseVariationId`}
+                render={({ field }) => (
+                  <Form.Item className="flex flex-col flex-1 overflow-hidden py-2.5">
+                    <Form.Label required>
+                      {t('experiments.base-variation')}
+                    </Form.Label>
+                    <Form.Control>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          disabled
+                          placeholder={t(`experiments.select-flag`)}
+                          label={
+                            variationOptions.find(
+                              item => item.value === field.value
+                            )?.label || ''
+                          }
+                          variant="secondary"
+                          className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
                         />
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
+                        <DropdownMenuContent
+                          className="w-[502px]"
+                          align="start"
+                          {...field}
+                        >
+                          {variationOptions.map((item, index) => (
+                            <DropdownMenuItem
+                              {...field}
+                              key={index}
+                              value={item.value}
+                              label={item.label}
+                              onSelectOption={value => {
+                                field.onChange(value);
+                              }}
+                            />
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                )}
+              />
             )}
-          />
+          </div>
+
           <Form.Field
             control={form.control}
             name={`goalIds`}
@@ -302,7 +361,6 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                 <Form.Control>
                   <DropdownMenu>
                     <DropdownMenuTrigger
-                      disabled
                       placeholder={t(`experiments.select-goal`)}
                       label={field.value
                         .map(
