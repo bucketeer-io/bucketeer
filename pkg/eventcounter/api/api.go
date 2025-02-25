@@ -473,8 +473,18 @@ func (s *eventCounterService) getHourlyUserCounts(
 	for _, hour := range hours {
 		c, err := s.evaluationCountCacher.GetUserCount(hour)
 		if err != nil {
+			s.logger.Error("Failed to get user count",
+				zap.Error(err),
+				zap.String("hour", hour),
+				zap.String("featureID", featureID),
+				zap.String("environmentId", environmentId))
 			return nil, err
 		}
+		s.logger.Info("Retrieved hourly user count",
+			zap.String("hour", hour),
+			zap.String("featureID", featureID),
+			zap.String("environmentId", environmentId),
+			zap.Float64("count", float64(c)))
 		counts = append(counts, float64(c))
 	}
 	return counts, nil
@@ -491,8 +501,18 @@ func (s *eventCounterService) getDailyUserCounts(
 			featureID, environmentId,
 		)
 		if err != nil {
+			s.logger.Error("Failed to get daily user count",
+				zap.Error(err),
+				zap.Strings("day", day),
+				zap.String("featureID", featureID),
+				zap.String("environmentId", environmentId))
 			return nil, err
 		}
+		s.logger.Info("Retrieved daily user count",
+			zap.Strings("day", day),
+			zap.String("featureID", featureID),
+			zap.String("environmentId", environmentId),
+			zap.Float64("count", c))
 		counts = append(counts, c)
 	}
 	return counts, nil
