@@ -289,7 +289,8 @@ func (p *evaluationCountEventPersister) countEvent(key string, variationID strin
 			zap.String("variationID", variationID),
 			zap.String("userID", e.UserId),
 			zap.String("tag", e.Tag),
-			zap.Int32("sourceID", int32(e.SourceId)))
+			zap.Int32("sourceID", int32(e.SourceId)),
+			zap.Any("user", e.User))
 		return err
 	}
 	p.logger.Info("Successfully incremented event count",
@@ -298,6 +299,7 @@ func (p *evaluationCountEventPersister) countEvent(key string, variationID strin
 		zap.String("featureID", e.FeatureId),
 		zap.String("variationID", variationID),
 		zap.String("tag", e.Tag),
+		zap.Any("user", e.User),
 		zap.Int32("sourceID", int32(e.SourceId)))
 	return nil
 }
@@ -312,6 +314,7 @@ func (p *evaluationCountEventPersister) countUser(key, variationID string, e *ev
 			zap.String("featureID", e.FeatureId),
 			zap.Int32("sourceID", int32(e.SourceId)),
 			zap.String("variationID", variationID),
+			zap.Any("user", e.User),
 			zap.String("tag", e.Tag))
 		return err
 	}
@@ -321,6 +324,7 @@ func (p *evaluationCountEventPersister) countUser(key, variationID string, e *ev
 		zap.Int64("wasNewUser", added),
 		zap.String("featureID", e.FeatureId),
 		zap.String("variationID", variationID),
+		zap.Any("user", e.User),
 		zap.String("tag", e.Tag),
 		zap.Int32("sourceID", int32(e.SourceId)))
 	return nil
