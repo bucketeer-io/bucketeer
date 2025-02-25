@@ -245,7 +245,7 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 		// but it also increases the Pod CPU usage. It's a trade-off.
 		// Since this is a background service and it's not latency-sensitive, we split the requests.
 		ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-		if err := p.countUser(ucKey, e.UserId); err != nil {
+		if err := p.countUser(ucKey, e.UserId, e.FeatureId, vID); err != nil {
 			if err != nil {
 				p.logger.Error("Failed to increment the evaluation user event in the Redis",
 					zap.Error(err),
@@ -258,7 +258,7 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 			return err
 		}
 		ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-		if err := p.countEvent(ecKey); err != nil {
+		if err := p.countEvent(ecKey, e.FeatureId, vID); err != nil {
 			p.logger.Error("Failed to increment the evaluation event in the Redis",
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
@@ -279,33 +279,41 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 	return nil
 }
 
-func (p *evaluationCountEventPersister) countEvent(key string) error {
+func (p *evaluationCountEventPersister) countEvent(key string, featureID, variationID string) error {
 	count, err := p.evaluationCountCacher.Increment(key)
 	if err != nil {
 		p.logger.Error("Failed to increment event count",
 			zap.Error(err),
-			zap.String("key", key))
+			zap.String("key", key),
+			zap.String("featureID", featureID),
+			zap.String("variationID", variationID))
 		return err
 	}
 	p.logger.Info("Successfully incremented event count",
 		zap.String("key", key),
-		zap.Int64("newCount", count))
+		zap.Int64("newCount", count),
+		zap.String("featureID", featureID),
+		zap.String("variationID", variationID))
 	return nil
 }
 
-func (p *evaluationCountEventPersister) countUser(key, userID string) error {
+func (p *evaluationCountEventPersister) countUser(key, userID, featureID, variationID string) error {
 	added, err := p.evaluationCountCacher.PFAdd(key, userID)
 	if err != nil {
 		p.logger.Error("Failed to add user to HyperLogLog",
 			zap.Error(err),
 			zap.String("key", key),
-			zap.String("userID", userID))
+			zap.String("userID", userID),
+			zap.String("featureID", featureID),
+			zap.String("variationID", variationID))
 		return err
 	}
 	p.logger.Info("Attempted to add user to HyperLogLog",
 		zap.String("key", key),
 		zap.String("userID", userID),
-		zap.Int64("wasNewUser", added))
+		zap.Int64("wasNewUser", added),
+		zap.String("featureID", featureID),
+		zap.String("variationID", variationID))
 	return nil
 }
 
