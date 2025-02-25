@@ -59,14 +59,14 @@ func WithLogger(logger *zap.Logger) Option {
 }
 
 type AccountService struct {
-	environmentClient environmentclient.Client
-	mysqlClient       mysql.Client
-	accountStorage    v2.AccountStorage
-	tagStorage        tagstorage.TagStorage
-	auditlogStorage   auditlogstorage.AuditLogStorage
-	publisher         publisher.Publisher
-	opts              *options
-	logger            *zap.Logger
+	environmentClient    environmentclient.Client
+	mysqlClient          mysql.Client
+	accountStorage       v2.AccountStorage
+	tagStorage           tagstorage.TagStorage
+	adminAuditLogStorage auditlogstorage.AdminAuditLogStorage
+	publisher            publisher.Publisher
+	opts                 *options
+	logger               *zap.Logger
 }
 
 func NewAccountService(
@@ -80,14 +80,14 @@ func NewAccountService(
 		opt(&options)
 	}
 	return &AccountService{
-		environmentClient: e,
-		mysqlClient:       mysqlClient,
-		accountStorage:    v2.NewAccountStorage(mysqlClient),
-		tagStorage:        tagstorage.NewTagStorage(mysqlClient),
-		auditlogStorage:   auditlogstorage.NewAuditLogStorage(mysqlClient),
-		publisher:         publisher,
-		opts:              &options,
-		logger:            options.logger.Named("api"),
+		environmentClient:    e,
+		mysqlClient:          mysqlClient,
+		accountStorage:       v2.NewAccountStorage(mysqlClient),
+		tagStorage:           tagstorage.NewTagStorage(mysqlClient),
+		adminAuditLogStorage: auditlogstorage.NewAdminAuditLogStorage(mysqlClient),
+		publisher:            publisher,
+		opts:                 &options,
+		logger:               options.logger.Named("api"),
 	}
 }
 

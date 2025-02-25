@@ -430,7 +430,7 @@ func TestCreateAccountV2NoCommandMySQL(t *testing.T) {
 					err := fn(ctx, nil)
 					require.NoError(t, err)
 				}).Return(nil)
-				s.auditlogStorage.(*alstoragemock.MockAuditLogStorage).EXPECT().CreateAuditLog(
+				s.adminAuditLogStorage.(*alstoragemock.MockAdminAuditLogStorage).EXPECT().CreateAdminAuditLog(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -971,6 +971,10 @@ func TestUpdateAccountV2NoCommandMySQL(t *testing.T) {
 					err := fn(ctx, nil)
 					require.NoError(t, err)
 				}).Return(nil)
+
+				s.adminAuditLogStorage.(*alstoragemock.MockAdminAuditLogStorage).EXPECT().CreateAdminAuditLog(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
 			},
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -1161,6 +1165,10 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 					err := fn(ctx, nil)
 					require.NoError(t, err)
 				}).Return(nil)
+
+				s.adminAuditLogStorage.(*alstoragemock.MockAdminAuditLogStorage).EXPECT().CreateAdminAuditLog(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
 			},
 			req: &accountproto.EnableAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -1355,6 +1363,10 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 					err := fn(ctx, nil)
 					require.NoError(t, err)
 				}).Return(nil)
+
+				s.adminAuditLogStorage.(*alstoragemock.MockAdminAuditLogStorage).EXPECT().CreateAdminAuditLog(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
 			},
 			req: &accountproto.DisableAccountV2Request{
 				Email:          "bucketeer@example.com",

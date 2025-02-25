@@ -200,7 +200,7 @@ func (s *AccountService) createAccountV2NoCommand(
 		}
 		// TODO: temporary implementation end ---
 
-		createAccountEvent, err = domainevent.NewEvent(
+		createAccountEvent, err = domainevent.NewAdminEvent(
 			editor,
 			eventproto.Event_ACCOUNT,
 			account.Email,
@@ -218,7 +218,6 @@ func (s *AccountService) createAccountV2NoCommand(
 				CreatedAt:        account.CreatedAt,
 				UpdatedAt:        account.UpdatedAt,
 			},
-			storage.AdminEnvironmentID,
 			account,
 			nil,
 		)
@@ -229,7 +228,7 @@ func (s *AccountService) createAccountV2NoCommand(
 		if err != nil {
 			return err
 		}
-		return s.auditlogStorage.CreateAuditLog(
+		return s.adminAuditLogStorage.CreateAdminAuditLog(
 			contextWithTx,
 			domainauditlog.NewAuditLog(createAccountEvent, storage.AdminEnvironmentID),
 		)
@@ -309,7 +308,7 @@ func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
 		return err
 	}
 
-	updateAccountEvent, err = domainevent.NewEvent(
+	updateAccountEvent, err = domainevent.NewAdminEvent(
 		editor,
 		eventproto.Event_PUSH,
 		updated.Email,
@@ -318,7 +317,6 @@ func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
 			Email:            updated.Email,
 			EnvironmentRoles: updated.EnvironmentRoles,
 		},
-		storage.AdminEnvironmentID,
 		updated,
 		account,
 	)
@@ -339,7 +337,7 @@ func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
 	if err != nil {
 		return err
 	}
-	return s.auditlogStorage.CreateAuditLog(
+	return s.adminAuditLogStorage.CreateAdminAuditLog(
 		ctx,
 		domainauditlog.NewAuditLog(updateAccountEvent, storage.AdminEnvironmentID),
 	)
@@ -864,7 +862,14 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 			return err
 		}
 		updatedAccountPb = updated.AccountV2
-		return s.accountStorage.UpdateAccountV2(contextWithTx, updated)
+		err = s.accountStorage.UpdateAccountV2(contextWithTx, updated)
+		if err != nil {
+			return err
+		}
+		return s.adminAuditLogStorage.CreateAdminAuditLog(
+			contextWithTx,
+			domainauditlog.NewAuditLog(updateAccountV2Event, storage.AdminEnvironmentID),
+		)
 	})
 	if err != nil {
 		return nil, err
