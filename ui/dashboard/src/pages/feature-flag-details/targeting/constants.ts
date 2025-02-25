@@ -11,7 +11,8 @@ const initialSegmentCondition: SegmentConditionType = {
   secondValue: '',
   value: '',
   date: '',
-  flag: ''
+  flagId: '',
+  variation: ''
 };
 
 const initialIndividualRule: IndividualRuleItem = {

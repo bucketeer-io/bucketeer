@@ -16,7 +16,8 @@ export interface SegmentConditionType {
   secondValue?: string;
   value?: string;
   date?: string;
-  flag?: string;
+  flagId?: string;
+  variation?: string;
 }
 
 export interface SegmentRuleItem {

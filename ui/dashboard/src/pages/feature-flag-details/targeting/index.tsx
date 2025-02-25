@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import AddRuleDropdown from './add-rule-dropdown';
 import {
   initialIndividualRule,
@@ -15,7 +15,14 @@ import {
   TargetSegmentItem
 } from './types';
 
+export interface SubmitRef {
+  isFormValid: boolean;
+  submit: () => void;
+}
+
 const Targeting = () => {
+  const submitRef = useRef<SubmitRef>(null);
+
   const [targetSegmentRules, setTargetSegmentRules] = useState<
     TargetSegmentItem[]
   >([]);
@@ -62,11 +69,17 @@ const Targeting = () => {
     [targetSegmentRules, targetIndividualRules, prerequisitesRules]
   );
 
+  const onSubmit = () => {
+    console.log(submitRef.current);
+    submitRef.current?.submit();
+  };
+
   return (
     <div className="flex flex-col size-full gap-y-6 overflow-visible">
-      <TargetingState />
+      <TargetingState onSubmit={onSubmit} />
       <AddRuleDropdown onAddRule={onAddRule} />
       <TargetSegmentRule
+        ref={submitRef}
         targetSegmentRules={targetSegmentRules}
         setTargetSegmentRules={setTargetSegmentRules}
       />
