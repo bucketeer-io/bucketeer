@@ -279,7 +279,10 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 	return nil
 }
 
-func (p *evaluationCountEventPersister) countEvent(key string, variationID string, e *eventproto.EvaluationEvent) error {
+func (p *evaluationCountEventPersister) countEvent(key string,
+	variationID string,
+	e *eventproto.EvaluationEvent,
+) error {
 	count, err := p.evaluationCountCacher.Increment(key)
 	if err != nil {
 		p.logger.Error("Failed to increment event count",
