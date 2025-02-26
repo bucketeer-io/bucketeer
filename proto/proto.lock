@@ -22484,7 +22484,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Get experiment result"
+                        "value": "Get an experiment result"
                       },
                       {
                         "name": "tags",

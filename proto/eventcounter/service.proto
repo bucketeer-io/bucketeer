@@ -162,7 +162,7 @@ service EventCounterService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get experiment result"
-      description: "Get experiment result"
+      description: "Get an experiment result"
       tags: "experiment_result"
       operation_id: "web.v1.event_counter.experiment_result.get"
       responses: {
