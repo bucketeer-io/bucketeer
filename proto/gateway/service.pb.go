@@ -1321,20 +1321,33 @@ type UpdateFeatureRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Comment         string                         `protobuf:"bytes,1,opt,name=comment,proto3" json:"comment"`
-	EnvironmentId   string                         `protobuf:"bytes,2,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
-	Id              string                         `protobuf:"bytes,3,opt,name=id,proto3" json:"id"`
-	Name            *wrapperspb.StringValue        `protobuf:"bytes,4,opt,name=name,proto3" json:"name"`
-	Description     *wrapperspb.StringValue        `protobuf:"bytes,5,opt,name=description,proto3" json:"description"`
-	Tags            *common.StringListValue        `protobuf:"bytes,6,opt,name=tags,proto3" json:"tags"`
-	Enabled         *wrapperspb.BoolValue          `protobuf:"bytes,7,opt,name=enabled,proto3" json:"enabled"`
-	Archived        *wrapperspb.BoolValue          `protobuf:"bytes,8,opt,name=archived,proto3" json:"archived"`
-	Variations      *feature.VariationListValue    `protobuf:"bytes,9,opt,name=variations,proto3" json:"variations"`
-	Prerequisites   *feature.PrerequisiteListValue `protobuf:"bytes,10,opt,name=prerequisites,proto3" json:"prerequisites"`
-	Targets         *feature.TargetListValue       `protobuf:"bytes,11,opt,name=targets,proto3" json:"targets"`
-	Rules           *feature.RuleListValue         `protobuf:"bytes,12,opt,name=rules,proto3" json:"rules"`
-	DefaultStrategy *feature.Strategy              `protobuf:"bytes,13,opt,name=default_strategy,json=defaultStrategy,proto3" json:"default_strategy"`
-	OffVariation    *wrapperspb.StringValue        `protobuf:"bytes,14,opt,name=off_variation,json=offVariation,proto3" json:"off_variation"`
+	Comment       string                  `protobuf:"bytes,1,opt,name=comment,proto3" json:"comment"`
+	EnvironmentId string                  `protobuf:"bytes,2,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
+	Id            string                  `protobuf:"bytes,3,opt,name=id,proto3" json:"id"`
+	Name          *wrapperspb.StringValue `protobuf:"bytes,4,opt,name=name,proto3" json:"name"`
+	Description   *wrapperspb.StringValue `protobuf:"bytes,5,opt,name=description,proto3" json:"description"`
+	Tags          *common.StringListValue `protobuf:"bytes,6,opt,name=tags,proto3" json:"tags"`
+	Enabled       *wrapperspb.BoolValue   `protobuf:"bytes,7,opt,name=enabled,proto3" json:"enabled"`
+	Archived      *wrapperspb.BoolValue   `protobuf:"bytes,8,opt,name=archived,proto3" json:"archived"`
+	// Legacy full-replacement fields (deprecated)
+	//
+	// Deprecated: Do not use.
+	Variations *feature.VariationListValue `protobuf:"bytes,9,opt,name=variations,proto3" json:"variations"`
+	// Deprecated: Do not use.
+	Prerequisites *feature.PrerequisiteListValue `protobuf:"bytes,10,opt,name=prerequisites,proto3" json:"prerequisites"`
+	// Deprecated: Do not use.
+	Targets *feature.TargetListValue `protobuf:"bytes,11,opt,name=targets,proto3" json:"targets"`
+	// Deprecated: Do not use.
+	Rules             *feature.RuleListValue  `protobuf:"bytes,12,opt,name=rules,proto3" json:"rules"`
+	DefaultStrategy   *feature.Strategy       `protobuf:"bytes,13,opt,name=default_strategy,json=defaultStrategy,proto3" json:"default_strategy"`
+	OffVariation      *wrapperspb.StringValue `protobuf:"bytes,14,opt,name=off_variation,json=offVariation,proto3" json:"off_variation"`
+	ResetSamplingSeed bool                    `protobuf:"varint,15,opt,name=reset_sampling_seed,json=resetSamplingSeed,proto3" json:"reset_sampling_seed"`
+	// New granular change fields (supporting multiple operations per field)
+	VariationChanges    []*feature.VariationChange    `protobuf:"bytes,16,rep,name=variation_changes,json=variationChanges,proto3" json:"variation_changes"`
+	RuleChanges         []*feature.RuleChange         `protobuf:"bytes,17,rep,name=rule_changes,json=ruleChanges,proto3" json:"rule_changes"`
+	PrerequisiteChanges []*feature.PrerequisiteChange `protobuf:"bytes,18,rep,name=prerequisite_changes,json=prerequisiteChanges,proto3" json:"prerequisite_changes"`
+	TargetChanges       []*feature.TargetChange       `protobuf:"bytes,19,rep,name=target_changes,json=targetChanges,proto3" json:"target_changes"`
+	TagChanges          []*feature.TagChange          `protobuf:"bytes,20,rep,name=tag_changes,json=tagChanges,proto3" json:"tag_changes"`
 }
 
 func (x *UpdateFeatureRequest) Reset() {
@@ -1425,6 +1438,7 @@ func (x *UpdateFeatureRequest) GetArchived() *wrapperspb.BoolValue {
 	return nil
 }
 
+// Deprecated: Do not use.
 func (x *UpdateFeatureRequest) GetVariations() *feature.VariationListValue {
 	if x != nil {
 		return x.Variations
@@ -1432,6 +1446,7 @@ func (x *UpdateFeatureRequest) GetVariations() *feature.VariationListValue {
 	return nil
 }
 
+// Deprecated: Do not use.
 func (x *UpdateFeatureRequest) GetPrerequisites() *feature.PrerequisiteListValue {
 	if x != nil {
 		return x.Prerequisites
@@ -1439,6 +1454,7 @@ func (x *UpdateFeatureRequest) GetPrerequisites() *feature.PrerequisiteListValue
 	return nil
 }
 
+// Deprecated: Do not use.
 func (x *UpdateFeatureRequest) GetTargets() *feature.TargetListValue {
 	if x != nil {
 		return x.Targets
@@ -1446,6 +1462,7 @@ func (x *UpdateFeatureRequest) GetTargets() *feature.TargetListValue {
 	return nil
 }
 
+// Deprecated: Do not use.
 func (x *UpdateFeatureRequest) GetRules() *feature.RuleListValue {
 	if x != nil {
 		return x.Rules
@@ -1463,6 +1480,48 @@ func (x *UpdateFeatureRequest) GetDefaultStrategy() *feature.Strategy {
 func (x *UpdateFeatureRequest) GetOffVariation() *wrapperspb.StringValue {
 	if x != nil {
 		return x.OffVariation
+	}
+	return nil
+}
+
+func (x *UpdateFeatureRequest) GetResetSamplingSeed() bool {
+	if x != nil {
+		return x.ResetSamplingSeed
+	}
+	return false
+}
+
+func (x *UpdateFeatureRequest) GetVariationChanges() []*feature.VariationChange {
+	if x != nil {
+		return x.VariationChanges
+	}
+	return nil
+}
+
+func (x *UpdateFeatureRequest) GetRuleChanges() []*feature.RuleChange {
+	if x != nil {
+		return x.RuleChanges
+	}
+	return nil
+}
+
+func (x *UpdateFeatureRequest) GetPrerequisiteChanges() []*feature.PrerequisiteChange {
+	if x != nil {
+		return x.PrerequisiteChanges
+	}
+	return nil
+}
+
+func (x *UpdateFeatureRequest) GetTargetChanges() []*feature.TargetChange {
+	if x != nil {
+		return x.TargetChanges
+	}
+	return nil
+}
+
+func (x *UpdateFeatureRequest) GetTagChanges() []*feature.TagChange {
+	if x != nil {
+		return x.TagChanges
 	}
 	return nil
 }
@@ -3854,7 +3913,7 @@ var file_proto_gateway_service_proto_rawDesc = []byte{
 	0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32,
 	0x1a, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x66, 0x65, 0x61, 0x74,
 	0x75, 0x72, 0x65, 0x2e, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x52, 0x08, 0x66, 0x65, 0x61,
-	0x74, 0x75, 0x72, 0x65, 0x73, 0x22, 0x96, 0x06, 0x0a, 0x14, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
+	0x74, 0x75, 0x72, 0x65, 0x73, 0x22, 0x86, 0x0a, 0x0a, 0x14, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
 	0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x18,
 	0x0a, 0x07, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
 	0x07, 0x63, 0x6f, 0x6d, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x25, 0x0a, 0x0e, 0x65, 0x6e, 0x76, 0x69,
@@ -3878,32 +3937,63 @@ var file_proto_gateway_service_proto_rawDesc = []byte{
 	0x0a, 0x08, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x64, 0x18, 0x08, 0x20, 0x01, 0x28, 0x0b,
 	0x32, 0x1a, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62,
 	0x75, 0x66, 0x2e, 0x42, 0x6f, 0x6f, 0x6c, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x08, 0x61, 0x72,
-	0x63, 0x68, 0x69, 0x76, 0x65, 0x64, 0x12, 0x45, 0x0a, 0x0a, 0x76, 0x61, 0x72, 0x69, 0x61, 0x74,
+	0x63, 0x68, 0x69, 0x76, 0x65, 0x64, 0x12, 0x58, 0x0a, 0x0a, 0x76, 0x61, 0x72, 0x69, 0x61, 0x74,
 	0x69, 0x6f, 0x6e, 0x73, 0x18, 0x09, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x62, 0x75, 0x63,
 	0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2e, 0x56,
 	0x61, 0x72, 0x69, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75,
-	0x65, 0x52, 0x0a, 0x76, 0x61, 0x72, 0x69, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x4e, 0x0a,
-	0x0d, 0x70, 0x72, 0x65, 0x72, 0x65, 0x71, 0x75, 0x69, 0x73, 0x69, 0x74, 0x65, 0x73, 0x18, 0x0a,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
-	0x2e, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2e, 0x50, 0x72, 0x65, 0x72, 0x65, 0x71, 0x75,
-	0x69, 0x73, 0x69, 0x74, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x0d,
-	0x70, 0x72, 0x65, 0x72, 0x65, 0x71, 0x75, 0x69, 0x73, 0x69, 0x74, 0x65, 0x73, 0x12, 0x3c, 0x0a,
-	0x07, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x73, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x22,
-	0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x66, 0x65, 0x61, 0x74, 0x75,
-	0x72, 0x65, 0x2e, 0x54, 0x61, 0x72, 0x67, 0x65, 0x74, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x61, 0x6c,
-	0x75, 0x65, 0x52, 0x07, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x73, 0x12, 0x36, 0x0a, 0x05, 0x72,
-	0x75, 0x6c, 0x65, 0x73, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x62, 0x75, 0x63,
-	0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2e, 0x52,
-	0x75, 0x6c, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x05, 0x72, 0x75,
-	0x6c, 0x65, 0x73, 0x12, 0x46, 0x0a, 0x10, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x5f, 0x73,
-	0x74, 0x72, 0x61, 0x74, 0x65, 0x67, 0x79, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1b, 0x2e,
-	0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72,
-	0x65, 0x2e, 0x53, 0x74, 0x72, 0x61, 0x74, 0x65, 0x67, 0x79, 0x52, 0x0f, 0x64, 0x65, 0x66, 0x61,
-	0x75, 0x6c, 0x74, 0x53, 0x74, 0x72, 0x61, 0x74, 0x65, 0x67, 0x79, 0x12, 0x41, 0x0a, 0x0d, 0x6f,
-	0x66, 0x66, 0x5f, 0x76, 0x61, 0x72, 0x69, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x0e, 0x20, 0x01,
-	0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x62, 0x75, 0x66, 0x2e, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x56, 0x61, 0x6c, 0x75, 0x65,
-	0x52, 0x0c, 0x6f, 0x66, 0x66, 0x56, 0x61, 0x72, 0x69, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x4d,
+	0x65, 0x42, 0x11, 0x18, 0x01, 0x92, 0x41, 0x0c, 0x32, 0x0a, 0x64, 0x65, 0x70, 0x72, 0x65, 0x63,
+	0x61, 0x74, 0x65, 0x64, 0x52, 0x0a, 0x76, 0x61, 0x72, 0x69, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x12, 0x61, 0x0a, 0x0d, 0x70, 0x72, 0x65, 0x72, 0x65, 0x71, 0x75, 0x69, 0x73, 0x69, 0x74, 0x65,
+	0x73, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x28, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
+	0x65, 0x65, 0x72, 0x2e, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2e, 0x50, 0x72, 0x65, 0x72,
+	0x65, 0x71, 0x75, 0x69, 0x73, 0x69, 0x74, 0x65, 0x4c, 0x69, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75,
+	0x65, 0x42, 0x11, 0x18, 0x01, 0x92, 0x41, 0x0c, 0x32, 0x0a, 0x64, 0x65, 0x70, 0x72, 0x65, 0x63,
+	0x61, 0x74, 0x65, 0x64, 0x52, 0x0d, 0x70, 0x72, 0x65, 0x72, 0x65, 0x71, 0x75, 0x69, 0x73, 0x69,
+	0x74, 0x65, 0x73, 0x12, 0x4f, 0x0a, 0x07, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x73, 0x18, 0x0b,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
+	0x2e, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2e, 0x54, 0x61, 0x72, 0x67, 0x65, 0x74, 0x4c,
+	0x69, 0x73, 0x74, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x42, 0x11, 0x18, 0x01, 0x92, 0x41, 0x0c, 0x32,
+	0x0a, 0x64, 0x65, 0x70, 0x72, 0x65, 0x63, 0x61, 0x74, 0x65, 0x64, 0x52, 0x07, 0x74, 0x61, 0x72,
+	0x67, 0x65, 0x74, 0x73, 0x12, 0x49, 0x0a, 0x05, 0x72, 0x75, 0x6c, 0x65, 0x73, 0x18, 0x0c, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x20, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e,
+	0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2e, 0x52, 0x75, 0x6c, 0x65, 0x4c, 0x69, 0x73, 0x74,
+	0x56, 0x61, 0x6c, 0x75, 0x65, 0x42, 0x11, 0x18, 0x01, 0x92, 0x41, 0x0c, 0x32, 0x0a, 0x64, 0x65,
+	0x70, 0x72, 0x65, 0x63, 0x61, 0x74, 0x65, 0x64, 0x52, 0x05, 0x72, 0x75, 0x6c, 0x65, 0x73, 0x12,
+	0x46, 0x0a, 0x10, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x5f, 0x73, 0x74, 0x72, 0x61, 0x74,
+	0x65, 0x67, 0x79, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x62, 0x75, 0x63, 0x6b,
+	0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2e, 0x53, 0x74,
+	0x72, 0x61, 0x74, 0x65, 0x67, 0x79, 0x52, 0x0f, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x53,
+	0x74, 0x72, 0x61, 0x74, 0x65, 0x67, 0x79, 0x12, 0x41, 0x0a, 0x0d, 0x6f, 0x66, 0x66, 0x5f, 0x76,
+	0x61, 0x72, 0x69, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x0e, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1c,
+	0x2e, 0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66,
+	0x2e, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x52, 0x0c, 0x6f, 0x66,
+	0x66, 0x56, 0x61, 0x72, 0x69, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x2e, 0x0a, 0x13, 0x72, 0x65,
+	0x73, 0x65, 0x74, 0x5f, 0x73, 0x61, 0x6d, 0x70, 0x6c, 0x69, 0x6e, 0x67, 0x5f, 0x73, 0x65, 0x65,
+	0x64, 0x18, 0x0f, 0x20, 0x01, 0x28, 0x08, 0x52, 0x11, 0x72, 0x65, 0x73, 0x65, 0x74, 0x53, 0x61,
+	0x6d, 0x70, 0x6c, 0x69, 0x6e, 0x67, 0x53, 0x65, 0x65, 0x64, 0x12, 0x4f, 0x0a, 0x11, 0x76, 0x61,
+	0x72, 0x69, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x18,
+	0x10, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x22, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65,
+	0x72, 0x2e, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2e, 0x56, 0x61, 0x72, 0x69, 0x61, 0x74,
+	0x69, 0x6f, 0x6e, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x52, 0x10, 0x76, 0x61, 0x72, 0x69, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x12, 0x40, 0x0a, 0x0c, 0x72,
+	0x75, 0x6c, 0x65, 0x5f, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x18, 0x11, 0x20, 0x03, 0x28,
+	0x0b, 0x32, 0x1d, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x66, 0x65,
+	0x61, 0x74, 0x75, 0x72, 0x65, 0x2e, 0x52, 0x75, 0x6c, 0x65, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65,
+	0x52, 0x0b, 0x72, 0x75, 0x6c, 0x65, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x12, 0x58, 0x0a,
+	0x14, 0x70, 0x72, 0x65, 0x72, 0x65, 0x71, 0x75, 0x69, 0x73, 0x69, 0x74, 0x65, 0x5f, 0x63, 0x68,
+	0x61, 0x6e, 0x67, 0x65, 0x73, 0x18, 0x12, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x25, 0x2e, 0x62, 0x75,
+	0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2e,
+	0x50, 0x72, 0x65, 0x72, 0x65, 0x71, 0x75, 0x69, 0x73, 0x69, 0x74, 0x65, 0x43, 0x68, 0x61, 0x6e,
+	0x67, 0x65, 0x52, 0x13, 0x70, 0x72, 0x65, 0x72, 0x65, 0x71, 0x75, 0x69, 0x73, 0x69, 0x74, 0x65,
+	0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x12, 0x46, 0x0a, 0x0e, 0x74, 0x61, 0x72, 0x67, 0x65,
+	0x74, 0x5f, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x18, 0x13, 0x20, 0x03, 0x28, 0x0b, 0x32,
+	0x1f, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x66, 0x65, 0x61, 0x74,
+	0x75, 0x72, 0x65, 0x2e, 0x54, 0x61, 0x72, 0x67, 0x65, 0x74, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65,
+	0x52, 0x0d, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x12,
+	0x3d, 0x0a, 0x0b, 0x74, 0x61, 0x67, 0x5f, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x18, 0x14,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x1c, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
+	0x2e, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2e, 0x54, 0x61, 0x67, 0x43, 0x68, 0x61, 0x6e,
+	0x67, 0x65, 0x52, 0x0a, 0x74, 0x61, 0x67, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x73, 0x22, 0x4d,
 	0x0a, 0x15, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x52,
 	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x34, 0x0a, 0x07, 0x66, 0x65, 0x61, 0x74, 0x75,
 	0x72, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65,
@@ -4965,23 +5055,28 @@ var file_proto_gateway_service_proto_goTypes = []interface{}{
 	(*feature.TargetListValue)(nil),                              // 72: bucketeer.feature.TargetListValue
 	(*feature.RuleListValue)(nil),                                // 73: bucketeer.feature.RuleListValue
 	(*feature.Strategy)(nil),                                     // 74: bucketeer.feature.Strategy
-	(push.ListPushesRequest_OrderBy)(0),                          // 75: bucketeer.push.ListPushesRequest.OrderBy
-	(push.ListPushesRequest_OrderDirection)(0),                   // 76: bucketeer.push.ListPushesRequest.OrderDirection
-	(*push.Push)(nil),                                            // 77: bucketeer.push.Push
-	(account.AccountV2_Role_Organization)(0),                     // 78: bucketeer.account.AccountV2.Role.Organization
-	(*account.AccountV2_EnvironmentRole)(nil),                    // 79: bucketeer.account.AccountV2.EnvironmentRole
-	(*account.AccountV2)(nil),                                    // 80: bucketeer.account.AccountV2
-	(*account.UpdateAccountV2Request_OrganizationRoleValue)(nil), // 81: bucketeer.account.UpdateAccountV2Request.OrganizationRoleValue
-	(*wrapperspb.Int64Value)(nil),                                // 82: google.protobuf.Int64Value
-	(*account.UpdateAccountV2Request_AccountV2Avatar)(nil),       // 83: bucketeer.account.UpdateAccountV2Request.AccountV2Avatar
-	(*account.ConsoleAccount)(nil),                               // 84: bucketeer.account.ConsoleAccount
-	(account.ListAccountsV2Request_OrderBy)(0),                   // 85: bucketeer.account.ListAccountsV2Request.OrderBy
-	(account.ListAccountsV2Request_OrderDirection)(0),            // 86: bucketeer.account.ListAccountsV2Request.OrderDirection
-	(*wrapperspb.Int32Value)(nil),                                // 87: google.protobuf.Int32Value
-	(*coderef.CodeReference)(nil),                                // 88: bucketeer.coderef.CodeReference
-	(coderef.ListCodeReferencesRequest_OrderBy)(0),               // 89: bucketeer.coderef.ListCodeReferencesRequest.OrderBy
-	(coderef.ListCodeReferencesRequest_OrderDirection)(0),        // 90: bucketeer.coderef.ListCodeReferencesRequest.OrderDirection
-	(coderef.CodeReference_RepositoryType)(0),                    // 91: bucketeer.coderef.CodeReference.RepositoryType
+	(*feature.VariationChange)(nil),                              // 75: bucketeer.feature.VariationChange
+	(*feature.RuleChange)(nil),                                   // 76: bucketeer.feature.RuleChange
+	(*feature.PrerequisiteChange)(nil),                           // 77: bucketeer.feature.PrerequisiteChange
+	(*feature.TargetChange)(nil),                                 // 78: bucketeer.feature.TargetChange
+	(*feature.TagChange)(nil),                                    // 79: bucketeer.feature.TagChange
+	(push.ListPushesRequest_OrderBy)(0),                          // 80: bucketeer.push.ListPushesRequest.OrderBy
+	(push.ListPushesRequest_OrderDirection)(0),                   // 81: bucketeer.push.ListPushesRequest.OrderDirection
+	(*push.Push)(nil),                                            // 82: bucketeer.push.Push
+	(account.AccountV2_Role_Organization)(0),                     // 83: bucketeer.account.AccountV2.Role.Organization
+	(*account.AccountV2_EnvironmentRole)(nil),                    // 84: bucketeer.account.AccountV2.EnvironmentRole
+	(*account.AccountV2)(nil),                                    // 85: bucketeer.account.AccountV2
+	(*account.UpdateAccountV2Request_OrganizationRoleValue)(nil), // 86: bucketeer.account.UpdateAccountV2Request.OrganizationRoleValue
+	(*wrapperspb.Int64Value)(nil),                                // 87: google.protobuf.Int64Value
+	(*account.UpdateAccountV2Request_AccountV2Avatar)(nil),       // 88: bucketeer.account.UpdateAccountV2Request.AccountV2Avatar
+	(*account.ConsoleAccount)(nil),                               // 89: bucketeer.account.ConsoleAccount
+	(account.ListAccountsV2Request_OrderBy)(0),                   // 90: bucketeer.account.ListAccountsV2Request.OrderBy
+	(account.ListAccountsV2Request_OrderDirection)(0),            // 91: bucketeer.account.ListAccountsV2Request.OrderDirection
+	(*wrapperspb.Int32Value)(nil),                                // 92: google.protobuf.Int32Value
+	(*coderef.CodeReference)(nil),                                // 93: bucketeer.coderef.CodeReference
+	(coderef.ListCodeReferencesRequest_OrderBy)(0),               // 94: bucketeer.coderef.ListCodeReferencesRequest.OrderBy
+	(coderef.ListCodeReferencesRequest_OrderDirection)(0),        // 95: bucketeer.coderef.ListCodeReferencesRequest.OrderDirection
+	(coderef.CodeReference_RepositoryType)(0),                    // 96: bucketeer.coderef.CodeReference.RepositoryType
 }
 var file_proto_gateway_service_proto_depIdxs = []int32{
 	55,  // 0: bucketeer.gateway.GetFeatureFlagsRequest.source_id:type_name -> bucketeer.event.client.SourceId
@@ -5017,105 +5112,110 @@ var file_proto_gateway_service_proto_depIdxs = []int32{
 	73,  // 30: bucketeer.gateway.UpdateFeatureRequest.rules:type_name -> bucketeer.feature.RuleListValue
 	74,  // 31: bucketeer.gateway.UpdateFeatureRequest.default_strategy:type_name -> bucketeer.feature.Strategy
 	67,  // 32: bucketeer.gateway.UpdateFeatureRequest.off_variation:type_name -> google.protobuf.StringValue
-	56,  // 33: bucketeer.gateway.UpdateFeatureResponse.feature:type_name -> bucketeer.feature.Feature
-	75,  // 34: bucketeer.gateway.ListPushesRequest.order_by:type_name -> bucketeer.push.ListPushesRequest.OrderBy
-	76,  // 35: bucketeer.gateway.ListPushesRequest.order_direction:type_name -> bucketeer.push.ListPushesRequest.OrderDirection
-	77,  // 36: bucketeer.gateway.ListPushesResponse.pushes:type_name -> bucketeer.push.Push
-	77,  // 37: bucketeer.gateway.CreatePushResponse.push:type_name -> bucketeer.push.Push
-	77,  // 38: bucketeer.gateway.GetPushResponse.push:type_name -> bucketeer.push.Push
-	67,  // 39: bucketeer.gateway.UpdatePushRequest.name:type_name -> google.protobuf.StringValue
-	69,  // 40: bucketeer.gateway.UpdatePushRequest.deleted:type_name -> google.protobuf.BoolValue
-	77,  // 41: bucketeer.gateway.UpdatePushResponse.push:type_name -> bucketeer.push.Push
-	78,  // 42: bucketeer.gateway.CreateAccountV2Request.organization_role:type_name -> bucketeer.account.AccountV2.Role.Organization
-	79,  // 43: bucketeer.gateway.CreateAccountV2Request.environment_roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
-	80,  // 44: bucketeer.gateway.CreateAccountV2Response.account:type_name -> bucketeer.account.AccountV2
-	67,  // 45: bucketeer.gateway.UpdateAccountV2Request.name:type_name -> google.protobuf.StringValue
-	67,  // 46: bucketeer.gateway.UpdateAccountV2Request.avatar_image_url:type_name -> google.protobuf.StringValue
-	81,  // 47: bucketeer.gateway.UpdateAccountV2Request.organization_role:type_name -> bucketeer.account.UpdateAccountV2Request.OrganizationRoleValue
-	79,  // 48: bucketeer.gateway.UpdateAccountV2Request.environment_roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
-	67,  // 49: bucketeer.gateway.UpdateAccountV2Request.first_name:type_name -> google.protobuf.StringValue
-	67,  // 50: bucketeer.gateway.UpdateAccountV2Request.last_name:type_name -> google.protobuf.StringValue
-	67,  // 51: bucketeer.gateway.UpdateAccountV2Request.language:type_name -> google.protobuf.StringValue
-	82,  // 52: bucketeer.gateway.UpdateAccountV2Request.last_seen:type_name -> google.protobuf.Int64Value
-	83,  // 53: bucketeer.gateway.UpdateAccountV2Request.avatar:type_name -> bucketeer.account.UpdateAccountV2Request.AccountV2Avatar
-	69,  // 54: bucketeer.gateway.UpdateAccountV2Request.disabled:type_name -> google.protobuf.BoolValue
-	69,  // 55: bucketeer.gateway.UpdateAccountV2Request.deleted:type_name -> google.protobuf.BoolValue
-	80,  // 56: bucketeer.gateway.UpdateAccountV2Response.account:type_name -> bucketeer.account.AccountV2
-	80,  // 57: bucketeer.gateway.GetAccountV2Response.account:type_name -> bucketeer.account.AccountV2
-	80,  // 58: bucketeer.gateway.GetAccountV2ByEnvironmentIDResponse.account:type_name -> bucketeer.account.AccountV2
-	84,  // 59: bucketeer.gateway.GetMeResponse.account:type_name -> bucketeer.account.ConsoleAccount
-	85,  // 60: bucketeer.gateway.ListAccountsV2Request.order_by:type_name -> bucketeer.account.ListAccountsV2Request.OrderBy
-	86,  // 61: bucketeer.gateway.ListAccountsV2Request.order_direction:type_name -> bucketeer.account.ListAccountsV2Request.OrderDirection
-	69,  // 62: bucketeer.gateway.ListAccountsV2Request.disabled:type_name -> google.protobuf.BoolValue
-	87,  // 63: bucketeer.gateway.ListAccountsV2Request.organization_role:type_name -> google.protobuf.Int32Value
-	67,  // 64: bucketeer.gateway.ListAccountsV2Request.environment_id:type_name -> google.protobuf.StringValue
-	87,  // 65: bucketeer.gateway.ListAccountsV2Request.environment_role:type_name -> google.protobuf.Int32Value
-	80,  // 66: bucketeer.gateway.ListAccountsV2Response.accounts:type_name -> bucketeer.account.AccountV2
-	88,  // 67: bucketeer.gateway.GetCodeReferenceResponse.code_reference:type_name -> bucketeer.coderef.CodeReference
-	89,  // 68: bucketeer.gateway.ListCodeReferencesRequest.order_by:type_name -> bucketeer.coderef.ListCodeReferencesRequest.OrderBy
-	90,  // 69: bucketeer.gateway.ListCodeReferencesRequest.order_direction:type_name -> bucketeer.coderef.ListCodeReferencesRequest.OrderDirection
-	88,  // 70: bucketeer.gateway.ListCodeReferencesResponse.code_references:type_name -> bucketeer.coderef.CodeReference
-	91,  // 71: bucketeer.gateway.CreateCodeReferenceRequest.repository_type:type_name -> bucketeer.coderef.CodeReference.RepositoryType
-	88,  // 72: bucketeer.gateway.CreateCodeReferenceResponse.code_reference:type_name -> bucketeer.coderef.CodeReference
-	88,  // 73: bucketeer.gateway.UpdateCodeReferenceResponse.code_reference:type_name -> bucketeer.coderef.CodeReference
-	53,  // 74: bucketeer.gateway.RegisterEventsResponse.ErrorsEntry.value:type_name -> bucketeer.gateway.RegisterEventsResponse.Error
-	6,   // 75: bucketeer.gateway.Gateway.GetEvaluations:input_type -> bucketeer.gateway.GetEvaluationsRequest
-	8,   // 76: bucketeer.gateway.Gateway.GetEvaluation:input_type -> bucketeer.gateway.GetEvaluationRequest
-	2,   // 77: bucketeer.gateway.Gateway.GetFeatureFlags:input_type -> bucketeer.gateway.GetFeatureFlagsRequest
-	4,   // 78: bucketeer.gateway.Gateway.GetSegmentUsers:input_type -> bucketeer.gateway.GetSegmentUsersRequest
-	10,  // 79: bucketeer.gateway.Gateway.RegisterEvents:input_type -> bucketeer.gateway.RegisterEventsRequest
-	12,  // 80: bucketeer.gateway.Gateway.Track:input_type -> bucketeer.gateway.TrackRequest
-	14,  // 81: bucketeer.gateway.Gateway.CreateFeature:input_type -> bucketeer.gateway.CreateFeatureRequest
-	16,  // 82: bucketeer.gateway.Gateway.GetFeature:input_type -> bucketeer.gateway.GetFeatureRequest
-	18,  // 83: bucketeer.gateway.Gateway.ListFeatures:input_type -> bucketeer.gateway.ListFeaturesRequest
-	20,  // 84: bucketeer.gateway.Gateway.UpdateFeature:input_type -> bucketeer.gateway.UpdateFeatureRequest
-	0,   // 85: bucketeer.gateway.Gateway.Ping:input_type -> bucketeer.gateway.PingRequest
-	22,  // 86: bucketeer.gateway.Gateway.ListPushes:input_type -> bucketeer.gateway.ListPushesRequest
-	24,  // 87: bucketeer.gateway.Gateway.CreatePush:input_type -> bucketeer.gateway.CreatePushRequest
-	26,  // 88: bucketeer.gateway.Gateway.GetPush:input_type -> bucketeer.gateway.GetPushRequest
-	28,  // 89: bucketeer.gateway.Gateway.UpdatePush:input_type -> bucketeer.gateway.UpdatePushRequest
-	30,  // 90: bucketeer.gateway.Gateway.CreateAccountV2:input_type -> bucketeer.gateway.CreateAccountV2Request
-	32,  // 91: bucketeer.gateway.Gateway.UpdateAccountV2:input_type -> bucketeer.gateway.UpdateAccountV2Request
-	34,  // 92: bucketeer.gateway.Gateway.GetAccountV2:input_type -> bucketeer.gateway.GetAccountV2Request
-	36,  // 93: bucketeer.gateway.Gateway.GetAccountV2ByEnvironmentID:input_type -> bucketeer.gateway.GetAccountV2ByEnvironmentIDRequest
-	38,  // 94: bucketeer.gateway.Gateway.GetMe:input_type -> bucketeer.gateway.GetMeRequest
-	40,  // 95: bucketeer.gateway.Gateway.ListAccountsV2:input_type -> bucketeer.gateway.ListAccountsV2Request
-	42,  // 96: bucketeer.gateway.Gateway.GetCodeReference:input_type -> bucketeer.gateway.GetCodeReferenceRequest
-	44,  // 97: bucketeer.gateway.Gateway.ListCodeReferences:input_type -> bucketeer.gateway.ListCodeReferencesRequest
-	46,  // 98: bucketeer.gateway.Gateway.CreateCodeReference:input_type -> bucketeer.gateway.CreateCodeReferenceRequest
-	48,  // 99: bucketeer.gateway.Gateway.UpdateCodeReference:input_type -> bucketeer.gateway.UpdateCodeReferenceRequest
-	50,  // 100: bucketeer.gateway.Gateway.DeleteCodeReference:input_type -> bucketeer.gateway.DeleteCodeReferenceRequest
-	7,   // 101: bucketeer.gateway.Gateway.GetEvaluations:output_type -> bucketeer.gateway.GetEvaluationsResponse
-	9,   // 102: bucketeer.gateway.Gateway.GetEvaluation:output_type -> bucketeer.gateway.GetEvaluationResponse
-	3,   // 103: bucketeer.gateway.Gateway.GetFeatureFlags:output_type -> bucketeer.gateway.GetFeatureFlagsResponse
-	5,   // 104: bucketeer.gateway.Gateway.GetSegmentUsers:output_type -> bucketeer.gateway.GetSegmentUsersResponse
-	11,  // 105: bucketeer.gateway.Gateway.RegisterEvents:output_type -> bucketeer.gateway.RegisterEventsResponse
-	13,  // 106: bucketeer.gateway.Gateway.Track:output_type -> bucketeer.gateway.TrackResponse
-	15,  // 107: bucketeer.gateway.Gateway.CreateFeature:output_type -> bucketeer.gateway.CreateFeatureResponse
-	17,  // 108: bucketeer.gateway.Gateway.GetFeature:output_type -> bucketeer.gateway.GetFeatureResponse
-	19,  // 109: bucketeer.gateway.Gateway.ListFeatures:output_type -> bucketeer.gateway.ListFeaturesResponse
-	21,  // 110: bucketeer.gateway.Gateway.UpdateFeature:output_type -> bucketeer.gateway.UpdateFeatureResponse
-	1,   // 111: bucketeer.gateway.Gateway.Ping:output_type -> bucketeer.gateway.PingResponse
-	23,  // 112: bucketeer.gateway.Gateway.ListPushes:output_type -> bucketeer.gateway.ListPushesResponse
-	25,  // 113: bucketeer.gateway.Gateway.CreatePush:output_type -> bucketeer.gateway.CreatePushResponse
-	27,  // 114: bucketeer.gateway.Gateway.GetPush:output_type -> bucketeer.gateway.GetPushResponse
-	29,  // 115: bucketeer.gateway.Gateway.UpdatePush:output_type -> bucketeer.gateway.UpdatePushResponse
-	31,  // 116: bucketeer.gateway.Gateway.CreateAccountV2:output_type -> bucketeer.gateway.CreateAccountV2Response
-	33,  // 117: bucketeer.gateway.Gateway.UpdateAccountV2:output_type -> bucketeer.gateway.UpdateAccountV2Response
-	35,  // 118: bucketeer.gateway.Gateway.GetAccountV2:output_type -> bucketeer.gateway.GetAccountV2Response
-	37,  // 119: bucketeer.gateway.Gateway.GetAccountV2ByEnvironmentID:output_type -> bucketeer.gateway.GetAccountV2ByEnvironmentIDResponse
-	39,  // 120: bucketeer.gateway.Gateway.GetMe:output_type -> bucketeer.gateway.GetMeResponse
-	41,  // 121: bucketeer.gateway.Gateway.ListAccountsV2:output_type -> bucketeer.gateway.ListAccountsV2Response
-	43,  // 122: bucketeer.gateway.Gateway.GetCodeReference:output_type -> bucketeer.gateway.GetCodeReferenceResponse
-	45,  // 123: bucketeer.gateway.Gateway.ListCodeReferences:output_type -> bucketeer.gateway.ListCodeReferencesResponse
-	47,  // 124: bucketeer.gateway.Gateway.CreateCodeReference:output_type -> bucketeer.gateway.CreateCodeReferenceResponse
-	49,  // 125: bucketeer.gateway.Gateway.UpdateCodeReference:output_type -> bucketeer.gateway.UpdateCodeReferenceResponse
-	51,  // 126: bucketeer.gateway.Gateway.DeleteCodeReference:output_type -> bucketeer.gateway.DeleteCodeReferenceResponse
-	101, // [101:127] is the sub-list for method output_type
-	75,  // [75:101] is the sub-list for method input_type
-	75,  // [75:75] is the sub-list for extension type_name
-	75,  // [75:75] is the sub-list for extension extendee
-	0,   // [0:75] is the sub-list for field type_name
+	75,  // 33: bucketeer.gateway.UpdateFeatureRequest.variation_changes:type_name -> bucketeer.feature.VariationChange
+	76,  // 34: bucketeer.gateway.UpdateFeatureRequest.rule_changes:type_name -> bucketeer.feature.RuleChange
+	77,  // 35: bucketeer.gateway.UpdateFeatureRequest.prerequisite_changes:type_name -> bucketeer.feature.PrerequisiteChange
+	78,  // 36: bucketeer.gateway.UpdateFeatureRequest.target_changes:type_name -> bucketeer.feature.TargetChange
+	79,  // 37: bucketeer.gateway.UpdateFeatureRequest.tag_changes:type_name -> bucketeer.feature.TagChange
+	56,  // 38: bucketeer.gateway.UpdateFeatureResponse.feature:type_name -> bucketeer.feature.Feature
+	80,  // 39: bucketeer.gateway.ListPushesRequest.order_by:type_name -> bucketeer.push.ListPushesRequest.OrderBy
+	81,  // 40: bucketeer.gateway.ListPushesRequest.order_direction:type_name -> bucketeer.push.ListPushesRequest.OrderDirection
+	82,  // 41: bucketeer.gateway.ListPushesResponse.pushes:type_name -> bucketeer.push.Push
+	82,  // 42: bucketeer.gateway.CreatePushResponse.push:type_name -> bucketeer.push.Push
+	82,  // 43: bucketeer.gateway.GetPushResponse.push:type_name -> bucketeer.push.Push
+	67,  // 44: bucketeer.gateway.UpdatePushRequest.name:type_name -> google.protobuf.StringValue
+	69,  // 45: bucketeer.gateway.UpdatePushRequest.deleted:type_name -> google.protobuf.BoolValue
+	82,  // 46: bucketeer.gateway.UpdatePushResponse.push:type_name -> bucketeer.push.Push
+	83,  // 47: bucketeer.gateway.CreateAccountV2Request.organization_role:type_name -> bucketeer.account.AccountV2.Role.Organization
+	84,  // 48: bucketeer.gateway.CreateAccountV2Request.environment_roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
+	85,  // 49: bucketeer.gateway.CreateAccountV2Response.account:type_name -> bucketeer.account.AccountV2
+	67,  // 50: bucketeer.gateway.UpdateAccountV2Request.name:type_name -> google.protobuf.StringValue
+	67,  // 51: bucketeer.gateway.UpdateAccountV2Request.avatar_image_url:type_name -> google.protobuf.StringValue
+	86,  // 52: bucketeer.gateway.UpdateAccountV2Request.organization_role:type_name -> bucketeer.account.UpdateAccountV2Request.OrganizationRoleValue
+	84,  // 53: bucketeer.gateway.UpdateAccountV2Request.environment_roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
+	67,  // 54: bucketeer.gateway.UpdateAccountV2Request.first_name:type_name -> google.protobuf.StringValue
+	67,  // 55: bucketeer.gateway.UpdateAccountV2Request.last_name:type_name -> google.protobuf.StringValue
+	67,  // 56: bucketeer.gateway.UpdateAccountV2Request.language:type_name -> google.protobuf.StringValue
+	87,  // 57: bucketeer.gateway.UpdateAccountV2Request.last_seen:type_name -> google.protobuf.Int64Value
+	88,  // 58: bucketeer.gateway.UpdateAccountV2Request.avatar:type_name -> bucketeer.account.UpdateAccountV2Request.AccountV2Avatar
+	69,  // 59: bucketeer.gateway.UpdateAccountV2Request.disabled:type_name -> google.protobuf.BoolValue
+	69,  // 60: bucketeer.gateway.UpdateAccountV2Request.deleted:type_name -> google.protobuf.BoolValue
+	85,  // 61: bucketeer.gateway.UpdateAccountV2Response.account:type_name -> bucketeer.account.AccountV2
+	85,  // 62: bucketeer.gateway.GetAccountV2Response.account:type_name -> bucketeer.account.AccountV2
+	85,  // 63: bucketeer.gateway.GetAccountV2ByEnvironmentIDResponse.account:type_name -> bucketeer.account.AccountV2
+	89,  // 64: bucketeer.gateway.GetMeResponse.account:type_name -> bucketeer.account.ConsoleAccount
+	90,  // 65: bucketeer.gateway.ListAccountsV2Request.order_by:type_name -> bucketeer.account.ListAccountsV2Request.OrderBy
+	91,  // 66: bucketeer.gateway.ListAccountsV2Request.order_direction:type_name -> bucketeer.account.ListAccountsV2Request.OrderDirection
+	69,  // 67: bucketeer.gateway.ListAccountsV2Request.disabled:type_name -> google.protobuf.BoolValue
+	92,  // 68: bucketeer.gateway.ListAccountsV2Request.organization_role:type_name -> google.protobuf.Int32Value
+	67,  // 69: bucketeer.gateway.ListAccountsV2Request.environment_id:type_name -> google.protobuf.StringValue
+	92,  // 70: bucketeer.gateway.ListAccountsV2Request.environment_role:type_name -> google.protobuf.Int32Value
+	85,  // 71: bucketeer.gateway.ListAccountsV2Response.accounts:type_name -> bucketeer.account.AccountV2
+	93,  // 72: bucketeer.gateway.GetCodeReferenceResponse.code_reference:type_name -> bucketeer.coderef.CodeReference
+	94,  // 73: bucketeer.gateway.ListCodeReferencesRequest.order_by:type_name -> bucketeer.coderef.ListCodeReferencesRequest.OrderBy
+	95,  // 74: bucketeer.gateway.ListCodeReferencesRequest.order_direction:type_name -> bucketeer.coderef.ListCodeReferencesRequest.OrderDirection
+	93,  // 75: bucketeer.gateway.ListCodeReferencesResponse.code_references:type_name -> bucketeer.coderef.CodeReference
+	96,  // 76: bucketeer.gateway.CreateCodeReferenceRequest.repository_type:type_name -> bucketeer.coderef.CodeReference.RepositoryType
+	93,  // 77: bucketeer.gateway.CreateCodeReferenceResponse.code_reference:type_name -> bucketeer.coderef.CodeReference
+	93,  // 78: bucketeer.gateway.UpdateCodeReferenceResponse.code_reference:type_name -> bucketeer.coderef.CodeReference
+	53,  // 79: bucketeer.gateway.RegisterEventsResponse.ErrorsEntry.value:type_name -> bucketeer.gateway.RegisterEventsResponse.Error
+	6,   // 80: bucketeer.gateway.Gateway.GetEvaluations:input_type -> bucketeer.gateway.GetEvaluationsRequest
+	8,   // 81: bucketeer.gateway.Gateway.GetEvaluation:input_type -> bucketeer.gateway.GetEvaluationRequest
+	2,   // 82: bucketeer.gateway.Gateway.GetFeatureFlags:input_type -> bucketeer.gateway.GetFeatureFlagsRequest
+	4,   // 83: bucketeer.gateway.Gateway.GetSegmentUsers:input_type -> bucketeer.gateway.GetSegmentUsersRequest
+	10,  // 84: bucketeer.gateway.Gateway.RegisterEvents:input_type -> bucketeer.gateway.RegisterEventsRequest
+	12,  // 85: bucketeer.gateway.Gateway.Track:input_type -> bucketeer.gateway.TrackRequest
+	14,  // 86: bucketeer.gateway.Gateway.CreateFeature:input_type -> bucketeer.gateway.CreateFeatureRequest
+	16,  // 87: bucketeer.gateway.Gateway.GetFeature:input_type -> bucketeer.gateway.GetFeatureRequest
+	18,  // 88: bucketeer.gateway.Gateway.ListFeatures:input_type -> bucketeer.gateway.ListFeaturesRequest
+	20,  // 89: bucketeer.gateway.Gateway.UpdateFeature:input_type -> bucketeer.gateway.UpdateFeatureRequest
+	0,   // 90: bucketeer.gateway.Gateway.Ping:input_type -> bucketeer.gateway.PingRequest
+	22,  // 91: bucketeer.gateway.Gateway.ListPushes:input_type -> bucketeer.gateway.ListPushesRequest
+	24,  // 92: bucketeer.gateway.Gateway.CreatePush:input_type -> bucketeer.gateway.CreatePushRequest
+	26,  // 93: bucketeer.gateway.Gateway.GetPush:input_type -> bucketeer.gateway.GetPushRequest
+	28,  // 94: bucketeer.gateway.Gateway.UpdatePush:input_type -> bucketeer.gateway.UpdatePushRequest
+	30,  // 95: bucketeer.gateway.Gateway.CreateAccountV2:input_type -> bucketeer.gateway.CreateAccountV2Request
+	32,  // 96: bucketeer.gateway.Gateway.UpdateAccountV2:input_type -> bucketeer.gateway.UpdateAccountV2Request
+	34,  // 97: bucketeer.gateway.Gateway.GetAccountV2:input_type -> bucketeer.gateway.GetAccountV2Request
+	36,  // 98: bucketeer.gateway.Gateway.GetAccountV2ByEnvironmentID:input_type -> bucketeer.gateway.GetAccountV2ByEnvironmentIDRequest
+	38,  // 99: bucketeer.gateway.Gateway.GetMe:input_type -> bucketeer.gateway.GetMeRequest
+	40,  // 100: bucketeer.gateway.Gateway.ListAccountsV2:input_type -> bucketeer.gateway.ListAccountsV2Request
+	42,  // 101: bucketeer.gateway.Gateway.GetCodeReference:input_type -> bucketeer.gateway.GetCodeReferenceRequest
+	44,  // 102: bucketeer.gateway.Gateway.ListCodeReferences:input_type -> bucketeer.gateway.ListCodeReferencesRequest
+	46,  // 103: bucketeer.gateway.Gateway.CreateCodeReference:input_type -> bucketeer.gateway.CreateCodeReferenceRequest
+	48,  // 104: bucketeer.gateway.Gateway.UpdateCodeReference:input_type -> bucketeer.gateway.UpdateCodeReferenceRequest
+	50,  // 105: bucketeer.gateway.Gateway.DeleteCodeReference:input_type -> bucketeer.gateway.DeleteCodeReferenceRequest
+	7,   // 106: bucketeer.gateway.Gateway.GetEvaluations:output_type -> bucketeer.gateway.GetEvaluationsResponse
+	9,   // 107: bucketeer.gateway.Gateway.GetEvaluation:output_type -> bucketeer.gateway.GetEvaluationResponse
+	3,   // 108: bucketeer.gateway.Gateway.GetFeatureFlags:output_type -> bucketeer.gateway.GetFeatureFlagsResponse
+	5,   // 109: bucketeer.gateway.Gateway.GetSegmentUsers:output_type -> bucketeer.gateway.GetSegmentUsersResponse
+	11,  // 110: bucketeer.gateway.Gateway.RegisterEvents:output_type -> bucketeer.gateway.RegisterEventsResponse
+	13,  // 111: bucketeer.gateway.Gateway.Track:output_type -> bucketeer.gateway.TrackResponse
+	15,  // 112: bucketeer.gateway.Gateway.CreateFeature:output_type -> bucketeer.gateway.CreateFeatureResponse
+	17,  // 113: bucketeer.gateway.Gateway.GetFeature:output_type -> bucketeer.gateway.GetFeatureResponse
+	19,  // 114: bucketeer.gateway.Gateway.ListFeatures:output_type -> bucketeer.gateway.ListFeaturesResponse
+	21,  // 115: bucketeer.gateway.Gateway.UpdateFeature:output_type -> bucketeer.gateway.UpdateFeatureResponse
+	1,   // 116: bucketeer.gateway.Gateway.Ping:output_type -> bucketeer.gateway.PingResponse
+	23,  // 117: bucketeer.gateway.Gateway.ListPushes:output_type -> bucketeer.gateway.ListPushesResponse
+	25,  // 118: bucketeer.gateway.Gateway.CreatePush:output_type -> bucketeer.gateway.CreatePushResponse
+	27,  // 119: bucketeer.gateway.Gateway.GetPush:output_type -> bucketeer.gateway.GetPushResponse
+	29,  // 120: bucketeer.gateway.Gateway.UpdatePush:output_type -> bucketeer.gateway.UpdatePushResponse
+	31,  // 121: bucketeer.gateway.Gateway.CreateAccountV2:output_type -> bucketeer.gateway.CreateAccountV2Response
+	33,  // 122: bucketeer.gateway.Gateway.UpdateAccountV2:output_type -> bucketeer.gateway.UpdateAccountV2Response
+	35,  // 123: bucketeer.gateway.Gateway.GetAccountV2:output_type -> bucketeer.gateway.GetAccountV2Response
+	37,  // 124: bucketeer.gateway.Gateway.GetAccountV2ByEnvironmentID:output_type -> bucketeer.gateway.GetAccountV2ByEnvironmentIDResponse
+	39,  // 125: bucketeer.gateway.Gateway.GetMe:output_type -> bucketeer.gateway.GetMeResponse
+	41,  // 126: bucketeer.gateway.Gateway.ListAccountsV2:output_type -> bucketeer.gateway.ListAccountsV2Response
+	43,  // 127: bucketeer.gateway.Gateway.GetCodeReference:output_type -> bucketeer.gateway.GetCodeReferenceResponse
+	45,  // 128: bucketeer.gateway.Gateway.ListCodeReferences:output_type -> bucketeer.gateway.ListCodeReferencesResponse
+	47,  // 129: bucketeer.gateway.Gateway.CreateCodeReference:output_type -> bucketeer.gateway.CreateCodeReferenceResponse
+	49,  // 130: bucketeer.gateway.Gateway.UpdateCodeReference:output_type -> bucketeer.gateway.UpdateCodeReferenceResponse
+	51,  // 131: bucketeer.gateway.Gateway.DeleteCodeReference:output_type -> bucketeer.gateway.DeleteCodeReferenceResponse
+	106, // [106:132] is the sub-list for method output_type
+	80,  // [80:106] is the sub-list for method input_type
+	80,  // [80:80] is the sub-list for extension type_name
+	80,  // [80:80] is the sub-list for extension extendee
+	0,   // [0:80] is the sub-list for field type_name
 }
 
 func init() { file_proto_gateway_service_proto_init() }

@@ -110,11 +110,6 @@ export class Feature extends jspb.Message {
   getSamplingSeed(): string;
   setSamplingSeed(value: string): void;
 
-  clearScheduleUpdateList(): void;
-  getScheduleUpdateList(): Array<ScheduleUpdate>;
-  setScheduleUpdateList(value: Array<ScheduleUpdate>): void;
-  addScheduleUpdate(value?: ScheduleUpdate, index?: number): ScheduleUpdate;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Feature.AsObject;
   static toObject(includeInstance: boolean, msg: Feature): Feature.AsObject;
@@ -157,7 +152,6 @@ export namespace Feature {
     archived: boolean;
     prerequisitesList: Array<proto_feature_prerequisite_pb.Prerequisite.AsObject>;
     samplingSeed: string;
-    scheduleUpdateList: Array<ScheduleUpdate.AsObject>;
   };
 
   export interface VariationTypeMap {

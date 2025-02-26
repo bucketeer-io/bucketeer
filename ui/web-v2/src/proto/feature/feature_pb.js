@@ -215,7 +215,7 @@ if (goog.DEBUG && !COMPILED) {
  * @private {!Array<number>}
  * @const
  */
-proto.bucketeer.feature.Feature.repeatedFields_ = [11, 12, 13, 16, 21, 23];
+proto.bucketeer.feature.Feature.repeatedFields_ = [11, 12, 13, 16, 21];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -297,12 +297,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_feature_prerequisite_pb.Prerequisite.toObject,
           includeInstance
         ),
-        samplingSeed: jspb.Message.getFieldWithDefault(msg, 22, ''),
-        scheduleUpdateList: jspb.Message.toObjectList(
-          msg.getScheduleUpdateList(),
-          proto.bucketeer.feature.ScheduleUpdate.toObject,
-          includeInstance
-        )
+        samplingSeed: jspb.Message.getFieldWithDefault(msg, 22, '')
       };
 
     if (includeInstance) {
@@ -460,14 +455,6 @@ proto.bucketeer.feature.Feature.deserializeBinaryFromReader = function (
         var value = /** @type {string} */ (reader.readString());
         msg.setSamplingSeed(value);
         break;
-      case 23:
-        var value = new proto.bucketeer.feature.ScheduleUpdate();
-        reader.readMessage(
-          value,
-          proto.bucketeer.feature.ScheduleUpdate.deserializeBinaryFromReader
-        );
-        msg.addScheduleUpdate(value);
-        break;
       default:
         reader.skipField();
         break;
@@ -610,14 +597,6 @@ proto.bucketeer.feature.Feature.serializeBinaryToWriter = function (
   f = message.getSamplingSeed();
   if (f.length > 0) {
     writer.writeString(22, f);
-  }
-  f = message.getScheduleUpdateList();
-  if (f.length > 0) {
-    writer.writeRepeatedMessage(
-      23,
-      f,
-      proto.bucketeer.feature.ScheduleUpdate.serializeBinaryToWriter
-    );
   }
 };
 
@@ -1185,57 +1164,6 @@ proto.bucketeer.feature.Feature.prototype.getSamplingSeed = function () {
 proto.bucketeer.feature.Feature.prototype.setSamplingSeed = function (value) {
   return jspb.Message.setProto3StringField(this, 22, value);
 };
-
-/**
- * repeated ScheduleUpdate schedule_update = 23;
- * @return {!Array<!proto.bucketeer.feature.ScheduleUpdate>}
- */
-proto.bucketeer.feature.Feature.prototype.getScheduleUpdateList = function () {
-  return /** @type{!Array<!proto.bucketeer.feature.ScheduleUpdate>} */ (
-    jspb.Message.getRepeatedWrapperField(
-      this,
-      proto.bucketeer.feature.ScheduleUpdate,
-      23
-    )
-  );
-};
-
-/**
- * @param {!Array<!proto.bucketeer.feature.ScheduleUpdate>} value
- * @return {!proto.bucketeer.feature.Feature} returns this
- */
-proto.bucketeer.feature.Feature.prototype.setScheduleUpdateList = function (
-  value
-) {
-  return jspb.Message.setRepeatedWrapperField(this, 23, value);
-};
-
-/**
- * @param {!proto.bucketeer.feature.ScheduleUpdate=} opt_value
- * @param {number=} opt_index
- * @return {!proto.bucketeer.feature.ScheduleUpdate}
- */
-proto.bucketeer.feature.Feature.prototype.addScheduleUpdate = function (
-  opt_value,
-  opt_index
-) {
-  return jspb.Message.addToRepeatedWrapperField(
-    this,
-    23,
-    opt_value,
-    proto.bucketeer.feature.ScheduleUpdate,
-    opt_index
-  );
-};
-
-/**
- * Clears the list making it empty but non-null.
- * @return {!proto.bucketeer.feature.Feature} returns this
- */
-proto.bucketeer.feature.Feature.prototype.clearScheduleUpdateList =
-  function () {
-    return this.setScheduleUpdateList([]);
-  };
 
 /**
  * List of repeated fields within this message type.

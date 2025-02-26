@@ -112,6 +112,38 @@ message CreateFeatureResponse {
   Feature feature = 1;
 }
 
+enum ChangeType {
+  UNSPECIFIED = 0;
+  CREATE = 1;
+  UPDATE = 2;
+  DELETE = 3;
+}
+
+message PrerequisiteChange {
+  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
+  Prerequisite prerequisite = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message TargetChange {
+  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
+  Target target = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message VariationChange {
+  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
+  Variation variation = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message RuleChange {
+  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
+  Rule rule = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message TagChange {
+  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
+  string tag = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
 message UpdateFeatureRequest {
   string comment = 1;
   string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
@@ -121,15 +153,44 @@ message UpdateFeatureRequest {
   common.StringListValue tags = 6;
   google.protobuf.BoolValue enabled = 7;
   google.protobuf.BoolValue archived = 8;
-  VariationListValue variations = 9;
-  PrerequisiteListValue prerequisites = 10;
-  TargetListValue targets = 11;
-  RuleListValue rules = 12;
+
+  // Legacy full-replacement fields (deprecated)
+  VariationListValue variations = 9 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  PrerequisiteListValue prerequisites = 10 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  TargetListValue targets = 11 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  RuleListValue rules = 12 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+
   Strategy default_strategy = 13;
   google.protobuf.StringValue off_variation = 14;
   bool reset_sampling_seed = 15;
   bool apply_schedule_update = 16;
-  ScheduleUpdateListValue schedule_updates = 17;
+
+  // New granular change fields (supporting multiple operations per field)
+  repeated VariationChange variation_changes = 17;
+  repeated RuleChange rule_changes = 18;
+  repeated PrerequisiteChange prerequisite_changes = 19;
+  repeated TargetChange target_changes = 20;
+  repeated TagChange tag_changes = 21;
 }
 
 message UpdateFeatureResponse {

@@ -8076,6 +8076,14 @@ definitions:
     properties:
       description:
         type: string
+  featureChangeType:
+    type: string
+    enum:
+      - UNSPECIFIED
+      - CREATE
+      - UPDATE
+      - DELETE
+    default: UNSPECIFIED
   featureClauseOperator:
     type: string
     enum:
@@ -8314,11 +8322,6 @@ definitions:
           $ref: '#/definitions/featurePrerequisite'
       samplingSeed:
         type: string
-      scheduleUpdate:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureScheduleUpdate'
   featureFeatureLastUsedInfo:
     type: object
     properties:
@@ -8522,6 +8525,16 @@ definitions:
         type: string
       variationId:
         type: string
+  featurePrerequisiteChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/featureChangeType'
+      prerequisite:
+        $ref: '#/definitions/featurePrerequisite'
+    required:
+      - changeType
+      - prerequisite
   featurePrerequisiteListValue:
     type: object
     properties:
@@ -8600,6 +8613,16 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/bucketeerfeatureClause'
+  featureRuleChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/featureChangeType'
+      rule:
+        $ref: '#/definitions/featureRule'
+    required:
+      - changeType
+      - rule
   featureRuleListValue:
     type: object
     properties:
@@ -8608,22 +8631,6 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureRule'
-  featureScheduleUpdate:
-    type: object
-    properties:
-      feature:
-        $ref: '#/definitions/featureFeature'
-      updateAt:
-        type: string
-        format: int64
-  featureScheduleUpdateListValue:
-    type: object
-    properties:
-      value:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureScheduleUpdate'
   featureSegment:
     type: object
     properties:
@@ -8707,6 +8714,16 @@ definitions:
       - FIXED
       - ROLLOUT
     default: FIXED
+  featureTagChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/featureChangeType'
+      tag:
+        type: string
+    required:
+      - changeType
+      - tag
   featureTarget:
     type: object
     properties:
@@ -8716,6 +8733,16 @@ definitions:
         type: array
         items:
           type: string
+  featureTargetChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/featureChangeType'
+      target:
+        $ref: '#/definitions/featureTarget'
+    required:
+      - changeType
+      - target
   featureTargetListValue:
     type: object
     properties:
@@ -8784,6 +8811,16 @@ definitions:
           type: string
       forceUpdate:
         type: boolean
+  featureVariationChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/featureChangeType'
+      variation:
+        $ref: '#/definitions/bucketeerfeatureVariation'
+    required:
+      - changeType
+      - variation
   featureVariationListValue:
     type: object
     properties:

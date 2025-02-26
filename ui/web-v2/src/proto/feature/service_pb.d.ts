@@ -466,6 +466,186 @@ export namespace CreateFeatureResponse {
   };
 }
 
+export class PrerequisiteChange extends jspb.Message {
+  getChangeType(): ChangeTypeMap[keyof ChangeTypeMap];
+  setChangeType(value: ChangeTypeMap[keyof ChangeTypeMap]): void;
+
+  hasPrerequisite(): boolean;
+  clearPrerequisite(): void;
+  getPrerequisite(): proto_feature_prerequisite_pb.Prerequisite | undefined;
+  setPrerequisite(value?: proto_feature_prerequisite_pb.Prerequisite): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): PrerequisiteChange.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: PrerequisiteChange
+  ): PrerequisiteChange.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: PrerequisiteChange,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): PrerequisiteChange;
+  static deserializeBinaryFromReader(
+    message: PrerequisiteChange,
+    reader: jspb.BinaryReader
+  ): PrerequisiteChange;
+}
+
+export namespace PrerequisiteChange {
+  export type AsObject = {
+    changeType: ChangeTypeMap[keyof ChangeTypeMap];
+    prerequisite?: proto_feature_prerequisite_pb.Prerequisite.AsObject;
+  };
+}
+
+export class TargetChange extends jspb.Message {
+  getChangeType(): ChangeTypeMap[keyof ChangeTypeMap];
+  setChangeType(value: ChangeTypeMap[keyof ChangeTypeMap]): void;
+
+  hasTarget(): boolean;
+  clearTarget(): void;
+  getTarget(): proto_feature_target_pb.Target | undefined;
+  setTarget(value?: proto_feature_target_pb.Target): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TargetChange.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: TargetChange
+  ): TargetChange.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: TargetChange,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): TargetChange;
+  static deserializeBinaryFromReader(
+    message: TargetChange,
+    reader: jspb.BinaryReader
+  ): TargetChange;
+}
+
+export namespace TargetChange {
+  export type AsObject = {
+    changeType: ChangeTypeMap[keyof ChangeTypeMap];
+    target?: proto_feature_target_pb.Target.AsObject;
+  };
+}
+
+export class VariationChange extends jspb.Message {
+  getChangeType(): ChangeTypeMap[keyof ChangeTypeMap];
+  setChangeType(value: ChangeTypeMap[keyof ChangeTypeMap]): void;
+
+  hasVariation(): boolean;
+  clearVariation(): void;
+  getVariation(): proto_feature_variation_pb.Variation | undefined;
+  setVariation(value?: proto_feature_variation_pb.Variation): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): VariationChange.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: VariationChange
+  ): VariationChange.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: VariationChange,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): VariationChange;
+  static deserializeBinaryFromReader(
+    message: VariationChange,
+    reader: jspb.BinaryReader
+  ): VariationChange;
+}
+
+export namespace VariationChange {
+  export type AsObject = {
+    changeType: ChangeTypeMap[keyof ChangeTypeMap];
+    variation?: proto_feature_variation_pb.Variation.AsObject;
+  };
+}
+
+export class RuleChange extends jspb.Message {
+  getChangeType(): ChangeTypeMap[keyof ChangeTypeMap];
+  setChangeType(value: ChangeTypeMap[keyof ChangeTypeMap]): void;
+
+  hasRule(): boolean;
+  clearRule(): void;
+  getRule(): proto_feature_rule_pb.Rule | undefined;
+  setRule(value?: proto_feature_rule_pb.Rule): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): RuleChange.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: RuleChange
+  ): RuleChange.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: RuleChange,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): RuleChange;
+  static deserializeBinaryFromReader(
+    message: RuleChange,
+    reader: jspb.BinaryReader
+  ): RuleChange;
+}
+
+export namespace RuleChange {
+  export type AsObject = {
+    changeType: ChangeTypeMap[keyof ChangeTypeMap];
+    rule?: proto_feature_rule_pb.Rule.AsObject;
+  };
+}
+
+export class TagChange extends jspb.Message {
+  getChangeType(): ChangeTypeMap[keyof ChangeTypeMap];
+  setChangeType(value: ChangeTypeMap[keyof ChangeTypeMap]): void;
+
+  getTag(): string;
+  setTag(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TagChange.AsObject;
+  static toObject(includeInstance: boolean, msg: TagChange): TagChange.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: TagChange,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): TagChange;
+  static deserializeBinaryFromReader(
+    message: TagChange,
+    reader: jspb.BinaryReader
+  ): TagChange;
+}
+
+export namespace TagChange {
+  export type AsObject = {
+    changeType: ChangeTypeMap[keyof ChangeTypeMap];
+    tag: string;
+  };
+}
+
 export class UpdateFeatureRequest extends jspb.Message {
   getComment(): string;
   setComment(value: string): void;
@@ -541,14 +721,33 @@ export class UpdateFeatureRequest extends jspb.Message {
   getApplyScheduleUpdate(): boolean;
   setApplyScheduleUpdate(value: boolean): void;
 
-  hasScheduleUpdates(): boolean;
-  clearScheduleUpdates(): void;
-  getScheduleUpdates():
-    | proto_feature_feature_pb.ScheduleUpdateListValue
-    | undefined;
-  setScheduleUpdates(
-    value?: proto_feature_feature_pb.ScheduleUpdateListValue
-  ): void;
+  clearVariationChangesList(): void;
+  getVariationChangesList(): Array<VariationChange>;
+  setVariationChangesList(value: Array<VariationChange>): void;
+  addVariationChanges(value?: VariationChange, index?: number): VariationChange;
+
+  clearRuleChangesList(): void;
+  getRuleChangesList(): Array<RuleChange>;
+  setRuleChangesList(value: Array<RuleChange>): void;
+  addRuleChanges(value?: RuleChange, index?: number): RuleChange;
+
+  clearPrerequisiteChangesList(): void;
+  getPrerequisiteChangesList(): Array<PrerequisiteChange>;
+  setPrerequisiteChangesList(value: Array<PrerequisiteChange>): void;
+  addPrerequisiteChanges(
+    value?: PrerequisiteChange,
+    index?: number
+  ): PrerequisiteChange;
+
+  clearTargetChangesList(): void;
+  getTargetChangesList(): Array<TargetChange>;
+  setTargetChangesList(value: Array<TargetChange>): void;
+  addTargetChanges(value?: TargetChange, index?: number): TargetChange;
+
+  clearTagChangesList(): void;
+  getTagChangesList(): Array<TagChange>;
+  setTagChangesList(value: Array<TagChange>): void;
+  addTagChanges(value?: TagChange, index?: number): TagChange;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFeatureRequest.AsObject;
@@ -589,7 +788,11 @@ export namespace UpdateFeatureRequest {
     offVariation?: google_protobuf_wrappers_pb.StringValue.AsObject;
     resetSamplingSeed: boolean;
     applyScheduleUpdate: boolean;
-    scheduleUpdates?: proto_feature_feature_pb.ScheduleUpdateListValue.AsObject;
+    variationChangesList: Array<VariationChange.AsObject>;
+    ruleChangesList: Array<RuleChange.AsObject>;
+    prerequisiteChangesList: Array<PrerequisiteChange.AsObject>;
+    targetChangesList: Array<TargetChange.AsObject>;
+    tagChangesList: Array<TagChange.AsObject>;
   };
 }
 
@@ -3131,3 +3334,12 @@ export class FlagTriggerWebhookResponse extends jspb.Message {
 export namespace FlagTriggerWebhookResponse {
   export type AsObject = {};
 }
+
+export interface ChangeTypeMap {
+  UNSPECIFIED: 0;
+  CREATE: 1;
+  UPDATE: 2;
+  DELETE: 3;
+}
+
+export const ChangeType: ChangeTypeMap;
