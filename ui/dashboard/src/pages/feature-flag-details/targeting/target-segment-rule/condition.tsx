@@ -34,6 +34,9 @@ interface Props {
   type: 'if' | 'and';
   condition: SegmentConditionType;
   isDisabledDelete: boolean;
+  segmentIndex: number;
+  ruleIndex: number;
+  conditionIndex: number;
   onDeleteCondition: () => void;
   onChangeFormField: (field: string, value: string | number | boolean) => void;
 }
@@ -42,6 +45,9 @@ const ConditionForm = ({
   type,
   condition,
   isDisabledDelete,
+  segmentIndex,
+  ruleIndex,
+  conditionIndex,
   onDeleteCondition,
   onChangeFormField
 }: Props) => {
@@ -55,7 +61,7 @@ const ConditionForm = ({
   const isFlag = condition.situation === 'feature-flag';
 
   const methods = useFormContext();
-  const { control, watch, setValue } = methods;
+  const { control, register, watch, setValue } = methods;
 
   const situationOptions = [
     {
@@ -130,7 +136,9 @@ const ConditionForm = ({
         <div className="flex items-end w-full gap-x-4">
           <Form.Field
             control={control}
-            name="situation"
+            {...register(
+              `targetSegmentRules.${segmentIndex}.rules.${ruleIndex}.conditions.${conditionIndex}.situation`
+            )}
             render={({ field }) => (
               <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-1">
                 <Form.Label required>{t('feature-flags.situation')}</Form.Label>
@@ -187,7 +195,9 @@ const ConditionForm = ({
           {isCompare && (
             <Form.Field
               control={control}
-              name="firstValue"
+              {...register(
+                `targetSegmentRules.${segmentIndex}.rules.${ruleIndex}.conditions.${conditionIndex}.firstValue`
+              )}
               render={({ field }) => (
                 <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
                   <Form.Label required>
@@ -216,7 +226,9 @@ const ConditionForm = ({
           {isFlag && (
             <Form.Field
               control={control}
-              name="flagId"
+              {...register(
+                `targetSegmentRules.${segmentIndex}.rules.${ruleIndex}.conditions.${conditionIndex}.flagId`
+              )}
               render={({ field }) => (
                 <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
                   <Form.Label required>
@@ -257,7 +269,9 @@ const ConditionForm = ({
           {(isUserSegment || isDate) && (
             <Form.Field
               control={control}
-              name="value"
+              {...register(
+                `targetSegmentRules.${segmentIndex}.rules.${ruleIndex}.conditions.${conditionIndex}.value`
+              )}
               render={({ field }) => (
                 <Form.Item
                   className={cn(
@@ -319,7 +333,9 @@ const ConditionForm = ({
           )}
           <Form.Field
             control={control}
-            name="conditioner"
+            {...register(
+              `targetSegmentRules.${segmentIndex}.rules.${ruleIndex}.conditions.${conditionIndex}.conditioner`
+            )}
             render={({ field }) => (
               <Form.Item
                 className={cn(
@@ -376,7 +392,9 @@ const ConditionForm = ({
           {isCompare && (
             <Form.Field
               control={control}
-              name="secondValue"
+              {...register(
+                `targetSegmentRules.${segmentIndex}.rules.${ruleIndex}.conditions.${conditionIndex}.secondValue`
+              )}
               render={({ field }) => (
                 <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-4">
                   <Form.Label required>
@@ -405,7 +423,9 @@ const ConditionForm = ({
           {isDate && (
             <Form.Field
               control={control}
-              name="date"
+              {...register(
+                `targetSegmentRules.${segmentIndex}.rules.${ruleIndex}.conditions.${conditionIndex}.date`
+              )}
               render={({ field }) => (
                 <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-4">
                   <Form.Label required>{t('feature-flags.date')}</Form.Label>
@@ -433,7 +453,9 @@ const ConditionForm = ({
           {isFlag && (
             <Form.Field
               control={control}
-              name="variation"
+              {...register(
+                `targetSegmentRules.${segmentIndex}.rules.${ruleIndex}.conditions.${conditionIndex}.variation`
+              )}
               render={({ field }) => (
                 <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-4">
                   <Form.Label required>

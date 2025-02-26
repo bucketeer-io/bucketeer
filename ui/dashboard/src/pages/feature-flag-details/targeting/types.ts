@@ -11,8 +11,8 @@ export type RuleCategory =
 
 export interface SegmentConditionType {
   situation: SituationType;
-  firstValue?: string;
   conditioner: string;
+  firstValue?: string;
   secondValue?: string;
   value?: string;
   date?: string;

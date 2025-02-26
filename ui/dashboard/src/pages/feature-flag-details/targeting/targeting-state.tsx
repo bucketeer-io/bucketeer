@@ -5,7 +5,7 @@ import Button from 'components/button';
 import Switch from 'components/switch';
 import ServeDropdown from './serve-dropdown';
 
-const TargetingState = ({ onSubmit }: { onSubmit: () => void }) => {
+const TargetingState = () => {
   const [isTargetingOn, setIsTargetingOn] = useState(true);
   const [serveValue, setServeValue] = useState(0);
 
@@ -28,7 +28,7 @@ const TargetingState = ({ onSubmit }: { onSubmit: () => void }) => {
           checked={isTargetingOn}
           onCheckedChange={value => setIsTargetingOn(value)}
         />
-        <Button onClick={onSubmit}>{t('submit')}</Button>
+        <Button>{t('submit')}</Button>
       </div>
     </div>
   );
