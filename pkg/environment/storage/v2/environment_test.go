@@ -32,7 +32,7 @@ func TestNewEnvironmentStorage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	storage := NewEnvironmentStorage(mock.NewMockClient(mockController))
+	storage := NewEnvironmentStorage(mock.NewMockQueryExecer(mockController))
 	assert.IsType(t, &environmentStorage{}, storage)
 }
 
