@@ -32,7 +32,7 @@ func TestNewProjectStorage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	storage := NewProjectStorage(mock.NewMockClient(mockController))
+	storage := NewProjectStorage(mock.NewMockQueryExecer(mockController))
 	assert.IsType(t, &projectStorage{}, storage)
 }
 
