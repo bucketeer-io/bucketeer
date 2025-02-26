@@ -6,8 +6,6 @@ import PageLayout from 'elements/page-layout';
 import HeaderDetails from './elements/header-details';
 import PageContent from './page-content';
 
-// import PageContent from './page-content';
-
 const PageLoader = () => {
   const navigate = useNavigate();
   const isLoading = false;

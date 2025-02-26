@@ -96,7 +96,13 @@
     "user-segment": "User Segment",
     "feature-flag": "Feature Flag",
     "add-condition": "Add Condition",
-    "value": "Value"
+    "value": "Value",
+    "receiving-state": "is {{state}} and receiving",
+    "flag": "Flag",
+    "prerequisites": "Prerequisites",
+    "add-prerequisites": "Add Prerequisites"
   },
-  "select-date": "Select date"
+  "select-date": "Select date",
+  "select-flag": "Select flag",
+  "select-variation": "Select variation"
 }

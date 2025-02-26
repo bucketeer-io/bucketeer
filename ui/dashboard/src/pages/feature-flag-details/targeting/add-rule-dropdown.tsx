@@ -6,7 +6,6 @@ import {
   IconTargetSegments,
   IconUserOutlined
 } from '@icons';
-import Button from 'components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,7 +44,7 @@ const AddRuleDropdown = ({ onAddRule }: Props) => {
     <DropdownMenu>
       <DropdownMenuTrigger
         trigger={
-          <Button type="button">
+          <div className="inline-flex animate-fade gap-2 items-center justify-center duration-300 ease-out whitespace-nowrap bg-primary-500 text-gray-50 rounded-lg px-6 py-2 hover:bg-primary-700 disabled:bg-primary-200 disabled:text-primary-50 h-12">
             <Icon
               icon={IconPlus}
               size={'sm'}
@@ -57,7 +56,7 @@ const AddRuleDropdown = ({ onAddRule }: Props) => {
               size={'sm'}
               className="flex-center text-white"
             />
-          </Button>
+          </div>
         }
         showArrow={false}
         className="!border-none !shadow-none p-0"

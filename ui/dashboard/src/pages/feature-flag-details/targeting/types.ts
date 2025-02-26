@@ -11,8 +11,8 @@ export type RuleCategory =
 
 export interface SegmentConditionType {
   situation: SituationType;
-  firstValue?: string;
   conditioner: string;
+  firstValue?: string;
   secondValue?: string;
   value?: string;
   date?: string;
@@ -48,4 +48,10 @@ export interface TargetIndividualItem {
 export interface TargetPrerequisiteItem {
   index: number;
   rules: PrerequisiteRuleType[];
+}
+
+export interface TargetingForm {
+  targetSegmentRules: TargetSegmentItem[];
+  prerequisitesRules: TargetPrerequisiteItem[];
+  targetIndividualRules: TargetIndividualItem[];
 }

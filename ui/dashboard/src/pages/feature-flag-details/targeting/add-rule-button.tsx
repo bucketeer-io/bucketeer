@@ -6,9 +6,10 @@ import Icon from 'components/icon';
 
 interface Props {
   isCenter?: boolean;
+  onAddRule: () => void;
 }
 
-const AddRuleButton = ({ isCenter }: Props) => {
+const AddRuleButton = ({ isCenter, onAddRule }: Props) => {
   const { t } = useTranslation(['table']);
   return (
     <div
@@ -17,7 +18,12 @@ const AddRuleButton = ({ isCenter }: Props) => {
           isCenter
       })}
     >
-      <Button type="button" variant={'text'} className="gap-x-2 h-6 !p-0">
+      <Button
+        type="button"
+        variant={'text'}
+        className="gap-x-2 h-6 !p-0"
+        onClick={onAddRule}
+      >
         <Icon
           icon={IconPlus}
           color="primary-500"
