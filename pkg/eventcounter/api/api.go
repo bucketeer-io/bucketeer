@@ -742,7 +742,7 @@ func (s *eventCounterService) GetExperimentResult(
 	}
 	result, err := s.mysqlExperimentResultStorage.GetExperimentResult(ctx, req.ExperimentId, req.EnvironmentId)
 	if err != nil {
-		if err == v2ecstorage.ErrExperimentResultNotFound {
+		if errors.Is(err, v2ecstorage.ErrExperimentResultNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -797,7 +797,7 @@ func (s *eventCounterService) ListExperimentResults(
 	}
 	experiments, err := s.listExperiments(ctx, req.FeatureId, req.FeatureVersion, req.EnvironmentId)
 	if err != nil {
-		if err == storage.ErrKeyNotFound {
+		if errors.Is(err, storage.ErrKeyNotFound) {
 			listExperimentCountsCounter.WithLabelValues(codeSuccess).Inc()
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -831,7 +831,7 @@ func (s *eventCounterService) ListExperimentResults(
 	for _, e := range experiments {
 		er, err := s.getExperimentResultMySQL(ctx, e.Id, req.EnvironmentId)
 		if err != nil {
-			if err == v2ecstorage.ErrExperimentResultNotFound {
+			if errors.Is(err, v2ecstorage.ErrExperimentResultNotFound) {
 				getExperimentCountsCounter.WithLabelValues(codeSuccess).Inc()
 			} else {
 				s.logger.Error(
@@ -1152,7 +1152,7 @@ func (s *eventCounterService) getExperimentResultMySQL(
 ) (*ecproto.ExperimentResult, error) {
 	result, err := s.mysqlExperimentResultStorage.GetExperimentResult(ctx, id, environmentId)
 	if err != nil {
-		if err == v2ecstorage.ErrExperimentResultNotFound {
+		if errors.Is(err, v2ecstorage.ErrExperimentResultNotFound) {
 			return nil, err
 		}
 		s.logger.Error(

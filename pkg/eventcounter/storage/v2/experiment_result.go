@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 
 	"github.com/bucketeer-io/bucketeer/pkg/eventcounter/domain"
@@ -25,6 +26,11 @@ import (
 )
 
 var ErrExperimentResultNotFound = errors.New("experimentResult: experiment result not found")
+
+var (
+	//go:embed sql/select_experiment_result.sql
+	selectExperimentResultSQL string
+)
 
 type ExperimentResultStorage interface {
 	GetExperimentResult(ctx context.Context, id, environmentId string) (*domain.ExperimentResult, error)
@@ -43,36 +49,24 @@ func (s *experimentResultStorage) GetExperimentResult(
 	id, environmentId string,
 ) (*domain.ExperimentResult, error) {
 	er := proto.ExperimentResult{}
-	er_for_goal_results := proto.ExperimentResult{}
-	query := `
-		SELECT
-			id,
-			experiment_id,
-			updated_at,
-			data
-		FROM
-			experiment_result
-		WHERE
-			id = ? AND
-			environment_id = ?
-	`
+	erForGoalResults := proto.ExperimentResult{}
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
+		selectExperimentResultSQL,
 		id,
 		environmentId,
 	).Scan(
 		&er.Id,
 		&er.ExperimentId,
 		&er.UpdatedAt,
-		&mysql.JSONPBObject{Val: &er_for_goal_results},
+		&mysql.JSONPBObject{Val: &erForGoalResults},
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrExperimentResultNotFound
 		}
 		return nil, err
 	}
-	er.GoalResults = er_for_goal_results.GoalResults
+	er.GoalResults = erForGoalResults.GoalResults
 	return &domain.ExperimentResult{ExperimentResult: &er}, nil
 }
