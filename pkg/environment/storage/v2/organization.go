@@ -61,15 +61,15 @@ type OrganizationStorage interface {
 }
 
 type organizationStorage struct {
-	client mysql.Client
+	qe mysql.QueryExecer
 }
 
-func NewOrganizationStorage(client mysql.Client) OrganizationStorage {
-	return &organizationStorage{client}
+func NewOrganizationStorage(qe mysql.QueryExecer) OrganizationStorage {
+	return &organizationStorage{qe}
 }
 
 func (s *organizationStorage) CreateOrganization(ctx context.Context, o *domain.Organization) error {
-	_, err := s.client.Qe(ctx).ExecContext(
+	_, err := s.qe.ExecContext(
 		ctx,
 		insertOrganizationSQL,
 		o.Id,
@@ -94,7 +94,7 @@ func (s *organizationStorage) CreateOrganization(ctx context.Context, o *domain.
 }
 
 func (s *organizationStorage) UpdateOrganization(ctx context.Context, o *domain.Organization) error {
-	result, err := s.client.Qe(ctx).ExecContext(
+	result, err := s.qe.ExecContext(
 		ctx,
 		updateOrganizationSQL,
 		o.Name,
@@ -122,7 +122,7 @@ func (s *organizationStorage) UpdateOrganization(ctx context.Context, o *domain.
 
 func (s *organizationStorage) GetOrganization(ctx context.Context, id string) (*domain.Organization, error) {
 	organization := proto.Organization{}
-	err := s.client.Qe(ctx).QueryRowContext(
+	err := s.qe.QueryRowContext(
 		ctx,
 		selectOrganizationSQL,
 		id,
@@ -150,7 +150,7 @@ func (s *organizationStorage) GetOrganization(ctx context.Context, id string) (*
 
 func (s *organizationStorage) GetSystemAdminOrganization(ctx context.Context) (*domain.Organization, error) {
 	organization := proto.Organization{}
-	err := s.client.Qe(ctx).QueryRowContext(
+	err := s.qe.QueryRowContext(
 		ctx,
 		selectSystemAdminOrganizationSQL,
 	).Scan(
@@ -185,7 +185,7 @@ func (s *organizationStorage) ListOrganizations(
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectOrganizationsSQL, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -220,7 +220,7 @@ func (s *organizationStorage) ListOrganizations(
 	nextOffset := offset + len(organizations)
 	var totalCount int64
 	countQuery := fmt.Sprintf(countOrganizationsSQL, whereSQL)
-	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

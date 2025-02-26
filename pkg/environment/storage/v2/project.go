@@ -63,15 +63,15 @@ type ProjectStorage interface {
 }
 
 type projectStorage struct {
-	client mysql.Client
+	qe mysql.QueryExecer
 }
 
-func NewProjectStorage(client mysql.Client) ProjectStorage {
-	return &projectStorage{client}
+func NewProjectStorage(qe mysql.QueryExecer) ProjectStorage {
+	return &projectStorage{qe}
 }
 
 func (s *projectStorage) CreateProject(ctx context.Context, p *domain.Project) error {
-	_, err := s.client.Qe(ctx).ExecContext(
+	_, err := s.qe.ExecContext(
 		ctx,
 		insertProjectSQL,
 		p.Id,
@@ -95,7 +95,7 @@ func (s *projectStorage) CreateProject(ctx context.Context, p *domain.Project) e
 }
 
 func (s *projectStorage) UpdateProject(ctx context.Context, p *domain.Project) error {
-	result, err := s.client.Qe(ctx).ExecContext(
+	result, err := s.qe.ExecContext(
 		ctx,
 		updateProjectSQL,
 		p.Name,
@@ -122,7 +122,7 @@ func (s *projectStorage) UpdateProject(ctx context.Context, p *domain.Project) e
 
 func (s *projectStorage) GetProject(ctx context.Context, id string) (*domain.Project, error) {
 	project := proto.Project{}
-	err := s.client.Qe(ctx).QueryRowContext(
+	err := s.qe.QueryRowContext(
 		ctx,
 		selectProjectSQL,
 		id,
@@ -153,7 +153,7 @@ func (s *projectStorage) GetTrialProjectByEmail(
 	disabled, trial bool,
 ) (*domain.Project, error) {
 	project := proto.Project{}
-	err := s.client.Qe(ctx).QueryRowContext(
+	err := s.qe.QueryRowContext(
 		ctx,
 		selectTrialProjectByEmailSQL,
 		email,
@@ -190,7 +190,7 @@ func (s *projectStorage) ListProjects(
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectProjectsSQL, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -223,7 +223,7 @@ func (s *projectStorage) ListProjects(
 	nextOffset := offset + len(projects)
 	var totalCount int64
 	countQuery := fmt.Sprintf(countProjectsSQL, whereSQL)
-	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
