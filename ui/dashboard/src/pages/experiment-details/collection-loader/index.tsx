@@ -1,7 +1,8 @@
 import { Experiment } from '@types';
 import { ExperimentDetailsTab } from '../page-content';
-import Metrics from './metrics';
+import Results from './results';
 import ExperimentSettings from './settings';
+import ExperimentState from './settings/experiment-state';
 
 const CollectionLoader = ({
   currentTab,
@@ -9,10 +10,14 @@ const CollectionLoader = ({
 }: {
   currentTab: ExperimentDetailsTab;
   experiment: Experiment;
-}) => {
-  if (currentTab === 'results') return <Metrics />;
-  if (currentTab === 'settings')
-    return <ExperimentSettings experiment={experiment} />;
-};
+}) => (
+  <div className="flex flex-col size-full gap-y-6">
+    <ExperimentState experiment={experiment} />
+    {currentTab === 'results' && <Results experiment={experiment} />}
+    {currentTab === 'settings' && (
+      <ExperimentSettings experiment={experiment} />
+    )}
+  </div>
+);
 
 export default CollectionLoader;

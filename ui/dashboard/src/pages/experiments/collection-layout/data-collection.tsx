@@ -82,7 +82,7 @@ export const useColumns = ({
         return (
           <div className="flex flex-col gap-0.5">
             <Link
-              to={`/${currenEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${experiment.id}/settings`}
+              to={`/${currenEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${experiment.id}/results`}
               className="underline text-primary-500 typo-para-medium text-left w-fit max-w-full line-clamp-1 break-all"
             >
               {experiment.name}

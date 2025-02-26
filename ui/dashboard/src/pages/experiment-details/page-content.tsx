@@ -25,6 +25,7 @@ const PageContent = ({ experiment }: { experiment: Experiment }) => {
         }
       >
         <TabsList>
+          <TabsTrigger value="results">{t(`results`)}</TabsTrigger>
           <TabsTrigger value="settings">{t(`settings`)}</TabsTrigger>
         </TabsList>
 

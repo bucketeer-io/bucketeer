@@ -13,3 +13,4 @@ export * from './goal';
 export * from './user-segment';
 export * from './experiment';
 export * from './goal';
+export * from './experiment-result';

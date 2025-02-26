@@ -109,13 +109,16 @@
     "waiting-experiment-desc": "The experiment is scheduled to start on {{date}}",
     "stopped-experiment-desc": "This experiment is currently stopped"
   },
-  "metrics": {
+  "results": {
     "variation": "Variation",
     "evaluation-user": "Evaluation User",
     "goal-total": "Goal Total",
     "goal-user": "Goal User",
     "conversion-rate": "Conversion Rate",
     "value-total": "Value Total",
-    "value-user": "Value/ User"
+    "value-user": "Value/ User",
+    "improvement": "Improvement",
+    "probability-to-beat-baseline": "Probability To Beat Baseline",
+    "probability-to-best": "Probability To Best"
   }
 }

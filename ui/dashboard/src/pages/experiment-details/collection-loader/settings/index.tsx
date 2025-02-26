@@ -38,7 +38,6 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
-import ExperimentState from './experiment-state';
 
 export interface ExperimentSettingsForm {
   id?: string;
@@ -177,7 +176,6 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
 
   return (
     <div className="flex flex-col w-full gap-y-6">
-      <ExperimentState experiment={experiment} />
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col w-full gap-y-6">
