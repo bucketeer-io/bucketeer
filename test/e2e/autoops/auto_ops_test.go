@@ -1236,7 +1236,6 @@ func deleteAutoOpsRules(t *testing.T, client autoopsclient.Client, id string) {
 	_, err := client.DeleteAutoOpsRule(ctx, &autoopsproto.DeleteAutoOpsRuleRequest{
 		EnvironmentId: *environmentID,
 		Id:            id,
-		Command:       &autoopsproto.DeleteAutoOpsRuleCommand{},
 	})
 	if err != nil {
 		t.Fatal("failed to list auto ops rules", err)
