@@ -111,6 +111,7 @@ type Client interface {
 	// Transaction is passed because it is required for storage that does not support storage architecture refactoring,
 	// but we plan to remove it once the refactoring is complete.
 	RunInTransactionV2(ctx context.Context, f func(ctx context.Context, tx Transaction) error) error
+	// Deprecated
 	Qe(ctx context.Context) QueryExecer
 }
 
@@ -166,6 +167,12 @@ func (c *client) Close() error {
 func (c *client) ExecContext(ctx context.Context, query string, args ...interface{}) (Result, error) {
 	var err error
 	defer record()(operationExec, &err)
+
+	tx, ok := ctx.Value(transactionKey).(Transaction)
+	if ok {
+		return tx.ExecContext(ctx, query, args...)
+	}
+
 	sret, err := c.db.ExecContext(ctx, query, args...)
 	err = convertMySQLError(err)
 	return &result{sret}, err
@@ -174,6 +181,12 @@ func (c *client) ExecContext(ctx context.Context, query string, args ...interfac
 func (c *client) QueryContext(ctx context.Context, query string, args ...interface{}) (Rows, error) {
 	var err error
 	defer record()(operationQuery, &err)
+
+	tx, ok := ctx.Value(transactionKey).(Transaction)
+	if ok {
+		return tx.QueryContext(ctx, query, args...)
+	}
+
 	srows, err := c.db.QueryContext(ctx, query, args...)
 	return &rows{srows}, err
 }
@@ -181,6 +194,12 @@ func (c *client) QueryContext(ctx context.Context, query string, args ...interfa
 func (c *client) QueryRowContext(ctx context.Context, query string, args ...interface{}) Row {
 	var err error
 	defer record()(operationQueryRow, &err)
+
+	tx, ok := ctx.Value(transactionKey).(Transaction)
+	if ok {
+		return tx.QueryRowContext(ctx, query, args...)
+	}
+
 	r := &row{c.db.QueryRowContext(ctx, query, args...)}
 	err = r.Err()
 	return r
@@ -228,6 +247,7 @@ func (c *client) RunInTransactionV2(
 	return err
 }
 
+// Deprecated
 func (c *client) Qe(ctx context.Context) QueryExecer {
 	tx, ok := ctx.Value(transactionKey).(Transaction)
 	if ok {
