@@ -773,7 +773,7 @@ func (s *AutoOpsService) validateCreateProgressiveRolloutRequest(
 		return dt.Err()
 	}
 	// This operation is not the atomic. We may have the problem.
-	f, err := s.getFeature(ctx, req, localizer)
+	f, err := s.getFeature(ctx, req.EnvironmentId, req.Command.FeatureId, localizer)
 	if err != nil {
 		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -846,7 +846,7 @@ func (s *AutoOpsService) validateCreateProgressiveRolloutRequestNoCommand(
 		return dt.Err()
 	}
 	// This operation is not the atomic. We may have the problem.
-	f, err := s.getFeature(ctx, req, localizer)
+	f, err := s.getFeature(ctx, req.EnvironmentId, req.FeatureId, localizer)
 	if err != nil {
 		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1007,15 +1007,12 @@ func (s *AutoOpsService) validateCommand(
 
 func (s *AutoOpsService) getFeature(
 	ctx context.Context,
-	req *autoopsproto.CreateProgressiveRolloutRequest,
+	environmentID string,
+	featureID string,
 	localizer locale.Localizer,
 ) (*featureproto.Feature, error) {
-	featureID := req.FeatureId
-	if req.Command != nil {
-		featureID = req.Command.FeatureId
-	}
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
-		EnvironmentId: req.EnvironmentId,
+		EnvironmentId: environmentID,
 		Id:            featureID,
 	})
 	if err != nil {
