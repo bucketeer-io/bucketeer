@@ -19,14 +19,21 @@ export const ConversionRateDistributionTimeseriesChart: FC<
   const timeseries = unwrapUndefinable(
     goalResult.variationResultsList[0].goalEventCountTimeseries?.timestampsList
   );
+
   const upperPercentiles = goalResult.variationResultsList.map((vr) => {
-    return unwrapUndefinable(vr.cvrPercentile975Timeseries).valuesList;
+    return unwrapUndefinable(vr.cvrPercentile975Timeseries).valuesList.map(
+      (value) => value * 100
+    );
   });
   const lowerPercentiles = goalResult.variationResultsList.map((vr) => {
-    return unwrapUndefinable(vr.cvrPercentile025Timeseries).valuesList;
+    return unwrapUndefinable(vr.cvrPercentile025Timeseries).valuesList.map(
+      (value) => value * 100
+    );
   });
   const medians = goalResult.variationResultsList.map((vr) => {
-    return unwrapUndefinable(vr.cvrMedianTimeseries).valuesList;
+    return unwrapUndefinable(vr.cvrMedianTimeseries).valuesList.map(
+      (value) => value * 100
+    );
   });
 
   return (
