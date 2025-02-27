@@ -15,7 +15,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/kms v1.36.3
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/go-gota/gota v0.12.0
-	github.com/go-jose/go-jose/v4 v4.0.4
+	github.com/go-jose/go-jose/v4 v4.0.5
 	github.com/go-resty/resty/v2 v2.15.3
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/golang/protobuf v1.5.4
@@ -33,7 +33,7 @@ require (
 	github.com/redis/go-redis/v9 v9.6.1
 	github.com/slack-go/slack v0.14.0
 	github.com/spaolacci/murmur3 v1.1.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/tkuchiki/go-timezone v0.2.3
 	go.opencensus.io v0.24.0
 	go.uber.org/mock v0.4.0
@@ -125,10 +125,10 @@ require (
 	go.opentelemetry.io/otel/metric v1.29.0 // indirect
 	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/mod v0.20.0 // indirect
 	golang.org/x/net v0.33.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/tools v0.24.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
