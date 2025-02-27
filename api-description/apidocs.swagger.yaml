@@ -1692,16 +1692,49 @@ definitions:
         type: boolean
       variations:
         $ref: '#/definitions/featureVariationListValue'
+        description: deprecated
+        title: Legacy full-replacement fields (deprecated)
       prerequisites:
         $ref: '#/definitions/featurePrerequisiteListValue'
+        description: deprecated
       targets:
         $ref: '#/definitions/featureTargetListValue'
+        description: deprecated
       rules:
         $ref: '#/definitions/featureRuleListValue'
+        description: deprecated
       defaultStrategy:
         $ref: '#/definitions/featureStrategy'
       offVariation:
         type: string
+      resetSamplingSeed:
+        type: boolean
+      variationChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureVariationChange'
+        title: New granular change fields (supporting multiple operations per field)
+      ruleChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureRuleChange'
+      prerequisiteChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featurePrerequisiteChange'
+      targetChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureTargetChange'
+      tagChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureTagChange'
   GatewayUpdatePushBody:
     type: object
     properties:
@@ -2315,6 +2348,14 @@ definitions:
       featureFlagCount:
         type: integer
         format: int32
+  featureChangeType:
+    type: string
+    enum:
+      - UNSPECIFIED
+      - CREATE
+      - UPDATE
+      - DELETE
+    default: UNSPECIFIED
   featureClause:
     type: object
     properties:
@@ -2415,11 +2456,6 @@ definitions:
           $ref: '#/definitions/featurePrerequisite'
       samplingSeed:
         type: string
-      scheduleUpdate:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureScheduleUpdate'
   featureFeatureLastUsedInfo:
     type: object
     properties:
@@ -2466,6 +2502,16 @@ definitions:
         type: string
       variationId:
         type: string
+  featurePrerequisiteChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/featureChangeType'
+      prerequisite:
+        $ref: '#/definitions/featurePrerequisite'
+    required:
+      - changeType
+      - prerequisite
   featurePrerequisiteListValue:
     type: object
     properties:
@@ -2525,6 +2571,16 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureClause'
+  featureRuleChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/featureChangeType'
+      rule:
+        $ref: '#/definitions/featureRule'
+    required:
+      - changeType
+      - rule
   featureRuleListValue:
     type: object
     properties:
@@ -2533,14 +2589,6 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureRule'
-  featureScheduleUpdate:
-    type: object
-    properties:
-      feature:
-        $ref: '#/definitions/featureFeature'
-      updateAt:
-        type: string
-        format: int64
   featureSegmentUser:
     type: object
     properties:
@@ -2588,6 +2636,16 @@ definitions:
       - FIXED
       - ROLLOUT
     default: FIXED
+  featureTagChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/featureChangeType'
+      tag:
+        type: string
+    required:
+      - changeType
+      - tag
   featureTarget:
     type: object
     properties:
@@ -2597,6 +2655,16 @@ definitions:
         type: array
         items:
           type: string
+  featureTargetChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/featureChangeType'
+      target:
+        $ref: '#/definitions/featureTarget'
+    required:
+      - changeType
+      - target
   featureTargetListValue:
     type: object
     properties:
@@ -2631,6 +2699,16 @@ definitions:
       - PARTIAL
       - FULL
     default: QUEUED
+  featureVariationChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/featureChangeType'
+      variation:
+        $ref: '#/definitions/bucketeerfeatureVariation'
+    required:
+      - changeType
+      - variation
   featureVariationListValue:
     type: object
     properties:

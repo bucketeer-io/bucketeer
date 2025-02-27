@@ -3852,6 +3852,115 @@ paths:
             $ref: '#/definitions/experimentUpdateExperimentRequest'
       tags:
         - experiment
+  /v1/experiment_result:
+    get:
+      summary: Get experiment result
+      description: Get an experiment result
+      operationId: web.v1.event_counter.experiment_result.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/eventcounterGetExperimentResultResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: experimentId
+          in: query
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - experiment_result
+  /v1/experiment_results:
+    get:
+      summary: List experiment results
+      description: List experiment results
+      operationId: web.v1.event_counter.experiment_result.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/eventcounterListExperimentResultsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - experiment_result
   /v1/experiments:
     get:
       summary: List
@@ -5680,6 +5789,15 @@ definitions:
       - Action_ON
       - Action_OFF
     default: Action_UNKNOWN
+  GetEvaluationTimeseriesCountRequestTimeRange:
+    type: string
+    enum:
+      - UNKNOWN
+      - TWENTY_FOUR_HOURS
+      - SEVEN_DAYS
+      - FOURTEEN_DAYS
+      - THIRTY_DAYS
+    default: UNKNOWN
   GoalAutoOpsRuleReference:
     type: object
     properties:
@@ -5792,6 +5910,12 @@ definitions:
       - FEATURE_FLAG
       - ACCOUNT
     default: UNSPECIFIED
+  TimeseriesUnit:
+    type: string
+    enum:
+      - HOUR
+      - DAY
+    default: HOUR
   UpdateAccountV2RequestAccountV2Avatar:
     type: object
     properties:
@@ -7841,6 +7965,248 @@ definitions:
         $ref: '#/definitions/environmentRenameProjectCommand'
   environmentUpdateProjectResponse:
     type: object
+  eventcounterDistributionSummary:
+    type: object
+    properties:
+      mean:
+        type: number
+        format: double
+      sd:
+        type: number
+        format: double
+      rhat:
+        type: number
+        format: double
+      histogram:
+        $ref: '#/definitions/eventcounterHistogram'
+      median:
+        type: number
+        format: double
+      percentile025:
+        type: number
+        format: double
+        title: Remove "_" because python should generate same
+      percentile975:
+        type: number
+        format: double
+        description: |-
+          field name for Datasource.
+
+          Remove "_" because python should generate same
+  eventcounterExperimentResult:
+    type: object
+    properties:
+      id:
+        type: string
+      experimentId:
+        type: string
+      updatedAt:
+        type: string
+        format: int64
+      goalResults:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterGoalResult'
+  eventcounterGetEvaluationTimeseriesCountResponse:
+    type: object
+    properties:
+      userCounts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterVariationTimeseries'
+      eventCounts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterVariationTimeseries'
+  eventcounterGetExperimentEvaluationCountResponse:
+    type: object
+    properties:
+      featureId:
+        type: string
+      featureVersion:
+        type: integer
+        format: int32
+      variationCounts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterVariationCount'
+  eventcounterGetExperimentGoalCountResponse:
+    type: object
+    properties:
+      goalId:
+        type: string
+      variationCounts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterVariationCount'
+  eventcounterGetExperimentResultResponse:
+    type: object
+    properties:
+      experimentResult:
+        $ref: '#/definitions/eventcounterExperimentResult'
+  eventcounterGetMAUCountResponse:
+    type: object
+    properties:
+      eventCount:
+        type: string
+        format: int64
+      userCount:
+        type: string
+        format: int64
+  eventcounterGetOpsEvaluationUserCountResponse:
+    type: object
+    properties:
+      opsRuleId:
+        type: string
+      clauseId:
+        type: string
+      count:
+        type: string
+        format: int64
+  eventcounterGetOpsGoalUserCountResponse:
+    type: object
+    properties:
+      opsRuleId:
+        type: string
+      clauseId:
+        type: string
+      count:
+        type: string
+        format: int64
+  eventcounterGoalResult:
+    type: object
+    properties:
+      goalId:
+        type: string
+      variationResults:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterVariationResult'
+  eventcounterHistogram:
+    type: object
+    properties:
+      hist:
+        type: array
+        items:
+          type: string
+          format: int64
+      bins:
+        type: array
+        items:
+          type: number
+          format: double
+  eventcounterListExperimentResultsResponse:
+    type: object
+    properties:
+      results:
+        type: object
+        additionalProperties:
+          $ref: '#/definitions/eventcounterExperimentResult'
+  eventcounterSummarizeMAUCountsResponse:
+    type: object
+  eventcounterTimeseries:
+    type: object
+    properties:
+      timestamps:
+        type: array
+        items:
+          type: string
+          format: int64
+      values:
+        type: array
+        items:
+          type: number
+          format: double
+      unit:
+        $ref: '#/definitions/TimeseriesUnit'
+      totalCounts:
+        type: string
+        format: int64
+  eventcounterVariationCount:
+    type: object
+    properties:
+      variationId:
+        type: string
+      userCount:
+        type: string
+        format: int64
+      eventCount:
+        type: string
+        format: int64
+      valueSum:
+        type: number
+        format: double
+      createdAt:
+        type: string
+        format: int64
+      variationValue:
+        type: string
+      valueSumPerUserMean:
+        type: number
+        format: double
+      valueSumPerUserVariance:
+        type: number
+        format: double
+  eventcounterVariationResult:
+    type: object
+    properties:
+      variationId:
+        type: string
+      experimentCount:
+        $ref: '#/definitions/eventcounterVariationCount'
+      evaluationCount:
+        $ref: '#/definitions/eventcounterVariationCount'
+      cvrProbBest:
+        $ref: '#/definitions/eventcounterDistributionSummary'
+      cvrProbBeatBaseline:
+        $ref: '#/definitions/eventcounterDistributionSummary'
+      cvrProb:
+        $ref: '#/definitions/eventcounterDistributionSummary'
+      evaluationUserCountTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      evaluationEventCountTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      goalUserCountTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      goalEventCountTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      goalValueSumTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      cvrMedianTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      cvrPercentile025Timeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      cvrPercentile975Timeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      cvrTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      goalValueSumPerUserTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      goalValueSumPerUserProb:
+        $ref: '#/definitions/eventcounterDistributionSummary'
+      goalValueSumPerUserProbBest:
+        $ref: '#/definitions/eventcounterDistributionSummary'
+      goalValueSumPerUserProbBeatBaseline:
+        $ref: '#/definitions/eventcounterDistributionSummary'
+      goalValueSumPerUserMedianTimeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      goalValueSumPerUserPercentile025Timeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+      goalValueSumPerUserPercentile975Timeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
+  eventcounterVariationTimeseries:
+    type: object
+    properties:
+      variationId:
+        type: string
+      timeseries:
+        $ref: '#/definitions/eventcounterTimeseries'
   experimentArchiveExperimentCommand:
     type: object
   experimentArchiveExperimentResponse:
@@ -8295,6 +8661,14 @@ definitions:
     properties:
       description:
         type: string
+  featureChangeType:
+    type: string
+    enum:
+      - UNSPECIFIED
+      - CREATE
+      - UPDATE
+      - DELETE
+    default: UNSPECIFIED
   featureClauseOperator:
     type: string
     enum:
@@ -8533,11 +8907,6 @@ definitions:
           $ref: '#/definitions/featurePrerequisite'
       samplingSeed:
         type: string
-      scheduleUpdate:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureScheduleUpdate'
   featureFeatureLastUsedInfo:
     type: object
     properties:
@@ -8741,6 +9110,16 @@ definitions:
         type: string
       variationId:
         type: string
+  featurePrerequisiteChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/featureChangeType'
+      prerequisite:
+        $ref: '#/definitions/featurePrerequisite'
+    required:
+      - changeType
+      - prerequisite
   featurePrerequisiteListValue:
     type: object
     properties:
@@ -8819,6 +9198,16 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/bucketeerfeatureClause'
+  featureRuleChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/featureChangeType'
+      rule:
+        $ref: '#/definitions/featureRule'
+    required:
+      - changeType
+      - rule
   featureRuleListValue:
     type: object
     properties:
@@ -8827,22 +9216,6 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureRule'
-  featureScheduleUpdate:
-    type: object
-    properties:
-      feature:
-        $ref: '#/definitions/featureFeature'
-      updateAt:
-        type: string
-        format: int64
-  featureScheduleUpdateListValue:
-    type: object
-    properties:
-      value:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureScheduleUpdate'
   featureSegment:
     type: object
     properties:
@@ -8926,6 +9299,16 @@ definitions:
       - FIXED
       - ROLLOUT
     default: FIXED
+  featureTagChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/featureChangeType'
+      tag:
+        type: string
+    required:
+      - changeType
+      - tag
   featureTarget:
     type: object
     properties:
@@ -8935,6 +9318,16 @@ definitions:
         type: array
         items:
           type: string
+  featureTargetChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/featureChangeType'
+      target:
+        $ref: '#/definitions/featureTarget'
+    required:
+      - changeType
+      - target
   featureTargetListValue:
     type: object
     properties:
@@ -9003,6 +9396,16 @@ definitions:
           type: string
       forceUpdate:
         type: boolean
+  featureVariationChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/featureChangeType'
+      variation:
+        $ref: '#/definitions/bucketeerfeatureVariation'
+    required:
+      - changeType
+      - variation
   featureVariationListValue:
     type: object
     properties:

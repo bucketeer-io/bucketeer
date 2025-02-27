@@ -35,6 +35,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	uproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
 
 const (
@@ -229,6 +230,16 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 	return vID, nil
 }
 
+// Because the `userId` field in the EvaluationEvent proto message is already in the `User` field,
+// we should remove it to avoid sending the same value twice.
+// To keep compatibility, we must check both fields until all the SDKs are updated
+func getUserID(userID string, user *uproto.User) string {
+	if userID == "" {
+		return user.Id
+	}
+	return userID
+}
+
 func (p *evaluationCountEventPersister) incrementEvaluationCount(
 	eventID string,
 	event proto.Message,
@@ -245,14 +256,16 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 		// but it also increases the Pod CPU usage. It's a trade-off.
 		// Since this is a background service and it's not latency-sensitive, we split the requests.
 		ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-		if err := p.countUser(ucKey, e.UserId); err != nil {
+		userID := getUserID(e.UserId, e.User)
+		if err := p.countUser(ucKey, userID); err != nil {
 			if err != nil {
 				p.logger.Error("Failed to increment the evaluation user event in the Redis",
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
 					zap.String("eventId", eventID),
-					zap.String("userId", e.UserId),
+					zap.String("userId", userID),
 					zap.String("userCountKey", ucKey),
+					zap.Any("evaluationEvent", e),
 				)
 			}
 			return err
@@ -263,8 +276,9 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 				zap.String("eventId", eventID),
-				zap.String("userId", e.UserId),
+				zap.String("userId", userID),
 				zap.String("eventCountKey", ecKey),
+				zap.Any("evaluationEvent", e),
 			)
 			return err
 		}

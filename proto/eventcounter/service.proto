@@ -17,6 +17,9 @@ syntax = "proto3";
 package bucketeer.eventcounter;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/eventcounter";
 
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 import "google/protobuf/wrappers.proto";
 
 import "proto/eventcounter/experiment_result.proto";
@@ -60,8 +63,8 @@ message GetEvaluationTimeseriesCountResponse {
 
 message GetExperimentResultRequest {
   reserved 1;
-  string experiment_id = 2;
-  string environment_id = 3;
+  string experiment_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
 message GetExperimentResultResponse {
@@ -69,10 +72,10 @@ message GetExperimentResultResponse {
 }
 
 message ListExperimentResultsRequest {
-  string feature_id = 1;
+  string feature_id = 1 [(google.api.field_behavior) = REQUIRED];
   google.protobuf.Int32Value feature_version = 2;
   reserved 3;
-  string environment_id = 4;
+  string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
 message ListExperimentResultsResponse {
@@ -153,10 +156,74 @@ service EventCounterService {
       returns (GetEvaluationTimeseriesCountResponse) {}
 
   rpc GetExperimentResult(GetExperimentResultRequest)
-      returns (GetExperimentResultResponse) {}
+      returns (GetExperimentResultResponse) {
+    option (google.api.http) = {
+      get: "/v1/experiment_result"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get experiment result"
+      description: "Get an experiment result"
+      tags: "experiment_result"
+      operation_id: "web.v1.event_counter.experiment_result.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 
   rpc ListExperimentResults(ListExperimentResultsRequest)
-      returns (ListExperimentResultsResponse) {}
+      returns (ListExperimentResultsResponse) {
+    option (google.api.http) = {
+      get: "/v1/experiment_results"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List experiment results"
+      description: "List experiment results"
+      tags: "experiment_result"
+      operation_id: "web.v1.event_counter.experiment_result.list"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 
   rpc GetExperimentGoalCount(GetExperimentGoalCountRequest)
       returns (GetExperimentGoalCountResponse) {}

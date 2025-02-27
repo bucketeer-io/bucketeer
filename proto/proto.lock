@@ -22556,12 +22556,24 @@
               {
                 "id": 2,
                 "name": "experiment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -22584,7 +22596,13 @@
               {
                 "id": 1,
                 "name": "feature_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 2,
@@ -22594,7 +22612,13 @@
               {
                 "id": 4,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -22859,12 +22883,256 @@
               {
                 "name": "GetExperimentResult",
                 "in_type": "GetExperimentResultRequest",
-                "out_type": "GetExperimentResultResponse"
+                "out_type": "GetExperimentResultResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/experiment_result"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get experiment result"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get an experiment result"
+                      },
+                      {
+                        "name": "tags",
+                        "value": "experiment_result"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.event_counter.experiment_result.get"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "ListExperimentResults",
                 "in_type": "ListExperimentResultsRequest",
-                "out_type": "ListExperimentResultsResponse"
+                "out_type": "ListExperimentResultsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/experiment_results"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List experiment results"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List experiment results"
+                      },
+                      {
+                        "name": "tags",
+                        "value": "experiment_result"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.event_counter.experiment_result.list"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "GetExperimentGoalCount",
@@ -22895,6 +23163,15 @@
           }
         ],
         "imports": [
+          {
+            "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/api/field_behavior.proto"
+          },
+          {
+            "path": "protoc-gen-openapiv2/options/annotations.proto"
+          },
           {
             "path": "google/protobuf/wrappers.proto"
           },
@@ -27238,12 +27515,6 @@
                 "id": 22,
                 "name": "sampling_seed",
                 "type": "string"
-              },
-              {
-                "id": 23,
-                "name": "schedule_update",
-                "type": "ScheduleUpdate",
-                "is_repeated": true
               }
             ]
           },
@@ -27960,6 +28231,26 @@
             ]
           },
           {
+            "name": "ChangeType",
+            "enum_fields": [
+              {
+                "name": "UNSPECIFIED"
+              },
+              {
+                "name": "CREATE",
+                "integer": 1
+              },
+              {
+                "name": "UPDATE",
+                "integer": 2
+              },
+              {
+                "name": "DELETE",
+                "integer": 3
+              }
+            ]
+          },
+          {
             "name": "UpdateFeatureTargetingRequest.From",
             "enum_fields": [
               {
@@ -28303,6 +28594,141 @@
             ]
           },
           {
+            "name": "PrerequisiteChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "change_type",
+                "type": "ChangeType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "prerequisite",
+                "type": "Prerequisite",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "TargetChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "change_type",
+                "type": "ChangeType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "target",
+                "type": "Target",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "VariationChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "change_type",
+                "type": "ChangeType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "variation",
+                "type": "Variation",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "RuleChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "change_type",
+                "type": "ChangeType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "rule",
+                "type": "Rule",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "TagChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "change_type",
+                "type": "ChangeType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "tag",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "name": "UpdateFeatureRequest",
             "fields": [
               {
@@ -28360,22 +28786,82 @@
               {
                 "id": 9,
                 "name": "variations",
-                "type": "VariationListValue"
+                "type": "VariationListValue",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 10,
                 "name": "prerequisites",
-                "type": "PrerequisiteListValue"
+                "type": "PrerequisiteListValue",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 11,
                 "name": "targets",
-                "type": "TargetListValue"
+                "type": "TargetListValue",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 12,
                 "name": "rules",
-                "type": "RuleListValue"
+                "type": "RuleListValue",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 13,
@@ -28399,8 +28885,33 @@
               },
               {
                 "id": 17,
-                "name": "schedule_updates",
-                "type": "ScheduleUpdateListValue"
+                "name": "variation_changes",
+                "type": "VariationChange",
+                "is_repeated": true
+              },
+              {
+                "id": 18,
+                "name": "rule_changes",
+                "type": "RuleChange",
+                "is_repeated": true
+              },
+              {
+                "id": 19,
+                "name": "prerequisite_changes",
+                "type": "PrerequisiteChange",
+                "is_repeated": true
+              },
+              {
+                "id": 20,
+                "name": "target_changes",
+                "type": "TargetChange",
+                "is_repeated": true
+              },
+              {
+                "id": 21,
+                "name": "tag_changes",
+                "type": "TagChange",
+                "is_repeated": true
               }
             ]
           },
@@ -31490,22 +32001,82 @@
               {
                 "id": 9,
                 "name": "variations",
-                "type": "feature.VariationListValue"
+                "type": "feature.VariationListValue",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 10,
                 "name": "prerequisites",
-                "type": "feature.PrerequisiteListValue"
+                "type": "feature.PrerequisiteListValue",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 11,
                 "name": "targets",
-                "type": "feature.TargetListValue"
+                "type": "feature.TargetListValue",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 12,
                 "name": "rules",
-                "type": "feature.RuleListValue"
+                "type": "feature.RuleListValue",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 13,
@@ -31516,6 +32087,41 @@
                 "id": 14,
                 "name": "off_variation",
                 "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 15,
+                "name": "reset_sampling_seed",
+                "type": "bool"
+              },
+              {
+                "id": 16,
+                "name": "variation_changes",
+                "type": "feature.VariationChange",
+                "is_repeated": true
+              },
+              {
+                "id": 17,
+                "name": "rule_changes",
+                "type": "feature.RuleChange",
+                "is_repeated": true
+              },
+              {
+                "id": 18,
+                "name": "prerequisite_changes",
+                "type": "feature.PrerequisiteChange",
+                "is_repeated": true
+              },
+              {
+                "id": 19,
+                "name": "target_changes",
+                "type": "feature.TargetChange",
+                "is_repeated": true
+              },
+              {
+                "id": 20,
+                "name": "tag_changes",
+                "type": "feature.TagChange",
+                "is_repeated": true
               }
             ]
           },
