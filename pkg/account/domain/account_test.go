@@ -22,6 +22,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
+	"github.com/bucketeer-io/bucketeer/proto/common"
 )
 
 func TestNewAccountV2(t *testing.T) {
@@ -1077,7 +1078,7 @@ func TestAccountV2_Update(t *testing.T) {
 		wrapperspb.String("ja"),
 		wrapperspb.String("newAvatarImageURL"),
 		nil,
-		[]string{"tag-1"},
+		&common.StringListValue{Values: []string{"tag-1"}},
 		&proto.UpdateAccountV2Request_OrganizationRoleValue{
 			Role: proto.AccountV2_Role_Organization_ADMIN,
 		},
