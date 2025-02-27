@@ -1391,8 +1391,7 @@
               {
                 "id": 22,
                 "name": "tags",
-                "type": "string",
-                "is_repeated": true
+                "type": "common.StringListValue"
               },
               {
                 "id": 23,
@@ -5344,6 +5343,9 @@
           },
           {
             "path": "proto/account/account.proto"
+          },
+          {
+            "path": "proto/common/string.proto"
           },
           {
             "path": "proto/account/api_key.proto"
@@ -11312,7 +11314,13 @@
               {
                 "id": 2,
                 "name": "name",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
@@ -11327,7 +11335,13 @@
               {
                 "id": 5,
                 "name": "project_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 6,
@@ -27300,32 +27314,6 @@
                 "type": "string"
               }
             ]
-          },
-          {
-            "name": "ScheduleUpdate",
-            "fields": [
-              {
-                "id": 1,
-                "name": "feature",
-                "type": "Feature"
-              },
-              {
-                "id": 2,
-                "name": "update_at",
-                "type": "int64"
-              }
-            ]
-          },
-          {
-            "name": "ScheduleUpdateListValue",
-            "fields": [
-              {
-                "id": 1,
-                "name": "value",
-                "type": "ScheduleUpdate",
-                "is_repeated": true
-              }
-            ]
           }
         ],
         "imports": [
@@ -27700,6 +27688,138 @@
           },
           {
             "path": "proto/feature/strategy.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.feature"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/feature"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "feature:/:scheduled_update.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "ScheduledChange.FieldType",
+            "enum_fields": [
+              {
+                "name": "UNSPECIFIED"
+              },
+              {
+                "name": "PREREQUISITES",
+                "integer": 1
+              },
+              {
+                "name": "TARGETS",
+                "integer": 2
+              },
+              {
+                "name": "RULES",
+                "integer": 3
+              },
+              {
+                "name": "DEFAULT_STRATEGY",
+                "integer": 4
+              },
+              {
+                "name": "VARIATIONS",
+                "integer": 5
+              }
+            ]
+          },
+          {
+            "name": "ScheduledChange.ChangeType",
+            "enum_fields": [
+              {
+                "name": "CHANGE_UNSPECIFIED"
+              },
+              {
+                "name": "CHANGE_CREATE",
+                "integer": 1
+              },
+              {
+                "name": "CHANGE_UPDATE",
+                "integer": 2
+              },
+              {
+                "name": "CHANGE_DELETE",
+                "integer": 3
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "ScheduledChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "change_type",
+                "type": "ChangeType"
+              },
+              {
+                "id": 3,
+                "name": "field_type",
+                "type": "FieldType"
+              },
+              {
+                "id": 4,
+                "name": "field_value",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ScheduledFlagUpdate",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "scheduled_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "updated_at",
+                "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "changes",
+                "type": "ScheduledChange",
+                "is_repeated": true
+              }
+            ]
           }
         ],
         "package": {
