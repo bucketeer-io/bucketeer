@@ -35,6 +35,12 @@ type transaction struct {
 func (tx *transaction) ExecContext(ctx context.Context, query string, args ...interface{}) (Result, error) {
 	var err error
 	defer record()(operationExec, &err)
+
+	ctxTx, ok := ctx.Value(transactionKey).(Transaction)
+	if ok {
+		return ctxTx.ExecContext(ctx, query, args...)
+	}
+
 	sret, err := tx.stx.ExecContext(ctx, query, args...)
 	err = convertMySQLError(err)
 	return &result{sret}, err
@@ -43,6 +49,12 @@ func (tx *transaction) ExecContext(ctx context.Context, query string, args ...in
 func (tx *transaction) QueryContext(ctx context.Context, query string, args ...interface{}) (Rows, error) {
 	var err error
 	defer record()(operationQuery, &err)
+
+	ctxTx, ok := ctx.Value(transactionKey).(Transaction)
+	if ok {
+		return ctxTx.QueryContext(ctx, query, args...)
+	}
+
 	srows, err := tx.stx.QueryContext(ctx, query, args...)
 	return &rows{srows}, err
 }
@@ -50,6 +62,12 @@ func (tx *transaction) QueryContext(ctx context.Context, query string, args ...i
 func (tx *transaction) QueryRowContext(ctx context.Context, query string, args ...interface{}) Row {
 	var err error
 	defer record()(operationQueryRow, &err)
+
+	ctxTx, ok := ctx.Value(transactionKey).(Transaction)
+	if ok {
+		return ctxTx.QueryRowContext(ctx, query, args...)
+	}
+
 	r := &row{tx.stx.QueryRowContext(ctx, query, args...)}
 	err = r.Err()
 	return r
