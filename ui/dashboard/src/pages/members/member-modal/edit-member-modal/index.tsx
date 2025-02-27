@@ -128,7 +128,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
       firstName: values.firstName,
       lastName: values.lastName,
       language: values.language,
-      tags: values.tags
+      tags: { values: values.tags }
     }).then(() => {
       notify({
         toastType: 'toast',

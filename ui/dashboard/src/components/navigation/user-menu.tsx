@@ -41,6 +41,8 @@ const UserMenu = () => {
   ] = useToggleOpen(false);
 
   const avatar = consoleAccount?.avatarImage;
+  const isHiddenProfileMenu =
+    consoleAccount?.isSystemAdmin && !consoleAccount?.organization.systemAdmin;
 
   const avatarSrc = useMemo(
     () =>
@@ -62,7 +64,7 @@ const UserMenu = () => {
   };
 
   const menuItems = compact([
-    !consoleAccount?.isSystemAdmin && {
+    !isHiddenProfileMenu && {
       label: t(`navigation.user-profile`),
       icon: IconUser,
       onClick: onOpenProfileModal
