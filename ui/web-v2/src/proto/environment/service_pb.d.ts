@@ -743,6 +743,18 @@ export class CreateProjectRequest extends jspb.Message {
   getCommand(): proto_environment_command_pb.CreateProjectCommand | undefined;
   setCommand(value?: proto_environment_command_pb.CreateProjectCommand): void;
 
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getUrlCode(): string;
+  setUrlCode(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateProjectRequest.AsObject;
   static toObject(
@@ -767,6 +779,10 @@ export class CreateProjectRequest extends jspb.Message {
 export namespace CreateProjectRequest {
   export type AsObject = {
     command?: proto_environment_command_pb.CreateProjectCommand.AsObject;
+    organizationId: string;
+    name: string;
+    description: string;
+    urlCode: string;
   };
 }
 
@@ -888,6 +904,16 @@ export class UpdateProjectRequest extends jspb.Message {
     value?: proto_environment_command_pb.RenameProjectCommand
   ): void;
 
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateProjectRequest.AsObject;
   static toObject(
@@ -914,6 +940,8 @@ export namespace UpdateProjectRequest {
     id: string;
     changeDescriptionCommand?: proto_environment_command_pb.ChangeDescriptionProjectCommand.AsObject;
     renameCommand?: proto_environment_command_pb.RenameProjectCommand.AsObject;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
   };
 }
 

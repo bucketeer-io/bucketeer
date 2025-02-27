@@ -236,14 +236,6 @@ func TestCreateProjectMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			req: &proto.CreateProjectRequest{
-				Command: nil,
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
-		{
 			desc:  "err: ErrInvalidProjectName: empty name",
 			setup: nil,
 			req: &proto.CreateProjectRequest{
@@ -348,6 +340,248 @@ func TestCreateProjectMySQL(t *testing.T) {
 				assert.Equal(t, p.expected.Trial, resp.Project.Trial)
 			}
 			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestCreateProjectNoCommand(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	expected, err := domain.NewProject(
+		"project name",
+		"project-url-code",
+		"Description",
+		"test@bucketer.io",
+		"organization-id",
+		false,
+	)
+	require.NoError(t, err)
+
+	patterns := []struct {
+		ctx         context.Context
+		desc        string
+		setup       func(*EnvironmentService)
+		req         *proto.CreateProjectRequest
+		expected    *proto.Project
+		expectedErr error
+	}{
+		{
+			ctx: metadata.NewIncomingContext(context.TODO(), metadata.MD{
+				"accept-language": []string{"ja"},
+			}),
+			desc:  "err: unauthenticated",
+			setup: nil,
+			req:   &proto.CreateProjectRequest{},
+			expectedErr: createError(
+				statusUnauthenticated,
+				localizer.MustLocalize(locale.UnauthenticatedError),
+			),
+		},
+		{
+			ctx: metadata.NewIncomingContext(createContextWithTokenRoleUnassigned(t), metadata.MD{
+				"accept-language": []string{"ja"},
+			}),
+			desc: "err: permission denied",
+			setup: func(s *EnvironmentService) {
+				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					},
+				}, nil)
+			},
+			req: &proto.CreateProjectRequest{},
+			expectedErr: createError(
+				statusPermissionDenied,
+				localizer.MustLocalize(locale.PermissionDenied),
+			),
+		},
+		{
+			ctx:   ctx,
+			desc:  "err: empty name",
+			setup: nil,
+			req: &proto.CreateProjectRequest{
+				Name: "",
+			},
+			expectedErr: createError(
+				statusEnvironmentNameRequired,
+				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+			),
+		},
+		{
+			ctx:   ctx,
+			desc:  "err: only space",
+			setup: nil,
+			req: &proto.CreateProjectRequest{
+				Name: "    ",
+			},
+			expectedErr: createError(
+				statusEnvironmentNameRequired,
+				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+			),
+		},
+		{
+			ctx:   ctx,
+			desc:  "err: max name length exceeded",
+			setup: nil,
+			req: &proto.CreateProjectRequest{
+				Name: strings.Repeat("a", 51),
+			},
+			expectedErr: createError(
+				statusInvalidEnvironmentName,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+			),
+		},
+		{
+			ctx:   ctx,
+			desc:  "err: empty url code",
+			setup: nil,
+			req: &proto.CreateProjectRequest{
+				Name:    "name",
+				UrlCode: "",
+			},
+			expectedErr: createError(
+				statusInvalidEnvironmentUrlCode,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+			),
+		},
+		{
+			ctx:   ctx,
+			desc:  "err: url code can't use uppercase",
+			setup: nil,
+			req: &proto.CreateProjectRequest{
+				Name:    "name",
+				UrlCode: "URLCODE",
+			},
+			expectedErr: createError(
+				statusInvalidEnvironmentUrlCode,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+			),
+		},
+		{
+			ctx:   ctx,
+			desc:  "err: url code can't use space",
+			setup: nil,
+			req: &proto.CreateProjectRequest{
+				Name:    "name",
+				UrlCode: "url code",
+			},
+			expectedErr: createError(
+				statusInvalidEnvironmentUrlCode,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+			),
+		},
+		{
+			ctx:   ctx,
+			desc:  "err: max url code length exceeded",
+			setup: nil,
+			req: &proto.CreateProjectRequest{
+				Name:    "name",
+				UrlCode: strings.Repeat("a", 51),
+			},
+			expectedErr: createError(
+				statusInvalidEnvironmentUrlCode,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+			),
+		},
+		{
+			ctx:   ctx,
+			desc:  "err: organization ID required",
+			setup: nil,
+			req: &proto.CreateProjectRequest{
+				Name:           "name",
+				UrlCode:        "url-code",
+				OrganizationId: "",
+			},
+			expectedErr: createError(
+				statusProjectIDRequired,
+				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id"),
+			),
+		},
+		{
+			ctx:  ctx,
+			desc: "err: project already exists",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(v2es.ErrEnvironmentAlreadyExists)
+			},
+			req: &proto.CreateProjectRequest{
+				Name:           expected.Project.Name,
+				UrlCode:        expected.Project.UrlCode,
+				OrganizationId: expected.Project.OrganizationId,
+				Description:    expected.Project.Description,
+			},
+			expectedErr: createError(statusEnvironmentAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+		},
+		{
+			ctx:  ctx,
+			desc: "err: internal error",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("internal error"))
+			},
+			req: &proto.CreateProjectRequest{
+				Name:           expected.Project.Name,
+				UrlCode:        expected.Project.UrlCode,
+				OrganizationId: expected.Project.OrganizationId,
+				Description:    expected.Project.Description,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			ctx:  ctx,
+			desc: "success",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &proto.CreateProjectRequest{
+				Name:           expected.Project.Name,
+				UrlCode:        expected.Project.UrlCode,
+				OrganizationId: expected.Project.OrganizationId,
+				Description:    expected.Project.Description,
+			},
+			expected: expected.Project,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := newEnvironmentService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			resp, err := service.CreateProject(p.ctx, p.req)
+			if resp != nil {
+				assert.Equal(t, p.expected.Name, resp.Project.Name)
+				assert.Equal(t, p.expected.UrlCode, resp.Project.UrlCode)
+				assert.Equal(t, p.expected.Description, resp.Project.Description)
+				assert.Equal(t, p.expected.OrganizationId, resp.Project.OrganizationId)
+				assert.Equal(t, p.expected.Trial, resp.Project.Trial)
+				assert.True(t, resp.Project.CreatedAt > 0)
+				assert.True(t, resp.Project.UpdatedAt > 0)
+			} else {
+				assert.Equal(t, p.expectedErr, err)
+			}
 		})
 	}
 }
@@ -932,14 +1166,6 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 		action   func(context.Context, *EnvironmentService) error
 		expected error
 	}{
-		{
-			desc: "CreateProject",
-			action: func(ctx context.Context, es *EnvironmentService) error {
-				_, err := es.CreateProject(ctx, &proto.CreateProjectRequest{})
-				return err
-			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
-		},
 		{
 			desc: "CreateTrialProject",
 			action: func(ctx context.Context, es *EnvironmentService) error {
