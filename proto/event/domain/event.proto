@@ -178,6 +178,7 @@ message Event {
     ENVIRONMENT_V2_ARCHIVED = 607;
     ENVIRONMENT_V2_UNARCHIVED = 608;
     ENVIRONMENT_V2_REQUIRE_COMMENT_CHANGED = 609;
+    ENVIRONMENT_V2_UPDATED = 610;
     ADMIN_ACCOUNT_CREATED = 700 [deprecated = true];
     ADMIN_ACCOUNT_ENABLED = 702 [deprecated = true];
     ADMIN_ACCOUNT_DISABLED = 703 [deprecated = true];
@@ -892,6 +893,13 @@ message EnvironmentV2UnarchivedEvent {
   string id = 1;
   string name = 2;
   string project_id = 3;
+}
+
+message EnvironmentV2UpdatedEvent {
+  string id = 1;
+  google.protobuf.StringValue name = 2;
+  google.protobuf.StringValue description = 3;
+  google.protobuf.BoolValue require_comment = 4;
 }
 
 message AutoOpsRuleCreatedEvent {

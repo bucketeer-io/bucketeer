@@ -11292,7 +11292,47 @@
               {
                 "id": 1,
                 "name": "command",
-                "type": "CreateEnvironmentV2Command"
+                "type": "CreateEnvironmentV2Command",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "url_code",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "project_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "require_comment",
+                "type": "bool"
               }
             ]
           },
@@ -11312,27 +11352,100 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 2,
                 "name": "rename_command",
-                "type": "RenameEnvironmentV2Command"
+                "type": "RenameEnvironmentV2Command",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "change_description_command",
-                "type": "ChangeDescriptionEnvironmentV2Command"
+                "type": "ChangeDescriptionEnvironmentV2Command",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "change_require_comment_command",
-                "type": "ChangeRequireCommentCommand"
+                "type": "ChangeRequireCommentCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 6,
+                "name": "description",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 7,
+                "name": "require_comment",
+                "type": "google.protobuf.BoolValue"
               }
             ]
           },
           {
-            "name": "UpdateEnvironmentV2Response"
+            "name": "UpdateEnvironmentV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment",
+                "type": "EnvironmentV2"
+              }
+            ]
           },
           {
             "name": "ArchiveEnvironmentV2Request",
@@ -16104,6 +16217,9 @@
             "path": "google/protobuf/wrappers.proto"
           },
           {
+            "path": "google/api/field_behavior.proto"
+          },
+          {
             "path": "google/api/annotations.proto"
           },
           {
@@ -17473,6 +17589,10 @@
               {
                 "name": "ENVIRONMENT_V2_REQUIRE_COMMENT_CHANGED",
                 "integer": 609
+              },
+              {
+                "name": "ENVIRONMENT_V2_UPDATED",
+                "integer": 610
               },
               {
                 "name": "ADMIN_ACCOUNT_CREATED",
@@ -19969,6 +20089,31 @@
                 "id": 3,
                 "name": "project_id",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "EnvironmentV2UpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 4,
+                "name": "require_comment",
+                "type": "google.protobuf.BoolValue"
               }
             ]
           },

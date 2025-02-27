@@ -18,6 +18,7 @@ package bucketeer.environment;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/environment";
 
 import "google/protobuf/wrappers.proto";
+import "google/api/field_behavior.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -65,7 +66,17 @@ message ListEnvironmentsV2Response {
 }
 
 message CreateEnvironmentV2Request {
-  CreateEnvironmentV2Command command = 1;
+  CreateEnvironmentV2Command command = 1 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  string name = 2 [(google.api.field_behavior) = REQUIRED];
+  string url_code = 3 [(google.api.field_behavior) = REQUIRED];
+  string description = 4;
+  string project_id = 5;
+  bool require_comment = 6;
 }
 
 message CreateEnvironmentV2Response {
@@ -73,13 +84,33 @@ message CreateEnvironmentV2Response {
 }
 
 message UpdateEnvironmentV2Request {
-  string id = 1;
-  RenameEnvironmentV2Command rename_command = 2;
-  ChangeDescriptionEnvironmentV2Command change_description_command = 3;
-  ChangeRequireCommentCommand change_require_comment_command = 4;
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  RenameEnvironmentV2Command rename_command = 2 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  ChangeDescriptionEnvironmentV2Command change_description_command = 3 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  ChangeRequireCommentCommand change_require_comment_command = 4 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  google.protobuf.StringValue name = 5;
+  google.protobuf.StringValue description = 6;
+  google.protobuf.BoolValue require_comment = 7;
 }
 
-message UpdateEnvironmentV2Response {}
+message UpdateEnvironmentV2Response {
+  EnvironmentV2 environment = 1;
+}
 
 message ArchiveEnvironmentV2Request {
   string id = 1;
