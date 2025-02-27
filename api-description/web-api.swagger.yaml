@@ -6413,9 +6413,7 @@ definitions:
       disabled:
         type: boolean
       tags:
-        type: array
-        items:
-          type: string
+        $ref: '#/definitions/commonStringListValue'
       changeTagsCommand:
         $ref: '#/definitions/accountChangeAccountV2TagsCommand'
   accountUpdateAccountV2Response:
