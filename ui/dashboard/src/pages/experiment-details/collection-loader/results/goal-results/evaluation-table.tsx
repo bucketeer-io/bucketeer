@@ -10,7 +10,7 @@ const headerList = [
   {
     name: 'variation',
     tooltip: '',
-    minSize: 255
+    minSize: 270
   },
   {
     name: 'evaluation-user',
@@ -133,7 +133,7 @@ const EvaluationTable = ({
         );
         return {
           ...item,
-          variationName: variation?.name || variation?.value || ''
+          variationName: variation?.value || variation?.name || ''
         };
       }),
     [goalResult, experiment]
@@ -167,7 +167,7 @@ const EvaluationTable = ({
               <RowItem
                 isFirstItem={true}
                 value={item?.variationName || ''}
-                minSize={255}
+                minSize={270}
               />
               <RowItem value={evaluationCount?.userCount} minSize={143} />
               <RowItem value={experimentCount?.eventCount} minSize={123} />

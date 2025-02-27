@@ -126,9 +126,9 @@ const TimeseriesLineChart = memo(
               font: {
                 family: 'Sofia Pro',
                 size: 14,
-                weight: 400,
-                color: '#94A3B8'
-              }
+                weight: 400
+              },
+              color: '#94A3B8'
             }
           },
           y: {
@@ -142,9 +142,9 @@ const TimeseriesLineChart = memo(
               font: {
                 family: 'Sofia Pro',
                 size: 14,
-                weight: 400,
-                color: '#94A3B8'
-              }
+                weight: 400
+              },
+              color: '#94A3B8'
             },
             grid: {
               display: true,

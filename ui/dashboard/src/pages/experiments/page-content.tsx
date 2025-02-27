@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -6,6 +6,7 @@ import { pickBy } from 'lodash';
 import { Experiment, ExperimentCollection } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
+import { cn } from 'utils/style';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
@@ -47,6 +48,11 @@ const PageContent = ({
 
   const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
     useToggleOpen(false);
+
+  const isHiddenTab = useMemo(
+    () => !!filters.searchQuery || filters?.isFilter,
+    [filters]
+  );
 
   const onChangeFilters = (values: Partial<ExperimentFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
@@ -103,7 +109,9 @@ const PageContent = ({
         />
       )}
       <Tabs
-        className="flex-1 flex h-full flex-col mt-6"
+        className={cn('flex-1 flex h-full flex-col', {
+          'mt-6': !isHiddenTab
+        })}
         value={filters.status}
         onValueChange={value => {
           const status = value as ExperimentTab;
@@ -120,7 +128,7 @@ const PageContent = ({
           });
         }}
       >
-        <TabsList>
+        <TabsList className={isHiddenTab ? 'hidden' : ''}>
           <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
           <TabsTrigger value="FINISHED">{t(`finished`)}</TabsTrigger>
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>

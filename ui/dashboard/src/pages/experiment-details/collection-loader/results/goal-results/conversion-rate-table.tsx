@@ -5,12 +5,13 @@ import { cn } from 'utils/style';
 import { IconInfo } from '@icons';
 import { Polygon } from 'pages/experiment-details/elements/header-details';
 import Icon from 'components/icon';
+import { GoalResultState } from '..';
 
 const headerList = [
   {
     name: 'variation',
     tooltip: '',
-    minSize: 255
+    minSize: 270
   },
   {
     name: 'value-user',
@@ -106,9 +107,11 @@ const RowItem = ({
 };
 
 const ConversionRateTable = ({
+  goalResultState,
   experiment,
   goalResult
 }: {
+  goalResultState: GoalResultState;
   experiment: Experiment;
   goalResult: GoalResult;
 }) => {
@@ -121,7 +124,7 @@ const ConversionRateTable = ({
         );
         return {
           ...item,
-          variationName: variation?.name || variation?.value || ''
+          variationName: variation?.value || variation?.name || ''
         };
       }),
     [goalResult, experiment]
@@ -160,7 +163,9 @@ const ConversionRateTable = ({
             experimentCount,
             evaluationCount,
             cvrProbBeatBaseline,
-            cvrProbBest
+            cvrProbBest,
+            goalValueSumPerUserProbBest,
+            goalValueSumPerUserProbBeatBaseline
           } = item;
           const conversionRate =
             (Number(experimentCount?.userCount) /
@@ -173,13 +178,21 @@ const ConversionRateTable = ({
           const isSameVariationId =
             item.variationId === experiment.baseVariationId;
           const improvementValue = conversionRate - baseConversionRate;
+          const probBeatBaseline =
+            goalResultState.chartType === 'conversion-rate'
+              ? cvrProbBeatBaseline
+              : goalValueSumPerUserProbBeatBaseline;
+          const probBest =
+            goalResultState.chartType === 'conversion-rate'
+              ? cvrProbBest
+              : goalValueSumPerUserProbBest;
 
           return (
             <div key={i} className="flex items-center w-full">
               <RowItem
                 isFirstItem={true}
                 value={item?.variationName || ''}
-                minSize={255}
+                minSize={270}
               />
               <RowItem
                 value={isNaN(valuePerUser) ? 'N/A' : valuePerUser.toFixed(2)}
@@ -199,17 +212,15 @@ const ConversionRateTable = ({
                 value={
                   isSameVariationId
                     ? 'Baseline'
-                    : cvrProbBeatBaseline
-                      ? (cvrProbBeatBaseline.mean * 100).toFixed(1) + ' %'
+                    : probBeatBaseline
+                      ? (probBeatBaseline.mean * 100).toFixed(1) + ' %'
                       : 'N/A'
                 }
                 minSize={212}
               />
               <RowItem
                 value={
-                  cvrProbBest
-                    ? (cvrProbBest.mean * 100).toFixed(1) + ' %'
-                    : 'N/A'
+                  probBest ? (probBest.mean * 100).toFixed(1) + ' %' : 'N/A'
                 }
                 minSize={212}
               />

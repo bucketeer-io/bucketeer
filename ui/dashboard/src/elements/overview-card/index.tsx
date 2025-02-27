@@ -37,7 +37,7 @@ const cardIconVariants = cva('flex-center size-[88px] p-5 rounded-lg', {
       green: 'bg-accent-green-50',
       brand: 'bg-primary-50',
       yellow: 'bg-accent-yellow-50',
-      gray: 'bg-accent-gray-200',
+      gray: 'bg-gray-200',
       pink: 'bg-accent-pink-50',
       red: 'bg-accent-red-50',
       orange: 'bg-accent-orange-50',

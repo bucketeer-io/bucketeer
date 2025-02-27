@@ -5,6 +5,7 @@ import { formatLongDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
 import {
   IconExperiment,
+  IconNotStartedExperiment,
   IconStartExperiment,
   IconStopExperiment,
   IconStoppedExperiment,
@@ -17,10 +18,11 @@ const ExperimentState = ({ experiment }: { experiment: Experiment }) => {
   const { t } = useTranslation(['table', 'form']);
 
   const isRunning = experiment.status === 'RUNNING',
-    isWaiting = experiment.status === 'WAITING';
+    isWaiting = experiment.status === 'WAITING',
+    isStopped = experiment.status === 'STOPPED';
 
   return (
-    <div className="flex items-center justify-between w-full px-4 py-2 gap-x-4 bg-gray-100 rounded-lg">
+    <div className="flex items-center justify-between w-full min-w-fit px-4 py-2 gap-x-4 bg-gray-100 rounded-lg">
       <div className="flex items-center">
         <div className="flex items-center gap-x-2 pr-3 border-r border-gray-400">
           <Icon
@@ -29,29 +31,35 @@ const ExperimentState = ({ experiment }: { experiment: Experiment }) => {
                 ? IconExperiment
                 : isWaiting
                   ? IconWaitingExperiment
-                  : IconStoppedExperiment
+                  : isStopped
+                    ? IconStoppedExperiment
+                    : IconNotStartedExperiment
             }
             size={'md'}
             className="[&>svg]:size-6"
           />
-          <p className="typo-head-bold-small text-gray-700">
+          <p className="typo-head-bold-small text-gray-700 whitespace-nowrap">
             {t(
               isRunning
-                ? `experiment.running-experiments`
+                ? `experiment.running-experiment`
                 : isWaiting
-                  ? `experiment.waiting-experiments`
-                  : `experiment.stopped-experiments`
-            ).slice(0, -1)}
+                  ? `experiment.scheduled-experiment`
+                  : isStopped
+                    ? `experiment.stopped-experiment`
+                    : `experiment.not-started-experiment`
+            )}
           </p>
         </div>
-        <div className="pl-3 typo-para-medium text-gray-700">
+        <div className="pl-3 typo-para-medium text-gray-700 whitespace-nowrap">
           <Trans
             i18nKey={
               isRunning
                 ? 'table:experiment.running-experiment-desc'
                 : isWaiting
-                  ? 'table:experiment.waiting-experiment-desc'
-                  : 'table:experiment.stopped-experiment-desc'
+                  ? 'table:experiment.scheduled-experiment-desc'
+                  : isStopped
+                    ? 'table:experiment.stopped-experiment-desc'
+                    : 'table:experiment.not-started-experiment-desc'
             }
             values={{
               date: formatLongDateTime({
@@ -71,7 +79,7 @@ const ExperimentState = ({ experiment }: { experiment: Experiment }) => {
       </div>
       <Button
         variant={'text'}
-        className={cn('typo-sm h-10', {
+        className={cn('typo-sm h-10 whitespace-nowrap', {
           'text-accent-red-500 hover:text-accent-red-600': isRunning
         })}
       >
@@ -79,11 +87,7 @@ const ExperimentState = ({ experiment }: { experiment: Experiment }) => {
           icon={isRunning ? IconStopExperiment : IconStartExperiment}
           size={'sm'}
         />
-        {t(
-          isRunning
-            ? `experiment.stopped-experiments`
-            : `experiment.running-experiments`
-        ).slice(0, -1)}
+        {t(isRunning ? `popover.stop-experiment` : `popover.start-experiment`)}
       </Button>
     </div>
   );

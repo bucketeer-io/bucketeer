@@ -56,7 +56,18 @@ const CollectionLoader = ({
     <CollectionEmpty
       data={experiments}
       searchQuery={filters.searchQuery}
-      onClear={() => setFilters({ searchQuery: '' })}
+      isFilter={filters.isFilter}
+      description="No experiments match your search filters. Try changing your filters."
+      buttonText="Clear Filters"
+      buttonVariant={'secondary'}
+      onClear={() =>
+        setFilters({
+          searchQuery: '',
+          isFilter: undefined,
+          status: 'ACTIVE',
+          statuses: ['WAITING', 'RUNNING']
+        })
+      }
       empty={<EmptyCollection onAdd={onAdd} />}
     />
   );

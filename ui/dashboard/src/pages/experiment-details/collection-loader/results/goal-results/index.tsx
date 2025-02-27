@@ -7,6 +7,7 @@ import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import { ChartDataType, GoalResultState, GoalResultTab } from '..';
 import ChartDataTypeDropdown from '../chart-data-type-dropdown';
+import ConversionRateChart from './conversion-rate-chart';
 import ConversionRateTable from './conversion-rate-table';
 import EvaluationTable from './evaluation-table';
 import TimeSeriesLineChart from './timeseries-line-chart';
@@ -50,7 +51,14 @@ const GoalResultItem = ({
       <Tabs
         className="flex-1 flex h-full flex-col"
         value={goalResultState?.tab}
-        onValueChange={tab => onChangeResultState(tab as GoalResultTab)}
+        onValueChange={tab =>
+          onChangeResultState(
+            tab as GoalResultTab,
+            (tab as GoalResultTab) === 'EVALUATION'
+              ? 'evaluation-user'
+              : 'conversion-rate'
+          )
+        }
       >
         <TabsList>
           <TabsTrigger value="EVALUATION">{t(`evaluation`)}</TabsTrigger>
@@ -74,7 +82,8 @@ const GoalResultItem = ({
               <TimeSeriesLineChart
                 timeseries={getTimeSeries(
                   goalResult?.variationResults,
-                  goalResultState?.chartType
+                  goalResultState?.chartType,
+                  goalResultState?.tab
                 )}
                 dataLabels={variationValues}
                 data={getData(
@@ -85,10 +94,25 @@ const GoalResultItem = ({
             </div>
           )}
           {goalResultState?.tab === 'CONVERSION' && (
-            <ConversionRateTable
-              goalResult={goalResult}
-              experiment={experiment}
-            />
+            <div className="flex flex-col gap-y-6">
+              <ConversionRateTable
+                goalResultState={goalResultState}
+                goalResult={goalResult}
+                experiment={experiment}
+              />
+              <ChartDataTypeDropdown
+                tab={goalResultState?.tab}
+                chartType={goalResultState?.chartType}
+                onSelectOption={value =>
+                  onChangeResultState(undefined, value as ChartDataType)
+                }
+              />
+              <ConversionRateChart
+                variationValues={variationValues}
+                goalResult={goalResult}
+                goalResultState={goalResultState}
+              />
+            </div>
           )}
         </TabsContent>
       </Tabs>

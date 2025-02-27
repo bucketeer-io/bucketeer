@@ -1,10 +1,17 @@
 import { VariationResult } from '@types';
-import { ChartDataType } from 'pages/experiment-details/collection-loader/results';
+import {
+  ChartDataType,
+  GoalResultTab
+} from 'pages/experiment-details/collection-loader/results';
 
 export const getTimeSeries = (
   variationResults: VariationResult[],
-  type: ChartDataType
+  type: ChartDataType,
+  tab: GoalResultTab
 ) => {
+  if (tab === 'CONVERSION') {
+    return variationResults[0]?.goalEventCountTimeseries?.timestamps || [];
+  }
   switch (type) {
     case 'goal-total':
       return variationResults[0]?.goalEventCountTimeseries?.timestamps || [];

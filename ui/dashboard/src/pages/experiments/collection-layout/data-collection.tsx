@@ -201,7 +201,7 @@ export const useColumns = ({
                 icon: IconEditOutlined,
                 value: 'EDIT'
               },
-              row.original.stopped
+              ['STOPPED', 'FORCE_STOPPED'].includes(row.original.status)
                 ? {
                     label: `${t('table:popover.start-experiment')}`,
                     icon: IconStartExperiment,
@@ -222,7 +222,9 @@ export const useColumns = ({
                     label: `${t('table:popover.archive-experiment')}`,
                     icon: IconArchiveOutlined,
                     value: 'ARCHIVE',
-                    disabled: !row.original.stopped
+                    disabled: ['RUNNING', 'WAITING'].includes(
+                      row.original.status
+                    )
                   }
             ]}
             icon={IconMoreHorizOutlined}
