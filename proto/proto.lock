@@ -11325,7 +11325,13 @@
               {
                 "id": 3,
                 "name": "url_code",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 4,

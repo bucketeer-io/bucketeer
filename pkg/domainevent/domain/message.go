@@ -904,7 +904,16 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 			Locale: localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(
 				locale.UnarchivedTemplate,
-				localizer.MustLocalizeWithTemplate(locale.Environment)),
+				localizer.MustLocalizeWithTemplate(locale.Environment),
+			),
+		}
+	case proto.Event_ENVIRONMENT_V2_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.UpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Environment),
+			),
 		}
 	case proto.Event_ADMIN_ACCOUNT_CREATED:
 		return &proto.LocalizedMessage{

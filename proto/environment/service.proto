@@ -73,7 +73,7 @@ message CreateEnvironmentV2Request {
     }
   ];
   string name = 2 [(google.api.field_behavior) = REQUIRED];
-  string url_code = 3;
+  string url_code = 3 [(google.api.field_behavior) = REQUIRED];
   string description = 4;
   string project_id = 5 [(google.api.field_behavior) = REQUIRED];
   bool require_comment = 6;

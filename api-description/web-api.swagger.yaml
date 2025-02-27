@@ -7355,6 +7355,7 @@ definitions:
         type: boolean
     required:
       - name
+      - urlCode
       - projectId
   environmentCreateEnvironmentV2Response:
     type: object
