@@ -33,6 +33,8 @@ var protoc$gen$openapiv2_options_annotations_pb = require('../../protoc-gen-open
 goog.object.extend(proto, protoc$gen$openapiv2_options_annotations_pb);
 var proto_account_account_pb = require('../../proto/account/account_pb.js');
 goog.object.extend(proto, proto_account_account_pb);
+var proto_common_string_pb = require('../../proto/common/string_pb.js');
+goog.object.extend(proto, proto_common_string_pb);
 var proto_account_api_key_pb = require('../../proto/account/api_key_pb.js');
 goog.object.extend(proto, proto_account_api_key_pb);
 var proto_account_command_pb = require('../../proto/account/command_pb.js');
@@ -3890,7 +3892,7 @@ proto.bucketeer.account.DeleteAccountV2Response.serializeBinaryToWriter =
  * @private {!Array<number>}
  * @const
  */
-proto.bucketeer.account.UpdateAccountV2Request.repeatedFields_ = [15, 22];
+proto.bucketeer.account.UpdateAccountV2Request.repeatedFields_ = [15];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -4023,8 +4025,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         disabled:
           (f = msg.getDisabled()) &&
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
-        tagsList:
-          (f = jspb.Message.getRepeatedField(msg, 22)) == null ? undefined : f,
+        tags:
+          (f = msg.getTags()) &&
+          proto_common_string_pb.StringListValue.toObject(includeInstance, f),
         changeTagsCommand:
           (f = msg.getChangeTagsCommand()) &&
           proto_account_command_pb.ChangeAccountV2TagsCommand.toObject(
@@ -4254,8 +4257,12 @@ proto.bucketeer.account.UpdateAccountV2Request.deserializeBinaryFromReader =
           msg.setDisabled(value);
           break;
         case 22:
-          var value = /** @type {string} */ (reader.readString());
-          msg.addTags(value);
+          var value = new proto_common_string_pb.StringListValue();
+          reader.readMessage(
+            value,
+            proto_common_string_pb.StringListValue.deserializeBinaryFromReader
+          );
+          msg.setTags(value);
           break;
         case 23:
           var value = new proto_account_command_pb.ChangeAccountV2TagsCommand();
@@ -4470,9 +4477,13 @@ proto.bucketeer.account.UpdateAccountV2Request.serializeBinaryToWriter =
         google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
       );
     }
-    f = message.getTagsList();
-    if (f.length > 0) {
-      writer.writeRepeatedString(22, f);
+    f = message.getTags();
+    if (f != null) {
+      writer.writeMessage(
+        22,
+        f,
+        proto_common_string_pb.StringListValue.serializeBinaryToWriter
+      );
     }
     f = message.getChangeTagsCommand();
     if (f != null) {
@@ -5664,45 +5675,45 @@ proto.bucketeer.account.UpdateAccountV2Request.prototype.hasDisabled =
   };
 
 /**
- * repeated string tags = 22;
- * @return {!Array<string>}
+ * optional bucketeer.common.StringListValue tags = 22;
+ * @return {?proto.bucketeer.common.StringListValue}
  */
-proto.bucketeer.account.UpdateAccountV2Request.prototype.getTagsList =
-  function () {
-    return /** @type {!Array<string>} */ (
-      jspb.Message.getRepeatedField(this, 22)
-    );
-  };
-
-/**
- * @param {!Array<string>} value
- * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
- */
-proto.bucketeer.account.UpdateAccountV2Request.prototype.setTagsList =
-  function (value) {
-    return jspb.Message.setField(this, 22, value || []);
-  };
-
-/**
- * @param {string} value
- * @param {number=} opt_index
- * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
- */
-proto.bucketeer.account.UpdateAccountV2Request.prototype.addTags = function (
-  value,
-  opt_index
-) {
-  return jspb.Message.addToRepeatedField(this, 22, value, opt_index);
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getTags = function () {
+  return /** @type{?proto.bucketeer.common.StringListValue} */ (
+    jspb.Message.getWrapperField(
+      this,
+      proto_common_string_pb.StringListValue,
+      22
+    )
+  );
 };
 
 /**
- * Clears the list making it empty but non-null.
+ * @param {?proto.bucketeer.common.StringListValue|undefined} value
  * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
  */
-proto.bucketeer.account.UpdateAccountV2Request.prototype.clearTagsList =
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setTags = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 22, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.clearTags =
   function () {
-    return this.setTagsList([]);
+    return this.setTags(undefined);
   };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.hasTags = function () {
+  return jspb.Message.getField(this, 22) != null;
+};
 
 /**
  * optional ChangeAccountV2TagsCommand change_tags_command = 23;

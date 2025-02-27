@@ -1391,8 +1391,7 @@
               {
                 "id": 22,
                 "name": "tags",
-                "type": "string",
-                "is_repeated": true
+                "type": "common.StringListValue"
               },
               {
                 "id": 23,
@@ -5344,6 +5343,9 @@
           },
           {
             "path": "proto/account/account.proto"
+          },
+          {
+            "path": "proto/common/string.proto"
           },
           {
             "path": "proto/account/api_key.proto"

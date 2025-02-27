@@ -36,6 +36,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	tagdomain "github.com/bucketeer-io/bucketeer/pkg/tag/domain"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	"github.com/bucketeer-io/bucketeer/proto/common"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
 )
@@ -276,7 +277,7 @@ func (s *AccountService) createAccountV2NoCommand(
 					zap.String("organizationId", req.OrganizationId),
 					zap.String("environmentId", envRole.EnvironmentId),
 					zap.String("email", req.Email),
-					zap.Strings("tags", req.Tags),
+					zap.Any("tags", req.Tags),
 				)...,
 			)
 			return nil, statusInternal.Err()
@@ -560,7 +561,10 @@ func (s *AccountService) updateAccountV2NoCommand(
 	// Upsert tags
 	if req.Tags != nil {
 		for _, envRole := range updatedAccountPb.EnvironmentRoles {
-			if err := s.upsertTags(ctx, req.Tags, envRole.EnvironmentId); err != nil {
+			if req.Tags == nil {
+				continue
+			}
+			if err := s.upsertTags(ctx, req.Tags.Values, envRole.EnvironmentId); err != nil {
 				s.logger.Error(
 					"Failed to upsert account tags",
 					log.FieldsFromImcomingContext(ctx).AddFields(
@@ -568,7 +572,7 @@ func (s *AccountService) updateAccountV2NoCommand(
 						zap.String("organizationId", req.OrganizationId),
 						zap.String("environmentId", envRole.EnvironmentId),
 						zap.String("email", req.Email),
-						zap.Strings("tags", req.Tags),
+						zap.Any("tags", req.Tags),
 					)...,
 				)
 				return nil, statusInternal.Err()
@@ -664,7 +668,7 @@ func (s *AccountService) EnableAccountV2(
 		nil,
 		nil,
 		nil,
-		[]string{},
+		nil,
 		nil,
 		nil,
 		wrapperspb.Bool(false),
@@ -738,7 +742,7 @@ func (s *AccountService) DisableAccountV2(
 		nil,
 		nil,
 		nil,
-		[]string{},
+		nil,
 		nil,
 		nil,
 		wrapperspb.Bool(true),
@@ -810,7 +814,7 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 	email, organizationID string,
 	name, firstName, lastName, language, avatarImageURL *wrapperspb.StringValue,
 	avatar *accountproto.UpdateAccountV2Request_AccountV2Avatar,
-	tags []string,
+	tags *common.StringListValue,
 	organizationRole *accountproto.UpdateAccountV2Request_OrganizationRoleValue,
 	environmentRoles []*accountproto.AccountV2_EnvironmentRole,
 	isDisabled *wrapperspb.BoolValue,
