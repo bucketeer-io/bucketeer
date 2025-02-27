@@ -742,20 +742,20 @@ func TestListSegmentsMySQL(t *testing.T) {
 		environmentId  string
 		getExpectedErr func(localizer locale.Localizer) error
 	}{
-		// {
-		// 	desc:    "error: exceeded max page size per request",
-		// 	service: createFeatureService(mockController),
-		// 	context: metadata.NewIncomingContext(
-		// 		createContextWithTokenRoleUnassigned(),
-		// 		metadata.MD{"accept-language": []string{"ja"}},
-		// 	),
-		// 	setup:         nil,
-		// 	pageSize:      int64(maxPageSizePerRequest + 1),
-		// 	environmentId: "ns0",
-		// 	getExpectedErr: func(localizer locale.Localizer) error {
-		// 		return createError(t, statusExceededMaxPageSizePerRequest, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "page_size"), localizer)
-		// 	},
-		// },
+		{
+			desc:    "error: exceeded max page size per request",
+			service: createFeatureService(mockController),
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			setup:         nil,
+			pageSize:      int64(maxPageSizePerRequest + 1),
+			environmentId: "ns0",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusExceededMaxPageSizePerRequest, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "page_size"), localizer)
+			},
+		},
 		{
 			desc:    "success",
 			service: createFeatureService(mockController),
@@ -780,13 +780,6 @@ func TestListSegmentsMySQL(t *testing.T) {
 						Id: "id",
 					},
 				}, 0, int64(0), nil)
-				// s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
-				// 	gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				// ).Return([]*featureproto.Feature{
-				// 	{
-				// 		Id: "id",
-				// 	},
-				// }, 0, int64(0), nil)
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
@@ -801,47 +794,47 @@ func TestListSegmentsMySQL(t *testing.T) {
 				return nil
 			},
 		},
-		// {
-		// 	desc:    "success with Viewer account",
-		// 	service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
-		// 	context: metadata.NewIncomingContext(
-		// 		createContextWithTokenRoleUnassigned(),
-		// 		metadata.MD{"accept-language": []string{"ja"}},
-		// 	),
-		// 	setup: func(s *FeatureService) {
-		// 		rows := mysqlmock.NewMockRows(mockController)
-		// 		rows.EXPECT().Close().Return(nil).Times(2)
-		// 		rows.EXPECT().Next().Return(false).Times(2)
-		// 		rows.EXPECT().Err().Return(nil).Times(2)
-		// 		s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-		// 			gomock.Any(), gomock.Any(), gomock.Any(),
-		// 		).Return(rows, nil).Times(2)
-		// 		row := mysqlmock.NewMockRow(mockController)
-		// 		row.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
-		// 		s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-		// 			gomock.Any(), gomock.Any(), gomock.Any(),
-		// 		).Return(row).Times(2)
-		// 	},
-		// 	pageSize:      int64(maxPageSizePerRequest),
-		// 	environmentId: "ns0",
-		// 	getExpectedErr: func(localizer locale.Localizer) error {
-		// 		return nil
-		// 	},
-		// },
-		// {
-		// 	desc:    "errPermissionDenied",
-		// 	service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-		// 	context: metadata.NewIncomingContext(
-		// 		createContextWithTokenRoleUnassigned(),
-		// 		metadata.MD{"accept-language": []string{"ja"}},
-		// 	),
-		// 	setup:         func(s *FeatureService) {},
-		// 	pageSize:      int64(maxPageSizePerRequest),
-		// 	environmentId: "ns0",
-		// 	getExpectedErr: func(localizer locale.Localizer) error {
-		// 		return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
-		// 	},
-		// },
+		{
+			desc:    "success with Viewer account",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			setup: func(s *FeatureService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil).Times(2)
+				rows.EXPECT().Next().Return(false).Times(2)
+				rows.EXPECT().Err().Return(nil).Times(2)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil).Times(2)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row).Times(2)
+			},
+			pageSize:      int64(maxPageSizePerRequest),
+			environmentId: "ns0",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "errPermissionDenied",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			setup:         func(s *FeatureService) {},
+			pageSize:      int64(maxPageSizePerRequest),
+			environmentId: "ns0",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			},
+		},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.desc, func(t *testing.T) {
