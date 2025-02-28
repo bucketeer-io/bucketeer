@@ -47,7 +47,7 @@ func TestWithLogger(t *testing.T) {
 
 func TestNewAccountService(t *testing.T) {
 	t.Parallel()
-	g := NewAccountService(nil, nil, nil)
+	g := NewAccountService(nil, nil, nil, nil)
 	assert.IsType(t, &AccountService{}, g)
 }
 

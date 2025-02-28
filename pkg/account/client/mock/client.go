@@ -394,6 +394,26 @@ func (mr *MockClientMockRecorder) GetMyOrganizationsByEmail(ctx, in any, opts ..
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMyOrganizationsByEmail", reflect.TypeOf((*MockClient)(nil).GetMyOrganizationsByEmail), varargs...)
 }
 
+// GetMyOrganizationsByGoogleToken mocks base method.
+func (m *MockClient) GetMyOrganizationsByGoogleToken(ctx context.Context, in *account.GetMyOrganizationsByGoogleTokenRequest, opts ...grpc.CallOption) (*account.GetMyOrganizationsResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetMyOrganizationsByGoogleToken", varargs...)
+	ret0, _ := ret[0].(*account.GetMyOrganizationsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMyOrganizationsByGoogleToken indicates an expected call of GetMyOrganizationsByGoogleToken.
+func (mr *MockClientMockRecorder) GetMyOrganizationsByGoogleToken(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMyOrganizationsByGoogleToken", reflect.TypeOf((*MockClient)(nil).GetMyOrganizationsByGoogleToken), varargs...)
+}
+
 // ListAPIKeys mocks base method.
 func (m *MockClient) ListAPIKeys(ctx context.Context, in *account.ListAPIKeysRequest, opts ...grpc.CallOption) (*account.ListAPIKeysResponse, error) {
 	m.ctrl.T.Helper()
