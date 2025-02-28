@@ -3,8 +3,7 @@ import { useTranslation } from 'i18n';
 import { ExperimentCollection, ExperimentStatus } from '@types';
 import { cn } from 'utils/style';
 import {
-  IconExperiment,
-  IconNotStartedExperiment,
+  IconExperiment, // IconNotStartedExperiment,
   IconStoppedExperiment,
   IconWaitingExperiment
 } from '@icons';
@@ -44,15 +43,15 @@ const overviewOptions: OverviewOption[] = [
     icon: IconStoppedExperiment,
     summaryFilterValue: 'stopped',
     filterValues: ['STOPPED', 'FORCE_STOPPED']
-  },
-  {
-    titleKey: 'experiment.not-started',
-    countKey: undefined,
-    color: 'gray',
-    icon: IconNotStartedExperiment,
-    summaryFilterValue: 'not-started',
-    filterValues: ['NOT_STARTED']
   }
+  // {
+  //   titleKey: 'experiment.not-started',
+  //   countKey: undefined,
+  //   color: 'gray',
+  //   icon: IconNotStartedExperiment,
+  //   summaryFilterValue: 'not-started',
+  //   filterValues: ['NOT_STARTED']
+  // }
 ];
 
 const Overview = ({

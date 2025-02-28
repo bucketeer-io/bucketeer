@@ -34,7 +34,7 @@ type Props = CardIconProps &
     onClick?: () => void;
   };
 
-const cardIconVariants = cva('flex-center size-[88px] p-5 rounded-lg', {
+const cardIconVariants = cva('flex-center size-16 p-5 rounded-lg', {
   variants: {
     color: {
       green: 'bg-accent-green-50',
@@ -102,7 +102,7 @@ const OverviewCard = ({
   return (
     <div
       className={cn(
-        'flex flex-1 items-center p-4 gap-x-4 w-full min-w-[300px] bg-white shadow-card rounded-2xl overflow-hidden cursor-pointer hover:shadow-gray-300',
+        'flex flex-1 items-center p-4 gap-x-4 w-full min-w-[268px] bg-white shadow-card rounded-2xl overflow-hidden cursor-pointer hover:shadow-gray-300',
         className
       )}
       onClick={onClick}
