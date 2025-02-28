@@ -46,6 +46,12 @@ message GetMyOrganizationsByEmailRequest {
   string email = 1;
 }
 
+// Retrieve the organization to which the account belongs by Google access
+// token.
+message GetMyOrganizationsByGoogleTokenRequest {
+  string access_token = 1;
+}
+
 message GetMyOrganizationsResponse {
   repeated environment.Organization organizations = 1;
 }
@@ -404,6 +410,40 @@ service AccountService {
       description: "Get all the organizations by email.",
       tags: "Account",
       operation_id: "web.v1.account.my_organizations_by_email",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc GetMyOrganizationsByGoogleToken(GetMyOrganizationsByGoogleTokenRequest)
+      returns (GetMyOrganizationsResponse) {
+    option (google.api.http) = {
+      get: "/v1/account/my_organizations_by_google_token"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get My Organizations By Google Token",
+      description: "Get all the organizations by Google access token.",
+      tags: "Account",
+      operation_id: "web.v1.account.my_organizations_by_google_token",
       responses: {
         key: "400"
         value: {

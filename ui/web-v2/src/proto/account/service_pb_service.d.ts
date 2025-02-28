@@ -31,6 +31,15 @@ type AccountServiceGetMyOrganizationsByEmail = {
   readonly responseType: typeof proto_account_service_pb.GetMyOrganizationsResponse;
 };
 
+type AccountServiceGetMyOrganizationsByGoogleToken = {
+  readonly methodName: string;
+  readonly service: typeof AccountService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_account_service_pb.GetMyOrganizationsByGoogleTokenRequest;
+  readonly responseType: typeof proto_account_service_pb.GetMyOrganizationsResponse;
+};
+
 type AccountServiceCreateAccountV2 = {
   readonly methodName: string;
   readonly service: typeof AccountService;
@@ -207,6 +216,7 @@ export class AccountService {
   static readonly GetMe: AccountServiceGetMe;
   static readonly GetMyOrganizations: AccountServiceGetMyOrganizations;
   static readonly GetMyOrganizationsByEmail: AccountServiceGetMyOrganizationsByEmail;
+  static readonly GetMyOrganizationsByGoogleToken: AccountServiceGetMyOrganizationsByGoogleToken;
   static readonly CreateAccountV2: AccountServiceCreateAccountV2;
   static readonly EnableAccountV2: AccountServiceEnableAccountV2;
   static readonly DisableAccountV2: AccountServiceDisableAccountV2;
@@ -313,6 +323,21 @@ export class AccountServiceClient {
   ): UnaryResponse;
   getMyOrganizationsByEmail(
     requestMessage: proto_account_service_pb.GetMyOrganizationsByEmailRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_account_service_pb.GetMyOrganizationsResponse | null
+    ) => void
+  ): UnaryResponse;
+  getMyOrganizationsByGoogleToken(
+    requestMessage: proto_account_service_pb.GetMyOrganizationsByGoogleTokenRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_account_service_pb.GetMyOrganizationsResponse | null
+    ) => void
+  ): UnaryResponse;
+  getMyOrganizationsByGoogleToken(
+    requestMessage: proto_account_service_pb.GetMyOrganizationsByGoogleTokenRequest,
     callback: (
       error: ServiceError | null,
       responseMessage: proto_account_service_pb.GetMyOrganizationsResponse | null

@@ -201,6 +201,7 @@ func (s *authService) ExchangeToken(
 			zap.Any("type", req.Type),
 			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
+			zap.String("organization_id", req.OrganizationId),
 		)
 		return nil, err
 	}
@@ -211,6 +212,7 @@ func (s *authService) ExchangeToken(
 			zap.Any("type", req.Type),
 			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
+			zap.String("organization_id", req.OrganizationId),
 		)
 		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -228,6 +230,7 @@ func (s *authService) ExchangeToken(
 			zap.Any("type", req.Type),
 			zap.String("code", req.Code),
 			zap.String("redirect_url", req.RedirectUrl),
+			zap.String("organization_id", req.OrganizationId),
 		)
 		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -239,26 +242,29 @@ func (s *authService) ExchangeToken(
 		return nil, dt.Err()
 	}
 
-	organizations, err := s.getOrganizationsByEmail(ctx, userInfo.Email, localizer)
+	// Validate that the user has access to the organization
+	err = s.validateOrganizationAccess(ctx, req.OrganizationId, userInfo.Email, localizer)
 	if err != nil {
-		s.logger.Error("Failed to get organizations by email",
+		s.logger.Error("Failed to validate organization access",
 			zap.Error(err),
 			zap.Any("type", req.Type),
-			zap.String("code", req.Code),
-			zap.String("redirect_url", req.RedirectUrl),
+			zap.String("email", userInfo.Email),
+			zap.String("organization_id", req.OrganizationId),
 		)
 		return nil, err
 	}
 
-	s.updateUserInfoForOrganizations(ctx, userInfo, organizations)
+	// Update user info for the organization
+	s.updateUserInfoForOrganization(ctx, userInfo, req.OrganizationId)
 
-	token, err := s.generateToken(ctx, userInfo.Email, organizations, localizer)
+	token, err := s.generateTokenWithOrganizationID(ctx, userInfo.Email, req.OrganizationId, localizer)
 	if err != nil {
 		s.logger.Error("Failed to generate token",
 			zap.Error(err),
 			zap.Any("type", req.Type),
 			zap.String("code", req.Code),
-			zap.String("redirect_url", req.RedirectUrl),
+			zap.String("email", userInfo.Email),
+			zap.String("organization_id", req.OrganizationId),
 		)
 		return nil, err
 	}
@@ -387,71 +393,69 @@ func (s *authService) getOrganizationsByEmail(
 	return orgResp.Organizations, nil
 }
 
-func (s *authService) updateUserInfoForOrganizations(
+// updateUserInfoForOrganization updates user info for a specific organization
+func (s *authService) updateUserInfoForOrganization(
 	ctx context.Context,
 	userInfo *auth.UserInfo,
-	organizations []*envproto.Organization,
+	organizationID string,
 ) {
-	for _, org := range organizations {
-		account, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
-			Email:          userInfo.Email,
-			OrganizationId: org.Id,
-		})
-		if err != nil {
-			// Because we don't know what organization the user belongs when exchanging the token,
-			// we ignore logs that were not found to avoid unnecessary logging.
-			if status.Code(err) != codes.NotFound {
-				s.logger.Error(
-					"Failed to get account",
-					zap.Error(err),
-					zap.String("email", userInfo.Email),
-					zap.String("organizationId", org.Id),
-				)
-			}
-			continue
+	account, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
+		Email:          userInfo.Email,
+		OrganizationId: organizationID,
+	})
+	if err != nil {
+		// If the account is not found, we don't need to update anything
+		if status.Code(err) != codes.NotFound {
+			s.logger.Error(
+				"Failed to get account",
+				zap.Error(err),
+				zap.String("email", userInfo.Email),
+				zap.String("organizationId", organizationID),
+			)
 		}
+		return
+	}
 
-		if account.Account.LastSeen == 0 {
-			// Download avatar image if URL exists
-			var avatarBytes []byte
-			if userInfo.Avatar != "" {
-				avatarBytes, err = s.downloadAvatar(ctx, userInfo.Avatar)
-				if err != nil {
-					s.logger.Error(
-						"Failed to download avatar image",
-						zap.Error(err),
-						zap.String("avatarUrl", userInfo.Avatar),
-					)
-					// Continue with update even if avatar download fails
-				}
-			}
-
-			updateReq := &acproto.UpdateAccountV2Request{
-				Email:          userInfo.Email,
-				OrganizationId: org.Id,
-				ChangeFirstNameCommand: &acproto.ChangeAccountV2FirstNameCommand{
-					FirstName: userInfo.FirstName,
-				},
-				ChangeLastNameCommand: &acproto.ChangeAccountV2LastNameCommand{
-					LastName: userInfo.LastName,
-				},
-				ChangeAvatarUrlCommand: &acproto.ChangeAccountV2AvatarImageUrlCommand{
-					AvatarImageUrl: userInfo.Avatar,
-				},
-				ChangeAvatarCommand: &acproto.ChangeAccountV2AvatarCommand{
-					AvatarImage:    avatarBytes,
-					AvatarFileType: "image/png",
-				},
-			}
-			_, err = s.accountClient.UpdateAccountV2(ctx, updateReq)
+	if account.Account.LastSeen == 0 {
+		// Download avatar image if URL exists
+		var avatarBytes []byte
+		if userInfo.Avatar != "" {
+			avatarBytes, err = s.downloadAvatar(ctx, userInfo.Avatar)
 			if err != nil {
 				s.logger.Error(
-					"Failed to update account first name, last name or avatar",
+					"Failed to download avatar image",
 					zap.Error(err),
-					zap.String("email", userInfo.Email),
-					zap.String("organizationId", org.Id),
+					zap.String("avatarUrl", userInfo.Avatar),
 				)
+				// Continue with update even if avatar download fails
 			}
+		}
+
+		updateReq := &acproto.UpdateAccountV2Request{
+			Email:          userInfo.Email,
+			OrganizationId: organizationID,
+			ChangeFirstNameCommand: &acproto.ChangeAccountV2FirstNameCommand{
+				FirstName: userInfo.FirstName,
+			},
+			ChangeLastNameCommand: &acproto.ChangeAccountV2LastNameCommand{
+				LastName: userInfo.LastName,
+			},
+			ChangeAvatarUrlCommand: &acproto.ChangeAccountV2AvatarImageUrlCommand{
+				AvatarImageUrl: userInfo.Avatar,
+			},
+			ChangeAvatarCommand: &acproto.ChangeAccountV2AvatarCommand{
+				AvatarImage:    avatarBytes,
+				AvatarFileType: "image/png",
+			},
+		}
+		_, err = s.accountClient.UpdateAccountV2(ctx, updateReq)
+		if err != nil {
+			s.logger.Error(
+				"Failed to update account first name, last name or avatar",
+				zap.Error(err),
+				zap.String("email", userInfo.Email),
+				zap.String("organizationId", organizationID),
+			)
 		}
 	}
 }
@@ -775,4 +779,189 @@ func (s *authService) PrepareDemoUser() {
 		}
 	}
 	s.logger.Info("Demo environment prepared successfully")
+}
+
+// validateOrganizationAccess checks if the user has access to the specified organization
+func (s *authService) validateOrganizationAccess(
+	ctx context.Context,
+	organizationID string,
+	email string,
+	localizer locale.Localizer,
+) error {
+	// Directly check if the user has an account in the specified organization
+	_, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: organizationID,
+	})
+
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			s.logger.Error(
+				"The account does not have access to this organization",
+				zap.String("email", email),
+				zap.String("organizationID", organizationID),
+			)
+			dt, err := auth.StatusUnapprovedAccount.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.PermissionDenied),
+			})
+			if err != nil {
+				return auth.StatusInternal.Err()
+			}
+			return dt.Err()
+		}
+
+		// For other errors, return internal error
+		s.logger.Error(
+			"Failed to get account for organization",
+			zap.Error(err),
+			zap.String("email", email),
+			zap.String("organizationID", organizationID),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return auth.StatusInternal.Err()
+		}
+		return dt.Err()
+	}
+
+	return nil
+}
+
+// generateTokenWithOrganizationID generates a token with an organization ID
+func (s *authService) generateTokenWithOrganizationID(
+	ctx context.Context,
+	userEmail string,
+	organizationID string,
+	localizer locale.Localizer,
+) (*authproto.Token, error) {
+	if err := s.checkEmail(userEmail, localizer); err != nil {
+		s.logger.Error(
+			"Access denied email",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", userEmail))...,
+		)
+		return nil, err
+	}
+
+	// Get account for this organization
+	account, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
+		Email:          userEmail,
+		OrganizationId: organizationID,
+	})
+	if err != nil {
+		s.logger.Error("Failed to get account",
+			zap.Error(err),
+			zap.String("email", userEmail),
+			zap.String("organizationId", organizationID),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	// Check if the account is enabled
+	if account.Account.Disabled {
+		s.logger.Error("Account is disabled",
+			zap.String("email", userEmail),
+			zap.String("organizationId", organizationID),
+		)
+		dt, err := auth.StatusUnapprovedAccount.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.PermissionDenied),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	accountDomain := domain.AccountV2{AccountV2: account.Account}
+
+	// Get all organizations for this email (to check if any is a system admin org)
+	orgResp, err := s.accountClient.GetMyOrganizationsByEmail(
+		ctx,
+		&acproto.GetMyOrganizationsByEmailRequest{
+			Email: userEmail,
+		},
+	)
+	if err != nil {
+		s.logger.Error("Failed to get organizations for system admin check",
+			zap.Error(err),
+			zap.String("email", userEmail),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	isSystemAdmin := s.hasSystemAdminOrganization(orgResp.Organizations)
+
+	timeNow := time.Now()
+	accessTokenTTL := timeNow.Add(day)
+	accessToken := &token.AccessToken{
+		Issuer:         s.issuer,
+		Audience:       s.audience,
+		Expiry:         accessTokenTTL,
+		IssuedAt:       timeNow,
+		Email:          userEmail,
+		Name:           accountDomain.GetAccountFullName(),
+		IsSystemAdmin:  isSystemAdmin,
+		OrganizationID: organizationID,
+	}
+	signedAccessToken, err := s.signer.SignAccessToken(accessToken)
+	if err != nil {
+		s.logger.Error(
+			"Failed to sign access token",
+			zap.Error(err),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	refreshToken := &token.RefreshToken{
+		Email:    userEmail,
+		Expiry:   timeNow.Add(sevenDays),
+		IssuedAt: timeNow,
+	}
+	signRefreshToken, err := s.signer.SignRefreshToken(refreshToken)
+	if err != nil {
+		s.logger.Error(
+			"Failed to sign access token",
+			zap.Error(err),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	return &authproto.Token{
+		AccessToken:  signedAccessToken,
+		RefreshToken: signRefreshToken,
+		TokenType:    "Bearer",
+		Expiry:       accessTokenTTL.Unix(),
+	}, nil
 }

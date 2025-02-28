@@ -500,6 +500,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		environmentClient,
 		mysqlClient,
 		domainTopicPublisher,
+		&oAuthConfig.GoogleConfig,
 		accountapi.WithLogger(logger),
 	)
 	accountServer := rpc.NewServer(accountService, *s.certPath, *s.keyPath,
