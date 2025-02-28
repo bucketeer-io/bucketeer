@@ -18,6 +18,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/jinzhu/copier"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
@@ -50,6 +53,28 @@ func NewOrganization(name, urlCode, ownerEmail, description string, trial, syste
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}}, nil
+}
+
+func (p *Organization) Update(
+	name *wrapperspb.StringValue,
+	description *wrapperspb.StringValue,
+	ownerEmail *wrapperspb.StringValue,
+) (*Organization, error) {
+	updated := &Organization{}
+	if err := copier.Copy(updated, p); err != nil {
+		return nil, err
+	}
+	if name != nil {
+		updated.Name = name.Value
+	}
+	if description != nil {
+		updated.Description = description.Value
+	}
+	if ownerEmail != nil {
+		updated.OwnerEmail = ownerEmail.Value
+	}
+	updated.UpdatedAt = time.Now().Unix()
+	return updated, nil
 }
 
 func (p *Organization) ChangeDescription(description string) {

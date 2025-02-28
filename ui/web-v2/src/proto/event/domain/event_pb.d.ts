@@ -299,6 +299,7 @@ export namespace Event {
     ORGANIZATION_UNARCHIVED: 1506;
     ORGANIZATION_TRIAL_CONVERTED: 1507;
     ORGANIZATION_OWNER_EMAIL_CHANGED: 1508;
+    ORGANIZATION_UPDATED: 1509;
     FLAG_TRIGGER_CREATED: 1601;
     FLAG_TRIGGER_RESET: 1602;
     FLAG_TRIGGER_DESCRIPTION_CHANGED: 1603;
@@ -6732,6 +6733,55 @@ export namespace OrganizationNameChangedEvent {
   export type AsObject = {
     id: string;
     name: string;
+  };
+}
+
+export class OrganizationUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasOwneremail(): boolean;
+  clearOwneremail(): void;
+  getOwneremail(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setOwneremail(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): OrganizationUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: OrganizationUpdatedEvent
+  ): OrganizationUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: OrganizationUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): OrganizationUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: OrganizationUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): OrganizationUpdatedEvent;
+}
+
+export namespace OrganizationUpdatedEvent {
+  export type AsObject = {
+    id: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    owneremail?: google_protobuf_wrappers_pb.StringValue.AsObject;
   };
 }
 
