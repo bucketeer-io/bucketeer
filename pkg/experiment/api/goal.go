@@ -387,7 +387,7 @@ func (s *experimentService) createGoalNoCommand(
 		}
 		return nil, dt.Err()
 	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
 		prev := &domain.Goal{}
 		e, err := domainevent.NewEvent(
 			editor,

@@ -239,20 +239,6 @@ func (mr *MockAccountStorageMockRecorder) ListAllEnvironmentAPIKeys(ctx any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllEnvironmentAPIKeys", reflect.TypeOf((*MockAccountStorage)(nil).ListAllEnvironmentAPIKeys), ctx)
 }
 
-// RunInTransaction mocks base method.
-func (m *MockAccountStorage) RunInTransaction(ctx context.Context, f func() error) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RunInTransaction", ctx, f)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RunInTransaction indicates an expected call of RunInTransaction.
-func (mr *MockAccountStorageMockRecorder) RunInTransaction(ctx, f any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunInTransaction", reflect.TypeOf((*MockAccountStorage)(nil).RunInTransaction), ctx, f)
-}
-
 // UpdateAPIKey mocks base method.
 func (m *MockAccountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentID string) error {
 	m.ctrl.T.Helper()

@@ -42,7 +42,11 @@ func TestCreateAPIKey(t *testing.T) {
 		{
 			desc: "ErrAPIKeyAlreadyExists",
 			setup: func(s *accountStorage) {
-				s.client.(*mock.MockClient).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, mysql.ErrDuplicateEntry)
 			},
@@ -55,7 +59,11 @@ func TestCreateAPIKey(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *accountStorage) {
-				s.client.(*mock.MockClient).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -68,7 +76,11 @@ func TestCreateAPIKey(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *accountStorage) {
-				s.client.(*mock.MockClient).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
 					"aid-0",
@@ -137,9 +149,13 @@ func TestUpdateAPIKey(t *testing.T) {
 		{
 			desc: "ErrAPIKeyUnexpectedAffectedRows",
 			setup: func(s *accountStorage) {
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
-				s.client.(*mock.MockClient).EXPECT().ExecContext(
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -152,7 +168,11 @@ func TestUpdateAPIKey(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *accountStorage) {
-				s.client.(*mock.MockClient).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -165,9 +185,13 @@ func TestUpdateAPIKey(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *accountStorage) {
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
-				s.client.(*mock.MockClient).EXPECT().ExecContext(
+				qe.EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
 					name, int32(role), disabled, maintainer, description, updatedAt, id, environmentId,
@@ -206,9 +230,13 @@ func TestGetAPIKey(t *testing.T) {
 		{
 			desc: "ErrAPIKeyNotFound",
 			setup: func(s *accountStorage) {
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -219,9 +247,13 @@ func TestGetAPIKey(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *accountStorage) {
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 
@@ -233,9 +265,13 @@ func TestGetAPIKey(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *accountStorage) {
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(),
 					gomock.Any(),
 					"id-0", "ns0",
@@ -272,9 +308,13 @@ func TestGetAPIKeyByAPIKey(t *testing.T) {
 		{
 			desc: "ErrAPIKeyNotFound",
 			setup: func(s *accountStorage) {
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -285,9 +325,13 @@ func TestGetAPIKeyByAPIKey(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *accountStorage) {
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 
@@ -299,9 +343,13 @@ func TestGetAPIKeyByAPIKey(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *accountStorage) {
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(),
 					gomock.Any(),
 					"id-0", "ns0",
@@ -349,7 +397,11 @@ func TestListAPIKeys(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *accountStorage) {
-				s.client.(*mock.MockClient).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -364,6 +416,10 @@ func TestListAPIKeys(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *accountStorage) {
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe).AnyTimes()
 				var nextCallCount = 0
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -377,14 +433,14 @@ func TestListAPIKeys(t *testing.T) {
 				}).Times(getSize + 1)
 				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(getSize)
 				rows.EXPECT().Err().Return(nil)
-				s.client.(*mock.MockClient).EXPECT().QueryContext(
+				qe.EXPECT().QueryContext(
 					gomock.Any(),
 					gomock.Any(),
 					createdAt, updatedAt,
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(),
 					gomock.Any(),
 					createdAt, updatedAt,
@@ -407,6 +463,10 @@ func TestListAPIKeys(t *testing.T) {
 		{
 			desc: "Success:No wereParts and no orderParts and no limit and no offset",
 			setup: func(s *accountStorage) {
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe).AnyTimes()
 				var nextCallCount = 0
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -420,7 +480,7 @@ func TestListAPIKeys(t *testing.T) {
 				}).Times(getSize + 1)
 				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(getSize)
 				rows.EXPECT().Err().Return(nil)
-				s.client.(*mock.MockClient).EXPECT().QueryContext(
+				qe.EXPECT().QueryContext(
 					gomock.Any(),
 					gomock.Any(),
 					[]interface{}{},
@@ -428,7 +488,7 @@ func TestListAPIKeys(t *testing.T) {
 
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(),
 					gomock.Any(),
 					[]interface{}{},
