@@ -7342,6 +7342,21 @@ definitions:
     properties:
       command:
         $ref: '#/definitions/environmentCreateEnvironmentV2Command'
+        description: deprecated
+      name:
+        type: string
+      urlCode:
+        type: string
+      description:
+        type: string
+      projectId:
+        type: string
+      requireComment:
+        type: boolean
+    required:
+      - name
+      - urlCode
+      - projectId
   environmentCreateEnvironmentV2Response:
     type: object
     properties:
@@ -7714,12 +7729,26 @@ definitions:
         type: string
       renameCommand:
         $ref: '#/definitions/environmentRenameEnvironmentV2Command'
+        description: deprecated
       changeDescriptionCommand:
         $ref: '#/definitions/environmentChangeDescriptionEnvironmentV2Command'
+        description: deprecated
       changeRequireCommentCommand:
         $ref: '#/definitions/environmentChangeRequireCommentCommand'
+        description: deprecated
+      name:
+        type: string
+      description:
+        type: string
+      requireComment:
+        type: boolean
+    required:
+      - id
   environmentUpdateEnvironmentV2Response:
     type: object
+    properties:
+      environment:
+        $ref: '#/definitions/environmentEnvironmentV2'
   environmentUpdateOrganizationRequest:
     type: object
     properties:

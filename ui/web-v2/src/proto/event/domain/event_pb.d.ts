@@ -240,6 +240,7 @@ export namespace Event {
     ENVIRONMENT_V2_ARCHIVED: 607;
     ENVIRONMENT_V2_UNARCHIVED: 608;
     ENVIRONMENT_V2_REQUIRE_COMMENT_CHANGED: 609;
+    ENVIRONMENT_V2_UPDATED: 610;
     ADMIN_ACCOUNT_CREATED: 700;
     ADMIN_ACCOUNT_ENABLED: 702;
     ADMIN_ACCOUNT_DISABLED: 703;
@@ -4587,6 +4588,55 @@ export namespace EnvironmentV2UnarchivedEvent {
     id: string;
     name: string;
     projectId: string;
+  };
+}
+
+export class EnvironmentV2UpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasRequireComment(): boolean;
+  clearRequireComment(): void;
+  getRequireComment(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setRequireComment(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnvironmentV2UpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: EnvironmentV2UpdatedEvent
+  ): EnvironmentV2UpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: EnvironmentV2UpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): EnvironmentV2UpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: EnvironmentV2UpdatedEvent,
+    reader: jspb.BinaryReader
+  ): EnvironmentV2UpdatedEvent;
+}
+
+export namespace EnvironmentV2UpdatedEvent {
+  export type AsObject = {
+    id: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    requireComment?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 }
 
