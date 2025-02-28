@@ -1,12 +1,12 @@
 global:
   image:
-    tag: v1.2.0 # x-release-please-version
+    tag: v1.3.0 # x-release-please-version
     imagePullSecrets:
 
 migration:
   image:
     repository: ghcr.io/bucketeer-io/bucketeer-migration
-    tag: v1.2.0 # x-release-please-version
+    tag: v1.3.0 # x-release-please-version
 
   imagePullSecrets: []
 
