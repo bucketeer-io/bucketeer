@@ -375,11 +375,6 @@ export namespace UpdateEnvironmentV2Request {
 }
 
 export class UpdateEnvironmentV2Response extends jspb.Message {
-  hasEnvironment(): boolean;
-  clearEnvironment(): void;
-  getEnvironment(): proto_environment_environment_pb.EnvironmentV2 | undefined;
-  setEnvironment(value?: proto_environment_environment_pb.EnvironmentV2): void;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateEnvironmentV2Response.AsObject;
   static toObject(
@@ -402,9 +397,7 @@ export class UpdateEnvironmentV2Response extends jspb.Message {
 }
 
 export namespace UpdateEnvironmentV2Response {
-  export type AsObject = {
-    environment?: proto_environment_environment_pb.EnvironmentV2.AsObject;
-  };
+  export type AsObject = {};
 }
 
 export class ArchiveEnvironmentV2Request extends jspb.Message {
@@ -1536,11 +1529,6 @@ export namespace UpdateOrganizationRequest {
 }
 
 export class UpdateOrganizationResponse extends jspb.Message {
-  hasOrganization(): boolean;
-  clearOrganization(): void;
-  getOrganization(): proto_environment_organization_pb.Organization | undefined;
-  setOrganization(value?: proto_environment_organization_pb.Organization): void;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateOrganizationResponse.AsObject;
   static toObject(
@@ -1563,9 +1551,7 @@ export class UpdateOrganizationResponse extends jspb.Message {
 }
 
 export namespace UpdateOrganizationResponse {
-  export type AsObject = {
-    organization?: proto_environment_organization_pb.Organization.AsObject;
-  };
+  export type AsObject = {};
 }
 
 export class EnableOrganizationRequest extends jspb.Message {

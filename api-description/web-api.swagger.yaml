@@ -7762,9 +7762,6 @@ definitions:
       - id
   environmentUpdateEnvironmentV2Response:
     type: object
-    properties:
-      environment:
-        $ref: '#/definitions/environmentEnvironmentV2'
   environmentUpdateOrganizationRequest:
     type: object
     properties:
@@ -7787,9 +7784,6 @@ definitions:
         type: string
   environmentUpdateOrganizationResponse:
     type: object
-    properties:
-      organization:
-        $ref: '#/definitions/bucketeerenvironmentOrganization'
   environmentUpdateProjectRequest:
     type: object
     properties:

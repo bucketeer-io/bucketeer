@@ -108,9 +108,7 @@ message UpdateEnvironmentV2Request {
   google.protobuf.BoolValue require_comment = 7;
 }
 
-message UpdateEnvironmentV2Response {
-  EnvironmentV2 environment = 1;
-}
+message UpdateEnvironmentV2Response {}
 
 message ArchiveEnvironmentV2Request {
   string id = 1;
@@ -309,9 +307,7 @@ message UpdateOrganizationRequest {
   google.protobuf.StringValue owner_email = 7;
 }
 
-message UpdateOrganizationResponse {
-  Organization organization = 1;
-}
+message UpdateOrganizationResponse {}
 
 message EnableOrganizationRequest {
   string id = 1;

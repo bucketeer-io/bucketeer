@@ -770,7 +770,6 @@ func (s *EnvironmentService) updateOrganizationNoCommand(
 	}
 	var prevOwnerEmail string
 	var newOwnerEmail string
-	var updatedOrg *environmentproto.Organization
 	var event *eventproto.Event
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
 		orgStorage := v2es.NewOrganizationStorage(tx)
@@ -793,7 +792,7 @@ func (s *EnvironmentService) updateOrganizationNoCommand(
 			req.Id,
 			eventproto.Event_ORGANIZATION_UPDATED,
 			&eventproto.OrganizationUpdatedEvent{
-				Id:          updatedOrg.Id,
+				Id:          req.Id,
 				Name:        req.Name,
 				Description: req.Description,
 				OwnerEmail:  req.OwnerEmail,
@@ -808,7 +807,6 @@ func (s *EnvironmentService) updateOrganizationNoCommand(
 		if prevOwnerEmail != organization.OwnerEmail {
 			newOwnerEmail = organization.OwnerEmail
 		}
-		updatedOrg = updated.Organization
 		return orgStorage.UpdateOrganization(ctxWithTx, updated)
 	})
 	if err != nil {
@@ -822,7 +820,14 @@ func (s *EnvironmentService) updateOrganizationNoCommand(
 				zap.Error(err),
 			)...,
 		)
-		return nil, statusInternal.Err()
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 
 	// Update the organization role when the owner email changes
@@ -845,9 +850,7 @@ func (s *EnvironmentService) updateOrganizationNoCommand(
 		}
 	}
 
-	return &environmentproto.UpdateOrganizationResponse{
-		Organization: updatedOrg,
-	}, nil
+	return &environmentproto.UpdateOrganizationResponse{}, nil
 }
 
 func (s *EnvironmentService) reportUpdateOrganizationError(

@@ -11458,14 +11458,7 @@
             ]
           },
           {
-            "name": "UpdateEnvironmentV2Response",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment",
-                "type": "EnvironmentV2"
-              }
-            ]
+            "name": "UpdateEnvironmentV2Response"
           },
           {
             "name": "ArchiveEnvironmentV2Request",
@@ -12045,14 +12038,7 @@
             ]
           },
           {
-            "name": "UpdateOrganizationResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "organization",
-                "type": "Organization"
-              }
-            ]
+            "name": "UpdateOrganizationResponse"
           },
           {
             "name": "EnableOrganizationRequest",

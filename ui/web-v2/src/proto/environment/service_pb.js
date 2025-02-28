@@ -3533,14 +3533,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {
-        environment:
-          (f = msg.getEnvironment()) &&
-          proto_environment_environment_pb.EnvironmentV2.toObject(
-            includeInstance,
-            f
-          )
-      };
+      obj = {};
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -3579,15 +3572,6 @@ proto.bucketeer.environment.UpdateEnvironmentV2Response.deserializeBinaryFromRea
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = new proto_environment_environment_pb.EnvironmentV2();
-          reader.readMessage(
-            value,
-            proto_environment_environment_pb.EnvironmentV2
-              .deserializeBinaryFromReader
-          );
-          msg.setEnvironment(value);
-          break;
         default:
           reader.skipField();
           break;
@@ -3620,56 +3604,6 @@ proto.bucketeer.environment.UpdateEnvironmentV2Response.prototype.serializeBinar
 proto.bucketeer.environment.UpdateEnvironmentV2Response.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironment();
-    if (f != null) {
-      writer.writeMessage(
-        1,
-        f,
-        proto_environment_environment_pb.EnvironmentV2.serializeBinaryToWriter
-      );
-    }
-  };
-
-/**
- * optional EnvironmentV2 environment = 1;
- * @return {?proto.bucketeer.environment.EnvironmentV2}
- */
-proto.bucketeer.environment.UpdateEnvironmentV2Response.prototype.getEnvironment =
-  function () {
-    return /** @type{?proto.bucketeer.environment.EnvironmentV2} */ (
-      jspb.Message.getWrapperField(
-        this,
-        proto_environment_environment_pb.EnvironmentV2,
-        1
-      )
-    );
-  };
-
-/**
- * @param {?proto.bucketeer.environment.EnvironmentV2|undefined} value
- * @return {!proto.bucketeer.environment.UpdateEnvironmentV2Response} returns this
- */
-proto.bucketeer.environment.UpdateEnvironmentV2Response.prototype.setEnvironment =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 1, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.environment.UpdateEnvironmentV2Response} returns this
- */
-proto.bucketeer.environment.UpdateEnvironmentV2Response.prototype.clearEnvironment =
-  function () {
-    return this.setEnvironment(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.environment.UpdateEnvironmentV2Response.prototype.hasEnvironment =
-  function () {
-    return jspb.Message.getField(this, 1) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -9535,14 +9469,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {
-        organization:
-          (f = msg.getOrganization()) &&
-          proto_environment_organization_pb.Organization.toObject(
-            includeInstance,
-            f
-          )
-      };
+      obj = {};
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -9581,15 +9508,6 @@ proto.bucketeer.environment.UpdateOrganizationResponse.deserializeBinaryFromRead
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = new proto_environment_organization_pb.Organization();
-          reader.readMessage(
-            value,
-            proto_environment_organization_pb.Organization
-              .deserializeBinaryFromReader
-          );
-          msg.setOrganization(value);
-          break;
         default:
           reader.skipField();
           break;
@@ -9622,56 +9540,6 @@ proto.bucketeer.environment.UpdateOrganizationResponse.prototype.serializeBinary
 proto.bucketeer.environment.UpdateOrganizationResponse.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getOrganization();
-    if (f != null) {
-      writer.writeMessage(
-        1,
-        f,
-        proto_environment_organization_pb.Organization.serializeBinaryToWriter
-      );
-    }
-  };
-
-/**
- * optional Organization organization = 1;
- * @return {?proto.bucketeer.environment.Organization}
- */
-proto.bucketeer.environment.UpdateOrganizationResponse.prototype.getOrganization =
-  function () {
-    return /** @type{?proto.bucketeer.environment.Organization} */ (
-      jspb.Message.getWrapperField(
-        this,
-        proto_environment_organization_pb.Organization,
-        1
-      )
-    );
-  };
-
-/**
- * @param {?proto.bucketeer.environment.Organization|undefined} value
- * @return {!proto.bucketeer.environment.UpdateOrganizationResponse} returns this
- */
-proto.bucketeer.environment.UpdateOrganizationResponse.prototype.setOrganization =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 1, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.environment.UpdateOrganizationResponse} returns this
- */
-proto.bucketeer.environment.UpdateOrganizationResponse.prototype.clearOrganization =
-  function () {
-    return this.setOrganization(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.environment.UpdateOrganizationResponse.prototype.hasOrganization =
-  function () {
-    return jspb.Message.getField(this, 1) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
