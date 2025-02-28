@@ -7,8 +7,8 @@ import { cn } from 'utils/style';
 import Icon from 'components/icon';
 
 export type PageDetailsHeaderProps = {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   children?: ReactNode;
   onBack: () => void;
 };
@@ -30,10 +30,12 @@ const PageDetailsHeader = ({
       >
         <Icon icon={IconArrowBackFilled} size="xxs" />
       </button>
-      <div className="text-gray-500 flex items-center gap-1.5 mt-4">
-        <Icon icon={IconAccessTimeOutlined} size="xxs" />
-        <p className="typo-para-small">{description}</p>
-      </div>
+      {description && (
+        <div className="text-gray-500 flex items-center gap-1.5 mt-4">
+          <Icon icon={IconAccessTimeOutlined} size="xxs" />
+          <p className="typo-para-small">{description}</p>
+        </div>
+      )}
       {children || (
         <h1 className="text-gray-900 typo-head-bold-huge mt-2">{title}</h1>
       )}

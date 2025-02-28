@@ -3,13 +3,12 @@ import { formatLongDateTime } from 'utils/date-time';
 import { Tooltip } from 'components/tooltip';
 
 type Props = {
-  date: Date | string;
+  date: string;
   trigger: ReactNode;
 };
 
 const DateTooltip = ({ date, trigger }: Props) => {
-  const _date = date instanceof Date ? date : new Date(Number(date) * 1000);
-  const dateFormatted = formatLongDateTime(_date);
+  const dateFormatted = formatLongDateTime({ value: date });
 
   return (
     <Tooltip

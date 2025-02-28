@@ -30,7 +30,12 @@
     "unarchive-goal": "Unarchive Goal",
     "edit-segment": "Edit User Segment",
     "delete-segment": "Delete User Segment",
-    "download-segment": "Download User Segment"
+    "download-segment": "Download User Segment",
+    "edit-experiment": "Edit Experiment",
+    "archive-experiment": "Archive Experiment",
+    "unarchive-experiment": "Unarchive Experiment",
+    "stop-experiment": "Stop Experiment",
+    "start-experiment": "Start Experiment"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -51,7 +56,9 @@
     "goal-title": "No registered goals",
     "goal-desc": "There are no registered goals. Add a new one to start managing.",
     "user-segments-title": "No registered user segments",
-    "user-segments-desc": "There are no registered user segments. Add a new one to start managing."
+    "user-segments-desc": "There are no registered user segments. Add a new one to start managing.",
+    "experiment-title": "No registered experiments",
+    "experiment-desc": "There are no registered experiments. Add a new one to start managing."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
@@ -91,5 +98,35 @@
   },
   "user-segment": {
     "delete-user-segment-desc": "The <bold>{{name}}</bold> is going to be deleted permanently. Are you sure you want to proceed?"
+  },
+  "experiment": {
+    "confirm-archive-desc": "The experiment \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
+    "confirm-unarchive-desc": "The experiment \"<bold>{{name}}</bold>\" will be unarchived. Are you sure you want to proceed?",
+    "scheduled": "Scheduled",
+    "running": "Running",
+    "stopped": "Stopped",
+    "not-started": "Not started",
+    "scheduled-experiment": "Scheduled Experiment",
+    "running-experiment": "Running Experiment",
+    "stopped-experiment": "Stopped Experiment",
+    "not-started-experiment": "Not Started Experiment",
+    "confirm-stop-desc": "The experiment \"<bold>{{name}}</bold>\" will be stopped. Are you sure you want to proceed?",
+    "confirm-start-desc": "The experiment \"<bold>{{name}}</bold>\" will be started. Are you sure you want to proceed?",
+    "running-experiment-desc": "The experiment is scheduled to stop on {{date}}",
+    "scheduled-experiment-desc": "The experiment is scheduled to start on {{date}}",
+    "stopped-experiment-desc": "This experiment is currently stopped",
+    "not-started-experiment-desc": "This is a manual start experiment"
+  },
+  "results": {
+    "variation": "Variation",
+    "evaluation-user": "Evaluation User",
+    "goal-total": "Goal Total",
+    "goal-user": "Goal User",
+    "conversion-rate": "Conversion Rate",
+    "value-total": "Value Total",
+    "value-user": "Value/ User",
+    "improvement": "Improvement",
+    "probability-to-beat-baseline": "Probability To Beat Baseline",
+    "probability-to-best": "Probability To Best"
   }
 }

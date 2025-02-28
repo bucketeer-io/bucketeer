@@ -1,10 +1,6 @@
-export type ConnectionType = 'UNKNOWN' | 'EXPERIMENT' | 'OPERATION';
-export type ExperimentStatus =
-  | 'WAITING'
-  | 'RUNNING'
-  | 'STOPPED'
-  | 'FORCE_STOPPED';
+import { ExperimentStatus } from './experiment';
 
+export type ConnectionType = 'UNKNOWN' | 'EXPERIMENT' | 'OPERATION';
 export type OperationStatus = 'WAITING' | 'RUNNING' | 'STOPPED' | 'FINISHED';
 
 export interface Goal {

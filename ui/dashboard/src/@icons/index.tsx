@@ -1,6 +1,7 @@
 import IconAngleDown from './customized-icons/angle-down.svg?react';
 import IconArrowDown from './customized-icons/arrow-down.svg?react';
 import IconBackspace from './customized-icons/backspace.svg?react';
+import IconCalendar from './customized-icons/calendar.svg?react';
 import IconChecked from './customized-icons/checked.svg?react';
 import IconChevronDown from './customized-icons/chevron-down.svg?react';
 import IconChevronRight from './customized-icons/chevron-right.svg?react';
@@ -14,6 +15,8 @@ import IconSearch from './customized-icons/search.svg?react';
 import IconSortingDown from './customized-icons/sorting-down.svg?react';
 import IconSortingUp from './customized-icons/sorting-up.svg?react';
 import IconSorting from './customized-icons/sorting.svg?react';
+import IconStartExperiment from './customized-icons/start-experiment.svg?react';
+import IconStopExperiment from './customized-icons/stop-experiment.svg?react';
 import IconToastError from './customized-icons/toast-error.svg?react';
 import IconToastInfo from './customized-icons/toast-info.svg?react';
 import IconToastSuccess from './customized-icons/toast-success.svg?react';
@@ -46,9 +49,12 @@ import IconGoogle from './special-icons/google.svg?react';
 import IconLogoutConfirm from './special-icons/logout.svg?react';
 import IconNoData from './special-icons/no-data.svg?react';
 import IconNotInUse from './special-icons/not-in-use.svg?react';
+import IconNotStartedExperiment from './special-icons/not-started-experiment.svg?react';
 import IconOperation from './special-icons/operation.svg?react';
 import IconOperationsConnected from './special-icons/operations-connected.svg?react';
 import IconSlack from './special-icons/slack.svg?react';
+import IconStoppedExperiment from './special-icons/stopped-experiment.svg?react';
+import IconWaitingExperiment from './special-icons/waiting-experment.svg?react';
 
 export {
   // Sidebar icons
@@ -86,10 +92,13 @@ export {
   IconDisable,
   IconCopy,
   IconUpload,
+  IconCalendar,
   IconChevronDown,
   IconAngleDown,
   IconInfoFilled,
   IconArrowDown,
+  IconStopExperiment,
+  IconStartExperiment,
   // Special icons
   IconGoal,
   IconGoogle,
@@ -104,5 +113,8 @@ export {
   IconNotInUse,
   IconExperimentsConnected,
   IconOperationsConnected,
-  IconFlagConnected
+  IconFlagConnected,
+  IconStoppedExperiment,
+  IconWaitingExperiment,
+  IconNotStartedExperiment
 };
