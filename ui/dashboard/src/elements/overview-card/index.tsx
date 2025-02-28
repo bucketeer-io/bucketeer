@@ -4,17 +4,19 @@ import { cn } from 'utils/style';
 import { IconChevronRight } from '@icons';
 import Icon from 'components/icon';
 
+export type OverviewIconColor =
+  | 'green'
+  | 'brand'
+  | 'yellow'
+  | 'gray'
+  | 'pink'
+  | 'red'
+  | 'orange'
+  | 'blue';
+
 type CardIconProps = {
   icon: FunctionComponent;
-  color:
-    | 'green'
-    | 'brand'
-    | 'yellow'
-    | 'gray'
-    | 'pink'
-    | 'red'
-    | 'orange'
-    | 'blue';
+  color: OverviewIconColor;
 };
 
 type CardDescriptionProps = {
@@ -27,6 +29,7 @@ type CardDescriptionProps = {
 
 type Props = CardIconProps &
   CardDescriptionProps & {
+    className?: string;
     showArrow?: boolean;
     onClick?: () => void;
   };
@@ -88,10 +91,20 @@ const CardDescription = ({
   );
 };
 
-const OverviewCard = ({ icon, color, showArrow, onClick, ...props }: Props) => {
+const OverviewCard = ({
+  icon,
+  color,
+  showArrow,
+  className,
+  onClick,
+  ...props
+}: Props) => {
   return (
     <div
-      className="flex flex-1 items-center p-4 gap-x-4 w-full min-w-[300px] bg-white shadow-card rounded-2xl overflow-hidden cursor-pointer hover:shadow-gray-300"
+      className={cn(
+        'flex flex-1 items-center p-4 gap-x-4 w-full min-w-[300px] bg-white shadow-card rounded-2xl overflow-hidden cursor-pointer hover:shadow-gray-300',
+        className
+      )}
       onClick={onClick}
     >
       <CardIcon icon={icon} color={color} />

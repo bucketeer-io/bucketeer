@@ -2,7 +2,8 @@ export type ExperimentStatus =
   | 'WAITING'
   | 'RUNNING'
   | 'STOPPED'
-  | 'FORCE_STOPPED';
+  | 'FORCE_STOPPED'
+  | 'NOT_STARTED';
 
 export interface Experiment {
   id: string;

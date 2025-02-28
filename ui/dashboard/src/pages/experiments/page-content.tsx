@@ -34,7 +34,10 @@ const PageContent = ({
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<ExperimentFilters> = searchOptions;
+
   const defaultFilters = {
+    filterByTab: true,
+    filterBySummary: undefined,
     page: 1,
     orderBy: 'CREATED_AT',
     orderDirection: 'DESC',
@@ -50,13 +53,20 @@ const PageContent = ({
     useToggleOpen(false);
 
   const isHiddenTab = useMemo(
-    () => !!filters.searchQuery || filters?.isFilter,
-    [filters]
+    () =>
+      (!!filters.searchQuery ||
+        filters?.isFilter ||
+        !!searchOptions?.statuses?.length) &&
+      !filters.filterByTab,
+    [filters, searchOptions]
   );
 
-  const onChangeFilters = (values: Partial<ExperimentFilters>) => {
+  const onChangeFilters = (
+    values: Partial<ExperimentFilters>,
+    isChangeParams = true
+  ) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
-    onChangSearchParams(options);
+    if (isChangeParams) onChangSearchParams(options);
     setFilters({ ...values });
   };
 
@@ -70,11 +80,19 @@ const PageContent = ({
     <PageLayout.Content>
       <Overview
         summary={summary}
-        onChangeFilters={statuses =>
+        filterBySummary={filters?.filterBySummary}
+        onChangeFilters={(statuses, summaryFilterValue) => {
+          const isSameSummaryValue =
+            filters?.filterBySummary === summaryFilterValue;
           onChangeFilters({
-            statuses
-          })
-        }
+            statuses: isSameSummaryValue ? ['WAITING', 'RUNNING'] : statuses,
+            filterBySummary: isSameSummaryValue
+              ? undefined
+              : summaryFilterValue,
+            filterByTab: isSameSummaryValue,
+            status: isSameSummaryValue ? 'ACTIVE' : filters?.status
+          });
+        }}
       />
       <Filter
         onOpenFilter={onOpenFilterModal}
@@ -86,7 +104,12 @@ const PageContent = ({
         }
         searchValue={filters.searchQuery}
         filterCount={isNotEmpty(filters.isFilter) ? 1 : undefined}
-        onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
+        onSearchChange={searchQuery => {
+          onChangeFilters(
+            { searchQuery, filterByTab: filters?.searchQuery === searchQuery },
+            filters?.searchQuery !== searchQuery
+          );
+        }}
       />
       {openFilterModal && (
         <FilterExperimentModal
@@ -94,7 +117,7 @@ const PageContent = ({
           filters={filters}
           onClose={onCloseFilterModal}
           onSubmit={value => {
-            onChangeFilters(value);
+            onChangeFilters({ ...value, filterByTab: false });
             onCloseFilterModal();
           }}
           onClearFilters={() => {
@@ -102,7 +125,8 @@ const PageContent = ({
               archived: undefined,
               statuses: [],
               isFilter: undefined,
-              status: 'ACTIVE'
+              status: 'ACTIVE',
+              filterByTab: true
             });
             onCloseFilterModal();
           }}
@@ -119,6 +143,7 @@ const PageContent = ({
             status,
             searchQuery: '',
             isFilter: undefined,
+            filterByTab: true,
             statuses:
               status === 'FINISHED'
                 ? ['STOPPED', 'FORCE_STOPPED']

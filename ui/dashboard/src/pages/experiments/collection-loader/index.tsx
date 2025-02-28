@@ -3,6 +3,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { sortingListFields } from 'constants/collection';
 import { Experiment } from '@types';
+import { useSearchParams } from 'utils/search-params';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
@@ -19,14 +20,17 @@ const CollectionLoader = ({
   onActions
 }: {
   filters: ExperimentFilters;
-  setFilters: (values: Partial<ExperimentFilters>) => void;
+  setFilters: (
+    values: Partial<ExperimentFilters>,
+    isChangeParams?: boolean
+  ) => void;
   onAdd: () => void;
   onActions: (item: Experiment, type: ExperimentActionsType) => void;
 }) => {
   const columns = useColumns({ onActions });
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
-
+  const { searchOptions, onChangSearchParams } = useSearchParams();
   const {
     data: collection,
     isLoading,
@@ -56,18 +60,22 @@ const CollectionLoader = ({
     <CollectionEmpty
       data={experiments}
       searchQuery={filters.searchQuery}
-      isFilter={filters.isFilter}
+      isFilter={filters.isFilter || !!searchOptions?.statuses?.length}
       description="No experiments match your search filters. Try changing your filters."
       buttonText="Clear Filters"
       buttonVariant={'secondary'}
-      onClear={() =>
-        setFilters({
-          searchQuery: '',
-          isFilter: undefined,
-          status: 'ACTIVE',
-          statuses: ['WAITING', 'RUNNING']
-        })
-      }
+      onClear={() => {
+        setFilters(
+          {
+            searchQuery: '',
+            isFilter: undefined,
+            status: 'ACTIVE',
+            statuses: ['WAITING', 'RUNNING']
+          },
+          false
+        );
+        onChangSearchParams({});
+      }}
       empty={<EmptyCollection onAdd={onAdd} />}
     />
   );

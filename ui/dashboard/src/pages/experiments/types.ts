@@ -14,7 +14,11 @@ export interface ExperimentFilters {
   statuses?: ExperimentStatus[];
   maintainer?: string;
   isFilter?: boolean;
+  filterByTab?: boolean;
+  filterBySummary?: SummaryType;
 }
+
+export type SummaryType = 'scheduled' | 'running' | 'stopped' | 'not-started';
 
 export type ExperimentActionsType =
   | 'EDIT'

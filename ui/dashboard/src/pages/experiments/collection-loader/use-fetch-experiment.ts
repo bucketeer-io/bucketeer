@@ -32,7 +32,9 @@ export const useFetchExperiments = ({
   const cursor = (page - 1) * LIST_PAGE_SIZE;
   const _params = pickBy(
     { ...params },
-    (v, k) => k !== 'isFilter' && isNotEmpty(v)
+    (v, k) =>
+      !['filterByTab', 'filterBySummary', 'isFilter'].includes(k) &&
+      isNotEmpty(v)
   );
 
   return useQueryExperiments({
