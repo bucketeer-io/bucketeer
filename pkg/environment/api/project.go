@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -26,6 +27,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/command"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
@@ -34,6 +36,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	evdomain "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
@@ -252,9 +255,17 @@ func (s *EnvironmentService) CreateProject(
 	req *environmentproto.CreateProjectRequest,
 ) (*environmentproto.CreateProjectResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkOrganizationRole(
+		ctx,
+		req.OrganizationId,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
+	}
+	if req.Command == nil {
+		return s.createProjectNoCommand(ctx, req, localizer, editor)
 	}
 	if err := validateCreateProjectRequest(req, localizer); err != nil {
 		return nil, err
@@ -282,6 +293,160 @@ func (s *EnvironmentService) CreateProject(
 		return nil, err
 	}
 	return &environmentproto.CreateProjectResponse{Project: project.Project}, nil
+}
+
+func (s *EnvironmentService) createProjectNoCommand(
+	ctx context.Context,
+	req *environmentproto.CreateProjectRequest,
+	localizer locale.Localizer,
+	editor *eventproto.Editor,
+) (*environmentproto.CreateProjectResponse, error) {
+	if err := validateCreateProjectRequestNoCommand(req, localizer); err != nil {
+		return nil, err
+	}
+	newProj, err := domain.NewProject(
+		strings.TrimSpace(req.Name),
+		strings.TrimSpace(req.UrlCode),
+		req.Description,
+		editor.Email,
+		req.OrganizationId,
+		false,
+	)
+	if err != nil {
+		return nil, err
+	}
+	var domainEvent *evdomain.Event
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		storage := v2es.NewProjectStorage(tx)
+		domainEvent, err = s.newCreateDomainEvent(ctx, newProj.Project, req, editor, localizer)
+		if err != nil {
+			return err
+		}
+		return storage.CreateProject(ctxWithTx, newProj)
+	})
+	if err != nil {
+		return nil, s.reportCreateProjectRequestError(ctx, req, err, localizer)
+	}
+	if err := s.publisher.Publish(ctx, domainEvent); err != nil {
+		return nil, s.reportCreateProjectRequestError(ctx, req, err, localizer)
+	}
+	return &environmentproto.CreateProjectResponse{
+		Project: newProj.Project,
+	}, nil
+}
+
+func validateCreateProjectRequestNoCommand(
+	req *environmentproto.CreateProjectRequest,
+	localizer locale.Localizer,
+) error {
+	name := strings.TrimSpace(req.Name)
+	if name == "" {
+		dt, err := statusEnvironmentNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if len(name) > maxEnvironmentNameLength {
+		dt, err := statusInvalidEnvironmentName.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if !environmentUrlCodeRegex.MatchString(req.UrlCode) {
+		dt, err := statusInvalidEnvironmentUrlCode.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.OrganizationId == "" {
+		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
+func (s *EnvironmentService) reportCreateProjectRequestError(
+	ctx context.Context,
+	req *environmentproto.CreateProjectRequest,
+	err error,
+	localizer locale.Localizer,
+) error {
+	s.logger.Error(
+		"Failed to create project",
+		log.FieldsFromImcomingContext(ctx).AddFields(
+			zap.Error(err),
+			zap.String("organizationId", req.OrganizationId),
+			zap.Any("name", req.Name),
+			zap.Any("description", req.Description),
+			zap.String("projectUrlCode", req.UrlCode),
+		)...,
+	)
+	if errors.Is(err, v2es.ErrEnvironmentAlreadyExists) {
+		dt, err := statusEnvironmentAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.AlreadyExistsError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalize(locale.InternalServerError),
+	})
+	if err != nil {
+		return statusInternal.Err()
+	}
+	return dt.Err()
+}
+
+func (s *EnvironmentService) newCreateDomainEvent(
+	ctx context.Context,
+	newProj *environmentproto.Project,
+	req *environmentproto.CreateProjectRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*evdomain.Event, error) {
+	event, err := domainevent.NewAdminEvent(
+		editor,
+		eventproto.Event_PROJECT,
+		newProj.Id,
+		eventproto.Event_PROJECT_CREATED,
+		&eventproto.ProjectCreatedEvent{
+			Id:          newProj.Id,
+			Name:        newProj.Name,
+			UrlCode:     newProj.UrlCode,
+			Description: newProj.Description,
+			Trial:       false,
+			CreatedAt:   newProj.CreatedAt,
+			UpdatedAt:   newProj.UpdatedAt,
+		},
+		newProj,
+		&environmentproto.Project{},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return event, nil
 }
 
 func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest, localizer locale.Localizer) error {
@@ -641,9 +806,17 @@ func (s *EnvironmentService) UpdateProject(
 	req *environmentproto.UpdateProjectRequest,
 ) (*environmentproto.UpdateProjectResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkSystemAdminRole(ctx, localizer)
+	editor, err := s.checkOrganizationRole(
+		ctx,
+		req.OrganizationId,
+		accountproto.AccountV2_Role_Organization_ADMIN,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
+	}
+	if isNoUpdatePushCommand(req) {
+		return s.updateProjectNoCommand(ctx, req, localizer, editor)
 	}
 	commands := getUpdateProjectCommands(req)
 	if err := validateUpdateProjectRequest(req.Id, commands, localizer); err != nil {
@@ -664,6 +837,11 @@ func getUpdateProjectCommands(req *environmentproto.UpdateProjectRequest) []comm
 		commands = append(commands, req.RenameCommand)
 	}
 	return commands
+}
+
+func isNoUpdatePushCommand(req *environmentproto.UpdateProjectRequest) bool {
+	return req.RenameCommand == nil &&
+		req.ChangeDescriptionCommand == nil
 }
 
 func validateUpdateProjectRequest(id string, commands []command.Command, localizer locale.Localizer) error {
@@ -713,6 +891,142 @@ func validateUpdateProjectRequest(id string, commands []command.Command, localiz
 		}
 	}
 	return nil
+}
+
+func (s *EnvironmentService) updateProjectNoCommand(
+	ctx context.Context,
+	req *environmentproto.UpdateProjectRequest,
+	localizer locale.Localizer,
+	editor *eventproto.Editor,
+) (*environmentproto.UpdateProjectResponse, error) {
+	if err := validateUpdateProjectRequestNoCommand(req, localizer); err != nil {
+		return nil, err
+	}
+	var domainEvent *evdomain.Event
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		storage := v2es.NewProjectStorage(tx)
+		var err error
+		prev, err := storage.GetProject(ctx, req.Id)
+		if err != nil {
+			return err
+		}
+		updated, err := prev.Update(
+			req.Name,
+			req.Description,
+		)
+		if err != nil {
+			return err
+		}
+		domainEvent, err = s.newUpdateDomainEvent(
+			ctx,
+			updated.Project,
+			prev.Project,
+			req,
+			editor,
+			localizer,
+		)
+		if err != nil {
+			return err
+		}
+		return storage.UpdateProject(ctxWithTx, updated)
+	})
+	if err != nil {
+		return nil, s.reportUpdateProjectRequestError(ctx, req, err, localizer)
+	}
+	if err := s.publisher.Publish(ctx, domainEvent); err != nil {
+		return nil, s.reportUpdateProjectRequestError(ctx, req, err, localizer)
+	}
+	return &environmentproto.UpdateProjectResponse{}, nil
+}
+
+func validateUpdateProjectRequestNoCommand(
+	req *environmentproto.UpdateProjectRequest,
+	localizer locale.Localizer,
+) error {
+	if req.Name != nil && strings.TrimSpace(req.Name.Value) == "" {
+		dt, err := statusEnvironmentNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Name != nil && len(strings.TrimSpace(req.Name.Value)) > maxEnvironmentNameLength {
+		dt, err := statusInvalidEnvironmentName.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
+func (s *EnvironmentService) reportUpdateProjectRequestError(
+	ctx context.Context,
+	req *environmentproto.UpdateProjectRequest,
+	err error,
+	localizer locale.Localizer,
+) error {
+	s.logger.Error(
+		"Failed to update project",
+		log.FieldsFromImcomingContext(ctx).AddFields(
+			zap.Error(err),
+			zap.String("organizationId", req.OrganizationId),
+			zap.String("projectId", req.Id),
+			zap.Any("name", req.Name),
+			zap.Any("description", req.Description),
+		)...,
+	)
+	if errors.Is(err, v2es.ErrProjectNotFound) {
+		dt, err := statusProjectNotFound.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.NotFoundError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalize(locale.InternalServerError),
+	})
+	if err != nil {
+		return statusInternal.Err()
+	}
+	return dt.Err()
+}
+
+func (s *EnvironmentService) newUpdateDomainEvent(
+	ctx context.Context,
+	updated, prev *environmentproto.Project,
+	req *environmentproto.UpdateProjectRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*evdomain.Event, error) {
+	event, err := domainevent.NewAdminEvent(
+		editor,
+		eventproto.Event_PROJECT,
+		updated.Id,
+		eventproto.Event_PROJECT_UPDATED,
+		&eventproto.ProjectUpdatedEvent{
+			Id:             updated.Id,
+			OrganizationId: updated.OrganizationId,
+			Name:           updated.Name,
+			Description:    updated.Description,
+		},
+		updated,
+		prev,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return event, nil
 }
 
 func (s *EnvironmentService) updateProject(

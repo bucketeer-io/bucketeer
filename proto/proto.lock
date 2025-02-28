@@ -11596,7 +11596,60 @@
               {
                 "id": 1,
                 "name": "command",
-                "type": "CreateProjectCommand"
+                "type": "CreateProjectCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "name",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "url_code",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ]
           },
@@ -11629,17 +11682,74 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 2,
                 "name": "change_description_command",
-                "type": "ChangeDescriptionProjectCommand"
+                "type": "ChangeDescriptionProjectCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "rename_command",
-                "type": "RenameProjectCommand"
+                "type": "RenameProjectCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "organization_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 6,
+                "name": "description",
+                "type": "google.protobuf.StringValue"
               }
             ]
           },
@@ -17815,6 +17925,10 @@
                 "integer": 1206
               },
               {
+                "name": "PROJECT_UPDATED",
+                "integer": 1207
+              },
+              {
                 "name": "PROGRESSIVE_ROLLOUT_CREATED",
                 "integer": 1400
               },
@@ -20602,6 +20716,31 @@
               {
                 "id": 9,
                 "name": "url_code",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ProjectUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "description",
                 "type": "string"
               }
             ]
