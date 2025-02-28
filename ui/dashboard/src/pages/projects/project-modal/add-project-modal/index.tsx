@@ -21,7 +21,6 @@ interface AddProjectModalProps {
 }
 
 export interface AddProjectForm {
-  id?: string;
   name: string;
   urlCode: string;
   description?: string;
@@ -50,7 +49,6 @@ const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
-      id: '',
       name: '',
       urlCode: '',
       description: ''
