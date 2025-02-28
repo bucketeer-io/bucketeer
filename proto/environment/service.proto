@@ -203,8 +203,9 @@ message UpdateProjectRequest {
       description: "deprecated"
     }
   ];
-  google.protobuf.StringValue name = 4;
-  google.protobuf.StringValue description = 5;
+  string organization_id = 4 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.StringValue name = 5;
+  google.protobuf.StringValue description = 6;
 }
 
 message UpdateProjectResponse {}

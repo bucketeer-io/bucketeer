@@ -1219,6 +1219,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.Project),
 			),
 		}
+	case proto.Event_PROJECT_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.UpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Project),
+			),
+		}
 	case proto.Event_PROJECT_DESCRIPTION_CHANGED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),

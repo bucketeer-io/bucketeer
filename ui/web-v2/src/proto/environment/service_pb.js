@@ -6074,6 +6074,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
+        organizationId: jspb.Message.getFieldWithDefault(msg, 4, ''),
         name:
           (f = msg.getName()) &&
           google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
@@ -6144,6 +6145,10 @@ proto.bucketeer.environment.UpdateProjectRequest.deserializeBinaryFromReader =
           msg.setRenameCommand(value);
           break;
         case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOrganizationId(value);
+          break;
+        case 5:
           var value = new google_protobuf_wrappers_pb.StringValue();
           reader.readMessage(
             value,
@@ -6151,7 +6156,7 @@ proto.bucketeer.environment.UpdateProjectRequest.deserializeBinaryFromReader =
           );
           msg.setName(value);
           break;
-        case 5:
+        case 6:
           var value = new google_protobuf_wrappers_pb.StringValue();
           reader.readMessage(
             value,
@@ -6213,10 +6218,14 @@ proto.bucketeer.environment.UpdateProjectRequest.serializeBinaryToWriter =
           .serializeBinaryToWriter
       );
     }
+    f = message.getOrganizationId();
+    if (f.length > 0) {
+      writer.writeString(4, f);
+    }
     f = message.getName();
     if (f != null) {
       writer.writeMessage(
-        4,
+        5,
         f,
         google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
       );
@@ -6224,7 +6233,7 @@ proto.bucketeer.environment.UpdateProjectRequest.serializeBinaryToWriter =
     f = message.getDescription();
     if (f != null) {
       writer.writeMessage(
-        5,
+        6,
         f,
         google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
       );
@@ -6334,7 +6343,27 @@ proto.bucketeer.environment.UpdateProjectRequest.prototype.hasRenameCommand =
   };
 
 /**
- * optional google.protobuf.StringValue name = 4;
+ * optional string organization_id = 4;
+ * @return {string}
+ */
+proto.bucketeer.environment.UpdateProjectRequest.prototype.getOrganizationId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.UpdateProjectRequest} returns this
+ */
+proto.bucketeer.environment.UpdateProjectRequest.prototype.setOrganizationId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
+  };
+
+/**
+ * optional google.protobuf.StringValue name = 5;
  * @return {?proto.google.protobuf.StringValue}
  */
 proto.bucketeer.environment.UpdateProjectRequest.prototype.getName =
@@ -6343,7 +6372,7 @@ proto.bucketeer.environment.UpdateProjectRequest.prototype.getName =
       jspb.Message.getWrapperField(
         this,
         google_protobuf_wrappers_pb.StringValue,
-        4
+        5
       )
     );
   };
@@ -6355,7 +6384,7 @@ proto.bucketeer.environment.UpdateProjectRequest.prototype.getName =
 proto.bucketeer.environment.UpdateProjectRequest.prototype.setName = function (
   value
 ) {
-  return jspb.Message.setWrapperField(this, 4, value);
+  return jspb.Message.setWrapperField(this, 5, value);
 };
 
 /**
@@ -6373,11 +6402,11 @@ proto.bucketeer.environment.UpdateProjectRequest.prototype.clearName =
  */
 proto.bucketeer.environment.UpdateProjectRequest.prototype.hasName =
   function () {
-    return jspb.Message.getField(this, 4) != null;
+    return jspb.Message.getField(this, 5) != null;
   };
 
 /**
- * optional google.protobuf.StringValue description = 5;
+ * optional google.protobuf.StringValue description = 6;
  * @return {?proto.google.protobuf.StringValue}
  */
 proto.bucketeer.environment.UpdateProjectRequest.prototype.getDescription =
@@ -6386,7 +6415,7 @@ proto.bucketeer.environment.UpdateProjectRequest.prototype.getDescription =
       jspb.Message.getWrapperField(
         this,
         google_protobuf_wrappers_pb.StringValue,
-        5
+        6
       )
     );
   };
@@ -6397,7 +6426,7 @@ proto.bucketeer.environment.UpdateProjectRequest.prototype.getDescription =
  */
 proto.bucketeer.environment.UpdateProjectRequest.prototype.setDescription =
   function (value) {
-    return jspb.Message.setWrapperField(this, 5, value);
+    return jspb.Message.setWrapperField(this, 6, value);
   };
 
 /**
@@ -6415,7 +6444,7 @@ proto.bucketeer.environment.UpdateProjectRequest.prototype.clearDescription =
  */
 proto.bucketeer.environment.UpdateProjectRequest.prototype.hasDescription =
   function () {
-    return jspb.Message.getField(this, 5) != null;
+    return jspb.Message.getField(this, 6) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

@@ -20,22 +20,26 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	gstatus "google.golang.org/grpc/status"
 
 	acmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	pubmock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
+	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
 func TestGetProjectMySQL(t *testing.T) {
@@ -549,9 +553,35 @@ func TestCreateProjectNoCommand(t *testing.T) {
 		},
 		{
 			ctx:  ctx,
+			desc: "err: publish domain event failed",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				// Simulate a failure when publishing the update event.
+				s.publisher.(*pubmock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("publish failed"))
+			},
+			req: &proto.CreateProjectRequest{
+				Name:           expected.Project.Name,
+				UrlCode:        expected.Project.UrlCode,
+				OrganizationId: expected.Project.OrganizationId,
+				Description:    expected.Project.Description,
+			},
+			expectedErr: createError(
+				statusInternal,
+				localizer.MustLocalize(locale.InternalServerError),
+			),
+		},
+		{
+			ctx:  ctx,
 			desc: "success",
 			setup: func(s *EnvironmentService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*pubmock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -750,6 +780,168 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 	}
 }
 
+func TestUpdateProjectNoCommand(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	// Set up a context with token and language metadata.
+	ctx := createContextWithToken(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+
+	// Helper to create errors with localized messages
+	createError := func(st *status.Status, msg string) error {
+		stWithDetails, err := st.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return stWithDetails.Err()
+	}
+
+	editor := &eventproto.Editor{
+		Email: "test@bucketer.io",
+	}
+
+	// Define test patterns.
+	patterns := []struct {
+		ctx         context.Context
+		desc        string
+		setup       func(*EnvironmentService)
+		req         *environmentproto.UpdateProjectRequest
+		expected    *environmentproto.UpdateProjectResponse
+		expectedErr error
+	}{
+		{
+			ctx:   ctx,
+			desc:  "err: empty name",
+			setup: nil,
+			req: &environmentproto.UpdateProjectRequest{
+				Id:          "project-id",
+				Name:        &wrappers.StringValue{Value: "    "},
+				Description: &wrappers.StringValue{Value: "updated description"},
+			},
+			expectedErr: createError(
+				statusEnvironmentNameRequired,
+				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+			),
+		},
+		{
+			ctx:   ctx,
+			desc:  "err: max name length exceeded",
+			setup: nil,
+			req: &environmentproto.UpdateProjectRequest{
+				Id:          "project-id",
+				Name:        &wrappers.StringValue{Value: strings.Repeat("a", 51)},
+				Description: &wrappers.StringValue{Value: "updated description"},
+			},
+			expectedErr: createError(
+				statusInvalidEnvironmentName,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+			),
+		},
+		{
+			ctx:  ctx,
+			desc: "err: project not found",
+			setup: func(s *EnvironmentService) {
+				// Simulate that the transaction returns an error from GetProject.
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(v2es.ErrProjectNotFound)
+			},
+			req: &environmentproto.UpdateProjectRequest{
+				Id:          "nonexistent",
+				Name:        &wrappers.StringValue{Value: "ValidName"},
+				Description: &wrappers.StringValue{Value: "updated description"},
+			},
+			expectedErr: createError(
+				statusProjectNotFound,
+				localizer.MustLocalize(locale.NotFoundError),
+			),
+		},
+		{
+			ctx:  ctx,
+			desc: "err: update failed",
+			setup: func(s *EnvironmentService) {
+				// Simulate an error during the transaction (e.g. when calling proj.Update).
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).DoAndReturn(func(ctx context.Context, fn func(context.Context, mysql.Transaction) error) error {
+					return errors.New("update failed")
+				})
+			},
+			req: &environmentproto.UpdateProjectRequest{
+				Id:          "project-id",
+				Name:        &wrappers.StringValue{Value: "ValidName"},
+				Description: &wrappers.StringValue{Value: "updated description"},
+			},
+			expectedErr: createError(
+				statusInternal,
+				localizer.MustLocalize(locale.InternalServerError),
+			),
+		},
+		{
+			ctx:  ctx,
+			desc: "err: publish domain event failed",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				// Simulate a failure when publishing the update event.
+				s.publisher.(*pubmock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("publish failed"))
+			},
+			req: &environmentproto.UpdateProjectRequest{
+				Id:          "project-id",
+				Name:        &wrappers.StringValue{Value: "ValidName"},
+				Description: &wrappers.StringValue{Value: "updated description"},
+			},
+			expectedErr: createError(
+				statusInternal,
+				localizer.MustLocalize(locale.InternalServerError),
+			),
+		},
+		{
+			ctx:  ctx,
+			desc: "success",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*pubmock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &environmentproto.UpdateProjectRequest{
+				Id:          "project-id",
+				Name:        &wrappers.StringValue{Value: "ValidName"},
+				Description: &wrappers.StringValue{Value: "updated description"},
+			},
+			expected: &environmentproto.UpdateProjectResponse{},
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := newEnvironmentService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			resp, err := service.updateProjectNoCommand(p.ctx, p.req, localizer, editor)
+			if resp != nil {
+				// For a successful update, compare the expected response.
+				assert.Equal(t, p.expected, resp)
+			} else {
+				assert.Equal(t, p.expectedErr, err)
+			}
+		})
+	}
+}
+
 func TestUpdateProjectMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -775,14 +967,6 @@ func TestUpdateProjectMySQL(t *testing.T) {
 		req         *proto.UpdateProjectRequest
 		expectedErr error
 	}{
-		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			req: &proto.UpdateProjectRequest{
-				Id: "id-0",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
 		{
 			desc:  "err: ErrProjectIDRequired",
 			setup: nil,
@@ -1170,14 +1354,6 @@ func TestProjectPermissionDeniedMySQL(t *testing.T) {
 			desc: "CreateTrialProject",
 			action: func(ctx context.Context, es *EnvironmentService) error {
 				_, err := es.CreateTrialProject(ctx, &proto.CreateTrialProjectRequest{})
-				return err
-			},
-			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
-		},
-		{
-			desc: "UpdateProject",
-			action: func(ctx context.Context, es *EnvironmentService) error {
-				_, err := es.UpdateProject(ctx, &proto.UpdateProjectRequest{})
 				return err
 			},
 			expected: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),

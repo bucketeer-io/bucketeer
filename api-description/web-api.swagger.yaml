@@ -7786,12 +7786,15 @@ definitions:
       renameCommand:
         $ref: '#/definitions/environmentRenameProjectCommand'
         description: deprecated
+      organizationId:
+        type: string
       name:
         type: string
       description:
         type: string
     required:
       - id
+      - organizationId
   environmentUpdateProjectResponse:
     type: object
   eventcounterDistributionSummary:

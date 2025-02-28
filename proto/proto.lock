@@ -11732,11 +11732,22 @@
               },
               {
                 "id": 4,
+                "name": "organization_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 5,
                 "name": "name",
                 "type": "google.protobuf.StringValue"
               },
               {
-                "id": 5,
+                "id": 6,
                 "name": "description",
                 "type": "google.protobuf.StringValue"
               }
@@ -17914,6 +17925,10 @@
                 "integer": 1206
               },
               {
+                "name": "PROJECT_UPDATED",
+                "integer": 1207
+              },
+              {
                 "name": "PROGRESSIVE_ROLLOUT_CREATED",
                 "integer": 1400
               },
@@ -20701,6 +20716,31 @@
               {
                 "id": 9,
                 "name": "url_code",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ProjectUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "description",
                 "type": "string"
               }
             ]

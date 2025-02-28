@@ -904,6 +904,9 @@ export class UpdateProjectRequest extends jspb.Message {
     value?: proto_environment_command_pb.RenameProjectCommand
   ): void;
 
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
   hasName(): boolean;
   clearName(): void;
   getName(): google_protobuf_wrappers_pb.StringValue | undefined;
@@ -940,6 +943,7 @@ export namespace UpdateProjectRequest {
     id: string;
     changeDescriptionCommand?: proto_environment_command_pb.ChangeDescriptionProjectCommand.AsObject;
     renameCommand?: proto_environment_command_pb.RenameProjectCommand.AsObject;
+    organizationId: string;
     name?: google_protobuf_wrappers_pb.StringValue.AsObject;
     description?: google_protobuf_wrappers_pb.StringValue.AsObject;
   };
