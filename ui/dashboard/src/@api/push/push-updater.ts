@@ -11,7 +11,7 @@ export type PushUpdaterParams = {
 };
 
 export interface PushUpdaterResponse {
-  push: Array<Push>;
+  push: Push;
 }
 
 export const pushUpdater = async (

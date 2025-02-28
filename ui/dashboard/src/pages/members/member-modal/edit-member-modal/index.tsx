@@ -121,25 +121,14 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
     return accountUpdater({
       organizationId: currentEnvironment.organizationId,
       email: member.email,
-      changeOrganizationRoleCommand: {
+      organizationRole: {
         role: values.role as OrganizationRole
       },
-      changeEnvironmentRolesCommand: {
-        roles: values.environmentRoles,
-        writeType: 'WriteType_OVERRIDE'
-      },
-      changeFirstNameCommand: {
-        firstName: values.firstName
-      },
-      changeLastNameCommand: {
-        lastName: values.lastName
-      },
-      changeLanguageCommand: {
-        language: values.language
-      },
-      changeTagsCommand: {
-        tags: values.tags
-      }
+      environmentRoles: values.environmentRoles,
+      firstName: values.firstName,
+      lastName: values.lastName,
+      language: values.language,
+      tags: { values: values.tags }
     }).then(() => {
       notify({
         toastType: 'toast',

@@ -1,10 +1,8 @@
 import axiosClient from '@api/axios-client';
-import { AnyObject } from 'yup';
 
 export interface AccountDeleterParams {
   email: string;
   organizationId: string;
-  command: AnyObject;
 }
 
 export const accountDeleter = async (params?: AccountDeleterParams) => {
