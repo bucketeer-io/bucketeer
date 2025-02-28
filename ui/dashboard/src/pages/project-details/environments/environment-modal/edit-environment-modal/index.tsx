@@ -58,31 +58,34 @@ const EditEnvironmentModal = ({
     }
   });
 
-  const onSubmit: SubmitHandler<EditEnvironmentForm> = values => {
-    return environmentUpdater({
-      id: environment.id,
-      renameCommand: {
-        name: values.name
-      },
-      changeDescriptionCommand: {
-        description: values.description
-      },
-      changeRequireCommentCommand: {
+  const onSubmit: SubmitHandler<EditEnvironmentForm> = async values => {
+    try {
+      const resp = await environmentUpdater({
+        id: environment.id,
+        name: values.name,
+        description: values.description,
         requireComment: values.requireComment
+      });
+      if (resp) {
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: (
+            <span>
+              <b>{values.name}</b> {`has been successfully updated!`}
+            </span>
+          )
+        });
+        invalidateEnvironments(queryClient);
+        onClose();
       }
-    }).then(() => {
+    } catch (error) {
       notify({
         toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {`has been successfully updated!`}
-          </span>
-        )
+        messageType: 'error',
+        message: (error as Error)?.message
       });
-      invalidateEnvironments(queryClient);
-      onClose();
-    });
+    }
   };
 
   return (

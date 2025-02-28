@@ -66,31 +66,32 @@ const EditOrganizationModal = ({
     }
   });
 
-  const onSubmit: SubmitHandler<EditOrganizationForm> = values => {
-    return organizationUpdater({
-      id: organization.id,
-      changeDescriptionCommand: {
-        description: values.description
-      },
-      renameCommand: {
-        name: values.name
-      },
-      changeOwnerEmailCommand: {
-        ownerEmail: values.ownerEmail
+  const onSubmit: SubmitHandler<EditOrganizationForm> = async values => {
+    try {
+      const resp = await organizationUpdater({
+        id: organization.id,
+        ...values
+      });
+      if (resp) {
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: (
+            <span>
+              <b>{values.name}</b> {`has been successfully updated!`}
+            </span>
+          )
+        });
+        invalidateOrganizations(queryClient);
+        onClose();
       }
-    }).then(() => {
+    } catch (error) {
       notify({
         toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {`has been successfully updated!`}
-          </span>
-        )
+        messageType: 'error',
+        message: (error as Error)?.message || 'Something went wrong.'
       });
-      invalidateOrganizations(queryClient);
-      onClose();
-    });
+    }
   };
 
   return (

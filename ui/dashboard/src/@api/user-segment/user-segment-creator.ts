@@ -1,7 +1,7 @@
 import axiosClient from '@api/axios-client';
 import { UserSegment } from '@types';
 
-export interface UserSegmentCreatorParams {
+export interface UserSegmentCreatorPayload {
   environmentId: string;
   name: string;
   description?: string;
@@ -12,7 +12,7 @@ export interface UserSegmentCreatorResponse {
 }
 
 export const userSegmentCreator = async (
-  params?: UserSegmentCreatorParams
+  params?: UserSegmentCreatorPayload
 ): Promise<UserSegmentCreatorResponse> => {
   return axiosClient
     .post<UserSegmentCreatorResponse>('/v1/segment', params)

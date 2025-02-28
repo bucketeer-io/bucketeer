@@ -1,9 +1,7 @@
 import axiosClient from '@api/axios-client';
-import { AnyObject } from 'yup';
 
 export interface EnvironmentUnarchiveParams {
   id: string;
-  command: AnyObject;
 }
 
 export const environmentUnarchive = async (
