@@ -746,6 +746,10 @@ func (s *EnvironmentService) UpdateOrganization(
 		}
 	}
 	commands := s.getUpdateOrganizationCommands(req)
+	if len(commands) == 0 {
+		return s.updateOrganizationNoCommand(ctx, req, editor, localizer)
+	}
+
 	if err := s.validateUpdateOrganizationRequest(req.Id, commands, localizer); err != nil {
 		return nil, err
 	}
@@ -753,6 +757,138 @@ func (s *EnvironmentService) UpdateOrganization(
 		return nil, err
 	}
 	return &environmentproto.UpdateOrganizationResponse{}, nil
+}
+
+func (s *EnvironmentService) updateOrganizationNoCommand(
+	ctx context.Context,
+	req *environmentproto.UpdateOrganizationRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*environmentproto.UpdateOrganizationResponse, error) {
+	if err := s.validateUpdateOrganizationRequestNoCommand(req, localizer); err != nil {
+		return nil, err
+	}
+	var prevOwnerEmail string
+	var newOwnerEmail string
+	var updatedOrg *environmentproto.Organization
+	var event *eventproto.Event
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		orgStorage := v2es.NewOrganizationStorage(tx)
+		organization, err := orgStorage.GetOrganization(ctxWithTx, req.Id)
+		if err != nil {
+			return err
+		}
+		prevOwnerEmail = organization.OwnerEmail
+		updated, err := organization.Update(
+			req.Name,
+			req.Description,
+			req.OwnerEmail,
+		)
+		if err != nil {
+			return err
+		}
+		event, err = domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_ORGANIZATION,
+			req.Id,
+			eventproto.Event_ORGANIZATION_UPDATED,
+			&eventproto.OrganizationUpdatedEvent{
+				Id:          updatedOrg.Id,
+				Name:        req.Name,
+				Description: req.Description,
+				OwnerEmail:  req.OwnerEmail,
+			},
+			updated,
+			organization,
+		)
+		if err != nil {
+			return err
+		}
+		// Set the new owner email if it changes
+		if prevOwnerEmail != organization.OwnerEmail {
+			newOwnerEmail = organization.OwnerEmail
+		}
+		updatedOrg = updated.Organization
+		return orgStorage.UpdateOrganization(ctxWithTx, updated)
+	})
+	if err != nil {
+		return nil, s.reportUpdateOrganizationError(ctx, err, localizer)
+	}
+
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish the event",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, statusInternal.Err()
+	}
+
+	// Update the organization role when the owner email changes
+	if prevOwnerEmail != "" && newOwnerEmail != "" {
+		if err := s.updateOwnerRole(ctx, req.Id, prevOwnerEmail, newOwnerEmail); err != nil {
+			s.logger.Error("Failed to update the new owner's role",
+				zap.Error(err),
+				zap.String("organizationId", req.Id),
+				zap.String("prevOwnerEmail", prevOwnerEmail),
+				zap.String("newOwnerEmail", newOwnerEmail),
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+	}
+
+	return &environmentproto.UpdateOrganizationResponse{
+		Organization: updatedOrg,
+	}, nil
+}
+
+func (s *EnvironmentService) reportUpdateOrganizationError(
+	ctx context.Context,
+	err error,
+	localizer locale.Localizer,
+) error {
+	s.logger.Error(
+		"Failed to update organization",
+		log.FieldsFromImcomingContext(ctx).AddFields(
+			zap.Error(err),
+		)...,
+	)
+	if errors.Is(err, domain.ErrCannotArchiveSystemAdmin) || errors.Is(err, domain.ErrCannotDisableSystemAdmin) {
+		dt, err := statusCannotUpdateSystemAdmin.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InvalidArgumentError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if errors.Is(err, v2es.ErrOrganizationNotFound) || errors.Is(err, v2es.ErrOrganizationUnexpectedAffectedRows) {
+		dt, err := statusOrganizationNotFound.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.NotFoundError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalize(locale.InternalServerError),
+	})
+	if err != nil {
+		return statusInternal.Err()
+	}
+	return dt.Err()
 }
 
 func (s *EnvironmentService) getUpdateOrganizationCommands(
@@ -776,16 +912,6 @@ func (s *EnvironmentService) validateUpdateOrganizationRequest(
 	commands []command.Command,
 	localizer locale.Localizer,
 ) error {
-	if len(commands) == 0 {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	if id == "" {
 		dt, err := statusOrganizationIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -819,6 +945,46 @@ func (s *EnvironmentService) validateUpdateOrganizationRequest(
 				}
 				return dt.Err()
 			}
+		}
+	}
+	return nil
+}
+
+func (s *EnvironmentService) validateUpdateOrganizationRequestNoCommand(
+	req *environmentproto.UpdateOrganizationRequest,
+	localizer locale.Localizer,
+) error {
+	if req.Id == "" {
+		dt, err := statusOrganizationIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Name != nil {
+		name := strings.TrimSpace(req.Name.Value)
+		if name == "" {
+			dt, err := statusOrganizationNameRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		if len(name) > maxOrganizationNameLength {
+			dt, err := statusInvalidOrganizationName.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 	}
 	return nil
@@ -873,40 +1039,7 @@ func (s *EnvironmentService) updateOrganization(
 		return orgStorage.UpdateOrganization(ctx, organization)
 	})
 	if err != nil {
-		s.logger.Error(
-			"Failed to update organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		if errors.Is(err, domain.ErrCannotArchiveSystemAdmin) || errors.Is(err, domain.ErrCannotDisableSystemAdmin) {
-			dt, err := statusCannotUpdateSystemAdmin.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InvalidArgumentError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
-		if errors.Is(err, v2es.ErrOrganizationNotFound) || errors.Is(err, v2es.ErrOrganizationUnexpectedAffectedRows) {
-			dt, err := statusOrganizationNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		return s.reportUpdateOrganizationError(ctx, err, localizer)
 	}
 	// Update the organization role when the owner email changes
 	if prevOwnerEmail != "" && newOwnerEmail != "" {

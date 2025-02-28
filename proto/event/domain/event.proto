@@ -242,6 +242,7 @@ message Event {
     ORGANIZATION_UNARCHIVED = 1506;
     ORGANIZATION_TRIAL_CONVERTED = 1507;
     ORGANIZATION_OWNER_EMAIL_CHANGED = 1508;
+    ORGANIZATION_UPDATED = 1509;
     FLAG_TRIGGER_CREATED = 1601;
     FLAG_TRIGGER_RESET = 1602;
     FLAG_TRIGGER_DESCRIPTION_CHANGED = 1603;
@@ -1159,6 +1160,13 @@ message OrganizationOwnerEmailChangedEvent {
 message OrganizationNameChangedEvent {
   string id = 1;
   string name = 2;
+}
+
+message OrganizationUpdatedEvent {
+  string id = 1;
+  google.protobuf.StringValue name = 2;
+  google.protobuf.StringValue description = 3;
+  google.protobuf.StringValue ownerEmail = 4;
 }
 
 message OrganizationEnabledEvent {

@@ -8763,7 +8763,16 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_environment_command_pb.ChangeOwnerEmailOrganizationCommand.toObject(
             includeInstance,
             f
-          )
+          ),
+        name:
+          (f = msg.getName()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
+        description:
+          (f = msg.getDescription()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
+        ownerEmail:
+          (f = msg.getOwnerEmail()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -8837,6 +8846,30 @@ proto.bucketeer.environment.UpdateOrganizationRequest.deserializeBinaryFromReade
           );
           msg.setChangeOwnerEmailCommand(value);
           break;
+        case 5:
+          var value = new google_protobuf_wrappers_pb.StringValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+          );
+          msg.setName(value);
+          break;
+        case 6:
+          var value = new google_protobuf_wrappers_pb.StringValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+          );
+          msg.setDescription(value);
+          break;
+        case 7:
+          var value = new google_protobuf_wrappers_pb.StringValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+          );
+          msg.setOwnerEmail(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -8898,6 +8931,30 @@ proto.bucketeer.environment.UpdateOrganizationRequest.serializeBinaryToWriter =
         f,
         proto_environment_command_pb.ChangeOwnerEmailOrganizationCommand
           .serializeBinaryToWriter
+      );
+    }
+    f = message.getName();
+    if (f != null) {
+      writer.writeMessage(
+        5,
+        f,
+        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getDescription();
+    if (f != null) {
+      writer.writeMessage(
+        6,
+        f,
+        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getOwnerEmail();
+    if (f != null) {
+      writer.writeMessage(
+        7,
+        f,
+        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
       );
     }
   };
@@ -9048,6 +9105,132 @@ proto.bucketeer.environment.UpdateOrganizationRequest.prototype.hasChangeOwnerEm
     return jspb.Message.getField(this, 4) != null;
   };
 
+/**
+ * optional google.protobuf.StringValue name = 5;
+ * @return {?proto.google.protobuf.StringValue}
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.getName =
+  function () {
+    return /** @type{?proto.google.protobuf.StringValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.StringValue,
+        5
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.StringValue|undefined} value
+ * @return {!proto.bucketeer.environment.UpdateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.setName =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 5, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.environment.UpdateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.clearName =
+  function () {
+    return this.setName(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.hasName =
+  function () {
+    return jspb.Message.getField(this, 5) != null;
+  };
+
+/**
+ * optional google.protobuf.StringValue description = 6;
+ * @return {?proto.google.protobuf.StringValue}
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.getDescription =
+  function () {
+    return /** @type{?proto.google.protobuf.StringValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.StringValue,
+        6
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.StringValue|undefined} value
+ * @return {!proto.bucketeer.environment.UpdateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.setDescription =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 6, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.environment.UpdateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.clearDescription =
+  function () {
+    return this.setDescription(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.hasDescription =
+  function () {
+    return jspb.Message.getField(this, 6) != null;
+  };
+
+/**
+ * optional google.protobuf.StringValue owner_email = 7;
+ * @return {?proto.google.protobuf.StringValue}
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.getOwnerEmail =
+  function () {
+    return /** @type{?proto.google.protobuf.StringValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.StringValue,
+        7
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.StringValue|undefined} value
+ * @return {!proto.bucketeer.environment.UpdateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.setOwnerEmail =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 7, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.environment.UpdateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.clearOwnerEmail =
+  function () {
+    return this.setOwnerEmail(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.hasOwnerEmail =
+  function () {
+    return jspb.Message.getField(this, 7) != null;
+  };
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -9083,7 +9266,14 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        organization:
+          (f = msg.getOrganization()) &&
+          proto_environment_organization_pb.Organization.toObject(
+            includeInstance,
+            f
+          )
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -9122,6 +9312,15 @@ proto.bucketeer.environment.UpdateOrganizationResponse.deserializeBinaryFromRead
       }
       var field = reader.getFieldNumber();
       switch (field) {
+        case 1:
+          var value = new proto_environment_organization_pb.Organization();
+          reader.readMessage(
+            value,
+            proto_environment_organization_pb.Organization
+              .deserializeBinaryFromReader
+          );
+          msg.setOrganization(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -9154,6 +9353,56 @@ proto.bucketeer.environment.UpdateOrganizationResponse.prototype.serializeBinary
 proto.bucketeer.environment.UpdateOrganizationResponse.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
+    f = message.getOrganization();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_environment_organization_pb.Organization.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional Organization organization = 1;
+ * @return {?proto.bucketeer.environment.Organization}
+ */
+proto.bucketeer.environment.UpdateOrganizationResponse.prototype.getOrganization =
+  function () {
+    return /** @type{?proto.bucketeer.environment.Organization} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_environment_organization_pb.Organization,
+        1
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.environment.Organization|undefined} value
+ * @return {!proto.bucketeer.environment.UpdateOrganizationResponse} returns this
+ */
+proto.bucketeer.environment.UpdateOrganizationResponse.prototype.setOrganization =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 1, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.environment.UpdateOrganizationResponse} returns this
+ */
+proto.bucketeer.environment.UpdateOrganizationResponse.prototype.clearOrganization =
+  function () {
+    return this.setOrganization(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.environment.UpdateOrganizationResponse.prototype.hasOrganization =
+  function () {
+    return jspb.Message.getField(this, 1) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

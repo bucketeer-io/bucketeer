@@ -1455,6 +1455,21 @@ export class UpdateOrganizationRequest extends jspb.Message {
     value?: proto_environment_command_pb.ChangeOwnerEmailOrganizationCommand
   ): void;
 
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasOwnerEmail(): boolean;
+  clearOwnerEmail(): void;
+  getOwnerEmail(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setOwnerEmail(value?: google_protobuf_wrappers_pb.StringValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateOrganizationRequest.AsObject;
   static toObject(
@@ -1482,10 +1497,18 @@ export namespace UpdateOrganizationRequest {
     renameCommand?: proto_environment_command_pb.ChangeNameOrganizationCommand.AsObject;
     changeDescriptionCommand?: proto_environment_command_pb.ChangeDescriptionOrganizationCommand.AsObject;
     changeOwnerEmailCommand?: proto_environment_command_pb.ChangeOwnerEmailOrganizationCommand.AsObject;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    ownerEmail?: google_protobuf_wrappers_pb.StringValue.AsObject;
   };
 }
 
 export class UpdateOrganizationResponse extends jspb.Message {
+  hasOrganization(): boolean;
+  clearOrganization(): void;
+  getOrganization(): proto_environment_organization_pb.Organization | undefined;
+  setOrganization(value?: proto_environment_organization_pb.Organization): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateOrganizationResponse.AsObject;
   static toObject(
@@ -1508,7 +1531,9 @@ export class UpdateOrganizationResponse extends jspb.Message {
 }
 
 export namespace UpdateOrganizationResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    organization?: proto_environment_organization_pb.Organization.AsObject;
+  };
 }
 
 export class EnableOrganizationRequest extends jspb.Message {
