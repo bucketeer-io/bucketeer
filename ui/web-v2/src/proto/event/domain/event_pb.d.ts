@@ -285,6 +285,7 @@ export namespace Event {
     PROJECT_TRIAL_CREATED: 1204;
     PROJECT_TRIAL_CONVERTED: 1205;
     PROJECT_RENAMED: 1206;
+    PROJECT_UPDATED: 1207;
     PROGRESSIVE_ROLLOUT_CREATED: 1400;
     PROGRESSIVE_ROLLOUT_DELETED: 1401;
     PROGRESSIVE_ROLLOUT_SCHEDULE_TRIGGERED_AT_CHANGED: 1402;
@@ -6014,6 +6015,49 @@ export namespace ProjectCreatedEvent {
     updatedAt: number;
     name: string;
     urlCode: string;
+  };
+}
+
+export class ProjectUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ProjectUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ProjectUpdatedEvent
+  ): ProjectUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ProjectUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ProjectUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: ProjectUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): ProjectUpdatedEvent;
+}
+
+export namespace ProjectUpdatedEvent {
+  export type AsObject = {
+    id: string;
+    organizationId: string;
+    name: string;
+    description: string;
   };
 }
 

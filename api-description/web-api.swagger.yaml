@@ -7422,6 +7422,19 @@ definitions:
     properties:
       command:
         $ref: '#/definitions/environmentCreateProjectCommand'
+        description: deprecated
+      organizationId:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      urlCode:
+        type: string
+    required:
+      - organizationId
+      - name
+      - urlCode
   environmentCreateProjectResponse:
     type: object
     properties:
@@ -7784,8 +7797,19 @@ definitions:
         type: string
       changeDescriptionCommand:
         $ref: '#/definitions/environmentChangeDescriptionProjectCommand'
+        description: deprecated
       renameCommand:
         $ref: '#/definitions/environmentRenameProjectCommand'
+        description: deprecated
+      organizationId:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+    required:
+      - id
+      - organizationId
   environmentUpdateProjectResponse:
     type: object
   eventcounterDistributionSummary:

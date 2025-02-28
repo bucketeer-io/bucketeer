@@ -223,6 +223,7 @@ message Event {
     PROJECT_TRIAL_CREATED = 1204;
     PROJECT_TRIAL_CONVERTED = 1205;
     PROJECT_RENAMED = 1206;
+    PROJECT_UPDATED = 1207;
     reserved 1300;
     reserved 1301;
     reserved 1302;
@@ -1062,6 +1063,13 @@ message ProjectCreatedEvent {
   int64 updated_at = 7;
   string name = 8;
   string url_code = 9;
+}
+
+message ProjectUpdatedEvent {
+  string id = 1;
+  string organization_id = 2;
+  string name = 3;
+  string description = 4;
 }
 
 message ProjectDescriptionChangedEvent {
