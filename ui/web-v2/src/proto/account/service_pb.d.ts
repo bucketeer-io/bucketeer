@@ -135,6 +135,41 @@ export namespace GetMyOrganizationsByEmailRequest {
   };
 }
 
+export class GetMyOrganizationsByGoogleTokenRequest extends jspb.Message {
+  getAccessToken(): string;
+  setAccessToken(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): GetMyOrganizationsByGoogleTokenRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GetMyOrganizationsByGoogleTokenRequest
+  ): GetMyOrganizationsByGoogleTokenRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GetMyOrganizationsByGoogleTokenRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): GetMyOrganizationsByGoogleTokenRequest;
+  static deserializeBinaryFromReader(
+    message: GetMyOrganizationsByGoogleTokenRequest,
+    reader: jspb.BinaryReader
+  ): GetMyOrganizationsByGoogleTokenRequest;
+}
+
+export namespace GetMyOrganizationsByGoogleTokenRequest {
+  export type AsObject = {
+    accessToken: string;
+  };
+}
+
 export class GetMyOrganizationsResponse extends jspb.Message {
   clearOrganizationsList(): void;
   getOrganizationsList(): Array<proto_environment_organization_pb.Organization>;

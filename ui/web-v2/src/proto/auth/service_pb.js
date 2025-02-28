@@ -603,7 +603,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         code: jspb.Message.getFieldWithDefault(msg, 1, ''),
         redirectUrl: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        type: jspb.Message.getFieldWithDefault(msg, 3, 0)
+        type: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        organizationId: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -656,6 +657,10 @@ proto.bucketeer.auth.ExchangeTokenRequest.deserializeBinaryFromReader =
           );
           msg.setType(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOrganizationId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -701,6 +706,10 @@ proto.bucketeer.auth.ExchangeTokenRequest.serializeBinaryToWriter = function (
   f = message.getType();
   if (f !== 0.0) {
     writer.writeEnum(3, f);
+  }
+  f = message.getOrganizationId();
+  if (f.length > 0) {
+    writer.writeString(4, f);
   }
 };
 
@@ -758,6 +767,26 @@ proto.bucketeer.auth.ExchangeTokenRequest.prototype.getType = function () {
 proto.bucketeer.auth.ExchangeTokenRequest.prototype.setType = function (value) {
   return jspb.Message.setProto3EnumField(this, 3, value);
 };
+
+/**
+ * optional string organization_id = 4;
+ * @return {string}
+ */
+proto.bucketeer.auth.ExchangeTokenRequest.prototype.getOrganizationId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.auth.ExchangeTokenRequest} returns this
+ */
+proto.bucketeer.auth.ExchangeTokenRequest.prototype.setOrganizationId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
+  };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**

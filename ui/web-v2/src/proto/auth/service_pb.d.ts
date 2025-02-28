@@ -86,6 +86,9 @@ export class ExchangeTokenRequest extends jspb.Message {
   getType(): AuthTypeMap[keyof AuthTypeMap];
   setType(value: AuthTypeMap[keyof AuthTypeMap]): void;
 
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ExchangeTokenRequest.AsObject;
   static toObject(
@@ -112,6 +115,7 @@ export namespace ExchangeTokenRequest {
     code: string;
     redirectUrl: string;
     type: AuthTypeMap[keyof AuthTypeMap];
+    organizationId: string;
   };
 }
 
