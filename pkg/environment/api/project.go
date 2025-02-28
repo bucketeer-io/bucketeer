@@ -318,14 +318,7 @@ func (s *EnvironmentService) createProjectNoCommand(
 	var domainEvent *evdomain.Event
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
 		storage := v2es.NewProjectStorage(tx)
-		domainEvent, err = s.newCreateDomainEvent(
-			ctx,
-			newProj.Project,
-			&environmentproto.Project{},
-			req,
-			editor,
-			localizer,
-		)
+		domainEvent, err = s.newCreateDomainEvent(ctx, newProj.Project, req, editor, localizer)
 		if err != nil {
 			return err
 		}
@@ -428,7 +421,7 @@ func (s *EnvironmentService) reportCreateProjectRequestError(
 
 func (s *EnvironmentService) newCreateDomainEvent(
 	ctx context.Context,
-	newProj, prev *environmentproto.Project,
+	newProj *environmentproto.Project,
 	req *environmentproto.CreateProjectRequest,
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
@@ -448,7 +441,7 @@ func (s *EnvironmentService) newCreateDomainEvent(
 			UpdatedAt:   newProj.UpdatedAt,
 		},
 		newProj,
-		prev,
+		&environmentproto.Project{},
 	)
 	if err != nil {
 		return nil, err
