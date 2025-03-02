@@ -8,7 +8,8 @@ import { Message } from 'google-protobuf';
 import { Any } from 'google-protobuf/google/protobuf/any_pb';
 import {
   BoolValue,
-  Int32Value
+  Int32Value,
+  StringValue
 } from 'google-protobuf/google/protobuf/wrappers_pb';
 
 import * as featureGrpc from '../grpc/features';
@@ -40,11 +41,21 @@ import {
   UpdateFeatureTargetingRequest,
   UpdateFeatureVariationsRequest,
   ListTagsRequest,
-  ListTagsResponse
+  ListTagsResponse,
+  UpdateFeatureRequest,
+  TagChange,
+  PrerequisiteChange,
+  TargetChange,
+  RuleChange,
+  VariationChange
 } from '../proto/feature/service_pb';
 import { Variation } from '../proto/feature/variation_pb';
-
 import { AppState } from '.';
+import {
+  FixedStrategy,
+  RolloutStrategy,
+  Strategy
+} from '../proto/feature/strategy_pb';
 
 const MODULE_NAME = 'features';
 
@@ -262,6 +273,169 @@ export const updateFeatureDetails = createAsyncThunk<
 
   await featureGrpc.updateFeatureDetails(request);
 });
+
+export interface UpdateFeatureParams {
+  environmentId: string;
+  id: string;
+  comment?: string;
+  enabled?: boolean;
+  applyScheduleUpdate?: boolean;
+  prerequisitesList?: PrerequisiteChange[];
+  targets?: TargetChange[];
+  rules?: RuleChange[];
+  defaultStrategy?: {
+    option: {
+      label: string;
+      value: string;
+    };
+    rolloutStrategy: {
+      id: string;
+      percentage: number;
+    }[];
+  };
+  offVariation?: {
+    label: string;
+    value: string;
+  };
+  variations?: VariationChange[];
+  name?: string;
+  description?: string;
+  tags?: Array<TagChange>;
+  archived?: boolean;
+  resetSampling?: boolean;
+  feature?: Feature;
+}
+
+export const updateFeature = createAsyncThunk<
+  void,
+  UpdateFeatureParams | undefined,
+  { state: AppState }
+>(`${MODULE_NAME}/updateFeature`, async (params) => {
+  const request = new UpdateFeatureRequest();
+  request.setEnvironmentId(params.environmentId);
+  request.setId(params.id);
+
+  if (params.comment) {
+    request.setComment(params.comment);
+  }
+
+  if (params.applyScheduleUpdate) {
+    request.setApplyScheduleUpdate(
+      new BoolValue().setValue(params.applyScheduleUpdate)
+    );
+  }
+
+  if (params.enabled !== undefined) {
+    console.log('Enabled set');
+    request.setEnabled(new BoolValue().setValue(params.enabled));
+  }
+
+  if (params.prerequisitesList) {
+    console.log('pre-requisites set');
+    request.setPrerequisiteChangesList(params.prerequisitesList);
+  }
+
+  if (params.targets) {
+    console.log('targets');
+    request.setTargetChangesList(params.targets);
+  }
+
+  if (params.rules) {
+    console.log('rules');
+    request.setRuleChangesList(params.rules);
+  }
+
+  if (params.defaultStrategy) {
+    console.log('defaultStrategy set');
+    request.setDefaultStrategy(mapToStrategy(params.defaultStrategy));
+  }
+
+  if (params.offVariation) {
+    console.log('offVariation set');
+    request.setOffVariation(mapOffVariation(params.offVariation));
+  }
+
+  if (params.variations) {
+    console.log('variations set');
+    request.setVariationChangesList(params.variations);
+  }
+
+  if (params.name) {
+    console.log('name set');
+    request.setName(new StringValue().setValue(params.name));
+  }
+
+  if (params.description !== undefined) {
+    console.log('description set');
+    request.setDescription(new StringValue().setValue(params.description));
+  }
+
+  if (params.tags) {
+    console.log('tags set');
+    request.setTagChangesList(params.tags);
+  }
+
+  if (params.archived !== undefined) {
+    console.log('archived set');
+    request.setArchived(new BoolValue().setValue(params.archived));
+  }
+
+  if (params.resetSampling) {
+    console.log('resetSampling set');
+    request.setResetSamplingSeed(
+      new BoolValue().setValue(params.resetSampling)
+    );
+  }
+
+  // const scheduleUpdateListValue = new ScheduleUpdateListValue();
+  // const scheduleUpdate = new ScheduleUpdate();
+
+  // const today = new Date();
+  // today.setDate(today.getDate() + 1);
+
+  // scheduleUpdate.setUpdateAt(today.getTime());
+
+  // // const feature = new Feature();
+  // // feature.setId(params.id);
+  // // feature.setName('test 1');
+
+  // scheduleUpdate.setFeature(params.feature);
+  // scheduleUpdateListValue.setValueList([scheduleUpdate]);
+  // request.setScheduleUpdates(scheduleUpdateListValue);
+
+  await featureGrpc.updateFeature(request);
+});
+
+function mapToStrategy(
+  strategy: UpdateFeatureParams['defaultStrategy']
+): Strategy {
+  const newStrategy = new Strategy();
+  if (strategy.option.value === Strategy.Type.ROLLOUT.toString()) {
+    newStrategy.setType(Strategy.Type.ROLLOUT);
+    const rolloutStrategy = new RolloutStrategy();
+    const variationList =
+      strategy.rolloutStrategy?.map((rollout) => {
+        const rolloutStrategyVariation = new RolloutStrategy.Variation();
+        rolloutStrategyVariation.setVariation(rollout.id);
+        rolloutStrategyVariation.setWeight(rollout.percentage * 1000);
+        return rolloutStrategyVariation;
+      }) || [];
+    rolloutStrategy.setVariationsList(variationList);
+    newStrategy.setRolloutStrategy(rolloutStrategy);
+  } else {
+    newStrategy.setType(Strategy.Type.FIXED);
+    const fixedStrategy = new FixedStrategy();
+    fixedStrategy.setVariation(strategy.option.value);
+    newStrategy.setFixedStrategy(fixedStrategy);
+  }
+  return newStrategy;
+}
+
+function mapOffVariation(offVariation: UpdateFeatureParams['offVariation']) {
+  const variation = new Variation();
+  variation.setValue(offVariation.value);
+  return variation;
+}
 
 export interface UpdateFeatureTargetingParams {
   environmentId: string;
