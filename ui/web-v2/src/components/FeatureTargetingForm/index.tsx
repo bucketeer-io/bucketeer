@@ -46,7 +46,8 @@ import { AppState } from '../../modules';
 import {
   selectById as selectFeatureById,
   selectAll as selectAllFeatures,
-  listFeatures
+  listFeatures,
+  updateFeature
 } from '../../modules/features';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
 import {
@@ -69,6 +70,7 @@ import { CancelScheduleDialog } from '../CancelScheduleDialog';
 import { Dialog } from '@headlessui/react';
 import ProjectSvg from '../../assets/svg/project.svg';
 import { Overlay } from '../Overlay';
+import { Modal } from '../Modal';
 
 interface FeatureTargetingFormProps {
   featureId: string;
@@ -78,6 +80,7 @@ interface FeatureTargetingFormProps {
 export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
   ({ featureId, onOpenConfirmDialog }) => {
     const { formatMessage: f } = useIntl();
+    const dispatch = useDispatch<AppDispatch>();
     const editable = useIsEditable();
     const methods = useFormContext<TargetingForm>();
     const {
@@ -183,7 +186,19 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       );
     };
 
+    const handleApplyNow = () => {
+      setIsApplyNowOpen(false);
+      dispatch(
+        updateFeature({
+          environmentId: currentEnvironment.id,
+          id: featureId,
+          applyScheduleUpdate: true
+        })
+      );
+    };
+
     const [open, setOpen] = useState(false);
+    const [isApplyNowOpen, setIsApplyNowOpen] = useState(false);
     const [isSeeChangesModalOpen, setIsSeeChangesModalOpen] = useState(false);
 
     const disabled = false;
@@ -191,6 +206,39 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     return (
       <div className="p-10 bg-gray-100">
         <CancelScheduleDialog open={open} onClose={() => setOpen(false)} />
+        <Modal open={isApplyNowOpen} onClose={() => setIsApplyNowOpen(false)}>
+          <Dialog.Title
+            as="h3"
+            className="text-lg font-medium leading-6 text-gray-900"
+          >
+            Apply Changes
+          </Dialog.Title>
+          <div className="py-6 flex justify-center">Icon</div>
+          <div className="mt-2 text-center px-5">
+            <p className="text-sm text-gray-500">
+              Apply changes now description.
+            </p>
+          </div>
+          <div className="pt-10">
+            <div className="flex justify-end">
+              <button
+                type="button"
+                className="btn-cancel mr-3"
+                disabled={false}
+                onClick={() => setIsApplyNowOpen(false)}
+              >
+                {f(messages.button.cancel)}
+              </button>
+              <button
+                type="button"
+                className="btn btn-submit"
+                onClick={handleApplyNow}
+              >
+                Apply Now
+              </button>
+            </div>
+          </div>
+        </Modal>
         <div className="bg-blue-50 p-4 border-l-4 border-blue-400 mb-7 inline-block">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -207,7 +255,12 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
               <div className="flex items-center">
                 <div className="flex items-center text-primary border-r border-gray-300 pr-4 space-x-2">
                   <CheckIcon className="w-5 h-5" />
-                  <button className="text-sm font-normal">Apply Now</button>
+                  <button
+                    className="text-sm font-normal"
+                    onClick={() => setIsApplyNowOpen(true)}
+                  >
+                    Apply Now
+                  </button>
                 </div>
                 <div className="flex items-center text-primary border-r border-gray-300 px-4 space-x-2">
                   <PencilIcon className="w-4 h-4" />
@@ -956,7 +1009,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
                       >
                         <XIcon className="w-5 h-5" aria-hidden="true" />
                       </button>
-                      {ruleIdx !== 0 && (
+                      {/* {ruleIdx !== 0 && (
                         <button
                           type="button"
                           onClick={() => swap(ruleIdx, ruleIdx - 1)}
@@ -970,8 +1023,8 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
                         >
                           <ArrowUpIcon width={18} />
                         </button>
-                      )}
-                      {ruleIdx !== rules.length - 1 && (
+                      )} */}
+                      {/* {ruleIdx !== rules.length - 1 && (
                         <button
                           type="button"
                           onClick={() => swap(ruleIdx, ruleIdx + 1)}
@@ -985,7 +1038,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
                         >
                           <ArrowDownIcon width={18} />
                         </button>
-                      )}
+                      )} */}
                     </div>
                   )}
                 </div>

@@ -7,6 +7,7 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { messages } from '../../lang/messages';
 import { Modal } from '../Modal';
 import RevertSvg from '../../assets/svg/revert.svg';
+import { updateFeature } from '../../modules/features';
 
 interface CancelScheduleDialogProps {
   open: boolean;
@@ -20,6 +21,10 @@ export const CancelScheduleDialog: FC<CancelScheduleDialogProps> = ({
   const dispatch = useDispatch<AppDispatch>();
   const { formatMessage: f } = useIntl();
 
+  const handleCancel = () => {
+    // dispatch(updateFeature({ id: 1, status: 'scheduled' }));
+    onClose();
+  };
   return (
     <Modal open={open} onClose={onClose}>
       <Dialog.Title
@@ -47,7 +52,11 @@ export const CancelScheduleDialog: FC<CancelScheduleDialogProps> = ({
           >
             {f(messages.button.cancel)}
           </button>
-          <button type="button" className="btn bg-[#EB1726]" onClick={() => {}}>
+          <button
+            type="button"
+            className="btn bg-[#EB1726]"
+            onClick={handleCancel}
+          >
             Revert
           </button>
         </div>

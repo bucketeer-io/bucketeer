@@ -96,7 +96,8 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   // );
 
   const [saveFeatureType, setSaveFeatureType] = useState(
-    SaveFeatureType.UPDATE_NOW
+    SaveFeatureType.SCHEDULE
+    // SaveFeatureType.UPDATE_NOW
   );
   const [scheduleErrorMessage, setScheduleErrorMessage] = useState('');
 

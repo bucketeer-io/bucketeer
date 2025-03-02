@@ -34,6 +34,8 @@ import { AppDispatch } from '../../store';
 
 import { VariationForm, variationsFormSchema } from './formSchema';
 import { createResetSampleSeedCommand } from './targeting';
+import { ChangeType, VariationChange } from '../../proto/feature/service_pb';
+import { Variation } from '../../proto/feature/variation_pb';
 
 interface FeatureVariationsPageProps {
   featureId: string;
@@ -101,11 +103,71 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
         };
 
         if (saveFeatureType === SaveFeatureType.SCHEDULE) {
+          const variationChangeList = [];
+
+          const orgVariations = feature.variationsList;
+          const valVariations = data.variations;
+
+          const orgVariationIds = new Set(orgVariations.map((v) => v.id));
+          const valVariationIds = new Set(valVariations.map((v) => v.id));
+
+          const variationIds = [...orgVariationIds].filter((id) =>
+            valVariationIds.has(id)
+          );
+
+          const createVariationChange = (type, variationData) => {
+            const variationChange = new VariationChange();
+            variationChange.setChangeType(type);
+
+            const variation = new Variation();
+            variation.setId(variationData.id);
+            variation.setName(variationData.name);
+            variation.setValue(variationData.value);
+            variation.setDescription(variationData.description);
+
+            variationChange.setVariation(variation);
+            return variationChange;
+          };
+
+          orgVariations
+            .filter((v) => !variationIds.includes(v.id))
+            .forEach((v) => {
+              console.log('remove variation');
+              variationChangeList.push(
+                createVariationChange(ChangeType.DELETE, v)
+              );
+            });
+
+          valVariations
+            .filter((v) => !orgVariationIds.has(v.id))
+            .forEach((v) => {
+              console.log('add variation');
+              variationChangeList.push(
+                createVariationChange(ChangeType.CREATE, v)
+              );
+            });
+
+          variationIds.forEach((vid) => {
+            const orgVariation = orgVariations.find((v) => v.id === vid);
+            const valVariation = valVariations.find((v) => v.id === vid);
+
+            if (
+              orgVariation.value !== valVariation.value ||
+              orgVariation.name !== valVariation.name ||
+              orgVariation.description !== valVariation.description
+            ) {
+              console.log('update variation');
+              variationChangeList.push(
+                createVariationChange(ChangeType.UPDATE, valVariation)
+              );
+            }
+          });
+
           await prepareUpdate(updateFeature, {
             environmentId: currentEnvironment.id,
             id: feature.id,
             comment: data.comment,
-            variations: data.variations
+            variations: variationChangeList
           });
         } else {
           const commands: Array<Command> = [];

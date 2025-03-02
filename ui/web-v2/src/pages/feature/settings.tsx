@@ -34,6 +34,7 @@ import { settingsFormSchema } from './formSchema';
 import { listTags } from '../../modules/tags';
 import { ListTagsRequest } from '../../proto/tag/service_pb';
 import { Tag } from '../../proto/tag/tag_pb';
+import { ChangeType, TagChange } from '../../proto/feature/service_pb';
 
 interface FeatureSettingsPageProps {
   featureId: string;
@@ -109,6 +110,34 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
           });
         };
 
+        const tags = [];
+
+        if (dirtyFields.tags) {
+          const createTagChange = (type, tag) => {
+            const tagChange = new TagChange();
+            tagChange.setTag(tag);
+            tagChange.setChangeType(type);
+            return tagChange;
+          };
+
+          const featureTags = new Set(feature.tagsList);
+          const dataTags = new Set(data.tags || []);
+
+          dataTags.forEach((tag: string) => {
+            if (!featureTags.has(tag)) {
+              console.log('add tag');
+              tags.push(createTagChange(ChangeType.CREATE, tag));
+            }
+          });
+
+          featureTags.forEach((tag: string) => {
+            if (!dataTags.has(tag)) {
+              console.log('remove tag');
+              tags.push(createTagChange(ChangeType.DELETE, tag));
+            }
+          });
+        }
+
         if (saveFeatureType === SaveFeatureType.SCHEDULE) {
           await prepareUpdate(updateFeature, {
             environmentId: currentEnvironment.id,
@@ -116,7 +145,7 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
             comment: data.comment,
             name: dirtyFields.name ? data.name : undefined,
             description: dirtyFields.description ? data.description : undefined,
-            tags: dirtyFields.tags ? data.tags : undefined
+            tags: tags.length && tags
           });
         } else {
           const commands: UpdateDetailCommands = {};

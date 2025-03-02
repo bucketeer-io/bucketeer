@@ -42,23 +42,20 @@ import {
   UpdateFeatureVariationsRequest,
   ListTagsRequest,
   ListTagsResponse,
-  UpdateFeatureRequest
+  UpdateFeatureRequest,
+  TagChange,
+  PrerequisiteChange,
+  TargetChange,
+  RuleChange,
+  VariationChange
 } from '../proto/feature/service_pb';
-import { Variation, VariationListValue } from '../proto/feature/variation_pb';
+import { Variation } from '../proto/feature/variation_pb';
 import { AppState } from '.';
-import { Target, TargetListValue } from '../proto/feature/target_pb';
-import {
-  Prerequisite,
-  PrerequisiteListValue
-} from '../proto/feature/prerequisite_pb';
-import { Rule, RuleListValue } from '../proto/feature/rule_pb';
-import { Clause } from '../proto/feature/clause_pb';
 import {
   FixedStrategy,
   RolloutStrategy,
   Strategy
 } from '../proto/feature/strategy_pb';
-import { StringListValue } from '../proto/common/string_pb';
 
 const MODULE_NAME = 'features';
 
@@ -280,35 +277,12 @@ export const updateFeatureDetails = createAsyncThunk<
 export interface UpdateFeatureParams {
   environmentId: string;
   id: string;
-  comment: string;
+  comment?: string;
   enabled?: boolean;
-  prerequisitesList?: {
-    featureId: string;
-    variationId: string;
-  }[];
-  targets?: {
-    variationId: string;
-    users: string[];
-  }[];
-  rules?: {
-    id: string;
-    clauses: {
-      id: string;
-      operator: Clause.OperatorMap[keyof Clause.OperatorMap];
-      attribute: string;
-      values: string[];
-    }[];
-    strategy: {
-      option: {
-        label: string;
-        value: string;
-      };
-      rolloutStrategy?: {
-        id: string;
-        percentage: number;
-      }[];
-    };
-  }[];
+  applyScheduleUpdate?: boolean;
+  prerequisitesList?: PrerequisiteChange[];
+  targets?: TargetChange[];
+  rules?: RuleChange[];
   defaultStrategy?: {
     option: {
       label: string;
@@ -323,17 +297,13 @@ export interface UpdateFeatureParams {
     label: string;
     value: string;
   };
-  variations?: {
-    id?: string;
-    value?: string;
-    name?: string;
-    description?: string;
-  }[];
+  variations?: VariationChange[];
   name?: string;
   description?: string;
-  tags?: string[];
+  tags?: Array<TagChange>;
   archived?: boolean;
   resetSampling?: boolean;
+  feature?: Feature;
 }
 
 export const updateFeature = createAsyncThunk<
@@ -344,9 +314,16 @@ export const updateFeature = createAsyncThunk<
   const request = new UpdateFeatureRequest();
   request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
-  request.setComment(params.comment);
 
-  console.log('params', params);
+  if (params.comment) {
+    request.setComment(params.comment);
+  }
+
+  if (params.applyScheduleUpdate) {
+    request.setApplyScheduleUpdate(
+      new BoolValue().setValue(params.applyScheduleUpdate)
+    );
+  }
 
   if (params.enabled !== undefined) {
     console.log('Enabled set');
@@ -355,17 +332,17 @@ export const updateFeature = createAsyncThunk<
 
   if (params.prerequisitesList) {
     console.log('pre-requisites set');
-    request.setPrerequisites(mapToPrerequisites(params.prerequisitesList));
+    request.setPrerequisiteChangesList(params.prerequisitesList);
   }
 
   if (params.targets) {
     console.log('targets');
-    request.setTargets(mapToTargets(params.targets));
+    request.setTargetChangesList(params.targets);
   }
 
   if (params.rules) {
     console.log('rules');
-    request.setRules(mapToRules(params.rules));
+    request.setRuleChangesList(params.rules);
   }
 
   if (params.defaultStrategy) {
@@ -380,7 +357,7 @@ export const updateFeature = createAsyncThunk<
 
   if (params.variations) {
     console.log('variations set');
-    request.setVariations(mapVariations(params.variations));
+    request.setVariationChangesList(params.variations);
   }
 
   if (params.name) {
@@ -395,7 +372,7 @@ export const updateFeature = createAsyncThunk<
 
   if (params.tags) {
     console.log('tags set');
-    request.setTags(mapTags(params.tags));
+    request.setTagChangesList(params.tags);
   }
 
   if (params.archived !== undefined) {
@@ -410,41 +387,27 @@ export const updateFeature = createAsyncThunk<
     );
   }
 
+  // const scheduleUpdateListValue = new ScheduleUpdateListValue();
+  // const scheduleUpdate = new ScheduleUpdate();
+
+  // const today = new Date();
+  // today.setDate(today.getDate() + 1);
+
+  // scheduleUpdate.setUpdateAt(today.getTime());
+
+  // // const feature = new Feature();
+  // // feature.setId(params.id);
+  // // feature.setName('test 1');
+
+  // scheduleUpdate.setFeature(params.feature);
+  // scheduleUpdateListValue.setValueList([scheduleUpdate]);
+  // request.setScheduleUpdates(scheduleUpdateListValue);
+
   await featureGrpc.updateFeature(request);
 });
 
-function mapToPrerequisites(
-  prerequisitesList: UpdateFeatureParams['prerequisitesList']
-): PrerequisiteListValue {
-  const prerequisiteList = prerequisitesList.map((prerequisite) => {
-    const p = new Prerequisite();
-    p.setFeatureId(prerequisite.featureId);
-    p.setVariationId(prerequisite.variationId);
-    return p;
-  });
-  const prerequisiteListValue = new PrerequisiteListValue();
-  prerequisiteListValue.setValuesList(prerequisiteList);
-  return prerequisiteListValue;
-}
-
-function mapToTargets(
-  targets: UpdateFeatureParams['targets']
-): TargetListValue {
-  const targetList = targets.map((target) => {
-    const t = new Target();
-    t.setVariation(target.variationId);
-    t.setUsersList(target.users);
-    return t;
-  });
-  const targetsListValue = new TargetListValue();
-  targetsListValue.setValuesList(targetList);
-  return targetsListValue;
-}
-
 function mapToStrategy(
-  strategy:
-    | UpdateFeatureParams['defaultStrategy']
-    | UpdateFeatureParams['rules'][number]['strategy']
+  strategy: UpdateFeatureParams['defaultStrategy']
 ): Strategy {
   const newStrategy = new Strategy();
   if (strategy.option.value === Strategy.Type.ROLLOUT.toString()) {
@@ -468,53 +431,10 @@ function mapToStrategy(
   return newStrategy;
 }
 
-function mapToRules(rules: UpdateFeatureParams['rules']): RuleListValue {
-  const ruleList = rules.map((rule) => {
-    const r = new Rule();
-    const clausesList = rule.clauses.map((clause) => {
-      const c = new Clause();
-      c.setId(clause.id);
-      c.setOperator(clause.operator);
-      c.setAttribute(clause.attribute);
-      c.setValuesList(clause.values);
-      return c;
-    });
-    r.setId(rule.id);
-    r.setClausesList(clausesList);
-    r.setStrategy(mapToStrategy(rule.strategy));
-    return r;
-  });
-  const rulesListValue = new RuleListValue();
-  rulesListValue.setValuesList(ruleList);
-  return rulesListValue;
-}
-
 function mapOffVariation(offVariation: UpdateFeatureParams['offVariation']) {
   const variation = new Variation();
   variation.setValue(offVariation.value);
   return variation;
-}
-
-function mapVariations(
-  variations: UpdateFeatureParams['variations']
-): VariationListValue {
-  const variationList = variations.map((v) => {
-    const variation = new Variation();
-    variation.setId(v.id);
-    variation.setName(v.name);
-    variation.setValue(v.value);
-    variation.setDescription(v.description);
-    return variation;
-  });
-  const variationListValue = new VariationListValue();
-  variationListValue.setValuesList(variationList);
-  return variationListValue;
-}
-
-function mapTags(tags: string[]): StringListValue {
-  const stringListValue = new StringListValue();
-  stringListValue.setValuesList(tags);
-  return stringListValue;
 }
 
 export interface UpdateFeatureTargetingParams {
