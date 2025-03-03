@@ -18,6 +18,7 @@ import EditExperimentModal from './experiments-modal/edit-experiment-modal';
 import GoalsConnectionModal from './experiments-modal/goals-connection-modal';
 import PageContent from './page-content';
 import { ExperimentActionsType } from './types';
+import { featuresFetcher } from '@api/features';
 
 const PageLoader = ({
   setTotalCount
@@ -130,6 +131,13 @@ const PageLoader = ({
   );
 
   useEffect(() => {
+    featuresFetcher({
+      cursor: String(0),
+      pageSize: 50,
+      environmentId: currentEnvironment.id,
+      hasExperiment: true
+    })
+
     if (collection?.experiments) setTotalCount(collection?.experiments?.length);
   }, [collection]);
 
