@@ -15,7 +15,10 @@ const PageLoader = () => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const { data, isLoading, refetch, isError } = useQueryProjectDetails({
-    params: { id: projectId! }
+    params: {
+      id: projectId!,
+      organizationId: currentEnvironment.organizationId
+    }
   });
 
   const project = data?.project;

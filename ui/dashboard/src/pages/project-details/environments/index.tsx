@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Trans } from 'react-i18next';
+import { useParams } from 'react-router-dom';
 import { environmentArchive, environmentUnarchive } from '@api/environment';
 import { invalidateEnvironments } from '@queries/environments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Environment } from '@types';
@@ -18,13 +20,20 @@ import { EnvironmentActionsType } from './types';
 const ProjectEnvironments = () => {
   const { t } = useTranslation(['common', 'table']);
   const queryClient = useQueryClient();
+  const { projectId } = useParams();
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const {
     data: collection,
     isLoading,
     refetch,
     isError
-  } = useFetchEnvironments({ pageSize: 1 });
+  } = useFetchEnvironments({
+    pageSize: 1,
+    projectId,
+    organizationId: currentEnvironment.organizationId
+  });
 
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>();
   const [isArchiving, setIsArchiving] = useState<boolean>();

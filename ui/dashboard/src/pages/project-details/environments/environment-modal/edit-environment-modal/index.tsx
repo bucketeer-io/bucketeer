@@ -5,6 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateEnvironments } from '@queries/environments';
 import { useQueryProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -45,7 +46,17 @@ const EditEnvironmentModal = ({
   const { projectId } = useParams();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
-  const { data: collection } = useQueryProjects();
+
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const { data: collection } = useQueryProjects({
+    params: {
+      organizationId: currentEnvironment.organizationId,
+      cursor: '0',
+      pageSize: 9999
+    }
+  });
 
   const project = collection?.projects.find(item => item.id === projectId);
 
