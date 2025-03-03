@@ -1,5 +1,66 @@
 # Changelog
 
+## [1.3.0](https://github.com/bucketeer-io/bucketeer/compare/v1.2.0...v1.3.0) (2025-02-28)
+
+
+### Features
+
+* add branch URL generation for code references ([#1490](https://github.com/bucketeer-io/bucketeer/issues/1490)) ([0206276](https://github.com/bucketeer-io/bucketeer/commit/0206276f5538fd3d8bf5de3d8684abcb78dac7ec))
+* add file extension support for code references ([#1493](https://github.com/bucketeer-io/bucketeer/issues/1493)) ([fd2d38a](https://github.com/bucketeer-io/bucketeer/commit/fd2d38a65a171f20d4d5e3a7c718a3bfbf2853b6))
+* be able to group slack notifications by feature flag tag ([#1472](https://github.com/bucketeer-io/bucketeer/issues/1472)) ([fcd92d2](https://github.com/bucketeer-io/bucketeer/commit/fcd92d2923d7cfc9b54ce528bc4f1e45921cf030))
+* implement create/update environment api no command ([#1540](https://github.com/bucketeer-io/bucketeer/issues/1540)) ([bfc545a](https://github.com/bucketeer-io/bucketeer/commit/bfc545af324c352af176b8602abb5b2f7a73b4a7))
+* implement delete goal no cmd ([#1473](https://github.com/bucketeer-io/bucketeer/issues/1473)) ([aa09981](https://github.com/bucketeer-io/bucketeer/commit/aa09981166ee6d28465edd179cd2120f33371648))
+* implement get create list experiments no command ([#1468](https://github.com/bucketeer-io/bucketeer/issues/1468)) ([9d21e17](https://github.com/bucketeer-io/bucketeer/commit/9d21e17751297f98f589a6ef2d52bab4aad5fb7f))
+* implement REST experiment result api ([#1534](https://github.com/bucketeer-io/bucketeer/issues/1534)) ([5d0b3ab](https://github.com/bucketeer-io/bucketeer/commit/5d0b3ab5390e2b85992bc9e456aac04f4f7b2a79))
+* implement REST get/list/create auto ops rule ([#1511](https://github.com/bucketeer-io/bucketeer/issues/1511)) ([277b969](https://github.com/bucketeer-io/bucketeer/commit/277b9695af4cb56b7042048830aa210f3093c328))
+* implement update experiment REST no command ([#1482](https://github.com/bucketeer-io/bucketeer/issues/1482)) ([6468dba](https://github.com/bucketeer-io/bucketeer/commit/6468dba2fd8851db9270070d0862720ebf8d99cf))
+* **ui/dashboard:** add tags to slack notifications ([#1514](https://github.com/bucketeer-io/bucketeer/issues/1514)) ([7d8d731](https://github.com/bucketeer-io/bucketeer/commit/7d8d731f3abbb241a929042bc3fa9e54920511ec))
+* **ui/dashboard:** goals managements ([#1451](https://github.com/bucketeer-io/bucketeer/issues/1451)) ([a8641b3](https://github.com/bucketeer-io/bucketeer/commit/a8641b3ab327b8ef476343a8c04a340a6bbcef07))
+* **ui/dashboard:** improvement tags and table cell view with tooltip ([#1452](https://github.com/bucketeer-io/bucketeer/issues/1452)) ([b2e8c9d](https://github.com/bucketeer-io/bucketeer/commit/b2e8c9d23ccd2775931b0d7fb5be33debedd6eea))
+* update/execute/stop auto ops rule REST no command ([#1519](https://github.com/bucketeer-io/bucketeer/issues/1519)) ([856fe8e](https://github.com/bucketeer-io/bucketeer/commit/856fe8e0fce73bca0eb8e1e1f7a4637afc31f127))
+
+
+### Bug Fixes
+
+* add missing experiment status in response ([#1492](https://github.com/bucketeer-io/bucketeer/issues/1492)) ([1092dea](https://github.com/bucketeer-io/bucketeer/commit/1092dea32285c5e5e8534c795cdfbcbc618c8b8d))
+* add order by options and correct experiment summary ([#1522](https://github.com/bucketeer-io/bucketeer/issues/1522)) ([bc2be07](https://github.com/bucketeer-io/bucketeer/commit/bc2be078a226d71e026877e760700e8cab5c178b))
+* ambiguous clause error while deleting a tag ([#1483](https://github.com/bucketeer-io/bucketeer/issues/1483)) ([44c2a19](https://github.com/bucketeer-io/bucketeer/commit/44c2a1996e17edf35ee77d209f558c302d492188))
+* cannot delete all tags in the account update api ([#1537](https://github.com/bucketeer-io/bucketeer/issues/1537)) ([29c1d58](https://github.com/bucketeer-io/bucketeer/commit/29c1d5825b1460cd1eb3d83c7e613ccb629af84f))
+* evaluation unique count not working for go sdk ([#1532](https://github.com/bucketeer-io/bucketeer/issues/1532)) ([a9557ae](https://github.com/bucketeer-io/bucketeer/commit/a9557ae565a1d526f946b7c3988500da0f05dd38))
+* feature update api not validating required fields before saving ([#1527](https://github.com/bucketeer-io/bucketeer/issues/1527)) ([5ce2051](https://github.com/bucketeer-io/bucketeer/commit/5ce205162d00f72fcd988f1fed091797ffc08a9b))
+* goal in-use-status is always false when the connection type is operation ([#1505](https://github.com/bucketeer-io/bucketeer/issues/1505)) ([e3f44ee](https://github.com/bucketeer-io/bucketeer/commit/e3f44ee18e59a103d3ca9901799e7abadb767079))
+* list tags by environment_id filter ([#1479](https://github.com/bucketeer-io/bucketeer/issues/1479)) ([7c736ef](https://github.com/bucketeer-io/bucketeer/commit/7c736ef5760ef0a0425721e8ace5b53a802723e6))
+* **ui:** displaying the same tag when listing tags ([#1478](https://github.com/bucketeer-io/bucketeer/issues/1478)) ([63b5c72](https://github.com/bucketeer-io/bucketeer/commit/63b5c72f85068efdf4df546b440520f25682ddf7))
+* **ui:** list goals not using the connection type ([#1507](https://github.com/bucketeer-io/bucketeer/issues/1507)) ([dc8a295](https://github.com/bucketeer-io/bucketeer/commit/dc8a2957d5be48c80beb4e1a2944ee775c6ed891))
+* **ui:** remove connection type validation from create goal modal ([#1502](https://github.com/bucketeer-io/bucketeer/issues/1502)) ([65b95ee](https://github.com/bucketeer-io/bucketeer/commit/65b95eebc6850ac28972e6789b00ec48b257f15a))
+* update feature api cannot update empty lists ([#1509](https://github.com/bucketeer-io/bucketeer/issues/1509)) ([82029e1](https://github.com/bucketeer-io/bucketeer/commit/82029e1d8d5a30c482aaa81d693fb07556eb9e81))
+
+
+### Miscellaneous
+
+* add auto ops status to the goal connection reference ([#1497](https://github.com/bucketeer-io/bucketeer/issues/1497)) ([8740728](https://github.com/bucketeer-io/bucketeer/commit/874072839279be2c7590e62d646e113ac3ad400c))
+* add debug log for the notification sender ([#1487](https://github.com/bucketeer-io/bucketeer/issues/1487)) ([3b2ceac](https://github.com/bucketeer-io/bucketeer/commit/3b2ceac0e09480aea915fec636ade4ae3fc38fe1))
+* add error logs while authenticating the user ([#1520](https://github.com/bucketeer-io/bucketeer/issues/1520)) ([105e73c](https://github.com/bucketeer-io/bucketeer/commit/105e73c49ed92fb68814e71333bb745f15da4df4))
+* add feature name to the goal auto ops reference ([#1500](https://github.com/bucketeer-io/bucketeer/issues/1500)) ([4e0e1a1](https://github.com/bucketeer-io/bucketeer/commit/4e0e1a1b1b8512b566a0fa5b0e32b6c913868fda))
+* add fields to update feature api to update the schedule update ([#1515](https://github.com/bucketeer-io/bucketeer/issues/1515)) ([af97827](https://github.com/bucketeer-io/bucketeer/commit/af97827fabee949968466d73b248b390796fef00))
+* add new error flag reasons for open feature support ([#1517](https://github.com/bucketeer-io/bucketeer/issues/1517)) ([ee8f8e7](https://github.com/bucketeer-io/bucketeer/commit/ee8f8e7a0e1fc81f90e6745cbc0db143b899e105))
+* add schedule update field to feature proto message ([#1499](https://github.com/bucketeer-io/bucketeer/issues/1499)) ([ddbd7f0](https://github.com/bucketeer-io/bucketeer/commit/ddbd7f0b951b71dddb81dae55c1113ec1273a3bc))
+* add schedule update field to feature proto message ([#1506](https://github.com/bucketeer-io/bucketeer/issues/1506)) ([dd1fca7](https://github.com/bucketeer-io/bucketeer/commit/dd1fca729e4bb999b3371f01f9fe3ae0376071a8))
+* add scheduled_flag_update table and proto message ([#1535](https://github.com/bucketeer-io/bucketeer/issues/1535)) ([47b4ee6](https://github.com/bucketeer-io/bucketeer/commit/47b4ee6873502f3b66aed83751a53e60f1f7f29e))
+* add sorting filter for entity type in the list tags api ([#1476](https://github.com/bucketeer-io/bucketeer/issues/1476)) ([3a35f75](https://github.com/bucketeer-io/bucketeer/commit/3a35f75a3f95a169677d52aecd13baab3d76ab87))
+* code ref fields doc ([#1485](https://github.com/bucketeer-io/bucketeer/issues/1485)) ([a3f8c60](https://github.com/bucketeer-io/bucketeer/commit/a3f8c60aca766e333eb2f727efa398c0c3ed0d2b))
+* fix the debug log in the notification sender ([#1486](https://github.com/bucketeer-io/bucketeer/issues/1486)) ([9c83de7](https://github.com/bucketeer-io/bucketeer/commit/9c83de71414204219050736ee398fe93b23771a9))
+* implement create and update project with not commands ([#1541](https://github.com/bucketeer-io/bucketeer/issues/1541)) ([ce8c8c8](https://github.com/bucketeer-io/bucketeer/commit/ce8c8c8d24dbb5539301000043dd1878e209ecc0))
+* implement rest for list features api ([#1543](https://github.com/bucketeer-io/bucketeer/issues/1543)) ([4bdb42c](https://github.com/bucketeer-io/bucketeer/commit/4bdb42c7c09aa7e1a81f039260b433ff4abb5daf))
+* improve bucket hash algorithm using murmurHash3 instead of md5 ([#1523](https://github.com/bucketeer-io/bucketeer/issues/1523)) ([1e5a2c1](https://github.com/bucketeer-io/bucketeer/commit/1e5a2c1a1cadd2c4d85218938481245cf856f325))
+* populate goal table with connection type ([#1491](https://github.com/bucketeer-io/bucketeer/issues/1491)) ([1c90d0a](https://github.com/bucketeer-io/bucketeer/commit/1c90d0af3a6cc7f3951f22c6a1042fdbb70a2611))
+* support list tags by organization id ([#1480](https://github.com/bucketeer-io/bucketeer/issues/1480)) ([1120b0b](https://github.com/bucketeer-io/bucketeer/commit/1120b0bc00bc138f4482b43acbe86912f63f36f7))
+
+
+### Reverts
+
+* add schedule update field to feature proto message ([#1499](https://github.com/bucketeer-io/bucketeer/issues/1499)) ([#1503](https://github.com/bucketeer-io/bucketeer/issues/1503)) ([e228d0d](https://github.com/bucketeer-io/bucketeer/commit/e228d0d9ce93081c4d6bfcdf0e3f066627327a10))
+
 ## [1.2.0](https://github.com/bucketeer-io/bucketeer/compare/v1.1.0...v1.2.0) (2025-01-22)
 
 

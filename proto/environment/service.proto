@@ -108,9 +108,7 @@ message UpdateEnvironmentV2Request {
   google.protobuf.BoolValue require_comment = 7;
 }
 
-message UpdateEnvironmentV2Response {
-  EnvironmentV2 environment = 1;
-}
+message UpdateEnvironmentV2Response {}
 
 message ArchiveEnvironmentV2Request {
   string id = 1;
@@ -272,8 +270,8 @@ message ListOrganizationsResponse {
 
 message CreateOrganizationRequest {
   CreateOrganizationCommand command = 1 [deprecated = true];
-  string name = 2;
-  string url_code = 3;
+  string name = 2 [(google.api.field_behavior) = REQUIRED];
+  string url_code = 3 [(google.api.field_behavior) = REQUIRED];
   string description = 4;  // optional
   bool is_trial = 5;
   bool is_system_admin = 6;
@@ -286,9 +284,27 @@ message CreateOrganizationResponse {
 
 message UpdateOrganizationRequest {
   string id = 1;
-  ChangeNameOrganizationCommand rename_command = 2;
-  ChangeDescriptionOrganizationCommand change_description_command = 3;
-  ChangeOwnerEmailOrganizationCommand change_owner_email_command = 4;
+  ChangeNameOrganizationCommand rename_command = 2 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  ChangeDescriptionOrganizationCommand change_description_command = 3 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  ChangeOwnerEmailOrganizationCommand change_owner_email_command = 4 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  google.protobuf.StringValue name = 5;
+  google.protobuf.StringValue description = 6;
+  google.protobuf.StringValue owner_email = 7;
 }
 
 message UpdateOrganizationResponse {}

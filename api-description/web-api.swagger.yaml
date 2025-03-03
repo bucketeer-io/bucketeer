@@ -7733,6 +7733,9 @@ definitions:
         type: boolean
       ownerEmail:
         type: string
+    required:
+      - name
+      - urlCode
   environmentCreateOrganizationResponse:
     type: object
     properties:
@@ -8095,9 +8098,6 @@ definitions:
       - id
   environmentUpdateEnvironmentV2Response:
     type: object
-    properties:
-      environment:
-        $ref: '#/definitions/environmentEnvironmentV2'
   environmentUpdateOrganizationRequest:
     type: object
     properties:
@@ -8105,10 +8105,19 @@ definitions:
         type: string
       renameCommand:
         $ref: '#/definitions/environmentChangeNameOrganizationCommand'
+        description: deprecated
       changeDescriptionCommand:
         $ref: '#/definitions/environmentChangeDescriptionOrganizationCommand'
+        description: deprecated
       changeOwnerEmailCommand:
         $ref: '#/definitions/environmentChangeOwnerEmailOrganizationCommand'
+        description: deprecated
+      name:
+        type: string
+      description:
+        type: string
+      ownerEmail:
+        type: string
   environmentUpdateOrganizationResponse:
     type: object
   environmentUpdateProjectRequest:

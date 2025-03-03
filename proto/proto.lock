@@ -11877,14 +11877,7 @@
             ]
           },
           {
-            "name": "UpdateEnvironmentV2Response",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment",
-                "type": "EnvironmentV2"
-              }
-            ]
+            "name": "UpdateEnvironmentV2Response"
           },
           {
             "name": "ArchiveEnvironmentV2Request",
@@ -12327,12 +12320,24 @@
               {
                 "id": 2,
                 "name": "name",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "url_code",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 4,
@@ -12377,17 +12382,77 @@
               {
                 "id": 2,
                 "name": "rename_command",
-                "type": "ChangeNameOrganizationCommand"
+                "type": "ChangeNameOrganizationCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "change_description_command",
-                "type": "ChangeDescriptionOrganizationCommand"
+                "type": "ChangeDescriptionOrganizationCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "change_owner_email_command",
-                "type": "ChangeOwnerEmailOrganizationCommand"
+                "type": "ChangeOwnerEmailOrganizationCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 6,
+                "name": "description",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 7,
+                "name": "owner_email",
+                "type": "google.protobuf.StringValue"
               }
             ]
           },
@@ -18400,6 +18465,10 @@
                 "integer": 1508
               },
               {
+                "name": "ORGANIZATION_UPDATED",
+                "integer": 1509
+              },
+              {
                 "name": "FLAG_TRIGGER_CREATED",
                 "integer": 1601
               },
@@ -21481,6 +21550,31 @@
                 "id": 2,
                 "name": "name",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "OrganizationUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 4,
+                "name": "ownerEmail",
+                "type": "google.protobuf.StringValue"
               }
             ]
           },
