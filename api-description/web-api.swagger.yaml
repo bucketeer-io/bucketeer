@@ -1131,6 +1131,10 @@ paths:
           in: query
           required: false
           type: string
+        - name: email
+          in: query
+          required: false
+          type: string
       tags:
         - Account
   /v1/account/my_organizations_by_email:
@@ -6667,6 +6671,8 @@ definitions:
       email:
         type: string
       password:
+        type: string
+      organizationId:
         type: string
   authSignInResponse:
     type: object

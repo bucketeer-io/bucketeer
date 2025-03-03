@@ -223,6 +223,9 @@ export class SignInRequest extends jspb.Message {
   getPassword(): string;
   setPassword(value: string): void;
 
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SignInRequest.AsObject;
   static toObject(
@@ -248,6 +251,7 @@ export namespace SignInRequest {
   export type AsObject = {
     email: string;
     password: string;
+    organizationId: string;
   };
 }
 

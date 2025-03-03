@@ -528,15 +528,15 @@ func (s *AccountService) GetMyOrganizationsByAccessToken(
 
 		return &accountproto.GetMyOrganizationsResponse{Organizations: myOrgs}, nil
 	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_BUCKETEER:
-		// TODO: Implement Bucketeer access token verification
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
+		// currently we only check demo account
+		if req.Email == s.oauthConfig.DemoSignIn.Email {
+			myOrgs, err := s.getMyOrganizations(ctx, req.Email, localizer)
+			if err != nil {
+				return nil, err
+			}
+			return &accountproto.GetMyOrganizationsResponse{Organizations: myOrgs}, nil
 		}
-		return nil, dt.Err()
+
 	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_GITHUB:
 		// TODO: Implement GitHub access token verification
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -573,8 +573,8 @@ func (s *AccountService) verifyGoogleAccessToken(
 
 	// Create a temporary OAuth2 config to use for token verification
 	config := &oauth2.Config{
-		ClientID:     s.googleConfig.ClientID,
-		ClientSecret: s.googleConfig.ClientSecret,
+		ClientID:     s.oauthConfig.GoogleConfig.ClientID,
+		ClientSecret: s.oauthConfig.GoogleConfig.ClientSecret,
 		Endpoint:     google.Endpoint,
 		Scopes:       scopes,
 	}

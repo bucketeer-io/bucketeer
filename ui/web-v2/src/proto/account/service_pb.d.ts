@@ -144,6 +144,9 @@ export class GetMyOrganizationsByAccessTokenRequest extends jspb.Message {
   getAccessToken(): string;
   setAccessToken(value: string): void;
 
+  getEmail(): string;
+  setEmail(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(
     includeInstance?: boolean
@@ -173,6 +176,7 @@ export namespace GetMyOrganizationsByAccessTokenRequest {
   export type AsObject = {
     type: GetMyOrganizationsByAccessTokenRequest.AuthTypeMap[keyof GetMyOrganizationsByAccessTokenRequest.AuthTypeMap];
     accessToken: string;
+    email: string;
   };
 
   export interface AuthTypeMap {

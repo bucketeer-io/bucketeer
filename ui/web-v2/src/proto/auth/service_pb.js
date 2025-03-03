@@ -1301,7 +1301,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         email: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        password: jspb.Message.getFieldWithDefault(msg, 2, '')
+        password: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        organizationId: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -1350,6 +1351,10 @@ proto.bucketeer.auth.SignInRequest.deserializeBinaryFromReader = function (
         var value = /** @type {string} */ (reader.readString());
         msg.setPassword(value);
         break;
+      case 3:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setOrganizationId(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -1388,6 +1393,10 @@ proto.bucketeer.auth.SignInRequest.serializeBinaryToWriter = function (
   if (f.length > 0) {
     writer.writeString(2, f);
   }
+  f = message.getOrganizationId();
+  if (f.length > 0) {
+    writer.writeString(3, f);
+  }
 };
 
 /**
@@ -1420,6 +1429,24 @@ proto.bucketeer.auth.SignInRequest.prototype.getPassword = function () {
  */
 proto.bucketeer.auth.SignInRequest.prototype.setPassword = function (value) {
   return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+/**
+ * optional string organization_id = 3;
+ * @return {string}
+ */
+proto.bucketeer.auth.SignInRequest.prototype.getOrganizationId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.auth.SignInRequest} returns this
+ */
+proto.bucketeer.auth.SignInRequest.prototype.setOrganizationId = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 3, value);
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

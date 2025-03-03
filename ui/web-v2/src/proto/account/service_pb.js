@@ -1915,7 +1915,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       var f,
         obj = {
           type: jspb.Message.getFieldWithDefault(msg, 1, 0),
-          accessToken: jspb.Message.getFieldWithDefault(msg, 2, '')
+          accessToken: jspb.Message.getFieldWithDefault(msg, 2, ''),
+          email: jspb.Message.getFieldWithDefault(msg, 3, '')
         };
 
       if (includeInstance) {
@@ -1967,6 +1968,10 @@ proto.bucketeer.account.GetMyOrganizationsByAccessTokenRequest.deserializeBinary
           var value = /** @type {string} */ (reader.readString());
           msg.setAccessToken(value);
           break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEmail(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -2006,6 +2011,10 @@ proto.bucketeer.account.GetMyOrganizationsByAccessTokenRequest.serializeBinaryTo
     f = message.getAccessToken();
     if (f.length > 0) {
       writer.writeString(2, f);
+    }
+    f = message.getEmail();
+    if (f.length > 0) {
+      writer.writeString(3, f);
     }
   };
 
@@ -2057,6 +2066,26 @@ proto.bucketeer.account.GetMyOrganizationsByAccessTokenRequest.prototype.getAcce
 proto.bucketeer.account.GetMyOrganizationsByAccessTokenRequest.prototype.setAccessToken =
   function (value) {
     return jspb.Message.setProto3StringField(this, 2, value);
+  };
+
+/**
+ * optional string email = 3;
+ * @return {string}
+ */
+proto.bucketeer.account.GetMyOrganizationsByAccessTokenRequest.prototype.getEmail =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.GetMyOrganizationsByAccessTokenRequest} returns this
+ */
+proto.bucketeer.account.GetMyOrganizationsByAccessTokenRequest.prototype.setEmail =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
   };
 
 /**

@@ -66,7 +66,7 @@ type AccountService struct {
 	tagStorage           tagstorage.TagStorage
 	adminAuditLogStorage auditlogstorage.AdminAuditLogStorage
 	publisher            publisher.Publisher
-	googleConfig         *auth.GoogleConfig
+	oauthConfig          *auth.OAuthConfig
 	opts                 *options
 	logger               *zap.Logger
 }
@@ -75,7 +75,7 @@ func NewAccountService(
 	e environmentclient.Client,
 	mysqlClient mysql.Client,
 	publisher publisher.Publisher,
-	googleConfig *auth.GoogleConfig,
+	oauthConfig *auth.OAuthConfig,
 	opts ...Option,
 ) *AccountService {
 	options := defaultOptions
@@ -89,7 +89,7 @@ func NewAccountService(
 		tagStorage:           tagstorage.NewTagStorage(mysqlClient),
 		adminAuditLogStorage: auditlogstorage.NewAdminAuditLogStorage(mysqlClient),
 		publisher:            publisher,
-		googleConfig:         googleConfig,
+		oauthConfig:          oauthConfig,
 		opts:                 &options,
 		logger:               options.logger.Named("api"),
 	}

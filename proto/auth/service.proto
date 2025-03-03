@@ -61,6 +61,7 @@ message RefreshTokenResponse {
 message SignInRequest {
   string email = 1;
   string password = 2;
+  string organization_id = 3;
 }
 
 message SignInResponse {

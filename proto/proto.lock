@@ -1067,6 +1067,11 @@
                 "id": 2,
                 "name": "access_token",
                 "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "email",
+                "type": "string"
               }
             ]
           },
@@ -6079,6 +6084,11 @@
               {
                 "id": 2,
                 "name": "password",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "organization_id",
                 "type": "string"
               }
             ]

@@ -147,5 +147,15 @@ func validateSignInRequest(
 		}
 		return dt.Err()
 	}
+	if req.OrganizationId == "" {
+		dt, err := auth.StatusInvalidOrganization.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id"),
+		})
+		if err != nil {
+			return auth.StatusInternal.Err()
+		}
+		return dt.Err()
+	}
 	return nil
 }
