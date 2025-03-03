@@ -52,7 +52,7 @@ var (
 )
 
 func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentID string) error {
-	_, err := s.qe(ctx).ExecContext(
+	_, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		insertAPIKeyV2SQLQuery,
 		k.Id,
@@ -76,7 +76,7 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 }
 
 func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentID string) error {
-	result, err := s.qe(ctx).ExecContext(
+	result, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		updateAPIKeyV2SQLQuery,
 		k.Name,
@@ -104,7 +104,7 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentID string) (*domain.APIKey, error) {
 	apiKey := proto.APIKey{}
 	var role int32
-	err := s.qe(ctx).QueryRowContext(
+	err := s.client.Qe(ctx).QueryRowContext(
 		ctx,
 		selectAPIKeyV2ByIDSQLQuery,
 		id,
@@ -137,7 +137,7 @@ func (s *accountStorage) GetAPIKeyByAPIKey(
 ) (*domain.APIKey, error) {
 	apiKeyDB := proto.APIKey{}
 	var role int32
-	err := s.qe(ctx).QueryRowContext(
+	err := s.client.Qe(ctx).QueryRowContext(
 		ctx,
 		selectAPIKeyV2ByAPIKeySQLQuery,
 		apiKey,
@@ -166,7 +166,7 @@ func (s *accountStorage) GetAPIKeyByAPIKey(
 func (s *accountStorage) ListAllEnvironmentAPIKeys(
 	ctx context.Context,
 ) ([]*domain.EnvironmentAPIKey, error) {
-	rows, err := s.qe(ctx).QueryContext(ctx, selectAllEnvironmentAPIKeysSQLQuery)
+	rows, err := s.client.Qe(ctx).QueryContext(ctx, selectAllEnvironmentAPIKeysSQLQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +228,7 @@ func (s *accountStorage) GetEnvironmentAPIKey(
 	envDB := envproto.EnvironmentV2{}
 	envApiKeyDB := proto.EnvironmentAPIKey{}
 	var role int32
-	err := s.qe(ctx).QueryRowContext(
+	err := s.client.Qe(ctx).QueryRowContext(
 		ctx,
 		selectEnvironmentAPIKeySQLQuery,
 		apiKey,
@@ -283,7 +283,7 @@ func (s *accountStorage) ListAPIKeys(
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectAPIKeyV2SQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.qe(ctx).QueryContext(ctx, query, whereArgs...)
+	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -316,7 +316,7 @@ func (s *accountStorage) ListAPIKeys(
 	nextOffset := offset + len(apiKeys)
 	var totalCount int64
 	countQuery := fmt.Sprintf(selectAPIKeyV2CountSQLQuery, whereSQL)
-	err = s.qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

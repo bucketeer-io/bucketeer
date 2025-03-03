@@ -5,12 +5,15 @@ import (
 	"strings"
 	"testing"
 
+	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
@@ -390,12 +393,6 @@ func TestUpdateOrganizationMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:        "err: ErrNoCommand",
-			setup:       nil,
-			req:         &proto.UpdateOrganizationRequest{Id: "id-0"},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
-		{
 			desc:  "err: ErrInvalidOrganizationName: empty name",
 			setup: nil,
 			req: &proto.UpdateOrganizationRequest{
@@ -461,6 +458,113 @@ func TestUpdateOrganizationMySQL(t *testing.T) {
 			req: &proto.UpdateOrganizationRequest{
 				Id:            "success-id-0",
 				RenameCommand: &proto.ChangeNameOrganizationCommand{Name: "id-0"},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := newEnvironmentService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			_, err := s.UpdateOrganization(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestUpdateOrganizationMySQLNoCommand(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*EnvironmentService)
+		req         *proto.UpdateOrganizationRequest
+		expectedErr error
+	}{
+		{
+			desc:  "err: ErrInvalidOrganizationName: empty name",
+			setup: nil,
+			req: &proto.UpdateOrganizationRequest{
+				Id:   "id-0",
+				Name: wrapperspb.String(""),
+			},
+			expectedErr: createError(statusOrganizationNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+		},
+		{
+			desc:  "err: ErrInvalidOrganizationName: only space",
+			setup: nil,
+			req: &proto.UpdateOrganizationRequest{
+				Id:   "id-0",
+				Name: wrapperspb.String("    "),
+			},
+			expectedErr: createError(statusOrganizationNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+		},
+		{
+			desc:  "err: ErrInvalidOrganizationName: max name length exceeded",
+			setup: nil,
+			req: &proto.UpdateOrganizationRequest{
+				Id:   "id-0",
+				Name: wrapperspb.String(strings.Repeat("a", 51)),
+			},
+			expectedErr: createError(statusInvalidOrganizationName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+		},
+		{
+			desc: "err: ErrOrganizationNotFound",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(v2es.ErrOrganizationNotFound)
+			},
+			req: &proto.UpdateOrganizationRequest{
+				Id:   "err-id-0",
+				Name: wrapperspb.String("id-0"),
+			},
+			expectedErr: createError(statusOrganizationNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "err: ErrInternal",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
+			},
+			req: &proto.UpdateOrganizationRequest{
+				Id:   "err-id-1",
+				Name: wrapperspb.String("id-1"),
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &proto.UpdateOrganizationRequest{
+				Id:   "success-id-0",
+				Name: wrapperspb.String("id-0"),
 			},
 			expectedErr: nil,
 		},

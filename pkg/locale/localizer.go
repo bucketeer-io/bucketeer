@@ -108,6 +108,7 @@ const (
 	RequiredFieldTemplate = "RequiredField"
 	InternalServerError   = "InternalServerError"
 	NotFoundError         = "NotFoundError"
+	NotError              = "NotFoundError"
 	InvalidArgumentError  = "InvalidArgumentError"
 	UnauthenticatedError  = "UnauthenticatedError"
 	PermissionDenied      = "PermissionDenied"

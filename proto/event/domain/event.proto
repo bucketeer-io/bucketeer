@@ -178,6 +178,7 @@ message Event {
     ENVIRONMENT_V2_ARCHIVED = 607;
     ENVIRONMENT_V2_UNARCHIVED = 608;
     ENVIRONMENT_V2_REQUIRE_COMMENT_CHANGED = 609;
+    ENVIRONMENT_V2_UPDATED = 610;
     ADMIN_ACCOUNT_CREATED = 700 [deprecated = true];
     ADMIN_ACCOUNT_ENABLED = 702 [deprecated = true];
     ADMIN_ACCOUNT_DISABLED = 703 [deprecated = true];
@@ -222,6 +223,7 @@ message Event {
     PROJECT_TRIAL_CREATED = 1204;
     PROJECT_TRIAL_CONVERTED = 1205;
     PROJECT_RENAMED = 1206;
+    PROJECT_UPDATED = 1207;
     reserved 1300;
     reserved 1301;
     reserved 1302;
@@ -241,6 +243,7 @@ message Event {
     ORGANIZATION_UNARCHIVED = 1506;
     ORGANIZATION_TRIAL_CONVERTED = 1507;
     ORGANIZATION_OWNER_EMAIL_CHANGED = 1508;
+    ORGANIZATION_UPDATED = 1509;
     FLAG_TRIGGER_CREATED = 1601;
     FLAG_TRIGGER_RESET = 1602;
     FLAG_TRIGGER_DESCRIPTION_CHANGED = 1603;
@@ -894,6 +897,13 @@ message EnvironmentV2UnarchivedEvent {
   string project_id = 3;
 }
 
+message EnvironmentV2UpdatedEvent {
+  string id = 1;
+  google.protobuf.StringValue name = 2;
+  google.protobuf.StringValue description = 3;
+  google.protobuf.BoolValue require_comment = 4;
+}
+
 message AutoOpsRuleCreatedEvent {
   string feature_id = 1;
   bucketeer.autoops.OpsType ops_type = 2;
@@ -1055,6 +1065,13 @@ message ProjectCreatedEvent {
   string url_code = 9;
 }
 
+message ProjectUpdatedEvent {
+  string id = 1;
+  string organization_id = 2;
+  string name = 3;
+  string description = 4;
+}
+
 message ProjectDescriptionChangedEvent {
   string id = 1;
   string description = 2;
@@ -1151,6 +1168,13 @@ message OrganizationOwnerEmailChangedEvent {
 message OrganizationNameChangedEvent {
   string id = 1;
   string name = 2;
+}
+
+message OrganizationUpdatedEvent {
+  string id = 1;
+  google.protobuf.StringValue name = 2;
+  google.protobuf.StringValue description = 3;
+  google.protobuf.StringValue ownerEmail = 4;
 }
 
 message OrganizationEnabledEvent {

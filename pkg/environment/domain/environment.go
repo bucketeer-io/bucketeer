@@ -17,7 +17,9 @@ package domain
 import (
 	"time"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -54,6 +56,30 @@ func NewEnvironmentV2(
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}}, nil
+}
+
+func (e *EnvironmentV2) Update(
+	name *wrapperspb.StringValue,
+	description *wrapperspb.StringValue,
+	requireComment *wrapperspb.BoolValue,
+) (*EnvironmentV2, error) {
+	updated := &EnvironmentV2{}
+	if err := copier.Copy(updated, e); err != nil {
+		return nil, err
+	}
+
+	if name != nil {
+		updated.Name = name.Value
+	}
+	if description != nil {
+		updated.Description = description.Value
+	}
+	if requireComment != nil {
+		updated.RequireComment = requireComment.Value
+	}
+
+	updated.UpdatedAt = time.Now().Unix()
+	return updated, nil
 }
 
 func (e *EnvironmentV2) Rename(name string) {
