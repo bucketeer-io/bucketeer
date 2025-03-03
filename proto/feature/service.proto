@@ -80,7 +80,7 @@ message ListFeaturesRequest {
   string search_keyword = 10;
   google.protobuf.BoolValue archived = 11;
   google.protobuf.BoolValue has_prerequisites = 12;
-  string environment_id = 13;
+  string environment_id = 13 [(google.api.field_behavior) = REQUIRED];
 }
 
 message ListFeaturesResponse {
@@ -607,7 +607,50 @@ message FlagTriggerWebhookResponse {}
 service FeatureService {
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {}
   rpc GetFeatures(GetFeaturesRequest) returns (GetFeaturesResponse) {}
-  rpc ListFeatures(ListFeaturesRequest) returns (ListFeaturesResponse) {}
+  rpc ListFeatures(ListFeaturesRequest) returns (ListFeaturesResponse) {
+    option (google.api.http) = {
+      get: "/v1/features"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Feature Flags",
+      description: "List feature flags. To call this API, you need at least a MEMBER role in the specified organizations.",
+      tags: "Feature",
+      operation_id: "web.v1.feature.list",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ListEnabledFeatures(ListEnabledFeaturesRequest)
       returns (ListEnabledFeaturesResponse) {}
   rpc CreateFeature(CreateFeatureRequest) returns (CreateFeatureResponse) {}

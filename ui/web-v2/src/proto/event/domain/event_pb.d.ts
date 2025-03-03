@@ -240,6 +240,7 @@ export namespace Event {
     ENVIRONMENT_V2_ARCHIVED: 607;
     ENVIRONMENT_V2_UNARCHIVED: 608;
     ENVIRONMENT_V2_REQUIRE_COMMENT_CHANGED: 609;
+    ENVIRONMENT_V2_UPDATED: 610;
     ADMIN_ACCOUNT_CREATED: 700;
     ADMIN_ACCOUNT_ENABLED: 702;
     ADMIN_ACCOUNT_DISABLED: 703;
@@ -284,6 +285,7 @@ export namespace Event {
     PROJECT_TRIAL_CREATED: 1204;
     PROJECT_TRIAL_CONVERTED: 1205;
     PROJECT_RENAMED: 1206;
+    PROJECT_UPDATED: 1207;
     PROGRESSIVE_ROLLOUT_CREATED: 1400;
     PROGRESSIVE_ROLLOUT_DELETED: 1401;
     PROGRESSIVE_ROLLOUT_SCHEDULE_TRIGGERED_AT_CHANGED: 1402;
@@ -4590,6 +4592,55 @@ export namespace EnvironmentV2UnarchivedEvent {
   };
 }
 
+export class EnvironmentV2UpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasRequireComment(): boolean;
+  clearRequireComment(): void;
+  getRequireComment(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setRequireComment(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnvironmentV2UpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: EnvironmentV2UpdatedEvent
+  ): EnvironmentV2UpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: EnvironmentV2UpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): EnvironmentV2UpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: EnvironmentV2UpdatedEvent,
+    reader: jspb.BinaryReader
+  ): EnvironmentV2UpdatedEvent;
+}
+
+export namespace EnvironmentV2UpdatedEvent {
+  export type AsObject = {
+    id: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    requireComment?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+  };
+}
+
 export class AutoOpsRuleCreatedEvent extends jspb.Message {
   getFeatureId(): string;
   setFeatureId(value: string): void;
@@ -5963,6 +6014,49 @@ export namespace ProjectCreatedEvent {
     updatedAt: number;
     name: string;
     urlCode: string;
+  };
+}
+
+export class ProjectUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ProjectUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ProjectUpdatedEvent
+  ): ProjectUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ProjectUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ProjectUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: ProjectUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): ProjectUpdatedEvent;
+}
+
+export namespace ProjectUpdatedEvent {
+  export type AsObject = {
+    id: string;
+    organizationId: string;
+    name: string;
+    description: string;
   };
 }
 

@@ -3,6 +3,7 @@
 
 import * as jspb from 'google-protobuf';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
+import * as google_api_field_behavior_pb from '../../google/api/field_behavior_pb';
 import * as google_api_annotations_pb from '../../google/api/annotations_pb';
 import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-openapiv2/options/annotations_pb';
 import * as proto_environment_environment_pb from '../../proto/environment/environment_pb';
@@ -214,6 +215,21 @@ export class CreateEnvironmentV2Request extends jspb.Message {
     value?: proto_environment_command_pb.CreateEnvironmentV2Command
   ): void;
 
+  getName(): string;
+  setName(value: string): void;
+
+  getUrlCode(): string;
+  setUrlCode(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getProjectId(): string;
+  setProjectId(value: string): void;
+
+  getRequireComment(): boolean;
+  setRequireComment(value: boolean): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateEnvironmentV2Request.AsObject;
   static toObject(
@@ -238,6 +254,11 @@ export class CreateEnvironmentV2Request extends jspb.Message {
 export namespace CreateEnvironmentV2Request {
   export type AsObject = {
     command?: proto_environment_command_pb.CreateEnvironmentV2Command.AsObject;
+    name: string;
+    urlCode: string;
+    description: string;
+    projectId: string;
+    requireComment: boolean;
   };
 }
 
@@ -305,6 +326,21 @@ export class UpdateEnvironmentV2Request extends jspb.Message {
     value?: proto_environment_command_pb.ChangeRequireCommentCommand
   ): void;
 
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasRequireComment(): boolean;
+  clearRequireComment(): void;
+  getRequireComment(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setRequireComment(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateEnvironmentV2Request.AsObject;
   static toObject(
@@ -332,10 +368,18 @@ export namespace UpdateEnvironmentV2Request {
     renameCommand?: proto_environment_command_pb.RenameEnvironmentV2Command.AsObject;
     changeDescriptionCommand?: proto_environment_command_pb.ChangeDescriptionEnvironmentV2Command.AsObject;
     changeRequireCommentCommand?: proto_environment_command_pb.ChangeRequireCommentCommand.AsObject;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    requireComment?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 }
 
 export class UpdateEnvironmentV2Response extends jspb.Message {
+  hasEnvironment(): boolean;
+  clearEnvironment(): void;
+  getEnvironment(): proto_environment_environment_pb.EnvironmentV2 | undefined;
+  setEnvironment(value?: proto_environment_environment_pb.EnvironmentV2): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateEnvironmentV2Response.AsObject;
   static toObject(
@@ -358,7 +402,9 @@ export class UpdateEnvironmentV2Response extends jspb.Message {
 }
 
 export namespace UpdateEnvironmentV2Response {
-  export type AsObject = {};
+  export type AsObject = {
+    environment?: proto_environment_environment_pb.EnvironmentV2.AsObject;
+  };
 }
 
 export class ArchiveEnvironmentV2Request extends jspb.Message {
@@ -697,6 +743,18 @@ export class CreateProjectRequest extends jspb.Message {
   getCommand(): proto_environment_command_pb.CreateProjectCommand | undefined;
   setCommand(value?: proto_environment_command_pb.CreateProjectCommand): void;
 
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getUrlCode(): string;
+  setUrlCode(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateProjectRequest.AsObject;
   static toObject(
@@ -721,6 +779,10 @@ export class CreateProjectRequest extends jspb.Message {
 export namespace CreateProjectRequest {
   export type AsObject = {
     command?: proto_environment_command_pb.CreateProjectCommand.AsObject;
+    organizationId: string;
+    name: string;
+    description: string;
+    urlCode: string;
   };
 }
 
@@ -842,6 +904,19 @@ export class UpdateProjectRequest extends jspb.Message {
     value?: proto_environment_command_pb.RenameProjectCommand
   ): void;
 
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateProjectRequest.AsObject;
   static toObject(
@@ -868,6 +943,9 @@ export namespace UpdateProjectRequest {
     id: string;
     changeDescriptionCommand?: proto_environment_command_pb.ChangeDescriptionProjectCommand.AsObject;
     renameCommand?: proto_environment_command_pb.RenameProjectCommand.AsObject;
+    organizationId: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
   };
 }
 

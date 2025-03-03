@@ -82,7 +82,7 @@ func (s *AccountService) CreateAPIKey(
 		}
 		return nil, dt.Err()
 	}
-	err = s.accountStorage.RunInTransaction(ctx, func() error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		handler, err := command.NewAPIKeyCommandHandler(
 			editor,
 			key,
@@ -95,7 +95,7 @@ func (s *AccountService) CreateAPIKey(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return s.accountStorage.CreateAPIKey(ctx, key, req.EnvironmentId)
+		return s.accountStorage.CreateAPIKey(contextWithTx, key, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAPIKeyAlreadyExists) {
@@ -164,8 +164,8 @@ func (s *AccountService) createAPIKeyNoCommand(
 		return nil, dt.Err()
 	}
 
-	err = s.accountStorage.RunInTransaction(ctx, func() error {
-		return s.accountStorage.CreateAPIKey(ctx, key, req.EnvironmentId)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		return s.accountStorage.CreateAPIKey(contextWithTx, key, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAPIKeyAlreadyExists) {
@@ -433,8 +433,8 @@ func (s *AccountService) updateAPIKeyMySQL(
 	id, environmentID string,
 	cmd command.Command,
 ) error {
-	return s.accountStorage.RunInTransaction(ctx, func() error {
-		apiKey, err := s.accountStorage.GetAPIKey(ctx, id, environmentID)
+	return s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		apiKey, err := s.accountStorage.GetAPIKey(contextWithTx, id, environmentID)
 		if err != nil {
 			return err
 		}
@@ -445,7 +445,7 @@ func (s *AccountService) updateAPIKeyMySQL(
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
-		return s.accountStorage.UpdateAPIKey(ctx, apiKey, environmentID)
+		return s.accountStorage.UpdateAPIKey(contextWithTx, apiKey, environmentID)
 	})
 }
 
@@ -725,8 +725,8 @@ func (s *AccountService) UpdateAPIKey(
 	}
 
 	var prev, current *proto.APIKey
-	err = s.accountStorage.RunInTransaction(ctx, func() error {
-		apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, req.EnvironmentId)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		apiKey, err := s.accountStorage.GetAPIKey(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -745,7 +745,7 @@ func (s *AccountService) UpdateAPIKey(
 		}
 		current = updated.APIKey
 
-		return s.accountStorage.UpdateAPIKey(ctx, updated, req.EnvironmentId)
+		return s.accountStorage.UpdateAPIKey(contextWithTx, updated, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAPIKeyNotFound) {

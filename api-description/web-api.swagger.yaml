@@ -4089,6 +4089,123 @@ paths:
           type: string
       tags:
         - experiment
+  /v1/features:
+    get:
+      summary: List Feature Flags
+      description: List feature flags. To call this API, you need at least a MEMBER role in the specified organizations.
+      operationId: web.v1.feature.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureListFeaturesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: tags
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+            - TAGS
+            - ENABLED
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: maintainer
+          in: query
+          required: false
+          type: string
+        - name: enabled
+          in: query
+          required: false
+          type: boolean
+        - name: hasExperiment
+          in: query
+          required: false
+          type: boolean
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: archived
+          in: query
+          required: false
+          type: boolean
+        - name: hasPrerequisites
+          in: query
+          required: false
+          type: boolean
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - Feature
   /v1/goal:
     get:
       summary: Get
@@ -7561,6 +7678,21 @@ definitions:
     properties:
       command:
         $ref: '#/definitions/environmentCreateEnvironmentV2Command'
+        description: deprecated
+      name:
+        type: string
+      urlCode:
+        type: string
+      description:
+        type: string
+      projectId:
+        type: string
+      requireComment:
+        type: boolean
+    required:
+      - name
+      - urlCode
+      - projectId
   environmentCreateEnvironmentV2Response:
     type: object
     properties:
@@ -7623,6 +7755,19 @@ definitions:
     properties:
       command:
         $ref: '#/definitions/environmentCreateProjectCommand'
+        description: deprecated
+      organizationId:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      urlCode:
+        type: string
+    required:
+      - organizationId
+      - name
+      - urlCode
   environmentCreateProjectResponse:
     type: object
     properties:
@@ -7933,12 +8078,26 @@ definitions:
         type: string
       renameCommand:
         $ref: '#/definitions/environmentRenameEnvironmentV2Command'
+        description: deprecated
       changeDescriptionCommand:
         $ref: '#/definitions/environmentChangeDescriptionEnvironmentV2Command'
+        description: deprecated
       changeRequireCommentCommand:
         $ref: '#/definitions/environmentChangeRequireCommentCommand'
+        description: deprecated
+      name:
+        type: string
+      description:
+        type: string
+      requireComment:
+        type: boolean
+    required:
+      - id
   environmentUpdateEnvironmentV2Response:
     type: object
+    properties:
+      environment:
+        $ref: '#/definitions/environmentEnvironmentV2'
   environmentUpdateOrganizationRequest:
     type: object
     properties:
@@ -7959,8 +8118,19 @@ definitions:
         type: string
       changeDescriptionCommand:
         $ref: '#/definitions/environmentChangeDescriptionProjectCommand'
+        description: deprecated
       renameCommand:
         $ref: '#/definitions/environmentRenameProjectCommand'
+        description: deprecated
+      organizationId:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+    required:
+      - id
+      - organizationId
   environmentUpdateProjectResponse:
     type: object
   eventcounterDistributionSummary:

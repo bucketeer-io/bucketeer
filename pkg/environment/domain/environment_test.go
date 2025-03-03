@@ -19,6 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestNewEnvironmentV2(t *testing.T) {
@@ -39,6 +40,30 @@ func TestNewEnvironmentV2(t *testing.T) {
 	assert.Equal(t, "desc", env.Description)
 	assert.Equal(t, "project-id", env.ProjectId)
 	assert.Equal(t, false, env.Archived)
+}
+
+func TestUpdateEnvironmentV2(t *testing.T) {
+	t.Parallel()
+	env, err := NewEnvironmentV2(
+		"name",
+		"code",
+		"desc",
+		"project-id",
+		"organization-id",
+		true,
+		zap.NewNop(),
+	)
+	assert.NoError(t, err)
+
+	updated, err := env.Update(
+		wrapperspb.String("new-name"),
+		wrapperspb.String("new-desc"),
+		nil,
+	)
+	assert.NoError(t, err)
+	assert.Equal(t, "new-name", updated.Name)
+	assert.Equal(t, "new-desc", updated.Description)
+	assert.Equal(t, true, updated.RequireComment)
 }
 
 func TestRenameEnvironmentV2(t *testing.T) {
