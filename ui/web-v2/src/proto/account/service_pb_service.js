@@ -37,12 +37,12 @@ AccountService.GetMyOrganizationsByEmail = {
   responseType: proto_account_service_pb.GetMyOrganizationsResponse
 };
 
-AccountService.GetMyOrganizationsByGoogleToken = {
-  methodName: 'GetMyOrganizationsByGoogleToken',
+AccountService.GetMyOrganizationsByAccessToken = {
+  methodName: 'GetMyOrganizationsByAccessToken',
   service: AccountService,
   requestStream: false,
   responseStream: false,
-  requestType: proto_account_service_pb.GetMyOrganizationsByGoogleTokenRequest,
+  requestType: proto_account_service_pb.GetMyOrganizationsByAccessTokenRequest,
   responseType: proto_account_service_pb.GetMyOrganizationsResponse
 };
 
@@ -326,12 +326,12 @@ AccountServiceClient.prototype.getMyOrganizationsByEmail =
     };
   };
 
-AccountServiceClient.prototype.getMyOrganizationsByGoogleToken =
-  function getMyOrganizationsByGoogleToken(requestMessage, metadata, callback) {
+AccountServiceClient.prototype.getMyOrganizationsByAccessToken =
+  function getMyOrganizationsByAccessToken(requestMessage, metadata, callback) {
     if (arguments.length === 2) {
       callback = arguments[1];
     }
-    var client = grpc.unary(AccountService.GetMyOrganizationsByGoogleToken, {
+    var client = grpc.unary(AccountService.GetMyOrganizationsByAccessToken, {
       request: requestMessage,
       host: this.serviceHost,
       metadata: metadata,

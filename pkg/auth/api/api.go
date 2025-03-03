@@ -30,6 +30,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	accountstotage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
@@ -434,16 +436,10 @@ func (s *authService) updateUserInfoForOrganization(
 		updateReq := &acproto.UpdateAccountV2Request{
 			Email:          userInfo.Email,
 			OrganizationId: organizationID,
-			ChangeFirstNameCommand: &acproto.ChangeAccountV2FirstNameCommand{
-				FirstName: userInfo.FirstName,
-			},
-			ChangeLastNameCommand: &acproto.ChangeAccountV2LastNameCommand{
-				LastName: userInfo.LastName,
-			},
-			ChangeAvatarUrlCommand: &acproto.ChangeAccountV2AvatarImageUrlCommand{
-				AvatarImageUrl: userInfo.Avatar,
-			},
-			ChangeAvatarCommand: &acproto.ChangeAccountV2AvatarCommand{
+			FirstName:      &wrapperspb.StringValue{Value: userInfo.FirstName},
+			LastName:       &wrapperspb.StringValue{Value: userInfo.LastName},
+			AvatarImageUrl: &wrapperspb.StringValue{Value: userInfo.Avatar},
+			Avatar: &acproto.UpdateAccountV2Request_AccountV2Avatar{
 				AvatarImage:    avatarBytes,
 				AvatarFileType: "image/png",
 			},

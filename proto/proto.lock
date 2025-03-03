@@ -905,6 +905,26 @@
       "def": {
         "enums": [
           {
+            "name": "GetMyOrganizationsByAccessTokenRequest.AuthType",
+            "enum_fields": [
+              {
+                "name": "AUTH_TYPE_UNSPECIFIED"
+              },
+              {
+                "name": "AUTH_TYPE_BUCKETEER",
+                "integer": 1
+              },
+              {
+                "name": "AUTH_TYPE_GOOGLE",
+                "integer": 2
+              },
+              {
+                "name": "AUTH_TYPE_GITHUB",
+                "integer": 3
+              }
+            ]
+          },
+          {
             "name": "ListAccountsV2Request.OrderBy",
             "enum_fields": [
               {
@@ -1036,10 +1056,15 @@
             ]
           },
           {
-            "name": "GetMyOrganizationsByGoogleTokenRequest",
+            "name": "GetMyOrganizationsByAccessTokenRequest",
             "fields": [
               {
                 "id": 1,
+                "name": "type",
+                "type": "AuthType"
+              },
+              {
+                "id": 2,
                 "name": "access_token",
                 "type": "string"
               }
@@ -2376,8 +2401,8 @@
                 ]
               },
               {
-                "name": "GetMyOrganizationsByGoogleToken",
-                "in_type": "GetMyOrganizationsByGoogleTokenRequest",
+                "name": "GetMyOrganizationsByAccessToken",
+                "in_type": "GetMyOrganizationsByAccessTokenRequest",
                 "out_type": "GetMyOrganizationsResponse",
                 "options": [
                   {
@@ -2385,7 +2410,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/account/my_organizations_by_google_token"
+                        "value": "/v1/account/my_organizations_by_access_token"
                       }
                     ]
                   },
@@ -2394,11 +2419,11 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Get My Organizations By Google Token"
+                        "value": "Get My Organizations By Access Token"
                       },
                       {
                         "name": "description",
-                        "value": "Get all the organizations by Google access token."
+                        "value": "Get all the organizations by access token."
                       },
                       {
                         "name": "tags",
@@ -2406,7 +2431,7 @@
                       },
                       {
                         "name": "operation_id",
-                        "value": "web.v1.account.my_organizations_by_google_token"
+                        "value": "web.v1.account.my_organizations_by_access_token"
                       },
                       {
                         "name": "responses",

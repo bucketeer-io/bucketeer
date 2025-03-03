@@ -135,39 +135,54 @@ export namespace GetMyOrganizationsByEmailRequest {
   };
 }
 
-export class GetMyOrganizationsByGoogleTokenRequest extends jspb.Message {
+export class GetMyOrganizationsByAccessTokenRequest extends jspb.Message {
+  getType(): GetMyOrganizationsByAccessTokenRequest.AuthTypeMap[keyof GetMyOrganizationsByAccessTokenRequest.AuthTypeMap];
+  setType(
+    value: GetMyOrganizationsByAccessTokenRequest.AuthTypeMap[keyof GetMyOrganizationsByAccessTokenRequest.AuthTypeMap]
+  ): void;
+
   getAccessToken(): string;
   setAccessToken(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(
     includeInstance?: boolean
-  ): GetMyOrganizationsByGoogleTokenRequest.AsObject;
+  ): GetMyOrganizationsByAccessTokenRequest.AsObject;
   static toObject(
     includeInstance: boolean,
-    msg: GetMyOrganizationsByGoogleTokenRequest
-  ): GetMyOrganizationsByGoogleTokenRequest.AsObject;
+    msg: GetMyOrganizationsByAccessTokenRequest
+  ): GetMyOrganizationsByAccessTokenRequest.AsObject;
   static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
   static extensionsBinary: {
     [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
   };
   static serializeBinaryToWriter(
-    message: GetMyOrganizationsByGoogleTokenRequest,
+    message: GetMyOrganizationsByAccessTokenRequest,
     writer: jspb.BinaryWriter
   ): void;
   static deserializeBinary(
     bytes: Uint8Array
-  ): GetMyOrganizationsByGoogleTokenRequest;
+  ): GetMyOrganizationsByAccessTokenRequest;
   static deserializeBinaryFromReader(
-    message: GetMyOrganizationsByGoogleTokenRequest,
+    message: GetMyOrganizationsByAccessTokenRequest,
     reader: jspb.BinaryReader
-  ): GetMyOrganizationsByGoogleTokenRequest;
+  ): GetMyOrganizationsByAccessTokenRequest;
 }
 
-export namespace GetMyOrganizationsByGoogleTokenRequest {
+export namespace GetMyOrganizationsByAccessTokenRequest {
   export type AsObject = {
+    type: GetMyOrganizationsByAccessTokenRequest.AuthTypeMap[keyof GetMyOrganizationsByAccessTokenRequest.AuthTypeMap];
     accessToken: string;
   };
+
+  export interface AuthTypeMap {
+    AUTH_TYPE_UNSPECIFIED: 0;
+    AUTH_TYPE_BUCKETEER: 1;
+    AUTH_TYPE_GOOGLE: 2;
+    AUTH_TYPE_GITHUB: 3;
+  }
+
+  export const AuthType: AuthTypeMap;
 }
 
 export class GetMyOrganizationsResponse extends jspb.Message {

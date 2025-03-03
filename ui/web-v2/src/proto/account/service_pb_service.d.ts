@@ -31,12 +31,12 @@ type AccountServiceGetMyOrganizationsByEmail = {
   readonly responseType: typeof proto_account_service_pb.GetMyOrganizationsResponse;
 };
 
-type AccountServiceGetMyOrganizationsByGoogleToken = {
+type AccountServiceGetMyOrganizationsByAccessToken = {
   readonly methodName: string;
   readonly service: typeof AccountService;
   readonly requestStream: false;
   readonly responseStream: false;
-  readonly requestType: typeof proto_account_service_pb.GetMyOrganizationsByGoogleTokenRequest;
+  readonly requestType: typeof proto_account_service_pb.GetMyOrganizationsByAccessTokenRequest;
   readonly responseType: typeof proto_account_service_pb.GetMyOrganizationsResponse;
 };
 
@@ -216,7 +216,7 @@ export class AccountService {
   static readonly GetMe: AccountServiceGetMe;
   static readonly GetMyOrganizations: AccountServiceGetMyOrganizations;
   static readonly GetMyOrganizationsByEmail: AccountServiceGetMyOrganizationsByEmail;
-  static readonly GetMyOrganizationsByGoogleToken: AccountServiceGetMyOrganizationsByGoogleToken;
+  static readonly GetMyOrganizationsByAccessToken: AccountServiceGetMyOrganizationsByAccessToken;
   static readonly CreateAccountV2: AccountServiceCreateAccountV2;
   static readonly EnableAccountV2: AccountServiceEnableAccountV2;
   static readonly DisableAccountV2: AccountServiceDisableAccountV2;
@@ -328,16 +328,16 @@ export class AccountServiceClient {
       responseMessage: proto_account_service_pb.GetMyOrganizationsResponse | null
     ) => void
   ): UnaryResponse;
-  getMyOrganizationsByGoogleToken(
-    requestMessage: proto_account_service_pb.GetMyOrganizationsByGoogleTokenRequest,
+  getMyOrganizationsByAccessToken(
+    requestMessage: proto_account_service_pb.GetMyOrganizationsByAccessTokenRequest,
     metadata: grpc.Metadata,
     callback: (
       error: ServiceError | null,
       responseMessage: proto_account_service_pb.GetMyOrganizationsResponse | null
     ) => void
   ): UnaryResponse;
-  getMyOrganizationsByGoogleToken(
-    requestMessage: proto_account_service_pb.GetMyOrganizationsByGoogleTokenRequest,
+  getMyOrganizationsByAccessToken(
+    requestMessage: proto_account_service_pb.GetMyOrganizationsByAccessTokenRequest,
     callback: (
       error: ServiceError | null,
       responseMessage: proto_account_service_pb.GetMyOrganizationsResponse | null

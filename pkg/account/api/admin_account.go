@@ -499,25 +499,60 @@ func (s *AccountService) updateLastSeen(ctx context.Context, email, organization
 	return s.accountStorage.UpdateAccountV2(ctx, account)
 }
 
-func (s *AccountService) GetMyOrganizationsByGoogleToken(
+func (s *AccountService) GetMyOrganizationsByAccessToken(
 	ctx context.Context,
-	req *accountproto.GetMyOrganizationsByGoogleTokenRequest,
+	req *accountproto.GetMyOrganizationsByAccessTokenRequest,
 ) (*accountproto.GetMyOrganizationsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
 
-	// Verify the Google access token
-	userInfo, err := s.verifyGoogleAccessToken(ctx, req.AccessToken, localizer)
-	if err != nil {
-		return nil, err
+	switch req.Type {
+	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_UNSPECIFIED:
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "Invalid auth type"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_GOOGLE:
+		userInfo, err := s.verifyGoogleAccessToken(ctx, req.AccessToken, localizer)
+		if err != nil {
+			return nil, err
+		}
+
+		myOrgs, err := s.getMyOrganizations(ctx, userInfo.Email, localizer)
+		if err != nil {
+			return nil, err
+		}
+
+		return &accountproto.GetMyOrganizationsResponse{Organizations: myOrgs}, nil
+	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_BUCKETEER:
+		// TODO: Implement Bucketeer access token verification
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_GITHUB:
+		// TODO: Implement GitHub access token verification
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 
-	// Use the email from the verified token to get organizations
-	myOrgs, err := s.getMyOrganizations(ctx, userInfo.Email, localizer)
-	if err != nil {
-		return nil, err
-	}
-
-	return &accountproto.GetMyOrganizationsResponse{Organizations: myOrgs}, nil
+	return nil, status.Error(
+		codes.InvalidArgument,
+		localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "Invalid auth type"),
+	)
 }
 
 func (s *AccountService) verifyGoogleAccessToken(
