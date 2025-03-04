@@ -1562,7 +1562,7 @@ func (s *AutoOpsService) listAutoOpsRules(
 		SearchQuery: nil,
 		Orders:      nil,
 	}
-	autoOpsRules, nextCursor, err := s.storage.ListAutoOpsRulesV2(ctx, listOptions)
+	autoOpsRules, nextCursor, err := s.autoOpsStorage.ListAutoOpsRulesV2(ctx, listOptions)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list autoOpsRules",

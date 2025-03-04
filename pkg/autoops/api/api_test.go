@@ -1477,8 +1477,8 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 			desc:    "success",
 			service: createAutoOpsService(mockController),
 			setup: func(s *AutoOpsService) {
-				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().ListAutoOpsRules(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().ListAutoOpsRulesV2(
+					gomock.Any(), gomock.Any(),
 				).Return([]*autoopsproto.AutoOpsRule{}, 0, nil)
 			},
 			req:         &autoopsproto.ListAutoOpsRulesRequest{EnvironmentId: "ns0", Cursor: ""},
@@ -1495,8 +1495,8 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 			desc:    "success with viewer",
 			service: createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *AutoOpsService) {
-				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().ListAutoOpsRules(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				s.autoOpsStorage.(*mockAutoOpsStorage.MockAutoOpsRuleStorage).EXPECT().ListAutoOpsRulesV2(
+					gomock.Any(), gomock.Any(),
 				).Return([]*autoopsproto.AutoOpsRule{}, 0, nil)
 			},
 			req:         &autoopsproto.ListAutoOpsRulesRequest{EnvironmentId: "ns0", Cursor: ""},

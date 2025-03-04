@@ -19,6 +19,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -204,7 +205,7 @@ func (s *autoOpsRuleStorage) ListAutoOpsRulesV2(
 	options *mysql.ListOptions,
 ) ([]*proto.AutoOpsRule, int, error) {
 	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAutoOpsRulesSQL, options)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, err
 	}
