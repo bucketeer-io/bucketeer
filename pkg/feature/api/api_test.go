@@ -118,6 +118,7 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 	return &FeatureService{
 		mock.NewMockFlagTriggerStorage(c),
 		mock.NewMockFeatureStorage(c),
+		mock.NewMockSegmentStorage(c),
 		mysqlmock.NewMockClient(c),
 		a,
 		e,
@@ -183,6 +184,7 @@ func createFeatureServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, r
 	return &FeatureService{
 		flagTriggerStorage:    mock.NewMockFlagTriggerStorage(c),
 		featureStorage:        mock.NewMockFeatureStorage(c),
+		segmentStorage:        mock.NewMockSegmentStorage(c),
 		mysqlClient:           mysqlmock.NewMockClient(c),
 		accountClient:         a,
 		autoOpsClient:         aoclientmock.NewMockClient(c),

@@ -298,8 +298,7 @@ func (s *FeatureService) listFeatures(
 		}
 		return nil, "", 0, dt.Err()
 	}
-	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	features, nextCursor, totalCount, err := featureStorage.ListFeatures(
+	features, nextCursor, totalCount, err := s.featureStorage.ListFeatures(
 		ctx,
 		whereParts,
 		orders,

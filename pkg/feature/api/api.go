@@ -58,6 +58,7 @@ func WithLogger(l *zap.Logger) Option {
 type FeatureService struct {
 	flagTriggerStorage    v2fs.FlagTriggerStorage
 	featureStorage        v2fs.FeatureStorage
+	segmentStorage        v2fs.SegmentStorage
 	mysqlClient           mysql.Client
 	accountClient         accountclient.Client
 	experimentClient      experimentclient.Client
@@ -96,6 +97,7 @@ func NewFeatureService(
 	return &FeatureService{
 		flagTriggerStorage:    v2fs.NewFlagTriggerStorage(mysqlClient),
 		featureStorage:        v2fs.NewFeatureStorage(mysqlClient),
+		segmentStorage:        v2fs.NewSegmentStorage(mysqlClient),
 		mysqlClient:           mysqlClient,
 		accountClient:         accountClient,
 		experimentClient:      experimentClient,
