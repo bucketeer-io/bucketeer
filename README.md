@@ -40,13 +40,13 @@ Bucketeer supports various languages and runtimes, with more coming soon!
 
 - Android
 - iOS
-- Javascript
+- JavaScript
 - Flutter
 
 #### Server-side
 
 - Go
-- NodeJS
+- Node.js
 
 ## Documentation
 
@@ -90,4 +90,4 @@ Big thanks to all Bucketeer contributors who have helped us since the beginning!
 <a href="https://github.com/YukiMatsumura"><img src="https://avatars.githubusercontent.com/u/1576836?v=4" title="YukiMatsumura" width="80" height="80"></a>
 <a href="https://github.com/yysskk"><img src="https://avatars.githubusercontent.com/u/7744927?v=4" title="yysskk" width="80" height="80"></a>
 <a href="https://github.com/xenbase"><img src="https://avatars.githubusercontent.com/u/1312483?v=4" title="xenbase" width="80" height="80"></a>
-<a href="https://github.com/unvalley"><img src="https://avatars.githubusercontent.com/u/38400669?v=4" title="xenbase" width="80" height="80"></a>
+<a href="https://github.com/unvalley"><img src="https://avatars.githubusercontent.com/u/38400669?v=4" title="unvalley" width="80" height="80"></a>
