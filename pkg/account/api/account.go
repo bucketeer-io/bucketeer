@@ -1330,7 +1330,7 @@ func (s *AccountService) verifyGoogleAccessToken(
 ) (*auth.UserInfo, error) {
 	// Use the googleAuthenticator to exchange the code for user info
 	// Note: accessToken is actually an authorization code here
-	userInfo, err := s.googleAuthenticator.ExchangeCode(ctx, accessToken)
+	userInfo, err := s.googleAuthenticator.Exchange(ctx, accessToken, s.oauthConfig.GoogleConfig.RedirectURLs[0])
 	if err != nil {
 		s.logger.Error(
 			"Failed to exchange Google authorization code",
