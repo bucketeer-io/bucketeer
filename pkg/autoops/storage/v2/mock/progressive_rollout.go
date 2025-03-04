@@ -103,6 +103,23 @@ func (mr *MockProgressiveRolloutStorageMockRecorder) ListProgressiveRollouts(ctx
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProgressiveRollouts", reflect.TypeOf((*MockProgressiveRolloutStorage)(nil).ListProgressiveRollouts), ctx, whereParts, orders, limit, offset)
 }
 
+// ListProgressiveRolloutsV2 mocks base method.
+func (m *MockProgressiveRolloutStorage) ListProgressiveRolloutsV2(ctx context.Context, options *mysql.ListOptions) ([]*autoops.ProgressiveRollout, int64, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListProgressiveRolloutsV2", ctx, options)
+	ret0, _ := ret[0].([]*autoops.ProgressiveRollout)
+	ret1, _ := ret[1].(int64)
+	ret2, _ := ret[2].(int)
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
+}
+
+// ListProgressiveRolloutsV2 indicates an expected call of ListProgressiveRolloutsV2.
+func (mr *MockProgressiveRolloutStorageMockRecorder) ListProgressiveRolloutsV2(ctx, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProgressiveRolloutsV2", reflect.TypeOf((*MockProgressiveRolloutStorage)(nil).ListProgressiveRolloutsV2), ctx, options)
+}
+
 // UpdateProgressiveRollout mocks base method.
 func (m *MockProgressiveRolloutStorage) UpdateProgressiveRollout(ctx context.Context, progressiveRollout *domain.ProgressiveRollout, environmentId string) error {
 	m.ctrl.T.Helper()

@@ -65,6 +65,10 @@ type ProgressiveRolloutStorage interface {
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*autoopsproto.ProgressiveRollout, int64, int, error)
+	ListProgressiveRolloutsV2(
+		ctx context.Context,
+		options *mysql.ListOptions,
+	) ([]*autoopsproto.ProgressiveRollout, int64, int, error)
 	UpdateProgressiveRollout(ctx context.Context,
 		progressiveRollout *domain.ProgressiveRollout,
 		environmentId string,
@@ -196,6 +200,52 @@ func (s *progressiveRolloutStorage) ListProgressiveRollouts(
 	nextOffset := offset + len(progressiveRollouts)
 	var totalCount int64
 	countQuery := fmt.Sprintf(countOpsProgressiveRolloutsSQL, whereSQL)
+	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	return progressiveRollouts, totalCount, nextOffset, nil
+}
+
+func (s *progressiveRolloutStorage) ListProgressiveRolloutsV2(
+	ctx context.Context,
+	options *mysql.ListOptions,
+) ([]*autoopsproto.ProgressiveRollout, int64, int, error) {
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectOpsProgressiveRolloutsSQL, options)
+	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	defer rows.Close()
+	progressiveRollouts := make([]*autoopsproto.ProgressiveRollout, 0)
+	for rows.Next() {
+		progressiveRollout := autoopsproto.ProgressiveRollout{}
+		err := rows.Scan(
+			&progressiveRollout.Id,
+			&progressiveRollout.FeatureId,
+			&mysql.JSONObject{Val: &progressiveRollout.Clause},
+			&progressiveRollout.Status,
+			&progressiveRollout.StoppedBy,
+			&progressiveRollout.Type,
+			&progressiveRollout.StoppedAt,
+			&progressiveRollout.CreatedAt,
+			&progressiveRollout.UpdatedAt,
+		)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+		progressiveRollouts = append(progressiveRollouts, &progressiveRollout)
+	}
+	if rows.Err() != nil {
+		return nil, 0, 0, err
+	}
+	var offset int
+	if options != nil {
+		offset = options.Offset
+	}
+	nextOffset := offset + len(progressiveRollouts)
+	var totalCount int64
+	countQuery, whereArgs := mysql.ConstructQueryAndWhereArgs(countOpsProgressiveRolloutsSQL, options)
 	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
