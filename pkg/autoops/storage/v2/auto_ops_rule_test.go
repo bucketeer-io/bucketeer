@@ -298,7 +298,11 @@ func TestListAutoOpsRulesV2(t *testing.T) {
 	}{
 		{
 			setup: func(s *autoOpsRuleStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -313,7 +317,11 @@ func TestListAutoOpsRulesV2(t *testing.T) {
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
@@ -348,7 +356,7 @@ func TestListAutoOpsRulesV2(t *testing.T) {
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		autoOpsRules, cursor, err := storage.ListAutoOpsRules(
+		autoOpsRules, cursor, err := storage.ListAutoOpsRulesV2(
 			context.Background(),
 			p.listOpts,
 		)

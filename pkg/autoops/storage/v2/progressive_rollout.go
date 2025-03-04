@@ -19,6 +19,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -59,6 +60,12 @@ type ProgressiveRolloutStorage interface {
 	GetProgressiveRollout(ctx context.Context, id, environmentId string) (*domain.ProgressiveRollout, error)
 	DeleteProgressiveRollout(ctx context.Context, id, environmentId string) error
 	ListProgressiveRollouts(
+		ctx context.Context,
+		whereParts []mysql.WherePart,
+		orders []*mysql.Order,
+		limit, offset int,
+	) ([]*autoopsproto.ProgressiveRollout, int64, int, error)
+	ListProgressiveRolloutsV2(
 		ctx context.Context,
 		options *mysql.ListOptions,
 	) ([]*autoopsproto.ProgressiveRollout, int64, int, error)
@@ -205,7 +212,7 @@ func (s *progressiveRolloutStorage) ListProgressiveRolloutsV2(
 	options *mysql.ListOptions,
 ) ([]*autoopsproto.ProgressiveRollout, int64, int, error) {
 	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectOpsProgressiveRolloutsSQL, options)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -239,7 +246,7 @@ func (s *progressiveRolloutStorage) ListProgressiveRolloutsV2(
 	nextOffset := offset + len(progressiveRollouts)
 	var totalCount int64
 	countQuery, whereArgs := mysql.ConstructQueryAndWhereArgs(countOpsProgressiveRolloutsSQL, options)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

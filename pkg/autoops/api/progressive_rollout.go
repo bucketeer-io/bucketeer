@@ -612,7 +612,7 @@ func (s *AutoOpsService) listProgressiveRollouts(
 	}
 
 	storage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
-	progressiveRollouts, totalCount, nextOffset, err := storage.ListProgressiveRollouts(ctx, listOptions)
+	progressiveRollouts, totalCount, nextOffset, err := storage.ListProgressiveRolloutsV2(ctx, listOptions)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list progressive rollouts",
