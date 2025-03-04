@@ -19,17 +19,19 @@ import (
 )
 
 type AccessToken struct {
-	Issuer        string    `json:"iss"`
-	Audience      string    `json:"aud"`
-	Expiry        time.Time `json:"exp"`
-	IssuedAt      time.Time `json:"iat"`
-	Email         string    `json:"email"`
-	Name          string    `json:"name"`
-	IsSystemAdmin bool      `json:"is_system_admin"`
+	Issuer         string    `json:"iss"`
+	Audience       string    `json:"aud"`
+	Expiry         time.Time `json:"exp"`
+	IssuedAt       time.Time `json:"iat"`
+	Email          string    `json:"email"`
+	Name           string    `json:"name"`
+	IsSystemAdmin  bool      `json:"is_system_admin"`
+	OrganizationID string    `json:"organization_id"`
 }
 
 type RefreshToken struct {
-	Email    string    `json:"email"`
-	Expiry   time.Time `json:"exp"`
-	IssuedAt time.Time `json:"iat"`
+	Email          string    `json:"email"`
+	Expiry         time.Time `json:"exp"`
+	IssuedAt       time.Time `json:"iat"`
+	OrganizationID string    `json:"organization_id"`
 }
