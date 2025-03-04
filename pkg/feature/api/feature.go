@@ -1934,7 +1934,7 @@ func (s *FeatureService) stopProgressiveRollout(
 		Offset:      0,
 	}
 
-	list, _, _, err := storage.ListProgressiveRollouts(ctx, listOptions)
+	list, _, _, err := storage.ListProgressiveRolloutsV2(ctx, listOptions)
 	if err != nil {
 		return err
 	}
