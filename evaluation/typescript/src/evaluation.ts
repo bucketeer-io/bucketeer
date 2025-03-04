@@ -286,7 +286,7 @@ enum Mark {
 }
 
 // FeatureIDsDependsOn returns the ids of the features that this feature depends on.
-function featureIDsDependsOn(feature: Feature): Array<string> {
+function getFeatureIDsDependsOn(feature: Feature): Array<string> {
   const ids: Array<string> = [];
 
   // Iterate over prerequisites and add their FeatureId
@@ -341,7 +341,7 @@ function topologicalSort(features: Array<Feature>): Array<Feature> {
 
     marks[fId] = Mark.Temporary;
 
-    const dependentFeatureIds = featureIDsDependsOn(f);
+    const dependentFeatureIds = getFeatureIDsDependsOn(f);
     for (const fid of dependentFeatureIds) {
       const pf = mapFeatures[fid];
       if (!pf) {
@@ -381,7 +381,7 @@ function getFeaturesDependedOnTargets(
     evals[f.getId()] = f;
 
     // Get dependent features recursively
-    const featureDependencies = featureIDsDependsOn(f);
+    const featureDependencies = getFeatureIDsDependsOn(f);
     featureDependencies.forEach((fid) => {
       const target = all.get(fid);
       if (target !== undefined) {
@@ -415,7 +415,7 @@ function getFeaturesDependsOnTargets(
       return true;
     }
 
-    const featureDependencies = featureIDsDependsOn(f);
+    const featureDependencies = getFeatureIDsDependsOn(f);
     for (const fid of featureDependencies) {
       const dependentFeature = all.get(fid);
       if (dependentFeature && dfs(dependentFeature)) {
@@ -445,4 +445,4 @@ function arrayToRecord(arr: Array<[string, string]>): Record<string, string> {
   );
 }
 
-export { Evaluator };
+export { Evaluator, getFeatureIDsDependsOn };
