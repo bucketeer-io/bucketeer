@@ -23,7 +23,8 @@ import {
   UpdateSearchFilterRequest,
   UpdateSearchFilterResponse,
   DeleteSearchFilterRequest,
-  DeleteSearchFilterResponse
+  DeleteSearchFilterResponse,
+  GetMyOrganizationsByAccessTokenRequest
 } from '../proto/account/service_pb';
 import {
   AccountServiceClient,
@@ -72,6 +73,41 @@ export function getMyOrganizations(
         request,
         getMetaData(),
         (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AccountServiceError(
+                extractErrorMessage(error),
+                request,
+                error
+              )
+            );
+          } else {
+            resolve({ request, response });
+          }
+        }
+      );
+    }
+  );
+}
+
+export interface GetMyOrganizationsByAccessTokenResult {
+  request: GetMyOrganizationsByAccessTokenRequest;
+  response: GetMyOrganizationsResponse;
+}
+
+export function getMyOrganizationsByAccessToken(
+  request: GetMyOrganizationsByAccessTokenRequest
+): Promise<GetMyOrganizationsByAccessTokenResult> {
+  return new Promise(
+    (
+      resolve: (result: GetMyOrganizationsByAccessTokenResult) => void,
+      reject
+    ): void => {
+      client.getMyOrganizationsByAccessToken(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          console.log({ error });
           if (isNotNull(error) || isNull(response)) {
             reject(
               new AccountServiceError(

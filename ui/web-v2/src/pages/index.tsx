@@ -97,11 +97,12 @@ export const App: FC = memo(() => {
 export const Root: FC = memo(() => {
   const dispatch = useDispatch<AppDispatch>();
   const me = useMe();
-  const myOrganization = useSelector<AppState, Organization.AsObject[]>(
-    (state) => state.myOrganization.myOrganization
-  );
-  const [selectedOrganization, setSelectedOrganization] = useState(null);
-  const history = useHistory();
+  // const myOrganization = useSelector<AppState, Organization.AsObject[]>(
+  //   (state) => state.myOrganization.myOrganization
+  // );
+  // const [selectedOrganization, setSelectedOrganization] = useState(null);
+  // const history = useHistory();
+  const organizationId = getOrganizationId();
 
   const token = getToken();
 
@@ -111,37 +112,41 @@ export const Root: FC = memo(() => {
 
   useEffect(() => {
     if (hasToken) {
-      const organizationId = getOrganizationId();
-
-      if (organizationId) {
-        dispatch(fetchMe({ organizationId })).then(() =>
-          setIsInitialLoading(false)
-        );
-      } else {
-        dispatch(fetchMyOrganizations()).then((res) => {
-          const organizationList = res.payload as Organization.AsObject[];
-          // if there is only one organization, set it as the default organization
-          if (organizationList.length === 1) {
-            setOrganizationId(organizationList[0].id);
-            dispatch(fetchMe({ organizationId: organizationList[0].id })).then(
-              () => {
-                setIsInitialLoading(false);
-              }
-            );
-          } else {
-            setIsInitialLoading(false);
-          }
-        });
-      }
+      dispatch(fetchMe({ organizationId: organizationId })).then(() =>
+        setIsInitialLoading(false)
+      );
     }
+    // if (hasToken) {
+    //   const organizationId = getOrganizationId();
+    // if (organizationId) {
+    //   dispatch(fetchMe({ organizationId })).then(() =>
+    //     setIsInitialLoading(false)
+    //   );
+    // } else {
+    //   dispatch(fetchMyOrganizations()).then((res) => {
+    //     const organizationList = res.payload as Organization.AsObject[];
+    //     // if there is only one organization, set it as the default organization
+    //     if (organizationList.length === 1) {
+    //       setOrganizationId(organizationList[0].id);
+    //       dispatch(fetchMe({ organizationId: organizationList[0].id })).then(
+    //         () => {
+    //           setIsInitialLoading(false);
+    //         }
+    //       );
+    //     } else {
+    //       setIsInitialLoading(false);
+    //     }
+    //   });
+    // }
+    // }
   }, [hasToken]);
 
-  const handleSubmit = () => {
-    setOrganizationId(selectedOrganization.value);
-    dispatch(fetchMe({ organizationId: selectedOrganization.value })).then(() =>
-      history.push(PAGE_PATH_ROOT)
-    );
-  };
+  // const handleSubmit = () => {
+  //   setOrganizationId(selectedOrganization.value);
+  //   dispatch(fetchMe({ organizationId: selectedOrganization.value })).then(() =>
+  //     history.push(PAGE_PATH_ROOT)
+  //   );
+  // };
 
   if (isInitialLoading) {
     return <div className="spinner mt-4 mx-auto" />;
@@ -165,19 +170,19 @@ export const Root: FC = memo(() => {
       </div>
     );
   }
-  if (hasToken && myOrganization.length > 1) {
-    return (
-      <SelectOrganization
-        options={myOrganization.map((org) => ({
-          label: org.name,
-          value: org.id
-        }))}
-        onChange={(o) => setSelectedOrganization(o)}
-        onSubmit={handleSubmit}
-        isSubmitBtnDisabled={!selectedOrganization}
-      />
-    );
-  }
+  // if (hasToken && myOrganization.length > 1) {
+  //   return (
+  //     <SelectOrganization
+  //       options={myOrganization.map((org) => ({
+  //         label: org.name,
+  //         value: org.id
+  //       }))}
+  //       onChange={(o) => setSelectedOrganization(o)}
+  //       onSubmit={handleSubmit}
+  //       isSubmitBtnDisabled={!selectedOrganization}
+  //     />
+  //   );
+  // }
   return <Login />;
 });
 
