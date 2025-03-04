@@ -1,7 +1,7 @@
 import axiosClient from '@api/axios-client';
 import { APIKey } from '@types';
 
-export interface APIKeyUpdaterParams {
+export interface APIKeyUpdaterPayload {
   id: string;
   environmentId?: string;
   name?: string;
@@ -10,11 +10,11 @@ export interface APIKeyUpdaterParams {
 }
 
 export interface APIKeyUpdaterResponse {
-  apiKey: Array<APIKey>;
+  apiKey: APIKey;
 }
 
 export const apiKeyUpdater = async (
-  params?: APIKeyUpdaterParams
+  params?: APIKeyUpdaterPayload
 ): Promise<APIKeyUpdaterResponse> => {
   return axiosClient
     .patch<APIKeyUpdaterResponse>('/v1/account/update_api_key', params)

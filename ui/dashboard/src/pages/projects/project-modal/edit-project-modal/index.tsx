@@ -47,28 +47,33 @@ const EditProjectModal = ({
     }
   });
 
-  const onSubmit: SubmitHandler<EditProjectForm> = values => {
-    return projectUpdater({
-      id: project.id,
-      changeDescriptionCommand: {
-        description: values.description
-      },
-      renameCommand: {
+  const onSubmit: SubmitHandler<EditProjectForm> = async values => {
+    try {
+      const resp = await projectUpdater({
+        id: project.id,
+        description: values.description,
         name: values.name
+      });
+      if (resp) {
+        invalidateProjects(queryClient);
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: (
+            <span>
+              <b>{values.name}</b> {`has been successfully updated!`}
+            </span>
+          )
+        });
+        onClose();
       }
-    }).then(() => {
+    } catch (error) {
       notify({
         toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {`has been successfully updated!`}
-          </span>
-        )
+        messageType: 'error',
+        message: (error as Error)?.message
       });
-      invalidateProjects(queryClient);
-      onClose();
-    });
+    }
   };
 
   return (

@@ -1,23 +1,19 @@
 import axiosClient from '@api/axios-client';
 import { Project } from '@types';
 
-export interface ProjectCreatorCommand {
+export interface ProjectCreatorPayload {
   name: string;
   urlCode: string;
   organizationId: string;
   description?: string;
 }
 
-export interface ProjectCreatorParams {
-  command: ProjectCreatorCommand;
-}
-
 export interface ProjectResponse {
-  project: Array<Project>;
+  project: Project;
 }
 
 export const projectCreator = async (
-  params?: ProjectCreatorParams
+  params?: ProjectCreatorPayload
 ): Promise<ProjectResponse> => {
   return axiosClient
     .post<ProjectResponse>('/v1/environment/create_project', params)

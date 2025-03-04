@@ -5,6 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateEnvironments } from '@queries/environments';
 import { useQueryProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -57,7 +58,16 @@ const AddEnvironmentModal = ({ isOpen, onClose }: AddEnvironmentModalProps) => {
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
 
-  const { data: projectList } = useQueryProjects();
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const { data: projectList } = useQueryProjects({
+    params: {
+      organizationId: currentEnvironment.organizationId,
+      cursor: '0',
+      pageSize: 9999
+    }
+  });
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -70,22 +80,31 @@ const AddEnvironmentModal = ({ isOpen, onClose }: AddEnvironmentModalProps) => {
     }
   });
 
-  const onSubmit: SubmitHandler<AddEnvironmentForm> = values => {
-    return environmentCreator({
-      command: { ...values }
-    }).then(() => {
+  const onSubmit: SubmitHandler<AddEnvironmentForm> = async values => {
+    try {
+      const resp = await environmentCreator({
+        ...values
+      });
+      if (resp) {
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: (
+            <span>
+              <b>{values.name}</b> {`has been successfully created!`}
+            </span>
+          )
+        });
+        invalidateEnvironments(queryClient);
+        onClose();
+      }
+    } catch (error) {
       notify({
         toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {`has been successfully created!`}
-          </span>
-        )
+        messageType: 'error',
+        message: (error as Error)?.message
       });
-      invalidateEnvironments(queryClient);
-      onClose();
-    });
+    }
   };
 
   return (

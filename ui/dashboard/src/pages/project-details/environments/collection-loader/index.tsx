@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { SortingState } from '@tanstack/react-table';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { sortingListFields } from 'constants/collection';
 import { Environment } from '@types';
@@ -25,12 +26,19 @@ const CollectionLoader = ({
 }) => {
   const { projectId } = useParams();
   const columns = useColumns({ onActions });
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
   const {
     data: collection,
     isLoading,
     refetch,
     isError
-  } = useFetchEnvironments({ ...filters, projectId });
+  } = useFetchEnvironments({
+    ...filters,
+    projectId,
+    organizationId: currentEnvironment.organizationId
+  });
 
   const onSortingChangeHandler = (sorting: SortingState) => {
     const updateOrderBy =

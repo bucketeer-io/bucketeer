@@ -1,7 +1,7 @@
 import axiosClient from '@api/axios-client';
 import { UserSegment } from '@types';
 
-export interface UserSegmentUpdaterParams {
+export interface UserSegmentUpdaterPayload {
   id: string;
   environmentId: string;
   name?: string;
@@ -13,7 +13,7 @@ export interface UserSegmentUpdaterResponse {
 }
 
 export const userSegmentUpdater = async (
-  params?: UserSegmentUpdaterParams
+  params?: UserSegmentUpdaterPayload
 ): Promise<UserSegmentUpdaterResponse> => {
   return axiosClient
     .patch<UserSegmentUpdaterResponse>('/v1/segment', params)

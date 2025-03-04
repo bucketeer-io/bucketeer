@@ -2,15 +2,9 @@ import axiosClient from '@api/axios-client';
 
 export interface EnvironmentUpdateParams {
   id: string;
-  renameCommand: {
-    name: string;
-  };
-  changeDescriptionCommand: {
-    description?: string;
-  };
-  changeRequireCommentCommand: {
-    requireComment: boolean;
-  };
+  name: string;
+  description?: string;
+  requireComment: boolean;
 }
 
 export const environmentUpdater = async (params?: EnvironmentUpdateParams) => {

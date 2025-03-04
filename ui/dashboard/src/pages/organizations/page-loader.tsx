@@ -46,7 +46,7 @@ const PageLoader = () => {
         ? organizationArchive
         : organizationUnarchive;
 
-      return archiveMutation({ id, command: {} });
+      return archiveMutation({ id });
     },
     onSuccess: () => {
       onCloseConfirmModal();

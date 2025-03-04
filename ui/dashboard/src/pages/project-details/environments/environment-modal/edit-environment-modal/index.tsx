@@ -5,6 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateEnvironments } from '@queries/environments';
 import { useQueryProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -45,7 +46,17 @@ const EditEnvironmentModal = ({
   const { projectId } = useParams();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
-  const { data: collection } = useQueryProjects();
+
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const { data: collection } = useQueryProjects({
+    params: {
+      organizationId: currentEnvironment.organizationId,
+      cursor: '0',
+      pageSize: 9999
+    }
+  });
 
   const project = collection?.projects.find(item => item.id === projectId);
 
@@ -58,31 +69,34 @@ const EditEnvironmentModal = ({
     }
   });
 
-  const onSubmit: SubmitHandler<EditEnvironmentForm> = values => {
-    return environmentUpdater({
-      id: environment.id,
-      renameCommand: {
-        name: values.name
-      },
-      changeDescriptionCommand: {
-        description: values.description
-      },
-      changeRequireCommentCommand: {
+  const onSubmit: SubmitHandler<EditEnvironmentForm> = async values => {
+    try {
+      const resp = await environmentUpdater({
+        id: environment.id,
+        name: values.name,
+        description: values.description,
         requireComment: values.requireComment
+      });
+      if (resp) {
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: (
+            <span>
+              <b>{values.name}</b> {`has been successfully updated!`}
+            </span>
+          )
+        });
+        invalidateEnvironments(queryClient);
+        onClose();
       }
-    }).then(() => {
+    } catch (error) {
       notify({
         toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {`has been successfully updated!`}
-          </span>
-        )
+        messageType: 'error',
+        message: (error as Error)?.message
       });
-      invalidateEnvironments(queryClient);
-      onClose();
-    });
+    }
   };
 
   return (

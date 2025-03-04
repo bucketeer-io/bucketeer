@@ -1,20 +1,14 @@
 import axiosClient from '@api/axios-client';
 
-export interface OrganizationUpdateParams {
+export interface OrganizationUpdatePayload {
   id: string;
-  renameCommand: {
-    name: string;
-  };
-  changeDescriptionCommand: {
-    description?: string;
-  };
-  changeOwnerEmailCommand: {
-    ownerEmail: string;
-  };
+  name: string;
+  description?: string;
+  ownerEmail: string;
 }
 
 export const organizationUpdater = async (
-  params?: OrganizationUpdateParams
+  params?: OrganizationUpdatePayload
 ) => {
   return axiosClient
     .post('/v1/environment/update_organization', params)
