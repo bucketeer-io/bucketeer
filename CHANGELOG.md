@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.4.0](https://github.com/bucketeer-io/bucketeer/compare/v1.3.0...v1.4.0) (2025-03-04)
+
+
+### Features
+
+* implement update organization no command ([#1544](https://github.com/bucketeer-io/bucketeer/issues/1544)) ([f483c13](https://github.com/bucketeer-io/bucketeer/commit/f483c13dde84a6ce2b28f5ab9548097fa5735cd0))
+
+
+### Bug Fixes
+
+* flag not found when using dependency flag in targeting rule ([#1550](https://github.com/bucketeer-io/bucketeer/issues/1550)) ([4fc4921](https://github.com/bucketeer-io/bucketeer/commit/4fc4921b09b1632edabca5aaecd78929ad8140e0))
+* **ui:** experiments graph fix ([#1539](https://github.com/bucketeer-io/bucketeer/issues/1539)) ([d84a30d](https://github.com/bucketeer-io/bucketeer/commit/d84a30d9918dc578caac70e238cc63531b6d4203))
+
+
+### Miscellaneous
+
+* **evaluation/typescript:** export function getFeatureIDsDependsOn ([#1553](https://github.com/bucketeer-io/bucketeer/issues/1553)) ([b3a17cb](https://github.com/bucketeer-io/bucketeer/commit/b3a17cbd6944dbee6ca0bb7b4788302011176811))
+
 ## [1.3.0](https://github.com/bucketeer-io/bucketeer/compare/v1.2.0...v1.3.0) (2025-02-28)
 
 
