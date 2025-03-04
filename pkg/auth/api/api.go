@@ -122,7 +122,7 @@ func NewAuthService(
 		accountClient: accountClient,
 		verifier:      verifier,
 		googleAuthenticator: google.NewAuthenticator(
-			&config.GoogleConfig, signer, logger,
+			&config.GoogleConfig, logger,
 		),
 		opts:   &options,
 		logger: logger,

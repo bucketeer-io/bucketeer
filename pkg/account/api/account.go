@@ -24,12 +24,15 @@ import (
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	domainauditlog "github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
+	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -1258,4 +1261,86 @@ func (s *AccountService) newAccountV2ListOrders(
 		direction = mysql.OrderDirectionDesc
 	}
 	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
+}
+
+func (s *AccountService) GetMyOrganizationsByAccessToken(
+	ctx context.Context,
+	req *accountproto.GetMyOrganizationsByAccessTokenRequest,
+) (*accountproto.GetMyOrganizationsResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+
+	switch req.Type {
+	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_UNSPECIFIED:
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "Invalid auth type"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_GOOGLE:
+		userInfo, err := s.verifyGoogleAccessToken(ctx, req.AccessToken, localizer)
+		if err != nil {
+			return nil, err
+		}
+
+		myOrgs, err := s.getMyOrganizations(ctx, userInfo.Email, localizer)
+		if err != nil {
+			return nil, err
+		}
+
+		return &accountproto.GetMyOrganizationsResponse{Organizations: myOrgs}, nil
+	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_BUCKETEER:
+		// currently we only check demo account
+		if req.Email == s.oauthConfig.DemoSignIn.Email {
+			myOrgs, err := s.getMyOrganizations(ctx, req.Email, localizer)
+			if err != nil {
+				return nil, err
+			}
+			return &accountproto.GetMyOrganizationsResponse{Organizations: myOrgs}, nil
+		}
+
+	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_GITHUB:
+		// TODO: Implement GitHub access token verification
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	return nil, status.Error(
+		codes.InvalidArgument,
+		localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "Invalid auth type"),
+	)
+}
+
+func (s *AccountService) verifyGoogleAccessToken(
+	ctx context.Context,
+	accessToken string,
+	localizer locale.Localizer,
+) (*auth.UserInfo, error) {
+	// Use the googleAuthenticator to exchange the code for user info
+	// Note: accessToken is actually an authorization code here
+	userInfo, err := s.googleAuthenticator.ExchangeCode(ctx, accessToken)
+	if err != nil {
+		s.logger.Error(
+			"Failed to exchange Google authorization code",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.UnauthenticatedError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	return userInfo, nil
 }

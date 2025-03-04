@@ -25,7 +25,6 @@ import (
 	"golang.org/x/oauth2/google"
 
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
-	"github.com/bucketeer-io/bucketeer/pkg/token"
 )
 
 var (
@@ -50,18 +49,15 @@ type googleUserInfo struct {
 
 type Authenticator struct {
 	config *auth.GoogleConfig
-	signer token.Signer
 	logger *zap.Logger
 }
 
 func NewAuthenticator(
 	config *auth.GoogleConfig,
-	signer token.Signer,
 	logger *zap.Logger,
 ) *Authenticator {
 	return &Authenticator{
 		config: config,
-		signer: signer,
 		logger: logger.Named("auth"),
 	}
 }
@@ -149,4 +145,46 @@ func (a Authenticator) oauth2Config(scopes []string, redirectURL string) *oauth2
 		Scopes:       scopes,
 		RedirectURL:  redirectURL,
 	}
+}
+
+// ExchangeCode exchanges an authorization code for user info without redirect URL validation
+// This is used for cases where a redirect URL isn't available or needed
+func (a Authenticator) ExchangeCode(
+	ctx context.Context,
+	code string,
+) (*auth.UserInfo, error) {
+	// Create a temporary config with no redirect URL
+	oauth2Config := &oauth2.Config{
+		ClientID:     a.config.ClientID,
+		ClientSecret: a.config.ClientSecret,
+		Endpoint:     google.Endpoint,
+		Scopes:       defaultScopes,
+	}
+
+	// Exchange the code for a token
+	authToken, err := oauth2Config.Exchange(ctx, code)
+	if err != nil {
+		a.logger.Error("auth/google: failed to exchange code", zap.Error(err))
+		return nil, err
+	}
+
+	// Get user info using the token
+	userInfo, err := a.getGoogleUserInfo(ctx, authToken, oauth2Config)
+	if err != nil {
+		a.logger.Error("auth/google: failed to get user info", zap.Error(err))
+		return nil, err
+	}
+
+	// Ensure the email is verified
+	if !userInfo.EmailVerified {
+		a.logger.Error("auth/google: email not verified", zap.String("email", userInfo.Email))
+		return nil, errors.New("email not verified")
+	}
+
+	return &auth.UserInfo{
+		FirstName: userInfo.GivenName,
+		LastName:  userInfo.FamilyName,
+		Avatar:    userInfo.Picture,
+		Email:     userInfo.Email,
+	}, nil
 }

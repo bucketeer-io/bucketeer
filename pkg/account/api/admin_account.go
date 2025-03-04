@@ -16,13 +16,10 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"time"
 
 	"go.uber.org/zap"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -30,7 +27,6 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -497,155 +493,4 @@ func (s *AccountService) updateLastSeen(ctx context.Context, email, organization
 	account.UpdatedAt = now
 
 	return s.accountStorage.UpdateAccountV2(ctx, account)
-}
-
-func (s *AccountService) GetMyOrganizationsByAccessToken(
-	ctx context.Context,
-	req *accountproto.GetMyOrganizationsByAccessTokenRequest,
-) (*accountproto.GetMyOrganizationsResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-
-	switch req.Type {
-	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_UNSPECIFIED:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "Invalid auth type"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_GOOGLE:
-		userInfo, err := s.verifyGoogleAccessToken(ctx, req.AccessToken, localizer)
-		if err != nil {
-			return nil, err
-		}
-
-		myOrgs, err := s.getMyOrganizations(ctx, userInfo.Email, localizer)
-		if err != nil {
-			return nil, err
-		}
-
-		return &accountproto.GetMyOrganizationsResponse{Organizations: myOrgs}, nil
-	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_BUCKETEER:
-		// currently we only check demo account
-		if req.Email == s.oauthConfig.DemoSignIn.Email {
-			myOrgs, err := s.getMyOrganizations(ctx, req.Email, localizer)
-			if err != nil {
-				return nil, err
-			}
-			return &accountproto.GetMyOrganizationsResponse{Organizations: myOrgs}, nil
-		}
-
-	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_GITHUB:
-		// TODO: Implement GitHub access token verification
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-
-	return nil, status.Error(
-		codes.InvalidArgument,
-		localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "Invalid auth type"),
-	)
-}
-
-func (s *AccountService) verifyGoogleAccessToken(
-	ctx context.Context,
-	accessToken string,
-	localizer locale.Localizer,
-) (*auth.UserInfo, error) {
-	// Create an OAuth2 token from the provided access token
-	token := &oauth2.Token{
-		AccessToken: accessToken,
-	}
-
-	// We need to create an OAuth2 config with the same scopes used for authentication
-	scopes := []string{
-		"https://www.googleapis.com/auth/userinfo.email",
-		"https://www.googleapis.com/auth/userinfo.profile",
-	}
-
-	// Create a temporary OAuth2 config to use for token verification
-	config := &oauth2.Config{
-		ClientID:     s.oauthConfig.GoogleConfig.ClientID,
-		ClientSecret: s.oauthConfig.GoogleConfig.ClientSecret,
-		Endpoint:     google.Endpoint,
-		Scopes:       scopes,
-	}
-
-	// Create a client using the token
-	client := config.Client(ctx, token)
-
-	// Query the userinfo endpoint to verify the token and get user info
-	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
-	if err != nil {
-		s.logger.Error(
-			"Failed to verify Google access token",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.UnauthenticatedError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	defer resp.Body.Close()
-
-	// Decode the user info response
-	var googleUserInfo struct {
-		Name          string `json:"name"`
-		GivenName     string `json:"given_name"`
-		FamilyName    string `json:"family_name"`
-		Picture       string `json:"picture"`
-		Email         string `json:"email"`
-		EmailVerified bool   `json:"email_verified"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&googleUserInfo); err != nil {
-		s.logger.Error(
-			"Failed to decode Google user info",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-
-	// Ensure the email is verified
-	if !googleUserInfo.EmailVerified {
-		s.logger.Error(
-			"Email not verified",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", googleUserInfo.Email))...,
-		)
-		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.UnauthenticatedError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-
-	// Return a valid UserInfo
-	return &auth.UserInfo{
-		FirstName: googleUserInfo.GivenName,
-		LastName:  googleUserInfo.FamilyName,
-		Avatar:    googleUserInfo.Picture,
-		Email:     googleUserInfo.Email,
-	}, nil
 }

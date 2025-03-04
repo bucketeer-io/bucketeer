@@ -495,6 +495,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go authServer.Run()
+
 	// accountService
 	accountService := accountapi.NewAccountService(
 		environmentClient,
