@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow
 } from '../Table';
+import { isNumber } from '../../../utils/isNumber';
 
 const createHeadCells = (): Array<HeaderCell> => [
   {
@@ -97,17 +98,15 @@ export const ConversionRateTable: FC<ConversionRateTableProps> = ({
               </TableCell>
               <TableCell textLeft={true}>
                 {' '}
-                {Number.isNaN(conversionRate)
-                  ? 'n/a'
-                  : conversionRate.toFixed(1) + ' %'}{' '}
+                {isNumber(conversionRate) ? conversionRate.toFixed(1) : 0}
+                {' %'}{' '}
               </TableCell>
               <TableCell textLeft={true}>
                 {baseVariationId === variationResult.variationId
                   ? 'Baseline'
-                  : Number.isNaN(conversionRate - baseConversionRate)
-                    ? 'n/a'
-                    : (conversionRate - baseConversionRate).toFixed(1) +
-                      ' %'}{' '}
+                  : (isNumber(conversionRate - baseConversionRate)
+                      ? (conversionRate - baseConversionRate).toFixed(1)
+                      : 0) + ' %'}{' '}
               </TableCell>
               <TableCell textLeft={true}>
                 {' '}
