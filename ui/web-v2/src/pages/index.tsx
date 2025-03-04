@@ -1,13 +1,12 @@
 import React, { FC, useEffect, memo, useState } from 'react';
 import TagManager from 'react-gtm-module';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import {
   Route,
   Switch,
   Redirect,
   useRouteMatch,
-  useParams,
-  useHistory
+  useParams
 } from 'react-router-dom';
 
 import { NotFound } from '../components/NotFound';
@@ -32,7 +31,7 @@ import {
   PAGE_PATH_AUTH_SIGNIN,
   PAGE_PATH_DEBUGGER
 } from '../constants/routing';
-import { AppState } from '../modules';
+// import { AppState } from '../modules';
 import {
   fetchMe,
   setCurrentEnvironment,
@@ -40,11 +39,11 @@ import {
   useIsEditable,
   useMe
 } from '../modules/me';
-import { fetchMyOrganizations } from '../modules/myOrganization';
-import { Organization } from '../proto/environment/organization_pb';
+// import { fetchMyOrganizations } from '../modules/myOrganization';
+// import { Organization } from '../proto/environment/organization_pb';
 import {
-  getOrganizationId,
-  setOrganizationId
+  getOrganizationId
+  // setOrganizationId
 } from '../storage/organizationId';
 import { AppDispatch } from '../store';
 
@@ -56,7 +55,7 @@ import { DebuggerIndexPage } from './debugger';
 import { AuthCallbackPage } from './auth';
 import Login from './auth/signin';
 import SignIn from './auth/email';
-import SelectOrganization from './auth/selectOrganization';
+// import SelectOrganization from './auth/selectOrganization';
 import { ExperimentIndexPage } from './experiment';
 import { FeatureIndexPage } from './feature';
 import { FeatureDetailPage } from './feature/detail';

@@ -11,8 +11,8 @@ import { parse } from 'query-string';
 import { Organization } from '../../proto/environment/organization_pb';
 import SelectOrganization from './selectOrganization';
 import { setOrganizationId } from '../../storage/organizationId';
-import { fetchMe } from '../../modules/me';
-import { PAGE_PATH_ROOT } from '../../constants/routing';
+// import { fetchMe } from '../../modules/me';
+// import { PAGE_PATH_ROOT } from '../../constants/routing';
 
 export const AuthCallbackPage: FC = memo(() => {
   const history = useHistory();
