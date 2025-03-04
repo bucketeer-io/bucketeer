@@ -602,11 +602,6 @@ export namespace UpdateAutoOpsRuleRequest {
 }
 
 export class UpdateAutoOpsRuleResponse extends jspb.Message {
-  hasAutoOpsRule(): boolean;
-  clearAutoOpsRule(): void;
-  getAutoOpsRule(): proto_autoops_auto_ops_rule_pb.AutoOpsRule | undefined;
-  setAutoOpsRule(value?: proto_autoops_auto_ops_rule_pb.AutoOpsRule): void;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateAutoOpsRuleResponse.AsObject;
   static toObject(
@@ -629,9 +624,7 @@ export class UpdateAutoOpsRuleResponse extends jspb.Message {
 }
 
 export namespace UpdateAutoOpsRuleResponse {
-  export type AsObject = {
-    autoOpsRule?: proto_autoops_auto_ops_rule_pb.AutoOpsRule.AsObject;
-  };
+  export type AsObject = {};
 }
 
 export class ExecuteAutoOpsRequest extends jspb.Message {
@@ -997,6 +990,11 @@ export class StopProgressiveRolloutRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getStoppedBy(): proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap];
+  setStoppedBy(
+    value: proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap]
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): StopProgressiveRolloutRequest.AsObject;
   static toObject(
@@ -1023,6 +1021,7 @@ export namespace StopProgressiveRolloutRequest {
     id: string;
     command?: proto_autoops_command_pb.StopProgressiveRolloutCommand.AsObject;
     environmentId: string;
+    stoppedBy: proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StoppedByMap];
   };
 }
 

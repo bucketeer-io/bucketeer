@@ -4286,14 +4286,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {
-        autoOpsRule:
-          (f = msg.getAutoOpsRule()) &&
-          proto_autoops_auto_ops_rule_pb.AutoOpsRule.toObject(
-            includeInstance,
-            f
-          )
-      };
+      obj = {};
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -4333,15 +4326,6 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleResponse.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = new proto_autoops_auto_ops_rule_pb.AutoOpsRule();
-          reader.readMessage(
-            value,
-            proto_autoops_auto_ops_rule_pb.AutoOpsRule
-              .deserializeBinaryFromReader
-          );
-          msg.setAutoOpsRule(value);
-          break;
         default:
           reader.skipField();
           break;
@@ -4374,56 +4358,6 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleResponse.prototype.serializeBinary =
 proto.bucketeer.autoops.UpdateAutoOpsRuleResponse.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getAutoOpsRule();
-    if (f != null) {
-      writer.writeMessage(
-        1,
-        f,
-        proto_autoops_auto_ops_rule_pb.AutoOpsRule.serializeBinaryToWriter
-      );
-    }
-  };
-
-/**
- * optional AutoOpsRule auto_ops_rule = 1;
- * @return {?proto.bucketeer.autoops.AutoOpsRule}
- */
-proto.bucketeer.autoops.UpdateAutoOpsRuleResponse.prototype.getAutoOpsRule =
-  function () {
-    return /** @type{?proto.bucketeer.autoops.AutoOpsRule} */ (
-      jspb.Message.getWrapperField(
-        this,
-        proto_autoops_auto_ops_rule_pb.AutoOpsRule,
-        1
-      )
-    );
-  };
-
-/**
- * @param {?proto.bucketeer.autoops.AutoOpsRule|undefined} value
- * @return {!proto.bucketeer.autoops.UpdateAutoOpsRuleResponse} returns this
- */
-proto.bucketeer.autoops.UpdateAutoOpsRuleResponse.prototype.setAutoOpsRule =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 1, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.autoops.UpdateAutoOpsRuleResponse} returns this
- */
-proto.bucketeer.autoops.UpdateAutoOpsRuleResponse.prototype.clearAutoOpsRule =
-  function () {
-    return this.setAutoOpsRule(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.autoops.UpdateAutoOpsRuleResponse.prototype.hasAutoOpsRule =
-  function () {
-    return jspb.Message.getField(this, 1) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -6277,7 +6211,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        stoppedBy: jspb.Message.getFieldWithDefault(msg, 5, 0)
       };
 
     if (includeInstance) {
@@ -6335,6 +6270,13 @@ proto.bucketeer.autoops.StopProgressiveRolloutRequest.deserializeBinaryFromReade
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 5:
+          var value =
+            /** @type {!proto.bucketeer.autoops.ProgressiveRollout.StoppedBy} */ (
+              reader.readEnum()
+            );
+          msg.setStoppedBy(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -6383,6 +6325,10 @@ proto.bucketeer.autoops.StopProgressiveRolloutRequest.serializeBinaryToWriter =
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(4, f);
+    }
+    f = message.getStoppedBy();
+    if (f !== 0.0) {
+      writer.writeEnum(5, f);
     }
   };
 
@@ -6466,6 +6412,26 @@ proto.bucketeer.autoops.StopProgressiveRolloutRequest.prototype.getEnvironmentId
 proto.bucketeer.autoops.StopProgressiveRolloutRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 4, value);
+  };
+
+/**
+ * optional ProgressiveRollout.StoppedBy stopped_by = 5;
+ * @return {!proto.bucketeer.autoops.ProgressiveRollout.StoppedBy}
+ */
+proto.bucketeer.autoops.StopProgressiveRolloutRequest.prototype.getStoppedBy =
+  function () {
+    return /** @type {!proto.bucketeer.autoops.ProgressiveRollout.StoppedBy} */ (
+      jspb.Message.getFieldWithDefault(this, 5, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.autoops.ProgressiveRollout.StoppedBy} value
+ * @return {!proto.bucketeer.autoops.StopProgressiveRolloutRequest} returns this
+ */
+proto.bucketeer.autoops.StopProgressiveRolloutRequest.prototype.setStoppedBy =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 5, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

@@ -576,7 +576,6 @@ func deleteProgressiveRollout(t *testing.T, client autoopsclient.Client, id stri
 	_, err := client.DeleteProgressiveRollout(ctx, &autoopsproto.DeleteProgressiveRolloutRequest{
 		EnvironmentId: *environmentID,
 		Id:            id,
-		Command:       &autoopsproto.DeleteProgressiveRolloutCommand{},
 	})
 	if err != nil {
 		t.Fatal("Failed to delete progressive rollout", err)
