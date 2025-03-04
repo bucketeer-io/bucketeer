@@ -40,13 +40,13 @@ Bucketeer supports various languages and runtimes, with more coming soon!
 
 - Android
 - iOS
-- Javascript
+- JavaScript
 - Flutter
 
 #### Server-side
 
 - Go
-- NodeJS
+- Node.js
 
 ## Documentation
 
