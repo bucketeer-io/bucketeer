@@ -1268,10 +1268,11 @@ func (s *AccountService) GetMyOrganizationsByAccessToken(
 	req *accountproto.GetMyOrganizationsByAccessTokenRequest,
 ) (*accountproto.GetMyOrganizationsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
+	s.logger.Info("GetMyOrganizationsByAccessToken ", zap.Any("req.type", req.Type))
 
 	switch req.Type {
 	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_UNSPECIFIED:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusInvalidAuthType.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "Invalid auth type"),
 		})
@@ -1280,15 +1281,18 @@ func (s *AccountService) GetMyOrganizationsByAccessToken(
 		}
 		return nil, dt.Err()
 	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_GOOGLE:
+		s.logger.Info("GetMyOrganizationsByAccessToken for google", zap.Any("req.AccessToken", req.AccessToken))
 		userInfo, err := s.verifyGoogleAccessToken(ctx, req.AccessToken, localizer)
 		if err != nil {
 			return nil, err
 		}
+		s.logger.Info("GetMyOrganizationsByAccessToken for google", zap.Any("userInfo", userInfo))
 
 		myOrgs, err := s.getMyOrganizations(ctx, userInfo.Email, localizer)
 		if err != nil {
 			return nil, err
 		}
+		s.logger.Info("GetMyOrganizationsByAccessToken for google", zap.Any("myOrgs", myOrgs))
 
 		return &accountproto.GetMyOrganizationsResponse{Organizations: myOrgs}, nil
 	case accountproto.GetMyOrganizationsByAccessTokenRequest_AUTH_TYPE_BUCKETEER:
