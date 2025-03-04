@@ -952,9 +952,13 @@ func (s *grpcGatewayService) getTargetFeatures(fs []*featureproto.Feature, id st
 	if err != nil {
 		return nil, err
 	}
-	if len(feature.Prerequisites) == 0 {
+	// Check if the flag depends on other flags.
+	// If not, we return only the target flag
+	df := &featuredomain.Feature{Feature: feature}
+	if len(df.FeatureIDsDependsOn()) == 0 {
 		return []*featureproto.Feature{feature}, nil
 	}
+	// Otherwise, we evaluate all features here to avoid complex logic.
 	evaluator := evaluation.NewEvaluator()
 	return evaluator.GetPrerequisiteDownwards([]*featureproto.Feature{feature}, fs)
 }
