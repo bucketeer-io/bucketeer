@@ -23,7 +23,6 @@ var (
 	statusInternal          = gstatus.New(codes.Internal, "autoops: internal")
 	statusUnknownOpsType    = gstatus.New(codes.Internal, "autoops: unknown ops type")
 	statusInvalidCursor     = gstatus.New(codes.InvalidArgument, "autoops: cursor is invalid")
-	statusNoCommand         = gstatus.New(codes.InvalidArgument, "autoops: no command")
 	statusIDRequired        = gstatus.New(codes.InvalidArgument, "autoops: id must be specified")
 	statusFeatureIDRequired = gstatus.New(
 		codes.InvalidArgument,
