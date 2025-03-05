@@ -152,7 +152,7 @@ func (s *FeatureService) updateSegmentUser(
 		user := domain.NewSegmentUser(segmentID, userID, state, deleted)
 		segmentUsers = append(segmentUsers, user.SegmentUser)
 	}
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, segmentID, environmentId)
 		if err != nil {
 			s.logger.Error(
@@ -164,8 +164,7 @@ func (s *FeatureService) updateSegmentUser(
 			)
 			return err
 		}
-		segmentUserStorage := v2fs.NewSegmentUserStorage(tx)
-		if err := segmentUserStorage.UpsertSegmentUsers(ctx, segmentUsers, environmentId); err != nil {
+		if err := s.segmentUserStorage.UpsertSegmentUsers(contextWithTx, segmentUsers, environmentId); err != nil {
 			s.logger.Error(
 				"Failed to store segment user",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -250,9 +249,8 @@ func (s *FeatureService) GetSegmentUser(
 		)
 		return nil, err
 	}
-	segmentUserStorage := v2fs.NewSegmentUserStorage(s.mysqlClient)
 	id := domain.SegmentUserID(req.SegmentId, req.UserId, req.State)
-	user, err := segmentUserStorage.GetSegmentUser(ctx, id, req.EnvironmentId)
+	user, err := s.segmentUserStorage.GetSegmentUser(ctx, id, req.EnvironmentId)
 	if err != nil {
 		if err == v2fs.ErrSegmentUserNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -333,8 +331,7 @@ func (s *FeatureService) ListSegmentUsers(
 		}
 		return nil, dt.Err()
 	}
-	segmentUserStorage := v2fs.NewSegmentUserStorage(s.mysqlClient)
-	users, nextCursor, err := segmentUserStorage.ListSegmentUsers(
+	users, nextCursor, err := s.segmentUserStorage.ListSegmentUsers(
 		ctx,
 		whereParts,
 		nil,
@@ -687,8 +684,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 		mysql.NewFilter("deleted", "=", false),
 		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
-	segmentUserStorage := v2fs.NewSegmentUserStorage(s.mysqlClient)
-	users, _, err := segmentUserStorage.ListSegmentUsers(
+	users, _, err := s.segmentUserStorage.ListSegmentUsers(
 		ctx,
 		whereParts,
 		nil,

@@ -58,6 +58,7 @@ type segmentUserPersister struct {
 	batchClient                btclient.Client
 	mysqlClient                mysql.Client
 	segmentStorage             v2fs.SegmentStorage
+	segmentUserStorage         v2fs.SegmentUserStorage
 	logger                     *zap.Logger
 }
 
@@ -106,6 +107,7 @@ func NewSegmentUserPersister(
 		batchClient:                batchClient,
 		mysqlClient:                mysqlClient,
 		segmentStorage:             v2fs.NewSegmentStorage(mysqlClient),
+		segmentUserStorage:         v2fs.NewSegmentUserStorage(mysqlClient),
 		logger:                     logger,
 	}, nil
 }
@@ -338,14 +340,8 @@ func (p *segmentUserPersister) persistSegmentUsers(
 		user := domain.NewSegmentUser(segmentID, id, state, false)
 		allSegmentUsers = append(allSegmentUsers, user.SegmentUser)
 	}
-	tx, err := p.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		p.logger.Error("Failed to begin transaction", zap.Error(err))
-		return 0, err
-	}
-	err = p.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		segmentUserStorage := v2fs.NewSegmentUserStorage(tx)
-		if err := segmentUserStorage.UpsertSegmentUsers(ctx, allSegmentUsers, environmentId); err != nil {
+	err := p.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		if err := p.segmentUserStorage.UpsertSegmentUsers(contextWithTx, allSegmentUsers, environmentId); err != nil {
 			return err
 		}
 		return nil

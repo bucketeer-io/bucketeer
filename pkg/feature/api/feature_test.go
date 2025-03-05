@@ -1043,9 +1043,9 @@ func TestEvaluateFeatures(t *testing.T) {
 						}}, nil)
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+				s.segmentUserStorage.(*storagemock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, 0, errors.New("error"))
 			},
 			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: nil,
@@ -1104,13 +1104,9 @@ func TestEvaluateFeatures(t *testing.T) {
 						}}, nil)
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
+				s.segmentUserStorage.(*storagemock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.SegmentUser{}, 0, nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: &featureproto.EvaluateFeaturesResponse{
@@ -1300,13 +1296,9 @@ func TestEvaluateSingleFeature(t *testing.T) {
 						}}, nil)
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
+				s.segmentUserStorage.(*storagemock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.SegmentUser{}, 0, nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{
 				User:          &userproto.User{Id: "user-id"},
