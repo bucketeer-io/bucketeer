@@ -570,6 +570,177 @@ func TestCreateFeatureMySQL(t *testing.T) {
 	}
 }
 
+func TestCreateFeatureNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	variations := createFeatureVariations()
+	tags := createFeatureTags()
+	patterns := []struct {
+		setup                                             func(*FeatureService)
+		id, name, description                             string
+		variations                                        []*featureproto.Variation
+		tags                                              []string
+		defaultOnVariationIndex, defaultOffVariationIndex *wrappers.Int32Value
+		environmentId                                     string
+		expected                                          error
+	}{
+		{
+			setup:                    nil,
+			id:                       "",
+			name:                     "name",
+			description:              "error: statusMissingID",
+			variations:               nil,
+			tags:                     nil,
+			defaultOnVariationIndex:  nil,
+			defaultOffVariationIndex: nil,
+			environmentId:            "ns0",
+			expected:                 createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			setup:                    nil,
+			id:                       "bucketeer_id",
+			name:                     "name",
+			description:              "error: statusInvalidID",
+			variations:               nil,
+			tags:                     nil,
+			defaultOnVariationIndex:  nil,
+			defaultOffVariationIndex: nil,
+			environmentId:            "ns0",
+			expected:                 createError(statusInvalidID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+		},
+		{
+			setup:                    nil,
+			id:                       "Bucketeer-id-2019",
+			name:                     "",
+			description:              "error: statusMissingName",
+			variations:               nil,
+			tags:                     nil,
+			defaultOnVariationIndex:  nil,
+			defaultOffVariationIndex: nil,
+			environmentId:            "ns0",
+			expected:                 createError(statusMissingName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+		},
+		{
+			setup:                    nil,
+			id:                       "Bucketeer-id-2019",
+			name:                     "name",
+			description:              "error: statusMissingFeatureVariations",
+			variations:               nil,
+			tags:                     nil,
+			defaultOnVariationIndex:  nil,
+			defaultOffVariationIndex: nil,
+			environmentId:            "ns0",
+			expected:                 createError(statusMissingFeatureVariations, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variations")),
+		},
+		{
+			setup:         nil,
+			id:            "Bucketeer-id-2019",
+			name:          "name",
+			description:   "error: statusMissingFeatureTags",
+			variations:    variations,
+			tags:          nil,
+			environmentId: "ns0",
+			expected:      createError(statusMissingFeatureTags, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tags")),
+		},
+		{
+			setup:                    nil,
+			id:                       "Bucketeer-id-2019",
+			name:                     "name",
+			description:              "error: statusMissingDefaultOnVariation",
+			variations:               variations,
+			tags:                     tags,
+			defaultOnVariationIndex:  nil,
+			defaultOffVariationIndex: nil,
+			environmentId:            "ns0",
+			expected:                 createError(statusMissingDefaultOnVariation, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "default_on_variation")),
+		},
+		{
+			setup:                    nil,
+			id:                       "Bucketeer-id-2019",
+			name:                     "name",
+			description:              "error: statusMissingDefaultOffVariation",
+			variations:               variations,
+			tags:                     tags,
+			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
+			defaultOffVariationIndex: nil,
+			environmentId:            "ns0",
+			expected:                 createError(statusMissingDefaultOffVariation, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "default_off_variation")),
+		},
+		{
+			setup: func(s *FeatureService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(v2fs.ErrFeatureAlreadyExists)
+			},
+			id:                       "Bucketeer-id-2019",
+			name:                     "name",
+			description:              "error: statusAlreadyExists",
+			variations:               variations,
+			tags:                     tags,
+			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
+			defaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+			environmentId:            "ns0",
+			expected:                 createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+		},
+		{
+			setup: func(s *FeatureService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
+			},
+			id:                       "Bucketeer-id-2019",
+			name:                     "name",
+			description:              "success",
+			variations:               variations,
+			tags:                     tags,
+			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
+			defaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+			environmentId:            "ns0",
+			expected:                 nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.description, func(t *testing.T) {
+			service := createFeatureService(mockController)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			req := &featureproto.CreateFeatureRequest{
+				Id:                       p.id,
+				Name:                     p.name,
+				Description:              p.description,
+				Variations:               p.variations,
+				Tags:                     p.tags,
+				DefaultOnVariationIndex:  p.defaultOnVariationIndex,
+				DefaultOffVariationIndex: p.defaultOffVariationIndex,
+				EnvironmentId:            p.environmentId,
+			}
+			actual, err := service.CreateFeature(ctx, req)
+			if p.expected == nil {
+				assert.NotNil(t, actual.Feature)
+			}
+			assert.Equal(t, p.expected, err)
+		})
+	}
+}
+
 func TestSetFeatureToLastUsedInfosByChunk(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

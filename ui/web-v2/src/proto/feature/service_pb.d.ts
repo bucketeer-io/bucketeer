@@ -405,6 +405,51 @@ export class CreateFeatureRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  clearVariationsList(): void;
+  getVariationsList(): Array<proto_feature_variation_pb.Variation>;
+  setVariationsList(value: Array<proto_feature_variation_pb.Variation>): void;
+  addVariations(
+    value?: proto_feature_variation_pb.Variation,
+    index?: number
+  ): proto_feature_variation_pb.Variation;
+
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
+  hasDefaultOnVariationIndex(): boolean;
+  clearDefaultOnVariationIndex(): void;
+  getDefaultOnVariationIndex():
+    | google_protobuf_wrappers_pb.Int32Value
+    | undefined;
+  setDefaultOnVariationIndex(
+    value?: google_protobuf_wrappers_pb.Int32Value
+  ): void;
+
+  hasDefaultOffVariationIndex(): boolean;
+  clearDefaultOffVariationIndex(): void;
+  getDefaultOffVariationIndex():
+    | google_protobuf_wrappers_pb.Int32Value
+    | undefined;
+  setDefaultOffVariationIndex(
+    value?: google_protobuf_wrappers_pb.Int32Value
+  ): void;
+
+  getVariationType(): proto_feature_feature_pb.Feature.VariationTypeMap[keyof proto_feature_feature_pb.Feature.VariationTypeMap];
+  setVariationType(
+    value: proto_feature_feature_pb.Feature.VariationTypeMap[keyof proto_feature_feature_pb.Feature.VariationTypeMap]
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateFeatureRequest.AsObject;
   static toObject(
@@ -430,6 +475,14 @@ export namespace CreateFeatureRequest {
   export type AsObject = {
     command?: proto_feature_command_pb.CreateFeatureCommand.AsObject;
     environmentId: string;
+    id: string;
+    name: string;
+    description: string;
+    variationsList: Array<proto_feature_variation_pb.Variation.AsObject>;
+    tagsList: Array<string>;
+    defaultOnVariationIndex?: google_protobuf_wrappers_pb.Int32Value.AsObject;
+    defaultOffVariationIndex?: google_protobuf_wrappers_pb.Int32Value.AsObject;
+    variationType: proto_feature_feature_pb.Feature.VariationTypeMap[keyof proto_feature_feature_pb.Feature.VariationTypeMap];
   };
 }
 

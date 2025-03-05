@@ -4089,6 +4089,124 @@ paths:
           type: string
       tags:
         - experiment
+  /v1/feature:
+    get:
+      summary: Get Feature Flag
+      description: Get a feature flag. To call this API, you need at least a MEMBER role in the specified organizations.
+      operationId: web.v1.feature.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureGetFeatureResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: false
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - Feature
+    post:
+      summary: Create Feature Flag
+      description: Create a feature flag. To call this API, you need at least a MEMBER role in the specified organizations.
+      operationId: web.v1.feature.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureCreateFeatureResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureCreateFeatureRequest'
+      tags:
+        - Feature
   /v1/features:
     get:
       summary: List Feature Flags
@@ -8684,6 +8802,43 @@ definitions:
         format: int32
       variationType:
         $ref: '#/definitions/FeatureVariationType'
+  featureCreateFeatureRequest:
+    type: object
+    properties:
+      command:
+        $ref: '#/definitions/featureCreateFeatureCommand'
+        description: deprecated
+      environmentId:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+        title: This is an optional field
+      variations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerfeatureVariation'
+      tags:
+        type: array
+        items:
+          type: string
+      defaultOnVariationIndex:
+        type: integer
+        format: int32
+      defaultOffVariationIndex:
+        type: integer
+        format: int32
+      variationType:
+        $ref: '#/definitions/FeatureVariationType'
+    required:
+      - environmentId
+      - id
+      - name
+      - tags
   featureCreateFeatureResponse:
     type: object
     properties:

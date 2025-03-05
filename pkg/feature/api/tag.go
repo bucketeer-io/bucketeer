@@ -135,7 +135,7 @@ func (s *FeatureService) upsertTags(
 	ctx context.Context,
 	tx mysql.Transaction,
 	tags []string,
-	environment_id string,
+	environmentId string,
 ) error {
 	tagStorage := v2fs.NewTagStorage(tx)
 	for _, tag := range tags {
@@ -149,18 +149,18 @@ func (s *FeatureService) upsertTags(
 				"Failed to create domain tag",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environment_id", environment_id),
+					zap.String("environment_id", environmentId),
 					zap.String("tagID", tag),
 				)...,
 			)
 			return err
 		}
-		if err := tagStorage.UpsertTag(ctx, t, environment_id); err != nil {
+		if err := tagStorage.UpsertTag(ctx, t, environmentId); err != nil {
 			s.logger.Error(
 				"Failed to store tag",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environment_id", environment_id),
+					zap.String("environment_id", environmentId),
 					zap.String("tagID", tag),
 				)...,
 			)

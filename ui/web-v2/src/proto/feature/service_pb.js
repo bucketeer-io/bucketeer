@@ -629,7 +629,14 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.bucketeer.feature.CreateFeatureRequest = function (opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.feature.CreateFeatureRequest.repeatedFields_,
+    null
+  );
 };
 goog.inherits(proto.bucketeer.feature.CreateFeatureRequest, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -4373,6 +4380,13 @@ proto.bucketeer.feature.ListEnabledFeaturesResponse.prototype.setCursor =
     return jspb.Message.setProto3StringField(this, 2, value);
   };
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.feature.CreateFeatureRequest.repeatedFields_ = [7, 8];
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -4416,7 +4430,24 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        id: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        name: jspb.Message.getFieldWithDefault(msg, 5, ''),
+        description: jspb.Message.getFieldWithDefault(msg, 6, ''),
+        variationsList: jspb.Message.toObjectList(
+          msg.getVariationsList(),
+          proto_feature_variation_pb.Variation.toObject,
+          includeInstance
+        ),
+        tagsList:
+          (f = jspb.Message.getRepeatedField(msg, 8)) == null ? undefined : f,
+        defaultOnVariationIndex:
+          (f = msg.getDefaultOnVariationIndex()) &&
+          google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
+        defaultOffVariationIndex:
+          (f = msg.getDefaultOffVariationIndex()) &&
+          google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
+        variationType: jspb.Message.getFieldWithDefault(msg, 11, 0)
       };
 
     if (includeInstance) {
@@ -4470,6 +4501,53 @@ proto.bucketeer.feature.CreateFeatureRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setId(value);
+          break;
+        case 5:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setName(value);
+          break;
+        case 6:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setDescription(value);
+          break;
+        case 7:
+          var value = new proto_feature_variation_pb.Variation();
+          reader.readMessage(
+            value,
+            proto_feature_variation_pb.Variation.deserializeBinaryFromReader
+          );
+          msg.addVariations(value);
+          break;
+        case 8:
+          var value = /** @type {string} */ (reader.readString());
+          msg.addTags(value);
+          break;
+        case 9:
+          var value = new google_protobuf_wrappers_pb.Int32Value();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.Int32Value.deserializeBinaryFromReader
+          );
+          msg.setDefaultOnVariationIndex(value);
+          break;
+        case 10:
+          var value = new google_protobuf_wrappers_pb.Int32Value();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.Int32Value.deserializeBinaryFromReader
+          );
+          msg.setDefaultOffVariationIndex(value);
+          break;
+        case 11:
+          var value =
+            /** @type {!proto.bucketeer.feature.Feature.VariationType} */ (
+              reader.readEnum()
+            );
+          msg.setVariationType(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -4513,6 +4591,50 @@ proto.bucketeer.feature.CreateFeatureRequest.serializeBinaryToWriter =
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(3, f);
+    }
+    f = message.getId();
+    if (f.length > 0) {
+      writer.writeString(4, f);
+    }
+    f = message.getName();
+    if (f.length > 0) {
+      writer.writeString(5, f);
+    }
+    f = message.getDescription();
+    if (f.length > 0) {
+      writer.writeString(6, f);
+    }
+    f = message.getVariationsList();
+    if (f.length > 0) {
+      writer.writeRepeatedMessage(
+        7,
+        f,
+        proto_feature_variation_pb.Variation.serializeBinaryToWriter
+      );
+    }
+    f = message.getTagsList();
+    if (f.length > 0) {
+      writer.writeRepeatedString(8, f);
+    }
+    f = message.getDefaultOnVariationIndex();
+    if (f != null) {
+      writer.writeMessage(
+        9,
+        f,
+        google_protobuf_wrappers_pb.Int32Value.serializeBinaryToWriter
+      );
+    }
+    f = message.getDefaultOffVariationIndex();
+    if (f != null) {
+      writer.writeMessage(
+        10,
+        f,
+        google_protobuf_wrappers_pb.Int32Value.serializeBinaryToWriter
+      );
+    }
+    f = message.getVariationType();
+    if (f !== 0.0) {
+      writer.writeEnum(11, f);
     }
   };
 
@@ -4577,6 +4699,257 @@ proto.bucketeer.feature.CreateFeatureRequest.prototype.getEnvironmentId =
 proto.bucketeer.feature.CreateFeatureRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+/**
+ * optional string id = 4;
+ * @return {string}
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.getId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.CreateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.setId = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+/**
+ * optional string name = 5;
+ * @return {string}
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.getName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.CreateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.setName = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 5, value);
+};
+
+/**
+ * optional string description = 6;
+ * @return {string}
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.getDescription =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 6, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.CreateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.setDescription =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 6, value);
+  };
+
+/**
+ * repeated Variation variations = 7;
+ * @return {!Array<!proto.bucketeer.feature.Variation>}
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.getVariationsList =
+  function () {
+    return /** @type{!Array<!proto.bucketeer.feature.Variation>} */ (
+      jspb.Message.getRepeatedWrapperField(
+        this,
+        proto_feature_variation_pb.Variation,
+        7
+      )
+    );
+  };
+
+/**
+ * @param {!Array<!proto.bucketeer.feature.Variation>} value
+ * @return {!proto.bucketeer.feature.CreateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.setVariationsList =
+  function (value) {
+    return jspb.Message.setRepeatedWrapperField(this, 7, value);
+  };
+
+/**
+ * @param {!proto.bucketeer.feature.Variation=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.feature.Variation}
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.addVariations =
+  function (opt_value, opt_index) {
+    return jspb.Message.addToRepeatedWrapperField(
+      this,
+      7,
+      opt_value,
+      proto.bucketeer.feature.Variation,
+      opt_index
+    );
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.feature.CreateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.clearVariationsList =
+  function () {
+    return this.setVariationsList([]);
+  };
+
+/**
+ * repeated string tags = 8;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.getTagsList =
+  function () {
+    return /** @type {!Array<string>} */ (
+      jspb.Message.getRepeatedField(this, 8)
+    );
+  };
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.feature.CreateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.setTagsList = function (
+  value
+) {
+  return jspb.Message.setField(this, 8, value || []);
+};
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.feature.CreateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.addTags = function (
+  value,
+  opt_index
+) {
+  return jspb.Message.addToRepeatedField(this, 8, value, opt_index);
+};
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.feature.CreateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.clearTagsList =
+  function () {
+    return this.setTagsList([]);
+  };
+
+/**
+ * optional google.protobuf.Int32Value default_on_variation_index = 9;
+ * @return {?proto.google.protobuf.Int32Value}
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.getDefaultOnVariationIndex =
+  function () {
+    return /** @type{?proto.google.protobuf.Int32Value} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.Int32Value,
+        9
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.Int32Value|undefined} value
+ * @return {!proto.bucketeer.feature.CreateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.setDefaultOnVariationIndex =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 9, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.CreateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.clearDefaultOnVariationIndex =
+  function () {
+    return this.setDefaultOnVariationIndex(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.hasDefaultOnVariationIndex =
+  function () {
+    return jspb.Message.getField(this, 9) != null;
+  };
+
+/**
+ * optional google.protobuf.Int32Value default_off_variation_index = 10;
+ * @return {?proto.google.protobuf.Int32Value}
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.getDefaultOffVariationIndex =
+  function () {
+    return /** @type{?proto.google.protobuf.Int32Value} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.Int32Value,
+        10
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.Int32Value|undefined} value
+ * @return {!proto.bucketeer.feature.CreateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.setDefaultOffVariationIndex =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 10, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.CreateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.clearDefaultOffVariationIndex =
+  function () {
+    return this.setDefaultOffVariationIndex(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.hasDefaultOffVariationIndex =
+  function () {
+    return jspb.Message.getField(this, 10) != null;
+  };
+
+/**
+ * optional Feature.VariationType variation_type = 11;
+ * @return {!proto.bucketeer.feature.Feature.VariationType}
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.getVariationType =
+  function () {
+    return /** @type {!proto.bucketeer.feature.Feature.VariationType} */ (
+      jspb.Message.getFieldWithDefault(this, 11, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.feature.Feature.VariationType} value
+ * @return {!proto.bucketeer.feature.CreateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.CreateFeatureRequest.prototype.setVariationType =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 11, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
