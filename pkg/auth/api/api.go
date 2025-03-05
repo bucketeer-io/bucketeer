@@ -379,87 +379,89 @@ func (s *authService) SwitchOrganization(
 		return nil, err
 	}
 
-	// Check if the new organization ID is in the list of organizations the user belongs to
-	validOrganization := false
-	for _, org := range organizations {
-		if org.Id == newOrganizationID {
-			validOrganization = true
-			break
-		}
-	}
-
-	if !validOrganization {
-		s.logger.Error(
-			"User does not belong to the requested organization",
-			zap.String("email", accessToken.Email),
-			zap.String("organizationID", newOrganizationID),
-		)
-		dt, err := auth.StatusInvalidOrganization.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "organization_id"),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-
-	// Check if the user account is enabled in the requested organization
-	account, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
-		Email:          accessToken.Email,
-		OrganizationId: newOrganizationID,
-	})
-	if err != nil {
-		s.logger.Error(
-			"Failed to get account",
-			zap.Error(err),
-			zap.String("email", accessToken.Email),
-			zap.String("organizationID", newOrganizationID),
-		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-
-	if account.Account.Disabled {
-		s.logger.Error(
-			"The account is disabled",
-			zap.String("email", accessToken.Email),
-			zap.String("organizationID", newOrganizationID),
-		)
-		dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.UnauthenticatedError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-
-	accountDomain := domain.AccountV2{AccountV2: account.Account}
 	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	// Generate new tokens with the new organization ID
-	newToken, err := s.generateToken(
-		ctx,
-		accessToken.Email,
-		accountDomain,
-		isSystemAdmin,
-		localizer,
-	)
-	if err != nil {
-		return nil, err
-	}
+	if isSystemAdmin {
+		account, err := s.checkAccountStatus(ctx, accessToken.Email, organizations, localizer)
+		if err != nil {
+			return nil, err
+		}
+		accountDomain := domain.AccountV2{AccountV2: account.Account}
+		if account.Account.Disabled {
+			s.logger.Error(
+				"The account is disabled",
+				zap.String("email", accessToken.Email),
+				zap.String("organizationID", newOrganizationID),
+			)
+		}
+		accountDomain.AccountV2.OrganizationId = newOrganizationID
+		token, err := s.generateToken(
+			ctx,
+			accessToken.Email,
+			accountDomain,
+			isSystemAdmin,
+			localizer,
+		)
+		if err != nil {
+			return nil, err
+		}
+		return &authproto.SwitchOrganizationResponse{
+			Token: token,
+		}, nil
+	} else {
+		account, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
+			Email:          accessToken.Email,
+			OrganizationId: newOrganizationID,
+		})
+		if err != nil {
+			s.logger.Error(
+				"Failed to get account",
+				zap.Error(err),
+				zap.String("email", accessToken.Email),
+				zap.String("organizationID", newOrganizationID),
+			)
+			dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, auth.StatusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		accountDomain := domain.AccountV2{AccountV2: account.Account}
+		if account.Account.Disabled {
+			s.logger.Error(
+				"The account is disabled",
+				zap.String("email", accessToken.Email),
+				zap.String("organizationID", newOrganizationID),
+			)
+			dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.UnauthenticatedError),
+			})
+			if err != nil {
+				return nil, auth.StatusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
 
-	return &authproto.SwitchOrganizationResponse{
-		Token: newToken,
-	}, nil
+		// Generate new tokens with the new organization ID
+		newToken, err := s.generateToken(
+			ctx,
+			accessToken.Email,
+			accountDomain,
+			isSystemAdmin,
+			localizer,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return &authproto.SwitchOrganizationResponse{
+			Token: newToken,
+		}, nil
+	}
 }
 
 func (s *authService) getAuthenticator(
