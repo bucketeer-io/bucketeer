@@ -321,6 +321,83 @@ func (s *authService) RefreshToken(
 	return &authproto.RefreshTokenResponse{Token: newToken}, nil
 }
 
+// createTokens generates access and refresh tokens for a user
+func (s *authService) createTokens(
+	ctx context.Context,
+	email string,
+	organizationID string,
+	name string,
+	isSystemAdmin bool,
+	localizer locale.Localizer,
+) (*authproto.Token, error) {
+	timeNow := time.Now()
+
+	// Create access token
+	accessTokenTTL := timeNow.Add(day)
+	accessToken := &token.AccessToken{
+		Issuer:         s.issuer,
+		Audience:       s.audience,
+		Expiry:         accessTokenTTL,
+		IssuedAt:       timeNow,
+		Email:          email,
+		OrganizationID: organizationID,
+		Name:           name,
+		IsSystemAdmin:  isSystemAdmin,
+	}
+
+	signedAccessToken, err := s.signer.SignAccessToken(accessToken)
+	if err != nil {
+		s.logger.Error(
+			"Failed to sign access token",
+			zap.Error(err),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	// Create refresh token
+	refreshTokenTTL := sevenDays
+	if s.opts.refreshTokenTTL > 0 {
+		refreshTokenTTL = s.opts.refreshTokenTTL
+	}
+
+	refreshToken := &token.RefreshToken{
+		Email:          email,
+		OrganizationID: organizationID,
+		Expiry:         timeNow.Add(refreshTokenTTL),
+		IssuedAt:       timeNow,
+	}
+
+	signedRefreshToken, err := s.signer.SignRefreshToken(refreshToken)
+	if err != nil {
+		s.logger.Error(
+			"Failed to sign refresh token",
+			zap.Error(err),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	return &authproto.Token{
+		AccessToken:  signedAccessToken,
+		RefreshToken: signedRefreshToken,
+		TokenType:    "Bearer",
+		Expiry:       accessTokenTTL.Unix(),
+	}, nil
+}
+
 func (s *authService) SwitchOrganization(
 	ctx context.Context,
 	req *authproto.SwitchOrganizationRequest,
@@ -405,9 +482,9 @@ func (s *authService) SwitchOrganization(
 			zap.String("email", accessToken.Email),
 			zap.String("organizationID", newOrganizationID),
 		)
-		dt, err := auth.StatusAccessDenied.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.PermissionDenied),
+			Message: localizer.MustLocalize(locale.UnauthenticatedError),
 		})
 		if err != nil {
 			return nil, auth.StatusInternal.Err()
@@ -416,68 +493,23 @@ func (s *authService) SwitchOrganization(
 	}
 
 	accountDomain := domain.AccountV2{AccountV2: account.Account}
+	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	timeNow := time.Now()
-	newAccessToken := &token.AccessToken{
-		Issuer:         s.issuer,
-		Audience:       s.audience,
-		Expiry:         timeNow.Add(day),
-		IssuedAt:       timeNow,
-		Email:          accessToken.Email,
-		OrganizationID: newOrganizationID,
-		Name:           accountDomain.GetAccountFullName(),
-		IsSystemAdmin:  s.hasSystemAdminOrganization(organizations),
-	}
-
-	signedAccessToken, err := s.signer.SignAccessToken(newAccessToken)
+	// Create tokens using the helper method
+	newToken, err := s.createTokens(
+		ctx,
+		accessToken.Email,
+		newOrganizationID,
+		accountDomain.GetAccountFullName(),
+		isSystemAdmin,
+		localizer,
+	)
 	if err != nil {
-		s.logger.Error(
-			"Failed to sign access token",
-			zap.Error(err),
-		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-
-	refreshTokenTTL := sevenDays
-	if s.opts.refreshTokenTTL > 0 {
-		refreshTokenTTL = s.opts.refreshTokenTTL
-	}
-
-	refreshToken := &token.RefreshToken{
-		Email:          accessToken.Email,
-		OrganizationID: newOrganizationID,
-		Expiry:         timeNow.Add(refreshTokenTTL),
-		IssuedAt:       timeNow,
-	}
-
-	signedRefreshToken, err := s.signer.SignRefreshToken(refreshToken)
-	if err != nil {
-		s.logger.Error(
-			"Failed to sign refresh token",
-			zap.Error(err),
-		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, err
 	}
 
 	return &authproto.SwitchOrganizationResponse{
-		Token: &authproto.Token{
-			AccessToken:  signedAccessToken,
-			RefreshToken: signedRefreshToken,
-		},
+		Token: newToken,
 	}, nil
 }
 
@@ -668,63 +700,17 @@ func (s *authService) generateToken(
 		return nil, err
 	}
 	accountDomain := domain.AccountV2{AccountV2: account.Account}
+	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
 
-	timeNow := time.Now()
-	accessTokenTTL := timeNow.Add(day)
-	accessToken := &token.AccessToken{
-		Issuer:         s.issuer,
-		Audience:       s.audience,
-		Expiry:         accessTokenTTL,
-		IssuedAt:       timeNow,
-		Email:          userEmail,
-		OrganizationID: account.Account.OrganizationId,
-		Name:           accountDomain.GetAccountFullName(),
-		IsSystemAdmin:  s.hasSystemAdminOrganization(organizations),
-	}
-	signedAccessToken, err := s.signer.SignAccessToken(accessToken)
-	if err != nil {
-		s.logger.Error(
-			"Failed to sign access token",
-			zap.Error(err),
-		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-
-	refreshToken := &token.RefreshToken{
-		Email:          userEmail,
-		OrganizationID: account.Account.OrganizationId,
-		Expiry:         timeNow.Add(sevenDays),
-		IssuedAt:       timeNow,
-	}
-	signRefreshToken, err := s.signer.SignRefreshToken(refreshToken)
-	if err != nil {
-		s.logger.Error(
-			"Failed to sign access token",
-			zap.Error(err),
-		)
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-
-	return &authproto.Token{
-		AccessToken:  signedAccessToken,
-		RefreshToken: signRefreshToken,
-		TokenType:    "Bearer",
-		Expiry:       accessTokenTTL.Unix(),
-	}, nil
+	// Create tokens using the helper method
+	return s.createTokens(
+		ctx,
+		userEmail,
+		account.Account.OrganizationId,
+		accountDomain.GetAccountFullName(),
+		isSystemAdmin,
+		localizer,
+	)
 }
 
 func (s *authService) checkEmail(
