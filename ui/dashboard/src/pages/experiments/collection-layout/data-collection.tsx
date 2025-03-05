@@ -126,7 +126,7 @@ export const useColumns = ({
             trigger={
               <div className="text-gray-700 typo-para-medium min-w-[150px]">
                 {formatLongDateTime({
-                  value: experiment.stopAt,
+                  value: experiment.startAt,
                   overrideOptions: {
                     month: '2-digit',
                     day: '2-digit',
@@ -192,7 +192,7 @@ export const useColumns = ({
       enableSorting: false,
       cell: ({ row }) => {
         const experiment = row.original;
-
+        const { status } = experiment;
         return (
           <Popover
             options={[
@@ -201,17 +201,21 @@ export const useColumns = ({
                 icon: IconEditOutlined,
                 value: 'EDIT'
               },
-              ['STOPPED', 'FORCE_STOPPED'].includes(row.original.status)
-                ? {
-                    label: `${t('table:popover.start-experiment')}`,
-                    icon: IconStartExperiment,
-                    value: 'START'
-                  }
-                : {
-                    label: `${t('table:popover.stop-experiment')}`,
-                    icon: IconStopExperiment,
-                    value: 'STOP'
-                  },
+              ...(['WAITING', 'RUNNING'].includes(status)
+                ? [
+                    status === 'WAITING'
+                      ? {
+                          label: `${t('table:popover.start-experiment')}`,
+                          icon: IconStartExperiment,
+                          value: 'START'
+                        }
+                      : {
+                          label: `${t('table:popover.stop-experiment')}`,
+                          icon: IconStopExperiment,
+                          value: 'STOP'
+                        }
+                  ]
+                : []),
               searchOptions.status === 'ARCHIVED'
                 ? {
                     label: `${t('table:popover.unarchive-experiment')}`,

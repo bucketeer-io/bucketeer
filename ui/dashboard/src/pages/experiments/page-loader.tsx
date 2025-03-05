@@ -93,6 +93,8 @@ const PageLoader = ({
       mutation.mutate({
         id: selectedExperiment?.id,
         environmentId: currentEnvironment.id,
+        startAt: selectedExperiment.startAt,
+        stopAt: selectedExperiment.stopAt,
         status: {
           status: isStop ? 'FORCE_STOPPED' : 'RUNNING'
         }
