@@ -91,3 +91,5 @@ Big thanks to all Bucketeer contributors who have helped us since the beginning!
 <a href="https://github.com/yysskk"><img src="https://avatars.githubusercontent.com/u/7744927?v=4" title="yysskk" width="80" height="80"></a>
 <a href="https://github.com/xenbase"><img src="https://avatars.githubusercontent.com/u/1312483?v=4" title="xenbase" width="80" height="80"></a>
 <a href="https://github.com/unvalley"><img src="https://avatars.githubusercontent.com/u/38400669?v=4" title="xenbase" width="80" height="80"></a>
+<a href="https://github.com/hvn2k1"><img src="https://avatars.githubusercontent.com/u/112093533?v=4" title="hvn2k1" width="80" height="80"></a>
+<a href="https://github.com/nnnkkk7"><img src="https://avatars.githubusercontent.com/u/68233204?v=4" title="nnnkkk7" width="80" height="80"></a>
