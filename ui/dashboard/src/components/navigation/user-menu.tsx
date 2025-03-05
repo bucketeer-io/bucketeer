@@ -122,6 +122,7 @@ const UserMenu = () => {
           isOpen={openUploadAvatarModal}
           onClose={() => {
             onCloseUploadAvatarModal();
+            onOpenProfileModal();
             setSelectedAvatar(null);
           }}
           onUploadPhoto={() => {
@@ -137,7 +138,10 @@ const UserMenu = () => {
         <EditPhotoProfileModal
           onUpload={avatar => onSelectAvatar(avatar, onCloseUploadPhotoModal)}
           isOpen={openUploadPhotoModal}
-          onClose={onCloseUploadPhotoModal}
+          onClose={() => {
+            onOpenProfileModal();
+            onCloseUploadPhotoModal();
+          }}
         />
       )}
     </Popover.Root>

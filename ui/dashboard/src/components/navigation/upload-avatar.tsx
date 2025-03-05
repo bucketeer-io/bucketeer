@@ -148,7 +148,7 @@ const UploadAvatarModal = ({
       <ButtonBar
         secondaryButton={
           <Button disabled={!currentAvatar} onClick={handleSelectAvatar}>
-            {t(`save`)}
+            {t(`select`)}
           </Button>
         }
         primaryButton={
