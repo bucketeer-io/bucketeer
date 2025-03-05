@@ -66,6 +66,15 @@ message SignInResponse {
   Token token = 1;
 }
 
+message SwitchOrganizationRequest {
+  string access_token = 1;
+  string organization_id = 2;
+}
+
+message SwitchOrganizationResponse {
+  Token token = 1;
+}
+
 service AuthService {
   rpc ExchangeToken(ExchangeTokenRequest) returns (ExchangeTokenResponse) {
     option (google.api.http) = {
@@ -189,6 +198,53 @@ service AuthService {
           examples: {
             key: "application/json"
             value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc SwitchOrganization(SwitchOrganizationRequest)
+      returns (SwitchOrganizationResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/switch_organization"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Switch Organization",
+      description: "Switch to a different organization.",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.switch_organization",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request could not be authorized (permission denied)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "permission denied", "details": [] }'
           }
         }
       }
