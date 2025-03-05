@@ -175,7 +175,7 @@ func TestListProgressiveRollouts(t *testing.T) {
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		pr, totalCount, cursor, err := storage.ListProgressiveRolloutsV2(context.Background(), p.listOpts)
+		pr, totalCount, cursor, err := storage.ListProgressiveRollouts(context.Background(), p.listOpts)
 		assert.Equal(t, p.expected, pr)
 		assert.Equal(t, p.expectedCursor, cursor)
 		assert.Equal(t, p.expectedTotalCount, totalCount)

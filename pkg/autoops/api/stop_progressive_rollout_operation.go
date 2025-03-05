@@ -41,7 +41,7 @@ func executeStopProgressiveRolloutOperation(
 		Column: "feature_id",
 		Values: featureIDs,
 	}
-	listOptions := &mysql.ListOptions{
+	options := &mysql.ListOptions{
 		Filters:     filters,
 		Orders:      nil,
 		InFilter:    inFilter,
@@ -51,7 +51,7 @@ func executeStopProgressiveRolloutOperation(
 		Limit:       0,
 		Offset:      0,
 	}
-	list, _, _, err := storage.ListProgressiveRolloutsV2(ctx, listOptions)
+	list, _, _, err := storage.ListProgressiveRollouts(ctx, options)
 	if err != nil {
 		return err
 	}

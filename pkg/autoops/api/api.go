@@ -1552,7 +1552,7 @@ func (s *AutoOpsService) listAutoOpsRules(
 		return nil, "", dt.Err()
 
 	}
-	listOptions := &mysql.ListOptions{
+	options := &mysql.ListOptions{
 		Limit:       limit,
 		Offset:      offset,
 		Filters:     filters,
@@ -1562,7 +1562,7 @@ func (s *AutoOpsService) listAutoOpsRules(
 		SearchQuery: nil,
 		Orders:      nil,
 	}
-	autoOpsRules, nextCursor, err := s.autoOpsStorage.ListAutoOpsRulesV2(ctx, listOptions)
+	autoOpsRules, nextCursor, err := s.autoOpsStorage.ListAutoOpsRules(ctx, options)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list autoOpsRules",

@@ -73,9 +73,9 @@ func (mr *MockAutoOpsRuleStorageMockRecorder) GetAutoOpsRule(ctx, id, environmen
 }
 
 // ListAutoOpsRules mocks base method.
-func (m *MockAutoOpsRuleStorage) ListAutoOpsRules(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*autoops.AutoOpsRule, int, error) {
+func (m *MockAutoOpsRuleStorage) ListAutoOpsRules(ctx context.Context, options *mysql.ListOptions) ([]*autoops.AutoOpsRule, int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAutoOpsRules", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListAutoOpsRules", ctx, options)
 	ret0, _ := ret[0].([]*autoops.AutoOpsRule)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(error)
@@ -83,25 +83,9 @@ func (m *MockAutoOpsRuleStorage) ListAutoOpsRules(ctx context.Context, wherePart
 }
 
 // ListAutoOpsRules indicates an expected call of ListAutoOpsRules.
-func (mr *MockAutoOpsRuleStorageMockRecorder) ListAutoOpsRules(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockAutoOpsRuleStorageMockRecorder) ListAutoOpsRules(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAutoOpsRules", reflect.TypeOf((*MockAutoOpsRuleStorage)(nil).ListAutoOpsRules), ctx, whereParts, orders, limit, offset)
-}
-
-// ListAutoOpsRulesV2 mocks base method.
-func (m *MockAutoOpsRuleStorage) ListAutoOpsRulesV2(ctx context.Context, options *mysql.ListOptions) ([]*autoops.AutoOpsRule, int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAutoOpsRulesV2", ctx, options)
-	ret0, _ := ret[0].([]*autoops.AutoOpsRule)
-	ret1, _ := ret[1].(int)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// ListAutoOpsRulesV2 indicates an expected call of ListAutoOpsRulesV2.
-func (mr *MockAutoOpsRuleStorageMockRecorder) ListAutoOpsRulesV2(ctx, options any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAutoOpsRulesV2", reflect.TypeOf((*MockAutoOpsRuleStorage)(nil).ListAutoOpsRulesV2), ctx, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAutoOpsRules", reflect.TypeOf((*MockAutoOpsRuleStorage)(nil).ListAutoOpsRules), ctx, options)
 }
 
 // UpdateAutoOpsRule mocks base method.

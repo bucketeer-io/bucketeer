@@ -19,7 +19,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -48,12 +47,6 @@ type AutoOpsRuleStorage interface {
 	UpdateAutoOpsRule(ctx context.Context, e *domain.AutoOpsRule, environmentId string) error
 	GetAutoOpsRule(ctx context.Context, id, environmentId string) (*domain.AutoOpsRule, error)
 	ListAutoOpsRules(
-		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
-	) ([]*proto.AutoOpsRule, int, error)
-	ListAutoOpsRulesV2(
 		ctx context.Context,
 		options *mysql.ListOptions,
 	) ([]*proto.AutoOpsRule, int, error)
@@ -158,49 +151,6 @@ func (s *autoOpsRuleStorage) GetAutoOpsRule(
 }
 
 func (s *autoOpsRuleStorage) ListAutoOpsRules(
-	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
-) ([]*proto.AutoOpsRule, int, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(selectAutoOpsRulesSQL, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
-	if err != nil {
-		return nil, 0, err
-	}
-	defer rows.Close()
-	autoOpsRules := make([]*proto.AutoOpsRule, 0, limit)
-	for rows.Next() {
-		autoOpsRule := proto.AutoOpsRule{}
-		var opsType int32
-		err := rows.Scan(
-			&autoOpsRule.Id,
-			&autoOpsRule.FeatureId,
-			&opsType,
-			&mysql.JSONObject{Val: &autoOpsRule.Clauses},
-			&autoOpsRule.CreatedAt,
-			&autoOpsRule.UpdatedAt,
-			&autoOpsRule.Deleted,
-			&autoOpsRule.AutoOpsStatus,
-			&autoOpsRule.FeatureName,
-		)
-		if err != nil {
-			return nil, 0, err
-		}
-		autoOpsRule.OpsType = proto.OpsType(opsType)
-		autoOpsRules = append(autoOpsRules, &autoOpsRule)
-	}
-	if rows.Err() != nil {
-		return nil, 0, err
-	}
-	nextOffset := offset + len(autoOpsRules)
-	return autoOpsRules, nextOffset, nil
-}
-
-func (s *autoOpsRuleStorage) ListAutoOpsRulesV2(
 	ctx context.Context,
 	options *mysql.ListOptions,
 ) ([]*proto.AutoOpsRule, int, error) {

@@ -214,83 +214,6 @@ func TestListAutoOpsRules(t *testing.T) {
 	defer mockController.Finish()
 	patterns := []struct {
 		setup          func(*autoOpsRuleStorage)
-		whereParts     []mysql.WherePart
-		orders         []*mysql.Order
-		limit          int
-		offset         int
-		expected       []*proto.AutoOpsRule
-		expectedCursor int
-		expectedErr    error
-	}{
-		{
-			setup: func(s *autoOpsRuleStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
-			},
-			whereParts:     nil,
-			orders:         nil,
-			limit:          0,
-			offset:         0,
-			expected:       nil,
-			expectedCursor: 0,
-			expectedErr:    errors.New("error"),
-		},
-		{
-			setup: func(s *autoOpsRuleStorage) {
-				rows := mock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-			},
-			whereParts: []mysql.WherePart{
-				mysql.NewFilter("num", ">=", 5),
-			},
-			orders: []*mysql.Order{
-				mysql.NewOrder("id", mysql.OrderDirectionAsc),
-			},
-			limit:          10,
-			offset:         5,
-			expected:       []*proto.AutoOpsRule{},
-			expectedCursor: 5,
-			expectedErr:    nil,
-		},
-	}
-	for _, p := range patterns {
-		storage := newAutoOpsRuleStorageWithMock(t, mockController)
-		if p.setup != nil {
-			p.setup(storage)
-		}
-		autoOpsRules, cursor, err := storage.ListAutoOpsRules(
-			context.Background(),
-			p.whereParts,
-			p.orders,
-			p.limit,
-			p.offset,
-		)
-		assert.Equal(t, p.expected, autoOpsRules)
-		assert.Equal(t, p.expectedCursor, cursor)
-		assert.Equal(t, p.expectedErr, err)
-	}
-}
-
-func TestListAutoOpsRulesV2(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	patterns := []struct {
-		setup          func(*autoOpsRuleStorage)
 		listOpts       *mysql.ListOptions
 		expected       []*proto.AutoOpsRule
 		expectedCursor int
@@ -356,7 +279,7 @@ func TestListAutoOpsRulesV2(t *testing.T) {
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		autoOpsRules, cursor, err := storage.ListAutoOpsRulesV2(
+		autoOpsRules, cursor, err := storage.ListAutoOpsRules(
 			context.Background(),
 			p.listOpts,
 		)

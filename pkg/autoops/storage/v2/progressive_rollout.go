@@ -19,7 +19,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -60,12 +59,6 @@ type ProgressiveRolloutStorage interface {
 	GetProgressiveRollout(ctx context.Context, id, environmentId string) (*domain.ProgressiveRollout, error)
 	DeleteProgressiveRollout(ctx context.Context, id, environmentId string) error
 	ListProgressiveRollouts(
-		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
-	) ([]*autoopsproto.ProgressiveRollout, int64, int, error)
-	ListProgressiveRolloutsV2(
 		ctx context.Context,
 		options *mysql.ListOptions,
 	) ([]*autoopsproto.ProgressiveRollout, int64, int, error)
@@ -161,53 +154,6 @@ func (s *progressiveRolloutStorage) DeleteProgressiveRollout(
 }
 
 func (s *progressiveRolloutStorage) ListProgressiveRollouts(
-	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
-) ([]*autoopsproto.ProgressiveRollout, int64, int, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(selectOpsProgressiveRolloutsSQL, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	defer rows.Close()
-	progressiveRollouts := make([]*autoopsproto.ProgressiveRollout, 0, limit)
-	for rows.Next() {
-		progressiveRollout := autoopsproto.ProgressiveRollout{}
-		err := rows.Scan(
-			&progressiveRollout.Id,
-			&progressiveRollout.FeatureId,
-			&mysql.JSONObject{Val: &progressiveRollout.Clause},
-			&progressiveRollout.Status,
-			&progressiveRollout.StoppedBy,
-			&progressiveRollout.Type,
-			&progressiveRollout.StoppedAt,
-			&progressiveRollout.CreatedAt,
-			&progressiveRollout.UpdatedAt,
-		)
-		if err != nil {
-			return nil, 0, 0, err
-		}
-		progressiveRollouts = append(progressiveRollouts, &progressiveRollout)
-	}
-	if rows.Err() != nil {
-		return nil, 0, 0, err
-	}
-	nextOffset := offset + len(progressiveRollouts)
-	var totalCount int64
-	countQuery := fmt.Sprintf(countOpsProgressiveRolloutsSQL, whereSQL)
-	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
-	if err != nil {
-		return nil, 0, 0, err
-	}
-	return progressiveRollouts, totalCount, nextOffset, nil
-}
-
-func (s *progressiveRolloutStorage) ListProgressiveRolloutsV2(
 	ctx context.Context,
 	options *mysql.ListOptions,
 ) ([]*autoopsproto.ProgressiveRollout, int64, int, error) {
