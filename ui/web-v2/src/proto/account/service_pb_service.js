@@ -37,15 +37,6 @@ AccountService.GetMyOrganizationsByEmail = {
   responseType: proto_account_service_pb.GetMyOrganizationsResponse
 };
 
-AccountService.GetMyOrganizationsByAccessToken = {
-  methodName: 'GetMyOrganizationsByAccessToken',
-  service: AccountService,
-  requestStream: false,
-  responseStream: false,
-  requestType: proto_account_service_pb.GetMyOrganizationsByAccessTokenRequest,
-  responseType: proto_account_service_pb.GetMyOrganizationsResponse
-};
-
 AccountService.CreateAccountV2 = {
   methodName: 'CreateAccountV2',
   service: AccountService,
@@ -300,38 +291,6 @@ AccountServiceClient.prototype.getMyOrganizationsByEmail =
       callback = arguments[1];
     }
     var client = grpc.unary(AccountService.GetMyOrganizationsByEmail, {
-      request: requestMessage,
-      host: this.serviceHost,
-      metadata: metadata,
-      transport: this.options.transport,
-      debug: this.options.debug,
-      onEnd: function (response) {
-        if (callback) {
-          if (response.status !== grpc.Code.OK) {
-            var err = new Error(response.statusMessage);
-            err.code = response.status;
-            err.metadata = response.trailers;
-            callback(err, null);
-          } else {
-            callback(null, response.message);
-          }
-        }
-      }
-    });
-    return {
-      cancel: function () {
-        callback = null;
-        client.close();
-      }
-    };
-  };
-
-AccountServiceClient.prototype.getMyOrganizationsByAccessToken =
-  function getMyOrganizationsByAccessToken(requestMessage, metadata, callback) {
-    if (arguments.length === 2) {
-      callback = arguments[1];
-    }
-    var client = grpc.unary(AccountService.GetMyOrganizationsByAccessToken, {
       request: requestMessage,
       host: this.serviceHost,
       metadata: metadata,

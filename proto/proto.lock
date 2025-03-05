@@ -905,26 +905,6 @@
       "def": {
         "enums": [
           {
-            "name": "GetMyOrganizationsByAccessTokenRequest.AuthType",
-            "enum_fields": [
-              {
-                "name": "AUTH_TYPE_UNSPECIFIED"
-              },
-              {
-                "name": "AUTH_TYPE_BUCKETEER",
-                "integer": 1
-              },
-              {
-                "name": "AUTH_TYPE_GOOGLE",
-                "integer": 2
-              },
-              {
-                "name": "AUTH_TYPE_GITHUB",
-                "integer": 3
-              }
-            ]
-          },
-          {
             "name": "ListAccountsV2Request.OrderBy",
             "enum_fields": [
               {
@@ -1050,26 +1030,6 @@
             "fields": [
               {
                 "id": 1,
-                "name": "email",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GetMyOrganizationsByAccessTokenRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "type",
-                "type": "AuthType"
-              },
-              {
-                "id": 2,
-                "name": "access_token",
-                "type": "string"
-              },
-              {
-                "id": 3,
                 "name": "email",
                 "type": "string"
               }
@@ -2310,133 +2270,6 @@
                       {
                         "name": "operation_id",
                         "value": "web.v1.account.my_organizations_by_email"
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "400"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Returned for bad requests that may have failed validation."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "responses",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "401"
-                          },
-                          {
-                            "name": "value",
-                            "aggregated": [
-                              {
-                                "name": "description",
-                                "value": "Request could not be authenticated (authentication required)."
-                              },
-                              {
-                                "name": "schema",
-                                "aggregated": [
-                                  {
-                                    "name": "json_schema",
-                                    "aggregated": [
-                                      {
-                                        "name": "ref",
-                                        "value": ".google.rpc.Status"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "examples",
-                                "aggregated": [
-                                  {
-                                    "name": "key",
-                                    "value": "application/json"
-                                  },
-                                  {
-                                    "name": "value",
-                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "GetMyOrganizationsByAccessToken",
-                "in_type": "GetMyOrganizationsByAccessTokenRequest",
-                "out_type": "GetMyOrganizationsResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "get",
-                        "value": "/v1/account/my_organizations_by_access_token"
-                      }
-                    ]
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
-                    "aggregated": [
-                      {
-                        "name": "summary",
-                        "value": "Get My Organizations By Access Token"
-                      },
-                      {
-                        "name": "description",
-                        "value": "Get all the organizations by access token."
-                      },
-                      {
-                        "name": "tags",
-                        "value": "Account"
-                      },
-                      {
-                        "name": "operation_id",
-                        "value": "web.v1.account.my_organizations_by_access_token"
                       },
                       {
                         "name": "responses",
@@ -6035,11 +5868,6 @@
                 "id": 3,
                 "name": "type",
                 "type": "AuthType"
-              },
-              {
-                "id": 4,
-                "name": "organization_id",
-                "type": "string"
               }
             ]
           },
@@ -6084,11 +5912,6 @@
               {
                 "id": 2,
                 "name": "password",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "organization_id",
                 "type": "string"
               }
             ]

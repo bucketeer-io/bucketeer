@@ -135,60 +135,6 @@ export namespace GetMyOrganizationsByEmailRequest {
   };
 }
 
-export class GetMyOrganizationsByAccessTokenRequest extends jspb.Message {
-  getType(): GetMyOrganizationsByAccessTokenRequest.AuthTypeMap[keyof GetMyOrganizationsByAccessTokenRequest.AuthTypeMap];
-  setType(
-    value: GetMyOrganizationsByAccessTokenRequest.AuthTypeMap[keyof GetMyOrganizationsByAccessTokenRequest.AuthTypeMap]
-  ): void;
-
-  getAccessToken(): string;
-  setAccessToken(value: string): void;
-
-  getEmail(): string;
-  setEmail(value: string): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(
-    includeInstance?: boolean
-  ): GetMyOrganizationsByAccessTokenRequest.AsObject;
-  static toObject(
-    includeInstance: boolean,
-    msg: GetMyOrganizationsByAccessTokenRequest
-  ): GetMyOrganizationsByAccessTokenRequest.AsObject;
-  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-  static extensionsBinary: {
-    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
-  };
-  static serializeBinaryToWriter(
-    message: GetMyOrganizationsByAccessTokenRequest,
-    writer: jspb.BinaryWriter
-  ): void;
-  static deserializeBinary(
-    bytes: Uint8Array
-  ): GetMyOrganizationsByAccessTokenRequest;
-  static deserializeBinaryFromReader(
-    message: GetMyOrganizationsByAccessTokenRequest,
-    reader: jspb.BinaryReader
-  ): GetMyOrganizationsByAccessTokenRequest;
-}
-
-export namespace GetMyOrganizationsByAccessTokenRequest {
-  export type AsObject = {
-    type: GetMyOrganizationsByAccessTokenRequest.AuthTypeMap[keyof GetMyOrganizationsByAccessTokenRequest.AuthTypeMap];
-    accessToken: string;
-    email: string;
-  };
-
-  export interface AuthTypeMap {
-    AUTH_TYPE_UNSPECIFIED: 0;
-    AUTH_TYPE_BUCKETEER: 1;
-    AUTH_TYPE_GOOGLE: 2;
-    AUTH_TYPE_GITHUB: 3;
-  }
-
-  export const AuthType: AuthTypeMap;
-}
-
 export class GetMyOrganizationsResponse extends jspb.Message {
   clearOrganizationsList(): void;
   getOrganizationsList(): Array<proto_environment_organization_pb.Organization>;

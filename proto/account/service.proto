@@ -46,20 +46,6 @@ message GetMyOrganizationsByEmailRequest {
   string email = 1;
 }
 
-// Retrieve the organization to which the account belongs by Google access
-// token.
-message GetMyOrganizationsByAccessTokenRequest {
-  enum AuthType {
-    AUTH_TYPE_UNSPECIFIED = 0;
-    AUTH_TYPE_BUCKETEER = 1;
-    AUTH_TYPE_GOOGLE = 2;
-    AUTH_TYPE_GITHUB = 3;
-  }
-  AuthType type = 1;
-  string access_token = 2;
-  string email = 3;
-}
-
 message GetMyOrganizationsResponse {
   repeated environment.Organization organizations = 1;
 }
@@ -418,40 +404,6 @@ service AccountService {
       description: "Get all the organizations by email.",
       tags: "Account",
       operation_id: "web.v1.account.my_organizations_by_email",
-      responses: {
-        key: "400"
-        value: {
-          description: "Returned for bad requests that may have failed validation."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
-          }
-        }
-      }
-      responses: {
-        key: "401"
-        value: {
-          description: "Request could not be authenticated (authentication required)."
-          schema: { json_schema: { ref: ".google.rpc.Status" } }
-          examples: {
-            key: "application/json"
-            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
-          }
-        }
-      }
-    };
-  }
-  rpc GetMyOrganizationsByAccessToken(GetMyOrganizationsByAccessTokenRequest)
-      returns (GetMyOrganizationsResponse) {
-    option (google.api.http) = {
-      get: "/v1/account/my_organizations_by_access_token"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get My Organizations By Access Token",
-      description: "Get all the organizations by access token.",
-      tags: "Account",
-      operation_id: "web.v1.account.my_organizations_by_access_token",
       responses: {
         key: "400"
         value: {

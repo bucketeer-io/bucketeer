@@ -495,13 +495,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go authServer.Run()
-
 	// accountService
 	accountService := accountapi.NewAccountService(
 		environmentClient,
 		mysqlClient,
 		domainTopicPublisher,
-		oAuthConfig,
 		accountapi.WithLogger(logger),
 	)
 	accountServer := rpc.NewServer(accountService, *s.certPath, *s.keyPath,

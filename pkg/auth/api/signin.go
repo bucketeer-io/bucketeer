@@ -52,14 +52,11 @@ func (s *authService) SignIn(
 		}
 		return nil, dt.Err()
 	}
-
-	// Validate organization access
-	err = s.validateOrganizationAccess(ctx, request.OrganizationId, config.Email, localizer)
+	organizations, err := s.getOrganizationsByEmail(ctx, config.Email, localizer)
 	if err != nil {
 		return nil, err
 	}
-
-	token, err := s.generateTokenWithOrganizationID(ctx, config.Email, request.OrganizationId, localizer)
+	token, err := s.generateToken(ctx, config.Email, organizations, localizer)
 	if err != nil {
 		return nil, err
 	}

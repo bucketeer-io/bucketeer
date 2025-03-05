@@ -26,8 +26,6 @@ import (
 
 	v2 "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	auditlogstorage "github.com/bucketeer-io/bucketeer/pkg/auditlog/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/auth"
-	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -67,8 +65,6 @@ type AccountService struct {
 	tagStorage           tagstorage.TagStorage
 	adminAuditLogStorage auditlogstorage.AdminAuditLogStorage
 	publisher            publisher.Publisher
-	oauthConfig          *auth.OAuthConfig
-	googleAuthenticator  *google.Authenticator
 	opts                 *options
 	logger               *zap.Logger
 }
@@ -77,20 +73,12 @@ func NewAccountService(
 	e environmentclient.Client,
 	mysqlClient mysql.Client,
 	publisher publisher.Publisher,
-	oauthConfig *auth.OAuthConfig,
 	opts ...Option,
 ) *AccountService {
 	options := defaultOptions
 	for _, opt := range opts {
 		opt(&options)
 	}
-
-	// Create the Google Authenticator
-	googleAuthenticator := google.NewAuthenticator(
-		&oauthConfig.GoogleConfig,
-		options.logger,
-	)
-
 	return &AccountService{
 		environmentClient:    e,
 		mysqlClient:          mysqlClient,
@@ -98,8 +86,6 @@ func NewAccountService(
 		tagStorage:           tagstorage.NewTagStorage(mysqlClient),
 		adminAuditLogStorage: auditlogstorage.NewAdminAuditLogStorage(mysqlClient),
 		publisher:            publisher,
-		oauthConfig:          oauthConfig,
-		googleAuthenticator:  googleAuthenticator,
 		opts:                 &options,
 		logger:               options.logger.Named("api"),
 	}

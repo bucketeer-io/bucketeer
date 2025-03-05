@@ -43,7 +43,6 @@ message ExchangeTokenRequest {
   string code = 1;
   string redirect_url = 2;
   AuthType type = 3;
-  string organization_id = 4;
 }
 
 message ExchangeTokenResponse {
@@ -61,7 +60,6 @@ message RefreshTokenResponse {
 message SignInRequest {
   string email = 1;
   string password = 2;
-  string organization_id = 3;
 }
 
 message SignInResponse {

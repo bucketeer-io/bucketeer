@@ -86,9 +86,6 @@ export class ExchangeTokenRequest extends jspb.Message {
   getType(): AuthTypeMap[keyof AuthTypeMap];
   setType(value: AuthTypeMap[keyof AuthTypeMap]): void;
 
-  getOrganizationId(): string;
-  setOrganizationId(value: string): void;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ExchangeTokenRequest.AsObject;
   static toObject(
@@ -115,7 +112,6 @@ export namespace ExchangeTokenRequest {
     code: string;
     redirectUrl: string;
     type: AuthTypeMap[keyof AuthTypeMap];
-    organizationId: string;
   };
 }
 
@@ -223,9 +219,6 @@ export class SignInRequest extends jspb.Message {
   getPassword(): string;
   setPassword(value: string): void;
 
-  getOrganizationId(): string;
-  setOrganizationId(value: string): void;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SignInRequest.AsObject;
   static toObject(
@@ -251,7 +244,6 @@ export namespace SignInRequest {
   export type AsObject = {
     email: string;
     password: string;
-    organizationId: string;
   };
 }
 

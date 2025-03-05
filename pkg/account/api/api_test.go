@@ -26,7 +26,6 @@ import (
 
 	storagemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
 	auditlogstoragemock "github.com/bucketeer-io/bucketeer/pkg/auditlog/storage/v2/mock"
-	auth "github.com/bucketeer-io/bucketeer/pkg/auth"
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
@@ -48,7 +47,7 @@ func TestWithLogger(t *testing.T) {
 
 func TestNewAccountService(t *testing.T) {
 	t.Parallel()
-	g := NewAccountService(nil, nil, nil, &auth.OAuthConfig{GoogleConfig: auth.GoogleConfig{}})
+	g := NewAccountService(nil, nil, nil)
 	assert.IsType(t, &AccountService{}, g)
 }
 

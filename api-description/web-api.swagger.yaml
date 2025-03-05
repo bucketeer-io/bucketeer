@@ -1075,68 +1075,6 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       tags:
         - Account
-  /v1/account/my_organizations_by_access_token:
-    get:
-      summary: Get My Organizations By Access Token
-      description: Get all the organizations by access token.
-      operationId: web.v1.account.my_organizations_by_access_token
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/accountGetMyOrganizationsResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: type
-          in: query
-          required: false
-          type: string
-          enum:
-            - AUTH_TYPE_UNSPECIFIED
-            - AUTH_TYPE_BUCKETEER
-            - AUTH_TYPE_GOOGLE
-            - AUTH_TYPE_GITHUB
-          default: AUTH_TYPE_UNSPECIFIED
-        - name: accessToken
-          in: query
-          required: false
-          type: string
-        - name: email
-          in: query
-          required: false
-          type: string
-      tags:
-        - Account
   /v1/account/my_organizations_by_email:
     get:
       summary: Get My Organizations By Email
@@ -6438,14 +6376,6 @@ definitions:
     properties:
       account:
         $ref: '#/definitions/accountConsoleAccount'
-  accountGetMyOrganizationsByAccessTokenRequestAuthType:
-    type: string
-    enum:
-      - AUTH_TYPE_UNSPECIFIED
-      - AUTH_TYPE_BUCKETEER
-      - AUTH_TYPE_GOOGLE
-      - AUTH_TYPE_GITHUB
-    default: AUTH_TYPE_UNSPECIFIED
   accountGetMyOrganizationsResponse:
     type: object
     properties:
@@ -6625,6 +6555,14 @@ definitions:
         $ref: '#/definitions/accountChangeDefaultSearchFilterCommand'
   accountUpdateSearchFilterResponse:
     type: object
+  authAuthType:
+    type: string
+    enum:
+      - AUTH_TYPE_UNSPECIFIED
+      - AUTH_TYPE_USER_PASSWORD
+      - AUTH_TYPE_GOOGLE
+      - AUTH_TYPE_GITHUB
+    default: AUTH_TYPE_UNSPECIFIED
   authExchangeTokenRequest:
     type: object
     properties:
@@ -6633,9 +6571,7 @@ definitions:
       redirectUrl:
         type: string
       type:
-        $ref: '#/definitions/bucketeerauthAuthType'
-      organizationId:
-        type: string
+        $ref: '#/definitions/authAuthType'
   authExchangeTokenResponse:
     type: object
     properties:
@@ -6649,7 +6585,7 @@ definitions:
       redirectUrl:
         type: string
       type:
-        $ref: '#/definitions/bucketeerauthAuthType'
+        $ref: '#/definitions/authAuthType'
   authGetAuthenticationURLResponse:
     type: object
     properties:
@@ -6671,8 +6607,6 @@ definitions:
       email:
         type: string
       password:
-        type: string
-      organizationId:
         type: string
   authSignInResponse:
     type: object
@@ -7127,14 +7061,6 @@ definitions:
     properties:
       autoOpsRule:
         $ref: '#/definitions/autoopsAutoOpsRule'
-  bucketeerauthAuthType:
-    type: string
-    enum:
-      - AUTH_TYPE_UNSPECIFIED
-      - AUTH_TYPE_USER_PASSWORD
-      - AUTH_TYPE_GOOGLE
-      - AUTH_TYPE_GITHUB
-    default: AUTH_TYPE_UNSPECIFIED
   bucketeerautoopsClause:
     type: object
     properties:
