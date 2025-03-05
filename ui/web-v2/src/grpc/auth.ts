@@ -9,7 +9,9 @@ import {
   RefreshTokenRequest,
   RefreshTokenResponse,
   SignInRequest,
-  SignInResponse
+  SignInResponse,
+  SwitchOrganizationRequest,
+  SwitchOrganizationResponse
 } from '../proto/auth/service_pb';
 import {
   AuthServiceClient,
@@ -73,6 +75,33 @@ export function getAuthenticationURL(
   return new Promise(
     (resolve: (result: GetAuthenticationResult) => void, reject): void => {
       client.getAuthenticationURL(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AuthServiceError(extractErrorMessage(error), request, error)
+            );
+          } else {
+            resolve({ request, response });
+          }
+        }
+      );
+    }
+  );
+}
+
+export interface SwitchOrganizationResult {
+  request: SwitchOrganizationRequest;
+  response: SwitchOrganizationResponse;
+}
+
+export function switchOrganization(
+  request: SwitchOrganizationRequest
+): Promise<SwitchOrganizationResult> {
+  return new Promise(
+    (resolve: (result: SwitchOrganizationResult) => void, reject): void => {
+      client.switchOrganization(
         request,
         getMetaData(),
         (error, response): void => {

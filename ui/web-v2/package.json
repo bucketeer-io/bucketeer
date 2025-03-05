@@ -52,6 +52,7 @@
     "history": "4.10.1",
     "js-cookie": "^3.0.5",
     "jstat": "1.9.4",
+    "jwt-decode": "^4.0.0",
     "option-t": "23.0.2",
     "prop-types": "^15.6.0",
     "query-string": "7.0.1",
