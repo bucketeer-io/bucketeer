@@ -93,7 +93,7 @@ export interface Feature {
 }
 
 export interface FeatureCollection {
-  goals: Array<Feature>;
+  features: Array<Feature>;
   cursor: string;
   totalCount: string;
 }
