@@ -69,26 +69,25 @@ export const TimeseriesAreaLineChart = memo(
 
     dataLabels.forEach((l, i) => {
       const color = CHART_COLORS[i % CHART_COLORS.length];
+      const hexColor = hexToRgba(color, 0.2);
       datasets.push({
         label: undefined,
         data: upperBoundaries[i],
-        borderWidth: 0,
-        backgroundColor: hexToRgba(color, 0.2),
-        pointRadius: 0,
+        borderColor: color,
+        backgroundColor: hexColor,
         fill: '+1'
       });
       datasets.push({
         label: undefined,
         data: lowerBoundaries[i],
-        borderWidth: 0,
-        pointRadius: 0,
-        backgroundColor: hexToRgba(color, 0.2),
+        backgroundColor: hexColor,
         fill: '-1'
       });
       datasets.push({
         label: l,
         data: representatives[i],
-        borderColor: CHART_COLORS[i % CHART_COLORS.length],
+        borderColor: color,
+        backgroundColor: hexColor,
         fill: false
       });
     });

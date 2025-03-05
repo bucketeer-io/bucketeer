@@ -137,6 +137,7 @@ const DropdownMenuItem = forwardRef<
     value: DropdownValue;
     description?: string;
     closeWhenSelected?: boolean;
+    additionalElement?: ReactNode;
     onSelectOption?: (value: DropdownValue, event: Event) => void;
   }
 >(
@@ -150,6 +151,7 @@ const DropdownMenuItem = forwardRef<
       isMultiselect,
       isSelected,
       closeWhenSelected = true,
+      additionalElement,
       onSelectOption,
       ...props
     },
@@ -186,6 +188,7 @@ const DropdownMenuItem = forwardRef<
           </p>
         )}
       </div>
+      {additionalElement}
     </DropdownMenuPrimitive.Item>
   )
 );

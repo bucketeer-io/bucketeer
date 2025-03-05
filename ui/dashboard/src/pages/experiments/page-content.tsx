@@ -39,8 +39,8 @@ const PageContent = ({
     filterByTab: true,
     filterBySummary: undefined,
     page: 1,
-    orderBy: 'CREATED_AT',
-    orderDirection: 'DESC',
+    orderBy: 'NAME',
+    orderDirection: 'ASC',
     status: 'ACTIVE',
     statuses: ['WAITING', 'RUNNING'],
     ...searchFilters

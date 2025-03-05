@@ -123,6 +123,15 @@
     "value-user": "Value/ User",
     "improvement": "Improvement",
     "probability-to-beat-baseline": "Probability To Beat Baseline",
-    "probability-to-best": "Probability To Best"
+    "probability-to-best": "Probability To Best",
+    "evaluation-user-tooltip": "The number of unique users for which variations have been returned. The number of users actually assigned to the feature flag variation. It does not include offline users or potential new users.",
+    "goal-total-tooltip": "The total number of goal events fired by the client.",
+    "goal-user-tooltip": "The number of unique users who fired the goal event. The count will not increase if the same user reaches the goal event multiple times.",
+    "conversion-rate-tooltip": "Calculated as (number of unique users who fired the goal event / number of unique users for whom a variation was returned).",
+    "value-total-tooltip": "The total number of values assigned to a goal event. This value is different for each goal.",
+    "value-user-tooltip": "The total number of values assigned to the goal event per user. It is calculated as (the sum of the numbers assigned to the goal event / the number of unique users who fired the goal event).",
+    "improvement-tooltip": "A measure of improvement in an indicator related to variation compared to a baseline (also called a control group). It is calculated by comparing the range of values for variation with the range of values for baseline.",
+    "probability-to-beat-baseline-tooltip": "Estimated likelihood of exceeding baseline (also known as a control group). A criterion of at least 95% is recommended.",
+    "probability-to-best-tooltip": "Possibility of being the best variation. Possibility of being presumed to outperform all other variations. We recommend a criterion of at least 95%."
   }
 }

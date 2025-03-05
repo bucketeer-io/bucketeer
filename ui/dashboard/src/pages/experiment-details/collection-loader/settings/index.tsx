@@ -9,6 +9,7 @@ import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateExperimentDetails } from '@queries/experiment-details';
 import { invalidateExperiments } from '@queries/experiments';
+import { useQueryFeatures } from '@queries/features';
 import { useQueryGoals } from '@queries/goals';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -17,13 +18,6 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Experiment } from '@types';
 import { IconInfo } from '@icons';
-import {
-  booleanVariations,
-  flagOptions,
-  jsonVariations,
-  numberVariations,
-  stringVariations
-} from 'pages/experiments/experiments-modal/mocks';
 import { experimentFormSchema } from 'pages/experiments/form-schema';
 import Button from 'components/button';
 import { CreatableSelect } from 'components/creatable-select';
@@ -87,6 +81,26 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
     );
   }, [goalCollection]);
 
+  const { data: featureCollection } = useQueryFeatures({
+    params: {
+      cursor: String(0),
+      pageSize: LIST_PAGE_SIZE,
+      environmentId: currentEnvironment.id,
+      hasExperiment: true
+    }
+  });
+
+  const featureFlagOptions = (featureCollection?.features || []).map(
+    feature => {
+      return {
+        value: feature.id,
+        label: feature.name,
+        enabled: feature.enabled,
+        variations: feature.variations
+      };
+    }
+  );
+
   const form = useForm({
     resolver: yupResolver(experimentFormSchema),
     defaultValues: {
@@ -115,17 +129,10 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   } = form;
 
   const featureId = watch('featureId');
-  const isStringVariation = featureId.includes('string');
-  const isNumberVariation = featureId.includes('number');
-  const isBooleanVariation = featureId.includes('boolean');
 
-  const variationOptions = isStringVariation
-    ? stringVariations
-    : isNumberVariation
-      ? numberVariations
-      : isBooleanVariation
-        ? booleanVariations
-        : jsonVariations;
+  const variationOptions =
+    featureFlagOptions?.find(item => item.value === featureId)?.variations ||
+    [];
 
   const onSubmit: SubmitHandler<ExperimentSettingsForm> = async values => {
     const { id, name, description, startAt, stopAt } = values;
@@ -364,8 +371,9 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                           disabled
                           placeholder={t(`experiments.select-flag`)}
                           label={
-                            flagOptions.find(item => item.value === field.value)
-                              ?.label || ''
+                            featureFlagOptions.find(
+                              item => item.value === field.value
+                            )?.label || ''
                           }
                           variant="secondary"
                           className="w-full"
@@ -375,7 +383,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                           align="start"
                           {...field}
                         >
-                          {flagOptions.map((item, index) => (
+                          {featureFlagOptions.map((item, index) => (
                             <DropdownMenuItem
                               {...field}
                               key={index}
@@ -409,8 +417,8 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                             placeholder={t(`experiments.select-flag`)}
                             label={
                               variationOptions.find(
-                                item => item.value === field.value
-                              )?.label || ''
+                                item => item.id === field.value
+                              )?.name || ''
                             }
                             variant="secondary"
                             className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
@@ -424,8 +432,8 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                               <DropdownMenuItem
                                 {...field}
                                 key={index}
-                                value={item.value}
-                                label={item.label}
+                                value={item.id}
+                                label={item.name}
                                 onSelectOption={value => {
                                   field.onChange(value);
                                 }}

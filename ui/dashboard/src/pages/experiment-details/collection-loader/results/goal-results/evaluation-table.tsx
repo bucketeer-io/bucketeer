@@ -1,120 +1,45 @@
 import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'i18n';
 import { Experiment, GoalResult } from '@types';
-import { cn } from 'utils/style';
-import { IconInfo } from '@icons';
-import { Polygon } from 'pages/experiment-details/elements/header-details';
-import Icon from 'components/icon';
+import { ResultCell, ResultHeaderCell } from './goal-results-table-element';
 
 const headerList = [
   {
     name: 'variation',
-    tooltip: '',
+    tooltipKey: '',
     minSize: 270
   },
   {
     name: 'evaluation-user',
-    tooltip: '',
+    tooltipKey: 'evaluation-user-tooltip',
     minSize: 143
   },
   {
     name: 'goal-total',
-    tooltip: '',
+    tooltipKey: 'goal-total-tooltip',
     minSize: 119
   },
   {
     name: 'goal-user',
-    tooltip: '',
+    tooltipKey: 'goal-user-tooltip',
     minSize: 123
   },
   {
     name: 'conversion-rate',
-    tooltip: '',
+    tooltipKey: 'conversion-rate-tooltip',
     minSize: 147
   },
   {
     name: 'value-total',
-    tooltip: '',
+    tooltipKey: 'value-total-tooltip',
     minSize: 125
   },
   {
     name: 'value-user',
-    tooltip: '',
+    tooltipKey: 'value-user-tooltip',
     minSize: 123
   }
 ];
-
-const HeaderItem = ({
-  text,
-  minSize,
-  isShowIcon = true,
-  className
-}: {
-  text: string;
-  minSize: number;
-  isShowIcon?: boolean;
-  className?: string;
-}) => {
-  const formatText = text.replace(' ', '<br />');
-  return (
-    <div
-      className={cn(
-        'flex items-center size-fit w-full p-4 pt-0 gap-x-3 text-[13px] leading-[13px] text-gray-500 uppercase',
-        className
-      )}
-      style={{
-        minWidth: minSize
-      }}
-    >
-      <p
-        dangerouslySetInnerHTML={{
-          __html: formatText
-        }}
-      />
-      {isShowIcon && <Icon icon={IconInfo} size={'xxs'} color="gray-500" />}
-    </div>
-  );
-};
-
-const RowItem = ({
-  value,
-  minSize,
-  isFirstItem,
-  className
-}: {
-  value: string | number | boolean;
-  minSize: number;
-  isFirstItem?: boolean;
-  className?: string;
-}) => {
-  const isBooleanValue = ['true', 'false'].includes(value as string);
-
-  return (
-    <div
-      className={cn(
-        'flex items-center size-fit w-full px-4 py-5 gap-x-2 text-gray-500',
-        className
-      )}
-      style={{ minWidth: minSize }}
-    >
-      {isFirstItem && isBooleanValue && (
-        <Polygon
-          className={cn('border-none size-3', {
-            'bg-accent-blue-500': value === 'true',
-            'bg-accent-pink-500': value === 'false'
-          })}
-        />
-      )}
-      <p
-        className={cn('typo-para-medium leading-4 text-gray-800', {
-          capitalize: isBooleanValue
-        })}
-      >
-        {String(value)}
-      </p>
-    </div>
-  );
-};
 
 const EvaluationTable = ({
   experiment,
@@ -143,11 +68,15 @@ const EvaluationTable = ({
     <div className="min-w-fit">
       <div className="flex w-full">
         {headerList.map((item, index) => (
-          <HeaderItem
+          <ResultHeaderCell
             key={index}
             text={t(`table:results.${item.name}`)}
+            tooltip={
+              item.tooltipKey ? t(`table:results.${item.tooltipKey}`) : ''
+            }
             isShowIcon={index > 0}
             minSize={item.minSize}
+            isFormatText={true}
           />
         ))}
       </div>
@@ -164,23 +93,23 @@ const EvaluationTable = ({
 
           return (
             <div key={i} className="flex items-center w-full">
-              <RowItem
+              <ResultCell
                 isFirstItem={true}
                 value={item?.variationName || ''}
                 minSize={270}
               />
-              <RowItem value={evaluationCount?.userCount} minSize={143} />
-              <RowItem value={experimentCount?.eventCount} minSize={123} />
-              <RowItem value={experimentCount?.userCount} minSize={119} />
-              <RowItem
+              <ResultCell value={evaluationCount?.userCount} minSize={143} />
+              <ResultCell value={experimentCount?.eventCount} minSize={123} />
+              <ResultCell value={experimentCount?.userCount} minSize={119} />
+              <ResultCell
                 value={
-                  isNaN(conversionRate) ? 'N/A' : conversionRate.toFixed(2)
+                  (isNaN(conversionRate) ? 0 : conversionRate.toFixed(1)) + ' %'
                 }
                 minSize={147}
               />
-              <RowItem value={experimentCount?.valueSum} minSize={125} />
-              <RowItem
-                value={isNaN(valuePerUser) ? 'N/A' : valuePerUser.toFixed(2)}
+              <ResultCell value={experimentCount?.valueSum} minSize={125} />
+              <ResultCell
+                value={isNaN(valuePerUser) ? '0.00' : valuePerUser.toFixed(2)}
                 minSize={123}
               />
             </div>

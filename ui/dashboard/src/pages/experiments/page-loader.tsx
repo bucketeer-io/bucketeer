@@ -90,12 +90,12 @@ const PageLoader = ({
 
   const onToggleExperiment = () => {
     if (selectedExperiment?.id) {
-      const stringCurrentTime = new Date().getTime.toString();
       mutation.mutate({
         id: selectedExperiment?.id,
         environmentId: currentEnvironment.id,
-        ...(isStop ? { stopAt: stringCurrentTime } : {}),
-        ...(!isStop ? { startAt: stringCurrentTime } : {})
+        status: {
+          status: isStop ? 'FORCE_STOPPED' : 'RUNNING'
+        }
       });
     }
   };

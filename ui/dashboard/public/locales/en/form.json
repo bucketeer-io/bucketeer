@@ -101,7 +101,9 @@
     "archive-warning-desc": "You cannot archive the experiment when it is running",
     "base-variation": "Baseline Variation",
     "select-variation": "Select Variation",
-    "time": "Time"
+    "time": "Time",
+    "on": "On",
+    "off": "Off"
   },
   "advanced": "Advanced",
   "link": "Link",

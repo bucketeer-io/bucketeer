@@ -12,6 +12,7 @@ import {
   useQueryExperimentDetails
 } from '@queries/experiment-details';
 import { invalidateExperiments } from '@queries/experiments';
+import { useQueryFeatures } from '@queries/features';
 import { useQueryGoals } from '@queries/goals';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -37,17 +38,9 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
-import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
 import FormLoading from 'elements/form-loading';
 import { StartType } from '../add-experiment-modal';
-import {
-  booleanVariations,
-  flagOptions,
-  jsonVariations,
-  numberVariations,
-  stringVariations
-} from '../mocks';
 
 interface EditExperimentModalProps {
   isOpen: boolean;
@@ -123,6 +116,26 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
     );
   }, [goalCollection]);
 
+  const { data: featureCollection } = useQueryFeatures({
+    params: {
+      cursor: String(0),
+      pageSize: LIST_PAGE_SIZE,
+      environmentId: currentEnvironment.id,
+      hasExperiment: true
+    }
+  });
+
+  const featureFlagOptions = (featureCollection?.features || []).map(
+    feature => {
+      return {
+        value: feature.id,
+        label: feature.name,
+        enabled: feature.enabled,
+        variations: feature.variations
+      };
+    }
+  );
+
   const form = useForm({
     resolver: yupResolver(experimentFormSchema),
     defaultValues: {
@@ -149,31 +162,22 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
     watch,
     formState: { isDirty, isSubmitting }
   } = form;
-  const startType = watch('startType');
   const featureId = watch('featureId');
 
-  const isStringVariation = featureId.includes('string');
-  const isNumberVariation = featureId.includes('number');
-  const isBooleanVariation = featureId.includes('boolean');
+  const variationOptions =
+    featureFlagOptions?.find(item => item.value === featureId)?.variations ||
+    [];
 
-  const variationOptions = isStringVariation
-    ? stringVariations
-    : isNumberVariation
-      ? numberVariations
-      : isBooleanVariation
-        ? booleanVariations
-        : jsonVariations;
-
-  const startOptions = [
-    {
-      label: 'Manual Start',
-      value: 'manual'
-    },
-    {
-      label: 'Schedule',
-      value: 'schedule'
-    }
-  ];
+  // const startOptions = [
+  //   {
+  //     label: 'Manual Start',
+  //     value: 'manual'
+  //   },
+  //   {
+  //     label: 'Schedule',
+  //     value: 'schedule'
+  //   }
+  // ];
 
   const onSubmit: SubmitHandler<EditExperimentForm> = async values => {
     try {
@@ -291,7 +295,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                   </Form.Item>
                 )}
               />
-              <RadioGroup
+              {/* <RadioGroup
                 defaultValue={startType}
                 value={startType}
                 onValueChange={value =>
@@ -321,137 +325,121 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                     )}
                   />
                 ))}
-              </RadioGroup>
-              {startType === 'schedule' && (
-                <>
-                  <div className="flex items-center w-full gap-x-4">
-                    <Form.Field
-                      control={form.control}
-                      name="startAt"
-                      render={({ field }) => (
-                        <Form.Item className="flex flex-col flex-1 h-full self-stretch">
-                          <Form.Label required>{t('start-at')}</Form.Label>
-                          <Form.Control>
-                            <ReactDatePicker
-                              disabled={!!experiment?.startAt}
-                              dateFormat={'yyyy/MM/dd'}
-                              showTimeSelect={false}
-                              selected={
-                                field.value
-                                  ? new Date(+field.value * 1000)
-                                  : null
-                              }
-                              onChange={date => {
-                                if (date) {
-                                  const timestamp = new Date(date)?.getTime();
-                                  field.onChange(timestamp / 1000);
-                                  form.trigger('startAt');
-                                }
-                              }}
-                            />
-                          </Form.Control>
-                          <Form.Message />
-                        </Form.Item>
-                      )}
-                    />
-                    <Form.Field
-                      control={form.control}
-                      name="startAt"
-                      render={({ field }) => (
-                        <Form.Item className="flex flex-col flex-1 h-full self-stretch">
-                          <Form.Label required>
-                            {t('experiments.time')}
-                          </Form.Label>
-                          <Form.Control>
-                            <ReactDatePicker
-                              disabled={!!experiment?.startAt}
-                              dateFormat={'HH:mm'}
-                              showTimeSelect
-                              showTimeSelectOnly={true}
-                              selected={
-                                field.value
-                                  ? new Date(+field.value * 1000)
-                                  : null
-                              }
-                              onChange={date => {
-                                if (date) {
-                                  const timestamp = new Date(date)?.getTime();
-                                  field.onChange(timestamp / 1000);
-                                  form.trigger('startAt');
-                                }
-                              }}
-                            />
-                          </Form.Control>
-                          <Form.Message />
-                        </Form.Item>
-                      )}
-                    />
-                  </div>
-                  <div className="flex items-center w-full gap-x-4">
-                    <Form.Field
-                      control={form.control}
-                      name="stopAt"
-                      render={({ field }) => (
-                        <Form.Item className="flex flex-col flex-1 h-full self-stretch">
-                          <Form.Label required>{t('end-at')}</Form.Label>
-                          <Form.Control>
-                            <ReactDatePicker
-                              disabled={!!experiment?.stopAt}
-                              dateFormat={'yyyy/MM/dd'}
-                              showTimeSelect={false}
-                              selected={
-                                field.value
-                                  ? new Date(+field.value * 1000)
-                                  : null
-                              }
-                              onChange={date => {
-                                if (date) {
-                                  const timestamp = new Date(date)?.getTime();
-                                  field.onChange(timestamp / 1000);
-                                  form.trigger('stopAt');
-                                }
-                              }}
-                            />
-                          </Form.Control>
-                          <Form.Message />
-                        </Form.Item>
-                      )}
-                    />
-                    <Form.Field
-                      control={form.control}
-                      name="stopAt"
-                      render={({ field }) => (
-                        <Form.Item className="flex flex-col flex-1 h-full self-stretch">
-                          <Form.Label required>
-                            {t('experiments.time')}
-                          </Form.Label>
-                          <Form.Control>
-                            <ReactDatePicker
-                              disabled={!!experiment?.stopAt}
-                              dateFormat={'HH:mm'}
-                              showTimeSelect
-                              showTimeSelectOnly={true}
-                              selected={
-                                field.value
-                                  ? new Date(+field.value * 1000)
-                                  : null
-                              }
-                              onChange={date => {
-                                if (date) {
-                                  const timestamp = new Date(date)?.getTime();
-                                  field.onChange(timestamp / 1000);
-                                  form.trigger('stopAt');
-                                }
-                              }}
-                            />
-                          </Form.Control>
-                          <Form.Message />
-                        </Form.Item>
-                      )}
-                    />
-                  </div>
-                </>
-              )}
+              </RadioGroup> */}
+              <div className="flex items-center w-full gap-x-4">
+                <Form.Field
+                  control={form.control}
+                  name="startAt"
+                  render={({ field }) => (
+                    <Form.Item className="flex flex-col flex-1 h-full self-stretch">
+                      <Form.Label required>{t('start-at')}</Form.Label>
+                      <Form.Control>
+                        <ReactDatePicker
+                          disabled={!!experiment?.startAt}
+                          dateFormat={'yyyy/MM/dd'}
+                          showTimeSelect={false}
+                          selected={
+                            field.value ? new Date(+field.value * 1000) : null
+                          }
+                          onChange={date => {
+                            if (date) {
+                              const timestamp = new Date(date)?.getTime();
+                              field.onChange(timestamp / 1000);
+                              form.trigger('startAt');
+                            }
+                          }}
+                        />
+                      </Form.Control>
+                      <Form.Message />
+                    </Form.Item>
+                  )}
+                />
+                <Form.Field
+                  control={form.control}
+                  name="startAt"
+                  render={({ field }) => (
+                    <Form.Item className="flex flex-col flex-1 h-full self-stretch">
+                      <Form.Label required>{t('experiments.time')}</Form.Label>
+                      <Form.Control>
+                        <ReactDatePicker
+                          disabled={!!experiment?.startAt}
+                          dateFormat={'HH:mm'}
+                          showTimeSelect
+                          showTimeSelectOnly={true}
+                          selected={
+                            field.value ? new Date(+field.value * 1000) : null
+                          }
+                          onChange={date => {
+                            if (date) {
+                              const timestamp = new Date(date)?.getTime();
+                              field.onChange(timestamp / 1000);
+                              form.trigger('startAt');
+                            }
+                          }}
+                        />
+                      </Form.Control>
+                      <Form.Message />
+                    </Form.Item>
+                  )}
+                />
+              </div>
+              <div className="flex items-center w-full gap-x-4">
+                <Form.Field
+                  control={form.control}
+                  name="stopAt"
+                  render={({ field }) => (
+                    <Form.Item className="flex flex-col flex-1 h-full self-stretch">
+                      <Form.Label required>{t('end-at')}</Form.Label>
+                      <Form.Control>
+                        <ReactDatePicker
+                          disabled={!!experiment?.stopAt}
+                          dateFormat={'yyyy/MM/dd'}
+                          showTimeSelect={false}
+                          selected={
+                            field.value ? new Date(+field.value * 1000) : null
+                          }
+                          onChange={date => {
+                            if (date) {
+                              const timestamp = new Date(date)?.getTime();
+                              field.onChange(timestamp / 1000);
+                              form.trigger('stopAt');
+                            }
+                          }}
+                        />
+                      </Form.Control>
+                      <Form.Message />
+                    </Form.Item>
+                  )}
+                />
+                <Form.Field
+                  control={form.control}
+                  name="stopAt"
+                  render={({ field }) => (
+                    <Form.Item className="flex flex-col flex-1 h-full self-stretch">
+                      <Form.Label required>{t('experiments.time')}</Form.Label>
+                      <Form.Control>
+                        <ReactDatePicker
+                          disabled={!!experiment?.stopAt}
+                          dateFormat={'HH:mm'}
+                          showTimeSelect
+                          showTimeSelectOnly={true}
+                          selected={
+                            field.value ? new Date(+field.value * 1000) : null
+                          }
+                          onChange={date => {
+                            if (date) {
+                              const timestamp = new Date(date)?.getTime();
+                              field.onChange(timestamp / 1000);
+                              form.trigger('stopAt');
+                            }
+                          }}
+                        />
+                      </Form.Control>
+                      <Form.Message />
+                    </Form.Item>
+                  )}
+                />
+              </div>
               <Divider className="mt-3 mb-4" />
               <p className="text-gray-800 typo-head-bold-small mb-1">
                 {t('common:flag')}
@@ -476,8 +464,9 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                           disabled
                           placeholder={t(`experiments.select-flag`)}
                           label={
-                            flagOptions.find(item => item.value === field.value)
-                              ?.label || ''
+                            featureFlagOptions.find(
+                              item => item.value === field.value
+                            )?.label || ''
                           }
                           variant="secondary"
                           className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
@@ -487,7 +476,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                           align="start"
                           {...field}
                         >
-                          {flagOptions.map((item, index) => (
+                          {featureFlagOptions.map((item, index) => (
                             <DropdownMenuItem
                               {...field}
                               key={index}
@@ -518,11 +507,11 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             disabled
-                            placeholder={t(`experiments.select-flag`)}
+                            placeholder={t(`experiments.select-variation`)}
                             label={
                               variationOptions.find(
-                                item => item.value === field.value
-                              )?.label || ''
+                                item => item.id === field.value
+                              )?.name || ''
                             }
                             variant="secondary"
                             className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
@@ -536,8 +525,8 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                               <DropdownMenuItem
                                 {...field}
                                 key={index}
-                                value={item.value}
-                                label={item.label}
+                                value={item.id}
+                                label={item.name}
                                 onSelectOption={value => {
                                   field.onChange(value);
                                 }}

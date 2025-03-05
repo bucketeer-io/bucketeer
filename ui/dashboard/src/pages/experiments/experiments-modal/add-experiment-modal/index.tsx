@@ -15,6 +15,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
+import { cn } from 'utils/style';
 import { IconInfo } from '@icons';
 import { experimentFormSchema } from 'pages/experiments/form-schema';
 import Button from 'components/button';
@@ -33,12 +34,6 @@ import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
-import {
-  booleanVariations,
-  jsonVariations,
-  numberVariations,
-  stringVariations
-} from '../mocks';
 
 interface AddExperimentModalProps {
   isOpen: boolean;
@@ -69,6 +64,27 @@ export type DefineAudienceField = ControllerRenderProps<
   AddExperimentForm,
   'audience'
 >;
+
+const FeatureFlagStatus = ({
+  status,
+  enabled
+}: {
+  status: string;
+  enabled: boolean;
+}) => {
+  return (
+    <div
+      className={cn(
+        'flex-center py-0.5 px-2 rounded-lg typo-para-small text-white bg-primary-500 border border-gray-300',
+        {
+          'text-gray-700 bg-gray-200': enabled
+        }
+      )}
+    >
+      {status}
+    </div>
+  );
+};
 
 const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
   const { t } = useTranslation(['form', 'common']);
@@ -101,7 +117,8 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
       return {
         value: feature.id,
         label: feature.name,
-        enabled: feature.enabled
+        enabled: feature.enabled,
+        variations: feature.variations
       };
     }
   );
@@ -143,17 +160,9 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
 
   const featureId = watch('featureId');
 
-  const isStringVariation = featureId.includes('string');
-  const isNumberVariation = featureId.includes('number');
-  const isBooleanVariation = featureId.includes('boolean');
-
-  const variationOptions = isStringVariation
-    ? stringVariations
-    : isNumberVariation
-      ? numberVariations
-      : isBooleanVariation
-        ? booleanVariations
-        : jsonVariations;
+  const variationOptions =
+    featureFlagOptions?.find(item => item.value === featureId)?.variations ||
+    [];
 
   // const startOptions = [
   //   {
@@ -434,6 +443,17 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                             key={index}
                             value={item.value}
                             label={item.label}
+                            className="justify-between gap-x-4"
+                            additionalElement={
+                              <FeatureFlagStatus
+                                status={t(
+                                  item.enabled
+                                    ? 'experiments.on'
+                                    : 'experiments.off'
+                                )}
+                                enabled={item.enabled}
+                              />
+                            }
                             onSelectOption={value => {
                               field.onChange(value);
                             }}
@@ -458,11 +478,11 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                     <Form.Control>
                       <DropdownMenu>
                         <DropdownMenuTrigger
-                          placeholder={t(`experiments.select-flag`)}
+                          placeholder={t(`experiments.select-variation`)}
                           label={
-                            variationOptions.find(
-                              item => item.value === field.value
-                            )?.label || ''
+                            variationOptions?.find(
+                              item => item.id === field.value
+                            )?.name || ''
                           }
                           variant="secondary"
                           className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
@@ -476,8 +496,8 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                             <DropdownMenuItem
                               {...field}
                               key={index}
-                              value={item.value}
-                              label={item.label}
+                              value={item.id}
+                              label={item.name}
                               onSelectOption={value => {
                                 field.onChange(value);
                               }}
