@@ -29,6 +29,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
@@ -320,6 +321,166 @@ func (s *authService) RefreshToken(
 	return &authproto.RefreshTokenResponse{Token: newToken}, nil
 }
 
+func (s *authService) SwitchOrganization(
+	ctx context.Context,
+	req *authproto.SwitchOrganizationRequest,
+) (*authproto.SwitchOrganizationResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	newOrganizationID := req.OrganizationId
+
+	// Verify the access token
+	accessToken, err := s.verifier.VerifyAccessToken(req.AccessToken)
+	if err != nil {
+		fields := log.FieldsFromImcomingContext(ctx)
+		s.logger.Error(
+			"Failed to verify access token",
+			append(fields, zap.Error(err))...,
+		)
+		dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.UnauthenticatedError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	// Get the organizations that the user belongs to
+	organizations, err := s.getOrganizationsByEmail(ctx, accessToken.Email, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if the new organization ID is in the list of organizations the user belongs to
+	validOrganization := false
+	for _, org := range organizations {
+		if org.Id == newOrganizationID {
+			validOrganization = true
+			break
+		}
+	}
+
+	if !validOrganization {
+		s.logger.Error(
+			"User does not belong to the requested organization",
+			zap.String("email", accessToken.Email),
+			zap.String("organizationID", newOrganizationID),
+		)
+		dt, err := auth.StatusInvalidOrganization.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "organization_id"),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	// Check if the user account is enabled in the requested organization
+	account, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
+		Email:          accessToken.Email,
+		OrganizationId: newOrganizationID,
+	})
+	if err != nil {
+		s.logger.Error(
+			"Failed to get account",
+			zap.Error(err),
+			zap.String("email", accessToken.Email),
+			zap.String("organizationID", newOrganizationID),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	if account.Account.Disabled {
+		s.logger.Error(
+			"The account is disabled",
+			zap.String("email", accessToken.Email),
+			zap.String("organizationID", newOrganizationID),
+		)
+		dt, err := auth.StatusAccessDenied.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.PermissionDenied),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	accountDomain := domain.AccountV2{AccountV2: account.Account}
+
+	timeNow := time.Now()
+	newAccessToken := &token.AccessToken{
+		Issuer:         s.issuer,
+		Audience:       s.audience,
+		Expiry:         timeNow.Add(day),
+		IssuedAt:       timeNow,
+		Email:          accessToken.Email,
+		OrganizationID: newOrganizationID,
+		Name:           accountDomain.GetAccountFullName(),
+		IsSystemAdmin:  s.hasSystemAdminOrganization(organizations),
+	}
+
+	signedAccessToken, err := s.signer.SignAccessToken(newAccessToken)
+	if err != nil {
+		s.logger.Error(
+			"Failed to sign access token",
+			zap.Error(err),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	refreshTokenTTL := sevenDays
+	if s.opts.refreshTokenTTL > 0 {
+		refreshTokenTTL = s.opts.refreshTokenTTL
+	}
+
+	refreshToken := &token.RefreshToken{
+		Email:          accessToken.Email,
+		OrganizationID: newOrganizationID,
+		Expiry:         timeNow.Add(refreshTokenTTL),
+		IssuedAt:       timeNow,
+	}
+
+	signedRefreshToken, err := s.signer.SignRefreshToken(refreshToken)
+	if err != nil {
+		s.logger.Error(
+			"Failed to sign refresh token",
+			zap.Error(err),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	return &authproto.SwitchOrganizationResponse{
+		Token: &authproto.Token{
+			AccessToken:  signedAccessToken,
+			RefreshToken: signedRefreshToken,
+		},
+	}, nil
+}
+
 func (s *authService) getAuthenticator(
 	authType authproto.AuthType,
 	localizer locale.Localizer,
@@ -429,20 +590,18 @@ func (s *authService) updateUserInfoForOrganizations(
 			updateReq := &acproto.UpdateAccountV2Request{
 				Email:          userInfo.Email,
 				OrganizationId: org.Id,
-				ChangeFirstNameCommand: &acproto.ChangeAccountV2FirstNameCommand{
-					FirstName: userInfo.FirstName,
-				},
-				ChangeLastNameCommand: &acproto.ChangeAccountV2LastNameCommand{
-					LastName: userInfo.LastName,
-				},
-				ChangeAvatarUrlCommand: &acproto.ChangeAccountV2AvatarImageUrlCommand{
-					AvatarImageUrl: userInfo.Avatar,
-				},
-				ChangeAvatarCommand: &acproto.ChangeAccountV2AvatarCommand{
+				FirstName:      wrapperspb.String(userInfo.FirstName),
+				LastName:       wrapperspb.String(userInfo.LastName),
+				AvatarImageUrl: wrapperspb.String(userInfo.Avatar),
+			}
+
+			if len(avatarBytes) > 0 {
+				updateReq.Avatar = &acproto.UpdateAccountV2Request_AccountV2Avatar{
 					AvatarImage:    avatarBytes,
 					AvatarFileType: "image/png",
-				},
+				}
 			}
+
 			_, err = s.accountClient.UpdateAccountV2(ctx, updateReq)
 			if err != nil {
 				s.logger.Error(
@@ -513,13 +672,14 @@ func (s *authService) generateToken(
 	timeNow := time.Now()
 	accessTokenTTL := timeNow.Add(day)
 	accessToken := &token.AccessToken{
-		Issuer:        s.issuer,
-		Audience:      s.audience,
-		Expiry:        accessTokenTTL,
-		IssuedAt:      timeNow,
-		Email:         userEmail,
-		Name:          accountDomain.GetAccountFullName(),
-		IsSystemAdmin: s.hasSystemAdminOrganization(organizations),
+		Issuer:         s.issuer,
+		Audience:       s.audience,
+		Expiry:         accessTokenTTL,
+		IssuedAt:       timeNow,
+		Email:          userEmail,
+		OrganizationID: account.Account.OrganizationId,
+		Name:           accountDomain.GetAccountFullName(),
+		IsSystemAdmin:  s.hasSystemAdminOrganization(organizations),
 	}
 	signedAccessToken, err := s.signer.SignAccessToken(accessToken)
 	if err != nil {
@@ -538,9 +698,10 @@ func (s *authService) generateToken(
 	}
 
 	refreshToken := &token.RefreshToken{
-		Email:    userEmail,
-		Expiry:   timeNow.Add(sevenDays),
-		IssuedAt: timeNow,
+		Email:          userEmail,
+		OrganizationID: account.Account.OrganizationId,
+		Expiry:         timeNow.Add(sevenDays),
+		IssuedAt:       timeNow,
 	}
 	signRefreshToken, err := s.signer.SignRefreshToken(refreshToken)
 	if err != nil {
