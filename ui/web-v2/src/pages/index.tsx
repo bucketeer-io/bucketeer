@@ -150,8 +150,8 @@ export const Root: FC = memo(() => {
     setOrganizationId(organizationId);
 
     const fetchUserData = () => {
-      dispatch(fetchMe({ organizationId })).then(() =>
-        history.push(PAGE_PATH_ROOT)
+      dispatch(fetchMe({ organizationId, shouldRefreshToken: false })).then(
+        () => history.push(PAGE_PATH_ROOT)
       );
     };
 
