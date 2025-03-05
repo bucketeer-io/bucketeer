@@ -6462,7 +6462,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Switch to a different organization using the current access token and a new organization ID."
+                        "value": "Switch to a different organization."
                       },
                       {
                         "name": "tags",

@@ -212,7 +212,7 @@ service AuthService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Switch Organization",
-      description: "Switch to a different organization using the current access token and a new organization ID.",
+      description: "Switch to a different organization.",
       tags: "Authentication",
       operation_id: "web.v1.auth.switch_organization",
       responses: {

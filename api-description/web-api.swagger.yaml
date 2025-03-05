@@ -1491,7 +1491,7 @@ paths:
   /v1/auth/switch_organization:
     post:
       summary: Switch Organization
-      description: Switch to a different organization using the current access token and a new organization ID.
+      description: Switch to a different organization.
       operationId: web.v1.auth.switch_organization
       responses:
         "200":
