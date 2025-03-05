@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { parse } from 'query-string';
 
 import { urls } from '../config';
 import { getState, setState } from '../cookie';
@@ -7,8 +8,7 @@ import {
   GetAuthenticationURLRequest,
   ExchangeTokenRequest,
   RefreshTokenRequest,
-  SignInRequest,
-  AuthType
+  SignInRequest
 } from '../proto/auth/service_pb';
 import { Token } from '../proto/auth/token_pb';
 import {
@@ -19,26 +19,17 @@ import { PAGE_PATH_ROOT } from '../constants/routing';
 
 const MODULE_NAME = 'auth';
 
-interface ExchangeTokenFromUrlParams {
-  code: string;
-  state: string;
-  organizationId: string;
-}
-export const exchangeTokenFromUrl = createAsyncThunk<
-  Token.AsObject,
-  ExchangeTokenFromUrlParams
->(
+export const exchangeTokenFromUrl = createAsyncThunk<Token.AsObject, string>(
   `${MODULE_NAME}/exchangeTokenFromUrl`,
-  async ({ code, state, organizationId }) => {
+  async (query) => {
+    const { code, state } = parse(query);
     const stateFromCookie = getState();
     if (!!code && state === stateFromCookie) {
       if (typeof code === 'string') {
         const request = new ExchangeTokenRequest();
         request.setCode(code);
         request.setRedirectUrl(urls.AUTH_REDIRECT);
-        request.setType(AuthType.AUTH_TYPE_GOOGLE);
-        request.setOrganizationId(organizationId);
-
+        request.setType(2);
         const result = await authGrpc.exchangeToken(request);
         return result.response.getToken().toObject();
       }
