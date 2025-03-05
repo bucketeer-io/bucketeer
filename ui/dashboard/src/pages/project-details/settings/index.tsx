@@ -52,7 +52,10 @@ const ProjectSettings = ({ project }: { project: Project }) => {
         name: values.name
       });
       if (resp) {
-        invalidateProjectDetails(queryClient, { id: projectDetailsId });
+        invalidateProjectDetails(queryClient, {
+          id: projectDetailsId,
+          organizationId: project.organizationId
+        });
         invalidateAccounts(queryClient);
         notify({
           toastType: 'toast',
