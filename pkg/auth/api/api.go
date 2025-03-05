@@ -408,60 +408,59 @@ func (s *authService) SwitchOrganization(
 		return &authproto.SwitchOrganizationResponse{
 			Token: token,
 		}, nil
-	} else {
-		account, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
-			Email:          accessToken.Email,
-			OrganizationId: newOrganizationID,
+	}
+	account, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
+		Email:          accessToken.Email,
+		OrganizationId: newOrganizationID,
+	})
+	if err != nil {
+		s.logger.Error(
+			"Failed to get account",
+			zap.Error(err),
+			zap.String("email", accessToken.Email),
+			zap.String("organizationID", newOrganizationID),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
 		if err != nil {
-			s.logger.Error(
-				"Failed to get account",
-				zap.Error(err),
-				zap.String("email", accessToken.Email),
-				zap.String("organizationID", newOrganizationID),
-			)
-			dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, auth.StatusInternal.Err()
-			}
-			return nil, dt.Err()
+			return nil, auth.StatusInternal.Err()
 		}
-		accountDomain := domain.AccountV2{AccountV2: account.Account}
-		if account.Account.Disabled {
-			s.logger.Error(
-				"The account is disabled",
-				zap.String("email", accessToken.Email),
-				zap.String("organizationID", newOrganizationID),
-			)
-			dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.UnauthenticatedError),
-			})
-			if err != nil {
-				return nil, auth.StatusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-
-		// Generate new tokens with the new organization ID
-		newToken, err := s.generateToken(
-			ctx,
-			accessToken.Email,
-			accountDomain,
-			isSystemAdmin,
-			localizer,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		return &authproto.SwitchOrganizationResponse{
-			Token: newToken,
-		}, nil
+		return nil, dt.Err()
 	}
+	accountDomain := domain.AccountV2{AccountV2: account.Account}
+	if account.Account.Disabled {
+		s.logger.Error(
+			"The account is disabled",
+			zap.String("email", accessToken.Email),
+			zap.String("organizationID", newOrganizationID),
+		)
+		dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.UnauthenticatedError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	// Generate new tokens with the new organization ID
+	newToken, err := s.generateToken(
+		ctx,
+		accessToken.Email,
+		accountDomain,
+		isSystemAdmin,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &authproto.SwitchOrganizationResponse{
+		Token: newToken,
+	}, nil
 }
 
 func (s *authService) getAuthenticator(
