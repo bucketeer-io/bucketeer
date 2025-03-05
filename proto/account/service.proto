@@ -23,6 +23,7 @@ import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/account/account.proto";
+import "proto/common/string.proto";
 import "proto/account/api_key.proto";
 import "proto/account/command.proto";
 import "proto/environment/organization.proto";
@@ -131,7 +132,7 @@ message UpdateAccountV2Request {
   google.protobuf.Int64Value last_seen = 19;
   AccountV2Avatar avatar = 20;
   google.protobuf.BoolValue disabled = 21;
-  repeated string tags = 22;
+  common.StringListValue tags = 22;
   ChangeAccountV2TagsCommand change_tags_command = 23 [deprecated = true];
 }
 

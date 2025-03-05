@@ -8,6 +8,7 @@ export interface NotificationUpdterPayload {
   name?: string;
   disabled?: boolean;
   language?: NotificationLanguage;
+  featureFlagTags?: string[];
 }
 
 export interface NotificationUpdterResponse {

@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow
 } from '../Table';
+import { isNumber } from '../../../utils/isNumber';
 
 const createHeadCells = (): Array<HeaderCell> => [
   {
@@ -76,9 +77,11 @@ export const GoalResultTable: FC<GoalResultTableProps> = ({
             (unwrapUndefinable(variationResult.experimentCount).userCount /
               unwrapUndefinable(variationResult.evaluationCount).userCount) *
             100;
+
           const valuePerUser =
             unwrapUndefinable(variationResult.experimentCount).valueSum /
             unwrapUndefinable(variationResult.experimentCount).userCount;
+
           return (
             <TableRow key={variationResult.variationId}>
               <TableCell textLeft={true}>
@@ -108,9 +111,8 @@ export const GoalResultTable: FC<GoalResultTableProps> = ({
               </TableCell>
               <TableCell textLeft={true}>
                 {' '}
-                {Number.isNaN(conversionRate)
-                  ? 'n/a'
-                  : conversionRate.toFixed(1) + ' %'}{' '}
+                {isNumber(conversionRate) ? conversionRate.toFixed(1) : 0}
+                {' %'}{' '}
               </TableCell>
               <TableCell textLeft={true}>
                 {' '}
@@ -120,9 +122,7 @@ export const GoalResultTable: FC<GoalResultTableProps> = ({
               </TableCell>
               <TableCell textLeft={true}>
                 {' '}
-                {Number.isNaN(valuePerUser)
-                  ? 'n/a'
-                  : valuePerUser.toFixed(2)}{' '}
+                {isNumber(valuePerUser) ? valuePerUser.toFixed(2) : '0.00'}
               </TableCell>
             </TableRow>
           );

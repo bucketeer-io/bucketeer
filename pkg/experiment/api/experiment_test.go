@@ -27,7 +27,9 @@ import (
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
+	storagemock "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
@@ -68,11 +70,7 @@ func TestGetExperimentMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, v2es.ErrExperimentNotFound)
 			},
 			id:            "id-0",
 			environmentId: "ns0",
@@ -80,11 +78,9 @@ func TestGetExperimentMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Experiment{
+					Experiment: &experimentproto.Experiment{Id: "id-1"},
+				}, nil)
 			},
 			id:            "id-1",
 			environmentId: "ns0",
@@ -140,18 +136,15 @@ func TestListExperimentsMySQL(t *testing.T) {
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *experimentService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().ListExperiments(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*experimentproto.Experiment{
+					{Id: "id-1"},
+				}, 0, int64(0), nil)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperimentSummary(
+					gomock.Any(), gomock.Any(),
+				).Return(&v2es.ExperimentSummary{}, nil)
+
 			},
 			req:         &experimentproto.ListExperimentsRequest{FeatureId: "id-0", EnvironmentId: "ns0"},
 			expectedErr: nil,
@@ -181,15 +174,13 @@ func TestCreateExperimentMySQL(t *testing.T) {
 	}{
 		{
 			setup: func(s *experimentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Goal{}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().CreateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input: &experimentproto.CreateExperimentRequest{
 				Command: &experimentproto.CreateExperimentCommand{
@@ -289,9 +280,15 @@ func TestCreateExperimentNoCommandMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *experimentService) {
+				s.goalStorage.(*storagemock.MockGoalStorage).EXPECT().GetGoal(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Goal{
+					Goal: &experimentproto.Goal{Id: "goalId", ConnectionType: experimentproto.Goal_EXPERIMENT},
+				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().CreateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input: &experimentproto.CreateExperimentRequest{
 				FeatureId:     "fid",
@@ -460,10 +457,12 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrExperimentNotFound)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, v2es.ErrExperimentNotFound)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(v2es.ErrExperimentNotFound)
 			},
 			req: &experimentproto.UpdateExperimentRequest{
 				Id:            "id-0",
@@ -476,10 +475,17 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Return(&domain.Experiment{
+					Experiment: &experimentproto.Experiment{Id: "id-1"},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &experimentproto.UpdateExperimentRequest{
 				Id:                "id-1",
@@ -638,10 +644,12 @@ func TestStartExperimentMySQL(t *testing.T) {
 		{
 			desc: "error not found",
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrExperimentNotFound)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, v2es.ErrExperimentNotFound)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(v2es.ErrExperimentNotFound)
 			},
 			req: &experimentproto.StartExperimentRequest{
 				Id:            "noop",
@@ -653,10 +661,15 @@ func TestStartExperimentMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Experiment{
+					Experiment: &experimentproto.Experiment{Id: "id-1"},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &experimentproto.StartExperimentRequest{
 				Id:            "eid",
@@ -722,10 +735,12 @@ func TestFinishExperimentMySQL(t *testing.T) {
 		{
 			desc: "error not found",
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrExperimentNotFound)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, v2es.ErrExperimentNotFound)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(v2es.ErrExperimentNotFound)
 			},
 			req: &experimentproto.FinishExperimentRequest{
 				Id:            "noop",
@@ -737,10 +752,15 @@ func TestFinishExperimentMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Experiment{
+					Experiment: &experimentproto.Experiment{Id: "id-1"},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &experimentproto.FinishExperimentRequest{
 				Id:            "eid",
@@ -802,10 +822,12 @@ func TestStopExperimentMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrExperimentNotFound)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, v2es.ErrExperimentNotFound)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(v2es.ErrExperimentNotFound)
 			},
 			req: &experimentproto.StopExperimentRequest{
 				Id:            "id-0",
@@ -816,10 +838,15 @@ func TestStopExperimentMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Experiment{
+					Experiment: &experimentproto.Experiment{Id: "id-1"},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &experimentproto.StopExperimentRequest{
 				Id:            "id-1",
@@ -879,10 +906,12 @@ func TestArchiveExperimentMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrExperimentNotFound)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, v2es.ErrExperimentNotFound)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(v2es.ErrExperimentNotFound)
 			},
 			req: &experimentproto.ArchiveExperimentRequest{
 				Id:            "id-0",
@@ -893,10 +922,15 @@ func TestArchiveExperimentMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Experiment{
+					Experiment: &experimentproto.Experiment{Id: "id-1"},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &experimentproto.ArchiveExperimentRequest{
 				Id:            "id-1",
@@ -956,10 +990,12 @@ func TestDeleteExperimentMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(v2es.ErrExperimentNotFound)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, v2es.ErrExperimentNotFound)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(v2es.ErrExperimentNotFound)
 			},
 			req: &experimentproto.DeleteExperimentRequest{
 				Id:            "id-0",
@@ -970,10 +1006,15 @@ func TestDeleteExperimentMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *experimentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().GetExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(&domain.Experiment{
+					Experiment: &experimentproto.Experiment{Id: "id-1"},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().UpdateExperiment(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &experimentproto.DeleteExperimentRequest{
 				Id:            "id-1",

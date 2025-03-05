@@ -18,6 +18,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -105,18 +106,24 @@ func TestListExperiments(t *testing.T) {
 	startAt := time.Now()
 	stopAt := startAt.Local().Add(time.Hour * 1)
 	expectedExps := createExperimentsWithMultiGoals(ctx, t, c, featureID, feature.Variations[0].Id, goalIDs, startAt, stopAt, 5)
-	actualExps := []*experimentproto.Experiment{}
-	for _, e := range expectedExps {
-		getResp, err := c.GetExperiment(ctx, &experimentproto.GetExperimentRequest{
-			Id:            e.Id,
-			EnvironmentId: *environmentID,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		actualExps = append(actualExps, getResp.Experiment)
+	sort.Slice(expectedExps, func(i, j int) bool {
+		return len(expectedExps[i].Goals) < len(expectedExps[j].Goals)
+	})
+
+	getResp, err := c.ListExperiments(ctx, &experimentproto.ListExperimentsRequest{
+		EnvironmentId: *environmentID,
+		OrderBy:       experimentproto.ListExperimentsRequest_GOALS_COUNT,
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
-	compareExperiments(t, expectedExps, actualExps)
+	assert.NotNil(t, getResp.Experiments)
+
+	for i := 1; i < len(getResp.Experiments); i++ {
+		if len(getResp.Experiments[i].Goals) < len(getResp.Experiments[i-1].Goals) {
+			t.Fatalf("Experiments are not sorted by goals count")
+		}
+	}
 }
 
 func TestStopExperiment(t *testing.T) {

@@ -25,6 +25,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	"github.com/bucketeer-io/bucketeer/proto/common"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -51,13 +52,23 @@ var (
 	errRuleMustHaveAtLeastOneClause  = errors.New("feature: rule must have at least one clause")
 	errClauseMustHaveAtLeastOneValue = errors.New("feature: clause must have at least one value")
 	errRuleAlreadyExists             = errors.New("feature: rule already exists")
+	errRuleIDRequired                = errors.New("feature: rule id required")
+	errRuleRequired                  = errors.New("feature: rule required")
 	errRuleNotFound                  = errors.New("feature: rule not found")
 	errTargetNotFound                = errors.New("feature: target not found")
+	errVariationRequired             = errors.New("feature: variation required")
 	errValueNotFound                 = errors.New("feature: value not found")
+	errVariationIDRequired           = errors.New("feature: variation id required")
+	errVariationNameRequired         = errors.New("feature: variation name required")
+	errVariationValueRequired        = errors.New("feature: variation value required")
+	errTargetUsersRequired           = errors.New("feature: target users required")
+	errTargetUserRequired            = errors.New("feature: target user required")
 	errVariationInUse                = errors.New("feature: variation in use")
 	errVariationNotFound             = errors.New("feature: variation not found")
 	errVariationTypeUnmatched        = errors.New("feature: variation value and type are unmatched")
+	errStrategyRequired              = errors.New("feature: strategy required")
 	errUnsupportedStrategy           = errors.New("feature: unsupported strategy")
+	errPrerequisiteAlreadyExists     = errors.New("feature: prerequisite already exists")
 	errPrerequisiteNotFound          = errors.New("feature: prerequisite not found")
 	ErrAlreadyEnabled                = errors.New("feature: already enabled")
 	ErrAlreadyDisabled               = errors.New("feature: already disabled")
@@ -65,6 +76,7 @@ var (
 	errRulesOrderSizeNotEqual        = errors.New("feature: rules order size not equal")
 	errRulesOrderDuplicateIDs        = errors.New("feature: rules order contains duplicate ids")
 	ErrCycleExists                   = errors.New("feature: cycle exists in features")
+	errFeatureIDRequired             = errors.New("feature: feature id required")
 	ErrFeatureNotFound               = errors.New("feature: feature not found")
 )
 
@@ -237,6 +249,9 @@ func (f *Feature) RemoveUserFromVariation(variation string, user string) error {
 }
 
 func (f *Feature) AddRule(rule *feature.Rule) error {
+	if rule == nil {
+		return errRuleRequired
+	}
 	if _, err := f.findRule(rule.Id); err == nil {
 		return errRuleAlreadyExists
 	}
@@ -247,6 +262,38 @@ func (f *Feature) AddRule(rule *feature.Rule) error {
 		return err
 	}
 	f.Rules = append(f.Rules, rule)
+	f.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (f *Feature) ChangeRule(rule *feature.Rule) error {
+	if rule == nil {
+		return errRuleRequired
+	}
+	idx, err := f.findRule(rule.Id)
+	if err != nil {
+		return err
+	}
+	if err := validateClauses(rule.Clauses); err != nil {
+		return err
+	}
+	if err := validateStrategy(rule.Strategy, f.Variations); err != nil {
+		return err
+	}
+	f.Rules[idx] = rule
+	f.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (f *Feature) RemoveRule(ruleID string) error {
+	if ruleID == "" {
+		return errRuleIDRequired
+	}
+	idx, err := f.findRule(ruleID)
+	if err != nil {
+		return err
+	}
+	f.Rules = append(f.Rules[:idx], f.Rules[idx+1:]...)
 	f.UpdatedAt = time.Now().Unix()
 	return nil
 }
@@ -342,6 +389,9 @@ func validateClauseValues(c *feature.Clause) error {
 }
 
 func validateStrategy(strategy *feature.Strategy, variations []*feature.Variation) error {
+	if strategy == nil {
+		return errStrategyRequired
+	}
 	switch strategy.Type {
 	case feature.Strategy_FIXED:
 		if strategy.FixedStrategy == nil {
@@ -509,7 +559,7 @@ func (f *Feature) AddVariation(id string, value string, name string, description
 
 func validateVariationValue(variationType feature.Feature_VariationType, value string) error {
 	if value == "" {
-		return errors.New("feature: variation value cannot be empty")
+		return errVariationValueRequired
 	}
 	switch variationType {
 	case feature.Feature_BOOLEAN:
@@ -557,6 +607,25 @@ func (f *Feature) addVariationToRolloutStrategy(strategy *feature.RolloutStrateg
 		Variation: variationID,
 		Weight:    0,
 	})
+}
+
+func (f *Feature) ChangeVariation(variation *feature.Variation) error {
+	if variation == nil {
+		return errVariationRequired
+	}
+	idx, err := f.findVariationIndex(variation.Id)
+	if err != nil {
+		return err
+	}
+	if variation.Name == "" {
+		return errVariationNameRequired
+	}
+	if err := validateVariationValue(f.VariationType, variation.Value); err != nil {
+		return err
+	}
+	f.Variations[idx] = variation
+	f.UpdatedAt = time.Now().Unix()
+	return nil
 }
 
 func (f *Feature) RemoveVariation(id string) error {
@@ -746,6 +815,12 @@ func (f *Feature) ResetSamplingSeed() error {
 }
 
 func (f *Feature) AddPrerequisite(fID, variationID string) error {
+	if _, err := f.findPrerequisite(fID); err == nil {
+		return errPrerequisiteAlreadyExists
+	}
+	if err := validatePrerequisite(fID, variationID); err != nil {
+		return err
+	}
 	p := &feature.Prerequisite{FeatureId: fID, VariationId: variationID}
 	f.Prerequisites = append(f.Prerequisites, p)
 	f.UpdatedAt = time.Now().Unix()
@@ -753,6 +828,9 @@ func (f *Feature) AddPrerequisite(fID, variationID string) error {
 }
 
 func (f *Feature) ChangePrerequisiteVariation(fID, variationID string) error {
+	if err := validatePrerequisite(fID, variationID); err != nil {
+		return err
+	}
 	idx, err := f.findPrerequisite(fID)
 	if err != nil {
 		return err
@@ -763,12 +841,25 @@ func (f *Feature) ChangePrerequisiteVariation(fID, variationID string) error {
 }
 
 func (f *Feature) RemovePrerequisite(fID string) error {
+	if fID == "" {
+		return errFeatureIDRequired
+	}
 	idx, err := f.findPrerequisite(fID)
 	if err != nil {
 		return err
 	}
 	f.Prerequisites = append(f.Prerequisites[:idx], f.Prerequisites[idx+1:]...)
 	f.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func validatePrerequisite(featureID, variationID string) error {
+	if featureID == "" {
+		return errFeatureIDRequired
+	}
+	if variationID == "" {
+		return errVariationIDRequired
+	}
 	return nil
 }
 
@@ -957,15 +1048,23 @@ func updateStrategyVariationID(varID, uID string, s *feature.Strategy) error {
 // Update returns a new Feature with the updated values.
 func (f *Feature) Update(
 	name, description *wrapperspb.StringValue,
-	tags []string,
+	tags *common.StringListValue,
 	enabled *wrapperspb.BoolValue,
 	archived *wrapperspb.BoolValue,
-	variations []*feature.Variation,
-	prerequisites []*feature.Prerequisite,
-	targets []*feature.Target,
-	rules []*feature.Rule,
 	defaultStrategy *feature.Strategy,
 	offVariation *wrapperspb.StringValue,
+	resetSamplingSeed bool,
+	// Legacy full‑replacement fields
+	prerequisites *feature.PrerequisiteListValue,
+	targets *feature.TargetListValue,
+	rules *feature.RuleListValue,
+	variations *feature.VariationListValue,
+	// Granular change lists
+	prerequisiteChanges []*feature.PrerequisiteChange,
+	targetChanges []*feature.TargetChange,
+	ruleChanges []*feature.RuleChange,
+	variationChanges []*feature.VariationChange,
+	tagChanges []*feature.TagChange,
 ) (*Feature, error) {
 	updated := &Feature{}
 	if err := copier.Copy(updated, f); err != nil {
@@ -978,8 +1077,9 @@ func (f *Feature) Update(
 	if description != nil {
 		updated.Description = description.Value
 	}
+	// Legacy full‑replacement tags
 	if tags != nil {
-		updated.Tags = tags
+		updated.Tags = tags.Values
 		incVersion = true
 	}
 	if enabled != nil {
@@ -1006,22 +1106,6 @@ func (f *Feature) Update(
 		}
 		incVersion = true
 	}
-	if variations != nil {
-		updated.Variations = variations
-		incVersion = true
-	}
-	if prerequisites != nil {
-		updated.Prerequisites = prerequisites
-		incVersion = true
-	}
-	if targets != nil {
-		updated.Targets = targets
-		incVersion = true
-	}
-	if rules != nil {
-		updated.Rules = rules
-		incVersion = true
-	}
 	if defaultStrategy != nil {
 		updated.DefaultStrategy = defaultStrategy
 		incVersion = true
@@ -1030,16 +1114,193 @@ func (f *Feature) Update(
 		updated.OffVariation = offVariation.Value
 		incVersion = true
 	}
+	if resetSamplingSeed {
+		if err := updated.ResetSamplingSeed(); err != nil {
+			return nil, err
+		}
+		incVersion = true
+	}
+
+	// Legacy full‑replacement updates (if granular changes not provided)
+	if prerequisites != nil && len(prerequisiteChanges) == 0 {
+		updated.Prerequisites = prerequisites.Values
+		incVersion = true
+	}
+	if targets != nil && len(targetChanges) == 0 {
+		updated.Targets = targets.Values
+		incVersion = true
+	}
+	if rules != nil && len(ruleChanges) == 0 {
+		updated.Rules = rules.Values
+		incVersion = true
+	}
+	if variations != nil && len(variationChanges) == 0 {
+		updated.Variations = variations.Values
+		incVersion = true
+	}
+
+	// Granular Field Updates using ChangeType
+	// Prerequisites
+	for _, change := range prerequisiteChanges {
+		switch change.ChangeType {
+		case feature.ChangeType_CREATE:
+			if err := updated.AddPrerequisite(
+				change.Prerequisite.FeatureId,
+				change.Prerequisite.VariationId,
+			); err != nil {
+				return nil, err
+			}
+			incVersion = true
+		case feature.ChangeType_UPDATE:
+			if err := updated.ChangePrerequisiteVariation(
+				change.Prerequisite.FeatureId,
+				change.Prerequisite.VariationId,
+			); err != nil {
+				return nil, err
+			}
+			incVersion = true
+		case feature.ChangeType_DELETE:
+			if err := updated.RemovePrerequisite(
+				change.Prerequisite.FeatureId,
+			); err != nil {
+				return nil, err
+			}
+			incVersion = true
+		}
+	}
+
+	// Individual Targets
+	for _, change := range targetChanges {
+		switch change.ChangeType {
+		case feature.ChangeType_CREATE, feature.ChangeType_UPDATE:
+			if err := updated.AddTargetUsers(change.Target); err != nil {
+				return nil, err
+			}
+			incVersion = true
+		case feature.ChangeType_DELETE:
+			if err := updated.RemoveTargetUsers(change.Target); err != nil {
+				return nil, err
+			}
+			incVersion = true
+		}
+	}
+
+	// Custom Rules
+	for _, change := range ruleChanges {
+		switch change.ChangeType {
+		case feature.ChangeType_CREATE:
+			if err := updated.AddRule(change.Rule); err != nil {
+				return nil, err
+			}
+			incVersion = true
+		case feature.ChangeType_UPDATE:
+			if err := updated.ChangeRule(change.Rule); err != nil {
+				return nil, err
+			}
+			incVersion = true
+		case feature.ChangeType_DELETE:
+			if err := updated.RemoveRule(change.Rule.Id); err != nil {
+				return nil, err
+			}
+			incVersion = true
+		}
+	}
+
+	// Variations
+	for _, change := range variationChanges {
+		switch change.ChangeType {
+		case feature.ChangeType_CREATE:
+			if err := updated.AddVariation(
+				change.Variation.Id,
+				change.Variation.Value,
+				change.Variation.Name,
+				change.Variation.Description,
+			); err != nil {
+				return nil, err
+			}
+			incVersion = true
+		case feature.ChangeType_UPDATE:
+			if err := updated.ChangeVariation(change.Variation); err != nil {
+				return nil, err
+			}
+			incVersion = true
+		case feature.ChangeType_DELETE:
+			if err := updated.RemoveVariation(change.Variation.Id); err != nil {
+				return nil, err
+			}
+			incVersion = true
+		}
+	}
+
+	// Tags
+	for _, change := range tagChanges {
+		switch change.ChangeType {
+		case feature.ChangeType_CREATE, feature.ChangeType_UPDATE:
+			if err := updated.AddTag(change.Tag); err != nil {
+				return nil, err
+			}
+		case feature.ChangeType_DELETE:
+			if err := updated.RemoveTag(change.Tag); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	if incVersion {
 		if err := updated.IncrementVersion(); err != nil {
 			return nil, err
 		}
 	}
+
+	// Remove any duplicate tags
+	updated.Tags = unique[string](updated.Tags)
 	updated.UpdatedAt = time.Now().Unix()
 	if err := validate(updated.Feature); err != nil {
 		return nil, err
 	}
 	return updated, nil
+}
+
+func (f *Feature) AddTargetUsers(target *feature.Target) error {
+	idx, err := f.findTarget(target.Variation)
+	if err != nil {
+		return err
+	}
+	if target.Users == nil {
+		return errTargetUsersRequired
+	}
+	for _, user := range target.Users {
+		if user == "" {
+			return errTargetUserRequired
+		}
+		if !contains(user, f.Targets[idx].Users) {
+			f.Targets[idx].Users = append(f.Targets[idx].Users, user)
+		}
+	}
+	f.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (f *Feature) RemoveTargetUsers(target *feature.Target) error {
+	idx, err := f.findTarget(target.Variation)
+	if err != nil {
+		return err
+	}
+	if target.Users == nil {
+		return errTargetUsersRequired
+	}
+	for _, user := range target.Users {
+		if user == "" {
+			return errTargetUserRequired
+		}
+		uidx, err := index(user, f.Targets[idx].Users)
+		if err != nil {
+			return err
+		}
+		f.Targets[idx].Users = append(f.Targets[idx].Users[:uidx], f.Targets[idx].Users[uidx+1:]...)
+	}
+	f.UpdatedAt = time.Now().Unix()
+	return nil
 }
 
 func validateVariations(variationType feature.Feature_VariationType, variations []*feature.Variation) error {
@@ -1272,4 +1533,16 @@ func validateTargets(targets []*feature.Target, variations []*feature.Variation)
 		}
 	}
 	return nil
+}
+
+func unique[T comparable](slice []T) []T {
+	seen := make(map[T]struct{})
+	result := make([]T, 0, len(slice))
+	for _, v := range slice {
+		if _, ok := seen[v]; !ok {
+			seen[v] = struct{}{}
+			result = append(result, v)
+		}
+	}
+	return result
 }

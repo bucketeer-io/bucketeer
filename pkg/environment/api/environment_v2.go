@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"strconv"
 	"strings"
@@ -23,6 +24,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/command"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
@@ -224,6 +226,11 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 	if err != nil {
 		return nil, err
 	}
+
+	if req.Command == nil {
+		return s.createEnvironmentV2NoCommand(ctx, req, localizer, editor)
+	}
+
 	if err := validateCreateEnvironmentV2Request(req, localizer); err != nil {
 		return nil, err
 	}
@@ -252,20 +259,95 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 	}, nil
 }
 
+func (s *EnvironmentService) createEnvironmentV2NoCommand(
+	ctx context.Context,
+	req *environmentproto.CreateEnvironmentV2Request,
+	localizer locale.Localizer,
+	editor *eventproto.Editor,
+) (*environmentproto.CreateEnvironmentV2Response, error) {
+	if err := validateCreateEnvironmentV2RequestNoCommand(req, localizer); err != nil {
+		return nil, err
+	}
+	orgID, err := s.getOrganizationID(ctx, req.ProjectId, localizer)
+	if err != nil {
+		return nil, err
+	}
+	name := strings.TrimSpace(req.Name)
+	newEnvironment, err := domain.NewEnvironmentV2(
+		name,
+		req.UrlCode,
+		req.Description,
+		req.ProjectId,
+		orgID,
+		req.RequireComment,
+		s.logger,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		environmentStorage := v2es.NewEnvironmentStorage(s.mysqlClient)
+		e, err := domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_ENVIRONMENT,
+			newEnvironment.Id,
+			eventproto.Event_ENVIRONMENT_V2_CREATED,
+			&eventproto.EnvironmentV2CreatedEvent{
+				Id:             newEnvironment.Id,
+				Name:           newEnvironment.Name,
+				UrlCode:        newEnvironment.UrlCode,
+				Description:    newEnvironment.Description,
+				ProjectId:      newEnvironment.ProjectId,
+				Archived:       newEnvironment.Archived,
+				RequireComment: newEnvironment.RequireComment,
+				CreatedAt:      newEnvironment.CreatedAt,
+				UpdatedAt:      newEnvironment.UpdatedAt,
+			},
+			newEnvironment.EnvironmentV2,
+			&domain.EnvironmentV2{},
+		)
+		if err != nil {
+			return err
+		}
+		if err := s.publisher.Publish(ctx, e); err != nil {
+			return err
+		}
+		return environmentStorage.CreateEnvironmentV2(ctxWithTx, newEnvironment)
+	})
+	if err != nil {
+		if errors.Is(err, v2es.ErrEnvironmentAlreadyExists) {
+			dt, err := statusEnvironmentAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to create environment",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &environmentproto.CreateEnvironmentV2Response{
+		Environment: newEnvironment.EnvironmentV2,
+	}, nil
+}
+
 func validateCreateEnvironmentV2Request(
 	req *environmentproto.CreateEnvironmentV2Request,
 	localizer locale.Localizer,
 ) error {
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	name := strings.TrimSpace(req.Command.Name)
 	if name == "" {
 		dt, err := statusEnvironmentNameRequired.WithDetails(&errdetails.LocalizedMessage{
@@ -298,6 +380,54 @@ func validateCreateEnvironmentV2Request(
 		return dt.Err()
 	}
 	if req.Command.ProjectId == "" {
+		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "project_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
+func validateCreateEnvironmentV2RequestNoCommand(
+	req *environmentproto.CreateEnvironmentV2Request,
+	localizer locale.Localizer,
+) error {
+	name := strings.TrimSpace(req.Name)
+	if name == "" {
+		dt, err := statusEnvironmentNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if len(name) > maxEnvironmentNameLength {
+		dt, err := statusInvalidEnvironmentName.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if !environmentUrlCodeRegex.MatchString(req.UrlCode) {
+		dt, err := statusInvalidEnvironmentUrlCode.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.ProjectId == "" {
 		dt, err := statusProjectIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "project_id"),
@@ -369,7 +499,7 @@ func (s *EnvironmentService) createEnvironmentV2(
 		return environmentStorage.CreateEnvironmentV2(ctx, environment)
 	})
 	if err != nil {
-		if err == v2es.ErrEnvironmentAlreadyExists {
+		if errors.Is(err, v2es.ErrEnvironmentAlreadyExists) {
 			dt, err := statusEnvironmentAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
@@ -405,11 +535,85 @@ func (s *EnvironmentService) UpdateEnvironmentV2(
 		return nil, err
 	}
 	commands := getUpdateEnvironmentV2Commands(req)
+
+	if len(commands) == 0 {
+		return s.updateEnvironmentV2NoCommand(ctx, req, localizer, editor)
+	}
+
 	if err := validateUpdateEnvironmentV2Request(req.Id, commands, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateEnvironmentV2(ctx, req.Id, commands, editor, localizer); err != nil {
 		return nil, err
+	}
+	return &environmentproto.UpdateEnvironmentV2Response{}, nil
+}
+
+func (s *EnvironmentService) updateEnvironmentV2NoCommand(
+	ctx context.Context,
+	req *environmentproto.UpdateEnvironmentV2Request,
+	localizer locale.Localizer,
+	editor *eventproto.Editor,
+) (*environmentproto.UpdateEnvironmentV2Response, error) {
+	if err := validateUpdateEnvironmentV2RequestNoCommand(req, localizer); err != nil {
+		return nil, err
+	}
+
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		environmentStorage := v2es.NewEnvironmentStorage(s.mysqlClient)
+		environment, err := environmentStorage.GetEnvironmentV2(ctxWithTx, req.Id)
+		if err != nil {
+			return err
+		}
+		updated, err := environment.Update(req.Name, req.Description, req.RequireComment)
+		if err != nil {
+			return err
+		}
+		event, err := domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_ENVIRONMENT,
+			environment.Id,
+			eventproto.Event_ENVIRONMENT_V2_UPDATED,
+			&eventproto.EnvironmentV2UpdatedEvent{
+				Id:             updated.Id,
+				Name:           req.Name,
+				Description:    req.Description,
+				RequireComment: req.RequireComment,
+			},
+			updated,
+			environment,
+		)
+		if err != nil {
+			return err
+		}
+		if err := s.publisher.Publish(ctx, event); err != nil {
+			return err
+		}
+		return environmentStorage.UpdateEnvironmentV2(ctxWithTx, updated)
+	})
+	if err != nil {
+		if errors.Is(err, v2es.ErrEnvironmentNotFound) || errors.Is(err, v2es.ErrEnvironmentUnexpectedAffectedRows) {
+			dt, err := statusEnvironmentNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to update environment",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &environmentproto.UpdateEnvironmentV2Response{}, nil
 }
@@ -456,7 +660,7 @@ func (s *EnvironmentService) updateEnvironmentV2(
 		return environmentStorage.UpdateEnvironmentV2(ctx, environment)
 	})
 	if err != nil {
-		if err == v2es.ErrEnvironmentNotFound || err == v2es.ErrEnvironmentUnexpectedAffectedRows {
+		if errors.Is(err, v2es.ErrEnvironmentNotFound) || errors.Is(err, v2es.ErrEnvironmentUnexpectedAffectedRows) {
 			dt, err := statusEnvironmentNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -498,16 +702,6 @@ func getUpdateEnvironmentV2Commands(req *environmentproto.UpdateEnvironmentV2Req
 
 func validateUpdateEnvironmentV2Request(id string, commands []command.Command, localizer locale.Localizer) error {
 	// Essentially, the id field is required, but no validation is performed because some older services do not have ID.
-	if len(commands) == 0 {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	for _, cmd := range commands {
 		if c, ok := cmd.(*environmentproto.RenameEnvironmentV2Command); ok {
 			newName := strings.TrimSpace(c.Name)
@@ -531,6 +725,36 @@ func validateUpdateEnvironmentV2Request(id string, commands []command.Command, l
 				}
 				return dt.Err()
 			}
+		}
+	}
+	return nil
+}
+
+func validateUpdateEnvironmentV2RequestNoCommand(
+	req *environmentproto.UpdateEnvironmentV2Request,
+	localizer locale.Localizer,
+) error {
+	if req.Name != nil {
+		newName := strings.TrimSpace(req.Name.Value)
+		if newName == "" {
+			dt, err := statusEnvironmentNameRequired.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		if len(newName) > maxEnvironmentNameLength {
+			dt, err := statusInvalidEnvironmentName.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 	}
 	return nil

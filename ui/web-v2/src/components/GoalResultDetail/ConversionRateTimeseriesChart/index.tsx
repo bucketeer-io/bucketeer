@@ -20,7 +20,7 @@ export const ConversionRateTimeseriesChart: FC<
     goalResult.variationResultsList[0].cvrTimeseries?.timestampsList
   );
   const data = goalResult.variationResultsList.map((vr) => {
-    return unwrapUndefinable(vr.cvrTimeseries).valuesList;
+    return unwrapUndefinable(vr.cvrTimeseries).valuesList.map((v) => v * 100); // Convert to percentage
   });
 
   return (

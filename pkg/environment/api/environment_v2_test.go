@@ -25,6 +25,7 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
@@ -243,17 +244,6 @@ func TestCreateEnvironmentV2(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			req: &proto.CreateEnvironmentV2Request{
-				Command: nil,
-			},
-			expectedErr: createError(
-				statusNoCommand,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-			),
-		},
-		{
 			desc:  "err: ErrInvalidEnvironmentName: empty name",
 			setup: nil,
 			req: &proto.CreateEnvironmentV2Request{
@@ -459,6 +449,266 @@ func TestCreateEnvironmentV2(t *testing.T) {
 	}
 }
 
+func TestCreateEnvironmentV2NoCommand(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	envExpectedTrue, err := domain.NewEnvironmentV2(
+		"Env Name-dev01",
+		"url-code-01",
+		"description",
+		"project-id01",
+		"organization-id01",
+		true,
+		nil,
+	)
+
+	envExpectedFalse, err := domain.NewEnvironmentV2(
+		"Env Name-dev01",
+		"url-code-01",
+		"description",
+		"project-id01",
+		"organization-id01",
+		false,
+		nil,
+	)
+
+	envExpectedTrue.Archived = false
+	require.NoError(t, err)
+
+	patterns := []struct {
+		desc        string
+		setup       func(*EnvironmentService)
+		req         *proto.CreateEnvironmentV2Request
+		expected    *proto.EnvironmentV2
+		expectedErr error
+	}{
+		{
+			desc:  "err: ErrInvalidEnvironmentName: empty name",
+			setup: nil,
+			req: &proto.CreateEnvironmentV2Request{
+				Name: "",
+			},
+			expectedErr: createError(
+				statusEnvironmentNameRequired,
+				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+			),
+		},
+		{
+			desc:  "err: ErrInvalidEnvironmentName: only space",
+			setup: nil,
+			req: &proto.CreateEnvironmentV2Request{
+				Name: "    ",
+			},
+			expectedErr: createError(
+				statusEnvironmentNameRequired,
+				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+			),
+		},
+		{
+			desc:  "err: ErrInvalidEnvironmentName: max name length exceeded",
+			setup: nil,
+			req: &proto.CreateEnvironmentV2Request{
+				Name: strings.Repeat("a", 51),
+			},
+			expectedErr: createError(
+				statusInvalidEnvironmentName,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+			),
+		},
+		{
+			desc:  "err: ErrInvalidEnvironmentUrlCode: empty url code",
+			setup: nil,
+			req: &proto.CreateEnvironmentV2Request{
+				Name:    "name",
+				UrlCode: "",
+			},
+			expectedErr: createError(
+				statusInvalidEnvironmentUrlCode,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+			),
+		},
+		{
+			desc:  "err: ErrInvalidEnvironmentUrlCode: can't use uppercase",
+			setup: nil,
+			req: &proto.CreateEnvironmentV2Request{
+				Name:    "name",
+				UrlCode: "URLCODE",
+			},
+			expectedErr: createError(
+				statusInvalidEnvironmentUrlCode,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+			),
+		},
+		{
+			desc:  "err: ErrInvalidEnvironmentUrlCode: can't use space",
+			setup: nil,
+			req: &proto.CreateEnvironmentV2Request{
+				Name:    "name",
+				UrlCode: "url code",
+			},
+			expectedErr: createError(
+				statusInvalidEnvironmentUrlCode,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+			),
+		},
+		{
+			desc:  "err: ErrInvalidEnvironmentUrlCode: max url code length exceeded",
+			setup: nil,
+			req: &proto.CreateEnvironmentV2Request{
+				Name:    "name",
+				UrlCode: strings.Repeat("a", 51),
+			},
+			expectedErr: createError(
+				statusInvalidEnvironmentUrlCode,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+			),
+		},
+		{
+			desc:  "err: ErrProjectIDRequired",
+			setup: nil,
+			req: &proto.CreateEnvironmentV2Request{
+				Name:      "name",
+				UrlCode:   "url-code",
+				ProjectId: "",
+			},
+			expectedErr: createError(
+				statusProjectIDRequired,
+				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "project_id"),
+			),
+		},
+		{
+			desc: "err: ErrProjectNotFound",
+			setup: func(s *EnvironmentService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			req: &proto.CreateEnvironmentV2Request{
+				Name:      "name",
+				UrlCode:   "url-code",
+				ProjectId: "project-id",
+			},
+			expectedErr: createError(statusProjectNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "err: ErrEnvironmentAlreadyExists",
+			setup: func(s *EnvironmentService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(v2es.ErrEnvironmentAlreadyExists)
+			},
+			req: &proto.CreateEnvironmentV2Request{
+				Name:      "name",
+				UrlCode:   "url-code",
+				ProjectId: "project-id",
+			},
+			expectedErr: createError(statusEnvironmentAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+		},
+		{
+			desc: "err: ErrInternal",
+			setup: func(s *EnvironmentService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			req: &proto.CreateEnvironmentV2Request{
+				Name:      "name",
+				UrlCode:   "url-code",
+				ProjectId: "project-id",
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success: require comment is true",
+			setup: func(s *EnvironmentService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &proto.CreateEnvironmentV2Request{
+				Name:           envExpectedTrue.Name,
+				UrlCode:        envExpectedTrue.UrlCode,
+				Description:    envExpectedTrue.Description,
+				ProjectId:      envExpectedTrue.ProjectId,
+				RequireComment: true,
+			},
+			expected: envExpectedTrue.EnvironmentV2,
+		},
+		{
+			desc: "success: require comment is false",
+			setup: func(s *EnvironmentService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &proto.CreateEnvironmentV2Request{
+				Name:           envExpectedFalse.Name,
+				UrlCode:        envExpectedFalse.UrlCode,
+				Description:    envExpectedFalse.Description,
+				ProjectId:      envExpectedFalse.ProjectId,
+				RequireComment: false,
+			},
+			expected: envExpectedFalse.EnvironmentV2,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := newEnvironmentService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			resp, err := service.CreateEnvironmentV2(ctx, p.req)
+			if resp != nil {
+				assert.True(t, len(resp.Environment.Id) > 0)
+				assert.Equal(t, p.expected.Name, resp.Environment.Name)
+				assert.Equal(t, p.expected.UrlCode, resp.Environment.UrlCode)
+				assert.Equal(t, p.expected.Description, resp.Environment.Description)
+				assert.Equal(t, p.expected.ProjectId, resp.Environment.ProjectId)
+				assert.Equal(t, p.expected.Archived, resp.Environment.Archived)
+				assert.Equal(t, p.expected.RequireComment, resp.Environment.RequireComment)
+				assert.True(t, resp.Environment.CreatedAt > 0)
+				assert.True(t, resp.Environment.UpdatedAt > 0)
+			}
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func TestUpdateEnvironmentV2(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -484,17 +734,6 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		req         *proto.UpdateEnvironmentV2Request
 		expectedErr error
 	}{
-		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			req: &proto.UpdateEnvironmentV2Request{
-				Id: "id01",
-			},
-			expectedErr: createError(
-				statusNoCommand,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-			),
-		},
 		{
 			desc:  "err: ErrInvalidEnvironmentName: only space",
 			setup: nil,
@@ -562,6 +801,111 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 				RenameCommand:               &proto.RenameEnvironmentV2Command{Name: "name-1"},
 				ChangeDescriptionCommand:    &proto.ChangeDescriptionEnvironmentV2Command{Description: "desc-1"},
 				ChangeRequireCommentCommand: &proto.ChangeRequireCommentCommand{RequireComment: true},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := newEnvironmentService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.UpdateEnvironmentV2(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestUpdateEnvironmentV2NoCommand(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*EnvironmentService)
+		req         *proto.UpdateEnvironmentV2Request
+		expectedErr error
+	}{
+		{
+			desc:  "err: ErrInvalidEnvironmentName: only space",
+			setup: nil,
+			req: &proto.UpdateEnvironmentV2Request{
+				Id:          "id01",
+				Name:        wrapperspb.String("  "),
+				Description: wrapperspb.String("desc-1"),
+			},
+			expectedErr: createError(
+				statusEnvironmentNameRequired,
+				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+			),
+		},
+		{
+			desc:  "err: ErrInvalidEnvironmentName: max name length exceeded",
+			setup: nil,
+			req: &proto.UpdateEnvironmentV2Request{
+				Id:          "id01",
+				Name:        wrapperspb.String(strings.Repeat("a", 51)),
+				Description: wrapperspb.String("desc-1"),
+			},
+			expectedErr: createError(
+				statusInvalidEnvironmentName,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+			),
+		},
+		{
+			desc: "err: ErrEnvironmentNotFound",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(v2es.ErrEnvironmentNotFound)
+			},
+			req: &proto.UpdateEnvironmentV2Request{
+				Id:   "id01",
+				Name: wrapperspb.String("name-0"),
+			},
+			expectedErr: createError(statusEnvironmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "err: ErrInternal",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
+			},
+			req: &proto.UpdateEnvironmentV2Request{
+				Id:   "id02",
+				Name: wrapperspb.String("name-1"),
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *EnvironmentService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &proto.UpdateEnvironmentV2Request{
+				Id:             "id01",
+				Name:           wrapperspb.String("name-1"),
+				Description:    wrapperspb.String("desc-1"),
+				RequireComment: wrapperspb.Bool(true),
 			},
 			expectedErr: nil,
 		},

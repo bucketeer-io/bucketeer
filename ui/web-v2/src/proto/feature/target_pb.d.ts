@@ -36,3 +36,36 @@ export namespace Target {
     usersList: Array<string>;
   };
 }
+
+export class TargetListValue extends jspb.Message {
+  clearValuesList(): void;
+  getValuesList(): Array<Target>;
+  setValuesList(value: Array<Target>): void;
+  addValues(value?: Target, index?: number): Target;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TargetListValue.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: TargetListValue
+  ): TargetListValue.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: TargetListValue,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): TargetListValue;
+  static deserializeBinaryFromReader(
+    message: TargetListValue,
+    reader: jspb.BinaryReader
+  ): TargetListValue;
+}
+
+export namespace TargetListValue {
+  export type AsObject = {
+    valuesList: Array<Target.AsObject>;
+  };
+}

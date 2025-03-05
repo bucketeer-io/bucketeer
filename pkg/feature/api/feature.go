@@ -763,12 +763,18 @@ func (s *FeatureService) UpdateFeature(
 			req.Tags,
 			req.Enabled,
 			req.Archived,
-			req.Variations,
+			req.DefaultStrategy,
+			req.OffVariation,
+			req.ResetSamplingSeed,
 			req.Prerequisites,
 			req.Targets,
 			req.Rules,
-			req.DefaultStrategy,
-			req.OffVariation,
+			req.Variations,
+			req.PrerequisiteChanges,
+			req.TargetChanges,
+			req.RuleChanges,
+			req.VariationChanges,
+			req.TagChanges,
 		)
 		if err != nil {
 			return err

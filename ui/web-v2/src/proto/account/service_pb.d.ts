@@ -7,6 +7,7 @@ import * as google_api_annotations_pb from '../../google/api/annotations_pb';
 import * as google_api_field_behavior_pb from '../../google/api/field_behavior_pb';
 import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-openapiv2/options/annotations_pb';
 import * as proto_account_account_pb from '../../proto/account/account_pb';
+import * as proto_common_string_pb from '../../proto/common/string_pb';
 import * as proto_account_api_key_pb from '../../proto/account/api_key_pb';
 import * as proto_account_command_pb from '../../proto/account/command_pb';
 import * as proto_environment_organization_pb from '../../proto/environment/organization_pb';
@@ -651,10 +652,10 @@ export class UpdateAccountV2Request extends jspb.Message {
   getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
-  clearTagsList(): void;
-  getTagsList(): Array<string>;
-  setTagsList(value: Array<string>): void;
-  addTags(value: string, index?: number): string;
+  hasTags(): boolean;
+  clearTags(): void;
+  getTags(): proto_common_string_pb.StringListValue | undefined;
+  setTags(value?: proto_common_string_pb.StringListValue): void;
 
   hasChangeTagsCommand(): boolean;
   clearChangeTagsCommand(): void;
@@ -709,7 +710,7 @@ export namespace UpdateAccountV2Request {
     lastSeen?: google_protobuf_wrappers_pb.Int64Value.AsObject;
     avatar?: UpdateAccountV2Request.AccountV2Avatar.AsObject;
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
-    tagsList: Array<string>;
+    tags?: proto_common_string_pb.StringListValue.AsObject;
     changeTagsCommand?: proto_account_command_pb.ChangeAccountV2TagsCommand.AsObject;
   };
 

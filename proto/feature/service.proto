@@ -22,6 +22,7 @@ import "google/api/field_behavior.proto";
 import "google/protobuf/wrappers.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
+import "proto/common/string.proto";
 import "proto/feature/command.proto";
 import "proto/feature/feature.proto";
 import "proto/feature/evaluation.proto";
@@ -79,7 +80,7 @@ message ListFeaturesRequest {
   string search_keyword = 10;
   google.protobuf.BoolValue archived = 11;
   google.protobuf.BoolValue has_prerequisites = 12;
-  string environment_id = 13;
+  string environment_id = 13 [(google.api.field_behavior) = REQUIRED];
 }
 
 message ListFeaturesResponse {
@@ -111,21 +112,85 @@ message CreateFeatureResponse {
   Feature feature = 1;
 }
 
+enum ChangeType {
+  UNSPECIFIED = 0;
+  CREATE = 1;
+  UPDATE = 2;
+  DELETE = 3;
+}
+
+message PrerequisiteChange {
+  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
+  Prerequisite prerequisite = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message TargetChange {
+  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
+  Target target = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message VariationChange {
+  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
+  Variation variation = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message RuleChange {
+  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
+  Rule rule = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message TagChange {
+  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
+  string tag = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
 message UpdateFeatureRequest {
   string comment = 1;
-  string environment_id = 2;
-  string id = 3;
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string id = 3 [(google.api.field_behavior) = REQUIRED];
   google.protobuf.StringValue name = 4;
   google.protobuf.StringValue description = 5;
-  repeated string tags = 6;
+  common.StringListValue tags = 6;
   google.protobuf.BoolValue enabled = 7;
   google.protobuf.BoolValue archived = 8;
-  repeated Variation variations = 9;
-  repeated Prerequisite prerequisites = 10;
-  repeated Target targets = 11;
-  repeated Rule rules = 12;
+
+  // Legacy full-replacement fields (deprecated)
+  VariationListValue variations = 9 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  PrerequisiteListValue prerequisites = 10 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  TargetListValue targets = 11 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  RuleListValue rules = 12 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+
   Strategy default_strategy = 13;
   google.protobuf.StringValue off_variation = 14;
+  bool reset_sampling_seed = 15;
+  bool apply_schedule_update = 16;
+
+  // New granular change fields (supporting multiple operations per field)
+  repeated VariationChange variation_changes = 17;
+  repeated RuleChange rule_changes = 18;
+  repeated PrerequisiteChange prerequisite_changes = 19;
+  repeated TargetChange target_changes = 20;
+  repeated TagChange tag_changes = 21;
 }
 
 message UpdateFeatureResponse {
@@ -542,7 +607,50 @@ message FlagTriggerWebhookResponse {}
 service FeatureService {
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {}
   rpc GetFeatures(GetFeaturesRequest) returns (GetFeaturesResponse) {}
-  rpc ListFeatures(ListFeaturesRequest) returns (ListFeaturesResponse) {}
+  rpc ListFeatures(ListFeaturesRequest) returns (ListFeaturesResponse) {
+    option (google.api.http) = {
+      get: "/v1/features"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Feature Flags",
+      description: "List feature flags. To call this API, you need at least a MEMBER role in the specified organizations.",
+      tags: "Feature",
+      operation_id: "web.v1.feature.list",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ListEnabledFeatures(ListEnabledFeaturesRequest)
       returns (ListEnabledFeaturesResponse) {}
   rpc CreateFeature(CreateFeatureRequest) returns (CreateFeatureResponse) {}

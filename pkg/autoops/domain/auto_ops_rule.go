@@ -19,6 +19,9 @@ import (
 	"sort"
 	"time"
 
+	"github.com/jinzhu/copier"
+	"google.golang.org/protobuf/types/known/anypb"
+
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
@@ -76,7 +79,76 @@ func NewAutoOpsRule(
 		return nil, errClauseEmpty
 	}
 	return autoOpsRule, nil
+}
 
+func (a *AutoOpsRule) Update(
+	autoOpsStatus *proto.AutoOpsStatus,
+	updateOpsEventRateClauses []*proto.UpdateAutoOpsRuleRequest_UpdateOpsEventRateClause,
+	updateDatetimeClauses []*proto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause,
+) (*AutoOpsRule, error) {
+	updated := &AutoOpsRule{}
+	if err := copier.Copy(updated, a); err != nil {
+		return nil, err
+	}
+
+	if autoOpsStatus != nil {
+		updated.AutoOpsRule.AutoOpsStatus = *autoOpsStatus
+	}
+
+	for _, c := range updateOpsEventRateClauses {
+		if c.Deleted != nil && c.Deleted.Value {
+			if err := updated.DeleteClause(c.Id); err != nil {
+				return nil, err
+			}
+		}
+		if c.Id == "" {
+			ac, err := anypb.New(c.Clause)
+			if err != nil {
+				return nil, err
+			}
+			_, err = updated.addClause(ac, c.Clause.ActionType)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			err := updated.changeClause(c.Id, c.Clause, c.Clause.ActionType)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	for _, c := range updateDatetimeClauses {
+		if c.Deleted != nil && c.Deleted.Value {
+			if err := updated.DeleteClause(c.Id); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		if c.Id == "" {
+			ac, err := anypb.New(c.Clause)
+			if err != nil {
+				return nil, err
+			}
+			_, err = updated.addClause(ac, c.Clause.ActionType)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			err := updated.changeClause(c.Id, c.Clause, c.Clause.ActionType)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if len(updated.Clauses) == 0 {
+		return nil, errClauseEmpty
+	}
+
+	now := time.Now().Unix()
+	updated.AutoOpsRule.UpdatedAt = now
+	return updated, nil
 }
 
 func (a *AutoOpsRule) SetStopped() {

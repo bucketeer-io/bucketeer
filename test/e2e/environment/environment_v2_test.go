@@ -21,9 +21,10 @@ import (
 	"testing"
 	"time"
 
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
@@ -119,6 +120,28 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		t.Fatal(err)
 	}
 	getResp, err := c.GetEnvironmentV2(ctx, &environmentproto.GetEnvironmentV2Request{Id: id})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if getResp.Environment.Id != id {
+		t.Fatalf("different ids, expected: %v, actual: %v", id, getResp.Environment.Id)
+	}
+	if getResp.Environment.Name != environmentName {
+		t.Fatalf("different name, expected: %v, actual: %v", environmentName, getResp.Environment.Name)
+	}
+	if getResp.Environment.Description != newDesc {
+		t.Fatalf("different descriptions, expected: %v, actual: %v", newDesc, getResp.Environment.Description)
+	}
+
+	newDesc = fmt.Sprintf("This environment is for local development (Updated at %d with no command)", time.Now().Unix())
+	_, err = c.UpdateEnvironmentV2(ctx, &environmentproto.UpdateEnvironmentV2Request{
+		Id:          id,
+		Description: wrapperspb.String(newDesc),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	getResp, err = c.GetEnvironmentV2(ctx, &environmentproto.GetEnvironmentV2Request{Id: id})
 	if err != nil {
 		t.Fatal(err)
 	}

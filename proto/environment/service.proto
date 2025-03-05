@@ -18,6 +18,7 @@ package bucketeer.environment;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/environment";
 
 import "google/protobuf/wrappers.proto";
+import "google/api/field_behavior.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -65,7 +66,17 @@ message ListEnvironmentsV2Response {
 }
 
 message CreateEnvironmentV2Request {
-  CreateEnvironmentV2Command command = 1;
+  CreateEnvironmentV2Command command = 1 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  string name = 2 [(google.api.field_behavior) = REQUIRED];
+  string url_code = 3 [(google.api.field_behavior) = REQUIRED];
+  string description = 4;
+  string project_id = 5 [(google.api.field_behavior) = REQUIRED];
+  bool require_comment = 6;
 }
 
 message CreateEnvironmentV2Response {
@@ -73,10 +84,28 @@ message CreateEnvironmentV2Response {
 }
 
 message UpdateEnvironmentV2Request {
-  string id = 1;
-  RenameEnvironmentV2Command rename_command = 2;
-  ChangeDescriptionEnvironmentV2Command change_description_command = 3;
-  ChangeRequireCommentCommand change_require_comment_command = 4;
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  RenameEnvironmentV2Command rename_command = 2 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  ChangeDescriptionEnvironmentV2Command change_description_command = 3 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  ChangeRequireCommentCommand change_require_comment_command = 4 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  google.protobuf.StringValue name = 5;
+  google.protobuf.StringValue description = 6;
+  google.protobuf.BoolValue require_comment = 7;
 }
 
 message UpdateEnvironmentV2Response {}
@@ -134,8 +163,18 @@ message ListProjectsResponse {
   string cursor = 2;
   int64 total_count = 3;
 }
+
 message CreateProjectRequest {
-  CreateProjectCommand command = 1;
+  CreateProjectCommand command = 1 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  string organization_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string name = 3 [(google.api.field_behavior) = REQUIRED];
+  string description = 4;
+  string url_code = 5 [(google.api.field_behavior) = REQUIRED];
 }
 
 message CreateProjectResponse {
@@ -149,9 +188,22 @@ message CreateTrialProjectRequest {
 message CreateTrialProjectResponse {}
 
 message UpdateProjectRequest {
-  string id = 1;
-  ChangeDescriptionProjectCommand change_description_command = 2;
-  RenameProjectCommand rename_command = 3;
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  ChangeDescriptionProjectCommand change_description_command = 2 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  RenameProjectCommand rename_command = 3 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  string organization_id = 4 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.StringValue name = 5;
+  google.protobuf.StringValue description = 6;
 }
 
 message UpdateProjectResponse {}
@@ -218,8 +270,8 @@ message ListOrganizationsResponse {
 
 message CreateOrganizationRequest {
   CreateOrganizationCommand command = 1 [deprecated = true];
-  string name = 2;
-  string url_code = 3;
+  string name = 2 [(google.api.field_behavior) = REQUIRED];
+  string url_code = 3 [(google.api.field_behavior) = REQUIRED];
   string description = 4;  // optional
   bool is_trial = 5;
   bool is_system_admin = 6;
@@ -232,9 +284,27 @@ message CreateOrganizationResponse {
 
 message UpdateOrganizationRequest {
   string id = 1;
-  ChangeNameOrganizationCommand rename_command = 2;
-  ChangeDescriptionOrganizationCommand change_description_command = 3;
-  ChangeOwnerEmailOrganizationCommand change_owner_email_command = 4;
+  ChangeNameOrganizationCommand rename_command = 2 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  ChangeDescriptionOrganizationCommand change_description_command = 3 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  ChangeOwnerEmailOrganizationCommand change_owner_email_command = 4 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  google.protobuf.StringValue name = 5;
+  google.protobuf.StringValue description = 6;
+  google.protobuf.StringValue owner_email = 7;
 }
 
 message UpdateOrganizationResponse {}

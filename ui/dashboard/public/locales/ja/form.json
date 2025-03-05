@@ -40,6 +40,7 @@
   "select-role": "Select role",
   "select-environment": "Select environment",
   "search-notification-type": "Search notification type",
+  "tag-notifications-tooltip": "The configured tags in the Feature Flag when was created. It will only notify you if the tags match the tag configured in the Feature Flag. When empty, it will notify you of any changes to all the flags.",
   "notification-type": {
     "project": "Get notified when someone adds or updates a project",
     "environment": "Get notified when someone adds or updates an environment",
