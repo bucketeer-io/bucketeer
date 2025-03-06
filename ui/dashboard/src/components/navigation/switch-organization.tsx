@@ -135,6 +135,7 @@ const SwitchOrganization = ({
           {t('switch-organization')}
         </h3>
         <div className="flex flex-col gap-y-[1px]">
+<<<<<<< HEAD
           {searchValue && !organizations?.length ? (
             <div className="typo-para-medium text-gray-600 whitespace-nowrap">
               No Organization found
@@ -153,6 +154,20 @@ const SwitchOrganization = ({
               />
             ))
           )}
+=======
+          {organizations?.map((item, index) => (
+            <OrganizationItem
+              key={index}
+              name={item.name}
+              isLoading={isLoading}
+              active={currentOrganization === item.id}
+              onClick={() => {
+                setCurrentOrganization(item.id);
+                onChangeOrganization(item.id);
+              }}
+            />
+          ))}
+>>>>>>> 143635371049352839ecc9dcf5a6badc1c8f4c7f
         </div>
       </div>
     </div>
