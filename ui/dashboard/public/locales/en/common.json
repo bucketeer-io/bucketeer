@@ -159,5 +159,20 @@
   "connections": "Connections",
   "status": "Status",
   "flags-connected": "Flags Connected",
-  "flags-connected-desc": "This user segment is currently connected to the following feature flags:"
+  "flags-connected-desc": "This user segment is currently connected to the following feature flags:",
+  "edit-profile": "Edit Profile",
+  "avatars": "Avatars",
+  "upload-title": "Choose a avatar or upload a photo",
+  "upload-photo": "Upload photo",
+  "edit-photo-profile": "Edit Photo Profile",
+  "file-upload": {
+    "error-multiple-file-title": "Too many files!",
+    "error-multiple-file-message": "Please select or drag & drop one file only.",
+    "error-format-title": "Wrong format!",
+    "error-format-message": "Please select or drag & drop one {{format}} document only.",
+    "error-file-size-title": "File too big!",
+    "error-file-size-message": "Please upload a document smaller than {{size}}.",
+    "try-again": "Try again"
+  },
+  "select": "Select"
 }
