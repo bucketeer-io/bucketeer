@@ -8,7 +8,8 @@ import {
   GetAuthenticationURLRequest,
   ExchangeTokenRequest,
   RefreshTokenRequest,
-  SignInRequest
+  SignInRequest,
+  SwitchOrganizationRequest
 } from '../proto/auth/service_pb';
 import { Token } from '../proto/auth/token_pb';
 import {
@@ -18,6 +19,29 @@ import {
 import { PAGE_PATH_ROOT } from '../constants/routing';
 
 const MODULE_NAME = 'auth';
+
+interface SwitchOrganizationParams {
+  accessToken: string;
+  organizationId: string;
+}
+export const switchOrganization = createAsyncThunk<
+  Token.AsObject,
+  SwitchOrganizationParams
+>(
+  `${MODULE_NAME}/switchOrganization`,
+  async ({ accessToken, organizationId }) => {
+    try {
+      const request = new SwitchOrganizationRequest();
+      request.setAccessToken(accessToken);
+      request.setOrganizationId(organizationId);
+
+      const result = await authGrpc.switchOrganization(request);
+      return result.response.getToken().toObject();
+    } catch (error) {
+      throw new Error('switch organization failed.');
+    }
+  }
+);
 
 export const exchangeTokenFromUrl = createAsyncThunk<Token.AsObject, string>(
   `${MODULE_NAME}/exchangeTokenFromUrl`,

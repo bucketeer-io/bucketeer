@@ -145,12 +145,10 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const onSubmit: SubmitHandler<AddMemberForm> = values => {
     return accountCreator({
       organizationId: currentEnvironment.organizationId,
-      command: {
-        email: values.email,
-        organizationRole: values.role,
-        environmentRoles: values.environmentRoles,
-        tags: values.tags ?? []
-      }
+      email: values.email,
+      organizationRole: values.role,
+      environmentRoles: values.environmentRoles,
+      tags: values.tags ?? []
     }).then(() => {
       notify({
         toastType: 'toast',
