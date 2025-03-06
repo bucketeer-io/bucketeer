@@ -20,6 +20,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
+
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -305,6 +307,9 @@ func TestListFeaturesMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CountFeaturesByStatus(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
 			},
 			orderBy:        featureproto.ListFeaturesRequest_DEFAULT,
 			hasExperiment:  false,
@@ -328,6 +333,9 @@ func TestListFeaturesMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CountFeaturesByStatus(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
 			},
 			orderBy:       featureproto.ListFeaturesRequest_DEFAULT,
 			hasExperiment: true,
@@ -353,6 +361,9 @@ func TestListFeaturesMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CountFeaturesByStatus(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
 			},
 			orderBy:        featureproto.ListFeaturesRequest_DEFAULT,
 			hasExperiment:  false,
