@@ -11,17 +11,23 @@ export interface InputProps
   > {
   size?: 'sm' | 'md' | 'lg';
   value?: string | number | undefined;
+  variant?: 'primary' | 'secondary';
   onChange?: (value: string, event: ChangeEvent<HTMLInputElement>) => void;
   onBlur?: (value: string, event: ChangeEvent<HTMLInputElement>) => void;
 }
 
 const inputVariants = cva(
   [
-    'typo-para-medium border rounded-lg border-gray-400 text-gray-700 w-full',
-    'disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-100'
+    'typo-para-medium border rounded-lg w-full',
+    'disabled:cursor-not-allowed disabled:bg-gray-100'
   ],
   {
     variants: {
+      variant: {
+        primary: 'border-gray-400 text-gray-700 disabled:border-gray-400',
+        secondary:
+          '!border-primary-200 text-primary-500 disabled:!border-primary-100 bg-white'
+      },
       size: {
         sm: 'px-4 py-2',
         md: 'px-4 py-[11px]',
@@ -45,6 +51,7 @@ const Input = forwardRef(
       onBlur,
       role = 'presentation',
       autoComplete = 'off',
+      variant = 'primary',
       ...props
     }: InputProps,
     ref: Ref<HTMLInputElement>
@@ -55,7 +62,10 @@ const Input = forwardRef(
     return (
       <input
         ref={ref}
-        className={cn(inputVariants({ className, size, addonSlot }), className)}
+        className={cn(
+          inputVariants({ className, size, addonSlot, variant }),
+          className
+        )}
         role={role}
         autoComplete={autoComplete}
         value={value}

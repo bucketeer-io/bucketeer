@@ -174,5 +174,6 @@
     "error-file-size-message": "Please upload a document smaller than {{size}}.",
     "try-again": "Try again"
   },
-  "select": "Select"
+  "select": "Select",
+  "switch-organization": "Switch organization"
 }

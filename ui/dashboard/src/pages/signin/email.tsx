@@ -49,19 +49,18 @@ const SignInWithEmail = () => {
     }
   });
 
-  const onSubmit: SubmitHandler<SignInForm> = values => {
-    setShowAuthError(false);
-    return signIn(values)
-      .then(response => {
-        syncSignIn(response.token);
-        setIsInitialLoading(true);
-        navigate(PAGE_PATH_ROOT);
-      })
-      .catch(error => {
-        if (error) {
-          setShowAuthError(true);
-        }
-      });
+  const onSubmit: SubmitHandler<SignInForm> = async values => {
+    try {
+      setShowAuthError(false);
+      const response = await signIn(values);
+      await syncSignIn(response?.token);
+      setIsInitialLoading(true);
+      navigate(PAGE_PATH_ROOT);
+    } catch (error) {
+      if (error) {
+        setShowAuthError(true);
+      }
+    }
   };
 
   useEffect(() => {

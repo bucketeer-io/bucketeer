@@ -8,6 +8,7 @@ export interface SearchBarProps {
   placeholder: string;
   value: string;
   disabled?: boolean;
+  variant?: 'primary' | 'secondary';
   onChange: (value: string) => void;
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
 }
@@ -16,6 +17,7 @@ const SearchInput = ({
   placeholder,
   value: defaultValue,
   disabled,
+  variant = 'primary',
   onChange,
   onKeyDown
 }: SearchBarProps) => {
@@ -50,9 +52,16 @@ const SearchInput = ({
     >
       <InputGroup
         className="w-full"
-        addon={<Icon icon={IconSearch} size="sm" />}
+        addon={
+          <Icon
+            icon={IconSearch}
+            size="sm"
+            color={variant === 'primary' ? 'gray-500' : 'primary-500'}
+          />
+        }
       >
         <Input
+          variant={variant}
           placeholder={placeholder}
           value={searchValue}
           disabled={disabled}
