@@ -212,10 +212,22 @@ func (s *FeatureService) ListFeatures(
 	if err != nil {
 		return nil, err
 	}
+	featureCount, err := s.featureStorage.CountFeaturesByStatus(ctx, req.EnvironmentId)
+	if err != nil {
+		s.logger.Error(
+			"Failed to count features by status",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, statusInternal.Err()
+	}
 	return &featureproto.ListFeaturesResponse{
-		Features:   features,
-		Cursor:     cursor,
-		TotalCount: totalCount,
+		Features:             features,
+		Cursor:               cursor,
+		TotalCount:           totalCount,
+		FeatureCountByStatus: featureCount,
 	}, nil
 }
 

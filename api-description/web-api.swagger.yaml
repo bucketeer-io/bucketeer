@@ -4207,6 +4207,63 @@ paths:
             $ref: '#/definitions/featureCreateFeatureRequest'
       tags:
         - Feature
+    patch:
+      summary: Update Feature Flag
+      description: Update a feature flag. To call this API, you need at least a MEMBER role in the specified organizations.
+      operationId: web.v1.feature.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureUpdateFeatureResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureUpdateFeatureRequest'
+      tags:
+        - Feature
   /v1/features:
     get:
       summary: List Feature Flags
@@ -9020,6 +9077,27 @@ definitions:
           $ref: '#/definitions/featurePrerequisite'
       samplingSeed:
         type: string
+      progressiveRolloutCount:
+        type: integer
+        format: int32
+      scheduleCount:
+        type: integer
+        format: int32
+      killSwitchCount:
+        type: integer
+        format: int32
+  featureFeatureCountByStatus:
+    type: object
+    properties:
+      total:
+        type: integer
+        format: int32
+      active:
+        type: integer
+        format: int32
+      inactive:
+        type: integer
+        format: int32
   featureFeatureLastUsedInfo:
     type: object
     properties:
@@ -9151,6 +9229,8 @@ definitions:
       totalCount:
         type: string
         format: int64
+      featureCountByStatus:
+        $ref: '#/definitions/featureFeatureCountByStatus'
   featureListFlagTriggersRequestOrderBy:
     type: string
     enum:
@@ -9455,6 +9535,75 @@ definitions:
     type: object
   featureUpdateFeatureDetailsResponse:
     type: object
+  featureUpdateFeatureRequest:
+    type: object
+    properties:
+      comment:
+        type: string
+      environmentId:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      tags:
+        $ref: '#/definitions/commonStringListValue'
+      enabled:
+        type: boolean
+      archived:
+        type: boolean
+      variations:
+        $ref: '#/definitions/featureVariationListValue'
+        description: deprecated
+        title: Legacy full-replacement fields (deprecated)
+      prerequisites:
+        $ref: '#/definitions/featurePrerequisiteListValue'
+        description: deprecated
+      targets:
+        $ref: '#/definitions/featureTargetListValue'
+        description: deprecated
+      rules:
+        $ref: '#/definitions/featureRuleListValue'
+        description: deprecated
+      defaultStrategy:
+        $ref: '#/definitions/featureStrategy'
+      offVariation:
+        type: string
+      resetSamplingSeed:
+        type: boolean
+      applyScheduleUpdate:
+        type: boolean
+      variationChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureVariationChange'
+        title: New granular change fields (supporting multiple operations per field)
+      ruleChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureRuleChange'
+      prerequisiteChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featurePrerequisiteChange'
+      targetChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureTargetChange'
+      tagChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureTagChange'
+    required:
+      - environmentId
+      - id
   featureUpdateFeatureResponse:
     type: object
     properties:

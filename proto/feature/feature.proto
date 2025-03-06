@@ -53,6 +53,9 @@ message Feature {
   bool archived = 20;
   repeated Prerequisite prerequisites = 21;
   string sampling_seed = 22;
+  int32 progressive_rollout_count = 23;
+  int32 schedule_count = 24;
+  int32 kill_switch_count = 25;
 }
 
 message Features {

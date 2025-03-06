@@ -267,6 +267,45 @@ export namespace ListFeaturesRequest {
   export const OrderDirection: OrderDirectionMap;
 }
 
+export class FeatureCountByStatus extends jspb.Message {
+  getTotal(): number;
+  setTotal(value: number): void;
+
+  getActive(): number;
+  setActive(value: number): void;
+
+  getInactive(): number;
+  setInactive(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FeatureCountByStatus.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: FeatureCountByStatus
+  ): FeatureCountByStatus.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: FeatureCountByStatus,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): FeatureCountByStatus;
+  static deserializeBinaryFromReader(
+    message: FeatureCountByStatus,
+    reader: jspb.BinaryReader
+  ): FeatureCountByStatus;
+}
+
+export namespace FeatureCountByStatus {
+  export type AsObject = {
+    total: number;
+    active: number;
+    inactive: number;
+  };
+}
+
 export class ListFeaturesResponse extends jspb.Message {
   clearFeaturesList(): void;
   getFeaturesList(): Array<proto_feature_feature_pb.Feature>;
@@ -281,6 +320,11 @@ export class ListFeaturesResponse extends jspb.Message {
 
   getTotalCount(): number;
   setTotalCount(value: number): void;
+
+  hasFeatureCountByStatus(): boolean;
+  clearFeatureCountByStatus(): void;
+  getFeatureCountByStatus(): FeatureCountByStatus | undefined;
+  setFeatureCountByStatus(value?: FeatureCountByStatus): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListFeaturesResponse.AsObject;
@@ -308,6 +352,7 @@ export namespace ListFeaturesResponse {
     featuresList: Array<proto_feature_feature_pb.Feature.AsObject>;
     cursor: string;
     totalCount: number;
+    featureCountByStatus?: FeatureCountByStatus.AsObject;
   };
 }
 

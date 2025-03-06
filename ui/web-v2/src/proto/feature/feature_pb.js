@@ -240,7 +240,10 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_feature_prerequisite_pb.Prerequisite.toObject,
           includeInstance
         ),
-        samplingSeed: jspb.Message.getFieldWithDefault(msg, 22, '')
+        samplingSeed: jspb.Message.getFieldWithDefault(msg, 22, ''),
+        progressiveRolloutCount: jspb.Message.getFieldWithDefault(msg, 23, 0),
+        scheduleCount: jspb.Message.getFieldWithDefault(msg, 24, 0),
+        killSwitchCount: jspb.Message.getFieldWithDefault(msg, 25, 0)
       };
 
     if (includeInstance) {
@@ -398,6 +401,18 @@ proto.bucketeer.feature.Feature.deserializeBinaryFromReader = function (
         var value = /** @type {string} */ (reader.readString());
         msg.setSamplingSeed(value);
         break;
+      case 23:
+        var value = /** @type {number} */ (reader.readInt32());
+        msg.setProgressiveRolloutCount(value);
+        break;
+      case 24:
+        var value = /** @type {number} */ (reader.readInt32());
+        msg.setScheduleCount(value);
+        break;
+      case 25:
+        var value = /** @type {number} */ (reader.readInt32());
+        msg.setKillSwitchCount(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -540,6 +555,18 @@ proto.bucketeer.feature.Feature.serializeBinaryToWriter = function (
   f = message.getSamplingSeed();
   if (f.length > 0) {
     writer.writeString(22, f);
+  }
+  f = message.getProgressiveRolloutCount();
+  if (f !== 0) {
+    writer.writeInt32(23, f);
+  }
+  f = message.getScheduleCount();
+  if (f !== 0) {
+    writer.writeInt32(24, f);
+  }
+  f = message.getKillSwitchCount();
+  if (f !== 0) {
+    writer.writeInt32(25, f);
   }
 };
 
@@ -1106,6 +1133,60 @@ proto.bucketeer.feature.Feature.prototype.getSamplingSeed = function () {
  */
 proto.bucketeer.feature.Feature.prototype.setSamplingSeed = function (value) {
   return jspb.Message.setProto3StringField(this, 22, value);
+};
+
+/**
+ * optional int32 progressive_rollout_count = 23;
+ * @return {number}
+ */
+proto.bucketeer.feature.Feature.prototype.getProgressiveRolloutCount =
+  function () {
+    return /** @type {number} */ (
+      jspb.Message.getFieldWithDefault(this, 23, 0)
+    );
+  };
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.feature.Feature} returns this
+ */
+proto.bucketeer.feature.Feature.prototype.setProgressiveRolloutCount =
+  function (value) {
+    return jspb.Message.setProto3IntField(this, 23, value);
+  };
+
+/**
+ * optional int32 schedule_count = 24;
+ * @return {number}
+ */
+proto.bucketeer.feature.Feature.prototype.getScheduleCount = function () {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 24, 0));
+};
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.feature.Feature} returns this
+ */
+proto.bucketeer.feature.Feature.prototype.setScheduleCount = function (value) {
+  return jspb.Message.setProto3IntField(this, 24, value);
+};
+
+/**
+ * optional int32 kill_switch_count = 25;
+ * @return {number}
+ */
+proto.bucketeer.feature.Feature.prototype.getKillSwitchCount = function () {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 25, 0));
+};
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.feature.Feature} returns this
+ */
+proto.bucketeer.feature.Feature.prototype.setKillSwitchCount = function (
+  value
+) {
+  return jspb.Message.setProto3IntField(this, 25, value);
 };
 
 /**

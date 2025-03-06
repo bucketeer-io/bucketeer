@@ -43,6 +43,21 @@ func (m *MockFeatureStorage) EXPECT() *MockFeatureStorageMockRecorder {
 	return m.recorder
 }
 
+// CountFeaturesByStatus mocks base method.
+func (m *MockFeatureStorage) CountFeaturesByStatus(ctx context.Context, environmentID string) (*feature.FeatureCountByStatus, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountFeaturesByStatus", ctx, environmentID)
+	ret0, _ := ret[0].(*feature.FeatureCountByStatus)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountFeaturesByStatus indicates an expected call of CountFeaturesByStatus.
+func (mr *MockFeatureStorageMockRecorder) CountFeaturesByStatus(ctx, environmentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountFeaturesByStatus", reflect.TypeOf((*MockFeatureStorage)(nil).CountFeaturesByStatus), ctx, environmentID)
+}
+
 // CreateFeature mocks base method.
 func (m *MockFeatureStorage) CreateFeature(ctx context.Context, feature *domain.Feature, environmentId string) error {
 	m.ctrl.T.Helper()

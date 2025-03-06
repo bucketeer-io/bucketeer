@@ -83,10 +83,17 @@ message ListFeaturesRequest {
   string environment_id = 13 [(google.api.field_behavior) = REQUIRED];
 }
 
+message FeatureCountByStatus {
+  int32 total = 1;
+  int32 active = 2;
+  int32 inactive = 3;
+}
+
 message ListFeaturesResponse {
   repeated Feature features = 1;
   string cursor = 2;
   int64 total_count = 3;
+  FeatureCountByStatus feature_count_by_status = 4;
 }
 
 message ListEnabledFeaturesRequest {
@@ -754,7 +761,51 @@ service FeatureService {
       }
     };
   }
-  rpc UpdateFeature(UpdateFeatureRequest) returns (UpdateFeatureResponse) {}
+  rpc UpdateFeature(UpdateFeatureRequest) returns (UpdateFeatureResponse) {
+    option (google.api.http) = {
+      patch: "/v1/feature"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update Feature Flag",
+      description: "Update a feature flag. To call this API, you need at least a MEMBER role in the specified organizations.",
+      tags: "Feature",
+      operation_id: "web.v1.feature.update",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc EnableFeature(EnableFeatureRequest) returns (EnableFeatureResponse) {
     option deprecated = true;
   }

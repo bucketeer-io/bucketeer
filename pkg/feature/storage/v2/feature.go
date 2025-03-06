@@ -35,6 +35,12 @@ var (
 var (
 	//go:embed sql/feature/select_all_environment_features.sql
 	selectAllEnvironmentFeaturesSQLQuery string
+	//go:embed sql/feature/select_features.sql
+	selectFeaturesSQLQuery string
+	//go:embed sql/feature/select_features_by_experiment.sql
+	selectFeaturesByExperimentSQLQuery string
+	//go:embed sql/feature/select_feature_count_by_status.sql
+	selectFeatureCountByStatusSQLQuery string
 )
 
 type FeatureStorage interface {
@@ -47,6 +53,10 @@ type FeatureStorage interface {
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.Feature, int, int64, error)
+	CountFeaturesByStatus(
+		ctx context.Context,
+		environmentID string,
+	) (*proto.FeatureCountByStatus, error)
 	ListFeaturesFilteredByExperiment(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -288,34 +298,7 @@ func (s *featureStorage) ListFeatures(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			name,
-			description,
-			enabled,
-			archived,
-			deleted,
-			evaluation_undelayable,
-			ttl,
-			version,
-			created_at,
-			updated_at,
-			variation_type,
-			variations,
-			targets,
-			rules,
-			default_strategy,
-			off_variation,
-			tags,
-			maintainer,
-			sampling_seed,
-			prerequisites
-		FROM
-			feature
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(selectFeaturesSQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -346,6 +329,9 @@ func (s *featureStorage) ListFeatures(
 			&feature.Maintainer,
 			&feature.SamplingSeed,
 			&mysql.JSONObject{Val: &feature.Prerequisites},
+			&feature.ProgressiveRolloutCount,
+			&feature.ScheduleCount,
+			&feature.KillSwitchCount,
 		)
 		if err != nil {
 			return nil, 0, 0, err
@@ -372,6 +358,22 @@ func (s *featureStorage) ListFeatures(
 	return features, nextOffset, totalCount, nil
 }
 
+func (s *featureStorage) CountFeaturesByStatus(
+	ctx context.Context,
+	environmentID string,
+) (*proto.FeatureCountByStatus, error) {
+	var countByStatus proto.FeatureCountByStatus
+	err := s.qe.QueryRowContext(ctx, selectFeatureCountByStatusSQLQuery, environmentID).Scan(
+		&countByStatus.Total,
+		&countByStatus.Active,
+	)
+	if err != nil {
+		return nil, err
+	}
+	countByStatus.Inactive = countByStatus.Total - countByStatus.Active
+	return &countByStatus, nil
+}
+
 func (s *featureStorage) ListFeaturesFilteredByExperiment(
 	ctx context.Context,
 	whereParts []mysql.WherePart,
@@ -381,39 +383,7 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT DISTINCT
-			feature.id,
-			feature.name,
-			feature.description,
-			feature.enabled,
-			feature.archived,
-			feature.deleted,
-			feature.evaluation_undelayable,
-			feature.ttl,
-			feature.version,
-			feature.created_at,
-			feature.updated_at,
-			feature.variation_type,
-			feature.variations,
-			feature.targets,
-			feature.rules,
-			feature.default_strategy,
-			feature.off_variation,
-			feature.tags,
-			feature.maintainer,
-			feature.sampling_seed,
-			feature.prerequisites
-		FROM
-			feature
-		LEFT OUTER JOIN
-			experiment
-		ON
-			feature.id = experiment.feature_id AND
-			feature.environment_id = experiment.environment_id
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(selectFeaturesByExperimentSQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -444,6 +414,9 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 			&feature.Maintainer,
 			&feature.SamplingSeed,
 			&mysql.JSONObject{Val: &feature.Prerequisites},
+			&feature.ProgressiveRolloutCount,
+			&feature.ScheduleCount,
+			&feature.KillSwitchCount,
 		)
 		if err != nil {
 			return nil, 0, 0, err

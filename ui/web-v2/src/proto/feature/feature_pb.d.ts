@@ -110,6 +110,15 @@ export class Feature extends jspb.Message {
   getSamplingSeed(): string;
   setSamplingSeed(value: string): void;
 
+  getProgressiveRolloutCount(): number;
+  setProgressiveRolloutCount(value: number): void;
+
+  getScheduleCount(): number;
+  setScheduleCount(value: number): void;
+
+  getKillSwitchCount(): number;
+  setKillSwitchCount(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Feature.AsObject;
   static toObject(includeInstance: boolean, msg: Feature): Feature.AsObject;
@@ -152,6 +161,9 @@ export namespace Feature {
     archived: boolean;
     prerequisitesList: Array<proto_feature_prerequisite_pb.Prerequisite.AsObject>;
     samplingSeed: string;
+    progressiveRolloutCount: number;
+    scheduleCount: number;
+    killSwitchCount: number;
   };
 
   export interface VariationTypeMap {
