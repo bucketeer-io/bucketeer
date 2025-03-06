@@ -62,7 +62,8 @@ copy-proto-external-api-files-to-lib:
 
 .PHONY: copy-genfiles
 copy-genfiles:
-	@rm -rf $(CURDIR)/lib
+	@rm -rf $(CURDIR)/lib # Clear cache
+	@mkdir -p $(CURDIR)/lib  # Ensure lib directory exists
 	$(NPM_BIN_DIR)/cpx '$(GENFILES_DIR)/**/*.{mjs,d.ts}' $(CURDIR)/lib
 	$(NPM_BIN_DIR)/cpx '$(GENFILES_DIR)/bucketeer.*' $(CURDIR)/lib
 	@find $(CURDIR)/lib -type f -exec chmod 644 {} +
