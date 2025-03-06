@@ -1,10 +1,8 @@
 import axiosClient from '@api/axios-client';
-import { AnyObject } from 'yup';
 
 export interface AccountEnablePayload {
   email: string;
   organizationId: string;
-  command: AnyObject;
 }
 
 export const accountEnable = async (params?: AccountEnablePayload) => {

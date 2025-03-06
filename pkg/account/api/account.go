@@ -29,6 +29,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	domainauditlog "github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -36,6 +37,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	tagdomain "github.com/bucketeer-io/bucketeer/pkg/tag/domain"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	"github.com/bucketeer-io/bucketeer/proto/common"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
 )
@@ -79,9 +81,9 @@ func (s *AccountService) CreateAccountV2(
 		req.Command.OrganizationRole,
 		req.Command.EnvironmentRoles,
 	)
-	err = s.accountStorage.RunInTransaction(ctx, func() error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		// TODO: temporary implementation: double write account v2 ---
-		exist, err := s.accountStorage.GetAccountV2(ctx, account.Email, req.OrganizationId)
+		exist, err := s.accountStorage.GetAccountV2(contextWithTx, account.Email, req.OrganizationId)
 		if err != nil && !errors.Is(err, v2as.ErrAccountNotFound) {
 			return err
 		}
@@ -97,7 +99,7 @@ func (s *AccountService) CreateAccountV2(
 			if err := handler.Handle(ctx, cmd); err != nil {
 				return err
 			}
-			return s.accountStorage.UpdateAccountV2(ctx, exist)
+			return s.accountStorage.UpdateAccountV2(contextWithTx, exist)
 		}
 		// TODO: temporary implementation end ---
 		handler, err := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
@@ -188,18 +190,18 @@ func (s *AccountService) createAccountV2NoCommand(
 		req.EnvironmentRoles,
 	)
 	var createAccountEvent *eventproto.Event
-	err = s.accountStorage.RunInTransaction(ctx, func() error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		// TODO: temporary implementation: double write account v2 ---
-		exist, err := s.accountStorage.GetAccountV2(ctx, account.Email, req.OrganizationId)
+		exist, err := s.accountStorage.GetAccountV2(contextWithTx, account.Email, req.OrganizationId)
 		if err != nil && !errors.Is(err, v2as.ErrAccountNotFound) {
 			return err
 		}
 		if exist != nil {
-			return s.changeExistedAccountV2EnvironmentRoles(ctx, req, exist, editor)
+			return s.changeExistedAccountV2EnvironmentRoles(contextWithTx, req, exist, editor)
 		}
 		// TODO: temporary implementation end ---
 
-		createAccountEvent, err = domainevent.NewEvent(
+		createAccountEvent, err = domainevent.NewAdminEvent(
 			editor,
 			eventproto.Event_ACCOUNT,
 			account.Email,
@@ -217,14 +219,20 @@ func (s *AccountService) createAccountV2NoCommand(
 				CreatedAt:        account.CreatedAt,
 				UpdatedAt:        account.UpdatedAt,
 			},
-			storage.AdminEnvironmentID,
 			account,
 			nil,
 		)
 		if err != nil {
 			return err
 		}
-		return s.accountStorage.CreateAccountV2(ctx, account)
+		err = s.accountStorage.CreateAccountV2(contextWithTx, account)
+		if err != nil {
+			return err
+		}
+		return s.adminAuditLogStorage.CreateAdminAuditLog(
+			contextWithTx,
+			domainauditlog.NewAuditLog(createAccountEvent, storage.AdminEnvironmentID),
+		)
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountAlreadyExists) {
@@ -276,7 +284,7 @@ func (s *AccountService) createAccountV2NoCommand(
 					zap.String("organizationId", req.OrganizationId),
 					zap.String("environmentId", envRole.EnvironmentId),
 					zap.String("email", req.Email),
-					zap.Strings("tags", req.Tags),
+					zap.Any("tags", req.Tags),
 				)...,
 			)
 			return nil, statusInternal.Err()
@@ -301,7 +309,7 @@ func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
 		return err
 	}
 
-	updateAccountEvent, err = domainevent.NewEvent(
+	updateAccountEvent, err = domainevent.NewAdminEvent(
 		editor,
 		eventproto.Event_PUSH,
 		updated.Email,
@@ -310,7 +318,6 @@ func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
 			Email:            updated.Email,
 			EnvironmentRoles: updated.EnvironmentRoles,
 		},
-		storage.AdminEnvironmentID,
 		updated,
 		account,
 	)
@@ -331,7 +338,10 @@ func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
 	if err != nil {
 		return err
 	}
-	return nil
+	return s.adminAuditLogStorage.CreateAdminAuditLog(
+		ctx,
+		domainauditlog.NewAuditLog(updateAccountEvent, storage.AdminEnvironmentID),
+	)
 }
 
 func (s *AccountService) upsertTags(
@@ -560,7 +570,10 @@ func (s *AccountService) updateAccountV2NoCommand(
 	// Upsert tags
 	if req.Tags != nil {
 		for _, envRole := range updatedAccountPb.EnvironmentRoles {
-			if err := s.upsertTags(ctx, req.Tags, envRole.EnvironmentId); err != nil {
+			if req.Tags == nil {
+				continue
+			}
+			if err := s.upsertTags(ctx, req.Tags.Values, envRole.EnvironmentId); err != nil {
 				s.logger.Error(
 					"Failed to upsert account tags",
 					log.FieldsFromImcomingContext(ctx).AddFields(
@@ -568,7 +581,7 @@ func (s *AccountService) updateAccountV2NoCommand(
 						zap.String("organizationId", req.OrganizationId),
 						zap.String("environmentId", envRole.EnvironmentId),
 						zap.String("email", req.Email),
-						zap.Strings("tags", req.Tags),
+						zap.Any("tags", req.Tags),
 					)...,
 				)
 				return nil, statusInternal.Err()
@@ -664,7 +677,7 @@ func (s *AccountService) EnableAccountV2(
 		nil,
 		nil,
 		nil,
-		[]string{},
+		nil,
 		nil,
 		nil,
 		wrapperspb.Bool(false),
@@ -738,7 +751,7 @@ func (s *AccountService) DisableAccountV2(
 		nil,
 		nil,
 		nil,
-		[]string{},
+		nil,
 		nil,
 		nil,
 		wrapperspb.Bool(true),
@@ -783,8 +796,8 @@ func (s *AccountService) updateAccountV2MySQL(
 	email, organizationID string,
 ) (*accountproto.AccountV2, error) {
 	var updatedAccountPb *accountproto.AccountV2
-	err := s.accountStorage.RunInTransaction(ctx, func() error {
-		account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		account, err := s.accountStorage.GetAccountV2(contextWithTx, email, organizationID)
 		if err != nil {
 			return err
 		}
@@ -798,7 +811,7 @@ func (s *AccountService) updateAccountV2MySQL(
 			}
 		}
 		updatedAccountPb = account.AccountV2
-		return s.accountStorage.UpdateAccountV2(ctx, account)
+		return s.accountStorage.UpdateAccountV2(contextWithTx, account)
 	})
 	return updatedAccountPb, err
 }
@@ -810,15 +823,15 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 	email, organizationID string,
 	name, firstName, lastName, language, avatarImageURL *wrapperspb.StringValue,
 	avatar *accountproto.UpdateAccountV2Request_AccountV2Avatar,
-	tags []string,
+	tags *common.StringListValue,
 	organizationRole *accountproto.UpdateAccountV2Request_OrganizationRoleValue,
 	environmentRoles []*accountproto.AccountV2_EnvironmentRole,
 	isDisabled *wrapperspb.BoolValue,
 ) (*accountproto.AccountV2, error) {
 	var updatedAccountPb *accountproto.AccountV2
 	var updateAccountV2Event *eventproto.Event
-	err := s.accountStorage.RunInTransaction(ctx, func() error {
-		account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		account, err := s.accountStorage.GetAccountV2(contextWithTx, email, organizationID)
 		if err != nil {
 			return err
 		}
@@ -853,7 +866,14 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 			return err
 		}
 		updatedAccountPb = updated.AccountV2
-		return s.accountStorage.UpdateAccountV2(ctx, updated)
+		err = s.accountStorage.UpdateAccountV2(contextWithTx, updated)
+		if err != nil {
+			return err
+		}
+		return s.adminAuditLogStorage.CreateAdminAuditLog(
+			contextWithTx,
+			domainauditlog.NewAuditLog(updateAccountV2Event, storage.AdminEnvironmentID),
+		)
 	})
 	if err != nil {
 		return nil, err
@@ -897,8 +917,8 @@ func (s *AccountService) DeleteAccountV2(
 		)
 		return nil, err
 	}
-	err = s.accountStorage.RunInTransaction(ctx, func() error {
-		account, err := s.accountStorage.GetAccountV2(ctx, req.Email, req.OrganizationId)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		account, err := s.accountStorage.GetAccountV2(contextWithTx, req.Email, req.OrganizationId)
 		if err != nil {
 			return err
 		}
@@ -924,7 +944,7 @@ func (s *AccountService) DeleteAccountV2(
 		if err = s.publisher.Publish(ctx, deleteAccountV2Event); err != nil {
 			return err
 		}
-		return s.accountStorage.DeleteAccountV2(ctx, account)
+		return s.accountStorage.DeleteAccountV2(contextWithTx, account)
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {

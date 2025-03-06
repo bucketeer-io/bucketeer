@@ -97,8 +97,7 @@ func (s *experimentService) getGoalMySQL(
 	ctx context.Context,
 	goalID, environmentId string,
 ) (*domain.Goal, error) {
-	goalStorage := v2es.NewGoalStorage(s.mysqlClient)
-	goal, err := goalStorage.GetGoal(ctx, goalID, environmentId)
+	goal, err := s.goalStorage.GetGoal(ctx, goalID, environmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get goal",
@@ -164,8 +163,7 @@ func (s *experimentService) ListGoals(
 	if req.IsInUseStatus != nil {
 		isInUseStatus = &req.IsInUseStatus.Value
 	}
-	goalStorage := v2es.NewGoalStorage(s.mysqlClient)
-	goals, nextCursor, totalCount, err := goalStorage.ListGoals(
+	goals, nextCursor, totalCount, err := s.goalStorage.ListGoals(
 		ctx,
 		whereParts,
 		orders,
@@ -320,25 +318,7 @@ func (s *experimentService) CreateGoal(
 		}
 		return nil, dt.Err()
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		goalStorage := v2es.NewGoalStorage(tx)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		handler, err := command.NewGoalCommandHandler(editor, goal, s.publisher, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -346,7 +326,7 @@ func (s *experimentService) CreateGoal(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return goalStorage.CreateGoal(ctx, goal, req.EnvironmentId)
+		return s.goalStorage.CreateGoal(ctxWithTx, goal, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrGoalAlreadyExists) {
@@ -407,25 +387,7 @@ func (s *experimentService) createGoalNoCommand(
 		}
 		return nil, dt.Err()
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		goalStorage := v2es.NewGoalStorage(tx)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
 		prev := &domain.Goal{}
 		e, err := domainevent.NewEvent(
 			editor,
@@ -451,7 +413,7 @@ func (s *experimentService) createGoalNoCommand(
 		if err := s.publisher.Publish(ctx, e); err != nil {
 			return err
 		}
-		return goalStorage.CreateGoal(ctx, goal, req.EnvironmentId)
+		return s.goalStorage.CreateGoal(ctxWithTx, goal, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrGoalAlreadyExists) {
@@ -625,28 +587,9 @@ func (s *experimentService) updateGoalNoCommand(
 	if err != nil {
 		return nil, err
 	}
-
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
 	var updatedGoal *proto.Goal
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		goalStorage := v2es.NewGoalStorage(tx)
-		goal, err := goalStorage.GetGoal(ctx, req.Id, req.EnvironmentId)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		goal, err := s.goalStorage.GetGoal(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -686,7 +629,7 @@ func (s *experimentService) updateGoalNoCommand(
 		if err = s.publisher.Publish(ctx, e); err != nil {
 			return err
 		}
-		return goalStorage.UpdateGoal(ctx, updated, req.EnvironmentId)
+		return s.goalStorage.UpdateGoal(ctxWithTx, updated, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrGoalNotFound) || errors.Is(err, v2es.ErrGoalUnexpectedAffectedRows) {
@@ -813,9 +756,8 @@ func (s *experimentService) DeleteGoal(
 		}
 		return nil, dt.Err()
 	}
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		experimentStorage := v2es.NewGoalStorage(s.mysqlClient)
-		goal, err := experimentStorage.GetGoal(ctxWithTx, req.Id, req.EnvironmentId)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		goal, err := s.goalStorage.GetGoal(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -837,7 +779,7 @@ func (s *experimentService) DeleteGoal(
 		if err := s.publisher.Publish(ctxWithTx, e); err != nil {
 			return err
 		}
-		return experimentStorage.DeleteGoal(ctxWithTx, req.Id, req.EnvironmentId)
+		return s.goalStorage.DeleteGoal(ctxWithTx, req.Id, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrGoalNotFound) || errors.Is(err, v2es.ErrGoalUnexpectedAffectedRows) {
@@ -869,26 +811,8 @@ func (s *experimentService) updateGoal(
 	commands []command.Command,
 	localizer locale.Localizer,
 ) error {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		goalStorage := v2es.NewGoalStorage(tx)
-		goal, err := goalStorage.GetGoal(ctx, goalID, environmentId)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		goal, err := s.goalStorage.GetGoal(ctxWithTx, goalID, environmentId)
 		if err != nil {
 			return err
 		}
@@ -901,7 +825,7 @@ func (s *experimentService) updateGoal(
 				return err
 			}
 		}
-		return goalStorage.UpdateGoal(ctx, goal, environmentId)
+		return s.goalStorage.UpdateGoal(ctxWithTx, goal, environmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrGoalNotFound) || errors.Is(err, v2es.ErrGoalUnexpectedAffectedRows) {

@@ -17,6 +17,9 @@ package domain
 import (
 	"time"
 
+	"github.com/jinzhu/copier"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
@@ -68,4 +71,19 @@ func (p *Project) Disable() {
 func (p *Project) ConvertTrial() {
 	p.Project.Trial = false
 	p.Project.UpdatedAt = time.Now().Unix()
+}
+
+func (p *Project) Update(name, description *wrapperspb.StringValue) (*Project, error) {
+	updated := &Project{}
+	if err := copier.Copy(updated, p); err != nil {
+		return nil, err
+	}
+	if name != nil {
+		updated.Name = name.Value
+	}
+	if description != nil {
+		updated.Description = description.Value
+	}
+	p.Project.UpdatedAt = time.Now().Unix()
+	return updated, nil
 }

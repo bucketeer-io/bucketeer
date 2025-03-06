@@ -110,11 +110,6 @@ export class Feature extends jspb.Message {
   getSamplingSeed(): string;
   setSamplingSeed(value: string): void;
 
-  clearScheduleUpdateList(): void;
-  getScheduleUpdateList(): Array<ScheduleUpdate>;
-  setScheduleUpdateList(value: Array<ScheduleUpdate>): void;
-  addScheduleUpdate(value?: ScheduleUpdate, index?: number): ScheduleUpdate;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Feature.AsObject;
   static toObject(includeInstance: boolean, msg: Feature): Feature.AsObject;
@@ -157,7 +152,6 @@ export namespace Feature {
     archived: boolean;
     prerequisitesList: Array<proto_feature_prerequisite_pb.Prerequisite.AsObject>;
     samplingSeed: string;
-    scheduleUpdateList: Array<ScheduleUpdate.AsObject>;
   };
 
   export interface VariationTypeMap {
@@ -275,75 +269,5 @@ export namespace Tag {
     createdAt: number;
     updatedAt: number;
     name: string;
-  };
-}
-
-export class ScheduleUpdate extends jspb.Message {
-  hasFeature(): boolean;
-  clearFeature(): void;
-  getFeature(): Feature | undefined;
-  setFeature(value?: Feature): void;
-
-  getUpdateAt(): number;
-  setUpdateAt(value: number): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ScheduleUpdate.AsObject;
-  static toObject(
-    includeInstance: boolean,
-    msg: ScheduleUpdate
-  ): ScheduleUpdate.AsObject;
-  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-  static extensionsBinary: {
-    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
-  };
-  static serializeBinaryToWriter(
-    message: ScheduleUpdate,
-    writer: jspb.BinaryWriter
-  ): void;
-  static deserializeBinary(bytes: Uint8Array): ScheduleUpdate;
-  static deserializeBinaryFromReader(
-    message: ScheduleUpdate,
-    reader: jspb.BinaryReader
-  ): ScheduleUpdate;
-}
-
-export namespace ScheduleUpdate {
-  export type AsObject = {
-    feature?: Feature.AsObject;
-    updateAt: number;
-  };
-}
-
-export class ScheduleUpdateListValue extends jspb.Message {
-  clearValueList(): void;
-  getValueList(): Array<ScheduleUpdate>;
-  setValueList(value: Array<ScheduleUpdate>): void;
-  addValue(value?: ScheduleUpdate, index?: number): ScheduleUpdate;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ScheduleUpdateListValue.AsObject;
-  static toObject(
-    includeInstance: boolean,
-    msg: ScheduleUpdateListValue
-  ): ScheduleUpdateListValue.AsObject;
-  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-  static extensionsBinary: {
-    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
-  };
-  static serializeBinaryToWriter(
-    message: ScheduleUpdateListValue,
-    writer: jspb.BinaryWriter
-  ): void;
-  static deserializeBinary(bytes: Uint8Array): ScheduleUpdateListValue;
-  static deserializeBinaryFromReader(
-    message: ScheduleUpdateListValue,
-    reader: jspb.BinaryReader
-  ): ScheduleUpdateListValue;
-}
-
-export namespace ScheduleUpdateListValue {
-  export type AsObject = {
-    valueList: Array<ScheduleUpdate.AsObject>;
   };
 }

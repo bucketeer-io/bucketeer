@@ -26,6 +26,7 @@ import (
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
+	storagemock "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -79,17 +80,31 @@ func createExperimentService(c *gomock.Controller, specifiedEnvironmentId *strin
 	featureClientMock := featureclientmock.NewMockClient(c)
 	fr := &featureproto.GetFeatureResponse{
 		Feature: &featureproto.Feature{
-			Id:         "fid",
-			Version:    1,
-			Variations: []*featureproto.Variation{},
+			Id:      "fid",
+			Version: 1,
+			Variations: []*featureproto.Variation{
+				{
+					Id: "variation-a-id",
+				},
+				{
+					Id: "variation-b-id",
+				},
+			},
 		},
 	}
 	featureClientMock.EXPECT().GetFeature(gomock.Any(), gomock.Any()).Return(fr, nil).AnyTimes()
 	fsr := &featureproto.GetFeaturesResponse{
 		Features: []*featureproto.Feature{{
-			Id:         "fid",
-			Version:    1,
-			Variations: []*featureproto.Variation{},
+			Id:      "fid",
+			Version: 1,
+			Variations: []*featureproto.Variation{
+				{
+					Id: "variation-a-id",
+				},
+				{
+					Id: "variation-b-id",
+				},
+			},
 		}},
 	}
 	featureClientMock.EXPECT().GetFeatures(gomock.Any(), gomock.Any()).Return(fsr, nil).AnyTimes()
@@ -111,8 +126,16 @@ func createExperimentService(c *gomock.Controller, specifiedEnvironmentId *strin
 	mysqlClient := mysqlmock.NewMockClient(c)
 	p := publishermock.NewMockPublisher(c)
 	p.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-	es := NewExperimentService(featureClientMock, accountClientMock, autoOpsClientMock, mysqlClient, p)
-	return es.(*experimentService)
+	return &experimentService{
+		featureClient:     featureClientMock,
+		accountClient:     accountClientMock,
+		autoOpsClient:     autoOpsClientMock,
+		mysqlClient:       mysqlClient,
+		experimentStorage: storagemock.NewMockExperimentStorage(c),
+		goalStorage:       storagemock.NewMockGoalStorage(c),
+		publisher:         p,
+		logger:            zap.NewNop().Named("api"),
+	}
 }
 
 func createContextWithToken() context.Context {

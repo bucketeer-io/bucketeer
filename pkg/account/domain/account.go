@@ -26,6 +26,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
+	"github.com/bucketeer-io/bucketeer/proto/common"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
@@ -86,7 +87,7 @@ func NewAccountV2(
 func (a *AccountV2) Update(
 	name, firstName, lastName, language, avatarImageURL *wrapperspb.StringValue,
 	avatar *proto.UpdateAccountV2Request_AccountV2Avatar,
-	tags []string,
+	tags *common.StringListValue,
 	organizationRole *proto.UpdateAccountV2Request_OrganizationRoleValue,
 	environmentRoles []*proto.AccountV2_EnvironmentRole,
 	isDisabled *wrapperspb.BoolValue,
@@ -116,7 +117,7 @@ func (a *AccountV2) Update(
 		updated.AvatarFileType = avatar.AvatarFileType
 	}
 	if tags != nil {
-		updated.Tags = tags
+		updated.Tags = tags.Values
 	}
 	if organizationRole != nil {
 		updated.OrganizationRole = organizationRole.Role

@@ -280,6 +280,74 @@ export namespace SignInResponse {
   };
 }
 
+export class SwitchOrganizationRequest extends jspb.Message {
+  getAccessToken(): string;
+  setAccessToken(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SwitchOrganizationRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SwitchOrganizationRequest
+  ): SwitchOrganizationRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SwitchOrganizationRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): SwitchOrganizationRequest;
+  static deserializeBinaryFromReader(
+    message: SwitchOrganizationRequest,
+    reader: jspb.BinaryReader
+  ): SwitchOrganizationRequest;
+}
+
+export namespace SwitchOrganizationRequest {
+  export type AsObject = {
+    accessToken: string;
+    organizationId: string;
+  };
+}
+
+export class SwitchOrganizationResponse extends jspb.Message {
+  hasToken(): boolean;
+  clearToken(): void;
+  getToken(): proto_auth_token_pb.Token | undefined;
+  setToken(value?: proto_auth_token_pb.Token): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SwitchOrganizationResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SwitchOrganizationResponse
+  ): SwitchOrganizationResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SwitchOrganizationResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): SwitchOrganizationResponse;
+  static deserializeBinaryFromReader(
+    message: SwitchOrganizationResponse,
+    reader: jspb.BinaryReader
+  ): SwitchOrganizationResponse;
+}
+
+export namespace SwitchOrganizationResponse {
+  export type AsObject = {
+    token?: proto_auth_token_pb.Token.AsObject;
+  };
+}
+
 export interface AuthTypeMap {
   AUTH_TYPE_UNSPECIFIED: 0;
   AUTH_TYPE_USER_PASSWORD: 1;

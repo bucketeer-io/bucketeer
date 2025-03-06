@@ -33,16 +33,19 @@ func TestNewExperiment(t *testing.T) {
 	featureVersion := int32(1)
 	variations := []*featureproto.Variation{
 		{
+			Id:          "variation-id-a",
 			Value:       "A",
 			Name:        "Variation A",
 			Description: "Thing does A",
 		},
 		{
+			Id:          "variation-id-b",
 			Value:       "B",
 			Name:        "Variation B",
 			Description: "Thing does B",
 		},
 		{
+			Id:          "variation-id-c",
 			Value:       "C",
 			Name:        "Variation C",
 			Description: "Thing does C",
@@ -53,37 +56,62 @@ func TestNewExperiment(t *testing.T) {
 	stopAt := int64(20)
 	name := "name"
 	description := "description"
-	baseVariationId := "baseVariationId"
 	maintainer := "bucketeer@example.com"
 
-	e, err := NewExperiment(
-		featureID,
-		featureVersion,
-		variations,
-		goalIDs,
-		startAt,
-		stopAt,
-		name,
-		description,
-		baseVariationId,
-		maintainer,
-	)
+	patterns := []*struct {
+		desc, baseVariationID string
+		expected              error
+	}{
+		{
+			desc:            "err: base variation not found",
+			baseVariationID: "random-id",
+			expected:        ErrBaseVariationNotFound,
+		},
+		{
+			desc:            "success",
+			baseVariationID: "variation-id-c",
+			expected:        nil,
+		},
+	}
 
-	assert.NoError(t, err)
-	assert.Equal(t, featureID, e.FeatureId)
-	assert.Equal(t, featureVersion, e.FeatureVersion)
-	if !reflect.DeepEqual(variations, e.Variations) {
-		t.Fatal("Variations not equal")
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			e, err := NewExperiment(
+				featureID,
+				featureVersion,
+				variations,
+				goalIDs,
+				startAt,
+				stopAt,
+				name,
+				description,
+				p.baseVariationID,
+				maintainer,
+			)
+
+			if err != nil {
+				assert.Equal(t, p.expected, err)
+				assert.Nil(t, e)
+				return
+			}
+			assert.NoError(t, err)
+			assert.NotEmpty(t, e.Id)
+			assert.Equal(t, featureID, e.FeatureId)
+			assert.Equal(t, featureVersion, e.FeatureVersion)
+			if !reflect.DeepEqual(variations, e.Variations) {
+				t.Fatal("Variations not equal")
+			}
+			if !reflect.DeepEqual(goalIDs, e.GoalIds) {
+				t.Fatal("GoalIDs not equal")
+			}
+			assert.Equal(t, startAt, e.StartAt)
+			assert.Equal(t, stopAt, e.StopAt)
+			assert.Equal(t, name, e.Name)
+			assert.Equal(t, description, e.Description)
+			assert.Equal(t, p.baseVariationID, e.BaseVariationId)
+			assert.Equal(t, maintainer, e.Maintainer)
+		})
 	}
-	if !reflect.DeepEqual(goalIDs, e.GoalIds) {
-		t.Fatal("GoalIDs not equal")
-	}
-	assert.Equal(t, startAt, e.StartAt)
-	assert.Equal(t, stopAt, e.StopAt)
-	assert.Equal(t, name, e.Name)
-	assert.Equal(t, description, e.Description)
-	assert.Equal(t, baseVariationId, e.BaseVariationId)
-	assert.Equal(t, maintainer, e.Maintainer)
 }
 
 func TestRenameExperiment(t *testing.T) {
@@ -606,16 +634,19 @@ func newExperiment(t *testing.T) *Experiment {
 	featureVersion := int32(1)
 	variations := []*featureproto.Variation{
 		{
+			Id:          "variation-a-id",
 			Value:       "A",
 			Name:        "Variation A",
 			Description: "Thing does A",
 		},
 		{
+			Id:          "variation-b-id",
 			Value:       "B",
 			Name:        "Variation B",
 			Description: "Thing does B",
 		},
 		{
+			Id:          "variation-c-id",
 			Value:       "C",
 			Name:        "Variation C",
 			Description: "Thing does C",
@@ -626,7 +657,7 @@ func newExperiment(t *testing.T) *Experiment {
 	stopAt := int64(20)
 	name := "name"
 	description := "description"
-	baseVariationId := "baseVariationId"
+	baseVariationId := "variation-c-id"
 	maintainer := "bucketeer@example.com"
 
 	e, err := NewExperiment(

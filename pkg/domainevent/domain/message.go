@@ -904,7 +904,16 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 			Locale: localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(
 				locale.UnarchivedTemplate,
-				localizer.MustLocalizeWithTemplate(locale.Environment)),
+				localizer.MustLocalizeWithTemplate(locale.Environment),
+			),
+		}
+	case proto.Event_ENVIRONMENT_V2_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.UpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Environment),
+			),
 		}
 	case proto.Event_ADMIN_ACCOUNT_CREATED:
 		return &proto.LocalizedMessage{
@@ -1210,6 +1219,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.Project),
 			),
 		}
+	case proto.Event_PROJECT_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.UpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Project),
+			),
+		}
 	case proto.Event_PROJECT_DESCRIPTION_CHANGED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),
@@ -1355,7 +1372,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.Organization),
 			),
 		}
-
+	case proto.Event_ORGANIZATION_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.UpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Organization),
+			),
+		}
 	case proto.Event_FLAG_TRIGGER_CREATED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),

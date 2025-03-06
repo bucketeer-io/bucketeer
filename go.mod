@@ -32,6 +32,7 @@ require (
 	github.com/prometheus/client_golang v1.20.4
 	github.com/redis/go-redis/v9 v9.6.1
 	github.com/slack-go/slack v0.14.0
+	github.com/spaolacci/murmur3 v1.1.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tkuchiki/go-timezone v0.2.3
 	go.opencensus.io v0.24.0

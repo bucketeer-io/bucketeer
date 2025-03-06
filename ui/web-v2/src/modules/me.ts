@@ -26,6 +26,7 @@ export type MeState = Me;
 
 export interface FetchMeParams {
   organizationId: string;
+  shouldRefreshToken?: boolean;
 }
 
 export const fetchMe = createAsyncThunk<
@@ -33,11 +34,15 @@ export const fetchMe = createAsyncThunk<
   FetchMeParams | undefined,
   { state: AppState }
 >('me/fetch', async (params, { dispatch }) => {
+  const { organizationId, shouldRefreshToken = true } = params;
   const token = getToken();
-  await dispatch(refreshToken({ token: token.refreshToken }));
+
+  if (shouldRefreshToken) {
+    await dispatch(refreshToken({ token: token.refreshToken }));
+  }
 
   const getMeRequest = new GetMeRequest();
-  getMeRequest.setOrganizationId(params.organizationId);
+  getMeRequest.setOrganizationId(organizationId);
   const res = await getMe(getMeRequest);
   return {
     isAdmin: res.response.toObject().account.isSystemAdmin,

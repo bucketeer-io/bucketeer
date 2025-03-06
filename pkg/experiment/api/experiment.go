@@ -58,8 +58,7 @@ func (s *experimentService) GetExperiment(
 	if err := validateGetExperimentRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	experimentStorage := v2es.NewExperimentStorage(s.mysqlClient)
-	experiment, err := experimentStorage.GetExperiment(ctx, req.Id, req.EnvironmentId)
+	experiment, err := s.experimentStorage.GetExperiment(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2es.ErrExperimentNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -168,8 +167,7 @@ func (s *experimentService) ListExperiments(
 		}
 		return nil, dt.Err()
 	}
-	experimentStorage := v2es.NewExperimentStorage(s.mysqlClient)
-	experiments, nextCursor, totalCount, err := experimentStorage.ListExperiments(
+	experiments, nextCursor, totalCount, err := s.experimentStorage.ListExperiments(
 		ctx,
 		whereParts,
 		orders,
@@ -194,7 +192,7 @@ func (s *experimentService) ListExperiments(
 		return nil, dt.Err()
 	}
 
-	summary, err := experimentStorage.GetExperimentSummary(ctx, req.EnvironmentId)
+	summary, err := s.experimentStorage.GetExperimentSummary(ctx, req.EnvironmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get experiment summary",
@@ -349,10 +347,13 @@ func (s *experimentService) CreateExperiment(
 	)
 	if err != nil {
 		s.logger.Error(
-			"Failed to create a new experiment",
+			"Failed to create experiment",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
+				zap.String("featureId", resp.Feature.Id),
+				zap.String("baseVariationId", req.BaseVariationId),
+				zap.Any("featureVariations", resp.Feature.Variations),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -364,25 +365,7 @@ func (s *experimentService) CreateExperiment(
 		}
 		return nil, dt.Err()
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		experimentStorage := v2es.NewExperimentStorage(tx)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		handler, err := command.NewExperimentCommandHandler(
 			editor,
 			experiment,
@@ -395,7 +378,7 @@ func (s *experimentService) CreateExperiment(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return experimentStorage.CreateExperiment(ctx, experiment, req.EnvironmentId)
+		return s.experimentStorage.CreateExperiment(contextWithTx, experiment, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrExperimentAlreadyExists) {
@@ -484,10 +467,13 @@ func (s *experimentService) createExperimentNoCommand(
 	)
 	if err != nil {
 		s.logger.Error(
-			"Failed to create a new experiment",
+			"Failed to create experiment",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
+				zap.String("featureId", getFeatureResp.Feature.Id),
+				zap.String("baseVariationId", req.BaseVariationId),
+				zap.Any("featureVariations", getFeatureResp.Feature.Variations),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -509,7 +495,6 @@ func (s *experimentService) createExperimentNoCommand(
 				return statusGoalTypeMismatch.Err()
 			}
 		}
-		experimentStorage := v2es.NewExperimentStorage(s.mysqlClient)
 		prev := &domain.Experiment{}
 		if err = copier.Copy(prev, experiment); err != nil {
 			return err
@@ -545,7 +530,7 @@ func (s *experimentService) createExperimentNoCommand(
 		if err != nil {
 			return err
 		}
-		return experimentStorage.CreateExperiment(ctxWithTx, experiment, req.EnvironmentId)
+		return s.experimentStorage.CreateExperiment(ctxWithTx, experiment, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrGoalNotFound) {
@@ -725,27 +710,9 @@ func (s *experimentService) UpdateExperiment(
 	if err := validateUpdateExperimentRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
 	var experimentPb *proto.Experiment
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		experimentStorage := v2es.NewExperimentStorage(tx)
-		experiment, err := experimentStorage.GetExperiment(ctx, req.Id, req.EnvironmentId)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		experiment, err := s.experimentStorage.GetExperiment(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -769,7 +736,7 @@ func (s *experimentService) UpdateExperiment(
 				)
 				return err
 			}
-			return experimentStorage.UpdateExperiment(ctx, experiment, req.EnvironmentId)
+			return s.experimentStorage.UpdateExperiment(contextWithTx, experiment, req.EnvironmentId)
 		}
 		if req.ChangeNameCommand != nil {
 			if err = handler.Handle(ctx, req.ChangeNameCommand); err != nil {
@@ -796,7 +763,7 @@ func (s *experimentService) UpdateExperiment(
 			}
 		}
 		experimentPb = experiment.Experiment
-		return experimentStorage.UpdateExperiment(ctx, experiment, req.EnvironmentId)
+		return s.experimentStorage.UpdateExperiment(contextWithTx, experiment, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrExperimentNotFound) || errors.Is(err, v2es.ErrExperimentUnexpectedAffectedRows) {
@@ -1241,26 +1208,8 @@ func (s *experimentService) updateExperiment(
 	id, environmentId string,
 	localizer locale.Localizer,
 ) error {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		experimentStorage := v2es.NewExperimentStorage(tx)
-		experiment, err := experimentStorage.GetExperiment(ctx, id, environmentId)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		experiment, err := s.experimentStorage.GetExperiment(contextWithTx, id, environmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get experiment",
@@ -1285,7 +1234,7 @@ func (s *experimentService) updateExperiment(
 			)
 			return err
 		}
-		return experimentStorage.UpdateExperiment(ctx, experiment, environmentId)
+		return s.experimentStorage.UpdateExperiment(contextWithTx, experiment, environmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrExperimentNotFound) || errors.Is(err, v2es.ErrExperimentUnexpectedAffectedRows) {

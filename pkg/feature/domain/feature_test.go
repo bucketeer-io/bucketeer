@@ -1457,7 +1457,7 @@ func TestValidateVariationValue(t *testing.T) {
 			desc:          "empty string",
 			variationType: feature.Feature_JSON,
 			value:         "",
-			expected:      errors.New("feature: variation value cannot be empty"),
+			expected:      errVariationValueRequired,
 		},
 		{
 			desc:          "invalid number",
@@ -1907,6 +1907,9 @@ func TestUpdate(t *testing.T) {
 	id1, _ := uuid.NewUUID()
 	id2, _ := uuid.NewUUID()
 	id3, _ := uuid.NewUUID()
+	// New UUID for the additional variation.
+	id4, _ := uuid.NewUUID()
+
 	genF := func() *Feature {
 		return &Feature{
 			Feature: &proto.Feature{
@@ -1940,18 +1943,24 @@ func TestUpdate(t *testing.T) {
 		inputFunc         func() *Feature
 		name              *wrapperspb.StringValue
 		description       *wrapperspb.StringValue
-		enabled           *wrapperspb.BoolValue
 		tags              *common.StringListValue
+		enabled           *wrapperspb.BoolValue
 		archived          *wrapperspb.BoolValue
-		variations        *proto.VariationListValue
 		prerequisites     *proto.PrerequisiteListValue
 		targets           *proto.TargetListValue
 		rules             *proto.RuleListValue
+		variations        *proto.VariationListValue
 		defaultStrategy   *proto.Strategy
 		offVariation      *wrapperspb.StringValue
 		resetSamplingSeed bool
-		expectedFunc      func() *Feature
-		expectedErr       error
+		// New granular change fields:
+		prerequisiteChanges []*proto.PrerequisiteChange
+		targetChanges       []*proto.TargetChange
+		ruleChanges         []*proto.RuleChange
+		variationChanges    []*proto.VariationChange
+		tagChanges          []*proto.TagChange
+		expectedFunc        func() *Feature
+		expectedErr         error
 	}{
 		{
 			desc: "fail: name is empty",
@@ -1986,20 +1995,16 @@ func TestUpdate(t *testing.T) {
 			expectedErr:  ErrAlreadyDisabled,
 		},
 		{
-			desc: "success: version incremented",
+			desc: "success: version incremented with full replacement fields",
 			inputFunc: func() *Feature {
-				f := genF()
-				return f
+				return genF()
 			},
 			name:        &wrapperspb.StringValue{Value: "n2"},
 			description: &wrapperspb.StringValue{Value: "d2"},
 			enabled:     &wrapperspb.BoolValue{Value: true},
 			archived:    &wrapperspb.BoolValue{Value: true},
 			tags:        &common.StringListValue{Values: []string{"t3"}},
-			variations: &proto.VariationListValue{Values: []*feature.Variation{
-				{Id: id1.String(), Value: "true", Name: "n3"},
-				{Id: id2.String(), Value: "false", Name: "n4"},
-			}},
+			// Legacy fields:
 			prerequisites: &proto.PrerequisiteListValue{Values: []*feature.Prerequisite{
 				{FeatureId: "f1", VariationId: "v1"},
 			}},
@@ -2024,10 +2029,16 @@ func TestUpdate(t *testing.T) {
 					},
 				},
 			}},
+			variations: &proto.VariationListValue{Values: []*feature.Variation{
+				{Id: id1.String(), Value: "true", Name: "n3"},
+				{Id: id2.String(), Value: "false", Name: "n4"},
+			}},
 			defaultStrategy: &feature.Strategy{
 				Type: feature.Strategy_ROLLOUT,
 				RolloutStrategy: &feature.RolloutStrategy{
-					Variations: []*feature.RolloutStrategy_Variation{{Variation: id1.String(), Weight: 100}},
+					Variations: []*feature.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 100},
+					},
 				},
 			},
 			offVariation: &wrapperspb.StringValue{Value: id1.String()},
@@ -2045,11 +2056,10 @@ func TestUpdate(t *testing.T) {
 					{Id: id2.String(), Value: "false", Name: "n4"},
 				}
 				f.Prerequisites = []*feature.Prerequisite{{FeatureId: "f1", VariationId: "v1"}}
-				f.Targets =
-					[]*feature.Target{
-						{Variation: id1.String(), Users: []string{"uid1"}},
-						{Variation: id2.String(), Users: []string{"uid2"}},
-					}
+				f.Targets = []*feature.Target{
+					{Variation: id1.String(), Users: []string{"uid1"}},
+					{Variation: id2.String(), Users: []string{"uid2"}},
+				}
 				f.Rules = []*feature.Rule{
 					{
 						Id: id3.String(),
@@ -2070,7 +2080,9 @@ func TestUpdate(t *testing.T) {
 				f.DefaultStrategy = &feature.Strategy{
 					Type: feature.Strategy_ROLLOUT,
 					RolloutStrategy: &feature.RolloutStrategy{
-						Variations: []*feature.RolloutStrategy_Variation{{Variation: id1.String(), Weight: 100}},
+						Variations: []*feature.RolloutStrategy_Variation{
+							{Variation: id1.String(), Weight: 100},
+						},
 					},
 				}
 				f.OffVariation = id1.String()
@@ -2079,7 +2091,7 @@ func TestUpdate(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "success: version not incremented",
+			desc: "success: version not incremented when only non-change fields updated",
 			inputFunc: func() *Feature {
 				return genF()
 			},
@@ -2092,16 +2104,153 @@ func TestUpdate(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "success: granular updates for variations, rules, prerequisites, targets, and tags",
+			inputFunc: func() *Feature {
+				return genF()
+			},
+			// No legacy full-replacement fields provided.
+			name:              nil,
+			description:       nil,
+			tags:              nil,
+			enabled:           nil,
+			archived:          nil,
+			prerequisites:     nil,
+			targets:           nil,
+			rules:             nil,
+			variations:        nil,
+			defaultStrategy:   nil,
+			offVariation:      nil,
+			resetSamplingSeed: false,
+			// Granular changes:
+			variationChanges: []*feature.VariationChange{
+				{
+					ChangeType: feature.ChangeType_UPDATE,
+					Variation: &feature.Variation{
+						Id:          id1.String(),
+						Value:       "true",
+						Name:        "granular v1",
+						Description: "d1 updated",
+					},
+				},
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Variation: &feature.Variation{
+						Id:          id4.String(),
+						Value:       "false",
+						Name:        "new variation",
+						Description: "d new",
+					},
+				},
+			},
+			ruleChanges: []*feature.RuleChange{
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Rule: &feature.Rule{
+						Id: id3.String(),
+						Strategy: &feature.Strategy{
+							Type:          feature.Strategy_FIXED,
+							FixedStrategy: &feature.FixedStrategy{Variation: id1.String()},
+						},
+						Clauses: []*feature.Clause{
+							{
+								Id:        id1.String(),
+								Attribute: "user",
+								Operator:  feature.Clause_EQUALS,
+								Values:    []string{"abc"},
+							},
+						},
+					},
+				},
+			},
+			prerequisiteChanges: []*feature.PrerequisiteChange{
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Prerequisite: &feature.Prerequisite{
+						FeatureId:   "f1",
+						VariationId: "v1",
+					},
+				},
+			},
+			targetChanges: []*feature.TargetChange{
+				{
+					ChangeType: feature.ChangeType_UPDATE,
+					Target: &feature.Target{
+						Variation: id1.String(),
+						Users:     []string{"uid-new"},
+					},
+				},
+			},
+			// New test case: duplicate granular tag changes.
+			tagChanges: []*feature.TagChange{
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Tag:        "new-tag",
+				},
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Tag:        "new-tag", // duplicate
+				},
+			},
+			expectedFunc: func() *Feature {
+				f := genF()
+				// Granular updates on Variations:
+				// Update id1, leave id2, and add new variation id4.
+				f.Variations = []*feature.Variation{
+					{Id: id1.String(), Value: "true", Name: "granular v1", Description: "d1 updated"},
+					f.Variations[1],
+					{Id: id4.String(), Value: "false", Name: "new variation", Description: "d new"},
+				}
+				// Granular target change: update target for variation id1.
+				// AddVariation (for id4) adds a new target automatically.
+				f.Targets = []*feature.Target{
+					{Variation: id1.String(), Users: []string{"uid-new"}},
+					{Variation: id2.String()},
+					{Variation: id4.String()},
+				}
+				// Granular rule change creates a new rule.
+				f.Rules = []*feature.Rule{
+					{
+						Id: id3.String(),
+						Strategy: &feature.Strategy{
+							Type:          feature.Strategy_FIXED,
+							FixedStrategy: &feature.FixedStrategy{Variation: id1.String()},
+						},
+						Clauses: []*feature.Clause{
+							{
+								Id:        id1.String(),
+								Attribute: "user",
+								Operator:  feature.Clause_EQUALS,
+								Values:    []string{"abc"},
+							},
+						},
+					},
+				}
+				// Granular prerequisite change creates a new prerequisite.
+				f.Prerequisites = append(f.Prerequisites, &feature.Prerequisite{
+					FeatureId:   "f1",
+					VariationId: "v1",
+				})
+				// Granular tag changes add "new-tag" only once.
+				if !contains("new-tag", f.Tags) {
+					f.Tags = append(f.Tags, "new-tag")
+				}
+				// Granular changes trigger a version increment.
+				f.Version = 1
+				f.UpdatedAt = time.Now().Unix()
+				return f
+			},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			actual, err := p.inputFunc().Update(
 				p.name, p.description,
 				p.tags, p.enabled, p.archived,
-				p.variations, p.prerequisites,
-				p.targets, p.rules, p.defaultStrategy,
-				p.offVariation,
-				p.resetSamplingSeed,
+				p.defaultStrategy, p.offVariation, p.resetSamplingSeed,
+				p.prerequisites, p.targets, p.rules, p.variations,
+				p.prerequisiteChanges, p.targetChanges, p.ruleChanges, p.variationChanges, p.tagChanges,
 			)
 			if p.expectedErr == nil && actual != nil {
 				assert.Equal(t, p.expectedFunc().Version, actual.Version, p.desc)
@@ -2675,6 +2824,868 @@ func TestValidateRules(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			assert.Equal(t, p.expectedErr, validateRules(p.rules, p.variations) != nil)
+		})
+	}
+}
+
+func TestUpdatePrerequisitesGranular(t *testing.T) {
+	// Generate valid UUIDs for variations.
+	v1, err := uuid.NewUUID()
+	require.NoError(t, err)
+	v2, err := uuid.NewUUID()
+	require.NoError(t, err)
+
+	// Baseline feature with no prerequisites.
+	genF := func() *Feature {
+		return &Feature{
+			Feature: &proto.Feature{
+				Id:            "i",
+				Name:          "n",
+				Description:   "d",
+				Archived:      false,
+				Enabled:       false,
+				Tags:          []string{"t1", "t2"},
+				VariationType: feature.Feature_BOOLEAN,
+				Variations: []*proto.Variation{
+					{Id: v1.String(), Value: "true", Name: "n1", Description: "d1"},
+					{Id: v2.String(), Value: "false", Name: "n2", Description: "d2"},
+				},
+				Prerequisites: []*proto.Prerequisite{},
+				Targets:       []*proto.Target{{Variation: v1.String()}, {Variation: v2.String()}},
+				Rules:         []*proto.Rule{},
+				DefaultStrategy: &proto.Strategy{
+					Type:          proto.Strategy_FIXED,
+					FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+				},
+				OffVariation: v1.String(),
+			},
+		}
+	}
+
+	patterns := []struct {
+		desc                string
+		inputFunc           func() *Feature
+		prerequisiteChanges []*proto.PrerequisiteChange
+		expectedFunc        func() *Feature
+		expectedErr         error
+	}{
+		{
+			desc:      "Prerequisite Create - success",
+			inputFunc: genF,
+			prerequisiteChanges: []*proto.PrerequisiteChange{
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Prerequisite: &proto.Prerequisite{
+						FeatureId:   "f1",
+						VariationId: v1.String(),
+					},
+				},
+			},
+			expectedFunc: func() *Feature {
+				f := genF()
+				_ = f.AddPrerequisite("f1", v1.String())
+				return f
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "Prerequisite Create - error if already exists",
+			inputFunc: func() *Feature {
+				f := genF()
+				_ = f.AddPrerequisite("f1", v1.String())
+				return f
+			},
+			prerequisiteChanges: []*proto.PrerequisiteChange{
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Prerequisite: &proto.Prerequisite{
+						FeatureId:   "f1",
+						VariationId: v1.String(),
+					},
+				},
+			},
+			expectedFunc: func() *Feature {
+				// Expect no change because duplicate creation returns an error.
+				return genF()
+			},
+			expectedErr: errPrerequisiteAlreadyExists,
+		},
+		{
+			desc: "Prerequisite Update - error if not found",
+			inputFunc: func() *Feature {
+				return genF()
+			},
+			prerequisiteChanges: []*proto.PrerequisiteChange{
+				{
+					ChangeType: feature.ChangeType_UPDATE,
+					Prerequisite: &proto.Prerequisite{
+						FeatureId:   "non-existent",
+						VariationId: v2.String(),
+					},
+				},
+			},
+			expectedFunc: func() *Feature {
+				return genF()
+			},
+			expectedErr: errPrerequisiteNotFound,
+		},
+		{
+			desc: "Prerequisite Delete - error if not found",
+			inputFunc: func() *Feature {
+				return genF()
+			},
+			prerequisiteChanges: []*proto.PrerequisiteChange{
+				{
+					ChangeType: feature.ChangeType_DELETE,
+					Prerequisite: &proto.Prerequisite{
+						FeatureId:   "non-existent",
+						VariationId: v1.String(),
+					},
+				},
+			},
+			expectedFunc: func() *Feature {
+				return genF()
+			},
+			expectedErr: errPrerequisiteNotFound,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual, err := p.inputFunc().Update(
+				nil, nil, nil, nil, nil, nil, nil, false,
+				nil, nil, nil, nil,
+				p.prerequisiteChanges, nil, nil, nil, nil,
+			)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+			if err == nil {
+				assert.Equal(t, p.expectedFunc().Prerequisites, actual.Prerequisites, p.desc)
+			}
+		})
+	}
+}
+
+func TestUpdateTargetsGranular(t *testing.T) {
+	// Generate valid UUIDs for variations.
+	v1, err := uuid.NewUUID()
+	require.NoError(t, err)
+	v2, err := uuid.NewUUID()
+	require.NoError(t, err)
+
+	genF := func() *Feature {
+		return &Feature{
+			Feature: &proto.Feature{
+				Id:            "i",
+				Name:          "n",
+				Description:   "d",
+				Archived:      false,
+				Enabled:       false,
+				Tags:          []string{"t1"},
+				VariationType: feature.Feature_BOOLEAN,
+				Variations: []*proto.Variation{
+					{Id: v1.String(), Value: "true", Name: "n1", Description: "d1"},
+					{Id: v2.String(), Value: "false", Name: "n2", Description: "d2"},
+				},
+				Prerequisites: []*proto.Prerequisite{},
+				Targets: []*proto.Target{
+					{Variation: v1.String(), Users: []string{"u1"}},
+					{Variation: v2.String(), Users: []string{"u2"}},
+				},
+				Rules: []*proto.Rule{},
+				DefaultStrategy: &proto.Strategy{
+					Type:          proto.Strategy_FIXED,
+					FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+				},
+				OffVariation: v1.String(),
+			},
+		}
+	}
+
+	patterns := []struct {
+		desc          string
+		inputFunc     func() *Feature
+		targetChanges []*proto.TargetChange
+		expectedFunc  func() *Feature
+		expectedErr   error
+	}{
+		{
+			desc:      "Target Create - error: empty target fields",
+			inputFunc: genF,
+			targetChanges: []*proto.TargetChange{
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Target:     &proto.Target{Variation: "", Users: []string{}},
+				},
+			},
+			expectedFunc: func() *Feature {
+				return genF()
+			},
+			expectedErr: errTargetNotFound,
+		},
+		{
+			desc:      "Target Update - error: target not found",
+			inputFunc: genF,
+			targetChanges: []*proto.TargetChange{
+				{
+					ChangeType: feature.ChangeType_UPDATE,
+					Target:     &proto.Target{Variation: "non-existent", Users: []string{"u-new"}},
+				},
+			},
+			expectedFunc: func() *Feature {
+				return genF()
+			},
+			expectedErr: errTargetNotFound,
+		},
+		{
+			desc:      "Target Delete - error: target not found",
+			inputFunc: genF,
+			targetChanges: []*proto.TargetChange{
+				{
+					ChangeType: feature.ChangeType_DELETE,
+					Target:     &proto.Target{Variation: "non-existent"},
+				},
+			},
+			expectedFunc: func() *Feature {
+				return genF()
+			},
+			expectedErr: errTargetNotFound,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual, err := p.inputFunc().Update(
+				nil, nil, nil, nil, nil, nil, nil, false,
+				nil, nil, nil, nil,
+				nil, p.targetChanges, nil, nil, nil,
+			)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+			if err == nil {
+				assert.Equal(t, p.expectedFunc().Targets, actual.Targets, p.desc)
+			}
+		})
+	}
+}
+
+func TestUpdateRulesGranular(t *testing.T) {
+	// Generate valid UUIDs.
+	v1, err := uuid.NewUUID()
+	require.NoError(t, err)
+	v2, err := uuid.NewUUID()
+	require.NoError(t, err)
+	ruleID, err := uuid.NewUUID()
+	require.NoError(t, err)
+	clauseID, err := uuid.NewUUID()
+	require.NoError(t, err)
+
+	// genF returns a baseline Feature with no rules.
+	genF := func() *Feature {
+		return &Feature{
+			Feature: &proto.Feature{
+				Id:            "i",
+				Name:          "n",
+				Description:   "d",
+				Archived:      false,
+				Enabled:       false,
+				Tags:          []string{"t1"},
+				VariationType: feature.Feature_BOOLEAN,
+				Variations: []*proto.Variation{
+					{Id: v1.String(), Value: "true", Name: "n1", Description: "d1"},
+					{Id: v2.String(), Value: "false", Name: "n2", Description: "d2"},
+				},
+				Prerequisites: []*proto.Prerequisite{},
+				Targets:       []*proto.Target{{Variation: v1.String()}, {Variation: v2.String()}},
+				Rules:         []*proto.Rule{},
+				DefaultStrategy: &proto.Strategy{
+					Type:          proto.Strategy_FIXED,
+					FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+				},
+				OffVariation: v1.String(),
+			},
+		}
+	}
+
+	// Define patterns for rule granular updates including clause validations.
+	patterns := []struct {
+		desc         string
+		inputFunc    func() *Feature
+		ruleChanges  []*proto.RuleChange
+		expectedFunc func() *Feature
+		expectedErr  error
+	}{
+		{
+			desc:      "Rule Create - error: rule required",
+			inputFunc: genF,
+			ruleChanges: []*proto.RuleChange{
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Rule:       nil,
+				},
+			},
+			expectedFunc: func() *Feature { return genF() },
+			expectedErr:  errRuleRequired,
+		},
+		{
+			desc:      "Rule Create - error: nil strategy",
+			inputFunc: genF,
+			ruleChanges: []*proto.RuleChange{
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Rule: &proto.Rule{
+						Id:       ruleID.String(),
+						Strategy: nil, // This should trigger errStrategyRequired
+						Clauses: []*proto.Clause{
+							{
+								Id:        clauseID.String(),
+								Attribute: "attr",
+								Operator:  feature.Clause_EQUALS,
+								Values:    []string{"val"},
+							},
+						},
+					},
+				},
+			},
+			expectedFunc: func() *Feature { return genF() },
+			expectedErr:  errStrategyRequired,
+		},
+		{
+			desc:      "Rule Create - error: no clauses",
+			inputFunc: genF,
+			ruleChanges: []*proto.RuleChange{
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Rule: &proto.Rule{
+						Id: ruleID.String(),
+						Strategy: &proto.Strategy{
+							Type:          feature.Strategy_FIXED,
+							FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+						},
+						Clauses: []*proto.Clause{},
+					},
+				},
+			},
+			expectedFunc: func() *Feature { return genF() },
+			expectedErr:  errors.New("feature: rule must have at least one clause"),
+		},
+		{
+			desc:      "Rule Create - error: clause attribute not empty for SEGMENT operator",
+			inputFunc: genF,
+			ruleChanges: []*proto.RuleChange{
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Rule: &proto.Rule{
+						Id: ruleID.String(),
+						Strategy: &proto.Strategy{
+							Type:          feature.Strategy_FIXED,
+							FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+						},
+						Clauses: []*proto.Clause{
+							{
+								Id:        clauseID.String(),
+								Attribute: "non-empty", // Not allowed for SEGMENT operator
+								Operator:  feature.Clause_SEGMENT,
+								Values:    []string{"val"},
+							},
+						},
+					},
+				},
+			},
+			expectedFunc: func() *Feature { return genF() },
+			expectedErr:  errClauseAttributeNotEmpty,
+		},
+		{
+			desc:      "Rule Create - error: clause values empty for SEGMENT operator",
+			inputFunc: genF,
+			ruleChanges: []*proto.RuleChange{
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Rule: &proto.Rule{
+						Id: ruleID.String(),
+						Strategy: &proto.Strategy{
+							Type:          feature.Strategy_FIXED,
+							FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+						},
+						Clauses: []*proto.Clause{
+							{
+								Id:        clauseID.String(),
+								Attribute: "", // Correct for SEGMENT operator
+								Operator:  feature.Clause_SEGMENT,
+								Values:    []string{}, // Missing values
+							},
+						},
+					},
+				},
+			},
+			expectedFunc: func() *Feature { return genF() },
+			expectedErr:  errClauseValuesEmpty,
+		},
+		{
+			desc:      "Rule Update - error: rule not found",
+			inputFunc: genF,
+			ruleChanges: []*proto.RuleChange{
+				{
+					ChangeType: feature.ChangeType_UPDATE,
+					Rule: &proto.Rule{
+						Id: "non-existent",
+						Strategy: &proto.Strategy{
+							Type:          feature.Strategy_FIXED,
+							FixedStrategy: &proto.FixedStrategy{Variation: v2.String()},
+						},
+						Clauses: []*proto.Clause{
+							{
+								Id:        clauseID.String(),
+								Attribute: "attr",
+								Operator:  feature.Clause_EQUALS,
+								Values:    []string{"val-updated"},
+							},
+						},
+					},
+				},
+			},
+			expectedFunc: func() *Feature { return genF() },
+			expectedErr:  errRuleNotFound,
+		},
+		{
+			desc: "Rule Update - error: clause attribute empty for non-SEGMENT operator",
+			inputFunc: func() *Feature {
+				f := genF()
+				// Pre-add a valid rule.
+				_ = f.AddRule(&proto.Rule{
+					Id: ruleID.String(),
+					Strategy: &proto.Strategy{
+						Type:          feature.Strategy_FIXED,
+						FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+					},
+					Clauses: []*proto.Clause{
+						{
+							Id:        clauseID.String(),
+							Attribute: "attr",
+							Operator:  feature.Clause_EQUALS,
+							Values:    []string{"val"},
+						},
+					},
+				})
+				return f
+			},
+			ruleChanges: []*proto.RuleChange{
+				{
+					ChangeType: feature.ChangeType_UPDATE,
+					Rule: &proto.Rule{
+						Id: ruleID.String(),
+						Strategy: &proto.Strategy{
+							Type:          feature.Strategy_FIXED,
+							FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+						},
+						Clauses: []*proto.Clause{
+							{
+								Id:        clauseID.String(),
+								Attribute: "", // empty attribute for non-SEGMENT operator not allowed
+								Operator:  feature.Clause_EQUALS,
+								Values:    []string{"val-updated"},
+							},
+						},
+					},
+				},
+			},
+			expectedFunc: func() *Feature { return genF() },
+			expectedErr:  errClauseAttributeEmpty,
+		},
+		{
+			desc: "Rule Update - error: clause values empty for non-SEGMENT operator",
+			inputFunc: func() *Feature {
+				f := genF()
+				// Pre-add a valid rule.
+				_ = f.AddRule(&proto.Rule{
+					Id: ruleID.String(),
+					Strategy: &proto.Strategy{
+						Type:          feature.Strategy_FIXED,
+						FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+					},
+					Clauses: []*proto.Clause{
+						{
+							Id:        clauseID.String(),
+							Attribute: "attr",
+							Operator:  feature.Clause_EQUALS,
+							Values:    []string{"val"},
+						},
+					},
+				})
+				return f
+			},
+			ruleChanges: []*proto.RuleChange{
+				{
+					ChangeType: feature.ChangeType_UPDATE,
+					Rule: &proto.Rule{
+						Id: ruleID.String(),
+						Strategy: &proto.Strategy{
+							Type:          feature.Strategy_FIXED,
+							FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+						},
+						Clauses: []*proto.Clause{
+							{
+								Id:        clauseID.String(),
+								Attribute: "attr",
+								Operator:  feature.Clause_EQUALS,
+								Values:    []string{}, // empty values not allowed
+							},
+						},
+					},
+				},
+			},
+			expectedFunc: func() *Feature { return genF() },
+			expectedErr:  errClauseValuesEmpty,
+		},
+		{
+			desc:      "Rule Delete - error: empty rule id",
+			inputFunc: genF,
+			ruleChanges: []*proto.RuleChange{
+				{
+					ChangeType: feature.ChangeType_DELETE,
+					Rule:       &proto.Rule{Id: ""},
+				},
+			},
+			expectedFunc: func() *Feature { return genF() },
+			expectedErr:  errRuleIDRequired,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual, err := p.inputFunc().Update(
+				nil, nil, nil, nil, nil, nil, nil, false, // basic fields
+				nil, nil, nil, nil, // legacy fields
+				nil, nil, p.ruleChanges, nil, nil, // granular change lists
+			)
+			if p.expectedErr != nil {
+				require.Error(t, err, p.desc)
+				assert.Contains(t, err.Error(), p.expectedErr.Error(), p.desc)
+			} else {
+				require.NoError(t, err, p.desc)
+				assert.Equal(t, p.expectedFunc().Rules, actual.Rules, p.desc)
+			}
+		})
+	}
+}
+
+func TestUpdateVariationsGranular(t *testing.T) {
+	// Generate valid UUIDs for variations.
+	v1, err := uuid.NewUUID()
+	require.NoError(t, err)
+	v2, err := uuid.NewUUID()
+	require.NoError(t, err)
+	v3, err := uuid.NewUUID() // for create success
+	require.NoError(t, err)
+
+	// Baseline generator for BOOLEAN type.
+	genFBoolean := func() *Feature {
+		return &Feature{
+			Feature: &proto.Feature{
+				Id:            "i",
+				Name:          "n",
+				Description:   "d",
+				Archived:      false,
+				Enabled:       false,
+				Tags:          []string{"t1"},
+				VariationType: feature.Feature_BOOLEAN,
+				Variations: []*proto.Variation{
+					{Id: v1.String(), Value: "true", Name: "n1", Description: "d1"},
+					{Id: v2.String(), Value: "false", Name: "n2", Description: "d2"},
+				},
+				Prerequisites: []*proto.Prerequisite{},
+				Targets:       []*proto.Target{{Variation: v1.String()}, {Variation: v2.String()}},
+				Rules:         []*proto.Rule{},
+				DefaultStrategy: &proto.Strategy{
+					Type:          proto.Strategy_FIXED,
+					FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+				},
+				OffVariation: v1.String(),
+			},
+		}
+	}
+
+	// Baseline generator for JSON type.
+	genFJSON := func() *Feature {
+		f := genFBoolean()
+		f.VariationType = feature.Feature_JSON
+		// Set valid JSON values as baseline.
+		f.Variations[0].Value = `{"default":"json-value-1"}`
+		f.Variations[1].Value = `{"default":"json-value-2"}`
+		// Also update default strategy and off variation accordingly.
+		f.DefaultStrategy.FixedStrategy.Variation = f.Variations[0].Id
+		f.OffVariation = f.Variations[0].Id
+		return f
+	}
+
+	// Define test patterns.
+	patterns := []struct {
+		desc             string
+		inputFunc        func() *Feature
+		variationChanges []*proto.VariationChange
+		expectedFunc     func() *Feature
+		expectedErr      error
+	}{
+		{
+			desc:      "Variation Create - success",
+			inputFunc: genFBoolean,
+			variationChanges: []*proto.VariationChange{
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Variation: &proto.Variation{
+						Id:          v3.String(),
+						Value:       "true",
+						Name:        "n3",
+						Description: "d3",
+					},
+				},
+			},
+			expectedFunc: func() *Feature {
+				f := genFBoolean()
+				_ = f.AddVariation(v3.String(), "true", "n3", "d3")
+				return f
+			},
+			expectedErr: nil,
+		},
+		{
+			desc:      "Variation Update - success",
+			inputFunc: genFBoolean,
+			variationChanges: []*proto.VariationChange{
+				{
+					ChangeType: feature.ChangeType_UPDATE,
+					Variation: &proto.Variation{
+						Id:          v1.String(),
+						Value:       "true",
+						Name:        "n1-updated",
+						Description: "d1-updated",
+					},
+				},
+			},
+			expectedFunc: func() *Feature {
+				f := genFBoolean()
+				_ = f.ChangeVariation(&proto.Variation{
+					Id:          v1.String(),
+					Value:       "true",
+					Name:        "n1-updated",
+					Description: "d1-updated",
+				})
+				return f
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "Variation Delete - success",
+			inputFunc: func() *Feature {
+				f := genFBoolean()
+				_ = f.AddVariation(v3.String(), "true", "n3", "d3")
+				return f
+			},
+			variationChanges: []*proto.VariationChange{
+				{
+					ChangeType: feature.ChangeType_DELETE,
+					Variation:  &proto.Variation{Id: v2.String()},
+				},
+			},
+			expectedFunc: func() *Feature {
+				f := genFBoolean()
+				_ = f.AddVariation(v3.String(), "true", "n3", "d3")
+				_ = f.RemoveVariation(v2.String())
+				return f
+			},
+			expectedErr: nil,
+		},
+		{
+			desc:      "Variation Update - error: nil variation",
+			inputFunc: genFBoolean,
+			variationChanges: []*proto.VariationChange{
+				{
+					ChangeType: feature.ChangeType_UPDATE,
+					Variation:  nil,
+				},
+			},
+			expectedFunc: func() *Feature { return genFBoolean() },
+			expectedErr:  errVariationRequired,
+		},
+		{
+			desc:      "Variation Update - error: empty name",
+			inputFunc: genFBoolean,
+			variationChanges: []*proto.VariationChange{
+				{
+					ChangeType: feature.ChangeType_UPDATE,
+					Variation: &proto.Variation{
+						Id:          v1.String(),
+						Value:       "true",
+						Name:        "",
+						Description: "d1-updated",
+					},
+				},
+			},
+			expectedFunc: func() *Feature { return genFBoolean() },
+			expectedErr:  errVariationNameRequired,
+		},
+		{
+			desc:      "Variation Update - success: JSON type, valid JSON object",
+			inputFunc: func() *Feature { return genFJSON() },
+			variationChanges: []*proto.VariationChange{
+				{
+					ChangeType: feature.ChangeType_UPDATE,
+					Variation: &proto.Variation{
+						Id:          v1.String(),
+						Value:       `{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}`,
+						Name:        "n1-updated",
+						Description: "d1-updated",
+					},
+				},
+			},
+			expectedFunc: func() *Feature {
+				f := genFJSON()
+				_ = f.ChangeVariation(&proto.Variation{
+					Id:          v1.String(),
+					Value:       `{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}`,
+					Name:        "n1-updated",
+					Description: "d1-updated",
+				})
+				return f
+			},
+			expectedErr: nil,
+		},
+		{
+			desc:      "Variation Update - success: JSON type, valid JSON array",
+			inputFunc: func() *Feature { return genFJSON() },
+			variationChanges: []*proto.VariationChange{
+				{
+					ChangeType: feature.ChangeType_UPDATE,
+					Variation: &proto.Variation{
+						Id:          v1.String(),
+						Value:       `[{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}]`,
+						Name:        "n1-updated",
+						Description: "d1-updated",
+					},
+				},
+			},
+			expectedFunc: func() *Feature {
+				f := genFJSON()
+				_ = f.ChangeVariation(&proto.Variation{
+					Id:          v1.String(),
+					Value:       `[{"foo":"foo","fee":20,"hoo": [1, "lee", null], "boo": true}]`,
+					Name:        "n1-updated",
+					Description: "d1-updated",
+				})
+				return f
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual, err := p.inputFunc().Update(
+				nil, nil, nil, nil, nil, nil, nil, false, // basic fields
+				nil, nil, nil, nil, // legacy fields
+				nil, nil, nil, p.variationChanges, nil, // granular change lists
+			)
+			if p.expectedErr != nil {
+				require.Error(t, err, p.desc)
+				assert.Contains(t, err.Error(), p.expectedErr.Error(), p.desc)
+			} else {
+				require.NoError(t, err, p.desc)
+				assert.Equal(t, p.expectedFunc().Variations, actual.Variations, p.desc)
+			}
+		})
+	}
+}
+
+func TestUpdateTagsGranular(t *testing.T) {
+	v1, err := uuid.NewUUID()
+	require.NoError(t, err)
+	v2, err := uuid.NewUUID()
+	require.NoError(t, err)
+	genF := func() *Feature {
+		return &Feature{
+			Feature: &proto.Feature{
+				Id:            "i",
+				Name:          "n",
+				Description:   "d",
+				Archived:      false,
+				Enabled:       false,
+				Tags:          []string{"t1", "t2"},
+				VariationType: feature.Feature_BOOLEAN,
+				Variations: []*proto.Variation{
+					{Id: v1.String(), Value: "true", Name: "n1", Description: "d1"},
+					{Id: v2.String(), Value: "false", Name: "n2", Description: "d2"},
+				},
+				Prerequisites: []*proto.Prerequisite{},
+				Targets:       []*proto.Target{{Variation: v1.String()}, {Variation: v2.String()}},
+				Rules:         []*proto.Rule{},
+				DefaultStrategy: &proto.Strategy{
+					Type:          proto.Strategy_FIXED,
+					FixedStrategy: &proto.FixedStrategy{Variation: v1.String()},
+				},
+				OffVariation: v1.String(),
+			},
+		}
+	}
+
+	patterns := []struct {
+		desc         string
+		inputFunc    func() *Feature
+		tagChanges   []*proto.TagChange
+		expectedFunc func() *Feature
+		expectedErr  error
+	}{
+		{
+			desc:      "Tag Create - error: duplicate create should not add duplicate",
+			inputFunc: genF,
+			tagChanges: []*proto.TagChange{
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Tag:        "new-tag",
+				},
+				{
+					ChangeType: feature.ChangeType_CREATE,
+					Tag:        "new-tag",
+				},
+			},
+			expectedFunc: func() *Feature {
+				f := genF()
+				_ = f.AddTag("new-tag")
+				return f
+			},
+			expectedErr: nil,
+		},
+		{
+			desc:      "Tag Delete - error: tag not found",
+			inputFunc: genF,
+			tagChanges: []*proto.TagChange{
+				{
+					ChangeType: feature.ChangeType_DELETE,
+					Tag:        "non-existent-tag",
+				},
+			},
+			expectedFunc: func() *Feature {
+				return genF()
+			},
+			expectedErr: errors.New("feature: value not found"),
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual, err := p.inputFunc().Update(
+				nil, nil, nil, nil, nil, nil, nil, false,
+				nil, nil, nil, nil,
+				nil, nil, nil, nil, p.tagChanges,
+			)
+			if p.expectedErr != nil {
+				assert.Error(t, err, p.desc)
+				assert.Contains(t, err.Error(), p.expectedErr.Error(), p.desc)
+			} else {
+				assert.NoError(t, err, p.desc)
+				tagSet := make(map[string]struct{})
+				for _, tag := range actual.Tags {
+					tagSet[tag] = struct{}{}
+				}
+				assert.Equal(t, len(actual.Tags), len(tagSet), p.desc)
+				assert.Equal(t, p.expectedFunc().Tags, actual.Tags, p.desc)
+			}
 		})
 	}
 }
