@@ -29,7 +29,7 @@ const (
 	urlTemplateAccount      = "%s/%s/accounts/%s"
 	urlTemplateAPIKey       = "%s/%s/apikeys/%s"
 	urlTemplateSegment      = "%s/%s/segments/%s"
-	urlTemplateAutoOpsRule  = "%s/%s/features/%s/settings"
+	urlTemplateAutoOpsRule  = "%s/%s/features/%s/autoops"
 	urlTemplatePush         = "%s/%s/settings/pushes/%s"
 	urlTemplateSubscription = "%s/%s/settings/notifications/%s"
 	urlTemplateTag          = "%s/%s/tags/%s"
