@@ -20,6 +20,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
+	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
@@ -56,7 +57,21 @@ func (s *authService) SignIn(
 	if err != nil {
 		return nil, err
 	}
-	token, err := s.generateToken(ctx, config.Email, organizations, localizer)
+
+	// Check if the user has at least one account enabled in any Organization
+	account, err := s.checkAccountStatus(ctx, config.Email, organizations, localizer)
+	if err != nil {
+		s.logger.Error("Failed to check account",
+			zap.Error(err),
+			zap.String("email", config.Email),
+			zap.Any("organizations", organizations),
+		)
+		return nil, err
+	}
+	accountDomain := domain.AccountV2{AccountV2: account.Account}
+	isSystemAdmin := s.hasSystemAdminOrganization(organizations)
+
+	token, err := s.generateToken(ctx, config.Email, accountDomain, isSystemAdmin, localizer)
 	if err != nil {
 		return nil, err
 	}

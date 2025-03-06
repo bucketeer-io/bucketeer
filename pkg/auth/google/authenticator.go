@@ -25,7 +25,6 @@ import (
 	"golang.org/x/oauth2/google"
 
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
-	"github.com/bucketeer-io/bucketeer/pkg/token"
 )
 
 var (
@@ -50,18 +49,15 @@ type googleUserInfo struct {
 
 type Authenticator struct {
 	config *auth.GoogleConfig
-	signer token.Signer
 	logger *zap.Logger
 }
 
 func NewAuthenticator(
 	config *auth.GoogleConfig,
-	signer token.Signer,
 	logger *zap.Logger,
 ) *Authenticator {
 	return &Authenticator{
 		config: config,
-		signer: signer,
 		logger: logger.Named("auth"),
 	}
 }

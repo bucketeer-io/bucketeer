@@ -24,6 +24,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	"github.com/bucketeer-io/bucketeer/proto/feature"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -35,6 +36,7 @@ var (
 	ErrExperimentStartIsAfterStop  = errors.New("experiment: start is after stop timestamp")
 	ErrExperimentStopIsBeforeStart = errors.New("experiment: stop is before start timestamp")
 	ErrExperimentStopIsBeforeNow   = errors.New("experiment: stop is same or older than now timestamp")
+	ErrBaseVariationNotFound       = errors.New("experiment: base variation not found")
 )
 
 type Experiment struct {
@@ -57,6 +59,9 @@ func NewExperiment(
 	if err != nil {
 		return nil, err
 	}
+	if !validateBaseVariation(baseVariationID, variations) {
+		return nil, ErrBaseVariationNotFound
+	}
 	goalIDs = removeDuplicated(goalIDs)
 	now := time.Now().Unix()
 	return &Experiment{
@@ -78,6 +83,15 @@ func NewExperiment(
 			Maintainer:      maintainer,
 		},
 	}, nil
+}
+
+func validateBaseVariation(v string, vs []*feature.Variation) bool {
+	for i := range vs {
+		if vs[i].Id == v {
+			return true
+		}
+	}
+	return false
 }
 
 func removeDuplicated(args []string) []string {

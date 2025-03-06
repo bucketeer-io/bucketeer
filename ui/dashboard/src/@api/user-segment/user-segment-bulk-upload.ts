@@ -1,6 +1,6 @@
 import axiosClient from '@api/axios-client';
 
-export interface UserSegmentBulkUploadParams {
+export interface UserSegmentBulkUploadPayload {
   segmentId: string;
   environmentId?: string;
   data?: string;
@@ -8,7 +8,7 @@ export interface UserSegmentBulkUploadParams {
 }
 
 export const userSegmentBulkUpload = async (
-  params?: UserSegmentBulkUploadParams
+  params?: UserSegmentBulkUploadPayload
 ) => {
   return axiosClient
     .post('/v1/segment_users/bulk_upload', params)

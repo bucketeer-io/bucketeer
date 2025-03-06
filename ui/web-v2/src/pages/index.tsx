@@ -64,6 +64,12 @@ import { GoalIndexPage } from './goal';
 import { SegmentIndexPage } from './segment';
 import { SettingsIndexPage } from './settings';
 import { getToken } from '../storage/token';
+import { switchOrganization } from '../modules/auth';
+import { jwtDecode } from 'jwt-decode';
+
+interface DecodedToken {
+  organization_id: string;
+}
 
 export const App: FC = memo(() => {
   useEffect(() => {
@@ -104,10 +110,12 @@ export const Root: FC = memo(() => {
   const history = useHistory();
 
   const token = getToken();
-
   const hasToken = token?.accessToken ? true : false;
-
   const [isInitialLoading, setIsInitialLoading] = useState(hasToken);
+
+  const parsedToken: DecodedToken = token
+    ? jwtDecode(token?.accessToken)
+    : null;
 
   useEffect(() => {
     if (hasToken) {
@@ -137,10 +145,23 @@ export const Root: FC = memo(() => {
   }, [hasToken]);
 
   const handleSubmit = () => {
-    setOrganizationId(selectedOrganization.value);
-    dispatch(fetchMe({ organizationId: selectedOrganization.value })).then(() =>
-      history.push(PAGE_PATH_ROOT)
-    );
+    const { value: organizationId } = selectedOrganization;
+
+    setOrganizationId(organizationId);
+
+    const fetchUserData = () => {
+      dispatch(fetchMe({ organizationId, shouldRefreshToken: false })).then(
+        () => history.push(PAGE_PATH_ROOT)
+      );
+    };
+
+    if (parsedToken.organization_id === organizationId) {
+      fetchUserData();
+    } else {
+      dispatch(
+        switchOrganization({ organizationId, accessToken: token.accessToken })
+      ).then(fetchUserData);
+    }
   };
 
   if (isInitialLoading) {
@@ -165,6 +186,7 @@ export const Root: FC = memo(() => {
       </div>
     );
   }
+
   if (hasToken && myOrganization.length > 1) {
     return (
       <SelectOrganization
