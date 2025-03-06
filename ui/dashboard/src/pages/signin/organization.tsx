@@ -1,10 +1,12 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import { switchOrganization } from '@api/auth';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuth } from 'auth';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { setOrgIdStorage } from 'storage/organization';
+import { getTokenStorage } from 'storage/token';
 import * as yup from 'yup';
 import Button from 'components/button';
 import {
@@ -23,7 +25,7 @@ const formSchema = yup.object().shape({
 const SelectOrganization = () => {
   const { t } = useTranslation(['auth', 'common']);
   const navigate = useNavigate();
-  const { myOrganizations, onMeFetcher } = useAuth();
+  const { myOrganizations, onMeFetcher, syncSignIn } = useAuth();
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -32,12 +34,25 @@ const SelectOrganization = () => {
     }
   });
 
-  const onSubmit: SubmitHandler<{ organization: string }> = values => {
-    if (values.organization) {
-      setOrgIdStorage(values.organization);
-      return onMeFetcher({ organizationId: values.organization }).then(() => {
-        navigate(PAGE_PATH_ROOT);
-      });
+  const onSubmit: SubmitHandler<{ organization: string }> = async values => {
+    try {
+      const { organization } = values;
+      if (organization) {
+        const token = getTokenStorage();
+        setOrgIdStorage(organization);
+        if (token) {
+          const resp = await switchOrganization({
+            accessToken: token.accessToken,
+            organizationId: organization
+          });
+          await syncSignIn(resp.token);
+        }
+        return onMeFetcher({ organizationId: organization }).then(() => {
+          navigate(PAGE_PATH_ROOT);
+        });
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -92,7 +107,7 @@ const SelectOrganization = () => {
             loading={form.formState.isSubmitting}
             className="w-full mt-10"
           >
-            {t(`continue`)}
+            {t(`common:continue`)}
           </Button>
         </Form>
       </FormProvider>

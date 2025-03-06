@@ -145,10 +145,10 @@ export const EnvironmentRoot = memo(
     const currentEnv = getCurrentEnvironment(account);
 
     useEffect(() => {
-      if (!envUrlCode) {
-        navigate(`${PAGE_PATH_ROOT}${currentEnv.urlCode}${PAGE_PATH_FEATURES}`);
-      }
-    }, [account, envUrlCode]);
+      navigate(
+        `${PAGE_PATH_ROOT}${currentEnv.urlCode ?? envUrlCode}${PAGE_PATH_FEATURES}`
+      );
+    }, [account, envUrlCode, currentEnv]);
 
     return (
       <Routes>

@@ -73,3 +73,12 @@ export interface ConsoleAccountResponse {
 export interface AuthUrlResponse {
   url: string;
 }
+
+export interface SwitchOrganizationPayload {
+  accessToken: string;
+  organizationId: string;
+}
+
+export interface SwitchOrganizationResponse {
+  token: AuthToken;
+}
