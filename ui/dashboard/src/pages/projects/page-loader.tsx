@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { Project } from '@types';
 import PageLayout from 'elements/page-layout';
@@ -9,12 +10,18 @@ import AddProjectModal from './project-modal/add-project-modal';
 import EditProjectModal from './project-modal/edit-project-modal';
 
 const PageLoader = () => {
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
   const {
     data: collection,
     isLoading,
     refetch,
     isError
-  } = useFetchProjects({ pageSize: 1 });
+  } = useFetchProjects({
+    pageSize: 1,
+    organizationId: currentEnvironment.organizationId
+  });
 
   const [selectedProject, setSelectedProject] = useState<Project>();
 

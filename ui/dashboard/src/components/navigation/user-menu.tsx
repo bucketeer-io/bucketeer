@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { AvatarCommand } from '@api/account/account-updater';
+import { AccountAvatar } from '@api/account/account-updater';
 import * as Popover from '@radix-ui/react-popover';
 import defaultAvatar from 'assets/avatars/default.svg';
 import { useAuth } from 'auth';
@@ -18,7 +18,7 @@ const UserMenu = () => {
   const { t } = useTranslation(['common']);
   const { logout, myOrganizations, consoleAccount } = useAuth();
 
-  const [selectedAvatar, setSelectedAvatar] = useState<AvatarCommand | null>(
+  const [selectedAvatar, setSelectedAvatar] = useState<AccountAvatar | null>(
     null
   );
 
@@ -52,7 +52,7 @@ const UserMenu = () => {
     [avatar, defaultAvatar]
   );
 
-  const onSelectAvatar = (avatar: AvatarCommand | null, cb?: () => void) => {
+  const onSelectAvatar = (avatar: AccountAvatar | null, cb?: () => void) => {
     setSelectedAvatar(avatar);
     onOpenProfileModal();
     if (cb) cb();

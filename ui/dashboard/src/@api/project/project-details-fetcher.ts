@@ -6,6 +6,7 @@ import { stringifyParams } from 'utils/search-params';
 
 export interface ProjectDetailsFetcherParams {
   id: string;
+  organizationId: string;
 }
 export interface ProjectDetailsResponse {
   project: Project;

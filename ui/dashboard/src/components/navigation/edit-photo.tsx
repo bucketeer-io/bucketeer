@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { AvatarCommand } from '@api/account/account-updater';
+import { AccountAvatar } from '@api/account/account-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -24,7 +24,7 @@ const formSchema = yup.object().shape({
 export type EditPhotoProfileProps = {
   isOpen: boolean;
   onClose: () => void;
-  onUpload: (avatar: AvatarCommand) => void;
+  onUpload: (avatar: AccountAvatar) => void;
 };
 
 const EditPhotoProfileModal = ({

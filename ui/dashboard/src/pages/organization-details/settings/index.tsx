@@ -63,31 +63,34 @@ const OrganizationSettings = ({
     }
   });
 
-  const onSubmit: SubmitHandler<OrganizationSettingsForm> = values => {
-    return organizationUpdater({
-      id: orgDetailsId,
-      changeDescriptionCommand: {
+  const onSubmit: SubmitHandler<OrganizationSettingsForm> = async values => {
+    try {
+      const resp = await organizationUpdater({
+        id: orgDetailsId,
+        name: values.name,
+        ownerEmail: values.ownerEmail,
         description: values.description
-      },
-      renameCommand: {
-        name: values.name
-      },
-      changeOwnerEmailCommand: {
-        ownerEmail: values.ownerEmail
+      });
+      if (resp) {
+        invalidateOrganizationDetails(queryClient, { id: orgDetailsId });
+        invalidateAccounts(queryClient);
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: (
+            <span>
+              <b>{values.name}</b> {`has been successfully updated!`}
+            </span>
+          )
+        });
       }
-    }).then(() => {
-      invalidateOrganizationDetails(queryClient, { id: orgDetailsId });
-      invalidateAccounts(queryClient);
+    } catch (error) {
       notify({
         toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {`has been successfully updated!`}
-          </span>
-        )
+        messageType: 'error',
+        message: (error as Error)?.message || 'Something went wrong.'
       });
-    });
+    }
   };
 
   return (

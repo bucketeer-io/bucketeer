@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
-import { AvatarCommand } from '@api/account/account-updater';
+import { AccountAvatar } from '@api/account/account-updater';
 import blueAvatar from 'assets/avatars/blue.svg';
 import greenAvatar from 'assets/avatars/green.svg';
 import orangeAvatar from 'assets/avatars/orange.svg';
@@ -19,7 +19,7 @@ import DialogModal from 'components/modal/dialog';
 export type UploadAvatarProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSelectAvatar: (avt: AvatarCommand | null) => void;
+  onSelectAvatar: (avt: AccountAvatar | null) => void;
   onUploadPhoto: () => void;
 };
 
@@ -97,7 +97,7 @@ const UploadAvatarModal = ({
   );
 
   const handleConvertImageToBase64 =
-    useCallback(async (): Promise<AvatarCommand | null> => {
+    useCallback(async (): Promise<AccountAvatar | null> => {
       if (!currentAvatar?.image) return null;
       const response = await fetch(currentAvatar.image);
       const blob = await response.blob();

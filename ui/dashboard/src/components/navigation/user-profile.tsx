@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { IconEditOutlined } from 'react-icons-material-design';
-import { accountUpdater, AvatarCommand } from '@api/account/account-updater';
+import { accountUpdater, AccountAvatar } from '@api/account/account-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
 import defaultAvatar from 'assets/avatars/default.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -38,7 +38,7 @@ const formSchema = yup.object().shape({
 });
 
 export type FilterProps = {
-  selectedAvatar: AvatarCommand | null;
+  selectedAvatar: AccountAvatar | null;
   isOpen: boolean;
   onClose: () => void;
   onEditAvatar: () => void;
