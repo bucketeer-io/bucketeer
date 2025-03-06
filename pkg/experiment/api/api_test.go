@@ -80,17 +80,31 @@ func createExperimentService(c *gomock.Controller, specifiedEnvironmentId *strin
 	featureClientMock := featureclientmock.NewMockClient(c)
 	fr := &featureproto.GetFeatureResponse{
 		Feature: &featureproto.Feature{
-			Id:         "fid",
-			Version:    1,
-			Variations: []*featureproto.Variation{},
+			Id:      "fid",
+			Version: 1,
+			Variations: []*featureproto.Variation{
+				{
+					Id: "variation-a-id",
+				},
+				{
+					Id: "variation-b-id",
+				},
+			},
 		},
 	}
 	featureClientMock.EXPECT().GetFeature(gomock.Any(), gomock.Any()).Return(fr, nil).AnyTimes()
 	fsr := &featureproto.GetFeaturesResponse{
 		Features: []*featureproto.Feature{{
-			Id:         "fid",
-			Version:    1,
-			Variations: []*featureproto.Variation{},
+			Id:      "fid",
+			Version: 1,
+			Variations: []*featureproto.Variation{
+				{
+					Id: "variation-a-id",
+				},
+				{
+					Id: "variation-b-id",
+				},
+			},
 		}},
 	}
 	featureClientMock.EXPECT().GetFeatures(gomock.Any(), gomock.Any()).Return(fsr, nil).AnyTimes()

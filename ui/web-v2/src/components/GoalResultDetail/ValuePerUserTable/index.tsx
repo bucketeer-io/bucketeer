@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow
 } from '../Table';
+import { isNumber } from '../../../utils/isNumber';
 
 const createHeadCells = (): Array<HeaderCell> => [
   {
@@ -96,16 +97,14 @@ export const ValuePerUserTable: FC<ValuePerUserTableProps> = ({
               </TableCell>
               <TableCell textLeft={true}>
                 {' '}
-                {Number.isNaN(valuePerUser)
-                  ? 'n/a'
-                  : valuePerUser.toFixed(2)}{' '}
+                {isNumber(valuePerUser) ? valuePerUser.toFixed(2) : '0.00'}
               </TableCell>
               <TableCell textLeft={true}>
                 {baseVariationId === variationResult.variationId
                   ? 'Baseline'
-                  : Number.isNaN(valuePerUser - baseValuePerUser)
-                    ? 'n/a'
-                    : (valuePerUser - baseValuePerUser).toFixed(1)}{' '}
+                  : isNumber(valuePerUser - baseValuePerUser)
+                    ? (valuePerUser - baseValuePerUser).toFixed(1)
+                    : '0.0'}{' '}
               </TableCell>
               <TableCell textLeft={true}>
                 {' '}

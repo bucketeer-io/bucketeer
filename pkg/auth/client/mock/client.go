@@ -133,3 +133,23 @@ func (mr *MockClientMockRecorder) SignIn(ctx, in any, opts ...any) *gomock.Call 
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignIn", reflect.TypeOf((*MockClient)(nil).SignIn), varargs...)
 }
+
+// SwitchOrganization mocks base method.
+func (m *MockClient) SwitchOrganization(ctx context.Context, in *auth.SwitchOrganizationRequest, opts ...grpc.CallOption) (*auth.SwitchOrganizationResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "SwitchOrganization", varargs...)
+	ret0, _ := ret[0].(*auth.SwitchOrganizationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SwitchOrganization indicates an expected call of SwitchOrganization.
+func (mr *MockClientMockRecorder) SwitchOrganization(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SwitchOrganization", reflect.TypeOf((*MockClient)(nil).SwitchOrganization), varargs...)
+}

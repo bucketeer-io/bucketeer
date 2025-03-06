@@ -59,7 +59,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 	}
 
 	if req.Command == nil {
-		return s.CreateProgressiveRolloutNoCommand(ctx, req, localizer, editor)
+		return s.createProgressiveRolloutNoCommand(ctx, req, localizer, editor)
 	}
 
 	if err := s.validateCreateProgressiveRolloutRequest(ctx, req, localizer); err != nil {
@@ -135,7 +135,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 	}, nil
 }
 
-func (s *AutoOpsService) CreateProgressiveRolloutNoCommand(
+func (s *AutoOpsService) createProgressiveRolloutNoCommand(
 	ctx context.Context,
 	req *autoopsproto.CreateProgressiveRolloutRequest,
 	localizer locale.Localizer,

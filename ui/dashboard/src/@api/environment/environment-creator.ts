@@ -1,7 +1,7 @@
 import axiosClient from '@api/axios-client';
 import { Environment } from '@types';
 
-export interface EnvironmentCreatorCommand {
+export interface EnvironmentCreatorParams {
   name: string;
   urlCode: string;
   description?: string;
@@ -9,12 +9,8 @@ export interface EnvironmentCreatorCommand {
   requireComment: boolean;
 }
 
-export interface EnvironmentCreatorParams {
-  command: EnvironmentCreatorCommand;
-}
-
 export interface EnvironmentResponse {
-  environment: Array<Environment>;
+  environment: Environment;
 }
 
 export const environmentCreator = async (

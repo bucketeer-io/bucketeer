@@ -1,4 +1,4 @@
-import { Evaluator } from './evaluation';
+import { Evaluator, getFeatureIDsDependsOn } from './evaluation';
 import { SegmentUser, SegmentUsers } from './proto/feature/segment_pb';
 import { Feature } from './proto/feature/feature_pb';
 import { NewUserEvaluations } from './userEvaluation';
@@ -31,7 +31,7 @@ import {
 import { SourceId } from './proto/event/client/event_pb';
 import { GatewayClient, ServiceError } from './proto/gateway/service_pb_service';
 
-export { Evaluator, NewUserEvaluations, Evaluation, UserEvaluations };
+export { Evaluator, NewUserEvaluations, Evaluation, UserEvaluations, getFeatureIDsDependsOn };
 export { User, SegmentUser, SegmentUsers, Feature };
 export { Strategy, Clause, Reason };
 export {

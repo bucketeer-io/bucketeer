@@ -40,12 +40,22 @@ type AuthServiceSignIn = {
   readonly responseType: typeof proto_auth_service_pb.SignInResponse;
 };
 
+type AuthServiceSwitchOrganization = {
+  readonly methodName: string;
+  readonly service: typeof AuthService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_auth_service_pb.SwitchOrganizationRequest;
+  readonly responseType: typeof proto_auth_service_pb.SwitchOrganizationResponse;
+};
+
 export class AuthService {
   static readonly serviceName: string;
   static readonly ExchangeToken: AuthServiceExchangeToken;
   static readonly GetAuthenticationURL: AuthServiceGetAuthenticationURL;
   static readonly RefreshToken: AuthServiceRefreshToken;
   static readonly SignIn: AuthServiceSignIn;
+  static readonly SwitchOrganization: AuthServiceSwitchOrganization;
 }
 
 export type ServiceError = {
@@ -151,6 +161,21 @@ export class AuthServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_auth_service_pb.SignInResponse | null
+    ) => void
+  ): UnaryResponse;
+  switchOrganization(
+    requestMessage: proto_auth_service_pb.SwitchOrganizationRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.SwitchOrganizationResponse | null
+    ) => void
+  ): UnaryResponse;
+  switchOrganization(
+    requestMessage: proto_auth_service_pb.SwitchOrganizationRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.SwitchOrganizationResponse | null
     ) => void
   ): UnaryResponse;
 }

@@ -1,7 +1,7 @@
 import axiosClient from '@api/axios-client';
 import { Organization } from '@types';
 
-export interface OrganizationCreatorCommand {
+export interface OrganizationCreatorPayload {
   name: string;
   urlCode: string;
   description?: string;
@@ -15,7 +15,7 @@ export interface OrganizationResponse {
 }
 
 export const organizationCreator = async (
-  params?: OrganizationCreatorCommand
+  params?: OrganizationCreatorPayload
 ): Promise<OrganizationResponse> => {
   return axiosClient
     .post<OrganizationResponse>('/v1/environment/create_organization', params)

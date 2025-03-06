@@ -347,10 +347,13 @@ func (s *experimentService) CreateExperiment(
 	)
 	if err != nil {
 		s.logger.Error(
-			"Failed to create a new experiment",
+			"Failed to create experiment",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
+				zap.String("featureId", resp.Feature.Id),
+				zap.String("baseVariationId", req.BaseVariationId),
+				zap.Any("featureVariations", resp.Feature.Variations),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -464,10 +467,13 @@ func (s *experimentService) createExperimentNoCommand(
 	)
 	if err != nil {
 		s.logger.Error(
-			"Failed to create a new experiment",
+			"Failed to create experiment",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
+				zap.String("featureId", getFeatureResp.Feature.Id),
+				zap.String("baseVariationId", req.BaseVariationId),
+				zap.Any("featureVariations", getFeatureResp.Feature.Variations),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

@@ -1,15 +1,15 @@
 import axiosClient from '@api/axios-client';
 import { Push } from '@types';
 
-export type PushCreatorPayload = {
+export interface PushCreatorPayload {
   tags: string[];
   name: string;
   fcmServiceAccount: Uint8Array | string;
   environmentId: string;
-};
+}
 
 export interface PushCreatorResponse {
-  push: Array<Push>;
+  push: Push;
 }
 
 export const pushCreator = async (
