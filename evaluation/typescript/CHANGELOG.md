@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.3] (2025-03-07)
+
+### Fix
+
+- fix(evaluation/typescript): missing proto import when build release lib (#1567)[https://github.com/bucketeer-io/bucketeer/pull/1567]
+
 ## [0.0.2] (2025-03-04)
 
 ### Miscellaneous
