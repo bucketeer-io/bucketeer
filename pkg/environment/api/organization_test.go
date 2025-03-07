@@ -20,7 +20,6 @@ import (
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	storagemock "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"

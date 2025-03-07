@@ -285,7 +285,6 @@ func (s *EnvironmentService) createEnvironmentV2NoCommand(
 	}
 
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		environmentStorage := v2es.NewEnvironmentStorage(s.mysqlClient)
 		e, err := domainevent.NewAdminEvent(
 			editor,
 			eventproto.Event_ENVIRONMENT,
@@ -311,7 +310,7 @@ func (s *EnvironmentService) createEnvironmentV2NoCommand(
 		if err := s.publisher.Publish(ctx, e); err != nil {
 			return err
 		}
-		return environmentStorage.CreateEnvironmentV2(ctxWithTx, newEnvironment)
+		return s.environmentStorage.CreateEnvironmentV2(ctxWithTx, newEnvironment)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrEnvironmentAlreadyExists) {
@@ -540,8 +539,7 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 	}
 
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		environmentStorage := v2es.NewEnvironmentStorage(s.mysqlClient)
-		environment, err := environmentStorage.GetEnvironmentV2(ctxWithTx, req.Id)
+		environment, err := s.environmentStorage.GetEnvironmentV2(ctxWithTx, req.Id)
 		if err != nil {
 			return err
 		}
@@ -569,7 +567,7 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 		if err := s.publisher.Publish(ctx, event); err != nil {
 			return err
 		}
-		return environmentStorage.UpdateEnvironmentV2(ctxWithTx, updated)
+		return s.environmentStorage.UpdateEnvironmentV2(ctxWithTx, updated)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrEnvironmentNotFound) || errors.Is(err, v2es.ErrEnvironmentUnexpectedAffectedRows) {
