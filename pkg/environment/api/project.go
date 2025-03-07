@@ -93,8 +93,7 @@ func (s *EnvironmentService) getProject(
 	id string,
 	localizer locale.Localizer,
 ) (*domain.Project, error) {
-	projectStorage := v2es.NewProjectStorage(s.mysqlClient)
-	project, err := projectStorage.GetProject(ctx, id)
+	project, err := s.projectStorage.GetProject(ctx, id)
 	if err != nil {
 		if err == v2es.ErrProjectNotFound {
 			dt, err := statusProjectNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -168,8 +167,7 @@ func (s *EnvironmentService) ListProjects(
 		}
 		return nil, dt.Err()
 	}
-	projectStorage := v2es.NewProjectStorage(s.mysqlClient)
-	projects, nextCursor, totalCount, err := projectStorage.ListProjects(
+	projects, nextCursor, totalCount, err := s.projectStorage.ListProjects(
 		ctx,
 		whereParts,
 		orders,
@@ -502,25 +500,7 @@ func (s *EnvironmentService) createProject(
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
 ) error {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		projectStorage := v2es.NewProjectStorage(tx)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		handler, err := command.NewProjectCommandHandler(editor, project, s.publisher)
 		if err != nil {
 			return err
@@ -528,7 +508,7 @@ func (s *EnvironmentService) createProject(
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
-		return projectStorage.CreateProject(ctx, project)
+		return s.projectStorage.CreateProject(contextWithTx, project)
 	})
 	if err != nil {
 		if err == v2es.ErrProjectAlreadyExists {
@@ -721,8 +701,7 @@ func (s *EnvironmentService) getTrialProjectByEmail(
 	email string,
 	localizer locale.Localizer,
 ) (*environmentproto.Project, error) {
-	projectStorage := v2es.NewProjectStorage(s.mysqlClient)
-	project, err := projectStorage.GetTrialProjectByEmail(ctx, email, false, true)
+	project, err := s.projectStorage.GetTrialProjectByEmail(ctx, email, false, true)
 	if err != nil {
 		if err == v2es.ErrProjectNotFound {
 			dt, err := statusProjectNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -1036,26 +1015,8 @@ func (s *EnvironmentService) updateProject(
 	localizer locale.Localizer,
 	commands ...command.Command,
 ) error {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		projectStorage := v2es.NewProjectStorage(tx)
-		project, err := projectStorage.GetProject(ctx, id)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		project, err := s.projectStorage.GetProject(contextWithTx, id)
 		if err != nil {
 			return err
 		}
@@ -1068,7 +1029,7 @@ func (s *EnvironmentService) updateProject(
 				return err
 			}
 		}
-		return projectStorage.UpdateProject(ctx, project)
+		return s.projectStorage.UpdateProject(contextWithTx, project)
 	})
 	if err != nil {
 		if err == v2es.ErrProjectNotFound || err == v2es.ErrProjectUnexpectedAffectedRows {
@@ -1289,8 +1250,7 @@ func (s *EnvironmentService) ListProjectsV2(
 		}
 		return nil, dt.Err()
 	}
-	projectStorage := v2es.NewProjectStorage(s.mysqlClient)
-	projects, nextCursor, totalCount, err := projectStorage.ListProjects(
+	projects, nextCursor, totalCount, err := s.projectStorage.ListProjects(
 		ctx,
 		whereParts,
 		orders,
