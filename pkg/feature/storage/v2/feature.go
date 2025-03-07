@@ -33,6 +33,10 @@ var (
 )
 
 var (
+	//go:embed sql/feature/create_feature.sql
+	createFeatureSQLQuery string
+	//go:embed sql/feature/update_feature.sql
+	updateFeatureSQLQuery string
 	//go:embed sql/feature/select_all_environment_features.sql
 	selectAllEnvironmentFeaturesSQLQuery string
 	//go:embed sql/feature/select_features.sql
@@ -41,6 +45,12 @@ var (
 	selectFeaturesByExperimentSQLQuery string
 	//go:embed sql/feature/select_feature_count_by_status.sql
 	selectFeatureCountByStatusSQLQuery string
+	//go:embed sql/feature/count_features.sql
+	countFeatureSQLQuery string
+	//go:embed sql/feature/count_features_by_experiment.sql
+	countFeaturesByExperimentSQLQuery string
+	//go:embed sql/feature/select_feature.sql
+	selectFeatureSQLQuery string
 )
 
 type FeatureStorage interface {
@@ -81,39 +91,9 @@ func (s *featureStorage) CreateFeature(
 	feature *domain.Feature,
 	environmentId string,
 ) error {
-	query := `
-		INSERT INTO feature (
-			id,
-			name,
-			description,
-			enabled,
-			archived,
-			deleted,
-			evaluation_undelayable,
-			ttl,
-			version,
-			created_at,
-			updated_at,
-			variation_type,
-			variations,
-			targets,
-			rules,
-			default_strategy,
-			off_variation,
-			tags,
-			maintainer,
-			sampling_seed,
-			prerequisites,
-			environment_id
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-			?, ?
-		)
-	`
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
+		createFeatureSQLQuery,
 		feature.Id,
 		feature.Name,
 		feature.Description,
@@ -138,7 +118,7 @@ func (s *featureStorage) CreateFeature(
 		environmentId,
 	)
 	if err != nil {
-		if err == mysql.ErrDuplicateEntry {
+		if errors.Is(err, mysql.ErrDuplicateEntry) {
 			return ErrFeatureAlreadyExists
 		}
 		return err
@@ -151,37 +131,9 @@ func (s *featureStorage) UpdateFeature(
 	feature *domain.Feature,
 	environmentId string,
 ) error {
-	query := `
-		UPDATE
-			feature
-		SET
-			name = ?,
-			description = ?,
-			enabled = ?,
-			archived = ?,
-			deleted = ?,
-			evaluation_undelayable = ?,
-			ttl = ?,
-			version = ?,
-			created_at = ?,
-			updated_at = ?,
-			variation_type = ?,
-			variations = ?,
-			targets = ?,
-			rules = ?,
-			default_strategy = ?,
-			off_variation = ?,
-			tags = ?,
-			maintainer = ?,
-			sampling_seed = ?,
-			prerequisites = ?
-		WHERE
-			id = ? AND
-			environment_id = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
+		updateFeatureSQLQuery,
 		feature.Name,
 		feature.Description,
 		feature.Enabled,
@@ -223,38 +175,9 @@ func (s *featureStorage) GetFeature(
 	key, environmentId string,
 ) (*domain.Feature, error) {
 	feature := proto.Feature{}
-	query := `
-		SELECT
-			id,
-			name,
-			description,
-			enabled,
-			archived,
-			deleted,
-			evaluation_undelayable,
-			ttl,
-			version,
-			created_at,
-			updated_at,
-			variation_type,
-			variations,
-			targets,
-			rules,
-			default_strategy,
-			off_variation,
-			tags,
-			maintainer,
-			sampling_seed,
-			prerequisites
-		FROM
-			feature
-		WHERE
-			id = ? AND
-			environment_id = ?
-	`
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
+		selectFeatureSQLQuery,
 		key,
 		environmentId,
 	).Scan(
@@ -281,7 +204,7 @@ func (s *featureStorage) GetFeature(
 		&mysql.JSONObject{Val: &feature.Prerequisites},
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrFeatureNotFound
 		}
 		return nil, err
@@ -343,14 +266,7 @@ func (s *featureStorage) ListFeatures(
 	}
 	nextOffset := offset + len(features)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(1)
-		FROM
-			feature
-		%s
-		`, whereSQL,
-	)
+	countQuery := fmt.Sprintf(countFeatureSQLQuery, whereSQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
@@ -428,19 +344,7 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 	}
 	nextOffset := offset + len(features)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(DISTINCT feature.id)
-		FROM
-			feature
-		LEFT OUTER JOIN
-			experiment
-		ON
-			feature.id = experiment.feature_id AND
-			feature.environment_id = experiment.environment_id
-		%s 
-		`, whereSQL,
-	)
+	countQuery := fmt.Sprintf(countFeaturesByExperimentSQLQuery, whereSQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

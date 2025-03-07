@@ -4663,7 +4663,7 @@ func TestUpdateFeature(t *testing.T) {
 			expectedErr: internalErr.Err(),
 		},
 		{
-			desc: "fail: publish doman event",
+			desc: "fail: publish domain event",
 			setup: func(s *FeatureService) {
 				s.experimentClient.(*exprclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
 					&exprproto.ListExperimentsResponse{},
