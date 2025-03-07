@@ -7,6 +7,7 @@ import PageDetailsHeader from 'elements/page-details-header';
 import PageLayout from 'elements/page-layout';
 import HeaderDetails from './elements/header-details';
 import PageContent from './page-content';
+import { EmptyCollection } from './page-empty';
 
 const PageLoader = () => {
   const navigate = useNavigate();
@@ -17,8 +18,7 @@ const PageLoader = () => {
   const {
     data: experimentCollection,
     isLoading,
-    isError,
-    refetch
+    isError
   } = useQueryExperimentDetails({
     params: {
       id: params?.experimentId || '',
@@ -37,7 +37,7 @@ const PageLoader = () => {
       {isLoading ? (
         <PageLayout.LoadingState />
       ) : isErrorState ? (
-        <PageLayout.ErrorState onRetry={refetch} />
+        <EmptyCollection />
       ) : (
         <>
           <PageDetailsHeader

@@ -1,6 +1,6 @@
 import axiosClient from '@api/axios-client';
 import pickBy from 'lodash/pickBy';
-import { CollectionParams, GoalCollection } from '@types';
+import { CollectionParams, ConnectionType, GoalCollection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams } from 'utils/search-params';
 
@@ -8,6 +8,7 @@ export interface GoalsFetcherParams extends CollectionParams {
   environmentId?: string;
   isInUseStatus?: boolean;
   archived?: boolean;
+  connectionType?: ConnectionType;
 }
 
 export const goalsFetcher = async (

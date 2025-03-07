@@ -77,7 +77,12 @@ const FilterExperimentModal = ({
     });
 
   useEffect(() => {
-    if (isNotEmpty(filters?.isFilter && filters?.statuses?.length)) {
+    if (
+      isNotEmpty(
+        (filters?.isFilter || filters?.filterBySummary) &&
+          filters?.statuses?.length
+      )
+    ) {
       setSelectedStatuses(
         typeof filters!.statuses === 'string'
           ? [filters!.statuses]

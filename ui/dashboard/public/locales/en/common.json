@@ -160,7 +160,7 @@
   "status": "Status",
   "flags-connected": "Flags Connected",
   "flags-connected-desc": "This user segment is currently connected to the following feature flags:",
-  "experiments-subtitle": "You can use goals to start experiments that will provide data of a feature flag linked to it",
+  "experiments-subtitle": "Manage and analyze your feature experiments to unlock real-time insights for agile decision-making.",
   "new-experiment": "New Experiment",
   "edit-experiment": "Edit Experiment",
   "results": "Results",

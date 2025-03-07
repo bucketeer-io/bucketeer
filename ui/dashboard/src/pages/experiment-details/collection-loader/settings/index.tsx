@@ -64,6 +64,11 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
 
+  const isEnabledEdit = useMemo(
+    () => ['WAITING', 'NOT_STARTED'].includes(experiment?.status as string),
+    [experiment]
+  );
+
   const { data: goalCollection, isLoading: isLoadingGoals } = useQueryGoals({
     params: {
       cursor: String(0),
@@ -241,7 +246,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                       <Form.Label required>{t('start-at')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!!experiment?.startAt}
+                          disabled={!isEnabledEdit}
                           dateFormat={'yyyy/MM/dd'}
                           showTimeSelect={false}
                           selected={
@@ -268,7 +273,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                       <Form.Label required>{t('experiments.time')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!!experiment?.startAt}
+                          disabled={!isEnabledEdit}
                           dateFormat={'HH:mm'}
                           showTimeSelect
                           showTimeSelectOnly={true}
@@ -298,7 +303,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                       <Form.Label required>{t('end-at')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!!experiment?.stopAt}
+                          disabled={!isEnabledEdit}
                           dateFormat={'yyyy/MM/dd'}
                           showTimeSelect={false}
                           selected={
@@ -325,7 +330,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                       <Form.Label required>{t('experiments.time')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!!experiment?.stopAt}
+                          disabled={!isEnabledEdit}
                           dateFormat={'HH:mm'}
                           showTimeSelect
                           showTimeSelectOnly={true}

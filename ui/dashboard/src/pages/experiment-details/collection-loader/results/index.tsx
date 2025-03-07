@@ -4,6 +4,7 @@ import { useQueryExperimentResultDetails } from '@queries/experiment-result';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { cloneDeep } from 'lodash';
 import { Experiment } from '@types';
+import { EmptyCollection } from 'pages/experiment-details/page-empty';
 import PageLayout from 'elements/page-layout';
 import GoalResultItem from './goal-results';
 
@@ -32,8 +33,7 @@ const Results = ({ experiment }: { experiment: Experiment }) => {
   const {
     data: experimentResultCollection,
     isLoading,
-    isError,
-    refetch
+    isError
   } = useQueryExperimentResultDetails({
     params: {
       experimentId: params?.experimentId || '',
@@ -81,7 +81,7 @@ const Results = ({ experiment }: { experiment: Experiment }) => {
       {isLoading ? (
         <PageLayout.LoadingState />
       ) : isErrorState ? (
-        <PageLayout.ErrorState onRetry={refetch} />
+        <EmptyCollection />
       ) : (
         <div className="flex flex-col w-full gap-y-6">
           {experimentResult?.goalResults?.map((item, index) => (

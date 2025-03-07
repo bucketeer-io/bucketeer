@@ -11,7 +11,6 @@ import { useTranslation } from 'i18n';
 import { Experiment } from '@types';
 import ConfirmModal from 'elements/confirm-modal';
 import PageLayout from 'elements/page-layout';
-import { EmptyCollection } from './collection-layout/empty-collection';
 import { useFetchExperiments } from './collection-loader/use-fetch-experiment';
 import AddExperimentModal from './experiments-modal/add-experiment-modal';
 import EditExperimentModal from './experiments-modal/edit-experiment-modal';
@@ -56,7 +55,6 @@ const PageLoader = ({
     isError
   } = useFetchExperiments({ environmentId: currentEnvironment.id });
 
-  const isEmpty = collection?.experiments?.length === 0;
   const summary = collection?.summary;
 
   const mutation = useMutation({
@@ -141,10 +139,6 @@ const PageLoader = ({
         <PageLayout.LoadingState />
       ) : isError ? (
         <PageLayout.ErrorState onRetry={refetch} />
-      ) : isEmpty ? (
-        <PageLayout.EmptyState>
-          <EmptyCollection onAdd={onOpenAddModal} />
-        </PageLayout.EmptyState>
       ) : (
         <PageContent
           summary={summary}

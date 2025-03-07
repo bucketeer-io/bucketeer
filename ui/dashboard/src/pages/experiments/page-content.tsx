@@ -1,9 +1,9 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
-import { Experiment, ExperimentCollection } from '@types';
+import { Experiment, ExperimentCollection, ExperimentStatus } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
@@ -18,7 +18,8 @@ import Overview from './overview';
 import {
   ExperimentActionsType,
   ExperimentFilters,
-  ExperimentTab
+  ExperimentTab,
+  SummaryType
 } from './types';
 
 const PageContent = ({
@@ -56,19 +57,63 @@ const PageContent = ({
     () =>
       (!!filters.searchQuery ||
         filters?.isFilter ||
-        !!searchOptions?.statuses?.length) &&
+        filters?.filterBySummary) &&
       !filters.filterByTab,
-    [filters, searchOptions]
+    [filters]
   );
 
-  const onChangeFilters = (
-    values: Partial<ExperimentFilters>,
-    isChangeParams = true
-  ) => {
-    const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
-    if (isChangeParams) onChangSearchParams(options);
-    setFilters({ ...values });
-  };
+  const onChangeFilters = useCallback(
+    (values: Partial<ExperimentFilters>, isChangeParams = true) => {
+      const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
+      if (isChangeParams) onChangSearchParams(options);
+      setFilters({ ...values });
+    },
+    [filters]
+  );
+
+  const onClearFilters = useCallback(() => {
+    onChangeFilters({
+      archived: undefined,
+      statuses: ['WAITING', 'RUNNING'],
+      isFilter: undefined,
+      status: 'ACTIVE',
+      filterByTab: true,
+      filterBySummary: undefined
+    });
+    onCloseFilterModal();
+  }, []);
+
+  const onChangeTab = useCallback(
+    (status: ExperimentTab) => {
+      onChangeFilters({
+        status,
+        searchQuery: filters?.searchQuery ?? '',
+        isFilter: undefined,
+        filterByTab: true,
+        statuses:
+          status === 'FINISHED'
+            ? ['STOPPED', 'FORCE_STOPPED']
+            : status === 'ACTIVE'
+              ? ['WAITING', 'RUNNING']
+              : []
+      });
+    },
+    [filters]
+  );
+
+  const onFilterBySummary = useCallback(
+    (statuses: ExperimentStatus[], summaryFilterValue: SummaryType) => {
+      const isSameSummaryValue =
+        filters?.filterBySummary === summaryFilterValue;
+      onChangeFilters({
+        statuses: isSameSummaryValue ? ['WAITING', 'RUNNING'] : statuses,
+        filterBySummary: isSameSummaryValue ? undefined : summaryFilterValue,
+        filterByTab: isSameSummaryValue,
+        status: isSameSummaryValue ? 'ACTIVE' : filters?.status
+      });
+    },
+    [filters]
+  );
 
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
@@ -81,18 +126,7 @@ const PageContent = ({
       <Overview
         summary={summary}
         filterBySummary={filters?.filterBySummary}
-        onChangeFilters={(statuses, summaryFilterValue) => {
-          const isSameSummaryValue =
-            filters?.filterBySummary === summaryFilterValue;
-          onChangeFilters({
-            statuses: isSameSummaryValue ? ['WAITING', 'RUNNING'] : statuses,
-            filterBySummary: isSameSummaryValue
-              ? undefined
-              : summaryFilterValue,
-            filterByTab: isSameSummaryValue,
-            status: isSameSummaryValue ? 'ACTIVE' : filters?.status
-          });
-        }}
+        onChangeFilters={onFilterBySummary}
       />
       <Filter
         onOpenFilter={onOpenFilterModal}
@@ -103,10 +137,18 @@ const PageContent = ({
           </Button>
         }
         searchValue={filters.searchQuery}
-        filterCount={isNotEmpty(filters.isFilter) ? 1 : undefined}
+        filterCount={
+          isNotEmpty(filters?.isFilter || filters?.filterBySummary)
+            ? 1
+            : undefined
+        }
         onSearchChange={searchQuery => {
           onChangeFilters(
-            { searchQuery, filterByTab: filters?.searchQuery === searchQuery },
+            {
+              searchQuery,
+              filterByTab:
+                filters?.searchQuery === searchQuery || filters?.filterByTab
+            },
             filters?.searchQuery !== searchQuery
           );
         }}
@@ -117,19 +159,16 @@ const PageContent = ({
           filters={filters}
           onClose={onCloseFilterModal}
           onSubmit={value => {
-            onChangeFilters({ ...value, filterByTab: false });
-            onCloseFilterModal();
-          }}
-          onClearFilters={() => {
+            console.log(123);
             onChangeFilters({
-              archived: undefined,
-              statuses: [],
-              isFilter: undefined,
-              status: 'ACTIVE',
-              filterByTab: true
+              ...value,
+              archived: false,
+              filterByTab: false,
+              filterBySummary: undefined
             });
             onCloseFilterModal();
           }}
+          onClearFilters={onClearFilters}
         />
       )}
       <Tabs
@@ -137,21 +176,7 @@ const PageContent = ({
           'mt-6': !isHiddenTab
         })}
         value={filters.status}
-        onValueChange={value => {
-          const status = value as ExperimentTab;
-          onChangeFilters({
-            status,
-            searchQuery: '',
-            isFilter: undefined,
-            filterByTab: true,
-            statuses:
-              status === 'FINISHED'
-                ? ['STOPPED', 'FORCE_STOPPED']
-                : status === 'ACTIVE'
-                  ? ['WAITING', 'RUNNING']
-                  : []
-          });
-        }}
+        onValueChange={status => onChangeTab(status as ExperimentTab)}
       >
         <TabsList className={isHiddenTab ? 'hidden' : ''}>
           <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>

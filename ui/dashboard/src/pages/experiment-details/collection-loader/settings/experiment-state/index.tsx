@@ -131,24 +131,18 @@ const ExperimentState = ({ experiment }: { experiment: Experiment }) => {
         </div>
       </div>
       <Button
+        disabled={isStopped}
         variant={'text'}
         className={cn('typo-sm h-10 whitespace-nowrap', {
-          'text-accent-red-500 hover:text-accent-red-600':
-            isRunning || isWaiting
+          'text-accent-red-500 hover:text-accent-red-600': isRunning
         })}
         onClick={onOpenToggleExperimentModal}
       >
         <Icon
-          icon={
-            isRunning || isWaiting ? IconStopExperiment : IconStartExperiment
-          }
+          icon={isRunning ? IconStopExperiment : IconStartExperiment}
           size={'sm'}
         />
-        {t(
-          isRunning || isWaiting
-            ? `popover.stop-experiment`
-            : `popover.start-experiment`
-        )}
+        {t(isRunning ? `popover.stop-experiment` : `popover.start-experiment`)}
       </Button>
       {openToggleExperimentModal && (
         <ConfirmModal
@@ -156,14 +150,14 @@ const ExperimentState = ({ experiment }: { experiment: Experiment }) => {
           onClose={onCloseToggleExperimentModal}
           onSubmit={onToggleExperiment}
           title={
-            isRunning || isWaiting
+            isRunning
               ? t(`table:popover.stop-experiment`)
               : t(`table:popover.start-experiment`)
           }
           description={
             <Trans
               i18nKey={
-                isRunning || isWaiting
+                isRunning
                   ? 'table:experiment.confirm-stop-desc'
                   : 'table:experiment.confirm-start-desc'
               }

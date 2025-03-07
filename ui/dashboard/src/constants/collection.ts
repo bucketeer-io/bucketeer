@@ -26,5 +26,9 @@ export const sortingListFields: SortingListFields = {
   connections: 'CONNECTIONS',
   users: 'USERS',
   tags: 'TAGS',
-  goals: 'GOALS'
+  goals: 'GOALS',
+  start_at: 'START_AT',
+  stop_at: 'STOP_AT',
+  status: 'STATUS',
+  goals_count: 'GOALS_COUNT'
 };

@@ -7,12 +7,16 @@ import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
+import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Experiment, ExperimentStatus } from '@types';
+import { truncateTextCenter } from 'utils/converts';
 import { formatLongDateTime } from 'utils/date-time';
+import { copyToClipBoard } from 'utils/function';
 import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
 import {
+  IconCopy,
   IconExperiment,
   IconStartExperiment,
   IconStopExperiment,
@@ -70,9 +74,23 @@ export const useColumns = ({
 
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const { notify } = useToast();
+
+  const handleCopyId = (id: string) => {
+    copyToClipBoard(id);
+    notify({
+      toastType: 'toast',
+      message: (
+        <span>
+          <b>ID</b> {` has been successfully copied!`}
+        </span>
+      )
+    });
+  };
 
   return [
     {
+      id: 'name',
       accessorKey: 'name',
       header: `${t('name')}`,
       size: 500,
@@ -87,14 +105,22 @@ export const useColumns = ({
             >
               {experiment.name}
             </Link>
-            <div className="h-5 gap-x-2 typo-para-tiny text-gray-500 line-clamp-1">
-              {experiment.id}
+            <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
+              {truncateTextCenter(experiment.id)}
+              <div onClick={() => handleCopyId(experiment.id)}>
+                <Icon
+                  icon={IconCopy}
+                  size={'sm'}
+                  className="opacity-0 group-hover:opacity-100 cursor-pointer"
+                />
+              </div>
             </div>
           </div>
         );
       }
     },
     {
+      id: 'goals_count',
       accessorKey: 'goalIds',
       header: `${t('navigation.goals')}`,
       size: 150,
@@ -116,6 +142,7 @@ export const useColumns = ({
       }
     },
     {
+      id: 'start_at',
       accessorKey: 'startAt',
       header: `${t('form:start-at')}`,
       size: 150,
@@ -144,6 +171,7 @@ export const useColumns = ({
       }
     },
     {
+      id: 'stop_at',
       accessorKey: 'stopAt',
       header: `${t('form:end-at')}`,
       size: 150,
@@ -172,6 +200,7 @@ export const useColumns = ({
       }
     },
     {
+      id: 'status',
       accessorKey: 'statuses',
       header: `${t('status')}`,
       size: 120,

@@ -12,7 +12,6 @@ import { useQueryFeatures } from '@queries/features';
 import { useQueryGoals } from '@queries/goals';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { cn } from 'utils/style';
@@ -97,8 +96,9 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
   const { data: goalCollection, isLoading: isLoadingGoals } = useQueryGoals({
     params: {
       cursor: String(0),
-      pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id
+      environmentId: currentEnvironment.id,
+      archived: false,
+      connectionType: 'EXPERIMENT'
     }
   });
 
@@ -106,9 +106,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
     useQueryFeatures({
       params: {
         cursor: String(0),
-        pageSize: LIST_PAGE_SIZE,
-        environmentId: currentEnvironment.id,
-        hasExperiment: true
+        environmentId: currentEnvironment.id
       }
     });
 

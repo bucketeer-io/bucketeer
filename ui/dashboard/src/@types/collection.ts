@@ -24,7 +24,11 @@ export type OrderBy =
   | 'CONNECTIONS'
   | 'USERS'
   | 'TAGS'
-  | 'GOALS';
+  | 'GOALS'
+  | 'START_AT'
+  | 'STOP_AT'
+  | 'STATUS'
+  | 'GOALS_COUNT';
 
 export type OrderDirection = 'ASC' | 'DESC';
 
@@ -37,7 +41,7 @@ export interface Collection<T> {
 }
 
 export interface CollectionParams {
-  pageSize: number;
+  pageSize?: number;
   cursor: string;
   orderBy?: OrderBy;
   orderDirection?: OrderDirection;

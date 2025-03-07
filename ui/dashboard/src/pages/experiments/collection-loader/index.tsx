@@ -60,7 +60,10 @@ const CollectionLoader = ({
     <CollectionEmpty
       data={experiments}
       searchQuery={filters.searchQuery}
-      isFilter={filters.isFilter || !!searchOptions?.statuses?.length}
+      isFilter={
+        filters.isFilter ||
+        (!!searchOptions?.statuses?.length && !filters?.filterByTab)
+      }
       description="No experiments match your search filters. Try changing your filters."
       buttonText="Clear Filters"
       buttonVariant={'secondary'}

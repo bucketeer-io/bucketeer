@@ -36,6 +36,8 @@ export const useFetchExperiments = ({
       !['filterByTab', 'filterBySummary', 'isFilter'].includes(k) &&
       isNotEmpty(v)
   );
+  const isArchived = status === 'ARCHIVED';
+  const statuses = isArchived ? [] : (_params?.statuses as ExperimentStatus[]);
 
   return useQueryExperiments({
     params: {
@@ -45,8 +47,9 @@ export const useFetchExperiments = ({
       orderDirection,
       searchKeyword: searchQuery,
       environmentId,
-      archived: status === 'ARCHIVED',
-      ..._params
+      ..._params,
+      archived: isArchived,
+      statuses
     }
   });
 };
