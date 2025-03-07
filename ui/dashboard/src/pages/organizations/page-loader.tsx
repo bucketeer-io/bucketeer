@@ -7,9 +7,6 @@ import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Organization } from '@types';
 import ConfirmModal from 'elements/confirm-modal';
-import PageLayout from 'elements/page-layout';
-import { EmptyCollection } from './collection-layout/empty-collection';
-import { useFetchOrganizations } from './collection-loader/use-fetch-organizations';
 import AddOrganizationModal from './organization-modal/add-organization-modal';
 import EditOrganizationModal from './organization-modal/edit-organization-modal';
 import PageContent from './page-content';
@@ -18,13 +15,6 @@ import { OrganizationActionsType } from './types';
 const PageLoader = () => {
   const { t } = useTranslation(['common', 'table']);
   const queryClient = useQueryClient();
-
-  const {
-    data: collection,
-    isLoading,
-    refetch,
-    isError
-  } = useFetchOrganizations({ pageSize: 1 });
 
   const [selectedOrganization, setSelectedOrganization] =
     useState<Organization>();
@@ -77,21 +67,9 @@ const PageLoader = () => {
     setSelectedOrganization(organization);
   };
 
-  const isEmpty = collection?.Organizations.length === 0;
-
   return (
     <>
-      {isLoading ? (
-        <PageLayout.LoadingState />
-      ) : isError ? (
-        <PageLayout.ErrorState onRetry={refetch} />
-      ) : isEmpty ? (
-        <PageLayout.EmptyState>
-          <EmptyCollection onAdd={onOpenAddModal} />
-        </PageLayout.EmptyState>
-      ) : (
-        <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
-      )}
+      <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
       {isOpenAddModal && (
         <AddOrganizationModal
           isOpen={isOpenAddModal}

@@ -7,9 +7,6 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { UserSegment } from '@types';
-import PageLayout from 'elements/page-layout';
-import { EmptyCollection } from './collection-layout/empty-collection';
-import { useFetchSegments } from './collection-loader/use-fetch-segment';
 import PageContent from './page-content';
 import AddUserSegmentModal from './user-segment-modal/add-segment-modal';
 import DeleteUserSegmentModal from './user-segment-modal/delete-segment-modal';
@@ -35,18 +32,6 @@ const PageLoader = () => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { notify } = useToast();
   const queryClient = useQueryClient();
-
-  const {
-    data: collection,
-    isLoading,
-    refetch,
-    isError
-  } = useFetchSegments({
-    pageSize: 1,
-    environmentId: currentEnvironment.id
-  });
-
-  const isEmpty = collection?.segments.length === 0;
 
   const mutation = useMutation({
     mutationFn: async (selectedSegment: UserSegment) => {
@@ -103,33 +88,23 @@ const PageLoader = () => {
 
   return (
     <>
-      {isLoading ? (
-        <PageLayout.LoadingState />
-      ) : isError ? (
-        <PageLayout.ErrorState onRetry={refetch} />
-      ) : isEmpty ? (
-        <PageLayout.EmptyState>
-          <EmptyCollection onAdd={onOpenAddModal} />
-        </PageLayout.EmptyState>
-      ) : (
-        <PageContent
-          segmentUploading={segmentUploading}
-          onAdd={onOpenAddModal}
-          onEdit={segment => {
-            setSelectedSegment(segment);
-            onOpenEditModal();
-          }}
-          onOpenFlagModal={segment => {
-            setSelectedSegment(segment);
-            onOpenFlagModal();
-          }}
-          onDelete={segment => {
-            setSelectedSegment(segment);
-            onOpenDeleteModal();
-          }}
-          onDownload={onBulkDownloadSegment}
-        />
-      )}
+      <PageContent
+        segmentUploading={segmentUploading}
+        onAdd={onOpenAddModal}
+        onEdit={segment => {
+          setSelectedSegment(segment);
+          onOpenEditModal();
+        }}
+        onOpenFlagModal={segment => {
+          setSelectedSegment(segment);
+          onOpenFlagModal();
+        }}
+        onDelete={segment => {
+          setSelectedSegment(segment);
+          onOpenDeleteModal();
+        }}
+        onDownload={onBulkDownloadSegment}
+      />
       {isOpenAddModal && (
         <AddUserSegmentModal
           isOpen={isOpenAddModal}
