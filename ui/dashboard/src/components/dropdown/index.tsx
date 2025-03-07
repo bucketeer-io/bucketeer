@@ -77,6 +77,7 @@ const DropdownMenuTrigger = forwardRef<
     ref
   ) => (
     <DropdownMenuPrimitive.Trigger
+      type="button"
       ref={ref}
       className={cn(
         triggerVariants({

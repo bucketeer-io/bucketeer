@@ -12,6 +12,7 @@ import Divider from 'components/divider';
 import Icon from 'components/icon';
 import SectionMenu from './menu-section';
 import MyProjects from './my-projects';
+import SwitchOrganization from './switch-organization';
 import UserMenu from './user-menu';
 
 const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
@@ -132,9 +133,12 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
     settingPaths.includes(pathname)
   );
 
+  const [isOpenSwitchOrg, onOpenSwitchOrg, onCloseSwitchOrg] =
+    useToggleOpen(false);
+
   return (
     <div className="fixed h-screen w-[248px] bg-primary-500 z-50 py-8 px-6">
-      <div className="flex flex-col h-full relative overflow-hidden">
+      <div className="flex flex-col size-full relative overflow-hidden">
         <Link to={ROUTING.PAGE_PATH_ROOT}>
           <img src={logo} alt="Bucketer" />
         </Link>
@@ -192,8 +196,13 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
         <Divider className="mb-3 bg-primary-50 opacity-10" />
 
         <div className="flex items-center justify-between">
-          <UserMenu />
+          <UserMenu
+            onOpenSwitchOrg={
+              isOpenSwitchOrg ? onCloseSwitchOrg : onOpenSwitchOrg
+            }
+          />
           <button
+            type="button"
             onClick={() => {
               onOpenSetting();
               if (consoleAccount?.isSystemAdmin) {
@@ -207,6 +216,11 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           </button>
         </div>
       </div>
+      <SwitchOrganization
+        isOpen={isOpenSwitchOrg}
+        onCloseSwitchOrg={onCloseSwitchOrg}
+        onCloseSetting={onCloseSetting}
+      />
     </div>
   );
 };

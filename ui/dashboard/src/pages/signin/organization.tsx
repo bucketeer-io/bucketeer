@@ -1,11 +1,15 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import { switchOrganization } from '@api/auth';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuth } from 'auth';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useTranslation } from 'i18n';
+import { jwtDecode } from 'jwt-decode';
 import { setOrgIdStorage } from 'storage/organization';
+import { getTokenStorage, setTokenStorage } from 'storage/token';
 import * as yup from 'yup';
+import { DecodedToken } from '@types';
 import Button from 'components/button';
 import {
   DropdownMenu,
@@ -32,12 +36,34 @@ const SelectOrganization = () => {
     }
   });
 
-  const onSubmit: SubmitHandler<{ organization: string }> = values => {
-    if (values.organization) {
-      setOrgIdStorage(values.organization);
-      return onMeFetcher({ organizationId: values.organization }).then(() => {
-        navigate(PAGE_PATH_ROOT);
-      });
+  const onSubmit: SubmitHandler<{ organization: string }> = async values => {
+    try {
+      const organizationId = values.organization;
+      const token = getTokenStorage();
+
+      if (organizationId && token) {
+        setOrgIdStorage(organizationId);
+        const parsedToken: DecodedToken = jwtDecode(token?.accessToken);
+
+        const fetchUserData = () => {
+          return onMeFetcher({ organizationId }).then(() => {
+            navigate(PAGE_PATH_ROOT);
+          });
+        };
+
+        if (parsedToken.organization_id === organizationId) {
+          await fetchUserData();
+        } else {
+          const resp = await switchOrganization({
+            organizationId,
+            accessToken: token.accessToken
+          });
+          setTokenStorage(resp.token);
+          await fetchUserData();
+        }
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -92,7 +118,7 @@ const SelectOrganization = () => {
             loading={form.formState.isSubmitting}
             className="w-full mt-10"
           >
-            {t(`continue`)}
+            {t(`common:continue`)}
           </Button>
         </Form>
       </FormProvider>

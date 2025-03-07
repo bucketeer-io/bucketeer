@@ -114,5 +114,6 @@
   "save-with-comment": "Save With Comment",
   "member-tags-tooltip": "Tags can be used to group members making it easier when listing them on the list page",
   "feature-flag-tags": "Feature Flag Tags",
-  "no-tags-found": "No tags were found"
+  "no-tags-found": "No tags were found",
+  "placeholder-search": "Search"
 }

@@ -8,7 +8,9 @@ import React, {
 import { useNavigate } from 'react-router-dom';
 import { accountOrganizationFetcher, MeFetcherParams } from '@api/account';
 import { accountMeFetcher } from '@api/account';
+import { AxiosError } from 'axios';
 import { PAGE_PATH_ROOT } from 'constants/routing';
+import { useToast } from 'hooks';
 import { Undefinable } from 'option-t/undefinable';
 import {
   clearCurrentEnvIdStorage,
@@ -34,7 +36,7 @@ interface AuthContextType {
   consoleAccount: Undefinable<ConsoleAccount>;
   myOrganizations: Array<Organization>;
 
-  syncSignIn: (authToken: AuthToken) => void;
+  syncSignIn: (authToken: AuthToken) => Promise<void>;
   onMeFetcher: (params: MeFetcherParams) => Promise<void>;
 
   isInitialLoading: boolean;
@@ -53,6 +55,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const authToken: AuthToken | null = getTokenStorage();
   const organizationId = getOrgIdStorage();
   const environmentId = getCurrentEnvIdStorage();
+  const { notify } = useToast();
 
   const [isInitialLoading, setIsInitialLoading] = useState(
     !!authToken?.accessToken
@@ -64,38 +67,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [myOrganizations, setMyOrganizations] = useState<Organization[]>([]);
   const [isGoogleAuthError, setIsGoogleAuthError] = useState(false);
 
-  const onMeFetcher = (params: MeFetcherParams) => {
-    return accountMeFetcher(params)
-      .then(response => {
-        const environmentRoles = response.account.environmentRoles;
-
-        if (environmentRoles.length > 0) {
-          setConsoleAccount(response.account);
-          setIsLogin(true);
-          if (!environmentId) {
-            setCurrentEnvIdStorage(environmentRoles[0].environment.id);
-          }
-        } else logout();
-      })
-      .finally(() => setIsInitialLoading(false));
+  const onMeFetcher = async (params: MeFetcherParams) => {
+    try {
+      const response = await accountMeFetcher(params);
+      const environmentRoles = response.account.environmentRoles;
+      if (environmentRoles.length > 0) {
+        setConsoleAccount(response.account);
+        setIsLogin(true);
+        if (!environmentId) {
+          setCurrentEnvIdStorage(environmentRoles[0].environment.id);
+        }
+      } else logout();
+    } catch (error) {
+      notify({
+        message: (error as AxiosError)?.message || 'Something went wrong.',
+        messageType: 'error'
+      });
+    } finally {
+      setIsInitialLoading(false);
+    }
   };
 
-  const onSyncAuthentication = () => {
-    accountOrganizationFetcher().then(response => {
+  const onSyncAuthentication = async () => {
+    try {
+      const response = await accountOrganizationFetcher();
       const organizationsList = response.organizations || [];
       if (organizationId) {
-        onMeFetcher({ organizationId });
+        await onMeFetcher({ organizationId });
       } else if (organizationsList.length === 1) {
         setOrgIdStorage(organizationsList[0].id);
-        onMeFetcher({ organizationId: organizationsList[0].id });
+        await onMeFetcher({ organizationId: organizationsList[0].id });
       } else {
         setIsInitialLoading(false);
       }
       setMyOrganizations(organizationsList);
-    });
+    } catch (error) {
+      notify({
+        message: (error as AxiosError)?.message || 'Something went wrong.',
+        messageType: 'error'
+      });
+    }
   };
 
-  const syncSignIn = (authToken: AuthToken) => {
+  const syncSignIn = async (authToken: AuthToken) => {
     setTokenStorage(authToken);
     onSyncAuthentication();
   };

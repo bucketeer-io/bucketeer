@@ -1,3 +1,4 @@
+import { unwrapUndefinable } from 'option-t/undefinable';
 import { getCurrentEnvIdStorage } from 'storage/environment';
 import { ConsoleAccount, Environment, EnvironmentRole, Project } from '@types';
 import { isNotEmpty } from 'utils/data-type';
@@ -24,6 +25,13 @@ export const getCurrentEnvironment = (account: ConsoleAccount): Environment => {
 
   return envRole.environment;
 };
+
+export const getCurrentProject = (
+  roles: EnvironmentRole[],
+  currentEnvId: string
+) =>
+  unwrapUndefinable(roles.find(role => role.environment.id == currentEnvId))
+    .project;
 
 export const hasEditable = (account: ConsoleAccount): boolean => {
   if (account.isSystemAdmin) return true;

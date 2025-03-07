@@ -69,7 +69,8 @@
     "user-profile": "User profile",
     "logout": "Logout",
     "back-to-main": "Back to Main",
-    "no-projects": "No projects found"
+    "no-projects": "No projects found",
+    "no-organizations": "No organizations found"
   },
   "submit": "Submit",
   "type": "Type",
@@ -188,5 +189,6 @@
     "error-file-size-message": "Please upload a document smaller than {{size}}.",
     "try-again": "Try again"
   },
-  "select": "Select"
+  "select": "Select",
+  "switch-organization": "Switch organization"
 }

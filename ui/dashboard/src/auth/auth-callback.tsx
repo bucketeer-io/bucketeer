@@ -17,20 +17,20 @@ export const AuthCallbackPage: FC = memo(() => {
   const query = location.search;
 
   const { onSubmit: onGoogleLoginHandler } = useSubmit(
-    (payload: ExchangeTokenPayload) =>
-      exchangeToken(payload)
-        .then(response => {
-          if (response.token) {
-            setTokenStorage(response.token);
-            syncSignIn(response.token);
-            navigate(PAGE_PATH_ROOT);
-          }
-        })
-        .catch(() => {
-          setIsGoogleAuthError(true);
-          setIsInitialLoading(false);
+    async (payload: ExchangeTokenPayload) => {
+      try {
+        const response = await exchangeToken(payload);
+        if (response.token) {
+          setTokenStorage(response.token);
+          await syncSignIn(response.token);
           navigate(PAGE_PATH_ROOT);
-        })
+        }
+      } catch {
+        setIsGoogleAuthError(true);
+        setIsInitialLoading(false);
+        navigate(PAGE_PATH_ROOT);
+      }
+    }
   );
 
   useEffect(() => {
