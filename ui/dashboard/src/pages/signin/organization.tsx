@@ -5,9 +5,11 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuth } from 'auth';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useTranslation } from 'i18n';
+import { jwtDecode } from 'jwt-decode';
 import { setOrgIdStorage } from 'storage/organization';
-import { getTokenStorage } from 'storage/token';
+import { getTokenStorage, setTokenStorage } from 'storage/token';
 import * as yup from 'yup';
+import { DecodedToken } from '@types';
 import Button from 'components/button';
 import {
   DropdownMenu,
@@ -25,7 +27,7 @@ const formSchema = yup.object().shape({
 const SelectOrganization = () => {
   const { t } = useTranslation(['auth', 'common']);
   const navigate = useNavigate();
-  const { myOrganizations, onMeFetcher, syncSignIn } = useAuth();
+  const { myOrganizations, onMeFetcher } = useAuth();
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -36,20 +38,32 @@ const SelectOrganization = () => {
 
   const onSubmit: SubmitHandler<{ organization: string }> = async values => {
     try {
-      const { organization } = values;
-      if (organization) {
-        const token = getTokenStorage();
-        setOrgIdStorage(organization);
-        if (token) {
-          const resp = await switchOrganization({
-            accessToken: token.accessToken,
-            organizationId: organization
+      const organizationId = values.organization;
+      const token = getTokenStorage();
+
+      if (organizationId && token) {
+        setOrgIdStorage(organizationId);
+        const parsedToken: DecodedToken = jwtDecode(token?.accessToken);
+
+        const fetchUserData = () => {
+          return onMeFetcher({ organizationId }).then(() => {
+            navigate(PAGE_PATH_ROOT);
           });
-          await syncSignIn(resp.token);
+        };
+
+        if (parsedToken.organization_id === organizationId) {
+          fetchUserData();
+        } else {
+          await switchOrganization({
+            organizationId,
+            accessToken: token.accessToken
+          }).then(resp => {
+            if (resp.token) {
+              setTokenStorage(resp.token);
+              fetchUserData();
+            }
+          });
         }
-        return onMeFetcher({ organizationId: organization }).then(() => {
-          navigate(PAGE_PATH_ROOT);
-        });
       }
     } catch (error) {
       console.log(error);

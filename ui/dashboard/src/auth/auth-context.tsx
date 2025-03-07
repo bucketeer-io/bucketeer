@@ -36,7 +36,7 @@ interface AuthContextType {
   consoleAccount: Undefinable<ConsoleAccount>;
   myOrganizations: Array<Organization>;
 
-  syncSignIn: (authToken: AuthToken, orgId?: string) => Promise<void>;
+  syncSignIn: (authToken: AuthToken) => Promise<void>;
   onMeFetcher: (params: MeFetcherParams) => Promise<void>;
 
   isInitialLoading: boolean;
@@ -87,12 +87,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     setIsInitialLoading(false);
   };
 
-  const onSyncAuthentication = async (orgId?: string) => {
+  const onSyncAuthentication = async () => {
     try {
       const response = await accountOrganizationFetcher();
       const organizationsList = response.organizations || [];
       if (organizationId) {
-        await onMeFetcher({ organizationId: orgId ?? organizationId });
+        await onMeFetcher({ organizationId });
       } else if (organizationsList.length === 1) {
         setOrgIdStorage(organizationsList[0].id);
         await onMeFetcher({ organizationId: organizationsList[0].id });
@@ -108,10 +108,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   };
 
-  const syncSignIn = async (authToken: AuthToken, orgId?: string) => {
+  const syncSignIn = async (authToken: AuthToken) => {
     setTokenStorage(authToken);
-    if (orgId) setOrgIdStorage(orgId);
-    await onSyncAuthentication(orgId);
+    onSyncAuthentication();
   };
 
   const logout = () => {

@@ -9,6 +9,10 @@ export interface ServerError {
   message: string;
 }
 
+export interface DecodedToken {
+  organization_id: string;
+}
+
 export type EnvironmentRoleType =
   | 'Environment_UNASSIGNED'
   | 'Environment_EDITOR'

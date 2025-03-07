@@ -3,17 +3,14 @@ import { switchOrganization } from '@api/auth';
 import { useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { jwtDecode } from 'jwt-decode';
-import { getOrgIdStorage } from 'storage/organization';
-import { getTokenStorage } from 'storage/token';
+import { getOrgIdStorage, setOrgIdStorage } from 'storage/organization';
+import { getTokenStorage, setTokenStorage } from 'storage/token';
+import { DecodedToken } from '@types';
 import { cn } from 'utils/style';
 import { IconChecked } from '@icons';
 import Icon from 'components/icon';
 import SearchInput from 'components/search-input';
 import Spinner from 'components/spinner';
-
-interface DecodedToken {
-  organization_id: string;
-}
 
 const OrganizationItem = ({
   name,
@@ -58,7 +55,7 @@ const SwitchOrganization = ({
   onCloseSwitchOrg: () => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
-  const { myOrganizations, syncSignIn } = useAuth();
+  const { myOrganizations, onMeFetcher } = useAuth();
   const availableOrganizations = useMemo(
     () => myOrganizations?.filter(item => item.environmentCount),
     [myOrganizations]
@@ -71,7 +68,7 @@ const SwitchOrganization = ({
   );
   const [isLoading, setIsLoading] = useState(false);
 
-  const onChangeSearchValue = useCallback(
+  const onSearchOrganization = useCallback(
     (value: string) => {
       if (!value) return setOrganizations(availableOrganizations);
       const newOrgs = availableOrganizations.filter(item =>
@@ -85,19 +82,23 @@ const SwitchOrganization = ({
 
   const onChangeOrganization = useCallback(
     async (organizationId: string) => {
+      setIsLoading(true);
+      setOrgIdStorage(organizationId);
       const token = getTokenStorage();
       if (token?.accessToken) {
         const parsedToken: DecodedToken = jwtDecode(token?.accessToken);
-        if (parsedToken && parsedToken?.organization_id !== organizationId) {
-          setIsLoading(true);
+
+        if (parsedToken.organization_id !== organizationId) {
           const resp = await switchOrganization({
             accessToken: token.accessToken,
             organizationId
           });
-
-          await syncSignIn(resp.token, organizationId);
-          setIsLoading(false);
-          onCloseSwitchOrg();
+          if (resp.token) {
+            setTokenStorage(resp.token);
+            await onMeFetcher({ organizationId });
+            setIsLoading(false);
+            onCloseSwitchOrg();
+          }
         }
       }
     },
@@ -129,46 +130,35 @@ const SwitchOrganization = ({
           variant="secondary"
           placeholder={`${t('form:placeholder-search')}`}
           value={searchValue}
-          onChange={value => onChangeSearchValue(value)}
+          onChange={value => onSearchOrganization(value)}
         />
-        <h3 className="typo-para-medium text-gray-600 whitespace-nowrap">
-          {t('switch-organization')}
-        </h3>
-        <div className="flex flex-col gap-y-[1px]">
-<<<<<<< HEAD
-          {searchValue && !organizations?.length ? (
-            <div className="typo-para-medium text-gray-600 whitespace-nowrap">
-              No Organization found
+        {searchValue && !organizations?.length ? (
+          <div className="flex flex-col justify-center items-center gap-3 pt-10 pb-4">
+            <div className="typo-para-medium text-gray-500">
+              {t(`navigation.no-organizations`)}
             </div>
-          ) : (
-            organizations?.map((item, index) => (
-              <OrganizationItem
-                key={index}
-                name={item.name}
-                isLoading={isLoading}
-                active={currentOrganization === item.id}
-                onClick={() => {
-                  setCurrentOrganization(item.id);
-                  onChangeOrganization(item.id);
-                }}
-              />
-            ))
-          )}
-=======
-          {organizations?.map((item, index) => (
-            <OrganizationItem
-              key={index}
-              name={item.name}
-              isLoading={isLoading}
-              active={currentOrganization === item.id}
-              onClick={() => {
-                setCurrentOrganization(item.id);
-                onChangeOrganization(item.id);
-              }}
-            />
-          ))}
->>>>>>> 143635371049352839ecc9dcf5a6badc1c8f4c7f
-        </div>
+          </div>
+        ) : (
+          <>
+            <h3 className="typo-para-medium text-gray-600 whitespace-nowrap">
+              {t('switch-organization')}
+            </h3>
+            <div className="flex flex-col gap-y-[1px]">
+              {organizations?.map((item, index) => (
+                <OrganizationItem
+                  key={index}
+                  name={item.name}
+                  isLoading={isLoading}
+                  active={currentOrganization === item.id}
+                  onClick={() => {
+                    setCurrentOrganization(item.id);
+                    onChangeOrganization(item.id);
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
