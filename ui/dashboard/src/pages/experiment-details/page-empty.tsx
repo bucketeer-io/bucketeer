@@ -5,7 +5,7 @@ export const EmptyCollection = () => {
   const { t } = useTranslation(['common', 'table']);
 
   return (
-    <EmptyState.Root variant="no-data" size="lg" className="mt-10">
+    <EmptyState.Root variant="no-data" size="lg" className="pt-60">
       <EmptyState.Illustration />
       <EmptyState.Body>
         <EmptyState.Title>{t(`no-data`)}</EmptyState.Title>

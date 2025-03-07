@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
 import { invalidateExperiments } from '@queries/experiments';
@@ -18,11 +18,7 @@ import GoalsConnectionModal from './experiments-modal/goals-connection-modal';
 import PageContent from './page-content';
 import { ExperimentActionsType } from './types';
 
-const PageLoader = ({
-  setTotalCount
-}: {
-  setTotalCount: (value: string | number) => void;
-}) => {
+const PageLoader = () => {
   const { t } = useTranslation(['common', 'table']);
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
@@ -128,10 +124,6 @@ const PageLoader = ({
     },
     []
   );
-
-  useEffect(() => {
-    if (collection?.experiments) setTotalCount(collection?.experiments?.length);
-  }, [collection]);
 
   return (
     <>

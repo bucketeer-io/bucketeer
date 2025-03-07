@@ -109,7 +109,8 @@ const PageContent = ({
         statuses: isSameSummaryValue ? ['WAITING', 'RUNNING'] : statuses,
         filterBySummary: isSameSummaryValue ? undefined : summaryFilterValue,
         filterByTab: isSameSummaryValue,
-        status: isSameSummaryValue ? 'ACTIVE' : filters?.status
+        archived: undefined,
+        status: isSameSummaryValue ? 'ACTIVE' : undefined
       });
     },
     [filters]
@@ -159,10 +160,10 @@ const PageContent = ({
           filters={filters}
           onClose={onCloseFilterModal}
           onSubmit={value => {
-            console.log(123);
             onChangeFilters({
               ...value,
-              archived: false,
+              archived: undefined,
+              status: undefined,
               filterByTab: false,
               filterBySummary: undefined
             });

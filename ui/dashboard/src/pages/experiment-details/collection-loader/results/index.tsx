@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQueryExperimentResultDetails } from '@queries/experiment-result';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -29,6 +29,7 @@ const Results = ({ experiment }: { experiment: Experiment }) => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const [goalResultState, setGoalResultState] = useState<GoalResultState[]>([]);
+  const [goalsNarrow, setGoalsNarrow] = useState<string[]>([]);
 
   const {
     data: experimentResultCollection,
@@ -38,7 +39,8 @@ const Results = ({ experiment }: { experiment: Experiment }) => {
     params: {
       experimentId: params?.experimentId || '',
       environmentId: currentEnvironment.id
-    }
+    },
+    retry: experiment.status !== 'WAITING'
   });
 
   const experimentResult = experimentResultCollection?.experimentResult;
@@ -62,6 +64,18 @@ const Results = ({ experiment }: { experiment: Experiment }) => {
     setGoalResultState(cloneGoalResultState);
   };
 
+  const handleNarrowGoalResult = useCallback(
+    (goalId: string) => {
+      const isExisted = goalsNarrow.includes(goalId);
+      setGoalsNarrow(
+        isExisted
+          ? goalsNarrow.filter(item => item !== goalId)
+          : [...goalsNarrow, goalId]
+      );
+    },
+    [goalsNarrow]
+  );
+
   useEffect(() => {
     if (experimentResult?.goalResults?.length) {
       const _goalResultState = experimentResult?.goalResults.map(
@@ -76,28 +90,26 @@ const Results = ({ experiment }: { experiment: Experiment }) => {
     }
   }, [experimentResult]);
 
-  return (
-    <>
-      {isLoading ? (
-        <PageLayout.LoadingState />
-      ) : isErrorState ? (
-        <EmptyCollection />
-      ) : (
-        <div className="flex flex-col w-full gap-y-6">
-          {experimentResult?.goalResults?.map((item, index) => (
-            <GoalResultItem
-              key={index}
-              experiment={experiment}
-              goalResult={item}
-              goalResultState={goalResultState[index]}
-              onChangeResultState={(tab, chartType) =>
-                handleChangeResultState({ index, tab, chartType })
-              }
-            />
-          ))}
-        </div>
-      )}
-    </>
+  return isLoading ? (
+    <PageLayout.LoadingState />
+  ) : isErrorState ? (
+    <EmptyCollection />
+  ) : (
+    <div className="flex flex-col w-full gap-y-6">
+      {experimentResult?.goalResults?.map((item, index) => (
+        <GoalResultItem
+          key={index}
+          isNarrow={goalsNarrow.includes(item.goalId)}
+          experiment={experiment}
+          goalResult={item}
+          goalResultState={goalResultState[index]}
+          onChangeResultState={(tab, chartType) =>
+            handleChangeResultState({ index, tab, chartType })
+          }
+          handleNarrowGoalResult={handleNarrowGoalResult}
+        />
+      ))}
+    </div>
   );
 };
 

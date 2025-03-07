@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Experiment, GoalResult } from '@types';
 import { getData, getTimeSeries } from 'utils/chart';
+import { cn } from 'utils/style';
 import { IconChevronDown } from '@icons';
 import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
@@ -13,15 +14,19 @@ import EvaluationTable from './evaluation-table';
 import TimeSeriesLineChart from './timeseries-line-chart';
 
 const GoalResultItem = ({
+  isNarrow,
   experiment,
   goalResult,
   goalResultState,
-  onChangeResultState
+  onChangeResultState,
+  handleNarrowGoalResult
 }: {
+  isNarrow: boolean;
   experiment: Experiment;
   goalResult: GoalResult;
   goalResultState: GoalResultState;
   onChangeResultState: (tab?: GoalResultTab, chartType?: ChartDataType) => void;
+  handleNarrowGoalResult: (goalId: string) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
 
@@ -35,18 +40,35 @@ const GoalResultItem = ({
   );
 
   return (
-    <div className="flex flex-col w-full min-w-fit gap-y-6 p-5 shadow-card rounded-lg bg-white">
+    <div
+      className={cn(
+        'flex flex-col w-full min-w-fit gap-y-6 p-5 shadow-card rounded-lg bg-white',
+        {
+          'h-16 overflow-hidden': isNarrow
+        }
+      )}
+    >
       <div className="flex items-center justify-between w-full">
         <p className="text-gray-800 typo-head-bold-small">
           {experiment?.goals?.find(goal => goal.id === goalResult?.goalId)
             ?.name || ''}
         </p>
-        <Icon
-          icon={IconChevronDown}
-          size={'md'}
-          color="gray-500"
-          className="rotate-180"
-        />
+        <div
+          className={cn(
+            'flex-center cursor-pointer rounded hover:bg-gray-200 transition-all duration-300',
+            {
+              'rotate-180': isNarrow
+            }
+          )}
+          onClick={() => handleNarrowGoalResult(goalResult.goalId)}
+        >
+          <Icon
+            icon={IconChevronDown}
+            size={'md'}
+            color="gray-500"
+            className="rotate-180"
+          />
+        </div>
       </div>
       <Tabs
         className="flex-1 flex h-full flex-col"

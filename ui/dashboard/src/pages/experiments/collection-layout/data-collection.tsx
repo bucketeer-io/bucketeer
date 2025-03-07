@@ -93,7 +93,7 @@ export const useColumns = ({
       id: 'name',
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 500,
+      size: 400,
       cell: ({ row }) => {
         const experiment = row.original;
 
@@ -145,7 +145,7 @@ export const useColumns = ({
       id: 'start_at',
       accessorKey: 'startAt',
       header: `${t('form:start-at')}`,
-      size: 150,
+      size: 200,
       cell: ({ row }) => {
         const experiment = row.original;
         return (
@@ -174,7 +174,7 @@ export const useColumns = ({
       id: 'stop_at',
       accessorKey: 'stopAt',
       header: `${t('form:end-at')}`,
-      size: 150,
+      size: 200,
       cell: ({ row }) => {
         const experiment = row.original;
         return (
@@ -203,7 +203,7 @@ export const useColumns = ({
       id: 'status',
       accessorKey: 'statuses',
       header: `${t('status')}`,
-      size: 120,
+      size: 200,
       cell: ({ row }) => {
         const experiment = row.original;
 
