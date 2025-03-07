@@ -52,17 +52,14 @@ const SelectOrganization = () => {
         };
 
         if (parsedToken.organization_id === organizationId) {
-          fetchUserData();
+          await fetchUserData();
         } else {
-          await switchOrganization({
+          const resp = await switchOrganization({
             organizationId,
             accessToken: token.accessToken
-          }).then(resp => {
-            if (resp.token) {
-              setTokenStorage(resp.token);
-              fetchUserData();
-            }
           });
+          setTokenStorage(resp.token);
+          await fetchUserData();
         }
       }
     } catch (error) {

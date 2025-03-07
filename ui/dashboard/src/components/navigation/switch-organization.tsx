@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { switchOrganization } from '@api/auth';
 import { useAuth } from 'auth';
+import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { jwtDecode } from 'jwt-decode';
 import { getOrgIdStorage, setOrgIdStorage } from 'storage/organization';
@@ -54,6 +56,7 @@ const SwitchOrganization = ({
   isOpen: boolean;
   onCloseSwitchOrg: () => void;
 }) => {
+  const navigate = useNavigate();
   const { t } = useTranslation(['common', 'form']);
   const { myOrganizations, onMeFetcher } = useAuth();
   const availableOrganizations = useMemo(
@@ -98,6 +101,7 @@ const SwitchOrganization = ({
             await onMeFetcher({ organizationId });
             setIsLoading(false);
             onCloseSwitchOrg();
+            navigate(PAGE_PATH_ROOT);
           }
         }
       }

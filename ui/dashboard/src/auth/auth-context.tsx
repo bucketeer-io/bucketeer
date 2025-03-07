@@ -83,8 +83,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         message: (error as AxiosError)?.message || 'Something went wrong.',
         messageType: 'error'
       });
+    } finally {
+      setIsInitialLoading(false);
     }
-    setIsInitialLoading(false);
   };
 
   const onSyncAuthentication = async () => {
