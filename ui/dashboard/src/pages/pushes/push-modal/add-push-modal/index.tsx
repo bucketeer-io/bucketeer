@@ -117,8 +117,6 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
     }
   };
 
-  console.log('form', form.getValues('tags'));
-
   return (
     <SlideModal title={t('new-push')} isOpen={isOpen} onClose={onClose}>
       <div className="w-full p-5 pb-28">

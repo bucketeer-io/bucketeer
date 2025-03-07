@@ -30,7 +30,12 @@
     "unarchive-goal": "Unarchive Goal",
     "edit-segment": "Edit User Segment",
     "delete-segment": "Delete User Segment",
-    "download-segment": "Download User Segment"
+    "download-segment": "Download User Segment",
+    "edit-experiment": "Edit Experiment",
+    "archive-experiment": "Archive Experiment",
+    "unarchive-experiment": "Unarchive Experiment",
+    "stop-experiment": "Stop Experiment",
+    "start-experiment": "Start Experiment"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -51,7 +56,10 @@
     "goal-title": "No registered goals",
     "goal-desc": "There are no registered goals. Add a new one to start managing.",
     "user-segments-title": "No registered user segments",
-    "user-segments-desc": "There are no registered user segments. Add a new one to start managing."
+    "user-segments-desc": "There are no registered user segments. Add a new one to start managing.",
+    "experiment-title": "No registered experiments",
+    "experiment-desc": "There are no registered experiments. Add a new one to start managing.",
+    "experiment-details-desc": "The result will be created when the experiment starts."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
@@ -91,5 +99,44 @@
   },
   "user-segment": {
     "delete-user-segment-desc": "The <bold>{{name}}</bold> is going to be deleted permanently. Are you sure you want to proceed?"
+  },
+  "experiment": {
+    "confirm-archive-desc": "The experiment \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
+    "confirm-unarchive-desc": "The experiment \"<bold>{{name}}</bold>\" will be unarchived. Are you sure you want to proceed?",
+    "scheduled": "Scheduled",
+    "running": "Running",
+    "stopped": "Stopped",
+    "not-started": "Not started",
+    "scheduled-experiment": "Scheduled Experiment",
+    "running-experiment": "Running Experiment",
+    "stopped-experiment": "Stopped Experiment",
+    "not-started-experiment": "Not Started Experiment",
+    "confirm-stop-desc": "The experiment \"<bold>{{name}}</bold>\" will be stopped. Are you sure you want to proceed?",
+    "confirm-start-desc": "The experiment \"<bold>{{name}}</bold>\" will be started. Are you sure you want to proceed?",
+    "running-experiment-desc": "The experiment is scheduled to stop on {{date}}",
+    "scheduled-experiment-desc": "The experiment is scheduled to start on {{date}}",
+    "stopped-experiment-desc": "This experiment is currently stopped",
+    "not-started-experiment-desc": "This is a manual start experiment"
+  },
+  "results": {
+    "variation": "Variation",
+    "evaluation-user": "Evaluation User",
+    "goal-total": "Goal Total",
+    "goal-user": "Goal User",
+    "conversion-rate": "Conversion Rate",
+    "value-total": "Value Total",
+    "value-user": "Value/ User",
+    "improvement": "Improvement",
+    "probability-to-beat-baseline": "Probability To Beat Baseline",
+    "probability-to-best": "Probability To Best",
+    "evaluation-user-tooltip": "The number of unique users for which variations have been returned. The number of users actually assigned to the feature flag variation. It does not include offline users or potential new users.",
+    "goal-total-tooltip": "The total number of goal events fired by the client.",
+    "goal-user-tooltip": "The number of unique users who fired the goal event. The count will not increase if the same user reaches the goal event multiple times.",
+    "conversion-rate-tooltip": "Calculated as (number of unique users who fired the goal event / number of unique users for whom a variation was returned).",
+    "value-total-tooltip": "The total number of values assigned to a goal event. This value is different for each goal.",
+    "value-user-tooltip": "The total number of values assigned to the goal event per user. It is calculated as (the sum of the numbers assigned to the goal event / the number of unique users who fired the goal event).",
+    "improvement-tooltip": "A measure of improvement in an indicator related to variation compared to a baseline (also called a control group). It is calculated by comparing the range of values for variation with the range of values for baseline.",
+    "probability-to-beat-baseline-tooltip": "Estimated likelihood of exceeding baseline (also known as a control group). A criterion of at least 95% is recommended.",
+    "probability-to-best-tooltip": "Possibility of being the best variation. Possibility of being presumed to outperform all other variations. We recommend a criterion of at least 95%."
   }
 }

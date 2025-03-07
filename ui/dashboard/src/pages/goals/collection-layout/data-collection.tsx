@@ -25,7 +25,7 @@ const Tag = ({ tag, type }: { tag: string; type: ConnectionType }) => {
   return (
     <div
       className={cn(
-        'flex-center w-fit px-2 py-1.5 typo-para-small leading-[14px] text-center rounded-[3px] capitalize',
+        'flex-center w-fit px-2 py-1.5 typo-para-small leading-[14px] text-center rounded-[3px] capitalize whitespace-nowrap',
         {
           'px-4 text-gray-600 bg-gray-100': type === 'UNKNOWN',
           'text-primary-500 bg-primary-50': type === 'EXPERIMENT',

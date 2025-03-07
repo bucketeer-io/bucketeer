@@ -1,6 +1,6 @@
 import { useTranslation } from 'i18n';
 import { IconExperiment, IconNotInUse, IconOperation } from '@icons';
-import OverviewCard from './overview-card';
+import OverviewCard from 'elements/overview-card';
 
 const Overview = () => {
   const { t } = useTranslation(['common']);

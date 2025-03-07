@@ -2,7 +2,7 @@ import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
-import { UserSegmentFeature } from '@types';
+import { Feature } from '@types';
 import { cn } from 'utils/style';
 import { IconToastWarning } from '@icons';
 import Icon from 'components/icon';
@@ -11,7 +11,7 @@ const SegmentWarning = ({
   features,
   className
 }: {
-  features: UserSegmentFeature[];
+  features: Feature[];
   className?: string;
 }) => {
   const { consoleAccount } = useAuth();
