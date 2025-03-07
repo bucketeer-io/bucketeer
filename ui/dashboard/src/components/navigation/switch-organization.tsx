@@ -51,10 +51,12 @@ const OrganizationItem = ({
 
 const SwitchOrganization = ({
   isOpen,
-  onCloseSwitchOrg
+  onCloseSwitchOrg,
+  onCloseSetting
 }: {
   isOpen: boolean;
   onCloseSwitchOrg: () => void;
+  onCloseSetting: () => void;
 }) => {
   const navigate = useNavigate();
   const { t } = useTranslation(['common', 'form']);
@@ -101,6 +103,7 @@ const SwitchOrganization = ({
             await onMeFetcher({ organizationId });
             setIsLoading(false);
             onCloseSwitchOrg();
+            onCloseSetting();
             navigate(PAGE_PATH_ROOT);
           }
         }

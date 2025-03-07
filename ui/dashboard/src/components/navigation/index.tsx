@@ -219,6 +219,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
       <SwitchOrganization
         isOpen={isOpenSwitchOrg}
         onCloseSwitchOrg={onCloseSwitchOrg}
+        onCloseSetting={onCloseSetting}
       />
     </div>
   );
