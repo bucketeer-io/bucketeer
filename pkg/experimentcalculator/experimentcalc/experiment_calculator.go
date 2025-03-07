@@ -356,69 +356,132 @@ func (e ExperimentCalculator) appendVariationResult(
 		goalResult.VariationResults[i].GoalValueSumPerUserProbBeatBaseline =
 			copyDistributionSummary(variationResult.GoalValueSumPerUserProbBeatBaseline)
 
-		goalResult.VariationResults[i].EvaluationUserCountTimeseries = &eventcounter.Timeseries{
-			Timestamps: []int64{timestamp},
-			Values:     []float64{float64(goalResult.VariationResults[i].EvaluationCount.UserCount)},
-		}
-		goalResult.VariationResults[i].EvaluationEventCountTimeseries = &eventcounter.Timeseries{
-			Timestamps: []int64{timestamp},
-			Values:     []float64{float64(goalResult.VariationResults[i].EvaluationCount.EventCount)},
-		}
-		goalResult.VariationResults[i].GoalUserCountTimeseries = &eventcounter.Timeseries{
-			Timestamps: []int64{timestamp},
-			Values:     []float64{float64(goalResult.VariationResults[i].ExperimentCount.UserCount)},
-		}
-		goalResult.VariationResults[i].GoalEventCountTimeseries = &eventcounter.Timeseries{
-			Timestamps: []int64{timestamp},
-			Values:     []float64{float64(goalResult.VariationResults[i].ExperimentCount.EventCount)},
-		}
-		goalResult.VariationResults[i].GoalValueSumTimeseries = &eventcounter.Timeseries{
-			Timestamps: []int64{timestamp},
-			Values:     []float64{goalResult.VariationResults[i].ExperimentCount.ValueSum},
-		}
-		goalResult.VariationResults[i].CvrMedianTimeseries = &eventcounter.Timeseries{
-			Timestamps: []int64{timestamp},
-			Values:     []float64{goalResult.VariationResults[i].CvrProb.Median},
-		}
-		goalResult.VariationResults[i].CvrPercentile025Timeseries = &eventcounter.Timeseries{
-			Timestamps: []int64{timestamp},
-			Values:     []float64{goalResult.VariationResults[i].CvrProb.Percentile025},
-		}
-		goalResult.VariationResults[i].CvrPercentile975Timeseries = &eventcounter.Timeseries{
-			Timestamps: []int64{timestamp},
-			Values:     []float64{goalResult.VariationResults[i].CvrProb.Percentile975},
-		}
+		// Append to EvaluationUserCountTimeseries
+		goalResult.VariationResults[i].EvaluationUserCountTimeseries = appendToTimeseries(
+			goalResult.VariationResults[i].EvaluationUserCountTimeseries,
+			timestamp,
+			float64(goalResult.VariationResults[i].EvaluationCount.UserCount),
+		)
+
+		// Append to EvaluationEventCountTimeseries
+		goalResult.VariationResults[i].EvaluationEventCountTimeseries = appendToTimeseries(
+			goalResult.VariationResults[i].EvaluationEventCountTimeseries,
+			timestamp,
+			float64(goalResult.VariationResults[i].EvaluationCount.EventCount),
+		)
+
+		// Append to GoalUserCountTimeseries
+		goalResult.VariationResults[i].GoalUserCountTimeseries = appendToTimeseries(
+			goalResult.VariationResults[i].GoalUserCountTimeseries,
+			timestamp,
+			float64(goalResult.VariationResults[i].ExperimentCount.UserCount),
+		)
+
+		// Append to GoalEventCountTimeseries
+		goalResult.VariationResults[i].GoalEventCountTimeseries = appendToTimeseries(
+			goalResult.VariationResults[i].GoalEventCountTimeseries,
+			timestamp,
+			float64(goalResult.VariationResults[i].ExperimentCount.EventCount),
+		)
+
+		// Append to GoalValueSumTimeseries
+		goalResult.VariationResults[i].GoalValueSumTimeseries = appendToTimeseries(
+			goalResult.VariationResults[i].GoalValueSumTimeseries,
+			timestamp,
+			goalResult.VariationResults[i].ExperimentCount.ValueSum,
+		)
+
+		// Append to CvrMedianTimeseries
+		goalResult.VariationResults[i].CvrMedianTimeseries = appendToTimeseries(
+			goalResult.VariationResults[i].CvrMedianTimeseries,
+			timestamp,
+			goalResult.VariationResults[i].CvrProb.Median,
+		)
+
+		// Append to CvrPercentile025Timeseries
+		goalResult.VariationResults[i].CvrPercentile025Timeseries = appendToTimeseries(
+			goalResult.VariationResults[i].CvrPercentile025Timeseries,
+			timestamp,
+			goalResult.VariationResults[i].CvrProb.Percentile025,
+		)
+
+		// Append to CvrPercentile975Timeseries
+		goalResult.VariationResults[i].CvrPercentile975Timeseries = appendToTimeseries(
+			goalResult.VariationResults[i].CvrPercentile975Timeseries,
+			timestamp,
+			goalResult.VariationResults[i].CvrProb.Percentile975,
+		)
+
+		// Calculate CVR
 		cvr := 0.0
 		if goalResult.VariationResults[i].EvaluationCount.UserCount != 0 {
 			cvr = float64(goalResult.VariationResults[i].ExperimentCount.UserCount) /
 				float64(goalResult.VariationResults[i].EvaluationCount.UserCount)
 		}
-		goalResult.VariationResults[i].CvrTimeseries = &eventcounter.Timeseries{
-			Timestamps: []int64{timestamp},
-			Values:     []float64{cvr},
-		}
+
+		// Append to CvrTimeseries
+		goalResult.VariationResults[i].CvrTimeseries = appendToTimeseries(
+			goalResult.VariationResults[i].CvrTimeseries,
+			timestamp,
+			cvr,
+		)
+
+		// Calculate valuePerUser
 		valuePerUser := 0.0
 		if goalResult.VariationResults[i].ExperimentCount.UserCount != 0 {
 			valuePerUser = goalResult.VariationResults[i].ExperimentCount.ValueSum /
 				float64(goalResult.VariationResults[i].ExperimentCount.UserCount)
 		}
-		goalResult.VariationResults[i].GoalValueSumPerUserTimeseries = &eventcounter.Timeseries{
-			Timestamps: []int64{timestamp},
-			Values:     []float64{valuePerUser},
-		}
-		goalResult.VariationResults[i].GoalValueSumPerUserMedianTimeseries = &eventcounter.Timeseries{
-			Timestamps: []int64{timestamp},
-			Values:     []float64{goalResult.VariationResults[i].GoalValueSumPerUserProb.Median},
-		}
-		goalResult.VariationResults[i].GoalValueSumPerUserPercentile025Timeseries = &eventcounter.Timeseries{
-			Timestamps: []int64{timestamp},
-			Values:     []float64{goalResult.VariationResults[i].GoalValueSumPerUserProb.Percentile025},
-		}
-		goalResult.VariationResults[i].GoalValueSumPerUserPercentile975Timeseries = &eventcounter.Timeseries{
-			Timestamps: []int64{timestamp},
-			Values:     []float64{goalResult.VariationResults[i].GoalValueSumPerUserProb.Percentile975},
+
+		// Append to GoalValueSumPerUserTimeseries
+		goalResult.VariationResults[i].GoalValueSumPerUserTimeseries = appendToTimeseries(
+			goalResult.VariationResults[i].GoalValueSumPerUserTimeseries,
+			timestamp,
+			valuePerUser,
+		)
+
+		// Append to GoalValueSumPerUserMedianTimeseries
+		goalResult.VariationResults[i].GoalValueSumPerUserMedianTimeseries = appendToTimeseries(
+			goalResult.VariationResults[i].GoalValueSumPerUserMedianTimeseries,
+			timestamp,
+			goalResult.VariationResults[i].GoalValueSumPerUserProb.Median,
+		)
+
+		// Append to GoalValueSumPerUserPercentile025Timeseries
+		goalResult.VariationResults[i].GoalValueSumPerUserPercentile025Timeseries = appendToTimeseries(
+			goalResult.VariationResults[i].GoalValueSumPerUserPercentile025Timeseries,
+			timestamp,
+			goalResult.VariationResults[i].GoalValueSumPerUserProb.Percentile025,
+		)
+
+		// Append to GoalValueSumPerUserPercentile975Timeseries
+		goalResult.VariationResults[i].GoalValueSumPerUserPercentile975Timeseries = appendToTimeseries(
+			goalResult.VariationResults[i].GoalValueSumPerUserPercentile975Timeseries,
+			timestamp,
+			goalResult.VariationResults[i].GoalValueSumPerUserProb.Percentile975,
+		)
+	}
+}
+
+// appendToTimeseries appends a new timestamp and value to the timeseries and increments total_counts
+func appendToTimeseries(ts *eventcounter.Timeseries, timestamp int64, value float64) *eventcounter.Timeseries {
+	// If timeseries doesn't exist, create a new one
+	if ts == nil {
+		return &eventcounter.Timeseries{
+			Timestamps:  []int64{timestamp},
+			Values:      []float64{value},
+			Unit:        eventcounter.Timeseries_DAY,
+			TotalCounts: 1,
 		}
 	}
+
+	// Append the new timestamp and value
+	ts.Timestamps = append(ts.Timestamps, timestamp)
+	ts.Values = append(ts.Values, value)
+
+	// Increment the total_counts
+	ts.TotalCounts++
+	return ts
 }
 
 func (e ExperimentCalculator) binomialModelSample(
