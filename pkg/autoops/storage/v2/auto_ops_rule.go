@@ -173,6 +173,7 @@ func (s *autoOpsRuleStorage) ListAutoOpsRules(
 			&autoOpsRule.UpdatedAt,
 			&autoOpsRule.Deleted,
 			&autoOpsRule.AutoOpsStatus,
+			&autoOpsRule.FeatureName,
 		)
 		if err != nil {
 			return nil, 0, err
