@@ -130,7 +130,7 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 				)
 				continue
 			}
-			e.logger.Debug("Experiment calculated successfully",
+			e.logger.Info("Experiment calculated successfully",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.String("environmentId", env.Id),
 					zap.String("experimentId", ex.Id),
