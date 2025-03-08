@@ -217,7 +217,7 @@ func (e *experimentCalculate) listExperiments(
 	environmentId string,
 ) ([]*experiment.Experiment, error) {
 	req := &experiment.ListExperimentsRequest{
-		From:          time.Now().In(e.location).Add(-2 * 24 * time.Hour).Unix(),
+		// From:          time.Now().In(e.location).Add(-2 * 24 * time.Hour).Unix(),
 		PageSize:      0,
 		Cursor:        "",
 		EnvironmentId: environmentId,
