@@ -335,7 +335,8 @@ func ConstructOrderBySQLString(orders []*Order) string {
 		sb.WriteString(" ")
 		sb.WriteString(o.Direction.String())
 	}
-	return sb.String()
+	constructStr := sb.String() + " "
+	return constructStr
 }
 
 func ConstructQueryAndWhereArgs(baseQuery string, options *ListOptions) (query string, whereArgs []interface{}) {
