@@ -1912,11 +1912,29 @@ func (s *FeatureService) stopProgressiveRollout(
 	EnvironmentId, featureID string) error {
 	storage := v2ao.NewProgressiveRolloutStorage(s.mysqlClient)
 	ids := convToInterfaceSlice([]string{featureID})
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_id", "=", EnvironmentId),
-		mysql.NewInFilter("feature_id", ids),
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    EnvironmentId,
+		},
 	}
-	list, _, _, err := storage.ListProgressiveRollouts(ctx, whereParts, nil, 0, 0)
+	inFilter := &mysql.InFilter{
+		Column: "feature_id",
+		Values: ids,
+	}
+	listOptions := &mysql.ListOptions{
+		Filters:     filters,
+		Orders:      nil,
+		InFilter:    inFilter,
+		NullFilters: nil,
+		JSONFilters: nil,
+		SearchQuery: nil,
+		Limit:       0,
+		Offset:      0,
+	}
+
+	list, _, _, err := storage.ListProgressiveRollouts(ctx, listOptions)
 	if err != nil {
 		return err
 	}
