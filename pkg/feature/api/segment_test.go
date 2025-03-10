@@ -30,7 +30,9 @@ import (
 
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 
+	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
+	storagemock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -76,8 +78,13 @@ func TestCreateSegmentMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().CreateSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -140,8 +147,13 @@ func TestCreateSegmentNoCommandMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().CreateSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -212,9 +224,8 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrSegmentNotFound)
 			},
 			id:            "id",
@@ -236,8 +247,20 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Segment{
+					Segment: &featureproto.Segment{
+						Id: "id",
+					},
+				}, nil, nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().UpdateSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -313,9 +336,8 @@ func TestDeleteSegmentNoCommandMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrSegmentNotFound)
 			},
 			req: &featureproto.DeleteSegmentRequest{
@@ -339,9 +361,21 @@ func TestDeleteSegmentNoCommandMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Segment{
+					Segment: &featureproto.Segment{
+						Id: "id",
+					},
+				}, nil, nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().DeleteSegment(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &featureproto.DeleteSegmentRequest{
@@ -400,8 +434,20 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+					gomock.All(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Segment{
+					Segment: &featureproto.Segment{
+						Id: "id",
+					},
+				}, nil, nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().UpdateSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -476,8 +522,20 @@ func TestUpdateSegmentNoCommandMySQL(t *testing.T) {
 		{
 			desc: "success update name",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+					gomock.All(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Segment{
+					Segment: &featureproto.Segment{
+						Id: "id0",
+					},
+				}, nil, nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().UpdateSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -491,8 +549,20 @@ func TestUpdateSegmentNoCommandMySQL(t *testing.T) {
 		{
 			desc: "success update description",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+					gomock.All(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Segment{
+					Segment: &featureproto.Segment{
+						Id: "id0",
+					},
+				}, nil, nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().UpdateSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -550,11 +620,9 @@ func TestGetSegmentMySQL(t *testing.T) {
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(nil, nil, v2fs.ErrSegmentNotFound)
 			},
 			id:            "id",
 			environmentId: "ns0",
@@ -570,11 +638,17 @@ func TestGetSegmentMySQL(t *testing.T) {
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row).Times(2)
+				).Return(&domain.Segment{
+					Segment: &featureproto.Segment{}}, nil, nil)
+				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{
+					{
+						Id: "id",
+					},
+				}, 0, int64(0), nil)
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
@@ -597,11 +671,17 @@ func TestGetSegmentMySQL(t *testing.T) {
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row).Times(2)
+				).Return(&domain.Segment{
+					Segment: &featureproto.Segment{}}, nil, nil)
+				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{
+					{
+						Id: "id",
+					},
+				}, 0, int64(0), nil)
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
@@ -683,18 +763,29 @@ func TestListSegmentsMySQL(t *testing.T) {
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().ListSegments(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Segment{
+					{
+						Id: "id",
+					},
+				}, 0, int64(0), map[string][]string{
+					"id": {"id"},
+				}, nil)
+				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{
+					{
+						Id: "id",
+					},
+				}, 0, int64(0), nil)
 				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil).Times(2)
-				rows.EXPECT().Next().Return(false).Times(2)
-				rows.EXPECT().Err().Return(nil).Times(2)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil).Times(2)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row).Times(2)
+				).Return(rows, nil)
 			},
 			pageSize:      int64(maxPageSizePerRequest),
 			environmentId: "ns0",
@@ -710,18 +801,29 @@ func TestListSegmentsMySQL(t *testing.T) {
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().ListSegments(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Segment{
+					{
+						Id: "id",
+					},
+				}, 0, int64(0), map[string][]string{
+					"id": {"id"},
+				}, nil)
+				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{
+					{
+						Id: "id",
+					},
+				}, 0, int64(0), nil)
 				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil).Times(2)
-				rows.EXPECT().Next().Return(false).Times(2)
-				rows.EXPECT().Err().Return(nil).Times(2)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil).Times(2)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row).Times(2)
+				).Return(rows, nil)
 			},
 			pageSize:      int64(maxPageSizePerRequest),
 			environmentId: "ns0",
