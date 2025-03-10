@@ -110,6 +110,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *domain.Experimen
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("environmentId", request.EnvironmentId),
 				zap.Any("experiment", request.Experiment),
+				zap.Any("experimentResult", experimentResult),
 				zap.Error(err),
 			)...,
 		)
