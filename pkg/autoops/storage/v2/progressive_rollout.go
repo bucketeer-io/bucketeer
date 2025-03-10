@@ -19,7 +19,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -61,9 +60,7 @@ type ProgressiveRolloutStorage interface {
 	DeleteProgressiveRollout(ctx context.Context, id, environmentId string) error
 	ListProgressiveRollouts(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		options *mysql.ListOptions,
 	) ([]*autoopsproto.ProgressiveRollout, int64, int, error)
 	UpdateProgressiveRollout(ctx context.Context,
 		progressiveRollout *domain.ProgressiveRollout,
@@ -158,20 +155,15 @@ func (s *progressiveRolloutStorage) DeleteProgressiveRollout(
 
 func (s *progressiveRolloutStorage) ListProgressiveRollouts(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*autoopsproto.ProgressiveRollout, int64, int, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(selectOpsProgressiveRolloutsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectOpsProgressiveRolloutsSQL, options)
 	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
-	progressiveRollouts := make([]*autoopsproto.ProgressiveRollout, 0, limit)
+	progressiveRollouts := make([]*autoopsproto.ProgressiveRollout, 0)
 	for rows.Next() {
 		progressiveRollout := autoopsproto.ProgressiveRollout{}
 		err := rows.Scan(
@@ -193,9 +185,13 @@ func (s *progressiveRolloutStorage) ListProgressiveRollouts(
 	if rows.Err() != nil {
 		return nil, 0, 0, err
 	}
+	var offset int
+	if options != nil {
+		offset = options.Offset
+	}
 	nextOffset := offset + len(progressiveRollouts)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countOpsProgressiveRolloutsSQL, whereSQL)
+	countQuery, whereArgs := mysql.ConstructQueryAndWhereArgs(countOpsProgressiveRolloutsSQL, options)
 	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

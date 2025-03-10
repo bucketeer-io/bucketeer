@@ -23,6 +23,41 @@ import (
 
 const placeHolder = "?"
 
+type Operator int
+
+const (
+	// Operation to find the field is equal to the specified value.
+	OperatorEqual = iota + 1
+	// Operation to find the field isn't equal to the specified value.
+	OperatorNotEqual
+	// Operation to find ones that contain any one of the multiple values.
+	OperatorIn
+	// Operation to find ones that do not contain any of the specified multiple values.
+	OperatorNotIn
+	// Operation to find ones the field is greater than the specified value.
+	OperatorGreaterThan
+	// Operation to find ones the field is greater or equal than the specified value.
+	OperatorGreaterThanOrEqual
+	// Operation to find ones the field is less than the specified value.
+	OperatorLessThan
+	// Operation to find ones the field is less or equal than the specified value.
+	OperatorLessThanOrEqual
+	// Operation to find ones that have a specified value in its array.
+	OperatorContains
+)
+
+var operatorMap = map[Operator]string{
+	OperatorEqual:              "=",
+	OperatorNotEqual:           "!=",
+	OperatorIn:                 "IN",
+	OperatorNotIn:              "NOT IN",
+	OperatorGreaterThan:        ">",
+	OperatorGreaterThanOrEqual: ">=",
+	OperatorLessThan:           "<",
+	OperatorLessThanOrEqual:    "<=",
+	OperatorContains:           "MEMBER OF",
+}
+
 type WherePart interface {
 	SQLString() (sql string, args []interface{})
 }
@@ -50,6 +85,21 @@ func (f *Filter) SQLString() (sql string, args []interface{}) {
 	return
 }
 
+type FilterV2 struct {
+	Column   string
+	Operator Operator
+	Value    interface{}
+}
+
+func (f *FilterV2) SQLString() (sql string, args []interface{}) {
+	if f.Column == "" || f.Operator < OperatorEqual || f.Operator > OperatorContains {
+		return "", nil
+	}
+	sql = fmt.Sprintf("%s %s %s", f.Column, operatorMap[f.Operator], placeHolder)
+	args = append(args, f.Value)
+	return
+}
+
 type InFilter struct {
 	Column string
 	Values []interface{}
@@ -63,7 +113,7 @@ func NewInFilter(column string, values []interface{}) WherePart {
 }
 
 func (f *InFilter) SQLString() (sql string, args []interface{}) {
-	if f.Column == "" {
+	if f.Column == "" || len(f.Values) == 0 {
 		return "", nil
 	}
 	var sb strings.Builder
@@ -236,7 +286,7 @@ func ConstructWhereSQLString(wps []WherePart) (sql string, args []interface{}) {
 		sb.WriteString(wpSQL)
 		args = append(args, wpArgs...)
 	}
-	sql = sb.String()
+	sql = sb.String() + " "
 	return
 }
 
@@ -285,7 +335,44 @@ func ConstructOrderBySQLString(orders []*Order) string {
 		sb.WriteString(" ")
 		sb.WriteString(o.Direction.String())
 	}
-	return sb.String()
+	constructStr := sb.String() + " "
+	return constructStr
+}
+
+func ConstructQueryAndWhereArgs(baseQuery string, options *ListOptions) (query string, whereArgs []interface{}) {
+	if options != nil {
+		var whereQuery string
+		whereParts := options.CreateWhereParts()
+		whereQuery, whereArgs = ConstructWhereSQLString(whereParts)
+		orderByQuery := ConstructOrderBySQLString(options.Orders)
+		limitOffsetQuery := ConstructLimitOffsetSQLString(options.Limit, options.Offset)
+		query = baseQuery + whereQuery + orderByQuery + limitOffsetQuery
+	} else {
+		query = baseQuery
+		whereArgs = []interface{}{}
+	}
+	return
+}
+
+type Orders struct {
+	Orders []*Order
+}
+
+func (o *Orders) SQLString() (sql string, args []interface{}) {
+	if len(o.Orders) == 0 {
+		return "", nil
+	}
+	var sb strings.Builder
+	sb.WriteString("ORDER BY ")
+	for i, o := range o.Orders {
+		if i != 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(o.Column)
+		sb.WriteString(" ")
+		sb.WriteString(o.Direction.String())
+	}
+	return sb.String(), nil
 }
 
 const (
@@ -308,4 +395,41 @@ func ConstructLimitOffsetSQLString(limit, offset int) string {
 		return fmt.Sprintf("LIMIT %d", limit)
 	}
 	return fmt.Sprintf("LIMIT %d OFFSET %d", limit, offset)
+}
+
+type ListOptions struct {
+	Limit       int
+	Filters     []*FilterV2
+	InFilter    *InFilter
+	NullFilters []*NullFilter
+	JSONFilters []*JSONFilter
+	SearchQuery *SearchQuery
+	Orders      []*Order
+	Offset      int
+}
+
+func (lo *ListOptions) CreateWhereParts() []WherePart {
+	var whereParts []WherePart
+	if lo.Filters != nil {
+		for _, f := range lo.Filters {
+			whereParts = append(whereParts, f)
+		}
+	}
+	if lo.InFilter != nil {
+		whereParts = append(whereParts, lo.InFilter)
+	}
+	if lo.NullFilters != nil {
+		for _, f := range lo.NullFilters {
+			whereParts = append(whereParts, f)
+		}
+	}
+	if lo.JSONFilters != nil {
+		for _, f := range lo.JSONFilters {
+			whereParts = append(whereParts, f)
+		}
+	}
+	if lo.SearchQuery != nil {
+		whereParts = append(whereParts, lo.SearchQuery)
+	}
+	return whereParts
 }

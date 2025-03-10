@@ -214,10 +214,7 @@ func TestListAutoOpsRules(t *testing.T) {
 	defer mockController.Finish()
 	patterns := []struct {
 		setup          func(*autoOpsRuleStorage)
-		whereParts     []mysql.WherePart
-		orders         []*mysql.Order
-		limit          int
-		offset         int
+		listOpts       *mysql.ListOptions
 		expected       []*proto.AutoOpsRule
 		expectedCursor int
 		expectedErr    error
@@ -232,10 +229,7 @@ func TestListAutoOpsRules(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			whereParts:     nil,
-			orders:         nil,
-			limit:          0,
-			offset:         0,
+			listOpts:       nil,
 			expected:       nil,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
@@ -254,14 +248,27 @@ func TestListAutoOpsRules(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			whereParts: []mysql.WherePart{
-				mysql.NewFilter("num", ">=", 5),
+			listOpts: &mysql.ListOptions{
+				Limit:  10,
+				Offset: 5,
+				Filters: []*mysql.FilterV2{
+					{
+						Column:   "num",
+						Operator: mysql.OperatorGreaterThanOrEqual,
+						Value:    5,
+					},
+				},
+				InFilter:    nil,
+				NullFilters: nil,
+				JSONFilters: nil,
+				SearchQuery: nil,
+				Orders: []*mysql.Order{
+					{
+						Column:    "id",
+						Direction: mysql.OrderDirectionAsc,
+					},
+				},
 			},
-			orders: []*mysql.Order{
-				mysql.NewOrder("id", mysql.OrderDirectionAsc),
-			},
-			limit:          10,
-			offset:         5,
 			expected:       []*proto.AutoOpsRule{},
 			expectedCursor: 5,
 			expectedErr:    nil,
@@ -274,10 +281,7 @@ func TestListAutoOpsRules(t *testing.T) {
 		}
 		autoOpsRules, cursor, err := storage.ListAutoOpsRules(
 			context.Background(),
-			p.whereParts,
-			p.orders,
-			p.limit,
-			p.offset,
+			p.listOpts,
 		)
 		assert.Equal(t, p.expected, autoOpsRules)
 		assert.Equal(t, p.expectedCursor, cursor)
