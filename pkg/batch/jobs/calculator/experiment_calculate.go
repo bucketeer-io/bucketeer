@@ -91,7 +91,7 @@ func NewExperimentCalculate(
 }
 
 func (e *experimentCalculate) Run(ctx context.Context) error {
-	now := time.Now().In(e.location)
+	// now := time.Now().In(e.location)
 	e.logger.Info("Started experiment calculate job")
 	environments, environmentErr := e.listEnvironments(ctx)
 	if environmentErr != nil {
@@ -120,30 +120,31 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 			)
 		}
 		for _, ex := range experiments {
-			if ex.Status == experiment.Experiment_STOPPED && now.Unix()-ex.StopAt > 30*day {
-				e.logger.Info("Skip experiment calculation. The experiment stopped more than 2 days ago",
-					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.String("environmentId", env.Id),
-						zap.String("experimentId", ex.Id),
-						zap.String("experimentName", ex.Name),
-					)...,
-				)
-				// Because the evaluation and goal events may be sent with a delay for many reasons from the client side,
-				// we still calculate the results for two days after it stopped.
-				continue
-			}
-			if ex.Status == experiment.Experiment_FORCE_STOPPED && now.Unix()-ex.StoppedAt > 30*day {
-				e.logger.Info("Skip experiment calculation. The experiment stopped more than 2 days ago",
-					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.String("environmentId", env.Id),
-						zap.String("experimentId", ex.Id),
-						zap.String("experimentName", ex.Name),
-					)...,
-				)
-				// Because the evaluation and goal events may be sent with a delay for many reasons from the client side,
-				// we still calculate the results for two days after it stopped.
-				continue
-			}
+			// FIXME: Revert
+			// if ex.Status == experiment.Experiment_STOPPED && now.Unix()-ex.StopAt > 30*day {
+			// 	e.logger.Info("Skip experiment calculation. The experiment stopped more than 2 days ago",
+			// 		log.FieldsFromImcomingContext(ctx).AddFields(
+			// 			zap.String("environmentId", env.Id),
+			// 			zap.String("experimentId", ex.Id),
+			// 			zap.String("experimentName", ex.Name),
+			// 		)...,
+			// 	)
+			// 	// Because the evaluation and goal events may be sent with a delay for many reasons from the client side,
+			// 	// we still calculate the results for two days after it stopped.
+			// 	continue
+			// }
+			// if ex.Status == experiment.Experiment_FORCE_STOPPED && now.Unix()-ex.StoppedAt > 30*day {
+			// 	e.logger.Info("Skip experiment calculation. The experiment stopped more than 2 days ago",
+			// 		log.FieldsFromImcomingContext(ctx).AddFields(
+			// 			zap.String("environmentId", env.Id),
+			// 			zap.String("experimentId", ex.Id),
+			// 			zap.String("experimentName", ex.Name),
+			// 		)...,
+			// 	)
+			// 	// Because the evaluation and goal events may be sent with a delay for many reasons from the client side,
+			// 	// we still calculate the results for two days after it stopped.
+			// 	continue
+			// }
 			calculateErr := e.calculateExperimentWithLock(ctx, env, ex)
 			if calculateErr != nil {
 				e.logger.Error("Failed to calculate experiment",
@@ -180,6 +181,7 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 		e.logger.Info("Experiment is being calculated by another instance",
 			zap.String("environmentId", env.Id),
 			zap.String("experimentId", experiment.Id),
+			zap.String("experimentName", experiment.Name),
 		)
 		return nil
 	}
@@ -192,12 +194,14 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 				zap.Error(unlockErr),
 				zap.String("environmentId", env.Id),
 				zap.String("experimentId", experiment.Id),
+				zap.String("experimentName", experiment.Name),
 			)
 		}
 		if !unlocked {
 			e.logger.Warn("Lock was not released when calculating experiment, possibly expired",
 				zap.String("environmentId", env.Id),
 				zap.String("experimentId", experiment.Id),
+				zap.String("experimentName", experiment.Name),
 			)
 		}
 		return calcErr
@@ -247,6 +251,7 @@ func (e *experimentCalculate) listExperiments(
 	environmentId string,
 ) ([]*experiment.Experiment, error) {
 	req := &experiment.ListExperimentsRequest{
+		StartAt:       time.Now().In(e.location).Add(-40 * day).Unix(), // FIXME: change this to 30 days
 		PageSize:      0,
 		Cursor:        "",
 		EnvironmentId: environmentId,

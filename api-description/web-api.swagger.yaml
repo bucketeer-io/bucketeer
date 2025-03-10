@@ -4070,12 +4070,12 @@ paths:
           required: false
           type: integer
           format: int32
-        - name: from
+        - name: startAt
           in: query
           required: false
           type: string
           format: int64
-        - name: to
+        - name: stopAt
           in: query
           required: false
           type: string
