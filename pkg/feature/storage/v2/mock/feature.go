@@ -72,6 +72,21 @@ func (mr *MockFeatureStorageMockRecorder) GetFeature(ctx, key, environmentId any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeature", reflect.TypeOf((*MockFeatureStorage)(nil).GetFeature), ctx, key, environmentId)
 }
 
+// GetFeatureSummary mocks base method.
+func (m *MockFeatureStorage) GetFeatureSummary(ctx context.Context, environmentID string) (*feature.FeatureSummary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFeatureSummary", ctx, environmentID)
+	ret0, _ := ret[0].(*feature.FeatureSummary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFeatureSummary indicates an expected call of GetFeatureSummary.
+func (mr *MockFeatureStorageMockRecorder) GetFeatureSummary(ctx, environmentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureSummary", reflect.TypeOf((*MockFeatureStorage)(nil).GetFeatureSummary), ctx, environmentID)
+}
+
 // ListAllEnvironmentFeatures mocks base method.
 func (m *MockFeatureStorage) ListAllEnvironmentFeatures(ctx context.Context) ([]*feature.EnvironmentFeature, error) {
 	m.ctrl.T.Helper()
