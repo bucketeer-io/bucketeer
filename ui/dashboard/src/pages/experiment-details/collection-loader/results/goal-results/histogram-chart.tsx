@@ -39,7 +39,7 @@ export const HistogramChart = memo(
       datasets: dataLabels.map((e, i) => {
         return {
           label: e,
-          data: hist[i],
+          data: hist[i] || [],
           backgroundColor: CHART_COLORS[i % CHART_COLORS.length]
         };
       })
