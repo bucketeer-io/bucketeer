@@ -114,7 +114,13 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 		}
 		for _, ex := range experiments {
 			if ex.Status == experiment.Experiment_STOPPED &&
-				now.Unix()-ex.StopAt > 2*day {
+				now.Unix()-ex.StopAt > 30*day { // TODO: Revert this to 2 days.
+				e.logger.Info("Skip experiment calculation. The experiment stopped more than 2 days ago",
+					log.FieldsFromImcomingContext(ctx).AddFields(
+						zap.String("environmentId", env.Id),
+						zap.String("experimentId", ex.Id),
+					)...,
+				)
 				// Because the evaluation and goal events may be sent with a delay for many reasons from the client side,
 				// we still calculate the results for two days after it stopped.
 				continue
