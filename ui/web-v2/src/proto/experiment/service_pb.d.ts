@@ -613,11 +613,11 @@ export class ListExperimentsRequest extends jspb.Message {
   getFeatureVersion(): google_protobuf_wrappers_pb.Int32Value | undefined;
   setFeatureVersion(value?: google_protobuf_wrappers_pb.Int32Value): void;
 
-  getFrom(): number;
-  setFrom(value: number): void;
+  getStartAt(): number;
+  setStartAt(value: number): void;
 
-  getTo(): number;
-  setTo(value: number): void;
+  getStopAt(): number;
+  setStopAt(value: number): void;
 
   getPageSize(): number;
   setPageSize(value: number): void;
@@ -693,8 +693,8 @@ export namespace ListExperimentsRequest {
   export type AsObject = {
     featureId: string;
     featureVersion?: google_protobuf_wrappers_pb.Int32Value.AsObject;
-    from: number;
-    to: number;
+    startAt: number;
+    stopAt: number;
     pageSize: number;
     cursor: string;
     status?: google_protobuf_wrappers_pb.Int32Value.AsObject;

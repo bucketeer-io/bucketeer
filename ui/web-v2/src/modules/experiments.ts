@@ -120,10 +120,10 @@ export const listExperiments = createAsyncThunk<
     request.setFeatureVersion(version);
   }
   if (params.startFrom) {
-    request.setFrom(params.startFrom);
+    request.setStartAt(params.startFrom);
   }
   if (params.stopUntil) {
-    request.setTo(params.stopUntil);
+    request.setStopAt(params.stopUntil);
   }
   const result = await grpc.listExperiments(request);
   return result.response.toObject();

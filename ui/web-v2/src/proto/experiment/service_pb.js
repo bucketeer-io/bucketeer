@@ -4199,8 +4199,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         featureVersion:
           (f = msg.getFeatureVersion()) &&
           google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
-        from: jspb.Message.getFieldWithDefault(msg, 3, 0),
-        to: jspb.Message.getFieldWithDefault(msg, 4, 0),
+        startAt: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        stopAt: jspb.Message.getFieldWithDefault(msg, 4, 0),
         pageSize: jspb.Message.getFieldWithDefault(msg, 5, 0),
         cursor: jspb.Message.getFieldWithDefault(msg, 6, ''),
         status:
@@ -4270,11 +4270,11 @@ proto.bucketeer.experiment.ListExperimentsRequest.deserializeBinaryFromReader =
           break;
         case 3:
           var value = /** @type {number} */ (reader.readInt64());
-          msg.setFrom(value);
+          msg.setStartAt(value);
           break;
         case 4:
           var value = /** @type {number} */ (reader.readInt64());
-          msg.setTo(value);
+          msg.setStopAt(value);
           break;
         case 5:
           var value = /** @type {number} */ (reader.readInt64());
@@ -4381,11 +4381,11 @@ proto.bucketeer.experiment.ListExperimentsRequest.serializeBinaryToWriter =
         google_protobuf_wrappers_pb.Int32Value.serializeBinaryToWriter
       );
     }
-    f = message.getFrom();
+    f = message.getStartAt();
     if (f !== 0) {
       writer.writeInt64(3, f);
     }
-    f = message.getTo();
+    f = message.getStopAt();
     if (f !== 0) {
       writer.writeInt64(4, f);
     }
@@ -4524,10 +4524,10 @@ proto.bucketeer.experiment.ListExperimentsRequest.prototype.hasFeatureVersion =
   };
 
 /**
- * optional int64 from = 3;
+ * optional int64 start_at = 3;
  * @return {number}
  */
-proto.bucketeer.experiment.ListExperimentsRequest.prototype.getFrom =
+proto.bucketeer.experiment.ListExperimentsRequest.prototype.getStartAt =
   function () {
     return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
   };
@@ -4536,17 +4536,16 @@ proto.bucketeer.experiment.ListExperimentsRequest.prototype.getFrom =
  * @param {number} value
  * @return {!proto.bucketeer.experiment.ListExperimentsRequest} returns this
  */
-proto.bucketeer.experiment.ListExperimentsRequest.prototype.setFrom = function (
-  value
-) {
-  return jspb.Message.setProto3IntField(this, 3, value);
-};
+proto.bucketeer.experiment.ListExperimentsRequest.prototype.setStartAt =
+  function (value) {
+    return jspb.Message.setProto3IntField(this, 3, value);
+  };
 
 /**
- * optional int64 to = 4;
+ * optional int64 stop_at = 4;
  * @return {number}
  */
-proto.bucketeer.experiment.ListExperimentsRequest.prototype.getTo =
+proto.bucketeer.experiment.ListExperimentsRequest.prototype.getStopAt =
   function () {
     return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
   };
@@ -4555,11 +4554,10 @@ proto.bucketeer.experiment.ListExperimentsRequest.prototype.getTo =
  * @param {number} value
  * @return {!proto.bucketeer.experiment.ListExperimentsRequest} returns this
  */
-proto.bucketeer.experiment.ListExperimentsRequest.prototype.setTo = function (
-  value
-) {
-  return jspb.Message.setProto3IntField(this, 4, value);
-};
+proto.bucketeer.experiment.ListExperimentsRequest.prototype.setStopAt =
+  function (value) {
+    return jspb.Message.setProto3IntField(this, 4, value);
+  };
 
 /**
  * optional int64 page_size = 5;
