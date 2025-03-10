@@ -26,7 +26,9 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
+	domain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
+	storagemock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
@@ -101,9 +103,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 		{
 			desc: "ErrSegmentNotFound",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrSegmentNotFound)
 			},
 			environmentId: "ns0",
@@ -117,9 +118,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 		{
 			desc: "ErrSegmentUsersAlreadyUploading",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(createError(statusSegmentUsersAlreadyUploading, localizer.MustLocalize(locale.SegmentUsersAlreadyUploading)))
 			},
 			environmentId: "ns0",
@@ -133,8 +133,18 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Segment{
+					Segment: &featureproto.Segment{},
+				}, nil, nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().UpdateSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -235,9 +245,8 @@ func TestBulkUploadSegmentUsersNoCommandMySQL(t *testing.T) {
 		{
 			desc: "ErrSegmentNotFound",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrSegmentNotFound)
 			},
 			req: &featureproto.BulkUploadSegmentUsersRequest{
@@ -251,9 +260,8 @@ func TestBulkUploadSegmentUsersNoCommandMySQL(t *testing.T) {
 		{
 			desc: "ErrSegmentUsersAlreadyUploading",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(createError(statusSegmentUsersAlreadyUploading, localizer.MustLocalize(locale.SegmentUsersAlreadyUploading)))
 			},
 			req: &featureproto.BulkUploadSegmentUsersRequest{
@@ -267,8 +275,18 @@ func TestBulkUploadSegmentUsersNoCommandMySQL(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Segment{
+					Segment: &featureproto.Segment{},
+				}, nil, nil)
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().UpdateSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -342,11 +360,9 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 		{
 			desc: "ErrSegmentNotFound",
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(nil, nil, v2fs.ErrSegmentNotFound)
 			},
 			environmentId: "ns0",
 			segmentID:     "id",
@@ -356,11 +372,11 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 		{
 			desc: "ErrSegmentStatusNotSuceeded",
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().GetSegment(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(&domain.Segment{
+					Segment: &featureproto.Segment{},
+				}, nil, nil)
 			},
 			environmentId: "ns0",
 			segmentID:     "id",

@@ -82,26 +82,8 @@ func (s *FeatureService) CreateSegment(
 		}
 		return nil, dt.Err()
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		segmentStorage := v2fs.NewSegmentStorage(tx)
-		if err := segmentStorage.CreateSegment(ctx, segment, req.EnvironmentId); err != nil {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		if err := s.segmentStorage.CreateSegment(contextWithTx, segment, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store segment",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -198,26 +180,8 @@ func (s *FeatureService) createSegmentNoCommand(
 		}
 		return nil, dt.Err()
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		segmentStorage := v2fs.NewSegmentStorage(tx)
-		if err := segmentStorage.CreateSegment(ctx, segment, req.EnvironmentId); err != nil {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		if err := s.segmentStorage.CreateSegment(contextWithTx, segment, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store segment",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -341,27 +305,8 @@ func (s *FeatureService) deleteSegmentNoCommand(
 	if err := s.checkSegmentInUse(ctx, req.Id, req.EnvironmentId, localizer); err != nil {
 		return nil, err
 	}
-
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		segmentStorage := v2fs.NewSegmentStorage(tx)
-		segment, _, err := segmentStorage.GetSegment(ctx, req.Id, req.EnvironmentId)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get segment",
@@ -394,7 +339,7 @@ func (s *FeatureService) deleteSegmentNoCommand(
 		if err := s.domainPublisher.Publish(ctx, event); err != nil {
 			return err
 		}
-		return segmentStorage.DeleteSegment(ctx, segment.Id)
+		return s.segmentStorage.DeleteSegment(contextWithTx, segment.Id)
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentNotFound) || errors.Is(err, v2fs.ErrSegmentUnexpectedAffectedRows) {
@@ -582,28 +527,9 @@ func (s *FeatureService) updateSegmentNoCommand(
 		)
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-
 	var updatedSegment *featureproto.Segment
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		segmentStorage := v2fs.NewSegmentStorage(tx)
-		segment, _, err := segmentStorage.GetSegment(ctx, req.Id, req.EnvironmentId)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get segment",
@@ -646,7 +572,7 @@ func (s *FeatureService) updateSegmentNoCommand(
 		if err := s.domainPublisher.Publish(ctx, e); err != nil {
 			return err
 		}
-		return segmentStorage.UpdateSegment(ctx, updated, req.EnvironmentId)
+		return s.segmentStorage.UpdateSegment(contextWithTx, updated, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentNotFound) || errors.Is(err, v2fs.ErrSegmentUnexpectedAffectedRows) {
@@ -687,28 +613,9 @@ func (s *FeatureService) updateSegment(
 	segmentID, environmentId string,
 	localizer locale.Localizer,
 ) (*featureproto.Segment, error) {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-
 	var updatedSegment *featureproto.Segment
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		segmentStorage := v2fs.NewSegmentStorage(tx)
-		segment, _, err := segmentStorage.GetSegment(ctx, segmentID, environmentId)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, segmentID, environmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get segment",
@@ -741,7 +648,7 @@ func (s *FeatureService) updateSegment(
 			}
 		}
 		updatedSegment = segment.Segment
-		return segmentStorage.UpdateSegment(ctx, segment, environmentId)
+		return s.segmentStorage.UpdateSegment(contextWithTx, segment, environmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentNotFound) || errors.Is(err, v2fs.ErrSegmentUnexpectedAffectedRows) {
@@ -794,8 +701,7 @@ func (s *FeatureService) GetSegment(
 		)
 		return nil, err
 	}
-	segmentStorage := v2fs.NewSegmentStorage(s.mysqlClient)
-	segment, featureIDs, err := segmentStorage.GetSegment(ctx, req.Id, req.EnvironmentId)
+	segment, featureIDs, err := s.segmentStorage.GetSegment(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if err == v2fs.ErrSegmentNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -912,8 +818,7 @@ func (s *FeatureService) ListSegments(
 	if req.IsInUseStatus != nil {
 		isInUseStatus = &req.IsInUseStatus.Value
 	}
-	segmentStorage := v2fs.NewSegmentStorage(s.mysqlClient)
-	segments, nextCursor, totalCount, featureIDsMap, err := segmentStorage.ListSegments(
+	segments, nextCursor, totalCount, featureIDsMap, err := s.segmentStorage.ListSegments(
 		ctx,
 		whereParts,
 		orders,

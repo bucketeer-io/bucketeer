@@ -152,26 +152,8 @@ func (s *FeatureService) updateSegmentUser(
 		user := domain.NewSegmentUser(segmentID, userID, state, deleted)
 		segmentUsers = append(segmentUsers, user.SegmentUser)
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		segmentStorage := v2fs.NewSegmentStorage(tx)
-		segment, _, err := segmentStorage.GetSegment(ctx, segmentID, environmentId)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, segmentID, environmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get segment",
@@ -182,8 +164,7 @@ func (s *FeatureService) updateSegmentUser(
 			)
 			return err
 		}
-		segmentUserStorage := v2fs.NewSegmentUserStorage(tx)
-		if err := segmentUserStorage.UpsertSegmentUsers(ctx, segmentUsers, environmentId); err != nil {
+		if err := s.segmentUserStorage.UpsertSegmentUsers(contextWithTx, segmentUsers, environmentId); err != nil {
 			s.logger.Error(
 				"Failed to store segment user",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -212,7 +193,7 @@ func (s *FeatureService) updateSegmentUser(
 			)
 			return err
 		}
-		if err := segmentStorage.UpdateSegment(ctx, segment, environmentId); err != nil {
+		if err := s.segmentStorage.UpdateSegment(contextWithTx, segment, environmentId); err != nil {
 			return err
 		}
 		return nil
@@ -268,9 +249,8 @@ func (s *FeatureService) GetSegmentUser(
 		)
 		return nil, err
 	}
-	segmentUserStorage := v2fs.NewSegmentUserStorage(s.mysqlClient)
 	id := domain.SegmentUserID(req.SegmentId, req.UserId, req.State)
-	user, err := segmentUserStorage.GetSegmentUser(ctx, id, req.EnvironmentId)
+	user, err := s.segmentUserStorage.GetSegmentUser(ctx, id, req.EnvironmentId)
 	if err != nil {
 		if err == v2fs.ErrSegmentUserNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -351,8 +331,7 @@ func (s *FeatureService) ListSegmentUsers(
 		}
 		return nil, dt.Err()
 	}
-	segmentUserStorage := v2fs.NewSegmentUserStorage(s.mysqlClient)
-	users, nextCursor, err := segmentUserStorage.ListSegmentUsers(
+	users, nextCursor, err := s.segmentUserStorage.ListSegmentUsers(
 		ctx,
 		whereParts,
 		nil,
@@ -416,26 +395,8 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 		)
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		segmentStorage := v2fs.NewSegmentStorage(tx)
-		segment, _, err := segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentId)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.SegmentId, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -478,7 +439,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 			)
 			return err
 		}
-		if err := segmentStorage.UpdateSegment(ctx, segment, req.EnvironmentId); err != nil {
+		if err := s.segmentStorage.UpdateSegment(contextWithTx, segment, req.EnvironmentId); err != nil {
 			return err
 		}
 		return s.publishBulkSegmentUsersReceivedEvent(
@@ -539,26 +500,8 @@ func (s *FeatureService) bulkUploadSegmentUsersNoCommand(
 		)
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		segmentStorage := v2fs.NewSegmentStorage(tx)
-		segment, _, err := segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentId)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		segment, _, err := s.segmentStorage.GetSegment(contextWithTx, req.SegmentId, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -587,7 +530,7 @@ func (s *FeatureService) bulkUploadSegmentUsersNoCommand(
 			return err
 		}
 		segment.SetStatus(featureproto.Segment_UPLOADING)
-		if err := segmentStorage.UpdateSegment(ctx, segment, req.EnvironmentId); err != nil {
+		if err := s.segmentStorage.UpdateSegment(contextWithTx, segment, req.EnvironmentId); err != nil {
 			return err
 		}
 		e, err := domainevent.NewEvent(
@@ -697,8 +640,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 		)
 		return nil, err
 	}
-	segmentStorage := v2fs.NewSegmentStorage(s.mysqlClient)
-	segment, _, err := segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentId)
+	segment, _, err := s.segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrSegmentNotFound) {
 			dt, err := statusSegmentNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -742,8 +684,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 		mysql.NewFilter("deleted", "=", false),
 		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
-	segmentUserStorage := v2fs.NewSegmentUserStorage(s.mysqlClient)
-	users, _, err := segmentUserStorage.ListSegmentUsers(
+	users, _, err := s.segmentUserStorage.ListSegmentUsers(
 		ctx,
 		whereParts,
 		nil,
