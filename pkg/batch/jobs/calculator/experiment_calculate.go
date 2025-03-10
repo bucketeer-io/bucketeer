@@ -91,11 +91,11 @@ func NewExperimentCalculate(
 }
 
 func (e *experimentCalculate) Run(ctx context.Context) error {
-	now := time.Now().In(e.location)
-	e.logger.Info("start experiment calculate job")
+	// now := time.Now().In(e.location)
+	e.logger.Info("Started experiment calculate job")
 	environments, environmentErr := e.listEnvironments(ctx)
 	if environmentErr != nil {
-		e.logger.Error("ExperimentCalculator failed to list environments",
+		e.logger.Error("Failed to list environments when calculating experiments",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(environmentErr),
 			)...,
@@ -105,20 +105,46 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 	for _, env := range environments {
 		experiments, experimentErr := e.listExperiments(ctx, env.Id)
 		if experimentErr != nil {
-			e.logger.Error("ExperimentCalculator failed to list experiments",
+			e.logger.Error("Failed to list experiments when running experiment calculation",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(experimentErr),
 				)...,
 			)
 			return experimentErr
 		}
+		if experiments == nil {
+			e.logger.Info("There are no experiments for calculation in the specified environment",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("environmentId", env.Id),
+				)...,
+			)
+		}
 		for _, ex := range experiments {
-			if ex.Status == experiment.Experiment_STOPPED &&
-				now.Unix()-ex.StopAt > 2*day {
-				// Because the evaluation and goal events may be sent with a delay for many reasons from the client side,
-				// we still calculate the results for two days after it stopped.
-				continue
-			}
+			// FIXME: Revert
+			// if ex.Status == experiment.Experiment_STOPPED && now.Unix()-ex.StopAt > 30*day {
+			// 	e.logger.Info("Skip experiment calculation. The experiment stopped more than 2 days ago",
+			// 		log.FieldsFromImcomingContext(ctx).AddFields(
+			// 			zap.String("environmentId", env.Id),
+			// 			zap.String("experimentId", ex.Id),
+			// 			zap.String("experimentName", ex.Name),
+			// 		)...,
+			// 	)
+			// 	// Because the evaluation and goal events may be sent with a delay for many reasons from the client side,
+			// 	// we still calculate the results for two days after it stopped.
+			// 	continue
+			// }
+			// if ex.Status == experiment.Experiment_FORCE_STOPPED && now.Unix()-ex.StoppedAt > 30*day {
+			// 	e.logger.Info("Skip experiment calculation. The experiment stopped more than 2 days ago",
+			// 		log.FieldsFromImcomingContext(ctx).AddFields(
+			// 			zap.String("environmentId", env.Id),
+			// 			zap.String("experimentId", ex.Id),
+			// 			zap.String("experimentName", ex.Name),
+			// 		)...,
+			// 	)
+			// 	// Because the evaluation and goal events may be sent with a delay for many reasons from the client side,
+			// 	// we still calculate the results for two days after it stopped.
+			// 	continue
+			// }
 			calculateErr := e.calculateExperimentWithLock(ctx, env, ex)
 			if calculateErr != nil {
 				e.logger.Error("Failed to calculate experiment",
@@ -126,14 +152,16 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 						zap.Error(calculateErr),
 						zap.String("environmentId", env.Id),
 						zap.String("experimentId", ex.Id),
+						zap.String("experimentName", ex.Name),
 					)...,
 				)
 				continue
 			}
-			e.logger.Debug("Experiment calculated successfully",
+			e.logger.Info("Experiment calculated successfully in the specified environment",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.String("environmentId", env.Id),
 					zap.String("experimentId", ex.Id),
+					zap.String("experimentName", ex.Name),
 				)...,
 			)
 		}
@@ -147,12 +175,13 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 ) error {
 	locked, lockValue, err := e.experimentLock.Lock(ctx, env.Id, experiment.Id)
 	if err != nil {
-		return fmt.Errorf("failed to acquire lock: %w", err)
+		return fmt.Errorf("Failed to acquire lock when calculating experiment. Error: %w", err)
 	}
 	if !locked {
 		e.logger.Info("Experiment is being calculated by another instance",
 			zap.String("environmentId", env.Id),
 			zap.String("experimentId", experiment.Id),
+			zap.String("experimentName", experiment.Name),
 		)
 		return nil
 	}
@@ -161,16 +190,18 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 		// we set the TTL for the lock key and only unlock it when an error occurs so that it can retry.
 		unlocked, unlockErr := e.experimentLock.Unlock(ctx, env.Id, experiment.Id, lockValue)
 		if unlockErr != nil {
-			e.logger.Error("Failed to release lock",
+			e.logger.Error("Failed to release lock when calculating experiment",
 				zap.Error(unlockErr),
 				zap.String("environmentId", env.Id),
 				zap.String("experimentId", experiment.Id),
+				zap.String("experimentName", experiment.Name),
 			)
 		}
 		if !unlocked {
-			e.logger.Warn("Lock was not released, possibly expired",
+			e.logger.Warn("Lock was not released when calculating experiment, possibly expired",
 				zap.String("environmentId", env.Id),
 				zap.String("experimentId", experiment.Id),
+				zap.String("experimentName", experiment.Name),
 			)
 		}
 		return calcErr
@@ -187,9 +218,12 @@ func (e *experimentCalculate) calculateExperiment(ctx context.Context,
 		Experiment:    experiment,
 	})
 	if err != nil {
-		e.logger.Error("ExperimentCalculator failed to calculate",
+		e.logger.Error("Failed experiment calculation",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
+				zap.String("nvironmentId", env.Id),
+				zap.String("experimentId", experiment.Id),
+				zap.String("experimentName", experiment.Name),
 			)...,
 		)
 		return err
@@ -217,13 +251,14 @@ func (e *experimentCalculate) listExperiments(
 	environmentId string,
 ) ([]*experiment.Experiment, error) {
 	req := &experiment.ListExperimentsRequest{
-		From:          time.Now().In(e.location).Add(-2 * 24 * time.Hour).Unix(),
+		StartAt:       time.Now().In(e.location).Add(-40 * day).Unix(), // FIXME: change this to 30 days
 		PageSize:      0,
 		Cursor:        "",
 		EnvironmentId: environmentId,
 		Statuses: []experiment.Experiment_Status{
 			experiment.Experiment_RUNNING,
 			experiment.Experiment_STOPPED,
+			experiment.Experiment_FORCE_STOPPED,
 		},
 	}
 	resp, err := e.experimentClient.ListExperiments(ctx, req)

@@ -163,8 +163,8 @@ message ListExperimentsRequest {
   }
   string feature_id = 1;
   google.protobuf.Int32Value feature_version = 2;
-  int64 from = 3;
-  int64 to = 4;
+  int64 start_at = 3;
+  int64 stop_at = 4;
   int64 page_size = 5;
   string cursor = 6;
   reserved 7;

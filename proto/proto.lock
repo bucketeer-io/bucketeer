@@ -24865,12 +24865,12 @@
               },
               {
                 "id": 3,
-                "name": "from",
+                "name": "start_at",
                 "type": "int64"
               },
               {
                 "id": 4,
-                "name": "to",
+                "name": "stop_at",
                 "type": "int64"
               },
               {
