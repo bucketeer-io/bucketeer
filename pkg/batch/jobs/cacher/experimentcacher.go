@@ -110,6 +110,7 @@ func (c *experimentCacher) listExperiments(
 		Statuses: []expproto.Experiment_Status{
 			expproto.Experiment_RUNNING,
 			expproto.Experiment_STOPPED,
+			expproto.Experiment_FORCE_STOPPED,
 		},
 		Archived: &wrapperspb.BoolValue{Value: false},
 	}
