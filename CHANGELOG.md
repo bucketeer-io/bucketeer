@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.4.0](https://github.com/bucketeer-io/bucketeer/compare/v1.3.0...v1.4.0) (2025-03-10)
+
+
+### Features
+
+* implement swicth organization api ([#1542](https://github.com/bucketeer-io/bucketeer/issues/1542)) ([68ee16e](https://github.com/bucketeer-io/bucketeer/commit/68ee16e1e7b69082757eb11de302a9d2d23afdcf))
+* implement update organization no command ([#1544](https://github.com/bucketeer-io/bucketeer/issues/1544)) ([f483c13](https://github.com/bucketeer-io/bucketeer/commit/f483c13dde84a6ce2b28f5ab9548097fa5735cd0))
+* **ui/dashboard:** experiments management ([#1513](https://github.com/bucketeer-io/bucketeer/issues/1513)) ([46afc49](https://github.com/bucketeer-io/bucketeer/commit/46afc499750af822f7481055f31cf845bc889188))
+* **ui/dashboard:** switch organization ([#1565](https://github.com/bucketeer-io/bucketeer/issues/1565)) ([f727b5a](https://github.com/bucketeer-io/bucketeer/commit/f727b5ac7fdda77c77bda66ce7827e4db7f55d18))
+* **ui/dashboard:** update profile ([#1525](https://github.com/bucketeer-io/bucketeer/issues/1525)) ([6108873](https://github.com/bucketeer-io/bucketeer/commit/6108873de0316b34f751a2aab74022c589cab808))
+
+
+### Bug Fixes
+
+* add unknown api id error handling ([#1566](https://github.com/bucketeer-io/bucketeer/issues/1566)) ([eb3aca9](https://github.com/bucketeer-io/bucketeer/commit/eb3aca9d606d39135fd1706417b4b4b122d7c8e2))
+* base variation id not being validated when creating experiments ([#1557](https://github.com/bucketeer-io/bucketeer/issues/1557)) ([5d4c74b](https://github.com/bucketeer-io/bucketeer/commit/5d4c74b8e2f4fd43a10cd08a4d1b7d6eb3544a15))
+* **evaluation/typescript:** missing proto import when build release lib ([#1567](https://github.com/bucketeer-io/bucketeer/issues/1567)) ([4f6dd29](https://github.com/bucketeer-io/bucketeer/commit/4f6dd299699076b7078788d06ff73aab55ab38e3))
+* **evaluation/typescript:** no such file or directory error ([#1561](https://github.com/bucketeer-io/bucketeer/issues/1561)) ([48d8cb6](https://github.com/bucketeer-io/bucketeer/commit/48d8cb6b913d6ecd244a5256d8cbc0ffd24ec909))
+* flag not found when using dependency flag in targeting rule ([#1550](https://github.com/bucketeer-io/bucketeer/issues/1550)) ([4fc4921](https://github.com/bucketeer-io/bucketeer/commit/4fc4921b09b1632edabca5aaecd78929ad8140e0))
+* **ui:** experiments graph fix ([#1539](https://github.com/bucketeer-io/bucketeer/issues/1539)) ([d84a30d](https://github.com/bucketeer-io/bucketeer/commit/d84a30d9918dc578caac70e238cc63531b6d4203))
+* update AutoOps rule URL template path ([#1563](https://github.com/bucketeer-io/bucketeer/issues/1563)) ([24ec56d](https://github.com/bucketeer-io/bucketeer/commit/24ec56d86f6c8dbf0624fb01bb8afaeea9a98353))
+* update CODEOWNERS with new contributor ([#1564](https://github.com/bucketeer-io/bucketeer/issues/1564)) ([33c662c](https://github.com/bucketeer-io/bucketeer/commit/33c662cec11acc7a8c59e331b8594137dd47aa37))
+
+
+### Miscellaneous
+
+* **evaluation/typescript:** export function getFeatureIDsDependsOn ([#1553](https://github.com/bucketeer-io/bucketeer/issues/1553)) ([b3a17cb](https://github.com/bucketeer-io/bucketeer/commit/b3a17cbd6944dbee6ca0bb7b4788302011176811))
+* **ui/dashboard:** remove command object all payload ([#1529](https://github.com/bucketeer-io/bucketeer/issues/1529)) ([6217bb0](https://github.com/bucketeer-io/bucketeer/commit/6217bb088f903931036e3b9d3e1f3c1f7e16de87))
+
 ## [1.3.0](https://github.com/bucketeer-io/bucketeer/compare/v1.2.0...v1.3.0) (2025-02-28)
 
 
