@@ -13,22 +13,22 @@ const headerList = [
   {
     name: 'value-user',
     tooltipKey: 'value-user-tooltip',
-    minSize: 212
+    minSize: 210
   },
   {
     name: 'improvement',
     tooltipKey: 'improvement-tooltip',
-    minSize: 212
+    minSize: 210
   },
   {
     name: 'probability-to-beat-baseline',
     tooltipKey: 'probability-to-beat-baseline-tooltip',
-    minSize: 212
+    minSize: 210
   },
   {
     name: 'probability-to-best',
     tooltipKey: 'probability-to-best-tooltip',
-    minSize: 212
+    minSize: 210
   }
 ];
 
@@ -125,7 +125,7 @@ const ConversionRateTable = ({
               />
               <ResultCell
                 value={isNaN(valuePerUser) ? '0.00' : valuePerUser.toFixed(2)}
-                minSize={212}
+                minSize={210}
               />
               <ResultCell
                 value={
@@ -135,7 +135,7 @@ const ConversionRateTable = ({
                         ? 0
                         : improvementValue.toFixed(1)) + ' %'
                 }
-                minSize={212}
+                minSize={210}
               />
               <ResultCell
                 value={
@@ -145,11 +145,11 @@ const ConversionRateTable = ({
                       ? (probBeatBaseline.mean * 100).toFixed(1) + ' %'
                       : '-'
                 }
-                minSize={212}
+                minSize={210}
               />
               <ResultCell
                 value={probBest ? (probBest.mean * 100).toFixed(1) + ' %' : '-'}
-                minSize={212}
+                minSize={210}
               />
             </div>
           );
