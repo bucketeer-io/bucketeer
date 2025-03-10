@@ -162,8 +162,10 @@ func TestGetFeatureMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			featureID:      "feature",
-			expected:       &domain.Feature{Feature: &proto.Feature{}},
+			featureID: "feature",
+			expected: &domain.Feature{Feature: &proto.Feature{
+				AutoOpsSummary: &proto.AutoOpsSummary{},
+			}},
 			expectedErr:    nil,
 			expectedCalled: true,
 		},
@@ -333,7 +335,7 @@ func TestCountFeaturesByStatus(t *testing.T) {
 		desc          string
 		setup         func(*featureStorage)
 		environmentID string
-		expected      *proto.FeatureCountByStatus
+		expected      *proto.FeatureSummary
 		expectedErr   error
 	}{
 		{
@@ -359,7 +361,7 @@ func TestCountFeaturesByStatus(t *testing.T) {
 				).Return(row)
 			},
 			environmentID: "env",
-			expected:      &proto.FeatureCountByStatus{},
+			expected:      &proto.FeatureSummary{},
 			expectedErr:   nil,
 		},
 	}
@@ -369,7 +371,7 @@ func TestCountFeaturesByStatus(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			count, err := storage.CountFeaturesByStatus(context.Background(), p.environmentID)
+			count, err := storage.GetFeatureSummary(context.Background(), p.environmentID)
 			assert.Equal(t, p.expected, count)
 			assert.Equal(t, p.expectedErr, err)
 		})

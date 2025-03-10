@@ -27497,16 +27497,26 @@
               },
               {
                 "id": 23,
+                "name": "auto_ops_summary",
+                "type": "AutoOpsSummary"
+              }
+            ]
+          },
+          {
+            "name": "AutoOpsSummary",
+            "fields": [
+              {
+                "id": 1,
                 "name": "progressive_rollout_count",
                 "type": "int32"
               },
               {
-                "id": 24,
+                "id": 2,
                 "name": "schedule_count",
                 "type": "int32"
               },
               {
-                "id": 25,
+                "id": 3,
                 "name": "kill_switch_count",
                 "type": "int32"
               }
@@ -28606,7 +28616,7 @@
             ]
           },
           {
-            "name": "FeatureCountByStatus",
+            "name": "FeatureSummary",
             "fields": [
               {
                 "id": 1,
@@ -28647,7 +28657,7 @@
               {
                 "id": 4,
                 "name": "feature_count_by_status",
-                "type": "FeatureCountByStatus"
+                "type": "FeatureSummary"
               }
             ]
           },

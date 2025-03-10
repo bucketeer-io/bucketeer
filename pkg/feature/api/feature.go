@@ -212,7 +212,7 @@ func (s *FeatureService) ListFeatures(
 	if err != nil {
 		return nil, err
 	}
-	featureCount, err := s.featureStorage.CountFeaturesByStatus(ctx, req.EnvironmentId)
+	featureCount, err := s.featureStorage.GetFeatureSummary(ctx, req.EnvironmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to count features by status",

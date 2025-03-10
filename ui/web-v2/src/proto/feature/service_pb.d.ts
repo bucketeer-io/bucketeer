@@ -267,7 +267,7 @@ export namespace ListFeaturesRequest {
   export const OrderDirection: OrderDirectionMap;
 }
 
-export class FeatureCountByStatus extends jspb.Message {
+export class FeatureSummary extends jspb.Message {
   getTotal(): number;
   setTotal(value: number): void;
 
@@ -278,27 +278,27 @@ export class FeatureCountByStatus extends jspb.Message {
   setInactive(value: number): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): FeatureCountByStatus.AsObject;
+  toObject(includeInstance?: boolean): FeatureSummary.AsObject;
   static toObject(
     includeInstance: boolean,
-    msg: FeatureCountByStatus
-  ): FeatureCountByStatus.AsObject;
+    msg: FeatureSummary
+  ): FeatureSummary.AsObject;
   static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
   static extensionsBinary: {
     [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
   };
   static serializeBinaryToWriter(
-    message: FeatureCountByStatus,
+    message: FeatureSummary,
     writer: jspb.BinaryWriter
   ): void;
-  static deserializeBinary(bytes: Uint8Array): FeatureCountByStatus;
+  static deserializeBinary(bytes: Uint8Array): FeatureSummary;
   static deserializeBinaryFromReader(
-    message: FeatureCountByStatus,
+    message: FeatureSummary,
     reader: jspb.BinaryReader
-  ): FeatureCountByStatus;
+  ): FeatureSummary;
 }
 
-export namespace FeatureCountByStatus {
+export namespace FeatureSummary {
   export type AsObject = {
     total: number;
     active: number;
@@ -323,8 +323,8 @@ export class ListFeaturesResponse extends jspb.Message {
 
   hasFeatureCountByStatus(): boolean;
   clearFeatureCountByStatus(): void;
-  getFeatureCountByStatus(): FeatureCountByStatus | undefined;
-  setFeatureCountByStatus(value?: FeatureCountByStatus): void;
+  getFeatureCountByStatus(): FeatureSummary | undefined;
+  setFeatureCountByStatus(value?: FeatureSummary): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListFeaturesResponse.AsObject;
@@ -352,7 +352,7 @@ export namespace ListFeaturesResponse {
     featuresList: Array<proto_feature_feature_pb.Feature.AsObject>;
     cursor: string;
     totalCount: number;
-    featureCountByStatus?: FeatureCountByStatus.AsObject;
+    featureCountByStatus?: FeatureSummary.AsObject;
   };
 }
 

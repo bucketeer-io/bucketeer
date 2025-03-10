@@ -83,7 +83,7 @@ message ListFeaturesRequest {
   string environment_id = 13 [(google.api.field_behavior) = REQUIRED];
 }
 
-message FeatureCountByStatus {
+message FeatureSummary {
   int32 total = 1;
   int32 active = 2;
   int32 inactive = 3;
@@ -93,7 +93,7 @@ message ListFeaturesResponse {
   repeated Feature features = 1;
   string cursor = 2;
   int64 total_count = 3;
-  FeatureCountByStatus feature_count_by_status = 4;
+  FeatureSummary feature_count_by_status = 4;
 }
 
 message ListEnabledFeaturesRequest {

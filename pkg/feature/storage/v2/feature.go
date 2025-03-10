@@ -63,10 +63,10 @@ type FeatureStorage interface {
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.Feature, int, int64, error)
-	CountFeaturesByStatus(
+	GetFeatureSummary(
 		ctx context.Context,
 		environmentID string,
-	) (*proto.FeatureCountByStatus, error)
+	) (*proto.FeatureSummary, error)
 	ListFeaturesFilteredByExperiment(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -175,6 +175,7 @@ func (s *featureStorage) GetFeature(
 	key, environmentId string,
 ) (*domain.Feature, error) {
 	feature := proto.Feature{}
+	feature.AutoOpsSummary = &proto.AutoOpsSummary{}
 	err := s.qe.QueryRowContext(
 		ctx,
 		selectFeatureSQLQuery,
@@ -230,6 +231,7 @@ func (s *featureStorage) ListFeatures(
 	features := make([]*proto.Feature, 0, limit)
 	for rows.Next() {
 		feature := proto.Feature{}
+		feature.AutoOpsSummary = &proto.AutoOpsSummary{}
 		err := rows.Scan(
 			&feature.Id,
 			&feature.Name,
@@ -252,9 +254,9 @@ func (s *featureStorage) ListFeatures(
 			&feature.Maintainer,
 			&feature.SamplingSeed,
 			&mysql.JSONObject{Val: &feature.Prerequisites},
-			&feature.ProgressiveRolloutCount,
-			&feature.ScheduleCount,
-			&feature.KillSwitchCount,
+			&feature.AutoOpsSummary.ProgressiveRolloutCount,
+			&feature.AutoOpsSummary.ScheduleCount,
+			&feature.AutoOpsSummary.KillSwitchCount,
 		)
 		if err != nil {
 			return nil, 0, 0, err
@@ -274,11 +276,11 @@ func (s *featureStorage) ListFeatures(
 	return features, nextOffset, totalCount, nil
 }
 
-func (s *featureStorage) CountFeaturesByStatus(
+func (s *featureStorage) GetFeatureSummary(
 	ctx context.Context,
 	environmentID string,
-) (*proto.FeatureCountByStatus, error) {
-	var countByStatus proto.FeatureCountByStatus
+) (*proto.FeatureSummary, error) {
+	var countByStatus proto.FeatureSummary
 	err := s.qe.QueryRowContext(ctx, selectFeatureCountByStatusSQLQuery, environmentID).Scan(
 		&countByStatus.Total,
 		&countByStatus.Active,
@@ -308,6 +310,7 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 	features := make([]*proto.Feature, 0, limit)
 	for rows.Next() {
 		feature := proto.Feature{}
+		feature.AutoOpsSummary = &proto.AutoOpsSummary{}
 		err := rows.Scan(
 			&feature.Id,
 			&feature.Name,
@@ -330,9 +333,9 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 			&feature.Maintainer,
 			&feature.SamplingSeed,
 			&mysql.JSONObject{Val: &feature.Prerequisites},
-			&feature.ProgressiveRolloutCount,
-			&feature.ScheduleCount,
-			&feature.KillSwitchCount,
+			&feature.AutoOpsSummary.ProgressiveRolloutCount,
+			&feature.AutoOpsSummary.ScheduleCount,
+			&feature.AutoOpsSummary.KillSwitchCount,
 		)
 		if err != nil {
 			return nil, 0, 0, err

@@ -53,9 +53,13 @@ message Feature {
   bool archived = 20;
   repeated Prerequisite prerequisites = 21;
   string sampling_seed = 22;
-  int32 progressive_rollout_count = 23;
-  int32 schedule_count = 24;
-  int32 kill_switch_count = 25;
+  AutoOpsSummary auto_ops_summary = 23;
+}
+
+message AutoOpsSummary {
+  int32 progressive_rollout_count = 1;
+  int32 schedule_count = 2;
+  int32 kill_switch_count = 3;
 }
 
 message Features {

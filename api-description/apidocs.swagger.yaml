@@ -2348,6 +2348,18 @@ definitions:
       featureFlagCount:
         type: integer
         format: int32
+  featureAutoOpsSummary:
+    type: object
+    properties:
+      progressiveRolloutCount:
+        type: integer
+        format: int32
+      scheduleCount:
+        type: integer
+        format: int32
+      killSwitchCount:
+        type: integer
+        format: int32
   featureChangeType:
     type: string
     enum:
@@ -2456,15 +2468,8 @@ definitions:
           $ref: '#/definitions/featurePrerequisite'
       samplingSeed:
         type: string
-      progressiveRolloutCount:
-        type: integer
-        format: int32
-      scheduleCount:
-        type: integer
-        format: int32
-      killSwitchCount:
-        type: integer
-        format: int32
+      autoOpsSummary:
+        $ref: '#/definitions/featureAutoOpsSummary'
   featureFeatureLastUsedInfo:
     type: object
     properties:

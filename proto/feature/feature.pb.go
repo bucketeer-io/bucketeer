@@ -97,26 +97,24 @@ type Feature struct {
 	Enabled     bool   `protobuf:"varint,4,opt,name=enabled,proto3" json:"enabled"`
 	Deleted     bool   `protobuf:"varint,5,opt,name=deleted,proto3" json:"deleted"`
 	// Deprecated: Do not use.
-	EvaluationUndelayable   bool                  `protobuf:"varint,6,opt,name=evaluation_undelayable,json=evaluationUndelayable,proto3" json:"evaluation_undelayable"`
-	Ttl                     int32                 `protobuf:"varint,7,opt,name=ttl,proto3" json:"ttl"`
-	Version                 int32                 `protobuf:"varint,8,opt,name=version,proto3" json:"version"`
-	CreatedAt               int64                 `protobuf:"varint,9,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
-	UpdatedAt               int64                 `protobuf:"varint,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
-	Variations              []*Variation          `protobuf:"bytes,11,rep,name=variations,proto3" json:"variations"`
-	Targets                 []*Target             `protobuf:"bytes,12,rep,name=targets,proto3" json:"targets"`
-	Rules                   []*Rule               `protobuf:"bytes,13,rep,name=rules,proto3" json:"rules"`
-	DefaultStrategy         *Strategy             `protobuf:"bytes,14,opt,name=default_strategy,json=defaultStrategy,proto3" json:"default_strategy"`
-	OffVariation            string                `protobuf:"bytes,15,opt,name=off_variation,json=offVariation,proto3" json:"off_variation"`
-	Tags                    []string              `protobuf:"bytes,16,rep,name=tags,proto3" json:"tags"`
-	LastUsedInfo            *FeatureLastUsedInfo  `protobuf:"bytes,17,opt,name=last_used_info,json=lastUsedInfo,proto3" json:"last_used_info"`
-	Maintainer              string                `protobuf:"bytes,18,opt,name=maintainer,proto3" json:"maintainer"`
-	VariationType           Feature_VariationType `protobuf:"varint,19,opt,name=variation_type,json=variationType,proto3,enum=bucketeer.feature.Feature_VariationType" json:"variation_type"`
-	Archived                bool                  `protobuf:"varint,20,opt,name=archived,proto3" json:"archived"`
-	Prerequisites           []*Prerequisite       `protobuf:"bytes,21,rep,name=prerequisites,proto3" json:"prerequisites"`
-	SamplingSeed            string                `protobuf:"bytes,22,opt,name=sampling_seed,json=samplingSeed,proto3" json:"sampling_seed"`
-	ProgressiveRolloutCount int32                 `protobuf:"varint,23,opt,name=progressive_rollout_count,json=progressiveRolloutCount,proto3" json:"progressive_rollout_count"`
-	ScheduleCount           int32                 `protobuf:"varint,24,opt,name=schedule_count,json=scheduleCount,proto3" json:"schedule_count"`
-	KillSwitchCount         int32                 `protobuf:"varint,25,opt,name=kill_switch_count,json=killSwitchCount,proto3" json:"kill_switch_count"`
+	EvaluationUndelayable bool                  `protobuf:"varint,6,opt,name=evaluation_undelayable,json=evaluationUndelayable,proto3" json:"evaluation_undelayable"`
+	Ttl                   int32                 `protobuf:"varint,7,opt,name=ttl,proto3" json:"ttl"`
+	Version               int32                 `protobuf:"varint,8,opt,name=version,proto3" json:"version"`
+	CreatedAt             int64                 `protobuf:"varint,9,opt,name=created_at,json=createdAt,proto3" json:"created_at"`
+	UpdatedAt             int64                 `protobuf:"varint,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at"`
+	Variations            []*Variation          `protobuf:"bytes,11,rep,name=variations,proto3" json:"variations"`
+	Targets               []*Target             `protobuf:"bytes,12,rep,name=targets,proto3" json:"targets"`
+	Rules                 []*Rule               `protobuf:"bytes,13,rep,name=rules,proto3" json:"rules"`
+	DefaultStrategy       *Strategy             `protobuf:"bytes,14,opt,name=default_strategy,json=defaultStrategy,proto3" json:"default_strategy"`
+	OffVariation          string                `protobuf:"bytes,15,opt,name=off_variation,json=offVariation,proto3" json:"off_variation"`
+	Tags                  []string              `protobuf:"bytes,16,rep,name=tags,proto3" json:"tags"`
+	LastUsedInfo          *FeatureLastUsedInfo  `protobuf:"bytes,17,opt,name=last_used_info,json=lastUsedInfo,proto3" json:"last_used_info"`
+	Maintainer            string                `protobuf:"bytes,18,opt,name=maintainer,proto3" json:"maintainer"`
+	VariationType         Feature_VariationType `protobuf:"varint,19,opt,name=variation_type,json=variationType,proto3,enum=bucketeer.feature.Feature_VariationType" json:"variation_type"`
+	Archived              bool                  `protobuf:"varint,20,opt,name=archived,proto3" json:"archived"`
+	Prerequisites         []*Prerequisite       `protobuf:"bytes,21,rep,name=prerequisites,proto3" json:"prerequisites"`
+	SamplingSeed          string                `protobuf:"bytes,22,opt,name=sampling_seed,json=samplingSeed,proto3" json:"sampling_seed"`
+	AutoOpsSummary        *AutoOpsSummary       `protobuf:"bytes,23,opt,name=auto_ops_summary,json=autoOpsSummary,proto3" json:"auto_ops_summary"`
 }
 
 func (x *Feature) Reset() {
@@ -306,21 +304,70 @@ func (x *Feature) GetSamplingSeed() string {
 	return ""
 }
 
-func (x *Feature) GetProgressiveRolloutCount() int32 {
+func (x *Feature) GetAutoOpsSummary() *AutoOpsSummary {
+	if x != nil {
+		return x.AutoOpsSummary
+	}
+	return nil
+}
+
+type AutoOpsSummary struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ProgressiveRolloutCount int32 `protobuf:"varint,1,opt,name=progressive_rollout_count,json=progressiveRolloutCount,proto3" json:"progressive_rollout_count"`
+	ScheduleCount           int32 `protobuf:"varint,2,opt,name=schedule_count,json=scheduleCount,proto3" json:"schedule_count"`
+	KillSwitchCount         int32 `protobuf:"varint,3,opt,name=kill_switch_count,json=killSwitchCount,proto3" json:"kill_switch_count"`
+}
+
+func (x *AutoOpsSummary) Reset() {
+	*x = AutoOpsSummary{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_feature_feature_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *AutoOpsSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AutoOpsSummary) ProtoMessage() {}
+
+func (x *AutoOpsSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_feature_feature_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AutoOpsSummary.ProtoReflect.Descriptor instead.
+func (*AutoOpsSummary) Descriptor() ([]byte, []int) {
+	return file_proto_feature_feature_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *AutoOpsSummary) GetProgressiveRolloutCount() int32 {
 	if x != nil {
 		return x.ProgressiveRolloutCount
 	}
 	return 0
 }
 
-func (x *Feature) GetScheduleCount() int32 {
+func (x *AutoOpsSummary) GetScheduleCount() int32 {
 	if x != nil {
 		return x.ScheduleCount
 	}
 	return 0
 }
 
-func (x *Feature) GetKillSwitchCount() int32 {
+func (x *AutoOpsSummary) GetKillSwitchCount() int32 {
 	if x != nil {
 		return x.KillSwitchCount
 	}
@@ -339,7 +386,7 @@ type Features struct {
 func (x *Features) Reset() {
 	*x = Features{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_feature_feature_proto_msgTypes[1]
+		mi := &file_proto_feature_feature_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -352,7 +399,7 @@ func (x *Features) String() string {
 func (*Features) ProtoMessage() {}
 
 func (x *Features) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_feature_feature_proto_msgTypes[1]
+	mi := &file_proto_feature_feature_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -365,7 +412,7 @@ func (x *Features) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Features.ProtoReflect.Descriptor instead.
 func (*Features) Descriptor() ([]byte, []int) {
-	return file_proto_feature_feature_proto_rawDescGZIP(), []int{1}
+	return file_proto_feature_feature_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Features) GetFeatures() []*Feature {
@@ -394,7 +441,7 @@ type EnvironmentFeature struct {
 func (x *EnvironmentFeature) Reset() {
 	*x = EnvironmentFeature{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_feature_feature_proto_msgTypes[2]
+		mi := &file_proto_feature_feature_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -407,7 +454,7 @@ func (x *EnvironmentFeature) String() string {
 func (*EnvironmentFeature) ProtoMessage() {}
 
 func (x *EnvironmentFeature) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_feature_feature_proto_msgTypes[2]
+	mi := &file_proto_feature_feature_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -420,7 +467,7 @@ func (x *EnvironmentFeature) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnvironmentFeature.ProtoReflect.Descriptor instead.
 func (*EnvironmentFeature) Descriptor() ([]byte, []int) {
-	return file_proto_feature_feature_proto_rawDescGZIP(), []int{2}
+	return file_proto_feature_feature_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *EnvironmentFeature) GetEnvironmentId() string {
@@ -451,7 +498,7 @@ type Tag struct {
 func (x *Tag) Reset() {
 	*x = Tag{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_feature_feature_proto_msgTypes[3]
+		mi := &file_proto_feature_feature_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -464,7 +511,7 @@ func (x *Tag) String() string {
 func (*Tag) ProtoMessage() {}
 
 func (x *Tag) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_feature_feature_proto_msgTypes[3]
+	mi := &file_proto_feature_feature_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -477,7 +524,7 @@ func (x *Tag) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Tag.ProtoReflect.Descriptor instead.
 func (*Tag) Descriptor() ([]byte, []int) {
-	return file_proto_feature_feature_proto_rawDescGZIP(), []int{3}
+	return file_proto_feature_feature_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Tag) GetId() string {
@@ -526,7 +573,7 @@ var file_proto_feature_feature_proto_rawDesc = []byte{
 	0x75, 0x73, 0x65, 0x64, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a,
 	0x20, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2f, 0x70,
 	0x72, 0x65, 0x72, 0x65, 0x71, 0x75, 0x69, 0x73, 0x69, 0x74, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x22, 0xe1, 0x08, 0x0a, 0x07, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x12, 0x0e, 0x0a,
+	0x6f, 0x22, 0x9f, 0x08, 0x0a, 0x07, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x12, 0x0e, 0x0a,
 	0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a,
 	0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d,
 	0x65, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e,
@@ -583,20 +630,26 @@ var file_proto_feature_feature_proto_rawDesc = []byte{
 	0x74, 0x65, 0x52, 0x0d, 0x70, 0x72, 0x65, 0x72, 0x65, 0x71, 0x75, 0x69, 0x73, 0x69, 0x74, 0x65,
 	0x73, 0x12, 0x23, 0x0a, 0x0d, 0x73, 0x61, 0x6d, 0x70, 0x6c, 0x69, 0x6e, 0x67, 0x5f, 0x73, 0x65,
 	0x65, 0x64, 0x18, 0x16, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x73, 0x61, 0x6d, 0x70, 0x6c, 0x69,
-	0x6e, 0x67, 0x53, 0x65, 0x65, 0x64, 0x12, 0x3a, 0x0a, 0x19, 0x70, 0x72, 0x6f, 0x67, 0x72, 0x65,
+	0x6e, 0x67, 0x53, 0x65, 0x65, 0x64, 0x12, 0x4b, 0x0a, 0x10, 0x61, 0x75, 0x74, 0x6f, 0x5f, 0x6f,
+	0x70, 0x73, 0x5f, 0x73, 0x75, 0x6d, 0x6d, 0x61, 0x72, 0x79, 0x18, 0x17, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x21, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x66, 0x65, 0x61,
+	0x74, 0x75, 0x72, 0x65, 0x2e, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x53, 0x75, 0x6d, 0x6d,
+	0x61, 0x72, 0x79, 0x52, 0x0e, 0x61, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x53, 0x75, 0x6d, 0x6d,
+	0x61, 0x72, 0x79, 0x22, 0x3e, 0x0a, 0x0d, 0x56, 0x61, 0x72, 0x69, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x54, 0x79, 0x70, 0x65, 0x12, 0x0a, 0x0a, 0x06, 0x53, 0x54, 0x52, 0x49, 0x4e, 0x47, 0x10, 0x00,
+	0x12, 0x0b, 0x0a, 0x07, 0x42, 0x4f, 0x4f, 0x4c, 0x45, 0x41, 0x4e, 0x10, 0x01, 0x12, 0x0a, 0x0a,
+	0x06, 0x4e, 0x55, 0x4d, 0x42, 0x45, 0x52, 0x10, 0x02, 0x12, 0x08, 0x0a, 0x04, 0x4a, 0x53, 0x4f,
+	0x4e, 0x10, 0x03, 0x22, 0x9f, 0x01, 0x0a, 0x0e, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x53,
+	0x75, 0x6d, 0x6d, 0x61, 0x72, 0x79, 0x12, 0x3a, 0x0a, 0x19, 0x70, 0x72, 0x6f, 0x67, 0x72, 0x65,
 	0x73, 0x73, 0x69, 0x76, 0x65, 0x5f, 0x72, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x5f, 0x63, 0x6f,
-	0x75, 0x6e, 0x74, 0x18, 0x17, 0x20, 0x01, 0x28, 0x05, 0x52, 0x17, 0x70, 0x72, 0x6f, 0x67, 0x72,
+	0x75, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x17, 0x70, 0x72, 0x6f, 0x67, 0x72,
 	0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x43, 0x6f, 0x75,
 	0x6e, 0x74, 0x12, 0x25, 0x0a, 0x0e, 0x73, 0x63, 0x68, 0x65, 0x64, 0x75, 0x6c, 0x65, 0x5f, 0x63,
-	0x6f, 0x75, 0x6e, 0x74, 0x18, 0x18, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0d, 0x73, 0x63, 0x68, 0x65,
+	0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0d, 0x73, 0x63, 0x68, 0x65,
 	0x64, 0x75, 0x6c, 0x65, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x2a, 0x0a, 0x11, 0x6b, 0x69, 0x6c,
-	0x6c, 0x5f, 0x73, 0x77, 0x69, 0x74, 0x63, 0x68, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x19,
+	0x6c, 0x5f, 0x73, 0x77, 0x69, 0x74, 0x63, 0x68, 0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x03,
 	0x20, 0x01, 0x28, 0x05, 0x52, 0x0f, 0x6b, 0x69, 0x6c, 0x6c, 0x53, 0x77, 0x69, 0x74, 0x63, 0x68,
-	0x43, 0x6f, 0x75, 0x6e, 0x74, 0x22, 0x3e, 0x0a, 0x0d, 0x56, 0x61, 0x72, 0x69, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x54, 0x79, 0x70, 0x65, 0x12, 0x0a, 0x0a, 0x06, 0x53, 0x54, 0x52, 0x49, 0x4e, 0x47,
-	0x10, 0x00, 0x12, 0x0b, 0x0a, 0x07, 0x42, 0x4f, 0x4f, 0x4c, 0x45, 0x41, 0x4e, 0x10, 0x01, 0x12,
-	0x0a, 0x0a, 0x06, 0x4e, 0x55, 0x4d, 0x42, 0x45, 0x52, 0x10, 0x02, 0x12, 0x08, 0x0a, 0x04, 0x4a,
-	0x53, 0x4f, 0x4e, 0x10, 0x03, 0x22, 0x52, 0x0a, 0x08, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65,
+	0x43, 0x6f, 0x75, 0x6e, 0x74, 0x22, 0x52, 0x0a, 0x08, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65,
 	0x73, 0x12, 0x36, 0x0a, 0x08, 0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x73, 0x18, 0x01, 0x20,
 	0x03, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e,
 	0x66, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2e, 0x46, 0x65, 0x61, 0x74, 0x75, 0x72, 0x65, 0x52,
@@ -635,35 +688,37 @@ func file_proto_feature_feature_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_feature_feature_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_feature_feature_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_proto_feature_feature_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_proto_feature_feature_proto_goTypes = []interface{}{
 	(Feature_VariationType)(0),  // 0: bucketeer.feature.Feature.VariationType
 	(*Feature)(nil),             // 1: bucketeer.feature.Feature
-	(*Features)(nil),            // 2: bucketeer.feature.Features
-	(*EnvironmentFeature)(nil),  // 3: bucketeer.feature.EnvironmentFeature
-	(*Tag)(nil),                 // 4: bucketeer.feature.Tag
-	(*Variation)(nil),           // 5: bucketeer.feature.Variation
-	(*Target)(nil),              // 6: bucketeer.feature.Target
-	(*Rule)(nil),                // 7: bucketeer.feature.Rule
-	(*Strategy)(nil),            // 8: bucketeer.feature.Strategy
-	(*FeatureLastUsedInfo)(nil), // 9: bucketeer.feature.FeatureLastUsedInfo
-	(*Prerequisite)(nil),        // 10: bucketeer.feature.Prerequisite
+	(*AutoOpsSummary)(nil),      // 2: bucketeer.feature.AutoOpsSummary
+	(*Features)(nil),            // 3: bucketeer.feature.Features
+	(*EnvironmentFeature)(nil),  // 4: bucketeer.feature.EnvironmentFeature
+	(*Tag)(nil),                 // 5: bucketeer.feature.Tag
+	(*Variation)(nil),           // 6: bucketeer.feature.Variation
+	(*Target)(nil),              // 7: bucketeer.feature.Target
+	(*Rule)(nil),                // 8: bucketeer.feature.Rule
+	(*Strategy)(nil),            // 9: bucketeer.feature.Strategy
+	(*FeatureLastUsedInfo)(nil), // 10: bucketeer.feature.FeatureLastUsedInfo
+	(*Prerequisite)(nil),        // 11: bucketeer.feature.Prerequisite
 }
 var file_proto_feature_feature_proto_depIdxs = []int32{
-	5,  // 0: bucketeer.feature.Feature.variations:type_name -> bucketeer.feature.Variation
-	6,  // 1: bucketeer.feature.Feature.targets:type_name -> bucketeer.feature.Target
-	7,  // 2: bucketeer.feature.Feature.rules:type_name -> bucketeer.feature.Rule
-	8,  // 3: bucketeer.feature.Feature.default_strategy:type_name -> bucketeer.feature.Strategy
-	9,  // 4: bucketeer.feature.Feature.last_used_info:type_name -> bucketeer.feature.FeatureLastUsedInfo
+	6,  // 0: bucketeer.feature.Feature.variations:type_name -> bucketeer.feature.Variation
+	7,  // 1: bucketeer.feature.Feature.targets:type_name -> bucketeer.feature.Target
+	8,  // 2: bucketeer.feature.Feature.rules:type_name -> bucketeer.feature.Rule
+	9,  // 3: bucketeer.feature.Feature.default_strategy:type_name -> bucketeer.feature.Strategy
+	10, // 4: bucketeer.feature.Feature.last_used_info:type_name -> bucketeer.feature.FeatureLastUsedInfo
 	0,  // 5: bucketeer.feature.Feature.variation_type:type_name -> bucketeer.feature.Feature.VariationType
-	10, // 6: bucketeer.feature.Feature.prerequisites:type_name -> bucketeer.feature.Prerequisite
-	1,  // 7: bucketeer.feature.Features.features:type_name -> bucketeer.feature.Feature
-	1,  // 8: bucketeer.feature.EnvironmentFeature.features:type_name -> bucketeer.feature.Feature
-	9,  // [9:9] is the sub-list for method output_type
-	9,  // [9:9] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	11, // 6: bucketeer.feature.Feature.prerequisites:type_name -> bucketeer.feature.Prerequisite
+	2,  // 7: bucketeer.feature.Feature.auto_ops_summary:type_name -> bucketeer.feature.AutoOpsSummary
+	1,  // 8: bucketeer.feature.Features.features:type_name -> bucketeer.feature.Feature
+	1,  // 9: bucketeer.feature.EnvironmentFeature.features:type_name -> bucketeer.feature.Feature
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_proto_feature_feature_proto_init() }
@@ -691,7 +746,7 @@ func file_proto_feature_feature_proto_init() {
 			}
 		}
 		file_proto_feature_feature_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Features); i {
+			switch v := v.(*AutoOpsSummary); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -703,7 +758,7 @@ func file_proto_feature_feature_proto_init() {
 			}
 		}
 		file_proto_feature_feature_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EnvironmentFeature); i {
+			switch v := v.(*Features); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -715,6 +770,18 @@ func file_proto_feature_feature_proto_init() {
 			}
 		}
 		file_proto_feature_feature_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*EnvironmentFeature); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_feature_feature_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Tag); i {
 			case 0:
 				return &v.state
@@ -733,7 +800,7 @@ func file_proto_feature_feature_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_feature_feature_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

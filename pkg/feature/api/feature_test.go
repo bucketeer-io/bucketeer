@@ -307,7 +307,7 @@ func TestListFeaturesMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CountFeaturesByStatus(
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureSummary(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
@@ -333,7 +333,7 @@ func TestListFeaturesMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CountFeaturesByStatus(
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureSummary(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
@@ -361,7 +361,7 @@ func TestListFeaturesMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CountFeaturesByStatus(
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureSummary(
 					gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
