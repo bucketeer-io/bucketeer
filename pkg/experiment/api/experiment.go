@@ -122,11 +122,11 @@ func (s *experimentService) ListExperiments(
 	if req.FeatureVersion != nil {
 		whereParts = append(whereParts, mysql.NewFilter("feature_version", "=", req.FeatureVersion.Value))
 	}
-	if req.From != 0 {
-		whereParts = append(whereParts, mysql.NewFilter("stopped_at", ">=", req.From))
+	if req.StartAt != 0 {
+		whereParts = append(whereParts, mysql.NewFilter("start_at", ">=", req.StartAt))
 	}
-	if req.To != 0 {
-		whereParts = append(whereParts, mysql.NewFilter("start_at", "<=", req.To))
+	if req.StopAt != 0 {
+		whereParts = append(whereParts, mysql.NewFilter("stop_at", "<=", req.StopAt))
 	}
 	if req.Status != nil {
 		whereParts = append(whereParts, mysql.NewFilter("status", "=", req.Status.Value))
