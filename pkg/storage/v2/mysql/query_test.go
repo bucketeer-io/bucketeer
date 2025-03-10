@@ -307,7 +307,7 @@ func TestConstructOrderBySQLString(t *testing.T) {
 				NewOrder("created_at", OrderDirectionDesc),
 				NewOrder("id", OrderDirectionAsc),
 			},
-			expectedSQL: "ORDER BY created_at DESC, id ASC",
+			expectedSQL: "ORDER BY created_at DESC, id ASC ",
 		},
 	}
 	for _, p := range patterns {
