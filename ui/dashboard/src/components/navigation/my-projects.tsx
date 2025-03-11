@@ -1,16 +1,16 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { IconCloseRound } from 'react-icons-material-design';
 import { useNavigate } from 'react-router-dom';
 import * as Popover from '@radix-ui/react-popover';
 import {
   getCurrentEnvironment,
   getEnvironmentsByProjectId,
+  getCurrentProject,
   getUniqueProjects,
   useAuth
 } from 'auth';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useTranslation } from 'i18n';
-import { unwrapUndefinable } from 'option-t/undefinable';
 import { setCurrentEnvIdStorage } from 'storage/environment';
 import { Environment, Project } from '@types';
 import { cn } from 'utils/style';
@@ -25,47 +25,54 @@ const MyProjects = () => {
   const { t } = useTranslation(['common']);
   const navigate = useNavigate();
   const { consoleAccount } = useAuth();
+
   const [isShowProjectsList, setIsShowProjectsList] = useState(false);
   const [searchValue, setSearchValue] = useState('');
-  const environmentRoles = consoleAccount?.environmentRoles || [];
+  const [projects, setProjects] = useState<Project[]>();
+  const [selectedProject, setSelectedProject] = useState<Project>();
+  const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>();
+  const [environments, setEnvironments] = useState<Environment[]>();
 
-  const uniqueProjects = getUniqueProjects(environmentRoles);
-  const [projects, setProjects] = useState(uniqueProjects);
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const handleChangeData = useCallback(() => {
+    const { environmentRoles } = consoleAccount!;
+    const currentProjects = getUniqueProjects(environmentRoles);
+    const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+    const currentProject = getCurrentProject(
+      environmentRoles,
+      currentEnvironment.id
+    );
+    const currentEnvironments = getEnvironmentsByProjectId(
+      environmentRoles,
+      currentProject.id
+    );
 
-  const initialProject = unwrapUndefinable(
-    environmentRoles.find(role => role.environment.id == currentEnvironment.id)
-  ).project;
+    setCurrentEnvIdStorage(currentEnvironment.id);
+    setProjects(currentProjects);
+    setSelectedProject(currentProject);
+    setSelectedEnvironment(currentEnvironment);
+    setEnvironments(currentEnvironments);
+  }, [consoleAccount]);
 
-  const [selectedProject, setSelectedProject] =
-    useState<Project>(initialProject);
-  const [selectedEnvironment, setSelectedEnvironment] =
-    useState<Environment>(currentEnvironment);
-
-  const environments = getEnvironmentsByProjectId(
-    environmentRoles,
-    selectedProject.id
+  const onOpenChange = useCallback(
+    (v: boolean) => {
+      if (!v) onClearSearch();
+      setIsShowProjectsList(v);
+    },
+    [consoleAccount]
   );
 
-  const onOpenChange = useCallback((v: boolean) => {
-    if (!v) onClearSearch();
-    setIsShowProjectsList(v);
-  }, []);
-
-  const onClearSearch = () => {
-    setProjects(uniqueProjects);
-    setSelectedProject(initialProject);
+  const onClearSearch = useCallback(() => {
     setSearchValue('');
-  };
+    handleChangeData();
+  }, [consoleAccount]);
 
   const onSearchProject = (value: string) => {
     if (!value) {
       onClearSearch();
     } else {
       const regex = new RegExp(value, 'i');
-      const projectFiltered = uniqueProjects.filter(item =>
-        regex.test(item.name)
-      );
+      const projectFiltered =
+        projects?.filter(item => regex.test(item.name)) || [];
       if (projectFiltered.length > 0) {
         setSelectedProject(projectFiltered[0]);
       }
@@ -82,8 +89,30 @@ const MyProjects = () => {
       setIsShowProjectsList(false);
       onClearSearch();
     },
-    [setSelectedEnvironment]
+    [setSelectedEnvironment, consoleAccount]
   );
+
+  const onChangeProject = useCallback(
+    (project: Project) => {
+      const { environmentRoles } = consoleAccount!;
+
+      const currentEnvironments = getEnvironmentsByProjectId(
+        environmentRoles,
+        project.id
+      );
+
+      const environmentFiltered = currentEnvironments?.filter(
+        item => item.projectId === project.id
+      );
+      setEnvironments(environmentFiltered);
+      setSelectedProject(project);
+    },
+    [environments]
+  );
+
+  useEffect(() => {
+    if (consoleAccount) handleChangeData();
+  }, [consoleAccount]);
 
   return (
     <Popover.Root onOpenChange={onOpenChange} open={isShowProjectsList}>
@@ -104,19 +133,21 @@ const MyProjects = () => {
               value={searchValue}
               onChange={onSearchProject}
             />
-            {projects.length > 0 ? (
+            {projects && projects?.length > 0 ? (
               <div className="mt-5 grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-3">
                   <List.Title>{t(`projects`)}</List.Title>
                   <ScrollArea className="h-[120px] pr-2">
                     <List
-                      items={projects.map(item => ({
-                        label: item.name,
-                        value: item.id,
-                        selected: item.id === selectedProject.id,
-                        expanded: item.id === selectedProject.id,
-                        onSelect: () => setSelectedProject(item)
-                      }))}
+                      items={
+                        projects?.map(item => ({
+                          label: item.name,
+                          value: item.id,
+                          selected: item.id === selectedProject?.id,
+                          expanded: item.id === selectedProject?.id,
+                          onSelect: () => onChangeProject(item)
+                        })) || []
+                      }
                     />
                   </ScrollArea>
                 </div>
@@ -124,14 +155,16 @@ const MyProjects = () => {
                   <List.Title>{t(`environments`)}</List.Title>
                   <ScrollArea className="h-[120px] pr-2">
                     <List
-                      items={environments
-                        .filter(i => i.id !== selectedEnvironment.id)
-                        .map(item => ({
-                          label: item.name,
-                          value: item.id,
-                          selected: item.id === selectedEnvironment.id,
-                          onSelect: () => onHandleChange(item)
-                        }))}
+                      items={
+                        environments
+                          ?.filter(i => i.id !== selectedEnvironment?.id)
+                          .map(item => ({
+                            label: item.name,
+                            value: item.id,
+                            selected: item.id === selectedEnvironment?.id,
+                            onSelect: () => onHandleChange(item)
+                          })) || []
+                      }
                     />
                   </ScrollArea>
                 </div>
@@ -158,7 +191,7 @@ const MyProjects = () => {
           <div className="flex items-center gap-x-2 truncate">
             <Icon color="primary-50" icon={IconFolder} size="sm" />
             <span className="truncate text-ellipsis">
-              {selectedEnvironment.name}
+              {selectedEnvironment?.name}
             </span>
           </div>
           <Icon color="primary-50" size="sm" icon={IconChevronRight} />

@@ -11,3 +11,7 @@ export * from './push';
 export * from './tag';
 export * from './goal';
 export * from './user-segment';
+export * from './experiment';
+export * from './goal';
+export * from './experiment-result';
+export * from './feature';

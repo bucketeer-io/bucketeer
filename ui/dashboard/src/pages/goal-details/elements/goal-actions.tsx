@@ -29,6 +29,7 @@ const GoalActions = ({
       {children}
       <Button
         className="w-fit"
+        type="button"
         variant={'secondary'}
         disabled={disabled}
         onClick={onClick}

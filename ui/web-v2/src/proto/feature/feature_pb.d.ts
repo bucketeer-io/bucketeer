@@ -110,6 +110,11 @@ export class Feature extends jspb.Message {
   getSamplingSeed(): string;
   setSamplingSeed(value: string): void;
 
+  hasAutoOpsSummary(): boolean;
+  clearAutoOpsSummary(): void;
+  getAutoOpsSummary(): AutoOpsSummary | undefined;
+  setAutoOpsSummary(value?: AutoOpsSummary): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Feature.AsObject;
   static toObject(includeInstance: boolean, msg: Feature): Feature.AsObject;
@@ -152,6 +157,7 @@ export namespace Feature {
     archived: boolean;
     prerequisitesList: Array<proto_feature_prerequisite_pb.Prerequisite.AsObject>;
     samplingSeed: string;
+    autoOpsSummary?: AutoOpsSummary.AsObject;
   };
 
   export interface VariationTypeMap {
@@ -162,6 +168,45 @@ export namespace Feature {
   }
 
   export const VariationType: VariationTypeMap;
+}
+
+export class AutoOpsSummary extends jspb.Message {
+  getProgressiveRolloutCount(): number;
+  setProgressiveRolloutCount(value: number): void;
+
+  getScheduleCount(): number;
+  setScheduleCount(value: number): void;
+
+  getKillSwitchCount(): number;
+  setKillSwitchCount(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AutoOpsSummary.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: AutoOpsSummary
+  ): AutoOpsSummary.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: AutoOpsSummary,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): AutoOpsSummary;
+  static deserializeBinaryFromReader(
+    message: AutoOpsSummary,
+    reader: jspb.BinaryReader
+  ): AutoOpsSummary;
+}
+
+export namespace AutoOpsSummary {
+  export type AsObject = {
+    progressiveRolloutCount: number;
+    scheduleCount: number;
+    killSwitchCount: number;
+  };
 }
 
 export class Features extends jspb.Message {

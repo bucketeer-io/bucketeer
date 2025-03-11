@@ -196,7 +196,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
                           htmlFor="experiments-connection"
                           className="typo-para-medium leading-4 text-gray-700 cursor-pointer"
                         >
-                          {t('form:experiments')}
+                          {t('experiments')}
                         </label>
                       </div>
 

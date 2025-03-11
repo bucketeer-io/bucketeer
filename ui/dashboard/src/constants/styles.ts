@@ -111,3 +111,25 @@ export const BG_COLOR_MAPPING = {
   'accent-yellow-100': 'bg-accent-yellow-100',
   'accent-yellow-50': 'bg-accent-yellow-50'
 };
+
+export const CHART_COLORS = [
+  '#f06292',
+  '#ba68c8',
+  '#64b5f6',
+  '#e57373',
+  '#81c784',
+  '#ffd54f',
+  '#fff176',
+  '#90a4ae',
+  '#a1887f',
+  '#ff8a65',
+  '#ffb74d',
+  '#4dd0e1',
+  '#9575cd',
+  '#4fc3f7',
+  '#e0e0e0',
+  '#7986cb',
+  '#aed581',
+  '#dce775',
+  '#4db6ac'
+];

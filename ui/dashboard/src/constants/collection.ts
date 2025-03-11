@@ -25,5 +25,10 @@ export const sortingListFields: SortingListFields = {
   connectionType: 'CONNECTION_TYPE',
   connections: 'CONNECTIONS',
   users: 'USERS',
-  tags: 'TAGS'
+  tags: 'TAGS',
+  goals: 'GOALS',
+  start_at: 'START_AT',
+  stop_at: 'STOP_AT',
+  status: 'STATUS',
+  goals_count: 'GOALS_COUNT'
 };
