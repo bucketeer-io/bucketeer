@@ -171,7 +171,7 @@ build-go-embed: build-web-console $(GO_APP_BUILD_TARGETS) clean-web-console
 # Make sure bucketeer-httpstan is already running. If not, run "make start-httpstan".
 .PHONY: test-go
 test-go:
-	TZ=UTC CGO_ENABLED=0 go test -v ./pkg/... ./evaluation/go/...
+	TZ=UTC CGO_ENABLED=0 go test -v ./pkg/feature/... ./evaluation/go/...
 
 .PHONY: start-httpstan
 start-httpstan:

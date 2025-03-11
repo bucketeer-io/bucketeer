@@ -581,30 +581,12 @@ func (s *FeatureService) CreateFeature(
 		return nil, err
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		if err := s.upsertTags(ctx, tx, req.Command.Tags, req.EnvironmentId); err != nil {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		if err := s.upsertTags(contextWithTx, req.Command.Tags, req.EnvironmentId); err != nil {
 			return err
 		}
 
-		featureStorage := v2fs.NewFeatureStorage(tx)
-		if err := featureStorage.CreateFeature(ctx, feature, req.EnvironmentId); err != nil {
+		if err := s.featureStorage.CreateFeature(ctx, feature, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -711,7 +693,7 @@ func (s *FeatureService) createFeatureNoCommand(
 	}
 	var event *eventproto.Event
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		if err := s.upsertTags(ctx, tx, req.Tags, req.EnvironmentId); err != nil {
+		if err := s.upsertTags(ctxWithTx, req.Tags, req.EnvironmentId); err != nil {
 			return err
 		}
 		event, err = domainevent.NewEvent(
@@ -819,33 +801,15 @@ func (s *FeatureService) UpdateFeature(
 	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
 	var event *eventproto.Event
 	var updatedpb *featureproto.Feature
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		featureStorage := v2fs.NewFeatureStorage(tx)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		whereParts := []mysql.WherePart{
 			mysql.NewFilter("deleted", "=", false),
 			mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 		}
-		features, _, _, err := featureStorage.ListFeatures(
-			ctx,
+		features, _, _, err := s.featureStorage.ListFeatures(
+			ctxWithTx,
 			whereParts,
 			nil,
 			mysql.QueryNoLimit,
@@ -942,7 +906,7 @@ func (s *FeatureService) UpdateFeature(
 		if err != nil {
 			return err
 		}
-		err = featureStorage.UpdateFeature(ctx, updated, req.EnvironmentId)
+		err = s.featureStorage.UpdateFeature(ctxWithTx, updated, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
@@ -1009,26 +973,8 @@ func (s *FeatureService) UpdateFeatureDetails(
 		return nil, err
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		featureStorage := v2fs.NewFeatureStorage(tx)
-		feature, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		feature, err := s.featureStorage.GetFeature(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get feature",
@@ -1098,7 +1044,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 			for _, c := range req.AddTagCommands {
 				tags = append(tags, c.Tag)
 			}
-			if err := s.upsertTags(ctx, tx, tags, req.EnvironmentId); err != nil {
+			if err := s.upsertTags(contextWithTx, tags, req.EnvironmentId); err != nil {
 				return err
 			}
 		}
@@ -1117,7 +1063,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 				}
 			}
 		}
-		err = featureStorage.UpdateFeature(ctx, feature, req.EnvironmentId)
+		err = s.featureStorage.UpdateFeature(contextWithTx, feature, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
@@ -1699,31 +1645,13 @@ func (s *FeatureService) UpdateFeatureVariations(
 		commands = append(commands, cmd)
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
 		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		featureStorage := v2fs.NewFeatureStorage(tx)
-		features, _, _, err := featureStorage.ListFeatures(
-			ctx,
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		features, _, _, err := s.featureStorage.ListFeatures(
+			contextWithTx,
 			whereParts,
 			nil,
 			mysql.QueryNoLimit,
@@ -1799,7 +1727,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 				return err
 			}
 		}
-		err = featureStorage.UpdateFeature(ctx, feature, req.EnvironmentId)
+		err = s.featureStorage.UpdateFeature(contextWithTx, feature, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
@@ -1886,31 +1814,13 @@ func (s *FeatureService) UpdateFeatureTargeting(
 	// Normally each command should be usable alone (load the feature from the repository change it and save it).
 	// Also here because many commands are run sequentially they all expect the same version of the feature.
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		whereParts := []mysql.WherePart{
 			mysql.NewFilter("deleted", "=", false),
 			mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 		}
-		featureStorage := v2fs.NewFeatureStorage(tx)
-		features, _, _, err := featureStorage.ListFeatures(
-			ctx,
+		features, _, _, err := s.featureStorage.ListFeatures(
+			contextWithTx,
 			whereParts,
 			nil,
 			mysql.QueryNoLimit,
@@ -1982,7 +1892,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 			// We must stop the progressive rollout if it contains a `DisableFeatureCommand`
 			switch cmd.(type) {
 			case *featureproto.DisableFeatureCommand:
-				if err := s.stopProgressiveRollout(ctx, req.EnvironmentId, feature.Id); err != nil {
+				if err := s.stopProgressiveRollout(contextWithTx, req.EnvironmentId, feature.Id); err != nil {
 					return err
 				}
 			}
@@ -1999,7 +1909,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 				return err
 			}
 		}
-		err = featureStorage.UpdateFeature(ctx, feature, req.EnvironmentId)
+		err = s.featureStorage.UpdateFeature(contextWithTx, feature, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
@@ -2488,8 +2398,7 @@ func (s *FeatureService) CloneFeature(
 	if err != nil {
 		return nil, err
 	}
-	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	f, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
+	f, err := s.featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if err == v2fs.ErrFeatureNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -2526,25 +2435,8 @@ func (s *FeatureService) CloneFeature(
 		return nil, err
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		if err := featureStorage.CreateFeature(ctx, feature, req.Command.EnvironmentId); err != nil {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		if err := s.featureStorage.CreateFeature(contextWithTx, feature, req.Command.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(

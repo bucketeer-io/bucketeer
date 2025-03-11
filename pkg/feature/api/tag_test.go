@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
+	storagemock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -118,21 +119,20 @@ func TestUpsertTags(t *testing.T) {
 	defer mockController.Finish()
 	service := createFeatureServiceNew(mockController)
 	ctx := createContextWithToken()
-	transaction := mysqlmock.NewMockTransaction(mockController)
 	internalErr := errors.New("test")
 	patterns := []struct {
 		desc        string
 		tags        []string
-		setup       func(*mysqlmock.MockTransaction)
+		setup       func(*FeatureService)
 		expectedErr error
 	}{
 		{
 			desc: "error: internal error when creating tag",
 			tags: []string{"tag"},
-			setup: func(mt *mysqlmock.MockTransaction) {
-				mt.EXPECT().ExecContext(
+			setup: func(fs *FeatureService) {
+				fs.tagStorage.(*storagemock.MockTagStorage).EXPECT().UpsertTag(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, internalErr)
+				).Return(internalErr)
 			},
 			expectedErr: internalErr,
 		},
@@ -144,10 +144,10 @@ func TestUpsertTags(t *testing.T) {
 		{
 			desc: "success: create new tag",
 			tags: []string{"tag"},
-			setup: func(mt *mysqlmock.MockTransaction) {
-				mt.EXPECT().ExecContext(
+			setup: func(fs *FeatureService) {
+				fs.tagStorage.(*storagemock.MockTagStorage).EXPECT().UpsertTag(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
+				).Return(nil)
 			},
 			expectedErr: nil,
 		},
@@ -156,9 +156,9 @@ func TestUpsertTags(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			if p.setup != nil {
-				p.setup(transaction)
+				p.setup(service)
 			}
-			err := service.upsertTags(ctx, transaction, p.tags, environmentId)
+			err := service.upsertTags(ctx, p.tags, environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
