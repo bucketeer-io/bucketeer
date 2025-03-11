@@ -1656,16 +1656,6 @@ func (s *FeatureService) validateEnvironmentSettings(
 }
 
 func validateCreateFlagTriggerCommand(cmd *featureproto.CreateFlagTriggerCommand, localizer locale.Localizer) error {
-	if cmd == nil {
-		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "create_flag_trigger_command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	if cmd.FeatureId == "" {
 		dt, err := statusMissingTriggerFeatureID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1699,24 +1689,31 @@ func validateCreateFlagTriggerCommand(cmd *featureproto.CreateFlagTriggerCommand
 	return nil
 }
 
-func validateUpdateFlagTriggerCommand(
-	cmd *featureproto.ChangeFlagTriggerDescriptionCommand,
-	localizer locale.Localizer,
-) error {
-	if cmd == nil {
-		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+func validateCreateFlagTriggerNoCommand(req *featureproto.CreateFlagTriggerRequest, localizer locale.Localizer) error {
+	if req.FeatureId == "" {
+		dt, err := statusMissingTriggerFeatureID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "change_flag_trigger_description_command"),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
 		})
 		if err != nil {
 			return statusInternal.Err()
 		}
 		return dt.Err()
 	}
-	if cmd.Description == "" {
-		dt, err := statusMissingTriggerDescription.WithDetails(&errdetails.LocalizedMessage{
+	if req.Type == featureproto.FlagTrigger_Type_UNKNOWN {
+		dt, err := statusMissingTriggerType.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "description"),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "type"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Action == featureproto.FlagTrigger_Action_UNKNOWN {
+		dt, err := statusMissingTriggerAction.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "action"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -1741,20 +1738,6 @@ func validateEnableFlagTriggerCommand(cmd *featureproto.EnableFlagTriggerCommand
 }
 
 func validateDisableFlagTriggerCommand(cmd *featureproto.DisableFlagTriggerCommand, localizer locale.Localizer) error {
-	if cmd == nil {
-		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InvalidArgumentError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	return nil
-}
-
-func validateDeleteFlagTriggerCommand(cmd *featureproto.DeleteFlagTriggerCommand, localizer locale.Localizer) error {
 	if cmd == nil {
 		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

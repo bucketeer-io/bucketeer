@@ -20,6 +20,8 @@ import (
 	"errors"
 	"testing"
 
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -64,14 +66,6 @@ func TestCreateFlagTrigger(t *testing.T) {
 		input       *proto.CreateFlagTriggerRequest
 		expectedErr error
 	}{
-		{
-			desc:  "Error Invalid Argument",
-			setup: nil,
-			input: &proto.CreateFlagTriggerRequest{
-				EnvironmentId: "namespace",
-			},
-			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "create_flag_trigger_command")),
-		},
 		{
 			desc: "Error Internal",
 			setup: func(s *FeatureService) {
@@ -129,6 +123,90 @@ func TestCreateFlagTrigger(t *testing.T) {
 				assert.Equal(t, p.input.CreateFlagTriggerCommand.FeatureId, resp.FlagTrigger.FeatureId)
 				assert.Equal(t, p.input.CreateFlagTriggerCommand.Type, resp.FlagTrigger.Type)
 				assert.Equal(t, p.input.CreateFlagTriggerCommand.Action, resp.FlagTrigger.Action)
+				assert.True(t, len(resp.Url) > 0)
+			}
+		})
+	}
+}
+
+func TestCreateFlagTriggerNoCommand(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := metadata.NewIncomingContext(
+		createContextWithToken(),
+		metadata.MD{"accept-language": []string{"ja"}},
+	)
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(service *FeatureService)
+		input       *proto.CreateFlagTriggerRequest
+		expectedErr error
+	}{
+		{
+			desc: "Error Internal",
+			setup: func(s *FeatureService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
+			},
+			input: &proto.CreateFlagTriggerRequest{
+				EnvironmentId: "namespace",
+				FeatureId:     "id-1",
+				Type:          proto.FlagTrigger_Type_WEBHOOK,
+				Action:        proto.FlagTrigger_Action_ON,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "Success",
+			setup: func(s *FeatureService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().CreateFlagTrigger(
+					ctx, gomock.Any(),
+				).Return(nil)
+			},
+			input: &proto.CreateFlagTriggerRequest{
+				EnvironmentId: "namespace",
+				FeatureId:     "id-1",
+				Type:          proto.FlagTrigger_Type_WEBHOOK,
+				Action:        proto.FlagTrigger_Action_ON,
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createFeatureServiceNew(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			resp, err := s.CreateFlagTrigger(ctx, p.input)
+			assert.Equal(t, p.expectedErr, err)
+			if resp != nil {
+				assert.True(t, len(resp.FlagTrigger.Id) > 0)
+				assert.Equal(t, p.input.FeatureId, resp.FlagTrigger.FeatureId)
+				assert.Equal(t, p.input.Type, resp.FlagTrigger.Type)
+				assert.Equal(t, p.input.Action, resp.FlagTrigger.Action)
 				assert.True(t, len(resp.Url) > 0)
 			}
 		})
@@ -303,15 +381,6 @@ func TestUpdateFlagTrigger(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:  "Error Invalid Argument",
-			setup: func(s *FeatureService) {},
-			input: &proto.UpdateFlagTriggerRequest{
-				Id:            "id",
-				EnvironmentId: "namespace",
-			},
-			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "change_flag_trigger_description_command")),
-		},
-		{
 			desc: "Error Internal",
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
@@ -356,6 +425,122 @@ func TestUpdateFlagTrigger(t *testing.T) {
 				ChangeFlagTriggerDescriptionCommand: &proto.ChangeFlagTriggerDescriptionCommand{
 					Description: "description",
 				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createFeatureServiceNew(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			resp, err := s.UpdateFlagTrigger(ctx, p.input)
+			assert.Equal(t, p.expectedErr, err)
+			if err == nil {
+				assert.NotNil(t, resp)
+			}
+		})
+	}
+}
+
+func TestUpdateFlagTriggerNoCommand(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := metadata.NewIncomingContext(
+		createContextWithToken(),
+		metadata.MD{"accept-language": []string{"ja"}},
+	)
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(service *FeatureService)
+		input       *proto.UpdateFlagTriggerRequest
+		expectedErr error
+	}{
+		{
+			desc: "Error Internal",
+			setup: func(s *FeatureService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
+			},
+			input: &proto.UpdateFlagTriggerRequest{
+				Id:            "id",
+				EnvironmentId: "namespace",
+				Description:   wrapperspb.String("description"),
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
+		},
+		{
+			desc: "Success update description",
+			setup: func(s *FeatureService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
+					ctx, gomock.Any(), gomock.Any(),
+				).Return(&domain.FlagTrigger{
+					FlagTrigger: &proto.FlagTrigger{
+						Id: "id",
+					},
+				}, nil)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().UpdateFlagTrigger(
+					ctx, gomock.Any(),
+				).Return(nil)
+			},
+			input: &proto.UpdateFlagTriggerRequest{
+				Id:            "id",
+				EnvironmentId: "namespace",
+				Description:   wrapperspb.String("description"),
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "Success reset flag trigger",
+			setup: func(s *FeatureService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
+					ctx, gomock.Any(), gomock.Any(),
+				).Return(&domain.FlagTrigger{
+					FlagTrigger: &proto.FlagTrigger{
+						Id:    "id",
+						Token: "token",
+					},
+				}, nil)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().UpdateFlagTrigger(
+					ctx, gomock.Any(),
+				).Return(nil)
+			},
+			input: &proto.UpdateFlagTriggerRequest{
+				Id:            "id",
+				EnvironmentId: "namespace",
+				Reset_:        true,
 			},
 			expectedErr: nil,
 		},
@@ -689,12 +874,6 @@ func TestDeleteFlagTrigger(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:        "Error Invalid Argument",
-			setup:       func(s *FeatureService) {},
-			input:       &proto.DeleteFlagTriggerRequest{},
-			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError)),
-		},
-		{
 			desc: "Error Internal",
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
@@ -727,9 +906,7 @@ func TestDeleteFlagTrigger(t *testing.T) {
 					ctx, gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			input: &proto.DeleteFlagTriggerRequest{
-				DeleteFlagTriggerCommand: &proto.DeleteFlagTriggerCommand{},
-			},
+			input:       &proto.DeleteFlagTriggerRequest{},
 			expectedErr: nil,
 		},
 	}
@@ -970,12 +1147,10 @@ func TestFeatureServiceGenerateTriggerURL(t *testing.T) {
 	featureService := createFeatureServiceNew(mockController)
 	trigger, err := domain.NewFlagTrigger(
 		"test",
-		&proto.CreateFlagTriggerCommand{
-			FeatureId:   "test",
-			Type:        proto.FlagTrigger_Type_WEBHOOK,
-			Action:      proto.FlagTrigger_Action_ON,
-			Description: "test",
-		},
+		"test",
+		proto.FlagTrigger_Type_WEBHOOK,
+		proto.FlagTrigger_Action_ON,
+		"test",
 	)
 	if err != nil {
 		t.Errorf("NewFlagTrigger() error = %v", err)

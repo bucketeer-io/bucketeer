@@ -2720,6 +2720,22 @@ export class CreateFlagTriggerRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getType(): proto_feature_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.TypeMap];
+  setType(
+    value: proto_feature_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.TypeMap]
+  ): void;
+
+  getAction(): proto_feature_flag_trigger_pb.FlagTrigger.ActionMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.ActionMap];
+  setAction(
+    value: proto_feature_flag_trigger_pb.FlagTrigger.ActionMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.ActionMap]
+  ): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateFlagTriggerRequest.AsObject;
   static toObject(
@@ -2745,6 +2761,10 @@ export namespace CreateFlagTriggerRequest {
   export type AsObject = {
     createFlagTriggerCommand?: proto_feature_command_pb.CreateFlagTriggerCommand.AsObject;
     environmentId: string;
+    featureId: string;
+    type: proto_feature_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.TypeMap];
+    action: proto_feature_flag_trigger_pb.FlagTrigger.ActionMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.ActionMap];
+    description: string;
   };
 }
 
@@ -2860,6 +2880,9 @@ export class UpdateFlagTriggerRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   hasChangeFlagTriggerDescriptionCommand(): boolean;
   clearChangeFlagTriggerDescriptionCommand(): void;
   getChangeFlagTriggerDescriptionCommand():
@@ -2869,8 +2892,18 @@ export class UpdateFlagTriggerRequest extends jspb.Message {
     value?: proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand
   ): void;
 
-  getEnvironmentId(): string;
-  setEnvironmentId(value: string): void;
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  getReset(): boolean;
+  setReset(value: boolean): void;
+
+  hasDisabled(): boolean;
+  clearDisabled(): void;
+  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFlagTriggerRequest.AsObject;
@@ -2896,8 +2929,11 @@ export class UpdateFlagTriggerRequest extends jspb.Message {
 export namespace UpdateFlagTriggerRequest {
   export type AsObject = {
     id: string;
-    changeFlagTriggerDescriptionCommand?: proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand.AsObject;
     environmentId: string;
+    changeFlagTriggerDescriptionCommand?: proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    reset: boolean;
+    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 }
 

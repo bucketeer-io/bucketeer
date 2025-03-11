@@ -20,6 +20,10 @@ import (
 	"encoding/base64"
 	"time"
 
+	"github.com/jinzhu/copier"
+
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -30,7 +34,10 @@ type FlagTrigger struct {
 
 func NewFlagTrigger(
 	environmentId string,
-	cmd *proto.CreateFlagTriggerCommand,
+	featureId string,
+	flagType proto.FlagTrigger_Type,
+	action proto.FlagTrigger_Action,
+	description string,
 ) (*FlagTrigger, error) {
 	now := time.Now().Unix()
 	triggerID, err := uuid.NewUUID()
@@ -39,15 +46,40 @@ func NewFlagTrigger(
 	}
 	return &FlagTrigger{&proto.FlagTrigger{
 		Id:            triggerID.String(),
-		FeatureId:     cmd.FeatureId,
+		FeatureId:     featureId,
 		EnvironmentId: environmentId,
-		Type:          cmd.Type,
-		Action:        cmd.Action,
-		Description:   cmd.Description,
+		Type:          flagType,
+		Action:        action,
+		Description:   description,
 		Disabled:      false,
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}}, nil
+}
+
+func (ft *FlagTrigger) UpdateFlagTrigger(
+	description *wrapperspb.StringValue,
+	reset bool,
+	disabled *wrapperspb.BoolValue,
+) (*FlagTrigger, error) {
+	updated := &FlagTrigger{}
+	if err := copier.Copy(updated, ft); err != nil {
+		return nil, err
+	}
+	if description != nil {
+		updated.Description = description.Value
+	}
+	if reset {
+		err := updated.GenerateToken()
+		if err != nil {
+			return nil, err
+		}
+	}
+	if disabled != nil {
+		updated.Disabled = disabled.Value
+	}
+	updated.UpdatedAt = time.Now().Unix()
+	return updated, nil
 }
 
 func (ft *FlagTrigger) ChangeDescription(description string) error {

@@ -4322,6 +4322,64 @@ paths:
             $ref: '#/definitions/featureUpdateFeatureRequest'
       tags:
         - Feature
+  /v1/feature/clone:
+    post:
+      summary: Clone Feature Flag
+      description: Clone a feature flag. To call this API, you need at least a MEMBER role in the specified organizations.
+      operationId: web.v1.feature.clone
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureCloneFeatureResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureCloneFeatureRequest'
+      tags:
+        - Feature
   /v1/features:
     get:
       summary: List Feature Flags
@@ -4439,6 +4497,319 @@ paths:
           type: string
       tags:
         - Feature
+  /v1/flag_trigger:
+    get:
+      summary: Get Flag Trigger
+      description: Get a flag trigger. To call this API, you need at least a MEMBER role in the specified organizations.
+      operationId: web.v1.flag_trigger.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureGetFlagTriggerResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - Flag Trigger
+    delete:
+      summary: Delete Flag Trigger
+      description: Delete a flag trigger. To call this API, you need at least a MEMBER role in the specified organizations.
+      operationId: web.v1.flag_trigger.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureDeleteFlagTriggerResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: false
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - Flag Trigger
+    post:
+      summary: Create Flag Trigger
+      description: Create a flag trigger. To call this API, you need at least a MEMBER role in the specified organizations.
+      operationId: web.v1.flag_trigger.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureCreateFlagTriggerResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureCreateFlagTriggerRequest'
+      tags:
+        - Flag Trigger
+    patch:
+      summary: Update Flag Trigger
+      description: Update a flag trigger. To call this API, you need at least a MEMBER role in the specified organizations.
+      operationId: web.v1.flag_trigger.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureUpdateFlagTriggerResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureUpdateFlagTriggerRequest'
+      tags:
+        - Flag Trigger
+  /v1/flag_triggers:
+    get:
+      summary: List Flag Triggers
+      description: List flag triggers. To call this API, you need at least a MEMBER role in the specified organizations.
+      operationId: web.v1.flag_trigger.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureListFlagTriggersResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: featureId
+          in: query
+          required: false
+          type: string
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: pageSize
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - Flag Trigger
   /v1/goal:
     get:
       summary: Get
@@ -8907,6 +9278,16 @@ definitions:
     properties:
       environmentId:
         type: string
+  featureCloneFeatureRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      command:
+        $ref: '#/definitions/featureCloneFeatureCommand'
+        description: deprecated
+      environmentId:
+        type: string
   featureCloneFeatureResponse:
     type: object
   featureCommand:
@@ -8994,6 +9375,27 @@ definitions:
         $ref: '#/definitions/FlagTriggerAction'
       description:
         type: string
+  featureCreateFlagTriggerRequest:
+    type: object
+    properties:
+      createFlagTriggerCommand:
+        $ref: '#/definitions/featureCreateFlagTriggerCommand'
+        description: deprecated
+      environmentId:
+        type: string
+      featureId:
+        type: string
+      type:
+        $ref: '#/definitions/featureFlagTriggerType'
+      action:
+        $ref: '#/definitions/FlagTriggerAction'
+      description:
+        type: string
+    required:
+      - environmentId
+      - featureId
+      - type
+      - action
   featureCreateFlagTriggerResponse:
     type: object
     properties:
@@ -9688,6 +10090,27 @@ definitions:
     type: object
   featureUpdateFeatureVariationsResponse:
     type: object
+  featureUpdateFlagTriggerRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      environmentId:
+        type: string
+      changeFlagTriggerDescriptionCommand:
+        $ref: '#/definitions/featureChangeFlagTriggerDescriptionCommand'
+        description: deprecated
+      description:
+        type: string
+      reset:
+        type: boolean
+        description: If true, reset the trigger hook URL.
+      disabled:
+        type: boolean
+        description: If true, disable the trigger.
+    required:
+      - id
+      - environmentId
   featureUpdateFlagTriggerResponse:
     type: object
   featureUpdateSegmentRequest:
