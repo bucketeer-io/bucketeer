@@ -80,6 +80,53 @@ func TestCreateAndListProgressiveRollout(t *testing.T) {
 	}
 }
 
+func TestCreateAndListProgressiveRolloutNoCommand(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createDisabledFeature(ctx, t, featureClient, featureID)
+	feature := getFeature(t, featureClient, featureID)
+	schedules := createProgressiveRolloutSchedule()
+	createProgressiveRolloutNoCommand(
+		ctx,
+		t,
+		autoOpsClient,
+		featureID,
+		&autoopsproto.ProgressiveRolloutManualScheduleClause{
+			Schedules:   schedules,
+			VariationId: feature.Variations[0].Id,
+		},
+		nil,
+	)
+	progressiveRollout := listProgressiveRollouts(t, autoOpsClient, featureID)
+	if len(progressiveRollout) != 1 {
+		t.Fatal("not enough rules")
+	}
+	actual := progressiveRollout[0]
+	if actual.Id == "" {
+		t.Fatal("id is empty")
+	}
+	if actual.FeatureId != featureID {
+		t.Fatalf("different feature ID, expected: %v, actual: %v", featureID, actual.FeatureId)
+	}
+	if actual.Type != autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE {
+		t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE, actual.Type)
+	}
+	actualClause := unmarshalProgressiveRolloutManualClause(t, actual.Clause)
+	if actualClause.VariationId != feature.Variations[0].Id {
+		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.VariationId)
+	}
+	if len(actualClause.Schedules) != len(schedules) {
+		t.Fatalf("different length of schedules, expected: %v, actual: %v", len(actualClause.Schedules), len(schedules))
+	}
+}
+
 func TestGetProgressiveRollout(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -94,6 +141,53 @@ func TestGetProgressiveRollout(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	schedules := createProgressiveRolloutSchedule()
 	createProgressiveRollout(
+		ctx,
+		t,
+		autoOpsClient,
+		featureID,
+		&autoopsproto.ProgressiveRolloutManualScheduleClause{
+			Schedules:   schedules,
+			VariationId: feature.Variations[0].Id,
+		},
+		nil,
+	)
+	progressiveRollouts := listProgressiveRollouts(t, autoOpsClient, featureID)
+	if len(progressiveRollouts) != 1 {
+		t.Fatal("not enough rules")
+	}
+	actual := getProgressiveRollout(t, progressiveRollouts[0].Id)
+	if actual.Id == "" {
+		t.Fatal("id is empty")
+	}
+	if actual.FeatureId != featureID {
+		t.Fatalf("different feature ID, expected: %v, actual: %v", featureID, actual.FeatureId)
+	}
+	if actual.Type != autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE {
+		t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE, actual.Type)
+	}
+	actualClause := unmarshalProgressiveRolloutManualClause(t, actual.Clause)
+	if actualClause.VariationId != feature.Variations[0].Id {
+		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.VariationId)
+	}
+	if len(actualClause.Schedules) != len(schedules) {
+		t.Fatalf("different length of schedules, expected: %v, actual: %v", len(actualClause.Schedules), len(schedules))
+	}
+}
+
+func TestCreateAndGetProgressiveRollout(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createDisabledFeature(ctx, t, featureClient, featureID)
+	feature := getFeature(t, featureClient, featureID)
+	schedules := createProgressiveRolloutSchedule()
+	createProgressiveRolloutNoCommand(
 		ctx,
 		t,
 		autoOpsClient,
@@ -382,6 +476,26 @@ func createProgressiveRollout(
 	}
 }
 
+func createProgressiveRolloutNoCommand(
+	ctx context.Context,
+	t *testing.T,
+	client autoopsclient.Client,
+	featureID string,
+	manual *autoopsproto.ProgressiveRolloutManualScheduleClause,
+	template *autoopsproto.ProgressiveRolloutTemplateScheduleClause,
+) {
+	t.Helper()
+	_, err := client.CreateProgressiveRollout(ctx, &autoopsproto.CreateProgressiveRolloutRequest{
+		EnvironmentId:                            *environmentID,
+		FeatureId:                                featureID,
+		ProgressiveRolloutManualScheduleClause:   manual,
+		ProgressiveRolloutTemplateScheduleClause: template,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func listProgressiveRollouts(t *testing.T, client autoopsclient.Client, featureID string) []*autoopsproto.ProgressiveRollout {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -462,7 +576,6 @@ func deleteProgressiveRollout(t *testing.T, client autoopsclient.Client, id stri
 	_, err := client.DeleteProgressiveRollout(ctx, &autoopsproto.DeleteProgressiveRolloutRequest{
 		EnvironmentId: *environmentID,
 		Id:            id,
-		Command:       &autoopsproto.DeleteProgressiveRolloutCommand{},
 	})
 	if err != nil {
 		t.Fatal("Failed to delete progressive rollout", err)
