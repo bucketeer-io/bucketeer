@@ -4,9 +4,9 @@ import { useQueryExperimentResultDetails } from '@queries/experiment-result';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { cloneDeep } from 'lodash';
 import { Experiment } from '@types';
-import { EmptyCollection } from 'pages/experiment-details/page-empty';
 import PageLayout from 'elements/page-layout';
 import GoalResultItem from './goal-results';
+import { EmptyCollection } from './results-empty';
 
 export type GoalResultTab = 'EVALUATION' | 'CONVERSION';
 export type ChartDataType =

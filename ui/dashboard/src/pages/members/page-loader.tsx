@@ -9,9 +9,6 @@ import { useToast } from 'hooks';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { Account } from '@types';
 import ConfirmModal from 'elements/confirm-modal';
-import PageLayout from 'elements/page-layout';
-import { EmptyCollection } from './collection-layout/empty-collection';
-import { useFetchMembers } from './collection-loader/use-fetch-members';
 import AddMemberModal from './member-modal/add-member-modal';
 import DeleteMemberModal from './member-modal/delete-member-modal';
 import EditMemberModal from './member-modal/edit-member-modal';
@@ -25,16 +22,6 @@ const PageLoader = () => {
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-
-  const {
-    data: collection,
-    isLoading,
-    refetch,
-    isError
-  } = useFetchMembers({
-    pageSize: 1,
-    organizationId: currentEnvironment.organizationId
-  });
 
   const [selectedMember, setSelectedMember] = useState<Account>();
   const [isDisabling, setIsDisabling] = useState<boolean>(false);
@@ -107,37 +94,26 @@ const PageLoader = () => {
   };
 
   const onHandleActions = (member: Account, type: MemberActionsType) => {
-    if (type === 'EDIT') {
-      onOpenEditModal();
-    } else if (type === 'DELETE') {
-      onOpenDeleteModal();
-    } else if (type === 'DETAILS') {
-      onOpenDetailsModal();
-    } else if (type === 'ENABLE') {
-      setIsDisabling(false);
-      onOpenConfirmModal();
-    } else if (type === 'DISABLE') {
-      setIsDisabling(true);
-      onOpenConfirmModal();
-    }
     setSelectedMember(member);
+    switch (type) {
+      case 'EDIT':
+        return onOpenEditModal();
+      case 'DELETE':
+        return onOpenDeleteModal();
+      case 'DETAILS':
+        return onOpenDetailsModal();
+      case 'DISABLE':
+      case 'ENABLE':
+        setIsDisabling(type === 'DISABLE');
+        return onOpenConfirmModal();
+      default:
+        return;
+    }
   };
-
-  const isEmpty = collection?.accounts.length === 0;
 
   return (
     <>
-      {isLoading ? (
-        <PageLayout.LoadingState />
-      ) : isError ? (
-        <PageLayout.ErrorState onRetry={refetch} />
-      ) : isEmpty ? (
-        <PageLayout.EmptyState>
-          <EmptyCollection onAdd={onOpenAddModal} />
-        </PageLayout.EmptyState>
-      ) : (
-        <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
-      )}
+      <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
       {isOpenAddModal && (
         <AddMemberModal isOpen={isOpenAddModal} onClose={onCloseAddModal} />
       )}

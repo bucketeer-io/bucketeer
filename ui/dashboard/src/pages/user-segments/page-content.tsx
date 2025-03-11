@@ -60,10 +60,16 @@ const PageContent = ({
     segment: UserSegment,
     type: UserSegmentsActionsType
   ) => {
-    if (type === 'EDIT') return onEdit(segment);
-    if (type === 'FLAG') return onOpenFlagModal(segment);
-    if (type === 'DELETE') return onDelete(segment);
-    onDownload(segment);
+    switch (type) {
+      case 'EDIT':
+        return onEdit(segment);
+      case 'FLAG':
+        return onOpenFlagModal(segment);
+      case 'DELETE':
+        return onDelete(segment);
+      default:
+        return onDownload(segment);
+    }
   };
 
   useEffect(() => {
