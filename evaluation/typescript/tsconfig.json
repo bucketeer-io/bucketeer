@@ -25,7 +25,7 @@
 		"noEmitOnError": true,
 		"useDefineForClassFields": true,
 		"forceConsistentCasingInFileNames": true,
-		"skipLibCheck": true,
+		"skipLibCheck": false,
     "outDir": "./__lib/",
     "types": [
       "node"

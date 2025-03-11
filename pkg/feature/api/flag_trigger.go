@@ -82,18 +82,7 @@ func (s *FeatureService) CreateFlagTrigger(
 		)
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", request.EnvironmentId),
-			)...,
-		)
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		storage := v2fs.NewFlagTriggerStorage(tx)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		handler, err := command.NewFlagTriggerCommandHandler(
 			editor,
 			flagTrigger,
@@ -110,7 +99,7 @@ func (s *FeatureService) CreateFlagTrigger(
 			)
 			return err
 		}
-		if err := storage.CreateFlagTrigger(ctx, flagTrigger); err != nil {
+		if err := s.flagTriggerStorage.CreateFlagTrigger(contextWithTx, flagTrigger); err != nil {
 			s.logger.Error(
 				"Failed to create flag trigger",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -174,20 +163,9 @@ func (s *FeatureService) UpdateFlagTrigger(
 		)
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", request.EnvironmentId),
-			)...,
-		)
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		storage := v2fs.NewFlagTriggerStorage(tx)
-		flagTrigger, err := storage.GetFlagTrigger(
-			ctx,
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
+			contextWithTx,
 			request.Id,
 			request.EnvironmentId,
 		)
@@ -217,8 +195,8 @@ func (s *FeatureService) UpdateFlagTrigger(
 			)
 			return err
 		}
-		if err := storage.UpdateFlagTrigger(
-			ctx,
+		if err := s.flagTriggerStorage.UpdateFlagTrigger(
+			contextWithTx,
 			flagTrigger,
 		); err != nil {
 			s.logger.Error(
@@ -279,20 +257,9 @@ func (s *FeatureService) EnableFlagTrigger(
 		)
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", request.EnvironmentId),
-			)...,
-		)
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		storage := v2fs.NewFlagTriggerStorage(tx)
-		flagTrigger, err := storage.GetFlagTrigger(
-			ctx,
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
+			contextWithTx,
 			request.Id,
 			request.EnvironmentId,
 		)
@@ -322,8 +289,8 @@ func (s *FeatureService) EnableFlagTrigger(
 			)
 			return err
 		}
-		if err := storage.UpdateFlagTrigger(
-			ctx,
+		if err := s.flagTriggerStorage.UpdateFlagTrigger(
+			contextWithTx,
 			flagTrigger,
 		); err != nil {
 			s.logger.Error(
@@ -384,20 +351,9 @@ func (s *FeatureService) DisableFlagTrigger(
 		)
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", request.EnvironmentId),
-			)...,
-		)
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		storage := v2fs.NewFlagTriggerStorage(tx)
-		flagTrigger, err := storage.GetFlagTrigger(
-			ctx,
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
+			contextWithTx,
 			request.Id,
 			request.EnvironmentId,
 		)
@@ -427,7 +383,7 @@ func (s *FeatureService) DisableFlagTrigger(
 			)
 			return err
 		}
-		if err := storage.UpdateFlagTrigger(ctx, flagTrigger); err != nil {
+		if err := s.flagTriggerStorage.UpdateFlagTrigger(contextWithTx, flagTrigger); err != nil {
 			s.logger.Error(
 				"Failed to disable flag trigger",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -486,8 +442,7 @@ func (s *FeatureService) ResetFlagTrigger(
 		)
 		return nil, err
 	}
-	trigger, err := v2fs.NewFlagTriggerStorage(s.mysqlClient).
-		GetFlagTrigger(ctx, request.Id, request.EnvironmentId)
+	trigger, err := s.flagTriggerStorage.GetFlagTrigger(ctx, request.Id, request.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -501,15 +456,7 @@ func (s *FeatureService) ResetFlagTrigger(
 		}
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		handler, err := command.NewFlagTriggerCommandHandler(
 			editor,
 			trigger,
@@ -526,7 +473,7 @@ func (s *FeatureService) ResetFlagTrigger(
 			)
 			return err
 		}
-		err = v2fs.NewFlagTriggerStorage(tx).UpdateFlagTrigger(ctx, trigger)
+		err = s.flagTriggerStorage.UpdateFlagTrigger(contextWithTx, trigger)
 		if err != nil {
 			s.logger.Error(
 				"Failed to reset flag trigger",
@@ -588,18 +535,9 @@ func (s *FeatureService) DeleteFlagTrigger(
 		)
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		return nil, err
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		storage := v2fs.NewFlagTriggerStorage(tx)
-		flagTrigger, err := storage.GetFlagTrigger(
-			ctx,
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
+			contextWithTx,
 			request.Id,
 			request.EnvironmentId,
 		)
@@ -629,8 +567,8 @@ func (s *FeatureService) DeleteFlagTrigger(
 			)
 			return err
 		}
-		if err := storage.DeleteFlagTrigger(
-			ctx,
+		if err := s.flagTriggerStorage.DeleteFlagTrigger(
+			contextWithTx,
 			request.Id,
 			request.EnvironmentId,
 		); err != nil {
@@ -760,7 +698,7 @@ func (s *FeatureService) ListFlagTriggers(
 		}
 		return nil, dt.Err()
 	}
-	flagTriggers, nextOffset, totalCount, _ := v2fs.NewFlagTriggerStorage(s.mysqlClient).ListFlagTriggers(
+	flagTriggers, nextOffset, totalCount, _ := s.flagTriggerStorage.ListFlagTriggers(
 		ctx,
 		whereParts,
 		orders,
@@ -958,17 +896,7 @@ func (s *FeatureService) updateTriggerUsageInfo(
 	editor *eventproto.Editor,
 	flagTrigger *domain.FlagTrigger,
 ) error {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).
-				AddFields(zap.Error(err))...,
-		)
-		return err
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		storage := v2fs.NewFlagTriggerStorage(tx)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		handler, err := command.NewFlagTriggerCommandHandler(
 			editor,
 			flagTrigger,
@@ -987,7 +915,7 @@ func (s *FeatureService) updateTriggerUsageInfo(
 			)
 			return err
 		}
-		err = storage.UpdateFlagTrigger(ctx, flagTrigger)
+		err = s.flagTriggerStorage.UpdateFlagTrigger(contextWithTx, flagTrigger)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update flag trigger usage",

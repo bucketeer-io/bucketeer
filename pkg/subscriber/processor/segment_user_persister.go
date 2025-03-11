@@ -57,6 +57,8 @@ type segmentUserPersister struct {
 	domainPublisher            publisher.Publisher
 	batchClient                btclient.Client
 	mysqlClient                mysql.Client
+	segmentStorage             v2fs.SegmentStorage
+	segmentUserStorage         v2fs.SegmentUserStorage
 	logger                     *zap.Logger
 }
 
@@ -104,6 +106,8 @@ func NewSegmentUserPersister(
 		domainPublisher:            domainPublisher,
 		batchClient:                batchClient,
 		mysqlClient:                mysqlClient,
+		segmentStorage:             v2fs.NewSegmentStorage(mysqlClient),
+		segmentUserStorage:         v2fs.NewSegmentUserStorage(mysqlClient),
 		logger:                     logger,
 	}, nil
 }
@@ -264,8 +268,7 @@ func validateSegmentUserState(state featureproto.SegmentUser_State) bool {
 
 func (p *segmentUserPersister) handleEvent(
 	ctx context.Context, event *serviceevent.BulkSegmentUsersReceivedEvent) error {
-	segmentStorage := v2fs.NewSegmentStorage(p.mysqlClient)
-	segment, _, err := segmentStorage.GetSegment(ctx, event.SegmentId, event.EnvironmentId)
+	segment, _, err := p.segmentStorage.GetSegment(ctx, event.SegmentId, event.EnvironmentId)
 	if err != nil {
 		return err
 	}
@@ -337,14 +340,8 @@ func (p *segmentUserPersister) persistSegmentUsers(
 		user := domain.NewSegmentUser(segmentID, id, state, false)
 		allSegmentUsers = append(allSegmentUsers, user.SegmentUser)
 	}
-	tx, err := p.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		p.logger.Error("Failed to begin transaction", zap.Error(err))
-		return 0, err
-	}
-	err = p.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		segmentUserStorage := v2fs.NewSegmentUserStorage(tx)
-		if err := segmentUserStorage.UpsertSegmentUsers(ctx, allSegmentUsers, environmentId); err != nil {
+	err := p.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		if err := p.segmentUserStorage.UpsertSegmentUsers(contextWithTx, allSegmentUsers, environmentId); err != nil {
 			return err
 		}
 		return nil
@@ -365,14 +362,8 @@ func (p *segmentUserPersister) updateSegmentStatus(
 	state featureproto.SegmentUser_State,
 	status featureproto.Segment_Status,
 ) error {
-	tx, err := p.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		p.logger.Error("Failed to begin transaction", zap.Error(err))
-		return err
-	}
-	return p.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		segmentStorage := v2fs.NewSegmentStorage(tx)
-		segment, _, err := segmentStorage.GetSegment(ctx, segmentID, environmentId)
+	return p.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		segment, _, err := p.segmentStorage.GetSegment(contextWithTx, segmentID, environmentId)
 		if err != nil {
 			return err
 		}
@@ -388,7 +379,7 @@ func (p *segmentUserPersister) updateSegmentStatus(
 		if err := handler.Handle(ctx, changeCmd); err != nil {
 			return err
 		}
-		return segmentStorage.UpdateSegment(ctx, segment, environmentId)
+		return p.segmentStorage.UpdateSegment(contextWithTx, segment, environmentId)
 	})
 }
 

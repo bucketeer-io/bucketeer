@@ -33,8 +33,24 @@ var (
 )
 
 var (
+	//go:embed sql/feature/create_feature.sql
+	createFeatureSQLQuery string
+	//go:embed sql/feature/update_feature.sql
+	updateFeatureSQLQuery string
 	//go:embed sql/feature/select_all_environment_features.sql
 	selectAllEnvironmentFeaturesSQLQuery string
+	//go:embed sql/feature/select_features.sql
+	selectFeaturesSQLQuery string
+	//go:embed sql/feature/select_features_by_experiment.sql
+	selectFeaturesByExperimentSQLQuery string
+	//go:embed sql/feature/select_feature_count_by_status.sql
+	selectFeatureCountByStatusSQLQuery string
+	//go:embed sql/feature/count_features.sql
+	countFeatureSQLQuery string
+	//go:embed sql/feature/count_features_by_experiment.sql
+	countFeaturesByExperimentSQLQuery string
+	//go:embed sql/feature/select_feature.sql
+	selectFeatureSQLQuery string
 )
 
 type FeatureStorage interface {
@@ -47,6 +63,10 @@ type FeatureStorage interface {
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.Feature, int, int64, error)
+	GetFeatureSummary(
+		ctx context.Context,
+		environmentID string,
+	) (*proto.FeatureSummary, error)
 	ListFeaturesFilteredByExperiment(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -71,39 +91,9 @@ func (s *featureStorage) CreateFeature(
 	feature *domain.Feature,
 	environmentId string,
 ) error {
-	query := `
-		INSERT INTO feature (
-			id,
-			name,
-			description,
-			enabled,
-			archived,
-			deleted,
-			evaluation_undelayable,
-			ttl,
-			version,
-			created_at,
-			updated_at,
-			variation_type,
-			variations,
-			targets,
-			rules,
-			default_strategy,
-			off_variation,
-			tags,
-			maintainer,
-			sampling_seed,
-			prerequisites,
-			environment_id
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-			?, ?
-		)
-	`
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
+		createFeatureSQLQuery,
 		feature.Id,
 		feature.Name,
 		feature.Description,
@@ -128,7 +118,7 @@ func (s *featureStorage) CreateFeature(
 		environmentId,
 	)
 	if err != nil {
-		if err == mysql.ErrDuplicateEntry {
+		if errors.Is(err, mysql.ErrDuplicateEntry) {
 			return ErrFeatureAlreadyExists
 		}
 		return err
@@ -141,37 +131,9 @@ func (s *featureStorage) UpdateFeature(
 	feature *domain.Feature,
 	environmentId string,
 ) error {
-	query := `
-		UPDATE
-			feature
-		SET
-			name = ?,
-			description = ?,
-			enabled = ?,
-			archived = ?,
-			deleted = ?,
-			evaluation_undelayable = ?,
-			ttl = ?,
-			version = ?,
-			created_at = ?,
-			updated_at = ?,
-			variation_type = ?,
-			variations = ?,
-			targets = ?,
-			rules = ?,
-			default_strategy = ?,
-			off_variation = ?,
-			tags = ?,
-			maintainer = ?,
-			sampling_seed = ?,
-			prerequisites = ?
-		WHERE
-			id = ? AND
-			environment_id = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
+		updateFeatureSQLQuery,
 		feature.Name,
 		feature.Description,
 		feature.Enabled,
@@ -213,38 +175,10 @@ func (s *featureStorage) GetFeature(
 	key, environmentId string,
 ) (*domain.Feature, error) {
 	feature := proto.Feature{}
-	query := `
-		SELECT
-			id,
-			name,
-			description,
-			enabled,
-			archived,
-			deleted,
-			evaluation_undelayable,
-			ttl,
-			version,
-			created_at,
-			updated_at,
-			variation_type,
-			variations,
-			targets,
-			rules,
-			default_strategy,
-			off_variation,
-			tags,
-			maintainer,
-			sampling_seed,
-			prerequisites
-		FROM
-			feature
-		WHERE
-			id = ? AND
-			environment_id = ?
-	`
+	feature.AutoOpsSummary = &proto.AutoOpsSummary{}
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
+		selectFeatureSQLQuery,
 		key,
 		environmentId,
 	).Scan(
@@ -271,7 +205,7 @@ func (s *featureStorage) GetFeature(
 		&mysql.JSONObject{Val: &feature.Prerequisites},
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrFeatureNotFound
 		}
 		return nil, err
@@ -288,34 +222,7 @@ func (s *featureStorage) ListFeatures(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			name,
-			description,
-			enabled,
-			archived,
-			deleted,
-			evaluation_undelayable,
-			ttl,
-			version,
-			created_at,
-			updated_at,
-			variation_type,
-			variations,
-			targets,
-			rules,
-			default_strategy,
-			off_variation,
-			tags,
-			maintainer,
-			sampling_seed,
-			prerequisites
-		FROM
-			feature
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(selectFeaturesSQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -324,6 +231,7 @@ func (s *featureStorage) ListFeatures(
 	features := make([]*proto.Feature, 0, limit)
 	for rows.Next() {
 		feature := proto.Feature{}
+		feature.AutoOpsSummary = &proto.AutoOpsSummary{}
 		err := rows.Scan(
 			&feature.Id,
 			&feature.Name,
@@ -346,6 +254,9 @@ func (s *featureStorage) ListFeatures(
 			&feature.Maintainer,
 			&feature.SamplingSeed,
 			&mysql.JSONObject{Val: &feature.Prerequisites},
+			&feature.AutoOpsSummary.ProgressiveRolloutCount,
+			&feature.AutoOpsSummary.ScheduleCount,
+			&feature.AutoOpsSummary.KillSwitchCount,
 		)
 		if err != nil {
 			return nil, 0, 0, err
@@ -357,19 +268,28 @@ func (s *featureStorage) ListFeatures(
 	}
 	nextOffset := offset + len(features)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(1)
-		FROM
-			feature
-		%s
-		`, whereSQL,
-	)
+	countQuery := fmt.Sprintf(countFeatureSQLQuery, whereSQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	return features, nextOffset, totalCount, nil
+}
+
+func (s *featureStorage) GetFeatureSummary(
+	ctx context.Context,
+	environmentID string,
+) (*proto.FeatureSummary, error) {
+	var countByStatus proto.FeatureSummary
+	err := s.qe.QueryRowContext(ctx, selectFeatureCountByStatusSQLQuery, environmentID).Scan(
+		&countByStatus.Total,
+		&countByStatus.Active,
+	)
+	if err != nil {
+		return nil, err
+	}
+	countByStatus.Inactive = countByStatus.Total - countByStatus.Active
+	return &countByStatus, nil
 }
 
 func (s *featureStorage) ListFeaturesFilteredByExperiment(
@@ -381,39 +301,7 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT DISTINCT
-			feature.id,
-			feature.name,
-			feature.description,
-			feature.enabled,
-			feature.archived,
-			feature.deleted,
-			feature.evaluation_undelayable,
-			feature.ttl,
-			feature.version,
-			feature.created_at,
-			feature.updated_at,
-			feature.variation_type,
-			feature.variations,
-			feature.targets,
-			feature.rules,
-			feature.default_strategy,
-			feature.off_variation,
-			feature.tags,
-			feature.maintainer,
-			feature.sampling_seed,
-			feature.prerequisites
-		FROM
-			feature
-		LEFT OUTER JOIN
-			experiment
-		ON
-			feature.id = experiment.feature_id AND
-			feature.environment_id = experiment.environment_id
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(selectFeaturesByExperimentSQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -422,6 +310,7 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 	features := make([]*proto.Feature, 0, limit)
 	for rows.Next() {
 		feature := proto.Feature{}
+		feature.AutoOpsSummary = &proto.AutoOpsSummary{}
 		err := rows.Scan(
 			&feature.Id,
 			&feature.Name,
@@ -444,6 +333,9 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 			&feature.Maintainer,
 			&feature.SamplingSeed,
 			&mysql.JSONObject{Val: &feature.Prerequisites},
+			&feature.AutoOpsSummary.ProgressiveRolloutCount,
+			&feature.AutoOpsSummary.ScheduleCount,
+			&feature.AutoOpsSummary.KillSwitchCount,
 		)
 		if err != nil {
 			return nil, 0, 0, err
@@ -455,19 +347,7 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 	}
 	nextOffset := offset + len(features)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(DISTINCT feature.id)
-		FROM
-			feature
-		LEFT OUTER JOIN
-			experiment
-		ON
-			feature.id = experiment.feature_id AND
-			feature.environment_id = experiment.environment_id
-		%s 
-		`, whereSQL,
-	)
+	countQuery := fmt.Sprintf(countFeaturesByExperimentSQLQuery, whereSQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

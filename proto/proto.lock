@@ -7942,14 +7942,7 @@
             ]
           },
           {
-            "name": "UpdateAutoOpsRuleResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "auto_ops_rule",
-                "type": "AutoOpsRule"
-              }
-            ]
+            "name": "UpdateAutoOpsRuleResponse"
           },
           {
             "name": "ExecuteAutoOpsRequest",
@@ -8071,12 +8064,54 @@
               {
                 "id": 2,
                 "name": "command",
-                "type": "CreateProgressiveRolloutCommand"
+                "type": "CreateProgressiveRolloutCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "feature_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "progressive_rollout_manual_schedule_clause",
+                "type": "ProgressiveRolloutManualScheduleClause"
+              },
+              {
+                "id": 6,
+                "name": "progressive_rollout_template_schedule_clause",
+                "type": "ProgressiveRolloutTemplateScheduleClause"
               }
             ],
             "reserved_ids": [
@@ -8084,7 +8119,14 @@
             ]
           },
           {
-            "name": "CreateProgressiveRolloutResponse"
+            "name": "CreateProgressiveRolloutResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "progressive_rollout",
+                "type": "ProgressiveRollout"
+              }
+            ]
           },
           {
             "name": "GetProgressiveRolloutRequest",
@@ -8125,12 +8167,32 @@
               {
                 "id": 3,
                 "name": "command",
-                "type": "StopProgressiveRolloutCommand"
+                "type": "StopProgressiveRolloutCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "stopped_by",
+                "type": "ProgressiveRollout.StoppedBy"
               }
             ],
             "reserved_ids": [
@@ -8151,7 +8213,22 @@
               {
                 "id": 3,
                 "name": "command",
-                "type": "DeleteProgressiveRolloutCommand"
+                "type": "DeleteProgressiveRolloutCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 4,
@@ -8383,6 +8460,51 @@
                                   {
                                     "name": "value",
                                     "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned when the resource is not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
                                   }
                                 ]
                               }
@@ -8778,6 +8900,51 @@
                             ]
                           }
                         ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned when the resource is not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ]
                   }
@@ -9036,6 +9203,51 @@
                             ]
                           }
                         ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned when the resource is not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ]
                   }
@@ -9167,6 +9379,51 @@
                             ]
                           }
                         ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned when the resource is not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ]
                   }
@@ -9180,27 +9437,780 @@
               {
                 "name": "CreateProgressiveRollout",
                 "in_type": "CreateProgressiveRolloutRequest",
-                "out_type": "CreateProgressiveRolloutResponse"
+                "out_type": "CreateProgressiveRolloutResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/progressive_rollout"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a progressive rollout."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "progressive_rollout"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.progressive_rollout.create"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "GetProgressiveRollout",
                 "in_type": "GetProgressiveRolloutRequest",
-                "out_type": "GetProgressiveRolloutResponse"
+                "out_type": "GetProgressiveRolloutResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/progressive_rollout"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get a progressive rollout."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "progressive_rollout"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.progressive_rollout.get"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned when the resource is not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "StopProgressiveRollout",
                 "in_type": "StopProgressiveRolloutRequest",
-                "out_type": "StopProgressiveRolloutResponse"
+                "out_type": "StopProgressiveRolloutResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/progressive_rollout/stop"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Stop"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Stop a progressive rollout."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "progressive_rollout"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.progressive_rollout.stop"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned when the resource is not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "DeleteProgressiveRollout",
                 "in_type": "DeleteProgressiveRolloutRequest",
-                "out_type": "DeleteProgressiveRolloutResponse"
+                "out_type": "DeleteProgressiveRolloutResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/progressive_rollout"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete a progressive rollout."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "progressive_rollout"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.progressive_rollout.delete"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned when the resource is not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "ListProgressiveRollouts",
                 "in_type": "ListProgressiveRolloutsRequest",
-                "out_type": "ListProgressiveRolloutsResponse"
+                "out_type": "ListProgressiveRolloutsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/progressive_rollouts"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List progressive rollouts."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "progressive_rollout"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.progressive_rollout.list"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "ExecuteProgressiveRollout",
@@ -27844,6 +28854,31 @@
                 "id": 22,
                 "name": "sampling_seed",
                 "type": "string"
+              },
+              {
+                "id": 23,
+                "name": "auto_ops_summary",
+                "type": "AutoOpsSummary"
+              }
+            ]
+          },
+          {
+            "name": "AutoOpsSummary",
+            "fields": [
+              {
+                "id": 1,
+                "name": "progressive_rollout_count",
+                "type": "int32"
+              },
+              {
+                "id": 2,
+                "name": "schedule_count",
+                "type": "int32"
+              },
+              {
+                "id": 3,
+                "name": "kill_switch_count",
+                "type": "int32"
               }
             ]
           },
@@ -28941,6 +29976,26 @@
             ]
           },
           {
+            "name": "FeatureSummary",
+            "fields": [
+              {
+                "id": 1,
+                "name": "total",
+                "type": "int32"
+              },
+              {
+                "id": 2,
+                "name": "active",
+                "type": "int32"
+              },
+              {
+                "id": 3,
+                "name": "inactive",
+                "type": "int32"
+              }
+            ]
+          },
+          {
             "name": "ListFeaturesResponse",
             "fields": [
               {
@@ -28958,6 +30013,11 @@
                 "id": 3,
                 "name": "total_count",
                 "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "feature_count_by_status",
+                "type": "FeatureSummary"
               }
             ]
           },
@@ -29012,12 +30072,93 @@
               {
                 "id": 1,
                 "name": "command",
-                "type": "CreateFeatureCommand"
+                "type": "CreateFeatureCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "name",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 6,
+                "name": "description",
                 "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "variations",
+                "type": "Variation",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 9,
+                "name": "default_on_variation_index",
+                "type": "google.protobuf.Int32Value"
+              },
+              {
+                "id": 10,
+                "name": "default_off_variation_index",
+                "type": "google.protobuf.Int32Value"
+              },
+              {
+                "id": 11,
+                "name": "variation_type",
+                "type": "Feature.VariationType"
               }
             ],
             "reserved_ids": [
@@ -30603,7 +31744,219 @@
               {
                 "name": "GetFeature",
                 "in_type": "GetFeatureRequest",
-                "out_type": "GetFeatureResponse"
+                "out_type": "GetFeatureResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/feature"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Feature Flag"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get a feature flag. To call this API, you need at least a MEMBER role in the specified organizations."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Feature"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.feature.get"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request does not have permission to access the resource."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"not authorized\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned when the resource is not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "GetFeatures",
@@ -30790,12 +32143,309 @@
               {
                 "name": "CreateFeature",
                 "in_type": "CreateFeatureRequest",
-                "out_type": "CreateFeatureResponse"
+                "out_type": "CreateFeatureResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/feature"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create Feature Flag"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a feature flag. To call this API, you need at least a MEMBER role in the specified organizations."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Feature"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.feature.create"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "UpdateFeature",
                 "in_type": "UpdateFeatureRequest",
-                "out_type": "UpdateFeatureResponse"
+                "out_type": "UpdateFeatureResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/feature"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update Feature Flag"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update a feature flag. To call this API, you need at least a MEMBER role in the specified organizations."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Feature"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.feature.update"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned when the resource is not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "EnableFeature",

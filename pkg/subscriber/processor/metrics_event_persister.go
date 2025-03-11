@@ -16,6 +16,7 @@ package processor
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -102,6 +103,10 @@ func (m metricsEventPersister) handle(message *puller.Message) error {
 	}
 	err = m.saveMetrics(metricsEvents)
 	if err != nil {
+		// This is an expected case, so we don't need to log an error
+		if errors.Is(err, ErrUnknownApiId) {
+			return nil
+		}
 		m.logger.Error("could not store data to prometheus client", zap.Error(err))
 		return err
 	}

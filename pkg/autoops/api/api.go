@@ -887,9 +887,8 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 	}
 	commands := s.createUpdateAutoOpsRuleCommands(req)
 
-	var autoOpsRule *domain.AutoOpsRule
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		autoOpsRule, err = s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
+		autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -994,38 +993,9 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 		return s.autoOpsStorage.UpdateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId)
 	})
 	if err != nil {
-		if errors.Is(err, v2as.ErrAutoOpsRuleNotFound) || errors.Is(err, v2as.ErrAutoOpsRuleUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		if status.Code(err) == codes.InvalidArgument {
-			return nil, err
-		}
-		s.logger.Error(
-			"Failed to update autoOpsRule",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, s.returnUpdateAutoOpsRuleError(ctx, req, err, localizer)
 	}
-	return &autoopsproto.UpdateAutoOpsRuleResponse{
-		AutoOpsRule: autoOpsRule.AutoOpsRule,
-	}, nil
+	return &autoopsproto.UpdateAutoOpsRuleResponse{}, nil
 }
 
 func (s *AutoOpsService) updateAutoOpsRuleNoCommand(
@@ -1061,7 +1031,7 @@ func (s *AutoOpsService) updateAutoOpsRuleNoCommand(
 			return nil, dt.Err()
 		}
 	}
-	var updated *domain.AutoOpsRule
+	var event *eventproto.Event
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		autoOpsRule, err := s.autoOpsStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
@@ -1132,12 +1102,12 @@ func (s *AutoOpsService) updateAutoOpsRuleNoCommand(
 			}
 		}
 
-		updated, err = autoOpsRule.Update(nil, req.UpdateOpsEventRateClauses, req.UpdateDatetimeClauses)
+		updated, err := autoOpsRule.Update(nil, req.UpdateOpsEventRateClauses, req.UpdateDatetimeClauses)
 		if err != nil {
 			return err
 		}
 
-		event, err := domainevent.NewEvent(
+		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_AUTOOPS_RULE,
 			updated.Id,
@@ -1160,21 +1130,12 @@ func (s *AutoOpsService) updateAutoOpsRuleNoCommand(
 		return s.autoOpsStorage.UpdateAutoOpsRule(contextWithTx, updated, req.EnvironmentId)
 	})
 	if err != nil {
-		if errors.Is(err, v2as.ErrAutoOpsRuleNotFound) || errors.Is(err, v2as.ErrAutoOpsRuleUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		if status.Code(err) == codes.InvalidArgument {
-			return nil, err
-		}
+		return nil, s.returnUpdateAutoOpsRuleError(ctx, req, err, localizer)
+	}
+	err = s.publisher.Publish(ctx, event)
+	if err != nil {
 		s.logger.Error(
-			"Failed to update autoOpsRule",
+			"Failed to publish event",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
@@ -1189,9 +1150,43 @@ func (s *AutoOpsService) updateAutoOpsRuleNoCommand(
 		}
 		return nil, dt.Err()
 	}
-	return &autoopsproto.UpdateAutoOpsRuleResponse{
-		AutoOpsRule: updated.AutoOpsRule,
-	}, nil
+	return &autoopsproto.UpdateAutoOpsRuleResponse{}, nil
+}
+
+func (s *AutoOpsService) returnUpdateAutoOpsRuleError(
+	ctx context.Context,
+	req *autoopsproto.UpdateAutoOpsRuleRequest,
+	err error,
+	localizer locale.Localizer,
+) error {
+	if errors.Is(err, v2as.ErrAutoOpsRuleNotFound) || errors.Is(err, v2as.ErrAutoOpsRuleUnexpectedAffectedRows) {
+		dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.NotFoundError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if status.Code(err) == codes.InvalidArgument {
+		return err
+	}
+	s.logger.Error(
+		"Failed to update autoOpsRule",
+		log.FieldsFromImcomingContext(ctx).AddFields(
+			zap.Error(err),
+			zap.String("environmentId", req.EnvironmentId),
+		)...,
+	)
+	dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalize(locale.InternalServerError),
+	})
+	if err != nil {
+		return statusInternal.Err()
+	}
+	return dt.Err()
 }
 
 func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(

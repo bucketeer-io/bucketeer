@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -211,10 +212,22 @@ func (s *FeatureService) ListFeatures(
 	if err != nil {
 		return nil, err
 	}
+	featureCount, err := s.featureStorage.GetFeatureSummary(ctx, req.EnvironmentId)
+	if err != nil {
+		s.logger.Error(
+			"Failed to count features by status",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, statusInternal.Err()
+	}
 	return &featureproto.ListFeaturesResponse{
-		Features:   features,
-		Cursor:     cursor,
-		TotalCount: totalCount,
+		Features:             features,
+		Cursor:               cursor,
+		TotalCount:           totalCount,
+		FeatureCountByStatus: featureCount,
 	}, nil
 }
 
@@ -298,8 +311,7 @@ func (s *FeatureService) listFeatures(
 		}
 		return nil, "", 0, dt.Err()
 	}
-	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	features, nextCursor, totalCount, err := featureStorage.ListFeatures(
+	features, nextCursor, totalCount, err := s.featureStorage.ListFeatures(
 		ctx,
 		whereParts,
 		orders,
@@ -548,6 +560,9 @@ func (s *FeatureService) CreateFeature(
 	if err != nil {
 		return nil, err
 	}
+	if req.Command == nil {
+		return s.createFeatureNoCommand(ctx, req, editor, localizer)
+	}
 	if err = validateCreateFeatureRequest(req.Command, localizer); err != nil {
 		return nil, err
 	}
@@ -616,7 +631,7 @@ func (s *FeatureService) CreateFeature(
 		return nil
 	})
 	if err != nil {
-		if err == v2fs.ErrFeatureAlreadyExists {
+		if errors.Is(err, v2fs.ErrFeatureAlreadyExists) {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
@@ -647,6 +662,120 @@ func (s *FeatureService) CreateFeature(
 			"Failed to publish events",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	s.updateFeatureFlagCache(ctx)
+	return &featureproto.CreateFeatureResponse{Feature: feature.Feature}, nil
+}
+
+func (s *FeatureService) createFeatureNoCommand(
+	ctx context.Context,
+	req *featureproto.CreateFeatureRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*featureproto.CreateFeatureResponse, error) {
+	err := validateCreateFeatureRequestNoCommand(req, localizer)
+	if err != nil {
+		return nil, err
+	}
+	feature, err := domain.NewFeature(
+		req.Id,
+		req.Name,
+		req.Description,
+		req.VariationType,
+		req.Variations,
+		req.Tags,
+		int(req.DefaultOnVariationIndex.Value),
+		int(req.DefaultOffVariationIndex.Value),
+		editor.Email,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create feature",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, err
+	}
+	var event *eventproto.Event
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
+		if err := s.upsertTags(ctx, tx, req.Tags, req.EnvironmentId); err != nil {
+			return err
+		}
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_FEATURE,
+			feature.Id,
+			eventproto.Event_FEATURE_CREATED,
+			&eventproto.FeatureCreatedEvent{
+				Id:                       feature.Id,
+				Name:                     feature.Name,
+				Description:              feature.Description,
+				User:                     "default",
+				Variations:               feature.Variations,
+				DefaultOnVariationIndex:  req.DefaultOnVariationIndex,
+				DefaultOffVariationIndex: req.DefaultOffVariationIndex,
+				VariationType:            req.VariationType,
+				Tags:                     feature.Tags,
+				Prerequisites:            feature.Prerequisites,
+				Targets:                  feature.Targets,
+				Rules:                    feature.Rules,
+			},
+			req.EnvironmentId,
+			feature,
+			featureproto.Feature{},
+		)
+		if err != nil {
+			return err
+		}
+		featureStorage := v2fs.NewFeatureStorage(tx)
+		return featureStorage.CreateFeature(ctx, feature, req.EnvironmentId)
+	})
+	if err != nil {
+		if errors.Is(err, v2fs.ErrFeatureAlreadyExists) {
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to create feature",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	err = s.domainPublisher.Publish(ctx, event)
+	if err != nil {
+		s.logger.Error(
+			"Failed to publish events",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Any("errors", err),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)

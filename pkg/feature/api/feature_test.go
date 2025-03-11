@@ -20,6 +20,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
+
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,6 +39,7 @@ import (
 	exprclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
+	storagemock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
@@ -305,6 +308,9 @@ func TestListFeaturesMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureSummary(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
 			},
 			orderBy:        featureproto.ListFeaturesRequest_DEFAULT,
 			hasExperiment:  false,
@@ -328,6 +334,9 @@ func TestListFeaturesMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureSummary(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
 			},
 			orderBy:       featureproto.ListFeaturesRequest_DEFAULT,
 			hasExperiment: true,
@@ -353,6 +362,9 @@ func TestListFeaturesMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().GetFeatureSummary(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
 			},
 			orderBy:        featureproto.ListFeaturesRequest_DEFAULT,
 			hasExperiment:  false,
@@ -570,6 +582,177 @@ func TestCreateFeatureMySQL(t *testing.T) {
 	}
 }
 
+func TestCreateFeatureNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	variations := createFeatureVariations()
+	tags := createFeatureTags()
+	patterns := []struct {
+		setup                                             func(*FeatureService)
+		id, name, description                             string
+		variations                                        []*featureproto.Variation
+		tags                                              []string
+		defaultOnVariationIndex, defaultOffVariationIndex *wrappers.Int32Value
+		environmentId                                     string
+		expected                                          error
+	}{
+		{
+			setup:                    nil,
+			id:                       "",
+			name:                     "name",
+			description:              "error: statusMissingID",
+			variations:               nil,
+			tags:                     nil,
+			defaultOnVariationIndex:  nil,
+			defaultOffVariationIndex: nil,
+			environmentId:            "ns0",
+			expected:                 createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			setup:                    nil,
+			id:                       "bucketeer_id",
+			name:                     "name",
+			description:              "error: statusInvalidID",
+			variations:               nil,
+			tags:                     nil,
+			defaultOnVariationIndex:  nil,
+			defaultOffVariationIndex: nil,
+			environmentId:            "ns0",
+			expected:                 createError(statusInvalidID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
+		},
+		{
+			setup:                    nil,
+			id:                       "Bucketeer-id-2019",
+			name:                     "",
+			description:              "error: statusMissingName",
+			variations:               nil,
+			tags:                     nil,
+			defaultOnVariationIndex:  nil,
+			defaultOffVariationIndex: nil,
+			environmentId:            "ns0",
+			expected:                 createError(statusMissingName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+		},
+		{
+			setup:                    nil,
+			id:                       "Bucketeer-id-2019",
+			name:                     "name",
+			description:              "error: statusMissingFeatureVariations",
+			variations:               nil,
+			tags:                     nil,
+			defaultOnVariationIndex:  nil,
+			defaultOffVariationIndex: nil,
+			environmentId:            "ns0",
+			expected:                 createError(statusMissingFeatureVariations, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variations")),
+		},
+		{
+			setup:         nil,
+			id:            "Bucketeer-id-2019",
+			name:          "name",
+			description:   "error: statusMissingFeatureTags",
+			variations:    variations,
+			tags:          nil,
+			environmentId: "ns0",
+			expected:      createError(statusMissingFeatureTags, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tags")),
+		},
+		{
+			setup:                    nil,
+			id:                       "Bucketeer-id-2019",
+			name:                     "name",
+			description:              "error: statusMissingDefaultOnVariation",
+			variations:               variations,
+			tags:                     tags,
+			defaultOnVariationIndex:  nil,
+			defaultOffVariationIndex: nil,
+			environmentId:            "ns0",
+			expected:                 createError(statusMissingDefaultOnVariation, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "default_on_variation")),
+		},
+		{
+			setup:                    nil,
+			id:                       "Bucketeer-id-2019",
+			name:                     "name",
+			description:              "error: statusMissingDefaultOffVariation",
+			variations:               variations,
+			tags:                     tags,
+			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
+			defaultOffVariationIndex: nil,
+			environmentId:            "ns0",
+			expected:                 createError(statusMissingDefaultOffVariation, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "default_off_variation")),
+		},
+		{
+			setup: func(s *FeatureService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(v2fs.ErrFeatureAlreadyExists)
+			},
+			id:                       "Bucketeer-id-2019",
+			name:                     "name",
+			description:              "error: statusAlreadyExists",
+			variations:               variations,
+			tags:                     tags,
+			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
+			defaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+			environmentId:            "ns0",
+			expected:                 createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+		},
+		{
+			setup: func(s *FeatureService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
+			},
+			id:                       "Bucketeer-id-2019",
+			name:                     "name",
+			description:              "success",
+			variations:               variations,
+			tags:                     tags,
+			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
+			defaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+			environmentId:            "ns0",
+			expected:                 nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.description, func(t *testing.T) {
+			service := createFeatureService(mockController)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			req := &featureproto.CreateFeatureRequest{
+				Id:                       p.id,
+				Name:                     p.name,
+				Description:              p.description,
+				Variations:               p.variations,
+				Tags:                     p.tags,
+				DefaultOnVariationIndex:  p.defaultOnVariationIndex,
+				DefaultOffVariationIndex: p.defaultOffVariationIndex,
+				EnvironmentId:            p.environmentId,
+			}
+			actual, err := service.CreateFeature(ctx, req)
+			if p.expected == nil {
+				assert.NotNil(t, actual.Feature)
+			}
+			assert.Equal(t, p.expected, err)
+		})
+	}
+}
+
 func TestSetFeatureToLastUsedInfosByChunk(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -711,9 +894,9 @@ func TestEvaluateFeatures(t *testing.T) {
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, errors.New("error"))
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), errors.New("error"))
 			},
 			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: nil,
@@ -977,18 +1160,9 @@ func TestEvaluateFeatures(t *testing.T) {
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, errors.New("error"))
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{}, 0, int64(0), nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: &featureproto.EvaluateFeaturesResponse{
@@ -1051,9 +1225,9 @@ func TestEvaluateFeatures(t *testing.T) {
 						}}, nil)
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+				s.segmentUserStorage.(*storagemock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, 0, errors.New("error"))
 			},
 			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: nil,
@@ -1112,13 +1286,9 @@ func TestEvaluateFeatures(t *testing.T) {
 						}}, nil)
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
+				s.segmentUserStorage.(*storagemock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.SegmentUser{}, 0, nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: &featureproto.EvaluateFeaturesResponse{
@@ -1144,18 +1314,9 @@ func TestEvaluateFeatures(t *testing.T) {
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, errors.New("error"))
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{}, 0, int64(0), nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: &featureproto.EvaluateFeaturesResponse{
@@ -1317,13 +1478,9 @@ func TestEvaluateSingleFeature(t *testing.T) {
 						}}, nil)
 				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
+				s.segmentUserStorage.(*storagemock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.SegmentUser{}, 0, nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{
 				User:          &userproto.User{Id: "user-id"},
@@ -4481,7 +4638,7 @@ func TestUpdateFeature(t *testing.T) {
 			expectedErr: internalErr.Err(),
 		},
 		{
-			desc: "fail: publish doman event",
+			desc: "fail: publish domain event",
 			setup: func(s *FeatureService) {
 				s.experimentClient.(*exprclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
 					&exprproto.ListExperimentsResponse{},

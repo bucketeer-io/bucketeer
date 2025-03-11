@@ -3,12 +3,14 @@ import emptyStateError from 'assets/empty-state/error.svg';
 import emptyStateNoData from 'assets/empty-state/no-data.svg';
 import emptyStateNoSearch from 'assets/empty-state/no-search.svg';
 import { createContext } from 'utils/create-context';
+import { cn } from 'utils/style';
 import Button, { type ButtonProps } from 'components/button';
 
 export interface EmptyStateProps {
   variant: 'error' | 'no-data' | 'no-search';
   size: 'sm' | 'md' | 'lg';
   children: ReactNode;
+  className?: string;
 }
 
 type EmptyStateContextValue = Omit<EmptyStateProps, 'children'>;
@@ -19,10 +21,17 @@ const [EmptyStateProvider, useEmptyState] =
     errorMessage: `useEmptyState returned is 'undefined'. Seems you forgot to wrap the components in "<EmptyState.Root />" `
   });
 
-const EmptyStateRoot = ({ variant, size, children }: EmptyStateProps) => {
+const EmptyStateRoot = ({
+  variant,
+  size,
+  children,
+  className
+}: EmptyStateProps) => {
   return (
     <EmptyStateProvider value={{ variant, size }}>
-      <div className="flex flex-col items-center gap-4">{children}</div>
+      <div className={cn('flex flex-col items-center gap-4', className)}>
+        {children}
+      </div>
     </EmptyStateProvider>
   );
 };
