@@ -41,9 +41,17 @@ const PageLoader = () => {
 
   const onHandleActions = (goal: Goal, type: GoalActions) => {
     setSelectedGoal(goal);
-    if (type === 'CONNECTION') return onOpenConnectionModal();
-    if (type === 'DELETE') return onOpenDeleteModal();
-    if (['ARCHIVE', 'UNARCHIVE'].includes(type)) onOpenConfirmModal();
+    switch (type) {
+      case 'CONNECTION':
+        return onOpenConnectionModal();
+      case 'DELETE':
+        return onOpenDeleteModal();
+      case 'ARCHIVE':
+      case 'UNARCHIVE':
+        return onOpenConfirmModal();
+      default:
+        return;
+    }
   };
 
   const mutation = useMutation({

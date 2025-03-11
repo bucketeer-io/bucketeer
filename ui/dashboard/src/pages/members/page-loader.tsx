@@ -95,11 +95,20 @@ const PageLoader = () => {
 
   const onHandleActions = (member: Account, type: MemberActionsType) => {
     setSelectedMember(member);
-    if (type === 'EDIT') return onOpenEditModal();
-    if (type === 'DELETE') return onOpenDeleteModal();
-    if (type === 'DETAILS') return onOpenDetailsModal();
-    setIsDisabling(type === 'DISABLE');
-    onOpenConfirmModal();
+    switch (type) {
+      case 'EDIT':
+        return onOpenEditModal();
+      case 'DELETE':
+        return onOpenDeleteModal();
+      case 'DETAILS':
+        return onOpenDetailsModal();
+      case 'DISABLE':
+      case 'ENABLE':
+        setIsDisabling(type === 'DISABLE');
+        return onOpenConfirmModal();
+      default:
+        return;
+    }
   };
 
   return (

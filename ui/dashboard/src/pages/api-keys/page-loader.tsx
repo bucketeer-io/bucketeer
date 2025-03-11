@@ -33,9 +33,16 @@ const PageLoader = () => {
 
   const onHandleActions = (apiKey: APIKey, type: APIKeyActionsType) => {
     setSelectedAPIKey(apiKey);
-    if (type === 'EDIT') return onOpenEditModal();
-    setIsDisabling(type === 'DISABLE');
-    onOpenConfirmModal();
+    switch (type) {
+      case 'EDIT':
+        return onOpenEditModal();
+      case 'ENABLE':
+      case 'DISABLE':
+        setIsDisabling(type === 'DISABLE');
+        return onOpenConfirmModal();
+      default:
+        break;
+    }
   };
 
   const mutationState = useMutation({

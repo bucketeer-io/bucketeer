@@ -55,14 +55,15 @@ const PageLoader = () => {
     organization: Organization,
     type: OrganizationActionsType
   ) => {
-    if (type === 'ARCHIVE') {
-      setIsArchiving(true);
-      onOpenConfirmModal();
-    } else if (type === 'UNARCHIVE') {
-      setIsArchiving(false);
-      onOpenConfirmModal();
-    } else {
-      onOpenEditModal();
+    switch (type) {
+      case 'ARCHIVE':
+      case 'UNARCHIVE':
+        setIsArchiving(type === 'ARCHIVE');
+        onOpenConfirmModal();
+        break;
+      default:
+        onOpenEditModal();
+        break;
     }
     setSelectedOrganization(organization);
   };
