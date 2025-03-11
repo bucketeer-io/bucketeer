@@ -34,8 +34,7 @@ import (
 )
 
 const (
-	day = 24 * 60 * 60
-
+	day                  = 24 * time.Hour
 	evaluationEventTable = "evaluation_event"
 )
 
@@ -228,7 +227,7 @@ func (w *evalEvtWriter) listExperiments(
 	ctx context.Context,
 	environmentId string,
 ) ([]*exproto.Experiment, error) {
-	exp, err, _ := w.flightgroup.Do(
+	experiments, err, _ := w.flightgroup.Do(
 		fmt.Sprintf("%s:%s", environmentId, "listExperiments"),
 		func() (interface{}, error) {
 			// Get the experiment cache
@@ -238,6 +237,10 @@ func (w *evalEvtWriter) listExperiments(
 			}
 			// Get the experiments from the DB
 			resp, err := w.experimentClient.ListExperiments(ctx, &exproto.ListExperimentsRequest{
+				// Because the evaluation and goal events may be sent with a delay
+				// for many reasons from the client side, we still calculate
+				// the results for two days after it stopped.
+				StopAt:        time.Now().In(w.location).Add(-2 * day).Unix(),
 				PageSize:      0,
 				EnvironmentId: environmentId,
 				Statuses: []exproto.Experiment_Status{
@@ -254,16 +257,5 @@ func (w *evalEvtWriter) listExperiments(
 	if err != nil {
 		return nil, err
 	}
-	// Filter the stopped experiments
-	// Because the evaluation and goal events may be sent with a delay for many reasons from the client side,
-	// we still calculate the results for two days after it stopped.
-	now := time.Now().In(w.location)
-	experiments := make([]*exproto.Experiment, 0, len(exp.([]*exproto.Experiment)))
-	for _, e := range exp.([]*exproto.Experiment) {
-		if e.Status == exproto.Experiment_STOPPED && now.Unix()-e.StopAt > 2*day {
-			continue
-		}
-		experiments = append(experiments, e)
-	}
-	return experiments, nil
+	return experiments.([]*exproto.Experiment), nil
 }

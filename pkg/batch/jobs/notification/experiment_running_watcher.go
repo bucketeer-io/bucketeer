@@ -18,7 +18,6 @@ import (
 	"context"
 	"time"
 
-	wrappersproto "github.com/golang/protobuf/ptypes/wrappers"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -150,7 +149,9 @@ func (w *experimentRunningWatcher) listExperiments(
 			PageSize:      listRequestSize,
 			Cursor:        cursor,
 			EnvironmentId: environmentId,
-			Status:        &wrappersproto.Int32Value{Value: int32(experimentproto.Experiment_RUNNING)},
+			Statuses: []experimentproto.Experiment_Status{
+				experimentproto.Experiment_RUNNING,
+			},
 		})
 		if err != nil {
 			return nil, err
