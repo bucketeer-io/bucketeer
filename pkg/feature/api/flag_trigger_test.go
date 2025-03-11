@@ -33,6 +33,7 @@ import (
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	proto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -74,9 +75,8 @@ func TestCreateFlagTrigger(t *testing.T) {
 		{
 			desc: "Error Internal",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
 			input: &proto.CreateFlagTriggerRequest{
@@ -92,9 +92,17 @@ func TestCreateFlagTrigger(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().CreateFlagTrigger(
+					ctx, gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.CreateFlagTriggerRequest{
@@ -306,9 +314,8 @@ func TestUpdateFlagTrigger(t *testing.T) {
 		{
 			desc: "Error Internal",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
 			input: &proto.UpdateFlagTriggerRequest{
@@ -323,9 +330,24 @@ func TestUpdateFlagTrigger(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
+					ctx, gomock.Any(), gomock.Any(),
+				).Return(&domain.FlagTrigger{
+					FlagTrigger: &proto.FlagTrigger{
+						Id: "id",
+					},
+				}, nil)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().UpdateFlagTrigger(
+					ctx, gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.UpdateFlagTriggerRequest{
@@ -390,9 +412,8 @@ func TestEnableFlagTrigger(t *testing.T) {
 		{
 			desc: "Error Internal",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
 			input: &proto.EnableFlagTriggerRequest{
@@ -405,9 +426,24 @@ func TestEnableFlagTrigger(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
+					ctx, gomock.Any(), gomock.Any(),
+				).Return(&domain.FlagTrigger{
+					FlagTrigger: &proto.FlagTrigger{
+						Id: "id",
+					},
+				}, nil)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().UpdateFlagTrigger(
+					ctx, gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.EnableFlagTriggerRequest{
@@ -470,9 +506,8 @@ func TestDisableFlagTrigger(t *testing.T) {
 		{
 			desc: "Error Internal",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
 			input: &proto.DisableFlagTriggerRequest{
@@ -485,9 +520,22 @@ func TestDisableFlagTrigger(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
+					ctx, gomock.Any(), gomock.Any(),
+				).Return(&domain.FlagTrigger{
+					FlagTrigger: &proto.FlagTrigger{Id: "id"},
+				}, nil)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().UpdateFlagTrigger(
+					ctx, gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.DisableFlagTriggerRequest{
@@ -547,11 +595,9 @@ func TestResetFlagTrigger(t *testing.T) {
 		{
 			desc: "Error GetFlagTrigger",
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+				).Return(nil, v2fs.ErrFlagTriggerNotFound)
 			},
 			input: &proto.ResetFlagTriggerRequest{
 				ResetFlagTriggerCommand: &proto.ResetFlagTriggerCommand{},
@@ -561,16 +607,14 @@ func TestResetFlagTrigger(t *testing.T) {
 		{
 			desc: "Error Internal",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.FlagTrigger{
+					FlagTrigger: &proto.FlagTrigger{Id: "id"},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
-
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
 			},
 			input: &proto.ResetFlagTriggerRequest{
 				ResetFlagTriggerCommand: &proto.ResetFlagTriggerCommand{},
@@ -580,16 +624,23 @@ func TestResetFlagTrigger(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.FlagTrigger{
+					FlagTrigger: &proto.FlagTrigger{Id: "id"},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
-
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().UpdateFlagTrigger(
+					ctx, gomock.Any(),
+				).Return(nil)
 			},
 			input: &proto.ResetFlagTriggerRequest{
 				ResetFlagTriggerCommand: &proto.ResetFlagTriggerCommand{},
@@ -646,9 +697,8 @@ func TestDeleteFlagTrigger(t *testing.T) {
 		{
 			desc: "Error Internal",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
 			input: &proto.DeleteFlagTriggerRequest{
@@ -659,9 +709,22 @@ func TestDeleteFlagTrigger(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
+					ctx, gomock.Any(), gomock.Any(),
+				).Return(&domain.FlagTrigger{
+					FlagTrigger: &proto.FlagTrigger{Id: "id"},
+				}, nil)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().DeleteFlagTrigger(
+					ctx, gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.DeleteFlagTriggerRequest{
@@ -760,9 +823,17 @@ func TestFlagTriggerWebhook(t *testing.T) {
 					},
 				}, nil)
 
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().UpdateFlagTrigger(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			input:       &proto.FlagTriggerWebhookRequest{Token: "token"},
@@ -835,18 +906,9 @@ func TestListFlagTriggers(t *testing.T) {
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Close().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().ListFlagTriggers(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*proto.FlagTrigger{}, 0, int64(0), nil)
 			},
 			input:    &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: ""},
 			expected: &proto.ListFlagTriggersResponse{FlagTriggers: []*proto.ListFlagTriggersResponse_FlagTriggerWithUrl{}, Cursor: "0"},
@@ -862,18 +924,9 @@ func TestListFlagTriggers(t *testing.T) {
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Close().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().ListFlagTriggers(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*proto.FlagTrigger{}, 0, int64(0), nil)
 			},
 			input:    &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
 			expected: &proto.ListFlagTriggersResponse{FlagTriggers: []*proto.ListFlagTriggersResponse_FlagTriggerWithUrl{}, Cursor: "0"},
