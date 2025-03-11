@@ -27,38 +27,29 @@ const ConversionRateChart = ({
 
   const upperBoundaries = useMemo(
     () =>
-      goalResult?.variationResults?.map(
-        item =>
-          item[
-            chartType === 'conversion-rate'
-              ? 'cvrPercentile975Timeseries'
-              : 'goalValueSumPerUserPercentile025Timeseries'
-          ]?.values
+      goalResult?.variationResults?.map(item =>
+        chartType === 'conversion-rate'
+          ? item.cvrPercentile975Timeseries.values.map(item => item * 100)
+          : item.goalValueSumPerUserPercentile025Timeseries?.values
       ) || [],
     [goalResult, chartType]
   );
   const lowerBoundaries = useMemo(
     () =>
-      goalResult?.variationResults?.map(
-        item =>
-          item?.[
-            chartType === 'conversion-rate'
-              ? 'cvrPercentile025Timeseries'
-              : 'goalValueSumPerUserPercentile025Timeseries'
-          ]?.values
+      goalResult?.variationResults?.map(item =>
+        chartType === 'conversion-rate'
+          ? item.cvrPercentile025Timeseries.values.map(item => item * 100)
+          : item.goalValueSumPerUserPercentile025Timeseries?.values
       ) || [],
     [goalResult, chartType]
   );
 
   const representatives = useMemo(
     () =>
-      goalResult?.variationResults?.map(
-        item =>
-          item[
-            chartType === 'conversion-rate'
-              ? 'cvrMedianTimeseries'
-              : 'goalValueSumPerUserMedianTimeseries'
-          ]?.values
+      goalResult?.variationResults?.map(item =>
+        chartType === 'conversion-rate'
+          ? item.cvrMedianTimeseries.values.map(item => item * 100)
+          : item.goalValueSumPerUserMedianTimeseries?.values
       ) || [],
     [goalResult, chartType]
   );
