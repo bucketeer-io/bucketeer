@@ -68,22 +68,20 @@ const ConversionRateChart = ({
   const hist = useMemo(
     () =>
       goalResult.variationResults.map(vr => {
-        const cvrProb = vr.cvrProb;
+        const cvrProb = vr?.cvrProb;
         if (!cvrProb) {
           return [];
         }
         const histogram = cvrProb?.histogram;
         if (bins.length === 0) {
-          bins = histogram.bins;
+          bins = histogram?.bins || [];
         }
-        return histogram.hist;
+        return histogram?.hist || [];
       }),
     [goalResult, bins]
   );
 
-  bins = bins.map(b => {
-    return Math.round(b * 10000) / 100;
-  });
+  bins = bins?.map(b => Math.round(b * 10000) / 100);
 
   return chartType === 'conversion-rate' &&
     !goalResult.variationResults[0]?.cvrMedianTimeseries ? (
