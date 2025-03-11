@@ -625,11 +625,6 @@ export class ListExperimentsRequest extends jspb.Message {
   getCursor(): string;
   setCursor(value: string): void;
 
-  hasStatus(): boolean;
-  clearStatus(): void;
-  getStatus(): google_protobuf_wrappers_pb.Int32Value | undefined;
-  setStatus(value?: google_protobuf_wrappers_pb.Int32Value): void;
-
   getMaintainer(): string;
   setMaintainer(value: string): void;
 
@@ -697,7 +692,6 @@ export namespace ListExperimentsRequest {
     stopAt: number;
     pageSize: number;
     cursor: string;
-    status?: google_protobuf_wrappers_pb.Int32Value.AsObject;
     maintainer: string;
     orderBy: ListExperimentsRequest.OrderByMap[keyof ListExperimentsRequest.OrderByMap];
     orderDirection: ListExperimentsRequest.OrderDirectionMap[keyof ListExperimentsRequest.OrderDirectionMap];

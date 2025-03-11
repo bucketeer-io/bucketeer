@@ -25,12 +25,16 @@ import (
 
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	btproto "github.com/bucketeer-io/bucketeer/proto/batch"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -91,6 +95,7 @@ func TestCreateAndGetExperiment(t *testing.T) {
 	assert.Equal(t, expected.Deleted, actual.Deleted)
 	assert.Equal(t, expected.Archived, actual.Archived)
 	assert.Equal(t, expected.Maintainer, actual.Maintainer)
+	stopExperiment(ctx, t, c, expected.Id)
 }
 
 func TestListExperiments(t *testing.T) {
@@ -124,6 +129,9 @@ func TestListExperiments(t *testing.T) {
 			t.Fatalf("Experiments are not sorted by goals count")
 		}
 	}
+	for _, exp := range expectedExps {
+		stopExperiment(ctx, t, c, exp.Id)
+	}
 }
 
 func TestStopExperiment(t *testing.T) {
@@ -156,6 +164,7 @@ func TestStopExperiment(t *testing.T) {
 	if !getResp.Experiment.Stopped {
 		t.Fatal("Experiment was not stopped")
 	}
+	stopExperiment(ctx, t, c, e.Id)
 }
 
 func TestArchiveExperiment(t *testing.T) {
@@ -188,6 +197,7 @@ func TestArchiveExperiment(t *testing.T) {
 	if !getResp.Experiment.Archived {
 		t.Fatal("Experiment was not archived")
 	}
+	stopExperiment(ctx, t, c, e.Id)
 }
 
 func TestDeleteExperiment(t *testing.T) {
@@ -220,6 +230,7 @@ func TestDeleteExperiment(t *testing.T) {
 	if !getResp.Experiment.Deleted {
 		t.Fatal("Experiment was not deleted")
 	}
+	stopExperiment(ctx, t, c, e.Id)
 }
 
 func TestUpdateExperiment(t *testing.T) {
@@ -258,6 +269,7 @@ func TestUpdateExperiment(t *testing.T) {
 	if stopAt.Unix() != getResp.Experiment.StopAt {
 		t.Fatalf("StopAt is not equal. Expected: %d, actual: %d", stopAt.Unix(), getResp.Experiment.StopAt)
 	}
+	stopExperiment(ctx, t, c, e.Id)
 }
 
 func TestUpdateExperimentNoCommand(t *testing.T) {
@@ -311,6 +323,7 @@ func TestUpdateExperimentNoCommand(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	stopExperiment(ctx, t, c, e.Id)
 }
 
 func TestCreateAndGetGoal(t *testing.T) {
@@ -528,6 +541,7 @@ func TestStatusUpdateFromWaitingToRunning(t *testing.T) {
 		}
 		time.Sleep(time.Second)
 	}
+	stopExperiment(ctx, t, c, expected.Id)
 }
 
 func TestStatusUpdateFromRunningToStopped(t *testing.T) {
@@ -584,6 +598,7 @@ func TestStatusUpdateFromRunningToStopped(t *testing.T) {
 		}
 		time.Sleep(time.Second)
 	}
+	stopExperiment(ctx, t, c, expected.Id)
 }
 
 func TestStatusUpdateFromRunningToStoppedNoCommand(t *testing.T) {
@@ -651,6 +666,7 @@ func TestStatusUpdateFromRunningToStoppedNoCommand(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	stopExperiment(ctx, t, c, expected.Id)
 }
 
 func TestStatusUpdateFromWaitingToStopped(t *testing.T) {
@@ -693,6 +709,7 @@ func TestStatusUpdateFromWaitingToStopped(t *testing.T) {
 		}
 		time.Sleep(time.Second)
 	}
+	stopExperiment(ctx, t, c, expected.Id)
 }
 
 func TestCreateListGoalsNoCommand(t *testing.T) {
@@ -1045,4 +1062,66 @@ func createGoalID(t *testing.T) string {
 		return fmt.Sprintf("%s-%s-goal-id-%s", prefixTestName, *testID, newUUID(t))
 	}
 	return fmt.Sprintf("%s-goal-id-%s", prefixTestName, newUUID(t))
+}
+
+// This helper tries to stop the running experiments
+// that are finished testing and waiting for deletion.
+// This will improve the load on the http-stan while analysing the other experiments
+// speeding up and improve timeout flaky tests.
+// Since this is optional, it will ignore any errors.
+func stopExperiment(
+	ctx context.Context,
+	t *testing.T,
+	client experimentclient.Client,
+	id string,
+) {
+	t.Helper()
+	_, err := client.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
+		EnvironmentId: *environmentID,
+		Id:            id,
+		Status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+			Status: experimentproto.Experiment_FORCE_STOPPED,
+		},
+	})
+	if err != nil {
+		// Ignore
+		return
+	}
+	// Update experiment cache
+	batchClient := newBatchClient(t)
+	defer batchClient.Close()
+	numRetries := 3
+	for i := 0; i < numRetries; i++ {
+		_, err = batchClient.ExecuteBatchJob(
+			ctx,
+			&btproto.BatchJobRequest{Job: btproto.BatchJob_ExperimentCacher})
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() != codes.Unavailable {
+			return
+		}
+		fmt.Printf("Failed to execute experiment cacher batch (Called by stopExperiment). Error code: %d. Retrying in 5 seconds.\n", st.Code())
+		time.Sleep(5 * time.Second)
+	}
+}
+
+func newBatchClient(t *testing.T) btclient.Client {
+	t.Helper()
+	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
+	if err != nil {
+		t.Fatal("Failed to create RPC credentials:", err)
+	}
+	client, err := btclient.NewClient(
+		fmt.Sprintf("%s:%d", *webGatewayAddr, *webGatewayPort),
+		*webGatewayCert,
+		rpcclient.WithPerRPCCredentials(creds),
+		rpcclient.WithDialTimeout(30*time.Second),
+		rpcclient.WithBlock(),
+	)
+	if err != nil {
+		t.Fatal("Failed to create batch client:", err)
+	}
+	return client
 }

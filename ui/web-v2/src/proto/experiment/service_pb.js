@@ -4203,9 +4203,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         stopAt: jspb.Message.getFieldWithDefault(msg, 4, 0),
         pageSize: jspb.Message.getFieldWithDefault(msg, 5, 0),
         cursor: jspb.Message.getFieldWithDefault(msg, 6, ''),
-        status:
-          (f = msg.getStatus()) &&
-          google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
         maintainer: jspb.Message.getFieldWithDefault(msg, 9, ''),
         orderBy: jspb.Message.getFieldWithDefault(msg, 10, 0),
         orderDirection: jspb.Message.getFieldWithDefault(msg, 11, 0),
@@ -4283,14 +4280,6 @@ proto.bucketeer.experiment.ListExperimentsRequest.deserializeBinaryFromReader =
         case 6:
           var value = /** @type {string} */ (reader.readString());
           msg.setCursor(value);
-          break;
-        case 8:
-          var value = new google_protobuf_wrappers_pb.Int32Value();
-          reader.readMessage(
-            value,
-            google_protobuf_wrappers_pb.Int32Value.deserializeBinaryFromReader
-          );
-          msg.setStatus(value);
           break;
         case 9:
           var value = /** @type {string} */ (reader.readString());
@@ -4396,14 +4385,6 @@ proto.bucketeer.experiment.ListExperimentsRequest.serializeBinaryToWriter =
     f = message.getCursor();
     if (f.length > 0) {
       writer.writeString(6, f);
-    }
-    f = message.getStatus();
-    if (f != null) {
-      writer.writeMessage(
-        8,
-        f,
-        google_protobuf_wrappers_pb.Int32Value.serializeBinaryToWriter
-      );
     }
     f = message.getMaintainer();
     if (f.length > 0) {
@@ -4595,48 +4576,6 @@ proto.bucketeer.experiment.ListExperimentsRequest.prototype.getCursor =
 proto.bucketeer.experiment.ListExperimentsRequest.prototype.setCursor =
   function (value) {
     return jspb.Message.setProto3StringField(this, 6, value);
-  };
-
-/**
- * optional google.protobuf.Int32Value status = 8;
- * @return {?proto.google.protobuf.Int32Value}
- */
-proto.bucketeer.experiment.ListExperimentsRequest.prototype.getStatus =
-  function () {
-    return /** @type{?proto.google.protobuf.Int32Value} */ (
-      jspb.Message.getWrapperField(
-        this,
-        google_protobuf_wrappers_pb.Int32Value,
-        8
-      )
-    );
-  };
-
-/**
- * @param {?proto.google.protobuf.Int32Value|undefined} value
- * @return {!proto.bucketeer.experiment.ListExperimentsRequest} returns this
- */
-proto.bucketeer.experiment.ListExperimentsRequest.prototype.setStatus =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 8, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.experiment.ListExperimentsRequest} returns this
- */
-proto.bucketeer.experiment.ListExperimentsRequest.prototype.clearStatus =
-  function () {
-    return this.setStatus(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.experiment.ListExperimentsRequest.prototype.hasStatus =
-  function () {
-    return jspb.Message.getField(this, 8) != null;
   };
 
 /**

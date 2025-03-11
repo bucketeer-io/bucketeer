@@ -24884,11 +24884,6 @@
                 "type": "string"
               },
               {
-                "id": 8,
-                "name": "status",
-                "type": "google.protobuf.Int32Value"
-              },
-              {
                 "id": 9,
                 "name": "maintainer",
                 "type": "string"
@@ -24932,7 +24927,8 @@
               }
             ],
             "reserved_ids": [
-              7
+              7,
+              8
             ]
           },
           {

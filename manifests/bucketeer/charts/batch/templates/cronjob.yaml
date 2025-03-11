@@ -53,7 +53,7 @@ spec:
                   TOKEN=`cat /usr/local/service-token/token`
                   RES=`curl -X POST -m 3600 --cacert /usr/local/certs/service/tls.crt -d '{"job": "{{ .jobId }}"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
                   echo "{{ .name }} job result: ${RES}"
-                  if [ "$RES" == 200 ] || [ "$RES" == 503 ] || [ "$RES" == 000 ]
+                  if [ "$RES" = 200 ] || [ "$RES" = 503 ] || [ "$RES" = 000 ]
                   then
                     exit 0
                   else

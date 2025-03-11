@@ -122,19 +122,6 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 			continue
 		}
 		for _, ex := range experiments {
-			// Because the evaluation and goal events may be sent with a delay for many reasons from the client side,
-			// we still calculate the results for two days after it stopped.
-			if ex.Status == experiment.Experiment_STOPPED &&
-				startTime.Unix()-ex.StopAt > int64(2*day/time.Second) {
-				e.logger.Info("Skip experiment calculation. The experiment has stopped more than 2 days ago",
-					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.String("environmentId", env.Id),
-						zap.String("experimentId", ex.Id),
-						zap.String("experimentName", ex.Name),
-					)...,
-				)
-				continue
-			}
 			calculateErr := e.calculateExperimentWithLock(ctx, env, ex)
 			if calculateErr != nil {
 				e.logger.Error("Failed to calculate experiment",
@@ -241,9 +228,10 @@ func (e *experimentCalculate) listExperiments(
 	environmentId string,
 ) ([]*experiment.Experiment, error) {
 	req := &experiment.ListExperimentsRequest{
-		// We ignore older stopped experiments because we only hold
-		// the evaluation and goal events in the BigQuery for 30 days.
-		StartAt:       time.Now().In(e.location).Add(-30 * day).Unix(),
+		// Because the evaluation and goal events may be sent with a delay
+		// for many reasons from the client side, we still calculate
+		// the results for two days after it stopped.
+		StopAt:        time.Now().In(e.location).Add(-2 * day).Unix(),
 		PageSize:      0,
 		Cursor:        "",
 		EnvironmentId: environmentId,

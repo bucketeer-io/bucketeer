@@ -18,6 +18,7 @@ package cacher
 import (
 	"context"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -29,6 +30,10 @@ import (
 	expclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	expproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+)
+
+const (
+	day = 24 * time.Hour
 )
 
 type experimentCacher struct {
@@ -105,6 +110,10 @@ func (c *experimentCacher) listExperiments(
 	environmentID string,
 ) ([]*expproto.Experiment, error) {
 	req := &expproto.ListExperimentsRequest{
+		// Because the evaluation and goal events may be sent with a delay
+		// for many reasons from the client side, we still calculate
+		// the results for two days after it stopped.
+		StopAt:        time.Now().Add(-2 * day).Unix(),
 		PageSize:      0,
 		EnvironmentId: environmentID,
 		Statuses: []expproto.Experiment_Status{

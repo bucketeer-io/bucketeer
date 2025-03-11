@@ -108,7 +108,7 @@ export const listExperiments = createAsyncThunk<
   if (params.status != null) {
     const int32Value = new Int32Value();
     int32Value.setValue(params.status);
-    request.setStatus(int32Value);
+    request.setStatusesList([int32Value]);
   }
   if (params.featureId) {
     request.setFeatureId(params.featureId);

@@ -168,7 +168,8 @@ message ListExperimentsRequest {
   int64 page_size = 5;
   string cursor = 6;
   reserved 7;
-  google.protobuf.Int32Value status = 8;  // [deprecated = true];
+  // google.protobuf.Int32Value status = 8; // [deprecated = true];
+  reserved 8;
   string maintainer = 9;
   OrderBy order_by = 10;
   OrderDirection order_direction = 11;

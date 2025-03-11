@@ -123,14 +123,24 @@ func (s *experimentService) ListExperiments(
 		whereParts = append(whereParts, mysql.NewFilter("feature_version", "=", req.FeatureVersion.Value))
 	}
 	if req.StartAt != 0 {
+		// When a start timestamp is provided,
+		// use it as the lower bound for filtering.
 		whereParts = append(whereParts, mysql.NewFilter("start_at", ">=", req.StartAt))
 	}
 	if req.StopAt != 0 {
-		whereParts = append(whereParts, mysql.NewFilter("stop_at", "<=", req.StopAt))
+		// When a stop timestamp is provided:
+		// - If req.StartAt is also provided, treat req.StopAt as an absolute upper bound.
+		// (This selects experiments with stop_at <= req.StopAt.)
+		// - If req.StartAt is not provided, treat req.StopAt as a relative cutoff timestamp.
+		// (This selects experiments with stop_at >= req.StopAt.)
+		// It treats it as a relative duration when the `startAt` is not provide
+		operator := ">="
+		if req.StartAt != 0 {
+			operator = "<="
+		}
+		whereParts = append(whereParts, mysql.NewFilter("stop_at", operator, req.StopAt))
 	}
-	if req.Status != nil {
-		whereParts = append(whereParts, mysql.NewFilter("status", "=", req.Status.Value))
-	} else if len(req.Statuses) > 0 {
+	if len(req.Statuses) > 0 {
 		statuses := make([]interface{}, 0, len(req.Statuses))
 		for _, sts := range req.Statuses {
 			statuses = append(statuses, sts)
