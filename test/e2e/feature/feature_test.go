@@ -99,6 +99,42 @@ func TestCreateFeature(t *testing.T) {
 	}
 }
 
+func TestCreateFeatureNoCommand(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	req := newCreateFeatureReq(newFeatureID(t))
+	createFeatureNoCmd(t, client, req)
+	f := getFeature(t, req.Id, client)
+	if req.Id != f.Id {
+		t.Fatalf("Different ids. Expected: %s actual: %s", req.Id, f.Id)
+	}
+	if req.Name != f.Name {
+		t.Fatalf("Different names. Expected: %s actual: %s", req.Name, f.Name)
+	}
+	if req.Description != f.Description {
+		t.Fatalf("Different descriptions. Expected: %s actual: %s", req.Description, f.Description)
+	}
+	if f.Enabled {
+		t.Fatalf("Enabled flag is true")
+	}
+	for i := range f.Variations {
+		compareVariation(t, req.Variations[i], f.Variations[i])
+	}
+	if !reflect.DeepEqual(req.Tags, f.Tags) {
+		t.Fatalf("Different tags. Expected: %v actual: %v: ", req.Tags, f.Tags)
+	}
+	defaultOnVariation := findVariation(f.DefaultStrategy.FixedStrategy.Variation, f.Variations)
+	cmdDefaultOnVariation := req.Variations[int(req.DefaultOnVariationIndex.Value)]
+	if cmdDefaultOnVariation.Value != defaultOnVariation.Value {
+		t.Fatalf("Different default on variation value. Expected: %s actual: %s", cmdDefaultOnVariation.Value, defaultOnVariation.Value)
+	}
+	defaultOffVariation := findVariation(f.OffVariation, f.Variations)
+	cmdDefaultOffVariation := req.Variations[int(req.DefaultOffVariationIndex.Value)]
+	if cmdDefaultOffVariation.Value != defaultOffVariation.Value {
+		t.Fatalf("Different default off variation value. Expected: %s actual: %s", cmdDefaultOffVariation.Value, defaultOffVariation.Value)
+	}
+}
+
 func TestArchiveFeature(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
@@ -1647,6 +1683,44 @@ func newCreateFeatureCommand(featureID string) *feature.CreateFeatureCommand {
 	}
 }
 
+func newCreateFeatureReq(featureID string) *feature.CreateFeatureRequest {
+	return &feature.CreateFeatureRequest{
+		Id:            featureID,
+		EnvironmentId: *environmentID,
+		Name:          "e2e-test-feature-name",
+		Description:   "e2e-test-feature-description",
+		Variations: []*feature.Variation{
+			{
+				Value:       "A",
+				Name:        "Variation A",
+				Description: "Thing does A",
+			},
+			{
+				Value:       "B",
+				Name:        "Variation B",
+				Description: "Thing does B",
+			},
+			{
+				Value:       "C",
+				Name:        "Variation C",
+				Description: "Thing does C",
+			},
+			{
+				Value:       "D",
+				Name:        "Variation D",
+				Description: "Thing does D",
+			},
+		},
+		Tags: []string{
+			"e2e-test-tag-1",
+			"e2e-test-tag-2",
+			"e2e-test-tag-3",
+		},
+		DefaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
+		DefaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
+	}
+}
+
 func newCreateFeatureWithTwoVariationsCommand(featureID string) *feature.CreateFeatureCommand {
 	return &feature.CreateFeatureCommand{
 		Id:          featureID,
@@ -1738,6 +1812,15 @@ func createFeature(t *testing.T, client featureclient.Client, cmd *feature.Creat
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	if _, err := client.CreateFeature(ctx, createReq); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func createFeatureNoCmd(t *testing.T, client featureclient.Client, req *feature.CreateFeatureRequest) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if _, err := client.CreateFeature(ctx, req); err != nil {
 		t.Fatal(err)
 	}
 }

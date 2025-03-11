@@ -267,6 +267,45 @@ export namespace ListFeaturesRequest {
   export const OrderDirection: OrderDirectionMap;
 }
 
+export class FeatureSummary extends jspb.Message {
+  getTotal(): number;
+  setTotal(value: number): void;
+
+  getActive(): number;
+  setActive(value: number): void;
+
+  getInactive(): number;
+  setInactive(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FeatureSummary.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: FeatureSummary
+  ): FeatureSummary.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: FeatureSummary,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): FeatureSummary;
+  static deserializeBinaryFromReader(
+    message: FeatureSummary,
+    reader: jspb.BinaryReader
+  ): FeatureSummary;
+}
+
+export namespace FeatureSummary {
+  export type AsObject = {
+    total: number;
+    active: number;
+    inactive: number;
+  };
+}
+
 export class ListFeaturesResponse extends jspb.Message {
   clearFeaturesList(): void;
   getFeaturesList(): Array<proto_feature_feature_pb.Feature>;
@@ -281,6 +320,11 @@ export class ListFeaturesResponse extends jspb.Message {
 
   getTotalCount(): number;
   setTotalCount(value: number): void;
+
+  hasFeatureCountByStatus(): boolean;
+  clearFeatureCountByStatus(): void;
+  getFeatureCountByStatus(): FeatureSummary | undefined;
+  setFeatureCountByStatus(value?: FeatureSummary): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListFeaturesResponse.AsObject;
@@ -308,6 +352,7 @@ export namespace ListFeaturesResponse {
     featuresList: Array<proto_feature_feature_pb.Feature.AsObject>;
     cursor: string;
     totalCount: number;
+    featureCountByStatus?: FeatureSummary.AsObject;
   };
 }
 
@@ -405,6 +450,51 @@ export class CreateFeatureRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  clearVariationsList(): void;
+  getVariationsList(): Array<proto_feature_variation_pb.Variation>;
+  setVariationsList(value: Array<proto_feature_variation_pb.Variation>): void;
+  addVariations(
+    value?: proto_feature_variation_pb.Variation,
+    index?: number
+  ): proto_feature_variation_pb.Variation;
+
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
+  hasDefaultOnVariationIndex(): boolean;
+  clearDefaultOnVariationIndex(): void;
+  getDefaultOnVariationIndex():
+    | google_protobuf_wrappers_pb.Int32Value
+    | undefined;
+  setDefaultOnVariationIndex(
+    value?: google_protobuf_wrappers_pb.Int32Value
+  ): void;
+
+  hasDefaultOffVariationIndex(): boolean;
+  clearDefaultOffVariationIndex(): void;
+  getDefaultOffVariationIndex():
+    | google_protobuf_wrappers_pb.Int32Value
+    | undefined;
+  setDefaultOffVariationIndex(
+    value?: google_protobuf_wrappers_pb.Int32Value
+  ): void;
+
+  getVariationType(): proto_feature_feature_pb.Feature.VariationTypeMap[keyof proto_feature_feature_pb.Feature.VariationTypeMap];
+  setVariationType(
+    value: proto_feature_feature_pb.Feature.VariationTypeMap[keyof proto_feature_feature_pb.Feature.VariationTypeMap]
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateFeatureRequest.AsObject;
   static toObject(
@@ -430,6 +520,14 @@ export namespace CreateFeatureRequest {
   export type AsObject = {
     command?: proto_feature_command_pb.CreateFeatureCommand.AsObject;
     environmentId: string;
+    id: string;
+    name: string;
+    description: string;
+    variationsList: Array<proto_feature_variation_pb.Variation.AsObject>;
+    tagsList: Array<string>;
+    defaultOnVariationIndex?: google_protobuf_wrappers_pb.Int32Value.AsObject;
+    defaultOffVariationIndex?: google_protobuf_wrappers_pb.Int32Value.AsObject;
+    variationType: proto_feature_feature_pb.Feature.VariationTypeMap[keyof proto_feature_feature_pb.Feature.VariationTypeMap];
   };
 }
 
