@@ -21,6 +21,7 @@ export interface SelectProps {
   formatOptionLabel?: (options: Option) => void;
   styles?: Styles;
   closeMenuOnSelect?: boolean;
+  menuPlacement?: string;
 }
 
 export const Select: FC<SelectProps> = forwardRef(
@@ -39,7 +40,8 @@ export const Select: FC<SelectProps> = forwardRef(
       customControl,
       formatOptionLabel,
       styles,
-      closeMenuOnSelect
+      closeMenuOnSelect,
+      menuPlacement
     },
     ref
   ) => {
@@ -120,6 +122,7 @@ export const Select: FC<SelectProps> = forwardRef(
           value={value}
           onChange={onChange}
           closeMenuOnSelect={closeMenuOnSelect}
+          menuPlacement={menuPlacement ? menuPlacement : 'auto'}
         />
       );
     }
@@ -147,6 +150,7 @@ export const Select: FC<SelectProps> = forwardRef(
         onChange={onChange}
         formatOptionLabel={formatOptionLabel}
         closeMenuOnSelect={closeMenuOnSelect}
+        menuPlacement={menuPlacement ? menuPlacement : 'auto'}
       />
     );
   }

@@ -196,6 +196,7 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
                               (v) => v.id === field.value.id
                             )}
                             isSearchable={false}
+                            menuPlacement="top"
                           />
                         );
                       }}
@@ -220,6 +221,7 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
                             (v) => v.id === field.value.id
                           )}
                           isSearchable={false}
+                          menuPlacement="top"
                         />
                       )}
                     />
