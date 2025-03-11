@@ -69,9 +69,13 @@ const ConversionRateChart = ({
     () =>
       goalResult.variationResults.map(vr => {
         const cvrProb = vr?.cvrProb;
-        if (!cvrProb) return [];
+        if (!cvrProb) {
+          return [];
+        }
         const histogram = cvrProb?.histogram;
-        if (bins?.length === 0) bins = histogram?.bins || [];
+        if (bins.length === 0) {
+          bins = histogram?.bins || [];
+        }
         return histogram?.hist || [];
       }),
     [goalResult, bins]
