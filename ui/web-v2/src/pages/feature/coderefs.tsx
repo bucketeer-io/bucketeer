@@ -28,6 +28,7 @@ import { useIntl } from 'react-intl';
 import { messages } from '../../lang/messages';
 import { ListSkeleton } from '../../components/ListSkeleton';
 import { Highlight, themes, Prism } from 'prism-react-renderer';
+import OpenInNewSvg from '../../assets/svg/open-new-tab.svg';
 
 (typeof global !== 'undefined' ? global : window).Prism = Prism;
 require('prismjs/components/prism-dart');
@@ -249,6 +250,7 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
               <p className="text-sm text-gray-500">
                 {f(messages.codeRefs.enableCodeRefsDescription)}
               </p>
+              <DocumentationLink />
             </div>
             <button
               type="button"
@@ -279,6 +281,7 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
               {f(messages.codeRefs.noRegisteredRefs)}
             </h1>
             <p className="text-sm">{f(messages.codeRefs.noRefsInCodebase)}</p>
+            <DocumentationLink />
           </div>
         </div>
       );
@@ -296,6 +299,7 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
             </p>
           </div>
           <div className="flex space-x-4">
+            <DocumentationLink />
             <Select
               placeholder={f(messages.all)}
               options={repositoryOptions}
@@ -398,6 +402,23 @@ export const FeatureCodeRefsPage: FC<FeatureCodeRefsPageProps> = memo(
     );
   }
 );
+
+const DocumentationLink = () => {
+  const { formatMessage: f } = useIntl();
+  return (
+    <div className="text-sm flex text-center justify-center pt-1">
+      <a
+        href="https://docs.bucketeer.io/feature-flags/code-reference"
+        target="_blank"
+        rel="noreferrer"
+        className="underline text-primary flex items-center space-x-1 ml-1"
+      >
+        <span>{f(messages.feature.documentation)}</span>
+        <OpenInNewSvg />
+      </a>
+    </div>
+  );
+};
 
 interface CodeAccordionProps {
   codeRef: CodeReference.AsObject;
