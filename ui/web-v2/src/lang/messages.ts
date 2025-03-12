@@ -1264,8 +1264,12 @@ export const messages = {
     action: {
       archive: defineMessage({
         id: 'goal.action.archive',
-        defaultMessage: 'Archive'
-      })
+        defaultMessage: 'Archive',
+      }),
+      archiveTooltip: defineMessage({
+        id: 'goal.action.archiveTooltip',
+        defaultMessage:'Please stop using the goal before archiving.'
+      }),
     },
     add: {
       header: {
