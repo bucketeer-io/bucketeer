@@ -53,8 +53,7 @@ func (s *EnvironmentService) GetEnvironmentV2(
 	if err := validateGetEnvironmentV2Request(req, localizer); err != nil {
 		return nil, err
 	}
-	environmentStorage := v2es.NewEnvironmentStorage(s.mysqlClient)
-	environment, err := environmentStorage.GetEnvironmentV2(ctx, req.Id)
+	environment, err := s.environmentStorage.GetEnvironmentV2(ctx, req.Id)
 	if err != nil {
 		if err == v2es.ErrEnvironmentNotFound {
 			dt, err := statusEnvironmentNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -149,8 +148,7 @@ func (s *EnvironmentService) ListEnvironmentsV2(
 		}
 		return nil, dt.Err()
 	}
-	environmentStorage := v2es.NewEnvironmentStorage(s.mysqlClient)
-	environments, nextCursor, totalCount, err := environmentStorage.ListEnvironmentsV2(
+	environments, nextCursor, totalCount, err := s.environmentStorage.ListEnvironmentsV2(
 		ctx,
 		whereParts,
 		orders,
@@ -287,7 +285,6 @@ func (s *EnvironmentService) createEnvironmentV2NoCommand(
 	}
 
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		environmentStorage := v2es.NewEnvironmentStorage(s.mysqlClient)
 		e, err := domainevent.NewAdminEvent(
 			editor,
 			eventproto.Event_ENVIRONMENT,
@@ -313,7 +310,7 @@ func (s *EnvironmentService) createEnvironmentV2NoCommand(
 		if err := s.publisher.Publish(ctx, e); err != nil {
 			return err
 		}
-		return environmentStorage.CreateEnvironmentV2(ctxWithTx, newEnvironment)
+		return s.environmentStorage.CreateEnvironmentV2(ctxWithTx, newEnvironment)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrEnvironmentAlreadyExists) {
@@ -470,25 +467,7 @@ func (s *EnvironmentService) createEnvironmentV2(
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
 ) error {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		environmentStorage := v2es.NewEnvironmentStorage(tx)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		handler, err := command.NewEnvironmentV2CommandHandler(editor, environment, s.publisher)
 		if err != nil {
 			return err
@@ -496,7 +475,7 @@ func (s *EnvironmentService) createEnvironmentV2(
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
-		return environmentStorage.CreateEnvironmentV2(ctx, environment)
+		return s.environmentStorage.CreateEnvironmentV2(contextWithTx, environment)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrEnvironmentAlreadyExists) {
@@ -560,8 +539,7 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 	}
 
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		environmentStorage := v2es.NewEnvironmentStorage(s.mysqlClient)
-		environment, err := environmentStorage.GetEnvironmentV2(ctxWithTx, req.Id)
+		environment, err := s.environmentStorage.GetEnvironmentV2(ctxWithTx, req.Id)
 		if err != nil {
 			return err
 		}
@@ -589,7 +567,7 @@ func (s *EnvironmentService) updateEnvironmentV2NoCommand(
 		if err := s.publisher.Publish(ctx, event); err != nil {
 			return err
 		}
-		return environmentStorage.UpdateEnvironmentV2(ctxWithTx, updated)
+		return s.environmentStorage.UpdateEnvironmentV2(ctxWithTx, updated)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrEnvironmentNotFound) || errors.Is(err, v2es.ErrEnvironmentUnexpectedAffectedRows) {
@@ -625,26 +603,8 @@ func (s *EnvironmentService) updateEnvironmentV2(
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
 ) error {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		environmentStorage := v2es.NewEnvironmentStorage(tx)
-		environment, err := environmentStorage.GetEnvironmentV2(ctx, envId)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		environment, err := s.environmentStorage.GetEnvironmentV2(contextWithTx, envId)
 		if err != nil {
 			return err
 		}
@@ -657,7 +617,7 @@ func (s *EnvironmentService) updateEnvironmentV2(
 				return err
 			}
 		}
-		return environmentStorage.UpdateEnvironmentV2(ctx, environment)
+		return s.environmentStorage.UpdateEnvironmentV2(contextWithTx, environment)
 	})
 	if err != nil {
 		if errors.Is(err, v2es.ErrEnvironmentNotFound) || errors.Is(err, v2es.ErrEnvironmentUnexpectedAffectedRows) {
@@ -772,26 +732,8 @@ func (s *EnvironmentService) ArchiveEnvironmentV2(
 	if err := validateArchiveEnvironmentV2Request(req, localizer); err != nil {
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		environmentStorage := v2es.NewEnvironmentStorage(tx)
-		environment, err := environmentStorage.GetEnvironmentV2(ctx, req.Id)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		environment, err := s.environmentStorage.GetEnvironmentV2(contextWithTx, req.Id)
 		if err != nil {
 			return err
 		}
@@ -802,7 +744,7 @@ func (s *EnvironmentService) ArchiveEnvironmentV2(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return environmentStorage.UpdateEnvironmentV2(ctx, environment)
+		return s.environmentStorage.UpdateEnvironmentV2(contextWithTx, environment)
 	})
 	if err != nil {
 		if err == v2es.ErrEnvironmentNotFound || err == v2es.ErrEnvironmentUnexpectedAffectedRows {
@@ -861,26 +803,8 @@ func (s *EnvironmentService) UnarchiveEnvironmentV2(
 	if err := validateUnarchiveEnvironmentV2Request(req, localizer); err != nil {
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		environmentStorage := v2es.NewEnvironmentStorage(tx)
-		environment, err := environmentStorage.GetEnvironmentV2(ctx, req.Id)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		environment, err := s.environmentStorage.GetEnvironmentV2(contextWithTx, req.Id)
 		if err != nil {
 			return err
 		}
@@ -891,7 +815,7 @@ func (s *EnvironmentService) UnarchiveEnvironmentV2(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return environmentStorage.UpdateEnvironmentV2(ctx, environment)
+		return s.environmentStorage.UpdateEnvironmentV2(contextWithTx, environment)
 	})
 	if err != nil {
 		if err == v2es.ErrEnvironmentNotFound || err == v2es.ErrEnvironmentUnexpectedAffectedRows {
