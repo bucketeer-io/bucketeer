@@ -23,7 +23,6 @@ var (
 	statusInternal              = status.New(codes.Internal, "coderef: internal")
 	statusInvalidCursor         = status.New(codes.InvalidArgument, "coderef: invalid cursor")
 	statusMissingID             = status.New(codes.InvalidArgument, "coderef: missing id")
-	statusMissingEnvironmentID  = status.New(codes.InvalidArgument, "coderef: missing environment_id")
 	statusMissingFeatureID      = status.New(codes.InvalidArgument, "coderef: missing feature_id")
 	statusMissingFilePath       = status.New(codes.InvalidArgument, "coderef: missing file_path")
 	statusMissingLineNumber     = status.New(codes.InvalidArgument, "coderef: missing line_number")
