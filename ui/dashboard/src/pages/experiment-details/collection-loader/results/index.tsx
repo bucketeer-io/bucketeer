@@ -88,7 +88,7 @@ const Results = ({ experiment }: { experiment: Experiment }) => {
       );
       setGoalResultState(_goalResultState);
     }
-  }, [experimentResult]);
+  }, []);
 
   return isLoading ? (
     <PageLayout.LoadingState />
