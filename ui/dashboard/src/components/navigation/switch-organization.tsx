@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { switchOrganization } from '@api/auth';
 import { useAuth } from 'auth';
@@ -73,6 +73,8 @@ const SwitchOrganization = ({
   );
   const [isLoading, setIsLoading] = useState(false);
 
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
   const onSearchOrganization = useCallback(
     (value: string) => {
       if (!value) return setOrganizations(availableOrganizations);
@@ -113,11 +115,25 @@ const SwitchOrganization = ({
   );
 
   useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        onCloseSwitchOrg();
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!isOpen) setSearchValue('');
   }, [isOpen]);
 
   return (
     <div
+      ref={menuRef}
       className={cn(
         'absolute top-0 left-[248px] w-[238px] h-screen bg-primary-100 transition-all duration-300',
         {

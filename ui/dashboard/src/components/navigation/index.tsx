@@ -196,11 +196,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
         <Divider className="mb-3 bg-primary-50 opacity-10" />
 
         <div className="flex items-center justify-between">
-          <UserMenu
-            onOpenSwitchOrg={
-              isOpenSwitchOrg ? onCloseSwitchOrg : onOpenSwitchOrg
-            }
-          />
+          <UserMenu onOpenSwitchOrg={onOpenSwitchOrg} />
           <button
             type="button"
             onClick={() => {
