@@ -92,16 +92,6 @@ func validateCreateCodeReferenceRequest(req *proto.CreateCodeReferenceRequest, l
 		}
 		return dt.Err()
 	}
-	if req.EnvironmentId == "" {
-		dt, err := statusMissingEnvironmentID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	return nil
 }
 
@@ -156,16 +146,6 @@ func validateUpdateCodeReferenceRequest(req *proto.UpdateCodeReferenceRequest, l
 		}
 		return dt.Err()
 	}
-	if req.EnvironmentId == "" {
-		dt, err := statusMissingEnvironmentID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	return nil
 }
 
@@ -174,16 +154,6 @@ func validateDeleteCodeReferenceRequest(req *proto.DeleteCodeReferenceRequest, l
 		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.EnvironmentId == "" {
-		dt, err := statusMissingEnvironmentID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_id"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -204,16 +174,6 @@ func validateGetCodeReferenceRequest(req *proto.GetCodeReferenceRequest, localiz
 		}
 		return dt.Err()
 	}
-	if req.EnvironmentId == "" {
-		dt, err := statusMissingEnvironmentID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	return nil
 }
 
@@ -222,16 +182,6 @@ func validateListCodeReferencesRequest(req *proto.ListCodeReferencesRequest, loc
 		dt, err := statusMissingFeatureID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.EnvironmentId == "" {
-		dt, err := statusMissingEnvironmentID.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_id"),
 		})
 		if err != nil {
 			return statusInternal.Err()
