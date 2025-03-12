@@ -49,11 +49,11 @@ const TimeseriesLineChart = memo(
           value: String(date.getTime() / 1000),
           overrideOptions: {
             day: '2-digit',
-            month: '2-digit',
+            month: 'short',
             year: undefined
           },
           locale: 'en-GB'
-        });
+        }).replace(/(\d{2}) (\w{3})/, '$2 $1');
       }
       return '';
     };
