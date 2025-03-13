@@ -11,9 +11,6 @@ import useActionWithURL from 'hooks/use-action-with-url';
 import { Goal } from '@types';
 import DeleteGoalModal from 'pages/goal-details/elements/delete-goal-modal';
 import ConfirmModal from 'elements/confirm-modal';
-import PageLayout from 'elements/page-layout';
-import { EmptyCollection } from './collection-layout/empty-collection';
-import { useFetchGoals } from './collection-loader/use-fetch-goals';
 import AddGoalModal from './goals-modal/add-goal-modal';
 import ConnectionsModal from './goals-modal/connections-modal';
 import PageContent from './page-content';
@@ -31,16 +28,6 @@ const PageLoader = () => {
     closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_GOALS}`
   });
 
-  const {
-    data: collection,
-    isLoading,
-    refetch,
-    isError
-  } = useFetchGoals({
-    pageSize: 1,
-    environmentId: currentEnvironment.id
-  });
-
   const [selectedGoal, setSelectedGoal] = useState<Goal>();
 
   const [isOpenConnectionModal, onOpenConnectionModal, onCloseConnectionModal] =
@@ -54,14 +41,16 @@ const PageLoader = () => {
 
   const onHandleActions = (goal: Goal, type: GoalActions) => {
     setSelectedGoal(goal);
-    if (type === 'CONNECTION') {
-      onOpenConnectionModal();
-    }
-    if (type === 'DELETE') {
-      onOpenDeleteModal();
-    }
-    if (['ARCHIVE', 'UNARCHIVE'].includes(type)) {
-      onOpenConfirmModal();
+    switch (type) {
+      case 'CONNECTION':
+        return onOpenConnectionModal();
+      case 'DELETE':
+        return onOpenDeleteModal();
+      case 'ARCHIVE':
+      case 'UNARCHIVE':
+        return onOpenConfirmModal();
+      default:
+        return;
     }
   };
 
@@ -120,22 +109,9 @@ const PageLoader = () => {
   const onUpdateGoal = async (payload: GoalUpdaterPayload) =>
     mutationState.mutate(payload);
 
-  const isEmpty = collection?.goals.length === 0;
-
   return (
     <>
-      {isLoading ? (
-        <PageLayout.LoadingState />
-      ) : isError ? (
-        <PageLayout.ErrorState onRetry={refetch} />
-      ) : isEmpty ? (
-        <PageLayout.EmptyState>
-          <EmptyCollection onAdd={onOpenAddModal} />
-        </PageLayout.EmptyState>
-      ) : (
-        <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
-      )}
-
+      <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
       {isAdd && <AddGoalModal isOpen={isAdd} onClose={onCloseActionModal} />}
       {isOpenConnectionModal && selectedGoal && (
         <ConnectionsModal

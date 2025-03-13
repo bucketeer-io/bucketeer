@@ -722,6 +722,53 @@ export const messages = {
       defaultMessage: 'Updated'
     })
   },
+  codeRefs: {
+    description: defineMessage({
+      id: 'codeRefs.description',
+      defaultMessage: 'References to this feature flag found in your codebase'
+    }),
+    repository: defineMessage({
+      id: 'codeRefs.repository',
+      defaultMessage: 'Repository'
+    }),
+    branch: defineMessage({
+      id: 'codeRefs.branch',
+      defaultMessage: 'Branch'
+    }),
+    fileExtensions: defineMessage({
+      id: 'codeRefs.fileExtensions',
+      defaultMessage: 'File Extensions'
+    }),
+    viewInSource: defineMessage({
+      id: 'codeRefs.viewInSource',
+      defaultMessage: 'View in Source'
+    }),
+    referenceFound: defineMessage({
+      id: 'codeRefs.referenceFound',
+      defaultMessage: '{value} reference found in {branchLink} branch'
+    }),
+    multipleReferenceFound: defineMessage({
+      id: 'codeRefs.multipleReferenceFound',
+      defaultMessage: '{value} reference(s) found in {branchLink} branch'
+    }),
+    noRegisteredRefs: defineMessage({
+      id: 'codeRefs.noRegisteredRefs',
+      defaultMessage: 'No registered code references'
+    }),
+    noRefsInCodebase: defineMessage({
+      id: 'codeRefs.noRefsInCodebase',
+      defaultMessage: 'There are no code references in your codebase yet.'
+    }),
+    enableCodeRefs: defineMessage({
+      id: 'codeRefs.enableCodeRefs',
+      defaultMessage: 'Enable code references'
+    }),
+    enableCodeRefsDescription: defineMessage({
+      id: 'codeRefs.enableCodeRefsDescription',
+      defaultMessage:
+        'Quickly see references of feature flags used in your codebase using our CLI tool. The result will be reported to our backend and shown on this tab.'
+    })
+  },
   maintainer: defineMessage({
     id: 'maintainer',
     defaultMessage: 'Maintainer'
@@ -1265,6 +1312,10 @@ export const messages = {
       archive: defineMessage({
         id: 'goal.action.archive',
         defaultMessage: 'Archive'
+      }),
+      archiveTooltip: defineMessage({
+        id: 'goal.action.archiveTooltip',
+        defaultMessage: 'Please stop using the goal before archiving.'
       })
     },
     add: {
@@ -2105,6 +2156,10 @@ export const messages = {
       variations: defineMessage({
         id: 'feature.tab.variations',
         defaultMessage: 'Variations'
+      }),
+      codeRefs: defineMessage({
+        id: 'feature.tab.codeRefs',
+        defaultMessage: 'Code Refs'
       })
     },
     search: {

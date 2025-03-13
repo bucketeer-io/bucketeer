@@ -37,7 +37,7 @@ import (
 )
 
 const (
-	day = 24 * 60 * 60
+	day = 24 * time.Hour
 )
 
 type experimentCalculate struct {
@@ -91,53 +91,61 @@ func NewExperimentCalculate(
 }
 
 func (e *experimentCalculate) Run(ctx context.Context) error {
-	now := time.Now().In(e.location)
-	e.logger.Info("start experiment calculate job")
+	e.logger.Info("Started experiment calculation job")
+	startTime := time.Now().In(e.location)
 	environments, environmentErr := e.listEnvironments(ctx)
 	if environmentErr != nil {
-		e.logger.Error("ExperimentCalculator failed to list environments",
+		e.logger.Error("Failed to list environments when calculating experiments",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(environmentErr),
 			)...,
 		)
 		return environmentErr
 	}
+	var calculatedCount int
 	for _, env := range environments {
 		experiments, experimentErr := e.listExperiments(ctx, env.Id)
 		if experimentErr != nil {
-			e.logger.Error("ExperimentCalculator failed to list experiments",
+			e.logger.Error("Failed to list experiments when running experiment calculation",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(experimentErr),
 				)...,
 			)
 			return experimentErr
 		}
+		if experiments == nil {
+			e.logger.Info("There are no experiments for calculation in the specified environment",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("environmentId", env.Id),
+				)...,
+			)
+			continue
+		}
 		for _, ex := range experiments {
-			if ex.Status == experiment.Experiment_STOPPED &&
-				now.Unix()-ex.StopAt > 2*day {
-				// Because the evaluation and goal events may be sent with a delay for many reasons from the client side,
-				// we still calculate the results for two days after it stopped.
-				continue
-			}
 			calculateErr := e.calculateExperimentWithLock(ctx, env, ex)
 			if calculateErr != nil {
 				e.logger.Error("Failed to calculate experiment",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(calculateErr),
 						zap.String("environmentId", env.Id),
-						zap.String("experimentId", ex.Id),
+						zap.Any("experiment", ex),
 					)...,
 				)
 				continue
 			}
-			e.logger.Debug("Experiment calculated successfully",
+			calculatedCount++
+			e.logger.Info("Experiment calculated successfully in the specified environment",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.String("environmentId", env.Id),
-					zap.String("experimentId", ex.Id),
+					zap.Any("experiment", ex),
 				)...,
 			)
 		}
 	}
+	e.logger.Info("Finished experiment calculation job",
+		zap.Duration("elapsedTime", time.Since(startTime)),
+		zap.Int("totalCalculatedExperiments", calculatedCount),
+	)
 	return nil
 }
 
@@ -147,12 +155,13 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 ) error {
 	locked, lockValue, err := e.experimentLock.Lock(ctx, env.Id, experiment.Id)
 	if err != nil {
-		return fmt.Errorf("failed to acquire lock: %w", err)
+		return fmt.Errorf("Failed to acquire lock when calculating experiment. Error: %w", err)
 	}
 	if !locked {
 		e.logger.Info("Experiment is being calculated by another instance",
 			zap.String("environmentId", env.Id),
 			zap.String("experimentId", experiment.Id),
+			zap.String("experimentName", experiment.Name),
 		)
 		return nil
 	}
@@ -161,16 +170,16 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 		// we set the TTL for the lock key and only unlock it when an error occurs so that it can retry.
 		unlocked, unlockErr := e.experimentLock.Unlock(ctx, env.Id, experiment.Id, lockValue)
 		if unlockErr != nil {
-			e.logger.Error("Failed to release lock",
+			e.logger.Error("Failed to release lock when calculating experiment",
 				zap.Error(unlockErr),
 				zap.String("environmentId", env.Id),
-				zap.String("experimentId", experiment.Id),
+				zap.Any("experiment", experiment),
 			)
 		}
 		if !unlocked {
-			e.logger.Warn("Lock was not released, possibly expired",
+			e.logger.Warn("Lock was not released when calculating experiment, possibly expired",
 				zap.String("environmentId", env.Id),
-				zap.String("experimentId", experiment.Id),
+				zap.Any("experiment", experiment),
 			)
 		}
 		return calcErr
@@ -187,9 +196,11 @@ func (e *experimentCalculate) calculateExperiment(ctx context.Context,
 		Experiment:    experiment,
 	})
 	if err != nil {
-		e.logger.Error("ExperimentCalculator failed to calculate",
+		e.logger.Error("Failed experiment calculation",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
+				zap.String("environmentId", env.Id),
+				zap.Any("experiment", experiment),
 			)...,
 		)
 		return err
@@ -217,7 +228,10 @@ func (e *experimentCalculate) listExperiments(
 	environmentId string,
 ) ([]*experiment.Experiment, error) {
 	req := &experiment.ListExperimentsRequest{
-		From:          time.Now().In(e.location).Add(-2 * 24 * time.Hour).Unix(),
+		// Because the evaluation and goal events may be sent with a delay
+		// for many reasons from the client side, we still calculate
+		// the results for two days after it stopped.
+		StopAt:        time.Now().In(e.location).Add(-2 * day).Unix(),
 		PageSize:      0,
 		Cursor:        "",
 		EnvironmentId: environmentId,

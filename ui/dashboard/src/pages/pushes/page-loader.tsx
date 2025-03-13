@@ -3,14 +3,10 @@ import { Trans } from 'react-i18next';
 import { pushUpdater } from '@api/push';
 import { invalidatePushes } from '@queries/pushes';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Push } from '@types';
 import ConfirmModal from 'elements/confirm-modal';
-import PageLayout from 'elements/page-layout';
-import { EmptyCollection } from './collection-layout/empty-collection';
-import { useFetchPushes } from './collection-loader/use-fetch-pushes';
 import PageContent from './page-content';
 import AddPushModal from './push-modal/add-push-modal';
 import EditPushModal from './push-modal/edit-push-modal';
@@ -19,18 +15,6 @@ import { PushActionsType } from './types';
 const PageLoader = () => {
   const { t } = useTranslation(['table']);
   const queryClient = useQueryClient();
-  const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-
-  const {
-    data: collection,
-    isLoading,
-    refetch,
-    isError
-  } = useFetchPushes({
-    pageSize: 1,
-    organizationId: currentEnvironment.organizationId
-  });
 
   const [selectedPush, setSelectedPush] = useState<Push>();
   const [isDisabling, setIsDisabling] = useState<boolean>(false);
@@ -46,14 +30,12 @@ const PageLoader = () => {
 
   const onHandleActions = (push: Push, type: PushActionsType) => {
     setSelectedPush(push);
-
-    if (type === 'EDIT') return onOpenEditModal();
-    if (type === 'ENABLE') {
-      setIsDisabling(false);
-      return onOpenConfirmModal();
+    if (type === 'EDIT') {
+      onOpenEditModal();
+    } else {
+      setIsDisabling(type !== 'ENABLE');
+      onOpenConfirmModal();
     }
-    setIsDisabling(true);
-    onOpenConfirmModal();
   };
 
   const mutationState = useMutation({
@@ -77,21 +59,9 @@ const PageLoader = () => {
     }
   };
 
-  const isEmpty = collection?.pushes.length === 0;
-
   return (
     <>
-      {isLoading ? (
-        <PageLayout.LoadingState />
-      ) : isError ? (
-        <PageLayout.ErrorState onRetry={refetch} />
-      ) : isEmpty ? (
-        <PageLayout.EmptyState>
-          <EmptyCollection onAdd={onOpenAddModal} />
-        </PageLayout.EmptyState>
-      ) : (
-        <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
-      )}
+      <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
 
       {isOpenAddModal && (
         <AddPushModal isOpen={isOpenAddModal} onClose={onCloseAddModal} />

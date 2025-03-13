@@ -28,6 +28,7 @@ export const PAGE_PATH_FEATURE_EVALUATION = '/evaluation';
 export const PAGE_PATH_FEATURE_AUTOOPS = '/autoops';
 export const PAGE_PATH_FEATURE_TRIGGER = '/trigger';
 export const PAGE_PATH_FEATURE_HISTORY = '/history';
+export const PAGE_PATH_CODE_REFS = '/coderefs';
 
 export const PAGE_PATH_AUTH_CALLBACK = '/auth/callback';
 export const PAGE_PATH_AUTH_SIGNIN = '/auth/signin';

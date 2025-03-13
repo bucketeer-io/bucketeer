@@ -8,11 +8,8 @@ import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { APIKey } from '@types';
 import ConfirmModal from 'elements/confirm-modal';
-import PageLayout from 'elements/page-layout';
 import AddAPIKeyModal from './api-key-modal/add-api-key-modal';
 import EditAPIKeyModal from './api-key-modal/edit-api-key-modal';
-import { EmptyCollection } from './collection-layout/empty-collection';
-import { useFetchAPIKeys } from './collection-loader/use-fetch-apikey';
 import PageContent from './page-content';
 import { APIKeyActionsType } from './types';
 
@@ -21,16 +18,6 @@ const PageLoader = () => {
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-
-  const {
-    data: collection,
-    isLoading,
-    refetch,
-    isError
-  } = useFetchAPIKeys({
-    pageSize: 1,
-    organizationId: currentEnvironment.organizationId
-  });
 
   const [selectedAPIKey, setSelectedAPIKey] = useState<APIKey>();
   const [isDisabling, setIsDisabling] = useState<boolean>(false);
@@ -45,16 +32,17 @@ const PageLoader = () => {
     useToggleOpen(false);
 
   const onHandleActions = (apiKey: APIKey, type: APIKeyActionsType) => {
-    if (type === 'EDIT') {
-      onOpenEditModal();
-    } else if (type === 'ENABLE') {
-      setIsDisabling(false);
-      onOpenConfirmModal();
-    } else if (type === 'DISABLE') {
-      setIsDisabling(true);
-      onOpenConfirmModal();
-    }
     setSelectedAPIKey(apiKey);
+    switch (type) {
+      case 'EDIT':
+        return onOpenEditModal();
+      case 'ENABLE':
+      case 'DISABLE':
+        setIsDisabling(type === 'DISABLE');
+        return onOpenConfirmModal();
+      default:
+        break;
+    }
   };
 
   const mutationState = useMutation({
@@ -78,22 +66,9 @@ const PageLoader = () => {
     }
   };
 
-  const isEmpty = collection?.apiKeys.length === 0;
-
   return (
     <>
-      {isLoading ? (
-        <PageLayout.LoadingState />
-      ) : isError ? (
-        <PageLayout.ErrorState onRetry={refetch} />
-      ) : isEmpty ? (
-        <PageLayout.EmptyState>
-          <EmptyCollection onAdd={onOpenAddModal} />
-        </PageLayout.EmptyState>
-      ) : (
-        <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
-      )}
-
+      <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
       {isOpenAddModal && (
         <AddAPIKeyModal isOpen={isOpenAddModal} onClose={onCloseAddModal} />
       )}

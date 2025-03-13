@@ -87,9 +87,9 @@ func (mr *MockProgressiveRolloutStorageMockRecorder) GetProgressiveRollout(ctx, 
 }
 
 // ListProgressiveRollouts mocks base method.
-func (m *MockProgressiveRolloutStorage) ListProgressiveRollouts(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*autoops.ProgressiveRollout, int64, int, error) {
+func (m *MockProgressiveRolloutStorage) ListProgressiveRollouts(ctx context.Context, options *mysql.ListOptions) ([]*autoops.ProgressiveRollout, int64, int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListProgressiveRollouts", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListProgressiveRollouts", ctx, options)
 	ret0, _ := ret[0].([]*autoops.ProgressiveRollout)
 	ret1, _ := ret[1].(int64)
 	ret2, _ := ret[2].(int)
@@ -98,9 +98,9 @@ func (m *MockProgressiveRolloutStorage) ListProgressiveRollouts(ctx context.Cont
 }
 
 // ListProgressiveRollouts indicates an expected call of ListProgressiveRollouts.
-func (mr *MockProgressiveRolloutStorageMockRecorder) ListProgressiveRollouts(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockProgressiveRolloutStorageMockRecorder) ListProgressiveRollouts(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProgressiveRollouts", reflect.TypeOf((*MockProgressiveRolloutStorage)(nil).ListProgressiveRollouts), ctx, whereParts, orders, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProgressiveRollouts", reflect.TypeOf((*MockProgressiveRolloutStorage)(nil).ListProgressiveRollouts), ctx, options)
 }
 
 // UpdateProgressiveRollout mocks base method.

@@ -27,38 +27,29 @@ const ConversionRateChart = ({
 
   const upperBoundaries = useMemo(
     () =>
-      goalResult?.variationResults?.map(
-        item =>
-          item[
-            chartType === 'conversion-rate'
-              ? 'cvrPercentile975Timeseries'
-              : 'goalValueSumPerUserPercentile025Timeseries'
-          ]?.values
+      goalResult?.variationResults?.map(item =>
+        chartType === 'conversion-rate'
+          ? item.cvrPercentile975Timeseries.values.map(item => item * 100)
+          : item.goalValueSumPerUserPercentile025Timeseries?.values
       ) || [],
     [goalResult, chartType]
   );
   const lowerBoundaries = useMemo(
     () =>
-      goalResult?.variationResults?.map(
-        item =>
-          item?.[
-            chartType === 'conversion-rate'
-              ? 'cvrPercentile025Timeseries'
-              : 'goalValueSumPerUserPercentile025Timeseries'
-          ]?.values
+      goalResult?.variationResults?.map(item =>
+        chartType === 'conversion-rate'
+          ? item.cvrPercentile025Timeseries.values.map(item => item * 100)
+          : item.goalValueSumPerUserPercentile025Timeseries?.values
       ) || [],
     [goalResult, chartType]
   );
 
   const representatives = useMemo(
     () =>
-      goalResult?.variationResults?.map(
-        item =>
-          item[
-            chartType === 'conversion-rate'
-              ? 'cvrMedianTimeseries'
-              : 'goalValueSumPerUserMedianTimeseries'
-          ]?.values
+      goalResult?.variationResults?.map(item =>
+        chartType === 'conversion-rate'
+          ? item.cvrMedianTimeseries.values.map(item => item * 100)
+          : item.goalValueSumPerUserMedianTimeseries?.values
       ) || [],
     [goalResult, chartType]
   );
@@ -68,22 +59,20 @@ const ConversionRateChart = ({
   const hist = useMemo(
     () =>
       goalResult.variationResults.map(vr => {
-        const cvrProb = vr.cvrProb;
+        const cvrProb = vr?.cvrProb;
         if (!cvrProb) {
           return [];
         }
         const histogram = cvrProb?.histogram;
         if (bins.length === 0) {
-          bins = histogram.bins;
+          bins = histogram?.bins || [];
         }
-        return histogram.hist;
+        return histogram?.hist || [];
       }),
     [goalResult, bins]
   );
 
-  bins = bins.map(b => {
-    return Math.round(b * 10000) / 100;
-  });
+  bins = bins?.map(b => Math.round(b * 10000) / 100);
 
   return chartType === 'conversion-rate' &&
     !goalResult.variationResults[0]?.cvrMedianTimeseries ? (

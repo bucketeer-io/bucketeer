@@ -70,22 +70,13 @@ func (u *experimentStatusUpdater) Run(ctx context.Context) (lastErr error) {
 		return
 	}
 	for _, env := range environments {
-		var experiments []*experimentproto.Experiment
-		statuses := []experimentproto.Experiment_Status{
-			experimentproto.Experiment_WAITING,
-			experimentproto.Experiment_RUNNING,
-		}
-		for _, status := range statuses {
-			exps, err := u.listExperiments(ctx, env.Id, status)
-			if err != nil {
-				u.logger.Error("Failed to list experiments", zap.Error(err),
-					zap.String("environmentId", env.Id),
-					zap.Int32("status", int32(status)),
-				)
-				lastErr = err
-				continue
-			}
-			experiments = append(experiments, exps...)
+		experiments, err := u.listExperiments(ctx, env.Id)
+		if err != nil {
+			u.logger.Error("Failed to list experiments", zap.Error(err),
+				zap.String("environmentId", env.Id),
+			)
+			lastErr = err
+			continue
 		}
 		for _, e := range experiments {
 			if err = u.updateStatus(ctx, env.Id, e); err != nil {
@@ -176,7 +167,6 @@ func (u *experimentStatusUpdater) updateToStopped(
 func (u *experimentStatusUpdater) listExperiments(
 	ctx context.Context,
 	environmentId string,
-	status experimentproto.Experiment_Status,
 ) ([]*experimentproto.Experiment, error) {
 	var experiments []*experimentproto.Experiment
 	cursor := ""
@@ -185,7 +175,10 @@ func (u *experimentStatusUpdater) listExperiments(
 			PageSize:      listRequestSize,
 			Cursor:        cursor,
 			EnvironmentId: environmentId,
-			Status:        &wrappersproto.Int32Value{Value: int32(status)},
+			Statuses: []experimentproto.Experiment_Status{
+				experimentproto.Experiment_WAITING,
+				experimentproto.Experiment_RUNNING,
+			},
 		})
 		if err != nil {
 			return nil, err

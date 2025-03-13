@@ -206,6 +206,7 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 		}
 		break
 	}
+	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestExperimentGoalCount(t *testing.T) {
@@ -339,6 +340,7 @@ func TestExperimentGoalCount(t *testing.T) {
 		}
 		break
 	}
+	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestGrpcExperimentResult(t *testing.T) {
@@ -496,6 +498,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 		actual, _ := experimentproto.Experiment_Status_name[int32(res.Experiment.Status)]
 		t.Fatalf("the status of experiment is not correct. expected: %s, but got %s", expected, actual)
 	}
+	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestExperimentResult(t *testing.T) {
@@ -653,6 +656,7 @@ func TestExperimentResult(t *testing.T) {
 		actual, _ := experimentproto.Experiment_Status_name[int32(res.Experiment.Status)]
 		t.Fatalf("the status of experiment is not correct. expected: %s, but got %s", expected, actual)
 	}
+	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestGrpcMultiGoalsEventCounter(t *testing.T) {
@@ -875,6 +879,7 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 		}
 		break
 	}
+	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestMultiGoalsEventCounter(t *testing.T) {
@@ -1097,6 +1102,7 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 		}
 		break
 	}
+	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestHTTPTrack(t *testing.T) {
@@ -1219,6 +1225,7 @@ func TestHTTPTrack(t *testing.T) {
 		}
 		break
 	}
+	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
@@ -1273,7 +1280,7 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
 	startAt := time.Now().Local().Add(-1 * time.Hour)
 	stopAt := startAt.Local().Add(time.Hour * 2)
-	createExperimentWithMultiGoals(
+	experiment := createExperimentWithMultiGoals(
 		ctx,
 		t,
 		experimentClient,
@@ -1347,6 +1354,7 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 		}
 		break
 	}
+	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestExperimentEvaluationEventCount(t *testing.T) {
@@ -1400,7 +1408,7 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
 	startAt := time.Now().Local().Add(-1 * time.Hour)
 	stopAt := startAt.Local().Add(time.Hour * 2)
-	createExperimentWithMultiGoals(
+	experiment := createExperimentWithMultiGoals(
 		ctx,
 		t,
 		experimentClient,
@@ -1472,6 +1480,7 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		}
 		break
 	}
+	stopExperiment(ctx, t, experimentClient, experiment.Id)
 }
 
 func TestGetEvaluationTimeseriesCount(t *testing.T) {
@@ -1624,7 +1633,7 @@ func createExperimentWithMultiGoals(
 	startAt, stopAt time.Time,
 ) *experimentproto.Experiment {
 	cmd := &experimentproto.CreateExperimentCommand{
-		Name:            name + strings.Join(goalIDs, ","),
+		Name:            fmt.Sprintf("%s - %v", name, strings.Join(goalIDs, ",")),
 		FeatureId:       featureID,
 		GoalIds:         goalIDs,
 		StartAt:         startAt.Unix(),
@@ -1668,6 +1677,49 @@ func createExperimentWithMultiGoals(
 		t.Fatal(err)
 	}
 	return resp.Experiment
+}
+
+// This helper tries to stop the running experiments
+// that are finished testing and waiting for deletion.
+// This will improve the load on the http-stan while analysing the other experiments
+// speeding up and improve timeout flaky tests.
+// Since this is optional, it will ignore any errors.
+func stopExperiment(
+	ctx context.Context,
+	t *testing.T,
+	client experimentclient.Client,
+	id string,
+) {
+	t.Helper()
+	_, err := client.UpdateExperiment(ctx, &experimentproto.UpdateExperimentRequest{
+		EnvironmentId: *environmentID,
+		Id:            id,
+		Status: &experimentproto.UpdateExperimentRequest_UpdatedStatus{
+			Status: experimentproto.Experiment_FORCE_STOPPED,
+		},
+	})
+	if err != nil {
+		// Ignore
+		return
+	}
+	// Update experiment cache
+	batchClient := newBatchClient(t)
+	defer batchClient.Close()
+	numRetries := 3
+	for i := 0; i < numRetries; i++ {
+		_, err = batchClient.ExecuteBatchJob(
+			ctx,
+			&btproto.BatchJobRequest{Job: btproto.BatchJob_ExperimentCacher})
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() != codes.Unavailable {
+			return
+		}
+		fmt.Printf("Failed to execute experiment cacher batch (Called by stopExperiment). Error code: %d. Retrying in 5 seconds.\n", st.Code())
+		time.Sleep(5 * time.Second)
+	}
 }
 
 func updateFeatueFlagCache(t *testing.T) {

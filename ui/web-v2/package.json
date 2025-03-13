@@ -54,6 +54,8 @@
     "jstat": "1.9.4",
     "jwt-decode": "^4.0.0",
     "option-t": "23.0.2",
+    "prism-react-renderer": "^2.4.1",
+    "prismjs": "^1.30.0",
     "prop-types": "^15.6.0",
     "query-string": "7.0.1",
     "react": "17.0.2",

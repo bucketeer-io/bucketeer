@@ -19,9 +19,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/jinzhu/copier"
 	"strconv"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
@@ -760,6 +760,9 @@ func (s *FeatureService) DeleteFlagTrigger(
 			&domain.FlagTrigger{},
 			flagTrigger,
 		)
+		if err != nil {
+			return err
+		}
 		if err := s.flagTriggerStorage.DeleteFlagTrigger(
 			contextWithTx,
 			flagTrigger.Id,

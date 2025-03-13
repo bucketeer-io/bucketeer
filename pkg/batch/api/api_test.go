@@ -104,7 +104,7 @@ func TestExperimentStatusUpdater(t *testing.T) {
 			)
 		experimentMockClient.EXPECT().
 			ListExperiments(gomock.Any(), gomock.Any()).
-			Times(4).
+			Times(2).
 			Return(
 				&experimentproto.ListExperimentsResponse{
 					Experiments: getExperiments(t),

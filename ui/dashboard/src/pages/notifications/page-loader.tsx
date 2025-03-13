@@ -3,14 +3,10 @@ import { Trans } from 'react-i18next';
 import { notificationUpdater } from '@api/notification';
 import { invalidateNotifications } from '@queries/notifications';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Notification } from '@types';
 import ConfirmModal from 'elements/confirm-modal';
-import PageLayout from 'elements/page-layout';
-import { EmptyCollection } from './collection-layout/empty-collection';
-import { useFetchNotifications } from './collection-loader/use-fetch-notifications';
 import AddNotificationModal from './notification-modal/add-notification-modal';
 import EditNotificationModal from './notification-modal/edit-notification-modal';
 import PageContent from './page-content';
@@ -19,18 +15,7 @@ import { NotificationActionsType } from './types';
 const PageLoader = () => {
   const { t } = useTranslation(['table']);
   const queryClient = useQueryClient();
-  const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const {
-    data: collection,
-    isLoading,
-    refetch,
-    isError
-  } = useFetchNotifications({
-    pageSize: 1,
-    organizationId: currentEnvironment.organizationId
-  });
   const [isDisabling, setIsDisabling] = useState<boolean>(false);
   const [selectedNotification, setSelectedNotification] =
     useState<Notification>();
@@ -48,14 +33,15 @@ const PageLoader = () => {
     notification: Notification,
     type: NotificationActionsType
   ) => {
-    if (type === 'EDIT') {
-      onOpenEditModal();
-    } else if (type === 'ENABLE') {
-      setIsDisabling(false);
-      onOpenConfirmModal();
-    } else if (type === 'DISABLE') {
-      setIsDisabling(true);
-      onOpenConfirmModal();
+    switch (type) {
+      case 'EDIT':
+        return onOpenEditModal();
+      case 'ENABLE':
+      case 'DISABLE':
+        setIsDisabling(type === 'DISABLE');
+        return onOpenConfirmModal();
+      default:
+        break;
     }
     setSelectedNotification(notification);
   };
@@ -81,21 +67,9 @@ const PageLoader = () => {
     }
   };
 
-  const isEmpty = collection?.subscriptions.length === 0;
-
   return (
     <>
-      {isLoading ? (
-        <PageLayout.LoadingState />
-      ) : isError ? (
-        <PageLayout.ErrorState onRetry={refetch} />
-      ) : isEmpty ? (
-        <PageLayout.EmptyState>
-          <EmptyCollection onAdd={onOpenAddModal} />
-        </PageLayout.EmptyState>
-      ) : (
-        <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
-      )}
+      <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
 
       {isOpenAddModal && (
         <AddNotificationModal

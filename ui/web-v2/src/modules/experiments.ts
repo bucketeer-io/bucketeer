@@ -108,7 +108,7 @@ export const listExperiments = createAsyncThunk<
   if (params.status != null) {
     const int32Value = new Int32Value();
     int32Value.setValue(params.status);
-    request.setStatus(int32Value);
+    request.setStatusesList([int32Value]);
   }
   if (params.featureId) {
     request.setFeatureId(params.featureId);
@@ -120,10 +120,10 @@ export const listExperiments = createAsyncThunk<
     request.setFeatureVersion(version);
   }
   if (params.startFrom) {
-    request.setFrom(params.startFrom);
+    request.setStartAt(params.startFrom);
   }
   if (params.stopUntil) {
-    request.setTo(params.stopUntil);
+    request.setStopAt(params.stopUntil);
   }
   const result = await grpc.listExperiments(request);
   return result.response.toObject();

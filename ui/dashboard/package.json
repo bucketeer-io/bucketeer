@@ -38,7 +38,7 @@
     "@testing-library/jest-dom": "^6.4.8",
     "@types/chart.js": "^2.9.41",
     "@types/js-cookie": "^3.0.6",
-    "axios": "^1.7.4",
+    "axios": "^1.8.2",
     "chart.js": "^4.4.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

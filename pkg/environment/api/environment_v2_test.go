@@ -15,6 +15,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"testing"
@@ -29,7 +30,9 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
+	storagemock "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -63,11 +66,9 @@ func TestGetEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2es.ErrEnvironmentNotFound)
 			},
 			id:          "id-0",
 			expectedErr: createError(statusEnvironmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
@@ -75,11 +76,9 @@ func TestGetEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
 			},
 			id:          "id-1",
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
@@ -87,11 +86,9 @@ func TestGetEnvironmentV2(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.EnvironmentV2{}, nil)
 			},
 			id:          "id-3",
 			expectedErr: nil,
@@ -152,9 +149,9 @@ func TestListEnvironmentsV2(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), errors.New("error"))
 			},
 			input:       &proto.ListEnvironmentsV2Request{},
 			expected:    nil,
@@ -163,18 +160,9 @@ func TestListEnvironmentsV2(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().ListEnvironmentsV2(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*proto.EnvironmentV2{}, 0, int64(0), nil)
 			},
 			input:       &proto.ListEnvironmentsV2Request{PageSize: 2, Cursor: ""},
 			expected:    &proto.ListEnvironmentsV2Response{Environments: []*proto.EnvironmentV2{}, Cursor: "0"},
@@ -334,11 +322,9 @@ func TestCreateEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrProjectNotFound",
 			setup: func(s *EnvironmentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2es.ErrProjectNotFound)
 			},
 			req: &proto.CreateEnvironmentV2Request{
 				Command: &proto.CreateEnvironmentV2Command{Name: "name", UrlCode: "url-code", ProjectId: "project-id"},
@@ -348,14 +334,13 @@ func TestCreateEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrEnvironmentAlreadyExists",
 			setup: func(s *EnvironmentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id"},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentAlreadyExists)
 			},
 			req: &proto.CreateEnvironmentV2Request{
@@ -366,11 +351,14 @@ func TestCreateEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id"},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
 			},
 			req: &proto.CreateEnvironmentV2Request{
 				Command: &proto.CreateEnvironmentV2Command{Name: "name", UrlCode: "url-code", ProjectId: "project-id"},
@@ -380,14 +368,19 @@ func TestCreateEnvironmentV2(t *testing.T) {
 		{
 			desc: "success: require comment is true",
 			setup: func(s *EnvironmentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id"},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().CreateEnvironmentV2(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &proto.CreateEnvironmentV2Request{
@@ -404,14 +397,19 @@ func TestCreateEnvironmentV2(t *testing.T) {
 		{
 			desc: "success: require comment is false",
 			setup: func(s *EnvironmentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id"},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().CreateEnvironmentV2(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &proto.CreateEnvironmentV2Request{
@@ -595,11 +593,9 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 		{
 			desc: "err: ErrProjectNotFound",
 			setup: func(s *EnvironmentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2es.ErrProjectNotFound)
 			},
 			req: &proto.CreateEnvironmentV2Request{
 				Name:      "name",
@@ -611,11 +607,11 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 		{
 			desc: "err: ErrEnvironmentAlreadyExists",
 			setup: func(s *EnvironmentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id"},
+				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentAlreadyExists)
@@ -630,11 +626,9 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
 			},
 			req: &proto.CreateEnvironmentV2Request{
 				Name:      "name",
@@ -646,12 +640,18 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 		{
 			desc: "success: require comment is true",
 			setup: func(s *EnvironmentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id"},
+				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().CreateEnvironmentV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -667,12 +667,18 @@ func TestCreateEnvironmentV2NoCommand(t *testing.T) {
 		{
 			desc: "success: require comment is false",
 			setup: func(s *EnvironmentService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().GetProject(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.Project{
+					Project: &proto.Project{Id: "project-id"},
+				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().CreateEnvironmentV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
@@ -763,9 +769,8 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentNotFound)
 			},
 			req: &proto.UpdateEnvironmentV2Request{
@@ -777,9 +782,8 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
 			req: &proto.UpdateEnvironmentV2Request{
@@ -791,9 +795,19 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.EnvironmentV2{
+					EnvironmentV2: &proto.EnvironmentV2{},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().UpdateEnvironmentV2(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &proto.UpdateEnvironmentV2Request{
@@ -950,9 +964,8 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentNotFound)
 			},
 			req: &proto.ArchiveEnvironmentV2Request{Id: "id01", Command: &proto.ArchiveEnvironmentV2Command{}},
@@ -964,9 +977,8 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
 			req:         &proto.ArchiveEnvironmentV2Request{Id: "id02", Command: &proto.ArchiveEnvironmentV2Command{}},
@@ -975,9 +987,19 @@ func TestArchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().GetEnvironmentV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&domain.EnvironmentV2{
+					EnvironmentV2: &proto.EnvironmentV2{},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().UpdateEnvironmentV2(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req:         &proto.ArchiveEnvironmentV2Request{Id: "id01", Command: &proto.ArchiveEnvironmentV2Command{}},
@@ -1024,9 +1046,8 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrEnvironmentNotFound",
 			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrEnvironmentNotFound)
 			},
 			req: &proto.UnarchiveEnvironmentV2Request{Id: "id01", Command: &proto.UnarchiveEnvironmentV2Command{}},
@@ -1038,9 +1059,8 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
 			req:         &proto.UnarchiveEnvironmentV2Request{Id: "id02", Command: &proto.UnarchiveEnvironmentV2Command{}},
@@ -1049,9 +1069,8 @@ func TestUnarchiveEnvironmentV2(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *EnvironmentService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req:         &proto.UnarchiveEnvironmentV2Request{Id: "id01", Command: &proto.UnarchiveEnvironmentV2Command{}},

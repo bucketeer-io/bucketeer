@@ -4,6 +4,7 @@ import { ThunkAction } from 'redux-thunk';
 import { accountsSlice } from './accounts';
 import { adminNotificationSlice } from './adminNotifications';
 import { apiKeySlice } from './apiKeys';
+import { codeRefsSlice } from './codeRefs';
 import { auditLogSlice } from './auditLogs';
 import { authSlice } from './auth';
 import { autoOpsRulesSlice } from './autoOpsRules';
@@ -30,6 +31,7 @@ export const reducers = combineReducers({
   adminNotification: adminNotificationSlice.reducer,
   auditLog: auditLogSlice.reducer,
   apiKeys: apiKeySlice.reducer,
+  codeRefs: codeRefsSlice.reducer,
   auth: authSlice.reducer,
   autoOpsRules: autoOpsRulesSlice.reducer,
   progressiveRollout: progressiveRolloutSlice.reducer,

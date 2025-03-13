@@ -86,9 +86,14 @@ message StopAutoOpsRuleResponse {}
 
 message DeleteAutoOpsRuleRequest {
   reserved 1;
-  string id = 2;
-  DeleteAutoOpsRuleCommand command = 3;
-  string environment_id = 4;
+  string id = 2 [(google.api.field_behavior) = REQUIRED];
+  DeleteAutoOpsRuleCommand command = 3 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
 message DeleteAutoOpsRuleResponse {}
@@ -159,9 +164,7 @@ message UpdateAutoOpsRuleRequest {
   repeated UpdateDatetimeClause update_datetime_clauses = 11;
 }
 
-message UpdateAutoOpsRuleResponse {
-  AutoOpsRule auto_ops_rule = 1;
-}
+message UpdateAutoOpsRuleResponse {}
 
 message ExecuteAutoOpsRequest {
   reserved 1;
@@ -195,11 +198,23 @@ message ListOpsCountsResponse {
 
 message CreateProgressiveRolloutRequest {
   reserved 1;
-  CreateProgressiveRolloutCommand command = 2;
-  string environment_id = 3;
+  CreateProgressiveRolloutCommand command = 2 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 4 [(google.api.field_behavior) = REQUIRED];
+  optional ProgressiveRolloutManualScheduleClause
+      progressive_rollout_manual_schedule_clause = 5;
+  optional ProgressiveRolloutTemplateScheduleClause
+      progressive_rollout_template_schedule_clause = 6;
 }
 
-message CreateProgressiveRolloutResponse {}
+message CreateProgressiveRolloutResponse {
+  ProgressiveRollout progressive_rollout = 1;
+}
 
 message GetProgressiveRolloutRequest {
   reserved 1;
@@ -214,8 +229,14 @@ message GetProgressiveRolloutResponse {
 message StopProgressiveRolloutRequest {
   reserved 1;
   string id = 2;
-  StopProgressiveRolloutCommand command = 3;
+  StopProgressiveRolloutCommand command = 3 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   string environment_id = 4;
+  ProgressiveRollout.StoppedBy stopped_by = 5;
 }
 
 message StopProgressiveRolloutResponse {}
@@ -223,7 +244,12 @@ message StopProgressiveRolloutResponse {}
 message DeleteProgressiveRolloutRequest {
   reserved 1;
   string id = 2;
-  DeleteProgressiveRolloutCommand command = 3;
+  DeleteProgressiveRolloutCommand command = 3 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   string environment_id = 4;
 }
 
@@ -295,6 +321,17 @@ service AutoOpsService {
           examples: {
             key: "application/json"
             value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
           }
         }
       }
@@ -372,7 +409,7 @@ service AutoOpsService {
   rpc StopAutoOpsRule(StopAutoOpsRuleRequest)
       returns (StopAutoOpsRuleResponse) {
     option (google.api.http) = {
-      patch: "/v1/auto_ops_rule/stop"
+      post: "/v1/auto_ops_rule/stop"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -402,10 +439,53 @@ service AutoOpsService {
           }
         }
       }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
     };
   }
   rpc DeleteAutoOpsRule(DeleteAutoOpsRuleRequest)
-      returns (DeleteAutoOpsRuleResponse) {}
+      returns (DeleteAutoOpsRuleResponse) {
+    option (google.api.http) = {
+      delete: "/v1/auto_ops_rule"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete"
+      description: "Delete an auto ops rule."
+      tags: "auto_ops_rule"
+      operation_id: "web.v1.auto_ops_rule.delete"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc UpdateAutoOpsRule(UpdateAutoOpsRuleRequest)
       returns (UpdateAutoOpsRuleResponse) {
     option (google.api.http) = {
@@ -436,6 +516,17 @@ service AutoOpsService {
           examples: {
             key: "application/json"
             value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
           }
         }
       }
@@ -473,19 +564,225 @@ service AutoOpsService {
           }
         }
       }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
     };
   }
   rpc ListOpsCounts(ListOpsCountsRequest) returns (ListOpsCountsResponse) {}
   rpc CreateProgressiveRollout(CreateProgressiveRolloutRequest)
-      returns (CreateProgressiveRolloutResponse) {}
+      returns (CreateProgressiveRolloutResponse) {
+    option (google.api.http) = {
+      post: "/v1/progressive_rollout"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create"
+      description: "Create a progressive rollout."
+      tags: "progressive_rollout"
+      operation_id: "web.v1.progressive_rollout.create"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc GetProgressiveRollout(GetProgressiveRolloutRequest)
-      returns (GetProgressiveRolloutResponse) {}
+      returns (GetProgressiveRolloutResponse) {
+    option (google.api.http) = {
+      get: "/v1/progressive_rollout"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get"
+      description: "Get a progressive rollout."
+      tags: "progressive_rollout"
+      operation_id: "web.v1.progressive_rollout.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc StopProgressiveRollout(StopProgressiveRolloutRequest)
-      returns (StopProgressiveRolloutResponse) {}
+      returns (StopProgressiveRolloutResponse) {
+    option (google.api.http) = {
+      patch: "/v1/progressive_rollout/stop"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Stop"
+      description: "Stop a progressive rollout."
+      tags: "progressive_rollout"
+      operation_id: "web.v1.progressive_rollout.stop"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc DeleteProgressiveRollout(DeleteProgressiveRolloutRequest)
-      returns (DeleteProgressiveRolloutResponse) {}
+      returns (DeleteProgressiveRolloutResponse) {
+    option (google.api.http) = {
+      delete: "/v1/progressive_rollout"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete"
+      description: "Delete a progressive rollout."
+      tags: "progressive_rollout"
+      operation_id: "web.v1.progressive_rollout.delete"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ListProgressiveRollouts(ListProgressiveRolloutsRequest)
-      returns (ListProgressiveRolloutsResponse) {}
+      returns (ListProgressiveRolloutsResponse) {
+    option (google.api.http) = {
+      get: "/v1/progressive_rollouts"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List"
+      description: "List progressive rollouts."
+      tags: "progressive_rollout"
+      operation_id: "web.v1.progressive_rollout.list"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ExecuteProgressiveRollout(ExecuteProgressiveRolloutRequest)
       returns (ExecuteProgressiveRolloutResponse) {}
 }
