@@ -770,8 +770,12 @@ func (s *AutoOpsService) listProgressiveRollouts(
 	req *autoopsproto.ListProgressiveRolloutsRequest,
 	localizer locale.Localizer,
 ) ([]*autoopsproto.ProgressiveRollout, int64, int, error) {
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.EnvironmentId,
+		},
 	}
 	limit := int(req.PageSize)
 	cursor := req.Cursor
@@ -789,9 +793,13 @@ func (s *AutoOpsService) listProgressiveRollouts(
 		}
 		return nil, 0, 0, dt.Err()
 	}
+	var inFilter *mysql.InFilter = nil
 	if len(req.FeatureIds) > 0 {
 		fIDs := s.convToInterfaceSlice(req.FeatureIds)
-		whereParts = append(whereParts, mysql.NewInFilter("feature_id", fIDs))
+		inFilter = &mysql.InFilter{
+			Column: "feature_id",
+			Values: fIDs,
+		}
 	}
 	orders, err := s.newListProgressiveRolloutsOrdersMySQL(
 		req.OrderBy,
@@ -809,19 +817,24 @@ func (s *AutoOpsService) listProgressiveRollouts(
 		return nil, 0, 0, err
 	}
 	if req.Type != nil {
-		whereParts = append(whereParts, mysql.NewFilter("type", "=", req.Type))
+		filters = append(filters, &mysql.FilterV2{Column: "type", Operator: mysql.OperatorEqual, Value: req.Type})
 	}
 	if req.Status != nil {
-		whereParts = append(whereParts, mysql.NewFilter("status", "=", req.Status))
+		filters = append(filters, &mysql.FilterV2{Column: "status", Operator: mysql.OperatorEqual, Value: req.Status})
 	}
+	listOptions := &mysql.ListOptions{
+		Filters:     filters,
+		Orders:      orders,
+		InFilter:    inFilter,
+		NullFilters: nil,
+		JSONFilters: nil,
+		SearchQuery: nil,
+		Limit:       limit,
+		Offset:      offset,
+	}
+
 	storage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
-	progressiveRollouts, totalCount, nextOffset, err := storage.ListProgressiveRollouts(
-		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
-	)
+	progressiveRollouts, totalCount, nextOffset, err := storage.ListProgressiveRollouts(ctx, listOptions)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list progressive rollouts",

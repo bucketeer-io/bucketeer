@@ -16,6 +16,7 @@ package v2
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -90,6 +91,94 @@ func TestCreateProgressiveRollout(t *testing.T) {
 			p.setup(storage)
 		}
 		err := storage.CreateProgressiveRollout(context.Background(), p.input, p.environmentId)
+		assert.Equal(t, p.expectedErr, err)
+	}
+}
+
+func TestListProgressiveRollouts(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		setup              func(*progressiveRolloutStorage)
+		listOpts           *mysql.ListOptions
+		expected           []*proto.ProgressiveRollout
+		expectedCursor     int
+		expectedTotalCount int64
+		expectedErr        error
+	}{
+		{
+			setup: func(s *progressiveRolloutStorage) {
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+			},
+			listOpts:           nil,
+			expected:           nil,
+			expectedCursor:     0,
+			expectedTotalCount: 0,
+			expectedErr:        errors.New("error"),
+		},
+		{
+			setup: func(s *progressiveRolloutStorage) {
+				rows := mock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe).Times(2)
+				qe.EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mock.NewMockRow(mockController)
+				qe.EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+			},
+			listOpts: &mysql.ListOptions{
+				Limit:  10,
+				Offset: 5,
+				Filters: []*mysql.FilterV2{
+					{
+						Column:   "num",
+						Operator: mysql.OperatorGreaterThanOrEqual,
+						Value:    5,
+					},
+				},
+				InFilter:    nil,
+				NullFilters: nil,
+				JSONFilters: nil,
+				SearchQuery: nil,
+				Orders: []*mysql.Order{
+					{
+						Column:    "id",
+						Direction: mysql.OrderDirectionAsc,
+					},
+				},
+			},
+			expected:           []*proto.ProgressiveRollout{},
+			expectedCursor:     5,
+			expectedTotalCount: 0,
+			expectedErr:        nil,
+		},
+	}
+	for _, p := range patterns {
+		storage := newProgressiveRolloutStorageWithMock(t, mockController)
+		if p.setup != nil {
+			p.setup(storage)
+		}
+		pr, totalCount, cursor, err := storage.ListProgressiveRollouts(context.Background(), p.listOpts)
+		assert.Equal(t, p.expected, pr)
+		assert.Equal(t, p.expectedCursor, cursor)
+		assert.Equal(t, p.expectedTotalCount, totalCount)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
