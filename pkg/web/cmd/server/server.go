@@ -825,6 +825,7 @@ func (s *server) createAuthService(
 	}
 	serviceOptions := []authapi.Option{
 		authapi.WithLogger(logger),
+		authapi.WithRefreshTokenTTL(30 * 24 * time.Hour),
 	}
 	if *s.emailFilter != "" {
 		filter, err := regexp.Compile(*s.emailFilter)
