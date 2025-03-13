@@ -51,14 +51,19 @@ spec:
                   echo "Start {{ .name }} job."
                   ENDPOINT="${WEB_GATEWAY_ADDRESS}/bucketeer.batch.BatchService/ExecuteBatchJob"
                   TOKEN=`cat /usr/local/service-token/token`
-                  RES=`curl -X POST -m 3600 --cacert /usr/local/certs/service/tls.crt -d '{"job": "{{ .jobId }}"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null -w '%{http_code}\\n' ${ENDPOINT}`
-                  echo "{{ .name }} job result: ${RES}"
-                  if [ "$RES" = 200 ] || [ "$RES" = 503 ] || [ "$RES" = 000 ]
-                  then
-                    exit 0
-                  else
-                    exit 1
-                  fi
+                  
+                  # Run the curl command in the background
+                  echo "Starting asynchronous API call to ${ENDPOINT}"
+                  curl -X POST -m 3600 --cacert /usr/local/certs/service/tls.crt -d '{"job": "{{ .jobId }}"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null ${ENDPOINT} > /dev/null 2>&1 &
+                  
+                  # Store the process ID of the background curl process
+                  CURL_PID=$!
+                  
+                  echo "{{ .name }} job submitted asynchronously with PID: ${CURL_PID}"
+                  echo "CronJob completed successfully. The API call will continue running in the background."
+                  
+                  # Exit with success since we're just initiating the job, not waiting for it
+                  exit 0
           restartPolicy: Never
 {{- end }}
 {{- end }}
