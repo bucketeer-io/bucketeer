@@ -398,6 +398,7 @@
   "fullStop": "。",
   "generalInformation": "一般情報",
   "goal.action.archive": "アーカイブ",
+  "goal.action.archiveTooltip": "アーカイブする前にゴールの使用を停止してください。",
   "goal.add.header.description": "ゴールを使用することで、エクスペリメントでフィーチャーフラグの影響受けるユーザーの行動を計測できます。",
   "goal.add.header.title": "ゴールの作成",
   "goal.addNewGoal": "ゴールを作成する",

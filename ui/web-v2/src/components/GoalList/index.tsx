@@ -61,13 +61,16 @@ export const GoalList: FC<GoalListProps> = memo(
       (state) => state.goals.totalCount,
       shallowEqual
     );
-
-    const createMenuItems = (): Array<MenuItem> => {
+    const createMenuItems = (isInUseStatus: boolean): Array<MenuItem> => {
       const items: Array<MenuItem> = [];
       items.push({
         action: MenuActions.ARCHIVE,
         name: intl.formatMessage(messages.feature.action.archive),
-        iconElement: <MUArchiveIcon />
+        iconElement: <MUArchiveIcon />,
+        disabled: isInUseStatus,
+        tooltipMessage: isInUseStatus
+          ? intl.formatMessage(messages.goal.action.archiveTooltip)
+          : null
       });
       return items;
     };
@@ -181,7 +184,7 @@ export const GoalList: FC<GoalListProps> = memo(
                                   return;
                               }
                             }}
-                            menuItems={createMenuItems()}
+                            menuItems={createMenuItems(goal.isInUseStatus)}
                           />
                         </td>
                       )}
