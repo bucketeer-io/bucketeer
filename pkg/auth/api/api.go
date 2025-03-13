@@ -60,7 +60,7 @@ type options struct {
 }
 
 var defaultOptions = options{
-	refreshTokenTTL: 30 * 24 * time.Hour,
+	refreshTokenTTL: 7 * 24 * time.Hour,
 	logger:          zap.NewNop(),
 }
 
