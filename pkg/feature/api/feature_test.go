@@ -43,6 +43,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -521,9 +522,8 @@ func TestCreateFeatureMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrFeatureAlreadyExists)
 			},
 			id:                       "Bucketeer-id-2019",
@@ -538,8 +538,16 @@ func TestCreateFeatureMySQL(t *testing.T) {
 		},
 		{
 			setup: func(s *FeatureService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.tagStorage.(*mock.MockTagStorage).EXPECT().UpsertTag(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil).Times(3)
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CreateFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
@@ -2341,6 +2349,11 @@ func TestCloneFeatureMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	vID1 := newUUID(t)
+	vID2 := newUUID(t)
+	cID := newUUID(t)
+	rID := newUUID(t)
+	fID := newUUID(t)
 
 	ctx := createContextWithToken()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
@@ -2394,14 +2407,55 @@ func TestCloneFeatureMySQL(t *testing.T) {
 		{
 			desc: "error: statusAlreadyExists",
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.Feature{
+					Feature: &featureproto.Feature{
+						Id: fID,
+						Variations: []*featureproto.Variation{
+							{
+								Id:    vID1,
+								Value: "true",
+								Name:  "true",
+							},
+							{
+								Id:    vID2,
+								Value: "false",
+								Name:  "false",
+							},
+						},
+						OffVariation: vID2,
+						Rules: []*featureproto.Rule{
+							{
+								Id: rID,
+								Strategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: vID2,
+									},
+								},
+								Clauses: []*featureproto.Clause{
+									{
+										Id:       cID,
+										Operator: featureproto.Clause_SEGMENT,
+										Values: []string{
+											"segment-id",
+										},
+									},
+								},
+							},
+						},
+						DefaultStrategy: &featureproto.Strategy{
+							Type: featureproto.Strategy_FIXED,
+							FixedStrategy: &featureproto.FixedStrategy{
+								Variation: vID1,
+							},
+						},
+						Tags: []string{"android"},
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrFeatureAlreadyExists)
 			},
 			req: &featureproto.CloneFeatureRequest{
@@ -2416,13 +2470,60 @@ func TestCloneFeatureMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *FeatureService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				).Return(&domain.Feature{
+					Feature: &featureproto.Feature{
+						Id: fID,
+						Variations: []*featureproto.Variation{
+							{
+								Id:    vID1,
+								Value: "true",
+								Name:  "true",
+							},
+							{
+								Id:    vID2,
+								Value: "false",
+								Name:  "false",
+							},
+						},
+						OffVariation: vID2,
+						Rules: []*featureproto.Rule{
+							{
+								Id: rID,
+								Strategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: vID2,
+									},
+								},
+								Clauses: []*featureproto.Clause{
+									{
+										Id:       cID,
+										Operator: featureproto.Clause_SEGMENT,
+										Values: []string{
+											"segment-id",
+										},
+									},
+								},
+							},
+						},
+						DefaultStrategy: &featureproto.Strategy{
+							Type: featureproto.Strategy_FIXED,
+							FixedStrategy: &featureproto.FixedStrategy{
+								Variation: vID1,
+							},
+						},
+						Tags: []string{"android"},
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().CreateFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
@@ -4559,6 +4660,11 @@ func TestUpdateFeature(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	fID := newUUID(t)
+	vID1 := newUUID(t)
+	vID2 := newUUID(t)
+	rID := newUUID(t)
+	cID := newUUID(t)
 
 	ctx := createContextWithToken()
 	localizer := locale.NewLocalizer(ctx)
@@ -4651,9 +4757,8 @@ func TestUpdateFeature(t *testing.T) {
 					&envproto.GetEnvironmentV2Response{Environment: &envproto.EnvironmentV2{RequireComment: true}},
 					nil,
 				)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
 					gomock.Any(), gomock.Any(),
@@ -4683,10 +4788,63 @@ func TestUpdateFeature(t *testing.T) {
 					&envproto.GetEnvironmentV2Response{Environment: &envproto.EnvironmentV2{RequireComment: true}},
 					nil,
 				)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					err := fn(ctx, nil)
+					require.NoError(t, err)
+				}).Return(nil)
+				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{
+					{
+						Id: fID,
+						Variations: []*featureproto.Variation{
+							{
+								Id:    vID1,
+								Value: "true",
+								Name:  "true",
+							},
+							{
+								Id:    vID2,
+								Value: "false",
+								Name:  "false",
+							},
+						},
+						OffVariation: vID2,
+						Rules: []*featureproto.Rule{
+							{
+								Id: rID,
+								Strategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: vID2,
+									},
+								},
+								Clauses: []*featureproto.Clause{
+									{
+										Id:       cID,
+										Operator: featureproto.Clause_SEGMENT,
+										Values: []string{
+											"segment-id",
+										},
+									},
+								},
+							},
+						},
+						DefaultStrategy: &featureproto.Strategy{
+							Type: featureproto.Strategy_FIXED,
+							FixedStrategy: &featureproto.FixedStrategy{
+								Variation: vID1,
+							},
+						},
+						Tags: []string{"android"},
+					},
+				}, 0, int64(0), nil)
+				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().UpdateFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
+
 				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -4696,7 +4854,7 @@ func TestUpdateFeature(t *testing.T) {
 			input: &featureproto.UpdateFeatureRequest{
 				EnvironmentId: "eid",
 				Comment:       "comment",
-				Id:            "fid",
+				Id:            fID,
 				Name:          wrapperspb.String("name"),
 				Description:   wrapperspb.String("desc"),
 			},

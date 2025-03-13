@@ -133,11 +133,9 @@ func (s *FeatureService) newListTagsOrdersMySQL(
 
 func (s *FeatureService) upsertTags(
 	ctx context.Context,
-	tx mysql.Transaction,
 	tags []string,
 	environmentId string,
 ) error {
-	tagStorage := v2fs.NewTagStorage(tx)
 	for _, tag := range tags {
 		trimed := strings.TrimSpace(tag)
 		if trimed == "" {
@@ -155,7 +153,7 @@ func (s *FeatureService) upsertTags(
 			)
 			return err
 		}
-		if err := tagStorage.UpsertTag(ctx, t, environmentId); err != nil {
+		if err := s.tagStorage.UpsertTag(ctx, t, environmentId); err != nil {
 			s.logger.Error(
 				"Failed to store tag",
 				log.FieldsFromImcomingContext(ctx).AddFields(
