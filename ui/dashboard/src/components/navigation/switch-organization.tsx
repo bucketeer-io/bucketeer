@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { switchOrganization } from '@api/auth';
 import { useAuth } from 'auth';
@@ -61,13 +61,9 @@ const SwitchOrganization = ({
   const navigate = useNavigate();
   const { t } = useTranslation(['common', 'form']);
   const { myOrganizations, onMeFetcher } = useAuth();
-  const availableOrganizations = useMemo(
-    () => myOrganizations?.filter(item => item.environmentCount),
-    [myOrganizations]
-  );
   const organizationId = getOrgIdStorage();
   const [searchValue, setSearchValue] = useState('');
-  const [organizations, setOrganizations] = useState(availableOrganizations);
+  const [organizations, setOrganizations] = useState(myOrganizations);
   const [currentOrganization, setCurrentOrganization] = useState(
     organizationId ?? ''
   );
@@ -77,14 +73,14 @@ const SwitchOrganization = ({
 
   const onSearchOrganization = useCallback(
     (value: string) => {
-      if (!value) return setOrganizations(availableOrganizations);
-      const newOrgs = availableOrganizations.filter(item =>
+      if (!value) return setOrganizations(myOrganizations);
+      const newOrgs = myOrganizations.filter(item =>
         item.name?.toLowerCase()?.includes(value.toString())
       );
       setSearchValue(value);
       setOrganizations(newOrgs);
     },
-    [availableOrganizations, myOrganizations]
+    [myOrganizations]
   );
 
   const onChangeOrganization = useCallback(
@@ -135,7 +131,7 @@ const SwitchOrganization = ({
     <div
       ref={menuRef}
       className={cn(
-        'absolute top-0 left-[248px] w-[238px] h-screen bg-primary-100 transition-all duration-300',
+        'absolute z-50 top-0 left-[248px] w-[238px] h-screen bg-primary-100 transition-all duration-300',
         {
           'w-0 [&>div]:px-0 opacity-0': !isOpen
         }
@@ -174,6 +170,7 @@ const SwitchOrganization = ({
                   isLoading={isLoading}
                   active={currentOrganization === item.id}
                   onClick={() => {
+                    if (currentOrganization === item.id) return;
                     setCurrentOrganization(item.id);
                     onChangeOrganization(item.id);
                   }}
