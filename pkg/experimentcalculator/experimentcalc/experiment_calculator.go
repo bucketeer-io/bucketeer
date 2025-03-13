@@ -92,8 +92,8 @@ func NewExperimentCalculator(
 func (e ExperimentCalculator) Run(ctx context.Context, request *domain.ExperimentCalculatorReq) error {
 	startTime := time.Now()
 
-	// Create a new context with a longer timeout (45 minutes)
-	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	// Create a new context with a longer timeout (30 minutes)
+	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
 
 	// Use the new context with longer timeout for all operations

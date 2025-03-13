@@ -53,9 +53,9 @@ spec:
                   TOKEN=`cat /usr/local/service-token/token`
                   
                   # Run the curl command in the background
-                  echo "Starting asynchronous API call to ${ENDPOINT}"
+                  echo "Starting asynchronous API call to ${ENDPOINT}, job: {{ .jobId }}"
                   curl -X POST -m 3600 --cacert /usr/local/certs/service/tls.crt -d '{"job": "{{ .jobId }}"}' -H "authorization: bearer ${TOKEN}" -H "Content-Type: application/json" -s -o /dev/null ${ENDPOINT} > /dev/null 2>&1 &
-                  
+
                   # Store the process ID of the background curl process
                   CURL_PID=$!
                   
