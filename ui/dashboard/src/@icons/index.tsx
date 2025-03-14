@@ -56,6 +56,16 @@ import IconSlack from './special-icons/slack.svg?react';
 import IconStoppedExperiment from './special-icons/stopped-experiment.svg?react';
 import IconWaitingExperiment from './special-icons/waiting-experment.svg?react';
 
+import IconFlagJSON from './customized-icons/json.svg?react';
+import IconFlagNumber from './customized-icons/number.svg?react';
+import IconOperationArrow from './customized-icons/operation-arrow.svg?react';
+import IconFlagOperation from './customized-icons/operation.svg?react';
+import IconPlus from './customized-icons/plus.svg?react';
+import IconFlagString from './customized-icons/string.svg?react';
+import IconFlagSwitch from './customized-icons/switch.svg?react';
+import IconUserSettings from './customized-icons/user-settings.svg?react';
+import IconWatch from './customized-icons/watch.svg?react';
+
 export {
   // Sidebar icons
   IconFolder,
@@ -99,6 +109,16 @@ export {
   IconArrowDown,
   IconStopExperiment,
   IconStartExperiment,
+  IconUserSettings,
+  IconFlagOperation,
+  IconOperationArrow,
+  IconFlagSwitch,
+  IconFlagNumber,
+  IconFlagString,
+  IconFlagJSON,
+  IconWatch,
+  IconPlus,
+  
   // Special icons
   IconGoal,
   IconGoogle,
