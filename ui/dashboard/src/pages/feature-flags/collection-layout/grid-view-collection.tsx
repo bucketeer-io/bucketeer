@@ -1,4 +1,4 @@
-import { PropsWithChildren } from 'react';
+import { ReactNode, useCallback, useState } from 'react';
 import {
   IconArchiveOutlined,
   IconMoreVertOutlined,
@@ -8,49 +8,32 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { compact } from 'lodash';
+import { Feature } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
-import {
-  IconFlagJSON,
-  IconFlagNumber,
-  IconFlagString,
-  IconFlagSwitch,
-  IconWatch
-} from '@icons';
+import { IconWatch } from '@icons';
 import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
-import { FlagActionType, FlagDataType, FlagsTemp } from '../types';
+import { FlagActionType } from '../types';
 import {
   FlagNameElement,
   FlagOperationsElement,
   FlagTagsElement,
-  FlagVariationsElement
+  FlagVariationsElement,
+  GridViewRoot,
+  GridViewRow
 } from './elements';
-
-const GridViewRoot = ({ children }: PropsWithChildren) => (
-  <div className="flex flex-col w-full gap-y-4">{children}</div>
-);
-
-export const getDataTypeIcon = (type: FlagDataType) => {
-  if (type === 'boolean') return IconFlagSwitch;
-  if (type === 'string') return IconFlagString;
-  if (type === 'number') return IconFlagNumber;
-  return IconFlagJSON;
-};
-
-const GridViewRow = ({ children }: PropsWithChildren) => (
-  <div className="flex items-center w-full p-5 gap-x-2 rounded shadow-card bg-white">
-    {children}
-  </div>
-);
+import { getDataTypeIcon, getFlagStatus } from './elements/utils';
 
 const GridViewCollection = ({
   data,
+  emptyState,
   onActions
 }: {
-  data: FlagsTemp[];
-  onActions: (item: FlagsTemp, type: FlagActionType) => void;
+  data: Feature[];
+  emptyState: ReactNode;
+  onActions: (item: Feature, type: FlagActionType) => void;
 }) => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
@@ -58,37 +41,73 @@ const GridViewCollection = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
+  const [tagsExpanded, setTagsExpanded] = useState<string[]>([]);
+
+  const onToggleExpandTag = useCallback(
+    (id: string) => {
+      const isExpanded = tagsExpanded.includes(id);
+      setTagsExpanded(
+        isExpanded
+          ? tagsExpanded.filter(item => item !== id)
+          : [...tagsExpanded, id]
+      );
+    },
+    [tagsExpanded]
+  );
+
+  if (!data?.length) return emptyState;
+
   return (
     <GridViewRoot>
       {data.map((item, index) => {
-        const { id, name, type, status, tags, updatedAt, disabled } = item;
+        const {
+          id,
+          name,
+          maintainer,
+          tags,
+          updatedAt,
+          enabled,
+          variationType,
+          variations,
+          autoOpsSummary
+        } = item;
         return (
           <GridViewRow key={index}>
             <FlagNameElement
+              id={id}
               link={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${id}/targeting`}
               name={name}
-              id={id}
-              icon={getDataTypeIcon(type)}
-              status={status}
+              maintainer={maintainer}
+              icon={getDataTypeIcon(variationType)}
+              status={getFlagStatus(item)}
             />
-            <div className="flex flex-col w-full gap-y-3 max-w-[442px] min-w-[300px]">
-              <FlagVariationsElement />
+            <div className="flex flex-col w-fit gap-y-3 min-w-[300px]">
+              <FlagVariationsElement variations={variations} />
               <div className="flex items-center w-full gap-x-2">
-                <FlagTagsElement tags={tags} />
-                <FlagOperationsElement />
+                <FlagTagsElement
+                  tags={tags}
+                  isExpanded={tagsExpanded.includes(id)}
+                  onToggleExpandTag={() => onToggleExpandTag(id)}
+                />
+                <FlagOperationsElement autoOpsSummary={autoOpsSummary} />
               </div>
             </div>
             <div className="flex flex-1 justify-end self-start h-full gap-x-2">
               <div className="flex-center">
                 <Icon icon={IconWatch} size={'xxs'} />
               </div>
-              <div className="text-gray-700 typo-para-medium">
+              <div className="text-gray-700 typo-para-small whitespace-nowrap">
                 {Number(updatedAt) === 0
                   ? t('never')
                   : `Updated ${formatDateTime(updatedAt)}`}
               </div>
               <div className="flex-center">
-                <Switch checked={!disabled} />
+                <Switch
+                  checked={enabled}
+                  onCheckedChange={() =>
+                    onActions(item, enabled ? 'INACTIVE' : 'ACTIVE')
+                  }
+                />
               </div>
               <Popover
                 options={compact([

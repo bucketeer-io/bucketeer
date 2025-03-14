@@ -8,12 +8,13 @@ import { ButtonBar } from 'components/button-bar';
 import Form from 'components/form';
 import DialogModal from 'components/modal/dialog';
 import TextArea from 'components/textarea';
+import ArchiveWarning from './archive-warning';
 
 export type ArchiveModalProps = {
+  isShowWarning: boolean;
   isOpen: boolean;
   title: string;
   description: React.ReactElement | string;
-  children?: React.ReactNode;
   className?: string;
   onClose: () => void;
   onSubmit: () => void;
@@ -24,10 +25,10 @@ export const formSchema = yup.object().shape({
 });
 
 const ArchiveModal = ({
+  isShowWarning,
   isOpen,
   title,
   description,
-  children,
   className,
   onClose,
   onSubmit
@@ -61,7 +62,7 @@ const ArchiveModal = ({
         <div className="typo-para-small text-gray-600 w-full">
           {description}
         </div>
-        {children}
+        {isShowWarning && <ArchiveWarning />}
         <FormProvider {...form}>
           <Form className="w-full" onSubmit={form.handleSubmit(onSubmit)}>
             <Form.Field

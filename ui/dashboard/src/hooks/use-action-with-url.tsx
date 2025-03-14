@@ -11,16 +11,17 @@ interface Props {
 }
 
 const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
-  const { [idKey]: action, ...params } = useParams();
+  const { [idKey]: id, ['*']: path, ...params } = useParams();
   const navigate = useNavigate();
   const { notify } = useToast();
   const location = useLocation();
   const { state } = location;
-  const isAdd = useMemo(() => action === ID_NEW, [action]);
-  const isClone = useMemo(() => action?.includes('clone'), [action]);
+
+  const isAdd = useMemo(() => path === ID_NEW, [path]);
+  const isClone = useMemo(() => path?.includes('clone'), [path]);
   const isEdit = useMemo(
-    () => action && !isAdd && !isClone,
-    [action, isAdd, isClone]
+    () => path && !isAdd && !isClone,
+    [path, isAdd, isClone]
   );
 
   const onOpenAddModal = () =>
@@ -43,7 +44,7 @@ const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
     });
 
   return {
-    id: action,
+    id,
     isAdd,
     isEdit,
     isClone,

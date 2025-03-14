@@ -62,7 +62,9 @@
     "user-segments-desc": "There are no registered user segments. Add a new one to start managing.",
     "experiment-title": "No registered experiments",
     "experiment-desc": "There are no registered experiments. Add a new one to start managing.",
-    "experiment-details-desc": "The result will be created when the experiment starts."
+    "experiment-details-desc": "The result will be created when the experiment starts.",
+    "feature-flags-title": "No registered feature flags",
+    "feature-flags-desc": "There are no registered feature flags. Add a new one to start managing."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
@@ -141,5 +143,29 @@
     "improvement-tooltip": "A measure of improvement in an indicator related to variation compared to a baseline (also called a control group). It is calculated by comparing the range of values for variation with the range of values for baseline.",
     "probability-to-beat-baseline-tooltip": "Estimated likelihood of exceeding baseline (also known as a control group). A criterion of at least 95% is recommended.",
     "probability-to-best-tooltip": "Possibility of being the best variation. Possibility of being presumed to outperform all other variations. We recommend a criterion of at least 95%."
+  },
+  "feature-flags": {
+    "confirm-archive-desc": "This will archive and return the default value defined in your code for all users. We recommend removing the code references to \"<text>{{name}}</text>\" from your application before archiving.",
+    "confirm-unarchive-desc": "Are you sure you want to unarchive the feature flag \"<text>{{name}}</text>\"?",
+    "archive-warning": "It is receiving one more requests in the last <text>{{days}}.</text>",
+    "confirm-required": "Confirmation Required",
+    "confirm-required-desc": "This will make changes to the flag and increment the version.",
+    "targeting": "Targeting",
+    "variation": "Variation",
+    "evaluation": "Evaluation",
+    "operations": "Operations",
+    "trigger": "Trigger",
+    "experiments": "Experiments",
+    "history": "History",
+    "when-targeting": "When targeting is {{state}}",
+    "serve": "Serve",
+    "add-rule": "Add Rule",
+    "target-segments": "Target Segments",
+    "target-individuals": "Target Individuals",
+    "set-prerequisites": "Set Prerequisites",
+    "default-rule": "Default Rule",
+    "default-rule-desc": "When targeting is ON and contexts don't match any targeting rules",
+    "rules": "Rules",
+    "rule-index": "Rule {{index}}"
   }
 }

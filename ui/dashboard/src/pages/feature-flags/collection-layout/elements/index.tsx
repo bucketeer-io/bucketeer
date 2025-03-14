@@ -1,25 +1,45 @@
-import { FunctionComponent } from 'react';
+import { FunctionComponent, PropsWithChildren } from 'react';
 import { Link } from 'react-router-dom';
+import { COLORS } from 'constants/styles';
+import { useToast } from 'hooks';
+import { useTranslation } from 'i18n';
+import { AutoOpsSummary, FeatureVariation } from '@types';
+import { truncateTextCenter } from 'utils/converts';
+import { copyToClipBoard } from 'utils/function';
 import { cn } from 'utils/style';
 import {
   IconArrowDown,
   IconCalendar,
+  IconCopy,
   IconFlagOperation,
   IconInfo,
   IconInfoFilled,
   IconOperationArrow,
   IconUserSettings
 } from '@icons';
-import { FlagStatusType } from 'pages/feature-flags/types';
+import { FeatureActivityStatus } from 'pages/feature-flags/types';
 import Icon, { IconProps } from 'components/icon';
 
 interface FlagNameElementType {
+  id: string;
   icon: FunctionComponent;
   name: string;
   link: string;
-  status: FlagStatusType;
-  id: string;
+  status: FeatureActivityStatus;
+  maintainer?: string;
 }
+
+export const GridViewRoot = ({ children }: PropsWithChildren) => (
+  <div className="flex flex-col w-ful min-w-max overflow-visible gap-y-4">
+    {children}
+  </div>
+);
+
+export const GridViewRow = ({ children }: PropsWithChildren) => (
+  <div className="flex items-center w-full min-w-fit p-5 gap-x-4 xl:gap-x-10 rounded shadow-card bg-white self-stretch">
+    {children}
+  </div>
+);
 
 const FlagDataTypeIcon = ({
   icon,
@@ -44,35 +64,44 @@ export const FlagIconWrapper = ({
       className
     )}
   >
-    <Icon icon={icon} size={'xs'} color={color} />
+    <Icon icon={icon} size={'xs'} color={color} className="flex-center" />
   </div>
 );
 
-export const FlagStatus = ({ status }: { status: FlagStatusType }) => (
-  <div
-    className={cn(
-      'flex items-center w-fit min-w-fit gap-x-1 px-2 py-1.5 rounded-[3px] relative',
-      {
-        'bg-accent-green-50 text-accent-green-500': status === 'active',
-        'bg-accent-yellow-50 text-accent-yellow-500': status === 'no_activity',
-        'bg-accent-blue-50 text-accent-blue-500': status === 'new'
-      }
-    )}
-  >
-    {status === 'no_activity' && (
-      <Icon icon={IconInfoFilled} color="accent-yellow-500" size={'xxs'} />
-    )}
-    <p className="typo-para-small leading-[14px] capitalize whitespace-nowrap">
-      {status.replace('_', ' ')}
-    </p>
-  </div>
-);
+export const FlagStatus = ({ status }: { status: FeatureActivityStatus }) => {
+  const { t } = useTranslation(['common']);
+
+  const isActive = status === FeatureActivityStatus.ACTIVE;
+  const isNew = status === FeatureActivityStatus.NEW;
+  const isInActive = !isActive && !isNew;
+  const statusKey = isActive ? 'active' : isNew ? 'new' : 'no-activity';
+
+  return (
+    <div
+      className={cn(
+        'flex items-center w-fit min-w-fit gap-x-1 px-2 py-1.5 rounded-[3px] relative',
+        {
+          'bg-accent-green-50 text-accent-green-500': isActive,
+          'bg-accent-yellow-50 text-accent-yellow-500': isInActive,
+          'bg-accent-blue-50 text-accent-blue-500': isNew
+        }
+      )}
+    >
+      {isInActive && (
+        <Icon icon={IconInfoFilled} color="accent-yellow-500" size={'xxs'} />
+      )}
+      <p className="typo-para-small leading-[14px] capitalize whitespace-nowrap">
+        {t(statusKey)}
+      </p>
+    </div>
+  );
+};
 
 export const FlagTag = ({ tag }: { tag: string }) => {
   return (
     <div
       className={
-        'flex-center w-fit px-2 py-[5px] typo-para-small leading-[14px] text-center rounded capitalize bg-primary-50 text-primary-500'
+        'flex-center w-fit px-2 py-1.5 typo-para-small leading-[14px] text-center rounded bg-primary-50 text-primary-500'
       }
     >
       {tag}
@@ -81,100 +110,170 @@ export const FlagTag = ({ tag }: { tag: string }) => {
 };
 
 export const FlagVariationPolygon = ({
-  color = 'blue',
+  index,
   className
 }: {
-  color?: 'blue' | 'pink' | 'green';
+  index: number;
   className?: string;
-}) => (
-  <div
-    className={cn(
-      'flex-center size-[14px] border border-white rounded rotate-45',
-      {
-        'bg-accent-blue-500': color === 'blue',
-        'bg-accent-pink-500': color === 'pink',
-        'bg-accent-green-500': color === 'green'
-      },
-      className
-    )}
-  />
-);
+}) => {
+  const colorIndex = index > 20 ? index % 20 : index;
+  const color = COLORS[colorIndex];
+  return (
+    <div
+      style={{
+        background: color,
+        zIndex: index
+      }}
+      className={cn(
+        'flex-center size-[14px] border border-white rounded rotate-45',
+        className
+      )}
+    />
+  );
+};
 
 export const FlagNameElement = ({
+  id,
   icon,
   name,
+  maintainer,
   link,
-  status,
-  id
-}: FlagNameElementType) => (
-  <div className="flex items-center w-full gap-x-4 min-w-[350px] max-w-[440px]">
-    <div className="flex flex-col flex-1 w-full gap-y-2">
-      <div className="flex items-center w-full gap-x-2">
-        <FlagDataTypeIcon icon={icon} className="size-[26px]" />
-        <Link
-          to={link}
-          className="typo-para-medium text-primary-500 line-clamp-1 break-all underline"
-        >
-          {name}
-        </Link>
-        <FlagIconWrapper icon={IconUserSettings} />
-        <FlagStatus status={status} />
+  status
+}: FlagNameElementType) => {
+  const { notify } = useToast();
+
+  const handleCopyId = (id: string) => {
+    copyToClipBoard(id);
+    notify({
+      toastType: 'toast',
+      message: (
+        <span>
+          <b>ID</b> {` has been successfully copied!`}
+        </span>
+      )
+    });
+  };
+
+  return (
+    <div className="flex items-center w-full min-w-[440px] max-w-[440px] gap-x-4">
+      <div className="flex flex-col flex-1 w-full gap-y-2">
+        <div className="flex items-center w-full gap-x-2">
+          <FlagDataTypeIcon icon={icon} className="size-[26px]" />
+          <Link
+            to={link}
+            className="typo-para-medium text-primary-500 line-clamp-1 break-all underline"
+          >
+            {name}
+          </Link>
+          {maintainer && <FlagIconWrapper icon={IconUserSettings} />}
+          <FlagStatus status={status} />
+        </div>
+        <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
+          {truncateTextCenter(id)}
+          <div onClick={() => handleCopyId(id)}>
+            <Icon
+              icon={IconCopy}
+              size={'sm'}
+              className="opacity-0 group-hover:opacity-100 cursor-pointer"
+            />
+          </div>
+        </div>
       </div>
-      <p className="typo-para-tiny leading-[14px] text-gray-500 truncate">
-        {id}
+    </div>
+  );
+};
+
+export const FlagVariationsElement = ({
+  variations
+}: {
+  variations: FeatureVariation[];
+}) => {
+  const { t } = useTranslation(['common', 'table']);
+
+  const variationCount = variations?.length;
+  if (!variationCount)
+    return (
+      <p className="typo-para-small text-gray-700">{t('no-variations')}</p>
+    );
+  if (variationCount === 1)
+    return (
+      <div className="flex items-center gap-x-2">
+        <FlagVariationPolygon index={0} />
+        <p className="typo-para-small text-gray-700">
+          {variations[variationCount]?.name}
+        </p>
+      </div>
+    );
+  return (
+    <div className="flex items-center gap-x-2">
+      <div className="flex items-center">
+        {variations.map((_, index) => (
+          <FlagVariationPolygon key={index} index={index} />
+        ))}
+      </div>
+      <p className="typo-para-small whitespace-nowrap text-gray-700">
+        {`${variationCount} ${variationCount > 1 ? t('variations') : t('table:results.variation')}`}
       </p>
+      <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
     </div>
-  </div>
-);
+  );
+};
 
-export const FlagVariationsElement = () => (
-  <div className="flex items-center gap-x-2">
-    <div className="flex items-center">
-      <FlagVariationPolygon />
-      <FlagVariationPolygon color="pink" className="z-[1] -ml-0.5" />
-      <FlagVariationPolygon color="green" className="z-[2] -ml-0.5" />
-    </div>
-    <p className="typo-para-small whitespace-nowrap text-gray-700">
-      3 Variations
-    </p>
-    <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
-  </div>
-);
-
-export const FlagTagsElement = ({ tags }: { tags: string[] }) => (
-  <div className="flex items-center gap-x-2">
-    {tags.slice(0, 3).map((tag, index) => (
+export const FlagTagsElement = ({
+  tags,
+  isExpanded,
+  onToggleExpandTag
+}: {
+  tags: string[];
+  isExpanded: boolean;
+  onToggleExpandTag: () => void;
+}) => (
+  <div className="flex items-center gap-2 max-w-[500px] flex-wrap">
+    {(isExpanded ? tags : tags.slice(0, 3)).map((tag, index) => (
       <FlagTag key={index} tag={tag} />
     ))}
-
-    {tags.length > 3 && <FlagTag tag={`+${tags.length - 3}`} />}
+    {tags.length > 3 && !isExpanded && <FlagTag tag={`+${tags.length - 3}`} />}
     {tags.length > 3 && (
-      <Icon
-        icon={IconArrowDown}
-        size={'sm'}
-        color="gray-500"
-        className="cursor-pointer"
-      />
+      <div className="flex-center" onClick={onToggleExpandTag}>
+        <Icon
+          icon={IconArrowDown}
+          size={'sm'}
+          color="gray-500"
+          className={cn('cursor-pointer transition-all duration-200 rotate-0', {
+            'rotate-180': isExpanded
+          })}
+        />
+      </div>
     )}
   </div>
 );
 
-export const FlagOperationsElement = () => (
+export const FlagOperationsElement = ({
+  autoOpsSummary
+}: {
+  autoOpsSummary: AutoOpsSummary;
+}) => (
   <div className="flex items-center gap-x-2">
-    <FlagIconWrapper
-      icon={IconFlagOperation}
-      color="accent-pink-500"
-      className="bg-accent-pink-50"
-    />
-    <FlagIconWrapper
-      icon={IconCalendar}
-      color="primary-500"
-      className="bg-primary-100"
-    />
-    <FlagIconWrapper
-      icon={IconOperationArrow}
-      color="accent-blue-500"
-      className="bg-accent-blue-50"
-    />
+    {!!autoOpsSummary?.progressiveRolloutCount && (
+      <FlagIconWrapper
+        icon={IconFlagOperation}
+        color="accent-pink-500"
+        className="bg-accent-pink-50"
+      />
+    )}
+    {!!autoOpsSummary?.scheduleCount && (
+      <FlagIconWrapper
+        icon={IconCalendar}
+        color="primary-500"
+        className="bg-primary-50"
+      />
+    )}
+    {!!autoOpsSummary?.killSwitchCount && (
+      <FlagIconWrapper
+        icon={IconOperationArrow}
+        color="accent-blue-500"
+        className="bg-accent-blue-50"
+      />
+    )}
   </div>
 );

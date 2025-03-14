@@ -1,91 +1,68 @@
-// import { LIST_PAGE_SIZE } from 'constants/app';
-// import Pagination from 'components/pagination';
-// import CollectionEmpty from 'elements/collection/collection-empty';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { LIST_PAGE_SIZE } from 'constants/app';
+import { Feature } from '@types';
+import Pagination from 'components/pagination';
+import CollectionEmpty from 'elements/collection/collection-empty';
 import PageLayout from 'elements/page-layout';
-// import { EmptyCollection } from '../collection-layout/empty-collection';
+import { EmptyCollection } from '../collection-layout/empty-collection';
 import GridViewCollection from '../collection-layout/grid-view-collection';
-import { FlagActionType, FlagsTemp } from '../types';
-
-export const mockFlags: FlagsTemp[] = [
-  {
-    id: 'flag-1',
-    name: 'Flag using boolean',
-    type: 'boolean',
-    status: 'active',
-    tags: ['Android'],
-    variations: [],
-    disabled: false,
-    operations: [],
-    createdAt: '1706182987',
-    updatedAt: '1706182994'
-  },
-  {
-    id: 'flag-2',
-    name: 'Flag using string',
-    type: 'string',
-    status: 'no_activity',
-    tags: ['Web'],
-    variations: [],
-    disabled: false,
-    operations: [],
-    createdAt: '1706182987',
-    updatedAt: '1706182994'
-  },
-  {
-    id: 'flag-3',
-    name: 'Flag using number',
-    type: 'number',
-    status: 'new',
-    tags: ['Android'],
-    variations: [],
-    disabled: false,
-    operations: [],
-    createdAt: '1706182987',
-    updatedAt: '1706182994'
-  },
-  {
-    id: 'flag-4',
-    name: 'Flag using json',
-    type: 'json',
-    status: 'no_activity',
-    tags: ['IOS'],
-    variations: [],
-    disabled: false,
-    operations: [],
-    createdAt: '1706182987',
-    updatedAt: '1706182994'
-  }
-];
+import { FlagActionType, FlagFilters } from '../types';
+import { useFetchFlags } from './use-fetch-flags';
 
 const CollectionLoader = ({
+  onAdd,
+  filters,
+  setFilters,
   onHandleActions
 }: {
-  onHandleActions: (item: FlagsTemp, type: FlagActionType) => void;
+  onAdd: () => void;
+  filters: FlagFilters;
+  setFilters: (filters: Partial<FlagFilters>) => void;
+  onHandleActions: (item: Feature, type: FlagActionType) => void;
 }) => {
-  const isError = false;
+  const { consoleAccount } = useAuth();
+  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  // const emptyState = (
-  //   <CollectionEmpty
-  //     data={mockFlags}
-  //     searchQuery={''}
-  //     onClear={() => {}}
-  //     empty={<EmptyCollection onAdd={() => {}} />}
-  //   />
-  // );
+  const {
+    data: collection,
+    isLoading,
+    refetch,
+    isError
+  } = useFetchFlags({
+    ...filters,
+    environmentId: currenEnvironment?.id
+  });
 
-  return isError ? (
-    <PageLayout.ErrorState onRetry={() => {}} />
+  const features = collection?.features || [];
+  const totalCount = Number(collection?.totalCount) || 0;
+
+  const emptyState = (
+    <CollectionEmpty
+      data={features}
+      searchQuery={filters?.searchQuery}
+      onClear={() => {}}
+      empty={<EmptyCollection onAdd={onAdd} />}
+    />
+  );
+  return isLoading ? (
+    <PageLayout.LoadingState />
+  ) : isError ? (
+    <PageLayout.ErrorState onRetry={refetch} />
   ) : (
     <>
-      <GridViewCollection data={mockFlags} onActions={onHandleActions} />
+      <GridViewCollection
+        data={features}
+        onActions={onHandleActions}
+        emptyState={emptyState}
+      />
 
-      {/* {totalCount > LIST_PAGE_SIZE && !isLoading && (
+      {totalCount > LIST_PAGE_SIZE && !isLoading && (
         <Pagination
           page={filters.page}
           totalCount={totalCount}
           onChange={page => setFilters({ page })}
         />
-      )} */}
+      )}
     </>
   );
 };

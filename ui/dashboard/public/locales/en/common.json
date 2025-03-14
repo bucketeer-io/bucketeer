@@ -195,5 +195,8 @@
   "feature-flags-subtitle": "Select a flag to manage the environment-specific targeting and rollout rules",
   "new-flag": "New Flag",
   "operations": "Operations",
-  "favorites": "Favorites"
+  "favorites": "Favorites",
+  "no-variations": "No Variations",
+  "new": "New",
+  "no-activity": "No Activity"
 }

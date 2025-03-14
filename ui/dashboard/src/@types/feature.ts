@@ -15,11 +15,13 @@ export type FeatureRuleClauseOperator =
 
 export type FeatureVariationType = 'STRING' | 'BOOLEAN' | 'NUMBER' | 'JSON';
 
+export type FeatureChangeType = 'UNSPECIFIED' | 'CREATE' | 'UPDATE' | 'DELETE';
+
 export interface FeatureVariation {
   id: string;
   value: string;
   name: string;
-  description: string;
+  description?: string;
 }
 
 export interface FeatureTarget {
@@ -90,10 +92,74 @@ export interface Feature {
   archived: true;
   prerequisites: FeaturePrerequisite[];
   samplingSeed: string;
+  autoOpsSummary: AutoOpsSummary;
+}
+
+export interface AutoOpsSummary {
+  progressiveRolloutCount: number;
+  scheduleCount: number;
+  killSwitchCount: number;
 }
 
 export interface FeatureCollection {
   features: Array<Feature>;
   cursor: string;
   totalCount: string;
+}
+
+interface ChangeType {
+  changeType: FeatureChangeType;
+}
+interface VariationChange extends ChangeType {
+  variation: FeatureVariation;
+}
+
+interface RuleChange extends ChangeType {
+  rule: FeatureRule;
+}
+
+interface PrerequisiteChange extends ChangeType {
+  prerequisite: FeaturePrerequisite;
+}
+
+interface TargetChange extends ChangeType {
+  target: FeatureTarget;
+}
+
+interface TagChange extends ChangeType {
+  tag: string;
+}
+
+export interface FeatureUpdaterParams {
+  comment: string;
+  environmentId: string;
+  id: string;
+  name: string;
+  description: string;
+  tags: {
+    values: string[];
+  };
+  enabled: boolean;
+  archived: boolean;
+  variations: {
+    values: FeatureVariation[];
+  };
+  prerequisites: {
+    values: FeaturePrerequisite[];
+  };
+  targets: {
+    values: FeatureTarget[];
+  };
+  rules: {
+    values: FeatureRule[];
+  };
+  defaultStrategy: FeatureRuleStrategy;
+  offVariation: string;
+  resetSamplingSeed: boolean;
+  applyScheduleUpdate: boolean;
+  variationChanges: VariationChange[];
+  ruleChanges: RuleChange[];
+  prerequisiteChanges: PrerequisiteChange[];
+  targetChanges: TargetChange[];
+  tagChanges: TagChange[];
 }
