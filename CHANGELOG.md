@@ -1,5 +1,59 @@
 # Changelog
 
+## [1.4.0](https://github.com/bucketeer-io/bucketeer/compare/v1.3.0...v1.4.0) (2025-03-14)
+
+
+### Features
+
+* implement delete auto ops rule REST ([#1524](https://github.com/bucketeer-io/bucketeer/issues/1524)) ([be21d74](https://github.com/bucketeer-io/bucketeer/commit/be21d7494661fa8b56c40d65da06d5cc079e24f5))
+* implement flag trigger rest and remove command ([#1588](https://github.com/bucketeer-io/bucketeer/issues/1588)) ([072ce9a](https://github.com/bucketeer-io/bucketeer/commit/072ce9a228e2904424844e0401659cfdbaab3cc2))
+* implement progressive rollout REST api ([#1526](https://github.com/bucketeer-io/bucketeer/issues/1526)) ([3caaab0](https://github.com/bucketeer-io/bucketeer/commit/3caaab0ab02ccee8280cd9e1d1e80afc55d1361b))
+* implement REST create/update/get/list feature api ([#1559](https://github.com/bucketeer-io/bucketeer/issues/1559)) ([5534304](https://github.com/bucketeer-io/bucketeer/commit/5534304d3b9986d7f2d00739b3cf1e555903e89a))
+* implement swicth organization api ([#1542](https://github.com/bucketeer-io/bucketeer/issues/1542)) ([68ee16e](https://github.com/bucketeer-io/bucketeer/commit/68ee16e1e7b69082757eb11de302a9d2d23afdcf))
+* implement update organization no command ([#1544](https://github.com/bucketeer-io/bucketeer/issues/1544)) ([f483c13](https://github.com/bucketeer-io/bucketeer/commit/f483c13dde84a6ce2b28f5ab9548097fa5735cd0))
+* **ui/dashboard:** experiments management ([#1513](https://github.com/bucketeer-io/bucketeer/issues/1513)) ([46afc49](https://github.com/bucketeer-io/bucketeer/commit/46afc499750af822f7481055f31cf845bc889188))
+* **ui/dashboard:** switch organization ([#1565](https://github.com/bucketeer-io/bucketeer/issues/1565)) ([f727b5a](https://github.com/bucketeer-io/bucketeer/commit/f727b5ac7fdda77c77bda66ce7827e4db7f55d18))
+* **ui/dashboard:** update profile ([#1525](https://github.com/bucketeer-io/bucketeer/issues/1525)) ([6108873](https://github.com/bucketeer-io/bucketeer/commit/6108873de0316b34f751a2aab74022c589cab808))
+* **ui/goal:** add archive action tooltip and disable archive action for goals in use ([#1580](https://github.com/bucketeer-io/bucketeer/issues/1580)) ([85d80a6](https://github.com/bucketeer-io/bucketeer/commit/85d80a6474edda84a2aa53d231f106c439724034))
+* **ui:** code references ([#1504](https://github.com/bucketeer-io/bucketeer/issues/1504)) ([fea2263](https://github.com/bucketeer-io/bucketeer/commit/fea226359fb76f955d4a30827273f8163b1082c1))
+
+
+### Bug Fixes
+
+* add unknown api id error handling ([#1566](https://github.com/bucketeer-io/bucketeer/issues/1566)) ([eb3aca9](https://github.com/bucketeer-io/bucketeer/commit/eb3aca9d606d39135fd1706417b4b4b122d7c8e2))
+* base variation id not being validated when creating experiments ([#1557](https://github.com/bucketeer-io/bucketeer/issues/1557)) ([5d4c74b](https://github.com/bucketeer-io/bucketeer/commit/5d4c74b8e2f4fd43a10cd08a4d1b7d6eb3544a15))
+* **evaluation/typescript:** missing proto import when build release lib ([#1567](https://github.com/bucketeer-io/bucketeer/issues/1567)) ([4f6dd29](https://github.com/bucketeer-io/bucketeer/commit/4f6dd299699076b7078788d06ff73aab55ab38e3))
+* **evaluation/typescript:** no such file or directory error ([#1561](https://github.com/bucketeer-io/bucketeer/issues/1561)) ([48d8cb6](https://github.com/bucketeer-io/bucketeer/commit/48d8cb6b913d6ecd244a5256d8cbc0ffd24ec909))
+* experiment results chart title ([#1573](https://github.com/bucketeer-io/bucketeer/issues/1573)) ([e991ab5](https://github.com/bucketeer-io/bucketeer/commit/e991ab5b59dd523e0560417acdddf3e641eb4c4f))
+* **experiment-calculator:** timeseries data handling ([#1568](https://github.com/bucketeer-io/bucketeer/issues/1568)) ([44300ce](https://github.com/bucketeer-io/bucketeer/commit/44300ce21552411d416a493defb8cee40a162c4f))
+* flag not found when using dependency flag in targeting rule ([#1550](https://github.com/bucketeer-io/bucketeer/issues/1550)) ([4fc4921](https://github.com/bucketeer-io/bucketeer/commit/4fc4921b09b1632edabca5aaecd78929ad8140e0))
+* remove `environment_id` validation from code references api ([#1581](https://github.com/bucketeer-io/bucketeer/issues/1581)) ([69a16e1](https://github.com/bucketeer-io/bucketeer/commit/69a16e1b51812255ec69338bf4d7dbe0d93fb642))
+* **ui/dashboard:** experiment result variation and switch organization menu ([#1582](https://github.com/bucketeer-io/bucketeer/issues/1582)) ([8f05a51](https://github.com/bucketeer-io/bucketeer/commit/8f05a517cc147d70308749453ebbee08c8bea724))
+* **ui/dashboard:** experiment results crash issue ([#1570](https://github.com/bucketeer-io/bucketeer/issues/1570)) ([52c8f65](https://github.com/bucketeer-io/bucketeer/commit/52c8f65e24f1c8e0afc1af3a33ba6c9cd3ecb29a))
+* **ui:** experiments graph fix ([#1539](https://github.com/bucketeer-io/bucketeer/issues/1539)) ([d84a30d](https://github.com/bucketeer-io/bucketeer/commit/d84a30d9918dc578caac70e238cc63531b6d4203))
+* **ui:** open variation dropdown list upwards ([#1572](https://github.com/bucketeer-io/bucketeer/issues/1572)) ([036bf9c](https://github.com/bucketeer-io/bucketeer/commit/036bf9c5bf0280c09363f67de74edf7870fcc8a4))
+* update AutoOps rule URL template path ([#1563](https://github.com/bucketeer-io/bucketeer/issues/1563)) ([24ec56d](https://github.com/bucketeer-io/bucketeer/commit/24ec56d86f6c8dbf0624fb01bb8afaeea9a98353))
+* update CODEOWNERS with new contributor ([#1564](https://github.com/bucketeer-io/bucketeer/issues/1564)) ([33c662c](https://github.com/bucketeer-io/bucketeer/commit/33c662cec11acc7a8c59e331b8594137dd47aa37))
+* update refresh token TTL to 7 days ([#1585](https://github.com/bucketeer-io/bucketeer/issues/1585)) ([e8f2fc6](https://github.com/bucketeer-io/bucketeer/commit/e8f2fc6f3f7aedcbd7b53ae13762b226d2492cf2))
+
+
+### Miscellaneous
+
+* **deps:** bump @babel/runtime from 7.26.9 to 7.26.10 in /ui/dashboard ([#1577](https://github.com/bucketeer-io/bucketeer/issues/1577)) ([351ec47](https://github.com/bucketeer-io/bucketeer/commit/351ec4701f9bbeb1b672901ee51ff1786afd9e80))
+* **deps:** bump axios from 1.8.1 to 1.8.2 in /ui/dashboard ([#1576](https://github.com/bucketeer-io/bucketeer/issues/1576)) ([42e1fa0](https://github.com/bucketeer-io/bucketeer/commit/42e1fa006b5c9acb95a46d5b072c7fdd0cc08615))
+* **evaluation/typescript:** export function getFeatureIDsDependsOn ([#1553](https://github.com/bucketeer-io/bucketeer/issues/1553)) ([b3a17cb](https://github.com/bucketeer-io/bucketeer/commit/b3a17cbd6944dbee6ca0bb7b4788302011176811))
+* **ui/dashboard:** empty collection improvement ([#1571](https://github.com/bucketeer-io/bucketeer/issues/1571)) ([2f6141a](https://github.com/bucketeer-io/bucketeer/commit/2f6141a34d469c5cf915ae02edc640f8422c74a0))
+* **ui/dashboard:** remove command object all payload ([#1529](https://github.com/bucketeer-io/bucketeer/issues/1529)) ([6217bb0](https://github.com/bucketeer-io/bucketeer/commit/6217bb088f903931036e3b9d3e1f3c1f7e16de87))
+
+
+### Build System
+
+* **deps:** bump @babel/runtime from 7.24.7 to 7.26.10 in /ui/web-v2 ([#1578](https://github.com/bucketeer-io/bucketeer/issues/1578)) ([734b0b4](https://github.com/bucketeer-io/bucketeer/commit/734b0b455f8888ec8eb95887b1e3efa65f338e69))
+* **deps:** bump golang.org/x/net from 0.33.0 to 0.36.0 ([#1583](https://github.com/bucketeer-io/bucketeer/issues/1583)) ([be2cf7e](https://github.com/bucketeer-io/bucketeer/commit/be2cf7ed802f267fee980f3b478a0ca9881a72ab))
+* **deps:** bump golang.org/x/net in /hack/delete-e2e-data-mysql ([#1584](https://github.com/bucketeer-io/bucketeer/issues/1584)) ([c74674e](https://github.com/bucketeer-io/bucketeer/commit/c74674e72b7c4a14f51067699731ed12f91dd518))
+* **deps:** bump prismjs from 1.29.0 to 1.30.0 in /ui/web-v2 ([#1575](https://github.com/bucketeer-io/bucketeer/issues/1575)) ([528b3cf](https://github.com/bucketeer-io/bucketeer/commit/528b3cf9fd65469fedfb4a097c914ee04da4e2ee))
+* **deps:** upgrade Go version to 1.24 ([#1589](https://github.com/bucketeer-io/bucketeer/issues/1589)) ([1baec3b](https://github.com/bucketeer-io/bucketeer/commit/1baec3b3ee667c9e6ea4977399f1e9505b11cff5))
+
 ## [1.3.0](https://github.com/bucketeer-io/bucketeer/compare/v1.2.0...v1.3.0) (2025-02-28)
 
 
