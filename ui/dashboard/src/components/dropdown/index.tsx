@@ -53,7 +53,7 @@ const triggerVariants = cva(
 const DropdownMenuTrigger = forwardRef<
   ElementRef<typeof DropdownMenuPrimitive.Trigger>,
   ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Trigger> & {
-    label?: string;
+    label?: ReactNode;
     description?: string;
     isExpand?: boolean;
     placeholder?: string;
@@ -86,7 +86,8 @@ const DropdownMenuTrigger = forwardRef<
         {
           'justify-between w-full': isExpand
         },
-        className
+        className,
+        'group'
       )}
       {...props}
     >
@@ -103,8 +104,8 @@ const DropdownMenuTrigger = forwardRef<
       </div>
 
       {showArrow && (
-        <div className="min-w-6">
-          <Icon icon={IconExpandMoreRound} size={'md'} className="min-w-6" />
+        <div className="size-6 min-w-6 transition-all duration-200 group-data-[state=closed]:rotate-0 group-data-[state=open]:rotate-180">
+          <Icon icon={IconExpandMoreRound} size={'md'} color="gray-500" />
         </div>
       )}
     </DropdownMenuPrimitive.Trigger>

@@ -205,5 +205,9 @@
   "archive-flag": "Archive Flag",
   "unarchive-flag": "Unarchive Flag",
   "update-now": "Update now",
-  "time-updated": "Updated {{time}}"
+  "time-updated": "Updated {{time}}",
+  "default": "Default",
+  "sort-by": "Sort by: {{sortBy}}",
+  "sort-asc": "Oldest to Newest",
+  "sort-desc": "Newest to Oldest"
 }

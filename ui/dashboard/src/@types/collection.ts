@@ -28,7 +28,8 @@ export type OrderBy =
   | 'START_AT'
   | 'STOP_AT'
   | 'STATUS'
-  | 'GOALS_COUNT';
+  | 'GOALS_COUNT'
+  | 'ENABLED';
 
 export type OrderDirection = 'ASC' | 'DESC';
 
