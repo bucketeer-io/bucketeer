@@ -9,6 +9,7 @@ import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-o
 import * as proto_common_string_pb from '../../proto/common/string_pb';
 import * as proto_feature_command_pb from '../../proto/feature/command_pb';
 import * as proto_feature_feature_pb from '../../proto/feature/feature_pb';
+import * as proto_feature_scheduled_update_pb from '../../proto/feature/scheduled_update_pb';
 import * as proto_feature_evaluation_pb from '../../proto/feature/evaluation_pb';
 import * as proto_user_user_pb from '../../proto/user/user_pb';
 import * as proto_feature_segment_pb from '../../proto/feature/segment_pb';
@@ -924,6 +925,308 @@ export class UpdateFeatureResponse extends jspb.Message {
 export namespace UpdateFeatureResponse {
   export type AsObject = {
     feature?: proto_feature_feature_pb.Feature.AsObject;
+  };
+}
+
+export class ScheduleFlagChangeRequest extends jspb.Message {
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  getScheduledAt(): number;
+  setScheduledAt(value: number): void;
+
+  clearChangesList(): void;
+  getChangesList(): Array<proto_feature_scheduled_update_pb.ScheduledChange>;
+  setChangesList(
+    value: Array<proto_feature_scheduled_update_pb.ScheduledChange>
+  ): void;
+  addChanges(
+    value?: proto_feature_scheduled_update_pb.ScheduledChange,
+    index?: number
+  ): proto_feature_scheduled_update_pb.ScheduledChange;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ScheduleFlagChangeRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ScheduleFlagChangeRequest
+  ): ScheduleFlagChangeRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ScheduleFlagChangeRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ScheduleFlagChangeRequest;
+  static deserializeBinaryFromReader(
+    message: ScheduleFlagChangeRequest,
+    reader: jspb.BinaryReader
+  ): ScheduleFlagChangeRequest;
+}
+
+export namespace ScheduleFlagChangeRequest {
+  export type AsObject = {
+    environmentId: string;
+    featureId: string;
+    scheduledAt: number;
+    changesList: Array<proto_feature_scheduled_update_pb.ScheduledChange.AsObject>;
+  };
+}
+
+export class ScheduleFlagChangeResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ScheduleFlagChangeResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ScheduleFlagChangeResponse
+  ): ScheduleFlagChangeResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ScheduleFlagChangeResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ScheduleFlagChangeResponse;
+  static deserializeBinaryFromReader(
+    message: ScheduleFlagChangeResponse,
+    reader: jspb.BinaryReader
+  ): ScheduleFlagChangeResponse;
+}
+
+export namespace ScheduleFlagChangeResponse {
+  export type AsObject = {};
+}
+
+export class UpdateScheduledFlagChangeRequest extends jspb.Message {
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  getId(): string;
+  setId(value: string): void;
+
+  hasScheduledAt(): boolean;
+  clearScheduledAt(): void;
+  getScheduledAt(): google_protobuf_wrappers_pb.Int64Value | undefined;
+  setScheduledAt(value?: google_protobuf_wrappers_pb.Int64Value): void;
+
+  clearChangesList(): void;
+  getChangesList(): Array<proto_feature_scheduled_update_pb.ScheduledChange>;
+  setChangesList(
+    value: Array<proto_feature_scheduled_update_pb.ScheduledChange>
+  ): void;
+  addChanges(
+    value?: proto_feature_scheduled_update_pb.ScheduledChange,
+    index?: number
+  ): proto_feature_scheduled_update_pb.ScheduledChange;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): UpdateScheduledFlagChangeRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: UpdateScheduledFlagChangeRequest
+  ): UpdateScheduledFlagChangeRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: UpdateScheduledFlagChangeRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateScheduledFlagChangeRequest;
+  static deserializeBinaryFromReader(
+    message: UpdateScheduledFlagChangeRequest,
+    reader: jspb.BinaryReader
+  ): UpdateScheduledFlagChangeRequest;
+}
+
+export namespace UpdateScheduledFlagChangeRequest {
+  export type AsObject = {
+    environmentId: string;
+    id: string;
+    scheduledAt?: google_protobuf_wrappers_pb.Int64Value.AsObject;
+    changesList: Array<proto_feature_scheduled_update_pb.ScheduledChange.AsObject>;
+  };
+}
+
+export class UpdateScheduledFlagChangeResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): UpdateScheduledFlagChangeResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: UpdateScheduledFlagChangeResponse
+  ): UpdateScheduledFlagChangeResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: UpdateScheduledFlagChangeResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): UpdateScheduledFlagChangeResponse;
+  static deserializeBinaryFromReader(
+    message: UpdateScheduledFlagChangeResponse,
+    reader: jspb.BinaryReader
+  ): UpdateScheduledFlagChangeResponse;
+}
+
+export namespace UpdateScheduledFlagChangeResponse {
+  export type AsObject = {};
+}
+
+export class DeleteScheduledFlagChangeRequest extends jspb.Message {
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  getId(): string;
+  setId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): DeleteScheduledFlagChangeRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: DeleteScheduledFlagChangeRequest
+  ): DeleteScheduledFlagChangeRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: DeleteScheduledFlagChangeRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteScheduledFlagChangeRequest;
+  static deserializeBinaryFromReader(
+    message: DeleteScheduledFlagChangeRequest,
+    reader: jspb.BinaryReader
+  ): DeleteScheduledFlagChangeRequest;
+}
+
+export namespace DeleteScheduledFlagChangeRequest {
+  export type AsObject = {
+    environmentId: string;
+    id: string;
+  };
+}
+
+export class DeleteScheduledFlagChangeResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): DeleteScheduledFlagChangeResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: DeleteScheduledFlagChangeResponse
+  ): DeleteScheduledFlagChangeResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: DeleteScheduledFlagChangeResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): DeleteScheduledFlagChangeResponse;
+  static deserializeBinaryFromReader(
+    message: DeleteScheduledFlagChangeResponse,
+    reader: jspb.BinaryReader
+  ): DeleteScheduledFlagChangeResponse;
+}
+
+export namespace DeleteScheduledFlagChangeResponse {
+  export type AsObject = {};
+}
+
+export class ListScheduledFlagChangesRequest extends jspb.Message {
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListScheduledFlagChangesRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ListScheduledFlagChangesRequest
+  ): ListScheduledFlagChangesRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ListScheduledFlagChangesRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ListScheduledFlagChangesRequest;
+  static deserializeBinaryFromReader(
+    message: ListScheduledFlagChangesRequest,
+    reader: jspb.BinaryReader
+  ): ListScheduledFlagChangesRequest;
+}
+
+export namespace ListScheduledFlagChangesRequest {
+  export type AsObject = {
+    environmentId: string;
+    featureId: string;
+  };
+}
+
+export class ListScheduledFlagChangesResponse extends jspb.Message {
+  clearScheduledFlagUpdatesList(): void;
+  getScheduledFlagUpdatesList(): Array<proto_feature_scheduled_update_pb.ScheduledFlagUpdate>;
+  setScheduledFlagUpdatesList(
+    value: Array<proto_feature_scheduled_update_pb.ScheduledFlagUpdate>
+  ): void;
+  addScheduledFlagUpdates(
+    value?: proto_feature_scheduled_update_pb.ScheduledFlagUpdate,
+    index?: number
+  ): proto_feature_scheduled_update_pb.ScheduledFlagUpdate;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): ListScheduledFlagChangesResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ListScheduledFlagChangesResponse
+  ): ListScheduledFlagChangesResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ListScheduledFlagChangesResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ListScheduledFlagChangesResponse;
+  static deserializeBinaryFromReader(
+    message: ListScheduledFlagChangesResponse,
+    reader: jspb.BinaryReader
+  ): ListScheduledFlagChangesResponse;
+}
+
+export namespace ListScheduledFlagChangesResponse {
+  export type AsObject = {
+    scheduledFlagUpdatesList: Array<proto_feature_scheduled_update_pb.ScheduledFlagUpdate.AsObject>;
   };
 }
 

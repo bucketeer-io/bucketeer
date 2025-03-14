@@ -58,6 +58,42 @@ type FeatureServiceUpdateFeature = {
   readonly responseType: typeof proto_feature_service_pb.UpdateFeatureResponse;
 };
 
+type FeatureServiceScheduleFlagChange = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.ScheduleFlagChangeRequest;
+  readonly responseType: typeof proto_feature_service_pb.ScheduleFlagChangeResponse;
+};
+
+type FeatureServiceUpdateScheduledFlagChange = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.UpdateScheduledFlagChangeRequest;
+  readonly responseType: typeof proto_feature_service_pb.UpdateScheduledFlagChangeResponse;
+};
+
+type FeatureServiceDeleteScheduledFlagChange = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.DeleteScheduledFlagChangeRequest;
+  readonly responseType: typeof proto_feature_service_pb.DeleteScheduledFlagChangeResponse;
+};
+
+type FeatureServiceListScheduledFlagChanges = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.ListScheduledFlagChangesRequest;
+  readonly responseType: typeof proto_feature_service_pb.ListScheduledFlagChangesResponse;
+};
+
 type FeatureServiceEnableFeature = {
   readonly methodName: string;
   readonly service: typeof FeatureService;
@@ -345,6 +381,10 @@ export class FeatureService {
   static readonly ListEnabledFeatures: FeatureServiceListEnabledFeatures;
   static readonly CreateFeature: FeatureServiceCreateFeature;
   static readonly UpdateFeature: FeatureServiceUpdateFeature;
+  static readonly ScheduleFlagChange: FeatureServiceScheduleFlagChange;
+  static readonly UpdateScheduledFlagChange: FeatureServiceUpdateScheduledFlagChange;
+  static readonly DeleteScheduledFlagChange: FeatureServiceDeleteScheduledFlagChange;
+  static readonly ListScheduledFlagChanges: FeatureServiceListScheduledFlagChanges;
   static readonly EnableFeature: FeatureServiceEnableFeature;
   static readonly DisableFeature: FeatureServiceDisableFeature;
   static readonly ArchiveFeature: FeatureServiceArchiveFeature;
@@ -511,6 +551,66 @@ export class FeatureServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_feature_service_pb.UpdateFeatureResponse | null
+    ) => void
+  ): UnaryResponse;
+  scheduleFlagChange(
+    requestMessage: proto_feature_service_pb.ScheduleFlagChangeRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_feature_service_pb.ScheduleFlagChangeResponse | null
+    ) => void
+  ): UnaryResponse;
+  scheduleFlagChange(
+    requestMessage: proto_feature_service_pb.ScheduleFlagChangeRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_feature_service_pb.ScheduleFlagChangeResponse | null
+    ) => void
+  ): UnaryResponse;
+  updateScheduledFlagChange(
+    requestMessage: proto_feature_service_pb.UpdateScheduledFlagChangeRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_feature_service_pb.UpdateScheduledFlagChangeResponse | null
+    ) => void
+  ): UnaryResponse;
+  updateScheduledFlagChange(
+    requestMessage: proto_feature_service_pb.UpdateScheduledFlagChangeRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_feature_service_pb.UpdateScheduledFlagChangeResponse | null
+    ) => void
+  ): UnaryResponse;
+  deleteScheduledFlagChange(
+    requestMessage: proto_feature_service_pb.DeleteScheduledFlagChangeRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_feature_service_pb.DeleteScheduledFlagChangeResponse | null
+    ) => void
+  ): UnaryResponse;
+  deleteScheduledFlagChange(
+    requestMessage: proto_feature_service_pb.DeleteScheduledFlagChangeRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_feature_service_pb.DeleteScheduledFlagChangeResponse | null
+    ) => void
+  ): UnaryResponse;
+  listScheduledFlagChanges(
+    requestMessage: proto_feature_service_pb.ListScheduledFlagChangesRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_feature_service_pb.ListScheduledFlagChangesResponse | null
+    ) => void
+  ): UnaryResponse;
+  listScheduledFlagChanges(
+    requestMessage: proto_feature_service_pb.ListScheduledFlagChangesRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_feature_service_pb.ListScheduledFlagChangesResponse | null
     ) => void
   ): UnaryResponse;
   enableFeature(
