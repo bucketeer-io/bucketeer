@@ -76,9 +76,7 @@ const PageContent = ({
         </TabsList>
 
         <TabsContent value={filters.status}>
-          <CollectionLoader
-            onHandleActions={onHandleActions}
-          />
+          <CollectionLoader onHandleActions={onHandleActions} />
         </TabsContent>
       </Tabs>
     </PageLayout.Content>

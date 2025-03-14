@@ -1,14 +1,14 @@
 import { Route, Routes } from 'react-router-dom';
+import { ID_CLONE, ID_NEW } from 'constants/routing';
 import ExperimentDetailsPage from 'pages/experiment-details';
 import ExperimentsPage from 'pages/experiments';
+import FeatureFlagsPage from 'pages/feature-flags';
 import GoalDetailsPage from 'pages/goal-details';
 import GoalsPage from 'pages/goals';
 import OrganizationDetailPage from 'pages/organization-details';
 import OrganizationsPage from 'pages/organizations';
 import ProjectDetailsPage from 'pages/project-details';
 import ProjectsPage from 'pages/projects';
-import { ID_CLONE, ID_NEW } from 'constants/routing';
-import FeatureFlagsPage from 'pages/feature-flags';
 
 export const OrganizationsRoot = () => {
   return (
