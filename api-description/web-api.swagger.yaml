@@ -10549,6 +10549,10 @@ definitions:
       - environmentId
   featureUpdateFlagTriggerResponse:
     type: object
+    properties:
+      url:
+        type: string
+        description: If reset is true, new generated trigger hook URL will be returned.
   featureUpdateSegmentRequest:
     type: object
     properties:

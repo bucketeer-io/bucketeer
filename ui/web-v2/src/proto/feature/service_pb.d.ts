@@ -2938,6 +2938,9 @@ export namespace UpdateFlagTriggerRequest {
 }
 
 export class UpdateFlagTriggerResponse extends jspb.Message {
+  getUrl(): string;
+  setUrl(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFlagTriggerResponse.AsObject;
   static toObject(
@@ -2960,7 +2963,9 @@ export class UpdateFlagTriggerResponse extends jspb.Message {
 }
 
 export namespace UpdateFlagTriggerResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    url: string;
+  };
 }
 
 export class EnableFlagTriggerRequest extends jspb.Message {

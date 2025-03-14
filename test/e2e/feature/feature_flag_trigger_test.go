@@ -24,6 +24,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
@@ -226,6 +227,35 @@ func TestResetFlagTrigger(t *testing.T) {
 	if resetResp.Url == createResp.Url {
 		t.Fatalf("unexpected reset url: %s, create url: %s", resetResp.Url, createResp.Url)
 	}
+}
+
+func TestResetFlagUpdateTrigger(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	// Create feature
+	req := newCreateFeatureReq(newFeatureID(t))
+	createFeatureNoCmd(t, client, req)
+	// Create flag trigger
+	createFlagTriggerReq := newCreateFlagTriggerReq(
+		req.Id,
+		newTriggerDescription(t),
+		featureproto.FlagTrigger_Action_ON,
+	)
+	createResp, err := client.CreateFlagTrigger(context.Background(), createFlagTriggerReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(1)
+	updateFlagTriggerReq := &featureproto.UpdateFlagTriggerRequest{
+		Id:            createResp.FlagTrigger.Id,
+		EnvironmentId: *environmentID,
+		Reset_:        true,
+	}
+	updateResp, err := client.UpdateFlagTrigger(context.Background(), updateFlagTriggerReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.NotEqual(t, createResp.Url, updateResp.Url)
 }
 
 func TestDeleteFlagTrigger(t *testing.T) {

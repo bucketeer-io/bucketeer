@@ -351,6 +351,7 @@ func (s *FeatureService) updateFlagTriggerNoCommand(
 	localizer locale.Localizer,
 ) (*featureproto.UpdateFlagTriggerResponse, error) {
 	var event *eventproto.Event
+	var resetURL string
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
 			contextWithTx,
@@ -367,6 +368,9 @@ func (s *FeatureService) updateFlagTriggerNoCommand(
 		)
 		if err != nil {
 			return err
+		}
+		if request.Reset_ {
+			resetURL = s.generateTriggerURL(ctx, updated.Token, false)
 		}
 		event, err = domainevent.NewEvent(
 			editor,
@@ -434,7 +438,9 @@ func (s *FeatureService) updateFlagTriggerNoCommand(
 		return nil, dt.Err()
 	}
 
-	return &featureproto.UpdateFlagTriggerResponse{}, nil
+	return &featureproto.UpdateFlagTriggerResponse{
+		Url: resetURL,
+	}, nil
 }
 
 func (s *FeatureService) EnableFlagTrigger(

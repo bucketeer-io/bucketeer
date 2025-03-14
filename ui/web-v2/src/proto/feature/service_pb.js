@@ -18383,7 +18383,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        url: jspb.Message.getFieldWithDefault(msg, 1, '')
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -18423,6 +18425,10 @@ proto.bucketeer.feature.UpdateFlagTriggerResponse.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setUrl(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -18455,7 +18461,32 @@ proto.bucketeer.feature.UpdateFlagTriggerResponse.prototype.serializeBinary =
 proto.bucketeer.feature.UpdateFlagTriggerResponse.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
+    f = message.getUrl();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
   };
+
+/**
+ * optional string url = 1;
+ * @return {string}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerResponse.prototype.getUrl =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.UpdateFlagTriggerResponse} returns this
+ */
+proto.bucketeer.feature.UpdateFlagTriggerResponse.prototype.setUrl = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**

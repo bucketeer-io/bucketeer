@@ -31717,7 +31717,25 @@
             ]
           },
           {
-            "name": "UpdateFlagTriggerResponse"
+            "name": "UpdateFlagTriggerResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "url",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "If reset is true, new generated trigger hook URL will be returned."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           },
           {
             "name": "EnableFlagTriggerRequest",

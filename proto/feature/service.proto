@@ -579,7 +579,12 @@ message UpdateFlagTriggerRequest {
       }];
 }
 
-message UpdateFlagTriggerResponse {}
+message UpdateFlagTriggerResponse {
+  string url = 1 [(grpc.gateway.protoc_gen_openapiv2.options
+                       .openapiv2_field) = {
+    description: "If reset is true, new generated trigger hook URL will be returned."
+  }];
+}
 
 message EnableFlagTriggerRequest {
   string id = 1;
