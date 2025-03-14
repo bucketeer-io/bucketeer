@@ -37,7 +37,15 @@ export const useToast = () => {
         duration
       }
     );
+
+  const errorNotify = (error: unknown) =>
+    notify({
+      messageType: 'error',
+      message: (error as Error)?.message || 'Something went wrong.'
+    });
+
   return {
-    notify
+    notify,
+    errorNotify
   };
 };

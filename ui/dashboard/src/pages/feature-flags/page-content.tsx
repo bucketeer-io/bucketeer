@@ -14,6 +14,7 @@ import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
 import FilterFlagModal from './flags-modal/filter-flag-modal';
 import Overview from './overview';
+import SortBy from './sort-by';
 import { FlagActionType, FlagFilters } from './types';
 
 const PageContent = ({
@@ -89,10 +90,13 @@ const PageContent = ({
       <Overview summary={summary} onChangeFilters={() => {}} />
       <Filter
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
-            <Icon icon={IconAddOutlined} size="sm" />
-            {t(`create-flag`)}
-          </Button>
+          <>
+            <SortBy filters={filters} setFilters={setFilters} />
+            <Button className="flex-1 lg:flex-none" onClick={onAdd}>
+              <Icon icon={IconAddOutlined} size="sm" />
+              {t(`create-flag`)}
+            </Button>
+          </>
         }
         filterCount={filterCount}
         searchValue={filters.searchQuery}

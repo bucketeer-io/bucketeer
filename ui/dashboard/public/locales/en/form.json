@@ -148,7 +148,10 @@
     "already-targeted": "Already targeted",
     "value-already-targeted": "{{value}} already target in {{targetedIn}}",
     "prerequisite-flags": "This flag is a prerequisite of {{quantity}} other {{flag}}.",
-    "prerequisite-flags-desc": "Changes to the targeting rules may affect the variations served by the flags below."
+    "prerequisite-flags-desc": "Changes to the targeting rules may affect the variations served by the flags below.",
+    "schedule-info": "You can update or delete the schedule on the Auto Operations tab on the Feature Flag details page.",
+    "flag-switch": "{{name}} has been {{state}}.",
+    "schedule-configured": "Schedule has been configured for {{name}}."
   },
   "origin-env": "Origin Environment",
   "destination-env": "Destination Environment",

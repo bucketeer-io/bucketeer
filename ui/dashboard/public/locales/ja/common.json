@@ -209,5 +209,7 @@
   "true": "True",
   "false": "False",
   "and": "And",
-  "see-more": "See more"
+  "see-more": "See more",
+  "default": "Default",
+  "sort-by": "Sort by: {{sortBy}}"
 }

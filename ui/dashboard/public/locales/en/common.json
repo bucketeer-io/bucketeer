@@ -209,5 +209,9 @@
   "true": "True",
   "false": "False",
   "and": "And",
-  "see-more": "See more"
+  "see-more": "See more",
+  "default": "Default",
+  "sort-by": "Sort by: {{sortBy}}",
+  "sort-asc": "Oldest to Newest",
+  "sort-desc": "Newest to Oldest"
 }
