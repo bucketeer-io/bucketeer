@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
-import { Feature } from '@types';
+import { Feature, FeatureCountByStatus } from '@types';
+import { isNotEmpty } from 'utils/data-type';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import PageLayout from 'elements/page-layout';
@@ -10,15 +12,19 @@ import { FlagActionType, FlagFilters } from '../types';
 import { useFetchFlags } from './use-fetch-flags';
 
 const CollectionLoader = ({
-  onAdd,
   filters,
+  onAdd,
   setFilters,
-  onHandleActions
+  setSummary,
+  onHandleActions,
+  onClearFilters
 }: {
-  onAdd: () => void;
   filters: FlagFilters;
+  onAdd: () => void;
   setFilters: (filters: Partial<FlagFilters>) => void;
+  setSummary: (summary: FeatureCountByStatus) => void;
   onHandleActions: (item: Feature, type: FlagActionType) => void;
+  onClearFilters: () => void;
 }) => {
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -39,11 +45,24 @@ const CollectionLoader = ({
   const emptyState = (
     <CollectionEmpty
       data={features}
+      isFilter={isNotEmpty(
+        filters?.enabled ??
+          filters?.hasExperiment ??
+          filters?.hasPrerequisites ??
+          filters?.maintainer
+      )}
       searchQuery={filters?.searchQuery}
-      onClear={() => {}}
+      onClear={onClearFilters}
       empty={<EmptyCollection onAdd={onAdd} />}
     />
   );
+
+  useEffect(() => {
+    if (collection) {
+      setSummary(collection.featureCountByStatus);
+    }
+  }, [collection]);
+
   return isLoading ? (
     <PageLayout.LoadingState />
   ) : isError ? (

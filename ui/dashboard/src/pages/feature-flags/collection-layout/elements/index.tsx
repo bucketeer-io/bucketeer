@@ -8,7 +8,6 @@ import { truncateTextCenter } from 'utils/converts';
 import { copyToClipBoard } from 'utils/function';
 import { cn } from 'utils/style';
 import {
-  IconArrowDown,
   IconCalendar,
   IconCopy,
   IconFlagOperation,
@@ -36,7 +35,7 @@ export const GridViewRoot = ({ children }: PropsWithChildren) => (
 );
 
 export const GridViewRow = ({ children }: PropsWithChildren) => (
-  <div className="flex items-center w-full min-w-fit p-5 gap-x-4 xl:gap-x-10 rounded shadow-card bg-white self-stretch">
+  <div className="flex items-center w-full min-w-fit p-5 gap-x-4 xxl:gap-x-10 rounded shadow-card bg-white self-stretch">
     {children}
   </div>
 );
@@ -97,18 +96,6 @@ export const FlagStatus = ({ status }: { status: FeatureActivityStatus }) => {
   );
 };
 
-export const FlagTag = ({ tag }: { tag: string }) => {
-  return (
-    <div
-      className={
-        'flex-center w-fit px-2 py-1.5 typo-para-small leading-[14px] text-center rounded bg-primary-50 text-primary-500'
-      }
-    >
-      {tag}
-    </div>
-  );
-};
-
 export const FlagVariationPolygon = ({
   index,
   className
@@ -155,7 +142,7 @@ export const FlagNameElement = ({
   };
 
   return (
-    <div className="flex items-center w-full min-w-[440px] max-w-[440px] gap-x-4">
+    <div className="flex items-center w-full min-w-[400px] max-w-[400px] xxl:min-w-[500px] gap-x-4">
       <div className="flex flex-col flex-1 w-full gap-y-2">
         <div className="flex items-center w-full gap-x-2">
           <FlagDataTypeIcon icon={icon} className="size-[26px]" />
@@ -218,35 +205,6 @@ export const FlagVariationsElement = ({
     </div>
   );
 };
-
-export const FlagTagsElement = ({
-  tags,
-  isExpanded,
-  onToggleExpandTag
-}: {
-  tags: string[];
-  isExpanded: boolean;
-  onToggleExpandTag: () => void;
-}) => (
-  <div className="flex items-center gap-2 max-w-[500px] flex-wrap">
-    {(isExpanded ? tags : tags.slice(0, 3)).map((tag, index) => (
-      <FlagTag key={index} tag={tag} />
-    ))}
-    {tags.length > 3 && !isExpanded && <FlagTag tag={`+${tags.length - 3}`} />}
-    {tags.length > 3 && (
-      <div className="flex-center" onClick={onToggleExpandTag}>
-        <Icon
-          icon={IconArrowDown}
-          size={'sm'}
-          color="gray-500"
-          className={cn('cursor-pointer transition-all duration-200 rotate-0', {
-            'rotate-180': isExpanded
-          })}
-        />
-      </div>
-    )}
-  </div>
-);
 
 export const FlagOperationsElement = ({
   autoOpsSummary

@@ -6,7 +6,7 @@ export const EmptyCollection = ({ onAdd }: { onAdd: () => void }) => {
   const { t } = useTranslation(['common', 'table']);
 
   return (
-    <EmptyState.Root variant="no-data" size="lg" className="pt-60">
+    <EmptyState.Root variant="no-data" size="lg">
       <EmptyState.Illustration />
       <EmptyState.Body>
         <EmptyState.Title>

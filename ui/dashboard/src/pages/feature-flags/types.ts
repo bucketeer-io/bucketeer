@@ -7,6 +7,7 @@ export type FlagActionType =
   | 'CLONE'
   | 'ACTIVE'
   | 'INACTIVE';
+export type SummaryType = 'TOTAL' | 'ACTIVE' | 'INACTIVE';
 
 export interface FlagFilters {
   page: number;

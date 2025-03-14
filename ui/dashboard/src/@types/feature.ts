@@ -101,7 +101,13 @@ export interface AutoOpsSummary {
   killSwitchCount: number;
 }
 
+export interface FeatureCountByStatus {
+  active: number;
+  inactive: number;
+  total: number;
+}
 export interface FeatureCollection {
+  featureCountByStatus: FeatureCountByStatus;
   features: Array<Feature>;
   cursor: string;
   totalCount: string;

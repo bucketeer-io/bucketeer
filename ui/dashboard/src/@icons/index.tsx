@@ -47,6 +47,7 @@ import IconSetting from './sidebar-icons/setting.svg?react';
 import IconSwitch from './sidebar-icons/switch.svg?react';
 import IconUsage from './sidebar-icons/usage.svg?react';
 import IconUser from './sidebar-icons/user.svg?react';
+import IconActiveFlags from './special-icons/active-flags.svg?react';
 import IconDelete from './special-icons/delete.svg?react';
 import IconExperiment from './special-icons/experiment.svg?react';
 import IconExperimentsConnected from './special-icons/experiments-connected.svg?react';
@@ -55,14 +56,17 @@ import IconFlagConnected from './special-icons/flag-connected.svg?react';
 import IconGithub from './special-icons/github.svg?react';
 import IconGoal from './special-icons/goal.svg?react';
 import IconGoogle from './special-icons/google.svg?react';
+import IconInactiveFlags from './special-icons/inactive-flags.svg?react';
 import IconLogoutConfirm from './special-icons/logout.svg?react';
 import IconNoData from './special-icons/no-data.svg?react';
 import IconNotInUse from './special-icons/not-in-use.svg?react';
 import IconNotStartedExperiment from './special-icons/not-started-experiment.svg?react';
+import IconNotifications from './special-icons/notifications.svg?react';
 import IconOperation from './special-icons/operation.svg?react';
 import IconOperationsConnected from './special-icons/operations-connected.svg?react';
 import IconSlack from './special-icons/slack.svg?react';
 import IconStoppedExperiment from './special-icons/stopped-experiment.svg?react';
+import IconTotalFlags from './special-icons/total-flags.svg?react';
 import IconWaitingExperiment from './special-icons/waiting-experment.svg?react';
 
 export {
@@ -135,5 +139,9 @@ export {
   IconFlagConnected,
   IconStoppedExperiment,
   IconWaitingExperiment,
-  IconNotStartedExperiment
+  IconNotStartedExperiment,
+  IconActiveFlags,
+  IconInactiveFlags,
+  IconTotalFlags,
+  IconNotifications
 };

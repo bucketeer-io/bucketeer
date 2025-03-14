@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useState } from 'react';
+import { ReactNode } from 'react';
 import {
   IconArchiveOutlined,
   IconMoreVertOutlined,
@@ -11,15 +11,16 @@ import { compact } from 'lodash';
 import { Feature } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
+import { cn } from 'utils/style';
 import { IconWatch } from '@icons';
 import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
+import ExpandableTag from 'elements/expandable-tag';
 import { FlagActionType } from '../types';
 import {
   FlagNameElement,
   FlagOperationsElement,
-  FlagTagsElement,
   FlagVariationsElement,
   GridViewRoot,
   GridViewRow
@@ -41,21 +42,7 @@ const GridViewCollection = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const [tagsExpanded, setTagsExpanded] = useState<string[]>([]);
-
-  const onToggleExpandTag = useCallback(
-    (id: string) => {
-      const isExpanded = tagsExpanded.includes(id);
-      setTagsExpanded(
-        isExpanded
-          ? tagsExpanded.filter(item => item !== id)
-          : [...tagsExpanded, id]
-      );
-    },
-    [tagsExpanded]
-  );
-
-  if (!data?.length) return emptyState;
+  if (!data?.length) return <div className="pt-32">{emptyState}</div>;
 
   return (
     <GridViewRoot>
@@ -83,11 +70,15 @@ const GridViewCollection = ({
             />
             <div className="flex flex-col w-fit gap-y-3 min-w-[300px]">
               <FlagVariationsElement variations={variations} />
-              <div className="flex items-center w-full gap-x-2">
-                <FlagTagsElement
+              <div className="flex items-center flex-wrap w-[410px] max-w-[410px] gap-2">
+                <ExpandableTag
                   tags={tags}
-                  isExpanded={tagsExpanded.includes(id)}
-                  onToggleExpandTag={() => onToggleExpandTag(id)}
+                  rowId={item.id}
+                  className={cn('!max-w-[180px] truncate', {
+                    '!max-w-[250px]': tags.length <= 1
+                  })}
+                  wrapperClassName="w-fit"
+                  maxSize={tags.length <= 1 ? 250 : 180}
                 />
                 <FlagOperationsElement autoOpsSummary={autoOpsSummary} />
               </div>
