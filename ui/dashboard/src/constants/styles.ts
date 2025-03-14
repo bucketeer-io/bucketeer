@@ -112,7 +112,7 @@ export const BG_COLOR_MAPPING = {
   'accent-yellow-50': 'bg-accent-yellow-50'
 };
 
-export const CHART_COLORS = [
+export const COLORS = [
   '#f06292',
   '#ba68c8',
   '#64b5f6',

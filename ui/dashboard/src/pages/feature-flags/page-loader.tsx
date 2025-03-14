@@ -6,15 +6,14 @@ import { PAGE_PATH_FEATURE_CLONE, PAGE_PATH_FEATURES } from 'constants/routing';
 import { useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
-import PageLayout from 'elements/page-layout';
-import { EmptyCollection } from './collection-layout/empty-collection';
+import { Feature } from '@types';
 import AddFlagModal from './flags-modal/add-flag-modal';
 import ArchiveModal from './flags-modal/archive-modal';
 import ArchiveWarning from './flags-modal/archive-modal/archive-warning';
 import CloneFlagModal from './flags-modal/clone-flag-modal';
 import ConfirmationRequiredModal from './flags-modal/confirm-required-modal';
 import PageContent from './page-content';
-import { FlagActionType, FlagsTemp } from './types';
+import { FlagActionType } from './types';
 
 const PageLoader = () => {
   const { t } = useTranslation(['common', 'table']);
@@ -25,13 +24,10 @@ const PageLoader = () => {
     useActionWithURL({
       closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`
     });
-  const isLoading = false,
-    isError = false,
-    isEmpty = false;
 
   const navigate = useNavigate();
   const location = useLocation();
-  const [selectedFlag, setSelectedFlag] = useState<FlagsTemp>();
+  const [selectedFlag, setSelectedFlag] = useState<Feature>();
   const [isArchiving, setIsArchiving] = useState(false);
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
@@ -44,7 +40,7 @@ const PageLoader = () => {
     onCloseConfirmRequiredModal
   ] = useToggleOpen(false);
 
-  const onHandleActions = (flag: FlagsTemp, type: FlagActionType) => {
+  const onHandleActions = (flag: Feature, type: FlagActionType) => {
     if (type === 'CLONE') {
       return navigate(
         `${location.pathname}${PAGE_PATH_FEATURE_CLONE}/${flag.id}`
@@ -59,17 +55,7 @@ const PageLoader = () => {
 
   return (
     <>
-      {isLoading ? (
-        <PageLayout.LoadingState />
-      ) : isError ? (
-        <PageLayout.ErrorState onRetry={() => {}} />
-      ) : isEmpty ? (
-        <PageLayout.EmptyState>
-          <EmptyCollection onAdd={onOpenAddModal} />
-        </PageLayout.EmptyState>
-      ) : (
-        <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
-      )}
+      <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
       {openConfirmModal && (
         <ArchiveModal
           isOpen={openConfirmModal}

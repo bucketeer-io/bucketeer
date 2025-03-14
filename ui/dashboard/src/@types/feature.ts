@@ -19,7 +19,7 @@ export interface FeatureVariation {
   id: string;
   value: string;
   name: string;
-  description: string;
+  description?: string;
 }
 
 export interface FeatureTarget {
@@ -90,6 +90,13 @@ export interface Feature {
   archived: true;
   prerequisites: FeaturePrerequisite[];
   samplingSeed: string;
+  autoOpsSummary: AutoOpsSummary;
+}
+
+export interface AutoOpsSummary {
+  progressiveRolloutCount: number;
+  scheduleCount: number;
+  killSwitchCount: number;
 }
 
 export interface FeatureCollection {
