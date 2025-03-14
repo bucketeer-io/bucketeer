@@ -39,6 +39,8 @@ const ConfirmationRequiredModal = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
+  const isRequireComment = currentEnvironment?.requireComment;
+
   // const { data: collection } = useQueryScheduleFlags({
   //   params: {
   //     environmentId: currentEnvironment?.id,
@@ -48,9 +50,7 @@ const ConfirmationRequiredModal = ({
 
   const formSchema = yup.object().shape({
     id: yup.string(),
-    comment: currentEnvironment?.requireComment
-      ? yup.string().required()
-      : yup.string(),
+    comment: isRequireComment ? yup.string().required() : yup.string(),
     scheduleType: yup.string().oneOf(['ACTIVE_NOW', 'SCHEDULE']).required(),
     scheduleAt: yup
       .string()
@@ -118,7 +118,7 @@ const ConfirmationRequiredModal = ({
                 name="comment"
                 render={({ field }) => (
                   <Form.Item className="py-0">
-                    <Form.Label required={currentEnvironment?.requireComment}>
+                    <Form.Label required={isRequireComment}>
                       {t('form:comment-for-update')}
                     </Form.Label>
                     <Form.Control>
@@ -199,7 +199,10 @@ const ConfirmationRequiredModal = ({
             </div>
             <ButtonBar
               secondaryButton={
-                <Button loading={isSubmitting} disabled={!isDirty || !isValid}>
+                <Button
+                  loading={isSubmitting}
+                  disabled={(isRequireComment && !isDirty) || !isValid}
+                >
                   {t(`submit`)}
                 </Button>
               }

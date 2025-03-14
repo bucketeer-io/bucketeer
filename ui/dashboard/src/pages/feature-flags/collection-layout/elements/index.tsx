@@ -9,7 +9,12 @@ import { Link } from 'react-router-dom';
 import { COLORS } from 'constants/styles';
 import { useScreen, useToast } from 'hooks';
 import { useTranslation } from 'i18n';
-import { AutoOpsSummary, FeatureVariation, FeatureVariationType } from '@types';
+import {
+  AutoOpsRule,
+  FeatureVariation,
+  FeatureVariationType,
+  Rollout
+} from '@types';
 import { truncateBySide } from 'utils/converts';
 import { copyToClipBoard } from 'utils/function';
 import { cn } from 'utils/style';
@@ -22,7 +27,10 @@ import {
   IconOperationArrow,
   IconUserSettings
 } from '@icons';
-import { FeatureActivityStatus } from 'pages/feature-flags/types';
+import {
+  FeatureActivityStatus,
+  FlagOperationType
+} from 'pages/feature-flags/types';
 import Divider from 'components/divider';
 import Icon, { IconProps } from 'components/icon';
 import { Tooltip, TooltipProps } from 'components/tooltip';
@@ -203,8 +211,8 @@ export const FlagNameElement = ({
             <TruncationWithTooltip
               content={name}
               elementId={id}
-              maxSize={isXXLScreen ? 370 : 270}
-              className="w-fit max-w-[270px] xxl:max-w-[370px]"
+              maxSize={isXXLScreen ? 320 : 220}
+              className="w-fit max-w-[220px] xxl:max-w-[320px]"
               tooltipWrapperCls="left-0 translate-x-0"
             >
               <Link
@@ -234,7 +242,7 @@ export const FlagNameElement = ({
           />
         </div>
         <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
-          {truncateBySide(id, 20)}
+          {truncateBySide(id, 55)}
           <div onClick={() => handleCopyId(id)}>
             <Icon
               icon={IconCopy}
@@ -344,15 +352,31 @@ export const FlagVariationsElement = ({
 };
 
 export const FlagOperationsElement = ({
-  autoOpsSummary
+  autoOpsRules,
+  rollouts,
+  featureId
 }: {
-  autoOpsSummary: AutoOpsSummary;
+  autoOpsRules: AutoOpsRule[];
+  rollouts: Rollout[];
+  featureId: string;
 }) => {
   const { t } = useTranslation(['table']);
 
+  const operationType: FlagOperationType | null = useMemo(() => {
+    if (rollouts?.find(item => item.featureId === featureId))
+      return FlagOperationType.ROLLOUT;
+    const operation = autoOpsRules?.find(item => item.featureId === featureId);
+    if (operation?.opsType === 'SCHEDULE') return FlagOperationType.SCHEDULED;
+    if (operation?.opsType === 'EVENT_RATE')
+      return FlagOperationType.KILL_SWITCH;
+    return null;
+  }, [autoOpsRules, rollouts, featureId]);
+
+  if (!operationType) return <></>;
+
   return (
     <div className="flex items-center gap-x-2">
-      {!!autoOpsSummary?.progressiveRolloutCount && (
+      {operationType === FlagOperationType.ROLLOUT && (
         <Tooltip
           asChild={false}
           trigger={
@@ -365,7 +389,7 @@ export const FlagOperationsElement = ({
           content={t('feature-flags.progressive-description')}
         />
       )}
-      {!!autoOpsSummary?.scheduleCount && (
+      {operationType === FlagOperationType.SCHEDULED && (
         <Tooltip
           asChild={false}
           trigger={
@@ -378,7 +402,7 @@ export const FlagOperationsElement = ({
           content={t('feature-flags.scheduled-description')}
         />
       )}
-      {!!autoOpsSummary?.killSwitchCount && (
+      {operationType === FlagOperationType.KILL_SWITCH && (
         <Tooltip
           asChild={false}
           trigger={

@@ -30,3 +30,9 @@ export enum FeatureActivityStatus {
   NEW = 'new',
   INACTIVE = 'in-active'
 }
+
+export enum FlagOperationType {
+  ROLLOUT = 'ROLLOUT',
+  SCHEDULED = 'SCHEDULED',
+  KILL_SWITCH = 'KILL_SWITCH'
+}

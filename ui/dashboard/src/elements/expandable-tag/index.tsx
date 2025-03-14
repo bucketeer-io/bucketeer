@@ -9,13 +9,15 @@ export const Tag = ({
   value,
   className,
   tooltipCls,
-  maxSize = 250
+  maxSize = 250,
+  onTagClick
 }: {
   tagId?: string;
   value: string;
   className?: string;
   tooltipCls?: string;
   maxSize?: number;
+  onTagClick?: () => void;
 }) => (
   <TruncationWithTooltip
     elementId={tagId || ''}
@@ -26,9 +28,10 @@ export const Tag = ({
     <div
       id={tagId}
       className={cn(
-        'px-2 py-1.5 bg-primary-100/70 text-primary-500 typo-para-small !w-fit leading-[14px] rounded whitespace-nowrap',
+        'px-2 py-1.5 bg-primary-100/70 text-primary-500 typo-para-small !w-fit leading-[14px] rounded whitespace-nowrap border border-transparent',
         className
       )}
+      onClick={onTagClick}
     >
       {value}
     </div>
@@ -38,17 +41,21 @@ export const Tag = ({
 const ExpandableTag = ({
   rowId,
   tags,
+  filterTags,
   className,
   wrapperClassName,
   maxSize,
-  tooltipCls
+  tooltipCls,
+  onTagClick
 }: {
   rowId: string;
   tags: string[];
+  filterTags?: string[];
   className?: string;
   wrapperClassName?: string;
   maxSize?: number;
   tooltipCls?: string;
+  onTagClick?: (tag: string) => void;
 }) => {
   const [expandedTags, setExpandedTags] = useState<string[]>([]);
 
@@ -81,9 +88,12 @@ const ExpandableTag = ({
             tagId={`${tag}-${index}`}
             key={index}
             value={tag}
-            className={className}
+            className={cn(className, {
+              'border border-primary-500': filterTags?.includes(tag)
+            })}
             maxSize={maxSize}
             tooltipCls={tooltipCls}
+            onTagClick={() => onTagClick && onTagClick(tag)}
           />
         ))}
         {tags.length > 3 && !isExpanded && (
