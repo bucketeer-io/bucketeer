@@ -65,7 +65,8 @@ const PageContent = ({
           const status = value as CollectionStatusType;
           onChangeFilters({
             searchQuery: '',
-            status
+            status,
+            archived: status === 'ARCHIVED'
           });
         }}
       >
