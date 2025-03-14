@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useCallback } from 'react';
 import { Trans } from 'react-i18next';
 import {
   IconArchiveOutlined,
@@ -9,9 +9,10 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { compact } from 'lodash';
-import { Feature } from '@types';
+import { Account, AutoOpsRule, Feature, Rollout } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
+import { cn } from 'utils/style';
 import { IconWatch } from '@icons';
 import Icon from 'components/icon';
 import { Popover } from 'components/popover';
@@ -29,19 +30,43 @@ import {
 import { getDataTypeIcon, getFlagStatus } from './elements/utils';
 
 const GridViewCollection = ({
+  filterTags,
+  autoOpsRules,
+  rollouts,
+  accounts,
   data,
   emptyState,
-  onActions
+  onActions,
+  handleTagFilters
 }: {
+  filterTags?: string[];
+  autoOpsRules: AutoOpsRule[];
+  rollouts: Rollout[];
+  accounts: Account[];
   data: Feature[];
   emptyState: ReactNode;
   onActions: (item: Feature, type: FlagActionType) => void;
+  handleTagFilters: (tag: string) => void;
 }) => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
   const { searchOptions } = useSearchParams();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const handleGetMaintainerInfo = useCallback(
+    (email: string) => {
+      const existedAccount = accounts?.find(account => account.email === email);
+      if (
+        !existedAccount ||
+        !existedAccount?.firstName ||
+        !existedAccount?.lastName
+      )
+        return email;
+      return `${existedAccount.firstName} ${existedAccount.lastName}`;
+    },
+    [accounts]
+  );
 
   if (!data?.length) return <div className="pt-32">{emptyState}</div>;
 
@@ -56,8 +81,7 @@ const GridViewCollection = ({
           updatedAt,
           enabled,
           variationType,
-          variations,
-          autoOpsSummary
+          variations
         } = item;
         return (
           <GridViewRow key={index}>
@@ -65,7 +89,7 @@ const GridViewCollection = ({
               id={id}
               link={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${id}/targeting`}
               name={name}
-              maintainer={maintainer}
+              maintainer={handleGetMaintainerInfo(maintainer)}
               variationType={variationType}
               icon={getDataTypeIcon(variationType)}
               status={getFlagStatus(item)}
@@ -75,13 +99,19 @@ const GridViewCollection = ({
               <div className="flex items-center flex-wrap w-full gap-2">
                 <ExpandableTag
                   tags={tags}
+                  filterTags={filterTags}
                   rowId={item.id}
-                  className="!max-w-[350px] truncate"
+                  className={cn('!max-w-[350px] truncate cursor-pointer')}
                   wrapperClassName="w-fit"
                   maxSize={382}
                   tooltipCls="!z-0"
+                  onTagClick={tag => handleTagFilters(tag)}
                 />
-                <FlagOperationsElement autoOpsSummary={autoOpsSummary} />
+                <FlagOperationsElement
+                  autoOpsRules={autoOpsRules}
+                  rollouts={rollouts}
+                  featureId={id}
+                />
               </div>
             </div>
             <div className="flex flex-1 justify-end self-start h-full gap-x-2">

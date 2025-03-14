@@ -16,3 +16,5 @@ export * from './goal';
 export * from './experiment-result';
 export * from './feature';
 export * from './schedule-flag';
+export * from './auto-ops';
+export * from './rollouts';

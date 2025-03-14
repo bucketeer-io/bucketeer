@@ -9,7 +9,7 @@ import {
   getUniqueProjects,
   useAuth
 } from 'auth';
-import { PAGE_PATH_ROOT } from 'constants/routing';
+import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { setCurrentEnvIdStorage } from 'storage/environment';
 import { Environment, Project } from '@types';
@@ -37,16 +37,15 @@ const MyProjects = () => {
     const { environmentRoles } = consoleAccount!;
     const currentProjects = getUniqueProjects(environmentRoles);
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-    const currentProject = getCurrentProject(
-      environmentRoles,
-      currentEnvironment.id
-    );
+    const { id, urlCode } = currentEnvironment || {};
+    const currentProject = getCurrentProject(environmentRoles, id || urlCode);
+
     const currentEnvironments = getEnvironmentsByProjectId(
       environmentRoles,
       currentProject.id
     );
 
-    setCurrentEnvIdStorage(currentEnvironment.id);
+    setCurrentEnvIdStorage(id || urlCode);
     setProjects(currentProjects);
     setSelectedProject(currentProject);
     setSelectedEnvironment(currentEnvironment);
@@ -84,8 +83,8 @@ const MyProjects = () => {
   const onHandleChange = useCallback(
     (value: Environment) => {
       setSelectedEnvironment(value);
-      setCurrentEnvIdStorage(value.id);
-      navigate(PAGE_PATH_ROOT);
+      setCurrentEnvIdStorage(value.id || value.urlCode);
+      navigate(`/${value.urlCode}${PAGE_PATH_FEATURES}`);
       setIsShowProjectsList(false);
       onClearSearch();
     },

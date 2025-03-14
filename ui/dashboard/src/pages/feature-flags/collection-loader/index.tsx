@@ -1,4 +1,7 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
+import { useQueryAccounts } from '@queries/accounts';
+import { useQueryAutoOps } from '@queries/auto-ops';
+import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { Feature, FeatureCountByStatus } from '@types';
@@ -39,8 +42,55 @@ const CollectionLoader = ({
     environmentId: currenEnvironment?.id
   });
 
+  const { data: accountCollection } = useQueryAccounts({
+    params: {
+      organizationId: currenEnvironment?.organizationId,
+      cursor: String(0)
+    }
+  });
+
+  const { data: autoOpsCollection } = useQueryAutoOps({
+    params: {
+      environmentId: currenEnvironment?.id,
+      cursor: String(0)
+    }
+  });
+
+  const { data: rolloutCollection } = useQueryRollouts({
+    params: {
+      environmentId: currenEnvironment?.id,
+      cursor: String(0)
+    }
+  });
+
+  const autoOpsRules = autoOpsCollection?.autoOpsRules || [];
+  const rollouts = rolloutCollection?.progressiveRollouts || [];
+  const accounts = accountCollection?.accounts || [];
   const features = collection?.features || [];
   const totalCount = Number(collection?.totalCount) || 0;
+
+  const handleTagFilters = useCallback(
+    (tag: string) => {
+      const tags = filters?.tags as string[];
+      const isNotEmptyTag = isNotEmpty(tags);
+      if (isNotEmptyTag) {
+        const isExistedTag = tags.includes(tag);
+        const _tags = isExistedTag
+          ? tags.filter(item => item !== tag)
+          : [...tags, tag];
+        return setFilters({
+          ...filters,
+          tags: _tags.length ? _tags : undefined
+        });
+      }
+
+      setFilters({
+        ...filters,
+        tags: [tag]
+      });
+    },
+    [filters]
+  );
 
   const emptyState = (
     <CollectionEmpty
@@ -71,9 +121,14 @@ const CollectionLoader = ({
   ) : (
     <>
       <GridViewCollection
+        filterTags={filters?.tags}
+        autoOpsRules={autoOpsRules}
+        rollouts={rollouts}
+        accounts={accounts}
         data={features}
         onActions={onHandleActions}
         emptyState={emptyState}
+        handleTagFilters={handleTagFilters}
       />
 
       {totalCount > LIST_PAGE_SIZE && !isLoading && (
