@@ -23,7 +23,7 @@ export const ResultHeaderCell = ({
   return (
     <div
       className={cn(
-        'flex items-center size-fit w-full p-4 pt-0 gap-x-3 text-[13px] leading-[13px] text-gray-500 uppercase relative z-50',
+        'flex items-center size-fit w-full p-4 pt-0 gap-x-3 text-[13px] leading-[13px] text-gray-500 uppercase relative z-10',
         className
       )}
       style={{

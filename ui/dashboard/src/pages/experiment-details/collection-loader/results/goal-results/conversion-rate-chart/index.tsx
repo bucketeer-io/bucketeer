@@ -64,9 +64,8 @@ const ConversionRateChart = ({
           return [];
         }
         const histogram = cvrProb?.histogram;
-        if (bins.length === 0) {
-          bins = histogram?.bins || [];
-        }
+        bins = !bins.length ? histogram?.bins || [] : bins;
+
         return histogram?.hist || [];
       }),
     [goalResult, bins]

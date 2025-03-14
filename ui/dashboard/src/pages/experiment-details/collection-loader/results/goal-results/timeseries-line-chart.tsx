@@ -14,6 +14,7 @@ import {
   ChartOptions
 } from 'chart.js';
 import { CHART_COLORS } from 'constants/styles';
+import { formatTooltipLabel, formatXAxisLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
 
 ChartJS.register(
@@ -42,21 +43,6 @@ interface TimeseriesLineChartProps {
 const TimeseriesLineChart = memo(
   ({ label, dataLabels, timeseries, data }: TimeseriesLineChartProps) => {
     const labels = timeseries.map(t => new Date(Number(t) * 1000));
-    const formatLabel = (index: number) => {
-      const date = labels[index];
-      if (date) {
-        return formatLongDateTime({
-          value: String(date.getTime() / 1000),
-          overrideOptions: {
-            day: '2-digit',
-            month: 'short',
-            year: undefined
-          },
-          locale: 'en-GB'
-        }).replace(/(\d{2}) (\w{3})/, '$2 $1');
-      }
-      return '';
-    };
 
     const chartData: ChartData<'line', (string | number)[], Date> = {
       labels,
@@ -92,7 +78,8 @@ const TimeseriesLineChart = memo(
                   });
                 }
                 return tooltipItems[0].label;
-              }
+              },
+              label: formatTooltipLabel
             }
           },
           title: {
@@ -118,7 +105,7 @@ const TimeseriesLineChart = memo(
             ticks: {
               align: 'center' as const,
               callback: function (index: string | number) {
-                return formatLabel ? formatLabel(Number(index)) : '';
+                return formatXAxisLabel(Number(index), labels);
               },
               autoSkip: false,
               minRotation: 0,

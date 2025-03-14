@@ -159,9 +159,10 @@ export const EnvironmentRoot = memo(
     return (
       <Routes>
         {!editable && (
-          <Route path={`/:any${PAGE_PATH_NEW}`}>
-            <h3>{`403 Access denied`}</h3>
-          </Route>
+          <Route
+            path={`/:any${PAGE_PATH_NEW}`}
+            element={<h3>{`403 Access denied`}</h3>}
+          />
         )}
         <Route path={`${PAGE_PATH_FEATURES}`} element={<FeatureFlagsPage />} />
         <Route path={`${PAGE_PATH_SETTINGS}`} element={<SettingsPage />} />

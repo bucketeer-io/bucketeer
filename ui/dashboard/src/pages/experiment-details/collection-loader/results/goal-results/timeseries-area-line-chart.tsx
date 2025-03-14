@@ -16,6 +16,7 @@ import {
   ChartDataset
 } from 'chart.js';
 import { CHART_COLORS } from 'constants/styles';
+import { formatTooltipLabel, formatXAxisLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
 
 ChartJS.register(
@@ -48,22 +49,6 @@ export const TimeseriesAreaLineChart = memo(
     representatives
   }: TimeseriesAreaLineChartProps) => {
     const labels = timeseries.map(t => new Date(Number(t) * 1000));
-
-    const formatLabel = (index: number) => {
-      const date = labels[index];
-      if (date) {
-        return formatLongDateTime({
-          value: String(date.getTime() / 1000),
-          overrideOptions: {
-            day: '2-digit',
-            month: 'short',
-            year: undefined
-          },
-          locale: 'en-GB'
-        }).replace(/(\d{2}) (\w{3})/, '$2 $1');
-      }
-      return '';
-    };
 
     const datasets: ChartDataset<'line'>[] = [];
 
@@ -119,7 +104,8 @@ export const TimeseriesAreaLineChart = memo(
                 });
               }
               return tooltipItems[0].label;
-            }
+            },
+            label: formatTooltipLabel
           }
         }
       },
@@ -141,7 +127,7 @@ export const TimeseriesAreaLineChart = memo(
           ticks: {
             align: 'center' as const,
             callback: function (index: string | number) {
-              return formatLabel ? formatLabel(Number(index)) : '';
+              return formatXAxisLabel(Number(index), labels);
             },
             autoSkip: false,
             minRotation: 0,

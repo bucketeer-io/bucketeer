@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Experiment, GoalResult } from '@types';
+import { isNumber } from 'utils/chart';
 import { GoalResultState } from '..';
 import { ResultHeaderCell, ResultCell } from './goal-results-table-element';
 
@@ -63,13 +64,17 @@ const ConversionRateTable = ({
     [goalResult, experiment]
   );
 
-  const baseConversionRate = useMemo(
-    () =>
-      (Number(baseVariationResult?.experimentCount?.userCount) /
-        Number(baseVariationResult?.evaluationCount.userCount)) *
-      100,
-    [baseVariationResult]
-  );
+  const baseConversionRate = useMemo(() => {
+    const experimentUserCount = Number(
+      baseVariationResult?.experimentCount?.userCount
+    );
+    const evaluationUserCount = Number(
+      baseVariationResult?.evaluationCount?.userCount
+    );
+    return evaluationUserCount > 0
+      ? (experimentUserCount / evaluationUserCount) * 100
+      : 0;
+  }, [baseVariationResult]);
 
   return (
     <div className="min-w-fit">
@@ -96,25 +101,49 @@ const ConversionRateTable = ({
             goalValueSumPerUserProbBest,
             goalValueSumPerUserProbBeatBaseline
           } = item;
+          const isConversionRateChart =
+            goalResultState.chartType === 'conversion-rate';
+
           const conversionRate =
-            (Number(experimentCount?.userCount) /
-              Number(evaluationCount?.userCount)) *
-            100;
+            Number(evaluationCount?.userCount) > 0
+              ? (Number(experimentCount?.userCount) /
+                  Number(evaluationCount?.userCount)) *
+                100
+              : 0;
+
           const valuePerUser =
-            Number(experimentCount.valueSum) /
-            Number(experimentCount.userCount);
+            Number(experimentCount.userCount) > 0
+              ? Number(experimentCount.valueSum) /
+                Number(experimentCount.userCount)
+              : 0;
 
           const isSameVariationId =
             item.variationId === experiment.baseVariationId;
-          const improvementValue = conversionRate - baseConversionRate;
-          const probBeatBaseline =
-            goalResultState.chartType === 'conversion-rate'
-              ? cvrProbBeatBaseline
-              : goalValueSumPerUserProbBeatBaseline;
-          const probBest =
-            goalResultState.chartType === 'conversion-rate'
-              ? cvrProbBest
-              : goalValueSumPerUserProbBest;
+
+          const improvementValue = isSameVariationId
+            ? 'Baseline'
+            : (isNumber(conversionRate - baseConversionRate)
+                ? conversionRate - baseConversionRate
+                : 0
+              ).toFixed(1) + ' %';
+
+          const probBeatBaseline = isConversionRateChart
+            ? cvrProbBeatBaseline
+            : goalValueSumPerUserProbBeatBaseline;
+
+          const probBeatBaselineValue = isSameVariationId
+            ? 'Baseline'
+            : isNumber(probBeatBaseline?.mean)
+              ? (probBeatBaseline.mean * 100).toFixed(1) + ' %'
+              : '-';
+
+          const probBest = isConversionRateChart
+            ? cvrProbBest
+            : goalValueSumPerUserProbBest;
+
+          const probBestValue = isNumber(probBest?.mean)
+            ? (probBest.mean * 100).toFixed(1) + ' %'
+            : '-';
 
           return (
             <div key={i} className="flex items-center w-full">
@@ -123,34 +152,10 @@ const ConversionRateTable = ({
                 value={item?.variationName || ''}
                 minSize={270}
               />
-              <ResultCell
-                value={isNaN(valuePerUser) ? '0.00' : valuePerUser.toFixed(2)}
-                minSize={210}
-              />
-              <ResultCell
-                value={
-                  isSameVariationId
-                    ? 'Baseline'
-                    : (isNaN(improvementValue)
-                        ? 0
-                        : improvementValue.toFixed(1)) + ' %'
-                }
-                minSize={210}
-              />
-              <ResultCell
-                value={
-                  isSameVariationId
-                    ? 'Baseline'
-                    : probBeatBaseline
-                      ? (probBeatBaseline.mean * 100).toFixed(1) + ' %'
-                      : '-'
-                }
-                minSize={210}
-              />
-              <ResultCell
-                value={probBest ? (probBest.mean * 100).toFixed(1) + ' %' : '-'}
-                minSize={210}
-              />
+              <ResultCell value={valuePerUser.toFixed(2)} minSize={210} />
+              <ResultCell value={improvementValue} minSize={210} />
+              <ResultCell value={probBeatBaselineValue} minSize={210} />
+              <ResultCell value={probBestValue} minSize={210} />
             </div>
           );
         })}
