@@ -36,7 +36,7 @@ on:
 env:
   GHCR_REGISTRY: ghcr.io/bucketeer-io
   GAR_REGISTRY: asia-docker.pkg.dev
-  GO_VERSION: 1.21.10
+  GO_VERSION: 1.24.1
   GO_BUILD_CONCURRENCY: 4 # Set the same number of apps to build.
   NODE_VERSION: "22.1"
 
