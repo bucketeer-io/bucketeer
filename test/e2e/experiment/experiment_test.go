@@ -537,7 +537,7 @@ func TestStatusUpdateFromWaitingToRunning(t *testing.T) {
 			break
 		}
 		if i == retryTimes-1 {
-			t.Fatalf("retry timeout")
+			t.Fatalf("retry timeout: %s", resp.Experiment.Name)
 		}
 		time.Sleep(time.Second)
 	}
@@ -594,7 +594,7 @@ func TestStatusUpdateFromRunningToStopped(t *testing.T) {
 			break
 		}
 		if i == retryTimes-1 {
-			t.Fatalf(fmt.Sprintf("retry timeout: %s", resp.Experiment.Name))
+			t.Fatalf("retry timeout: %s", resp.Experiment.Name)
 		}
 		time.Sleep(time.Second)
 	}
@@ -653,7 +653,7 @@ func TestStatusUpdateFromRunningToStoppedNoCommand(t *testing.T) {
 			break
 		}
 		if i == retryTimes-1 {
-			t.Fatalf(fmt.Sprintf("retry timeout: %s", resp.Experiment.Name))
+			t.Fatalf("retry timeout: %s", resp.Experiment.Name)
 		}
 		time.Sleep(time.Second)
 	}
@@ -705,7 +705,7 @@ func TestStatusUpdateFromWaitingToStopped(t *testing.T) {
 			break
 		}
 		if i == retryTimes-1 {
-			t.Fatalf(fmt.Sprintf("retry timeout: %s", resp.Experiment.Name))
+			t.Fatalf("retry timeout: %s", resp.Experiment.Name)
 		}
 		time.Sleep(time.Second)
 	}
