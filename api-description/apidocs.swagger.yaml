@@ -1974,6 +1974,14 @@ definitions:
         format: int32
       ownerEmail:
         type: string
+  bucketeerfeatureChangeType:
+    type: string
+    enum:
+      - UNSPECIFIED
+      - CREATE
+      - UPDATE
+      - DELETE
+    default: UNSPECIFIED
   bucketeerfeatureVariation:
     type: object
     properties:
@@ -2360,14 +2368,6 @@ definitions:
       killSwitchCount:
         type: integer
         format: int32
-  featureChangeType:
-    type: string
-    enum:
-      - UNSPECIFIED
-      - CREATE
-      - UPDATE
-      - DELETE
-    default: UNSPECIFIED
   featureClause:
     type: object
     properties:
@@ -2520,7 +2520,7 @@ definitions:
     type: object
     properties:
       changeType:
-        $ref: '#/definitions/featureChangeType'
+        $ref: '#/definitions/bucketeerfeatureChangeType'
       prerequisite:
         $ref: '#/definitions/featurePrerequisite'
     required:
@@ -2589,7 +2589,7 @@ definitions:
     type: object
     properties:
       changeType:
-        $ref: '#/definitions/featureChangeType'
+        $ref: '#/definitions/bucketeerfeatureChangeType'
       rule:
         $ref: '#/definitions/featureRule'
     required:
@@ -2654,7 +2654,7 @@ definitions:
     type: object
     properties:
       changeType:
-        $ref: '#/definitions/featureChangeType'
+        $ref: '#/definitions/bucketeerfeatureChangeType'
       tag:
         type: string
     required:
@@ -2673,7 +2673,7 @@ definitions:
     type: object
     properties:
       changeType:
-        $ref: '#/definitions/featureChangeType'
+        $ref: '#/definitions/bucketeerfeatureChangeType'
       target:
         $ref: '#/definitions/featureTarget'
     required:
@@ -2717,7 +2717,7 @@ definitions:
     type: object
     properties:
       changeType:
-        $ref: '#/definitions/featureChangeType'
+        $ref: '#/definitions/bucketeerfeatureChangeType'
       variation:
         $ref: '#/definitions/bucketeerfeatureVariation'
     required:
