@@ -4406,7 +4406,7 @@ paths:
   /v1/feature/clone:
     post:
       summary: Clone Feature Flag
-      description: Clone a feature flag. To call this API, you need at least a MEMBER role in the specified organizations.
+      description: Clone a feature flag. To call this API, you need an EDITOR role in the specified environment.
       operationId: web.v1.feature.clone
       responses:
         "200":
@@ -4641,7 +4641,7 @@ paths:
         - Flag Trigger
     delete:
       summary: Delete Flag Trigger
-      description: Delete a flag trigger. To call this API, you need at least a MEMBER role in the specified organizations.
+      description: Delete a flag trigger. To call this API, you need an EDITOR role in the specified environment.
       operationId: web.v1.flag_trigger.delete
       responses:
         "200":
@@ -4701,7 +4701,7 @@ paths:
         - Flag Trigger
     post:
       summary: Create Flag Trigger
-      description: Create a flag trigger. To call this API, you need at least a MEMBER role in the specified organizations.
+      description: Create a flag trigger. To call this API, you need an EDITOR role in the specified environment.
       operationId: web.v1.flag_trigger.create
       responses:
         "200":
@@ -4758,7 +4758,7 @@ paths:
         - Flag Trigger
     patch:
       summary: Update Flag Trigger
-      description: Update a flag trigger. To call this API, you need at least a MEMBER role in the specified organizations.
+      description: Update a flag trigger. To call this API, you need an EDITOR role in the specified environment.
       operationId: web.v1.flag_trigger.update
       responses:
         "200":

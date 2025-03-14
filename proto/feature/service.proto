@@ -866,7 +866,7 @@ service FeatureService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Clone Feature Flag",
-      description: "Clone a feature flag. To call this API, you need at least a MEMBER role in the specified organizations.",
+      description: "Clone a feature flag. To call this API, you need an EDITOR role in the specified environment.",
       tags: "Feature",
       operation_id: "web.v1.feature.clone",
       responses: {
@@ -1165,7 +1165,7 @@ service FeatureService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Create Flag Trigger",
-      description: "Create a flag trigger. To call this API, you need at least a MEMBER role in the specified organizations.",
+      description: "Create a flag trigger. To call this API, you need an EDITOR role in the specified environment.",
       tags: "Flag Trigger",
       operation_id: "web.v1.flag_trigger.create",
       responses: {
@@ -1211,7 +1211,7 @@ service FeatureService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Update Flag Trigger",
-      description: "Update a flag trigger. To call this API, you need at least a MEMBER role in the specified organizations.",
+      description: "Update a flag trigger. To call this API, you need an EDITOR role in the specified environment.",
       tags: "Flag Trigger",
       operation_id: "web.v1.flag_trigger.update",
       responses: {
@@ -1262,7 +1262,7 @@ service FeatureService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Delete Flag Trigger",
-      description: "Delete a flag trigger. To call this API, you need at least a MEMBER role in the specified organizations.",
+      description: "Delete a flag trigger. To call this API, you need an EDITOR role in the specified environment.",
       tags: "Flag Trigger",
       operation_id: "web.v1.flag_trigger.delete",
       responses: {

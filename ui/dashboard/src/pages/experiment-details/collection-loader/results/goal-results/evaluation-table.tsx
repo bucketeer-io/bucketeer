@@ -83,13 +83,19 @@ const EvaluationTable = ({
       <div className="divide-y divide-gray-300">
         {evaluationData?.map((item, i) => {
           const { experimentCount, evaluationCount } = item;
+
           const conversionRate =
-            (Number(experimentCount?.userCount) /
-              Number(evaluationCount?.userCount)) *
-            100;
+            Number(evaluationCount?.userCount) > 0
+              ? (Number(experimentCount?.userCount) /
+                  Number(evaluationCount?.userCount)) *
+                100
+              : 0;
+
           const valuePerUser =
-            Number(experimentCount.valueSum) /
-            Number(experimentCount.userCount);
+            Number(experimentCount.userCount) > 0
+              ? Number(experimentCount.valueSum) /
+                Number(experimentCount.userCount)
+              : 0;
 
           return (
             <div key={i} className="flex items-center w-full">
@@ -98,20 +104,27 @@ const EvaluationTable = ({
                 value={item?.variationName || ''}
                 minSize={270}
               />
-              <ResultCell value={evaluationCount?.userCount} minSize={143} />
-              <ResultCell value={experimentCount?.eventCount} minSize={123} />
-              <ResultCell value={experimentCount?.userCount} minSize={119} />
               <ResultCell
-                value={
-                  (isNaN(conversionRate) ? 0 : conversionRate.toFixed(1)) + ' %'
-                }
-                minSize={147}
+                value={Number(evaluationCount?.userCount)}
+                minSize={143}
               />
-              <ResultCell value={experimentCount?.valueSum} minSize={125} />
               <ResultCell
-                value={isNaN(valuePerUser) ? '0.00' : valuePerUser.toFixed(2)}
+                value={Number(experimentCount?.eventCount)}
                 minSize={123}
               />
+              <ResultCell
+                value={Number(experimentCount?.userCount)}
+                minSize={119}
+              />
+              <ResultCell
+                value={conversionRate.toFixed(1) + ' %'}
+                minSize={147}
+              />
+              <ResultCell
+                value={Number(experimentCount?.valueSum)}
+                minSize={125}
+              />
+              <ResultCell value={valuePerUser.toFixed(2)} minSize={123} />
             </div>
           );
         })}

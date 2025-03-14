@@ -32745,7 +32745,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Clone a feature flag. To call this API, you need at least a MEMBER role in the specified organizations."
+                        "value": "Clone a feature flag. To call this API, you need an EDITOR role in the specified environment."
                       },
                       {
                         "name": "tags",
@@ -33870,7 +33870,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Create a flag trigger. To call this API, you need at least a MEMBER role in the specified organizations."
+                        "value": "Create a flag trigger. To call this API, you need an EDITOR role in the specified environment."
                       },
                       {
                         "name": "tags",
@@ -34046,7 +34046,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Update a flag trigger. To call this API, you need at least a MEMBER role in the specified organizations."
+                        "value": "Update a flag trigger. To call this API, you need an EDITOR role in the specified environment."
                       },
                       {
                         "name": "tags",
@@ -34233,7 +34233,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Delete a flag trigger. To call this API, you need at least a MEMBER role in the specified organizations."
+                        "value": "Delete a flag trigger. To call this API, you need an EDITOR role in the specified environment."
                       },
                       {
                         "name": "tags",
