@@ -35,7 +35,10 @@
     "archive-experiment": "Archive Experiment",
     "unarchive-experiment": "Unarchive Experiment",
     "stop-experiment": "Stop Experiment",
-    "start-experiment": "Start Experiment"
+    "start-experiment": "Start Experiment",
+    "archive-flag": "Archive Feature Flag",
+    "unarchive-flag": "Unarchive Feature Flag",
+    "clone-flag": "Clone Feature Flag"
   },
   "empty": {
     "project-title": "No registered projects",

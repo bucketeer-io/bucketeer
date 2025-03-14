@@ -190,5 +190,10 @@
     "try-again": "Try again"
   },
   "select": "Select",
-  "switch-organization": "Switch organization"
+  "switch-organization": "Switch organization",
+  "feature-flags": "Feature Flags",
+  "feature-flags-subtitle": "Select a flag to manage the environment-specific targeting and rollout rules",
+  "new-flag": "New Flag",
+  "operations": "Operations",
+  "favorites": "Favorites"
 }

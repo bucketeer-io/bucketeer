@@ -53,7 +53,8 @@ import {
   ExperimentsRoot,
   OrganizationsRoot,
   ProjectsRoot,
-  GoalsRoot
+  GoalsRoot,
+  FeatureFlagsRoot
 } from './routers';
 
 export const AppLoading = () => (
@@ -164,7 +165,10 @@ export const EnvironmentRoot = memo(
             element={<h3>{`403 Access denied`}</h3>}
           />
         )}
-        <Route path={`${PAGE_PATH_FEATURES}`} element={<FeatureFlagsPage />} />
+        <Route
+          path={`${PAGE_PATH_FEATURES}/*`}
+          element={<FeatureFlagsRoot />}
+        />
         <Route path={`${PAGE_PATH_SETTINGS}`} element={<SettingsPage />} />
         <Route path={`${PAGE_PATH_PROJECTS}/*`} element={<ProjectsRoot />} />
         <Route path={`${PAGE_PATH_APIKEYS}`} element={<APIKeysPage />} />

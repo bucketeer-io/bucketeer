@@ -68,3 +68,13 @@ export const covertFileToUint8ToBase64 = (
     onLoad(base64String);
   };
 };
+
+export const isJsonString = (str: string) => {
+  try {
+    JSON.parse(str);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
+    return false;
+  }
+  return true;
+};

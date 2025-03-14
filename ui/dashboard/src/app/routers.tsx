@@ -7,6 +7,8 @@ import OrganizationDetailPage from 'pages/organization-details';
 import OrganizationsPage from 'pages/organizations';
 import ProjectDetailsPage from 'pages/project-details';
 import ProjectsPage from 'pages/projects';
+import { ID_CLONE, ID_NEW } from 'constants/routing';
+import FeatureFlagsPage from 'pages/feature-flags';
 
 export const OrganizationsRoot = () => {
   return (
@@ -43,6 +45,17 @@ export const GoalsRoot = () => {
       <Route index element={<GoalsPage />} />
       <Route path="new" element={<GoalsPage />} />
       <Route path=":goalId/*" element={<GoalDetailsPage />} />
+    </Routes>
+  );
+};
+
+export const FeatureFlagsRoot = () => {
+  return (
+    <Routes>
+      <Route index element={<FeatureFlagsPage />} />
+      <Route path={ID_NEW} element={<FeatureFlagsPage />} />
+      <Route path={`${ID_CLONE}/:flagId`} element={<FeatureFlagsPage />} />
+      {/* <Route path=":flagId/*" element={<FeatureFlagDetailsPage />} /> */}
     </Routes>
   );
 };

@@ -35,7 +35,10 @@
     "archive-experiment": "Archive Experiment",
     "unarchive-experiment": "Unarchive Experiment",
     "stop-experiment": "Stop Experiment",
-    "start-experiment": "Start Experiment"
+    "start-experiment": "Start Experiment",
+    "archive-flag": "Archive Feature Flag",
+    "unarchive-flag": "Unarchive Feature Flag",
+    "clone-flag": "Clone Feature Flag"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -107,6 +110,10 @@
     "running": "Running",
     "stopped": "Stopped",
     "not-started": "Not started",
+    "scheduled-experiment": "Scheduled Experiment",
+    "running-experiment": "Running Experiment",
+    "stopped-experiment": "Stopped Experiment",
+    "not-started-experiment": "Not Started Experiment",
     "confirm-stop-desc": "The experiment \"<bold>{{name}}</bold>\" will be stopped. Are you sure you want to proceed?",
     "confirm-start-desc": "The experiment \"<bold>{{name}}</bold>\" will be started. Are you sure you want to proceed?",
     "running-experiment-desc": "The experiment is scheduled to stop on {{date}}",
