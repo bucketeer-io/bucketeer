@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { Trans } from 'react-i18next';
 import {
   IconArchiveOutlined,
   IconMoreVertOutlined,
@@ -11,11 +12,11 @@ import { compact } from 'lodash';
 import { Feature } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
-import { cn } from 'utils/style';
 import { IconWatch } from '@icons';
 import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
+import DateTooltip from 'elements/date-tooltip';
 import ExpandableTag from 'elements/expandable-tag';
 import { FlagActionType } from '../types';
 import {
@@ -69,15 +70,16 @@ const GridViewCollection = ({
               icon={getDataTypeIcon(variationType)}
               status={getFlagStatus(item)}
             />
-            <div className="flex flex-col gap-y-3 w-[410px] max-w-[410px] xxl:w-[750px] xxl:max-w-[750px] relative z-50">
+            <div className="flex flex-col gap-y-3 w-[410px] max-w-[410px] xxl:w-full xxl:max-w-[730px]">
               <FlagVariationsElement variations={variations} />
               <div className="flex items-center flex-wrap w-full gap-2">
                 <ExpandableTag
                   tags={tags}
                   rowId={item.id}
-                  className={cn('!max-w-[350px] truncate')}
+                  className="!max-w-[350px] truncate"
                   wrapperClassName="w-fit"
                   maxSize={382}
+                  tooltipCls="!z-0"
                 />
                 <FlagOperationsElement autoOpsSummary={autoOpsSummary} />
               </div>
@@ -86,11 +88,23 @@ const GridViewCollection = ({
               <div className="flex-center">
                 <Icon icon={IconWatch} size={'xxs'} />
               </div>
-              <div className="text-gray-700 typo-para-small whitespace-nowrap">
-                {Number(updatedAt) === 0
-                  ? t('never')
-                  : `Updated ${formatDateTime(updatedAt)}`}
-              </div>
+              <DateTooltip
+                trigger={
+                  <div className="text-gray-700 typo-para-small whitespace-nowrap">
+                    {Number(updatedAt) === 0 ? (
+                      t('never')
+                    ) : (
+                      <Trans
+                        i18nKey={'common:time-updated'}
+                        values={{
+                          time: formatDateTime(updatedAt)
+                        }}
+                      />
+                    )}
+                  </div>
+                }
+                date={Number(updatedAt) === 0 ? null : updatedAt}
+              />
               <div className="flex-center">
                 <Switch
                   checked={enabled}
@@ -103,17 +117,17 @@ const GridViewCollection = ({
                 options={compact([
                   searchOptions.status === 'ARCHIVED'
                     ? {
-                        label: `${t('table:popover.unarchive-flag')}`,
+                        label: `${t('unarchive-flag')}`,
                         icon: IconArchiveOutlined,
                         value: 'UNARCHIVE'
                       }
                     : {
-                        label: `${t('table:popover.archive-flag')}`,
+                        label: `${t('archive-flag')}`,
                         icon: IconArchiveOutlined,
                         value: 'ARCHIVE'
                       },
                   {
-                    label: `${t('table:popover.clone-flag')}`,
+                    label: `${t('clone-flag')}`,
                     icon: IconSaveAsFilled,
                     value: 'CLONE'
                   }

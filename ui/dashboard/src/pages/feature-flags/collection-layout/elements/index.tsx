@@ -7,7 +7,7 @@ import {
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { COLORS } from 'constants/styles';
-import { useToast } from 'hooks';
+import { useScreen, useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { AutoOpsSummary, FeatureVariation, FeatureVariationType } from '@types';
 import { truncateBySide } from 'utils/converts';
@@ -26,6 +26,7 @@ import { FeatureActivityStatus } from 'pages/feature-flags/types';
 import Divider from 'components/divider';
 import Icon, { IconProps } from 'components/icon';
 import { Tooltip } from 'components/tooltip';
+import TruncationWithTooltip from 'elements/truncation-with-tooltip';
 
 interface FlagNameElementType {
   id: string;
@@ -172,6 +173,7 @@ export const FlagNameElement = ({
 }: FlagNameElementType) => {
   const { notify } = useToast();
   const { t } = useTranslation(['table']);
+  const { isXXLScreen } = useScreen();
 
   const handleCopyId = (id: string) => {
     copyToClipBoard(id);
@@ -195,13 +197,23 @@ export const FlagNameElement = ({
               variationType={variationType}
             />
           </div>
-          <Link
-            id={id}
-            to={link}
-            className="typo-para-medium text-primary-500 line-clamp-2 break-all underline"
-          >
-            {name}
-          </Link>
+          <div>
+            <TruncationWithTooltip
+              content={name}
+              elementId={id}
+              maxSize={isXXLScreen ? 370 : 270}
+              className="w-fit max-w-[270px] xxl:max-w-[370px]"
+              tooltipWrapperCls="left-0 translate-x-0"
+            >
+              <Link
+                id={id}
+                to={link}
+                className="typo-para-medium text-primary-500 underline w-full"
+              >
+                <p className="truncate">{name}</p>
+              </Link>
+            </TruncationWithTooltip>
+          </div>
           {maintainer && (
             <Tooltip
               asChild={false}
@@ -287,14 +299,15 @@ export const FlagVariationsElement = ({
             <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
           </div>
         }
-        className="z-50"
         content={
-          <div className="flex flex-col gap-y-3 max-w-[420px]">
+          <div className="flex flex-col gap-y-3 w-full max-w-[420px]">
             {_variations.map((item, index) => (
               <div className="flex items-center w-full gap-3" key={index}>
                 {item.map((variation, variationIndex) => (
                   <div
-                    className={cn('flex items-center gap-x-1 max-w-[140px]')}
+                    className={cn('flex items-center gap-x-1 max-w-[140px]', {
+                      'w-[140px]': _variations.length > 1
+                    })}
                     key={variationIndex}
                   >
                     {variationIndex !== 0 && (
@@ -348,7 +361,6 @@ export const FlagOperationsElement = ({
             />
           }
           content={t('feature-flags.progressive-description')}
-          className="z-50"
         />
       )}
       {!!autoOpsSummary?.scheduleCount && (
@@ -362,7 +374,6 @@ export const FlagOperationsElement = ({
             />
           }
           content={t('feature-flags.scheduled-description')}
-          className="z-50"
         />
       )}
       {!!autoOpsSummary?.killSwitchCount && (
@@ -376,7 +387,6 @@ export const FlagOperationsElement = ({
             />
           }
           content={t('feature-flags.kill-description')}
-          className="z-50"
         />
       )}
     </div>

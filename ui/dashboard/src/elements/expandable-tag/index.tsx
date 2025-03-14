@@ -40,13 +40,15 @@ const ExpandableTag = ({
   tags,
   className,
   wrapperClassName,
-  maxSize
+  maxSize,
+  tooltipCls
 }: {
   rowId: string;
   tags: string[];
   className?: string;
   wrapperClassName?: string;
   maxSize?: number;
+  tooltipCls?: string;
 }) => {
   const [expandedTags, setExpandedTags] = useState<string[]>([]);
 
@@ -81,10 +83,11 @@ const ExpandableTag = ({
             value={tag}
             className={className}
             maxSize={maxSize}
+            tooltipCls={tooltipCls}
           />
         ))}
         {tags.length > 3 && !isExpanded && (
-          <Tag value={`+${tags.length - 3}`} />
+          <Tag value={`+${tags.length - 3}`} tooltipCls={tooltipCls} />
         )}
       </div>
       {tags.length > 3 && (

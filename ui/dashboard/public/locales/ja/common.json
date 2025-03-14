@@ -204,5 +204,6 @@
   "clone-flag": "Clone Flag",
   "archive-flag": "Archive Flag",
   "unarchive-flag": "Unarchive Flag",
-  "update-now": "Update now"
+  "update-now": "Update now",
+  "time-updated": "Updated {{time}}"
 }
