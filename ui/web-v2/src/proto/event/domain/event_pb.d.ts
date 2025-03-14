@@ -307,6 +307,7 @@ export namespace Event {
     FLAG_TRIGGER_ENABLED: 1605;
     FLAG_TRIGGER_DELETED: 1606;
     FLAG_TRIGGER_USAGE_UPDATED: 1607;
+    FLAG_TRIGGER_UPDATED: 1608;
     TAG_CREATED: 1701;
     TAG_DELETED: 1702;
     CODE_REFERENCE_CREATED: 1800;
@@ -7004,6 +7005,57 @@ export namespace FlagTriggerCreatedEvent {
     createdAt: number;
     updatedAt: number;
     environmentId: string;
+  };
+}
+
+export class FlagTriggerUpdateEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  getReset(): boolean;
+  setReset(value: boolean): void;
+
+  hasDisabled(): boolean;
+  clearDisabled(): void;
+  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FlagTriggerUpdateEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: FlagTriggerUpdateEvent
+  ): FlagTriggerUpdateEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: FlagTriggerUpdateEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): FlagTriggerUpdateEvent;
+  static deserializeBinaryFromReader(
+    message: FlagTriggerUpdateEvent,
+    reader: jspb.BinaryReader
+  ): FlagTriggerUpdateEvent;
+}
+
+export namespace FlagTriggerUpdateEvent {
+  export type AsObject = {
+    id: string;
+    featureId: string;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    reset: boolean;
+    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 }
 

@@ -308,7 +308,12 @@ message UpdateFeatureTargetingResponse {}
 
 message CloneFeatureRequest {
   string id = 1;
-  CloneFeatureCommand command = 2;
+  CloneFeatureCommand command = 2 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   reserved 3;
   string environment_id = 4;
 }
@@ -480,11 +485,11 @@ message BulkDownloadSegmentUsersResponse {
 }
 
 message EvaluateFeaturesRequest {
-  bucketeer.user.User user = 1;
+  bucketeer.user.User user = 1 [(google.api.field_behavior) = REQUIRED];
   reserved 2;
   string tag = 3;
   string feature_id = 4;  // it will evaluate a single feature if set
-  string environment_id = 5;
+  string environment_id = 5 [(google.api.field_behavior) = REQUIRED];
 }
 
 message EvaluateFeaturesResponse {
@@ -520,8 +525,17 @@ message ListTagsResponse {
 
 message CreateFlagTriggerRequest {
   reserved 1;
-  CreateFlagTriggerCommand create_flag_trigger_command = 2;
-  string environment_id = 3;
+  CreateFlagTriggerCommand create_flag_trigger_command = 2 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 4 [(google.api.field_behavior) = REQUIRED];
+  FlagTrigger.Type type = 5 [(google.api.field_behavior) = REQUIRED];
+  FlagTrigger.Action action = 6 [(google.api.field_behavior) = REQUIRED];
+  string description = 7;
 }
 
 message CreateFlagTriggerResponse {
@@ -532,21 +546,45 @@ message CreateFlagTriggerResponse {
 message DeleteFlagTriggerRequest {
   string id = 1;
   reserved 2;
-  DeleteFlagTriggerCommand delete_flag_trigger_command = 3;
+  DeleteFlagTriggerCommand delete_flag_trigger_command = 3 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   string environment_id = 4;
 }
 
 message DeleteFlagTriggerResponse {}
 
 message UpdateFlagTriggerRequest {
-  string id = 1;
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
   reserved 2;
+  string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
   ChangeFlagTriggerDescriptionCommand change_flag_trigger_description_command =
-      3;
-  string environment_id = 4;
+      3 [
+        deprecated = true,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+          description: "deprecated"
+        }
+      ];
+  google.protobuf.StringValue description = 5;
+  bool reset = 6
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "If true, reset the trigger hook URL."
+      }];
+  google.protobuf.BoolValue disabled = 7
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "If true, disable the trigger."
+      }];
 }
 
-message UpdateFlagTriggerResponse {}
+message UpdateFlagTriggerResponse {
+  string url = 1 [(grpc.gateway.protoc_gen_openapiv2.options
+                       .openapiv2_field) = {
+    description: "If reset is true, new generated trigger hook URL will be returned."
+  }];
+}
 
 message EnableFlagTriggerRequest {
   string id = 1;
@@ -579,9 +617,9 @@ message ResetFlagTriggerResponse {
 }
 
 message GetFlagTriggerRequest {
-  string id = 1;
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
   reserved 2;
-  string environment_id = 3;
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
 message GetFlagTriggerResponse {
@@ -812,9 +850,13 @@ service FeatureService {
   rpc DisableFeature(DisableFeatureRequest) returns (DisableFeatureResponse) {
     option deprecated = true;
   }
-  rpc ArchiveFeature(ArchiveFeatureRequest) returns (ArchiveFeatureResponse) {}
+  rpc ArchiveFeature(ArchiveFeatureRequest) returns (ArchiveFeatureResponse) {
+    option deprecated = true;
+  }
   rpc UnarchiveFeature(UnarchiveFeatureRequest)
-      returns (UnarchiveFeatureResponse) {}
+      returns (UnarchiveFeatureResponse) {
+    option deprecated = true;
+  }
   rpc DeleteFeature(DeleteFeatureRequest) returns (DeleteFeatureResponse) {}
   rpc UpdateFeatureDetails(UpdateFeatureDetailsRequest)
       returns (UpdateFeatureDetailsResponse) {}
@@ -822,7 +864,51 @@ service FeatureService {
       returns (UpdateFeatureVariationsResponse) {}
   rpc UpdateFeatureTargeting(UpdateFeatureTargetingRequest)
       returns (UpdateFeatureTargetingResponse) {}
-  rpc CloneFeature(CloneFeatureRequest) returns (CloneFeatureResponse) {}
+  rpc CloneFeature(CloneFeatureRequest) returns (CloneFeatureResponse) {
+    option (google.api.http) = {
+      post: "/v1/feature/clone"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Clone Feature Flag",
+      description: "Clone a feature flag. To call this API, you need an EDITOR role in the specified environment.",
+      tags: "Feature",
+      operation_id: "web.v1.feature.clone",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 
   rpc CreateSegment(CreateSegmentRequest) returns (CreateSegmentResponse) {
     option (google.api.http) = {
@@ -1077,9 +1163,97 @@ service FeatureService {
       returns (EvaluateFeaturesResponse) {}
   rpc ListTags(ListTagsRequest) returns (ListTagsResponse) {}
   rpc CreateFlagTrigger(CreateFlagTriggerRequest)
-      returns (CreateFlagTriggerResponse) {}
+      returns (CreateFlagTriggerResponse) {
+    option (google.api.http) = {
+      post: "/v1/flag_trigger"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create Flag Trigger",
+      description: "Create a flag trigger. To call this API, you need an EDITOR role in the specified environment.",
+      tags: "Flag Trigger",
+      operation_id: "web.v1.flag_trigger.create",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc UpdateFlagTrigger(UpdateFlagTriggerRequest)
-      returns (UpdateFlagTriggerResponse) {}
+      returns (UpdateFlagTriggerResponse) {
+    option (google.api.http) = {
+      patch: "/v1/flag_trigger"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update Flag Trigger",
+      description: "Update a flag trigger. To call this API, you need an EDITOR role in the specified environment.",
+      tags: "Flag Trigger",
+      operation_id: "web.v1.flag_trigger.update",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc EnableFlagTrigger(EnableFlagTriggerRequest)
       returns (EnableFlagTriggerResponse) {}
   rpc DisableFlagTrigger(DisableFlagTriggerRequest)
@@ -1087,10 +1261,128 @@ service FeatureService {
   rpc ResetFlagTrigger(ResetFlagTriggerRequest)
       returns (ResetFlagTriggerResponse) {}
   rpc DeleteFlagTrigger(DeleteFlagTriggerRequest)
-      returns (DeleteFlagTriggerResponse) {}
-  rpc GetFlagTrigger(GetFlagTriggerRequest) returns (GetFlagTriggerResponse) {}
+      returns (DeleteFlagTriggerResponse) {
+    option (google.api.http) = {
+      delete: "/v1/flag_trigger"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete Flag Trigger",
+      description: "Delete a flag trigger. To call this API, you need an EDITOR role in the specified environment.",
+      tags: "Flag Trigger",
+      operation_id: "web.v1.flag_trigger.delete",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc GetFlagTrigger(GetFlagTriggerRequest) returns (GetFlagTriggerResponse) {
+    option (google.api.http) = {
+      get: "/v1/flag_trigger"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Flag Trigger",
+      description: "Get a flag trigger. To call this API, you need at least a MEMBER role in the specified organizations.",
+      tags: "Flag Trigger",
+      operation_id: "web.v1.flag_trigger.get",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ListFlagTriggers(ListFlagTriggersRequest)
-      returns (ListFlagTriggersResponse) {}
+      returns (ListFlagTriggersResponse) {
+    option (google.api.http) = {
+      get: "/v1/flag_triggers"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Flag Triggers",
+      description: "List flag triggers. To call this API, you need at least a MEMBER role in the specified organizations.",
+      tags: "Flag Trigger",
+      operation_id: "web.v1.flag_trigger.list",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc FlagTriggerWebhook(FlagTriggerWebhookRequest)
       returns (FlagTriggerWebhookResponse) {
     option (google.api.http) = {

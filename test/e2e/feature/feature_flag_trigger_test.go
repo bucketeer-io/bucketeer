@@ -24,6 +24,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -59,6 +63,59 @@ func TestCreateFeatureFlagTrigger(t *testing.T) {
 	}
 }
 
+func TestUpdateFeatureFlagDescriptionTriggerNoCommand(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	// Create feature
+	req := newCreateFeatureReq(newFeatureID(t))
+	createFeatureNoCmd(t, client, req)
+	// Create flag trigger
+	createFlagTriggerReq := newCreateFlagTriggerReq(
+		req.Id,
+		newTriggerDescription(t),
+		featureproto.FlagTrigger_Action_ON,
+	)
+	resp, err := client.CreateFlagTrigger(context.Background(), createFlagTriggerReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.FlagTrigger.FeatureId != req.Id {
+		t.Fatalf("unexpected flag feature id: %s, feature id: %s", resp.FlagTrigger.FeatureId, req.Id)
+	}
+	if resp.FlagTrigger.Type != createFlagTriggerReq.Type {
+		t.Fatalf("unexpected trigger type: %s, type: %s", resp.FlagTrigger.Type, createFlagTriggerReq.Type)
+	}
+	if resp.FlagTrigger.Action != createFlagTriggerReq.Action {
+		t.Fatalf("unexpected trigger action: %s, action: %s",
+			resp.FlagTrigger.Action, createFlagTriggerReq.Action)
+	}
+	if resp.FlagTrigger.Description != createFlagTriggerReq.Description {
+		t.Fatalf("unexpected trigger description: %s, description: %s",
+			resp.FlagTrigger.Description, createFlagTriggerReq.Description)
+	}
+	if resp.GetUrl() == "" {
+		t.Fatal("unexpected empty url")
+	}
+	updateFlagTriggerReq := &featureproto.UpdateFlagTriggerRequest{
+		Id:            resp.FlagTrigger.Id,
+		EnvironmentId: *environmentID,
+		Description:   wrapperspb.String(newTriggerDescription(t)),
+	}
+	_, err = client.UpdateFlagTrigger(context.Background(), updateFlagTriggerReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Get flag trigger
+	getFlagTriggerReq := &featureproto.GetFlagTriggerRequest{
+		Id:            resp.FlagTrigger.Id,
+		EnvironmentId: *environmentID,
+	}
+	getResp := getFeatureFlagTrigger(t, client, getFlagTriggerReq)
+	if getResp.FlagTrigger.Description != updateFlagTriggerReq.Description.Value {
+		t.Fatal("unexpected description")
+	}
+}
+
 func TestUpdateFlagTrigger(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
@@ -72,8 +129,6 @@ func TestUpdateFlagTrigger(t *testing.T) {
 		featureproto.FlagTrigger_Action_ON,
 	)
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
-	// Wait for updating to change timestamp in description
-	time.Sleep(1 * time.Second)
 	// Update flag trigger
 	updateFlagTriggerReq := &featureproto.UpdateFlagTriggerRequest{
 		Id:            createResp.FlagTrigger.Id,
@@ -174,6 +229,35 @@ func TestResetFlagTrigger(t *testing.T) {
 	}
 }
 
+func TestResetFlagUpdateTrigger(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	// Create feature
+	req := newCreateFeatureReq(newFeatureID(t))
+	createFeatureNoCmd(t, client, req)
+	// Create flag trigger
+	createFlagTriggerReq := newCreateFlagTriggerReq(
+		req.Id,
+		newTriggerDescription(t),
+		featureproto.FlagTrigger_Action_ON,
+	)
+	createResp, err := client.CreateFlagTrigger(context.Background(), createFlagTriggerReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(1)
+	updateFlagTriggerReq := &featureproto.UpdateFlagTriggerRequest{
+		Id:            createResp.FlagTrigger.Id,
+		EnvironmentId: *environmentID,
+		Reset_:        true,
+	}
+	updateResp, err := client.UpdateFlagTrigger(context.Background(), updateFlagTriggerReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.NotEqual(t, createResp.Url, updateResp.Url)
+}
+
 func TestDeleteFlagTrigger(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
@@ -189,9 +273,8 @@ func TestDeleteFlagTrigger(t *testing.T) {
 	createResp := createFeatureFlagTrigger(t, client, createFlagTriggerCommand)
 	// Delete flag trigger
 	deleteFlagTriggerReq := &featureproto.DeleteFlagTriggerRequest{
-		Id:                       createResp.FlagTrigger.Id,
-		EnvironmentId:            *environmentID,
-		DeleteFlagTriggerCommand: &featureproto.DeleteFlagTriggerCommand{},
+		Id:            createResp.FlagTrigger.Id,
+		EnvironmentId: *environmentID,
 	}
 	_, err := client.DeleteFlagTrigger(context.Background(), deleteFlagTriggerReq)
 	if err != nil {
@@ -387,6 +470,20 @@ func newCreateFlagTriggerCmd(
 	return createFlagTriggerCommand
 }
 
+func newCreateFlagTriggerReq(
+	featureID string,
+	description string,
+	action featureproto.FlagTrigger_Action,
+) *featureproto.CreateFlagTriggerRequest {
+	return &featureproto.CreateFlagTriggerRequest{
+		EnvironmentId: *environmentID,
+		FeatureId:     featureID,
+		Type:          featureproto.FlagTrigger_Type_WEBHOOK,
+		Action:        action,
+		Description:   description,
+	}
+}
+
 func getFeatureFlagTrigger(
 	t *testing.T,
 	client featureproto.FeatureServiceClient,
@@ -419,8 +516,13 @@ func createFeatureFlagTrigger(
 func newTriggerDescription(t *testing.T) string {
 	t.Helper()
 	now := time.Now()
-	if *testID != "" {
-		return fmt.Sprintf("%s-%s-%v-trigger-description", prefixID, *testID, now.Unix())
+	salt, err := uuid.NewUUID()
+	if err != nil {
+		t.Fatal(err)
 	}
-	return fmt.Sprintf("%s-%v-trigger-description", prefixID, now.Unix())
+	salted := fmt.Sprintf("%s-%v", salt.String(), now.Unix())
+	if *testID != "" {
+		return fmt.Sprintf("%s-%s-%v-trigger-description", prefixID, *testID, salted)
+	}
+	return fmt.Sprintf("%s-%v-trigger-description", prefixID, salted)
 }

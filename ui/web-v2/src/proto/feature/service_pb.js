@@ -17132,7 +17132,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        featureId: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        type: jspb.Message.getFieldWithDefault(msg, 5, 0),
+        action: jspb.Message.getFieldWithDefault(msg, 6, 0),
+        description: jspb.Message.getFieldWithDefault(msg, 7, '')
       };
 
     if (includeInstance) {
@@ -17186,6 +17190,27 @@ proto.bucketeer.feature.CreateFlagTriggerRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setFeatureId(value);
+          break;
+        case 5:
+          var value = /** @type {!proto.bucketeer.feature.FlagTrigger.Type} */ (
+            reader.readEnum()
+          );
+          msg.setType(value);
+          break;
+        case 6:
+          var value =
+            /** @type {!proto.bucketeer.feature.FlagTrigger.Action} */ (
+              reader.readEnum()
+            );
+          msg.setAction(value);
+          break;
+        case 7:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setDescription(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -17230,6 +17255,22 @@ proto.bucketeer.feature.CreateFlagTriggerRequest.serializeBinaryToWriter =
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(3, f);
+    }
+    f = message.getFeatureId();
+    if (f.length > 0) {
+      writer.writeString(4, f);
+    }
+    f = message.getType();
+    if (f !== 0.0) {
+      writer.writeEnum(5, f);
+    }
+    f = message.getAction();
+    if (f !== 0.0) {
+      writer.writeEnum(6, f);
+    }
+    f = message.getDescription();
+    if (f.length > 0) {
+      writer.writeString(7, f);
     }
   };
 
@@ -17293,6 +17334,87 @@ proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.getEnvironmentId =
 proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+/**
+ * optional string feature_id = 4;
+ * @return {string}
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.getFeatureId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.CreateFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.setFeatureId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
+  };
+
+/**
+ * optional FlagTrigger.Type type = 5;
+ * @return {!proto.bucketeer.feature.FlagTrigger.Type}
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.getType =
+  function () {
+    return /** @type {!proto.bucketeer.feature.FlagTrigger.Type} */ (
+      jspb.Message.getFieldWithDefault(this, 5, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.feature.FlagTrigger.Type} value
+ * @return {!proto.bucketeer.feature.CreateFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.setType = function (
+  value
+) {
+  return jspb.Message.setProto3EnumField(this, 5, value);
+};
+
+/**
+ * optional FlagTrigger.Action action = 6;
+ * @return {!proto.bucketeer.feature.FlagTrigger.Action}
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.getAction =
+  function () {
+    return /** @type {!proto.bucketeer.feature.FlagTrigger.Action} */ (
+      jspb.Message.getFieldWithDefault(this, 6, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.feature.FlagTrigger.Action} value
+ * @return {!proto.bucketeer.feature.CreateFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.setAction =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 6, value);
+  };
+
+/**
+ * optional string description = 7;
+ * @return {string}
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.getDescription =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 7, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.CreateFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.CreateFlagTriggerRequest.prototype.setDescription =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 7, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -17878,13 +18000,20 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, ''),
         changeFlagTriggerDescriptionCommand:
           (f = msg.getChangeFlagTriggerDescriptionCommand()) &&
           proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand.toObject(
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
+        description:
+          (f = msg.getDescription()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
+        reset: jspb.Message.getBooleanFieldWithDefault(msg, 6, false),
+        disabled:
+          (f = msg.getDisabled()) &&
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -17929,6 +18058,10 @@ proto.bucketeer.feature.UpdateFlagTriggerRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         case 3:
           var value =
             new proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand();
@@ -17939,9 +18072,25 @@ proto.bucketeer.feature.UpdateFlagTriggerRequest.deserializeBinaryFromReader =
           );
           msg.setChangeFlagTriggerDescriptionCommand(value);
           break;
-        case 4:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentId(value);
+        case 5:
+          var value = new google_protobuf_wrappers_pb.StringValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+          );
+          msg.setDescription(value);
+          break;
+        case 6:
+          var value = /** @type {boolean} */ (reader.readBool());
+          msg.setReset(value);
+          break;
+        case 7:
+          var value = new google_protobuf_wrappers_pb.BoolValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
+          );
+          msg.setDisabled(value);
           break;
         default:
           reader.skipField();
@@ -17979,6 +18128,10 @@ proto.bucketeer.feature.UpdateFlagTriggerRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(1, f);
     }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(4, f);
+    }
     f = message.getChangeFlagTriggerDescriptionCommand();
     if (f != null) {
       writer.writeMessage(
@@ -17988,9 +18141,25 @@ proto.bucketeer.feature.UpdateFlagTriggerRequest.serializeBinaryToWriter =
           .serializeBinaryToWriter
       );
     }
-    f = message.getEnvironmentId();
-    if (f.length > 0) {
-      writer.writeString(4, f);
+    f = message.getDescription();
+    if (f != null) {
+      writer.writeMessage(
+        5,
+        f,
+        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getReset();
+    if (f) {
+      writer.writeBool(6, f);
+    }
+    f = message.getDisabled();
+    if (f != null) {
+      writer.writeMessage(
+        7,
+        f,
+        google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
+      );
     }
   };
 
@@ -18011,6 +18180,26 @@ proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.setId = function (
 ) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
+
+/**
+ * optional string environment_id = 4;
+ * @return {string}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.UpdateFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
+  };
 
 /**
  * optional ChangeFlagTriggerDescriptionCommand change_flag_trigger_description_command = 3;
@@ -18055,23 +18244,108 @@ proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.hasChangeFlagTriggerD
   };
 
 /**
- * optional string environment_id = 4;
- * @return {string}
+ * optional google.protobuf.StringValue description = 5;
+ * @return {?proto.google.protobuf.StringValue}
  */
-proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.getEnvironmentId =
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.getDescription =
   function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 4, '')
+    return /** @type{?proto.google.protobuf.StringValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.StringValue,
+        5
+      )
     );
   };
 
 /**
- * @param {string} value
+ * @param {?proto.google.protobuf.StringValue|undefined} value
  * @return {!proto.bucketeer.feature.UpdateFlagTriggerRequest} returns this
  */
-proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.setEnvironmentId =
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.setDescription =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 4, value);
+    return jspb.Message.setWrapperField(this, 5, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.UpdateFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.clearDescription =
+  function () {
+    return this.setDescription(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.hasDescription =
+  function () {
+    return jspb.Message.getField(this, 5) != null;
+  };
+
+/**
+ * optional bool reset = 6;
+ * @return {boolean}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.getReset =
+  function () {
+    return /** @type {boolean} */ (
+      jspb.Message.getBooleanFieldWithDefault(this, 6, false)
+    );
+  };
+
+/**
+ * @param {boolean} value
+ * @return {!proto.bucketeer.feature.UpdateFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.setReset = function (
+  value
+) {
+  return jspb.Message.setProto3BooleanField(this, 6, value);
+};
+
+/**
+ * optional google.protobuf.BoolValue disabled = 7;
+ * @return {?proto.google.protobuf.BoolValue}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.getDisabled =
+  function () {
+    return /** @type{?proto.google.protobuf.BoolValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.BoolValue,
+        7
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.BoolValue|undefined} value
+ * @return {!proto.bucketeer.feature.UpdateFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.setDisabled =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 7, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.UpdateFlagTriggerRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.clearDisabled =
+  function () {
+    return this.setDisabled(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerRequest.prototype.hasDisabled =
+  function () {
+    return jspb.Message.getField(this, 7) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -18109,7 +18383,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        url: jspb.Message.getFieldWithDefault(msg, 1, '')
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -18149,6 +18425,10 @@ proto.bucketeer.feature.UpdateFlagTriggerResponse.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setUrl(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -18181,7 +18461,32 @@ proto.bucketeer.feature.UpdateFlagTriggerResponse.prototype.serializeBinary =
 proto.bucketeer.feature.UpdateFlagTriggerResponse.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
+    f = message.getUrl();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
   };
+
+/**
+ * optional string url = 1;
+ * @return {string}
+ */
+proto.bucketeer.feature.UpdateFlagTriggerResponse.prototype.getUrl =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.UpdateFlagTriggerResponse} returns this
+ */
+proto.bucketeer.feature.UpdateFlagTriggerResponse.prototype.setUrl = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**

@@ -21,11 +21,13 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
@@ -61,6 +63,11 @@ func (s *FeatureService) CreateFlagTrigger(
 	if err != nil {
 		return nil, err
 	}
+
+	if request.CreateFlagTriggerCommand == nil {
+		return s.createFlagTriggerNoCommand(ctx, request, editor, localizer)
+	}
+
 	if err = validateCreateFlagTriggerCommand(request.CreateFlagTriggerCommand, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -73,7 +80,10 @@ func (s *FeatureService) CreateFlagTrigger(
 	}
 	flagTrigger, err := domain.NewFlagTrigger(
 		request.EnvironmentId,
-		request.CreateFlagTriggerCommand,
+		request.CreateFlagTriggerCommand.FeatureId,
+		request.CreateFlagTriggerCommand.Type,
+		request.CreateFlagTriggerCommand.Action,
+		request.CreateFlagTriggerCommand.Description,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -139,6 +149,113 @@ func (s *FeatureService) CreateFlagTrigger(
 	}, nil
 }
 
+func (s *FeatureService) createFlagTriggerNoCommand(
+	ctx context.Context,
+	req *featureproto.CreateFlagTriggerRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*featureproto.CreateFlagTriggerResponse, error) {
+	if err := validateCreateFlagTriggerNoCommand(req, localizer); err != nil {
+		s.logger.Error(
+			"Error validating create flag trigger request",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, err
+	}
+	flagTrigger, err := domain.NewFlagTrigger(
+		req.EnvironmentId,
+		req.FeatureId,
+		req.Type,
+		req.Action,
+		req.Description,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Error creating flag trigger",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, err
+	}
+	var event *eventproto.Event
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		if err := flagTrigger.GenerateToken(); err != nil {
+			return err
+		}
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_FLAG_TRIGGER,
+			flagTrigger.Id,
+			eventproto.Event_FEATURE_CREATED,
+			&eventproto.FlagTriggerCreatedEvent{
+				Id:            flagTrigger.Id,
+				FeatureId:     flagTrigger.FeatureId,
+				Type:          flagTrigger.Type,
+				Action:        flagTrigger.Action,
+				Description:   flagTrigger.Description,
+				Token:         flagTrigger.Token,
+				CreatedAt:     flagTrigger.CreatedAt,
+				UpdatedAt:     flagTrigger.UpdatedAt,
+				EnvironmentId: flagTrigger.EnvironmentId,
+			},
+			req.EnvironmentId,
+			flagTrigger,
+			&domain.FlagTrigger{},
+		)
+		if err != nil {
+			return err
+		}
+		if err := s.flagTriggerStorage.CreateFlagTrigger(contextWithTx, flagTrigger); err != nil {
+			s.logger.Error(
+				"Failed to create flag trigger",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		if errors.Is(err, v2fs.ErrFlagTriggerAlreadyExists) {
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	triggerURL := s.generateTriggerURL(ctx, flagTrigger.Token, false)
+	flagTrigger.FlagTrigger.Token = ""
+
+	if err = s.domainPublisher.Publish(ctx, event); err != nil {
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	return &featureproto.CreateFlagTriggerResponse{
+		FlagTrigger: flagTrigger.FlagTrigger,
+		Url:         triggerURL,
+	}, nil
+}
+
 func (s *FeatureService) UpdateFlagTrigger(
 	ctx context.Context,
 	request *featureproto.UpdateFlagTriggerRequest,
@@ -153,15 +270,8 @@ func (s *FeatureService) UpdateFlagTrigger(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateUpdateFlagTriggerCommand(request.ChangeFlagTriggerDescriptionCommand, localizer); err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", request.EnvironmentId),
-			)...,
-		)
-		return nil, err
+	if request.ChangeFlagTriggerDescriptionCommand == nil {
+		return s.updateFlagTriggerNoCommand(ctx, request, editor, localizer)
 	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
@@ -211,7 +321,8 @@ func (s *FeatureService) UpdateFlagTrigger(
 		return nil
 	})
 	if err != nil {
-		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) {
+		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) ||
+			errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -231,6 +342,105 @@ func (s *FeatureService) UpdateFlagTrigger(
 		return nil, dt.Err()
 	}
 	return &featureproto.UpdateFlagTriggerResponse{}, nil
+}
+
+func (s *FeatureService) updateFlagTriggerNoCommand(
+	ctx context.Context,
+	request *featureproto.UpdateFlagTriggerRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*featureproto.UpdateFlagTriggerResponse, error) {
+	var event *eventproto.Event
+	var resetURL string
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
+			contextWithTx,
+			request.Id,
+			request.EnvironmentId,
+		)
+		if err != nil {
+			return err
+		}
+		updated, err := flagTrigger.UpdateFlagTrigger(
+			request.Description,
+			request.Reset_,
+			request.Disabled,
+		)
+		if err != nil {
+			return err
+		}
+		if request.Reset_ {
+			resetURL = s.generateTriggerURL(ctx, updated.Token, false)
+		}
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_FLAG_TRIGGER,
+			flagTrigger.Id,
+			eventproto.Event_FLAG_TRIGGER_UPDATED,
+			&eventproto.FlagTriggerUpdateEvent{
+				Id:          updated.Id,
+				FeatureId:   updated.FeatureId,
+				Description: request.Description,
+				Reset_:      request.Reset_,
+				Disabled:    request.Disabled,
+			},
+			request.EnvironmentId,
+			updated,
+			flagTrigger,
+		)
+		if err != nil {
+			return err
+		}
+		if err := s.flagTriggerStorage.UpdateFlagTrigger(
+			contextWithTx,
+			updated,
+		); err != nil {
+			s.logger.Error(
+				"Failed to update flag trigger",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", request.EnvironmentId),
+				)...,
+			)
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		if errors.Is(err, v2fs.ErrFlagTriggerUnexpectedAffectedRows) ||
+			errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	if err = s.domainPublisher.Publish(ctx, event); err != nil {
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	return &featureproto.UpdateFlagTriggerResponse{
+		Url: resetURL,
+	}, nil
 }
 
 func (s *FeatureService) EnableFlagTrigger(
@@ -525,16 +735,7 @@ func (s *FeatureService) DeleteFlagTrigger(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateDeleteFlagTriggerCommand(request.DeleteFlagTriggerCommand, localizer); err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", request.EnvironmentId),
-			)...,
-		)
-		return nil, err
-	}
+	var event *eventproto.Event
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		flagTrigger, err := s.flagTriggerStorage.GetFlagTrigger(
 			contextWithTx,
@@ -551,26 +752,27 @@ func (s *FeatureService) DeleteFlagTrigger(
 			)
 			return err
 		}
-		handler, err := command.NewFlagTriggerCommandHandler(
+		event, err = domainevent.NewEvent(
 			editor,
-			flagTrigger,
-			s.domainPublisher,
+			eventproto.Event_FLAG_TRIGGER,
+			flagTrigger.Id,
+			eventproto.Event_FLAG_TRIGGER_DELETED,
+			&eventproto.FlagTriggerDeletedEvent{
+				Id:            flagTrigger.Id,
+				FeatureId:     flagTrigger.FeatureId,
+				EnvironmentId: flagTrigger.EnvironmentId,
+			},
 			request.EnvironmentId,
+			&domain.FlagTrigger{},
+			flagTrigger,
 		)
 		if err != nil {
 			return err
 		}
-		if err := handler.Handle(ctx, request.DeleteFlagTriggerCommand); err != nil {
-			s.logger.Error(
-				"Failed to delete flag trigger",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-			)
-			return err
-		}
 		if err := s.flagTriggerStorage.DeleteFlagTrigger(
 			contextWithTx,
-			request.Id,
-			request.EnvironmentId,
+			flagTrigger.Id,
+			flagTrigger.EnvironmentId,
 		); err != nil {
 			s.logger.Error(
 				"Failed to delete flag trigger",
@@ -591,6 +793,17 @@ func (s *FeatureService) DeleteFlagTrigger(
 			}
 			return nil, dt.Err()
 		}
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	err = s.domainPublisher.Publish(ctx, event)
+	if err != nil {
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
@@ -801,9 +1014,6 @@ func (s *FeatureService) FlagTriggerWebhook(
 		}
 		return nil, dt.Err()
 	}
-	if err != nil {
-		return nil, err
-	}
 	feature, err := s.featureStorage.GetFeature(ctx, trigger.FeatureId, trigger.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
@@ -896,23 +1106,33 @@ func (s *FeatureService) updateTriggerUsageInfo(
 	editor *eventproto.Editor,
 	flagTrigger *domain.FlagTrigger,
 ) error {
+	var event *eventproto.Event
 	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
-		handler, err := command.NewFlagTriggerCommandHandler(
-			editor,
-			flagTrigger,
-			s.domainPublisher,
-			flagTrigger.EnvironmentId,
-		)
+		prev := &domain.FlagTrigger{}
+		if err := copier.Copy(prev, flagTrigger); err != nil {
+			return err
+		}
+		err := flagTrigger.UpdateTriggerUsage()
 		if err != nil {
 			return err
 		}
-		err = handler.Handle(ctx, &featureproto.UpdateFlagTriggerUsageCommand{})
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_FLAG_TRIGGER,
+			flagTrigger.Id,
+			eventproto.Event_FLAG_TRIGGER_USAGE_UPDATED,
+			&eventproto.FlagTriggerUsageUpdatedEvent{
+				Id:              flagTrigger.Id,
+				FeatureId:       flagTrigger.FeatureId,
+				LastTriggeredAt: flagTrigger.LastTriggeredAt,
+				TriggerTimes:    flagTrigger.TriggerCount,
+				EnvironmentId:   flagTrigger.EnvironmentId,
+			},
+			flagTrigger.EnvironmentId,
+			flagTrigger,
+			prev,
+		)
 		if err != nil {
-			s.logger.Error(
-				"Failed to update flag trigger usage",
-				log.FieldsFromImcomingContext(ctx).
-					AddFields(zap.Error(err))...,
-			)
 			return err
 		}
 		err = s.flagTriggerStorage.UpdateFlagTrigger(contextWithTx, flagTrigger)
@@ -929,6 +1149,15 @@ func (s *FeatureService) updateTriggerUsageInfo(
 	if err != nil {
 		s.logger.Error(
 			"Failed to update flag trigger usage",
+			log.FieldsFromImcomingContext(ctx).
+				AddFields(zap.Error(err))...,
+		)
+		return err
+	}
+	err = s.domainPublisher.Publish(ctx, event)
+	if err != nil {
+		s.logger.Error(
+			"Failed to publish event",
 			log.FieldsFromImcomingContext(ctx).
 				AddFields(zap.Error(err))...,
 		)
