@@ -251,7 +251,8 @@ proto.bucketeer.feature.ScheduledChange.FieldType = {
   TARGETS: 2,
   RULES: 3,
   DEFAULT_STRATEGY: 4,
-  VARIATIONS: 5
+  OFF_VARIATION: 5,
+  VARIATIONS: 6
 };
 
 /**

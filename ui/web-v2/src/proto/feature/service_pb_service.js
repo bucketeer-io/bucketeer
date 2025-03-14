@@ -64,6 +64,42 @@ FeatureService.UpdateFeature = {
   responseType: proto_feature_service_pb.UpdateFeatureResponse
 };
 
+FeatureService.ScheduleFlagChange = {
+  methodName: 'ScheduleFlagChange',
+  service: FeatureService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_feature_service_pb.ScheduleFlagChangeRequest,
+  responseType: proto_feature_service_pb.ScheduleFlagChangeResponse
+};
+
+FeatureService.UpdateScheduledFlagChange = {
+  methodName: 'UpdateScheduledFlagChange',
+  service: FeatureService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_feature_service_pb.UpdateScheduledFlagChangeRequest,
+  responseType: proto_feature_service_pb.UpdateScheduledFlagChangeResponse
+};
+
+FeatureService.DeleteScheduledFlagChange = {
+  methodName: 'DeleteScheduledFlagChange',
+  service: FeatureService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_feature_service_pb.DeleteScheduledFlagChangeRequest,
+  responseType: proto_feature_service_pb.DeleteScheduledFlagChangeResponse
+};
+
+FeatureService.ListScheduledFlagChanges = {
+  methodName: 'ListScheduledFlagChanges',
+  service: FeatureService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_feature_service_pb.ListScheduledFlagChangesRequest,
+  responseType: proto_feature_service_pb.ListScheduledFlagChangesResponse
+};
+
 FeatureService.EnableFeature = {
   methodName: 'EnableFeature',
   service: FeatureService,
@@ -556,6 +592,137 @@ FeatureServiceClient.prototype.updateFeature = function updateFeature(
     }
   };
 };
+
+FeatureServiceClient.prototype.scheduleFlagChange = function scheduleFlagChange(
+  requestMessage,
+  metadata,
+  callback
+) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(FeatureService.ScheduleFlagChange, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+FeatureServiceClient.prototype.updateScheduledFlagChange =
+  function updateScheduledFlagChange(requestMessage, metadata, callback) {
+    if (arguments.length === 2) {
+      callback = arguments[1];
+    }
+    var client = grpc.unary(FeatureService.UpdateScheduledFlagChange, {
+      request: requestMessage,
+      host: this.serviceHost,
+      metadata: metadata,
+      transport: this.options.transport,
+      debug: this.options.debug,
+      onEnd: function (response) {
+        if (callback) {
+          if (response.status !== grpc.Code.OK) {
+            var err = new Error(response.statusMessage);
+            err.code = response.status;
+            err.metadata = response.trailers;
+            callback(err, null);
+          } else {
+            callback(null, response.message);
+          }
+        }
+      }
+    });
+    return {
+      cancel: function () {
+        callback = null;
+        client.close();
+      }
+    };
+  };
+
+FeatureServiceClient.prototype.deleteScheduledFlagChange =
+  function deleteScheduledFlagChange(requestMessage, metadata, callback) {
+    if (arguments.length === 2) {
+      callback = arguments[1];
+    }
+    var client = grpc.unary(FeatureService.DeleteScheduledFlagChange, {
+      request: requestMessage,
+      host: this.serviceHost,
+      metadata: metadata,
+      transport: this.options.transport,
+      debug: this.options.debug,
+      onEnd: function (response) {
+        if (callback) {
+          if (response.status !== grpc.Code.OK) {
+            var err = new Error(response.statusMessage);
+            err.code = response.status;
+            err.metadata = response.trailers;
+            callback(err, null);
+          } else {
+            callback(null, response.message);
+          }
+        }
+      }
+    });
+    return {
+      cancel: function () {
+        callback = null;
+        client.close();
+      }
+    };
+  };
+
+FeatureServiceClient.prototype.listScheduledFlagChanges =
+  function listScheduledFlagChanges(requestMessage, metadata, callback) {
+    if (arguments.length === 2) {
+      callback = arguments[1];
+    }
+    var client = grpc.unary(FeatureService.ListScheduledFlagChanges, {
+      request: requestMessage,
+      host: this.serviceHost,
+      metadata: metadata,
+      transport: this.options.transport,
+      debug: this.options.debug,
+      onEnd: function (response) {
+        if (callback) {
+          if (response.status !== grpc.Code.OK) {
+            var err = new Error(response.statusMessage);
+            err.code = response.status;
+            err.metadata = response.trailers;
+            callback(err, null);
+          } else {
+            callback(null, response.message);
+          }
+        }
+      }
+    });
+    return {
+      cancel: function () {
+        callback = null;
+        client.close();
+      }
+    };
+  };
 
 FeatureServiceClient.prototype.enableFeature = function enableFeature(
   requestMessage,
