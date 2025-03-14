@@ -126,6 +126,7 @@ type server struct {
 	autoOpsService       *string
 	codeReferenceService *string
 	// auth
+	refreshTokenTTL     *time.Duration
 	emailFilter         *string
 	oauthConfigPath     *string
 	oauthPublicKeyPath  *string
@@ -287,6 +288,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"Path to public key used to verify oauth token.",
 		).Required().String(),
 		// auth
+		refreshTokenTTL: cmd.Flag(
+			"refresh-token-ttl",
+			"TTL for refresh token.",
+		).Default("168h").Duration(),
 		emailFilter:     cmd.Flag("email-filter", "Regexp pattern for filtering email.").String(),
 		oauthConfigPath: cmd.Flag("oauth-config-path", "Path to oauth config.").Required().String(),
 		oauthPrivateKeyPath: cmd.Flag(
@@ -825,6 +830,7 @@ func (s *server) createAuthService(
 	}
 	serviceOptions := []authapi.Option{
 		authapi.WithLogger(logger),
+		authapi.WithRefreshTokenTTL(*s.refreshTokenTTL),
 	}
 	if *s.emailFilter != "" {
 		filter, err := regexp.Compile(*s.emailFilter)
