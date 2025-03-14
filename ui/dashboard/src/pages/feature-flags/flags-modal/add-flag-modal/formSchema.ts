@@ -28,7 +28,7 @@ const variationsSchema = yup
             if (
               context?.from &&
               context.from[1].value.variationType === 'NUMBER' &&
-              !isNumber(+value)
+              (!isNumber(+value) || value.startsWith(' '))
             ) {
               return context.createError({
                 message: 'This must be a number.',

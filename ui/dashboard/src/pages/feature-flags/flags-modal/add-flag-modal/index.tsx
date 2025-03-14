@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { featureCreator } from '@api/features/feature-creator';
@@ -123,7 +124,8 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
       variations: defaultVariations,
       defaultOnVariation: defaultVariations[0].id,
       defaultOffVariation: defaultVariations[1].id
-    }
+    },
+    mode: 'onChange'
   });
   const { watch } = form;
 
@@ -134,6 +136,28 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
   );
 
   const currentVariations = watch('variations') as FeatureVariation[];
+
+  const handleOnChangeVariationType = useCallback(
+    (
+      value: FeatureVariationType,
+      onChange: (value: FeatureVariationType) => void
+    ) => {
+      const cloneVariations = cloneDeep(defaultVariations);
+      const newVariations =
+        value === 'BOOLEAN'
+          ? cloneVariations
+          : cloneVariations.map(item => ({
+              ...item,
+              value: ''
+            }));
+      form.setValue('variations', newVariations);
+      onChange(value);
+      let timerId: NodeJS.Timeout | null = null;
+      if (timerId) clearTimeout(timerId);
+      timerId = setTimeout(() => form.setFocus('variations.0.value'), 100);
+    },
+    [form, defaultVariations]
+  );
 
   const onSubmit: SubmitHandler<AddFlagForm> = async values => {
     try {
@@ -354,19 +378,12 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
                             icon={item.icon}
                             value={item.value}
                             label={item.label}
-                            onSelectOption={value => {
-                              const cloneVariations =
-                                cloneDeep(defaultVariations);
-                              const newVariations =
-                                value === 'BOOLEAN'
-                                  ? cloneVariations
-                                  : cloneVariations.map(item => ({
-                                      ...item,
-                                      value: ''
-                                    }));
-                              form.setValue('variations', newVariations);
-                              field.onChange(value);
-                            }}
+                            onSelectOption={value =>
+                              handleOnChangeVariationType(
+                                value as FeatureVariationType,
+                                field.onChange
+                              )
+                            }
                           />
                         ))}
                       </DropdownMenuContent>
