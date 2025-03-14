@@ -91,15 +91,13 @@ func NewExperimentCalculate(
 }
 
 func (e *experimentCalculate) Run(ctx context.Context) error {
-	// Create an error channel to receive the result from the goroutine
-	errCh := make(chan error, 1)
-
 	// Create a context with timeout from the options
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, e.opts.Timeout)
-	defer cancel()
 
-	// Run the calculation logic in a goroutine
+	// Run the calculation logic in a goroutine and return immediately
 	go func() {
+		defer cancel() // Ensure context is canceled when goroutine completes
+
 		e.logger.Info("Started experiment calculation job")
 		startTime := time.Now().In(e.location)
 		environments, environmentErr := e.listEnvironments(ctxWithTimeout)
@@ -109,7 +107,6 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 					zap.Error(environmentErr),
 				)...,
 			)
-			errCh <- environmentErr
 			return
 		}
 		var calculatedCount int
@@ -121,7 +118,6 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 						zap.Error(experimentErr),
 					)...,
 				)
-				errCh <- experimentErr
 				return
 			}
 			if experiments == nil {
@@ -157,16 +153,10 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 			zap.Duration("elapsedTime", time.Since(startTime)),
 			zap.Int("totalCalculatedExperiments", calculatedCount),
 		)
-		errCh <- nil
 	}()
 
-	// Wait for either the goroutine to complete or context to be canceled
-	select {
-	case err := <-errCh:
-		return err
-	case <-ctx.Done():
-		return ctx.Err()
-	}
+	// Return immediately, not waiting for the goroutine to complete
+	return nil
 }
 
 func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
