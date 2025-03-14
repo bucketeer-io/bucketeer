@@ -6,10 +6,11 @@ export type TooltipProps = {
   align?: 'start' | 'center' | 'end';
   delayDuration?: number;
   hidden?: boolean;
-  content?: string;
+  content?: ReactNode;
   trigger: ReactNode;
   className?: string;
   alignOffset?: number;
+  asChild?: boolean;
 };
 
 const TooltipProvider = TooltipPrimitive.Provider;
@@ -47,14 +48,15 @@ const Tooltip = forwardRef(
       content,
       trigger,
       className,
-      alignOffset = 0
+      alignOffset = 0,
+      asChild = true
     }: TooltipProps,
     ref: Ref<HTMLDivElement>
   ) => {
     return (
       <TooltipProvider delayDuration={delayDuration}>
         <TooltipRoot>
-          <TooltipTrigger type="button" asChild>
+          <TooltipTrigger type="button" asChild={asChild}>
             {trigger}
           </TooltipTrigger>
           {content && (

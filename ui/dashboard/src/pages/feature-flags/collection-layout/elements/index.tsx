@@ -1,10 +1,16 @@
-import { FunctionComponent, PropsWithChildren } from 'react';
+import {
+  FunctionComponent,
+  PropsWithChildren,
+  ReactNode,
+  useMemo
+} from 'react';
+import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { COLORS } from 'constants/styles';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
-import { AutoOpsSummary, FeatureVariation } from '@types';
-import { truncateTextCenter } from 'utils/converts';
+import { AutoOpsSummary, FeatureVariation, FeatureVariationType } from '@types';
+import { truncateBySide } from 'utils/converts';
 import { copyToClipBoard } from 'utils/function';
 import { cn } from 'utils/style';
 import {
@@ -17,7 +23,9 @@ import {
   IconUserSettings
 } from '@icons';
 import { FeatureActivityStatus } from 'pages/feature-flags/types';
+import Divider from 'components/divider';
 import Icon, { IconProps } from 'components/icon';
+import { Tooltip } from 'components/tooltip';
 
 interface FlagNameElementType {
   id: string;
@@ -25,6 +33,7 @@ interface FlagNameElementType {
   name: string;
   link: string;
   status: FeatureActivityStatus;
+  variationType: FeatureVariationType;
   maintainer?: string;
 }
 
@@ -112,12 +121,45 @@ export const FlagVariationPolygon = ({
         zIndex: index
       }}
       className={cn(
-        'flex-center size-[14px] border border-white rounded rotate-45',
+        'flex-center size-[14px] min-w-[14px] border border-white rounded rotate-45',
         className
       )}
     />
   );
 };
+
+export const VariationTypeTooltip = ({
+  trigger,
+  variationType,
+  asChild = false,
+  className
+}: {
+  trigger: ReactNode;
+  variationType: FeatureVariationType;
+  asChild?: boolean;
+  className?: string;
+}) => (
+  <Tooltip
+    asChild={asChild}
+    align="start"
+    trigger={trigger}
+    content={
+      <Trans
+        i18nKey={'table:feature-flags.variation-type'}
+        values={{
+          type:
+            variationType === 'JSON'
+              ? variationType
+              : variationType?.toLowerCase()
+        }}
+        components={{
+          text: <span className="capitalize" />
+        }}
+        className={className}
+      />
+    }
+  />
+);
 
 export const FlagNameElement = ({
   id,
@@ -125,9 +167,11 @@ export const FlagNameElement = ({
   name,
   maintainer,
   link,
-  status
+  status,
+  variationType
 }: FlagNameElementType) => {
   const { notify } = useToast();
+  const { t } = useTranslation(['table']);
 
   const handleCopyId = (id: string) => {
     copyToClipBoard(id);
@@ -145,18 +189,38 @@ export const FlagNameElement = ({
     <div className="flex items-center w-full min-w-[400px] max-w-[400px] xxl:min-w-[500px] gap-x-4">
       <div className="flex flex-col flex-1 w-full gap-y-2">
         <div className="flex items-center w-full gap-x-2">
-          <FlagDataTypeIcon icon={icon} className="size-[26px]" />
+          <div className="flex-center size-fit">
+            <VariationTypeTooltip
+              trigger={<FlagDataTypeIcon icon={icon} className="size-[26px]" />}
+              variationType={variationType}
+            />
+          </div>
           <Link
+            id={id}
             to={link}
-            className="typo-para-medium text-primary-500 line-clamp-1 break-all underline"
+            className="typo-para-medium text-primary-500 line-clamp-2 break-all underline"
           >
             {name}
           </Link>
-          {maintainer && <FlagIconWrapper icon={IconUserSettings} />}
-          <FlagStatus status={status} />
+          {maintainer && (
+            <Tooltip
+              asChild={false}
+              align="start"
+              trigger={<FlagIconWrapper icon={IconUserSettings} />}
+              content={maintainer}
+            />
+          )}
+          <Tooltip
+            asChild={false}
+            align="start"
+            trigger={<FlagStatus status={status} />}
+            content={t(
+              `feature-flags.${status === 'active' ? 'active-description' : status === 'in-active' ? 'inactive-description' : 'new-description'}`
+            )}
+          />
         </div>
         <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
-          {truncateTextCenter(id)}
+          {truncateBySide(id, 20)}
           <div onClick={() => handleCopyId(id)}>
             <Icon
               icon={IconCopy}
@@ -178,21 +242,36 @@ export const FlagVariationsElement = ({
   const { t } = useTranslation(['common', 'table']);
 
   const variationCount = variations?.length;
+
+  const _variations = useMemo(() => {
+    if (variationCount <= 2) return [variations?.map(item => item.name)];
+    const vars: string[][] = [];
+
+    variations.forEach(item => {
+      if (!vars.length || vars[vars.length - 1]?.length > 1) {
+        vars.push([item.name]);
+      } else vars[vars.length - 1] = [...vars[vars.length - 1], item.name];
+    });
+    return vars;
+  }, [variations, variationCount]);
+
   if (!variationCount)
     return (
       <p className="typo-para-small text-gray-700">{t('no-variations')}</p>
     );
   if (variationCount === 1)
     return (
-      <div className="flex items-center gap-x-2">
-        <FlagVariationPolygon index={0} />
-        <p className="typo-para-small text-gray-700">
-          {variations[variationCount]?.name}
+      <div className="flex items-center gap-x-2 w-full overflow-hidden">
+        <div className="flex-center size-4">
+          <FlagVariationPolygon index={0} />
+        </div>
+        <p className="typo-para-small text-gray-700 truncate flex-1">
+          {_variations[variationCount]}
         </p>
       </div>
     );
   return (
-    <div className="flex items-center gap-x-2">
+    <div className="flex items-center gap-x-2 w-full">
       <div className="flex items-center">
         {variations.map((_, index) => (
           <FlagVariationPolygon key={index} index={index} />
@@ -201,7 +280,50 @@ export const FlagVariationsElement = ({
       <p className="typo-para-small whitespace-nowrap text-gray-700">
         {`${variationCount} ${variationCount > 1 ? t('variations') : t('table:results.variation')}`}
       </p>
-      <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
+      <Tooltip
+        asChild={false}
+        trigger={
+          <div className="flex-center size-fit">
+            <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
+          </div>
+        }
+        className="z-50"
+        content={
+          <div className="flex flex-col gap-y-3 max-w-[420px]">
+            {_variations.map((item, index) => (
+              <div className="flex items-center w-full gap-3" key={index}>
+                {item.map((variation, variationIndex) => (
+                  <div
+                    className={cn('flex items-center gap-x-1 max-w-[140px]')}
+                    key={variationIndex}
+                  >
+                    {variationIndex !== 0 && (
+                      <Divider
+                        className={cn('h-2 min-w-px bg-white/15 border-none', {
+                          'mr-2.5': variationIndex !== 0
+                        })}
+                      />
+                    )}
+                    <div className="flex-center size-4">
+                      <FlagVariationPolygon
+                        index={
+                          index === 0
+                            ? variationIndex
+                            : variationIndex + index + 1
+                        }
+                        className="border-none"
+                      />
+                    </div>
+                    <p className="typo-para-small text-white break-all truncate">
+                      {variation}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        }
+      />
     </div>
   );
 };
@@ -210,28 +332,53 @@ export const FlagOperationsElement = ({
   autoOpsSummary
 }: {
   autoOpsSummary: AutoOpsSummary;
-}) => (
-  <div className="flex items-center gap-x-2">
-    {!!autoOpsSummary?.progressiveRolloutCount && (
-      <FlagIconWrapper
-        icon={IconFlagOperation}
-        color="accent-pink-500"
-        className="bg-accent-pink-50"
-      />
-    )}
-    {!!autoOpsSummary?.scheduleCount && (
-      <FlagIconWrapper
-        icon={IconCalendar}
-        color="primary-500"
-        className="bg-primary-50"
-      />
-    )}
-    {!!autoOpsSummary?.killSwitchCount && (
-      <FlagIconWrapper
-        icon={IconOperationArrow}
-        color="accent-blue-500"
-        className="bg-accent-blue-50"
-      />
-    )}
-  </div>
-);
+}) => {
+  const { t } = useTranslation(['table']);
+
+  return (
+    <div className="flex items-center gap-x-2">
+      {!!autoOpsSummary?.progressiveRolloutCount && (
+        <Tooltip
+          asChild={false}
+          trigger={
+            <FlagIconWrapper
+              icon={IconFlagOperation}
+              color="accent-pink-500"
+              className="bg-accent-pink-50"
+            />
+          }
+          content={t('feature-flags.progressive-description')}
+          className="z-50"
+        />
+      )}
+      {!!autoOpsSummary?.scheduleCount && (
+        <Tooltip
+          asChild={false}
+          trigger={
+            <FlagIconWrapper
+              icon={IconCalendar}
+              color="primary-500"
+              className="bg-primary-50"
+            />
+          }
+          content={t('feature-flags.scheduled-description')}
+          className="z-50"
+        />
+      )}
+      {!!autoOpsSummary?.killSwitchCount && (
+        <Tooltip
+          asChild={false}
+          trigger={
+            <FlagIconWrapper
+              icon={IconOperationArrow}
+              color="accent-blue-500"
+              className="bg-accent-blue-50"
+            />
+          }
+          content={t('feature-flags.kill-description')}
+          className="z-50"
+        />
+      )}
+    </div>
+  );
+};

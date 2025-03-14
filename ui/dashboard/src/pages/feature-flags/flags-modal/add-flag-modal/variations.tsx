@@ -25,11 +25,13 @@ const Variations = ({
   const { t } = useTranslation(['common', 'form']);
 
   const methods = useFormContext();
-  const { control } = methods;
+  const { control, watch } = methods;
 
   const isBoolean = useMemo(() => variationType === 'BOOLEAN', [variationType]);
   const isJSON = useMemo(() => variationType === 'JSON', [variationType]);
-  const isNumber = useMemo(() => variationType === 'NUMBER', [variationType]);
+
+  const onVariation = watch('defaultOnVariation');
+  const offVariation = watch('defaultOffVariation');
 
   const onAddVariation = () => {
     onChangeVariations([
@@ -85,7 +87,6 @@ const Variations = ({
                       placeholder={t(
                         'form:feature-flags.placeholder-variation'
                       )}
-                      type={isNumber ? 'number' : 'text'}
                       disabled={isBoolean}
                       value={item.value}
                       className={isBoolean ? 'capitalize' : ''}
@@ -133,17 +134,18 @@ const Variations = ({
                 )}
               />
             </div>
-            {variations.length > 2 && (
-              <Button
-                variant="text"
-                size="icon"
-                type="button"
-                className="p-0 size-5 mt-5 self-center"
-                onClick={() => onDeleteVariation(variationIndex)}
-              >
-                <Icon icon={IconTrash} size="sm" color="gray-600" />
-              </Button>
-            )}
+            {variations.length > 2 &&
+              ![onVariation, offVariation].includes(item.id) && (
+                <Button
+                  variant="text"
+                  size="icon"
+                  type="button"
+                  className="p-0 size-5 mt-5 self-center"
+                  onClick={() => onDeleteVariation(variationIndex)}
+                >
+                  <Icon icon={IconTrash} size="sm" color="gray-600" />
+                </Button>
+              )}
           </div>
         </div>
       ))}

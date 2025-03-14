@@ -102,6 +102,7 @@ const PageLoader = () => {
       <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
       {openConfirmModal && selectedFlag && (
         <ArchiveModal
+          isArchiving={isArchiving}
           isOpen={openConfirmModal}
           isShowWarning={
             isArchiving &&

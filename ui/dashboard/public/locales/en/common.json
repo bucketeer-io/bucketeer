@@ -192,12 +192,17 @@
   "select": "Select",
   "switch-organization": "Switch organization",
   "feature-flags": "Feature Flags",
-  "feature-flags-subtitle": "Select a flag to manage the environment-specific targeting and rollout rules",
-  "new-flag": "New Flag",
+  "feature-flags-subtitle": "Select a flag to configure targeting, manage rollout strategies, and control feature availability.",
+  "new-flag": "New Feature Flag",
   "operations": "Operations",
   "favorites": "Favorites",
   "no-variations": "No Variations",
   "new": "New",
   "no-activity": "No Activity",
-  "notifications": "Notifications"
+  "notifications": "Notifications",
+  "create-flag": "Create Flag",
+  "clone-flag": "Clone Flag",
+  "archive-flag": "Archive Flag",
+  "unarchive-flag": "Unarchive Flag",
+  "update-now": "Update now"
 }

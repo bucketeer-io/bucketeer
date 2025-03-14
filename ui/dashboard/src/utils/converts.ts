@@ -26,6 +26,21 @@ export const truncateTextCenter = (value: string, maxLen: number = 14) => {
   return `${start}...${end}`;
 };
 
+export const truncateBySide = (
+  value: string,
+  maxLen: number = 40,
+  side: 'left' | 'right' = 'right'
+) => {
+  const valueLength = value.length;
+  if (valueLength <= maxLen) return value;
+  if (side === 'right') {
+    const _value = value.slice(0, maxLen);
+    return `${_value}...`;
+  }
+  const _value = value.slice(valueLength - maxLen, valueLength);
+  return `...${_value}`;
+};
+
 export const formatFileSize = (size: number): string => {
   if (size === 0) return '0 Bytes';
 
@@ -71,10 +86,12 @@ export const covertFileToUint8ToBase64 = (
 
 export const isJsonString = (str: string) => {
   try {
-    JSON.parse(str);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (error) {
+    const parsed = JSON.parse(str);
+    if (parsed && typeof parsed === 'object') {
+      return true;
+    }
+  } catch {
     return false;
   }
-  return true;
+  return false;
 };

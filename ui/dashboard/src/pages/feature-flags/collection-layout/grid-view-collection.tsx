@@ -65,20 +65,19 @@ const GridViewCollection = ({
               link={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${id}/targeting`}
               name={name}
               maintainer={maintainer}
+              variationType={variationType}
               icon={getDataTypeIcon(variationType)}
               status={getFlagStatus(item)}
             />
-            <div className="flex flex-col w-fit gap-y-3 min-w-[300px]">
+            <div className="flex flex-col gap-y-3 w-[410px] max-w-[410px] xxl:w-[750px] xxl:max-w-[750px] relative z-50">
               <FlagVariationsElement variations={variations} />
-              <div className="flex items-center flex-wrap w-[410px] max-w-[410px] gap-2">
+              <div className="flex items-center flex-wrap w-full gap-2">
                 <ExpandableTag
                   tags={tags}
                   rowId={item.id}
-                  className={cn('!max-w-[180px] truncate', {
-                    '!max-w-[250px]': tags.length <= 1
-                  })}
+                  className={cn('!max-w-[350px] truncate')}
                   wrapperClassName="w-fit"
-                  maxSize={tags.length <= 1 ? 250 : 180}
+                  maxSize={382}
                 />
                 <FlagOperationsElement autoOpsSummary={autoOpsSummary} />
               </div>

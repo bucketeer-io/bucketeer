@@ -79,6 +79,10 @@ const CloneFlagModal = ({
   });
 
   const environments = collection?.environments || [];
+
+  const destinationEnvironments =
+    environments?.filter(item => item.id !== currentEnvironment?.id) || [];
+
   const feature = featureCollection?.feature;
 
   const form = useForm({
@@ -93,10 +97,11 @@ const CloneFlagModal = ({
 
   const onSubmit: SubmitHandler<CloneFlagForm> = async values => {
     try {
-      const { id, destinationEnvironmentId } = values;
+      const { id, destinationEnvironmentId, originEnvironmentId } = values;
       const resp = await featureClone({
         id,
-        environmentId: destinationEnvironmentId
+        environmentId: originEnvironmentId,
+        targetEnvironmentId: destinationEnvironmentId
       });
 
       if (resp) {
@@ -204,7 +209,7 @@ const CloneFlagModal = ({
                         <DropdownMenuTrigger
                           placeholder={t(`form:select-environment`)}
                           label={
-                            environments.find(
+                            destinationEnvironments.find(
                               item => !!field.value && item.id === field.value
                             )?.name
                           }
@@ -217,7 +222,7 @@ const CloneFlagModal = ({
                           align="start"
                           {...field}
                         >
-                          {environments.map((item, index) => (
+                          {destinationEnvironments.map((item, index) => (
                             <DropdownMenuItem
                               {...field}
                               key={index}
@@ -249,7 +254,7 @@ const CloneFlagModal = ({
                       disabled={!form.formState.isDirty}
                       loading={form.formState.isSubmitting}
                     >
-                      {t(`submit`)}
+                      {t(`clone-flag`)}
                     </Button>
                   }
                 />

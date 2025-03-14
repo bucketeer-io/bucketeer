@@ -7,7 +7,6 @@ import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { AxiosError } from 'axios';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
@@ -37,6 +36,7 @@ import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import { Tooltip } from 'components/tooltip';
 import { formSchema } from './formSchema';
 import Variations from './variations';
 
@@ -51,8 +51,8 @@ export interface AddFlagForm {
   tags: string[];
   variationType: FeatureVariationType;
   variations: FeatureVariation[];
-  defaultOnVariationIndex: number;
-  defaultOffVariationIndex: number;
+  defaultOnVariation: string;
+  defaultOffVariation: string;
   description?: string;
 }
 
@@ -104,8 +104,9 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
 
   const { data: collection, isLoading: isLoadingTags } = useQueryTags({
     params: {
-      pageSize: LIST_PAGE_SIZE,
-      cursor: String(0)
+      cursor: String(0),
+      environmentId: currentEnvironment?.id,
+      entityType: 'FEATURE_FLAG'
     }
   });
 
@@ -120,14 +121,16 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
       variationType: 'BOOLEAN',
       tags: [],
       variations: defaultVariations,
-      defaultOnVariationIndex: 0,
-      defaultOffVariationIndex: 1
+      defaultOnVariation: defaultVariations[0].id,
+      defaultOffVariation: defaultVariations[1].id
     }
   });
   const { watch } = form;
 
+  const variationType = watch('variationType');
+
   const currentFlagOption = flagTypeOptions.find(
-    item => item.value === watch('variationType')
+    item => item.value === variationType
   );
 
   const currentVariations = watch('variations') as FeatureVariation[];
@@ -139,8 +142,8 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
         name,
         tags,
         variationType,
-        defaultOffVariationIndex,
-        defaultOnVariationIndex,
+        defaultOffVariation,
+        defaultOnVariation,
         description,
         variations
       } = values;
@@ -149,8 +152,12 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
         id: flagId,
         name,
         tags,
-        defaultOnVariationIndex,
-        defaultOffVariationIndex,
+        defaultOnVariationIndex: variations.findIndex(
+          item => item.id === defaultOnVariation
+        ),
+        defaultOffVariationIndex: variations.findIndex(
+          item => item.id === defaultOffVariation
+        ),
         variations,
         variationType,
         description
@@ -291,11 +298,28 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
                 <Form.Item className="py-2">
                   <Form.Label required className="relative w-fit !mb-2">
                     {t('form:feature-flags.flag-type')}
-                    <Icon
-                      icon={IconInfo}
-                      size="xs"
-                      color="gray-500"
-                      className="absolute -right-6"
+                    <Tooltip
+                      align="start"
+                      trigger={
+                        <div className="flex-center absolute top-0 -right-6">
+                          <Icon icon={IconInfo} size={'sm'} color="gray-500" />
+                        </div>
+                      }
+                      content={
+                        <Trans
+                          i18nKey={'table:feature-flags.variation-type'}
+                          values={{
+                            type:
+                              variationType === 'JSON'
+                                ? variationType
+                                : variationType?.toLowerCase()
+                          }}
+                          components={{
+                            text: <span className="capitalize" />
+                          }}
+                        />
+                      }
+                      className="!z-[100] max-w-[400px]"
                     />
                   </Form.Label>
                   <Form.Control>
@@ -370,7 +394,7 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
             <div className="flex items-center w-full gap-x-4">
               <Form.Field
                 control={form.control}
-                name={`defaultOnVariationIndex`}
+                name={`defaultOnVariation`}
                 render={({ field }) => (
                   <Form.Item className="py-2.5 flex-1">
                     <Form.Label className="!mb-2">
@@ -385,19 +409,24 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           placeholder={t(`form:placeholder-tags`)}
-                          trigger={(() => {
-                            return (
-                              <div className="flex items-center gap-x-2">
-                                <FlagVariationPolygon index={field.value} />
-                                <Trans
-                                  i18nKey={'form:feature-flags.variation'}
-                                  values={{
-                                    index: field.value + 1
-                                  }}
-                                />
-                              </div>
-                            );
-                          })()}
+                          trigger={
+                            <div className="flex items-center gap-x-2">
+                              <FlagVariationPolygon
+                                index={currentVariations?.findIndex(
+                                  item => item.id === field.value
+                                )}
+                              />
+                              <Trans
+                                i18nKey={'form:feature-flags.variation'}
+                                values={{
+                                  index:
+                                    currentVariations?.findIndex(
+                                      item => item.id === field.value
+                                    ) + 1
+                                }}
+                              />
+                            </div>
+                          }
                           variant="secondary"
                           className="w-full"
                         />
@@ -409,7 +438,7 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
                               value={item.id}
                               label={`Variation ${index + 1}`}
                               onSelectOption={() => {
-                                field.onChange(index);
+                                field.onChange(item.id);
                               }}
                             />
                           ))}
@@ -422,7 +451,7 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
               />
               <Form.Field
                 control={form.control}
-                name={`defaultOffVariationIndex`}
+                name={`defaultOffVariation`}
                 render={({ field }) => (
                   <Form.Item className="py-2.5 flex-1">
                     <Form.Label className="!mb-2">
@@ -437,19 +466,24 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           placeholder={t(`form:placeholder-tags`)}
-                          trigger={(() => {
-                            return (
-                              <div className="flex items-center gap-x-2">
-                                <FlagVariationPolygon index={field.value} />
-                                <Trans
-                                  i18nKey={'form:feature-flags.variation'}
-                                  values={{
-                                    index: field.value + 1
-                                  }}
-                                />
-                              </div>
-                            );
-                          })()}
+                          trigger={
+                            <div className="flex items-center gap-x-2">
+                              <FlagVariationPolygon
+                                index={currentVariations?.findIndex(
+                                  item => item.id === field.value
+                                )}
+                              />
+                              <Trans
+                                i18nKey={'form:feature-flags.variation'}
+                                values={{
+                                  index:
+                                    currentVariations?.findIndex(
+                                      item => item.id === field.value
+                                    ) + 1
+                                }}
+                              />
+                            </div>
+                          }
                           variant="secondary"
                           className="w-full"
                         />
@@ -461,7 +495,7 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
                               value={item.id}
                               label={`Variation ${index + 1}`}
                               onSelectOption={() => {
-                                field.onChange(index);
+                                field.onChange(item.id);
                               }}
                             />
                           ))}
@@ -486,7 +520,7 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
                     disabled={!form.formState.isDirty}
                     loading={form.formState.isSubmitting}
                   >
-                    {t(`submit`)}
+                    {t(`create-flag`)}
                   </Button>
                 }
               />

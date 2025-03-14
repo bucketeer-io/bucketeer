@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryAccounts } from '@queries/accounts';
+import { useQueryTags } from '@queries/tags';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { isEmpty, isNotEmpty } from 'utils/data-type';
@@ -32,7 +33,8 @@ export enum FilterTypes {
   HAS_EXPERIMENT = 'hasExperiment',
   HAS_PREREQUISITES = 'hasPrerequisites',
   MAINTAINER = 'maintainer',
-  ENABLED = 'enabled'
+  ENABLED = 'enabled',
+  TAGS = 'tags'
 }
 
 export const filterOptions: Option[] = [
@@ -51,6 +53,10 @@ export const filterOptions: Option[] = [
   {
     value: FilterTypes.ENABLED,
     label: 'Enabled'
+  },
+  {
+    value: FilterTypes.TAGS,
+    label: 'Tags'
   }
 ];
 
@@ -79,10 +85,17 @@ const FilterFlagModal = ({
   const [selectedFilter, setSelectedFilter] = useState<Option>(
     filterOptions[0]
   );
-  const [filterValue, setFilterValue] = useState<string | number>('');
+  const [filterValue, setFilterValue] = useState<string | number | string[]>(
+    ''
+  );
 
   const isMaintainerFilter = useMemo(
     () => selectedFilter.value === FilterTypes.MAINTAINER,
+    [selectedFilter]
+  );
+
+  const isTagFilter = useMemo(
+    () => selectedFilter.value === FilterTypes.TAGS,
     [selectedFilter]
   );
 
@@ -95,32 +108,51 @@ const FilterFlagModal = ({
     enabled: isMaintainerFilter
   });
 
+  const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
+    params: {
+      cursor: String(0),
+      environmentId: currentEnvironment?.id,
+      entityType: 'FEATURE_FLAG'
+    },
+    enabled: isTagFilter
+  });
+
   const accounts = collection?.accounts || [];
+  const tags = tagCollection?.tags || [];
 
   const valueOptions = useMemo(() => {
-    if (!isMaintainerFilter) return booleanOptions;
-    return accounts.map(item => ({ label: item.email, value: item.email }));
-  }, [isMaintainerFilter, accounts]);
+    if (isMaintainerFilter)
+      return accounts.map(item => ({ label: item.email, value: item.email }));
+    if (isTagFilter)
+      return tags.map(item => ({
+        label: item.name,
+        value: item.name
+      }));
+    return booleanOptions;
+  }, [isMaintainerFilter, accounts, isTagFilter, tags]);
 
   const onConfirmHandler = useCallback(() => {
     const defaultFilters = {
       hasExperiment: undefined,
       hasPrerequisites: undefined,
       maintainer: undefined,
-      enabled: undefined
+      enabled: undefined,
+      tags: undefined
     };
 
     onSubmit({
       ...defaultFilters,
-      [selectedFilter.value]: isMaintainerFilter ? filterValue : !!filterValue
+      [selectedFilter.value]:
+        isMaintainerFilter || isTagFilter ? filterValue : !!filterValue
     });
-  }, [isMaintainerFilter, filterValue]);
+  }, [isMaintainerFilter, isTagFilter, filterValue]);
 
   const handleSetFilterOnInit = useCallback(() => {
     if (filters) {
-      const { maintainer, hasExperiment, hasPrerequisites, enabled } =
+      const { maintainer, hasExperiment, hasPrerequisites, enabled, tags } =
         filters || {};
       const isNotEmptyMaintainer = isNotEmpty(maintainer);
+      const isNotTagMaintainer = isNotEmpty(tags);
       const isNotEmptyExperiment = isNotEmpty(hasExperiment);
       const isNotEmptyPrerequisites = isNotEmpty(hasPrerequisites);
       const isNotEmptyEnabled = isNotEmpty(enabled);
@@ -128,6 +160,10 @@ const FilterFlagModal = ({
       if (isNotEmptyMaintainer) {
         setFilterValue(maintainer!);
         return setSelectedFilter(filterOptions[2]);
+      }
+      if (isNotTagMaintainer) {
+        setFilterValue(tags!);
+        return setSelectedFilter(filterOptions[4]);
       }
       if (
         isNotEmptyExperiment ||
@@ -144,6 +180,34 @@ const FilterFlagModal = ({
       setSelectedFilter(filterOptions[0]);
     }
   }, [filters]);
+
+  const handleGetLabelFilterValue = useCallback(() => {
+    return isMaintainerFilter
+      ? String(filterValue)
+      : isTagFilter
+        ? (Array.isArray(filterValue) &&
+            tags.length &&
+            filterValue
+              .map(item => tags.find(tag => tag.name === item)?.name)
+              ?.join(', ')) ||
+          ''
+        : booleanOptions.find(item => item.value === filterValue)?.label || '';
+  }, [filterValue, isMaintainerFilter, isTagFilter, tags]);
+
+  const handleChangeFilterValue = useCallback(
+    (value: string | number) => {
+      if (!isTagFilter) return setFilterValue(value);
+      if (Array.isArray(filterValue)) {
+        const isExistedTag = filterValue.includes(value as string);
+        setFilterValue(
+          isExistedTag
+            ? filterValue.filter(item => item !== value)
+            : [...filterValue, value as string]
+        );
+      }
+    },
+    [isTagFilter, filterValue]
+  );
 
   useEffect(() => {
     handleSetFilterOnInit();
@@ -177,7 +241,7 @@ const FilterFlagModal = ({
                   label={item.label}
                   onSelectOption={() => {
                     setSelectedFilter(item);
-                    setFilterValue('');
+                    setFilterValue(item.value === FilterTypes.TAGS ? [] : '');
                   }}
                 />
               ))}
@@ -186,28 +250,31 @@ const FilterFlagModal = ({
           <p className="typo-para-medium text-gray-600">{`is`}</p>
           <DropdownMenu>
             <DropdownMenuTrigger
-              disabled={isLoading}
+              disabled={isLoading || isLoadingTags}
               placeholder={t(`select-value`)}
-              label={
-                isMaintainerFilter
-                  ? String(filterValue)
-                  : booleanOptions.find(item => item.value === filterValue)
-                      ?.label || ''
-              }
+              label={handleGetLabelFilterValue()}
               variant="secondary"
-              className="w-full"
+              className="w-full max-w-[235px] truncate"
             />
             <DropdownMenuContent
-              className={isMaintainerFilter ? 'w-[300px]' : 'w-[235px]'}
+              className={
+                isMaintainerFilter || isTagFilter ? 'w-[300px]' : 'w-[235px]'
+              }
               align="start"
             >
               {valueOptions.map((item, index) => (
                 <DropdownMenuItem
                   key={index}
+                  isSelected={
+                    isTagFilter &&
+                    Array.isArray(filterValue) &&
+                    filterValue.includes(item.value as string)
+                  }
+                  isMultiselect={isTagFilter}
                   value={item.value}
                   label={item.label}
-                  className="normal-case line-clamp-1 break-all"
-                  onSelectOption={value => setFilterValue(value)}
+                  className="flex items-center max-w-full truncate"
+                  onSelectOption={value => handleChangeFilterValue(value)}
                 />
               ))}
             </DropdownMenuContent>

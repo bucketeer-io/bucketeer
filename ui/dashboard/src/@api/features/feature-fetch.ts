@@ -4,13 +4,13 @@ import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams } from 'utils/search-params';
 import { FeatureResponse } from './feature-clone';
 
-export interface FeatureCloneParams {
+export interface FeatureFetcherParams {
   id: string;
   environmentId: string;
 }
 
 export const featureFetcher = async (
-  params?: FeatureCloneParams
+  params?: FeatureFetcherParams
 ): Promise<FeatureResponse> => {
   const requestParams = stringifyParams(pickBy(params, v => isNotEmpty(v)));
 

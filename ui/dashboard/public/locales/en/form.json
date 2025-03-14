@@ -126,7 +126,7 @@
     "variation": "Variation {{index}}",
     "add-variation": "Add Variation",
     "serve-targeting": "Serve when targeting is {{state}}",
-    "placeholder-variation": "Enter variation",
+    "placeholder-variation": "Enter variation value",
     "active-now": "Active now",
     "schedule": "Schedule",
     "start-at": "Start at",

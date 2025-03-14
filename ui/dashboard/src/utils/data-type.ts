@@ -1,12 +1,19 @@
 import omit from 'lodash/omit';
 import pick from 'lodash/pick';
 
-export const isEmpty = (data: number | string | undefined | null | boolean) =>
-  data === undefined || data === '' || data === null;
+export const isEmpty = (
+  data: number | string | undefined | null | boolean | string[]
+) =>
+  data === undefined ||
+  data === '' ||
+  data === null ||
+  (Array.isArray(data) && !data.length);
 
 export const isNotEmpty = (
   data: number | string | undefined | null | boolean | string[]
-) => data !== undefined && data !== '' && data !== null;
+) =>
+  (data !== undefined && data !== '' && data !== null) ||
+  (Array.isArray(data) && data.length > 0);
 
 export const isEmptyObject = (data: object) => Object.keys(data).length === 0;
 

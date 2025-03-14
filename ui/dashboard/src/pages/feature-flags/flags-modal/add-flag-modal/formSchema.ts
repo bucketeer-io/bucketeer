@@ -8,6 +8,7 @@ import {
 } from 'constants/feature-flag';
 import * as yup from 'yup';
 import { FeatureVariation, FeatureVariationType } from '@types';
+import { isNumber } from 'utils/chart';
 import { isJsonString } from 'utils/converts';
 
 const nameSchema = yup.string().max(FEATURE_NAME_MAX_LENGTH).required();
@@ -19,15 +20,15 @@ const variationsSchema = yup
     yup
       .object()
       .shape({
-        id: yup.string().required(),
+        id: yup.string().required('This field is required'),
         value: yup
           .string()
-          .required()
+          .required('This field is required')
           .test('isNumber', (value, context) => {
             if (
               context?.from &&
               context.from[1].value.variationType === 'NUMBER' &&
-              isNaN(Number(value))
+              !isNumber(+value)
             ) {
               return context.createError({
                 message: 'This must be a number.',
@@ -113,6 +114,6 @@ export const formSchema = yup.object().shape({
   tags: yup.array().min(1).required(),
   variationType: yup.mixed<FeatureVariationType>().required(),
   variations: variationsSchema,
-  defaultOnVariationIndex: yup.number().required(),
-  defaultOffVariationIndex: yup.number().required()
+  defaultOnVariation: yup.string().required(),
+  defaultOffVariation: yup.string().required()
 });

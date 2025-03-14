@@ -1,9 +1,10 @@
 import axiosClient from '@api/axios-client';
 import { Feature } from '@types';
 
-export interface FeatureFetcherParams {
+export interface FeatureCloneParams {
   id: string;
   environmentId: string;
+  targetEnvironmentId: string;
 }
 
 export interface FeatureResponse {
@@ -11,7 +12,7 @@ export interface FeatureResponse {
 }
 
 export const featureClone = async (
-  params?: FeatureFetcherParams
+  params?: FeatureCloneParams
 ): Promise<FeatureResponse> => {
   return axiosClient
     .post<FeatureResponse>(`/v1/feature/clone`, params)

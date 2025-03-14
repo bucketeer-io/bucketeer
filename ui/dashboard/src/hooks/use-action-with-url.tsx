@@ -36,13 +36,16 @@ const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
     if (closeModalPath || path) navigate(String(closeModalPath || path));
   };
 
-  const errorToast = (error: Error) =>
+  const errorToast = (error: AnyObject) => {
+    const { message, status } = error || {};
     notify({
-      toastType: 'toast',
       messageType: 'error',
-      message: error?.message || 'Something went wrong.'
+      message:
+        message || status === 409
+          ? 'The same data already exists'
+          : 'Something went wrong.'
     });
-
+  };
   return {
     id,
     isAdd,

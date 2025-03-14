@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { scheduleFlagCreator } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -21,30 +21,11 @@ export type ConfirmationRequiredModalProps = {
   onClose: () => void;
 };
 
-export const formSchema = yup.object().shape({
-  id: yup.string(),
-  comment: yup.string().required(),
-  scheduleType: yup.string().oneOf(['ACTIVE_NOW', 'SCHEDULE']).required(),
-  scheduleAt: yup
-    .string()
-    .required()
-    .test('test', function (value, context) {
-      const scheduleType = context.from && context.from[0].value.scheduleType;
-      if (scheduleType === 'SCHEDULE' && !value) {
-        return context.createError({
-          message: `This field is required.`,
-          path: context.path
-        });
-      }
-      return true;
-    })
-});
-
 export interface ScheduleFlagForm {
   id?: string;
   scheduleType: 'ACTIVE_NOW' | 'SCHEDULE';
   scheduleAt: string;
-  comment: string;
+  comment?: string;
 }
 
 const ConfirmationRequiredModal = ({
@@ -58,14 +39,33 @@ const ConfirmationRequiredModal = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const isEnabled = useMemo(() => selectedFlag.enabled, [selectedFlag]);
-
   // const { data: collection } = useQueryScheduleFlags({
   //   params: {
   //     environmentId: currentEnvironment?.id,
   //     featureId: selectedFlag.id
   //   }
   // });
+
+  const formSchema = yup.object().shape({
+    id: yup.string(),
+    comment: currentEnvironment?.requireComment
+      ? yup.string().required()
+      : yup.string(),
+    scheduleType: yup.string().oneOf(['ACTIVE_NOW', 'SCHEDULE']).required(),
+    scheduleAt: yup
+      .string()
+      .required()
+      .test('test', function (value, context) {
+        const scheduleType = context.from && context.from[0].value.scheduleType;
+        if (scheduleType === 'SCHEDULE' && !value) {
+          return context.createError({
+            message: `This field is required.`,
+            path: context.path
+          });
+        }
+        return true;
+      })
+  });
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -118,7 +118,9 @@ const ConfirmationRequiredModal = ({
                 name="comment"
                 render={({ field }) => (
                   <Form.Item className="py-0">
-                    <Form.Label>{t('form:comment-for-update')}</Form.Label>
+                    <Form.Label required={currentEnvironment?.requireComment}>
+                      {t('form:comment-for-update')}
+                    </Form.Label>
                     <Form.Control>
                       <TextArea
                         placeholder={`${t('form:placeholder-comment')}`}
@@ -153,11 +155,7 @@ const ConfirmationRequiredModal = ({
                             htmlFor="active_now"
                             className="typo-para-medium leading-4 text-gray-700 cursor-pointer"
                           >
-                            {t(
-                              isEnabled
-                                ? 'form:feature-flags.disable-now'
-                                : 'form:feature-flags.active-now'
-                            )}
+                            {t('update-now')}
                           </label>
                         </div>
 

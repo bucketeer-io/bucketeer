@@ -43,14 +43,19 @@ const PageContent = ({
   const [filters, setFilters] = usePartialState<FlagFilters>(defaultFilters);
 
   const filterCount = useMemo(() => {
-    const { hasExperiment, hasPrerequisites, maintainer, enabled } =
+    const { hasExperiment, hasPrerequisites, maintainer, enabled, tags } =
       filters || {};
     return isNotEmpty(
-      enabled ?? hasExperiment ?? hasPrerequisites ?? maintainer
+      enabled ?? hasExperiment ?? hasPrerequisites ?? maintainer ?? tags
     )
       ? 1
       : undefined;
   }, [filters]);
+
+  const isHiddenTab = useMemo(
+    () => !!filterCount || !!filters?.searchQuery,
+    [filterCount, filters]
+  );
 
   const onChangeFilters = (values: Partial<FlagFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
@@ -67,6 +72,7 @@ const PageContent = ({
       maintainer: undefined,
       enabled: undefined,
       archived: undefined,
+      tags: undefined,
       status: 'ACTIVE'
     });
     onCloseFilterModal();
@@ -85,7 +91,7 @@ const PageContent = ({
         action={
           <Button className="flex-1 lg:flex-none" onClick={onAdd}>
             <Icon icon={IconAddOutlined} size="sm" />
-            {t(`new-flag`)}
+            {t(`create-flag`)}
           </Button>
         }
         filterCount={filterCount}
@@ -117,10 +123,12 @@ const PageContent = ({
           });
         }}
       >
-        <TabsList>
-          <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
-          <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
-        </TabsList>
+        {!isHiddenTab && (
+          <TabsList>
+            <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
+            <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
+          </TabsList>
+        )}
 
         <TabsContent value={filters.status}>
           <CollectionLoader

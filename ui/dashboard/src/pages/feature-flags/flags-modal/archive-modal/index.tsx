@@ -1,5 +1,6 @@
 import { FormProvider, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { cn } from 'utils/style';
@@ -11,6 +12,7 @@ import TextArea from 'components/textarea';
 import ArchiveWarning from './archive-warning';
 
 export type ArchiveModalProps = {
+  isArchiving: boolean;
   isShowWarning: boolean;
   isOpen: boolean;
   title: string;
@@ -20,11 +22,8 @@ export type ArchiveModalProps = {
   onSubmit: () => void;
 };
 
-export const formSchema = yup.object().shape({
-  comment: yup.string().required()
-});
-
 const ArchiveModal = ({
+  isArchiving,
   isShowWarning,
   isOpen,
   title,
@@ -34,6 +33,14 @@ const ArchiveModal = ({
   onSubmit
 }: ArchiveModalProps) => {
   const { t } = useTranslation(['common', 'form']);
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const formSchema = yup.object().shape({
+    comment: currentEnvironment?.requireComment
+      ? yup.string().required()
+      : yup.string()
+  });
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -43,7 +50,7 @@ const ArchiveModal = ({
   });
 
   const {
-    formState: { isDirty, isValid, isSubmitting }
+    formState: { isValid, isSubmitting }
   } = form;
 
   return (
@@ -70,7 +77,7 @@ const ArchiveModal = ({
               name="comment"
               render={({ field }) => (
                 <Form.Item className="py-0">
-                  <Form.Label required>
+                  <Form.Label required={currentEnvironment?.requireComment}>
                     {t('form:comment-for-update')}
                   </Form.Label>
                   <Form.Control>
@@ -90,12 +97,8 @@ const ArchiveModal = ({
 
       <ButtonBar
         secondaryButton={
-          <Button
-            loading={isSubmitting}
-            disabled={!isDirty || !isValid}
-            onClick={onSubmit}
-          >
-            {t(`submit`)}
+          <Button loading={isSubmitting} disabled={!isValid} onClick={onSubmit}>
+            {t(isArchiving ? `archive-flag` : 'unarchive-flag')}
           </Button>
         }
         primaryButton={

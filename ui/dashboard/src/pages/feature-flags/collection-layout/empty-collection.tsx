@@ -19,7 +19,7 @@ export const EmptyCollection = ({ onAdd }: { onAdd: () => void }) => {
       <EmptyState.Actions>
         <EmptyState.ActionButton variant="primary" onClick={onAdd}>
           <IconAddOutlined />
-          {t(`new-flag`)}
+          {t(`create-flag`)}
         </EmptyState.ActionButton>
       </EmptyState.Actions>
     </EmptyState.Root>

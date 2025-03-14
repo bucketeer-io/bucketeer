@@ -90,11 +90,11 @@ const DropdownMenuTrigger = forwardRef<
       )}
       {...props}
     >
-      <div className="flex items-center w-full justify-between typo-para-medium">
+      <div className="flex items-center w-full justify-between typo-para-medium overflow-hidden">
         {trigger ? (
           trigger
         ) : label ? (
-          <p>
+          <p className="max-w-full truncate">
             {label} {description && <span>{description}</span>}
           </p>
         ) : (
@@ -102,7 +102,11 @@ const DropdownMenuTrigger = forwardRef<
         )}
       </div>
 
-      {showArrow && <Icon icon={IconExpandMoreRound} size={'md'} />}
+      {showArrow && (
+        <div className="min-w-6">
+          <Icon icon={IconExpandMoreRound} size={'md'} className="min-w-6" />
+        </div>
+      )}
     </DropdownMenuPrimitive.Trigger>
   )
 );
@@ -181,8 +185,10 @@ const DropdownMenuItem = forwardRef<
         </div>
       )}
 
-      <div className="flex flex-col gap-y-1.5">
-        <p className="typo-para-medium leading-5 text-gray-700">{label}</p>
+      <div className="flex flex-col gap-y-1.5 w-full overflow-hidden">
+        <p className="typo-para-medium leading-5 text-gray-700 truncate">
+          {label}
+        </p>
         {description && (
           <p className="typo-para-small leading-[14px] text-gray-500">
             {description}
