@@ -1,8 +1,8 @@
 // import { LIST_PAGE_SIZE } from 'constants/app';
 // import Pagination from 'components/pagination';
-import CollectionEmpty from 'elements/collection/collection-empty';
+// import CollectionEmpty from 'elements/collection/collection-empty';
 import PageLayout from 'elements/page-layout';
-import { EmptyCollection } from '../collection-layout/empty-collection';
+// import { EmptyCollection } from '../collection-layout/empty-collection';
 import GridViewCollection from '../collection-layout/grid-view-collection';
 import { FlagActionType, FlagsTemp } from '../types';
 
@@ -64,14 +64,14 @@ const CollectionLoader = ({
 }) => {
   const isError = false;
 
-  const emptyState = (
-    <CollectionEmpty
-      data={mockFlags}
-      searchQuery={''}
-      onClear={() => {}}
-      empty={<EmptyCollection onAdd={() => {}} />}
-    />
-  );
+  // const emptyState = (
+  //   <CollectionEmpty
+  //     data={mockFlags}
+  //     searchQuery={''}
+  //     onClear={() => {}}
+  //     empty={<EmptyCollection onAdd={() => {}} />}
+  //   />
+  // );
 
   return isError ? (
     <PageLayout.ErrorState onRetry={() => {}} />
