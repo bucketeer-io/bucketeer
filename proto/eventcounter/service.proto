@@ -155,7 +155,7 @@ service EventCounterService {
       get: "/v1/experiment_evaluation_count"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get experiment evaluation count"
+      summary: "Get Experiment Evaluation Count"
       description: "Get an experiment evaluation count"
       tags: "experiment_evaluation_count"
       operation_id: "web.v1.event_counter.experiment_evaluation_count.get"
@@ -201,7 +201,7 @@ service EventCounterService {
       get: "/v1/evaluation_timeseries_count"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get evaluation timeseries count"
+      summary: "Get Evaluation Timeseries Count"
       description: "Get an evaluation timeseries count"
       tags: "evaluation_timeseries_count"
       operation_id: "web.v1.event_counter.evaluation_timeseries_count.get"
@@ -247,7 +247,7 @@ service EventCounterService {
       get: "/v1/experiment_result"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get experiment result"
+      summary: "Get Experiment Result"
       description: "Get an experiment result"
       tags: "experiment_result"
       operation_id: "web.v1.event_counter.experiment_result.get"
@@ -293,7 +293,7 @@ service EventCounterService {
       get: "/v1/experiment_results"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "List experiment results"
+      summary: "List Experiment Results"
       description: "List experiment results"
       tags: "experiment_result"
       operation_id: "web.v1.event_counter.experiment_result.list"
@@ -339,7 +339,7 @@ service EventCounterService {
       get: "/v1/experiment_goal_count"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get experiment goal count"
+      summary: "Get Experiment Goal Count"
       description: "Get an experiment goal count"
       tags: "experiment_goal_count"
       operation_id: "web.v1.event_counter.experiment_goal_count.get"
@@ -384,7 +384,7 @@ service EventCounterService {
       get: "/v1/mau_count"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get MAU count"
+      summary: "Get MAU Count"
       description: "Get MAU count"
       tags: "mau_count"
       operation_id: "web.v1.event_counter.mau_count.get"
@@ -430,7 +430,7 @@ service EventCounterService {
       get: "/v1/summarize_mau_counts"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Summarize MAU counts"
+      summary: "Summarize MAU Counts"
       description: "Summarize MAU counts"
       tags: "mau_count"
       operation_id: "web.v1.event_counter.summarize_mau_counts.get"
@@ -476,7 +476,7 @@ service EventCounterService {
       get: "/v1/ops_evaluation_user_count"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get ops evaluation user count"
+      summary: "Get Ops Evaluation User Count"
       description: "Get an ops evaluation user count"
       tags: "ops_evaluation_user_count"
       operation_id: "web.v1.event_counter.ops_evaluation_user_count.get"
@@ -522,7 +522,7 @@ service EventCounterService {
       get: "/v1/ops_goal_user_count"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get ops goal user count"
+      summary: "Get Ops Goal User Count"
       description: "Get an ops goal user count"
       tags: "ops_goal_user_count"
       operation_id: "web.v1.event_counter.ops_goal_user_count.get"

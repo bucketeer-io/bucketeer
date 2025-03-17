@@ -3851,7 +3851,7 @@ paths:
         - Project
   /v1/evaluation_timeseries_count:
     get:
-      summary: Get evaluation timeseries count
+      summary: Get Evaluation Timeseries Count
       description: Get an evaluation timeseries count
       operationId: web.v1.event_counter.evaluation_timeseries_count.get
       responses:
@@ -4071,7 +4071,7 @@ paths:
         - experiment
   /v1/experiment_evaluation_count:
     get:
-      summary: Get experiment evaluation count
+      summary: Get Experiment Evaluation Count
       description: Get an experiment evaluation count
       operationId: web.v1.event_counter.experiment_evaluation_count.get
       responses:
@@ -4154,7 +4154,7 @@ paths:
         - experiment_evaluation_count
   /v1/experiment_goal_count:
     get:
-      summary: Get experiment goal count
+      summary: Get Experiment Goal Count
       description: Get an experiment goal count
       operationId: web.v1.event_counter.experiment_goal_count.get
       responses:
@@ -4241,7 +4241,7 @@ paths:
         - experiment_goal_count
   /v1/experiment_result:
     get:
-      summary: Get experiment result
+      summary: Get Experiment Result
       description: Get an experiment result
       operationId: web.v1.event_counter.experiment_result.get
       responses:
@@ -4302,7 +4302,7 @@ paths:
         - experiment_result
   /v1/experiment_results:
     get:
-      summary: List experiment results
+      summary: List Experiment Results
       description: List experiment results
       operationId: web.v1.event_counter.experiment_result.list
       responses:
@@ -5449,7 +5449,7 @@ paths:
         - goal
   /v1/mau_count:
     get:
-      summary: Get MAU count
+      summary: Get MAU Count
       description: Get MAU count
       operationId: web.v1.event_counter.mau_count.get
       responses:
@@ -5510,7 +5510,7 @@ paths:
         - mau_count
   /v1/ops_evaluation_user_count:
     get:
-      summary: Get ops evaluation user count
+      summary: Get Ops Evaluation User Count
       description: Get an ops evaluation user count
       operationId: web.v1.event_counter.ops_evaluation_user_count.get
       responses:
@@ -5588,7 +5588,7 @@ paths:
         - ops_evaluation_user_count
   /v1/ops_goal_user_count:
     get:
-      summary: Get ops goal user count
+      summary: Get Ops Goal User Count
       description: Get an ops goal user count
       operationId: web.v1.event_counter.ops_goal_user_count.get
       responses:
@@ -7130,7 +7130,7 @@ paths:
         - subscription
   /v1/summarize_mau_counts:
     get:
-      summary: Summarize MAU counts
+      summary: Summarize MAU Counts
       description: Summarize MAU counts
       operationId: web.v1.event_counter.summarize_mau_counts.get
       responses:

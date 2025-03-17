@@ -24424,7 +24424,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Get experiment evaluation count"
+                        "value": "Get Experiment Evaluation Count"
                       },
                       {
                         "name": "description",
@@ -24596,7 +24596,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Get evaluation timeseries count"
+                        "value": "Get Evaluation Timeseries Count"
                       },
                       {
                         "name": "description",
@@ -24768,7 +24768,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Get experiment result"
+                        "value": "Get Experiment Result"
                       },
                       {
                         "name": "description",
@@ -24940,7 +24940,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "List experiment results"
+                        "value": "List Experiment Results"
                       },
                       {
                         "name": "description",
@@ -25112,7 +25112,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Get experiment goal count"
+                        "value": "Get Experiment Goal Count"
                       },
                       {
                         "name": "description",
@@ -25284,7 +25284,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Get MAU count"
+                        "value": "Get MAU Count"
                       },
                       {
                         "name": "description",
@@ -25456,7 +25456,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Summarize MAU counts"
+                        "value": "Summarize MAU Counts"
                       },
                       {
                         "name": "description",
@@ -25628,7 +25628,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Get ops evaluation user count"
+                        "value": "Get Ops Evaluation User Count"
                       },
                       {
                         "name": "description",
@@ -25800,7 +25800,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Get ops goal user count"
+                        "value": "Get Ops Goal User Count"
                       },
                       {
                         "name": "description",
