@@ -30,6 +30,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/stan"
 	metricsmock "github.com/bucketeer-io/bucketeer/pkg/metrics/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
+	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 var (
@@ -60,6 +62,17 @@ func TestExperimentCalculatorBinomialModelSample(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	experimentCalculator := creatExperimentCalculator(mockController)
+	experiment := &experimentproto.Experiment{
+		BaseVariationId: "vid1",
+		Variations: []*featureproto.Variation{
+			{
+				Id: "vid1",
+			},
+			{
+				Id: "vid2",
+			},
+		},
+	}
 	assert.NotNil(t, experimentCalculator, "ExperimentCalculator should not be nil")
 	ctx := context.TODO()
 	vrs, err := experimentCalculator.binomialModelSample(
@@ -68,6 +81,7 @@ func TestExperimentCalculatorBinomialModelSample(t *testing.T) {
 		[]int64{38, 51},
 		[]int64{101, 99},
 		0,
+		experiment,
 	)
 
 	assert.NoError(t, err, "BinomialModelSample should not be error")

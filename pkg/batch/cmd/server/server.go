@@ -507,7 +507,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			mysqlClient,
 			calculator.NewExperimentLock(nonPersistentRedisClient, *s.experimentLockTTL),
 			location,
-			jobs.WithTimeout(5*time.Minute),
+			jobs.WithTimeout(30*time.Minute),
 			jobs.WithLogger(logger),
 			jobs.WithMetrics(registerer),
 		),

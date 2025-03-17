@@ -91,41 +91,57 @@ func NewExperimentCalculate(
 }
 
 func (e *experimentCalculate) Run(ctx context.Context) error {
+	// Because the calculation can take several minutes depending on the data volume
+	// and the number of the running experiments, it runs the calculation in the background
+	// returning the response immediately, not waiting for the calculation to complete.
+	go func() {
+		e.runCalculation()
+	}()
+
+	// Return immediately, not waiting for the goroutine to complete
+	return nil
+}
+
+func (e *experimentCalculate) runCalculation() {
+	// Create a context with timeout from the options inside the goroutine
+	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), e.opts.Timeout)
+	defer cancel() // Ensure context is canceled when goroutine completes
+
 	e.logger.Info("Started experiment calculation job")
 	startTime := time.Now().In(e.location)
-	environments, environmentErr := e.listEnvironments(ctx)
+	environments, environmentErr := e.listEnvironments(ctxWithTimeout)
 	if environmentErr != nil {
 		e.logger.Error("Failed to list environments when calculating experiments",
-			log.FieldsFromImcomingContext(ctx).AddFields(
+			log.FieldsFromImcomingContext(ctxWithTimeout).AddFields(
 				zap.Error(environmentErr),
 			)...,
 		)
-		return environmentErr
+		return
 	}
 	var calculatedCount int
 	for _, env := range environments {
-		experiments, experimentErr := e.listExperiments(ctx, env.Id)
+		experiments, experimentErr := e.listExperiments(ctxWithTimeout, env.Id)
 		if experimentErr != nil {
 			e.logger.Error("Failed to list experiments when running experiment calculation",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromImcomingContext(ctxWithTimeout).AddFields(
 					zap.Error(experimentErr),
 				)...,
 			)
-			return experimentErr
+			return
 		}
 		if experiments == nil {
 			e.logger.Info("There are no experiments for calculation in the specified environment",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromImcomingContext(ctxWithTimeout).AddFields(
 					zap.String("environmentId", env.Id),
 				)...,
 			)
 			continue
 		}
 		for _, ex := range experiments {
-			calculateErr := e.calculateExperimentWithLock(ctx, env, ex)
+			calculateErr := e.calculateExperimentWithLock(ctxWithTimeout, env, ex)
 			if calculateErr != nil {
 				e.logger.Error("Failed to calculate experiment",
-					log.FieldsFromImcomingContext(ctx).AddFields(
+					log.FieldsFromImcomingContext(ctxWithTimeout).AddFields(
 						zap.Error(calculateErr),
 						zap.String("environmentId", env.Id),
 						zap.Any("experiment", ex),
@@ -135,7 +151,7 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 			}
 			calculatedCount++
 			e.logger.Info("Experiment calculated successfully in the specified environment",
-				log.FieldsFromImcomingContext(ctx).AddFields(
+				log.FieldsFromImcomingContext(ctxWithTimeout).AddFields(
 					zap.String("environmentId", env.Id),
 					zap.Any("experiment", ex),
 				)...,
@@ -146,7 +162,6 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 		zap.Duration("elapsedTime", time.Since(startTime)),
 		zap.Int("totalCalculatedExperiments", calculatedCount),
 	)
-	return nil
 }
 
 func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
