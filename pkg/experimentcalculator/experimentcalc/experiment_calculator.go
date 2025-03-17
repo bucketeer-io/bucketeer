@@ -311,19 +311,7 @@ func (e ExperimentCalculator) calcGoalResult(
 	for i := 0; i < len(vids); i++ {
 		if goalUc[i] == 0 || valueMeans[i] == 0 || valueVars[i] == 0 {
 			calculationExceptionCounter.WithLabelValues(valuesAreZero).Inc()
-			e.logger.Warn("Values are zero",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.String("variation_id", vids[i]),
-					zap.Int64("goal_uc", goalUc[i]),
-					zap.Float64("value_mean", valueMeans[i]),
-					zap.Float64("value_var", valueVars[i]),
-					zap.Any("experiment", experiment),
-					zap.Strings("all_variation_ids", vids),
-					zap.Int64s("all_goal_user_counts", goalUc),
-					zap.Float64s("all_value_means", valueMeans),
-					zap.Float64s("all_value_vars", valueVars),
-				)...,
-			)
+			// skip it if the value is zero
 			return goalResult
 		}
 	}
