@@ -97,6 +97,11 @@ func createCvrProbBeatBaseline(
 
 // rHat  Return the split potential scale reduction (split R hat) for the specified parameter.
 func rHat(samples [][]float64) float64 {
+	// Check for empty input
+	if len(samples) == 0 || len(samples[0]) == 0 {
+		return 1.0 // Return 1.0 as a safe default for convergence
+	}
+
 	chains := len(samples)
 	nsamples := len(samples[0])
 	for i := 1; i < chains; i++ {
@@ -121,8 +126,23 @@ func rHat(samples [][]float64) float64 {
 	varBetween := float64(n) * stat.Variance(splitChainMean, nil)
 	varWithin := stat.Mean(splitChainVar, nil)
 
+	// Handle edge case where varWithin is zero
+	if varWithin == 0 {
+		if varBetween == 0 {
+			return 1.0 // All chains have identical values
+		}
+		return math.Inf(1) // Chains differ but no within-chain variance
+	}
+
 	// rewrote [(n-1)*W/n + B/n]/W as (n-1+ B/W)/n
-	return math.Sqrt((varBetween/varWithin + float64(n-1)) / float64(n))
+	rhat := math.Sqrt((varBetween/varWithin + float64(n-1)) / float64(n))
+
+	// Handle any remaining NaN cases
+	if math.IsNaN(rhat) {
+		return 1.0
+	}
+
+	return rhat
 }
 
 func extractParamSample(samples []dataframe.DataFrame, col string) [][]float64 {
