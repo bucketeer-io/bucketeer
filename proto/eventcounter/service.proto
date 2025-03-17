@@ -28,12 +28,12 @@ import "proto/eventcounter/variation_count.proto";
 
 message GetExperimentEvaluationCountRequest {
   reserved 1;
-  int64 start_at = 2;
-  int64 end_at = 3;
-  string feature_id = 4;
+  int64 start_at = 2 [(google.api.field_behavior) = REQUIRED];
+  int64 end_at = 3 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 4 [(google.api.field_behavior) = REQUIRED];
   int32 feature_version = 5;
   repeated string variation_ids = 6;
-  string environment_id = 7;
+  string environment_id = 7 [(google.api.field_behavior) = REQUIRED];
 }
 
 message GetExperimentEvaluationCountResponse {
@@ -51,9 +51,9 @@ message GetEvaluationTimeseriesCountRequest {
     THIRTY_DAYS = 4;
   }
   reserved 1;
-  string feature_id = 2;
-  TimeRange time_range = 3;
-  string environment_id = 4;
+  string feature_id = 2 [(google.api.field_behavior) = REQUIRED];
+  TimeRange time_range = 3 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
 }
 
 message GetEvaluationTimeseriesCountResponse {
@@ -84,13 +84,13 @@ message ListExperimentResultsResponse {
 
 message GetExperimentGoalCountRequest {
   reserved 1;
-  int64 start_at = 2;
-  int64 end_at = 3;
-  string goal_id = 4;
-  string feature_id = 5;
+  int64 start_at = 2 [(google.api.field_behavior) = REQUIRED];
+  int64 end_at = 3 [(google.api.field_behavior) = REQUIRED];
+  string goal_id = 4 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 5 [(google.api.field_behavior) = REQUIRED];
   int32 feature_version = 6;
   repeated string variation_ids = 7;
-  string environment_id = 8;
+  string environment_id = 8 [(google.api.field_behavior) = REQUIRED];
 }
 
 message GetExperimentGoalCountResponse {
@@ -100,12 +100,12 @@ message GetExperimentGoalCountResponse {
 
 message GetOpsEvaluationUserCountRequest {
   reserved 1;
-  string ops_rule_id = 2;
-  string clause_id = 3;
-  string feature_id = 4;
-  int32 feature_version = 5;
-  string variation_id = 6;
-  string environment_id = 7;
+  string ops_rule_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string clause_id = 3 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 4 [(google.api.field_behavior) = REQUIRED];
+  int32 feature_version = 5 [(google.api.field_behavior) = REQUIRED];
+  string variation_id = 6 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 7 [(google.api.field_behavior) = REQUIRED];
 }
 
 message GetOpsEvaluationUserCountResponse {
@@ -116,12 +116,12 @@ message GetOpsEvaluationUserCountResponse {
 
 message GetOpsGoalUserCountRequest {
   reserved 1;
-  string ops_rule_id = 2;
-  string clause_id = 3;
-  string feature_id = 4;
-  int32 feature_version = 5;
-  string variation_id = 6;
-  string environment_id = 7;
+  string ops_rule_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string clause_id = 3 [(google.api.field_behavior) = REQUIRED];
+  string feature_id = 4 [(google.api.field_behavior) = REQUIRED];
+  int32 feature_version = 5 [(google.api.field_behavior) = REQUIRED];
+  string variation_id = 6 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 7 [(google.api.field_behavior) = REQUIRED];
 }
 
 message GetOpsGoalUserCountResponse {
@@ -132,8 +132,8 @@ message GetOpsGoalUserCountResponse {
 
 message GetMAUCountRequest {
   reserved 1;
-  string year_month = 2;
-  string environment_id = 3;
+  string year_month = 2 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
 message GetMAUCountResponse {
@@ -142,7 +142,7 @@ message GetMAUCountResponse {
 }
 
 message SummarizeMAUCountsRequest {
-  string year_month = 1;
+  string year_month = 1 [(google.api.field_behavior) = REQUIRED];
   bool is_finished = 2;
 }
 
@@ -150,10 +150,96 @@ message SummarizeMAUCountsResponse {}
 
 service EventCounterService {
   rpc GetExperimentEvaluationCount(GetExperimentEvaluationCountRequest)
-      returns (GetExperimentEvaluationCountResponse) {}
+      returns (GetExperimentEvaluationCountResponse) {
+    option (google.api.http) = {
+      get: "/v1/experiment_evaluation_count"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get experiment evaluation count"
+      description: "Get an experiment evaluation count"
+      tags: "experiment_evaluation_count"
+      operation_id: "web.v1.event_counter.experiment_evaluation_count.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the requested resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 
   rpc GetEvaluationTimeseriesCount(GetEvaluationTimeseriesCountRequest)
-      returns (GetEvaluationTimeseriesCountResponse) {}
+      returns (GetEvaluationTimeseriesCountResponse) {
+    option (google.api.http) = {
+      get: "/v1/evaluation_timeseries_count"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get evaluation timeseries count"
+      description: "Get an evaluation timeseries count"
+      tags: "evaluation_timeseries_count"
+      operation_id: "web.v1.event_counter.evaluation_timeseries_count.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the requested resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 
   rpc GetExperimentResult(GetExperimentResultRequest)
       returns (GetExperimentResultResponse) {
@@ -184,6 +270,17 @@ service EventCounterService {
           examples: {
             key: "application/json"
             value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the requested resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
           }
         }
       }
@@ -222,20 +319,246 @@ service EventCounterService {
           }
         }
       }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the requested resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
     };
   }
 
   rpc GetExperimentGoalCount(GetExperimentGoalCountRequest)
-      returns (GetExperimentGoalCountResponse) {}
+      returns (GetExperimentGoalCountResponse) {
+    option (google.api.http) = {
+      get: "/v1/experiment_goal_count"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get experiment goal count"
+      description: "Get an experiment goal count"
+      tags: "experiment_goal_count"
+      operation_id: "web.v1.event_counter.experiment_goal_count.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the requested resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 
-  rpc GetMAUCount(GetMAUCountRequest) returns (GetMAUCountResponse) {}
+  rpc GetMAUCount(GetMAUCountRequest) returns (GetMAUCountResponse) {
+    option (google.api.http) = {
+      get: "/v1/mau_count"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get MAU count"
+      description: "Get MAU count"
+      tags: "mau_count"
+      operation_id: "web.v1.event_counter.mau_count.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the requested resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 
   rpc SummarizeMAUCounts(SummarizeMAUCountsRequest)
-      returns (SummarizeMAUCountsResponse) {}
+      returns (SummarizeMAUCountsResponse) {
+    option (google.api.http) = {
+      get: "/v1/summarize_mau_counts"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Summarize MAU counts"
+      description: "Summarize MAU counts"
+      tags: "mau_count"
+      operation_id: "web.v1.event_counter.summarize_mau_counts.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the requested resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 
   rpc GetOpsEvaluationUserCount(GetOpsEvaluationUserCountRequest)
-      returns (GetOpsEvaluationUserCountResponse) {}
+      returns (GetOpsEvaluationUserCountResponse) {
+    option (google.api.http) = {
+      get: "/v1/ops_evaluation_user_count"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get ops evaluation user count"
+      description: "Get an ops evaluation user count"
+      tags: "ops_evaluation_user_count"
+      operation_id: "web.v1.event_counter.ops_evaluation_user_count.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the requested resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 
   rpc GetOpsGoalUserCount(GetOpsGoalUserCountRequest)
-      returns (GetOpsGoalUserCountResponse) {}
+      returns (GetOpsGoalUserCountResponse) {
+    option (google.api.http) = {
+      get: "/v1/ops_goal_user_count"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get ops goal user count"
+      description: "Get an ops goal user count"
+      tags: "ops_goal_user_count"
+      operation_id: "web.v1.event_counter.ops_goal_user_count.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the requested resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 }
