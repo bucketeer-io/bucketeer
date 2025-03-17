@@ -383,6 +383,7 @@
   "feature.variationSettings.bothVariations": "このバリエーションは、デフォルトおよびオフバリエーション設定で使用されているため、削除できません。",
   "feature.variationSettings.defaultStrategy": "このバリエーションはデフォルトバリエーション設定で使用されているため、削除できません。",
   "feature.variationSettings.offVariation": "このバリエーションはオフバリエーション設定で使用されているため、削除できません。",
+  "feature.variationSettings.targetingRule": "このバリエーションはターゲティングルールで使用されているため、削除できません。",
   "feature.variationType": "フラグの型",
   "fileUpload.browseFiles": "ファイルを選択",
   "fileUpload.fileFormat": "ファイルタイプ: .json",
