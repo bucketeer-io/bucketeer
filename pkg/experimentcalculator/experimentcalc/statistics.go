@@ -95,26 +95,35 @@ func createCvrProbBeatBaseline(
 	return probBeatBaseline
 }
 
-// rHat  Return the split potential scale reduction (split R hat) for the specified parameter.
+// rHat returns the split potential scale reduction (split R hat)
+// for the specified parameter samples.
 func rHat(samples [][]float64) float64 {
 	// Check for empty input
 	if len(samples) == 0 || len(samples[0]) == 0 {
-		return 1.0 // Return 1.0 as a safe default for convergence
+		return 1.0 // Safe default: no samples implies convergence.
 	}
 
 	chains := len(samples)
 	nsamples := len(samples[0])
+	// Use the smallest chain length among all chains.
 	for i := 1; i < chains; i++ {
 		nsamples = int(math.Min(float64(nsamples), float64(len(samples[i]))))
 	}
+	// Ensure we have at least two samples per chain.
+	if nsamples < 2 {
+		return 1.0
+	}
+	// Use an even number of samples.
 	if nsamples%2 == 1 {
 		nsamples--
 	}
 	n := nsamples / 2
 
+	// Allocate arrays for the split-chain means and variances.
 	splitChainMean := make([]float64, 2*chains)
 	splitChainVar := make([]float64, 2*chains)
 
+	// Split each chain into two halves.
 	for chain := 0; chain < chains; chain++ {
 		splitChainMean[2*chain] = stat.Mean(samples[chain][:n], nil)
 		splitChainMean[2*chain+1] = stat.Mean(samples[chain][n:], nil)
@@ -123,22 +132,27 @@ func rHat(samples [][]float64) float64 {
 		splitChainVar[2*chain+1] = stat.Variance(samples[chain][n:], nil)
 	}
 
+	// Calculate between-chain and within-chain variances.
 	varBetween := float64(n) * stat.Variance(splitChainMean, nil)
 	varWithin := stat.Mean(splitChainVar, nil)
 
-	// Handle edge case where varWithin is zero
-	if varWithin == 0 {
-		if varBetween == 0 {
-			return 1.0 // All chains have identical values
+	// Use an epsilon to avoid division by a near-zero within-chain variance.
+	epsilon := 1e-10
+	if math.Abs(varWithin) < epsilon {
+		// If both between and within are near zero, the chains are identical.
+		if math.Abs(varBetween) < epsilon {
+			return 1.0
 		}
-		return math.Inf(1) // Chains differ but no within-chain variance
+		// Otherwise, force varWithin to epsilon to avoid division by zero.
+		varWithin = epsilon
 	}
 
-	// rewrote [(n-1)*W/n + B/n]/W as (n-1+ B/W)/n
+	// Compute the split R hat statistic using the reformulated expression:
+	// rHat = sqrt(( (B/W) + (n-1) ) / n)
 	rhat := math.Sqrt((varBetween/varWithin + float64(n-1)) / float64(n))
 
-	// Handle any remaining NaN cases
-	if math.IsNaN(rhat) {
+	// As a final safeguard, return 1.0 if rhat is not a finite number.
+	if math.IsNaN(rhat) || math.IsInf(rhat, 0) {
 		return 1.0
 	}
 
