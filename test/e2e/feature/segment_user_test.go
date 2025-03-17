@@ -186,6 +186,9 @@ func TestBulkUploadAndDownloadSegmentUsers(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.NotNil(t, uploadRes)
+	// Because the upload process is done in the background,
+	// we wait a bit so the test won't fail.
+	time.Sleep(20 * time.Second)
 	for i := 0; i < segmentUserRetryTimes; i++ {
 		downloadRes, err := bulkDownloadSegmentUsers(t, client, segmentID)
 		if err == nil {
@@ -195,7 +198,7 @@ func TestBulkUploadAndDownloadSegmentUsers(t *testing.T) {
 		if i == segmentUserRetryTimes-1 {
 			t.Fatalf("SegmentUsers cannot be downloaded.")
 		}
-		time.Sleep(time.Second)
+		time.Sleep(5 * time.Second)
 	}
 }
 

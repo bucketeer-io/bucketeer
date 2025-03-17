@@ -66,12 +66,12 @@ func TestUpsertAndListTag(t *testing.T) {
 		t.Fatalf("Different sizes. Expected: %d, Actual: %d", len(testTags), len(tags))
 	}
 	// Wait a few seconds before upserting the same tag
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 5)
 	// Upsert tag index 1
 	targetTag := tags[1]
 	createTag(t, client, targetTag.Name, tagproto.Tag_FEATURE_FLAG)
 	// Wait a few seconds before listing the tags
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 5)
 	// List the latest again
 	actual = listTags(ctx, t, client)
 	tagUpsert := findTags(actual, []string{targetTag.Name})
