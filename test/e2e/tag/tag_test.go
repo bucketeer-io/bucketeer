@@ -70,12 +70,15 @@ func TestUpsertAndListTag(t *testing.T) {
 	// Upsert tag index 1
 	targetTag := tags[1]
 	createTag(t, client, targetTag.Name, tagproto.Tag_FEATURE_FLAG)
+	// Wait a few seconds before listing the tags
+	time.Sleep(time.Second * 3)
 	// List the latest again
 	actual = listTags(ctx, t, client)
 	tagUpsert := findTags(actual, []string{targetTag.Name})
 	// Check if the create time is equal
 	if targetTag.CreatedAt != tagUpsert[0].CreatedAt {
-		t.Fatalf("Different create time. Expected: %d, Actual: %d", targetTag.CreatedAt, tagUpsert[1].CreatedAt)
+		t.Fatalf("Different create time. Expected: %d, Actual: %d",
+			targetTag.CreatedAt, tagUpsert[0].CreatedAt)
 	}
 	// Check if the update time has changed
 	if targetTag.UpdatedAt == tagUpsert[0].UpdatedAt {
