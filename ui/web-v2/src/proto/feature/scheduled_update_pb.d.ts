@@ -55,7 +55,8 @@ export namespace ScheduledChange {
     TARGETS: 2;
     RULES: 3;
     DEFAULT_STRATEGY: 4;
-    VARIATIONS: 5;
+    OFF_VARIATION: 5;
+    VARIATIONS: 6;
   }
 
   export const FieldType: FieldTypeMap;

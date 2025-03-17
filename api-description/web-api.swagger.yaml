@@ -5750,6 +5750,242 @@ paths:
           type: boolean
       tags:
         - push
+  /v1/schedule_flag:
+    delete:
+      summary: Delete Scheduled Feature Change
+      description: Delete a scheduled feature flag change. To call this API, you need an EDITOR role in the specified environment.
+      operationId: web.v1.schedule_flag.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureDeleteScheduledFlagChangeResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+        - name: id
+          in: query
+          required: true
+          type: string
+      tags:
+        - Feature
+    post:
+      summary: Schedule Feature Change
+      description: Schedule a feature flag change. To call this API, you need an EDITOR role in the specified environment.
+      operationId: web.v1.schedule_flag.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureScheduleFlagChangeResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureScheduleFlagChangeRequest'
+      tags:
+        - Feature
+    patch:
+      summary: Update Scheduled Feature Change
+      description: Update a scheduled feature flag change. To call this API, you need an EDITOR role in the specified environment.
+      operationId: web.v1.schedule_flag.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureUpdateScheduledFlagChangeResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureUpdateScheduledFlagChangeRequest'
+      tags:
+        - Feature
+  /v1/schedule_flags:
+    get:
+      summary: List Scheduled Feature Changes
+      description: List scheduled feature flag changes. To call this API, you need at least a MEMBER role in the specified organizations.
+      operationId: web.v1.schedule_flag.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureListScheduledFlagChangesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+        - name: featureId
+          in: query
+          required: true
+          type: string
+      tags:
+        - Feature
   /v1/segment:
     get:
       summary: Get
@@ -6806,6 +7042,17 @@ definitions:
       - Environment_VIEWER
       - Environment_EDITOR
     default: Environment_UNASSIGNED
+  ScheduledChangeFieldType:
+    type: string
+    enum:
+      - UNSPECIFIED
+      - PREREQUISITES
+      - TARGETS
+      - RULES
+      - DEFAULT_STRATEGY
+      - OFF_VARIATION
+      - VARIATIONS
+    default: UNSPECIFIED
   SubscriptionSourceType:
     type: string
     enum:
@@ -8164,6 +8411,14 @@ definitions:
         format: int32
       ownerEmail:
         type: string
+  bucketeerfeatureChangeType:
+    type: string
+    enum:
+      - UNSPECIFIED
+      - CREATE
+      - UPDATE
+      - DELETE
+    default: UNSPECIFIED
   bucketeerfeatureClause:
     type: object
     properties:
@@ -9683,14 +9938,6 @@ definitions:
     properties:
       description:
         type: string
-  featureChangeType:
-    type: string
-    enum:
-      - UNSPECIFIED
-      - CREATE
-      - UPDATE
-      - DELETE
-    default: UNSPECIFIED
   featureClauseOperator:
     type: string
     enum:
@@ -9873,6 +10120,8 @@ definitions:
   featureDeleteFlagTriggerCommand:
     type: object
   featureDeleteFlagTriggerResponse:
+    type: object
+  featureDeleteScheduledFlagChangeResponse:
     type: object
   featureDeleteSegmentCommand:
     type: object
@@ -10170,6 +10419,14 @@ definitions:
       totalCount:
         type: string
         format: int64
+  featureListScheduledFlagChangesResponse:
+    type: object
+    properties:
+      scheduledFlagUpdates:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureScheduledFlagUpdate'
   featureListSegmentUsersResponse:
     type: object
     properties:
@@ -10220,7 +10477,7 @@ definitions:
     type: object
     properties:
       changeType:
-        $ref: '#/definitions/featureChangeType'
+        $ref: '#/definitions/bucketeerfeatureChangeType'
       prerequisite:
         $ref: '#/definitions/featurePrerequisite'
     required:
@@ -10308,7 +10565,7 @@ definitions:
     type: object
     properties:
       changeType:
-        $ref: '#/definitions/featureChangeType'
+        $ref: '#/definitions/bucketeerfeatureChangeType'
       rule:
         $ref: '#/definitions/featureRule'
     required:
@@ -10322,6 +10579,70 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureRule'
+  featureScheduleFlagChangeRequest:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      featureId:
+        type: string
+      scheduledAt:
+        type: string
+        format: int64
+      scheduledChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureScheduledChange'
+    required:
+      - environmentId
+      - featureId
+      - scheduledAt
+      - scheduledChanges
+  featureScheduleFlagChangeResponse:
+    type: object
+  featureScheduledChange:
+    type: object
+    properties:
+      id:
+        type: string
+      changeType:
+        $ref: '#/definitions/featureScheduledChangeChangeType'
+      fieldType:
+        $ref: '#/definitions/ScheduledChangeFieldType'
+      fieldValue:
+        type: string
+  featureScheduledChangeChangeType:
+    type: string
+    enum:
+      - CHANGE_UNSPECIFIED
+      - CHANGE_CREATE
+      - CHANGE_UPDATE
+      - CHANGE_DELETE
+    default: CHANGE_UNSPECIFIED
+  featureScheduledFlagUpdate:
+    type: object
+    properties:
+      id:
+        type: string
+      featureId:
+        type: string
+      environmentId:
+        type: string
+      scheduledAt:
+        type: string
+        format: int64
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      changes:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureScheduledChange'
   featureSegment:
     type: object
     properties:
@@ -10409,7 +10730,7 @@ definitions:
     type: object
     properties:
       changeType:
-        $ref: '#/definitions/featureChangeType'
+        $ref: '#/definitions/bucketeerfeatureChangeType'
       tag:
         type: string
     required:
@@ -10428,7 +10749,7 @@ definitions:
     type: object
     properties:
       changeType:
-        $ref: '#/definitions/featureChangeType'
+        $ref: '#/definitions/bucketeerfeatureChangeType'
       target:
         $ref: '#/definitions/featureTarget'
     required:
@@ -10553,6 +10874,28 @@ definitions:
       url:
         type: string
         description: If reset is true, new generated trigger hook URL will be returned.
+  featureUpdateScheduledFlagChangeRequest:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      id:
+        type: string
+      scheduledAt:
+        type: string
+        format: int64
+      scheduledChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureScheduledChange'
+    required:
+      - environmentId
+      - id
+      - scheduledAt
+      - scheduledChanges
+  featureUpdateScheduledFlagChangeResponse:
+    type: object
   featureUpdateSegmentRequest:
     type: object
     properties:
@@ -10600,7 +10943,7 @@ definitions:
     type: object
     properties:
       changeType:
-        $ref: '#/definitions/featureChangeType'
+        $ref: '#/definitions/bucketeerfeatureChangeType'
       variation:
         $ref: '#/definitions/bucketeerfeatureVariation'
     required:

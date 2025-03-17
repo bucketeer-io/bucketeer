@@ -10,7 +10,8 @@ message ScheduledChange {
     TARGETS = 2;
     RULES = 3;
     DEFAULT_STRATEGY = 4;
-    VARIATIONS = 5;
+    OFF_VARIATION = 5;
+    VARIATIONS = 6;
   }
   enum ChangeType {
     CHANGE_UNSPECIFIED = 0;
