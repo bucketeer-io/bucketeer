@@ -51,12 +51,7 @@ func TestCreateProgressiveRollout(t *testing.T) {
 		{
 			desc: "error",
 			setup: func(s *progressiveRolloutStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-
-				qe.EXPECT().ExecContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, mysql.ErrDuplicateEntry)
 			},
@@ -69,12 +64,7 @@ func TestCreateProgressiveRollout(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *progressiveRolloutStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-
-				qe.EXPECT().ExecContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
@@ -110,11 +100,7 @@ func TestListProgressiveRollouts(t *testing.T) {
 	}{
 		{
 			setup: func(s *progressiveRolloutStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().QueryContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -130,15 +116,11 @@ func TestListProgressiveRollouts(t *testing.T) {
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe).Times(2)
-				qe.EXPECT().QueryContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
-				qe.EXPECT().QueryRowContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -185,5 +167,5 @@ func TestListProgressiveRollouts(t *testing.T) {
 
 func newProgressiveRolloutStorageWithMock(t *testing.T, mockController *gomock.Controller) *progressiveRolloutStorage {
 	t.Helper()
-	return &progressiveRolloutStorage{mock.NewMockClient(mockController)}
+	return &progressiveRolloutStorage{mock.NewMockQueryExecer(mockController)}
 }
