@@ -10589,7 +10589,7 @@ definitions:
       scheduledAt:
         type: string
         format: int64
-      changes:
+      scheduledChanges:
         type: array
         items:
           type: object
@@ -10598,7 +10598,7 @@ definitions:
       - environmentId
       - featureId
       - scheduledAt
-      - changes
+      - scheduledChanges
   featureScheduleFlagChangeResponse:
     type: object
   featureScheduledChange:
@@ -10884,7 +10884,7 @@ definitions:
       scheduledAt:
         type: string
         format: int64
-      changes:
+      scheduledChanges:
         type: array
         items:
           type: object
@@ -10893,7 +10893,7 @@ definitions:
       - environmentId
       - id
       - scheduledAt
-      - changes
+      - scheduledChanges
   featureUpdateScheduledFlagChangeResponse:
     type: object
   featureUpdateSegmentRequest:

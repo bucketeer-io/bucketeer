@@ -222,7 +222,8 @@ message ScheduleFlagChangeRequest {
   string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
   string feature_id = 2 [(google.api.field_behavior) = REQUIRED];
   int64 scheduled_at = 3 [(google.api.field_behavior) = REQUIRED];
-  repeated ScheduledChange changes = 4 [(google.api.field_behavior) = REQUIRED];
+  repeated ScheduledChange scheduled_changes = 4
+      [(google.api.field_behavior) = REQUIRED];
 }
 
 message ScheduleFlagChangeResponse {}
@@ -232,7 +233,8 @@ message UpdateScheduledFlagChangeRequest {
   string id = 2 [(google.api.field_behavior) = REQUIRED];
   google.protobuf.Int64Value scheduled_at = 3
       [(google.api.field_behavior) = REQUIRED];
-  repeated ScheduledChange changes = 4 [(google.api.field_behavior) = REQUIRED];
+  repeated ScheduledChange scheduled_changes = 4
+      [(google.api.field_behavior) = REQUIRED];
 }
 
 message UpdateScheduledFlagChangeResponse {}

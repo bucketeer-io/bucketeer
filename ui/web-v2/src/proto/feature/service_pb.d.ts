@@ -938,12 +938,12 @@ export class ScheduleFlagChangeRequest extends jspb.Message {
   getScheduledAt(): number;
   setScheduledAt(value: number): void;
 
-  clearChangesList(): void;
-  getChangesList(): Array<proto_feature_scheduled_update_pb.ScheduledChange>;
-  setChangesList(
+  clearScheduledChangesList(): void;
+  getScheduledChangesList(): Array<proto_feature_scheduled_update_pb.ScheduledChange>;
+  setScheduledChangesList(
     value: Array<proto_feature_scheduled_update_pb.ScheduledChange>
   ): void;
-  addChanges(
+  addScheduledChanges(
     value?: proto_feature_scheduled_update_pb.ScheduledChange,
     index?: number
   ): proto_feature_scheduled_update_pb.ScheduledChange;
@@ -974,7 +974,7 @@ export namespace ScheduleFlagChangeRequest {
     environmentId: string;
     featureId: string;
     scheduledAt: number;
-    changesList: Array<proto_feature_scheduled_update_pb.ScheduledChange.AsObject>;
+    scheduledChangesList: Array<proto_feature_scheduled_update_pb.ScheduledChange.AsObject>;
   };
 }
 
@@ -1016,12 +1016,12 @@ export class UpdateScheduledFlagChangeRequest extends jspb.Message {
   getScheduledAt(): google_protobuf_wrappers_pb.Int64Value | undefined;
   setScheduledAt(value?: google_protobuf_wrappers_pb.Int64Value): void;
 
-  clearChangesList(): void;
-  getChangesList(): Array<proto_feature_scheduled_update_pb.ScheduledChange>;
-  setChangesList(
+  clearScheduledChangesList(): void;
+  getScheduledChangesList(): Array<proto_feature_scheduled_update_pb.ScheduledChange>;
+  setScheduledChangesList(
     value: Array<proto_feature_scheduled_update_pb.ScheduledChange>
   ): void;
-  addChanges(
+  addScheduledChanges(
     value?: proto_feature_scheduled_update_pb.ScheduledChange,
     index?: number
   ): proto_feature_scheduled_update_pb.ScheduledChange;
@@ -1054,7 +1054,7 @@ export namespace UpdateScheduledFlagChangeRequest {
     environmentId: string;
     id: string;
     scheduledAt?: google_protobuf_wrappers_pb.Int64Value.AsObject;
-    changesList: Array<proto_feature_scheduled_update_pb.ScheduledChange.AsObject>;
+    scheduledChangesList: Array<proto_feature_scheduled_update_pb.ScheduledChange.AsObject>;
   };
 }
 

@@ -30579,7 +30579,7 @@
               },
               {
                 "id": 4,
-                "name": "changes",
+                "name": "scheduled_changes",
                 "type": "ScheduledChange",
                 "is_repeated": true,
                 "options": [
@@ -30632,7 +30632,7 @@
               },
               {
                 "id": 4,
-                "name": "changes",
+                "name": "scheduled_changes",
                 "type": "ScheduledChange",
                 "is_repeated": true,
                 "options": [

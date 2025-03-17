@@ -8113,8 +8113,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         environmentId: jspb.Message.getFieldWithDefault(msg, 1, ''),
         featureId: jspb.Message.getFieldWithDefault(msg, 2, ''),
         scheduledAt: jspb.Message.getFieldWithDefault(msg, 3, 0),
-        changesList: jspb.Message.toObjectList(
-          msg.getChangesList(),
+        scheduledChangesList: jspb.Message.toObjectList(
+          msg.getScheduledChangesList(),
           proto_feature_scheduled_update_pb.ScheduledChange.toObject,
           includeInstance
         )
@@ -8177,7 +8177,7 @@ proto.bucketeer.feature.ScheduleFlagChangeRequest.deserializeBinaryFromReader =
             proto_feature_scheduled_update_pb.ScheduledChange
               .deserializeBinaryFromReader
           );
-          msg.addChanges(value);
+          msg.addScheduledChanges(value);
           break;
         default:
           reader.skipField();
@@ -8223,7 +8223,7 @@ proto.bucketeer.feature.ScheduleFlagChangeRequest.serializeBinaryToWriter =
     if (f !== 0) {
       writer.writeInt64(3, f);
     }
-    f = message.getChangesList();
+    f = message.getScheduledChangesList();
     if (f.length > 0) {
       writer.writeRepeatedMessage(
         4,
@@ -8293,10 +8293,10 @@ proto.bucketeer.feature.ScheduleFlagChangeRequest.prototype.setScheduledAt =
   };
 
 /**
- * repeated ScheduledChange changes = 4;
+ * repeated ScheduledChange scheduled_changes = 4;
  * @return {!Array<!proto.bucketeer.feature.ScheduledChange>}
  */
-proto.bucketeer.feature.ScheduleFlagChangeRequest.prototype.getChangesList =
+proto.bucketeer.feature.ScheduleFlagChangeRequest.prototype.getScheduledChangesList =
   function () {
     return /** @type{!Array<!proto.bucketeer.feature.ScheduledChange>} */ (
       jspb.Message.getRepeatedWrapperField(
@@ -8311,7 +8311,7 @@ proto.bucketeer.feature.ScheduleFlagChangeRequest.prototype.getChangesList =
  * @param {!Array<!proto.bucketeer.feature.ScheduledChange>} value
  * @return {!proto.bucketeer.feature.ScheduleFlagChangeRequest} returns this
  */
-proto.bucketeer.feature.ScheduleFlagChangeRequest.prototype.setChangesList =
+proto.bucketeer.feature.ScheduleFlagChangeRequest.prototype.setScheduledChangesList =
   function (value) {
     return jspb.Message.setRepeatedWrapperField(this, 4, value);
   };
@@ -8321,7 +8321,7 @@ proto.bucketeer.feature.ScheduleFlagChangeRequest.prototype.setChangesList =
  * @param {number=} opt_index
  * @return {!proto.bucketeer.feature.ScheduledChange}
  */
-proto.bucketeer.feature.ScheduleFlagChangeRequest.prototype.addChanges =
+proto.bucketeer.feature.ScheduleFlagChangeRequest.prototype.addScheduledChanges =
   function (opt_value, opt_index) {
     return jspb.Message.addToRepeatedWrapperField(
       this,
@@ -8336,9 +8336,9 @@ proto.bucketeer.feature.ScheduleFlagChangeRequest.prototype.addChanges =
  * Clears the list making it empty but non-null.
  * @return {!proto.bucketeer.feature.ScheduleFlagChangeRequest} returns this
  */
-proto.bucketeer.feature.ScheduleFlagChangeRequest.prototype.clearChangesList =
+proto.bucketeer.feature.ScheduleFlagChangeRequest.prototype.clearScheduledChangesList =
   function () {
-    return this.setChangesList([]);
+    return this.setScheduledChangesList([]);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -8497,8 +8497,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         scheduledAt:
           (f = msg.getScheduledAt()) &&
           google_protobuf_wrappers_pb.Int64Value.toObject(includeInstance, f),
-        changesList: jspb.Message.toObjectList(
-          msg.getChangesList(),
+        scheduledChangesList: jspb.Message.toObjectList(
+          msg.getScheduledChangesList(),
           proto_feature_scheduled_update_pb.ScheduledChange.toObject,
           includeInstance
         )
@@ -8564,7 +8564,7 @@ proto.bucketeer.feature.UpdateScheduledFlagChangeRequest.deserializeBinaryFromRe
             proto_feature_scheduled_update_pb.ScheduledChange
               .deserializeBinaryFromReader
           );
-          msg.addChanges(value);
+          msg.addScheduledChanges(value);
           break;
         default:
           reader.skipField();
@@ -8614,7 +8614,7 @@ proto.bucketeer.feature.UpdateScheduledFlagChangeRequest.serializeBinaryToWriter
         google_protobuf_wrappers_pb.Int64Value.serializeBinaryToWriter
       );
     }
-    f = message.getChangesList();
+    f = message.getScheduledChangesList();
     if (f.length > 0) {
       writer.writeRepeatedMessage(
         4,
@@ -8708,10 +8708,10 @@ proto.bucketeer.feature.UpdateScheduledFlagChangeRequest.prototype.hasScheduledA
   };
 
 /**
- * repeated ScheduledChange changes = 4;
+ * repeated ScheduledChange scheduled_changes = 4;
  * @return {!Array<!proto.bucketeer.feature.ScheduledChange>}
  */
-proto.bucketeer.feature.UpdateScheduledFlagChangeRequest.prototype.getChangesList =
+proto.bucketeer.feature.UpdateScheduledFlagChangeRequest.prototype.getScheduledChangesList =
   function () {
     return /** @type{!Array<!proto.bucketeer.feature.ScheduledChange>} */ (
       jspb.Message.getRepeatedWrapperField(
@@ -8726,7 +8726,7 @@ proto.bucketeer.feature.UpdateScheduledFlagChangeRequest.prototype.getChangesLis
  * @param {!Array<!proto.bucketeer.feature.ScheduledChange>} value
  * @return {!proto.bucketeer.feature.UpdateScheduledFlagChangeRequest} returns this
  */
-proto.bucketeer.feature.UpdateScheduledFlagChangeRequest.prototype.setChangesList =
+proto.bucketeer.feature.UpdateScheduledFlagChangeRequest.prototype.setScheduledChangesList =
   function (value) {
     return jspb.Message.setRepeatedWrapperField(this, 4, value);
   };
@@ -8736,7 +8736,7 @@ proto.bucketeer.feature.UpdateScheduledFlagChangeRequest.prototype.setChangesLis
  * @param {number=} opt_index
  * @return {!proto.bucketeer.feature.ScheduledChange}
  */
-proto.bucketeer.feature.UpdateScheduledFlagChangeRequest.prototype.addChanges =
+proto.bucketeer.feature.UpdateScheduledFlagChangeRequest.prototype.addScheduledChanges =
   function (opt_value, opt_index) {
     return jspb.Message.addToRepeatedWrapperField(
       this,
@@ -8751,9 +8751,9 @@ proto.bucketeer.feature.UpdateScheduledFlagChangeRequest.prototype.addChanges =
  * Clears the list making it empty but non-null.
  * @return {!proto.bucketeer.feature.UpdateScheduledFlagChangeRequest} returns this
  */
-proto.bucketeer.feature.UpdateScheduledFlagChangeRequest.prototype.clearChangesList =
+proto.bucketeer.feature.UpdateScheduledFlagChangeRequest.prototype.clearScheduledChangesList =
   function () {
-    return this.setChangesList([]);
+    return this.setScheduledChangesList([]);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
