@@ -5,34 +5,6 @@ import { isNumber } from 'utils/chart';
 import { GoalResultState } from '..';
 import { ResultHeaderCell, ResultCell } from './goal-results-table-element';
 
-const headerList = [
-  {
-    name: 'variation',
-    tooltipKey: '',
-    minSize: 270
-  },
-  {
-    name: 'value-user',
-    tooltipKey: 'value-user-tooltip',
-    minSize: 210
-  },
-  {
-    name: 'improvement',
-    tooltipKey: 'improvement-tooltip',
-    minSize: 210
-  },
-  {
-    name: 'probability-to-beat-baseline',
-    tooltipKey: 'probability-to-beat-baseline-tooltip',
-    minSize: 210
-  },
-  {
-    name: 'probability-to-best',
-    tooltipKey: 'probability-to-best-tooltip',
-    minSize: 210
-  }
-];
-
 const ConversionRateTable = ({
   goalResultState,
   experiment,
@@ -43,6 +15,44 @@ const ConversionRateTable = ({
   goalResult: GoalResult;
 }) => {
   const { t } = useTranslation(['common', 'table']);
+
+  const headerList = useMemo(
+    () => [
+      {
+        name: 'variation',
+        tooltipKey: '',
+        minSize: 270
+      },
+      goalResultState?.chartType === 'conversion-rate'
+        ? {
+            name: 'conversion-rate',
+            tooltipKey: 'conversion-rate-tooltip',
+            minSize: 210
+          }
+        : {
+            name: 'value-user',
+            tooltipKey: 'value-user-tooltip',
+            minSize: 210
+          },
+      {
+        name: 'improvement',
+        tooltipKey: 'improvement-tooltip',
+        minSize: 210
+      },
+      {
+        name: 'probability-to-beat-baseline',
+        tooltipKey: 'probability-to-beat-baseline-tooltip',
+        minSize: 210
+      },
+      {
+        name: 'probability-to-best',
+        tooltipKey: 'probability-to-best-tooltip',
+        minSize: 210
+      }
+    ],
+    [goalResultState]
+  );
+
   const conversionRateData = useMemo(
     () =>
       goalResult?.variationResults?.map(item => {
@@ -152,7 +162,14 @@ const ConversionRateTable = ({
                 value={item?.variationName || ''}
                 minSize={270}
               />
-              <ResultCell value={valuePerUser.toFixed(2)} minSize={210} />
+              <ResultCell
+                value={
+                  isConversionRateChart
+                    ? conversionRate.toFixed(1) + ' %'
+                    : valuePerUser.toFixed(2)
+                }
+                minSize={210}
+              />
               <ResultCell value={improvementValue} minSize={210} />
               <ResultCell value={probBeatBaselineValue} minSize={210} />
               <ResultCell value={probBestValue} minSize={210} />
