@@ -130,7 +130,7 @@ func (es *eventStorage) QueryEvaluationCount(
 			Value: featureVersion,
 		},
 	}
-	es.logger.Debug("Query evaluation count",
+	es.logger.Info("Query evaluation count",
 		zap.String("query", query),
 		zap.Any("params", params),
 	)
@@ -216,7 +216,7 @@ func (es *eventStorage) QueryGoalCount(
 			Value: featureVersion,
 		},
 	}
-	es.logger.Debug("query goal count",
+	es.logger.Info("query goal count",
 		zap.String("query", query),
 		zap.Any("params", params),
 	)

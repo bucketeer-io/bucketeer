@@ -177,6 +177,14 @@ func (e ExperimentCalculator) createExperimentResult(
 				)
 				return nil, errFailedToGetEvalVariationCount
 			}
+			e.logger.Info("ExperimentCalculator got evaluation count",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("namespace", envNamespace),
+					zap.Any("experiment", experiment),
+					zap.Duration("duration", time.Since(evaluationStart)),
+					zap.Any("evalVc", evalVc),
+				)...,
+			)
 			goalStart := time.Now()
 			goalVc, goalErr := e.getGoalCount(ctx, &eventcounter.GetExperimentGoalCountRequest{
 				EnvironmentId:  envNamespace,
@@ -198,7 +206,15 @@ func (e ExperimentCalculator) createExperimentResult(
 				)
 				return nil, errFailedToGetGoalEventCount
 			}
-			gr := e.calcGoalResult(ctx, evalVc, goalVc, experiment.BaseVariationId)
+			e.logger.Info("ExperimentCalculator got goal count",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("namespace", envNamespace),
+					zap.Any("experiment", experiment),
+					zap.Duration("duration", time.Since(goalStart)),
+					zap.Any("goalVc", goalVc),
+				)...,
+			)
+			gr := e.calcGoalResult(ctx, evalVc, goalVc, experiment)
 			gr.GoalId = goalID
 			e.appendVariationResult(ctx, timestamp, goalResult, gr.VariationResults)
 		}
@@ -242,7 +258,7 @@ func (e ExperimentCalculator) calcGoalResult(
 	ctx context.Context,
 	evalVariationCounts,
 	goalVariationCounts map[string]*eventcounter.VariationCount,
-	baselineVariationID string,
+	experiment *experiment.Experiment,
 ) *eventcounter.GoalResult {
 	goalResult := &eventcounter.GoalResult{}
 	length := len(goalVariationCounts)
@@ -258,6 +274,7 @@ func (e ExperimentCalculator) calcGoalResult(
 			e.logger.Error("Variation not found in evaluation count",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.String("variation_id", vid),
+					zap.Any("experiment", experiment),
 				)...,
 			)
 			return goalResult
@@ -276,7 +293,7 @@ func (e ExperimentCalculator) calcGoalResult(
 
 		goalResult.VariationResults = append(goalResult.VariationResults, vr)
 		vrs[vid] = vr
-		if vid == baselineVariationID {
+		if vid == experiment.BaseVariationId {
 			baselineIdx = loopIdx
 		}
 		loopIdx++
@@ -290,19 +307,23 @@ func (e ExperimentCalculator) calcGoalResult(
 					zap.String("variation_id", vids[i]),
 					zap.Int64("evaluation_count", evalUc[i]),
 					zap.Int64("goal_count", goalUc[i]),
+					zap.Any("experiment", experiment),
 				)...,
 			)
 			return goalResult
 		}
 	}
 
-	cvrResult, sampleErr := e.binomialModelSample(ctx, vids, goalUc, evalUc, baselineIdx)
+	cvrResult, sampleErr := e.binomialModelSample(ctx, vids, goalUc, evalUc, baselineIdx, experiment)
 	if sampleErr != nil {
 		calculationCounter.WithLabelValues(calculationFail).Inc()
 		e.logger.Error("BinomialModelSample error",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(sampleErr),
-				zap.String("baselineVariationID", baselineVariationID),
+				zap.Any("experiment", experiment),
+				zap.Strings("variation_ids", vids),
+				zap.Int64s("goal_user_counts", goalUc),
+				zap.Int64s("eval_user_counts", evalUc),
 			)...,
 		)
 		return goalResult
@@ -322,6 +343,11 @@ func (e ExperimentCalculator) calcGoalResult(
 					zap.Int64("goal_uc", goalUc[i]),
 					zap.Float64("value_mean", valueMeans[i]),
 					zap.Float64("value_var", valueVars[i]),
+					zap.Any("experiment", experiment),
+					zap.Strings("all_variation_ids", vids),
+					zap.Int64s("all_goal_user_counts", goalUc),
+					zap.Float64s("all_value_means", valueMeans),
+					zap.Float64s("all_value_vars", valueVars),
 				)...,
 			)
 			return goalResult
@@ -500,6 +526,7 @@ func (e ExperimentCalculator) binomialModelSample(
 	vids []string,
 	goalUc, evalUc []int64,
 	baseLineIdx int,
+	experiment *experiment.Experiment,
 ) (map[string]*eventcounter.VariationResult, error) {
 	// The index starts from 1 in PyStan.
 	startTime := time.Now()
@@ -528,7 +555,10 @@ func (e ExperimentCalculator) binomialModelSample(
 					zap.Int("chain", chain),
 					zap.Int("numSamples", req.NumSamples),
 					zap.Int("numWarmup", req.NumWarmup),
-					zap.Any("data", req.Data),
+					zap.Any("experiment", experiment),
+					zap.Strings("variation_ids", vids),
+					zap.Int64s("goal_user_counts", goalUc),
+					zap.Int64s("eval_user_counts", evalUc),
 				)...,
 			)
 			fitResp, err := e.httpStan.CreateFit(ctx, e.stanModelID, req)
@@ -537,6 +567,10 @@ func (e ExperimentCalculator) binomialModelSample(
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.String("modelId", e.stanModelID),
 						zap.Error(err),
+						zap.Any("experiment", experiment),
+						zap.Strings("variation_ids", vids),
+						zap.Int64s("goal_user_counts", goalUc),
+						zap.Int64s("eval_user_counts", evalUc),
 					)...,
 				)
 				return
@@ -549,6 +583,10 @@ func (e ExperimentCalculator) binomialModelSample(
 						log.FieldsFromImcomingContext(ctx).AddFields(
 							zap.String("fitId", fitId),
 							zap.Error(err),
+							zap.Any("experiment", experiment),
+							zap.Strings("variation_ids", vids),
+							zap.Int64s("goal_user_counts", goalUc),
+							zap.Int64s("eval_user_counts", evalUc),
 						)...,
 					)
 					return
@@ -564,6 +602,10 @@ func (e ExperimentCalculator) binomialModelSample(
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.String("fitId", fitId),
 						zap.Error(err),
+						zap.Any("experiment", experiment),
+						zap.Strings("variation_ids", vids),
+						zap.Int64s("goal_user_counts", goalUc),
+						zap.Int64s("eval_user_counts", evalUc),
 					)...,
 				)
 				return
@@ -588,6 +630,10 @@ func (e ExperimentCalculator) binomialModelSample(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Int("numOfChains", numOfChains),
 				zap.Int("numOfSamples", len(samples)),
+				zap.Any("experiment", experiment),
+				zap.Strings("variation_ids", vids),
+				zap.Int64s("goal_user_counts", goalUc),
+				zap.Int64s("eval_user_counts", evalUc),
 			)...,
 		)
 		return nil, errFailedToSample
