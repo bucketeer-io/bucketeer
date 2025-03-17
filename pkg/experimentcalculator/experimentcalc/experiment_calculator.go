@@ -91,13 +91,7 @@ func NewExperimentCalculator(
 
 func (e ExperimentCalculator) Run(ctx context.Context, request *domain.ExperimentCalculatorReq) error {
 	startTime := time.Now()
-
-	// Create a new context with a longer timeout (30 minutes)
-	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
-	defer cancel()
-
-	// Use the new context with longer timeout for all operations
-	experimentResult, calculationErr := e.createExperimentResult(ctxWithTimeout, request.EnvironmentId, request.Experiment)
+	experimentResult, calculationErr := e.createExperimentResult(ctx, request.EnvironmentId, request.Experiment)
 	if calculationErr != nil {
 		e.logger.Error("ExperimentCalculator failed to calculate experiment result",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -109,7 +103,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *domain.Experimen
 		return calculationErr
 	}
 	if err := v2es.NewExperimentResultStorage(e.mysqlClient).
-		UpdateExperimentResult(ctxWithTimeout, request.EnvironmentId, &domain.ExperimentResult{
+		UpdateExperimentResult(ctx, request.EnvironmentId, &domain.ExperimentResult{
 			ExperimentResult: experimentResult,
 		}); err != nil {
 		e.logger.Error("ExperimentCalculator failed to update experiment result",
@@ -157,7 +151,6 @@ func (e ExperimentCalculator) createExperimentResult(
 			})
 		}
 		for _, timestamp := range endAts {
-			evaluationStart := time.Now()
 			evalVc, evalErr := e.getEvaluationCount(ctx, &eventcounter.GetExperimentEvaluationCountRequest{
 				EnvironmentId:  envNamespace,
 				StartAt:        experiment.StartAt,
@@ -171,21 +164,11 @@ func (e ExperimentCalculator) createExperimentResult(
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.String("namespace", envNamespace),
 						zap.Any("experiment", experiment),
-						zap.Duration("duration", time.Since(evaluationStart)),
 						zap.Error(evalErr),
 					)...,
 				)
 				return nil, errFailedToGetEvalVariationCount
 			}
-			e.logger.Info("ExperimentCalculator got evaluation count",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.String("namespace", envNamespace),
-					zap.Any("experiment", experiment),
-					zap.Duration("duration", time.Since(evaluationStart)),
-					zap.Any("evalVc", evalVc),
-				)...,
-			)
-			goalStart := time.Now()
 			goalVc, goalErr := e.getGoalCount(ctx, &eventcounter.GetExperimentGoalCountRequest{
 				EnvironmentId:  envNamespace,
 				StartAt:        experiment.StartAt,
@@ -200,20 +183,11 @@ func (e ExperimentCalculator) createExperimentResult(
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.String("namespace", envNamespace),
 						zap.Any("experiment", experiment),
-						zap.Duration("duration", time.Since(goalStart)),
 						zap.Error(goalErr),
 					)...,
 				)
 				return nil, errFailedToGetGoalEventCount
 			}
-			e.logger.Info("ExperimentCalculator got goal count",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.String("namespace", envNamespace),
-					zap.Any("experiment", experiment),
-					zap.Duration("duration", time.Since(goalStart)),
-					zap.Any("goalVc", goalVc),
-				)...,
-			)
 			gr := e.calcGoalResult(ctx, evalVc, goalVc, experiment)
 			gr.GoalId = goalID
 			e.appendVariationResult(ctx, timestamp, goalResult, gr.VariationResults)
@@ -549,18 +523,6 @@ func (e ExperimentCalculator) binomialModelSample(
 				NumWarmup:  1000,
 				RandomSeed: 1234,
 			}
-			e.logger.Info("Creating fit with request",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.String("modelId", e.stanModelID),
-					zap.Int("chain", chain),
-					zap.Int("numSamples", req.NumSamples),
-					zap.Int("numWarmup", req.NumWarmup),
-					zap.Any("experiment", experiment),
-					zap.Strings("variation_ids", vids),
-					zap.Int64s("goal_user_counts", goalUc),
-					zap.Int64s("eval_user_counts", evalUc),
-				)...,
-			)
 			fitResp, err := e.httpStan.CreateFit(ctx, e.stanModelID, req)
 			if err != nil {
 				e.logger.Error("Failed to create fit",
