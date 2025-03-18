@@ -1177,17 +1177,31 @@ func validateCloneFeatureRequest(req *featureproto.CloneFeatureRequest, localize
 		}
 		return dt.Err()
 	}
-	if req.Command == nil {
-		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+	if req.Command.EnvironmentId == req.EnvironmentId {
+		dt, err := statusIncorrectDestinationEnvironment.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "environment"),
 		})
 		if err != nil {
 			return statusInternal.Err()
 		}
 		return dt.Err()
 	}
-	if req.Command.EnvironmentId == req.EnvironmentId {
+	return nil
+}
+
+func validateCloneFeatureRequestNoCommand(req *featureproto.CloneFeatureRequest, localizer locale.Localizer) error {
+	if req.Id == "" {
+		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.TargetEnvironmentId == req.EnvironmentId {
 		dt, err := statusIncorrectDestinationEnvironment.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "environment"),

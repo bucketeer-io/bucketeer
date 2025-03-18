@@ -12783,7 +12783,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        targetEnvironmentId: jspb.Message.getFieldWithDefault(msg, 5, '')
       };
 
     if (includeInstance) {
@@ -12841,6 +12842,10 @@ proto.bucketeer.feature.CloneFeatureRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 5:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setTargetEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -12890,6 +12895,10 @@ proto.bucketeer.feature.CloneFeatureRequest.serializeBinaryToWriter = function (
   f = message.getEnvironmentId();
   if (f.length > 0) {
     writer.writeString(4, f);
+  }
+  f = message.getTargetEnvironmentId();
+  if (f.length > 0) {
+    writer.writeString(5, f);
   }
 };
 
@@ -12968,6 +12977,26 @@ proto.bucketeer.feature.CloneFeatureRequest.prototype.getEnvironmentId =
 proto.bucketeer.feature.CloneFeatureRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 4, value);
+  };
+
+/**
+ * optional string target_environment_id = 5;
+ * @return {string}
+ */
+proto.bucketeer.feature.CloneFeatureRequest.prototype.getTargetEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 5, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.CloneFeatureRequest} returns this
+ */
+proto.bucketeer.feature.CloneFeatureRequest.prototype.setTargetEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 5, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

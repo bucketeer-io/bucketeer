@@ -43,6 +43,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -2371,15 +2372,6 @@ func TestCloneFeatureMySQL(t *testing.T) {
 			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc:  "error: statusMissingCommand",
-			setup: nil,
-			req: &featureproto.CloneFeatureRequest{
-				Id:            "id-0",
-				EnvironmentId: "ns0",
-			},
-			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
-		},
-		{
 			desc:  "error: statusIncorrectDestinationEnvironment",
 			setup: nil,
 			req: &featureproto.CloneFeatureRequest{
@@ -2433,6 +2425,112 @@ func TestCloneFeatureMySQL(t *testing.T) {
 					EnvironmentId: "ns1",
 				},
 				EnvironmentId: "ns0",
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := createFeatureService(mockController)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.CloneFeature(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestCloneFeatureNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*FeatureService)
+		req         *featureproto.CloneFeatureRequest
+		expectedErr error
+	}{
+		{
+			desc:  "error: statusMissingID",
+			setup: nil,
+			req: &featureproto.CloneFeatureRequest{
+				Id: "",
+			},
+			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc:  "error: statusIncorrectDestinationEnvironment",
+			setup: nil,
+			req: &featureproto.CloneFeatureRequest{
+				Id:                  "id-0",
+				TargetEnvironmentId: "ns0",
+				EnvironmentId:       "ns0",
+			},
+			expectedErr: createError(statusIncorrectDestinationEnvironment, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "environment")),
+		},
+		{
+			desc: "error: statusAlreadyExists",
+			setup: func(s *FeatureService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(v2fs.ErrFeatureAlreadyExists)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, v2fs.ErrFeatureAlreadyExists)
+			},
+			req: &featureproto.CloneFeatureRequest{
+				Id:                  "id-0",
+				TargetEnvironmentId: "ns1",
+				EnvironmentId:       "ns0",
+			},
+			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *FeatureService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
+				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
+			},
+			req: &featureproto.CloneFeatureRequest{
+				Id:                  "id-0",
+				TargetEnvironmentId: "ns1",
+				EnvironmentId:       "ns0",
 			},
 			expectedErr: nil,
 		},

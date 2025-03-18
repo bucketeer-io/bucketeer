@@ -349,11 +349,12 @@ message CloneFeatureRequest {
   CloneFeatureCommand command = 2 [
     deprecated = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
+      description: "deprecated, use targetEnvironmentId instead"
     }
   ];
   reserved 3;
   string environment_id = 4;
+  string target_environment_id = 5;
 }
 
 message CloneFeatureResponse {}

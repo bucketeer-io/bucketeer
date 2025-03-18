@@ -2496,8 +2496,8 @@ func (s *FeatureService) CloneFeature(
 	req *featureproto.CloneFeatureRequest,
 ) (*featureproto.CloneFeatureResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	if err := validateCloneFeatureRequest(req, localizer); err != nil {
-		return nil, err
+	if req.Command == nil {
+		return s.cloneFeatureNoCommand(ctx, req, localizer)
 	}
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
@@ -2506,10 +2506,13 @@ func (s *FeatureService) CloneFeature(
 	if err != nil {
 		return nil, err
 	}
+	if err := validateCloneFeatureRequest(req, localizer); err != nil {
+		return nil, err
+	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
 	f, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
-		if err == v2fs.ErrFeatureNotFound {
+		if errors.Is(err, v2fs.ErrFeatureNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -2589,7 +2592,7 @@ func (s *FeatureService) CloneFeature(
 		return nil
 	})
 	if err != nil {
-		if err == v2fs.ErrFeatureAlreadyExists {
+		if errors.Is(err, v2fs.ErrFeatureAlreadyExists) {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
@@ -2621,6 +2624,157 @@ func (s *FeatureService) CloneFeature(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
 				zap.String("environmentId", req.Command.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	s.updateFeatureFlagCache(ctx)
+	return &featureproto.CloneFeatureResponse{}, nil
+}
+
+func (s *FeatureService) cloneFeatureNoCommand(
+	ctx context.Context,
+	req *featureproto.CloneFeatureRequest,
+	localizer locale.Localizer,
+) (*featureproto.CloneFeatureResponse, error) {
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.TargetEnvironmentId, localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+	err = validateCloneFeatureRequestNoCommand(req, localizer)
+	if err != nil {
+		return nil, err
+	}
+	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
+	f, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
+	if err != nil {
+		if errors.Is(err, v2fs.ErrFeatureNotFound) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to get feature",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("targetEnvironmentId", req.TargetEnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	domainFeature := &domain.Feature{
+		Feature: f.Feature,
+	}
+	feature, err := domainFeature.Clone(editor.Email)
+	if err != nil {
+		s.logger.Error(
+			"Failed to clone domain feature",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("targetEnvironmentId", req.TargetEnvironmentId),
+			)...,
+		)
+		return nil, err
+	}
+	var event *eventproto.Event
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_FEATURE,
+			feature.Id,
+			eventproto.Event_FEATURE_CLONED,
+			&eventproto.FeatureClonedEvent{
+				Id:              feature.Id,
+				Name:            feature.Name,
+				Description:     feature.Description,
+				Variations:      feature.Variations,
+				Targets:         feature.Targets,
+				Rules:           feature.Rules,
+				DefaultStrategy: feature.DefaultStrategy,
+				OffVariation:    feature.OffVariation,
+				Tags:            feature.Tags,
+				Maintainer:      feature.Maintainer,
+				VariationType:   feature.VariationType,
+				Prerequisites:   feature.Prerequisites,
+			},
+			req.EnvironmentId,
+			feature,
+			feature,
+		)
+
+		if err := featureStorage.CreateFeature(ctxWithTx, feature, req.TargetEnvironmentId); err != nil {
+			s.logger.Error(
+				"Failed to store feature",
+				log.FieldsFromImcomingContext(ctxWithTx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+					zap.String("targetEnvironmentId", req.TargetEnvironmentId),
+				)...,
+			)
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		if errors.Is(err, v2fs.ErrFeatureAlreadyExists) {
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to clone feature",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.Command.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	if err = s.domainPublisher.Publish(ctx, event); err != nil {
+		s.logger.Error(
+			"Failed to publish events",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Any("errors", err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("targetEnvironmentId", req.TargetEnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

@@ -31390,7 +31390,7 @@
                     "aggregated": [
                       {
                         "name": "description",
-                        "value": "deprecated"
+                        "value": "deprecated, use targetEnvironmentId instead"
                       }
                     ]
                   }
@@ -31399,6 +31399,11 @@
               {
                 "id": 4,
                 "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "target_environment_id",
                 "type": "string"
               }
             ],
