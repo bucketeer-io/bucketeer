@@ -1300,7 +1300,7 @@ paths:
   /v1/admin_audit_logs:
     get:
       summary: List Admin Audit Logs
-      description: List Admin Audit Logs
+      description: List admin audit logs
       operationId: web.v1.audit_log.admin.list
       responses:
         "200":
@@ -1388,7 +1388,7 @@ paths:
   /v1/audit_logs:
     get:
       summary: List Audit Logs
-      description: List Audit Logs
+      description: List audit logs
       operationId: web.v1.audit_log.list
       responses:
         "200":
@@ -4644,7 +4644,7 @@ paths:
   /v1/feature_history:
     get:
       summary: List Feature History
-      description: List Feature History
+      description: List feature history
       operationId: web.v1.audit_log.feature_history.list
       responses:
         "200":

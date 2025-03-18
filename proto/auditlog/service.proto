@@ -110,7 +110,7 @@ service AuditLogService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List Audit Logs"
-      description: "List Audit Logs"
+      description: "List audit logs"
       tags: "audit_log"
       operation_id: "web.v1.audit_log.list"
       responses: {
@@ -144,7 +144,7 @@ service AuditLogService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List Admin Audit Logs"
-      description: "List Admin Audit Logs"
+      description: "List admin audit logs"
       tags: "audit_log"
       operation_id: "web.v1.audit_log.admin.list"
       responses: {
@@ -178,7 +178,7 @@ service AuditLogService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List Feature History"
-      description: "List Feature History"
+      description: "List feature history"
       tags: "audit_log"
       operation_id: "web.v1.audit_log.feature_history.list"
       responses: {

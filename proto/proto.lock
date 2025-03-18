@@ -5781,7 +5781,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "List Audit Logs"
+                        "value": "List audit logs"
                       },
                       {
                         "name": "tags",
@@ -5908,7 +5908,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "List Admin Audit Logs"
+                        "value": "List admin audit logs"
                       },
                       {
                         "name": "tags",
@@ -6035,7 +6035,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "List Feature History"
+                        "value": "List feature history"
                       },
                       {
                         "name": "tags",
