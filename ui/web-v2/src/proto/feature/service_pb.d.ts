@@ -1866,6 +1866,9 @@ export class CloneFeatureRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getTargetEnvironmentId(): string;
+  setTargetEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CloneFeatureRequest.AsObject;
   static toObject(
@@ -1892,6 +1895,7 @@ export namespace CloneFeatureRequest {
     id: string;
     command?: proto_feature_command_pb.CloneFeatureCommand.AsObject;
     environmentId: string;
+    targetEnvironmentId: string;
   };
 }
 

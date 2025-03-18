@@ -10585,8 +10585,10 @@ definitions:
         type: string
       command:
         $ref: '#/definitions/featureCloneFeatureCommand'
-        description: deprecated
+        description: deprecated, use targetEnvironmentId instead
       environmentId:
+        type: string
+      targetEnvironmentId:
         type: string
   featureCloneFeatureResponse:
     type: object
