@@ -17,6 +17,9 @@ syntax = "proto3";
 package bucketeer.auditlog;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/auditlog";
 
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 import "google/protobuf/wrappers.proto";
 
 import "proto/auditlog/auditlog.proto";
@@ -82,7 +85,7 @@ message ListFeatureHistoryRequest {
     DESC = 0;
     ASC = 1;
   }
-  string feature_id = 1;
+  string feature_id = 1 [(google.api.field_behavior) = REQUIRED];
   int64 page_size = 2;
   string cursor = 3;
   reserved 4;
@@ -101,9 +104,105 @@ message ListFeatureHistoryResponse {
 }
 
 service AuditLogService {
-  rpc ListAuditLogs(ListAuditLogsRequest) returns (ListAuditLogsResponse) {}
+  rpc ListAuditLogs(ListAuditLogsRequest) returns (ListAuditLogsResponse) {
+    option (google.api.http) = {
+      get: "/v1/audit_logs"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Audit Logs"
+      description: "List audit logs"
+      tags: "audit_log"
+      operation_id: "web.v1.audit_log.list"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ListAdminAuditLogs(ListAdminAuditLogsRequest)
-      returns (ListAdminAuditLogsResponse) {}
+      returns (ListAdminAuditLogsResponse) {
+    option (google.api.http) = {
+      get: "/v1/admin_audit_logs"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Admin Audit Logs"
+      description: "List admin audit logs"
+      tags: "audit_log"
+      operation_id: "web.v1.audit_log.admin.list"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ListFeatureHistory(ListFeatureHistoryRequest)
-      returns (ListFeatureHistoryResponse) {}
+      returns (ListFeatureHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v1/feature_history"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Feature History"
+      description: "List feature history"
+      tags: "audit_log"
+      operation_id: "web.v1.audit_log.feature_history.list"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 }
