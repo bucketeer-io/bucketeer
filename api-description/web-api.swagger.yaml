@@ -1297,6 +1297,186 @@ paths:
             $ref: '#/definitions/accountUpdateSearchFilterRequest'
       tags:
         - Account
+  /v1/admin_audit_logs:
+    get:
+      summary: List Admin Audit Logs
+      description: List Admin Audit Logs
+      operationId: web.v1.audit_log.admin.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/auditlogListAdminAuditLogsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - TIMESTAMP
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - DESC
+            - ASC
+          default: DESC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: from
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: to
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: entityType
+          in: query
+          required: false
+          type: integer
+          format: int32
+      tags:
+        - audit_log
+  /v1/audit_logs:
+    get:
+      summary: List Audit Logs
+      description: List Audit Logs
+      operationId: web.v1.audit_log.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/auditlogListAuditLogsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - TIMESTAMP
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - DESC
+            - ASC
+          default: DESC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: from
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: to
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: entityType
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - audit_log
   /v1/auth/authentication_url:
     post:
       summary: Get Authentication URL
@@ -4461,6 +4641,97 @@ paths:
             $ref: '#/definitions/featureCloneFeatureRequest'
       tags:
         - Feature
+  /v1/feature_history:
+    get:
+      summary: List Feature History
+      description: List Feature History
+      operationId: web.v1.audit_log.feature_history.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/auditlogListFeatureHistoryResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - TIMESTAMP
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - DESC
+            - ASC
+          default: DESC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: from
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: to
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - audit_log
   /v1/features:
     get:
       summary: List Feature Flags
@@ -6932,6 +7203,15 @@ definitions:
       - lineNumber
       - codeSnippet
       - contentHash
+  EditorPublicAPIEditor:
+    type: object
+    properties:
+      token:
+        type: string
+      maintainer:
+        type: string
+      name:
+        type: string
   ExperimentGoalReference:
     type: object
     properties:
@@ -7079,13 +7359,6 @@ definitions:
       - EXPERIMENT_RUNNING
       - MAU_COUNT
     default: DOMAIN_EVENT_FEATURE
-  TagEntityType:
-    type: string
-    enum:
-      - UNSPECIFIED
-      - FEATURE_FLAG
-      - ACCOUNT
-    default: UNSPECIFIED
   TimeseriesUnit:
     type: string
     enum:
@@ -7813,6 +8086,109 @@ definitions:
         $ref: '#/definitions/accountChangeDefaultSearchFilterCommand'
   accountUpdateSearchFilterResponse:
     type: object
+  auditlogAuditLog:
+    type: object
+    properties:
+      id:
+        type: string
+      timestamp:
+        type: string
+        format: int64
+      entityType:
+        $ref: '#/definitions/domainEventEntityType'
+      entityId:
+        type: string
+      type:
+        $ref: '#/definitions/domainEventType'
+      event:
+        $ref: '#/definitions/protobufAny'
+      editor:
+        $ref: '#/definitions/domainEditor'
+      options:
+        $ref: '#/definitions/domainOptions'
+      localizedMessage:
+        $ref: '#/definitions/domainLocalizedMessage'
+      entityData:
+        type: string
+        title: JSON string of the entity data
+      previousEntityData:
+        type: string
+        title: JSON string of the previous entity data
+  auditlogListAdminAuditLogsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - TIMESTAMP
+    default: DEFAULT
+  auditlogListAdminAuditLogsRequestOrderDirection:
+    type: string
+    enum:
+      - DESC
+      - ASC
+    default: DESC
+  auditlogListAdminAuditLogsResponse:
+    type: object
+    properties:
+      auditLogs:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/auditlogAuditLog'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  auditlogListAuditLogsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - TIMESTAMP
+    default: DEFAULT
+  auditlogListAuditLogsRequestOrderDirection:
+    type: string
+    enum:
+      - DESC
+      - ASC
+    default: DESC
+  auditlogListAuditLogsResponse:
+    type: object
+    properties:
+      auditLogs:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/auditlogAuditLog'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  auditlogListFeatureHistoryRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - TIMESTAMP
+    default: DEFAULT
+  auditlogListFeatureHistoryRequestOrderDirection:
+    type: string
+    enum:
+      - DESC
+      - ASC
+    default: DESC
+  auditlogListFeatureHistoryResponse:
+    type: object
+    properties:
+      auditLogs:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/auditlogAuditLog'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
   authAuthType:
     type: string
     enum:
@@ -8529,7 +8905,7 @@ definitions:
         type: string
         format: int64
       entityType:
-        $ref: '#/definitions/TagEntityType'
+        $ref: '#/definitions/tagTagEntityType'
       environmentId:
         type: string
       environmentName:
@@ -8673,6 +9049,247 @@ definitions:
         type: array
         items:
           type: string
+  domainEditor:
+    type: object
+    properties:
+      email:
+        type: string
+      isAdmin:
+        type: boolean
+      name:
+        type: string
+      publicApiEditor:
+        $ref: '#/definitions/EditorPublicAPIEditor'
+  domainEventEntityType:
+    type: string
+    enum:
+      - FEATURE
+      - GOAL
+      - EXPERIMENT
+      - ACCOUNT
+      - APIKEY
+      - SEGMENT
+      - ENVIRONMENT
+      - ADMIN_ACCOUNT
+      - AUTOOPS_RULE
+      - PUSH
+      - SUBSCRIPTION
+      - ADMIN_SUBSCRIPTION
+      - PROJECT
+      - PROGRESSIVE_ROLLOUT
+      - ORGANIZATION
+      - FLAG_TRIGGER
+      - TAG
+      - CODEREF
+    default: FEATURE
+  domainEventType:
+    type: string
+    enum:
+      - UNKNOWN
+      - FEATURE_CREATED
+      - FEATURE_RENAMED
+      - FEATURE_ENABLED
+      - FEATURE_DISABLED
+      - FEATURE_DELETED
+      - FEATURE_DESCRIPTION_CHANGED
+      - FEATURE_VARIATION_ADDED
+      - FEATURE_VARIATION_REMOVED
+      - FEATURE_OFF_VARIATION_CHANGED
+      - VARIATION_VALUE_CHANGED
+      - VARIATION_NAME_CHANGED
+      - VARIATION_DESCRIPTION_CHANGED
+      - VARIATION_USER_ADDED
+      - VARIATION_USER_REMOVED
+      - FEATURE_RULE_ADDED
+      - FEATURE_RULE_STRATEGY_CHANGED
+      - FEATURE_RULE_DELETED
+      - RULE_CLAUSE_ADDED
+      - RULE_CLAUSE_DELETED
+      - RULE_FIXED_STRATEGY_CHANGED
+      - RULE_ROLLOUT_STRATEGY_CHANGED
+      - CLAUSE_ATTRIBUTE_CHANGED
+      - CLAUSE_OPERATOR_CHANGED
+      - CLAUSE_VALUE_ADDED
+      - CLAUSE_VALUE_REMOVED
+      - FEATURE_DEFAULT_STRATEGY_CHANGED
+      - FEATURE_TAG_ADDED
+      - FEATURE_TAG_REMOVED
+      - FEATURE_VERSION_INCREMENTED
+      - FEATURE_ARCHIVED
+      - FEATURE_CLONED
+      - FEATURE_UNARCHIVED
+      - SAMPLING_SEED_RESET
+      - PREREQUISITE_ADDED
+      - PREREQUISITE_REMOVED
+      - PREREQUISITE_VARIATION_CHANGED
+      - FEATURE_RULES_ORDER_CHANGED
+      - FEATURE_UPDATED
+      - GOAL_CREATED
+      - GOAL_RENAMED
+      - GOAL_DESCRIPTION_CHANGED
+      - GOAL_DELETED
+      - GOAL_ARCHIVED
+      - GOAL_UPDATED
+      - EXPERIMENT_CREATED
+      - EXPERIMENT_STOPPED
+      - EXPERIMENT_START_AT_CHANGED
+      - EXPERIMENT_STOP_AT_CHANGED
+      - EXPERIMENT_DELETED
+      - EXPERIMENT_PERIOD_CHANGED
+      - EXPERIMENT_NAME_CHANGED
+      - EXPERIMENT_DESCRIPTION_CHANGED
+      - EXPERIMENT_STARTED
+      - EXPERIMENT_FINISHED
+      - EXPERIMENT_ARCHIVED
+      - EXPERIMENT_UPDATED
+      - ACCOUNT_CREATED
+      - ACCOUNT_ROLE_CHANGED
+      - ACCOUNT_ENABLED
+      - ACCOUNT_DISABLED
+      - ACCOUNT_DELETED
+      - ACCOUNT_V2_CREATED
+      - ACCOUNT_V2_NAME_CHANGED
+      - ACCOUNT_V2_AVATAR_IMAGE_URL_CHANGED
+      - ACCOUNT_V2_ORGANIZATION_ROLE_CHANGED
+      - ACCOUNT_V2_ENVIRONMENT_ROLES_CHANGED
+      - ACCOUNT_V2_ENABLED
+      - ACCOUNT_V2_DISABLED
+      - ACCOUNT_V2_DELETED
+      - ACCOUNT_V2_CREATED_SEARCH_FILTER
+      - ACCOUNT_V2_SEARCH_FILTER_NANE_CHANGED
+      - ACCOUNT_V2_SEARCH_FILTER_QUERY_CHANGED
+      - ACCOUNT_V2_SEARCH_FILTER_DEFAULT_CHANGED
+      - ACCOUNT_V2_SEARCH_FILTER_DELETED
+      - ACCOUNT_V2_FIRST_NAME_CHANGED
+      - ACCOUNT_V2_LAST_NAME_CHANGED
+      - ACCOUNT_V2_LANGUAGE_CHANGED
+      - ACCOUNT_V2_UPDATED
+      - ACCOUNT_V2_TAGS_CHANGED
+      - APIKEY_CREATED
+      - APIKEY_NAME_CHANGED
+      - APIKEY_ENABLED
+      - APIKEY_DISABLED
+      - APIKEY_CHANGED
+      - SEGMENT_CREATED
+      - SEGMENT_DELETED
+      - SEGMENT_NAME_CHANGED
+      - SEGMENT_DESCRIPTION_CHANGED
+      - SEGMENT_RULE_ADDED
+      - SEGMENT_RULE_DELETED
+      - SEGMENT_RULE_CLAUSE_ADDED
+      - SEGMENT_RULE_CLAUSE_DELETED
+      - SEGMENT_CLAUSE_ATTRIBUTE_CHANGED
+      - SEGMENT_CLAUSE_OPERATOR_CHANGED
+      - SEGMENT_CLAUSE_VALUE_ADDED
+      - SEGMENT_CLAUSE_VALUE_REMOVED
+      - SEGMENT_USER_ADDED
+      - SEGMENT_USER_DELETED
+      - SEGMENT_BULK_UPLOAD_USERS
+      - SEGMENT_BULK_UPLOAD_USERS_STATUS_CHANGED
+      - SEGMENT_UPDATED
+      - ENVIRONMENT_CREATED
+      - ENVIRONMENT_RENAMED
+      - ENVIRONMENT_DESCRIPTION_CHANGED
+      - ENVIRONMENT_DELETED
+      - ENVIRONMENT_V2_CREATED
+      - ENVIRONMENT_V2_RENAMED
+      - ENVIRONMENT_V2_DESCRIPTION_CHANGED
+      - ENVIRONMENT_V2_ARCHIVED
+      - ENVIRONMENT_V2_UNARCHIVED
+      - ENVIRONMENT_V2_REQUIRE_COMMENT_CHANGED
+      - ENVIRONMENT_V2_UPDATED
+      - ADMIN_ACCOUNT_CREATED
+      - ADMIN_ACCOUNT_ENABLED
+      - ADMIN_ACCOUNT_DISABLED
+      - AUTOOPS_RULE_CREATED
+      - AUTOOPS_RULE_DELETED
+      - AUTOOPS_RULE_OPS_TYPE_CHANGED
+      - AUTOOPS_RULE_CLAUSE_DELETED
+      - AUTOOPS_RULE_TRIGGERED_AT_CHANGED
+      - OPS_EVENT_RATE_CLAUSE_ADDED
+      - OPS_EVENT_RATE_CLAUSE_CHANGED
+      - DATETIME_CLAUSE_ADDED
+      - DATETIME_CLAUSE_CHANGED
+      - AUTOOPS_RULE_STOPPED
+      - AUTOOPS_RULE_OPS_STATUS_CHANGED
+      - AUTOOPS_RULE_UPDATED
+      - PUSH_CREATED
+      - PUSH_DELETED
+      - PUSH_TAGS_ADDED
+      - PUSH_TAGS_DELETED
+      - PUSH_RENAMED
+      - PUSH_UPDATED
+      - SUBSCRIPTION_CREATED
+      - SUBSCRIPTION_DELETED
+      - SUBSCRIPTION_ENABLED
+      - SUBSCRIPTION_DISABLED
+      - SUBSCRIPTION_SOURCE_TYPE_ADDED
+      - SUBSCRIPTION_SOURCE_TYPE_DELETED
+      - SUBSCRIPTION_RENAMED
+      - SUBSCRIPTION_UPDATED
+      - SUBSCRIPTION_FEATURE_FLAG_TAGS_UPDATED
+      - ADMIN_SUBSCRIPTION_CREATED
+      - ADMIN_SUBSCRIPTION_DELETED
+      - ADMIN_SUBSCRIPTION_ENABLED
+      - ADMIN_SUBSCRIPTION_DISABLED
+      - ADMIN_SUBSCRIPTION_SOURCE_TYPE_ADDED
+      - ADMIN_SUBSCRIPTION_SOURCE_TYPE_DELETED
+      - ADMIN_SUBSCRIPTION_RENAMED
+      - PROJECT_CREATED
+      - PROJECT_DESCRIPTION_CHANGED
+      - PROJECT_ENABLED
+      - PROJECT_DISABLED
+      - PROJECT_TRIAL_CREATED
+      - PROJECT_TRIAL_CONVERTED
+      - PROJECT_RENAMED
+      - PROJECT_UPDATED
+      - PROGRESSIVE_ROLLOUT_CREATED
+      - PROGRESSIVE_ROLLOUT_DELETED
+      - PROGRESSIVE_ROLLOUT_SCHEDULE_TRIGGERED_AT_CHANGED
+      - PROGRESSIVE_ROLLOUT_STOPPED
+      - ORGANIZATION_CREATED
+      - ORGANIZATION_NAME_CHANGED
+      - ORGANIZATION_DESCRIPTION_CHANGED
+      - ORGANIZATION_ENABLED
+      - ORGANIZATION_DISABLED
+      - ORGANIZATION_ARCHIVED
+      - ORGANIZATION_UNARCHIVED
+      - ORGANIZATION_TRIAL_CONVERTED
+      - ORGANIZATION_OWNER_EMAIL_CHANGED
+      - ORGANIZATION_UPDATED
+      - FLAG_TRIGGER_CREATED
+      - FLAG_TRIGGER_RESET
+      - FLAG_TRIGGER_DESCRIPTION_CHANGED
+      - FLAG_TRIGGER_DISABLED
+      - FLAG_TRIGGER_ENABLED
+      - FLAG_TRIGGER_DELETED
+      - FLAG_TRIGGER_USAGE_UPDATED
+      - FLAG_TRIGGER_UPDATED
+      - TAG_CREATED
+      - TAG_DELETED
+      - CODE_REFERENCE_CREATED
+      - CODE_REFERENCE_UPDATED
+      - CODE_REFERENCE_DELETED
+    default: UNKNOWN
+  domainLocalizedMessage:
+    type: object
+    properties:
+      locale:
+        type: string
+        title: |-
+          The locale used following the specification defined at
+          http://www.rfc-editor.org/rfc/bcp/bcp47.txt.
+          Examples are: "en-US", "fr-CH", "es-MX"
+      message:
+        type: string
+  domainOptions:
+    type: object
+    properties:
+      comment:
+        type: string
+      newVersion:
+        type: integer
+        format: int32
   environmentArchiveEnvironmentV2Command:
     type: object
   environmentArchiveEnvironmentV2Request:
@@ -11545,7 +12162,7 @@ definitions:
       name:
         type: string
       entityType:
-        $ref: '#/definitions/TagEntityType'
+        $ref: '#/definitions/tagTagEntityType'
       environmentId:
         type: string
     required:
@@ -11559,6 +12176,13 @@ definitions:
         $ref: '#/definitions/bucketeertagTag'
   tagDeleteTagResponse:
     type: object
+  tagTagEntityType:
+    type: string
+    enum:
+      - UNSPECIFIED
+      - FEATURE_FLAG
+      - ACCOUNT
+    default: UNSPECIFIED
   userUser:
     type: object
     properties:
