@@ -383,6 +383,7 @@
   "feature.variationSettings.bothVariations": "This variation cannot be deleted because it is used in the default and the off-variation settings.",
   "feature.variationSettings.defaultStrategy": "This variation cannot be deleted because it is used in the default variation settings.",
   "feature.variationSettings.offVariation": "This variation cannot be deleted because it is used in the off-variation settings.",
+  "feature.variationSettings.targetingRule": "This variation cannot be deleted because it is used in the targeting rules.",
   "feature.variationType": "Flag type",
   "fileUpload.browseFiles": "Browse files",
   "fileUpload.fileFormat": "Accepted file type: .json",

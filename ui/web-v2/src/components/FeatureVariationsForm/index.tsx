@@ -95,6 +95,20 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
       });
     }
 
+
+    const ruleVariationIds = [];
+    feature.rulesList.forEach((rule) => {
+      if (rule.strategy.type === Strategy.Type.FIXED) {
+        ruleVariationIds.push(rule.strategy.fixedStrategy.variation);
+      } else if (rule.strategy.type === Strategy.Type.ROLLOUT) {
+        rule.strategy.rolloutStrategy.variationsList.forEach((v) => {
+          if (v.weight > 0) {
+            ruleVariationIds.push(v.variation);
+          }
+        });
+      }
+    });
+
     const isProgressiveRolloutsRunning =
       progressiveRollouts.filter((p) =>
         isProgressiveRolloutsRunningWaiting(p.status)
@@ -126,7 +140,8 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
               isProgressiveRolloutsRunning={isProgressiveRolloutsRunning}
               rulesAppliedVariationList={{
                 onVariationIds,
-                offVariationId: feature.offVariation
+                offVariationId: feature.offVariation,
+                ruleVariationIds
               }}
               featureId={featureId}
             />
@@ -192,6 +207,7 @@ type RulesAppliedVariationList = {
   onVariationId?: string;
   onVariationIds?: string[];
   offVariationId: string;
+  ruleVariationIds?: string[];
 };
 export interface VariationInputProps {
   typeDisabled: boolean;
@@ -235,7 +251,7 @@ export const VariationInput: FC<VariationInputProps> = memo(
       feature.variationType == Feature.VariationType.BOOLEAN ||
       isProgressiveRolloutsRunning;
 
-    const { onVariationId, onVariationIds, offVariationId } =
+    const { onVariationId, onVariationIds, offVariationId, ruleVariationIds } =
       rulesAppliedVariationList;
 
     const handleAddVariation = useCallback(() => {
@@ -281,12 +297,16 @@ export const VariationInput: FC<VariationInputProps> = memo(
           case offVariationId === variationId:
             return f(messages.feature.variationSettings.offVariation);
 
+          // Check if the variation is used in targeting rules
+          case ruleVariationIds.includes(variationId):
+            return f(messages.feature.variationSettings.targetingRule);
+
           // Return null if none of the conditions are met
           default:
             return null;
         }
       },
-      [onVariationId, onVariationIds, offVariationId]
+      [onVariationId, onVariationIds, offVariationId, ruleVariationIds]
     );
 
     return (
@@ -321,7 +341,8 @@ export const VariationInput: FC<VariationInputProps> = memo(
                 Feature.VariationType.BOOLEAN.toString() ||
               variation.id === onVariationId ||
               variation.id === offVariationId ||
-              (typeDisabled && onVariationIds.includes(variation.id));
+              (typeDisabled && onVariationIds.includes(variation.id)) ||
+              ruleVariationIds.includes(variation.id);
             return (
               <div key={idx} className="flex flex-row flex-wrap mb-2">
                 {feature.variationType === Feature.VariationType.BOOLEAN ? (

@@ -1967,6 +1967,11 @@ export const messages = {
         id: 'feature.variationSettings.bothVariations',
         defaultMessage:
           'This variation cannot be deleted because it is used in the default and the off-variation settings.'
+      }),
+      targetingRule: defineMessage({
+        id: 'feature.variationSettings.targetingRule',
+        defaultMessage:
+          'This variation cannot be deleted because it is used in the targeting rules.'
       })
     },
     evaluation: {
