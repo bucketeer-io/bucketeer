@@ -31,7 +31,7 @@ message GetExperimentEvaluationCountRequest {
   int64 start_at = 2 [(google.api.field_behavior) = REQUIRED];
   int64 end_at = 3 [(google.api.field_behavior) = REQUIRED];
   string feature_id = 4 [(google.api.field_behavior) = REQUIRED];
-  int32 feature_version = 5;
+  int32 feature_version = 5 [(google.api.field_behavior) = REQUIRED];
   repeated string variation_ids = 6;
   string environment_id = 7 [(google.api.field_behavior) = REQUIRED];
 }
@@ -88,7 +88,7 @@ message GetExperimentGoalCountRequest {
   int64 end_at = 3 [(google.api.field_behavior) = REQUIRED];
   string goal_id = 4 [(google.api.field_behavior) = REQUIRED];
   string feature_id = 5 [(google.api.field_behavior) = REQUIRED];
-  int32 feature_version = 6;
+  int32 feature_version = 6 [(google.api.field_behavior) = REQUIRED];
   repeated string variation_ids = 7;
   string environment_id = 8 [(google.api.field_behavior) = REQUIRED];
 }

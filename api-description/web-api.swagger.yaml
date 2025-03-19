@@ -4136,7 +4136,7 @@ paths:
           type: string
         - name: featureVersion
           in: query
-          required: false
+          required: true
           type: integer
           format: int32
         - name: variationIds
@@ -4223,7 +4223,7 @@ paths:
           type: string
         - name: featureVersion
           in: query
-          required: false
+          required: true
           type: integer
           format: int32
         - name: variationIds

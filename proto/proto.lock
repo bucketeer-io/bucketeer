@@ -23862,7 +23862,13 @@
               {
                 "id": 5,
                 "name": "feature_version",
-                "type": "int32"
+                "type": "int32",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 6,
@@ -24103,7 +24109,13 @@
               {
                 "id": 6,
                 "name": "feature_version",
-                "type": "int32"
+                "type": "int32",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 7,
