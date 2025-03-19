@@ -238,19 +238,27 @@ func (w *eventCountWatcher) assessRule(
 	opsEventRateClause *autoopsproto.OpsEventRateClause,
 	evaluationCount, opsCount int64,
 ) bool {
-	rate := float64(opsCount) / float64(evaluationCount)
+	// Check if the minimum count requirement is met.
 	if opsCount < opsEventRateClause.MinCount {
 		return false
 	}
+	// If opsCount is unexpectedly greater than evaluationCount,
+	// log a warning and clamp opsCount to evaluationCount.
+	if opsCount > evaluationCount {
+		w.logger.Warn("The opsCount is greater than evaluationCount",
+			zap.Int64("opsCount", opsCount),
+			zap.Int64("evaluationCount", evaluationCount),
+			zap.Any("opsEventRateClause", opsEventRateClause),
+		)
+		opsCount = evaluationCount
+	}
+	// Now calculate the rate, which will be at most 1.0
+	rate := float64(opsCount) / float64(evaluationCount)
 	switch opsEventRateClause.Operator {
 	case autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL:
-		if rate >= opsEventRateClause.ThreadsholdRate {
-			return true
-		}
+		return rate >= opsEventRateClause.ThreadsholdRate
 	case autoopsproto.OpsEventRateClause_LESS_OR_EQUAL:
-		if rate <= opsEventRateClause.ThreadsholdRate {
-			return true
-		}
+		return rate <= opsEventRateClause.ThreadsholdRate
 	}
 	return false
 }
