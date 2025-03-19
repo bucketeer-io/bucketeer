@@ -160,11 +160,11 @@ func (a auditLogPersister) createAuditLogsMySQL(
 ) {
 	for i, aud := range auditlogs {
 		if err := createFunc(ctx, aud); err != nil {
-			a.logger.Error("Failed to put audit logs", zap.Error(err))
 			if errors.Is(err, v2als.ErrAuditLogAlreadyExists) {
 				subscriberHandledCounter.WithLabelValues(subscriberAuditLog, codes.NonRepeatableError.String()).Inc()
 				messages[i].Ack()
 			} else {
+				a.logger.Error("Failed to put audit logs", zap.Error(err))
 				subscriberHandledCounter.WithLabelValues(subscriberAuditLog, codes.RepeatableError.String()).Inc()
 				messages[i].Nack()
 			}
