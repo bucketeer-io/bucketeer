@@ -50,11 +50,7 @@ func TestCreatePush(t *testing.T) {
 		{
 			desc: "ErrPushAlreadyExists",
 			setup: func(s *pushStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().ExecContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, mysql.ErrDuplicateEntry)
 			},
@@ -67,11 +63,7 @@ func TestCreatePush(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *pushStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().ExecContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 
@@ -85,11 +77,7 @@ func TestCreatePush(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *pushStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().ExecContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
@@ -128,11 +116,7 @@ func TestUpdatePush(t *testing.T) {
 			setup: func(s *pushStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().ExecContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -145,11 +129,7 @@ func TestUpdatePush(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *pushStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().ExecContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 
@@ -165,11 +145,7 @@ func TestUpdatePush(t *testing.T) {
 			setup: func(s *pushStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().ExecContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -208,11 +184,7 @@ func TestGetPush(t *testing.T) {
 			setup: func(s *pushStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().QueryRowContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -225,11 +197,7 @@ func TestGetPush(t *testing.T) {
 			setup: func(s *pushStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().QueryRowContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 
@@ -243,11 +211,7 @@ func TestGetPush(t *testing.T) {
 			setup: func(s *pushStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().QueryRowContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -286,11 +250,7 @@ func TestListPushs(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *pushStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().QueryContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -309,16 +269,12 @@ func TestListPushs(t *testing.T) {
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe).AnyTimes()
-				qe.EXPECT().QueryContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				qe.EXPECT().QueryRowContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -357,5 +313,5 @@ func TestListPushs(t *testing.T) {
 
 func newpushStorageWithMock(t *testing.T, mockController *gomock.Controller) *pushStorage {
 	t.Helper()
-	return &pushStorage{mock.NewMockClient(mockController)}
+	return &pushStorage{mock.NewMockQueryExecer(mockController)}
 }

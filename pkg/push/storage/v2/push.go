@@ -56,15 +56,15 @@ type PushStorage interface {
 }
 
 type pushStorage struct {
-	client mysql.Client
+	qe mysql.QueryExecer
 }
 
-func NewPushStorage(client mysql.Client) PushStorage {
-	return &pushStorage{client: client}
+func NewPushStorage(qe mysql.QueryExecer) PushStorage {
+	return &pushStorage{qe: qe}
 }
 
 func (s *pushStorage) CreatePush(ctx context.Context, e *domain.Push, environmentId string) error {
-	_, err := s.client.Qe(ctx).ExecContext(
+	_, err := s.qe.ExecContext(
 		ctx,
 		insertPushSQL,
 		e.Id,
@@ -87,7 +87,7 @@ func (s *pushStorage) CreatePush(ctx context.Context, e *domain.Push, environmen
 }
 
 func (s *pushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmentId string) error {
-	result, err := s.client.Qe(ctx).ExecContext(
+	result, err := s.qe.ExecContext(
 		ctx,
 		updatePushSQL,
 		e.FcmServiceAccount,
@@ -115,7 +115,7 @@ func (s *pushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmen
 
 func (s *pushStorage) GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error) {
 	push := proto.Push{}
-	err := s.client.Qe(ctx).QueryRowContext(
+	err := s.qe.QueryRowContext(
 		ctx,
 		selectPushSQL,
 		id,
@@ -151,7 +151,7 @@ func (s *pushStorage) ListPushes(
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(listPushesSQL, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -182,7 +182,7 @@ func (s *pushStorage) ListPushes(
 	nextOffset := offset + len(pushes)
 	var totalCount int64
 	countQuery := fmt.Sprintf(countPushesSQL, whereSQL)
-	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
