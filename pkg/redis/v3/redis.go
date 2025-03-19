@@ -47,6 +47,9 @@ const (
 	pipelineExecCmdName = "PIPELINE_EXEC"
 	ttlCmdName          = "TTL"
 	SetNXCmdName        = "SETNX"
+	publishCmdName      = "PUBLISH"
+	subscribeCmdName    = "SUBSCRIBE"
+	psubscribeCmdName   = "PSUBSCRIBE"
 )
 
 var (
@@ -71,6 +74,21 @@ const (
 	ClientTypeCluster
 )
 
+// PubSubMessage represents a Redis pubsub message
+type PubSubMessage struct {
+	Channel      string
+	Pattern      string
+	Payload      []byte
+	PayloadSlice []interface{}
+}
+
+// PubSub represents a Redis pubsub subscription
+type PubSub struct {
+	ps     *goredis.PubSub
+	ctx    context.Context
+	logger *zap.Logger
+}
+
 type Client interface {
 	Close() error
 	Check(context.Context) health.Status
@@ -92,6 +110,9 @@ type Client interface {
 	Dump(key string) (string, error)
 	Restore(key string, ttl int64, value string) error
 	Exists(key string) (int64, error)
+	Publish(ctx context.Context, channel string, message interface{}) (int64, error)
+	Subscribe(ctx context.Context, channels ...string) (*PubSub, error)
+	PSubscribe(ctx context.Context, patterns ...string) (*PubSub, error)
 }
 
 type client struct {
@@ -755,4 +776,158 @@ func (c *client) Restore(key string, ttl int64, value string) error {
 
 func (c *client) Exists(key string) (int64, error) {
 	return c.rc.Exists(context.TODO(), key).Result()
+}
+
+// Helper function to convert error to code string for metrics
+func convertErrorToMetricsCode(err error) string {
+	if err == nil {
+		return redis.CodeSuccess
+	}
+	if errors.Is(err, ErrNil) {
+		return redis.CodeNotFound
+	}
+	if errors.Is(err, ErrInvalidType) {
+		return redis.CodeInvalidType
+	}
+	return redis.CodeFail
+}
+
+// recordRedisMetrics records metrics for Redis operations
+func recordRedisMetrics(labels []string, startTime time.Time, err error) {
+	code := convertErrorToMetricsCode(err)
+	serverName := labels[0]
+	cmdName := labels[1]
+
+	redis.HandledCounter.WithLabelValues(clientVersion, serverName, cmdName, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, serverName, cmdName, code).Observe(time.Since(startTime).Seconds())
+}
+
+// Publish publishes a message to the specified channel
+func (c *client) Publish(ctx context.Context, channel string, message interface{}) (int64, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, publishCmdName).Inc()
+
+	cmd := c.rc.Publish(ctx, channel, message)
+	result, err := cmd.Result()
+
+	code := convertErrorToMetricsCode(err)
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, publishCmdName, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, publishCmdName, code).Observe(
+		time.Since(startTime).Seconds())
+
+	if err != nil {
+		c.logger.Error("Failed to publish message",
+			zap.String("channel", channel),
+			zap.Error(err),
+		)
+		return 0, err
+	}
+
+	return result, nil
+}
+
+// Subscribe subscribes to the specified channels and returns a PubSub
+func (c *client) Subscribe(ctx context.Context, channels ...string) (*PubSub, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, subscribeCmdName).Inc()
+
+	ps := c.rc.Subscribe(ctx, channels...)
+
+	code := redis.CodeSuccess
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, subscribeCmdName, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, subscribeCmdName, code).Observe(
+		time.Since(startTime).Seconds())
+
+	c.logger.Debug("Subscribed to channels", zap.Strings("channels", channels))
+
+	return &PubSub{
+		ps:     ps,
+		ctx:    ctx,
+		logger: c.logger,
+	}, nil
+}
+
+// PSubscribe subscribes to channels matching the specified patterns and returns a PubSub
+func (c *client) PSubscribe(ctx context.Context, patterns ...string) (*PubSub, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, psubscribeCmdName).Inc()
+
+	ps := c.rc.PSubscribe(ctx, patterns...)
+
+	code := redis.CodeSuccess
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, psubscribeCmdName, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, psubscribeCmdName, code).Observe(
+		time.Since(startTime).Seconds())
+
+	c.logger.Debug("Subscribed to patterns", zap.Strings("patterns", patterns))
+
+	return &PubSub{
+		ps:     ps,
+		ctx:    ctx,
+		logger: c.logger,
+	}, nil
+}
+
+// Receive returns the next message from the subscription
+func (p *PubSub) Receive(ctx context.Context) (*PubSubMessage, error) {
+	msg, err := p.ps.Receive(ctx)
+	if err != nil {
+		p.logger.Error("Failed to receive message", zap.Error(err))
+		return nil, err
+	}
+
+	switch m := msg.(type) {
+	case *goredis.Message:
+		return &PubSubMessage{
+			Channel: m.Channel,
+			Payload: []byte(m.Payload),
+		}, nil
+	case *goredis.Subscription:
+		p.logger.Debug("Subscription event",
+			zap.String("kind", m.Kind),
+			zap.String("channel", m.Channel),
+			zap.Int("count", m.Count),
+		)
+		return nil, nil // Return nil for subscription events
+	case *goredis.Pong:
+		p.logger.Debug("Pong received")
+		return nil, nil // Return nil for pongs
+	default:
+		p.logger.Warn("Unknown message type", zap.Any("message", msg))
+		return nil, nil
+	}
+}
+
+// Channel returns a channel for receiving messages
+func (p *PubSub) Channel() <-chan *PubSubMessage {
+	redisCh := p.ps.Channel()
+	ch := make(chan *PubSubMessage)
+
+	go func() {
+		defer close(ch)
+		for msg := range redisCh {
+			ch <- &PubSubMessage{
+				Channel: msg.Channel,
+				Pattern: msg.Pattern,
+				Payload: []byte(msg.Payload),
+			}
+		}
+	}()
+
+	return ch
+}
+
+// Close closes the subscription
+func (p *PubSub) Close() error {
+	return p.ps.Close()
+}
+
+// Unsubscribe unsubscribes from the specified channels
+func (p *PubSub) Unsubscribe(ctx context.Context, channels ...string) error {
+	return p.ps.Unsubscribe(ctx, channels...)
+}
+
+// PUnsubscribe unsubscribes from the specified patterns
+func (p *PubSub) PUnsubscribe(ctx context.Context, patterns ...string) error {
+	return p.ps.PUnsubscribe(ctx, patterns...)
 }
