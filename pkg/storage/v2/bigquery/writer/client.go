@@ -148,6 +148,7 @@ func (w *writer) AppendRows(
 			w.logger.Error("failed to append rows",
 				zap.Error(err),
 				zap.Int("index", idx),
+				zap.Any("result", r),
 			)
 			// We can't use `continue` because the index will be shifted in next for loop
 			fails = append(fails, idx)
@@ -155,11 +156,12 @@ func (w *writer) AppendRows(
 		results = append(results, r)
 	}
 	for idx, r := range results {
-		_, err := r.GetResult(ctx)
+		res, err := r.GetResult(ctx)
 		if err != nil {
 			w.logger.Error("failed to get result of appending",
 				zap.Error(err),
 				zap.Int("index", idx),
+				zap.Any("result", res),
 			)
 			fails = append(fails, idx)
 		}
