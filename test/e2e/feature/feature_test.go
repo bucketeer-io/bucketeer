@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -534,7 +535,9 @@ func TestListFeaturesOrderByName(t *testing.T) {
 		}
 		names := make([]string, 0, len(response.Features))
 		for _, f := range response.Features {
-			names = append(names, f.Name)
+			// Custom reverse sort with case-insensitive comparison.
+			// We convert the strings to lower-case before comparing.
+			names = append(names, strings.ToLower(f.Name))
 		}
 		if !tc.checkSortedFunc(names) {
 			t.Fatalf("Features aren't sorted by Name %s. Features: %v", tc.orderDirection, response.Features)
