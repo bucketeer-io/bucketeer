@@ -31,7 +31,10 @@ interface Props {
   segmentIndex: number;
   clauseIndex: number;
   onDeleteCondition: () => void;
-  onChangeFormField: (field: string, value: string | string[]) => void;
+  onChangeFormField: (
+    field: keyof RuleClauseSchema,
+    value: string | string[]
+  ) => void;
 }
 
 const ConditionForm = forwardRef(
@@ -147,7 +150,11 @@ const ConditionForm = forwardRef(
       []
     );
 
-    const featureId = isFlag ? watch('attribute') : '';
+    const commonName = useMemo(
+      () => `rules.${segmentIndex}.clauses.${clauseIndex}.`,
+      [segmentIndex, clauseIndex]
+    );
+    const featureId = isFlag ? watch(`${commonName}attribute`) : '';
 
     const flagOptions = useMemo(
       () =>
@@ -185,25 +192,27 @@ const ConditionForm = forwardRef(
       value: item.id
     }));
 
-    const commonName = `rules.${segmentIndex}.clauses.${clauseIndex}.`;
-
     const handleChangeConditioner = useCallback(
       (value: RuleClauseType) => {
         let _value = '';
         switch (value) {
           case RuleClauseType.COMPARE:
-            return (_value = FeatureRuleClauseOperator.EQUALS);
+            _value = FeatureRuleClauseOperator.EQUALS;
+            break;
           case RuleClauseType.SEGMENT:
-            return (_value = FeatureRuleClauseOperator.SEGMENT);
+            _value = FeatureRuleClauseOperator.SEGMENT;
+            break;
           case RuleClauseType.FEATURE_FLAG:
-            return (_value = FeatureRuleClauseOperator.FEATURE_FLAG);
+            _value = FeatureRuleClauseOperator.FEATURE_FLAG;
+            break;
           case RuleClauseType.DATE:
-            return (_value = FeatureRuleClauseOperator.IN);
+            _value = FeatureRuleClauseOperator.BEFORE;
+            break;
           default:
             break;
         }
         onChangeFormField('operator', _value);
-        setValue(`${commonName}operator`, value);
+        setValue(`${commonName}operator`, _value);
       },
       [commonName]
     );
@@ -249,7 +258,7 @@ const ConditionForm = forwardRef(
                             value={item.value}
                             onSelectOption={value => {
                               field.onChange(value);
-                              onChangeFormField('operator', value as string);
+                              onChangeFormField('type', value as string);
                               handleChangeConditioner(value as RuleClauseType);
                             }}
                           />
@@ -361,10 +370,7 @@ const ConditionForm = forwardRef(
                               value={item.value}
                               onSelectOption={value => {
                                 field.onChange(value);
-                                onChangeFormField(
-                                  'conditioner',
-                                  value as string
-                                );
+                                onChangeFormField('operator', value as string);
                               }}
                             />
                           ))}
@@ -413,8 +419,8 @@ const ConditionForm = forwardRef(
                             if (date) {
                               const value =
                                 (date.getTime() / 1000)?.toString() || '';
-                              field.onChange(value);
-                              onChangeFormField('date', [value]);
+                              field.onChange([value]);
+                              onChangeFormField('values', [value]);
                             }
                           }}
                         />
@@ -444,7 +450,7 @@ const ConditionForm = forwardRef(
                                   label={item.label}
                                   value={item.value}
                                   onSelectOption={value => {
-                                    field.onChange(value);
+                                    field.onChange([value]);
                                     onChangeFormField('values', [
                                       value as string
                                     ]);
@@ -460,12 +466,11 @@ const ConditionForm = forwardRef(
                             label: item,
                             value: item
                           }))}
-                          onChange={options =>
-                            onChangeFormField(
-                              'values',
-                              options.map(item => item.value)
-                            )
-                          }
+                          onChange={options => {
+                            const _value = options.map(item => item.value);
+                            field.onChange(_value);
+                            onChangeFormField('values', _value);
+                          }}
                         />
                       )}
                     </Form.Control>

@@ -161,5 +161,6 @@
   "partially-matches": "Partially matches",
   "starts-with": "Starts with",
   "ends-with": "Ends with",
-  "is-included-in": "Is included in"
+  "is-included-in": "Is included in",
+  "select-rollout-percentage": "Select rollout percentage"
 }

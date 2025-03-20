@@ -4,7 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryFeatures } from '@queries/features';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { v4 as uuid } from 'uuid';
-import { Feature, FeatureRuleClauseOperator } from '@types';
+import { Feature, FeatureRuleClauseOperator, StrategyType } from '@types';
 import Form from 'components/form';
 import AddRuleButton from './add-rule-button';
 import AddRuleDropdown from './add-rule-dropdown';
@@ -21,7 +21,6 @@ import {
   TargetingForm,
   TargetPrerequisiteItem
 } from './types';
-import { createVariationLabel } from './utils';
 
 const Targeting = ({ feature }: { feature: Feature }) => {
   const { consoleAccount } = useAuth();
@@ -56,20 +55,25 @@ const Targeting = ({ feature }: { feature: Feature }) => {
     }
   });
 
-  const defaultRule = useMemo(() => {
-    const newRolloutStrategy = feature.variations?.map(val => ({
-      id: val.id,
-      percentage: 0
-    }));
+  const defaultRolloutStrategy = useMemo(
+    () =>
+      feature.variations?.map(val => ({
+        variation: val.id,
+        weight: 0
+      })),
+    [feature]
+  );
 
+  const defaultRule = useMemo(() => {
     return {
       id: uuid(),
       strategy: {
-        option: {
-          value: feature?.variations[0]?.id,
-          label: createVariationLabel(feature?.variations[0])
+        currentOption: feature?.variations[0]?.id || '',
+        fixedStrategy: {
+          variation: feature?.variations[0]?.id || ''
         },
-        rolloutStrategy: newRolloutStrategy
+        rolloutStrategy: defaultRolloutStrategy,
+        type: StrategyType.FIXED
       },
       clauses: [
         {
@@ -81,12 +85,14 @@ const Targeting = ({ feature }: { feature: Feature }) => {
         }
       ]
     };
-  }, [feature]);
+  }, [feature, defaultRolloutStrategy]);
 
   const onAddRule = useCallback(
     (type: RuleCategory) => {
       if (type === 'target-segments') {
-        return setTargetSegmentRules([...targetSegmentRules, defaultRule]);
+        const _rules = [...targetSegmentRules, defaultRule];
+        form.setValue('rules', _rules);
+        return setTargetSegmentRules(_rules);
       }
       if (type === 'target-individuals') {
         const data = feature?.variations?.map(({ name, id }) => ({
@@ -104,7 +110,14 @@ const Targeting = ({ feature }: { feature: Feature }) => {
         }
       ]);
     },
-    [targetSegmentRules, targetIndividualRules, prerequisitesRules, feature]
+    [
+      targetSegmentRules,
+      targetIndividualRules,
+      prerequisitesRules,
+      feature,
+      defaultRule,
+      form
+    ]
   );
 
   const onSubmit: SubmitHandler<TargetingForm> = async values => {
@@ -167,6 +180,8 @@ const Targeting = ({ feature }: { feature: Feature }) => {
                     <Form.Item className="py-0">
                       <Form.Control>
                         <TargetSegmentRule
+                          feature={feature}
+                          defaultRolloutStrategy={defaultRolloutStrategy}
                           features={features}
                           targetSegmentRules={targetSegmentRules}
                           onChangeTargetSegmentRules={rules => {

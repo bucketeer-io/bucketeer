@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import {
@@ -7,79 +7,82 @@ import {
 } from 'react-icons-material-design';
 import { Fragment } from 'react/jsx-runtime';
 import { useTranslation } from 'i18n';
-import { cloneDeep } from 'lodash';
 import { v4 as uuid } from 'uuid';
-import { Feature, FeatureRuleClauseOperator } from '@types';
+import {
+  Feature,
+  FeatureRuleClauseOperator,
+  RuleStrategyVariation
+} from '@types';
 import { IconInfo, IconPlus } from '@icons';
 import Button from 'components/button';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Card from '../../elements/card';
 import AddRuleButton from '../add-rule-button';
-import { RuleClauseType, RuleSchema } from '../form-schema';
+import { RuleClauseSchema, RuleClauseType, RuleSchema } from '../form-schema';
 import Condition from './condition';
+import SegmentVariation from './variation';
 
 interface Props {
+  feature: Feature;
   features: Feature[];
+  defaultRolloutStrategy: RuleStrategyVariation[];
   targetSegmentRules: RuleSchema[];
   onChangeTargetSegmentRules: (value: RuleSchema[]) => void;
   onAddRule: () => void;
 }
 
 const TargetSegmentRule = ({
+  feature,
   features,
+  defaultRolloutStrategy,
   targetSegmentRules,
   onChangeTargetSegmentRules,
   onAddRule
 }: Props) => {
   const { t } = useTranslation(['table', 'form']);
 
-  const cloneTargetSegmentRules: RuleSchema[] = useMemo(
-    () => cloneDeep(targetSegmentRules),
-    [targetSegmentRules]
-  );
   const methods = useFormContext();
 
   const { control } = methods;
 
   const onAddCondition = useCallback(
     (ruleIndex: number) => {
-      cloneTargetSegmentRules[ruleIndex].clauses.push({
+      targetSegmentRules[ruleIndex].clauses.push({
         id: uuid(),
         type: RuleClauseType.COMPARE,
         attribute: '',
         operator: FeatureRuleClauseOperator.EQUALS,
         values: []
       });
-      onChangeTargetSegmentRules(cloneTargetSegmentRules);
+      onChangeTargetSegmentRules(targetSegmentRules);
     },
-    [targetSegmentRules, cloneTargetSegmentRules]
+    [targetSegmentRules, targetSegmentRules]
   );
 
   const onDeleteCondition = useCallback(
     (ruleIndex: number, conditionIndex: number) => {
-      const cloneTargetSegmentRules = cloneDeep(targetSegmentRules);
-      cloneTargetSegmentRules[ruleIndex].clauses.splice(conditionIndex, 1);
-      onChangeTargetSegmentRules(cloneTargetSegmentRules);
+      targetSegmentRules[ruleIndex].clauses.splice(conditionIndex, 1);
+      onChangeTargetSegmentRules(targetSegmentRules);
     },
-    [targetSegmentRules, cloneTargetSegmentRules]
+    [targetSegmentRules]
   );
 
   const onChangeFormField = useCallback(
     (
       ruleIndex: number,
-      field: string,
+      field: keyof RuleClauseSchema,
       value: string | string[],
-      conditionIndex: number
+      clauseIndex: number
     ) => {
-      cloneTargetSegmentRules[ruleIndex].clauses[conditionIndex] = {
-        ...cloneTargetSegmentRules[ruleIndex].clauses[conditionIndex],
+      targetSegmentRules[ruleIndex].clauses[clauseIndex] = {
+        ...targetSegmentRules[ruleIndex].clauses[clauseIndex],
         [field]: value
       };
-      return onChangeTargetSegmentRules(cloneTargetSegmentRules);
+      return onChangeTargetSegmentRules([...targetSegmentRules]);
     },
 
-    [cloneTargetSegmentRules]
+    [targetSegmentRules]
   );
 
   return (
@@ -169,10 +172,13 @@ const TargetSegmentRule = ({
                     />{' '}
                     {t('form:feature-flags.add-condition')}
                   </Button>
-                  {/* <SegmentVariation
+                  <SegmentVariation
+                    feature={feature}
+                    defaultRolloutStrategy={defaultRolloutStrategy}
                     segmentIndex={segmentIndex}
-                    ruleIndex={ruleIndex}
-                  /> */}
+                    targetSegmentRules={targetSegmentRules}
+                    onChangeTargetSegmentRules={onChangeTargetSegmentRules}
+                  />
                 </Fragment>
               </Card>
               <AddRuleButton onAddRule={onAddRule} />

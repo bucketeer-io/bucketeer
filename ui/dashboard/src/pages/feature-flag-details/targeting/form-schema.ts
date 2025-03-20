@@ -24,47 +24,63 @@ const ruleClauseSchema = yup.object().shape({
   attribute: yup.string().when('type', {
     is: (type: string) => type === RuleClauseType.SEGMENT,
     then: schema => schema,
-    otherwise: schema => schema.required()
+    otherwise: schema => schema.required('This field is required.')
   }),
   operator: yup.string().required('This field is required.'),
   values: yup
     .array()
     .of(yup.string())
-    .min(1)
+    .min(1, 'This field is required.')
     .required('This field is required.')
 });
 
 export type RuleSchema = yup.InferType<typeof rulesSchema>;
 
 const strategySchema = yup.object().shape({
-  option: yup.object().shape({
-    value: yup.string(),
-    label: yup.string()
-  }),
+  currentOption: yup.string(),
+  type: yup
+    .string()
+    .oneOf([StrategyType.FIXED, StrategyType.ROLLOUT])
+    .required('This field is required.'),
+  fixedStrategy: yup
+    .object()
+    .shape({
+      variation: yup.string()
+    })
+    .when('type', {
+      is: (type: string) => type === StrategyType.ROLLOUT,
+      then: schema => schema,
+      otherwise: schema => schema.required('This field is required.')
+    }),
   rolloutStrategy: yup
     .array()
     .of(
       yup.object().shape({
-        id: yup.string(),
-        percentage: yup.number()
+        variation: yup.string(),
+        weight: yup.number()
       })
     )
-    .required()
+    .when('type', {
+      is: (type: string) => type === StrategyType.FIXED,
+      then: schema => schema,
+      otherwise: schema => schema.required('This field is required.')
+    })
     .test('sum', (value, context) => {
       if (context.parent.option.value != StrategyType.ROLLOUT) {
         return true;
       }
-      const total = value
-        .map(v => Number(v.percentage))
-        .reduce((total, current) => {
-          return total + (current || 0);
-        }, 0);
-      if (total == 100)
-        return context.createError({
-          message: `Total should be 100%.`,
-          path: context.path
-        });
-
+      if (value) {
+        const total = value
+          .map(v => Number(v.weight))
+          .reduce((total, current) => {
+            return total + (current || 0);
+          }, 0);
+        if (total == 100)
+          return context.createError({
+            message: `Total should be 100%.`,
+            path: context.path
+          });
+      }
       return true;
     })
 });
