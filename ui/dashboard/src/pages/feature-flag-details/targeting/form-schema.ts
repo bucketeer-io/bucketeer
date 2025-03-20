@@ -1,4 +1,79 @@
 import * as yup from 'yup';
+import { StrategyType } from '@types';
+
+export enum RuleClauseType {
+  COMPARE = 'compare',
+  SEGMENT = 'segment',
+  DATE = 'date',
+  FEATURE_FLAG = 'feature-flag'
+}
+
+export type RuleClauseSchema = yup.InferType<typeof ruleClauseSchema>;
+
+const ruleClauseSchema = yup.object().shape({
+  id: yup.string().required(),
+  type: yup
+    .string()
+    .oneOf([
+      RuleClauseType.COMPARE,
+      RuleClauseType.SEGMENT,
+      RuleClauseType.DATE,
+      RuleClauseType.FEATURE_FLAG
+    ])
+    .required('This field is required.'),
+  attribute: yup.string().when('type', {
+    is: (type: string) => type === RuleClauseType.SEGMENT,
+    then: schema => schema,
+    otherwise: schema => schema.required()
+  }),
+  operator: yup.string().required('This field is required.'),
+  values: yup
+    .array()
+    .of(yup.string())
+    .min(1)
+    .required('This field is required.')
+});
+
+export type RuleSchema = yup.InferType<typeof rulesSchema>;
+
+const strategySchema = yup.object().shape({
+  option: yup.object().shape({
+    value: yup.string(),
+    label: yup.string()
+  }),
+  rolloutStrategy: yup
+    .array()
+    .of(
+      yup.object().shape({
+        id: yup.string(),
+        percentage: yup.number()
+      })
+    )
+    .required()
+    .test('sum', (value, context) => {
+      if (context.parent.option.value != StrategyType.ROLLOUT) {
+        return true;
+      }
+      const total = value
+        .map(v => Number(v.percentage))
+        .reduce((total, current) => {
+          return total + (current || 0);
+        }, 0);
+      if (total == 100)
+        return context.createError({
+          message: `Total should be 100%.`,
+          path: context.path
+        });
+
+      return true;
+    })
+});
+
+export const rulesSchema = yup.object().shape({
+  id: yup.string(),
+  clauses: yup.array().of(ruleClauseSchema).required(),
+  strategy: strategySchema
+});
 
 export const formSchema = yup.object().shape({
   prerequisitesRules: yup
@@ -23,117 +98,22 @@ export const formSchema = yup.object().shape({
     .required()
     .of(
       yup.object().shape({
-        on: yup.array().required('This field is required.'),
-        off: yup.array().required('This field is required.')
+        variationId: yup.string().required('This field is required.'),
+        name: yup.string(),
+        users: yup
+          .array()
+          .required('This field is required.')
+          .test('required', (value, context) => {
+            if ((Array.isArray(value) && !value.length) || !value) {
+              return context.createError({
+                message: `This field is required.`,
+                path: context.path
+              });
+            }
+
+            return true;
+          })
       })
     ),
-  targetSegmentRules: yup
-    .array()
-    .required()
-    .of(
-      yup.object().shape({
-        index: yup.number().required(),
-        rules: yup
-          .array()
-          .required()
-          .of(
-            yup.object().shape({
-              conditions: yup
-                .array()
-                .required()
-                .of(
-                  yup.object().shape({
-                    situation: yup
-                      .string()
-                      .oneOf([
-                        'compare',
-                        'user-segment',
-                        'date',
-                        'feature-flag'
-                      ])
-                      .required('This field is required.'),
-                    conditioner: yup
-                      .string()
-                      .required('This field is required.'),
-                    firstValue: yup
-                      .string()
-                      .test('required', (value, context) => {
-                        const situation =
-                          context.from && context.from[0].value.situation;
-                        if (!value && situation === 'compare')
-                          return context.createError({
-                            message: `This field is required.`,
-                            path: context.path
-                          });
-
-                        return true;
-                      }),
-                    secondValue: yup
-                      .string()
-                      .test('required', (value, context) => {
-                        const situation =
-                          context.from && context.from[0].value.situation;
-                        if (!value && situation === 'compare')
-                          return context.createError({
-                            message: `This field is required.`,
-                            path: context.path
-                          });
-
-                        return true;
-                      }),
-                    value: yup.string().test('required', (value, context) => {
-                      const situation =
-                        context.from && context.from[0].value.situation;
-                      if (
-                        !value &&
-                        ['user-segment', 'date'].includes(situation)
-                      )
-                        return context.createError({
-                          message: `This field is required.`,
-                          path: context.path
-                        });
-
-                      return true;
-                    }),
-                    date: yup.string().test('required', (value, context) => {
-                      const situation =
-                        context.from && context.from[0].value.situation;
-                      if (!value && situation === 'date')
-                        return context.createError({
-                          message: `This field is required.`,
-                          path: context.path
-                        });
-                      return true;
-                    }),
-                    flagId: yup.string().test('required', (value, context) => {
-                      const situation =
-                        context.from && context.from[0].value.situation;
-                      if (!value && situation === 'feature-flag')
-                        return context.createError({
-                          message: `This field is required.`,
-                          path: context.path
-                        });
-
-                      return true;
-                    }),
-                    variation: yup
-                      .string()
-                      .test('required', (value, context) => {
-                        const situation =
-                          context.from && context.from[0].value.situation;
-                        if (!value && situation === 'feature-flag')
-                          return context.createError({
-                            message: `This field is required.`,
-                            path: context.path
-                          });
-
-                        return true;
-                      })
-                  })
-                ),
-              variation: yup.boolean().required('This field is required.')
-            })
-          )
-      })
-    )
+  rules: yup.array().of(rulesSchema)
 });

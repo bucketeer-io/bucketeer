@@ -1,17 +1,18 @@
-export type FeatureRuleClauseOperator =
-  | 'EQUALS'
-  | 'IN'
-  | 'ENDS_WITH'
-  | 'STARTS_WITH'
-  | 'SEGMENT'
-  | 'GREATER'
-  | 'GREATER_OR_EQUAL'
-  | 'LESS'
-  | 'LESS_OR_EQUAL'
-  | 'BEFORE'
-  | 'AFTER'
-  | 'FEATURE_FLAG'
-  | 'PARTIALLY_MATCH';
+export enum FeatureRuleClauseOperator {
+  EQUALS = 'EQUALS',
+  GREATER_OR_EQUAL = 'GREATER_OR_EQUAL',
+  GREATER = 'GREATER',
+  LESS_OR_EQUAL = 'LESS_OR_EQUAL',
+  LESS = 'LESS',
+  IN = 'IN',
+  PARTIALLY_MATCH = 'PARTIALLY_MATCH',
+  STARTS_WITH = 'STARTS_WITH',
+  ENDS_WITH = 'ENDS_WITH',
+  BEFORE = 'BEFORE',
+  AFTER = 'AFTER',
+  SEGMENT = 'SEGMENT',
+  FEATURE_FLAG = 'FEATURE_FLAG'
+}
 
 export type FeatureVariationType = 'STRING' | 'BOOLEAN' | 'NUMBER' | 'JSON';
 
@@ -39,8 +40,13 @@ export interface RuleStrategyVariation {
   weight: number;
 }
 
+export enum StrategyType {
+  FIXED = 'FIXED',
+  ROLLOUT = 'ROLLOUT'
+}
+
 export interface FeatureRuleStrategy {
-  type: 'FIXED' | 'ROLLOUT';
+  type: StrategyType;
   fixedStrategy: {
     variation: string;
   };

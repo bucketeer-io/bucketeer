@@ -104,7 +104,12 @@ const DropdownMenuTrigger = forwardRef<
 
       {showArrow && (
         <div className="h-6 min-w-6">
-          <Icon icon={IconExpandMoreRound} size={'md'} className="min-w-6" />
+          <Icon
+            icon={IconExpandMoreRound}
+            size={'md'}
+            color="gray-600"
+            className="min-w-6"
+          />
         </div>
       )}
     </DropdownMenuPrimitive.Trigger>

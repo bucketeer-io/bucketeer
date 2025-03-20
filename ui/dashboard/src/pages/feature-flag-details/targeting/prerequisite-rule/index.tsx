@@ -3,6 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { Fragment } from 'react/jsx-runtime';
 import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
+import { Feature } from '@types';
 import { IconInfo, IconPlus } from '@icons';
 import Button from 'components/button';
 import Form from 'components/form';
@@ -11,13 +12,18 @@ import Card from '../../elements/card';
 import { initialPrerequisitesRule } from '../constants';
 import { TargetPrerequisiteItem } from '../types';
 import ConditionForm from './condition';
+import PrerequisiteBanner from './prequisite-banner';
 
 interface Props {
+  feature: Feature;
+  features: Feature[];
   prerequisitesRules: TargetPrerequisiteItem[];
   onChangePrerequisitesRules: (value: TargetPrerequisiteItem[]) => void;
 }
 
 const PrerequisiteRule = ({
+  feature,
+  features,
   prerequisitesRules,
   onChangePrerequisitesRules
 }: Props) => {
@@ -68,6 +74,12 @@ const PrerequisiteRule = ({
   return (
     prerequisitesRules.length > 0 && (
       <div className="flex flex-col gap-y-6 w-full">
+        {feature?.prerequisites?.length > 0 && (
+          <PrerequisiteBanner
+            features={features}
+            prerequisite={feature.prerequisites}
+          />
+        )}
         {prerequisitesRules.map((prerequisite, prerequisiteIndex) => (
           <div
             key={`prerequisite-${prerequisiteIndex}`}
@@ -90,6 +102,7 @@ const PrerequisiteRule = ({
                   render={({ field }) => (
                     <Fragment>
                       <ConditionForm
+                        features={features}
                         condition={rule}
                         ruleIndex={ruleIndex}
                         prerequisiteIndex={prerequisiteIndex}

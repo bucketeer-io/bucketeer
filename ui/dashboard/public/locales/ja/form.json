@@ -143,10 +143,23 @@
     "flag": "Flag",
     "prerequisites": "Prerequisites",
     "add-prerequisites": "Add Prerequisites",
-    "disable-now": "Disable now"
+    "disable-now": "Disable now",
+    "add-user-id": "Add user id",
+    "already-targeted": "Already targeted",
+    "value-already-targeted": "{{value}} already target in {{targetedIn}}",
+    "prerequisite-flags": "This flag is a prerequisite of {{quantity}} other flags.",
+    "prerequisite-flags-desc": "Changes to the targeting rules may affect the variations served by the flags below."
   },
   "origin-env": "Origin Environment",
   "destination-env": "Destination Environment",
   "comment-for-update": "Comment for update",
-  "placeholder-comment": "Enter comment"
+  "placeholder-comment": "Enter comment",
+  "placeholder-value": "Enter value",
+  "before": "Before",
+  "after": "After",
+  "contains": "Contains",
+  "partially-matches": "Partially matches",
+  "starts-with": "Starts with",
+  "ends-with": "Ends with",
+  "is-included-in": "Is included in"
 }

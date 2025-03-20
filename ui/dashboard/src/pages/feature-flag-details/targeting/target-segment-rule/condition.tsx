@@ -1,20 +1,16 @@
-import { forwardRef, Ref } from 'react';
+import { forwardRef, Ref, useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { useQueryUserSegments } from '@queries/user-segments';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useTranslation } from 'i18n';
+import { omit } from 'lodash';
+import { Feature, FeatureRuleClauseOperator } from '@types';
 import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
-import {
-  booleanVariations,
-  flagOptions,
-  jsonVariations,
-  numberVariations,
-  stringVariations
-} from 'pages/feature-flag-details/mocks';
 import Button from 'components/button';
+import { CreatableSelect } from 'components/creatable-select';
 import { ReactDatePicker } from 'components/date-time-picker';
 import {
   DropdownMenu,
@@ -25,28 +21,28 @@ import {
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
-import { SegmentConditionType, SituationType } from '../types';
+import { RuleClauseSchema, RuleClauseType } from '../form-schema';
 
 interface Props {
+  features: Feature[];
   type: 'if' | 'and';
-  condition: SegmentConditionType;
+  clause: RuleClauseSchema;
   isDisabledDelete: boolean;
   segmentIndex: number;
-  ruleIndex: number;
-  conditionIndex: number;
+  clauseIndex: number;
   onDeleteCondition: () => void;
-  onChangeFormField: (field: string, value: string | number | boolean) => void;
+  onChangeFormField: (field: string, value: string | string[]) => void;
 }
 
 const ConditionForm = forwardRef(
   (
     {
+      features,
       type,
-      condition,
+      clause,
       isDisabledDelete,
       segmentIndex,
-      ruleIndex,
-      conditionIndex,
+      clauseIndex,
       onDeleteCondition,
       onChangeFormField
     }: Props,
@@ -56,71 +52,161 @@ const ConditionForm = forwardRef(
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-    const isCompare = condition.situation === 'compare';
-    const isUserSegment = condition.situation === 'user-segment';
-    const isDate = condition.situation === 'date';
-    const isFlag = condition.situation === 'feature-flag';
+    const isCompare = useMemo(
+      () => clause.type === RuleClauseType.COMPARE,
+      [clause]
+    );
+    const isUserSegment = useMemo(
+      () => clause.type === RuleClauseType.SEGMENT,
+      [clause]
+    );
+    const isDate = useMemo(() => clause.type === RuleClauseType.DATE, [clause]);
+    const isFlag = useMemo(
+      () => clause.type === RuleClauseType.FEATURE_FLAG,
+      [clause]
+    );
 
     const methods = useFormContext();
     const { control, watch, setValue } = methods;
 
-    const situationOptions = [
-      {
-        label: t('feature-flags.compare'),
-        value: 'compare'
-      },
-      {
-        label: t('feature-flags.user-segment'),
-        value: 'user-segment'
-      },
-      {
-        label: t('feature-flags.date'),
-        value: 'date'
-      },
-      {
-        label: t('feature-flags.feature-flag'),
-        value: 'feature-flag'
-      }
-    ];
-
-    const conditionerDateOptions = [
-      {
-        label: 'Before',
-        value: 'before'
-      },
-      {
-        label: 'After',
-        value: 'after'
-      }
-    ];
-
-    const { data: segmentCollection, isLoading: segmentLoading } =
-      useQueryUserSegments({
-        params: {
-          cursor: String(0),
-          pageSize: LIST_PAGE_SIZE,
-          environmentId: currentEnvironment.id
+    const situationOptions = useMemo(
+      () => [
+        {
+          label: t('feature-flags.compare'),
+          value: RuleClauseType.COMPARE
         },
-        enabled: isUserSegment
-      });
+        {
+          label: t('feature-flags.user-segment'),
+          value: RuleClauseType.SEGMENT
+        },
+        {
+          label: t('feature-flags.date'),
+          value: RuleClauseType.DATE
+        },
+        {
+          label: t('feature-flags.feature-flag'),
+          value: RuleClauseType.FEATURE_FLAG
+        }
+      ],
+      []
+    );
+
+    const conditionerCompareOptions = useMemo(
+      () => [
+        {
+          label: '=',
+          value: FeatureRuleClauseOperator.EQUALS
+        },
+        {
+          label: '>=',
+          value: FeatureRuleClauseOperator.GREATER_OR_EQUAL
+        },
+        {
+          label: '>',
+          value: FeatureRuleClauseOperator.GREATER
+        },
+        {
+          label: '<=',
+          value: FeatureRuleClauseOperator.LESS_OR_EQUAL
+        },
+        {
+          label: '<',
+          value: FeatureRuleClauseOperator.LESS
+        },
+        {
+          label: t('contains'),
+          value: FeatureRuleClauseOperator.IN
+        },
+        {
+          label: t('partially-matches'),
+          value: FeatureRuleClauseOperator.PARTIALLY_MATCH
+        },
+        {
+          label: t('starts-with'),
+          value: FeatureRuleClauseOperator.STARTS_WITH
+        },
+        {
+          label: t('ends-with'),
+          value: FeatureRuleClauseOperator.ENDS_WITH
+        }
+      ],
+      []
+    );
+
+    const conditionerDateOptions = useMemo(
+      () => [
+        {
+          label: t('before'),
+          value: FeatureRuleClauseOperator.BEFORE
+        },
+        {
+          label: t('after'),
+          value: FeatureRuleClauseOperator.AFTER
+        }
+      ],
+      []
+    );
+
+    const featureId = isFlag ? watch('attribute') : '';
+
+    const flagOptions = useMemo(
+      () =>
+        features?.map(item => ({
+          label: item.name,
+          value: item.id
+        })),
+      []
+    );
+
+    const variationOptions = useMemo(
+      () =>
+        features
+          ?.find(item => item.id === featureId)
+          ?.variations?.map(v => ({
+            label: v.name || v.value,
+            value: v.id
+          })),
+      [featureId, features]
+    );
+
+    const { data: segmentCollection } = useQueryUserSegments({
+      params: {
+        cursor: String(0),
+        pageSize: LIST_PAGE_SIZE,
+        environmentId: currentEnvironment.id
+      },
+      enabled: isUserSegment
+    });
 
     const userSegments = segmentCollection?.segments || [];
 
-    const flagId = watch('flagId');
+    const segmentOptions = userSegments?.map(item => ({
+      label: item.name,
+      value: item.id
+    }));
 
-    const isStringVariation = flagId?.includes('string');
-    const isNumberVariation = flagId?.includes('number');
-    const isBooleanVariation = flagId?.includes('boolean');
+    const commonName = `rules.${segmentIndex}.clauses.${clauseIndex}.`;
 
-    const variationOptions = isStringVariation
-      ? stringVariations
-      : isNumberVariation
-        ? numberVariations
-        : isBooleanVariation
-          ? booleanVariations
-          : jsonVariations;
-
-    const commonName = `targetSegmentRules.${segmentIndex}.rules.${ruleIndex}.conditions.${conditionIndex}.`;
+    const handleChangeConditioner = useCallback(
+      (value: RuleClauseType) => {
+        let _value = '';
+        switch (value) {
+          case RuleClauseType.COMPARE:
+            return (_value = FeatureRuleClauseOperator.EQUALS);
+          case RuleClauseType.SEGMENT:
+            return (_value = FeatureRuleClauseOperator.SEGMENT);
+          case RuleClauseType.FEATURE_FLAG:
+            return (_value = FeatureRuleClauseOperator.FEATURE_FLAG);
+          case RuleClauseType.DATE:
+            return (_value = FeatureRuleClauseOperator.IN);
+          default:
+            break;
+        }
+        onChangeFormField('operator', _value);
+        setValue(`${commonName}operator`, value);
+      },
+      [commonName]
+    );
 
     return (
       <div ref={ref} className="flex items-center w-full gap-x-4">
@@ -139,7 +225,7 @@ const ConditionForm = forwardRef(
           <div className="flex items-end w-full gap-x-4">
             <Form.Field
               control={control}
-              name={`${commonName}situation`}
+              name={`${commonName}type`}
               render={({ field }) => (
                 <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-1">
                   <Form.Label required>
@@ -150,7 +236,7 @@ const ConditionForm = forwardRef(
                       <DropdownMenuTrigger
                         label={
                           situationOptions.find(
-                            item => item.value === condition.situation
+                            item => item.value === clause.type
                           )?.label
                         }
                         className="w-full"
@@ -163,28 +249,8 @@ const ConditionForm = forwardRef(
                             value={item.value}
                             onSelectOption={value => {
                               field.onChange(value);
-                              onChangeFormField('situation', value);
-                              const isEqualConditioner = [
-                                'compare',
-                                'feature-flag'
-                              ].includes(value as SituationType);
-                              const _isDate = value === 'date';
-                              onChangeFormField(
-                                'conditioner',
-                                isEqualConditioner
-                                  ? '='
-                                  : _isDate
-                                    ? 'before'
-                                    : 'Is included in'
-                              );
-                              setValue(
-                                `${commonName}conditioner`,
-                                isEqualConditioner
-                                  ? '='
-                                  : _isDate
-                                    ? 'before'
-                                    : 'Is included in'
-                              );
+                              onChangeFormField('operator', value as string);
+                              handleChangeConditioner(value as RuleClauseType);
                             }}
                           />
                         ))}
@@ -195,119 +261,50 @@ const ConditionForm = forwardRef(
                 </Form.Item>
               )}
             />
-            {isCompare && (
+            {!isUserSegment && (
               <Form.Field
                 control={control}
-                name={`${commonName}firstValue`}
+                name={`${commonName}attribute`}
                 render={({ field }) => (
                   <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
                     <Form.Label required>
-                      <Trans
-                        i18nKey={'form:feature-flags.value-type'}
-                        values={{
-                          type: 'First'
-                        }}
-                      />
-                    </Form.Label>
-                    <Form.Control>
-                      <Input
-                        {...field}
-                        value={field.value || condition.firstValue}
-                        onChange={value => {
-                          field.onChange(value);
-                          onChangeFormField('firstValue', value);
-                        }}
-                      />
-                    </Form.Control>
-                    <Form.Message />
-                  </Form.Item>
-                )}
-              />
-            )}
-            {isFlag && (
-              <Form.Field
-                control={control}
-                name={`${commonName}flagId`}
-                render={({ field }) => (
-                  <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
-                    <Form.Label required>
-                      {t('feature-flags.feature-flag')}
-                    </Form.Label>
-                    <Form.Control>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          label={
-                            flagOptions?.find(
-                              item =>
-                                item.value ===
-                                (field.value || condition?.flagId)
-                            )?.label || ''
-                          }
-                          placeholder={t('common:select-value')}
-                          className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
+                      {isFlag ? (
+                        t('feature-flags.feature-flag')
+                      ) : (
+                        <Trans
+                          i18nKey={'form:feature-flags.value-type'}
+                          values={{
+                            type: isCompare ? 'First' : ''
+                          }}
                         />
-                        <DropdownMenuContent align="start" {...field}>
-                          {flagOptions?.map((item, index) => (
-                            <DropdownMenuItem
-                              key={index}
-                              label={item.label}
-                              value={item.value}
-                              onSelectOption={value => {
-                                field.onChange(value);
-                                onChangeFormField('flagId', value);
-                              }}
-                            />
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </Form.Control>
-                    <Form.Message />
-                  </Form.Item>
-                )}
-              />
-            )}
-            {(isUserSegment || isDate) && (
-              <Form.Field
-                control={control}
-                name={`${commonName}value`}
-                render={({ field }) => (
-                  <Form.Item
-                    className={cn(
-                      'flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2',
-                      { 'order-3': isUserSegment }
-                    )}
-                  >
-                    <Form.Label required>
-                      <Trans
-                        i18nKey={'form:feature-flags.value'}
-                        values={{
-                          type: 'First'
-                        }}
-                      />
+                      )}
                     </Form.Label>
                     <Form.Control>
-                      {isUserSegment ? (
+                      {isFlag ? (
                         <DropdownMenu>
                           <DropdownMenuTrigger
-                            disabled={segmentLoading}
                             label={
-                              userSegments?.find(
+                              flagOptions?.find(
                                 item =>
-                                  item.id === (field.value || condition?.value)
-                              )?.name || ''
+                                  item.value ===
+                                  (field.value || clause?.attribute)
+                              )?.label || ''
                             }
                             placeholder={t('common:select-value')}
-                            className="w-full"
+                            className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
                           />
                           <DropdownMenuContent align="start" {...field}>
-                            {userSegments?.map((item, index) => (
+                            {flagOptions?.map((item, index) => (
                               <DropdownMenuItem
                                 key={index}
-                                label={item.name}
-                                value={item.id}
+                                label={item.label}
+                                value={item.value}
                                 onSelectOption={value => {
                                   field.onChange(value);
-                                  onChangeFormField('value', value);
+                                  onChangeFormField(
+                                    'attribute',
+                                    value as string
+                                  );
                                 }}
                               />
                             ))}
@@ -316,10 +313,10 @@ const ConditionForm = forwardRef(
                       ) : (
                         <Input
                           {...field}
-                          value={field.value || condition.value}
+                          value={field.value || clause?.attribute}
                           onChange={value => {
                             field.onChange(value);
-                            onChangeFormField('value', value);
+                            onChangeFormField('attribute', value);
                           }}
                         />
                       )}
@@ -331,24 +328,22 @@ const ConditionForm = forwardRef(
             )}
             <Form.Field
               control={control}
-              name={`${commonName}conditioner`}
+              name={`${commonName}operator`}
               render={({ field }) => (
-                <Form.Item
-                  className={cn(
-                    'flex flex-col flex-1 py-0 self-stretch min-w-[170px] order-3',
-                    { 'order-2': isUserSegment }
-                  )}
-                >
+                <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
                   <Form.Label required>
                     {t('feature-flags.conditioner')}
                   </Form.Label>
                   <Form.Control>
-                    {isDate ? (
+                    {isDate || isCompare ? (
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           label={
-                            conditionerDateOptions.find(item =>
-                              [field.value, condition.conditioner].includes(
+                            (isDate
+                              ? conditionerDateOptions
+                              : conditionerCompareOptions
+                            ).find(item =>
+                              [field.value, clause.operator].includes(
                                 item.value
                               )
                             )?.label
@@ -356,14 +351,20 @@ const ConditionForm = forwardRef(
                           className="w-full"
                         />
                         <DropdownMenuContent align="start" {...field}>
-                          {conditionerDateOptions.map((item, index) => (
+                          {(isDate
+                            ? conditionerDateOptions
+                            : conditionerCompareOptions
+                          ).map((item, index) => (
                             <DropdownMenuItem
                               key={index}
                               label={item.label}
                               value={item.value}
                               onSelectOption={value => {
                                 field.onChange(value);
-                                onChangeFormField('conditioner', value);
+                                onChangeFormField(
+                                  'conditioner',
+                                  value as string
+                                );
                               }}
                             />
                           ))}
@@ -371,13 +372,9 @@ const ConditionForm = forwardRef(
                       </DropdownMenu>
                     ) : (
                       <Input
-                        disabled={isUserSegment && isFlag}
                         {...field}
-                        value={field.value || condition.conditioner}
-                        onChange={value => {
-                          field.onChange(value);
-                          onChangeFormField('conditioner', value);
-                        }}
+                        disabled={isUserSegment || isFlag}
+                        value={isUserSegment ? t('is-included-in') : '='}
                       />
                     )}
                   </Form.Control>
@@ -385,110 +382,99 @@ const ConditionForm = forwardRef(
                 </Form.Item>
               )}
             />
-            {isCompare && (
-              <Form.Field
-                control={control}
-                name={`${commonName}secondValue`}
-                render={({ field }) => (
-                  <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-4">
+            <Form.Field
+              control={control}
+              name={`${commonName}values`}
+              render={({ field }) => {
+                const { value, ...rest } = field;
+                const fieldValue = isDate ? Number(value[0]) * 1000 : value;
+                return (
+                  <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
                     <Form.Label required>
-                      <Trans
-                        i18nKey={'form:feature-flags.value-type'}
-                        values={{
-                          type: 'Second'
-                        }}
-                      />
+                      {isFlag ? (
+                        t('table:feature-flags.variation')
+                      ) : isDate ? (
+                        t('feature-flags.date')
+                      ) : (
+                        <Trans
+                          i18nKey={'form:feature-flags.value-type'}
+                          values={{
+                            type: isCompare ? 'Second' : ''
+                          }}
+                        />
+                      )}
                     </Form.Label>
                     <Form.Control>
-                      <Input
-                        {...field}
-                        value={field.value || condition.secondValue}
-                        onChange={value => {
-                          field.onChange(value);
-                          onChangeFormField('secondValue', value);
-                        }}
-                      />
-                    </Form.Control>
-                    <Form.Message />
-                  </Form.Item>
-                )}
-              />
-            )}
-            {isDate && (
-              <Form.Field
-                control={control}
-                name={`${commonName}date`}
-                render={({ field }) => {
-                  const { value, ...rest } = field;
-                  const fieldValue = Number(value ?? condition?.date) * 1000;
-
-                  return (
-                    <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-4">
-                      <Form.Label required>
-                        {t('feature-flags.date')}
-                      </Form.Label>
-                      <Form.Control>
+                      {isDate ? (
                         <ReactDatePicker
-                          {...rest}
+                          {...omit(rest, 'ref')}
                           selected={fieldValue ? new Date(fieldValue) : null}
                           onChange={date => {
                             if (date) {
                               const value =
                                 (date.getTime() / 1000)?.toString() || '';
                               field.onChange(value);
-                              onChangeFormField('date', value);
+                              onChangeFormField('date', [value]);
                             }
                           }}
                         />
-                      </Form.Control>
-                      <Form.Message />
-                    </Form.Item>
-                  );
-                }}
-              />
-            )}
-            {isFlag && (
-              <Form.Field
-                control={control}
-                name={`${commonName}variation`}
-                render={({ field }) => (
-                  <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-4">
-                    <Form.Label required>
-                      {t('table:feature-flags.variation')}
-                    </Form.Label>
-                    <Form.Control>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          label={
-                            variationOptions?.find(
-                              item =>
-                                item.value ===
-                                (field.value || condition?.variation)
-                            )?.label || ''
+                      ) : isFlag || isUserSegment ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            disabled={
+                              isFlag
+                                ? !variationOptions?.length
+                                : !segmentOptions.length
+                            }
+                            label={
+                              (isFlag
+                                ? variationOptions
+                                : segmentOptions
+                              )?.find(item => item.value === value[0])?.label ||
+                              ''
+                            }
+                            placeholder={t('common:select-value')}
+                            className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
+                          />
+                          <DropdownMenuContent align="start" {...field}>
+                            {(isFlag ? variationOptions : segmentOptions)?.map(
+                              (item, index) => (
+                                <DropdownMenuItem
+                                  key={index}
+                                  label={item.label}
+                                  value={item.value}
+                                  onSelectOption={value => {
+                                    field.onChange(value);
+                                    onChangeFormField('values', [
+                                      value as string
+                                    ]);
+                                  }}
+                                />
+                              )
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <CreatableSelect
+                          value={value?.map((item: string) => ({
+                            label: item,
+                            value: item
+                          }))}
+                          onChange={options =>
+                            onChangeFormField(
+                              'values',
+                              options.map(item => item.value)
+                            )
                           }
-                          placeholder={t('common:select-value')}
-                          className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
                         />
-                        <DropdownMenuContent align="start" {...field}>
-                          {variationOptions?.map((item, index) => (
-                            <DropdownMenuItem
-                              key={index}
-                              label={item.label}
-                              value={item.value}
-                              onSelectOption={value => {
-                                field.onChange(value);
-                                onChangeFormField('variation', value);
-                              }}
-                            />
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      )}
                     </Form.Control>
                     <Form.Message />
                   </Form.Item>
-                )}
-              />
-            )}
+                );
+              }}
+            />
+
             <div className="flex items-center self-stretch order-5">
               <Button
                 type="button"

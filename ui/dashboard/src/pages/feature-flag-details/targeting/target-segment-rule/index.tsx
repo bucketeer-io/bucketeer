@@ -8,31 +8,33 @@ import {
 import { Fragment } from 'react/jsx-runtime';
 import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
+import { v4 as uuid } from 'uuid';
+import { Feature, FeatureRuleClauseOperator } from '@types';
 import { IconInfo, IconPlus } from '@icons';
 import Button from 'components/button';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Card from '../../elements/card';
 import AddRuleButton from '../add-rule-button';
-import { initialSegmentCondition } from '../constants';
-import { TargetSegmentItem } from '../types';
+import { RuleClauseType, RuleSchema } from '../form-schema';
 import Condition from './condition';
-import SegmentVariation from './variation';
 
 interface Props {
-  targetSegmentRules: TargetSegmentItem[];
-  onChangeTargetSegmentRules: (value: TargetSegmentItem[]) => void;
+  features: Feature[];
+  targetSegmentRules: RuleSchema[];
+  onChangeTargetSegmentRules: (value: RuleSchema[]) => void;
   onAddRule: () => void;
 }
 
 const TargetSegmentRule = ({
+  features,
   targetSegmentRules,
   onChangeTargetSegmentRules,
   onAddRule
 }: Props) => {
   const { t } = useTranslation(['table', 'form']);
 
-  const cloneTargetSegmentRules = useMemo(
+  const cloneTargetSegmentRules: RuleSchema[] = useMemo(
     () => cloneDeep(targetSegmentRules),
     [targetSegmentRules]
   );
@@ -41,22 +43,23 @@ const TargetSegmentRule = ({
   const { control } = methods;
 
   const onAddCondition = useCallback(
-    (segmentIndex: number, ruleIndex: number) => {
-      cloneTargetSegmentRules[segmentIndex].rules[ruleIndex].conditions.push(
-        initialSegmentCondition
-      );
+    (ruleIndex: number) => {
+      cloneTargetSegmentRules[ruleIndex].clauses.push({
+        id: uuid(),
+        type: RuleClauseType.COMPARE,
+        attribute: '',
+        operator: FeatureRuleClauseOperator.EQUALS,
+        values: []
+      });
       onChangeTargetSegmentRules(cloneTargetSegmentRules);
     },
     [targetSegmentRules, cloneTargetSegmentRules]
   );
 
   const onDeleteCondition = useCallback(
-    (segmentIndex: number, ruleIndex: number, conditionIndex: number) => {
+    (ruleIndex: number, conditionIndex: number) => {
       const cloneTargetSegmentRules = cloneDeep(targetSegmentRules);
-      cloneTargetSegmentRules[segmentIndex].rules[ruleIndex].conditions.splice(
-        conditionIndex,
-        1
-      );
+      cloneTargetSegmentRules[ruleIndex].clauses.splice(conditionIndex, 1);
       onChangeTargetSegmentRules(cloneTargetSegmentRules);
     },
     [targetSegmentRules, cloneTargetSegmentRules]
@@ -64,29 +67,18 @@ const TargetSegmentRule = ({
 
   const onChangeFormField = useCallback(
     (
-      segmentIndex: number,
       ruleIndex: number,
       field: string,
-      value: string | number | boolean,
-      conditionIndex?: number
+      value: string | string[],
+      conditionIndex: number
     ) => {
-      if (typeof conditionIndex === 'number') {
-        cloneTargetSegmentRules[segmentIndex].rules[ruleIndex].conditions[
-          conditionIndex
-        ] = {
-          ...cloneTargetSegmentRules[segmentIndex].rules[ruleIndex].conditions[
-            conditionIndex
-          ],
-          [field]: value
-        };
-        return onChangeTargetSegmentRules(cloneTargetSegmentRules);
-      }
-      cloneTargetSegmentRules[segmentIndex].rules[ruleIndex] = {
-        ...cloneTargetSegmentRules[segmentIndex].rules[ruleIndex],
+      cloneTargetSegmentRules[ruleIndex].clauses[conditionIndex] = {
+        ...cloneTargetSegmentRules[ruleIndex].clauses[conditionIndex],
         [field]: value
       };
-      onChangeTargetSegmentRules(cloneTargetSegmentRules);
+      return onChangeTargetSegmentRules(cloneTargetSegmentRules);
     },
+
     [cloneTargetSegmentRules]
   );
 
@@ -133,67 +125,57 @@ const TargetSegmentRule = ({
                     </div>
                   )}
                 </div>
-                {segment.rules.map((rule, ruleIndex) => (
-                  <Form.Field
-                    key={`rule-${ruleIndex}`}
-                    control={control}
-                    name={`targetSegmentRules.${segmentIndex}.rules.${ruleIndex}`}
-                    render={({ field }) => (
-                      <Fragment>
-                        {rule.conditions.map((condition, conditionIndex) => (
-                          <Condition
-                            key={`condition-${conditionIndex}`}
-                            isDisabledDelete={rule.conditions.length <= 1}
-                            segmentIndex={segmentIndex}
-                            ruleIndex={ruleIndex}
-                            conditionIndex={conditionIndex}
-                            type={conditionIndex === 0 ? 'if' : 'and'}
-                            condition={condition}
-                            onDeleteCondition={() =>
-                              onDeleteCondition(
-                                segmentIndex,
-                                ruleIndex,
-                                conditionIndex
-                              )
-                            }
-                            onChangeFormField={(field, value) =>
-                              onChangeFormField(
-                                segmentIndex,
-                                ruleIndex,
-                                field,
-                                value,
-                                conditionIndex
-                              )
-                            }
-                            {...field}
-                          />
-                        ))}
-                        <Button
-                          type="button"
-                          variant={'text'}
-                          className="w-fit gap-x-2 h-6 !p-0"
-                          onClick={() =>
-                            onAddCondition(segmentIndex, ruleIndex)
-                          }
-                        >
-                          <Icon
-                            icon={IconPlus}
-                            color="primary-500"
-                            className="flex-center"
-                            size={'sm'}
-                          />{' '}
-                          {t('form:feature-flags.add-condition')}
-                        </Button>
-                        <SegmentVariation
+                <Fragment>
+                  {segment.clauses.map((clause, clauseIndex) => (
+                    <Form.Field
+                      key={`clause-${clauseIndex}`}
+                      control={control}
+                      name={`rules.${segmentIndex}.clauses.${clauseIndex}`}
+                      render={({ field }) => (
+                        <Condition
+                          features={features}
+                          isDisabledDelete={segment.clauses.length <= 1}
                           segmentIndex={segmentIndex}
-                          ruleIndex={ruleIndex}
+                          clauseIndex={clauseIndex}
+                          type={clauseIndex === 0 ? 'if' : 'and'}
+                          clause={clause}
+                          onDeleteCondition={() =>
+                            onDeleteCondition(segmentIndex, clauseIndex)
+                          }
+                          onChangeFormField={(field, value) =>
+                            onChangeFormField(
+                              segmentIndex,
+                              field,
+                              value,
+                              clauseIndex
+                            )
+                          }
+                          {...field}
                         />
-                      </Fragment>
-                    )}
-                  />
-                ))}
-                <AddRuleButton onAddRule={onAddRule} />
+                      )}
+                    />
+                  ))}
+                  <Button
+                    type="button"
+                    variant={'text'}
+                    className="w-fit gap-x-2 h-6 !p-0"
+                    onClick={() => onAddCondition(segmentIndex)}
+                  >
+                    <Icon
+                      icon={IconPlus}
+                      color="primary-500"
+                      className="flex-center"
+                      size={'sm'}
+                    />{' '}
+                    {t('form:feature-flags.add-condition')}
+                  </Button>
+                  {/* <SegmentVariation
+                    segmentIndex={segmentIndex}
+                    ruleIndex={ruleIndex}
+                  /> */}
+                </Fragment>
               </Card>
+              <AddRuleButton onAddRule={onAddRule} />
             </Card>
           </div>
         ))}

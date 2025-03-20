@@ -207,5 +207,7 @@
   "update-now": "Update now",
   "time-updated": "Updated {{time}}",
   "true": "True",
-  "false": "False"
+  "false": "False",
+  "and": "And",
+  "see-more": "See more"
 }

@@ -1,16 +1,11 @@
-import { forwardRef, Ref } from 'react';
+import { forwardRef, Ref, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
+import { AnyObject } from 'yup';
+import { Feature } from '@types';
 import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
-import {
-  booleanVariations,
-  flagOptions,
-  jsonVariations,
-  numberVariations,
-  stringVariations
-} from 'pages/feature-flag-details/mocks';
 import Button from 'components/button';
 import {
   DropdownMenu,
@@ -23,6 +18,7 @@ import Icon from 'components/icon';
 import { PrerequisiteRuleType } from '../types';
 
 interface Props {
+  features: Feature[];
   type: 'if' | 'and';
   condition: PrerequisiteRuleType;
   isDisabledDelete: boolean;
@@ -35,6 +31,7 @@ interface Props {
 const ConditionForm = forwardRef(
   (
     {
+      features,
       type,
       condition,
       isDisabledDelete,
@@ -50,21 +47,45 @@ const ConditionForm = forwardRef(
     const methods = useFormContext();
     const { control, watch } = methods;
 
-    const commonName = `prerequisitesRules.${prerequisiteIndex}.rules.${ruleIndex}.`;
+    const featuresSelected = useMemo(
+      () =>
+        watch(`prerequisitesRules.${prerequisiteIndex}.rules`)?.map(
+          (item: AnyObject) => item?.featureFlag
+        ),
+      [prerequisiteIndex]
+    );
+
+    const commonName = useMemo(
+      () => `prerequisitesRules.${prerequisiteIndex}.rules.${ruleIndex}.`,
+      [prerequisiteIndex, ruleIndex]
+    );
 
     const featureFlag = watch(`${commonName}featureFlag`);
 
-    const isStringVariation = featureFlag?.includes('string');
-    const isNumberVariation = featureFlag?.includes('number');
-    const isBooleanVariation = featureFlag?.includes('boolean');
+    const currentFeature = useMemo(
+      () => features.find(item => item.id === featureFlag),
+      [featureFlag, features]
+    );
 
-    const variationOptions = isStringVariation
-      ? stringVariations
-      : isNumberVariation
-        ? numberVariations
-        : isBooleanVariation
-          ? booleanVariations
-          : jsonVariations;
+    const flagOptions = useMemo(
+      () =>
+        features
+          .filter(f => !featuresSelected.includes(f.id))
+          .map(item => ({
+            label: item.name,
+            value: item.id
+          })),
+      [features, featuresSelected]
+    );
+
+    const variationOptions = useMemo(
+      () =>
+        currentFeature?.variations?.map(item => ({
+          label: item.name || item.value,
+          value: item.id
+        })),
+      [currentFeature]
+    );
 
     return (
       <div ref={ref} className="flex items-center w-full gap-x-4">
@@ -91,17 +112,18 @@ const ConditionForm = forwardRef(
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         label={
-                          flagOptions.find(item =>
+                          flagOptions?.find(item =>
                             [field.value, condition.featureFlag].includes(
                               item.value
                             )
                           )?.label
                         }
-                        placeholder={t('select-flag')}
+                        placeholder={t('experiments.select-flag')}
                         className="w-full"
+                        disabled={!flagOptions?.length}
                       />
                       <DropdownMenuContent align="start" {...field}>
-                        {flagOptions.map((item, index) => (
+                        {flagOptions?.map((item, index) => (
                           <DropdownMenuItem
                             key={index}
                             label={item.label}
@@ -139,17 +161,18 @@ const ConditionForm = forwardRef(
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         label={
-                          variationOptions.find(item =>
+                          variationOptions?.find(item =>
                             [field.value, condition.variation].includes(
                               item.value
                             )
                           )?.label
                         }
-                        placeholder={t('select-variation')}
+                        placeholder={t('experiments.select-variation')}
                         className="w-full"
+                        disabled={!variationOptions?.length}
                       />
                       <DropdownMenuContent align="start" {...field}>
-                        {variationOptions.map((item, index) => (
+                        {variationOptions?.map((item, index) => (
                           <DropdownMenuItem
                             key={index}
                             label={item.label}

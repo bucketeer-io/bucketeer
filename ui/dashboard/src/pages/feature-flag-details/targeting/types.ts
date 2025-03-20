@@ -1,3 +1,5 @@
+import { RuleSchema } from './form-schema';
+
 export type SituationType =
   | 'compare'
   | 'user-segment'
@@ -26,8 +28,9 @@ export interface SegmentRuleItem {
 }
 
 export interface IndividualRuleItem {
-  on: string[];
-  off: string[];
+  variationId: string;
+  name?: string;
+  users: string[];
 }
 
 export interface PrerequisiteRuleType {
@@ -46,7 +49,7 @@ export interface TargetPrerequisiteItem {
 }
 
 export interface TargetingForm {
-  targetSegmentRules: TargetSegmentItem[];
+  rules?: RuleSchema[];
   prerequisitesRules: TargetPrerequisiteItem[];
   targetIndividualRules: IndividualRuleItem[];
 }

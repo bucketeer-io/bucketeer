@@ -16,8 +16,8 @@ const initialSegmentCondition: SegmentConditionType = {
 };
 
 const initialIndividualRule: IndividualRuleItem = {
-  on: [],
-  off: []
+  variationId: '',
+  users: []
 };
 
 const initialPrerequisitesRule: PrerequisiteRuleType = {

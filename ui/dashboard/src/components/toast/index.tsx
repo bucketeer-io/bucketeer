@@ -2,6 +2,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { cva } from 'class-variance-authority';
 import { NotifyProps } from 'hooks/use-toast';
+import { useTranslation } from 'i18n';
 import { cn } from 'utils/style';
 import {
   IconChevronRight,
@@ -40,8 +41,10 @@ const ToastMessage = ({
   messageType = 'success',
   message,
   t,
-  toastChildren
+  toastChildren,
+  className
 }: NotifyProps) => {
+  const { t: translate } = useTranslation(['common']);
   const [isExpand, setIsExpand] = useState(false);
   const icon =
     messageType === 'success'
@@ -52,7 +55,7 @@ const ToastMessage = ({
           ? IconToastInfo
           : IconToastWarning;
   return (
-    <div className={toastVariants({ toastType, messageType })}>
+    <div className={cn(toastVariants({ toastType, messageType }), className)}>
       <div
         className={cn('flex gap-x-2', {
           'items-center': ['info-message', 'prerequisite-message'].includes(
@@ -80,7 +83,9 @@ const ToastMessage = ({
             className="flex items-center gap-x-2 text-gray-700 cursor-pointer"
             onClick={() => setIsExpand(!isExpand)}
           >
-            <p className="typo-para-medium">See more</p>
+            <p className="typo-para-medium ml-2">
+              {translate(isExpand ? 'close' : 'see-more')}
+            </p>
             <div
               className={cn(
                 'flex-center size-fit rotate-90 transition-transform duration-200',
