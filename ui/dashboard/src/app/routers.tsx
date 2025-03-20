@@ -1,6 +1,8 @@
 import { Route, Routes } from 'react-router-dom';
+import { ID_CLONE, ID_NEW } from 'constants/routing';
 import ExperimentDetailsPage from 'pages/experiment-details';
 import ExperimentsPage from 'pages/experiments';
+import FeatureFlagsPage from 'pages/feature-flags';
 import GoalDetailsPage from 'pages/goal-details';
 import GoalsPage from 'pages/goals';
 import OrganizationDetailPage from 'pages/organization-details';
@@ -43,6 +45,17 @@ export const GoalsRoot = () => {
       <Route index element={<GoalsPage />} />
       <Route path="new" element={<GoalsPage />} />
       <Route path=":goalId/*" element={<GoalDetailsPage />} />
+    </Routes>
+  );
+};
+
+export const FeatureFlagsRoot = () => {
+  return (
+    <Routes>
+      <Route index element={<FeatureFlagsPage />} />
+      <Route path={ID_NEW} element={<FeatureFlagsPage />} />
+      <Route path={`${ID_CLONE}/:flagId`} element={<FeatureFlagsPage />} />
+      {/* <Route path=":flagId/*" element={<FeatureFlagDetailsPage />} /> */}
     </Routes>
   );
 };

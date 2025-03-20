@@ -35,7 +35,10 @@
     "archive-experiment": "Archive Experiment",
     "unarchive-experiment": "Unarchive Experiment",
     "stop-experiment": "Stop Experiment",
-    "start-experiment": "Start Experiment"
+    "start-experiment": "Start Experiment",
+    "archive-flag": "Archive Feature Flag",
+    "unarchive-flag": "Unarchive Feature Flag",
+    "clone-flag": "Clone Feature Flag"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -59,7 +62,10 @@
     "user-segments-desc": "There are no registered user segments. Add a new one to start managing.",
     "experiment-title": "No registered experiments",
     "experiment-desc": "There are no registered experiments. Add a new one to start managing.",
-    "experiment-details-desc": "The result will be created when the experiment starts."
+    "experiment-details-desc": "The result will be created when the experiment starts.",
+    "feature-flags-title": "No registered feature flags",
+    "feature-flags-desc": "There are no registered feature flags. Add a new one to start managing.",
+    "notifications": "No notifications to show just yet, but don't worry, we're here to keep you in the loop."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
@@ -107,6 +113,10 @@
     "running": "Running",
     "stopped": "Stopped",
     "not-started": "Not started",
+    "scheduled-experiment": "Scheduled Experiment",
+    "running-experiment": "Running Experiment",
+    "stopped-experiment": "Stopped Experiment",
+    "not-started-experiment": "Not Started Experiment",
     "confirm-stop-desc": "The experiment \"<bold>{{name}}</bold>\" will be stopped. Are you sure you want to proceed?",
     "confirm-start-desc": "The experiment \"<bold>{{name}}</bold>\" will be started. Are you sure you want to proceed?",
     "running-experiment-desc": "The experiment is scheduled to stop on {{date}}",
@@ -134,5 +144,39 @@
     "improvement-tooltip": "A measure of improvement in an indicator related to variation compared to a baseline (also called a control group). It is calculated by comparing the range of values for variation with the range of values for baseline.",
     "probability-to-beat-baseline-tooltip": "Estimated likelihood of exceeding baseline (also known as a control group). A criterion of at least 95% is recommended.",
     "probability-to-best-tooltip": "Possibility of being the best variation. Possibility of being presumed to outperform all other variations. We recommend a criterion of at least 95%."
+  },
+  "feature-flags": {
+    "confirm-archive-desc": "This will archive and return the default value defined in your code for all users. We recommend removing the code references to \"<text>{{name}}</text>\" from your application before archiving.",
+    "confirm-unarchive-desc": "Are you sure you want to unarchive the feature flag \"<text>{{name}}</text>\"?",
+    "archive-warning": "It is receiving one more requests in the last <text>{{days}}.</text>",
+    "confirm-required": "Confirmation Required",
+    "confirm-required-desc": "This will make changes to the flag and increment the version.",
+    "targeting": "Targeting",
+    "variation": "Variation",
+    "evaluation": "Evaluation",
+    "operations": "Operations",
+    "trigger": "Trigger",
+    "experiments": "Experiments",
+    "history": "History",
+    "when-targeting": "When targeting is {{state}}",
+    "serve": "Serve",
+    "add-rule": "Add Rule",
+    "target-segments": "Target Segments",
+    "target-individuals": "Target Individuals",
+    "set-prerequisites": "Set Prerequisites",
+    "default-rule": "Default Rule",
+    "default-rule-desc": "When targeting is ON and contexts don't match any targeting rules",
+    "rules": "Rules",
+    "rule-index": "Rule {{index}}",
+    "total-flags": "Total Flags",
+    "active-flags": "Active Flags",
+    "inactive-flags": "Inactive Flags",
+    "variation-type": "<text>{{type}}</text> variation type",
+    "active-description": "This flag is receiving one or more requests in the last 7 days",
+    "inactive-description": "This flag hasn't received any request in the last 7 days",
+    "new-description": "This flag didn't receive any request after creation",
+    "progressive-description": "This flag has a progressive rollout.",
+    "scheduled-description": "This flag has a scheduled operation.",
+    "kill-description": "This flag has an automatic kill switch."
   }
 }

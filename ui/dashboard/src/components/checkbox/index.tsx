@@ -54,7 +54,7 @@ const Checkbox = forwardRef(
               })}
               forceMount={true}
             >
-              <Icon icon={IconChecked} size={'fit'} />
+              <Icon icon={IconChecked} size={'fit'} className="text-white" />
             </CheckboxPrimitive.Indicator>
           </CheckboxPrimitive.Root>
         </div>
