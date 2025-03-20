@@ -11,9 +11,9 @@ import { FeatureVariation, FeatureVariationType } from '@types';
 import { isNumber } from 'utils/chart';
 import { isJsonString } from 'utils/converts';
 
-const nameSchema = yup.string().max(FEATURE_NAME_MAX_LENGTH).required();
-const descriptionSchema = yup.string().max(FEATURE_DESCRIPTION_MAX_LENGTH);
-const variationsSchema = yup
+export const nameSchema = yup.string().max(FEATURE_NAME_MAX_LENGTH).required();
+export const descriptionSchema = yup.string().max(FEATURE_DESCRIPTION_MAX_LENGTH);
+export const variationsSchema = yup
   .array()
   .required()
   .of(

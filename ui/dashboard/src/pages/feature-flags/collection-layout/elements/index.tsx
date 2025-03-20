@@ -25,7 +25,7 @@ import {
 import { FeatureActivityStatus } from 'pages/feature-flags/types';
 import Divider from 'components/divider';
 import Icon, { IconProps } from 'components/icon';
-import { Tooltip } from 'components/tooltip';
+import { Tooltip, TooltipProps } from 'components/tooltip';
 import TruncationWithTooltip from 'elements/truncation-with-tooltip';
 
 interface FlagNameElementType {
@@ -133,20 +133,22 @@ export const VariationTypeTooltip = ({
   trigger,
   variationType,
   asChild = false,
-  className
+  className,
+  align = 'start'
 }: {
   trigger: ReactNode;
   variationType: FeatureVariationType;
   asChild?: boolean;
   className?: string;
+  align?: TooltipProps['align'];
 }) => (
   <Tooltip
     asChild={asChild}
-    align="start"
+    align={align}
     trigger={trigger}
     content={
       <Trans
-        i18nKey={'table:feature-flags.variation-type'}
+        i18nKey={'table:feature-flags.specific-variation-type'}
         values={{
           type:
             variationType === 'JSON'

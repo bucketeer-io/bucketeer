@@ -7,57 +7,6 @@ import PageLayout from 'elements/page-layout';
 import HeaderDetails from './elements/header-details';
 import PageContent from './page-content';
 
-export const mockFlags = [
-  {
-    id: 'flag-1',
-    name: 'Flag using boolean',
-    type: 'boolean',
-    status: 'active',
-    tags: ['Android'],
-    variations: [],
-    disabled: false,
-    operations: [],
-    createdAt: '1706182987',
-    updatedAt: '1706182994'
-  },
-  {
-    id: 'flag-2',
-    name: 'Flag using string',
-    type: 'string',
-    status: 'no_activity',
-    tags: ['Web'],
-    variations: [],
-    disabled: false,
-    operations: [],
-    createdAt: '1706182987',
-    updatedAt: '1706182994'
-  },
-  {
-    id: 'flag-3',
-    name: 'Flag using number',
-    type: 'number',
-    status: 'new',
-    tags: ['Android'],
-    variations: [],
-    disabled: false,
-    operations: [],
-    createdAt: '1706182987',
-    updatedAt: '1706182994'
-  },
-  {
-    id: 'flag-4',
-    name: 'Flag using json',
-    type: 'json',
-    status: 'no_activity',
-    tags: ['IOS'],
-    variations: [],
-    disabled: false,
-    operations: [],
-    createdAt: '1706182987',
-    updatedAt: '1706182994'
-  }
-];
-
 const PageLoader = () => {
   const params = useParams();
 

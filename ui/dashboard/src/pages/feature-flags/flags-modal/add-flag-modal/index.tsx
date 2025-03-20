@@ -307,7 +307,9 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
                       }
                       content={
                         <Trans
-                          i18nKey={'table:feature-flags.variation-type'}
+                          i18nKey={
+                            'table:feature-flags.specific-variation-type'
+                          }
                           values={{
                             type:
                               variationType === 'JSON'

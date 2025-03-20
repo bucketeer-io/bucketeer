@@ -18,6 +18,7 @@ import { Tabs, TabsList, TabsContent, TabsLink } from 'components/tabs-link';
 import PageLayout from 'elements/page-layout';
 import Targeting from './targeting';
 import { TabItem } from './types';
+import Variation from './variation';
 
 const PageContent = ({ feature }: { feature: Feature }) => {
   const { t } = useTranslation(['table', 'common']);
@@ -88,7 +89,7 @@ const PageContent = ({ feature }: { feature: Feature }) => {
             />
             <Route
               path={PAGE_PATH_FEATURE_VARIATION}
-              element={<div>PAGE_PATH_FEATURE_VARIATION</div>}
+              element={<Variation feature={feature} />}
             />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

@@ -163,5 +163,6 @@
   "ends-with": "Ends with",
   "is-included-in": "Is included in",
   "select-rollout-percentage": "Select rollout percentage",
-  "rollout": "Rollout"
+  "rollout": "Rollout",
+  "off-variation": "Off Variation"
 }
