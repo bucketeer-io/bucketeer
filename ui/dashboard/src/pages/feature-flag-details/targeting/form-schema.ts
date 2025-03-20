@@ -23,16 +23,8 @@ export const formSchema = yup.object().shape({
     .required()
     .of(
       yup.object().shape({
-        index: yup.number().required(),
-        rules: yup
-          .array()
-          .required()
-          .of(
-            yup.object().shape({
-              on: yup.array().required('This field is required.'),
-              off: yup.array().required('This field is required.')
-            })
-          )
+        on: yup.array().required('This field is required.'),
+        off: yup.array().required('This field is required.')
       })
     ),
   targetSegmentRules: yup

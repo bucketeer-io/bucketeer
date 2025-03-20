@@ -40,11 +40,6 @@ export interface TargetSegmentItem {
   rules: SegmentRuleItem[];
 }
 
-export interface TargetIndividualItem {
-  index: number;
-  rules: IndividualRuleItem[];
-}
-
 export interface TargetPrerequisiteItem {
   index: number;
   rules: PrerequisiteRuleType[];
@@ -53,5 +48,5 @@ export interface TargetPrerequisiteItem {
 export interface TargetingForm {
   targetSegmentRules: TargetSegmentItem[];
   prerequisitesRules: TargetPrerequisiteItem[];
-  targetIndividualRules: TargetIndividualItem[];
+  targetIndividualRules: IndividualRuleItem[];
 }

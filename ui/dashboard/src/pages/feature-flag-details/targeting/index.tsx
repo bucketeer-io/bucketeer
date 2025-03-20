@@ -12,12 +12,13 @@ import {
 } from './constants';
 import DefaultRule from './default-rule';
 import { formSchema } from './form-schema';
+import IndividualRule from './individual-rule';
 import PrerequisiteRule from './prerequisite-rule';
 import TargetSegmentRule from './target-segment-rule';
 import TargetingState from './targeting-state';
 import {
+  IndividualRuleItem,
   RuleCategory,
-  TargetIndividualItem,
   TargetingForm,
   TargetPrerequisiteItem,
   TargetSegmentItem
@@ -28,7 +29,7 @@ const Targeting = ({ feature }: { feature: Feature }) => {
     TargetSegmentItem[]
   >([]);
   const [targetIndividualRules, setTargetIndividualRules] = useState<
-    TargetIndividualItem[]
+    IndividualRuleItem[]
   >([]);
   const [prerequisitesRules, setPrerequisitesRules] = useState<
     TargetPrerequisiteItem[]
@@ -62,10 +63,7 @@ const Targeting = ({ feature }: { feature: Feature }) => {
       if (type === 'target-individuals') {
         return setTargetIndividualRules([
           ...targetIndividualRules,
-          {
-            index: targetIndividualRules.length + 1,
-            rules: [initialIndividualRule]
-          }
+          initialIndividualRule
         ]);
       }
       setPrerequisitesRules([
@@ -121,18 +119,23 @@ const Targeting = ({ feature }: { feature: Feature }) => {
                 <Form.Field
                   control={form.control}
                   name={'targetIndividualRules'}
-                  render={() => (
+                  render={({ field }) => (
                     <Form.Item className="py-0">
                       <Form.Control>
-                        <></>
+                        <IndividualRule
+                          individualRules={targetIndividualRules}
+                          onChangeIndividualRules={rules => {
+                            field.onChange(rules);
+                            setTargetIndividualRules(rules);
+                          }}
+                        />
                       </Form.Control>
                     </Form.Item>
                   )}
                 />
-
                 <AddRuleButton
                   isCenter
-                  onAddRule={() => onAddRule('set-prerequisites')}
+                  onAddRule={() => onAddRule('target-individuals')}
                 />
               </>
             )}
