@@ -23,7 +23,7 @@ export type PopoverOption<PopoverValue> = {
   tooltip?: string;
 };
 
-export type PopoverValue = number | string;
+export type PopoverValue = number | string | boolean;
 
 const PopoverRoot = PopoverPrimitive.Root;
 const PopoverTrigger = PopoverPrimitive.Trigger;
@@ -140,7 +140,7 @@ const Popover = forwardRef(
                         <PopoverItem
                           type="item"
                           addonSlot={addonSlot}
-                          icon={item.icon}
+                          icon={item?.icon}
                           label={item.label}
                           disabled={item?.disabled}
                           onClick={() =>

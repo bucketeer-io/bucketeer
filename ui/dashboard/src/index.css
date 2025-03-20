@@ -7,7 +7,7 @@
     font-family: 'Sofia Pro', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    scrollbar-gutter: stable;
+    /* scrollbar-gutter: stable; */
   }
 
   table {

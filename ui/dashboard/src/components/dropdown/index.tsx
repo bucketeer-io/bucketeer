@@ -103,7 +103,7 @@ const DropdownMenuTrigger = forwardRef<
       </div>
 
       {showArrow && (
-        <div className="min-w-6">
+        <div className="h-6 min-w-6">
           <Icon icon={IconExpandMoreRound} size={'md'} className="min-w-6" />
         </div>
       )}
