@@ -2,19 +2,11 @@ import { useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
 import { Feature, RuleStrategyVariation, StrategyType } from '@types';
-import { IconInfo } from '@icons';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
-import Form from 'components/form';
-import Icon from 'components/icon';
 import { RuleSchema } from '../form-schema';
 import { createVariationLabel } from '../utils';
+import Strategy from './strategy';
 
-interface VariationOption {
+export interface VariationOption {
   label: string;
   value: string;
   type: StrategyType;
@@ -36,11 +28,16 @@ const SegmentVariation = ({
   const { t } = useTranslation(['table', 'common', 'form']);
 
   const methods = useFormContext();
-  const { control, watch, setValue } = methods;
+  const { watch, setValue, setFocus, trigger } = methods;
   const commonName = `rules.${segmentIndex}.strategy`;
-  const currentOption = watch(`${commonName}.currentOption`);
-  const type = watch(`${commonName}.type`);
+  const rolloutStrategy: RuleStrategyVariation[] = watch(
+    `${commonName}.rolloutStrategy`
+  );
 
+  const percentageValueCount = useMemo(
+    () => rolloutStrategy?.filter(item => item.weight > 0)?.length || 0,
+    [rolloutStrategy]
+  );
   const variationOptions: VariationOption[] = useMemo(() => {
     const variations = feature.variations.map(item => ({
       label: createVariationLabel(item),
@@ -74,6 +71,14 @@ const SegmentVariation = ({
         }
       };
       setValue(commonName, targetSegmentRules[segmentIndex].strategy);
+      if (!isFixed) {
+        let timerId: NodeJS.Timeout | null = null;
+        if (timerId) clearTimeout(timerId);
+        timerId = setTimeout(
+          () => setFocus(`${commonName}.rolloutStrategy.0.weight`),
+          100
+        );
+      }
       return onChangeTargetSegmentRules([...targetSegmentRules]);
     },
     [
@@ -86,73 +91,42 @@ const SegmentVariation = ({
     ]
   );
 
-  return (
-    <div>
-      <Form.Label required className="relative w-fit mb-5">
-        {t('feature-flags.variation')}
-        <Icon
-          icon={IconInfo}
-          size="xs"
-          color="gray-500"
-          className="absolute -right-6"
-        />
-      </Form.Label>
-      <div className="flex w-full gap-x-4">
-        <p className="typo-para-small text-gray-600 mt-3">
-          {t('feature-flags.serve')}
-        </p>
-        <div className="flex flex-col w-full gap-x-2">
-          <Form.Field
-            control={control}
-            name={`${commonName}.currentOption`}
-            render={({ field }) => (
-              <Form.Item className="flex flex-col flex-1 py-0 w-full">
-                <Form.Control>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      label={
-                        variationOptions.find(
-                          item => item.value === currentOption
-                        )?.label || ''
-                      }
-                      isExpand
-                      className="w-full"
-                    />
-                    <DropdownMenuContent align="start">
-                      {variationOptions.map((item, index) => (
-                        <DropdownMenuItem
-                          {...field}
-                          key={index}
-                          label={item.label}
-                          value={item.value}
-                          onSelectOption={() => handleSelectStrategy(item)}
-                        />
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
+  const handleChangeRolloutWeight = useCallback(
+    (weight: number, itemIndex: number) => {
+      const newRollout = targetSegmentRules[
+        segmentIndex
+      ]?.strategy?.rolloutStrategy?.map((item, index) => {
+        if (index === itemIndex) {
+          return {
+            ...item,
+            weight
+          };
+        }
+        return item;
+      });
+      targetSegmentRules[segmentIndex] = {
+        ...targetSegmentRules[segmentIndex],
+        strategy: {
+          ...targetSegmentRules[segmentIndex].strategy,
+          rolloutStrategy: newRollout
+        }
+      };
+      setValue(commonName, targetSegmentRules[segmentIndex].strategy);
+      trigger(commonName);
+      return onChangeTargetSegmentRules([...targetSegmentRules]);
+    },
+    [targetSegmentRules, commonName, segmentIndex]
+  );
 
-          {type === StrategyType.ROLLOUT && (
-            <Form.Field
-              control={control}
-              name={`${commonName}.currentOption`}
-              render={() => (
-                <Form.Item className="flex flex-col w-full gap-y-2">
-                  <Form.Control>
-                    <div className="flex items-center min-w-full"></div>
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-          )}
-        </div>
-      </div>
-    </div>
+  return (
+    <Strategy
+      feature={feature}
+      strategyName={commonName}
+      percentageValueCount={percentageValueCount}
+      variationOptions={variationOptions}
+      handleSelectStrategy={handleSelectStrategy}
+      handleChangeRolloutWeight={handleChangeRolloutWeight}
+    />
   );
 };
 

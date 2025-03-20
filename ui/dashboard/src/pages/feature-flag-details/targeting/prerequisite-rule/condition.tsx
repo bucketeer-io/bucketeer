@@ -2,7 +2,6 @@ import { forwardRef, Ref, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
-import { AnyObject } from 'yup';
 import { Feature } from '@types';
 import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
@@ -15,15 +14,15 @@ import {
 } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import { PrerequisiteRuleType } from '../types';
+import { PrerequisiteSchema } from '../types';
 
 interface Props {
+  prerequisites: PrerequisiteSchema[];
   features: Feature[];
   type: 'if' | 'and';
-  condition: PrerequisiteRuleType;
+  prerequisite: PrerequisiteSchema;
   isDisabledDelete: boolean;
   prerequisiteIndex: number;
-  ruleIndex: number;
   onDeleteCondition: () => void;
   onChangeFormField: (field: string, value: string | number | boolean) => void;
 }
@@ -31,12 +30,12 @@ interface Props {
 const ConditionForm = forwardRef(
   (
     {
+      prerequisites,
       features,
       type,
-      condition,
+      prerequisite,
       isDisabledDelete,
       prerequisiteIndex,
-      ruleIndex,
       onDeleteCondition,
       onChangeFormField
     }: Props,
@@ -47,36 +46,29 @@ const ConditionForm = forwardRef(
     const methods = useFormContext();
     const { control, watch } = methods;
 
-    const featuresSelected = useMemo(
-      () =>
-        watch(`prerequisitesRules.${prerequisiteIndex}.rules`)?.map(
-          (item: AnyObject) => item?.featureFlag
-        ),
+    const commonName = useMemo(
+      () => `prerequisites.${prerequisiteIndex}`,
       [prerequisiteIndex]
     );
 
-    const commonName = useMemo(
-      () => `prerequisitesRules.${prerequisiteIndex}.rules.${ruleIndex}.`,
-      [prerequisiteIndex, ruleIndex]
-    );
-
-    const featureFlag = watch(`${commonName}featureFlag`);
+    const featureId = watch(`${commonName}.featureId`);
 
     const currentFeature = useMemo(
-      () => features.find(item => item.id === featureFlag),
-      [featureFlag, features]
+      () => features.find(item => item.id === featureId),
+      [featureId, features]
     );
 
-    const flagOptions = useMemo(
-      () =>
-        features
-          .filter(f => !featuresSelected.includes(f.id))
-          .map(item => ({
-            label: item.name,
-            value: item.id
-          })),
-      [features, featuresSelected]
-    );
+    const flagOptions = useMemo(() => {
+      const featuresSelected = prerequisites.map(
+        (item: PrerequisiteSchema) => item.featureId
+      );
+      return features
+        .filter(f => !featuresSelected.includes(f.id))
+        .map(item => ({
+          label: item.name,
+          value: item.id
+        }));
+    }, [features, prerequisites]);
 
     const variationOptions = useMemo(
       () =>
@@ -104,20 +96,14 @@ const ConditionForm = forwardRef(
           <div className="flex  w-full gap-x-4">
             <Form.Field
               control={control}
-              name={`${commonName}featureFlag`}
+              name={`${commonName}.featureId`}
               render={({ field }) => (
                 <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px]">
                   <Form.Label required>{t('feature-flags.flag')}</Form.Label>
                   <Form.Control>
                     <DropdownMenu>
                       <DropdownMenuTrigger
-                        label={
-                          flagOptions?.find(item =>
-                            [field.value, condition.featureFlag].includes(
-                              item.value
-                            )
-                          )?.label
-                        }
+                        label={currentFeature?.name}
                         placeholder={t('experiments.select-flag')}
                         className="w-full"
                         disabled={!flagOptions?.length}
@@ -130,7 +116,7 @@ const ConditionForm = forwardRef(
                             value={item.value}
                             onSelectOption={value => {
                               field.onChange(value);
-                              onChangeFormField('featureFlag', value);
+                              onChangeFormField('featureId', value);
                             }}
                           />
                         ))}
@@ -151,7 +137,7 @@ const ConditionForm = forwardRef(
             </div>
             <Form.Field
               control={control}
-              name={`${commonName}variation`}
+              name={`${commonName}.variationId`}
               render={({ field }) => (
                 <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px]">
                   <Form.Label required>
@@ -162,7 +148,7 @@ const ConditionForm = forwardRef(
                       <DropdownMenuTrigger
                         label={
                           variationOptions?.find(item =>
-                            [field.value, condition.variation].includes(
+                            [field.value, prerequisite.variationId].includes(
                               item.value
                             )
                           )?.label
@@ -179,7 +165,7 @@ const ConditionForm = forwardRef(
                             value={item.value}
                             onSelectOption={value => {
                               field.onChange(value);
-                              onChangeFormField('variation', value);
+                              onChangeFormField('variationId', value);
                             }}
                           />
                         ))}

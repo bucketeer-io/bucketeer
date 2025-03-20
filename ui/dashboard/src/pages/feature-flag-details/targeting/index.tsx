@@ -3,14 +3,20 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryFeatures } from '@queries/features';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { cloneDeep } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { Feature, FeatureRuleClauseOperator, StrategyType } from '@types';
 import Form from 'components/form';
 import AddRuleButton from './add-rule-button';
 import AddRuleDropdown from './add-rule-dropdown';
-import { initialPrerequisitesRule } from './constants';
-import DefaultRule from './default-rule';
-import { formSchema, RuleClauseType, RuleSchema } from './form-schema';
+import { initialPrerequisite } from './constants';
+import DefaultStrategy from './default-strategy';
+import {
+  formSchema,
+  RuleClauseType,
+  RuleSchema,
+  StrategySchema
+} from './form-schema';
 import IndividualRule from './individual-rule';
 import PrerequisiteRule from './prerequisite-rule';
 import TargetSegmentRule from './target-segment-rule';
@@ -19,7 +25,7 @@ import {
   IndividualRuleItem,
   RuleCategory,
   TargetingForm,
-  TargetPrerequisiteItem
+  PrerequisiteSchema
 } from './types';
 
 const Targeting = ({ feature }: { feature: Feature }) => {
@@ -32,9 +38,7 @@ const Targeting = ({ feature }: { feature: Feature }) => {
   const [targetIndividualRules, setTargetIndividualRules] = useState<
     IndividualRuleItem[]
   >([]);
-  const [prerequisitesRules, setPrerequisitesRules] = useState<
-    TargetPrerequisiteItem[]
-  >([]);
+  const [prerequisites, setPrerequisites] = useState<PrerequisiteSchema[]>([]);
 
   const { data: collection } = useQueryFeatures({
     params: {
@@ -46,15 +50,6 @@ const Targeting = ({ feature }: { feature: Feature }) => {
 
   const features = useMemo(() => collection?.features || [], [collection]);
 
-  const form = useForm({
-    resolver: yupResolver(formSchema),
-    values: {
-      prerequisitesRules,
-      rules: targetSegmentRules,
-      targetIndividualRules
-    }
-  });
-
   const defaultRolloutStrategy = useMemo(
     () =>
       feature.variations?.map(val => ({
@@ -63,6 +58,30 @@ const Targeting = ({ feature }: { feature: Feature }) => {
       })),
     [feature]
   );
+
+  const defaultStrategy = useMemo(() => {
+    const { defaultStrategy } = feature || {};
+    return {
+      ...defaultStrategy,
+      rolloutStrategy: defaultStrategy?.rolloutStrategy?.variations?.length
+        ? defaultStrategy?.rolloutStrategy?.variations
+        : defaultRolloutStrategy,
+      currentOption:
+        defaultStrategy?.type === StrategyType.FIXED
+          ? defaultStrategy?.fixedStrategy?.variation
+          : StrategyType.ROLLOUT
+    } as unknown as StrategySchema;
+  }, [feature]);
+
+  const form = useForm({
+    resolver: yupResolver(formSchema),
+    defaultValues: {
+      prerequisites,
+      rules: targetSegmentRules,
+      targetIndividualRules,
+      defaultStrategy
+    }
+  });
 
   const defaultRule = useMemo(() => {
     return {
@@ -90,7 +109,7 @@ const Targeting = ({ feature }: { feature: Feature }) => {
   const onAddRule = useCallback(
     (type: RuleCategory) => {
       if (type === 'target-segments') {
-        const _rules = [...targetSegmentRules, defaultRule];
+        const _rules = [...targetSegmentRules, cloneDeep(defaultRule)];
         form.setValue('rules', _rules);
         return setTargetSegmentRules(_rules);
       }
@@ -102,18 +121,32 @@ const Targeting = ({ feature }: { feature: Feature }) => {
         }));
         return setTargetIndividualRules(data);
       }
-      setPrerequisitesRules([
-        ...prerequisitesRules,
-        {
-          index: prerequisitesRules.length + 1,
-          rules: [initialPrerequisitesRule]
-        }
-      ]);
+      const _prerequisites = [...prerequisites, cloneDeep(initialPrerequisite)];
+      form.setValue('prerequisites', _prerequisites);
+      setPrerequisites(_prerequisites);
     },
     [
       targetSegmentRules,
       targetIndividualRules,
-      prerequisitesRules,
+      prerequisites,
+      feature,
+      defaultRule,
+      form
+    ]
+  );
+
+  const onDeleteRule = useCallback(
+    (type: RuleCategory, index: number) => {
+      if (type === 'target-segments') {
+        const _rules = targetSegmentRules.filter((_, i) => i !== index);
+        form.setValue('rules', _rules);
+        return setTargetSegmentRules(_rules);
+      }
+    },
+    [
+      targetSegmentRules,
+      targetIndividualRules,
+      prerequisites,
       feature,
       defaultRule,
       form
@@ -131,20 +164,20 @@ const Targeting = ({ feature }: { feature: Feature }) => {
           <div className="flex flex-col size-full gap-y-6 overflow-visible">
             <TargetingState />
             <AddRuleDropdown onAddRule={onAddRule} />
-            {prerequisitesRules.length > 0 && (
+            {prerequisites.length > 0 && (
               <Form.Field
                 control={form.control}
-                name={'prerequisitesRules'}
+                name={'prerequisites'}
                 render={({ field }) => (
                   <Form.Item className="py-0">
                     <Form.Control>
                       <PrerequisiteRule
                         features={features}
                         feature={feature}
-                        prerequisitesRules={prerequisitesRules}
-                        onChangePrerequisitesRules={rules => {
+                        prerequisites={prerequisites}
+                        onChangePrerequisites={rules => {
                           field.onChange(rules);
-                          setPrerequisitesRules(rules);
+                          setPrerequisites(rules);
                         }}
                       />
                     </Form.Control>
@@ -189,6 +222,9 @@ const Targeting = ({ feature }: { feature: Feature }) => {
                             setTargetSegmentRules(rules);
                           }}
                           onAddRule={() => onAddRule('target-segments')}
+                          onDeleteRule={index =>
+                            onDeleteRule('target-segments', index)
+                          }
                         />
                       </Form.Control>
                     </Form.Item>
@@ -200,7 +236,7 @@ const Targeting = ({ feature }: { feature: Feature }) => {
                 />
               </>
             )}
-            <DefaultRule />
+            <DefaultStrategy feature={feature} />
           </div>
         </Form>
       </FormProvider>

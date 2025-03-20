@@ -322,7 +322,6 @@ const ConditionForm = forwardRef(
                       ) : (
                         <Input
                           {...field}
-                          value={field.value || clause?.attribute}
                           onChange={value => {
                             field.onChange(value);
                             onChangeFormField('attribute', value);

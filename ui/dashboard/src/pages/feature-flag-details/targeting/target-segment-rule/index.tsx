@@ -13,7 +13,7 @@ import {
   FeatureRuleClauseOperator,
   RuleStrategyVariation
 } from '@types';
-import { IconInfo, IconPlus } from '@icons';
+import { IconClose, IconInfo, IconPlus } from '@icons';
 import Button from 'components/button';
 import Form from 'components/form';
 import Icon from 'components/icon';
@@ -30,6 +30,7 @@ interface Props {
   targetSegmentRules: RuleSchema[];
   onChangeTargetSegmentRules: (value: RuleSchema[]) => void;
   onAddRule: () => void;
+  onDeleteRule: (index: number) => void;
 }
 
 const TargetSegmentRule = ({
@@ -38,7 +39,8 @@ const TargetSegmentRule = ({
   defaultRolloutStrategy,
   targetSegmentRules,
   onChangeTargetSegmentRules,
-  onAddRule
+  onAddRule,
+  onDeleteRule
 }: Props) => {
   const { t } = useTranslation(['table', 'form']);
 
@@ -47,17 +49,17 @@ const TargetSegmentRule = ({
   const { control } = methods;
 
   const onAddCondition = useCallback(
-    (ruleIndex: number) => {
-      targetSegmentRules[ruleIndex].clauses.push({
+    (segmentIndex: number) => {
+      targetSegmentRules[segmentIndex].clauses.push({
         id: uuid(),
         type: RuleClauseType.COMPARE,
         attribute: '',
         operator: FeatureRuleClauseOperator.EQUALS,
         values: []
       });
-      onChangeTargetSegmentRules(targetSegmentRules);
+      onChangeTargetSegmentRules([...targetSegmentRules]);
     },
-    [targetSegmentRules, targetSegmentRules]
+    [targetSegmentRules]
   );
 
   const onDeleteCondition = useCallback(
@@ -85,9 +87,25 @@ const TargetSegmentRule = ({
     [targetSegmentRules]
   );
 
+  const handleChangeIndexRule = useCallback(
+    (type: 'increase' | 'decrease', currentIndex: number) => {
+      const isIncrease = type === 'increase';
+      const _rules = targetSegmentRules.map((rule, index) => {
+        const targetIndex = isIncrease ? currentIndex + 1 : currentIndex - 1;
+        if ([currentIndex, targetIndex].includes(index))
+          return targetSegmentRules[
+            index === currentIndex ? targetIndex : currentIndex
+          ];
+        return rule;
+      });
+      return onChangeTargetSegmentRules(_rules);
+    },
+    [targetSegmentRules]
+  );
+
   return (
     targetSegmentRules.length > 0 && (
-      <div className="w-full">
+      <div className="flex flex-col w-full gap-y-6">
         {targetSegmentRules.map((segment, segmentIndex) => (
           <div key={segmentIndex} className="flex flex-col w-full gap-y-6">
             <Card>
@@ -109,24 +127,50 @@ const TargetSegmentRule = ({
                       }}
                     />
                   </p>
-                  {targetSegmentRules.length > 1 && (
-                    <div className="flex items-center gap-x-1">
-                      {segmentIndex !== targetSegmentRules.length - 1 && (
-                        <Icon
-                          icon={IconArrowDownwardFilled}
-                          color="gray-500"
-                          size={'sm'}
-                        />
-                      )}
-                      {segmentIndex !== 0 && (
-                        <Icon
-                          icon={IconArrowUpwardFilled}
-                          color="gray-500"
-                          size={'sm'}
-                        />
-                      )}
+                  <div className="flex items-center gap-x-2">
+                    <div
+                      className="flex-center cursor-pointer group"
+                      onClick={() => onDeleteRule(segmentIndex)}
+                    >
+                      <Icon
+                        icon={IconClose}
+                        size={'sm'}
+                        className="flex-center text-gray-500 group-hover:text-gray-700"
+                      />
                     </div>
-                  )}
+                    {targetSegmentRules.length > 1 && (
+                      <div className="flex items-center gap-x-1">
+                        {segmentIndex !== targetSegmentRules.length - 1 && (
+                          <div
+                            className="flex-center group cursor-pointer"
+                            onClick={() =>
+                              handleChangeIndexRule('increase', segmentIndex)
+                            }
+                          >
+                            <Icon
+                              icon={IconArrowDownwardFilled}
+                              size={'sm'}
+                              className="text-gray-500 group-hover:text-gray-700"
+                            />
+                          </div>
+                        )}
+                        {segmentIndex !== 0 && (
+                          <div
+                            className="flex-center group cursor-pointer"
+                            onClick={() =>
+                              handleChangeIndexRule('decrease', segmentIndex)
+                            }
+                          >
+                            <Icon
+                              icon={IconArrowUpwardFilled}
+                              size={'sm'}
+                              className="text-gray-500 group-hover:text-gray-700"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <Fragment>
                   {segment.clauses.map((clause, clauseIndex) => (

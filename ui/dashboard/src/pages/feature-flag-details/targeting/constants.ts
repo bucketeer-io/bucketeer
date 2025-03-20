@@ -1,6 +1,6 @@
 import {
   IndividualRuleItem,
-  PrerequisiteRuleType,
+  PrerequisiteSchema,
   SegmentConditionType
 } from './types';
 
@@ -20,13 +20,9 @@ const initialIndividualRule: IndividualRuleItem = {
   users: []
 };
 
-const initialPrerequisitesRule: PrerequisiteRuleType = {
-  featureFlag: '',
-  variation: ''
+const initialPrerequisite: PrerequisiteSchema = {
+  featureId: '',
+  variationId: ''
 };
 
-export {
-  initialSegmentCondition,
-  initialIndividualRule,
-  initialPrerequisitesRule
-};
+export { initialSegmentCondition, initialIndividualRule, initialPrerequisite };

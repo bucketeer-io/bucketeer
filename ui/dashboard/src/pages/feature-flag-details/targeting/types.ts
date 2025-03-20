@@ -43,13 +43,13 @@ export interface TargetSegmentItem {
   rules: SegmentRuleItem[];
 }
 
-export interface TargetPrerequisiteItem {
-  index: number;
-  rules: PrerequisiteRuleType[];
+export interface PrerequisiteSchema {
+  featureId: string;
+  variationId: string;
 }
 
 export interface TargetingForm {
   rules?: RuleSchema[];
-  prerequisitesRules: TargetPrerequisiteItem[];
+  prerequisites?: PrerequisiteSchema[];
   targetIndividualRules: IndividualRuleItem[];
 }

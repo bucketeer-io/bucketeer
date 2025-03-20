@@ -34,8 +34,6 @@ const ruleClauseSchema = yup.object().shape({
     .required('This field is required.')
 });
 
-export type RuleSchema = yup.InferType<typeof rulesSchema>;
-
 const strategySchema = yup.object().shape({
   currentOption: yup.string(),
   type: yup
@@ -56,8 +54,8 @@ const strategySchema = yup.object().shape({
     .array()
     .of(
       yup.object().shape({
-        variation: yup.string(),
-        weight: yup.number()
+        variation: yup.string().required('This field is required.'),
+        weight: yup.number().required('This field is required.')
       })
     )
     .when('type', {
@@ -66,7 +64,7 @@ const strategySchema = yup.object().shape({
       otherwise: schema => schema.required('This field is required.')
     })
     .test('sum', (value, context) => {
-      if (context.parent.option.value != StrategyType.ROLLOUT) {
+      if (context.parent?.type !== StrategyType.ROLLOUT) {
         return true;
       }
       if (value) {
@@ -75,7 +73,7 @@ const strategySchema = yup.object().shape({
           .reduce((total, current) => {
             return total + (current || 0);
           }, 0);
-        if (total == 100)
+        if (total !== 100)
           return context.createError({
             message: `Total should be 100%.`,
             path: context.path
@@ -84,6 +82,7 @@ const strategySchema = yup.object().shape({
       return true;
     })
 });
+export type StrategySchema = yup.InferType<typeof strategySchema>;
 
 export const rulesSchema = yup.object().shape({
   id: yup.string(),
@@ -91,24 +90,15 @@ export const rulesSchema = yup.object().shape({
   strategy: strategySchema
 });
 
+export type RuleSchema = yup.InferType<typeof rulesSchema>;
+
 export const formSchema = yup.object().shape({
-  prerequisitesRules: yup
-    .array()
-    .required()
-    .of(
-      yup.object().shape({
-        index: yup.number().required(),
-        rules: yup
-          .array()
-          .required()
-          .of(
-            yup.object().shape({
-              featureFlag: yup.string().required('This field is required.'),
-              variation: yup.string().required('This field is required.')
-            })
-          )
-      })
-    ),
+  prerequisites: yup.array().of(
+    yup.object().shape({
+      featureId: yup.string().required('This field is required.'),
+      variationId: yup.string().required('This field is required.')
+    })
+  ),
   targetIndividualRules: yup
     .array()
     .required()
@@ -131,5 +121,6 @@ export const formSchema = yup.object().shape({
           })
       })
     ),
-  rules: yup.array().of(rulesSchema)
+  rules: yup.array().of(rulesSchema),
+  defaultStrategy: strategySchema
 });
