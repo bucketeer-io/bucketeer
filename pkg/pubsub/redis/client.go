@@ -111,6 +111,13 @@ func (c *Client) CreatePuller(subscription, topic string) (puller.Puller, error)
 	return NewRedisPuller(c.redisClient, subscription, topic, options...), nil
 }
 
+// CreatePublisherInProject creates a publisher for the given topic
+// For Redis, this behaves the same as CreatePublisher since Redis doesn't have the concept of projects
+func (c *Client) CreatePublisherInProject(topic, project string) (publisher.Publisher, error) {
+	// For Redis, we ignore the project parameter
+	return c.CreatePublisher(topic)
+}
+
 // Close closes the client
 func (c *Client) Close() error {
 	// The client doesn't own the Redis client, so we don't close it
