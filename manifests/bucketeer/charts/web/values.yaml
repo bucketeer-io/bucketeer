@@ -11,6 +11,10 @@ env:
   bigqueryEmulatorHost:
   pubsubEmulatorHost:
   project:
+  pubSubType: google
+  pubSubRedisAddr:
+  pubSubRedisPoolSize:
+  pubSubRedisMinIdle:
   mysqlUser:
   mysqlPass:
   mysqlHost:
