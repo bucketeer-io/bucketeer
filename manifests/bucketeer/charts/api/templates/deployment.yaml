@@ -98,6 +98,14 @@ spec:
               value: "{{ .Values.env.logLevel }}"
             - name: BUCKETEER_API_TRACE_SAMPLING_PROBABILITY
               value: "{{ .Values.env.traceSamplingProbability }}"
+            - name: BUCKETEER_API_PUBSUB_TYPE
+              value: "{{ .Values.env.pubSubType }}"
+            - name: BUCKETEER_API_PUBSUB_REDIS_ADDR
+              value: "{{ .Values.env.pubSubRedisAddr }}"
+            - name: BUCKETEER_API_PUBSUB_REDIS_POOL_SIZE
+              value: "{{ .Values.env.pubSubRedisPoolSize }}"
+            - name: BUCKETEER_API_PUBSUB_REDIS_MIN_IDLE
+              value: "{{ .Values.env.pubSubRedisMinIdle }}"
             - name: BUCKETEER_API_SERVICE_TOKEN
               value: /usr/local/service-token/token
             - name: BUCKETEER_API_CERT
