@@ -21,8 +21,9 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
+	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 )
 
 type options struct {
@@ -30,21 +31,23 @@ type options struct {
 	logger  *zap.Logger
 }
 
-var defaultOptions = options{
-	logger: zap.NewNop(),
-}
+// Default values
+const (
+	// DefaultPubSubType is the default PubSub implementation
+	DefaultPubSubType = factory.Google
+)
 
 type Option func(*options)
 
 func WithMetrics(r metrics.Registerer) Option {
-	return func(opts *options) {
-		opts.metrics = r
+	return func(o *options) {
+		o.metrics = r
 	}
 }
 
 func WithLogger(logger *zap.Logger) Option {
-	return func(opts *options) {
-		opts.logger = logger
+	return func(o *options) {
+		o.logger = logger
 	}
 }
 
@@ -63,6 +66,8 @@ type OnDemandProcessor interface {
 }
 
 type Configuration struct {
+	// PubSubType specifies which PubSub implementation to use (google or redis)
+	PubSubType                   string `json:"pubSubType"`
 	Project                      string `json:"project"`
 	Subscription                 string `json:"subscription"`
 	Topic                        string `json:"topic"`
@@ -71,6 +76,11 @@ type Configuration struct {
 	PullerMaxOutstandingBytes    int    `json:"pullerMaxOutstandingBytes"`
 	MaxMPS                       int    `json:"maxMPS"`
 	WorkerNum                    int    `json:"workerNum"`
+	// Redis configuration (used when PubSubType is "redis")
+	RedisAddr     string `json:"redisAddr,omitempty"`
+	RedisPoolSize int    `json:"redisPoolSize,omitempty"`
+	RedisMinIdle  int    `json:"redisMinIdle,omitempty"`
+	RedisDB       int    `json:"redisDB,omitempty"`
 }
 
 type pubSubSubscriber struct {
@@ -88,22 +98,31 @@ func NewPubSubSubscriber(
 	processor PubSubProcessor,
 	opts ...Option,
 ) Subscriber {
-	options := defaultOptions
-	for _, o := range opts {
-		o(&options)
+	dopts := options{
+		logger: zap.NewNop(),
 	}
+	for _, opt := range opts {
+		opt(&dopts)
+	}
+	if configuration.PubSubType == "" {
+		configuration.PubSubType = string(DefaultPubSubType)
+	}
+	logger := dopts.logger.Named("subscriber").With(
+		zap.String("name", name),
+	)
 	return &pubSubSubscriber{
 		name:          name,
 		configuration: configuration,
 		processor:     processor,
-		opts:          options,
-		logger:        options.logger.Named(name),
+		opts:          dopts,
+		logger:        logger,
 	}
 }
 
 func (s pubSubSubscriber) Run(ctx context.Context) {
 	s.logger.Debug("subscriber starting",
 		zap.String("name", s.name),
+		zap.String("pubSubType", s.configuration.PubSubType),
 		zap.String("project", s.configuration.Project),
 		zap.String("subscription", s.configuration.Subscription),
 		zap.String("topic", s.configuration.Topic),
@@ -143,26 +162,79 @@ func (s pubSubSubscriber) Stop() {
 func (s pubSubSubscriber) createPuller(
 	ctx context.Context,
 ) puller.RateLimitedPuller {
-	pubsubClient, err := pubsub.NewClient(
-		ctx,
-		s.configuration.Project,
-		pubsub.WithMetrics(s.opts.metrics),
-		pubsub.WithLogger(s.logger),
-	)
+	var pubsubClient factory.Client
+	var err error
+
+	// Create client based on configured PubSubType
+	pubSubType := factory.PubSubType(s.configuration.PubSubType)
+
+	factoryOpts := []factory.Option{
+		factory.WithPubSubType(pubSubType),
+		factory.WithMetrics(s.opts.metrics),
+		factory.WithLogger(s.logger),
+	}
+
+	// Add provider-specific options
+	if pubSubType == factory.Google {
+		factoryOpts = append(factoryOpts, factory.WithProjectID(s.configuration.Project))
+	} else if pubSubType == factory.Redis {
+		// Create Redis client
+		redisClient, redisErr := createRedisClient(ctx, s.configuration, s.logger)
+		if redisErr != nil {
+			s.logger.Error("Failed to create Redis client", zap.Error(redisErr))
+			return nil
+		}
+		factoryOpts = append(factoryOpts, factory.WithRedisClient(redisClient))
+	}
+
+	// Create the PubSub client using the factory
+	pubsubClient, err = factory.NewClient(ctx, factoryOpts...)
 	if err != nil {
-		s.logger.Error("Failed to create pubsub client", zap.Error(err))
+		s.logger.Error("Failed to create pubsub client",
+			zap.Error(err),
+			zap.String("pubSubType", string(pubSubType)),
+		)
 		return nil
 	}
+
+	// Create the puller using the client
 	pubsubPuller, err := pubsubClient.CreatePuller(
 		s.configuration.Subscription,
 		s.configuration.Topic,
-		pubsub.WithNumGoroutines(s.configuration.PullerNumGoroutines),
-		pubsub.WithMaxOutstandingMessages(s.configuration.PullerMaxOutstandingMessages),
-		pubsub.WithMaxOutstandingBytes(s.configuration.PullerMaxOutstandingBytes),
 	)
 	if err != nil {
-		s.logger.Error("Failed to create pubsub puller", zap.Error(err))
+		s.logger.Error("Failed to create puller",
+			zap.Error(err),
+			zap.String("subscription", s.configuration.Subscription),
+			zap.String("topic", s.configuration.Topic),
+		)
 		return nil
 	}
-	return puller.NewRateLimitedPuller(pubsubPuller, s.configuration.MaxMPS)
+
+	// Create rate-limited puller (only MaxMPS is supported in the actual implementation)
+	rateLimitedPuller := puller.NewRateLimitedPuller(pubsubPuller, s.configuration.MaxMPS)
+	return rateLimitedPuller
+}
+
+// createRedisClient creates a Redis client from the configuration
+func createRedisClient(ctx context.Context, config Configuration, logger *zap.Logger) (redisv3.Client, error) {
+	redisOpts := []redisv3.Option{}
+
+	// Add Redis options if configured
+	if config.RedisPoolSize > 0 {
+		redisOpts = append(redisOpts, redisv3.WithPoolSize(config.RedisPoolSize))
+	}
+	if config.RedisMinIdle > 0 {
+		redisOpts = append(redisOpts, redisv3.WithMinIdleConns(config.RedisMinIdle))
+	}
+
+	// Add metrics and logger
+	redisOpts = append(redisOpts, redisv3.WithServerName("pubsub-redis"))
+	redisOpts = append(redisOpts, redisv3.WithLogger(logger.Named("redis-client")))
+
+	// Create Redis client
+	return redisv3.NewClient(
+		config.RedisAddr,
+		redisOpts...,
+	)
 }

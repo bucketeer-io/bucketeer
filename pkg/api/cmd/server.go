@@ -29,7 +29,7 @@ import (
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
@@ -65,6 +65,11 @@ type server struct {
 	redisPoolMaxActive     *int
 	oldestEventTimestamp   *time.Duration
 	furthestEventTimestamp *time.Duration
+	// PubSub configurations
+	pubSubType          *string
+	pubSubRedisAddr     *string
+	pubSubRedisPoolSize *int
+	pubSubRedisMinIdle  *int
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -134,6 +139,11 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"furthest-event-timestamp",
 			"The duration of furthest event timestamp from processing time to allow.",
 		).Default("24h").Duration(),
+		// PubSub configurations
+		pubSubType:          cmd.Flag("pubsub-type", "Type of PubSub to use (google or redis).").Default("google").String(),
+		pubSubRedisAddr:     cmd.Flag("pubsub-redis-addr", "Address of the Redis server for PubSub.").Default("localhost:6379").String(),
+		pubSubRedisPoolSize: cmd.Flag("pubsub-redis-pool-size", "Maximum number of connections for Redis PubSub.").Default("10").Int(),
+		pubSubRedisMinIdle:  cmd.Flag("pubsub-redis-min-idle", "Minimum number of idle connections for Redis PubSub.").Default("5").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -144,19 +154,35 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	pubsubCtx, pubsubCancel := context.WithTimeout(ctx, 5*time.Second)
 	defer pubsubCancel()
-	pubsubClient, err := pubsub.NewClient(
-		pubsubCtx,
-		*s.project,
-		pubsub.WithMetrics(registerer),
-		pubsub.WithLogger(logger),
-	)
-	if err != nil {
-		return err
+
+	// Create PubSub client using the factory
+	pubSubType := factory.PubSubType(*s.pubSubType)
+	factoryOpts := []factory.Option{
+		factory.WithPubSubType(pubSubType),
+		factory.WithMetrics(registerer),
+		factory.WithLogger(logger),
 	}
 
-	publishOptions := []pubsub.PublishOption{pubsub.WithPublishTimeout(*s.publishTimeout)}
-	if *s.publishNumGoroutines > 0 {
-		publishOptions = append(publishOptions, pubsub.WithPublishNumGoroutines(*s.publishNumGoroutines))
+	// Add provider-specific options
+	if pubSubType == factory.Google {
+		factoryOpts = append(factoryOpts, factory.WithProjectID(*s.project))
+	} else if pubSubType == factory.Redis {
+		redisClient, err := redisv3.NewClient(
+			*s.pubSubRedisAddr,
+			redisv3.WithPoolSize(*s.pubSubRedisPoolSize),
+			redisv3.WithMinIdleConns(*s.pubSubRedisMinIdle),
+			redisv3.WithServerName("api-pubsub-redis"),
+			redisv3.WithLogger(logger),
+		)
+		if err != nil {
+			return err
+		}
+		factoryOpts = append(factoryOpts, factory.WithRedisClient(redisClient))
+	}
+
+	pubsubClient, err := factory.NewClient(pubsubCtx, factoryOpts...)
+	if err != nil {
+		return err
 	}
 
 	var goalTopicProject string
@@ -165,7 +191,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	} else {
 		goalTopicProject = *s.goalTopicProject
 	}
-	goalPublisher, err := pubsubClient.CreatePublisherInProject(*s.goalTopic, goalTopicProject, publishOptions...)
+	goalPublisher, err := pubsubClient.CreatePublisherInProject(*s.goalTopic, goalTopicProject)
 	if err != nil {
 		return err
 	}
@@ -180,7 +206,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	evaluationPublisher, err := pubsubClient.CreatePublisherInProject(
 		*s.evaluationTopic,
 		evaluationTopicProject,
-		publishOptions...,
 	)
 	if err != nil {
 		return nil
@@ -190,7 +215,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// FIXME: This condition won't be necessary once user feature is fully released.
 	var userPublisher publisher.Publisher
 	if *s.userTopic != "" {
-		userPublisher, err = pubsubClient.CreatePublisherInProject(*s.userTopic, *s.project, publishOptions...)
+		userPublisher, err = pubsubClient.CreatePublisherInProject(*s.userTopic, *s.project)
 		if err != nil {
 			return err
 		}
@@ -200,7 +225,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// FIXME: This condition won't be necessary once user feature is fully released.
 	var metricsPublisher publisher.Publisher
 	if *s.metricsTopic != "" {
-		metricsPublisher, err = pubsubClient.CreatePublisherInProject(*s.metricsTopic, *s.project, publishOptions...)
+		metricsPublisher, err = pubsubClient.CreatePublisherInProject(*s.metricsTopic, *s.project)
 		if err != nil {
 			return err
 		}
