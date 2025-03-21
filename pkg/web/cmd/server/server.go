@@ -49,7 +49,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	notificationapi "github.com/bucketeer-io/bucketeer/pkg/notification/api"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	pushapi "github.com/bucketeer-io/bucketeer/pkg/push/api"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
@@ -101,6 +101,11 @@ type server struct {
 	// PubSub
 	domainTopic                   *string
 	bulkSegmentUsersReceivedTopic *string
+	// PubSub configuration
+	pubSubType          *string
+	pubSubRedisAddr     *string
+	pubSubRedisPoolSize *int
+	pubSubRedisMinIdle  *int
 	// Port
 	accountServicePort       *int
 	authServicePort          *int
@@ -306,6 +311,11 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Required().String(),
 		cloudService:        cmd.Flag("cloud-service", "Cloud Service info").Default(gcp).String(),
 		webConsoleEnvJSPath: cmd.Flag("web-console-env-js-path", "console env js path").Required().String(),
+		// PubSub configuration
+		pubSubType:          cmd.Flag("pubsub-type", "Type of PubSub to use (google or redis).").Default("google").String(),
+		pubSubRedisAddr:     cmd.Flag("pubsub-redis-addr", "Address of the Redis server for PubSub.").Default("localhost:6379").String(),
+		pubSubRedisPoolSize: cmd.Flag("pubsub-redis-pool-size", "Maximum number of connections for Redis PubSub.").Default("10").Int(),
+		pubSubRedisMinIdle:  cmd.Flag("pubsub-redis-min-idle", "Minimum number of idle connections for Redis PubSub.").Default("5").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -784,16 +794,40 @@ func (s *server) createPublisher(
 ) (publisher.Publisher, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	client, err := pubsub.NewClient(
-		ctx,
-		*s.project,
-		pubsub.WithMetrics(registerer),
-		pubsub.WithLogger(logger),
-	)
+
+	// Create PubSub client using the factory
+	pubSubType := factory.PubSubType(*s.pubSubType)
+	factoryOpts := []factory.Option{
+		factory.WithPubSubType(pubSubType),
+		factory.WithMetrics(registerer),
+		factory.WithLogger(logger),
+	}
+
+	// Add provider-specific options
+	if pubSubType == factory.Google {
+		factoryOpts = append(factoryOpts, factory.WithProjectID(*s.project))
+	} else if pubSubType == factory.Redis {
+		redisClient, err := redisv3.NewClient(
+			*s.pubSubRedisAddr,
+			redisv3.WithPoolSize(*s.pubSubRedisPoolSize),
+			redisv3.WithMinIdleConns(*s.pubSubRedisMinIdle),
+			redisv3.WithServerName("web-pubsub-redis"),
+			redisv3.WithLogger(logger),
+		)
+		if err != nil {
+			return nil, err
+		}
+		factoryOpts = append(factoryOpts, factory.WithRedisClient(redisClient))
+	}
+
+	// Create the PubSub client using the factory
+	pubsubClient, err := factory.NewClient(ctx, factoryOpts...)
 	if err != nil {
 		return nil, err
 	}
-	return client.CreatePublisher(topic)
+
+	// Create publisher for the topic
+	return pubsubClient.CreatePublisher(topic)
 }
 
 func (s *server) readOAuthConfig(

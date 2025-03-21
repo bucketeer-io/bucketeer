@@ -124,7 +124,7 @@ func NewClient(ctx context.Context, opts ...Option) (Client, error) {
 		if options.projectID == "" {
 			return nil, fmt.Errorf("project ID is required for Google PubSub")
 		}
-		googleOpts := []pubsub.Option{}
+		var googleOpts []pubsub.Option
 		if options.metrics != nil {
 			googleOpts = append(googleOpts, pubsub.WithMetrics(options.metrics))
 		}

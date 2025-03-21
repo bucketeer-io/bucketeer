@@ -198,6 +198,14 @@ spec:
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_WEB_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_WEB_PUBSUB_TYPE
+              value: "{{ .Values.env.pubSubType }}"
+            - name: BUCKETEER_WEB_PUBSUB_REDIS_ADDR
+              value: "{{ .Values.env.pubSubRedisAddr }}"
+            - name: BUCKETEER_WEB_PUBSUB_REDIS_POOL_SIZE
+              value: "{{ .Values.env.pubSubRedisPoolSize }}"
+            - name: BUCKETEER_WEB_PUBSUB_REDIS_MIN_IDLE
+              value: "{{ .Values.env.pubSubRedisMinIdle }}"
             - name: BUCKETEER_WEB_OAUTH_PUBLIC_KEY
               value: /usr/local/oauth-key/public.pem
             - name: BUCKETEER_WEB_OAUTH_PRIVATE_KEY

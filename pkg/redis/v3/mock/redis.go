@@ -269,6 +269,26 @@ func (mr *MockClientMockRecorder) PFMerge(dest, expiration any, keys ...any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFMerge", reflect.TypeOf((*MockClient)(nil).PFMerge), varargs...)
 }
 
+// PSubscribe mocks base method.
+func (m *MockClient) PSubscribe(ctx context.Context, patterns ...string) (*v3.PubSub, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range patterns {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PSubscribe", varargs...)
+	ret0, _ := ret[0].(*v3.PubSub)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PSubscribe indicates an expected call of PSubscribe.
+func (mr *MockClientMockRecorder) PSubscribe(ctx any, patterns ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, patterns...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PSubscribe", reflect.TypeOf((*MockClient)(nil).PSubscribe), varargs...)
+}
+
 // Pipeline mocks base method.
 func (m *MockClient) Pipeline(tx bool) v3.PipeClient {
 	m.ctrl.T.Helper()
@@ -281,6 +301,21 @@ func (m *MockClient) Pipeline(tx bool) v3.PipeClient {
 func (mr *MockClientMockRecorder) Pipeline(tx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pipeline", reflect.TypeOf((*MockClient)(nil).Pipeline), tx)
+}
+
+// Publish mocks base method.
+func (m *MockClient) Publish(ctx context.Context, channel string, message any) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Publish", ctx, channel, message)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Publish indicates an expected call of Publish.
+func (mr *MockClientMockRecorder) Publish(ctx, channel, message any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockClient)(nil).Publish), ctx, channel, message)
 }
 
 // Restore mocks base method.
@@ -354,6 +389,26 @@ func (m *MockClient) Stats() redis.PoolStats {
 func (mr *MockClientMockRecorder) Stats() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stats", reflect.TypeOf((*MockClient)(nil).Stats))
+}
+
+// Subscribe mocks base method.
+func (m *MockClient) Subscribe(ctx context.Context, channels ...string) (*v3.PubSub, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx}
+	for _, a := range channels {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Subscribe", varargs...)
+	ret0, _ := ret[0].(*v3.PubSub)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Subscribe indicates an expected call of Subscribe.
+func (mr *MockClientMockRecorder) Subscribe(ctx any, channels ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx}, channels...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockClient)(nil).Subscribe), varargs...)
 }
 
 // MockPipeClient is a mock of PipeClient interface.
