@@ -11,14 +11,18 @@ interface Props {
 }
 
 const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
-  const { [idKey]: action, ...params } = useParams();
+  const { [idKey]: id, ['*']: path, ...params } = useParams();
   const navigate = useNavigate();
   const { notify } = useToast();
   const location = useLocation();
-
   const { state } = location;
-  const isAdd = useMemo(() => action === ID_NEW, [action]);
-  const isEdit = useMemo(() => action && !isAdd, [action, isAdd]);
+
+  const isAdd = useMemo(() => path === ID_NEW, [path]);
+  const isClone = useMemo(() => path?.includes('clone'), [path]);
+  const isEdit = useMemo(
+    () => path && !isAdd && !isClone,
+    [path, isAdd, isClone]
+  );
 
   const onOpenAddModal = () =>
     navigate(addPath || `${location.pathname}/${ID_NEW}`);
@@ -32,17 +36,21 @@ const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
     if (closeModalPath || path) navigate(String(closeModalPath || path));
   };
 
-  const errorToast = (error: Error) =>
+  const errorToast = (error: AnyObject) => {
+    const { message, status } = error || {};
     notify({
-      toastType: 'toast',
       messageType: 'error',
-      message: error?.message || 'Something went wrong.'
+      message:
+        message || status === 409
+          ? 'The same data already exists'
+          : 'Something went wrong.'
     });
-
+  };
   return {
-    id: action,
+    id,
     isAdd,
     isEdit,
+    isClone,
     state,
     onOpenAddModal,
     onOpenEditModal,

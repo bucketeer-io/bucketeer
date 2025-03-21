@@ -14,9 +14,12 @@ export function useSearchParams() {
 
   const onChangSearchParams = useCallback(
     (options: Record<string, string | number | boolean | string[]>) => {
-      navigate(`${location.pathname}?${stringifyParams(options)}`, {
-        replace: true
-      });
+      navigate(
+        `${location.pathname}?${decodeURIComponent(stringifyParams(options))}`,
+        {
+          replace: true
+        }
+      );
     },
     [navigate]
   );

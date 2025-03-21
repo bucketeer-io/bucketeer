@@ -1,4 +1,5 @@
 export const ID_NEW = 'new';
+export const ID_CLONE = 'clone';
 
 export const PAGE_PATH_ROOT = '/';
 export const PAGE_PATH_NEW = '/' + ID_NEW;

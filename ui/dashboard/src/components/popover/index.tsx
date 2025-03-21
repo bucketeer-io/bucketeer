@@ -9,6 +9,8 @@ import * as PopoverPrimitive from '@radix-ui/react-popover';
 import type { PopoverContentProps } from '@radix-ui/react-popover';
 import { AddonSlot } from '@types';
 import { cn } from 'utils/style';
+import { IconClose } from '@icons';
+import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 import PopoverItem from './popover-item';
 
@@ -34,7 +36,7 @@ const PopoverContent = React.forwardRef<
     align={align}
     sideOffset={sideOffset}
     className={cn(
-      'max-h-[260px] min-w-[167px] overflow-auto rounded-lg bg-gray-50 p-1 shadow-menu',
+      'max-h-[260px] min-w-[167px] overflow-auto rounded-lg bg-gray-50 p-1 shadow-dropdown',
       className
     )}
     {...props}
@@ -51,12 +53,15 @@ export type PopoverProps<PopoverValue> = {
   trigger?: ReactNode;
   triggerLabel?: string;
   icon?: FunctionComponent;
-  options: PopoverOption<PopoverValue>[];
+  options?: PopoverOption<PopoverValue>[];
   disabled?: boolean;
   value?: PopoverValue | undefined;
   modal?: boolean;
   className?: string;
   closeWhenSelected?: boolean;
+  children?: ReactNode;
+  closeBtnCls?: string;
+  sideOffset?: number;
   onClick?: (value: PopoverValue) => void;
 };
 
@@ -74,6 +79,9 @@ const Popover = forwardRef(
       modal = false,
       className,
       closeWhenSelected = true,
+      children,
+      closeBtnCls,
+      sideOffset = 0,
       onClick
     }: PopoverProps<PopoverValue>,
     ref: Ref<HTMLDivElement>
@@ -114,27 +122,37 @@ const Popover = forwardRef(
             hideWhenDetached={true}
             className={className}
             align={align}
+            sideOffset={sideOffset}
           >
-            <PopoverClose ref={popoverCloseRef} className="hidden" />
-            {options.map((item, index) => (
-              <Tooltip
-                key={index}
-                trigger={
-                  <div>
-                    <PopoverItem
-                      type="item"
-                      addonSlot={addonSlot}
-                      icon={item.icon}
-                      label={item.label}
-                      disabled={item?.disabled}
-                      onClick={() => onClick && handleSelectItem(item.value)}
-                    />
-                  </div>
-                }
-                content={item.tooltip}
-                className="bg-gray-800"
-              />
-            ))}
+            <PopoverClose
+              ref={popoverCloseRef}
+              className={cn('hidden', closeBtnCls)}
+            >
+              <Icon icon={IconClose} size={'sm'} className="flex-center" />
+            </PopoverClose>
+            {children
+              ? children
+              : options?.map((item, index) => (
+                  <Tooltip
+                    key={index}
+                    trigger={
+                      <div>
+                        <PopoverItem
+                          type="item"
+                          addonSlot={addonSlot}
+                          icon={item.icon}
+                          label={item.label}
+                          disabled={item?.disabled}
+                          onClick={() =>
+                            onClick && handleSelectItem(item.value)
+                          }
+                        />
+                      </div>
+                    }
+                    content={item.tooltip}
+                    className="bg-gray-800"
+                  />
+                ))}
           </PopoverContent>
         </PopoverPrimitive.Portal>
       </PopoverRoot>

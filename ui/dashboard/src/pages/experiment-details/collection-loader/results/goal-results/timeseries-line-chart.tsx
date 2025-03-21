@@ -13,7 +13,7 @@ import {
   ChartData,
   ChartOptions
 } from 'chart.js';
-import { CHART_COLORS } from 'constants/styles';
+import { COLORS } from 'constants/styles';
 import { formatTooltipLabel, formatXAxisLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
 
@@ -47,7 +47,7 @@ const TimeseriesLineChart = memo(
     const chartData: ChartData<'line', (string | number)[], Date> = {
       labels,
       datasets: dataLabels.map((e, i) => {
-        const color = CHART_COLORS[i % CHART_COLORS.length];
+        const color = COLORS[i % COLORS.length];
         return {
           label: e,
           data: [...data[i]],

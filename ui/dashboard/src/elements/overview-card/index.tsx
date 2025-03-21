@@ -65,28 +65,30 @@ const CardDescription = ({
   highlightType = 'increase'
 }: CardDescriptionProps) => {
   return (
-    <div className="flex flex-col flex-1 gap-y-3 overflow-hidden">
+    <div className="flex flex-col flex-1 gap-y-2 overflow-hidden">
       <p className="w-full typo-para-medium leading-5 text-gray-600 truncate capitalize">
         {title}
       </p>
       <p className="typo-head-bold-huge leading-6 text-gray-900">{count}</p>
-      <div className="flex items-center gap-x-2">
-        {highlightText && (
-          <p
-            className={cn('typo-head-bold-huge leading-6', {
-              'text-accent-green-500': highlightType === 'increase',
-              'text-accent-red-500': highlightType === 'decrease'
-            })}
-          >
-            {highlightText}
-          </p>
-        )}
-        {description && (
-          <p className="w-full typo-para-small leading-5 text-gray-600 truncate">
-            {description}
-          </p>
-        )}
-      </div>
+      {(description || highlightText) && (
+        <div className="flex items-center gap-x-2">
+          {highlightText && (
+            <p
+              className={cn('typo-head-bold-huge leading-6', {
+                'text-accent-green-500': highlightType === 'increase',
+                'text-accent-red-500': highlightType === 'decrease'
+              })}
+            >
+              {highlightText}
+            </p>
+          )}
+          {description && (
+            <p className="w-full typo-para-small leading-5 text-gray-600 truncate">
+              {description}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 };

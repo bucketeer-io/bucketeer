@@ -11,7 +11,7 @@ import {
   Tooltip,
   Filler
 } from 'chart.js';
-import { CHART_COLORS } from 'constants/styles';
+import { COLORS } from 'constants/styles';
 import { formatLongDateTime } from 'utils/date-time';
 
 ChartJS.register(
@@ -40,7 +40,7 @@ export const HistogramChart = memo(
         return {
           label: e,
           data: hist[i] || [],
-          backgroundColor: CHART_COLORS[i % CHART_COLORS.length]
+          backgroundColor: COLORS[i % COLORS.length]
         };
       })
     };
