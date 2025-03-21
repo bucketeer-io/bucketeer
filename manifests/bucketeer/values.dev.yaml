@@ -30,10 +30,10 @@ web:
     bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
     pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
     project: bucketeer-test
-    pubSubType: google
-    pubSubRedisAddr:
-    pubSubRedisPoolSize:
-    pubSubRedisMinIdle:
+    pubSubType: redis
+    pubSubRedisAddr: localenv-redis-headless.default.svc.cluster.local:6379
+    pubSubRedisPoolSize: 25
+    pubSubRedisMinIdle: 25
     mysqlUser: bucketeer
     mysqlPass: bucketeer
     mysqlHost: localenv-mysql-headless.default.svc.cluster.local
@@ -107,10 +107,10 @@ api:
     metricsTopic: metrics
     publishNumGoroutines: 200
     publishTimeout: 1m
-    pubSubType: google
-    pubSubRedisAddr: 
-    pubSubRedisPoolSize: 
-    pubSubRedisMinIdle: 
+    pubSubType: redis
+    pubSubRedisAddr:  localenv-redis-headless.default.svc.cluster.local:6379
+    pubSubRedisPoolSize: 25
+    pubSubRedisMinIdle: 25
     redis:
       serverName: api-gateway
       poolMaxIdle: 25
@@ -295,7 +295,10 @@ subscriber:
     # This is the processor's name. It must match the same name defined in the
     # pkg/subscriber/processor/processors.go
     auditLogPersister:
-      pubSubType: google
+      pubSubType: redis
+      redisAddr: localenv-redis-headless.default.svc.cluster.local:6379
+      redisPoolSize: 10
+      redisMinIdle: 3
       project: bucketeer-test
       topic: domain
       subscription: auditlog-persister
@@ -305,7 +308,10 @@ subscriber:
       maxMps: 50
       workerNum: 1
     domainEventInformer:
-      pubSubType: google
+      pubSubType: redis
+      redisAddr: localenv-redis-headless.default.svc.cluster.local:6379
+      redisPoolSize: 10
+      redisMinIdle: 3
       project: bucketeer-test
       topic: domain
       subscription: domain-subscription
@@ -315,7 +321,10 @@ subscriber:
       maxMps: 50
       workerNum: 1
     evaluationCountEventPersister:
-      pubSubType: google
+      pubSubType: redis
+      redisAddr: localenv-redis-headless.default.svc.cluster.local:6379
+      redisPoolSize: 10
+      redisMinIdle: 3
       project: bucketeer-test
       topic: evaluation
       subscription: evaluation-count-sub
@@ -325,7 +334,10 @@ subscriber:
       maxMps: 50
       workerNum: 1
     metricsEventPersister:
-      pubSubType: google
+      pubSubType: redis
+      redisAddr: localenv-redis-headless.default.svc.cluster.local:6379
+      redisPoolSize: 10
+      redisMinIdle: 3
       project: bucketeer-test
       topic: metrics
       subscription: metrics-sub
@@ -335,7 +347,10 @@ subscriber:
       maxMps: 50
       workerNum: 1
     pushSender:
-      pubSubType: google
+      pubSubType: redis
+      redisAddr: localenv-redis-headless.default.svc.cluster.local:6379
+      redisPoolSize: 10
+      redisMinIdle: 3
       project: bucketeer-test
       topic: domain
       subscription: push-sender-domain-sub
@@ -345,7 +360,10 @@ subscriber:
       maxMps: 50
       workerNum: 1
     segmentUserPersister:
-      pubSubType: google
+      pubSubType: redis
+      redisAddr: localenv-redis-headless.default.svc.cluster.local:6379
+      redisPoolSize: 10
+      redisMinIdle: 3
       project: bucketeer-test
       topic: bulk-segment-users-received
       subscription: bulk-segment-users-received-subscription
@@ -355,7 +373,10 @@ subscriber:
       maxMps: 50
       workerNum: 1
     userEventPersister:
-      pubSubType: google
+      pubSubType: redis
+      redisAddr: localenv-redis-headless.default.svc.cluster.local:6379
+      redisPoolSize: 10
+      redisMinIdle: 3
       project: bucketeer-test
       topic: user
       subscription: user-sub
@@ -367,7 +388,10 @@ subscriber:
 
   onDemandSubscribers:
     evaluationCountEventDWHPersister:
-      pubSubType: google
+      pubSubType: redis
+      redisAddr: localenv-redis-headless.default.svc.cluster.local:6379
+      redisPoolSize: 10
+      redisMinIdle: 3
       project: bucketeer-test
       topic: evaluation
       subscription: evaluation-dwh-sub
@@ -378,7 +402,10 @@ subscriber:
       workerNum: 1
       checkInterval: 5
     evaluationCountEventOPSPersister:
-      pubSubType: google
+      pubSubType: redis
+      redisAddr: localenv-redis-headless.default.svc.cluster.local:6379
+      redisPoolSize: 10
+      redisMinIdle: 3
       project: bucketeer-test
       topic: evaluation
       subscription: evaluation-ops-sub
@@ -389,7 +416,10 @@ subscriber:
       workerNum: 1
       checkInterval: 5
     goalCountEventDWHPersister:
-      pubSubType: google
+      pubSubType: redis
+      redisAddr: localenv-redis-headless.default.svc.cluster.local:6379
+      redisPoolSize: 10
+      redisMinIdle: 3
       project: bucketeer-test
       topic: goal
       subscription: goal-dwh-sub
@@ -400,7 +430,10 @@ subscriber:
       workerNum: 1
       checkInterval: 5
     goalCountEventOPSPersister:
-      pubSubType: google
+      pubSubType: redis
+      redisAddr: localenv-redis-headless.default.svc.cluster.local:6379
+      redisPoolSize: 10
+      redisMinIdle: 3
       project: bucketeer-test
       topic: goal
       subscription: goal-ops-sub
