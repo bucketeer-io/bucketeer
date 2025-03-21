@@ -123,3 +123,20 @@ func (c *Client) Close() error {
 	// The client doesn't own the Redis client, so we don't close it
 	return nil
 }
+
+// SubscriptionExists checks if a subscription exists
+func (c *Client) SubscriptionExists(subscription string) (bool, error) {
+	// For Redis, subscriptions don't really "exist" in the same way as Google PubSub
+	// We'll return true if the subscription is valid
+	if subscription == "" {
+		return false, ErrInvalidSubscription
+	}
+	return true, nil
+}
+
+// DeleteSubscription deletes a subscription
+func (c *Client) DeleteSubscription(subscription string) error {
+	// In Redis, subscriptions are just runtime constructs, so there's nothing to delete
+	// Return nil to indicate success
+	return nil
+}
