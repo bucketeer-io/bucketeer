@@ -39,13 +39,9 @@ func TestGetAdminAccountV2(t *testing.T) {
 		{
 			desc: "ErrAdminAccountNotFound",
 			setup: func(s *accountStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				qe.EXPECT().QueryRowContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -55,13 +51,9 @@ func TestGetAdminAccountV2(t *testing.T) {
 		{
 			desc: "Error",
 			setup: func(s *accountStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				qe.EXPECT().QueryRowContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 
@@ -72,13 +64,9 @@ func TestGetAdminAccountV2(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *accountStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				qe.EXPECT().QueryRowContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},

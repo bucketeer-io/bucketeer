@@ -52,9 +52,9 @@ type AccountStorage interface {
 }
 
 type accountStorage struct {
-	client mysql.Client
+	qe mysql.QueryExecer
 }
 
-func NewAccountStorage(client mysql.Client) AccountStorage {
-	return &accountStorage{client}
+func NewAccountStorage(qe mysql.QueryExecer) AccountStorage {
+	return &accountStorage{qe}
 }
