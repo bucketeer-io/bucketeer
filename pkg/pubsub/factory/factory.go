@@ -54,6 +54,10 @@ type Client interface {
 	CreatePublisherInProject(topic, project string) (publisher.Publisher, error)
 	// CreatePuller creates a puller for the given subscription and topic.
 	CreatePuller(subscription, topic string) (puller.Puller, error)
+	// SubscriptionExists checks if a subscription exists.
+	SubscriptionExists(subscription string) (bool, error)
+	// DeleteSubscription deletes a subscription.
+	DeleteSubscription(subscription string) error
 	// Close closes the client.
 	Close() error
 }
@@ -200,6 +204,16 @@ func (a *GoogleClientAdapter) CreatePuller(subscription, topic string) (puller.P
 // Close closes the client.
 func (a *GoogleClientAdapter) Close() error {
 	return a.client.Close()
+}
+
+// SubscriptionExists checks if a subscription exists.
+func (a *GoogleClientAdapter) SubscriptionExists(subscription string) (bool, error) {
+	return a.client.SubscriptionExists(subscription)
+}
+
+// DeleteSubscription deletes a subscription.
+func (a *GoogleClientAdapter) DeleteSubscription(subscription string) error {
+	return a.client.DeleteSubscription(subscription)
 }
 
 // GoogleClient returns the underlying Google PubSub client.

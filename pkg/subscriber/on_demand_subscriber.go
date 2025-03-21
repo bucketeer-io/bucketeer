@@ -129,7 +129,7 @@ func (s *onDemandSubscriber) Run(ctx context.Context) {
 					s.unsubscribe()
 				}
 				// delete subscription if it exists
-				exists, err := s.client.SubscriptionExists(s.configuration.Subscription)
+				exists, err := s.factoryClient.SubscriptionExists(s.configuration.Subscription)
 				if err != nil {
 					s.logger.Error("Failed to check subscription existence",
 						zap.String("name", s.name),
@@ -138,7 +138,7 @@ func (s *onDemandSubscriber) Run(ctx context.Context) {
 					continue
 				}
 				if exists {
-					err = s.client.DeleteSubscription(s.configuration.Subscription)
+					err = s.factoryClient.DeleteSubscription(s.configuration.Subscription)
 					if err != nil {
 						s.logger.Error("Failed to delete subscription",
 							zap.String("name", s.name),
