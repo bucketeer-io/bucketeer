@@ -1133,10 +1133,16 @@ const EventRateOperation = memo(
 
     let currentEventRate = 0;
     if (opsCount && opsCount.opsEventCount >= minCount) {
+      let opsEventCount = opsCount.opsEventCount;
+      // If opsEventCount is unexpectedly greater than evaluationCount,
+      // clamp opsEventCount to evaluationCount so that it never exceeds 100%.
+      // This way, it will avoid a rate above 100%, which breaks the admin console design.
+      if (opsCount.opsEventCount > opsCount.evaluationCount) {
+        opsEventCount = opsCount.evaluationCount;
+      }
       currentEventRate =
-        Math.round(
-          (opsCount.opsEventCount / opsCount.evaluationCount) * 100 * 100
-        ) / 100;
+        Math.round((opsEventCount / opsCount.evaluationCount) * 100 * 100) /
+        100;
     }
 
     const numberOfSteps =
@@ -1149,7 +1155,10 @@ const EventRateOperation = memo(
       Math.round(step + index * step)
     );
 
-    const barWidth = (currentEventRate / (threadsholdRate * 100)) * 100;
+    const barWidth = Math.min(
+      (currentEventRate / (threadsholdRate * 100)) * 100,
+      100
+    );
 
     return (
       <div>
