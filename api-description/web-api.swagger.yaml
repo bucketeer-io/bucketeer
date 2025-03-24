@@ -4810,6 +4810,7 @@ paths:
             - UPDATED_AT
             - TAGS
             - ENABLED
+            - AUTO_OPS
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -4847,6 +4848,16 @@ paths:
           in: query
           required: true
           type: string
+        - name: status
+          in: query
+          required: false
+          type: string
+          enum:
+            - UNKNOWN
+            - NEW
+            - ACTIVE
+            - NO_ACTIVITY
+          default: UNKNOWN
       tags:
         - Feature
   /v1/flag_trigger:
@@ -10885,6 +10896,16 @@ definitions:
         type: string
       clientLatestVersion:
         type: string
+      status:
+        $ref: '#/definitions/featureFeatureLastUsedInfoStatus'
+  featureFeatureLastUsedInfoStatus:
+    type: string
+    enum:
+      - UNKNOWN
+      - NEW
+      - ACTIVE
+      - NO_ACTIVITY
+    default: UNKNOWN
   featureFeatureSummary:
     type: object
     properties:
@@ -10990,6 +11011,7 @@ definitions:
       - UPDATED_AT
       - TAGS
       - ENABLED
+      - AUTO_OPS
     default: DEFAULT
   featureListFeaturesRequestOrderDirection:
     type: string

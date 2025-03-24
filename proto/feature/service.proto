@@ -27,6 +27,7 @@ import "proto/feature/command.proto";
 import "proto/feature/feature.proto";
 import "proto/feature/scheduled_update.proto";
 import "proto/feature/evaluation.proto";
+import "proto/feature/feature_last_used_info.proto";
 import "proto/user/user.proto";
 import "proto/feature/segment.proto";
 import "proto/feature/flag_trigger.proto";
@@ -64,6 +65,7 @@ message ListFeaturesRequest {
     UPDATED_AT = 3;
     TAGS = 4;
     ENABLED = 5;
+    AUTO_OPS = 6;
   }
   enum OrderDirection {
     ASC = 0;
@@ -82,6 +84,7 @@ message ListFeaturesRequest {
   google.protobuf.BoolValue archived = 11;
   google.protobuf.BoolValue has_prerequisites = 12;
   string environment_id = 13 [(google.api.field_behavior) = REQUIRED];
+  FeatureLastUsedInfo.Status status = 14;
 }
 
 message FeatureSummary {

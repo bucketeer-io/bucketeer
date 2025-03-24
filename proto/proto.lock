@@ -29385,6 +29385,28 @@
     {
       "protopath": "feature:/:feature_last_used_info.proto",
       "def": {
+        "enums": [
+          {
+            "name": "FeatureLastUsedInfo.Status",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN"
+              },
+              {
+                "name": "NEW",
+                "integer": 1
+              },
+              {
+                "name": "ACTIVE",
+                "integer": 2
+              },
+              {
+                "name": "NO_ACTIVITY",
+                "integer": 3
+              }
+            ]
+          }
+        ],
         "messages": [
           {
             "name": "FeatureLastUsedInfo",
@@ -29418,6 +29440,11 @@
                 "id": 6,
                 "name": "client_latest_version",
                 "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "status",
+                "type": "Status"
               }
             ]
           }
@@ -30100,6 +30127,10 @@
               {
                 "name": "ENABLED",
                 "integer": 5
+              },
+              {
+                "name": "AUTO_OPS",
+                "integer": 6
               }
             ]
           },
@@ -30384,6 +30415,11 @@
                     "value": "REQUIRED"
                   }
                 ]
+              },
+              {
+                "id": 14,
+                "name": "status",
+                "type": "FeatureLastUsedInfo.Status"
               }
             ],
             "reserved_ids": [
@@ -36005,6 +36041,9 @@
           },
           {
             "path": "proto/feature/evaluation.proto"
+          },
+          {
+            "path": "proto/feature/feature_last_used_info.proto"
           },
           {
             "path": "proto/user/user.proto"

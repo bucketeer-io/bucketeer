@@ -41,6 +41,8 @@ var proto_feature_scheduled_update_pb = require('../../proto/feature/scheduled_u
 goog.object.extend(proto, proto_feature_scheduled_update_pb);
 var proto_feature_evaluation_pb = require('../../proto/feature/evaluation_pb.js');
 goog.object.extend(proto, proto_feature_evaluation_pb);
+var proto_feature_feature_last_used_info_pb = require('../../proto/feature/feature_last_used_info_pb.js');
+goog.object.extend(proto, proto_feature_feature_last_used_info_pb);
 var proto_user_user_pb = require('../../proto/user/user_pb.js');
 goog.object.extend(proto, proto_user_user_pb);
 var proto_feature_segment_pb = require('../../proto/feature/segment_pb.js');
@@ -3380,7 +3382,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         hasPrerequisites:
           (f = msg.getHasPrerequisites()) &&
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 13, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 13, ''),
+        status: jspb.Message.getFieldWithDefault(msg, 14, 0)
       };
 
     if (includeInstance) {
@@ -3491,6 +3494,13 @@ proto.bucketeer.feature.ListFeaturesRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 14:
+          var value =
+            /** @type {!proto.bucketeer.feature.FeatureLastUsedInfo.Status} */ (
+              reader.readEnum()
+            );
+          msg.setStatus(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -3589,6 +3599,10 @@ proto.bucketeer.feature.ListFeaturesRequest.serializeBinaryToWriter = function (
   if (f.length > 0) {
     writer.writeString(13, f);
   }
+  f = message.getStatus();
+  if (f !== 0.0) {
+    writer.writeEnum(14, f);
+  }
 };
 
 /**
@@ -3600,7 +3614,8 @@ proto.bucketeer.feature.ListFeaturesRequest.OrderBy = {
   CREATED_AT: 2,
   UPDATED_AT: 3,
   TAGS: 4,
-  ENABLED: 5
+  ENABLED: 5,
+  AUTO_OPS: 6
 };
 
 /**
@@ -3954,6 +3969,26 @@ proto.bucketeer.feature.ListFeaturesRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 13, value);
   };
+
+/**
+ * optional FeatureLastUsedInfo.Status status = 14;
+ * @return {!proto.bucketeer.feature.FeatureLastUsedInfo.Status}
+ */
+proto.bucketeer.feature.ListFeaturesRequest.prototype.getStatus = function () {
+  return /** @type {!proto.bucketeer.feature.FeatureLastUsedInfo.Status} */ (
+    jspb.Message.getFieldWithDefault(this, 14, 0)
+  );
+};
+
+/**
+ * @param {!proto.bucketeer.feature.FeatureLastUsedInfo.Status} value
+ * @return {!proto.bucketeer.feature.ListFeaturesRequest} returns this
+ */
+proto.bucketeer.feature.ListFeaturesRequest.prototype.setStatus = function (
+  value
+) {
+  return jspb.Message.setProto3EnumField(this, 14, value);
+};
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**

@@ -1149,6 +1149,7 @@ paths:
             - UPDATED_AT
             - TAGS
             - ENABLED
+            - AUTO_OPS
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -2488,6 +2489,16 @@ definitions:
         type: string
       clientLatestVersion:
         type: string
+      status:
+        $ref: '#/definitions/featureFeatureLastUsedInfoStatus'
+  featureFeatureLastUsedInfoStatus:
+    type: string
+    enum:
+      - UNKNOWN
+      - NEW
+      - ACTIVE
+      - NO_ACTIVITY
+    default: UNKNOWN
   featureFixedStrategy:
     type: object
     properties:
@@ -2502,6 +2513,7 @@ definitions:
       - UPDATED_AT
       - TAGS
       - ENABLED
+      - AUTO_OPS
     default: DEFAULT
   featureListFeaturesRequestOrderDirection:
     type: string

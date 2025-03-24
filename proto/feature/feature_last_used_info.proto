@@ -18,10 +18,17 @@ package bucketeer.feature;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/feature";
 
 message FeatureLastUsedInfo {
+  enum Status {
+    UNKNOWN = 0;
+    NEW = 1;
+    ACTIVE = 2;
+    NO_ACTIVITY = 3;
+  }
   string feature_id = 1;
   int32 version = 2;
   int64 last_used_at = 3;
   int64 created_at = 4;
   string client_oldest_version = 5;
   string client_latest_version = 6;
+  Status status = 7;
 }

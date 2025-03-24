@@ -953,6 +953,7 @@ func (s *FeatureService) listAllFeatures(
 		nil,
 		nil,
 		"",
+		featureproto.FeatureLastUsedInfo_UNKNOWN,
 		featureproto.ListFeaturesRequest_DEFAULT,
 		featureproto.ListFeaturesRequest_ASC,
 		environmentId,

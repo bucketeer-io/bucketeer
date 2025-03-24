@@ -73,7 +73,7 @@ func (s *FeatureService) GetFeature(
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
 	feature, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
-		if err == v2fs.ErrFeatureNotFound {
+		if errors.Is(err, v2fs.ErrFeatureNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -188,6 +188,7 @@ func (s *FeatureService) ListFeatures(
 			req.Archived,
 			req.HasPrerequisites,
 			req.SearchKeyword,
+			req.Status,
 			req.OrderBy,
 			req.OrderDirection,
 			req.EnvironmentId,
@@ -203,6 +204,7 @@ func (s *FeatureService) ListFeatures(
 			req.Archived,
 			req.HasPrerequisites,
 			req.SearchKeyword,
+			req.Status,
 			req.OrderBy,
 			req.OrderDirection,
 			req.HasExperiment.Value,
@@ -241,6 +243,7 @@ func (s *FeatureService) listFeatures(
 	archived *wrappers.BoolValue,
 	hasPrerequisites *wrappers.BoolValue,
 	searchKeyword string,
+	status featureproto.FeatureLastUsedInfo_Status,
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
 	orderDirection featureproto.ListFeaturesRequest_OrderDirection,
 	environmentId string,
@@ -284,6 +287,26 @@ func (s *FeatureService) listFeatures(
 	}
 	if searchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "description"}, searchKeyword))
+	}
+	switch status {
+	case featureproto.FeatureLastUsedInfo_UNKNOWN:
+	case featureproto.FeatureLastUsedInfo_NEW:
+		whereParts = append(whereParts, mysql.NewSubQueryFilter(fmt.Sprintf(
+			"id NOT IN (SELECT feature_id FROM feature_last_used_info WHERE environment_id = '%s')",
+			environmentId,
+		)))
+	case featureproto.FeatureLastUsedInfo_ACTIVE:
+		whereParts = append(whereParts, mysql.NewSubQueryFilter(fmt.Sprintf(
+			"id IN (SELECT feature_id FROM feature_last_used_info WHERE environment_id = '%s' AND "+
+				"FROM_UNIXTIME(last_used_at) >= DATE_SUB(now(), INTERVAL 7 DAY))",
+			environmentId,
+		)))
+	case featureproto.FeatureLastUsedInfo_NO_ACTIVITY:
+		whereParts = append(whereParts, mysql.NewSubQueryFilter(fmt.Sprintf(
+			"id IN (SELECT feature_id FROM feature_last_used_info WHERE environment_id = '%s' AND "+
+				"FROM_UNIXTIME(last_used_at) < DATE_SUB(now(), INTERVAL 7 DAY))",
+			environmentId,
+		)))
 	}
 	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection, localizer)
 	if err != nil {
@@ -344,6 +367,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	archived *wrappers.BoolValue,
 	hasPrerequisites *wrappers.BoolValue,
 	searchKeyword string,
+	status featureproto.FeatureLastUsedInfo_Status,
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
 	orderDirection featureproto.ListFeaturesRequest_OrderDirection,
 	hasExperiment bool,
@@ -393,6 +417,26 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 			whereParts,
 			mysql.NewSearchQuery([]string{"feature.id", "feature.name", "feature.description"}, searchKeyword),
 		)
+	}
+	switch status {
+	case featureproto.FeatureLastUsedInfo_UNKNOWN:
+	case featureproto.FeatureLastUsedInfo_NEW:
+		whereParts = append(whereParts, mysql.NewSubQueryFilter(fmt.Sprintf(
+			"id NOT IN (SELECT feature_id FROM feature_last_used_info WHERE environment_id = '%s')",
+			environmentId,
+		)))
+	case featureproto.FeatureLastUsedInfo_ACTIVE:
+		whereParts = append(whereParts, mysql.NewSubQueryFilter(fmt.Sprintf(
+			"id IN (SELECT feature_id FROM feature_last_used_info WHERE environment_id = '%s' AND "+
+				"FROM_UNIXTIME(last_used_at) >= DATE_SUB(now(), INTERVAL 7 DAY))",
+			environmentId,
+		)))
+	case featureproto.FeatureLastUsedInfo_NO_ACTIVITY:
+		whereParts = append(whereParts, mysql.NewSubQueryFilter(fmt.Sprintf(
+			"id IN (SELECT feature_id FROM feature_last_used_info WHERE environment_id = '%s' AND "+
+				"FROM_UNIXTIME(last_used_at) < DATE_SUB(now(), INTERVAL 7 DAY))",
+			environmentId,
+		)))
 	}
 	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection, localizer)
 	if err != nil {
@@ -462,6 +506,8 @@ func (s *FeatureService) newListFeaturesOrdersMySQL(
 		column = "feature.tags"
 	case featureproto.ListFeaturesRequest_ENABLED:
 		column = "feature.enabled"
+	case featureproto.ListFeaturesRequest_AUTO_OPS:
+		column = "(progressive_rollout_count + schedule_count + kill_switch_count)"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -2183,6 +2229,7 @@ func (s *FeatureService) getFeatures(
 		nil,
 		nil,
 		"",
+		featureproto.FeatureLastUsedInfo_UNKNOWN,
 		featureproto.ListFeaturesRequest_DEFAULT,
 		featureproto.ListFeaturesRequest_ASC,
 		EnvironmentId,
@@ -2292,8 +2339,7 @@ func (s *FeatureService) setLastUsedInfosToFeature(
 	for _, f := range features {
 		ids = append(ids, domain.FeatureLastUsedInfoID(f.Id, f.Version))
 	}
-	storage := v2fs.NewFeatureLastUsedInfoStorage(s.mysqlClient)
-	fluiList, err := storage.GetFeatureLastUsedInfos(ctx, ids, EnvironmentId)
+	fluiList, err := s.fluiStorage.GetFeatureLastUsedInfos(ctx, ids, EnvironmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get feature last used infos",

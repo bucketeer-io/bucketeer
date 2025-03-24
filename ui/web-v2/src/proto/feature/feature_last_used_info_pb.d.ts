@@ -22,6 +22,11 @@ export class FeatureLastUsedInfo extends jspb.Message {
   getClientLatestVersion(): string;
   setClientLatestVersion(value: string): void;
 
+  getStatus(): FeatureLastUsedInfo.StatusMap[keyof FeatureLastUsedInfo.StatusMap];
+  setStatus(
+    value: FeatureLastUsedInfo.StatusMap[keyof FeatureLastUsedInfo.StatusMap]
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FeatureLastUsedInfo.AsObject;
   static toObject(
@@ -51,5 +56,15 @@ export namespace FeatureLastUsedInfo {
     createdAt: number;
     clientOldestVersion: string;
     clientLatestVersion: string;
+    status: FeatureLastUsedInfo.StatusMap[keyof FeatureLastUsedInfo.StatusMap];
   };
+
+  export interface StatusMap {
+    UNKNOWN: 0;
+    NEW: 1;
+    ACTIVE: 2;
+    NO_ACTIVITY: 3;
+  }
+
+  export const Status: StatusMap;
 }
