@@ -61,20 +61,24 @@ func TestUpsertAndListTag(t *testing.T) {
 	}
 	createTags(t, client, testTags, tagproto.Tag_FEATURE_FLAG)
 	actual := listTags(ctx, t, client)
+	// Check if the created tags are in the response
 	tags := findTags(actual, testTags)
 	if len(tags) != len(testTags) {
 		t.Fatalf("Different sizes. Expected: %d, Actual: %d", len(testTags), len(tags))
 	}
-	// Wait a few seconds before upserting the same tag
-	time.Sleep(time.Second * 5)
+	// Wait a few seconds before upserting the same tag.
+	// Otherwise, the test could fail because it could finish in less than 1 second,
+	// not updating the `updateAt` correctly.
+	time.Sleep(5 * time.Second)
 	// Upsert tag index 1
 	targetTag := tags[1]
 	createTag(t, client, targetTag.Name, tagproto.Tag_FEATURE_FLAG)
-	// Wait a few seconds before listing the tags
-	time.Sleep(time.Second * 5)
-	// List the latest again
 	actual = listTags(ctx, t, client)
 	tagUpsert := findTags(actual, []string{targetTag.Name})
+	if tagUpsert == nil {
+		t.Fatalf("Upserted tag wasn't found in the response. Expected: %v\n Response: %v",
+			targetTag, actual)
+	}
 	// Check if the create time is equal
 	if targetTag.CreatedAt != tagUpsert[0].CreatedAt {
 		t.Fatalf("Different create time. Expected: %d, Actual: %d",
