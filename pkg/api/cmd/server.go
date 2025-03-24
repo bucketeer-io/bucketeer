@@ -140,10 +140,18 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"The duration of furthest event timestamp from processing time to allow.",
 		).Default("24h").Duration(),
 		// PubSub configurations
-		pubSubType:          cmd.Flag("pubsub-type", "Type of PubSub to use (google or redis).").Default("google").String(),
-		pubSubRedisAddr:     cmd.Flag("pubsub-redis-addr", "Address of the Redis server for PubSub.").Default("localhost:6379").String(),
-		pubSubRedisPoolSize: cmd.Flag("pubsub-redis-pool-size", "Maximum number of connections for Redis PubSub.").Default("10").Int(),
-		pubSubRedisMinIdle:  cmd.Flag("pubsub-redis-min-idle", "Minimum number of idle connections for Redis PubSub.").Default("5").Int(),
+		pubSubType: cmd.Flag("pubsub-type",
+			"Type of PubSub to use (google or redis).",
+		).Default("google").String(),
+		pubSubRedisAddr: cmd.Flag("pubsub-redis-addr",
+			"Address of the Redis server for PubSub.",
+		).Default("localhost:6379").String(),
+		pubSubRedisPoolSize: cmd.Flag("pubsub-redis-pool-size",
+			"Maximum number of connections for Redis PubSub.",
+		).Default("10").Int(),
+		pubSubRedisMinIdle: cmd.Flag("pubsub-redis-min-idle",
+			"Minimum number of idle connections for Redis PubSub.",
+		).Default("5").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
