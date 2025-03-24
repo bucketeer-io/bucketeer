@@ -792,16 +792,6 @@ func convertErrorToMetricsCode(err error) string {
 	return redis.CodeFail
 }
 
-// recordRedisMetrics records metrics for Redis operations
-func recordRedisMetrics(labels []string, startTime time.Time, err error) {
-	code := convertErrorToMetricsCode(err)
-	serverName := labels[0]
-	cmdName := labels[1]
-
-	redis.HandledCounter.WithLabelValues(clientVersion, serverName, cmdName, code).Inc()
-	redis.HandledHistogram.WithLabelValues(clientVersion, serverName, cmdName, code).Observe(time.Since(startTime).Seconds())
-}
-
 // Publish publishes a message to the specified channel
 func (c *client) Publish(ctx context.Context, channel string, message interface{}) (int64, error) {
 	startTime := time.Now()
@@ -811,9 +801,20 @@ func (c *client) Publish(ctx context.Context, channel string, message interface{
 	result, err := cmd.Result()
 
 	code := convertErrorToMetricsCode(err)
-	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, publishCmdName, code).Inc()
-	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, publishCmdName, code).Observe(
-		time.Since(startTime).Seconds())
+	redis.HandledCounter.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		publishCmdName,
+		code,
+	).Inc()
+	redis.HandledHistogram.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		publishCmdName,
+		code,
+	).Observe(
+		time.Since(startTime).Seconds(),
+	)
 
 	if err != nil {
 		c.logger.Error("Failed to publish message",
