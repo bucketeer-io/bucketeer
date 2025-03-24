@@ -52,7 +52,7 @@ var (
 )
 
 func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV2) error {
-	_, err := s.client.Qe(ctx).ExecContext(
+	_, err := s.qe.ExecContext(
 		ctx,
 		insertAccountV2SQL,
 		a.Email,
@@ -81,7 +81,7 @@ func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV
 }
 
 func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV2) error {
-	result, err := s.client.Qe(ctx).ExecContext(
+	result, err := s.qe.ExecContext(
 		ctx,
 		updateAccountV2SQL,
 		a.Name,
@@ -115,7 +115,7 @@ func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV
 }
 
 func (s *accountStorage) DeleteAccountV2(ctx context.Context, a *domain.AccountV2) error {
-	result, err := s.client.Qe(ctx).ExecContext(
+	result, err := s.qe.ExecContext(
 		ctx,
 		deleteAccountV2SQL,
 		a.Email,
@@ -137,7 +137,7 @@ func (s *accountStorage) DeleteAccountV2(ctx context.Context, a *domain.AccountV
 func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID string) (*domain.AccountV2, error) {
 	account := proto.AccountV2{}
 	var organizationRole int32
-	err := s.client.Qe(ctx).QueryRowContext(
+	err := s.qe.QueryRowContext(
 		ctx,
 		selectAccountV2SQL,
 		email,
@@ -177,7 +177,7 @@ func (s *accountStorage) GetAccountV2ByEnvironmentID(
 ) (*domain.AccountV2, error) {
 	account := proto.AccountV2{}
 	var organizationRole int32
-	err := s.client.Qe(ctx).QueryRowContext(
+	err := s.qe.QueryRowContext(
 		ctx,
 		selectAccountV2ByEnvironmentIDSQL,
 		email,
@@ -215,7 +215,7 @@ func (s *accountStorage) GetAccountsWithOrganization(
 	ctx context.Context,
 	email string,
 ) ([]*domain.AccountWithOrganization, error) {
-	rows, err := s.client.Qe(ctx).QueryContext(ctx, selectAccountsWithOrganizationSQL, email)
+	rows, err := s.qe.QueryContext(ctx, selectAccountsWithOrganizationSQL, email)
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +284,7 @@ func (s *accountStorage) ListAccountsV2(
 		orderBySQL,
 		limitOffsetSQL,
 	)
-	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -325,7 +325,7 @@ func (s *accountStorage) ListAccountsV2(
 	nextOffset := offset + len(accounts)
 	var totalCount int64
 	countQuery := fmt.Sprintf(countAccountsV2SQL, whereSQL)
-	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

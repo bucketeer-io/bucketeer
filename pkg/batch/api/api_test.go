@@ -607,8 +607,7 @@ func TestAPIKeyCacher(t *testing.T) {
 		mysqlMockRows.EXPECT().Next().Return(false)
 		mysqlMockRows.EXPECT().Err().Return(nil)
 
-		mysqlMockClient.EXPECT().Qe(gomock.Any()).Return(mysqlMockQueryExecer)
-		mysqlMockQueryExecer.EXPECT().QueryContext(
+		mysqlMockClient.EXPECT().QueryContext(
 			gomock.Any(), gomock.Any(), gomock.Any(),
 		).Return(mysqlMockRows, nil)
 	}
