@@ -59,15 +59,15 @@ type AdminSubscriptionStorage interface {
 }
 
 type adminSubscriptionStorage struct {
-	client mysql.Client
+	qe mysql.QueryExecer
 }
 
-func NewAdminSubscriptionStorage(client mysql.Client) AdminSubscriptionStorage {
-	return &adminSubscriptionStorage{client}
+func NewAdminSubscriptionStorage(qe mysql.QueryExecer) AdminSubscriptionStorage {
+	return &adminSubscriptionStorage{qe}
 }
 
 func (s *adminSubscriptionStorage) CreateAdminSubscription(ctx context.Context, e *domain.Subscription) error {
-	_, err := s.client.Qe(ctx).ExecContext(
+	_, err := s.qe.ExecContext(
 		ctx,
 		insertAdminSubscriptionV2SQLQuery,
 		e.Id,
@@ -88,7 +88,7 @@ func (s *adminSubscriptionStorage) CreateAdminSubscription(ctx context.Context, 
 }
 
 func (s *adminSubscriptionStorage) UpdateAdminSubscription(ctx context.Context, e *domain.Subscription) error {
-	result, err := s.client.Qe(ctx).ExecContext(
+	result, err := s.qe.ExecContext(
 		ctx,
 		updateAdminSubscriptionV2SQLQuery,
 		e.UpdatedAt,
@@ -112,7 +112,7 @@ func (s *adminSubscriptionStorage) UpdateAdminSubscription(ctx context.Context, 
 }
 
 func (s *adminSubscriptionStorage) DeleteAdminSubscription(ctx context.Context, id string) error {
-	result, err := s.client.Qe(ctx).ExecContext(
+	result, err := s.qe.ExecContext(
 		ctx,
 		deleteAdminSubscriptionV2SQLQuery,
 		id,
@@ -132,7 +132,7 @@ func (s *adminSubscriptionStorage) DeleteAdminSubscription(ctx context.Context, 
 
 func (s *adminSubscriptionStorage) GetAdminSubscription(ctx context.Context, id string) (*domain.Subscription, error) {
 	subscription := proto.Subscription{}
-	err := s.client.Qe(ctx).QueryRowContext(
+	err := s.qe.QueryRowContext(
 		ctx,
 		selectAdminSubscriptionV2SQLQuery,
 		id,
@@ -164,7 +164,7 @@ func (s *adminSubscriptionStorage) ListAdminSubscriptions(
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectAdminSubscriptionV2AnySQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 
 	if err != nil {
 		return nil, 0, 0, err
@@ -194,7 +194,7 @@ func (s *adminSubscriptionStorage) ListAdminSubscriptions(
 	var totalCount int64
 	countQuery := fmt.Sprintf(selectAdminSubscriptionV2CountSQLQuery, whereSQL)
 
-	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
