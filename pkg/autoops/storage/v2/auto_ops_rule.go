@@ -53,11 +53,11 @@ type AutoOpsRuleStorage interface {
 }
 
 type autoOpsRuleStorage struct {
-	client mysql.Client
+	qe mysql.QueryExecer
 }
 
-func NewAutoOpsRuleStorage(client mysql.Client) AutoOpsRuleStorage {
-	return &autoOpsRuleStorage{client: client}
+func NewAutoOpsRuleStorage(qe mysql.QueryExecer) AutoOpsRuleStorage {
+	return &autoOpsRuleStorage{qe: qe}
 }
 
 func (s *autoOpsRuleStorage) CreateAutoOpsRule(
@@ -65,7 +65,7 @@ func (s *autoOpsRuleStorage) CreateAutoOpsRule(
 	e *domain.AutoOpsRule,
 	environmentId string,
 ) error {
-	_, err := s.client.Qe(ctx).ExecContext(
+	_, err := s.qe.ExecContext(
 		ctx,
 		insertAutoOpsRuleSQL,
 		e.Id,
@@ -92,7 +92,7 @@ func (s *autoOpsRuleStorage) UpdateAutoOpsRule(
 	e *domain.AutoOpsRule,
 	environmentId string,
 ) error {
-	result, err := s.client.Qe(ctx).ExecContext(
+	result, err := s.qe.ExecContext(
 		ctx,
 		updateAutoOpsRuleSQL,
 		e.FeatureId,
@@ -124,7 +124,7 @@ func (s *autoOpsRuleStorage) GetAutoOpsRule(
 ) (*domain.AutoOpsRule, error) {
 	autoOpsRule := proto.AutoOpsRule{}
 	var opsType int32
-	err := s.client.Qe(ctx).QueryRowContext(
+	err := s.qe.QueryRowContext(
 		ctx,
 		selectAutoOpsRuleSQL,
 		id,
@@ -155,7 +155,7 @@ func (s *autoOpsRuleStorage) ListAutoOpsRules(
 	options *mysql.ListOptions,
 ) ([]*proto.AutoOpsRule, int, error) {
 	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAutoOpsRulesSQL, options)
-	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, err
 	}
