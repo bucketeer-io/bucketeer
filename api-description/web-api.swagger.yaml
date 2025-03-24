@@ -4029,6 +4029,78 @@ paths:
             $ref: '#/definitions/environmentUpdateProjectRequest'
       tags:
         - Project
+  /v1/evaluation_timeseries_count:
+    get:
+      summary: Get Evaluation Timeseries Count
+      description: Get an evaluation timeseries count
+      operationId: web.v1.event_counter.evaluation_timeseries_count.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/eventcounterGetEvaluationTimeseriesCountResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the requested resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: timeRange
+          in: query
+          required: true
+          type: string
+          enum:
+            - UNKNOWN
+            - TWENTY_FOUR_HOURS
+            - SEVEN_DAYS
+            - FOURTEEN_DAYS
+            - THIRTY_DAYS
+          default: UNKNOWN
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - evaluation_timeseries_count
   /v1/experiment:
     get:
       summary: Get
@@ -4177,9 +4249,179 @@ paths:
             $ref: '#/definitions/experimentUpdateExperimentRequest'
       tags:
         - experiment
+  /v1/experiment_evaluation_count:
+    get:
+      summary: Get Experiment Evaluation Count
+      description: Get an experiment evaluation count
+      operationId: web.v1.event_counter.experiment_evaluation_count.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/eventcounterGetExperimentEvaluationCountResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the requested resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: startAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: endAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          in: query
+          required: true
+          type: integer
+          format: int32
+        - name: variationIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - experiment_evaluation_count
+  /v1/experiment_goal_count:
+    get:
+      summary: Get Experiment Goal Count
+      description: Get an experiment goal count
+      operationId: web.v1.event_counter.experiment_goal_count.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/eventcounterGetExperimentGoalCountResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the requested resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: startAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: endAt
+          in: query
+          required: true
+          type: string
+          format: int64
+        - name: goalId
+          in: query
+          required: true
+          type: string
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          in: query
+          required: true
+          type: integer
+          format: int32
+        - name: variationIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - experiment_goal_count
   /v1/experiment_result:
     get:
-      summary: Get experiment result
+      summary: Get Experiment Result
       description: Get an experiment result
       operationId: web.v1.event_counter.experiment_result.get
       responses:
@@ -4205,6 +4447,15 @@ paths:
               code: 16
               details: []
               message: not authenticated
+        "404":
+          description: Returned when the requested resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
         "503":
           description: Returned for internal errors.
           schema:
@@ -4231,7 +4482,7 @@ paths:
         - experiment_result
   /v1/experiment_results:
     get:
-      summary: List experiment results
+      summary: List Experiment Results
       description: List experiment results
       operationId: web.v1.event_counter.experiment_result.list
       responses:
@@ -4257,6 +4508,15 @@ paths:
               code: 16
               details: []
               message: not authenticated
+        "404":
+          description: Returned when the requested resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
         "503":
           description: Returned for internal errors.
           schema:
@@ -5458,6 +5718,223 @@ paths:
           default: UNKNOWN
       tags:
         - goal
+  /v1/mau_count:
+    get:
+      summary: Get MAU Count
+      description: Get MAU count
+      operationId: web.v1.event_counter.mau_count.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/eventcounterGetMAUCountResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the requested resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: yearMonth
+          in: query
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - mau_count
+  /v1/ops_evaluation_user_count:
+    get:
+      summary: Get Ops Evaluation User Count
+      description: Get an ops evaluation user count
+      operationId: web.v1.event_counter.ops_evaluation_user_count.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/eventcounterGetOpsEvaluationUserCountResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the requested resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: opsRuleId
+          in: query
+          required: true
+          type: string
+        - name: clauseId
+          in: query
+          required: true
+          type: string
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          in: query
+          required: true
+          type: integer
+          format: int32
+        - name: variationId
+          in: query
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - ops_evaluation_user_count
+  /v1/ops_goal_user_count:
+    get:
+      summary: Get Ops Goal User Count
+      description: Get an ops goal user count
+      operationId: web.v1.event_counter.ops_goal_user_count.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/eventcounterGetOpsGoalUserCountResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the requested resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: opsRuleId
+          in: query
+          required: true
+          type: string
+        - name: clauseId
+          in: query
+          required: true
+          type: string
+        - name: featureId
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          in: query
+          required: true
+          type: integer
+          format: int32
+        - name: variationId
+          in: query
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - ops_goal_user_count
   /v1/progressive_rollout:
     get:
       summary: Get
@@ -6922,6 +7399,67 @@ paths:
           type: string
       tags:
         - subscription
+  /v1/summarize_mau_counts:
+    get:
+      summary: Summarize MAU Counts
+      description: Summarize MAU counts
+      operationId: web.v1.event_counter.summarize_mau_counts.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/eventcounterSummarizeMAUCountsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the requested resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: yearMonth
+          in: query
+          required: true
+          type: string
+        - name: isFinished
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - mau_count
   /v1/tag:
     delete:
       summary: Delete
