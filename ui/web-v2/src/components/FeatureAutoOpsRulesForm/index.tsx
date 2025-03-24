@@ -1155,7 +1155,10 @@ const EventRateOperation = memo(
       Math.round(step + index * step)
     );
 
-    const barWidth = (currentEventRate / (threadsholdRate * 100)) * 100;
+    const barWidth = Math.min(
+      (currentEventRate / (threadsholdRate * 100)) * 100,
+      100
+    );
 
     return (
       <div>
