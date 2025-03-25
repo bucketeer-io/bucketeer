@@ -9,26 +9,29 @@ export const Tag = ({
   value,
   className,
   tooltipCls,
-  maxSize = 250
+  maxSize = 250,
+  onTagClick
 }: {
   tagId?: string;
   value: string;
   className?: string;
   tooltipCls?: string;
   maxSize?: number;
+  onTagClick?: () => void;
 }) => (
   <TruncationWithTooltip
     elementId={tagId || ''}
     content={value}
     maxSize={maxSize}
-    className={cn('!w-fit', tooltipCls)}
+    className={cn('!w-fit !z-50', tooltipCls)}
   >
     <div
       id={tagId}
       className={cn(
-        'px-2 py-1.5 bg-primary-100/70 text-primary-500 typo-para-small !w-fit leading-[14px] rounded whitespace-nowrap',
+        'px-2 py-1.5 bg-primary-100/70 text-primary-500 typo-para-small !w-fit leading-[14px] rounded whitespace-nowrap border border-transparent',
         className
       )}
+      onClick={onTagClick}
     >
       {value}
     </div>
@@ -38,11 +41,21 @@ export const Tag = ({
 const ExpandableTag = ({
   rowId,
   tags,
-  className
+  filterTags,
+  className,
+  wrapperClassName,
+  maxSize,
+  tooltipCls,
+  onTagClick
 }: {
   rowId: string;
   tags: string[];
+  filterTags?: string[];
   className?: string;
+  wrapperClassName?: string;
+  maxSize?: number;
+  tooltipCls?: string;
+  onTagClick?: (tag: string) => void;
 }) => {
   const [expandedTags, setExpandedTags] = useState<string[]>([]);
 
@@ -61,9 +74,13 @@ const ExpandableTag = ({
 
   return (
     <div
-      className={cn('flex items-center w-full gap-x-2', {
-        'items-start': isExpanded
-      })}
+      className={cn(
+        'flex items-center w-full gap-x-2',
+        {
+          'items-start': isExpanded
+        },
+        wrapperClassName
+      )}
     >
       <div className="flex w-fit items-center flex-wrap gap-2">
         {(isExpanded ? tags : tags.slice(0, 3))?.map((tag, index) => (
@@ -71,11 +88,16 @@ const ExpandableTag = ({
             tagId={`${tag}-${index}`}
             key={index}
             value={tag}
-            className={className}
+            className={cn(className, {
+              'border border-primary-500': filterTags?.includes(tag)
+            })}
+            maxSize={maxSize}
+            tooltipCls={tooltipCls}
+            onTagClick={() => onTagClick && onTagClick(tag)}
           />
         ))}
         {tags.length > 3 && !isExpanded && (
-          <Tag value={`+${tags.length - 3}`} />
+          <Tag value={`+${tags.length - 3}`} tooltipCls={tooltipCls} />
         )}
       </div>
       {tags.length > 3 && (
@@ -86,7 +108,7 @@ const ExpandableTag = ({
           <Icon
             icon={IconChevronDown}
             size={'sm'}
-            className={cn('flex-center rotate-0', {
+            className={cn('flex-center transition-all duration-200 rotate-0', {
               'rotate-180': isExpanded
             })}
           />
