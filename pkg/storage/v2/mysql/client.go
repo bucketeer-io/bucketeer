@@ -111,8 +111,6 @@ type Client interface {
 	// Transaction is passed because it is required for storage that does not support storage architecture refactoring,
 	// but we plan to remove it once the refactoring is complete.
 	RunInTransactionV2(ctx context.Context, f func(ctx context.Context, tx Transaction) error) error
-	// Deprecated
-	Qe(ctx context.Context) QueryExecer
 }
 
 type client struct {
@@ -245,13 +243,4 @@ func (c *client) RunInTransactionV2(
 		err = tx.Commit()
 	}
 	return err
-}
-
-// Deprecated
-func (c *client) Qe(ctx context.Context) QueryExecer {
-	tx, ok := ctx.Value(transactionKey).(Transaction)
-	if ok {
-		return tx
-	}
-	return c
 }
