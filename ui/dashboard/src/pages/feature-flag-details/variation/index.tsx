@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -34,16 +34,14 @@ const Variation = ({ feature }: VariationProps) => {
       variationType: feature.variationType,
       offVariation: feature.offVariation,
       onVariation: '',
-      requireComment: currentEnvironment?.requireComment,
+      requireComment: false,
       comment: '',
       resetSampling: false
     },
-    mode: 'onChange'
+    mode: 'all'
   });
 
-  const onShowConfirmDialog = useCallback(() => {
-    onOpenConfirmDialog();
-  }, []);
+  const { getValues } = form;
 
   const onSubmit = useCallback(async () => {
     try {
@@ -67,27 +65,48 @@ const Variation = ({ feature }: VariationProps) => {
             </span>
           )
         });
+
         invalidateFeature(queryClient);
         onCloseConfirmDialog();
       }
     } catch (error) {
       errorNotify(error);
     }
-  }, []);
+  }, [feature]);
+
+  useEffect(() => {
+    form.reset({
+      ...getValues(),
+      variations: feature.variations,
+      comment: '',
+      resetSampling: false,
+      requireComment: false
+    });
+  }, [feature]);
 
   return (
     <div className="flex flex-col w-full p-5 pt-0">
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col w-full gap-y-6">
-            <SubmitBar onShowConfirmDialog={onShowConfirmDialog} />
+            <SubmitBar
+              onShowConfirmDialog={() => {
+                form.setValue(
+                  'requireComment',
+                  currentEnvironment?.requireComment
+                );
+                onOpenConfirmDialog();
+              }}
+            />
             <VariationsSection feature={feature} />
           </div>
-          <ConfirmationRequiredModal
-            isOpen={openConfirmDialog}
-            onClose={onCloseConfirmDialog}
-            onSubmit={form.handleSubmit(onSubmit)}
-          />
+          {openConfirmDialog && (
+            <ConfirmationRequiredModal
+              isOpen={openConfirmDialog}
+              onClose={onCloseConfirmDialog}
+              onSubmit={form.handleSubmit(onSubmit)}
+            />
+          )}
         </Form>
       </FormProvider>
     </div>
