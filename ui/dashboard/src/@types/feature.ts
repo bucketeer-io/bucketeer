@@ -122,7 +122,7 @@ export interface FeatureCollection {
 interface ChangeType {
   changeType: FeatureChangeType;
 }
-interface VariationChange extends ChangeType {
+export interface VariationChange extends ChangeType {
   variation: FeatureVariation;
 }
 

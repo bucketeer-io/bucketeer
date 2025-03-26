@@ -1,5 +1,4 @@
 import { useFormContext } from 'react-hook-form';
-import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -25,8 +24,6 @@ const ConfirmationRequiredModal = ({
   onSubmit
 }: ConfirmationRequiredModalProps) => {
   const { t } = useTranslation(['common', 'form', 'table']);
-  const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const {
     control,
@@ -34,8 +31,7 @@ const ConfirmationRequiredModal = ({
     watch
   } = useFormContext();
 
-  const isRequireComment =
-    currentEnvironment?.requireComment || watch('requireComment');
+  const isRequireComment = watch('requireComment');
 
   return (
     <DialogModal
@@ -71,7 +67,7 @@ const ConfirmationRequiredModal = ({
           />
           <Form.Field
             control={control}
-            name="resetSamplingSeed"
+            name="resetSampling"
             render={({ field }) => (
               <Form.Item className="flex flex-col w-full py-0 gap-y-4 mt-5">
                 <Form.Control>

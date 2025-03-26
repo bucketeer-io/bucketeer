@@ -10,9 +10,11 @@ const SubmitBar = ({
   onShowConfirmDialog: () => void;
 }) => {
   const { t } = useTranslation(['common', 'table']);
+
   const {
     formState: { isDirty, isValid }
   } = useFormContext();
+
   return (
     <div className="flex items-center justify-between w-full gap-x-6">
       <div className="flex items-center gap-x-2">
