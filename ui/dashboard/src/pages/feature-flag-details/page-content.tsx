@@ -19,6 +19,7 @@ import PageLayout from 'elements/page-layout';
 import HistoryPage from './history';
 import SettingsPage from './settings';
 import { TabItem } from './types';
+import Variation from './variation';
 
 const PageContent = ({ feature }: { feature: Feature }) => {
   const { t } = useTranslation(['table', 'common']);
@@ -87,12 +88,14 @@ const PageContent = ({ feature }: { feature: Feature }) => {
               path={`${PAGE_PATH_FEATURE_HISTORY}/*`}
               element={<HistoryPage feature={feature} />}
             />
-
             <Route
               path={PAGE_PATH_FEATURE_SETTING}
               element={<SettingsPage feature={feature} />}
             />
-
+            <Route
+              path={PAGE_PATH_FEATURE_VARIATION}
+              element={<Variation feature={feature} />}
+            />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </TabsContent>

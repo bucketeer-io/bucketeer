@@ -206,6 +206,10 @@
   "unarchive-flag": "Unarchive Flag",
   "update-now": "Update now",
   "time-updated": "Updated {{time}}",
+  "true": "True",
+  "false": "False",
+  "and": "And",
+  "see-more": "See more",
   "default": "Default",
   "sort-by": "Sort by: {{sortBy}}",
   "no-options-found": "No options found",
@@ -233,5 +237,7 @@
   "user": "User",
   "edit-fields": "Edit Fields",
   "clear-all-fields": "Clear All Fields",
-  "update-flag": "Update Feature Flag"
+  "update-flag": "Update Feature Flag",
+  "sort-asc": "Oldest to Newest",
+  "sort-desc": "Newest to Oldest"
 }
