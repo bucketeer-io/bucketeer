@@ -94,8 +94,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         lastUsedAt: jspb.Message.getFieldWithDefault(msg, 3, 0),
         createdAt: jspb.Message.getFieldWithDefault(msg, 4, 0),
         clientOldestVersion: jspb.Message.getFieldWithDefault(msg, 5, ''),
-        clientLatestVersion: jspb.Message.getFieldWithDefault(msg, 6, ''),
-        status: jspb.Message.getFieldWithDefault(msg, 7, 0)
+        clientLatestVersion: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {
@@ -160,13 +159,6 @@ proto.bucketeer.feature.FeatureLastUsedInfo.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setClientLatestVersion(value);
           break;
-        case 7:
-          var value =
-            /** @type {!proto.bucketeer.feature.FeatureLastUsedInfo.Status} */ (
-              reader.readEnum()
-            );
-          msg.setStatus(value);
-          break;
         default:
           reader.skipField();
           break;
@@ -224,10 +216,6 @@ proto.bucketeer.feature.FeatureLastUsedInfo.serializeBinaryToWriter = function (
   f = message.getClientLatestVersion();
   if (f.length > 0) {
     writer.writeString(6, f);
-  }
-  f = message.getStatus();
-  if (f !== 0.0) {
-    writer.writeEnum(7, f);
   }
 };
 
@@ -357,25 +345,5 @@ proto.bucketeer.feature.FeatureLastUsedInfo.prototype.setClientLatestVersion =
   function (value) {
     return jspb.Message.setProto3StringField(this, 6, value);
   };
-
-/**
- * optional Status status = 7;
- * @return {!proto.bucketeer.feature.FeatureLastUsedInfo.Status}
- */
-proto.bucketeer.feature.FeatureLastUsedInfo.prototype.getStatus = function () {
-  return /** @type {!proto.bucketeer.feature.FeatureLastUsedInfo.Status} */ (
-    jspb.Message.getFieldWithDefault(this, 7, 0)
-  );
-};
-
-/**
- * @param {!proto.bucketeer.feature.FeatureLastUsedInfo.Status} value
- * @return {!proto.bucketeer.feature.FeatureLastUsedInfo} returns this
- */
-proto.bucketeer.feature.FeatureLastUsedInfo.prototype.setStatus = function (
-  value
-) {
-  return jspb.Message.setProto3EnumField(this, 7, value);
-};
 
 goog.object.extend(exports, proto.bucketeer.feature);

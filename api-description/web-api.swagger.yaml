@@ -10896,8 +10896,6 @@ definitions:
         type: string
       clientLatestVersion:
         type: string
-      status:
-        $ref: '#/definitions/featureFeatureLastUsedInfoStatus'
   featureFeatureLastUsedInfoStatus:
     type: string
     enum:

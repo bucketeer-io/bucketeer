@@ -29440,11 +29440,6 @@
                 "id": 6,
                 "name": "client_latest_version",
                 "type": "string"
-              },
-              {
-                "id": 7,
-                "name": "status",
-                "type": "Status"
               }
             ]
           }

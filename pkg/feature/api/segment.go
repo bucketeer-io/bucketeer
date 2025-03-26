@@ -378,11 +378,13 @@ func (s *FeatureService) checkSegmentInUse(
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_id", "=", environmentId),
+		mysql.NewFilter("feature.environment_id", "=", environmentId),
 	}
 	features, _, _, err := featureStorage.ListFeatures(
 		ctx,
 		whereParts,
+		featureproto.FeatureLastUsedInfo_UNKNOWN,
+		environmentId,
 		nil,
 		mysql.QueryNoLimit,
 		mysql.QueryNoOffset,

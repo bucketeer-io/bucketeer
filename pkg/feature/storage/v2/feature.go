@@ -60,6 +60,8 @@ type FeatureStorage interface {
 	ListFeatures(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
+		status proto.FeatureLastUsedInfo_Status,
+		environmentID string,
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.Feature, int, int64, error)
@@ -70,6 +72,8 @@ type FeatureStorage interface {
 	ListFeaturesFilteredByExperiment(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
+		status proto.FeatureLastUsedInfo_Status,
+		environmentID string,
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.Feature, int, int64, error)
@@ -216,13 +220,33 @@ func (s *featureStorage) GetFeature(
 func (s *featureStorage) ListFeatures(
 	ctx context.Context,
 	whereParts []mysql.WherePart,
+	status proto.FeatureLastUsedInfo_Status,
+	environmentID string,
 	orders []*mysql.Order,
 	limit, offset int,
 ) ([]*proto.Feature, int, int64, error) {
+	switch status {
+	case proto.FeatureLastUsedInfo_UNKNOWN:
+	case proto.FeatureLastUsedInfo_NEW:
+		whereParts = append(whereParts, mysql.NewNullFilter("feature_last_used_info.id", true))
+	case proto.FeatureLastUsedInfo_ACTIVE:
+		whereParts = append(whereParts, mysql.NewFilter(
+			"FROM_UNIXTIME(feature_last_used_info.last_used_at)",
+			">=",
+			"DATE_SUB(now(), INTERVAL 7 DAY)"),
+		)
+	case proto.FeatureLastUsedInfo_NO_ACTIVITY:
+		whereParts = append(whereParts, mysql.NewFilter(
+			"FROM_UNIXTIME(feature_last_used_info.last_used_at)",
+			"<",
+			"DATE_SUB(now(), INTERVAL 7 DAY)"),
+		)
+	}
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectFeaturesSQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
+	fmt.Printf("query: %s\n", query)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -232,6 +256,7 @@ func (s *featureStorage) ListFeatures(
 	for rows.Next() {
 		feature := proto.Feature{}
 		feature.AutoOpsSummary = &proto.AutoOpsSummary{}
+		lastUsedInfo := proto.FeatureLastUsedInfo{}
 		err := rows.Scan(
 			&feature.Id,
 			&feature.Name,
@@ -257,9 +282,18 @@ func (s *featureStorage) ListFeatures(
 			&feature.AutoOpsSummary.ProgressiveRolloutCount,
 			&feature.AutoOpsSummary.ScheduleCount,
 			&feature.AutoOpsSummary.KillSwitchCount,
+			&lastUsedInfo.FeatureId,
+			&lastUsedInfo.Version,
+			&lastUsedInfo.LastUsedAt,
+			&lastUsedInfo.CreatedAt,
+			&lastUsedInfo.ClientOldestVersion,
+			&lastUsedInfo.ClientLatestVersion,
 		)
 		if err != nil {
 			return nil, 0, 0, err
+		}
+		if lastUsedInfo.FeatureId != "" {
+			feature.LastUsedInfo = &lastUsedInfo
 		}
 		features = append(features, &feature)
 	}
@@ -284,20 +318,42 @@ func (s *featureStorage) GetFeatureSummary(
 	err := s.qe.QueryRowContext(ctx, selectFeatureCountByStatusSQLQuery, environmentID).Scan(
 		&countByStatus.Total,
 		&countByStatus.Active,
+		&countByStatus.Inactive,
 	)
 	if err != nil {
 		return nil, err
 	}
-	countByStatus.Inactive = countByStatus.Total - countByStatus.Active
 	return &countByStatus, nil
 }
 
 func (s *featureStorage) ListFeaturesFilteredByExperiment(
 	ctx context.Context,
 	whereParts []mysql.WherePart,
+	status proto.FeatureLastUsedInfo_Status,
+	environmentID string,
 	orders []*mysql.Order,
 	limit, offset int,
 ) ([]*proto.Feature, int, int64, error) {
+	switch status {
+	case proto.FeatureLastUsedInfo_UNKNOWN:
+	case proto.FeatureLastUsedInfo_NEW:
+		whereParts = append(whereParts, mysql.NewSubQueryFilter(fmt.Sprintf(
+			"feature.id NOT IN (SELECT feature_id FROM feature_last_used_info WHERE environment_id = '%s')",
+			environmentID,
+		)))
+	case proto.FeatureLastUsedInfo_ACTIVE:
+		whereParts = append(whereParts, mysql.NewSubQueryFilter(fmt.Sprintf(
+			"feature.id IN (SELECT feature_id FROM feature_last_used_info WHERE environment_id = '%s' AND "+
+				"FROM_UNIXTIME(last_used_at) >= DATE_SUB(now(), INTERVAL 7 DAY))",
+			environmentID,
+		)))
+	case proto.FeatureLastUsedInfo_NO_ACTIVITY:
+		whereParts = append(whereParts, mysql.NewSubQueryFilter(fmt.Sprintf(
+			"feature.id IN (SELECT feature_id FROM feature_last_used_info WHERE environment_id = '%s' AND "+
+				"FROM_UNIXTIME(last_used_at) < DATE_SUB(now(), INTERVAL 7 DAY))",
+			environmentID,
+		)))
+	}
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
@@ -311,6 +367,7 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 	for rows.Next() {
 		feature := proto.Feature{}
 		feature.AutoOpsSummary = &proto.AutoOpsSummary{}
+		lastUsedInfo := proto.FeatureLastUsedInfo{}
 		err := rows.Scan(
 			&feature.Id,
 			&feature.Name,
@@ -336,9 +393,18 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 			&feature.AutoOpsSummary.ProgressiveRolloutCount,
 			&feature.AutoOpsSummary.ScheduleCount,
 			&feature.AutoOpsSummary.KillSwitchCount,
+			&lastUsedInfo.FeatureId,
+			&lastUsedInfo.Version,
+			&lastUsedInfo.LastUsedAt,
+			&lastUsedInfo.CreatedAt,
+			&lastUsedInfo.ClientOldestVersion,
+			&lastUsedInfo.ClientLatestVersion,
 		)
 		if err != nil {
 			return nil, 0, 0, err
+		}
+		if lastUsedInfo.FeatureId != "" {
+			feature.LastUsedInfo = &lastUsedInfo
 		}
 		features = append(features, &feature)
 	}

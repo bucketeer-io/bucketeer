@@ -2489,16 +2489,6 @@ definitions:
         type: string
       clientLatestVersion:
         type: string
-      status:
-        $ref: '#/definitions/featureFeatureLastUsedInfoStatus'
-  featureFeatureLastUsedInfoStatus:
-    type: string
-    enum:
-      - UNKNOWN
-      - NEW
-      - ACTIVE
-      - NO_ACTIVITY
-    default: UNKNOWN
   featureFixedStrategy:
     type: object
     properties:
