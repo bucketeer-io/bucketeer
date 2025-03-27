@@ -814,7 +814,7 @@ func (s *server) createPublisher(
 	// Add provider-specific options
 	if pubSubType == factory.Google {
 		factoryOpts = append(factoryOpts, factory.WithProjectID(*s.project))
-	} else if pubSubType == factory.Redis {
+	} else if pubSubType == factory.RedisStream {
 		redisClient, err := redisv3.NewClient(
 			*s.pubSubRedisAddr,
 			redisv3.WithPoolSize(*s.pubSubRedisPoolSize),
