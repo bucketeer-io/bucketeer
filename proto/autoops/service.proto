@@ -286,8 +286,14 @@ message ExecuteProgressiveRolloutRequest {
   reserved 1;
   string id = 2;
   ChangeProgressiveRolloutScheduleTriggeredAtCommand
-      change_progressive_rollout_triggered_at_command = 3;
+      change_progressive_rollout_triggered_at_command = 3 [
+        deprecated = true,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+          description: "deprecated"
+        }
+      ];
   string environment_id = 4;
+  string schedule_id = 5;
 }
 
 message ExecuteProgressiveRolloutResponse {}
@@ -784,5 +790,49 @@ service AutoOpsService {
     };
   }
   rpc ExecuteProgressiveRollout(ExecuteProgressiveRolloutRequest)
-      returns (ExecuteProgressiveRolloutResponse) {}
+      returns (ExecuteProgressiveRolloutResponse) {
+    option (google.api.http) = {
+      post: "/v1/progressive_rollout/execute"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Execute"
+      description: "Execute a progressive rollout."
+      tags: "progressive_rollout"
+      operation_id: "web.v1.progressive_rollout.execute"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 }

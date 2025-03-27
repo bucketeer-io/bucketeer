@@ -95,7 +95,6 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
       });
     }
 
-
     const ruleVariationIds = [];
     feature.rulesList.forEach((rule) => {
       if (rule.strategy.type === Strategy.Type.FIXED) {
