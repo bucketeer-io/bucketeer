@@ -19,8 +19,8 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	gwapi "github.com/bucketeer-io/bucketeer/pkg/api/api"
@@ -144,7 +144,7 @@ func RegisterEvents(t *testing.T, events []Event, gatewayAddr, apiKeyPath string
 }
 
 func SendHTTPRequest(t *testing.T, url string, body interface{}, apiKeyPath string) *successResponse {
-	data, err := ioutil.ReadFile(apiKeyPath)
+	data, err := os.ReadFile(apiKeyPath)
 	if err != nil {
 		t.Fatal(err)
 	}
