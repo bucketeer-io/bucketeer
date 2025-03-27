@@ -94,7 +94,7 @@ const GridViewCollection = ({
               icon={getDataTypeIcon(variationType)}
               status={getFlagStatus(item)}
             />
-            <div className="flex flex-col gap-y-3 w-[410px] max-w-[410px] xxl:w-full xxl:max-w-[730px]">
+            <div className="flex flex-col gap-y-3 w-full flex-1 flex-wrap">
               <FlagVariationsElement variations={variations} />
               <div className="flex items-center flex-wrap w-full gap-2">
                 <ExpandableTag
@@ -104,7 +104,6 @@ const GridViewCollection = ({
                   className={cn('!max-w-[350px] truncate cursor-pointer')}
                   wrapperClassName="w-fit"
                   maxSize={382}
-                  tooltipCls="!z-0"
                   onTagClick={tag => handleTagFilters(tag)}
                 />
                 <FlagOperationsElement

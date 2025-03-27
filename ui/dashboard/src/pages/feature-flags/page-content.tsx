@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
@@ -25,6 +26,11 @@ const PageContent = ({
   onHandleActions: (item: Feature, type: FlagActionType) => void;
 }) => {
   const { t } = useTranslation(['common']);
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const isFiltered = useRef(false);
+
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const [summary, setSummary] = useState<FeatureCountByStatus>();
 
@@ -62,6 +68,7 @@ const PageContent = ({
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });
+    isFiltered.current = true;
   };
 
   const onClearFilters = useCallback(() => {
@@ -84,6 +91,13 @@ const PageContent = ({
       setFilters({ ...defaultFilters });
     }
   }, [searchOptions]);
+
+  useEffect(() => {
+    if (isFiltered.current) {
+      onClearFilters();
+      isFiltered.current = false;
+    }
+  }, [currentEnvironment]);
 
   return (
     <PageLayout.Content>
@@ -142,6 +156,7 @@ const PageContent = ({
             setSummary={setSummary}
             onHandleActions={onHandleActions}
             onClearFilters={onClearFilters}
+            onChangeFilters={onChangeFilters}
           />
         </TabsContent>
       </Tabs>

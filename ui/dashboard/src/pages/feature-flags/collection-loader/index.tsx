@@ -20,7 +20,8 @@ const CollectionLoader = ({
   setFilters,
   setSummary,
   onHandleActions,
-  onClearFilters
+  onClearFilters,
+  onChangeFilters
 }: {
   filters: FlagFilters;
   onAdd: () => void;
@@ -28,6 +29,7 @@ const CollectionLoader = ({
   setSummary: (summary: FeatureCountByStatus) => void;
   onHandleActions: (item: Feature, type: FlagActionType) => void;
   onClearFilters: () => void;
+  onChangeFilters: (values: Partial<FlagFilters>) => void;
 }) => {
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -78,13 +80,13 @@ const CollectionLoader = ({
         const _tags = isExistedTag
           ? tags.filter(item => item !== tag)
           : [...tags, tag];
-        return setFilters({
+        return onChangeFilters({
           ...filters,
           tags: _tags.length ? _tags : undefined
         });
       }
 
-      setFilters({
+      onChangeFilters({
         ...filters,
         tags: [tag]
       });
@@ -119,7 +121,7 @@ const CollectionLoader = ({
   ) : isError ? (
     <PageLayout.ErrorState onRetry={refetch} />
   ) : (
-    <>
+    <div className="flex flex-col gap-y-6">
       <GridViewCollection
         filterTags={filters?.tags}
         autoOpsRules={autoOpsRules}
@@ -138,7 +140,7 @@ const CollectionLoader = ({
           onChange={page => setFilters({ page })}
         />
       )}
-    </>
+    </div>
   );
 };
 

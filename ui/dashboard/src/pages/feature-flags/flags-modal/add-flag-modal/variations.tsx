@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
-import { FeatureVariation, FeatureVariationType } from '@types';
+import { FeatureVariationType } from '@types';
 import { IconTrash } from '@icons';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
@@ -12,20 +12,27 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
+import { AddFlagForm } from './formSchema';
 
 const Variations = ({
-  variationType,
-  variations,
-  onChangeVariations
+  variationType
 }: {
   variationType: FeatureVariationType;
-  variations: FeatureVariation[];
-  onChangeVariations: (v: FeatureVariation[]) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
 
-  const methods = useFormContext();
+  const methods = useFormContext<AddFlagForm>();
   const { control, watch } = methods;
+
+  const {
+    fields: variations,
+    append,
+    remove
+  } = useFieldArray({
+    name: 'variations',
+    control,
+    keyName: 'flagVariation'
+  });
 
   const isBoolean = useMemo(() => variationType === 'BOOLEAN', [variationType]);
   const isJSON = useMemo(() => variationType === 'JSON', [variationType]);
@@ -34,28 +41,22 @@ const Variations = ({
   const offVariation = watch('defaultOffVariation');
 
   const onAddVariation = () => {
-    onChangeVariations([
-      ...variations,
-      {
-        id: uuid(),
-        value: '',
-        name: '',
-        description: ''
-      }
-    ]);
+    append({
+      id: uuid(),
+      value: '',
+      name: '',
+      description: ''
+    });
   };
 
   const onDeleteVariation = (itemIndex: number) => {
-    const _variations = variations.filter(
-      (_item, index) => itemIndex !== index
-    );
-    onChangeVariations([..._variations]);
+    remove(itemIndex);
   };
 
   return (
     <>
       {variations.map((item, variationIndex) => (
-        <div key={variationIndex} className="flex flex-col w-full">
+        <div key={item.flagVariation} className="flex flex-col w-full">
           <Form.Field
             control={control}
             name={`variations.${variationIndex}.value`}
@@ -79,7 +80,6 @@ const Variations = ({
                       placeholder={t(
                         'form:feature-flags.placeholder-variation'
                       )}
-                      value={item.value}
                     />
                   ) : (
                     <Input
@@ -88,7 +88,6 @@ const Variations = ({
                         'form:feature-flags.placeholder-variation'
                       )}
                       disabled={isBoolean}
-                      value={item.value}
                       className={isBoolean ? 'capitalize' : ''}
                     />
                   )}
@@ -109,7 +108,6 @@ const Variations = ({
                       <Input
                         {...field}
                         placeholder={t('form:placeholder-name')}
-                        value={item.name}
                       />
                     </Form.Control>
                     <Form.Message />
@@ -126,7 +124,6 @@ const Variations = ({
                       <TextArea
                         {...field}
                         placeholder={t('form:placeholder-desc')}
-                        value={item.description}
                       />
                     </Form.Control>
                     <Form.Message />

@@ -86,4 +86,8 @@
   .small-scroll::-webkit-scrollbar-track {
     @apply bg-gray-200;
   }
+
+  [data-radix-popper-content-wrapper] {
+    z-index: 9999 !important;
+  }
 }

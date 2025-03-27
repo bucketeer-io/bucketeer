@@ -116,7 +116,9 @@ const Popover = forwardRef(
             />
           )}
         </PopoverTrigger>
-        <PopoverPrimitive.Portal>
+        <PopoverPrimitive.Portal
+          container={document.getElementById('modal-root')}
+        >
           <PopoverContent
             ref={ref}
             hideWhenDetached={true}

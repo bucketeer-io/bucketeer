@@ -90,9 +90,9 @@ export const useColumns = ({
       cell: ({ row }) => {
         const apiKey = row.original;
         return (
-          <div className="typo-para-small text-accent-blue-500 bg-accent-blue-50 px-2 py-[3px] w-fit rounded">
+          <p className="typo-para-medium text-gray-700">
             {getAPIkeyRole(apiKey.role)}
-          </div>
+          </p>
         );
       }
     },

@@ -117,3 +117,5 @@ export const formSchema = yup.object().shape({
   defaultOnVariation: yup.string().required(),
   defaultOffVariation: yup.string().required()
 });
+
+export type AddFlagForm = yup.InferType<typeof formSchema>;
