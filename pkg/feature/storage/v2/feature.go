@@ -268,6 +268,7 @@ func (s *featureStorage) ListFeatures(
 		if err != nil {
 			return nil, 0, 0, err
 		}
+		// Flags that haven't been evaluated yet won't have the status info.
 		if lastUsedInfo.FeatureId != "" {
 			feature.LastUsedInfo = &lastUsedInfo
 		}
@@ -357,6 +358,7 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 		if err != nil {
 			return nil, 0, 0, err
 		}
+		// Flags that haven't been evaluated yet won't have the status info.
 		if lastUsedInfo.FeatureId != "" {
 			feature.LastUsedInfo = &lastUsedInfo
 		}
