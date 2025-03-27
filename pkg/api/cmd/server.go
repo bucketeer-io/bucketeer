@@ -141,7 +141,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Default("24h").Duration(),
 		// PubSub configurations
 		pubSubType: cmd.Flag("pubsub-type",
-			"Type of PubSub to use (google or redis).",
+			"Type of PubSub to use (google, redis, or redis-stream).",
 		).Default("google").String(),
 		pubSubRedisAddr: cmd.Flag("pubsub-redis-addr",
 			"Address of the Redis server for PubSub.",
@@ -174,7 +174,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// Add provider-specific options
 	if pubSubType == factory.Google {
 		factoryOpts = append(factoryOpts, factory.WithProjectID(*s.project))
-	} else if pubSubType == factory.Redis {
+	} else if pubSubType == factory.RedisStream {
 		redisClient, err := redisv3.NewClient(
 			*s.pubSubRedisAddr,
 			redisv3.WithPoolSize(*s.pubSubRedisPoolSize),

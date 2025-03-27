@@ -217,7 +217,7 @@ func (s *onDemandSubscriber) createPubSubClient(ctx context.Context) error {
 	// Add provider-specific options
 	if pubSubType == factory.Google {
 		factoryOpts = append(factoryOpts, factory.WithProjectID(s.configuration.Project))
-	} else if pubSubType == factory.Redis {
+	} else if pubSubType == factory.RedisStream {
 		// Create Redis client
 		redisClient, redisErr := createRedisClient(ctx, s.configuration.Configuration, s.logger)
 		if redisErr != nil {

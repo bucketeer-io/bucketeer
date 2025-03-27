@@ -35,8 +35,8 @@ type PubSubType string
 const (
 	// Google represents Google Cloud PubSub.
 	Google PubSubType = "google"
-	// Redis represents Redis PubSub.
-	Redis PubSubType = "redis"
+	// RedisStream represents Redis Streams.
+	RedisStream PubSubType = "redis-stream"
 )
 
 // ClientFactory represents a factory for creating PubSub clients.
@@ -67,7 +67,7 @@ type options struct {
 	pubSubType PubSubType
 	// For Google PubSub
 	projectID string
-	// For Redis PubSub
+	// For Redis Streams
 	redisClient v3.Client
 	// Common options
 	metrics metrics.Registerer
@@ -148,25 +148,26 @@ func NewClient(ctx context.Context, opts ...Option) (Client, error) {
 			logger: options.logger.Named("google-pubsub-adapter"),
 		}, nil
 
-	case Redis:
+	case RedisStream:
+		// Handle RedisStream type
 		if options.redisClient == nil {
-			return nil, fmt.Errorf("Redis client is required for Redis PubSub")
+			return nil, fmt.Errorf("Redis client is required for Redis Stream")
 		}
-		redisOpts := []redis.Option{}
+		streamOpts := []redis.StreamOption{}
 		if options.metrics != nil {
-			redisOpts = append(redisOpts, redis.WithMetrics(options.metrics))
+			streamOpts = append(streamOpts, redis.WithStreamMetrics(options.metrics))
 		}
 		if options.logger != nil {
-			redisOpts = append(redisOpts, redis.WithLogger(options.logger))
+			streamOpts = append(streamOpts, redis.WithStreamLogger(options.logger))
 		}
 
-		// Create Redis PubSub client
-		client, err := redis.NewClient(ctx, options.redisClient, redisOpts...)
+		// Create Redis Stream client
+		client, err := redis.NewStreamClient(ctx, options.redisClient, streamOpts...)
 		if err != nil {
 			return nil, err
 		}
 
-		// Redis client already implements our interface
+		// Redis Stream client already implements our interface
 		return client, nil
 
 	default:
