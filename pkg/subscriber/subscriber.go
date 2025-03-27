@@ -16,6 +16,7 @@ package subscriber
 
 import (
 	"context"
+	"fmt"
 
 	"go.uber.org/zap"
 
@@ -31,10 +32,15 @@ type options struct {
 	logger  *zap.Logger
 }
 
-// Default values
+// Configuration types
 const (
+	// PubSubTypeGoogle is the Google Cloud PubSub implementation
+	PubSubTypeGoogle = "google"
+	// PubSubTypeRedisStream is the Redis Stream implementation
+	PubSubTypeRedisStream = "redis-stream"
+
 	// DefaultPubSubType is the default PubSub implementation
-	DefaultPubSubType = factory.Google
+	DefaultPubSubType = PubSubTypeRedisStream
 )
 
 type Option func(*options)
@@ -177,7 +183,7 @@ func (s pubSubSubscriber) createPuller(
 	// Add provider-specific options
 	if pubSubType == factory.Google {
 		factoryOpts = append(factoryOpts, factory.WithProjectID(s.configuration.Project))
-	} else if pubSubType == factory.Redis {
+	} else if pubSubType == factory.RedisStream {
 		// Create Redis client
 		redisClient, redisErr := createRedisClient(ctx, s.configuration, s.logger)
 		if redisErr != nil {
@@ -217,24 +223,44 @@ func (s pubSubSubscriber) createPuller(
 }
 
 // createRedisClient creates a Redis client from the configuration
-func createRedisClient(ctx context.Context, config Configuration, logger *zap.Logger) (redisv3.Client, error) {
-	redisOpts := []redisv3.Option{}
-
-	// Add Redis options if configured
-	if config.RedisPoolSize > 0 {
-		redisOpts = append(redisOpts, redisv3.WithPoolSize(config.RedisPoolSize))
-	}
-	if config.RedisMinIdle > 0 {
-		redisOpts = append(redisOpts, redisv3.WithMinIdleConns(config.RedisMinIdle))
+func createRedisClient(ctx context.Context, conf Configuration, logger *zap.Logger) (redisv3.Client, error) {
+	redisAddr := conf.RedisAddr
+	if redisAddr == "" {
+		return nil, fmt.Errorf("redis address is required for Redis PubSub")
 	}
 
-	// Add metrics and logger
-	redisOpts = append(redisOpts, redisv3.WithServerName("pubsub-redis"))
-	redisOpts = append(redisOpts, redisv3.WithLogger(logger.Named("redis-client")))
+	redisPoolSize := 10
+	if conf.RedisPoolSize > 0 {
+		redisPoolSize = conf.RedisPoolSize
+	}
+
+	redisMinIdle := 3
+	if conf.RedisMinIdle > 0 {
+		redisMinIdle = conf.RedisMinIdle
+	}
+
+	pubSubType := conf.PubSubType
+	if pubSubType == "" {
+		pubSubType = string(DefaultPubSubType)
+	}
+
+	// Create a server name for metrics
+	serverName := fmt.Sprintf("subscriber-%s-%s", conf.Topic, conf.Subscription)
+
+	logger.Debug("Creating Redis client",
+		zap.String("address", redisAddr),
+		zap.Int("poolSize", redisPoolSize),
+		zap.Int("minIdle", redisMinIdle),
+		zap.String("serverName", serverName),
+		zap.String("pubSubType", pubSubType),
+	)
 
 	// Create Redis client
 	return redisv3.NewClient(
-		config.RedisAddr,
-		redisOpts...,
+		redisAddr,
+		redisv3.WithPoolSize(redisPoolSize),
+		redisv3.WithMinIdleConns(redisMinIdle),
+		redisv3.WithServerName(serverName),
+		redisv3.WithLogger(logger),
 	)
 }
