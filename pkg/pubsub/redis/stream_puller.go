@@ -244,7 +244,10 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 					// We expect one field with the message ID as the key and the serialized message as the value
 					var data []byte
 					for _, value := range msg.Values {
-						if b, ok := value.([]byte); ok {
+						if s, ok := value.(string); ok {
+							data = []byte(s)
+							break
+						} else if b, ok := value.([]byte); ok {
 							data = b
 							break
 						}
@@ -400,7 +403,10 @@ func (p *StreamPuller) recoveryLoop(ctx context.Context) {
 				// Extract data from the message
 				var data []byte
 				for _, value := range msg.Values {
-					if b, ok := value.([]byte); ok {
+					if s, ok := value.(string); ok {
+						data = []byte(s)
+						break
+					} else if b, ok := value.([]byte); ok {
 						data = b
 						break
 					}
