@@ -649,9 +649,6 @@ func TestGetSegmentMySQL(t *testing.T) {
 						Id: "id",
 					},
 				}, 0, int64(0), nil)
-				s.fluiStorage.(*storagemock.MockFeatureLastUsedInfoStorage).EXPECT().GetFeatureLastUsedInfos(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
 			},
 			id:            "id",
 			environmentId: "ns0",
@@ -678,9 +675,6 @@ func TestGetSegmentMySQL(t *testing.T) {
 						Id: "id",
 					},
 				}, 0, int64(0), nil)
-				s.fluiStorage.(*storagemock.MockFeatureLastUsedInfoStorage).EXPECT().GetFeatureLastUsedInfos(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
 			},
 			id:            "id",
 			environmentId: "ns0",
@@ -771,9 +765,6 @@ func TestListSegmentsMySQL(t *testing.T) {
 						Id: "id",
 					},
 				}, 0, int64(0), nil)
-				s.fluiStorage.(*storagemock.MockFeatureLastUsedInfoStorage).EXPECT().GetFeatureLastUsedInfos(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
 			},
 			pageSize:      int64(maxPageSizePerRequest),
 			environmentId: "ns0",
@@ -805,9 +796,6 @@ func TestListSegmentsMySQL(t *testing.T) {
 						Id: "id",
 					},
 				}, 0, int64(0), nil)
-				s.fluiStorage.(*storagemock.MockFeatureLastUsedInfoStorage).EXPECT().GetFeatureLastUsedInfos(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
 			},
 			pageSize:      int64(maxPageSizePerRequest),
 			environmentId: "ns0",

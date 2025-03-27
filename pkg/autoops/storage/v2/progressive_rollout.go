@@ -47,7 +47,7 @@ var (
 )
 
 type progressiveRolloutStorage struct {
-	client mysql.Client
+	qe mysql.QueryExecer
 }
 
 type ProgressiveRolloutStorage interface {
@@ -68,8 +68,8 @@ type ProgressiveRolloutStorage interface {
 	) error
 }
 
-func NewProgressiveRolloutStorage(client mysql.Client) ProgressiveRolloutStorage {
-	return &progressiveRolloutStorage{client: client}
+func NewProgressiveRolloutStorage(qe mysql.QueryExecer) ProgressiveRolloutStorage {
+	return &progressiveRolloutStorage{qe: qe}
 }
 
 func (s *progressiveRolloutStorage) CreateProgressiveRollout(
@@ -77,7 +77,7 @@ func (s *progressiveRolloutStorage) CreateProgressiveRollout(
 	progressiveRollout *domain.ProgressiveRollout,
 	environmentId string,
 ) error {
-	_, err := s.client.Qe(ctx).ExecContext(
+	_, err := s.qe.ExecContext(
 		ctx,
 		insertOpsProgressiveRolloutSQL,
 		progressiveRollout.Id,
@@ -105,7 +105,7 @@ func (s *progressiveRolloutStorage) GetProgressiveRollout(
 	id, environmentId string,
 ) (*domain.ProgressiveRollout, error) {
 	progressiveRollout := autoopsproto.ProgressiveRollout{}
-	err := s.client.Qe(ctx).QueryRowContext(
+	err := s.qe.QueryRowContext(
 		ctx,
 		selectOpsProgressiveRolloutSQL,
 		id,
@@ -134,7 +134,7 @@ func (s *progressiveRolloutStorage) DeleteProgressiveRollout(
 	ctx context.Context,
 	id, environmentId string,
 ) error {
-	result, err := s.client.Qe(ctx).ExecContext(
+	result, err := s.qe.ExecContext(
 		ctx,
 		deleteOpsProgressiveRolloutSQL,
 		id,
@@ -158,7 +158,7 @@ func (s *progressiveRolloutStorage) ListProgressiveRollouts(
 	options *mysql.ListOptions,
 ) ([]*autoopsproto.ProgressiveRollout, int64, int, error) {
 	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectOpsProgressiveRolloutsSQL, options)
-	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -192,7 +192,7 @@ func (s *progressiveRolloutStorage) ListProgressiveRollouts(
 	nextOffset := offset + len(progressiveRollouts)
 	var totalCount int64
 	countQuery, whereArgs := mysql.ConstructQueryAndWhereArgs(countOpsProgressiveRolloutsSQL, options)
-	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -204,7 +204,7 @@ func (s *progressiveRolloutStorage) UpdateProgressiveRollout(
 	progressiveRollout *domain.ProgressiveRollout,
 	environmentId string,
 ) error {
-	result, err := s.client.Qe(ctx).ExecContext(
+	result, err := s.qe.ExecContext(
 		ctx,
 		updateOpsProgressiveRolloutSQL,
 		&progressiveRollout.FeatureId,

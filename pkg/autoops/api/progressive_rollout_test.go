@@ -26,13 +26,15 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
+	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
+	storagemock "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
+	"github.com/bucketeer-io/bucketeer/proto/autoops"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -1624,17 +1626,9 @@ func TestGetProgressiveRolloutMySQL(t *testing.T) {
 		{
 			desc: "err: ErrNotFound",
 			setup: func(s *AutoOpsService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				qe := mysqlmock.NewMockQueryExecer(mockController)
-
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-
-				qe.EXPECT().QueryRowContext(
+				s.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().GetProgressiveRollout(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(nil, v2as.ErrProgressiveRolloutNotFound)
 			},
 			req:         &autoopsproto.GetProgressiveRolloutRequest{Id: "wrongid", EnvironmentId: "ns0"},
 			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
@@ -1642,17 +1636,9 @@ func TestGetProgressiveRolloutMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AutoOpsService) {
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				qe := mysqlmock.NewMockQueryExecer(mockController)
-
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-
-				qe.EXPECT().QueryRowContext(
+				s.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().GetProgressiveRollout(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(&domain.ProgressiveRollout{}, nil)
 			},
 			req:         &autoopsproto.GetProgressiveRolloutRequest{Id: "aid1", EnvironmentId: "ns0"},
 			expectedErr: nil,
@@ -2011,22 +1997,9 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 		{
 			desc: "err: interal error",
 			setup: func(s *AutoOpsService) {
-				qe := mysqlmock.NewMockQueryExecer(mockController)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe).Times(2)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				qe.EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				qe.EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().ListProgressiveRollouts(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, int64(0), 0, errors.New("error"))
 			},
 			orderBy:       autoopsproto.ListProgressiveRolloutsRequest_DEFAULT,
 			environmentId: "ns0",
@@ -2035,22 +2008,9 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AutoOpsService) {
-				qe := mysqlmock.NewMockQueryExecer(mockController)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe).Times(2)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				qe.EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				qe.EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				s.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().ListProgressiveRollouts(
+					gomock.Any(), gomock.Any(),
+				).Return([]*autoops.ProgressiveRollout{}, int64(0), 0, nil)
 			},
 			orderBy:       autoopsproto.ListProgressiveRolloutsRequest_DEFAULT,
 			environmentId: "ns0",

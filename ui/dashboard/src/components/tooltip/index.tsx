@@ -6,10 +6,11 @@ export type TooltipProps = {
   align?: 'start' | 'center' | 'end';
   delayDuration?: number;
   hidden?: boolean;
-  content?: string;
+  content?: ReactNode;
   trigger: ReactNode;
   className?: string;
   alignOffset?: number;
+  asChild?: boolean;
 };
 
 const TooltipProvider = TooltipPrimitive.Provider;
@@ -29,7 +30,7 @@ const TooltipContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        'data-[state=delayed-open]:data-[side=top]:animate-slideDownAndFade data-[state=delayed-open]:data-[side=right]:animate-slideLeftAndFade data-[state=delayed-open]:data-[side=left]:animate-slideRightAndFade data-[state=delayed-open]:data-[side=bottom]:animate-slideUpAndFade select-none rounded px-3 py-1.5 text-para-medium will-change-[transform,opacity] bg-gray-700 text-white',
+        'data-[state=delayed-open]:data-[side=top]:animate-slideDownAndFade data-[state=delayed-open]:data-[side=right]:animate-slideLeftAndFade data-[state=delayed-open]:data-[side=left]:animate-slideRightAndFade data-[state=delayed-open]:data-[side=bottom]:animate-slideUpAndFade select-none rounded px-3 py-1.5 text-para-medium will-change-[transform,opacity] bg-gray-700 text-white z-50',
         className
       )}
       {...props}
@@ -47,14 +48,15 @@ const Tooltip = forwardRef(
       content,
       trigger,
       className,
-      alignOffset = 0
+      alignOffset = 0,
+      asChild = true
     }: TooltipProps,
     ref: Ref<HTMLDivElement>
   ) => {
     return (
       <TooltipProvider delayDuration={delayDuration}>
         <TooltipRoot>
-          <TooltipTrigger type="button" asChild>
+          <TooltipTrigger type="button" asChild={asChild}>
             {trigger}
           </TooltipTrigger>
           {content && (

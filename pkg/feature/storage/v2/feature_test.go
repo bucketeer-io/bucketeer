@@ -247,8 +247,6 @@ func TestListFeatureMySQL(t *testing.T) {
 			features, cursor, _, err := storage.ListFeatures(
 				context.Background(),
 				p.whereParts,
-				proto.FeatureLastUsedInfo_UNKNOWN,
-				"env",
 				p.orders,
 				p.limit,
 				p.offset,
@@ -317,8 +315,6 @@ func TestListFeatureFilterByExperiment(t *testing.T) {
 			features, cursor, _, err := storage.ListFeaturesFilteredByExperiment(
 				context.Background(),
 				p.whereParts,
-				proto.FeatureLastUsedInfo_UNKNOWN,
-				"env",
 				p.orders,
 				p.limit,
 				p.offset,

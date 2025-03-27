@@ -52,6 +52,8 @@ import (
 const (
 	getMultiChunkSize = 1000
 	listRequestSize   = 500
+	// after 7 days without request, the feature is considered as no activity
+	activeDays = 7 * 24 * time.Hour
 )
 
 var errEvaluationNotFound = status.Error(codes.NotFound, "feature: evaluation not found")
@@ -139,8 +141,6 @@ func (s *FeatureService) GetFeatures(
 	features, _, _, err := featureStorage.ListFeatures(
 		ctx,
 		whereParts,
-		featureproto.FeatureLastUsedInfo_UNKNOWN,
-		req.EnvironmentId,
 		nil,
 		mysql.QueryNoLimit,
 		mysql.QueryNoOffset,
@@ -262,33 +262,53 @@ func (s *FeatureService) listFeatures(
 	if len(tagValues) > 0 {
 		whereParts = append(
 			whereParts,
-			mysql.NewJSONFilter("tags", mysql.JSONContainsString, tagValues),
+			mysql.NewJSONFilter("feature.tags", mysql.JSONContainsString, tagValues),
 		)
 	}
 	if maintainer != "" {
-		whereParts = append(whereParts, mysql.NewFilter("maintainer", "=", maintainer))
+		whereParts = append(whereParts, mysql.NewFilter("feature.maintainer", "=", maintainer))
 	}
 	if enabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("enabled", "=", enabled.Value))
+		whereParts = append(whereParts, mysql.NewFilter("feature.enabled", "=", enabled.Value))
 	}
 	if archived != nil {
-		whereParts = append(whereParts, mysql.NewFilter("archived", "=", archived.Value))
+		whereParts = append(whereParts, mysql.NewFilter("feature.archived", "=", archived.Value))
 	}
 	if hasPrerequisites != nil {
 		if hasPrerequisites.Value {
 			whereParts = append(
 				whereParts,
-				mysql.NewJSONFilter("prerequisites", mysql.JSONLengthGreaterThan, []interface{}{"0"}),
+				mysql.NewJSONFilter("feature.prerequisites", mysql.JSONLengthGreaterThan, []interface{}{"0"}),
 			)
 		} else {
 			whereParts = append(
 				whereParts,
-				mysql.NewJSONFilter("prerequisites", mysql.JSONLengthSmallerThan, []interface{}{"1"}),
+				mysql.NewJSONFilter("feature.prerequisites", mysql.JSONLengthSmallerThan, []interface{}{"1"}),
 			)
 		}
 	}
 	if searchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "description"}, searchKeyword))
+		whereParts = append(
+			whereParts,
+			mysql.NewSearchQuery([]string{"feature.id", "feature.name", "feature.description"}, searchKeyword),
+		)
+	}
+	switch status {
+	case featureproto.FeatureLastUsedInfo_UNKNOWN:
+	case featureproto.FeatureLastUsedInfo_NEW:
+		whereParts = append(whereParts, mysql.NewNullFilter("feature_last_used_info.id", true))
+	case featureproto.FeatureLastUsedInfo_ACTIVE:
+		whereParts = append(whereParts, mysql.NewFilter(
+			"feature_last_used_info.last_used_at",
+			">=",
+			time.Now().Add(-activeDays).Unix()),
+		)
+	case featureproto.FeatureLastUsedInfo_NO_ACTIVITY:
+		whereParts = append(whereParts, mysql.NewFilter(
+			"feature_last_used_info.last_used_at",
+			"<",
+			time.Now().Add(-activeDays).Unix()),
+		)
 	}
 	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection, localizer)
 	if err != nil {
@@ -319,8 +339,6 @@ func (s *FeatureService) listFeatures(
 	features, nextCursor, totalCount, err := s.featureStorage.ListFeatures(
 		ctx,
 		whereParts,
-		status,
-		environmentId,
 		orders,
 		limit,
 		offset,
@@ -333,9 +351,6 @@ func (s *FeatureService) listFeatures(
 				zap.String("environmentId", environmentId),
 			)...,
 		)
-		return nil, "", 0, err
-	}
-	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, environmentId, localizer); err != nil {
 		return nil, "", 0, err
 	}
 	return features, strconv.Itoa(nextCursor), totalCount, nil
@@ -387,12 +402,12 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 		if hasPrerequisites.Value {
 			whereParts = append(
 				whereParts,
-				mysql.NewJSONFilter("prerequisites", mysql.JSONLengthGreaterThan, []interface{}{"0"}),
+				mysql.NewJSONFilter("feature.prerequisites", mysql.JSONLengthGreaterThan, []interface{}{"0"}),
 			)
 		} else {
 			whereParts = append(
 				whereParts,
-				mysql.NewJSONFilter("prerequisites", mysql.JSONLengthSmallerThan, []interface{}{"1"}),
+				mysql.NewJSONFilter("feature.prerequisites", mysql.JSONLengthSmallerThan, []interface{}{"1"}),
 			)
 		}
 	}
@@ -400,6 +415,23 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 		whereParts = append(
 			whereParts,
 			mysql.NewSearchQuery([]string{"feature.id", "feature.name", "feature.description"}, searchKeyword),
+		)
+	}
+	switch status {
+	case featureproto.FeatureLastUsedInfo_UNKNOWN:
+	case featureproto.FeatureLastUsedInfo_NEW:
+		whereParts = append(whereParts, mysql.NewNullFilter("feature_last_used_info.id", true))
+	case featureproto.FeatureLastUsedInfo_ACTIVE:
+		whereParts = append(whereParts, mysql.NewFilter(
+			"feature_last_used_info.last_used_at",
+			">=",
+			time.Now().Add(-activeDays).Unix()),
+		)
+	case featureproto.FeatureLastUsedInfo_NO_ACTIVITY:
+		whereParts = append(whereParts, mysql.NewFilter(
+			"feature_last_used_info.last_used_at",
+			"<",
+			time.Now().Add(-activeDays).Unix()),
 		)
 	}
 	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection, localizer)
@@ -432,8 +464,6 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	features, nextCursor, totalCount, err := featureStorage.ListFeaturesFilteredByExperiment(
 		ctx,
 		whereParts,
-		status,
-		environmentId,
 		orders,
 		limit,
 		offset,
@@ -535,8 +565,6 @@ func (s *FeatureService) ListEnabledFeatures(
 	features, nextCursor, _, err := featureStorage.ListFeatures(
 		ctx,
 		whereParts,
-		featureproto.FeatureLastUsedInfo_UNKNOWN,
-		req.EnvironmentId,
 		nil,
 		limit,
 		offset,
@@ -858,8 +886,6 @@ func (s *FeatureService) UpdateFeature(
 		features, _, _, err := featureStorage.ListFeatures(
 			ctx,
 			whereParts,
-			featureproto.FeatureLastUsedInfo_UNKNOWN,
-			req.EnvironmentId,
 			nil,
 			mysql.QueryNoLimit,
 			mysql.QueryNoOffset,
@@ -1355,8 +1381,6 @@ func (s *FeatureService) ArchiveFeature(
 	features, _, _, err := featureStorage.ListFeatures(
 		ctx,
 		whereParts,
-		featureproto.FeatureLastUsedInfo_UNKNOWN,
-		req.EnvironmentId,
 		nil,
 		mysql.QueryNoLimit,
 		mysql.QueryNoOffset,
@@ -1740,8 +1764,6 @@ func (s *FeatureService) UpdateFeatureVariations(
 		features, _, _, err := featureStorage.ListFeatures(
 			ctx,
 			whereParts,
-			featureproto.FeatureLastUsedInfo_UNKNOWN,
-			req.EnvironmentId,
 			nil,
 			mysql.QueryNoLimit,
 			mysql.QueryNoOffset,
@@ -1922,15 +1944,13 @@ func (s *FeatureService) UpdateFeatureTargeting(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		whereParts := []mysql.WherePart{
-			mysql.NewFilter("deleted", "=", false),
+			mysql.NewFilter("feature.deleted", "=", false),
 			mysql.NewFilter("feature.environment_id", "=", req.EnvironmentId),
 		}
 		featureStorage := v2fs.NewFeatureStorage(tx)
 		features, _, _, err := featureStorage.ListFeatures(
 			ctx,
 			whereParts,
-			featureproto.FeatureLastUsedInfo_UNKNOWN,
-			req.EnvironmentId,
 			nil,
 			mysql.QueryNoLimit,
 			mysql.QueryNoOffset,
@@ -2062,7 +2082,7 @@ func (s *FeatureService) stopProgressiveRollout(
 	ids := convToInterfaceSlice([]string{featureID})
 	filters := []*mysql.FilterV2{
 		{
-			Column:   "feature.environment_id",
+			Column:   "environment_id",
 			Operator: mysql.OperatorEqual,
 			Value:    EnvironmentId,
 		},

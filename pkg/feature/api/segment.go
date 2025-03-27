@@ -383,8 +383,6 @@ func (s *FeatureService) checkSegmentInUse(
 	features, _, _, err := featureStorage.ListFeatures(
 		ctx,
 		whereParts,
-		featureproto.FeatureLastUsedInfo_UNKNOWN,
-		environmentId,
 		nil,
 		mysql.QueryNoLimit,
 		mysql.QueryNoOffset,

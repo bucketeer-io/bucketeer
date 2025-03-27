@@ -62,24 +62,6 @@ type WherePart interface {
 	SQLString() (sql string, args []interface{})
 }
 
-type SubQueryFilter struct {
-	SubQuery string
-}
-
-func NewSubQueryFilter(subQuery string) WherePart {
-	return &SubQueryFilter{
-		SubQuery: subQuery,
-	}
-}
-
-func (f *SubQueryFilter) SQLString() (sql string, args []interface{}) {
-	if f.SubQuery == "" {
-		return "", nil
-	}
-	sql = f.SubQuery
-	return
-}
-
 type Filter struct {
 	Column   string
 	Operator string
