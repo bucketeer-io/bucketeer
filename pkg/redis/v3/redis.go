@@ -102,10 +102,22 @@ type Client interface {
 	// Redis Stream methods
 	XAdd(ctx context.Context, stream string, values map[string]interface{}) (string, error)
 	XGroupCreateMkStream(stream, group, start string) error
-	XReadGroup(ctx context.Context, group, consumer string, streams []string, count int64, block time.Duration) ([]goredis.XStream, error)
+	XReadGroup(ctx context.Context,
+		group, consumer string,
+		streams []string,
+		count int64,
+		block time.Duration,
+	) ([]goredis.XStream, error)
 	XAck(stream, group, id string) error
-	XPendingExt(ctx context.Context, stream, group, start, end string, count int64, idle time.Duration) ([]goredis.XPendingExt, error)
-	XClaim(ctx context.Context, stream, group, consumer string, minIdle time.Duration, ids []string) ([]goredis.XMessage, error)
+	XPendingExt(ctx context.Context,
+		stream, group, start, end string,
+		count int64,
+		idle time.Duration,
+	) ([]goredis.XPendingExt, error)
+	XClaim(ctx context.Context,
+		stream, group, consumer string,
+		minIdle time.Duration,
+		ids []string) ([]goredis.XMessage, error)
 }
 
 type client struct {
@@ -862,7 +874,12 @@ func (c *client) XGroupCreateMkStream(stream, group, start string) error {
 }
 
 // XReadGroup reads messages from a stream using a consumer group
-func (c *client) XReadGroup(ctx context.Context, group, consumer string, streams []string, count int64, block time.Duration) ([]goredis.XStream, error) {
+func (c *client) XReadGroup(ctx context.Context,
+	group, consumer string,
+	streams []string,
+	count int64,
+	block time.Duration,
+) ([]goredis.XStream, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, xReadGroupCmdName).Inc()
 
@@ -943,7 +960,9 @@ func (c *client) XAck(stream, group, id string) error {
 }
 
 // XPendingExt gets extended information about pending messages in a consumer group
-func (c *client) XPendingExt(ctx context.Context, stream, group, start, end string, count int64, idle time.Duration) ([]goredis.XPendingExt, error) {
+func (c *client) XPendingExt(ctx context.Context,
+	stream, group, start, end string,
+	count int64, idle time.Duration) ([]goredis.XPendingExt, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, xPendingCmdName).Inc()
 
@@ -988,7 +1007,11 @@ func (c *client) XPendingExt(ctx context.Context, stream, group, start, end stri
 }
 
 // XClaim claims pending messages from a consumer group
-func (c *client) XClaim(ctx context.Context, stream, group, consumer string, minIdle time.Duration, ids []string) ([]goredis.XMessage, error) {
+func (c *client) XClaim(ctx context.Context,
+	stream, group, consumer string,
+	minIdle time.Duration,
+	ids []string,
+) ([]goredis.XMessage, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, xClaimCmdName).Inc()
 
