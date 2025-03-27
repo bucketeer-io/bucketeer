@@ -47,9 +47,12 @@ const (
 	pipelineExecCmdName = "PIPELINE_EXEC"
 	ttlCmdName          = "TTL"
 	SetNXCmdName        = "SETNX"
-	publishCmdName      = "PUBLISH"
-	subscribeCmdName    = "SUBSCRIBE"
-	psubscribeCmdName   = "PSUBSCRIBE"
+	xAddCmdName         = "XADD"
+	xGroupCreateCmdName = "XGROUP CREATE"
+	xReadGroupCmdName   = "XREADGROUP"
+	xAckCmdName         = "XACK"
+	xPendingCmdName     = "XPENDING"
+	xClaimCmdName       = "XCLAIM"
 )
 
 var (
@@ -74,21 +77,6 @@ const (
 	ClientTypeCluster
 )
 
-// PubSubMessage represents a Redis pubsub message
-type PubSubMessage struct {
-	Channel      string
-	Pattern      string
-	Payload      []byte
-	PayloadSlice []interface{}
-}
-
-// PubSub represents a Redis pubsub subscription
-type PubSub struct {
-	ps     *goredis.PubSub
-	ctx    context.Context
-	logger *zap.Logger
-}
-
 type Client interface {
 	Close() error
 	Check(context.Context) health.Status
@@ -110,9 +98,14 @@ type Client interface {
 	Dump(key string) (string, error)
 	Restore(key string, ttl int64, value string) error
 	Exists(key string) (int64, error)
-	Publish(ctx context.Context, channel string, message interface{}) (int64, error)
-	Subscribe(ctx context.Context, channels ...string) (*PubSub, error)
-	PSubscribe(ctx context.Context, patterns ...string) (*PubSub, error)
+
+	// Redis Stream methods
+	XAdd(ctx context.Context, stream string, values map[string]interface{}) (string, error)
+	XGroupCreateMkStream(stream, group, start string) error
+	XReadGroup(ctx context.Context, group, consumer string, streams []string, count int64, block time.Duration) ([]goredis.XStream, error)
+	XAck(stream, group, id string) error
+	XPendingExt(ctx context.Context, stream, group, start, end string, count int64, idle time.Duration) ([]goredis.XPendingExt, error)
+	XClaim(ctx context.Context, stream, group, consumer string, minIdle time.Duration, ids []string) ([]goredis.XMessage, error)
 }
 
 type client struct {
@@ -792,143 +785,250 @@ func convertErrorToMetricsCode(err error) string {
 	return redis.CodeFail
 }
 
-// Publish publishes a message to the specified channel
-func (c *client) Publish(ctx context.Context, channel string, message interface{}) (int64, error) {
+// XAdd adds a message to a stream
+func (c *client) XAdd(ctx context.Context, stream string, values map[string]interface{}) (string, error) {
 	startTime := time.Now()
-	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, publishCmdName).Inc()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, xAddCmdName).Inc()
 
-	cmd := c.rc.Publish(ctx, channel, message)
+	// Create XAddArgs with auto-generated ID and values
+	args := &goredis.XAddArgs{
+		Stream: stream,
+		Values: values,
+		ID:     "*", // Auto-generate ID
+	}
+
+	// Execute XAdd command
+	cmd := c.rc.XAdd(ctx, args)
+	id, err := cmd.Result()
+
+	code := convertErrorToMetricsCode(err)
+	redis.HandledCounter.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		xAddCmdName,
+		code,
+	).Inc()
+	redis.HandledHistogram.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		xAddCmdName,
+		code,
+	).Observe(time.Since(startTime).Seconds())
+
+	if err != nil {
+		c.logger.Error("Failed to add message to stream",
+			zap.String("stream", stream),
+			zap.Error(err),
+		)
+		return "", err
+	}
+
+	return id, nil
+}
+
+// XGroupCreateMkStream creates a consumer group, creating the stream if it doesn't exist
+func (c *client) XGroupCreateMkStream(stream, group, start string) error {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, xGroupCreateCmdName).Inc()
+
+	// Execute XGroupCreateMkStream command
+	cmd := c.rc.XGroupCreateMkStream(context.Background(), stream, group, start)
+	err := cmd.Err()
+
+	code := convertErrorToMetricsCode(err)
+	redis.HandledCounter.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		xGroupCreateCmdName,
+		code,
+	).Inc()
+	redis.HandledHistogram.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		xGroupCreateCmdName,
+		code,
+	).Observe(time.Since(startTime).Seconds())
+
+	if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
+		c.logger.Error("Failed to create consumer group",
+			zap.String("stream", stream),
+			zap.String("group", group),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	return nil
+}
+
+// XReadGroup reads messages from a stream using a consumer group
+func (c *client) XReadGroup(ctx context.Context, group, consumer string, streams []string, count int64, block time.Duration) ([]goredis.XStream, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, xReadGroupCmdName).Inc()
+
+	// Create XReadGroupArgs
+	args := &goredis.XReadGroupArgs{
+		Group:    group,
+		Consumer: consumer,
+		Streams:  streams,
+		Count:    count,
+		Block:    block,
+	}
+
+	// Execute XReadGroup command
+	cmd := c.rc.XReadGroup(ctx, args)
 	result, err := cmd.Result()
 
 	code := convertErrorToMetricsCode(err)
 	redis.HandledCounter.WithLabelValues(
 		clientVersion,
 		c.opts.serverName,
-		publishCmdName,
+		xReadGroupCmdName,
 		code,
 	).Inc()
 	redis.HandledHistogram.WithLabelValues(
 		clientVersion,
 		c.opts.serverName,
-		publishCmdName,
+		xReadGroupCmdName,
 		code,
-	).Observe(
-		time.Since(startTime).Seconds(),
-	)
+	).Observe(time.Since(startTime).Seconds())
 
-	if err != nil {
-		c.logger.Error("Failed to publish message",
-			zap.String("channel", channel),
+	if err != nil && err != goredis.Nil {
+		c.logger.Error("Failed to read from stream",
+			zap.String("group", group),
+			zap.String("consumer", consumer),
+			zap.Strings("streams", streams),
 			zap.Error(err),
 		)
-		return 0, err
-	}
-
-	return result, nil
-}
-
-// Subscribe subscribes to the specified channels and returns a PubSub
-func (c *client) Subscribe(ctx context.Context, channels ...string) (*PubSub, error) {
-	startTime := time.Now()
-	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, subscribeCmdName).Inc()
-
-	ps := c.rc.Subscribe(ctx, channels...)
-
-	code := redis.CodeSuccess
-	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, subscribeCmdName, code).Inc()
-	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, subscribeCmdName, code).Observe(
-		time.Since(startTime).Seconds())
-
-	c.logger.Debug("Subscribed to channels", zap.Strings("channels", channels))
-
-	return &PubSub{
-		ps:     ps,
-		ctx:    ctx,
-		logger: c.logger,
-	}, nil
-}
-
-// PSubscribe subscribes to channels matching the specified patterns and returns a PubSub
-func (c *client) PSubscribe(ctx context.Context, patterns ...string) (*PubSub, error) {
-	startTime := time.Now()
-	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, psubscribeCmdName).Inc()
-
-	ps := c.rc.PSubscribe(ctx, patterns...)
-
-	code := redis.CodeSuccess
-	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, psubscribeCmdName, code).Inc()
-	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, psubscribeCmdName, code).Observe(
-		time.Since(startTime).Seconds())
-
-	c.logger.Debug("Subscribed to patterns", zap.Strings("patterns", patterns))
-
-	return &PubSub{
-		ps:     ps,
-		ctx:    ctx,
-		logger: c.logger,
-	}, nil
-}
-
-// Receive returns the next message from the subscription
-func (p *PubSub) Receive(ctx context.Context) (*PubSubMessage, error) {
-	msg, err := p.ps.Receive(ctx)
-	if err != nil {
-		p.logger.Error("Failed to receive message", zap.Error(err))
 		return nil, err
 	}
 
-	switch m := msg.(type) {
-	case *goredis.Message:
-		return &PubSubMessage{
-			Channel: m.Channel,
-			Payload: []byte(m.Payload),
-		}, nil
-	case *goredis.Subscription:
-		p.logger.Debug("Subscription event",
-			zap.String("kind", m.Kind),
-			zap.String("channel", m.Channel),
-			zap.Int("count", m.Count),
+	return result, err
+}
+
+// XAck acknowledges a message in a consumer group
+func (c *client) XAck(stream, group, id string) error {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, xAckCmdName).Inc()
+
+	// Execute XAck command
+	cmd := c.rc.XAck(context.Background(), stream, group, id)
+	_, err := cmd.Result()
+
+	code := convertErrorToMetricsCode(err)
+	redis.HandledCounter.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		xAckCmdName,
+		code,
+	).Inc()
+	redis.HandledHistogram.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		xAckCmdName,
+		code,
+	).Observe(time.Since(startTime).Seconds())
+
+	if err != nil {
+		c.logger.Error("Failed to acknowledge message",
+			zap.String("stream", stream),
+			zap.String("group", group),
+			zap.String("id", id),
+			zap.Error(err),
 		)
-		return nil, nil // Return nil for subscription events
-	case *goredis.Pong:
-		p.logger.Debug("Pong received")
-		return nil, nil // Return nil for pongs
-	default:
-		p.logger.Warn("Unknown message type", zap.Any("message", msg))
-		return nil, nil
+		return err
 	}
+
+	return nil
 }
 
-// Channel returns a channel for receiving messages
-func (p *PubSub) Channel() <-chan *PubSubMessage {
-	redisCh := p.ps.Channel()
-	ch := make(chan *PubSubMessage)
+// XPendingExt gets extended information about pending messages in a consumer group
+func (c *client) XPendingExt(ctx context.Context, stream, group, start, end string, count int64, idle time.Duration) ([]goredis.XPendingExt, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, xPendingCmdName).Inc()
 
-	go func() {
-		defer close(ch)
-		for msg := range redisCh {
-			ch <- &PubSubMessage{
-				Channel: msg.Channel,
-				Pattern: msg.Pattern,
-				Payload: []byte(msg.Payload),
-			}
-		}
-	}()
+	// Create XPendingExtArgs
+	args := &goredis.XPendingExtArgs{
+		Stream: stream,
+		Group:  group,
+		Start:  start,
+		End:    end,
+		Count:  count,
+		Idle:   idle,
+	}
 
-	return ch
+	// Execute XPendingExt command
+	cmd := c.rc.XPendingExt(ctx, args)
+	pending, err := cmd.Result()
+
+	code := convertErrorToMetricsCode(err)
+	redis.HandledCounter.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		xPendingCmdName,
+		code,
+	).Inc()
+	redis.HandledHistogram.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		xPendingCmdName,
+		code,
+	).Observe(time.Since(startTime).Seconds())
+
+	if err != nil && err != goredis.Nil {
+		c.logger.Error("Failed to get pending messages",
+			zap.String("stream", stream),
+			zap.String("group", group),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	return pending, err
 }
 
-// Close closes the subscription
-func (p *PubSub) Close() error {
-	return p.ps.Close()
-}
+// XClaim claims pending messages from a consumer group
+func (c *client) XClaim(ctx context.Context, stream, group, consumer string, minIdle time.Duration, ids []string) ([]goredis.XMessage, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, xClaimCmdName).Inc()
 
-// Unsubscribe unsubscribes from the specified channels
-func (p *PubSub) Unsubscribe(ctx context.Context, channels ...string) error {
-	return p.ps.Unsubscribe(ctx, channels...)
-}
+	// Create XClaimArgs
+	args := &goredis.XClaimArgs{
+		Stream:   stream,
+		Group:    group,
+		Consumer: consumer,
+		MinIdle:  minIdle,
+		Messages: ids,
+	}
 
-// PUnsubscribe unsubscribes from the specified patterns
-func (p *PubSub) PUnsubscribe(ctx context.Context, patterns ...string) error {
-	return p.ps.PUnsubscribe(ctx, patterns...)
+	// Execute XClaim command
+	cmd := c.rc.XClaim(ctx, args)
+	messages, err := cmd.Result()
+
+	code := convertErrorToMetricsCode(err)
+	redis.HandledCounter.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		xClaimCmdName,
+		code,
+	).Inc()
+	redis.HandledHistogram.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		xClaimCmdName,
+		code,
+	).Observe(time.Since(startTime).Seconds())
+
+	if err != nil && err != goredis.Nil {
+		c.logger.Error("Failed to claim messages",
+			zap.String("stream", stream),
+			zap.String("group", group),
+			zap.String("consumer", consumer),
+			zap.Strings("ids", ids),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	return messages, err
 }

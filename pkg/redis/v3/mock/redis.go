@@ -269,26 +269,6 @@ func (mr *MockClientMockRecorder) PFMerge(dest, expiration any, keys ...any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFMerge", reflect.TypeOf((*MockClient)(nil).PFMerge), varargs...)
 }
 
-// PSubscribe mocks base method.
-func (m *MockClient) PSubscribe(ctx context.Context, patterns ...string) (*v3.PubSub, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx}
-	for _, a := range patterns {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "PSubscribe", varargs...)
-	ret0, _ := ret[0].(*v3.PubSub)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// PSubscribe indicates an expected call of PSubscribe.
-func (mr *MockClientMockRecorder) PSubscribe(ctx any, patterns ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx}, patterns...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PSubscribe", reflect.TypeOf((*MockClient)(nil).PSubscribe), varargs...)
-}
-
 // Pipeline mocks base method.
 func (m *MockClient) Pipeline(tx bool) v3.PipeClient {
 	m.ctrl.T.Helper()
@@ -301,21 +281,6 @@ func (m *MockClient) Pipeline(tx bool) v3.PipeClient {
 func (mr *MockClientMockRecorder) Pipeline(tx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pipeline", reflect.TypeOf((*MockClient)(nil).Pipeline), tx)
-}
-
-// Publish mocks base method.
-func (m *MockClient) Publish(ctx context.Context, channel string, message any) (int64, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Publish", ctx, channel, message)
-	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Publish indicates an expected call of Publish.
-func (mr *MockClientMockRecorder) Publish(ctx, channel, message any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockClient)(nil).Publish), ctx, channel, message)
 }
 
 // Restore mocks base method.
@@ -391,24 +356,92 @@ func (mr *MockClientMockRecorder) Stats() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stats", reflect.TypeOf((*MockClient)(nil).Stats))
 }
 
-// Subscribe mocks base method.
-func (m *MockClient) Subscribe(ctx context.Context, channels ...string) (*v3.PubSub, error) {
+// XAck mocks base method.
+func (m *MockClient) XAck(stream, group, id string) error {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx}
-	for _, a := range channels {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "Subscribe", varargs...)
-	ret0, _ := ret[0].(*v3.PubSub)
+	ret := m.ctrl.Call(m, "XAck", stream, group, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// XAck indicates an expected call of XAck.
+func (mr *MockClientMockRecorder) XAck(stream, group, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "XAck", reflect.TypeOf((*MockClient)(nil).XAck), stream, group, id)
+}
+
+// XAdd mocks base method.
+func (m *MockClient) XAdd(ctx context.Context, stream string, values map[string]any) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "XAdd", ctx, stream, values)
+	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Subscribe indicates an expected call of Subscribe.
-func (mr *MockClientMockRecorder) Subscribe(ctx any, channels ...any) *gomock.Call {
+// XAdd indicates an expected call of XAdd.
+func (mr *MockClientMockRecorder) XAdd(ctx, stream, values any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx}, channels...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockClient)(nil).Subscribe), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "XAdd", reflect.TypeOf((*MockClient)(nil).XAdd), ctx, stream, values)
+}
+
+// XClaim mocks base method.
+func (m *MockClient) XClaim(ctx context.Context, stream, group, consumer string, minIdle time.Duration, ids []string) ([]redis0.XMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "XClaim", ctx, stream, group, consumer, minIdle, ids)
+	ret0, _ := ret[0].([]redis0.XMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// XClaim indicates an expected call of XClaim.
+func (mr *MockClientMockRecorder) XClaim(ctx, stream, group, consumer, minIdle, ids any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "XClaim", reflect.TypeOf((*MockClient)(nil).XClaim), ctx, stream, group, consumer, minIdle, ids)
+}
+
+// XGroupCreateMkStream mocks base method.
+func (m *MockClient) XGroupCreateMkStream(stream, group, start string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "XGroupCreateMkStream", stream, group, start)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// XGroupCreateMkStream indicates an expected call of XGroupCreateMkStream.
+func (mr *MockClientMockRecorder) XGroupCreateMkStream(stream, group, start any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "XGroupCreateMkStream", reflect.TypeOf((*MockClient)(nil).XGroupCreateMkStream), stream, group, start)
+}
+
+// XPendingExt mocks base method.
+func (m *MockClient) XPendingExt(ctx context.Context, stream, group, start, end string, count int64, idle time.Duration) ([]redis0.XPendingExt, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "XPendingExt", ctx, stream, group, start, end, count, idle)
+	ret0, _ := ret[0].([]redis0.XPendingExt)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// XPendingExt indicates an expected call of XPendingExt.
+func (mr *MockClientMockRecorder) XPendingExt(ctx, stream, group, start, end, count, idle any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "XPendingExt", reflect.TypeOf((*MockClient)(nil).XPendingExt), ctx, stream, group, start, end, count, idle)
+}
+
+// XReadGroup mocks base method.
+func (m *MockClient) XReadGroup(ctx context.Context, group, consumer string, streams []string, count int64, block time.Duration) ([]redis0.XStream, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "XReadGroup", ctx, group, consumer, streams, count, block)
+	ret0, _ := ret[0].([]redis0.XStream)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// XReadGroup indicates an expected call of XReadGroup.
+func (mr *MockClientMockRecorder) XReadGroup(ctx, group, consumer, streams, count, block any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "XReadGroup", reflect.TypeOf((*MockClient)(nil).XReadGroup), ctx, group, consumer, streams, count, block)
 }
 
 // MockPipeClient is a mock of PipeClient interface.
