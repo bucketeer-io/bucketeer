@@ -255,6 +255,7 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 						ID:   msg.ID,
 						Data: data,
 						Attributes: map[string]string{
+							"id":     msg.ID,
 							"stream": s.Stream,
 						},
 						Ack:  ackFunc,
