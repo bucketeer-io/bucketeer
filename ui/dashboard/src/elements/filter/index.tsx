@@ -25,7 +25,7 @@ const Filter = ({
 }: FilterProps) => {
   const { t } = useTranslation(['common', 'form']);
   return (
-    <div className="flex lg:items-center justify-between flex-col lg:flex-row">
+    <div className="flex lg:items-center justify-between flex-col lg:flex-row px-6">
       <div className="w-full lg:w-[365px]">
         <SearchInput
           placeholder={`${t('form:placeholder-search-input')}`}

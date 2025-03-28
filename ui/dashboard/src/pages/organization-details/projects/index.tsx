@@ -40,7 +40,7 @@ const OrganizationProjects = () => {
   };
 
   return (
-    <>
+    <div className="flex flex-col w-full min-w-[900px]">
       <Filter
         onOpenFilter={onOpenFilterModal}
         searchValue={filters.searchQuery}
@@ -78,7 +78,7 @@ const OrganizationProjects = () => {
           onOpenEditModal();
         }}
       />
-    </>
+    </div>
   );
 };
 

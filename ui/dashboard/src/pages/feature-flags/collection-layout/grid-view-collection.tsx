@@ -7,6 +7,7 @@ import {
 } from 'react-icons-material-design';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
+import { useScreen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { compact } from 'lodash';
 import { Account, AutoOpsRule, Feature, Rollout } from '@types';
@@ -51,6 +52,7 @@ const GridViewCollection = ({
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
   const { searchOptions } = useSearchParams();
+  const { fromXLScreen } = useScreen();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
@@ -94,17 +96,18 @@ const GridViewCollection = ({
               icon={getDataTypeIcon(variationType)}
               status={getFlagStatus(item)}
             />
-            <div className="flex flex-col gap-y-3 w-[410px] max-w-[410px] xxl:w-full xxl:max-w-[730px]">
+            <div className="flex flex-col gap-y-3 col-span-4 flex-1">
               <FlagVariationsElement variations={variations} />
               <div className="flex items-center flex-wrap w-full gap-2">
                 <ExpandableTag
                   tags={tags}
                   filterTags={filterTags}
                   rowId={item.id}
-                  className={cn('!max-w-[350px] truncate cursor-pointer')}
+                  className={cn('!max-w-[200px] truncate cursor-pointer', {
+                    '!max-w-[350px]': fromXLScreen
+                  })}
                   wrapperClassName="w-fit"
-                  maxSize={382}
-                  tooltipCls="!z-0"
+                  maxSize={fromXLScreen ? 382 : 232}
                   onTagClick={tag => handleTagFilters(tag)}
                 />
                 <FlagOperationsElement
@@ -114,7 +117,7 @@ const GridViewCollection = ({
                 />
               </div>
             </div>
-            <div className="flex flex-1 justify-end self-start h-full gap-x-2">
+            <div className="flex col-span-3 justify-end self-start gap-x-2">
               <div className="flex-center">
                 <Icon icon={IconWatch} size={'xxs'} />
               </div>

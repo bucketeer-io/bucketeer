@@ -8,6 +8,7 @@ import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
+import TableListContent from 'elements/table-list-content';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { EnvironmentActionsType, EnvironmentFilters } from '../types';
@@ -67,7 +68,7 @@ const CollectionLoader = ({
   return isError ? (
     <PageLayout.ErrorState onRetry={refetch} />
   ) : (
-    <>
+    <TableListContent>
       <DataTable
         isLoading={isLoading}
         data={environments}
@@ -82,7 +83,7 @@ const CollectionLoader = ({
           onChange={page => setFilters({ page })}
         />
       )}
-    </>
+    </TableListContent>
   );
 };
 

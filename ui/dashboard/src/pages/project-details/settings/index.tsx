@@ -77,83 +77,85 @@ const ProjectSettings = ({ project }: { project: Project }) => {
   };
 
   return (
-    <FormProvider {...form}>
-      <Form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="flex lg:items-center justify-between flex-col lg:flex-row">
-          <p className="typo-head-bold-big">{t(`settings`)}</p>
-          <div className="flex items-center gap-4 mt-3 lg:mt-0">
-            <Button
-              variant="text"
-              type="button"
-              className="flex-1 lg:flex-none"
-            >
-              <Icon icon={IconLaunchOutlined} size="sm" />
-              {t('documentation')}
-            </Button>
-            <Button
-              loading={form.formState.isSubmitting}
-              disabled={!form.formState.isDirty}
-              type="submit"
-              className="w-[120px]"
-            >
-              {t(`save`)}
-            </Button>
+    <div className="flex flex-col w-full p-6">
+      <FormProvider {...form}>
+        <Form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="flex lg:items-center justify-between flex-col lg:flex-row">
+            <p className="typo-head-bold-big">{t(`settings`)}</p>
+            <div className="flex items-center gap-4 mt-3 lg:mt-0">
+              <Button
+                variant="text"
+                type="button"
+                className="flex-1 lg:flex-none"
+              >
+                <Icon icon={IconLaunchOutlined} size="sm" />
+                {t('documentation')}
+              </Button>
+              <Button
+                loading={form.formState.isSubmitting}
+                disabled={!form.formState.isDirty}
+                type="submit"
+                className="w-[120px]"
+              >
+                {t(`save`)}
+              </Button>
+            </div>
           </div>
-        </div>
-        <div className="p-5 shadow-card rounded-lg bg-white">
-          <Form.Field
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <Form.Item>
-                <Form.Label required>{t('name')}</Form.Label>
-                <Form.Control>
-                  <Input
-                    placeholder={`${t('form:placeholder-name')}`}
-                    {...field}
-                  />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Form.Field
-            control={form.control}
-            name="urlCode"
-            render={({ field }) => (
-              <Form.Item>
-                <Form.Label required>{t('form:url-code')}</Form.Label>
-                <Form.Control>
-                  <Input
-                    disabled
-                    placeholder={`${t('form:placeholder-code')}`}
-                    {...field}
-                  />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Form.Field
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <Form.Item>
-                <Form.Label optional>{t('form:description')}</Form.Label>
-                <Form.Control>
-                  <TextArea
-                    placeholder={t('form:placeholder-desc')}
-                    rows={4}
-                    {...field}
-                  />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-        </div>
-      </Form>
-    </FormProvider>
+          <div className="p-5 shadow-card rounded-lg bg-white mt-6">
+            <Form.Field
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Label required>{t('name')}</Form.Label>
+                  <Form.Control>
+                    <Input
+                      placeholder={`${t('form:placeholder-name')}`}
+                      {...field}
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+            <Form.Field
+              control={form.control}
+              name="urlCode"
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Label required>{t('form:url-code')}</Form.Label>
+                  <Form.Control>
+                    <Input
+                      disabled
+                      placeholder={`${t('form:placeholder-code')}`}
+                      {...field}
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+            <Form.Field
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Label optional>{t('form:description')}</Form.Label>
+                  <Form.Control>
+                    <TextArea
+                      placeholder={t('form:placeholder-desc')}
+                      rows={4}
+                      {...field}
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+          </div>
+        </Form>
+      </FormProvider>
+    </div>
   );
 };
 

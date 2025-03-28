@@ -91,12 +91,15 @@ const PageContent = ({
           onChangeFilters({ status, searchQuery: '', disabled: undefined });
         }}
       >
-        <TabsList>
+        <TabsList className="px-6">
           <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value={filters.status}>
+        <TabsContent
+          value={filters.status}
+          className="w-full p-6 pt-0 overflow-auto"
+        >
           <CollectionLoader
             onAdd={onAdd}
             filters={filters}

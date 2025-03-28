@@ -128,13 +128,13 @@ const PageContent = ({
         }}
       >
         {!isHiddenTab && (
-          <TabsList>
+          <TabsList className="px-6">
             <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
             <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
           </TabsList>
         )}
 
-        <TabsContent value={filters.status}>
+        <TabsContent value={filters.status} className="px-6 pb-6">
           <CollectionLoader
             filters={filters}
             onAdd={onAdd}
