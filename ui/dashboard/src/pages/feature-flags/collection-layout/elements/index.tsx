@@ -9,7 +9,7 @@ import {
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { COLORS } from 'constants/styles';
-import { useScreen, useToast } from 'hooks';
+import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import {
   AutoOpsRule,
@@ -179,7 +179,10 @@ export const FlagNameElement = ({
 }: FlagNameElementType) => {
   const { notify } = useToast();
   const { t } = useTranslation(['table']);
+<<<<<<< HEAD
   const { from3XLScreen, from4XLScreen } = useScreen();
+=======
+>>>>>>> c9be9a28 (feat: update show variations names on flag list page)
   const [isTruncate, setIsTruncate] = useState(false);
 
   const handleCopyId = (id: string) => {
@@ -195,6 +198,7 @@ export const FlagNameElement = ({
   };
 
   useEffect(() => {
+<<<<<<< HEAD
     const isTextTruncated = () => {
       const element = document?.getElementById(`name-${id}`);
       const textElement = document?.getElementById(`text-${id}`);
@@ -207,6 +211,27 @@ export const FlagNameElement = ({
     isTextTruncated();
     window.addEventListener('resize', isTextTruncated);
     return () => window.removeEventListener('resize', isTextTruncated);
+=======
+    const hasMoreThanTwoLines = () => {
+      const pElement = document.getElementById(`text-${id}`);
+      if (pElement) {
+        pElement.style.display = 'none';
+        void pElement.offsetHeight;
+        pElement.style.display = '';
+
+        const style = window.getComputedStyle(pElement);
+        const lineHeight = parseFloat(style.lineHeight);
+        const height = pElement.clientHeight;
+        return setIsTruncate(height / lineHeight > 2);
+      }
+      return setIsTruncate(false);
+    };
+
+    hasMoreThanTwoLines();
+
+    window.addEventListener('resize', hasMoreThanTwoLines);
+    return () => window.removeEventListener('resize', hasMoreThanTwoLines);
+>>>>>>> c9be9a28 (feat: update show variations names on flag list page)
   }, []);
 
   return (
@@ -235,12 +260,14 @@ export const FlagNameElement = ({
               <Link
                 id={`name-${id}`}
                 to={link}
-                className="typo-para-medium text-primary-500 underline"
+                className="typo-para-medium text-primary-500 underline relative"
               >
-                <p className="line-clamp-2 break-all">
-                  {from4XLScreen
-                    ? name
-                    : truncateBySide(name, from3XLScreen ? 60 : 50)}
+                <p className="line-clamp-2 break-all">{name}</p>
+                <p
+                  id={`text-${id}`}
+                  className="absolute left-0 right-0 break-all w-full -z-1 text-transparent invisible"
+                >
+                  {name}
                 </p>
                 <p
                   id={`text-${id}`}
