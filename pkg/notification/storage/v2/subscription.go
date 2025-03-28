@@ -19,7 +19,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -52,9 +51,7 @@ type SubscriptionStorage interface {
 	GetSubscription(ctx context.Context, id, environmentId string) (*domain.Subscription, error)
 	ListSubscriptions(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		options *mysql.ListOptions,
 	) ([]*proto.Subscription, int, int64, error)
 }
 
@@ -179,20 +176,15 @@ func (s *subscriptionStorage) GetSubscription(
 
 func (s *subscriptionStorage) ListSubscriptions(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.Subscription, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(selectSubscriptionV2AnySQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectSubscriptionV2AnySQLQuery, options)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
-	subscriptions := make([]*proto.Subscription, 0, limit)
+	subscriptions := make([]*proto.Subscription, 0)
 	for rows.Next() {
 		subscription := proto.Subscription{}
 		err := rows.Scan(
@@ -215,10 +207,14 @@ func (s *subscriptionStorage) ListSubscriptions(
 	if rows.Err() != nil {
 		return nil, 0, 0, err
 	}
+	var offset int
+	if options != nil {
+		offset = options.Offset
+	}
 	nextOffset := offset + len(subscriptions)
 	var totalCount int64
-	countQuery := fmt.Sprintf(selectSubscriptionV2CountSQLQuery, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	countQuery, countQueryWhereArgs := mysql.ConstructQueryAndWhereArgs(selectSubscriptionV2CountSQLQuery, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countQueryWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

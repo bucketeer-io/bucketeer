@@ -722,30 +722,6 @@ func (s *NotificationService) ListSubscriptions(
 	if err != nil {
 		return nil, err
 	}
-	var whereParts []mysql.WherePart
-	if req.OrganizationId != "" {
-		// New console
-		whereParts = append(whereParts, mysql.NewFilter("env.organization_id", "=", req.OrganizationId))
-	} else {
-		// Current console
-		whereParts = append(whereParts, mysql.NewFilter("sub.environment_id", "=", req.EnvironmentId))
-	}
-	sourceTypesValues := make([]interface{}, len(req.SourceTypes))
-	for i, st := range req.SourceTypes {
-		sourceTypesValues[i] = int32(st)
-	}
-	if len(sourceTypesValues) > 0 {
-		whereParts = append(
-			whereParts,
-			mysql.NewJSONFilter("sub.source_types", mysql.JSONContainsNumber, sourceTypesValues),
-		)
-	}
-	if req.Disabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("sub.disabled", "=", req.Disabled.Value))
-	}
-	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"sub.name"}, req.SearchKeyword))
-	}
 	orders, err := s.newSubscriptionListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
@@ -754,9 +730,18 @@ func (s *NotificationService) ListSubscriptions(
 		)
 		return nil, err
 	}
+	var disabled *bool
+	if req.Disabled != nil {
+		disabled = &req.Disabled.Value
+	}
+
 	subscriptions, cursor, totalCount, err := s.listSubscriptionsMySQL(
 		ctx,
-		whereParts,
+		req.OrganizationId,
+		req.EnvironmentId,
+		req.SourceTypes,
+		disabled,
+		req.SearchKeyword,
 		orders,
 		req.PageSize,
 		req.Cursor,
@@ -819,25 +804,14 @@ func (s *NotificationService) ListEnabledSubscriptions(
 	if err != nil {
 		return nil, err
 	}
-	var whereParts []mysql.WherePart
-	whereParts = append(
-		whereParts,
-		mysql.NewFilter("sub.environment_id", "=", req.EnvironmentId),
-		mysql.NewFilter("sub.disabled", "=", false),
-	)
-	sourceTypesValues := make([]interface{}, len(req.SourceTypes))
-	for i, st := range req.SourceTypes {
-		sourceTypesValues[i] = int32(st)
-	}
-	if len(sourceTypesValues) > 0 {
-		whereParts = append(
-			whereParts,
-			mysql.NewJSONFilter("sub.source_types", mysql.JSONContainsNumber, sourceTypesValues),
-		)
-	}
+	var disabled = false
 	subscriptions, cursor, _, err := s.listSubscriptionsMySQL(
 		ctx,
-		whereParts,
+		"",
+		req.EnvironmentId,
+		req.SourceTypes,
+		&disabled,
+		"",
 		nil,
 		req.PageSize,
 		req.Cursor,
@@ -854,12 +828,58 @@ func (s *NotificationService) ListEnabledSubscriptions(
 
 func (s *NotificationService) listSubscriptionsMySQL(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
+	organizationId string,
+	environmentId string,
+	sourceTypes []notificationproto.Subscription_SourceType,
+	disabled *bool,
+	searchKeyword string,
 	orders []*mysql.Order,
 	pageSize int64,
 	cursor string,
 	localizer locale.Localizer,
 ) ([]*notificationproto.Subscription, string, int64, error) {
+	var filters []*mysql.FilterV2
+	if organizationId != "" {
+		// New console
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "env.organization_id",
+			Operator: mysql.OperatorEqual,
+			Value:    organizationId,
+		})
+	} else {
+		// Current console
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "sub.environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    environmentId,
+		})
+	}
+	if disabled != nil {
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "sub.disabled",
+			Operator: mysql.OperatorEqual,
+			Value:    disabled,
+		})
+	}
+	var seachQuery *mysql.SearchQuery
+	if searchKeyword != "" {
+		seachQuery = &mysql.SearchQuery{
+			Columns: []string{"sub.name"},
+			Keyword: searchKeyword,
+		}
+	}
+	sourceTypesValues := make([]interface{}, len(sourceTypes))
+	for i, st := range sourceTypes {
+		sourceTypesValues[i] = int32(st)
+	}
+	var jsonFilters []*mysql.JSONFilter
+	if len(sourceTypesValues) > 0 {
+		jsonFilters = append(jsonFilters, &mysql.JSONFilter{
+			Column: "sub.source_types",
+			Func:   mysql.JSONContainsNumber,
+			Values: sourceTypesValues,
+		})
+	}
 	limit := int(pageSize)
 	if cursor == "" {
 		cursor = "0"
@@ -875,12 +895,19 @@ func (s *NotificationService) listSubscriptionsMySQL(
 		}
 		return nil, "", 0, dt.Err()
 	}
+	options := &mysql.ListOptions{
+		Limit:       limit,
+		Offset:      offset,
+		Filters:     filters,
+		InFilter:    nil,
+		NullFilters: nil,
+		JSONFilters: jsonFilters,
+		SearchQuery: seachQuery,
+		Orders:      nil,
+	}
+
 	subscriptions, nextCursor, totalCount, err := s.subscriptionStorage.ListSubscriptions(
-		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
+		ctx, options,
 	)
 	if err != nil {
 		s.logger.Error(
