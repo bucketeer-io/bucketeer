@@ -649,13 +649,6 @@ func TestGetSegmentMySQL(t *testing.T) {
 						Id: "id",
 					},
 				}, 0, int64(0), nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
 			},
 			id:            "id",
 			environmentId: "ns0",
@@ -682,13 +675,6 @@ func TestGetSegmentMySQL(t *testing.T) {
 						Id: "id",
 					},
 				}, 0, int64(0), nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
 			},
 			id:            "id",
 			environmentId: "ns0",
@@ -779,13 +765,6 @@ func TestListSegmentsMySQL(t *testing.T) {
 						Id: "id",
 					},
 				}, 0, int64(0), nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
 			},
 			pageSize:      int64(maxPageSizePerRequest),
 			environmentId: "ns0",
@@ -817,13 +796,6 @@ func TestListSegmentsMySQL(t *testing.T) {
 						Id: "id",
 					},
 				}, 0, int64(0), nil)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
 			},
 			pageSize:      int64(maxPageSizePerRequest),
 			environmentId: "ns0",

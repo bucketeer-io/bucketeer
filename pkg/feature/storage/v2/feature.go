@@ -232,6 +232,7 @@ func (s *featureStorage) ListFeatures(
 	for rows.Next() {
 		feature := proto.Feature{}
 		feature.AutoOpsSummary = &proto.AutoOpsSummary{}
+		lastUsedInfo := proto.FeatureLastUsedInfo{}
 		err := rows.Scan(
 			&feature.Id,
 			&feature.Name,
@@ -257,9 +258,19 @@ func (s *featureStorage) ListFeatures(
 			&feature.AutoOpsSummary.ProgressiveRolloutCount,
 			&feature.AutoOpsSummary.ScheduleCount,
 			&feature.AutoOpsSummary.KillSwitchCount,
+			&lastUsedInfo.FeatureId,
+			&lastUsedInfo.Version,
+			&lastUsedInfo.LastUsedAt,
+			&lastUsedInfo.CreatedAt,
+			&lastUsedInfo.ClientOldestVersion,
+			&lastUsedInfo.ClientLatestVersion,
 		)
 		if err != nil {
 			return nil, 0, 0, err
+		}
+		// Flags that haven't been evaluated yet won't have the status info.
+		if lastUsedInfo.FeatureId != "" {
+			feature.LastUsedInfo = &lastUsedInfo
 		}
 		features = append(features, &feature)
 	}
@@ -284,11 +295,11 @@ func (s *featureStorage) GetFeatureSummary(
 	err := s.qe.QueryRowContext(ctx, selectFeatureCountByStatusSQLQuery, environmentID).Scan(
 		&countByStatus.Total,
 		&countByStatus.Active,
+		&countByStatus.Inactive,
 	)
 	if err != nil {
 		return nil, err
 	}
-	countByStatus.Inactive = countByStatus.Total - countByStatus.Active
 	return &countByStatus, nil
 }
 
@@ -311,6 +322,7 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 	for rows.Next() {
 		feature := proto.Feature{}
 		feature.AutoOpsSummary = &proto.AutoOpsSummary{}
+		lastUsedInfo := proto.FeatureLastUsedInfo{}
 		err := rows.Scan(
 			&feature.Id,
 			&feature.Name,
@@ -336,9 +348,19 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 			&feature.AutoOpsSummary.ProgressiveRolloutCount,
 			&feature.AutoOpsSummary.ScheduleCount,
 			&feature.AutoOpsSummary.KillSwitchCount,
+			&lastUsedInfo.FeatureId,
+			&lastUsedInfo.Version,
+			&lastUsedInfo.LastUsedAt,
+			&lastUsedInfo.CreatedAt,
+			&lastUsedInfo.ClientOldestVersion,
+			&lastUsedInfo.ClientLatestVersion,
 		)
 		if err != nil {
 			return nil, 0, 0, err
+		}
+		// Flags that haven't been evaluated yet won't have the status info.
+		if lastUsedInfo.FeatureId != "" {
+			feature.LastUsedInfo = &lastUsedInfo
 		}
 		features = append(features, &feature)
 	}

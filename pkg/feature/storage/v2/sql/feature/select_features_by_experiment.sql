@@ -21,31 +21,41 @@ SELECT DISTINCT
     feature.sampling_seed,
     feature.prerequisites,
     (
-        select count(aor.id)
-        from auto_ops_rule aor
-        where
-            aor.feature_id = feature.id and
-            ops_type = 1 and
+        SELECT COUNT(aor.id)
+        FROM auto_ops_rule aor
+        WHERE
+            aor.feature_id = feature.id AND
+            ops_type = 1 AND
             aor.deleted = 0
-    ) as progressive_rollout_count,
+    ) AS progressive_rollout_count,
     (
-        select count(aor.id)
-        from auto_ops_rule aor
-        where
-            aor.feature_id = feature.id and
-            ops_type = 2 and
+        SELECT COUNT(aor.id)
+        FROM auto_ops_rule aor
+        WHERE
+            aor.feature_id = feature.id AND
+            ops_type = 2 AND
             aor.deleted = 0
-    ) as schedule_count,
+    ) AS schedule_count,
     (
-        select count(aor.id)
-        from auto_ops_rule aor
-        where
-            aor.feature_id = feature.id and
-            ops_type = 3 and
+        SELECT COUNT(aor.id)
+        FROM auto_ops_rule aor
+        WHERE
+            aor.feature_id = feature.id AND
+            ops_type = 3 AND
             aor.deleted = 0
-    ) as kill_switch_count
-FROM feature
+    ) AS kill_switch_count,
+    COALESCE(feature_last_used_info.feature_id, '') AS feature_id,
+    COALESCE(feature_last_used_info.version, 0) AS version,
+    COALESCE(feature_last_used_info.last_used_at, 0) AS last_used_at,
+    COALESCE(feature_last_used_info.created_at, 0) AS created_at,
+    COALESCE(feature_last_used_info.client_oldest_version, '') AS client_oldest_version,
+    COALESCE(feature_last_used_info.client_latest_version, '') AS client_latest_version
+FROM
+    feature
+LEFT OUTER JOIN feature_last_used_info ON
+    feature.id = feature_last_used_info.feature_id AND
+    feature.environment_id = feature_last_used_info.environment_id
 LEFT OUTER JOIN experiment ON
     feature.id = experiment.feature_id AND
     feature.environment_id = experiment.environment_id
-        %s %s %s
+%s %s %s

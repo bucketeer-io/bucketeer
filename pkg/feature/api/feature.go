@@ -52,6 +52,8 @@ import (
 const (
 	getMultiChunkSize = 1000
 	listRequestSize   = 500
+	// after 7 days without request, the feature is considered as no activity
+	activeDays = 7 * 24 * time.Hour
 )
 
 var errEvaluationNotFound = status.Error(codes.NotFound, "feature: evaluation not found")
@@ -73,7 +75,7 @@ func (s *FeatureService) GetFeature(
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
 	feature, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
-		if err == v2fs.ErrFeatureNotFound {
+		if errors.Is(err, v2fs.ErrFeatureNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -126,7 +128,7 @@ func (s *FeatureService) GetFeatures(
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+		mysql.NewFilter("feature.environment_id", "=", req.EnvironmentId),
 	}
 	ids := make([]interface{}, 0, len(req.Ids))
 	for _, id := range req.Ids {
@@ -188,6 +190,7 @@ func (s *FeatureService) ListFeatures(
 			req.Archived,
 			req.HasPrerequisites,
 			req.SearchKeyword,
+			req.Status,
 			req.OrderBy,
 			req.OrderDirection,
 			req.EnvironmentId,
@@ -203,6 +206,7 @@ func (s *FeatureService) ListFeatures(
 			req.Archived,
 			req.HasPrerequisites,
 			req.SearchKeyword,
+			req.Status,
 			req.OrderBy,
 			req.OrderDirection,
 			req.HasExperiment.Value,
@@ -241,14 +245,15 @@ func (s *FeatureService) listFeatures(
 	archived *wrappers.BoolValue,
 	hasPrerequisites *wrappers.BoolValue,
 	searchKeyword string,
+	status featureproto.FeatureLastUsedInfo_Status,
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
 	orderDirection featureproto.ListFeaturesRequest_OrderDirection,
 	environmentId string,
 ) ([]*featureproto.Feature, string, int64, error) {
 	localizer := locale.NewLocalizer(ctx)
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_id", "=", environmentId),
+		mysql.NewFilter("feature.deleted", "=", false),
+		mysql.NewFilter("feature.environment_id", "=", environmentId),
 	}
 	tagValues := make([]interface{}, 0, len(tags))
 	for _, tag := range tags {
@@ -257,33 +262,53 @@ func (s *FeatureService) listFeatures(
 	if len(tagValues) > 0 {
 		whereParts = append(
 			whereParts,
-			mysql.NewJSONFilter("tags", mysql.JSONContainsString, tagValues),
+			mysql.NewJSONFilter("feature.tags", mysql.JSONContainsString, tagValues),
 		)
 	}
 	if maintainer != "" {
-		whereParts = append(whereParts, mysql.NewFilter("maintainer", "=", maintainer))
+		whereParts = append(whereParts, mysql.NewFilter("feature.maintainer", "=", maintainer))
 	}
 	if enabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("enabled", "=", enabled.Value))
+		whereParts = append(whereParts, mysql.NewFilter("feature.enabled", "=", enabled.Value))
 	}
 	if archived != nil {
-		whereParts = append(whereParts, mysql.NewFilter("archived", "=", archived.Value))
+		whereParts = append(whereParts, mysql.NewFilter("feature.archived", "=", archived.Value))
 	}
 	if hasPrerequisites != nil {
 		if hasPrerequisites.Value {
 			whereParts = append(
 				whereParts,
-				mysql.NewJSONFilter("prerequisites", mysql.JSONLengthGreaterThan, []interface{}{"0"}),
+				mysql.NewJSONFilter("feature.prerequisites", mysql.JSONLengthGreaterThan, []interface{}{"0"}),
 			)
 		} else {
 			whereParts = append(
 				whereParts,
-				mysql.NewJSONFilter("prerequisites", mysql.JSONLengthSmallerThan, []interface{}{"1"}),
+				mysql.NewJSONFilter("feature.prerequisites", mysql.JSONLengthSmallerThan, []interface{}{"1"}),
 			)
 		}
 	}
 	if searchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "description"}, searchKeyword))
+		whereParts = append(
+			whereParts,
+			mysql.NewSearchQuery([]string{"feature.id", "feature.name", "feature.description"}, searchKeyword),
+		)
+	}
+	switch status {
+	case featureproto.FeatureLastUsedInfo_UNKNOWN:
+	case featureproto.FeatureLastUsedInfo_NEW:
+		whereParts = append(whereParts, mysql.NewNullFilter("feature_last_used_info.id", true))
+	case featureproto.FeatureLastUsedInfo_ACTIVE:
+		whereParts = append(whereParts, mysql.NewFilter(
+			"feature_last_used_info.last_used_at",
+			">=",
+			time.Now().Add(-activeDays).Unix()),
+		)
+	case featureproto.FeatureLastUsedInfo_NO_ACTIVITY:
+		whereParts = append(whereParts, mysql.NewFilter(
+			"feature_last_used_info.last_used_at",
+			"<",
+			time.Now().Add(-activeDays).Unix()),
+		)
 	}
 	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection, localizer)
 	if err != nil {
@@ -328,9 +353,6 @@ func (s *FeatureService) listFeatures(
 		)
 		return nil, "", 0, err
 	}
-	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, environmentId, localizer); err != nil {
-		return nil, "", 0, err
-	}
 	return features, strconv.Itoa(nextCursor), totalCount, nil
 }
 
@@ -344,6 +366,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	archived *wrappers.BoolValue,
 	hasPrerequisites *wrappers.BoolValue,
 	searchKeyword string,
+	status featureproto.FeatureLastUsedInfo_Status,
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
 	orderDirection featureproto.ListFeaturesRequest_OrderDirection,
 	hasExperiment bool,
@@ -379,12 +402,12 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 		if hasPrerequisites.Value {
 			whereParts = append(
 				whereParts,
-				mysql.NewJSONFilter("prerequisites", mysql.JSONLengthGreaterThan, []interface{}{"0"}),
+				mysql.NewJSONFilter("feature.prerequisites", mysql.JSONLengthGreaterThan, []interface{}{"0"}),
 			)
 		} else {
 			whereParts = append(
 				whereParts,
-				mysql.NewJSONFilter("prerequisites", mysql.JSONLengthSmallerThan, []interface{}{"1"}),
+				mysql.NewJSONFilter("feature.prerequisites", mysql.JSONLengthSmallerThan, []interface{}{"1"}),
 			)
 		}
 	}
@@ -392,6 +415,23 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 		whereParts = append(
 			whereParts,
 			mysql.NewSearchQuery([]string{"feature.id", "feature.name", "feature.description"}, searchKeyword),
+		)
+	}
+	switch status {
+	case featureproto.FeatureLastUsedInfo_UNKNOWN:
+	case featureproto.FeatureLastUsedInfo_NEW:
+		whereParts = append(whereParts, mysql.NewNullFilter("feature_last_used_info.id", true))
+	case featureproto.FeatureLastUsedInfo_ACTIVE:
+		whereParts = append(whereParts, mysql.NewFilter(
+			"feature_last_used_info.last_used_at",
+			">=",
+			time.Now().Add(-activeDays).Unix()),
+		)
+	case featureproto.FeatureLastUsedInfo_NO_ACTIVITY:
+		whereParts = append(whereParts, mysql.NewFilter(
+			"feature_last_used_info.last_used_at",
+			"<",
+			time.Now().Add(-activeDays).Unix()),
 		)
 	}
 	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection, localizer)
@@ -438,9 +478,6 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 		)
 		return nil, "", 0, err
 	}
-	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, environmentId, localizer); err != nil {
-		return nil, "", 0, err
-	}
 	return features, strconv.Itoa(nextCursor), totalCount, nil
 }
 
@@ -462,6 +499,8 @@ func (s *FeatureService) newListFeaturesOrdersMySQL(
 		column = "feature.tags"
 	case featureproto.ListFeaturesRequest_ENABLED:
 		column = "feature.enabled"
+	case featureproto.ListFeaturesRequest_AUTO_OPS:
+		column = "(progressive_rollout_count + schedule_count + kill_switch_count)"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -494,7 +533,7 @@ func (s *FeatureService) ListEnabledFeatures(
 		mysql.NewFilter("archived", "=", false),
 		mysql.NewFilter("enabled", "=", true),
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+		mysql.NewFilter("feature.environment_id", "=", req.EnvironmentId),
 	}
 	tagValues := make([]interface{}, 0, len(req.Tags))
 	for _, tag := range req.Tags {
@@ -581,30 +620,12 @@ func (s *FeatureService) CreateFeature(
 		return nil, err
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		if err := s.upsertTags(ctx, tx, req.Command.Tags, req.EnvironmentId); err != nil {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		if err := s.upsertTags(contextWithTx, req.Command.Tags, req.EnvironmentId); err != nil {
 			return err
 		}
 
-		featureStorage := v2fs.NewFeatureStorage(tx)
-		if err := featureStorage.CreateFeature(ctx, feature, req.EnvironmentId); err != nil {
+		if err := s.featureStorage.CreateFeature(contextWithTx, feature, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -710,8 +731,8 @@ func (s *FeatureService) createFeatureNoCommand(
 		return nil, err
 	}
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, tx mysql.Transaction) error {
-		if err := s.upsertTags(ctx, tx, req.Tags, req.EnvironmentId); err != nil {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		if err := s.upsertTags(ctxWithTx, req.Tags, req.EnvironmentId); err != nil {
 			return err
 		}
 		event, err = domainevent.NewEvent(
@@ -740,8 +761,7 @@ func (s *FeatureService) createFeatureNoCommand(
 		if err != nil {
 			return err
 		}
-		featureStorage := v2fs.NewFeatureStorage(tx)
-		return featureStorage.CreateFeature(ctx, feature, req.EnvironmentId)
+		return s.featureStorage.CreateFeature(ctxWithTx, feature, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureAlreadyExists) {
@@ -819,33 +839,15 @@ func (s *FeatureService) UpdateFeature(
 	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
 	var event *eventproto.Event
 	var updatedpb *featureproto.Feature
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		featureStorage := v2fs.NewFeatureStorage(tx)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		whereParts := []mysql.WherePart{
-			mysql.NewFilter("deleted", "=", false),
-			mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+			mysql.NewFilter("feature.deleted", "=", false),
+			mysql.NewFilter("feature.environment_id", "=", req.EnvironmentId),
 		}
-		features, _, _, err := featureStorage.ListFeatures(
-			ctx,
+		features, _, _, err := s.featureStorage.ListFeatures(
+			ctxWithTx,
 			whereParts,
 			nil,
 			mysql.QueryNoLimit,
@@ -942,7 +944,7 @@ func (s *FeatureService) UpdateFeature(
 		if err != nil {
 			return err
 		}
-		err = featureStorage.UpdateFeature(ctx, updated, req.EnvironmentId)
+		err = s.featureStorage.UpdateFeature(ctxWithTx, updated, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
@@ -1009,26 +1011,8 @@ func (s *FeatureService) UpdateFeatureDetails(
 		return nil, err
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		featureStorage := v2fs.NewFeatureStorage(tx)
-		feature, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		feature, err := s.featureStorage.GetFeature(ctxWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get feature",
@@ -1098,7 +1082,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 			for _, c := range req.AddTagCommands {
 				tags = append(tags, c.Tag)
 			}
-			if err := s.upsertTags(ctx, tx, tags, req.EnvironmentId); err != nil {
+			if err := s.upsertTags(ctxWithTx, tags, req.EnvironmentId); err != nil {
 				return err
 			}
 		}
@@ -1117,7 +1101,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 				}
 			}
 		}
-		err = featureStorage.UpdateFeature(ctx, feature, req.EnvironmentId)
+		err = s.featureStorage.UpdateFeature(ctxWithTx, feature, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
@@ -1336,7 +1320,7 @@ func (s *FeatureService) ArchiveFeature(
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("archived", "=", false),
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+		mysql.NewFilter("feature.environment_id", "=", req.EnvironmentId),
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
 	features, _, _, err := featureStorage.ListFeatures(
@@ -1532,9 +1516,8 @@ func (s *FeatureService) updateFeature(
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
 
-	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
-		featureStorage := v2fs.NewFeatureStorage(tx)
-		feature, err := featureStorage.GetFeature(contextWithTx, id, environmentId)
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		feature, err := s.featureStorage.GetFeature(contextWithTx, id, environmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get feature",
@@ -1577,7 +1560,7 @@ func (s *FeatureService) updateFeature(
 			)
 			return err
 		}
-		if err := featureStorage.UpdateFeature(contextWithTx, feature, environmentId); err != nil {
+		if err := s.featureStorage.UpdateFeature(contextWithTx, feature, environmentId); err != nil {
 			s.logger.Error(
 				"Failed to update feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -1699,31 +1682,13 @@ func (s *FeatureService) UpdateFeatureVariations(
 		commands = append(commands, cmd)
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+		mysql.NewFilter("feature.environment_id", "=", req.EnvironmentId),
 	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		featureStorage := v2fs.NewFeatureStorage(tx)
-		features, _, _, err := featureStorage.ListFeatures(
-			ctx,
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		features, _, _, err := s.featureStorage.ListFeatures(
+			ctxWithTx,
 			whereParts,
 			nil,
 			mysql.QueryNoLimit,
@@ -1799,7 +1764,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 				return err
 			}
 		}
-		err = featureStorage.UpdateFeature(ctx, feature, req.EnvironmentId)
+		err = s.featureStorage.UpdateFeature(ctxWithTx, feature, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
@@ -1886,31 +1851,13 @@ func (s *FeatureService) UpdateFeatureTargeting(
 	// Normally each command should be usable alone (load the feature from the repository change it and save it).
 	// Also here because many commands are run sequentially they all expect the same version of the feature.
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
 		whereParts := []mysql.WherePart{
-			mysql.NewFilter("deleted", "=", false),
-			mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+			mysql.NewFilter("feature.deleted", "=", false),
+			mysql.NewFilter("feature.environment_id", "=", req.EnvironmentId),
 		}
-		featureStorage := v2fs.NewFeatureStorage(tx)
-		features, _, _, err := featureStorage.ListFeatures(
-			ctx,
+		features, _, _, err := s.featureStorage.ListFeatures(
+			ctxWithTx,
 			whereParts,
 			nil,
 			mysql.QueryNoLimit,
@@ -1982,7 +1929,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 			// We must stop the progressive rollout if it contains a `DisableFeatureCommand`
 			switch cmd.(type) {
 			case *featureproto.DisableFeatureCommand:
-				if err := s.stopProgressiveRollout(ctx, req.EnvironmentId, feature.Id); err != nil {
+				if err := s.stopProgressiveRollout(ctxWithTx, req.EnvironmentId, feature.Id); err != nil {
 					return err
 				}
 			}
@@ -1999,7 +1946,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 				return err
 			}
 		}
-		err = featureStorage.UpdateFeature(ctx, feature, req.EnvironmentId)
+		err = s.featureStorage.UpdateFeature(ctxWithTx, feature, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
@@ -2183,6 +2130,7 @@ func (s *FeatureService) getFeatures(
 		nil,
 		nil,
 		"",
+		featureproto.FeatureLastUsedInfo_UNKNOWN,
 		featureproto.ListFeaturesRequest_DEFAULT,
 		featureproto.ListFeaturesRequest_ASC,
 		EnvironmentId,
@@ -2292,8 +2240,7 @@ func (s *FeatureService) setLastUsedInfosToFeature(
 	for _, f := range features {
 		ids = append(ids, domain.FeatureLastUsedInfoID(f.Id, f.Version))
 	}
-	storage := v2fs.NewFeatureLastUsedInfoStorage(s.mysqlClient)
-	fluiList, err := storage.GetFeatureLastUsedInfos(ctx, ids, EnvironmentId)
+	fluiList, err := s.fluiStorage.GetFeatureLastUsedInfos(ctx, ids, EnvironmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get feature last used infos",
@@ -2509,8 +2456,7 @@ func (s *FeatureService) CloneFeature(
 	if err := validateCloneFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	f, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
+	f, err := s.featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -2547,25 +2493,8 @@ func (s *FeatureService) CloneFeature(
 		return nil, err
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		if err := featureStorage.CreateFeature(ctx, feature, req.Command.EnvironmentId); err != nil {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		if err := s.featureStorage.CreateFeature(ctxWithTx, feature, req.Command.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
