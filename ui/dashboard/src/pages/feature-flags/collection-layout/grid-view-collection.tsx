@@ -96,7 +96,10 @@ const GridViewCollection = ({
               icon={getDataTypeIcon(variationType)}
               status={getFlagStatus(item)}
             />
-            <div className="flex flex-col gap-y-3 col-span-4 flex-1">
+            <div
+              id="variations-wrapper"
+              className="flex flex-col gap-y-3 col-span-4 flex-1"
+            >
               <FlagVariationsElement variations={variations} />
               <div className="flex items-center flex-wrap w-full gap-2">
                 <ExpandableTag

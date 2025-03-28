@@ -258,6 +258,9 @@ export const FlagVariationsElement = ({
 }) => {
   const { t } = useTranslation(['common', 'table']);
 
+  const variationsWrapperWidth =
+    document.getElementById('variations-wrapper')?.offsetWidth;
+
   const variationCount = variations?.length;
 
   if (!variationCount)
@@ -279,7 +282,7 @@ export const FlagVariationsElement = ({
     <div className="flex w-fit max-w-full">
       <Tooltip
         asChild={false}
-        align="center"
+        align="start"
         trigger={
           <div className="flex items-center w-full gap-2">
             <div className="flex items-center w-full flex-wrap gap-y-1">
@@ -296,12 +299,15 @@ export const FlagVariationsElement = ({
           </div>
         }
         content={
-          <div className="flex flex-col gap-y-2 w-full max-w-[420px]">
+          <div
+            style={{
+              maxWidth: variationsWrapperWidth
+            }}
+            className="flex flex-col gap-y-2 w-full"
+          >
             {variations.map((item, index) => (
               <div
-                className={cn('flex items-center gap-x-1 max-w-full', {
-                  'w-[140px]': variations.length > 1
-                })}
+                className={'flex items-center gap-x-1 max-w-full'}
                 key={index}
               >
                 <div className="flex-center size-4">
