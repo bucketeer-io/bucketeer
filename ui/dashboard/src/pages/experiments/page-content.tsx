@@ -179,13 +179,13 @@ const PageContent = ({
         value={filters.status}
         onValueChange={status => onChangeTab(status as ExperimentTab)}
       >
-        <TabsList className={isHiddenTab ? 'hidden' : ''}>
+        <TabsList className={isHiddenTab ? 'hidden' : 'px-6'}>
           <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
           <TabsTrigger value="FINISHED">{t(`finished`)}</TabsTrigger>
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value={filters.status as string}>
+        <TabsContent value={filters.status as string} className="px-6">
           <CollectionLoader
             onAdd={onAdd}
             filters={filters}

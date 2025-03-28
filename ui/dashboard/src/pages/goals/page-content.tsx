@@ -74,12 +74,12 @@ const PageContent = ({
           });
         }}
       >
-        <TabsList>
+        <TabsList className="px-6">
           <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value={filters.status}>
+        <TabsContent value={filters.status} className="px-6">
           <CollectionLoader
             onAdd={onAdd}
             filters={filters}

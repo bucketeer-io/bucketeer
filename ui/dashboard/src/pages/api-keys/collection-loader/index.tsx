@@ -64,7 +64,7 @@ const CollectionLoader = ({
   return isError ? (
     <PageLayout.ErrorState onRetry={refetch} />
   ) : (
-    <>
+    <div className="flex flex-col min-w-[900px]">
       <DataTable
         isLoading={isLoading}
         data={apiKeys}
@@ -79,7 +79,7 @@ const CollectionLoader = ({
           onChange={page => setFilters({ page })}
         />
       )}
-    </>
+    </div>
   );
 };
 

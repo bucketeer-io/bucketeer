@@ -82,7 +82,7 @@ const ExpandableTag = ({
         wrapperClassName
       )}
     >
-      <div className="flex w-fit items-center flex-wrap gap-2">
+      <div className="flex w-full items-center flex-wrap gap-2">
         {(isExpanded ? tags : tags.slice(0, 3))?.map((tag, index) => (
           <Tag
             tagId={`${tag}-${index}`}

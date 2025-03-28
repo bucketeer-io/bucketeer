@@ -11,6 +11,7 @@ import Button from 'components/button';
 import Icon from 'components/icon';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import { UserSegmentsActionsType, UserSegmentsFilters } from './types';
 import FilterUserSegmentModal from './user-segment-modal/filter-segment-modal';
@@ -109,7 +110,7 @@ const PageContent = ({
           }}
         />
       )}
-      <div className="mt-5 flex flex-col flex-1">
+      <TableListContainer>
         <CollectionLoader
           segmentUploading={segmentUploading}
           onAdd={onAdd}
@@ -118,7 +119,7 @@ const PageContent = ({
           onActionHandler={onActionHandler}
           organizationIds={[currentEnvironment.organizationId]}
         />
-      </div>
+      </TableListContainer>
     </PageLayout.Content>
   );
 };

@@ -33,7 +33,6 @@ import {
 } from 'pages/feature-flags/types';
 import Icon, { IconProps } from 'components/icon';
 import { Tooltip } from 'components/tooltip';
-import TruncationWithTooltip from 'elements/truncation-with-tooltip';
 
 interface FlagNameElementType {
   id: string;
@@ -46,13 +45,11 @@ interface FlagNameElementType {
 }
 
 export const GridViewRoot = ({ children }: PropsWithChildren) => (
-  <div className="flex flex-col w-ful min-w-max overflow-visible gap-y-4">
-    {children}
-  </div>
+  <div className="flex flex-col w-full gap-y-4">{children}</div>
 );
 
 export const GridViewRow = ({ children }: PropsWithChildren) => (
-  <div className="flex items-center w-full min-w-fit p-5 gap-x-4 xxl:gap-x-10 rounded shadow-card bg-white self-stretch">
+  <div className="grid grid-cols-12 items-center w-full max-w-full p-5 gap-x-10 xxl:gap-x-10 rounded shadow-card bg-white self-stretch">
     {children}
   </div>
 );
@@ -180,7 +177,7 @@ export const FlagNameElement = ({
 }: FlagNameElementType) => {
   const { notify } = useToast();
   const { t } = useTranslation(['table']);
-  const { isXXLScreen } = useScreen();
+  const { from3XLScreen, from4XLScreen } = useScreen();
 
   const handleCopyId = (id: string) => {
     copyToClipBoard(id);
@@ -195,8 +192,8 @@ export const FlagNameElement = ({
   };
 
   return (
-    <div className="flex items-center w-full min-w-[400px] max-w-[400px] xxl:min-w-[500px] gap-x-4">
-      <div className="flex flex-col flex-1 w-full gap-y-2">
+    <div className="flex items-center col-span-5 w-full max-w-full gap-x-4 overflow-hidden">
+      <div className="flex flex-col w-full max-w-full gap-y-2">
         <div className="flex items-center w-full gap-x-2">
           <div className="flex-center size-fit">
             <VariationTypeTooltip
@@ -204,23 +201,24 @@ export const FlagNameElement = ({
               variationType={variationType}
             />
           </div>
-          <div>
-            <TruncationWithTooltip
-              content={name}
-              elementId={id}
-              maxSize={isXXLScreen ? 320 : 220}
-              className="w-fit max-w-[220px] xxl:max-w-[320px]"
-              tooltipWrapperCls="left-0 translate-x-0"
-            >
+          <Tooltip
+            content={name}
+            hidden={name.length < 50}
+            className="max-w-[400px]"
+            trigger={
               <Link
                 id={id}
                 to={link}
-                className="typo-para-medium text-primary-500 underline w-full"
+                className="typo-para-medium text-primary-500 underline"
               >
-                <p className="truncate">{name}</p>
+                <p className="line-clamp-2 break-all">
+                  {from4XLScreen
+                    ? name
+                    : truncateBySide(name, from3XLScreen ? 60 : 50)}
+                </p>
               </Link>
-            </TruncationWithTooltip>
-          </div>
+            }
+          />
           {maintainer && (
             <Tooltip
               asChild={false}
@@ -239,7 +237,7 @@ export const FlagNameElement = ({
           />
         </div>
         <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
-          {truncateBySide(id, 55)}
+          <p className="truncate">{truncateBySide(id, 55)}</p>
           <div onClick={() => handleCopyId(id)}>
             <Icon
               icon={IconCopy}
