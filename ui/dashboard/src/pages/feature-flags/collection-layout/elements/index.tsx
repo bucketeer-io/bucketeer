@@ -2,7 +2,9 @@ import {
   FunctionComponent,
   PropsWithChildren,
   ReactNode,
-  useMemo
+  useEffect,
+  useMemo,
+  useState
 } from 'react';
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -178,6 +180,7 @@ export const FlagNameElement = ({
   const { notify } = useToast();
   const { t } = useTranslation(['table']);
   const { from3XLScreen, from4XLScreen } = useScreen();
+  const [isTruncate, setIsTruncate] = useState(false);
 
   const handleCopyId = (id: string) => {
     copyToClipBoard(id);
@@ -191,6 +194,21 @@ export const FlagNameElement = ({
     });
   };
 
+  useEffect(() => {
+    const isTextTruncated = () => {
+      const element = document?.getElementById(`name-${id}`);
+      const textElement = document?.getElementById(`text-${id}`);
+      if (element && textElement) {
+        setIsTruncate(textElement?.offsetWidth > element?.offsetWidth);
+        return textElement?.offsetWidth > element?.offsetWidth;
+      }
+      setIsTruncate(false);
+    };
+    isTextTruncated();
+    window.addEventListener('resize', isTextTruncated);
+    return () => window.removeEventListener('resize', isTextTruncated);
+  }, []);
+
   return (
     <div className="flex items-center col-span-5 w-full max-w-full gap-x-4 overflow-hidden">
       <div className="flex flex-col w-full max-w-full gap-y-2">
@@ -202,12 +220,20 @@ export const FlagNameElement = ({
             />
           </div>
           <Tooltip
-            content={name}
-            hidden={name.length < 50}
-            className="max-w-[400px]"
+            align="start"
+            content={
+              <div
+                style={{
+                  maxWidth: document?.getElementById(`name-${id}`)?.clientWidth
+                }}
+              >
+                {name}
+              </div>
+            }
+            hidden={!isTruncate}
             trigger={
               <Link
-                id={id}
+                id={`name-${id}`}
                 to={link}
                 className="typo-para-medium text-primary-500 underline"
               >
@@ -215,6 +241,12 @@ export const FlagNameElement = ({
                   {from4XLScreen
                     ? name
                     : truncateBySide(name, from3XLScreen ? 60 : 50)}
+                </p>
+                <p
+                  id={`text-${id}`}
+                  className="absolute line-clamp-2 break-all min-w-max -z-1 text-transparent invisible h-0"
+                >
+                  {name}
                 </p>
               </Link>
             }
