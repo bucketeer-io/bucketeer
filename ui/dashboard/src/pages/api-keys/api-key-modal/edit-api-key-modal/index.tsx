@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { apiKeyUpdater } from '@api/api-key';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAPIKeys } from '@queries/api-keys';
+import { useQueryEnvironments } from '@queries/environments';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
@@ -9,7 +11,6 @@ import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { APIKey, APIKeyRole } from '@types';
 import { IconInfo } from '@icons';
-import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import {
@@ -57,19 +58,39 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const { data: collection } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId
+  const { data: collection } = useQueryEnvironments({
+    params: {
+      cursor: String(0),
+      organizationId: currentEnvironment.organizationId
+    }
   });
-  const environments = (collection?.environments || []).filter(item => item.id);
+  const environments = collection?.environments || [];
+
+  const apiEnvironmentId = useMemo(
+    () => environments.find(item => item.name === apiKey?.environmentName)?.id,
+    [environments, apiKey]
+  );
 
   const form = useForm({
     resolver: yupResolver(formSchema),
-    defaultValues: {
+    values: {
       name: apiKey.name,
-      environmentId: currentEnvironment.id,
+      environmentId: apiEnvironmentId || '',
       description: apiKey.description
     }
   });
+
+  const {
+    watch,
+    formState: { isValid, isSubmitting, isDirty }
+  } = form;
+
+  const environmentId = watch('environmentId');
+
+  const currentEnv = useMemo(
+    () => environments.find(item => item.id === environmentId),
+    [environments, environmentId]
+  );
 
   const options: APIKeyOption[] = [
     {
@@ -103,11 +124,6 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
       value: 'PUBLIC_API_ADMIN'
     }
   ];
-
-  const {
-    getValues,
-    formState: { isValid, isSubmitting, isDirty }
-  } = form;
 
   const onSubmit: SubmitHandler<EditAPIKeyForm> = values => {
     return apiKeyUpdater({
@@ -185,11 +201,7 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         placeholder={t(`form:select-environment`)}
-                        label={
-                          environments.find(
-                            item => item.id === getValues('environmentId')
-                          )?.name
-                        }
+                        label={currentEnv?.name}
                         disabled
                         variant="secondary"
                         className="w-full"
