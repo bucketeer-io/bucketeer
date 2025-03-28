@@ -204,6 +204,7 @@ func (w *goalEvtWriter) convToGoalEvent(
 			return nil, false, err
 		}
 	}
+	userID := getUserID(e.UserId, e.User)
 	if tag == "" {
 		// Tag is optional, so we insert none when is empty.
 		tag = "none"
@@ -213,7 +214,7 @@ func (w *goalEvtWriter) convToGoalEvent(
 		GoalId:         e.GoalId,
 		Value:          float32(e.Value),
 		UserData:       string(ud),
-		UserId:         e.UserId,
+		UserId:         userID,
 		Tag:            tag,
 		SourceId:       e.SourceId.String(),
 		EnvironmentId:  environmentId,
