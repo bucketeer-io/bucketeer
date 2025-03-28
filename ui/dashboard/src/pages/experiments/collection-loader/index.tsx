@@ -1,6 +1,5 @@
 import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { sortingListFields } from 'constants/collection';
 import { Experiment } from '@types';
 import { useSearchParams } from 'utils/search-params';
@@ -94,7 +93,7 @@ const CollectionLoader = ({
         onSortingChange={onSortingChangeHandler}
         emptyCollection={emptyState}
       />
-      {totalCount > LIST_PAGE_SIZE && !isLoading && (
+      {!isLoading && (
         <Pagination
           page={filters.page}
           totalCount={totalCount}

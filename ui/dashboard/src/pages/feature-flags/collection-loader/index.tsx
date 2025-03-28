@@ -3,7 +3,6 @@ import { useQueryAccounts } from '@queries/accounts';
 import { useQueryAutoOps } from '@queries/auto-ops';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { Feature, FeatureCountByStatus } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import Pagination from 'components/pagination';
@@ -119,7 +118,7 @@ const CollectionLoader = ({
   ) : isError ? (
     <PageLayout.ErrorState onRetry={refetch} />
   ) : (
-    <>
+    <div className="flex flex-col gap-y-6">
       <GridViewCollection
         filterTags={filters?.tags}
         autoOpsRules={autoOpsRules}
@@ -131,14 +130,14 @@ const CollectionLoader = ({
         handleTagFilters={handleTagFilters}
       />
 
-      {totalCount > LIST_PAGE_SIZE && !isLoading && (
+      {!isLoading && (
         <Pagination
           page={filters.page}
           totalCount={totalCount}
           onChange={page => setFilters({ page })}
         />
       )}
-    </>
+    </div>
   );
 };
 
