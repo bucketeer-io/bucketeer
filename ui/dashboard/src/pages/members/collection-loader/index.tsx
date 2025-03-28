@@ -3,6 +3,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { sortingListFields } from 'constants/collection';
 import { Account } from '@types';
+import { isNotEmpty } from 'utils/data-type';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
@@ -19,12 +20,14 @@ const CollectionLoader = ({
   filters,
   setFilters,
   onAdd,
-  onActions
+  onActions,
+  onClearFilters
 }: {
   filters: MembersFilters;
   setFilters: (values: Partial<MembersFilters>) => void;
   onAdd?: () => void;
   onActions: (item: Account, type: MemberActionsType) => void;
+  onClearFilters: () => void;
 }) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -63,8 +66,11 @@ const CollectionLoader = ({
   const emptyState = (
     <CollectionEmpty
       data={accounts}
+      isFilter={isNotEmpty(
+        filters?.disabled ?? filters?.organizationRole ?? filters?.tags
+      )}
       searchQuery={filters.searchQuery}
-      onClear={() => setFilters({ searchQuery: '' })}
+      onClear={onClearFilters}
       empty={<EmptyCollection onAdd={onAdd} />}
     />
   );

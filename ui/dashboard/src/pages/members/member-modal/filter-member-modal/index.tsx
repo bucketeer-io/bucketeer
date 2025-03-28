@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryTags } from '@queries/tags';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { isNotEmpty } from 'utils/data-type';
 import { MembersFilters } from 'pages/members/types';
@@ -28,7 +30,8 @@ export interface Option {
 
 export enum FilterTypes {
   ENABLED = 'enabled',
-  ROLE = 'role'
+  ROLE = 'role',
+  TAGS = 'tags'
 }
 
 export const filterOptions: Option[] = [
@@ -39,6 +42,10 @@ export const filterOptions: Option[] = [
   {
     value: FilterTypes.ROLE,
     label: 'Role'
+  },
+  {
+    value: FilterTypes.TAGS,
+    label: 'Tags'
   }
 ];
 
@@ -76,43 +83,138 @@ const FilterMemberModal = ({
   filters
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
-  const [selectedFilterType, setSelectedFilterType] = useState<Option>();
-  const [valueOption, setValueOption] = useState<Option>();
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const onConfirmHandler = () => {
+  const [selectedFilterType, setSelectedFilterType] = useState<Option>();
+  const [filterValue, setFilterValue] = useState<string | string[]>();
+
+  const isEnabledFilter = useMemo(
+    () => selectedFilterType?.value === FilterTypes.ENABLED,
+    [selectedFilterType]
+  );
+  const isTagFilter = useMemo(
+    () => selectedFilterType?.value === FilterTypes.TAGS,
+    [selectedFilterType]
+  );
+
+  const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
+    params: {
+      cursor: String(0),
+      organizationId: currentEnvironment?.organizationId,
+      entityType: 'ACCOUNT'
+    },
+    enabled: isTagFilter
+  });
+
+  const tags = tagCollection?.tags || [];
+
+  const dropdownOptions = useMemo(() => {
     switch (selectedFilterType?.value) {
       case FilterTypes.ENABLED:
-        if (valueOption?.value) {
-          onSubmit({
-            disabled: valueOption?.value === 'no'
-          });
-        }
-        return;
+        return enabledOptions;
       case FilterTypes.ROLE:
-        if (valueOption?.value) {
+        return roleOptions;
+      case FilterTypes.TAGS:
+        return tags?.map(item => ({
+          label: item.name,
+          value: item.id
+        }));
+      default:
+        return [];
+    }
+  }, [selectedFilterType, tags]);
+
+  const handleSetFilterOnInit = useCallback(() => {
+    if (filters) {
+      const { organizationRole, disabled, tags } = filters || {};
+      const isNotEmptyRole = isNotEmpty(organizationRole);
+      const isNotTag = isNotEmpty(tags);
+      const isNotEmptyDisabled = isNotEmpty(disabled);
+      if (isNotEmptyDisabled) {
+        setSelectedFilterType(filterOptions[0]);
+        return setFilterValue(enabledOptions[disabled ? 1 : 0].value);
+      }
+      if (isNotEmptyRole) {
+        setSelectedFilterType(filterOptions[1]);
+        return setFilterValue(
+          roleOptions.find(
+            item => item.value === String(filters?.organizationRole)
+          )?.value
+        );
+      }
+
+      if (isNotTag && tags) {
+        setFilterValue(Array.isArray(tags) ? tags : [tags]);
+        return setSelectedFilterType(filterOptions[2]);
+      }
+    }
+
+    setSelectedFilterType(undefined);
+    setFilterValue(undefined);
+  }, [filters]);
+
+  const labelFilterValue = useMemo(() => {
+    if (!isTagFilter)
+      return (
+        (isEnabledFilter ? enabledOptions : roleOptions).find(
+          item => item.value === filterValue
+        )?.label || ''
+      );
+
+    return (
+      (Array.isArray(filterValue) &&
+        tags.length &&
+        filterValue
+          .map(item => tags.find(tag => tag.id === item)?.name)
+          ?.join(', ')) ||
+      ''
+    );
+  }, [selectedFilterType, filterValue, isTagFilter, tags]);
+
+  const handleChangeFilterValue = useCallback(
+    (value: string) => {
+      if (!isTagFilter) return setFilterValue(value);
+      if (Array.isArray(filterValue)) {
+        const isExistedTag = filterValue.includes(value as string);
+        setFilterValue(
+          isExistedTag
+            ? filterValue.filter(item => item !== value)
+            : [...filterValue, value as string]
+        );
+      }
+    },
+    [isTagFilter, filterValue]
+  );
+
+  const onConfirmHandler = useCallback(() => {
+    switch (selectedFilterType?.value) {
+      case FilterTypes.ENABLED: {
+        if (filterValue) {
           onSubmit({
-            organizationRole: +valueOption?.value
+            disabled: filterValue === 'no'
           });
         }
         return;
+      }
+      case FilterTypes.ROLE: {
+        if (filterValue) {
+          onSubmit({
+            organizationRole: +filterValue
+          });
+        }
+        return;
+      }
+      case FilterTypes.TAGS: {
+        return onSubmit({
+          tags: Array.isArray(filterValue) ? filterValue : []
+        });
+      }
     }
-  };
+  }, [selectedFilterType, filterValue]);
 
   useEffect(() => {
-    if (isNotEmpty(filters?.disabled)) {
-      setSelectedFilterType(filterOptions[0]);
-      return setValueOption(enabledOptions[filters?.disabled ? 1 : 0]);
-    }
-    if (isNotEmpty(filters?.organizationRole)) {
-      setSelectedFilterType(filterOptions[1]);
-      return setValueOption(
-        roleOptions.find(
-          item => item.value === String(filters?.organizationRole)
-        )
-      );
-    }
-    setSelectedFilterType(undefined);
-    setValueOption(undefined);
+    handleSetFilterOnInit();
   }, [filters]);
 
   return (
@@ -141,7 +243,10 @@ const FilterMemberModal = ({
                   key={index}
                   value={item.value}
                   label={item.label}
-                  onSelectOption={() => setSelectedFilterType(item)}
+                  onSelectOption={() => {
+                    setSelectedFilterType(item);
+                    setFilterValue(item.value === FilterTypes.TAGS ? [] : '');
+                  }}
                 />
               ))}
             </DropdownMenuContent>
@@ -150,21 +255,27 @@ const FilterMemberModal = ({
           <DropdownMenu>
             <DropdownMenuTrigger
               placeholder={t(`select-value`)}
-              label={valueOption?.label}
-              disabled={!selectedFilterType}
+              label={labelFilterValue}
+              disabled={!selectedFilterType || isLoadingTags}
               variant="secondary"
-              className="w-full"
+              className="w-full max-w-[235px] truncate"
             />
-            <DropdownMenuContent className="w-[235px]" align="start">
-              {(selectedFilterType?.value === FilterTypes.ENABLED
-                ? enabledOptions
-                : roleOptions
-              ).map((item, index) => (
+            <DropdownMenuContent
+              className={isTagFilter ? 'w-[300px]' : 'w-[235px]'}
+              align="start"
+            >
+              {dropdownOptions.map((item, index) => (
                 <DropdownMenuItem
+                  isSelected={
+                    isTagFilter &&
+                    Array.isArray(filterValue) &&
+                    filterValue.includes(item.value as string)
+                  }
+                  isMultiselect={isTagFilter}
                   key={index}
                   value={item.value}
                   label={item.label}
-                  onSelectOption={() => setValueOption(item)}
+                  onSelectOption={() => handleChangeFilterValue(item.value)}
                 />
               ))}
             </DropdownMenuContent>
