@@ -52,4 +52,13 @@ export namespace FeatureLastUsedInfo {
     clientOldestVersion: string;
     clientLatestVersion: string;
   };
+
+  export interface StatusMap {
+    UNKNOWN: 0;
+    NEW: 1;
+    ACTIVE: 2;
+    NO_ACTIVITY: 3;
+  }
+
+  export const Status: StatusMap;
 }

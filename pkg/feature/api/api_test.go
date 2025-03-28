@@ -116,6 +116,7 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 	env := envclientmock.NewMockClient(c)
 	at.EXPECT().ListProgressiveRollouts(gomock.Any(), gomock.Any()).Return(&autoopsproto.ListProgressiveRolloutsResponse{}, nil).AnyTimes()
 	return &FeatureService{
+		mock.NewMockFeatureLastUsedInfoStorage(c),
 		mock.NewMockFlagTriggerStorage(c),
 		mock.NewMockFeatureStorage(c),
 		mock.NewMockSegmentStorage(c),
@@ -148,6 +149,7 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 	}
 	a.EXPECT().GetAccountV2(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	return &FeatureService{
+		fluiStorage:           mock.NewMockFeatureLastUsedInfoStorage(c),
 		flagTriggerStorage:    mock.NewMockFlagTriggerStorage(c),
 		featureStorage:        mock.NewMockFeatureStorage(c),
 		mysqlClient:           mysqlmock.NewMockClient(c),
@@ -183,6 +185,7 @@ func createFeatureServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, r
 	}
 	a.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	return &FeatureService{
+		fluiStorage:           mock.NewMockFeatureLastUsedInfoStorage(c),
 		flagTriggerStorage:    mock.NewMockFlagTriggerStorage(c),
 		featureStorage:        mock.NewMockFeatureStorage(c),
 		segmentStorage:        mock.NewMockSegmentStorage(c),

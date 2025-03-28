@@ -86,13 +86,9 @@ func TestGetFeatureMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+				s.fluiStorage.(*mock.MockFeatureLastUsedInfoStorage).EXPECT().GetFeatureLastUsedInfos(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
+				).Return(nil, nil)
 			},
 			input: "fid",
 			getExpectedErr: func(localizer locale.Localizer) error {
@@ -109,13 +105,9 @@ func TestGetFeatureMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+				s.fluiStorage.(*mock.MockFeatureLastUsedInfoStorage).EXPECT().GetFeatureLastUsedInfos(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
+				).Return(nil, nil)
 			},
 			input: "fid",
 			getExpectedErr: func(localizer locale.Localizer) error {
@@ -771,13 +763,16 @@ func TestSetFeatureToLastUsedInfosByChunk(t *testing.T) {
 	}{
 		{
 			setup: func(s *FeatureService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+				s.fluiStorage.(*mock.MockFeatureLastUsedInfoStorage).EXPECT().GetFeatureLastUsedInfos(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
+				).Return([]*domain.FeatureLastUsedInfo{
+					{
+						FeatureLastUsedInfo: &featureproto.FeatureLastUsedInfo{
+							FeatureId:  "feature-id-0",
+							LastUsedAt: time.Now().Unix(),
+						},
+					},
+				}, nil)
 			},
 			input: []*featureproto.Feature{
 				{
