@@ -17,6 +17,7 @@ package processor
 import (
 	"context"
 
+	uproto "github.com/bucketeer-io/bucketeer/proto/user"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -32,4 +33,14 @@ type Writer interface {
 
 type Updater interface {
 	UpdateUserCounts(ctx context.Context, events environmentEventOPSMap) map[string]bool
+}
+
+// Because the `userId` field in the EvaluationEvent proto message is already in the `User` field,
+// we should remove it to avoid sending the same value twice.
+// To keep compatibility, we must check both fields until all the SDKs are updated
+func getUserID(userID string, user *uproto.User) string {
+	if userID == "" {
+		return user.Id
+	}
+	return userID
 }

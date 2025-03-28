@@ -3750,11 +3750,28 @@ func TestGrcpRegisterEvents(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{Timestamp: time.Now().Unix()})
+	bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{
+		Timestamp: time.Now().Unix(),
+		GoalId:    "goal-id-1",
+		UserId:    "user-id-1",
+		User: &userproto.User{
+			Id: "user-id-1",
+		},
+	})
 	if err != nil {
 		t.Fatal("could not serialize goal event")
 	}
-	bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{Timestamp: time.Now().Unix()})
+	bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
+		Timestamp:   time.Now().Unix(),
+		FeatureId:   "feature-id-1",
+		VariationId: "variation-id-1",
+		User: &userproto.User{
+			Id: "user-id-1",
+		},
+		Reason: &featureproto.Reason{
+			Type: featureproto.Reason_DEFAULT,
+		},
+	})
 	if err != nil {
 		t.Fatal("could not serialize evaluation event")
 	}

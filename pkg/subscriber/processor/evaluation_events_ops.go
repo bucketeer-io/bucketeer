@@ -134,6 +134,7 @@ func (u *evalEvtUpdater) updateUserCount(
 		}
 		linkedOpsRules[rule.Id] = clauseIDs
 	}
+	userID := getUserID(event.UserId, event.User)
 	// Update the user count per rule
 	for ruleID, clauseIDs := range linkedOpsRules {
 		err := u.updateUserCountPerClause(
@@ -141,7 +142,7 @@ func (u *evalEvtUpdater) updateUserCount(
 			event.FeatureId,
 			event.FeatureVersion,
 			event.VariationId,
-			event.UserId,
+			userID,
 			ruleID,
 			clauseIDs,
 		)

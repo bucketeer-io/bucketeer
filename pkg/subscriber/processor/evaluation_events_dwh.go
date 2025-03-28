@@ -190,6 +190,7 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 			return nil, false, err
 		}
 	}
+	userID := getUserID(e.UserId, e.User)
 	tag := e.Tag
 	if tag == "" {
 		// Tag is optional, so we insert none when is empty.
@@ -200,7 +201,7 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 		FeatureId:      e.FeatureId,
 		FeatureVersion: e.FeatureVersion,
 		UserData:       string(ud),
-		UserId:         e.UserId,
+		UserId:         userID,
 		VariationId:    e.VariationId,
 		Reason:         e.Reason.Type.String(),
 		Tag:            tag,

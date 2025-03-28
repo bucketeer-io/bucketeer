@@ -154,6 +154,7 @@ func (u *evalGoalUpdater) updateUserCount(
 		subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeGetFeaturesReturnedEmpty).Inc()
 		return true, ErrFeatureEmptyList
 	}
+	userID := getUserID(event.UserId, event.User)
 	for _, r := range linkedRules {
 		// Get the latest feature version
 		fVersion, err := u.getFeatureVersion(r.featureID, resp.Features)
@@ -172,7 +173,7 @@ func (u *evalGoalUpdater) updateUserCount(
 			environmentId,
 			r.featureID,
 			fVersion,
-			event.UserId,
+			userID,
 			r,
 		)
 		if err != nil {

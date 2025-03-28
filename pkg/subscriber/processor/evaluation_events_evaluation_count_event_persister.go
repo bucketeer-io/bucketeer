@@ -35,7 +35,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	uproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
 
 const (
@@ -228,16 +227,6 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 		return defaultVariationID, nil
 	}
 	return vID, nil
-}
-
-// Because the `userId` field in the EvaluationEvent proto message is already in the `User` field,
-// we should remove it to avoid sending the same value twice.
-// To keep compatibility, we must check both fields until all the SDKs are updated
-func getUserID(userID string, user *uproto.User) string {
-	if userID == "" {
-		return user.Id
-	}
-	return userID
 }
 
 func (p *evaluationCountEventPersister) incrementEvaluationCount(
