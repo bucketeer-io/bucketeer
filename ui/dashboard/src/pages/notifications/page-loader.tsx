@@ -33,6 +33,7 @@ const PageLoader = () => {
     notification: Notification,
     type: NotificationActionsType
   ) => {
+    setSelectedNotification(notification);
     switch (type) {
       case 'EDIT':
         return onOpenEditModal();
@@ -43,7 +44,6 @@ const PageLoader = () => {
       default:
         break;
     }
-    setSelectedNotification(notification);
   };
 
   const mutationState = useMutation({
