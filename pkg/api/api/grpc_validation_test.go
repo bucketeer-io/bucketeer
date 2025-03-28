@@ -27,7 +27,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
-	"github.com/bucketeer-io/bucketeer/proto/user"
 )
 
 const (
@@ -155,84 +154,10 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 			expectedErr: errUnmarshalFailed,
 		},
 		{
-			desc: "empty goal_id",
-			inputFunc: func() *eventproto.Event {
-				bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{
-					Timestamp: time.Now().Unix(),
-					GoalId:    "",
-					User: &user.User{
-						Id: "user-id",
-					},
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalEvent",
-						Value:   bGoalEvent,
-					},
-				}
-			},
-			expected:    codeEmptyField,
-			expectedErr: errEmptyGoalID,
-		},
-		{
-			desc: "nil user",
-			inputFunc: func() *eventproto.Event {
-				bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{
-					Timestamp: time.Now().Unix(),
-					GoalId:    "goal-id",
-					User:      nil,
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalEvent",
-						Value:   bGoalEvent,
-					},
-				}
-			},
-			expected:    codeEmptyField,
-			expectedErr: errNilUser,
-		},
-		{
-			desc: "empty user_id",
-			inputFunc: func() *eventproto.Event {
-				bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{
-					Timestamp: time.Now().Unix(),
-					GoalId:    "goal-id",
-					User: &user.User{
-						Id: "",
-					},
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalEvent",
-						Value:   bGoalEvent,
-					},
-				}
-			},
-			expected:    codeEmptyField,
-			expectedErr: errEmptyUserID,
-		},
-		{
 			desc: "invalid timestamp",
 			inputFunc: func() *eventproto.Event {
 				bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{
 					Timestamp: int64(999999999999999),
-					GoalId:    "goal-id",
-					User: &user.User{
-						Id: "user-id",
-					},
 				})
 				if err != nil {
 					t.Fatal("could not serialize event")
@@ -253,10 +178,6 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 			inputFunc: func() *eventproto.Event {
 				bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{
 					Timestamp: time.Now().Unix(),
-					GoalId:    "goal-id",
-					User: &user.User{
-						Id: "user-id",
-					},
 					Evaluations: []*feature.Evaluation{
 						{
 							Id: "evaluation-id",
@@ -321,154 +242,10 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 			expectedErr: errUnmarshalFailed,
 		},
 		{
-			desc: "empty feature_id",
-			inputFunc: func() *eventproto.Event {
-				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:   time.Now().Unix(),
-					FeatureId:   "",
-					VariationId: "variation-id",
-					User: &user.User{
-						Id: "user-id",
-					},
-					Reason: &feature.Reason{
-						Type: feature.Reason_DEFAULT,
-					},
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
-						Value:   bEvaluationEvent,
-					},
-				}
-			},
-			expected:    codeEmptyField,
-			expectedErr: errEmptyFeatureID,
-		},
-		{
-			desc: "empty variation_id",
-			inputFunc: func() *eventproto.Event {
-				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:   time.Now().Unix(),
-					FeatureId:   "feature-id",
-					VariationId: "",
-					User: &user.User{
-						Id: "user-id",
-					},
-					Reason: &feature.Reason{
-						Type: feature.Reason_DEFAULT,
-					},
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
-						Value:   bEvaluationEvent,
-					},
-				}
-			},
-			expected:    codeEmptyField,
-			expectedErr: errEmptyVariationID,
-		},
-		{
-			desc: "nil user",
-			inputFunc: func() *eventproto.Event {
-				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:   time.Now().Unix(),
-					FeatureId:   "feature-id",
-					VariationId: "variation-id",
-					User:        nil,
-					Reason: &feature.Reason{
-						Type: feature.Reason_DEFAULT,
-					},
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
-						Value:   bEvaluationEvent,
-					},
-				}
-			},
-			expected:    codeEmptyField,
-			expectedErr: errNilUser,
-		},
-		{
-			desc: "empty user_id",
-			inputFunc: func() *eventproto.Event {
-				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:   time.Now().Unix(),
-					FeatureId:   "feature-id",
-					VariationId: "variation-id",
-					User: &user.User{
-						Id: "",
-					},
-					Reason: &feature.Reason{
-						Type: feature.Reason_DEFAULT,
-					},
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
-						Value:   bEvaluationEvent,
-					},
-				}
-			},
-			expected:    codeEmptyField,
-			expectedErr: errEmptyUserID,
-		},
-		{
-			desc: "nil reason",
-			inputFunc: func() *eventproto.Event {
-				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:   time.Now().Unix(),
-					FeatureId:   "feature-id",
-					VariationId: "variation-id",
-					User: &user.User{
-						Id: "user-id",
-					},
-					Reason: nil,
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
-						Value:   bEvaluationEvent,
-					},
-				}
-			},
-			expected:    codeEmptyField,
-			expectedErr: errNilReason,
-		},
-		{
 			desc: "invalid timestamp",
 			inputFunc: func() *eventproto.Event {
 				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:   int64(999999999999999),
-					FeatureId:   "feature-id",
-					VariationId: "variation-id",
-					User: &user.User{
-						Id: "user-id",
-					},
-					Reason: &feature.Reason{
-						Type: feature.Reason_DEFAULT,
-					},
+					Timestamp: int64(999999999999999),
 				})
 				if err != nil {
 					t.Fatal("could not serialize event")
@@ -488,16 +265,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 			desc: "success",
 			inputFunc: func() *eventproto.Event {
 				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:      time.Now().Unix(),
-					FeatureId:      "feature-id",
-					FeatureVersion: 1,
-					VariationId:    "variation-id",
-					User: &user.User{
-						Id: "user-id",
-					},
-					Reason: &feature.Reason{
-						Type: feature.Reason_DEFAULT,
-					},
+					Timestamp: time.Now().Unix(),
 				})
 				if err != nil {
 					t.Fatal("could not serialize event")
