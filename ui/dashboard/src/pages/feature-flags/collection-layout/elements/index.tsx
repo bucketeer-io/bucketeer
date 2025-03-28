@@ -31,7 +31,6 @@ import {
   FeatureActivityStatus,
   FlagOperationType
 } from 'pages/feature-flags/types';
-import Divider from 'components/divider';
 import Icon, { IconProps } from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 import TruncationWithTooltip from 'elements/truncation-with-tooltip';
@@ -130,7 +129,7 @@ export const FlagVariationPolygon = ({
         zIndex: index
       }}
       className={cn(
-        'flex-center size-[14px] min-w-[14px] border border-white rounded rotate-45',
+        'flex-center size-[14px] min-w-[14px] border border-gray-200 rounded rotate-45',
         className
       )}
     />
@@ -263,18 +262,6 @@ export const FlagVariationsElement = ({
 
   const variationCount = variations?.length;
 
-  const _variations = useMemo(() => {
-    if (variationCount <= 2) return [variations?.map(item => item.name)];
-    const vars: string[][] = [];
-
-    variations.forEach(item => {
-      if (!vars.length || vars[vars.length - 1]?.length > 1) {
-        vars.push([item.name]);
-      } else vars[vars.length - 1] = [...vars[vars.length - 1], item.name];
-    });
-    return vars;
-  }, [variations, variationCount]);
-
   if (!variationCount)
     return (
       <p className="typo-para-small text-gray-700">{t('no-variations')}</p>
@@ -286,60 +273,48 @@ export const FlagVariationsElement = ({
           <FlagVariationPolygon index={0} />
         </div>
         <p className="typo-para-small text-gray-700 truncate flex-1">
-          {_variations[variationCount]}
+          {variations[variationCount].name}
         </p>
       </div>
     );
   return (
-    <div className="flex items-center gap-x-2 w-full">
-      <div className="flex items-center">
-        {variations.map((_, index) => (
-          <FlagVariationPolygon key={index} index={index} />
-        ))}
-      </div>
-      <p className="typo-para-small whitespace-nowrap text-gray-700">
-        {`${variationCount} ${variationCount > 1 ? t('variations') : t('table:results.variation')}`}
-      </p>
+    <div className="flex w-fit max-w-full">
       <Tooltip
         asChild={false}
+        align="center"
         trigger={
-          <div className="flex-center size-fit">
-            <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
+          <div className="flex items-center w-full gap-2">
+            <div className="flex items-center w-full flex-wrap gap-y-1">
+              {variations.map((_, index) => (
+                <FlagVariationPolygon key={index} index={index} />
+              ))}
+            </div>
+            <p className="typo-para-small whitespace-nowrap text-gray-700">
+              {`${variationCount} ${variationCount > 1 ? t('variations') : t('table:results.variation')}`}
+            </p>
+            <div className="flex-center size-fit">
+              <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
+            </div>
           </div>
         }
         content={
-          <div className="flex flex-col gap-y-3 w-full max-w-[420px]">
-            {_variations.map((item, index) => (
-              <div className="flex items-center w-full gap-3" key={index}>
-                {item.map((variation, variationIndex) => (
-                  <div
-                    className={cn('flex items-center gap-x-1 max-w-[140px]', {
-                      'w-[140px]': _variations.length > 1
-                    })}
-                    key={variationIndex}
-                  >
-                    {variationIndex !== 0 && (
-                      <Divider
-                        className={cn('h-2 min-w-px bg-white/15 border-none', {
-                          'mr-2.5': variationIndex !== 0
-                        })}
-                      />
-                    )}
-                    <div className="flex-center size-4">
-                      <FlagVariationPolygon
-                        index={
-                          index === 0
-                            ? variationIndex
-                            : variationIndex + index + 1
-                        }
-                        className="border-none"
-                      />
-                    </div>
-                    <p className="typo-para-small text-white break-all truncate">
-                      {variation}
-                    </p>
-                  </div>
-                ))}
+          <div className="flex flex-col gap-y-2 w-full max-w-[420px]">
+            {variations.map((item, index) => (
+              <div
+                className={cn('flex items-center gap-x-1 max-w-full', {
+                  'w-[140px]': variations.length > 1
+                })}
+                key={index}
+              >
+                <div className="flex-center size-4">
+                  <FlagVariationPolygon
+                    index={index === 0 ? index : index + index + 1}
+                    className="border-white/10"
+                  />
+                </div>
+                <p className="typo-para-small text-white break-all truncate">
+                  {item.name || item.value}
+                </p>
               </div>
             ))}
           </div>
