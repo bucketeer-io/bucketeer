@@ -696,7 +696,8 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		if errors.Is(err, v2as.ErrProgressiveRolloutNotFound) || errors.Is(err, v2as.ErrProgressiveRolloutUnexpectedAffectedRows) {
+		if errors.Is(err, v2as.ErrProgressiveRolloutNotFound) ||
+			errors.Is(err, v2as.ErrProgressiveRolloutUnexpectedAffectedRows) {
 			dt, err := statusProgressiveRolloutNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout),
@@ -888,7 +889,8 @@ func (s *AutoOpsService) executeProgressiveRolloutNoCommand(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		if errors.Is(err, v2as.ErrProgressiveRolloutNotFound) || errors.Is(err, v2as.ErrProgressiveRolloutUnexpectedAffectedRows) {
+		if errors.Is(err, v2as.ErrProgressiveRolloutNotFound) ||
+			errors.Is(err, v2as.ErrProgressiveRolloutUnexpectedAffectedRows) {
 			dt, err := statusProgressiveRolloutNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout),
