@@ -135,7 +135,7 @@ func (s *FeatureService) GetFeatures(
 		ids = append(ids, id)
 	}
 	if len(ids) > 0 {
-		whereParts = append(whereParts, mysql.NewInFilter("id", ids))
+		whereParts = append(whereParts, mysql.NewInFilter("feature.id", ids))
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
 	features, _, _, err := featureStorage.ListFeatures(
