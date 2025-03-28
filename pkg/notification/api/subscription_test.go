@@ -1046,7 +1046,7 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *NotificationService) {
 				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().ListSubscriptions(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Subscription{}, 0, int64(0), nil)
 			},
 			input: &proto.ListSubscriptionsRequest{
@@ -1131,7 +1131,7 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *NotificationService) {
 				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().ListSubscriptions(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Subscription{}, 1, int64(1), nil)
 			},
 			input: &proto.ListEnabledSubscriptionsRequest{

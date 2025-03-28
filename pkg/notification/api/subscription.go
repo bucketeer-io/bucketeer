@@ -903,7 +903,7 @@ func (s *NotificationService) listSubscriptionsMySQL(
 		NullFilters: nil,
 		JSONFilters: jsonFilters,
 		SearchQuery: seachQuery,
-		Orders:      nil,
+		Orders:      orders,
 	}
 
 	subscriptions, nextCursor, totalCount, err := s.subscriptionStorage.ListSubscriptions(
