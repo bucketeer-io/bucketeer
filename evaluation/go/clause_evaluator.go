@@ -276,12 +276,27 @@ func (c *clauseEvaluator) parseFloat(targetValue string, values []string) (float
 }
 
 func (c *clauseEvaluator) parseSemver(targetValue string, values []string) (semver.Version, []semver.Version, error) {
-	versionTarget, err := semver.Parse(targetValue)
+	targetValueWithoutV, targetHasV := strings.CutPrefix(targetValue, "v")
+	versionTarget, err := semver.Parse(targetValueWithoutV)
 	if err != nil {
 		return semver.Version{}, nil, err
 	}
 	versionValues := make([]semver.Version, 0, len(values))
+	if targetHasV {
+		for _, value := range values {
+			// if target value has v prefix, compare only values with v prefix
+			valueWithoutV, valueHasV := strings.CutPrefix(value, "v")
+			if valueHasV {
+				v, err := semver.Parse(valueWithoutV)
+				if err == nil {
+					versionValues = append(versionValues, v)
+				}
+			}
+		}
+		return versionTarget, versionValues, nil
+	}
 	for _, value := range values {
+		// if target value has no v prefix, compare only values without v prefix
 		v, err := semver.Parse(value)
 		if err == nil {
 			versionValues = append(versionValues, v)
