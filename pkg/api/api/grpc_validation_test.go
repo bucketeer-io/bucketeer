@@ -179,28 +179,6 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 			expectedErr: errEmptyGoalID,
 		},
 		{
-			desc: "nil user",
-			inputFunc: func() *eventproto.Event {
-				bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{
-					Timestamp: time.Now().Unix(),
-					GoalId:    "goal-id",
-					User:      nil,
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalEvent",
-						Value:   bGoalEvent,
-					},
-				}
-			},
-			expected:    codeEmptyField,
-			expectedErr: errNilUser,
-		},
-		{
 			desc: "empty user_id",
 			inputFunc: func() *eventproto.Event {
 				bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{
@@ -209,6 +187,7 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 					User: &user.User{
 						Id: "",
 					},
+					UserId: "",
 				})
 				if err != nil {
 					t.Fatal("could not serialize event")
@@ -377,32 +356,6 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 			expectedErr: errEmptyVariationID,
 		},
 		{
-			desc: "nil user",
-			inputFunc: func() *eventproto.Event {
-				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:   time.Now().Unix(),
-					FeatureId:   "feature-id",
-					VariationId: "variation-id",
-					User:        nil,
-					Reason: &feature.Reason{
-						Type: feature.Reason_DEFAULT,
-					},
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
-						Value:   bEvaluationEvent,
-					},
-				}
-			},
-			expected:    codeEmptyField,
-			expectedErr: errNilUser,
-		},
-		{
 			desc: "empty user_id",
 			inputFunc: func() *eventproto.Event {
 				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
@@ -412,6 +365,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					User: &user.User{
 						Id: "",
 					},
+					UserId: "",
 					Reason: &feature.Reason{
 						Type: feature.Reason_DEFAULT,
 					},

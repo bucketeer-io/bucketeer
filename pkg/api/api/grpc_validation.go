@@ -35,7 +35,6 @@ var (
 	errEmptyUserID      = errors.New("gateway: user_id is empty")
 	errEmptyVariationID = errors.New("gateway: variation_id is empty")
 	errEmptyGoalID      = errors.New("gateway: goal_id is empty")
-	errNilUser          = errors.New("gateway: user is nil")
 	errNilReason        = errors.New("gateway: reason is nil")
 )
 
@@ -123,22 +122,13 @@ func (v *eventGoalValidator) validate(ctx context.Context) (string, error) {
 		)
 		return codeEmptyField, errEmptyGoalID
 	}
-	if ev.User == nil {
-		v.logger.Debug(
-			"Nil user",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("id", v.event.Id),
-				zap.Any("user", ev.User),
-			)...,
-		)
-		return codeEmptyField, errNilUser
-	}
-	if ev.User.Id == "" {
+	if ev.User.Id == "" && ev.UserId == "" {
 		v.logger.Debug(
 			"Empty user_id",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("id", v.event.Id),
-				zap.String("user_id", ev.User.Id),
+				zap.Any("user", ev.User),
+				zap.String("user_id", ev.UserId),
 			)...,
 		)
 		return codeEmptyField, errEmptyUserID
@@ -209,21 +199,13 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 		)
 		return codeEmptyField, errEmptyVariationID
 	}
-	if ev.User == nil {
-		v.logger.Debug(
-			"Nil user",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("id", v.event.Id),
-				zap.Any("user", ev.User),
-			)...,
-		)
-		return codeEmptyField, errNilUser
-	}
-	if ev.User.Id == "" {
+	if ev.User.Id == "" && ev.UserId == "" {
 		v.logger.Debug(
 			"Empty user_id",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("id", v.event.Id),
+				zap.Any("user", ev.User),
+				zap.String("user_id", ev.UserId),
 			)...,
 		)
 		return codeEmptyField, errEmptyUserID
