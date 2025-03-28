@@ -297,7 +297,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                     {t('tags')}
                     <Tooltip
                       align="start"
-                      alignOffset={-130}
+                      alignOffset={-30}
                       trigger={
                         <div className="flex-center absolute top-0 -right-6">
                           <Icon icon={IconInfo} size={'sm'} color="gray-600" />
@@ -312,7 +312,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                       defaultValues={defaultTagsValue}
                       disabled={isLoadingTags}
                       loading={isLoadingTags}
-                      placeholder={t(`form:placeholder-tags`)}
+                      placeholder={t(`form:placeholder-member-tags`)}
                       options={tagOptions?.map(tag => ({
                         label: tag.name,
                         value: tag.id
