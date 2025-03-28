@@ -179,10 +179,7 @@ export const FlagNameElement = ({
 }: FlagNameElementType) => {
   const { notify } = useToast();
   const { t } = useTranslation(['table']);
-<<<<<<< HEAD
-  const { from3XLScreen, from4XLScreen } = useScreen();
-=======
->>>>>>> c9be9a28 (feat: update show variations names on flag list page)
+
   const [isTruncate, setIsTruncate] = useState(false);
 
   const handleCopyId = (id: string) => {
@@ -198,20 +195,6 @@ export const FlagNameElement = ({
   };
 
   useEffect(() => {
-<<<<<<< HEAD
-    const isTextTruncated = () => {
-      const element = document?.getElementById(`name-${id}`);
-      const textElement = document?.getElementById(`text-${id}`);
-      if (element && textElement) {
-        setIsTruncate(textElement?.offsetWidth > element?.offsetWidth);
-        return textElement?.offsetWidth > element?.offsetWidth;
-      }
-      setIsTruncate(false);
-    };
-    isTextTruncated();
-    window.addEventListener('resize', isTextTruncated);
-    return () => window.removeEventListener('resize', isTextTruncated);
-=======
     const hasMoreThanTwoLines = () => {
       const pElement = document.getElementById(`text-${id}`);
       if (pElement) {
@@ -226,12 +209,10 @@ export const FlagNameElement = ({
       }
       return setIsTruncate(false);
     };
-
     hasMoreThanTwoLines();
 
     window.addEventListener('resize', hasMoreThanTwoLines);
     return () => window.removeEventListener('resize', hasMoreThanTwoLines);
->>>>>>> c9be9a28 (feat: update show variations names on flag list page)
   }, []);
 
   return (
