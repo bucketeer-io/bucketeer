@@ -7607,7 +7607,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        scheduleId: jspb.Message.getFieldWithDefault(msg, 5, '')
       };
 
     if (includeInstance) {
@@ -7666,6 +7667,10 @@ proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.deserializeBinaryFromRe
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 5:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setScheduleId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -7715,6 +7720,10 @@ proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.serializeBinaryToWriter
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(4, f);
+    }
+    f = message.getScheduleId();
+    if (f.length > 0) {
+      writer.writeString(5, f);
     }
   };
 
@@ -7798,6 +7807,26 @@ proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.prototype.getEnvironmen
 proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 4, value);
+  };
+
+/**
+ * optional string schedule_id = 5;
+ * @return {string}
+ */
+proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.prototype.getScheduleId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 5, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest} returns this
+ */
+proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.prototype.setScheduleId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 5, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

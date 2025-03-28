@@ -1274,6 +1274,9 @@ export class ExecuteProgressiveRolloutRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getScheduleId(): string;
+  setScheduleId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(
     includeInstance?: boolean
@@ -1302,6 +1305,7 @@ export namespace ExecuteProgressiveRolloutRequest {
     id: string;
     changeProgressiveRolloutTriggeredAtCommand?: proto_autoops_command_pb.ChangeProgressiveRolloutScheduleTriggeredAtCommand.AsObject;
     environmentId: string;
+    scheduleId: string;
   };
 }
 

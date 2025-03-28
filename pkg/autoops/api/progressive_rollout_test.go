@@ -15,6 +15,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -33,6 +34,7 @@ import (
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/proto/autoops"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
@@ -2064,26 +2066,24 @@ func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 			expectedErr: createError(statusProgressiveRolloutIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc: "err: ErrNoCommand",
-			req: &autoopsproto.ExecuteProgressiveRolloutRequest{
-				Id: "aid",
-			},
-			expectedErr: createError(statusProgressiveRolloutNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
-		{
-			desc: "err: ErrNoCommand",
-			req: &autoopsproto.ExecuteProgressiveRolloutRequest{
-				Id: "aid",
-				ChangeProgressiveRolloutTriggeredAtCommand: &autoopsproto.ChangeProgressiveRolloutScheduleTriggeredAtCommand{},
-			},
-			expectedErr: createError(statusProgressiveRolloutScheduleIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "schedule_id")),
-		},
-		{
 			desc: "success",
 			setup: func(s *AutoOpsService) {
+				tx := mysqlmock.NewMockTransaction(mockController)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, tx)
+				}).Return(nil)
+				s.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().GetProgressiveRollout(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.ProgressiveRollout{
+					ProgressiveRollout: &autoopsproto.ProgressiveRollout{},
+				}, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				tx.EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
 			},
 			req: &autoopsproto.ExecuteProgressiveRolloutRequest{
 				Id:            "aid1",
@@ -2091,6 +2091,85 @@ func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 				ChangeProgressiveRolloutTriggeredAtCommand: &autoopsproto.ChangeProgressiveRolloutScheduleTriggeredAtCommand{
 					ScheduleId: "sid1",
 				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createAutoOpsService(mockController)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			_, err := s.ExecuteProgressiveRollout(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestExecuteProgressiveRolloutNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithTokenRoleOwner(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AutoOpsService)
+		req         *autoopsproto.ExecuteProgressiveRolloutRequest
+		expectedErr error
+	}{
+		{
+			desc:        "err: ErrIDRequired",
+			req:         &autoopsproto.ExecuteProgressiveRolloutRequest{},
+			expectedErr: createError(statusProgressiveRolloutIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc: "err: ErrNoScheduleID",
+			req: &autoopsproto.ExecuteProgressiveRolloutRequest{
+				Id:            "aid",
+				EnvironmentId: "ns0",
+				ScheduleId:    "",
+			},
+			expectedErr: createError(statusProgressiveRolloutScheduleIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "schedule_id")),
+		},
+		{
+			desc: "success",
+			setup: func(s *AutoOpsService) {
+				tx := mysqlmock.NewMockTransaction(mockController)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, tx)
+				}).Return(nil)
+				s.prStorage.(*storagemock.MockProgressiveRolloutStorage).EXPECT().GetProgressiveRollout(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.ProgressiveRollout{
+					ProgressiveRollout: &autoopsproto.ProgressiveRollout{},
+				}, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				tx.EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+			},
+			req: &autoopsproto.ExecuteProgressiveRolloutRequest{
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+				ScheduleId:    "sid1",
 			},
 			expectedErr: nil,
 		},
