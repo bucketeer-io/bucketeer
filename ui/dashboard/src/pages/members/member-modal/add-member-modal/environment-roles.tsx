@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { EnvironmentRoleItem } from '@api/account/account-creator';
@@ -19,7 +20,7 @@ interface environmentRoleOption {
   label: string;
 }
 
-const environmentRoles: environmentRoleOption[] = [
+const environmentRoleOptions: environmentRoleOption[] = [
   {
     value: 'Environment_EDITOR',
     label: 'Editor'
@@ -42,11 +43,21 @@ const EnvironmentRoles = ({
   const { t } = useTranslation(['common', 'form']);
 
   const methods = useFormContext();
-  const { control } = methods;
+  const { control, watch } = methods;
 
   const selectedEnvs = memberEnvironments.map(item => item.environmentId);
   const environmentsOptions = environments.filter(
     item => item.id && !selectedEnvs.includes(item.id)
+  );
+
+  const environmentRoles = watch('environmentRoles');
+
+  const isDisabledAddMemberButton = useMemo(
+    () =>
+      environmentRoles?.length >=
+        environments?.filter(item => item.id).length ||
+      !environmentsOptions.length,
+    [environmentRoles, environments, environmentsOptions]
   );
 
   const onAddEnvironment = () => {
@@ -72,6 +83,7 @@ const EnvironmentRoles = ({
         variant="text"
         type="button"
         className="my-1"
+        disabled={isDisabledAddMemberButton}
       >
         <Icon icon={IconAddOutlined} />
         {t(`add-environment`)}
@@ -137,7 +149,7 @@ const EnvironmentRoles = ({
                       <DropdownMenuTrigger
                         placeholder={t(`form:select-role`)}
                         label={
-                          environmentRoles.find(
+                          environmentRoleOptions.find(
                             item => item.value === environment.role
                           )?.label
                         }
@@ -149,7 +161,7 @@ const EnvironmentRoles = ({
                         align="start"
                         {...field}
                       >
-                        {environmentRoles.map((item, index) => (
+                        {environmentRoleOptions.map((item, index) => (
                           <DropdownMenuItem
                             {...field}
                             key={index}
