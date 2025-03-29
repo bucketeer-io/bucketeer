@@ -12,6 +12,7 @@ import { useFormatDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
 import { Popover } from 'components/popover';
 import Spinner from 'components/spinner';
+import DateTooltip from 'elements/date-tooltip';
 import { UserSegmentsActionsType } from '../types';
 
 export const useColumns = ({
@@ -121,12 +122,18 @@ export const useColumns = ({
       size: 200,
       cell: ({ row }) => {
         const segment = row.original;
+        const isNever = Number(segment.updatedAt) === 0;
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {Number(segment.updatedAt) === 0
-              ? t('never')
-              : formatDateTime(segment.updatedAt)}
-          </div>
+          <DateTooltip
+            trigger={
+              <div className="text-gray-700 typo-para-medium">
+                {Number(segment.updatedAt) === 0
+                  ? t('never')
+                  : formatDateTime(segment.updatedAt)}
+              </div>
+            }
+            date={isNever ? null : segment.updatedAt}
+          />
         );
       }
     },

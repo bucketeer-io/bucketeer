@@ -14,6 +14,7 @@ import { IconTrash } from '@icons';
 import { AvatarImage } from 'components/avatar';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
+import DateTooltip from 'elements/date-tooltip';
 import ExpandableTag from 'elements/expandable-tag';
 import TruncationWithTooltip from 'elements/truncation-with-tooltip';
 import { MemberActionsType } from '../types';
@@ -132,12 +133,16 @@ export const useColumns = ({
       size: 180,
       cell: ({ row }) => {
         const account = row.original;
+        const isNever = Number(account.lastSeen) === 0;
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {Number(account.lastSeen) === 0
-              ? t('never')
-              : formatDateTime(account.lastSeen)}
-          </div>
+          <DateTooltip
+            trigger={
+              <div className="text-gray-700 typo-para-medium">
+                {isNever ? t('never') : formatDateTime(account.lastSeen)}
+              </div>
+            }
+            date={isNever ? null : account.lastSeen}
+          />
         );
       }
     },

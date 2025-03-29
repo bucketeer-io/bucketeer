@@ -9,6 +9,7 @@ import { Notification } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
+import DateTooltip from 'elements/date-tooltip';
 import { NotificationActionsType } from '../types';
 
 export const useColumns = ({
@@ -58,10 +59,17 @@ export const useColumns = ({
       size: 150,
       cell: ({ row }) => {
         const notification = row.original;
+        const isNever = Number(notification.createdAt) === 0;
+
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {formatDateTime(notification.createdAt)}
-          </div>
+          <DateTooltip
+            trigger={
+              <div className="text-gray-700 typo-para-medium">
+                {isNever ? t('never') : formatDateTime(notification.createdAt)}
+              </div>
+            }
+            date={isNever ? null : notification.createdAt}
+          />
         );
       }
     },
