@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryAccounts } from '@queries/accounts';
 import { useQueryTags } from '@queries/tags';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
+import { debounce } from 'lodash';
 import { isEmpty, isNotEmpty } from 'utils/data-type';
+import { cn } from 'utils/style';
 import { FlagFilters } from 'pages/feature-flags/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -12,6 +14,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSearch,
   DropdownMenuTrigger
 } from 'components/dropdown';
 import DialogModal from 'components/modal/dialog';
@@ -82,12 +85,16 @@ const FilterFlagModal = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
+  const inputSearchRef = useRef<HTMLInputElement>(null);
+
   const [selectedFilter, setSelectedFilter] = useState<Option>(
     filterOptions[0]
   );
   const [filterValue, setFilterValue] = useState<string | number | string[]>(
     ''
   );
+  const [searchValue, setSearchValue] = useState('');
+  const [debounceValue, setDebounceValue] = useState('');
 
   const isMaintainerFilter = useMemo(
     () => selectedFilter.value === FilterTypes.MAINTAINER,
@@ -97,6 +104,11 @@ const FilterFlagModal = ({
   const isTagFilter = useMemo(
     () => selectedFilter.value === FilterTypes.TAGS,
     [selectedFilter]
+  );
+
+  const isHaveSearchingDropdown = useMemo(
+    () => isMaintainerFilter || isTagFilter,
+    [isMaintainerFilter, isTagFilter]
   );
 
   const { data: collection, isLoading } = useQueryAccounts({
@@ -121,15 +133,35 @@ const FilterFlagModal = ({
   const tags = tagCollection?.tags || [];
 
   const valueOptions = useMemo(() => {
-    if (isMaintainerFilter)
-      return accounts.map(item => ({ label: item.email, value: item.email }));
-    if (isTagFilter)
-      return tags.map(item => ({
-        label: item.name,
-        value: item.name
-      }));
+    if (isHaveSearchingDropdown) {
+      const options = isMaintainerFilter
+        ? accounts.map(item => ({ label: item.email, value: item.email }))
+        : tags.map(item => ({
+            label: item.name,
+            value: item.name
+          }));
+      return options?.filter(item =>
+        searchValue
+          ? item.value.toLowerCase().includes(searchValue.toLowerCase())
+          : item
+      );
+    }
+
     return booleanOptions;
-  }, [isMaintainerFilter, accounts, isTagFilter, tags]);
+  }, [
+    isMaintainerFilter,
+    accounts,
+    isTagFilter,
+    tags,
+    searchValue,
+    isHaveSearchingDropdown
+  ]);
+
+  const handleFocusSearchInput = useCallback(() => {
+    let timerId: NodeJS.Timeout | null = null;
+    if (timerId) clearTimeout(timerId);
+    timerId = setTimeout(() => inputSearchRef?.current?.focus(), 50);
+  }, []);
 
   const onConfirmHandler = useCallback(() => {
     const defaultFilters = {
@@ -142,10 +174,11 @@ const FilterFlagModal = ({
 
     onSubmit({
       ...defaultFilters,
-      [selectedFilter.value]:
-        isMaintainerFilter || isTagFilter ? filterValue : !!filterValue
+      [selectedFilter.value]: isHaveSearchingDropdown
+        ? filterValue
+        : !!filterValue
     });
-  }, [isMaintainerFilter, isTagFilter, filterValue]);
+  }, [isMaintainerFilter, isTagFilter, filterValue, isHaveSearchingDropdown]);
 
   const handleSetFilterOnInit = useCallback(() => {
     if (filters) {
@@ -209,6 +242,13 @@ const FilterFlagModal = ({
     [isTagFilter, filterValue]
   );
 
+  const debouncedSearch = useCallback(
+    debounce(value => {
+      setSearchValue(value);
+    }, 500),
+    []
+  );
+
   useEffect(() => {
     handleSetFilterOnInit();
   }, [filters]);
@@ -248,7 +288,13 @@ const FilterFlagModal = ({
             </DropdownMenuContent>
           </DropdownMenu>
           <p className="typo-para-medium text-gray-600">{`is`}</p>
-          <DropdownMenu>
+          <DropdownMenu
+            onOpenChange={open => {
+              if (open) return handleFocusSearchInput();
+              setDebounceValue('');
+              setSearchValue('');
+            }}
+          >
             <DropdownMenuTrigger
               disabled={isLoading || isLoadingTags}
               placeholder={t(`select-value`)}
@@ -257,26 +303,43 @@ const FilterFlagModal = ({
               className="w-full max-w-[235px] truncate"
             />
             <DropdownMenuContent
-              className={
-                isMaintainerFilter || isTagFilter ? 'w-[300px]' : 'w-[235px]'
-              }
+              className={cn('w-[235px]', {
+                'pt-0 w-[300px]': isHaveSearchingDropdown
+              })}
               align="start"
             >
-              {valueOptions.map((item, index) => (
-                <DropdownMenuItem
-                  key={index}
-                  isSelected={
-                    isTagFilter &&
-                    Array.isArray(filterValue) &&
-                    filterValue.includes(item.value as string)
-                  }
-                  isMultiselect={isTagFilter}
-                  value={item.value}
-                  label={item.label}
-                  className="flex items-center max-w-full truncate"
-                  onSelectOption={value => handleChangeFilterValue(value)}
+              {isHaveSearchingDropdown && (
+                <DropdownMenuSearch
+                  ref={inputSearchRef}
+                  value={debounceValue}
+                  onChange={value => {
+                    setDebounceValue(value);
+                    debouncedSearch(value);
+                    handleFocusSearchInput();
+                  }}
                 />
-              ))}
+              )}
+              {valueOptions?.length > 0 ? (
+                valueOptions.map((item, index) => (
+                  <DropdownMenuItem
+                    key={index}
+                    isSelected={
+                      isTagFilter &&
+                      Array.isArray(filterValue) &&
+                      filterValue.includes(item.value as string)
+                    }
+                    isMultiselect={isTagFilter}
+                    value={item.value}
+                    label={item.label}
+                    className="flex items-center max-w-full truncate"
+                    onSelectOption={value => handleChangeFilterValue(value)}
+                  />
+                ))
+              ) : (
+                <div className="flex-center py-2.5 typo-para-medium text-gray-600">
+                  {t('no-options-found')}
+                </div>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
