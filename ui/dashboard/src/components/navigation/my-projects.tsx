@@ -10,8 +10,13 @@ import {
   useAuth
 } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
+import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
-import { setCurrentEnvIdStorage } from 'storage/environment';
+import {
+  clearCurrentEnvIdStorage,
+  getCurrentEnvIdStorage,
+  setCurrentEnvIdStorage
+} from 'storage/environment';
 import { Environment, Project } from '@types';
 import { cn } from 'utils/style';
 import { IconChevronRight, IconFolder, IconNoData } from '@icons';
@@ -24,8 +29,8 @@ import SearchInput from 'components/search-input';
 const MyProjects = () => {
   const { t } = useTranslation(['common']);
   const navigate = useNavigate();
-  const { consoleAccount } = useAuth();
-
+  const { consoleAccount, logout } = useAuth();
+  const { errorNotify } = useToast();
   const [isShowProjectsList, setIsShowProjectsList] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [projects, setProjects] = useState<Project[]>();
@@ -33,24 +38,41 @@ const MyProjects = () => {
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>();
   const [environments, setEnvironments] = useState<Environment[]>();
 
-  const handleChangeData = useCallback(() => {
-    const { environmentRoles } = consoleAccount!;
-    const currentProjects = getUniqueProjects(environmentRoles);
-    const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-    const { id, urlCode } = currentEnvironment || {};
-    const currentProject = getCurrentProject(environmentRoles, id || urlCode);
+  const handleInitLoadData = useCallback(() => {
+    const lastEnvironmentId = getCurrentEnvIdStorage();
+    handleSetData(lastEnvironmentId as string);
+  }, []);
 
-    const currentEnvironments = getEnvironmentsByProjectId(
-      environmentRoles,
-      currentProject.id
-    );
+  const handleSetData = useCallback(
+    (lastEnvironmentId?: string) => {
+      const { environmentRoles } = consoleAccount!;
 
-    setCurrentEnvIdStorage(id || urlCode);
-    setProjects(currentProjects);
-    setSelectedProject(currentProject);
-    setSelectedEnvironment(currentEnvironment);
-    setEnvironments(currentEnvironments);
-  }, [consoleAccount]);
+      const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+      const { id, urlCode } = currentEnvironment || {};
+
+      const environmentId = lastEnvironmentId || id || urlCode;
+
+      const currentProjects = getUniqueProjects(environmentRoles);
+      const currentProject = getCurrentProject(environmentRoles, environmentId);
+
+      if (!currentProject) {
+        clearCurrentEnvIdStorage();
+        errorNotify(null, 'The environment is not found.');
+        return logout();
+      }
+      const currentEnvironments = getEnvironmentsByProjectId(
+        environmentRoles,
+        currentProject.id
+      );
+
+      setCurrentEnvIdStorage(environmentId);
+      setProjects(currentProjects);
+      setSelectedProject(currentProject);
+      setSelectedEnvironment(currentEnvironment);
+      setEnvironments(currentEnvironments);
+    },
+    [consoleAccount]
+  );
 
   const onOpenChange = useCallback(
     (v: boolean) => {
@@ -62,7 +84,7 @@ const MyProjects = () => {
 
   const onClearSearch = useCallback(() => {
     setSearchValue('');
-    handleChangeData();
+    handleSetData();
   }, [consoleAccount]);
 
   const onSearchProject = (value: string) => {
@@ -110,7 +132,7 @@ const MyProjects = () => {
   );
 
   useEffect(() => {
-    if (consoleAccount) handleChangeData();
+    if (consoleAccount) handleInitLoadData();
   }, [consoleAccount]);
 
   return (
