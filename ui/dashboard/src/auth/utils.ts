@@ -11,11 +11,11 @@ export const currentEnvironmentRole = (
     ? currentEnvId
     : account.environmentRoles[0].environment.id;
 
-  let curEnvRole = account.environmentRoles.find(
-    environmentRole =>
-      environmentRole.environment.id === curEnvId ||
-      environmentRole.environment.urlCode === curEnvId
-  );
+  let curEnvRole = account.environmentRoles.find(environmentRole => {
+    const { environment } = environmentRole;
+    if (environment.id && curEnvId) return environment.id === curEnvId;
+    return environment.urlCode === curEnvId;
+  });
   if (!curEnvRole) {
     curEnvRole = account.environmentRoles[0];
   }
@@ -31,14 +31,21 @@ export const getCurrentEnvironment = (account: ConsoleAccount): Environment => {
 export const getCurrentProject = (
   roles: EnvironmentRole[],
   currentEnvId: string
-) =>
-  unwrapUndefinable(
-    roles.find(
-      role =>
-        role.environment.id == currentEnvId ||
-        role.environment.urlCode == currentEnvId
-    )
-  ).project;
+) => {
+  try {
+    return unwrapUndefinable(
+      roles.find(role => {
+        const { environment } = role;
+
+        if (!!environment.id && !!currentEnvId)
+          return environment.id == currentEnvId;
+        return role.environment.urlCode == currentEnvId;
+      })
+    )?.project;
+  } catch {
+    return null;
+  }
+};
 
 export const hasEditable = (account: ConsoleAccount): boolean => {
   if (account.isSystemAdmin) return true;
