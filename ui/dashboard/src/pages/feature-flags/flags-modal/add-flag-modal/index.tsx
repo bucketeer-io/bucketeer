@@ -127,7 +127,11 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
     },
     mode: 'onChange'
   });
-  const { watch } = form;
+
+  const {
+    watch,
+    formState: { isDirty, isValid, isSubmitting }
+  } = form;
 
   const variationType = watch('variationType');
 
@@ -143,18 +147,22 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
       onChange: (value: FeatureVariationType) => void
     ) => {
       const cloneVariations = cloneDeep(defaultVariations);
-      const newVariations =
-        value === 'BOOLEAN'
-          ? cloneVariations
-          : cloneVariations.map(item => ({
-              ...item,
-              value: ''
-            }));
+      const isBoolean = value === 'BOOLEAN';
+
+      const newVariations = isBoolean
+        ? cloneVariations
+        : cloneVariations.map(item => ({
+            ...item,
+            value: ''
+          }));
       form.setValue('variations', newVariations);
       onChange(value);
+      if (isBoolean) return form.resetField('variations');
       let timerId: NodeJS.Timeout | null = null;
       if (timerId) clearTimeout(timerId);
-      timerId = setTimeout(() => form.setFocus('variations.0.value'), 100);
+      timerId = setTimeout(() => {
+        form.setFocus('variations.0.value');
+      }, 100);
     },
     [form, defaultVariations]
   );
@@ -396,14 +404,10 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
             <Form.Field
               control={form.control}
               name="variations"
-              render={({ field }) => (
+              render={() => (
                 <Form.Item>
                   <Form.Control>
-                    <Variations
-                      variationType={watch('variationType')}
-                      variations={currentVariations}
-                      onChangeVariations={field.onChange}
-                    />
+                    <Variations variationType={watch('variationType')} />
                   </Form.Control>
                 </Form.Item>
               )}
@@ -534,8 +538,8 @@ const AddFlagModal = ({ isOpen, onClose }: AddFlagModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!form.formState.isDirty}
-                    loading={form.formState.isSubmitting}
+                    disabled={!isDirty || !isValid}
+                    loading={isSubmitting}
                   >
                     {t(`create-flag`)}
                   </Button>
