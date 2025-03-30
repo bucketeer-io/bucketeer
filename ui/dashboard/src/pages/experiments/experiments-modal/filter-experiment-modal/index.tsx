@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'i18n';
 import { ExperimentStatus } from '@types';
 import { isNotEmpty } from 'utils/data-type';
@@ -67,6 +67,11 @@ const FilterExperimentModal = ({
   const { t } = useTranslation(['common']);
   const [selectedStatuses, setSelectedStatuses] = useState<ExperimentStatus[]>(
     []
+  );
+
+  const isDisabledSubmitBtn = useMemo(
+    () => !selectedStatuses.length,
+    [selectedStatuses]
   );
 
   const onConfirmHandler = () =>
@@ -167,7 +172,9 @@ const FilterExperimentModal = ({
 
       <ButtonBar
         secondaryButton={
-          <Button onClick={onConfirmHandler}>{t(`confirm`)}</Button>
+          <Button disabled={isDisabledSubmitBtn} onClick={onConfirmHandler}>
+            {t(`confirm`)}
+          </Button>
         }
         primaryButton={
           <Button onClick={onClearFilters} variant="secondary">
