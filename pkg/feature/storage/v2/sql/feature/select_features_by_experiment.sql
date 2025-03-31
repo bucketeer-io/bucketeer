@@ -58,5 +58,6 @@ LEFT OUTER JOIN feature_last_used_info ON
     feature.version = feature_last_used_info.version
 LEFT OUTER JOIN experiment ON
     feature.id = experiment.feature_id AND
-    feature.environment_id = experiment.environment_id
+    feature.environment_id = experiment.environment_id AND
+    feature.version = experiment.feature_version
 %s %s %s
