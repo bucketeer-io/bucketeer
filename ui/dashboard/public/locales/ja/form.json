@@ -162,7 +162,14 @@
     "schedule-operation": "Schedule Operation",
     "progress-information": "Progress Information",
     "stopped-at": "Stopped {stoppedAt} by",
-    "user": "User"
+    "user": "User",
+    "progress-goal-value": "Goal <b>{{value}}</b>",
+    "progress-min-count": "Min Count <b>{{value}}</b>",
+    "progress-current-goal": "Current Goal Count <b>{{value}}</b>",
+    "current-state": "Current State <comp>{{state}}</comp>",
+    "start-date": "Start Date",
+    "time": "Time",
+    "create-operation": "Create Operation"
   },
   "origin-env": "Origin Environment",
   "destination-env": "Destination Environment",

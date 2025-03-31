@@ -15,25 +15,30 @@ import {
   DropdownMenuTrigger
 } from 'components/dropdown';
 import Icon from 'components/icon';
+import { OpsTypeMap } from '../types';
 
-const OperationActions = () => {
+const OperationActions = ({
+  onOpenOperationModal
+}: {
+  onOpenOperationModal: (operationType?: OpsTypeMap) => void;
+}) => {
   const { t } = useTranslation(['common', 'form']);
 
   const options = useMemo(
     () => [
       {
         label: t('form:feature-flags.schedule'),
-        value: 'SCHEDULE',
+        value: OpsTypeMap.SCHEDULE,
         icon: IconCalendar
       },
       {
         label: t('form:feature-flags.event-rate'),
-        value: 'EVENT_RATE',
+        value: OpsTypeMap.EVENT_RATE,
         icon: IconFlagOperation
       },
       {
         label: t('form:feature-flags.progressive-rollout'),
-        value: 'PROGRESSIVE_ROLLOUT',
+        value: OpsTypeMap.ROLLOUT,
         icon: IconOperationArrow
       }
     ],
@@ -66,6 +71,7 @@ const OperationActions = () => {
             icon={item.icon}
             value={item.value}
             label={item.label}
+            onSelectOption={value => onOpenOperationModal(value as OpsTypeMap)}
           />
         ))}
       </DropdownMenuContent>

@@ -1,6 +1,5 @@
 import { AUTOOPS_MAX_MIN_COUNT } from 'constants/autoops';
 import * as yup from 'yup';
-import { Rollout } from '@types';
 import {
   areIntervalsApart,
   isArraySorted,
@@ -87,7 +86,7 @@ export const operationFormSchema = yup.object().shape({
   datetimeClausesList: yup.array().of(
     yup.object().shape({
       id: yup.string(),
-      actionType: yup.mixed<ActionTypeMap[keyof ActionTypeMap]>().required(),
+      actionType: yup.mixed<ActionTypeMap>().required(),
       time: yup.date()
     })
   ),
@@ -119,7 +118,7 @@ export const operationFormSchema = yup.object().shape({
       .max(100),
     operator: yup.string()
   }),
-  progressiveRolloutType: yup.mixed<Rollout>().required(),
+  progressiveRolloutType: yup.mixed<RolloutTypeMap>().required(),
   progressiveRollout: yup.object().shape({
     template: yup.object().shape({
       variationId: yup.string().required(),

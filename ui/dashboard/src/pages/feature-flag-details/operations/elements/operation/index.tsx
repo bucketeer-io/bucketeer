@@ -1,4 +1,5 @@
 import { OperationCombinedType } from '../../types';
+import OperationProgress from '../operation-progress';
 import OperationStatus from '../operation-status';
 
 interface Props {
@@ -15,6 +16,7 @@ const Operation = ({ isCompleted, operation, onActions }: Props) => {
         isCompleted={isCompleted}
         onActions={onActions}
       />
+      <OperationProgress />
     </div>
   );
 };

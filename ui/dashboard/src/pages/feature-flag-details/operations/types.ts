@@ -1,9 +1,9 @@
 import { AutoOpsRule, Rollout } from '@types';
 
-export interface ActionTypeMap {
-  UNKNOWN: 'UNKNOWN';
-  ENABLE: 'ENABLE';
-  DISABLE: 'DISABLE';
+export enum ActionTypeMap {
+  UNKNOWN = 'UNKNOWN',
+  ENABLE = 'ENABLE',
+  DISABLE = 'DISABLE'
 }
 
 export enum OpsTypeMap {
