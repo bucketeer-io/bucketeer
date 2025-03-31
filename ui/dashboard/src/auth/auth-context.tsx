@@ -13,7 +13,6 @@ import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
 import { Undefinable } from 'option-t/undefinable';
 import {
-  clearCurrentEnvIdStorage,
   getCurrentEnvIdStorage,
   setCurrentEnvIdStorage
 } from 'storage/environment';
@@ -120,7 +119,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     setIsLogin(false);
     clearOrgIdStorage();
     clearTokenStorage();
-    clearCurrentEnvIdStorage();
     navigate(PAGE_PATH_ROOT);
   };
 
