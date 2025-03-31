@@ -15,7 +15,7 @@ type CollectionEmptyProps<Data extends object> = {
 
 export const NoResultsCollection = ({
   description,
-  buttonVariant = 'primary',
+  buttonVariant = 'secondary',
   buttonText,
   onClear
 }: {

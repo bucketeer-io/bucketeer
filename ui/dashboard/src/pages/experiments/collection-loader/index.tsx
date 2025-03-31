@@ -64,8 +64,6 @@ const CollectionLoader = ({
         (!!searchOptions?.statuses?.length && !filters?.filterByTab)
       }
       description="No experiments match your search filters. Try changing your filters."
-      buttonText="Clear Filters"
-      buttonVariant={'secondary'}
       onClear={() => {
         setFilters(
           {
