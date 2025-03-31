@@ -122,7 +122,7 @@ func (v *eventGoalValidator) validate(ctx context.Context) (string, error) {
 		)
 		return codeEmptyField, errEmptyGoalID
 	}
-	if ev.User.Id == "" && ev.UserId == "" {
+	if (ev.User == nil || (ev.User != nil && ev.User.Id == "")) && ev.UserId == "" {
 		v.logger.Debug(
 			"Empty user_id",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -199,7 +199,7 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 		)
 		return codeEmptyField, errEmptyVariationID
 	}
-	if ev.User.Id == "" && ev.UserId == "" {
+	if (ev.User == nil || (ev.User != nil && ev.User.Id == "")) && ev.UserId == "" {
 		v.logger.Debug(
 			"Empty user_id",
 			log.FieldsFromImcomingContext(ctx).AddFields(
