@@ -156,10 +156,6 @@ func (s *adminSubscriptionStorage) ListAdminSubscriptions(
 	options *mysql.ListOptions,
 ) ([]*proto.Subscription, int, int64, error) {
 	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAdminSubscriptionV2AnySQLQuery, options)
-	// whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	// orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	// limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	// query := fmt.Sprintf(selectAdminSubscriptionV2AnySQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 
 	if err != nil {

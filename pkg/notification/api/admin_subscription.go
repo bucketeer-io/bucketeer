@@ -629,13 +629,20 @@ func (s *NotificationService) ListAdminSubscriptions(
 	if req.Disabled != nil {
 		disabled = &req.Disabled.Value
 	}
+	orders, err := s.newAdminSubscriptionListOrders(req.OrderBy, req.OrderDirection, localizer)
+	if err != nil {
+		s.logger.Error(
+			"Invalid argument",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, err
 
 	subscriptions, cursor, totalCount, err := s.listAdminSubscriptionsMySQL(
 		ctx,
 		req.SourceTypes,
 		disabled,
 		req.SearchKeyword,
-		nil,
+		orders,
 		req.PageSize,
 		req.Cursor,
 		localizer,
