@@ -636,6 +636,7 @@ func (s *NotificationService) ListAdminSubscriptions(
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)
 		return nil, err
+	}
 
 	subscriptions, cursor, totalCount, err := s.listAdminSubscriptionsMySQL(
 		ctx,
