@@ -146,7 +146,9 @@
     "disable-now": "Disable now",
     "schedule-info": "You can update or delete the schedule on the Auto Operations tab on the Feature Flag details page.",
     "flag-switch": "{{name}} has been {{state}}.",
-    "schedule-configured": "Schedule has been configured for {{name}}."
+    "schedule-configured": "Schedule has been configured for {{name}}.",
+    "event-rate": "Event Rate",
+    "progressive-rollout": "Progressive Rollout"
   },
   "origin-env": "Origin Environment",
   "destination-env": "Destination Environment",

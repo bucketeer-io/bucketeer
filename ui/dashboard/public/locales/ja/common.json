@@ -207,5 +207,7 @@
   "update-now": "Update now",
   "time-updated": "Updated {{time}}",
   "default": "Default",
-  "sort-by": "Sort by: {{sortBy}}"
+  "sort-by": "Sort by: {{sortBy}}",
+  "new-operation": "New Operation",
+  "completed": "Completed"
 }

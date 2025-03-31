@@ -209,5 +209,7 @@
   "default": "Default",
   "sort-by": "Sort by: {{sortBy}}",
   "sort-asc": "Oldest to Newest",
-  "sort-desc": "Newest to Oldest"
+  "sort-desc": "Newest to Oldest",
+  "new-operation": "New Operation",
+  "completed": "Completed"
 }
