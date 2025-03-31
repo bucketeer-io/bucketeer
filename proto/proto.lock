@@ -5429,6 +5429,11 @@
                 "id": 11,
                 "name": "previous_entity_data",
                 "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "entity_name",
+                "type": "string"
               }
             ]
           }
@@ -19944,6 +19949,11 @@
                 "id": 5,
                 "name": "public_api_editor",
                 "type": "PublicAPIEditor"
+              },
+              {
+                "id": 6,
+                "name": "avatar_image_url",
+                "type": "string"
               }
             ],
             "reserved_ids": [
@@ -19966,6 +19976,11 @@
                   {
                     "id": 3,
                     "name": "name",
+                    "type": "string"
+                  },
+                  {
+                    "id": 4,
+                    "name": "avatar_image_url",
                     "type": "string"
                   }
                 ]

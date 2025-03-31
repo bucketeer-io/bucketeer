@@ -7761,6 +7761,8 @@ definitions:
         type: string
       name:
         type: string
+      avatarImageUrl:
+        type: string
   ExperimentGoalReference:
     type: object
     properties:
@@ -8663,6 +8665,8 @@ definitions:
       previousEntityData:
         type: string
         title: JSON string of the previous entity data
+      entityName:
+        type: string
   auditlogListAdminAuditLogsRequestOrderBy:
     type: string
     enum:
@@ -9609,6 +9613,8 @@ definitions:
         type: string
       publicApiEditor:
         $ref: '#/definitions/EditorPublicAPIEditor'
+      avatarImageUrl:
+        type: string
   domainEventEntityType:
     type: string
     enum:

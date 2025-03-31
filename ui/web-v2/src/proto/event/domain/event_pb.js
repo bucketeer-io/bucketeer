@@ -6489,7 +6489,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto.bucketeer.event.domain.Editor.PublicAPIEditor.toObject(
             includeInstance,
             f
-          )
+          ),
+        avatarImageUrl: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {
@@ -6551,6 +6552,10 @@ proto.bucketeer.event.domain.Editor.deserializeBinaryFromReader = function (
         );
         msg.setPublicApiEditor(value);
         break;
+      case 6:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setAvatarImageUrl(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -6602,6 +6607,10 @@ proto.bucketeer.event.domain.Editor.serializeBinaryToWriter = function (
         .serializeBinaryToWriter
     );
   }
+  f = message.getAvatarImageUrl();
+  if (f.length > 0) {
+    writer.writeString(6, f);
+  }
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -6642,7 +6651,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         token: jspb.Message.getFieldWithDefault(msg, 1, ''),
         maintainer: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        name: jspb.Message.getFieldWithDefault(msg, 3, '')
+        name: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        avatarImageUrl: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -6694,6 +6704,10 @@ proto.bucketeer.event.domain.Editor.PublicAPIEditor.deserializeBinaryFromReader 
           var value = /** @type {string} */ (reader.readString());
           msg.setName(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setAvatarImageUrl(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -6737,6 +6751,10 @@ proto.bucketeer.event.domain.Editor.PublicAPIEditor.serializeBinaryToWriter =
     f = message.getName();
     if (f.length > 0) {
       writer.writeString(3, f);
+    }
+    f = message.getAvatarImageUrl();
+    if (f.length > 0) {
+      writer.writeString(4, f);
     }
   };
 
@@ -6798,6 +6816,26 @@ proto.bucketeer.event.domain.Editor.PublicAPIEditor.prototype.getName =
 proto.bucketeer.event.domain.Editor.PublicAPIEditor.prototype.setName =
   function (value) {
     return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+/**
+ * optional string avatar_image_url = 4;
+ * @return {string}
+ */
+proto.bucketeer.event.domain.Editor.PublicAPIEditor.prototype.getAvatarImageUrl =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.event.domain.Editor.PublicAPIEditor} returns this
+ */
+proto.bucketeer.event.domain.Editor.PublicAPIEditor.prototype.setAvatarImageUrl =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
   };
 
 /**
@@ -6889,6 +6927,24 @@ proto.bucketeer.event.domain.Editor.prototype.clearPublicApiEditor =
  */
 proto.bucketeer.event.domain.Editor.prototype.hasPublicApiEditor = function () {
   return jspb.Message.getField(this, 5) != null;
+};
+
+/**
+ * optional string avatar_image_url = 6;
+ * @return {string}
+ */
+proto.bucketeer.event.domain.Editor.prototype.getAvatarImageUrl = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.event.domain.Editor} returns this
+ */
+proto.bucketeer.event.domain.Editor.prototype.setAvatarImageUrl = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 6, value);
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

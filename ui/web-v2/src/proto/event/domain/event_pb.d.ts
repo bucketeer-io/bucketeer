@@ -333,6 +333,9 @@ export class Editor extends jspb.Message {
   getPublicApiEditor(): Editor.PublicAPIEditor | undefined;
   setPublicApiEditor(value?: Editor.PublicAPIEditor): void;
 
+  getAvatarImageUrl(): string;
+  setAvatarImageUrl(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Editor.AsObject;
   static toObject(includeInstance: boolean, msg: Editor): Editor.AsObject;
@@ -357,6 +360,7 @@ export namespace Editor {
     isAdmin: boolean;
     name: string;
     publicApiEditor?: Editor.PublicAPIEditor.AsObject;
+    avatarImageUrl: string;
   };
 
   export class PublicAPIEditor extends jspb.Message {
@@ -368,6 +372,9 @@ export namespace Editor {
 
     getName(): string;
     setName(value: string): void;
+
+    getAvatarImageUrl(): string;
+    setAvatarImageUrl(value: string): void;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PublicAPIEditor.AsObject;
@@ -395,6 +402,7 @@ export namespace Editor {
       token: string;
       maintainer: string;
       name: string;
+      avatarImageUrl: string;
     };
   }
 }

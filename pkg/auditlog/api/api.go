@@ -16,6 +16,8 @@ package api
 
 import (
 	"context"
+	"encoding/json"
+	"sort"
 	"strconv"
 
 	"go.uber.org/zap"
@@ -25,6 +27,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	v2als "github.com/bucketeer-io/bucketeer/pkg/auditlog/storage/v2"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -62,11 +65,12 @@ type AuditlogService interface {
 }
 
 type auditlogService struct {
-	accountClient     accountclient.Client
-	mysqlStorage      v2als.AuditLogStorage
-	mysqlAdminStorage v2als.AdminAuditLogStorage
-	opts              *options
-	logger            *zap.Logger
+	accountClient        accountclient.Client
+	accountStorage       v2as.AccountStorage
+	auditLogStorage      v2als.AuditLogStorage
+	adminAuditLogStorage v2als.AdminAuditLogStorage
+	opts                 *options
+	logger               *zap.Logger
 }
 
 func NewAuditLogService(
@@ -81,11 +85,12 @@ func NewAuditLogService(
 		opt(dopts)
 	}
 	return &auditlogService{
-		accountClient:     accountClient,
-		mysqlStorage:      v2als.NewAuditLogStorage(mysqlClient),
-		mysqlAdminStorage: v2als.NewAdminAuditLogStorage(mysqlClient),
-		opts:              dopts,
-		logger:            dopts.logger.Named("api"),
+		accountClient:        accountClient,
+		accountStorage:       v2as.NewAccountStorage(mysqlClient),
+		auditLogStorage:      v2als.NewAuditLogStorage(mysqlClient),
+		adminAuditLogStorage: v2als.NewAdminAuditLogStorage(mysqlClient),
+		opts:                 dopts,
+		logger:               dopts.logger.Named("api"),
 	}
 }
 
@@ -143,7 +148,7 @@ func (s *auditlogService) ListAuditLogs(
 		)
 		return nil, err
 	}
-	auditlogs, nextCursor, totalCount, err := s.mysqlStorage.ListAuditLogs(
+	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(
 		ctx,
 		whereParts,
 		orders,
@@ -164,9 +169,37 @@ func (s *auditlogService) ListAuditLogs(
 		}
 		return nil, dt.Err()
 	}
-	for _, auditlog := range auditlogs {
-		auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
+	editorEmails := make([]string, len(auditlogs))
+	for i, auditlog := range auditlogs {
+		auditlogs[i].LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
+		// unmarshal json string to map entity name
+		var entityData map[string]interface{}
+		err := json.Unmarshal([]byte(auditlog.EntityData), &entityData)
+		if err != nil {
+			continue
+		}
+		if entityName, ok := entityData["name"]; ok {
+			auditlogs[i].EntityName = entityName.(string)
+		} else {
+			auditlogs[i].EntityName = auditlog.EntityId
+		}
+		editorEmails = append(editorEmails, auditlog.Editor.Email)
 	}
+	editorEmails = deDuplicateStrings(editorEmails)
+	accounts, err := s.getAccountMapByEmails(ctx, editorEmails, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range auditlogs {
+		if account, ok := accounts[auditlogs[i].Editor.Email]; ok {
+			auditlogs[i].Editor.AvatarImageUrl = account.AvatarImageUrl
+			if auditlogs[i].Editor.PublicApiEditor != nil {
+				auditlogs[i].Editor.PublicApiEditor.AvatarImageUrl = account.AvatarImageUrl
+			}
+		}
+	}
+
 	return &proto.ListAuditLogsResponse{
 		AuditLogs:  auditlogs,
 		Cursor:     strconv.Itoa(nextCursor),
@@ -247,7 +280,7 @@ func (s *auditlogService) ListAdminAuditLogs(
 		}
 		return nil, dt.Err()
 	}
-	auditlogs, nextCursor, totalCount, err := s.mysqlAdminStorage.ListAdminAuditLogs(
+	auditlogs, nextCursor, totalCount, err := s.adminAuditLogStorage.ListAdminAuditLogs(
 		ctx,
 		whereParts,
 		orders,
@@ -355,7 +388,7 @@ func (s *auditlogService) ListFeatureHistory(
 		}
 		return nil, dt.Err()
 	}
-	auditlogs, nextCursor, totalCount, err := s.mysqlStorage.ListAuditLogs(
+	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(
 		ctx,
 		whereParts,
 		orders,
@@ -388,6 +421,46 @@ func (s *auditlogService) ListFeatureHistory(
 		Cursor:     strconv.Itoa(nextCursor),
 		TotalCount: totalCount,
 	}, nil
+}
+
+func (s *auditlogService) getAccountMapByEmails(
+	ctx context.Context,
+	emails []string,
+	localizer locale.Localizer,
+) (accountMap map[string]*accountproto.AccountV2, err error) {
+	accountMap = make(map[string]*accountproto.AccountV2)
+	var whereParts []mysql.WherePart
+	if len(emails) > 0 {
+		emailInterfaces := make([]interface{}, len(emails))
+		for _, email := range emails {
+			emailInterfaces = append(emailInterfaces, email)
+		}
+		whereParts = append(whereParts, mysql.NewInFilter("email", emailInterfaces))
+	} else {
+		return accountMap, nil
+	}
+
+	accounts, _, _, err := s.accountStorage.ListAccountsV2(
+		ctx,
+		whereParts,
+		nil,
+		0,
+		0,
+	)
+	if err != nil {
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return accountMap, statusInternal.Err()
+		}
+		return accountMap, dt.Err()
+	}
+	for i := range accounts {
+		accountMap[accounts[i].Email] = accounts[i]
+	}
+	return accountMap, nil
 }
 
 func (s *auditlogService) newFeatureHistoryAuditLogListOrders(
@@ -541,4 +614,15 @@ func (s *auditlogService) checkSystemAdminRole(
 		}
 	}
 	return editor, nil
+}
+
+func deDuplicateStrings(args []string) []string {
+	sort.Strings(args)
+	var result []string
+	for i := 0; i < len(args); i++ {
+		if i == 0 || args[i] != args[i-1] {
+			result = append(result, args[i])
+		}
+	}
+	return result
 }
