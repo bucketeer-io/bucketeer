@@ -209,5 +209,6 @@
   "default": "Default",
   "sort-by": "Sort by: {{sortBy}}",
   "sort-asc": "Oldest to Newest",
-  "sort-desc": "Newest to Oldest"
+  "sort-desc": "Newest to Oldest",
+  "no-options-found": "No options found"
 }
