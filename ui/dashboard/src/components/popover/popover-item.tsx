@@ -1,6 +1,6 @@
-import { FunctionComponent } from 'react';
+import { FunctionComponent, ReactNode } from 'react';
 import { PropsWithChildren } from 'react';
-import { AddonSlot } from '@types';
+import { AddonSlot, Color } from '@types';
 import { cn } from 'utils/style';
 import Icon from 'components/icon';
 
@@ -42,8 +42,9 @@ export type PopoverItemProps = {
   type: 'trigger' | 'item';
   addonSlot?: AddonSlot;
   icon?: FunctionComponent;
-  label?: string;
+  label?: ReactNode;
   disabled?: boolean;
+  color?: Color;
   onClick?: () => void;
 };
 
@@ -53,6 +54,7 @@ const PopoverItem = ({
   icon,
   label,
   disabled,
+  color,
   onClick
 }: PopoverItemProps) => {
   return (
@@ -63,16 +65,20 @@ const PopoverItem = ({
       onClick={onClick}
     >
       {icon && (
-        <span
+        <div
           className={cn(
             'flex size-5 items-center justify-center',
             disabled ? 'text-gray-400' : 'text-gray-600'
           )}
         >
-          <Icon icon={icon} size={type === 'item' ? 'xxs' : 'sm'} />
-        </span>
+          <Icon
+            icon={icon}
+            size={type === 'item' ? 'xxs' : 'sm'}
+            color={color}
+          />
+        </div>
       )}
-      {label && <span className={'typo-para-small select-none'}>{label}</span>}
+      {label && <div className={'typo-para-small select-none'}>{label}</div>}
     </PopoverItemWrapper>
   );
 };

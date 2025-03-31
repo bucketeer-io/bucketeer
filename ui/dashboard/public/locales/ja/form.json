@@ -148,7 +148,15 @@
     "flag-switch": "{{name}} has been {{state}}.",
     "schedule-configured": "Schedule has been configured for {{name}}.",
     "event-rate": "Event Rate",
-    "progressive-rollout": "Progressive Rollout"
+    "progressive-rollout": "Progressive Rollout",
+    "see-details": "See Details",
+    "clone-operation": "Clone Operation",
+    "edit-operation": "Edit Operation",
+    "stop-operation": "Stop Operation",
+    "delete-operation": "Delete Operation",
+    "edit-kill-switch": "Edit Kill Switch",
+    "stop-kill-switch": "Stop Kill Switch",
+    "delete-kill-switch": "Delete Kill Switch"
   },
   "origin-env": "Origin Environment",
   "destination-env": "Destination Environment",

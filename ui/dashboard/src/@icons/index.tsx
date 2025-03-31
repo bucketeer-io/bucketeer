@@ -14,6 +14,8 @@ import IconInfo from './customized-icons/info.svg?react';
 import IconFlagJSON from './customized-icons/json.svg?react';
 import IconFlagNumber from './customized-icons/number.svg?react';
 import IconOperationArrow from './customized-icons/operation-arrow.svg?react';
+import IconOperationClone from './customized-icons/operation-clone.svg?react';
+import IconOperationDetails from './customized-icons/operation-details.svg?react';
 import IconFlagOperation from './customized-icons/operation.svg?react';
 import IconPlus from './customized-icons/plus.svg?react';
 import IconSearch from './customized-icons/search.svg?react';
@@ -121,7 +123,8 @@ export {
   IconFlagJSON,
   IconWatch,
   IconPlus,
-
+  IconOperationClone,
+  IconOperationDetails,
   // Special icons
   IconGoal,
   IconGoogle,
