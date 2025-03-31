@@ -385,6 +385,32 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 			expectedErr: errEmptyUserID,
 		},
 		{
+			desc: "nil user",
+			inputFunc: func() *eventproto.Event {
+				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
+					Timestamp:   time.Now().Unix(),
+					FeatureId:   "feature-id",
+					VariationId: "variation-id",
+					User:        nil,
+					Reason: &feature.Reason{
+						Type: feature.Reason_DEFAULT,
+					},
+				})
+				if err != nil {
+					t.Fatal("could not serialize event")
+				}
+				return &eventproto.Event{
+					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
+					Event: &any.Any{
+						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
+						Value:   bEvaluationEvent,
+					},
+				}
+			},
+			expected:    codeEmptyField,
+			expectedErr: errEmptyUserID,
+		},
+		{
 			desc: "nil reason",
 			inputFunc: func() *eventproto.Event {
 				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
