@@ -9677,7 +9677,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Execute"
+                        "value": "Execute Auto Ops Rule"
                       },
                       {
                         "name": "description",
@@ -10636,7 +10636,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Execute"
+                        "value": "Execute Progressive Rollout"
                       },
                       {
                         "name": "description",

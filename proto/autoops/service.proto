@@ -544,7 +544,7 @@ service AutoOpsService {
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Execute"
+      summary: "Execute Auto Ops Rule"
       description: "Execute an auto ops rule."
       tags: "auto_ops_rule"
       operation_id: "web.v1.auto_ops_rule.execute"
@@ -796,7 +796,7 @@ service AutoOpsService {
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Execute"
+      summary: "Execute Progressive Rollout"
       description: "Execute a progressive rollout."
       tags: "progressive_rollout"
       operation_id: "web.v1.progressive_rollout.execute"

@@ -30,7 +30,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
@@ -580,8 +579,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		if err != nil {
 			return err
 		}
-		ftStorage := ftstorage.NewFeatureStorage(tx)
-		feature, err := ftStorage.GetFeature(ctx, progressiveRollout.FeatureId, req.EnvironmentId)
+		feature, err := s.featureStorage.GetFeature(ctx, progressiveRollout.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -657,7 +655,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		if err != nil {
 			return err
 		}
-		if err := ftStorage.UpdateFeature(ctx, updated, req.EnvironmentId); err != nil {
+		if err := s.featureStorage.UpdateFeature(ctx, updated, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to update feature flag",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -761,8 +759,7 @@ func (s *AutoOpsService) executeProgressiveRolloutNoCommand(
 		if err != nil {
 			return err
 		}
-		ftStorage := ftstorage.NewFeatureStorage(tx)
-		feature, err := ftStorage.GetFeature(ctx, progressiveRollout.FeatureId, req.EnvironmentId)
+		feature, err := s.featureStorage.GetFeature(ctx, progressiveRollout.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -834,7 +831,7 @@ func (s *AutoOpsService) executeProgressiveRolloutNoCommand(
 		if err != nil {
 			return err
 		}
-		if err := ftStorage.UpdateFeature(ctx, updated, req.EnvironmentId); err != nil {
+		if err := s.featureStorage.UpdateFeature(ctx, updated, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to update feature flag",
 				log.FieldsFromImcomingContext(ctx).AddFields(

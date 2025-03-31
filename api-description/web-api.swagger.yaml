@@ -1945,7 +1945,7 @@ paths:
         - auto_ops_rule
   /v1/auto_ops_rule/execute:
     post:
-      summary: Execute
+      summary: Execute Auto Ops Rule
       description: Execute an auto ops rule.
       operationId: web.v1.auto_ops_rule.execute
       responses:
@@ -6117,7 +6117,7 @@ paths:
         - progressive_rollout
   /v1/progressive_rollout/execute:
     post:
-      summary: Execute
+      summary: Execute Progressive Rollout
       description: Execute a progressive rollout.
       operationId: web.v1.progressive_rollout.execute
       responses:

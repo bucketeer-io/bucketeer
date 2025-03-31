@@ -32,6 +32,8 @@ import (
 	storagemock "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
+	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
+	mockFeatureStorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -2079,11 +2081,9 @@ func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 				).Return(&domain.ProgressiveRollout{
 					ProgressiveRollout: &autoopsproto.ProgressiveRollout{},
 				}, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				tx.EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.featureStorage.(*mockFeatureStorage.MockFeatureStorage).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&ftdomain.Feature{}, nil)
 			},
 			req: &autoopsproto.ExecuteProgressiveRolloutRequest{
 				Id:            "aid1",
@@ -2160,11 +2160,9 @@ func TestExecuteProgressiveRolloutNoCommandMySQL(t *testing.T) {
 				).Return(&domain.ProgressiveRollout{
 					ProgressiveRollout: &autoopsproto.ProgressiveRollout{},
 				}, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				tx.EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.featureStorage.(*mockFeatureStorage.MockFeatureStorage).EXPECT().GetFeature(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&ftdomain.Feature{}, nil)
 			},
 			req: &autoopsproto.ExecuteProgressiveRolloutRequest{
 				Id:            "aid1",

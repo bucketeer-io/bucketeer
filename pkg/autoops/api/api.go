@@ -35,6 +35,7 @@ import (
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
+	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	v2os "github.com/bucketeer-io/bucketeer/pkg/opsevent/storage/v2"
@@ -65,6 +66,7 @@ type AutoOpsService struct {
 	opsCountStorage  v2os.OpsCountStorage
 	autoOpsStorage   v2as.AutoOpsRuleStorage
 	prStorage        v2as.ProgressiveRolloutStorage
+	featureStorage   v2fs.FeatureStorage
 	featureClient    featureclient.Client
 	experimentClient experimentclient.Client
 	accountClient    accountclient.Client
