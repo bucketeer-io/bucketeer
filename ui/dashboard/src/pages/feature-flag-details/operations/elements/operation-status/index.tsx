@@ -1,13 +1,26 @@
 import { FunctionComponent, useCallback, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import {
   IconEditOutlined,
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
 import { cva } from 'class-variance-authority';
-import { IconDisable, IconOperationClone, IconOperationDetails } from '@icons';
+import { Color, RolloutStoppedBy } from '@types';
+import { useFormatDateTime } from 'utils/date-time';
+import {
+  IconCalendar,
+  IconDisable,
+  IconFlagOperation,
+  IconOperationClone,
+  IconOperationDetails,
+  IconStoppedByUser,
+  IconWatch
+} from '@icons';
+import Divider from 'components/divider';
+import Icon from 'components/icon';
 import { Popover, PopoverOption, PopoverValue } from 'components/popover';
-import { OpsTypeMap } from '../../types';
+import DateTooltip from 'elements/date-tooltip';
+import { OperationCombinedType, OpsTypeMap } from '../../types';
 
 const statusVariants = cva(
   'flex-center px-2 py-1.5 rounded-[3px] typo-para-small',
@@ -48,20 +61,86 @@ const Status = ({ status }: { status: OpsTypeMap }) => {
   );
 };
 
+interface StoppedByData {
+  icon: FunctionComponent;
+  textKey: string;
+  iconColor: Color;
+}
+
+const getStoppedByData = (stoppedBy: RolloutStoppedBy): StoppedByData => {
+  switch (stoppedBy) {
+    case 'USER':
+      return {
+        icon: IconStoppedByUser,
+        textKey: 'user',
+        iconColor: 'accent-blue-500'
+      };
+
+    case 'OPS_SCHEDULE':
+      return {
+        icon: IconCalendar,
+        textKey: 'schedule',
+        iconColor: 'primary-500'
+      };
+    case 'OPS_KILL_SWITCH':
+      return {
+        icon: IconFlagOperation,
+        textKey: 'event-rate',
+        iconColor: 'accent-pink-500'
+      };
+    case 'UNKNOWN':
+    default:
+      return {} as StoppedByData;
+  }
+};
+
+const StoppedBy = ({ stoppedBy }: { stoppedBy: RolloutStoppedBy }) => {
+  const { t } = useTranslation(['form']);
+  const isUnknown = useMemo(() => stoppedBy === 'UNKNOWN', [stoppedBy]);
+  if (isUnknown) return <></>;
+  const { icon, iconColor, textKey } = getStoppedByData(stoppedBy);
+  return (
+    <>
+      <Icon icon={icon} size={'xxs'} color={iconColor} />
+      <p className="typo-para-small text-gray-700">
+        {t(`feature-flags.${textKey}`)}
+      </p>
+    </>
+  );
+};
+
 const OperationStatus = ({
   isCompleted,
-  isKillSwitch,
-  title,
-  status,
+  operation,
   onActions
 }: {
-  title: string;
-  status: OpsTypeMap;
-  isCompleted?: boolean;
-  isKillSwitch?: boolean;
+  isCompleted: boolean;
+  operation: OperationCombinedType;
   onActions: () => void;
 }) => {
   const { t } = useTranslation(['form']);
+  const formatDateTime = useFormatDateTime();
+
+  const operationType = useMemo(
+    () => operation.opsType as OpsTypeMap,
+    [operation]
+  );
+
+  const isRollout = useMemo(
+    () => ['MANUAL_SCHEDULE', 'TEMPLATE_SCHEDULE'].includes(operation.type),
+    [operation.type]
+  );
+
+  const isKillSwitch = useMemo(
+    () => operation.opsType === OpsTypeMap.EVENT_RATE,
+    [operation]
+  );
+
+  const isStopped = useMemo(() => operation.status === 'STOPPED', [operation]);
+  const stoppedAt = useMemo(() => {
+    const isNever = Number(operation.stoppedAt) === 0;
+    return isNever ? null : operation.stoppedAt;
+  }, [operation]);
 
   const completedOptions: PopoverOption<PopoverValue>[] = useMemo(
     () => [
@@ -110,18 +189,53 @@ const OperationStatus = ({
     [isCompleted, isKillSwitch, operationOptions, completedOptions]
   );
 
+  const titleKey = useMemo(() => {
+    if (isRollout) return 'enable-operation';
+    if (isKillSwitch) return 'kill-switch-operation';
+    return 'schedule-operation';
+  }, [isRollout, isKillSwitch]);
+
   return (
-    <div className="flex items-center w-full justify-between pb-4 border-b border-gray-200">
-      <p className="typo-head-bold-big text-gray-700">{title}</p>
-      <div className="flex items-center gap-x-4">
-        <Status status={status} />
+    <div className="flex flex-col w-full gap-y-4">
+      <div className="flex items-center w-full justify-between gap-x-4">
+        <p className="typo-head-bold-big text-gray-700">
+          {t(`feature-flags.${titleKey}`)}
+        </p>
+        <div className="flex items-center gap-x-4">
+          <Status status={operationType} />
+          <Popover
+            options={popoverOptions}
+            icon={IconMoreHorizOutlined}
+            onClick={onActions}
+            align="end"
+          />
+        </div>
       </div>
-      <Popover
-        options={popoverOptions}
-        icon={IconMoreHorizOutlined}
-        onClick={onActions}
-        align="end"
-      />
+      <Divider />
+      <div className="flex items-center w-full justify-between gap-x-4">
+        <p className="typo-head-bold-medium text-gray-700">
+          {t('feature-flags.progress-information')}
+        </p>
+        {isStopped && (
+          <div className="flex items-center gap-x-1.5">
+            <DateTooltip
+              trigger={
+                <div className="flex items-center gap-x-1.5">
+                  <Icon icon={IconWatch} size={'xxs'} />
+                  <Trans
+                    i18nKey={'form:feature-flags.stopped-at'}
+                    values={{
+                      stoppedAt: formatDateTime(operation.stoppedAt)
+                    }}
+                  />
+                </div>
+              }
+              date={stoppedAt}
+            />
+            <StoppedBy stoppedBy={operation.stoppedBy} />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -3,31 +3,34 @@ import { AutoOpsRule, Rollout } from '@types';
 import { OperationCombinedType } from '../../types';
 import Operation from '../operation';
 
-const ActiveContent = ({
+const CompletedContent = ({
   rollouts,
   operations
 }: {
   rollouts: Rollout[];
   operations: AutoOpsRule[];
 }) => {
-  const activeStatuses = useMemo(() => ['WAITING', 'RUNNING'], []);
+  const completedStatuses = useMemo(() => ['STOPPED', 'FINISHED'], []);
 
-  const operationActiveData = useMemo(
+  const operationCompletedData = useMemo(
     () =>
-      operations?.filter(item => activeStatuses.includes(item.autoOpsStatus)),
-    [operations, activeStatuses]
+      operations?.filter(item =>
+        completedStatuses.includes(item.autoOpsStatus)
+      ),
+    [operations, completedStatuses]
   );
 
-  const rolloutActiveData = useMemo(
-    () => rollouts?.filter(item => activeStatuses.includes(item.status)),
-    [rollouts, activeStatuses]
+  const rolloutCompletedData = useMemo(
+    () => rollouts?.filter(item => completedStatuses.includes(item.status)),
+    [rollouts, completedStatuses]
   );
+
   const sortedData: OperationCombinedType[] = useMemo(
     () =>
-      [...operationActiveData, ...rolloutActiveData].sort(
+      [...operationCompletedData, ...rolloutCompletedData].sort(
         (a, b) => Number(a.createdAt) - Number(b.createdAt)
       ) as OperationCombinedType[],
-    [operationActiveData, rolloutActiveData]
+    [operationCompletedData, rolloutCompletedData]
   );
 
   return (
@@ -35,7 +38,7 @@ const ActiveContent = ({
       {sortedData?.map((item, index) => (
         <Operation
           key={index}
-          isCompleted={false}
+          isCompleted={true}
           operation={item}
           onActions={() => {}}
         />
@@ -44,4 +47,4 @@ const ActiveContent = ({
   );
 };
 
-export default ActiveContent;
+export default CompletedContent;

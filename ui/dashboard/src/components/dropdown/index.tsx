@@ -182,7 +182,12 @@ const DropdownMenuItem = forwardRef<
       {isMultiselect && <Checkbox checked={isSelected} />}
       {icon && (
         <div className="flex-center size-5">
-          <Icon icon={icon} size={'xs'} color="gray-600" className='flex-center' />
+          <Icon
+            icon={icon}
+            size={'xs'}
+            color="gray-600"
+            className="flex-center"
+          />
         </div>
       )}
 

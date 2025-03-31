@@ -156,7 +156,13 @@
     "delete-operation": "Delete Operation",
     "edit-kill-switch": "Edit Kill Switch",
     "stop-kill-switch": "Stop Kill Switch",
-    "delete-kill-switch": "Delete Kill Switch"
+    "delete-kill-switch": "Delete Kill Switch",
+    "kill-switch-operation": "Kill Switch Operation",
+    "enable-operation": "Enable Operation",
+    "schedule-operation": "Schedule Operation",
+    "progress-information": "Progress Information",
+    "stopped-at": "Stopped {stoppedAt} by",
+    "user": "User"
   },
   "origin-env": "Origin Environment",
   "destination-env": "Destination Environment",

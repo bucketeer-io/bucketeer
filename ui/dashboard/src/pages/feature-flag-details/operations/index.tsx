@@ -43,7 +43,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
       >
         <TabsList>
           <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
-          <TabsTrigger value="COMPLETE">{t(`completed`)}</TabsTrigger>
+          <TabsTrigger value="COMPLETED">{t(`completed`)}</TabsTrigger>
         </TabsList>
 
         <TabsContent value={currentTab}>

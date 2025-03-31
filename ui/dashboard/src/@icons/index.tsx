@@ -24,6 +24,7 @@ import IconSortingUp from './customized-icons/sorting-up.svg?react';
 import IconSorting from './customized-icons/sorting.svg?react';
 import IconStartExperiment from './customized-icons/start-experiment.svg?react';
 import IconStopExperiment from './customized-icons/stop-experiment.svg?react';
+import IconStoppedByUser from './customized-icons/stopped-by-user.svg?react';
 import IconFlagString from './customized-icons/string.svg?react';
 import IconFlagSwitch from './customized-icons/switch.svg?react';
 import IconToastError from './customized-icons/toast-error.svg?react';
@@ -125,6 +126,7 @@ export {
   IconPlus,
   IconOperationClone,
   IconOperationDetails,
+  IconStoppedByUser,
   // Special icons
   IconGoal,
   IconGoogle,

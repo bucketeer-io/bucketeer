@@ -1,3 +1,5 @@
+import { AutoOpsRule, Rollout } from '@types';
+
 export interface ActionTypeMap {
   UNKNOWN: 'UNKNOWN';
   ENABLE: 'ENABLE';
@@ -27,3 +29,5 @@ export enum OperationTab {
   ACTIVE = 'ACTIVE',
   COMPLETED = 'COMPLETED'
 }
+
+export type OperationCombinedType = Rollout & AutoOpsRule;

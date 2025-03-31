@@ -63,7 +63,7 @@ const Overview = ({
   ) => void;
 }) => {
   const { t } = useTranslation(['form', 'table']);
-
+  console.log({ summary });
   return (
     <div className="flex flex-col w-full gap-6">
       <p className="typo-head-bold-big text-gray-800">
