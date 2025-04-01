@@ -11,9 +11,23 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   subscribers.json: |-
+    {{- range $name, $config := .Values.subscribers }}
+    {{- $_ := set $config "pubSubType" $.Values.global.pubsub.type }}
+    {{- $_ := set $config "redisAddr" $.Values.global.pubsub.redis.addr }}
+    {{- $_ := set $config "redisPoolSize" $.Values.global.pubsub.redis.poolSize }}
+    {{- $_ := set $config "redisMinIdle" $.Values.global.pubsub.redis.minIdle }}
+    {{- $_ := set $config "project" $.Values.global.pubsub.project }}
+    {{- end }}
     {{ toJson .Values.subscribers }}
 
   onDemandSubscribers.json: |-
+    {{- range $name, $config := .Values.onDemandSubscribers }}
+    {{- $_ := set $config "pubSubType" $.Values.global.pubsub.type }}
+    {{- $_ := set $config "redisAddr" $.Values.global.pubsub.redis.addr }}
+    {{- $_ := set $config "redisPoolSize" $.Values.global.pubsub.redis.poolSize }}
+    {{- $_ := set $config "redisMinIdle" $.Values.global.pubsub.redis.minIdle }}
+    {{- $_ := set $config "project" $.Values.global.pubsub.project }}
+    {{- end }}
     {{ toJson .Values.onDemandSubscribers }}
 
   processors.json: |-

@@ -55,9 +55,9 @@ spec:
             - name: BUCKETEER_API_GCP_TRACE_ENABLED
               value: "{{.Values.env.gcpEnabled}}"
             - name: BUCKETEER_API_PROJECT
-              value: "{{ .Values.env.project }}"
+              value: "{{ .Values.global.pubsub.project }}"
             - name: PUBSUB_EMULATOR_HOST
-              value: "{{.Values.env.pubsubEmulatorHost}}"
+              value: "{{ .Values.global.pubsub.emulatorHost }}"
             - name: BUCKETEER_API_GOAL_TOPIC
               value: "{{ .Values.env.goalTopic }}"
             - name: BUCKETEER_API_EVALUATION_TOPIC
@@ -99,13 +99,13 @@ spec:
             - name: BUCKETEER_API_TRACE_SAMPLING_PROBABILITY
               value: "{{ .Values.env.traceSamplingProbability }}"
             - name: BUCKETEER_API_PUBSUB_TYPE
-              value: "{{ .Values.env.pubSubType }}"
+              value: "{{ .Values.global.pubsub.type }}"
             - name: BUCKETEER_API_PUBSUB_REDIS_ADDR
-              value: "{{ .Values.env.pubSubRedisAddr }}"
+              value: "{{ .Values.global.pubsub.redis.addr }}"
             - name: BUCKETEER_API_PUBSUB_REDIS_POOL_SIZE
-              value: "{{ .Values.env.pubSubRedisPoolSize }}"
+              value: "{{ .Values.global.pubsub.redis.poolSize }}"
             - name: BUCKETEER_API_PUBSUB_REDIS_MIN_IDLE
-              value: "{{ .Values.env.pubSubRedisMinIdle }}"
+              value: "{{ .Values.global.pubsub.redis.minIdle }}"
             - name: BUCKETEER_API_SERVICE_TOKEN
               value: /usr/local/service-token/token
             - name: BUCKETEER_API_CERT

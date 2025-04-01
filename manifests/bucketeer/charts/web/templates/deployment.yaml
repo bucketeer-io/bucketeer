@@ -102,16 +102,12 @@ spec:
               value: "{{ .Values.env.cloudService }}"
             - name: BIGQUERY_QUERIER_EMULATOR_HOST
               value: "{{.Values.env.bigqueryQuerierEmulatorHost}}"
-            - name: PUBSUB_EMULATOR_HOST
-              value: "{{.Values.env.pubsubEmulatorHost}}"
             - name: BUCKETEER_WEB_PROFILE
               value: "{{.Values.env.profile}}"
             - name: BUCKETEER_TEST_ENABLED
               value: "{{.Values.env.bucketeerTestEnabled}}"
             - name: BUCKETEER_WEB_GCP_TRACE_ENABLED
               value: "{{.Values.env.gcpEnabled}}"
-            - name: BUCKETEER_WEB_PROJECT
-              value: "{{ .Values.env.project }}"
             - name: BUCKETEER_WEB_MYSQL_USER
               value: "{{ .Values.env.mysqlUser }}"
             - name: BUCKETEER_WEB_MYSQL_PASS
@@ -199,13 +195,17 @@ spec:
             - name: BUCKETEER_WEB_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
             - name: BUCKETEER_WEB_PUBSUB_TYPE
-              value: "{{ .Values.env.pubSubType }}"
+              value: "{{ .Values.global.pubsub.type }}"
             - name: BUCKETEER_WEB_PUBSUB_REDIS_ADDR
-              value: "{{ .Values.env.pubSubRedisAddr }}"
+              value: "{{ .Values.global.pubsub.redis.addr }}"
             - name: BUCKETEER_WEB_PUBSUB_REDIS_POOL_SIZE
-              value: "{{ .Values.env.pubSubRedisPoolSize }}"
+              value: "{{ .Values.global.pubsub.redis.poolSize }}"
             - name: BUCKETEER_WEB_PUBSUB_REDIS_MIN_IDLE
-              value: "{{ .Values.env.pubSubRedisMinIdle }}"
+              value: "{{ .Values.global.pubsub.redis.minIdle }}"
+            - name: BUCKETEER_WEB_PROJECT
+              value: "{{ .Values.global.pubsub.project }}"
+            - name: PUBSUB_EMULATOR_HOST
+              value: "{{ .Values.global.pubsub.emulatorHost }}"
             - name: BUCKETEER_WEB_OAUTH_PUBLIC_KEY
               value: /usr/local/oauth-key/public.pem
             - name: BUCKETEER_WEB_OAUTH_PRIVATE_KEY
