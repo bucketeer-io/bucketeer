@@ -8,11 +8,11 @@ import React, {
 import { useNavigate } from 'react-router-dom';
 import { accountOrganizationFetcher, MeFetcherParams } from '@api/account';
 import { accountMeFetcher } from '@api/account';
-import { AxiosError } from 'axios';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
 import { Undefinable } from 'option-t/undefinable';
 import {
+  clearCurrentEnvIdStorage,
   getCurrentEnvIdStorage,
   setCurrentEnvIdStorage
 } from 'storage/environment';
@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const authToken: AuthToken | null = getTokenStorage();
   const organizationId = getOrgIdStorage();
   const environmentId = getCurrentEnvIdStorage();
-  const { notify } = useToast();
+  const { errorNotify } = useToast();
 
   const [isInitialLoading, setIsInitialLoading] = useState(
     !!authToken?.accessToken
@@ -66,22 +66,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [myOrganizations, setMyOrganizations] = useState<Organization[]>([]);
   const [isGoogleAuthError, setIsGoogleAuthError] = useState(false);
 
+  const clearOrgAndEnvStorage = () => {
+    clearOrgIdStorage();
+    clearCurrentEnvIdStorage();
+  };
+
   const onMeFetcher = async (params: MeFetcherParams) => {
     try {
       const response = await accountMeFetcher(params);
       const environmentRoles = response.account.environmentRoles;
-      if (environmentRoles.length > 0) {
-        setConsoleAccount(response.account);
-        setIsLogin(true);
-        if (!environmentId) {
-          setCurrentEnvIdStorage(environmentRoles[0].environment.id);
-        }
-      } else logout();
+      if (!environmentRoles.length) {
+        clearOrgAndEnvStorage();
+        errorNotify(null, 'The environments are empty.');
+        return logout();
+      }
+
+      setConsoleAccount(response.account);
+      setIsLogin(true);
+      if (!environmentId) {
+        setCurrentEnvIdStorage(environmentRoles[0].environment.id);
+      }
     } catch (error) {
-      notify({
-        message: (error as AxiosError)?.message || 'Something went wrong.',
-        messageType: 'error'
-      });
+      clearOrgAndEnvStorage();
+      errorNotify(error, 'The organization is not found.');
     } finally {
       setIsInitialLoading(false);
     }
@@ -101,10 +108,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
       setMyOrganizations(organizationsList);
     } catch (error) {
-      notify({
-        message: (error as AxiosError)?.message || 'Something went wrong.',
-        messageType: 'error'
-      });
+      errorNotify(error);
     }
   };
 
@@ -117,7 +121,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     setConsoleAccount(undefined);
     setMyOrganizations([]);
     setIsLogin(false);
-    clearOrgIdStorage();
     clearTokenStorage();
     navigate(PAGE_PATH_ROOT);
   };

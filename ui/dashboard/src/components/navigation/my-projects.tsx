@@ -17,6 +17,7 @@ import {
   getCurrentEnvIdStorage,
   setCurrentEnvIdStorage
 } from 'storage/environment';
+import { clearOrgIdStorage } from 'storage/organization';
 import { Environment, Project } from '@types';
 import { cn } from 'utils/style';
 import { IconChevronRight, IconFolder, IconNoData } from '@icons';
@@ -38,35 +39,40 @@ const MyProjects = () => {
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>();
   const [environments, setEnvironments] = useState<Environment[]>();
 
-  const handleChangeData = useCallback(() => {
-    const { environmentRoles } = consoleAccount!;
+  const handleInitLoadData = useCallback(() => {
     const lastEnvironmentId = getCurrentEnvIdStorage();
-
-    const currentProjects = getUniqueProjects(environmentRoles);
-    const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-    const { id, urlCode } = currentEnvironment || {};
-
-    const currentProject = getCurrentProject(
-      environmentRoles,
-      lastEnvironmentId || id || urlCode
-    );
-
-    if (!currentProject) {
-      clearCurrentEnvIdStorage();
-      errorNotify(null, 'The environment is not found.');
-      return logout();
-    }
-    const currentEnvironments = getEnvironmentsByProjectId(
-      environmentRoles,
-      currentProject.id
-    );
-
-    setCurrentEnvIdStorage(lastEnvironmentId || id || urlCode);
-    setProjects(currentProjects);
-    setSelectedProject(currentProject);
-    setSelectedEnvironment(currentEnvironment);
-    setEnvironments(currentEnvironments);
+    handleChangeData(lastEnvironmentId as string);
   }, [consoleAccount]);
+
+  const handleChangeData = useCallback(
+    (lastEnvironmentId?: string) => {
+      const { environmentRoles } = consoleAccount!;
+      const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+      const { id, urlCode } = currentEnvironment || {};
+
+      const environmentId = lastEnvironmentId || id || urlCode;
+      const currentProjects = getUniqueProjects(environmentRoles);
+      const currentProject = getCurrentProject(environmentRoles, environmentId);
+
+      if (!currentProject) {
+        clearCurrentEnvIdStorage();
+        clearOrgIdStorage();
+        errorNotify(null, 'The environment is not found.');
+        return logout();
+      }
+      const currentEnvironments = getEnvironmentsByProjectId(
+        environmentRoles,
+        currentProject.id
+      );
+
+      setCurrentEnvIdStorage(environmentId);
+      setProjects(currentProjects);
+      setSelectedProject(currentProject);
+      setSelectedEnvironment(currentEnvironment);
+      setEnvironments(currentEnvironments);
+    },
+    [consoleAccount]
+  );
 
   const onOpenChange = useCallback(
     (v: boolean) => {
@@ -126,7 +132,7 @@ const MyProjects = () => {
   );
 
   useEffect(() => {
-    if (consoleAccount) handleChangeData();
+    if (consoleAccount) handleInitLoadData();
   }, [consoleAccount]);
 
   return (
