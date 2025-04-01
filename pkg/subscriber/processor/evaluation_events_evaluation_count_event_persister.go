@@ -37,6 +37,11 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
+var (
+	// goredis doesn't export a dedicated sentinel for client close error
+	errRedisClientClosed = errors.New("redis: client is closed")
+)
+
 const (
 	eventCountKey      = "ec"
 	userCountKey       = "uc"
@@ -247,7 +252,7 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 		ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
 		userID := getUserID(e.UserId, e.User)
 		if err := p.countUser(ucKey, userID); err != nil {
-			if err != nil {
+			if !errors.Is(err, errRedisClientClosed) {
 				p.logger.Error("Failed to increment the evaluation user event in the Redis",
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
@@ -261,14 +266,16 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 		}
 		ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
 		if err := p.countEvent(ecKey); err != nil {
-			p.logger.Error("Failed to increment the evaluation event in the Redis",
-				zap.Error(err),
-				zap.String("environmentId", environmentId),
-				zap.String("eventId", eventID),
-				zap.String("userId", userID),
-				zap.String("eventCountKey", ecKey),
-				zap.Any("evaluationEvent", e),
-			)
+			if !errors.Is(err, errRedisClientClosed) {
+				p.logger.Error("Failed to increment the evaluation event in the Redis",
+					zap.Error(err),
+					zap.String("environmentId", environmentId),
+					zap.String("eventId", eventID),
+					zap.String("userId", userID),
+					zap.String("eventCountKey", ecKey),
+					zap.Any("evaluationEvent", e),
+				)
+			}
 			return err
 		}
 		evaluationEventCounter.WithLabelValues(
