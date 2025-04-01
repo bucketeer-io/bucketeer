@@ -1041,16 +1041,15 @@ func (s *PushService) listAllPushes(
 	environmentId string,
 	localizer locale.Localizer,
 ) ([]*pushproto.Push, error) {
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("push.deleted", "=", false),
-		mysql.NewFilter("push.environment_id", "=", environmentId),
-	}
+	var disabled = false
 	pushes, _, _, err := s.listPushes(
 		ctx,
 		mysql.QueryNoLimit,
 		"",
+		"",
 		environmentId,
-		whereParts,
+		"",
+		&disabled,
 		nil,
 		localizer,
 	)
@@ -1071,22 +1070,11 @@ func (s *PushService) ListPushes(
 	if err != nil {
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("push.deleted", "=", false),
-	}
-	if req.OrganizationId != "" {
-		// New console
-		whereParts = append(whereParts, mysql.NewFilter("env.organization_id", "=", req.OrganizationId))
-	} else {
-		// Current console
-		whereParts = append(whereParts, mysql.NewFilter("push.environment_id", "=", req.EnvironmentId))
-	}
-	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"push.name"}, req.SearchKeyword))
-	}
+	var disabled *bool
 	if req.Disabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("push.disabled", "=", req.Disabled.Value))
+		disabled = &req.Disabled.Value
 	}
+
 	orders, err := s.newListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
@@ -1099,8 +1087,11 @@ func (s *PushService) ListPushes(
 		ctx,
 		req.PageSize,
 		req.Cursor,
+		req.OrganizationId,
 		req.EnvironmentId,
-		whereParts,
+		req.SearchKeyword,
+		disabled,
+		//		whereParts,
 		orders,
 		localizer,
 	)
@@ -1157,11 +1148,43 @@ func (s *PushService) listPushes(
 	ctx context.Context,
 	pageSize int64,
 	cursor string,
+	organizationId string,
 	environmentId string,
-	whereParts []mysql.WherePart,
+	searchKeyword string,
+	disabled *bool,
 	orders []*mysql.Order,
 	localizer locale.Localizer,
 ) ([]*pushproto.Push, string, int64, error) {
+	var filters []*mysql.FilterV2
+	if organizationId != "" {
+		// New console
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "env.organization_id",
+			Operator: mysql.OperatorEqual,
+			Value:    organizationId,
+		})
+	} else {
+		// Current console
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "push.environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    environmentId,
+		})
+	}
+	if disabled != nil {
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "push.disabled",
+			Operator: mysql.OperatorEqual,
+			Value:    *disabled,
+		})
+	}
+	var searchQuery *mysql.SearchQuery
+	if searchKeyword != "" {
+		searchQuery = &mysql.SearchQuery{
+			Columns: []string{"push.name"},
+			Keyword: searchKeyword,
+		}
+	}
 	limit := int(pageSize)
 	if cursor == "" {
 		cursor = "0"
@@ -1177,12 +1200,20 @@ func (s *PushService) listPushes(
 		}
 		return nil, "", 0, dt.Err()
 	}
+
+	options := &mysql.ListOptions{
+		Limit:       limit,
+		Offset:      offset,
+		Filters:     filters,
+		SearchQuery: searchQuery,
+		InFilter:    nil,
+		Orders:      orders,
+		JSONFilters: nil,
+		NullFilters: nil,
+	}
 	pushes, nextCursor, totalCount, err := s.pushStorage.ListPushes(
 		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
+		options,
 	)
 	if err != nil {
 		s.logger.Error(

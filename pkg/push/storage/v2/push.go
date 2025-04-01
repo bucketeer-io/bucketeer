@@ -19,7 +19,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/push/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -49,9 +48,7 @@ type PushStorage interface {
 	GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error)
 	ListPushes(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		option *mysql.ListOptions,
 	) ([]*proto.Push, int, int64, error)
 }
 
@@ -143,20 +140,15 @@ func (s *pushStorage) GetPush(ctx context.Context, id, environmentId string) (*d
 
 func (s *pushStorage) ListPushes(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.Push, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(listPushesSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(listPushesSQL, options)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
-	pushes := make([]*proto.Push, 0, limit)
+	pushes := make([]*proto.Push, 0)
 	for rows.Next() {
 		push := proto.Push{}
 		err := rows.Scan(
@@ -179,10 +171,14 @@ func (s *pushStorage) ListPushes(
 	if rows.Err() != nil {
 		return nil, 0, 0, err
 	}
+	var offset int
+	if options != nil {
+		offset = options.Offset
+	}
 	nextOffset := offset + len(pushes)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countPushesSQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countPushesSQL, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
