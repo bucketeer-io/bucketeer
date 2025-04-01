@@ -56,13 +56,21 @@ spec:
             - name: BIGQUERY_QUERIER_EMULATOR_HOST
               value: "{{.Values.env.bigqueryQuerierEmulatorHost}}"
             - name: BUCKETEER_SUBSCRIBER_PROJECT
-              value: "{{ .Values.env.project }}"
+              value: "{{ .Values.global.pubsub.project }}"
             - name: BUCKETEER_SUBSCRIBER_PROFILE
               value: "{{.Values.env.profile}}"
             - name: BUCKETEER_SUBSCRIBER_GCP_TRACE_ENABLED
               value: "{{.Values.env.gcpEnabled}}"
             - name: PUBSUB_EMULATOR_HOST
-              value: "{{.Values.env.pubsubEmulatorHost}}"
+              value: "{{ .Values.global.pubsub.emulatorHost }}"
+            - name: BUCKETEER_SUBSCRIBER_PUBSUB_TYPE
+              value: "{{ .Values.global.pubsub.type }}"
+            - name: BUCKETEER_SUBSCRIBER_PUBSUB_REDIS_ADDR
+              value: "{{ .Values.global.pubsub.redis.addr }}"
+            - name: BUCKETEER_SUBSCRIBER_PUBSUB_REDIS_POOL_SIZE
+              value: "{{ .Values.global.pubsub.redis.poolSize }}"
+            - name: BUCKETEER_SUBSCRIBER_PUBSUB_REDIS_MIN_IDLE
+              value: "{{ .Values.global.pubsub.redis.minIdle }}"
             - name: BUCKETEER_SUBSCRIBER_NOTIFICATION_SERVICE
               value: "{{ .Values.env.notificationService }}"
             - name: BUCKETEER_SUBSCRIBER_ENVIRONMENT_SERVICE
