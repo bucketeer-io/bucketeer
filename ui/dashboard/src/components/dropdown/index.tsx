@@ -3,7 +3,8 @@ import {
   ElementRef,
   forwardRef,
   FunctionComponent,
-  ReactNode
+  ReactNode,
+  Ref
 } from 'react';
 import { IconExpandMoreRound } from 'react-icons-material-design';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
@@ -203,26 +204,27 @@ const DropdownMenuItem = forwardRef<
 
 type DropdownSearchProps = InputProps;
 
-const DropdownMenuSearch = ({
-  value,
-  onChange,
-  ...props
-}: DropdownSearchProps) => {
-  return (
-    <div className="sticky top-0 left-0 right-0 flex items-center w-full px-3 py-[11.5px] gap-x-2 border-b border-gray-200 bg-white z-50">
-      <div className="flex-center size-5">
-        <Icon icon={IconSearch} size={'xs'} color="gray-500" />
+const DropdownMenuSearch = forwardRef(
+  (
+    { value, onChange, ...props }: DropdownSearchProps,
+    ref: Ref<HTMLInputElement>
+  ) => {
+    return (
+      <div className="sticky top-0 left-0 right-0 flex items-center w-full px-3 py-[11.5px] gap-x-2 border-b border-gray-200 bg-white z-50">
+        <div className="flex-center size-5">
+          <Icon icon={IconSearch} size={'xs'} color="gray-500" />
+        </div>
+        <Input
+          {...props}
+          ref={ref}
+          value={value}
+          onChange={onChange}
+          className="p-0 border-none rounded-none"
+        />
       </div>
-      <Input
-        {...props}
-        value={value}
-        onChange={onChange}
-        className="p-0 border-none"
-        autoFocus={true}
-      />
-    </div>
-  );
-};
+    );
+  }
+);
 
 export {
   DropdownMenu,

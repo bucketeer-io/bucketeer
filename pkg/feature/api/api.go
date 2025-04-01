@@ -61,6 +61,7 @@ type FeatureService struct {
 	featureStorage        v2fs.FeatureStorage
 	segmentStorage        v2fs.SegmentStorage
 	segmentUserStorage    v2fs.SegmentUserStorage
+	tagStorage            v2fs.TagStorage
 	mysqlClient           mysql.Client
 	accountClient         accountclient.Client
 	experimentClient      experimentclient.Client
@@ -102,6 +103,7 @@ func NewFeatureService(
 		featureStorage:        v2fs.NewFeatureStorage(mysqlClient),
 		segmentStorage:        v2fs.NewSegmentStorage(mysqlClient),
 		segmentUserStorage:    v2fs.NewSegmentUserStorage(mysqlClient),
+		tagStorage:            v2fs.NewTagStorage(mysqlClient),
 		mysqlClient:           mysqlClient,
 		accountClient:         accountClient,
 		experimentClient:      experimentClient,

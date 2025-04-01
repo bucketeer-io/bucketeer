@@ -10,8 +10,13 @@ import {
   useAuth
 } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
+import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
-import { setCurrentEnvIdStorage } from 'storage/environment';
+import {
+  clearCurrentEnvIdStorage,
+  getCurrentEnvIdStorage,
+  setCurrentEnvIdStorage
+} from 'storage/environment';
 import { Environment, Project } from '@types';
 import { cn } from 'utils/style';
 import { IconChevronRight, IconFolder, IconNoData } from '@icons';
@@ -24,8 +29,8 @@ import SearchInput from 'components/search-input';
 const MyProjects = () => {
   const { t } = useTranslation(['common']);
   const navigate = useNavigate();
-  const { consoleAccount } = useAuth();
-
+  const { consoleAccount, logout } = useAuth();
+  const { errorNotify } = useToast();
   const [isShowProjectsList, setIsShowProjectsList] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [projects, setProjects] = useState<Project[]>();
@@ -35,17 +40,28 @@ const MyProjects = () => {
 
   const handleChangeData = useCallback(() => {
     const { environmentRoles } = consoleAccount!;
+    const lastEnvironmentId = getCurrentEnvIdStorage();
+
     const currentProjects = getUniqueProjects(environmentRoles);
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
     const { id, urlCode } = currentEnvironment || {};
-    const currentProject = getCurrentProject(environmentRoles, id || urlCode);
 
+    const currentProject = getCurrentProject(
+      environmentRoles,
+      lastEnvironmentId || id || urlCode
+    );
+
+    if (!currentProject) {
+      clearCurrentEnvIdStorage();
+      errorNotify(null, 'The environment is not found.');
+      return logout();
+    }
     const currentEnvironments = getEnvironmentsByProjectId(
       environmentRoles,
       currentProject.id
     );
 
-    setCurrentEnvIdStorage(id || urlCode);
+    setCurrentEnvIdStorage(lastEnvironmentId || id || urlCode);
     setProjects(currentProjects);
     setSelectedProject(currentProject);
     setSelectedEnvironment(currentEnvironment);
