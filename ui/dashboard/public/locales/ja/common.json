@@ -208,5 +208,7 @@
   "time-updated": "Updated {{time}}",
   "default": "Default",
   "sort-by": "Sort by: {{sortBy}}",
-  "no-options-found": "No options found"
+  "no-options-found": "No options found",
+  "create-goal": "Create Goal",
+  "create-a-new-goal": "Create a new Goal"
 }

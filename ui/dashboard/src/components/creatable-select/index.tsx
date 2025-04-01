@@ -1,14 +1,21 @@
-import { FC, memo } from 'react';
-import { StylesConfig, ActionMeta, MultiValue } from 'react-select';
-import ReactCreatableSelect from 'react-select/creatable';
+import { FC, memo, ReactNode } from 'react';
+import { StylesConfig, ActionMeta, MultiValue, GroupBase } from 'react-select';
+import ReactCreatableSelect, { CreatableProps } from 'react-select/creatable';
 import Spinner from 'components/spinner';
 
 export interface Option {
   value: string;
   label: string;
+  [key: string]: string | number | boolean;
 }
 
-export interface CreatableSelectProps {
+export interface NoOptionsMessageProps {
+  inputValue: string;
+  [key: string]: string | number | boolean;
+}
+
+export interface CreatableSelectProps
+  extends CreatableProps<Option, true, GroupBase<Option>> {
   loading?: boolean;
   options?: Option[];
   disabled?: boolean;
@@ -23,6 +30,8 @@ export interface CreatableSelectProps {
   value?: MultiValue<Option>;
   placeholder?: string;
   onCreateOption?: (v: string) => void;
+  formatCreateLabel?: (v: string) => JSX.Element;
+  noOptionsMessage?: (props: NoOptionsMessageProps) => ReactNode;
 }
 
 const textColor = '#475569';
@@ -103,10 +112,14 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
     closeMenuOnSelect,
     value,
     placeholder = '',
-    onCreateOption
+    onCreateOption,
+    formatCreateLabel,
+    noOptionsMessage,
+    ...props
   }) => {
     return (
       <ReactCreatableSelect
+        {...props}
         isMulti
         options={options}
         placeholder={placeholder}
@@ -127,6 +140,8 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
           onChange(newValue as MultiValue<Option>, actionMeta)
         }
         closeMenuOnSelect={closeMenuOnSelect}
+        formatCreateLabel={formatCreateLabel}
+        noOptionsMessage={noOptionsMessage}
       />
     );
   }

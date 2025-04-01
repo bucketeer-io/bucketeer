@@ -12,10 +12,10 @@ import { useQueryFeatures } from '@queries/features';
 import { useQueryGoals } from '@queries/goals';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { useToast } from 'hooks';
+import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { cn } from 'utils/style';
-import { IconInfo } from '@icons';
+import { IconInfo, IconPlus } from '@icons';
 import { experimentFormSchema } from 'pages/experiments/form-schema';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -33,6 +33,7 @@ import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import CreateGoalModal from 'elements/create-goal-modal';
 
 interface AddExperimentModalProps {
   isOpen: boolean;
@@ -92,6 +93,12 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
+
+  const [
+    isOpenCreateGoalModal,
+    onOpenCreateGoalModal,
+    onHiddenCreateGoalModal
+  ] = useToggleOpen(false);
 
   const { data: goalCollection, isLoading: isLoadingGoals } = useQueryGoals({
     params: {
@@ -536,10 +543,42 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                         label: goal.label,
                         value: goal.value
                       }))}
+                      // const formatOptionLabel = ({ label, enabled }) => {
+                      //   return (
+                      //     <div className="flex justify-between space-x-4 pr-2">
+                      //       <span className="flex-1 truncate">{label}</span>
+                      //       <span
+                      //         className={`border rounded-lg text-sm w-11 flex justify-center ${
+                      //           enabled
+                      //             ? 'bg-primary border-primary text-white'
+                      //             : 'bg-gray-100 border-gray-300'
+                      //         }`}
+                      //       >
+                      //         {enabled ? 'On' : 'Off'}
+                      //       </span>
+                      //     </div>
+                      //   );
+                      // };
                       onChange={value =>
                         field.onChange(value.map(goal => goal.value))
                       }
-                      onCreateOption={() => {}}
+                      onCreateOption={onOpenCreateGoalModal}
+                      formatCreateLabel={() => (
+                        <Button
+                          variant="text"
+                          className="h-6 self-center w-full"
+                        >
+                          <Icon
+                            icon={IconPlus}
+                            color="primary-500"
+                            size={'xs'}
+                          />
+                          {t('common:create-a-new-goal')}
+                        </Button>
+                      )}
+                      noOptionsMessage={() => (
+                        <p>{t('common:no-options-found')}</p>
+                      )}
                     />
                   </Form.Control>
                   <Form.Message />
@@ -584,6 +623,12 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
           </Form>
         </FormProvider>
       </div>
+      {isOpenCreateGoalModal && (
+        <CreateGoalModal
+          isOpen={isOpenCreateGoalModal}
+          onClose={onHiddenCreateGoalModal}
+        />
+      )}
     </SlideModal>
   );
 };
