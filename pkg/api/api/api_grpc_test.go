@@ -3801,7 +3801,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 					&accountproto.EnvironmentAPIKey{
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
-							Id:       "id-0",
+							Id:       "api-key-id-0",
 							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
@@ -3817,7 +3817,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 					&accountproto.EnvironmentAPIKey{
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
-							Id:       "id-0",
+							Id:       "api-key-id-0",
 							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
@@ -3839,7 +3839,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 					&accountproto.EnvironmentAPIKey{
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
-							Id:       "id-0",
+							Id:       "api-key-id-0",
 							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
@@ -3877,7 +3877,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 					&accountproto.EnvironmentAPIKey{
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
-							Id:       "id-0",
+							Id:       "api-key-id-0",
 							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
