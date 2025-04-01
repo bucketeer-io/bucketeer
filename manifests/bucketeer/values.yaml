@@ -2,6 +2,21 @@ global:
   image:
     tag: v1.3.0 # x-release-please-version
     imagePullSecrets:
+  pubsub:
+    # Type of pubsub to use: redis-stream or google
+    type: ""
+    # Redis configuration (used when type is redis-stream)
+    redis:
+      # Redis server address
+      addr: ""
+      # Connection pool size
+      poolSize: 25
+      # Minimum number of idle connections
+      minIdle: 25
+    # PubSub emulator host (for local development)
+    emulatorHost: ""
+    # Google Cloud project ID
+    project: ""
 
 migration:
   image:
