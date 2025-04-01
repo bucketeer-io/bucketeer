@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -1223,6 +1224,8 @@ func (s *grpcGatewayService) RegisterEvents(
 		s.logger.Error("Failed to validate RegisterEvents request. Missing events.",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
+				zap.String("environmentId", envAPIKey.Environment.Id),
+				zap.String("apiKey", fmt.Sprintf("%s*****", envAPIKey.ApiKey.Id[:10])),
 				zap.Any("sourceId", req.SourceId),
 				zap.String("sdkVersion", req.SdkVersion),
 			)...,
