@@ -36,12 +36,6 @@ web:
     profile: false
     bucketeerTestEnabled: true
     bigqueryEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
-    project: ${global.pubsub.project}
-    pubSubType: ${global.pubsub.type}
-    pubSubRedisAddr: ${global.pubsub.redis.addr}
-    pubSubRedisPoolSize: ${global.pubsub.redis.poolSize}
-    pubSubRedisMinIdle: ${global.pubsub.redis.minIdle}
-    pubsubEmulatorHost: ${global.pubsub.emulatorHost}
     mysqlUser: bucketeer
     mysqlPass: bucketeer
     mysqlHost: localenv-mysql-headless.default.svc.cluster.local
@@ -107,18 +101,12 @@ api:
   env:
     gcpEnabled: false
     profile: false
-    pubsubEmulatorHost: ${global.pubsub.emulatorHost}
-    project: ${global.pubsub.project}
     goalTopic: goal
     evaluationTopic: evaluation
     userTopic: user
     metricsTopic: metrics
     publishNumGoroutines: 200
     publishTimeout: 1m
-    pubSubType: ${global.pubsub.type}
-    pubSubRedisAddr: ${global.pubsub.redis.addr}
-    pubSubRedisPoolSize: ${global.pubsub.redis.poolSize}
-    pubSubRedisMinIdle: ${global.pubsub.redis.minIdle}
     redis:
       serverName: api-gateway
       poolMaxIdle: 25
@@ -302,11 +290,6 @@ subscriber:
     # This is the processor's name. It must match the same name defined in the
     # pkg/subscriber/processor/processors.go
     auditLogPersister:
-      pubSubType: ${global.pubsub.type}
-      redisAddr: ${global.pubsub.redis.addr}
-      redisPoolSize: ${global.pubsub.redis.poolSize}
-      redisMinIdle: ${global.pubsub.redis.minIdle}
-      project: ${global.pubsub.project}
       topic: domain
       subscription: auditlog-persister
       pullerNumGoroutines: 5
@@ -315,11 +298,6 @@ subscriber:
       maxMps: 50
       workerNum: 1
     domainEventInformer:
-      pubSubType: ${global.pubsub.type}
-      redisAddr: ${global.pubsub.redis.addr}
-      redisPoolSize: ${global.pubsub.redis.poolSize}
-      redisMinIdle: ${global.pubsub.redis.minIdle}
-      project: ${global.pubsub.project}
       topic: domain
       subscription: domain-subscription
       pullerNumGoroutines: 5
@@ -328,11 +306,6 @@ subscriber:
       maxMps: 50
       workerNum: 1
     evaluationCountEventPersister:
-      pubSubType: ${global.pubsub.type}
-      redisAddr: ${global.pubsub.redis.addr}
-      redisPoolSize: ${global.pubsub.redis.poolSize}
-      redisMinIdle: ${global.pubsub.redis.minIdle}
-      project: ${global.pubsub.project}
       topic: evaluation
       subscription: evaluation-count-sub
       pullerNumGoroutines: 5
@@ -341,11 +314,6 @@ subscriber:
       maxMps: 50
       workerNum: 1
     metricsEventPersister:
-      pubSubType: ${global.pubsub.type}
-      redisAddr: ${global.pubsub.redis.addr}
-      redisPoolSize: ${global.pubsub.redis.poolSize}
-      redisMinIdle: ${global.pubsub.redis.minIdle}
-      project: ${global.pubsub.project}
       topic: metrics
       subscription: metrics-sub
       pullerNumGoroutines: 5
@@ -354,11 +322,6 @@ subscriber:
       maxMps: 50
       workerNum: 1
     pushSender:
-      pubSubType: ${global.pubsub.type}
-      redisAddr: ${global.pubsub.redis.addr}
-      redisPoolSize: ${global.pubsub.redis.poolSize}
-      redisMinIdle: ${global.pubsub.redis.minIdle}
-      project: ${global.pubsub.project}
       topic: domain
       subscription: push-sender-domain-sub
       pullerNumGoroutines: 5
@@ -367,11 +330,6 @@ subscriber:
       maxMps: 50
       workerNum: 1
     segmentUserPersister:
-      pubSubType: ${global.pubsub.type}
-      redisAddr: ${global.pubsub.redis.addr}
-      redisPoolSize: ${global.pubsub.redis.poolSize}
-      redisMinIdle: ${global.pubsub.redis.minIdle}
-      project: ${global.pubsub.project}
       topic: bulk-segment-users-received
       subscription: bulk-segment-users-received-subscription
       pullerNumGoroutines: 5
@@ -380,11 +338,6 @@ subscriber:
       maxMps: 50
       workerNum: 1
     userEventPersister:
-      pubSubType: ${global.pubsub.type}
-      redisAddr: ${global.pubsub.redis.addr}
-      redisPoolSize: ${global.pubsub.redis.poolSize}
-      redisMinIdle: ${global.pubsub.redis.minIdle}
-      project: ${global.pubsub.project}
       topic: user
       subscription: user-sub
       pullerNumGoroutines: 5
@@ -395,11 +348,6 @@ subscriber:
 
   onDemandSubscribers:
     evaluationCountEventDWHPersister:
-      pubSubType: ${global.pubsub.type}
-      redisAddr: ${global.pubsub.redis.addr}
-      redisPoolSize: ${global.pubsub.redis.poolSize}
-      redisMinIdle: ${global.pubsub.redis.minIdle}
-      project: ${global.pubsub.project}
       topic: evaluation
       subscription: evaluation-dwh-sub
       pullerNumGoroutines: 1
@@ -409,11 +357,6 @@ subscriber:
       workerNum: 1
       checkInterval: 5
     evaluationCountEventOPSPersister:
-      pubSubType: ${global.pubsub.type}
-      redisAddr: ${global.pubsub.redis.addr}
-      redisPoolSize: ${global.pubsub.redis.poolSize}
-      redisMinIdle: ${global.pubsub.redis.minIdle}
-      project: ${global.pubsub.project}
       topic: evaluation
       subscription: evaluation-ops-sub
       pullerNumGoroutines: 1
@@ -423,11 +366,6 @@ subscriber:
       workerNum: 1
       checkInterval: 5
     goalCountEventDWHPersister:
-      pubSubType: ${global.pubsub.type}
-      redisAddr: ${global.pubsub.redis.addr}
-      redisPoolSize: ${global.pubsub.redis.poolSize}
-      redisMinIdle: ${global.pubsub.redis.minIdle}
-      project: ${global.pubsub.project}
       topic: goal
       subscription: goal-dwh-sub
       pullerNumGoroutines: 1
@@ -437,11 +375,6 @@ subscriber:
       workerNum: 1
       checkInterval: 5
     goalCountEventOPSPersister:
-      pubSubType: ${global.pubsub.type}
-      redisAddr: ${global.pubsub.redis.addr}
-      redisPoolSize: ${global.pubsub.redis.poolSize}
-      redisMinIdle: ${global.pubsub.redis.minIdle}
-      project: ${global.pubsub.project}
       topic: goal
       subscription: goal-ops-sub
       pullerNumGoroutines: 1
