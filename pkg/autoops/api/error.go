@@ -87,13 +87,9 @@ var (
 		codes.NotFound,
 		"autoops: ops event rate clause goal does not exist",
 	)
-	statusAlreadyExists               = gstatus.New(codes.AlreadyExists, "autoops: already exists")
-	statusUnauthenticated             = gstatus.New(codes.Unauthenticated, "autoops: unauthenticated")
-	statusPermissionDenied            = gstatus.New(codes.PermissionDenied, "autoops: permission denied")
-	statusProgressiveRolloutNoCommand = gstatus.New(
-		codes.InvalidArgument,
-		"autoops: no command for a progressive rollout",
-	)
+	statusAlreadyExists                       = gstatus.New(codes.AlreadyExists, "autoops: already exists")
+	statusUnauthenticated                     = gstatus.New(codes.Unauthenticated, "autoops: unauthenticated")
+	statusPermissionDenied                    = gstatus.New(codes.PermissionDenied, "autoops: permission denied")
 	statusProgressiveRolloutFeatureIDRequired = gstatus.New(
 		codes.InvalidArgument,
 		"autoops: feature id must be specified for a progressive rollout",
