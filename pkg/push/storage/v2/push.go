@@ -147,8 +147,15 @@ func (s *pushStorage) ListPushes(
 	if err != nil {
 		return nil, 0, 0, err
 	}
+	var offset int
+	var limit int
+	if options != nil {
+		offset = options.Offset
+		limit = options.Limit
+	}
+
 	defer rows.Close()
-	pushes := make([]*proto.Push, 0)
+	pushes := make([]*proto.Push, 0, limit)
 	for rows.Next() {
 		push := proto.Push{}
 		err := rows.Scan(
@@ -170,10 +177,6 @@ func (s *pushStorage) ListPushes(
 	}
 	if rows.Err() != nil {
 		return nil, 0, 0, err
-	}
-	var offset int
-	if options != nil {
-		offset = options.Offset
 	}
 	nextOffset := offset + len(pushes)
 	var totalCount int64
