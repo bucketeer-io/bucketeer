@@ -319,7 +319,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT})
 	if err != nil {
-		if !errors.Is(err, context.Canceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
+		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
 			s.logger.Error("Failed to check GetEvaluations request",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
@@ -512,7 +512,7 @@ func (s *grpcGatewayService) GetEvaluation(
 	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT})
 	if err != nil {
-		if !errors.Is(err, context.Canceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
+		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
 			s.logger.Error("Failed to check GetEvaluation request",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
@@ -625,7 +625,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_SERVER})
 	if err != nil {
-		if !errors.Is(err, context.Canceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
+		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
 			s.logger.Error("Failed to check GetFeatureFlags request",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
@@ -785,7 +785,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_SERVER})
 	if err != nil {
-		if !errors.Is(err, context.Canceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
+		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
 			s.logger.Error("Failed to check GetSegmentUsers request",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
@@ -1204,7 +1204,7 @@ func (s *grpcGatewayService) RegisterEvents(
 	allowedRoles := []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT, accountproto.APIKey_SDK_SERVER}
 	envAPIKey, err := s.checkRequest(ctx, allowedRoles)
 	if err != nil {
-		if !errors.Is(err, context.Canceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
+		if !errors.Is(err, ErrContextCanceled) && !errors.Is(err, ErrInvalidAPIKey) && !errors.Is(err, ErrMissingAPIKey) {
 			s.logger.Error("Failed to check RegisterEvents request",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
