@@ -50,14 +50,12 @@ SELECT DISTINCT
     COALESCE(feature_last_used_info.created_at, 0) AS created_at,
     COALESCE(feature_last_used_info.client_oldest_version, '') AS client_oldest_version,
     COALESCE(feature_last_used_info.client_latest_version, '') AS client_latest_version
-FROM
-    feature
+FROM feature
 LEFT OUTER JOIN feature_last_used_info ON
     feature.id = feature_last_used_info.feature_id AND
     feature.environment_id = feature_last_used_info.environment_id AND
     feature.version = feature_last_used_info.version
-LEFT OUTER JOIN experiment ON
+JOIN experiment ON
     feature.id = experiment.feature_id AND
-    feature.environment_id = experiment.environment_id AND
-    feature.version = experiment.feature_version
+    feature.environment_id = experiment.environment_id
 %s %s %s
