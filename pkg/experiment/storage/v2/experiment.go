@@ -67,11 +67,11 @@ type ExperimentSummary struct {
 }
 
 type experimentStorage struct {
-	client mysql.Client
+	qe mysql.QueryExecer
 }
 
-func NewExperimentStorage(client mysql.Client) ExperimentStorage {
-	return &experimentStorage{client: client}
+func NewExperimentStorage(qe mysql.QueryExecer) ExperimentStorage {
+	return &experimentStorage{qe: qe}
 }
 
 func (s *experimentStorage) CreateExperiment(
@@ -79,7 +79,7 @@ func (s *experimentStorage) CreateExperiment(
 	e *domain.Experiment,
 	environmentId string,
 ) error {
-	_, err := s.client.Qe(ctx).ExecContext(
+	_, err := s.qe.ExecContext(
 		ctx,
 		insertExperimentSQL,
 		e.Id,
@@ -117,7 +117,7 @@ func (s *experimentStorage) UpdateExperiment(
 	e *domain.Experiment,
 	environmentId string,
 ) error {
-	result, err := s.client.Qe(ctx).ExecContext(
+	result, err := s.qe.ExecContext(
 		ctx,
 		updateExperimentSQL,
 		e.GoalId,
@@ -160,7 +160,7 @@ func (s *experimentStorage) GetExperiment(
 ) (*domain.Experiment, error) {
 	experiment := proto.Experiment{}
 	var status int32
-	err := s.client.Qe(ctx).QueryRowContext(
+	err := s.qe.QueryRowContext(
 		ctx,
 		selectExperimentSQL,
 		id,
@@ -207,7 +207,7 @@ func (s *experimentStorage) ListExperiments(
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectExperimentsSQL, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -250,7 +250,7 @@ func (s *experimentStorage) ListExperiments(
 	nextOffset := offset + len(experiments)
 	var totalCount int64
 	countQuery := fmt.Sprintf(countExperimentSQL, whereSQL)
-	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(
+	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(
 		&totalCount,
 	)
 	if err != nil {
@@ -265,7 +265,7 @@ func (s *experimentStorage) GetExperimentSummary(
 	environmentID string,
 ) (*ExperimentSummary, error) {
 	summary := &ExperimentSummary{}
-	err := s.client.Qe(ctx).QueryRowContext(ctx, summarizeExperimentSQL, environmentID).Scan(
+	err := s.qe.QueryRowContext(ctx, summarizeExperimentSQL, environmentID).Scan(
 		&summary.TotalWaitingCount,
 		&summary.TotalRunningCount,
 		&summary.TotalStoppedCount,
