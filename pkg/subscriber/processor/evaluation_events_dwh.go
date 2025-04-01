@@ -196,13 +196,20 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 		// Tag is optional, so we insert none when is empty.
 		tag = "none"
 	}
+	variationID := e.VariationId
+	if variationID == "" {
+		// When the default value is returned to the app in the SDK,
+		// it creates a default evaluation event with an empty variation ID.
+		// Because we don't have the variation ID we insert "default" as the variation_id
+		variationID = "default"
+	}
 	return &epproto.EvaluationEvent{
 		Id:             id,
 		FeatureId:      e.FeatureId,
 		FeatureVersion: e.FeatureVersion,
 		UserData:       string(ud),
 		UserId:         userID,
-		VariationId:    e.VariationId,
+		VariationId:    variationID,
 		Reason:         e.Reason.Type.String(),
 		Tag:            tag,
 		SourceId:       e.SourceId.String(),
