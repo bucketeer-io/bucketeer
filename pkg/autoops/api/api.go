@@ -94,6 +94,7 @@ func NewAutoOpsService(
 	return &AutoOpsService{
 		mysqlClient:      mysqlClient,
 		opsCountStorage:  v2os.NewOpsCountStorage(mysqlClient),
+		featureStorage:   v2fs.NewFeatureStorage(mysqlClient),
 		autoOpsStorage:   v2as.NewAutoOpsRuleStorage(mysqlClient),
 		prStorage:        v2as.NewProgressiveRolloutStorage(mysqlClient),
 		featureClient:    featureClient,
