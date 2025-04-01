@@ -71,7 +71,7 @@ func TestInFilterSQLString(t *testing.T) {
 		{
 			desc: "Success",
 			input: &InFilter{
-				Column: " name",
+				Column: "name",
 				Values: []interface{}{"v1", "v2"},
 			},
 			expectedSQL:  " name IN (?, ?)",
