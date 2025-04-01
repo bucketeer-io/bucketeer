@@ -6,7 +6,10 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { FeatureConfirmDialog } from '../../components/FeatureConfirmDialog';
+import {
+  FeatureConfirmDialog,
+  SaveFeatureType
+} from '../../components/FeatureConfirmDialog';
 import { FeatureTargetingForm } from '../../components/FeatureTargetingForm';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
@@ -15,7 +18,8 @@ import {
   selectById as selectFeatureById,
   updateFeatureTargeting,
   getFeature,
-  createCommand
+  createCommand,
+  updateFeature
 } from '../../modules/features';
 import { useCurrentEnvironment } from '../../modules/me';
 import { listSegments } from '../../modules/segments';
@@ -65,6 +69,13 @@ import {
   RuleSchema,
   TargetingForm
 } from './formSchema';
+import {
+  ChangeType,
+  PrerequisiteChange,
+  RuleChange,
+  TargetChange
+} from '../../proto/feature/service_pb';
+import { Target } from '../../proto/feature/target_pb';
 
 interface FeatureTargetingPageProps {
   featureId: string;
@@ -152,77 +163,326 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
     const handleUpdate = useCallback(
-      async (data) => {
-        const commands: Array<Command> = [];
-        const defaultValues = getDefaultValues(
-          feature,
-          currentEnvironment.requireComment
-        );
+      async (data, saveFeatureType) => {
+        const prepareUpdate = async (actionType, payload) => {
+          dispatch(actionType(payload)).then(() => {
+            setIsConfirmDialogOpen(false);
+            dispatch(
+              getFeature({
+                environmentId: currentEnvironment.id,
+                id: featureId
+              })
+            ).then((response) => {
+              const featurePayload = response.payload as Feature.AsObject;
+              reset(
+                getDefaultValues(
+                  featurePayload,
+                  currentEnvironment.requireComment
+                )
+              );
+            });
+          });
+        };
 
-        dirtyFields.enabled &&
-          commands.push(...createEnabledCommands(defaultValues, data));
-        dirtyFields.targets &&
-          commands.push(
-            ...createTargetCommands(defaultValues.targets, data.targets)
-          );
-        dirtyFields.rules &&
-          commands.push(...createRuleCommands(defaultValues.rules, data.rules));
-        dirtyFields.rules &&
-          commands.push(
-            ...createClauseCommands(defaultValues.rules, data.rules)
-          );
-        dirtyFields.rules &&
-          commands.push(
-            ...createStrategyCommands(defaultValues.rules, data.rules)
-          );
-        dirtyFields.defaultStrategy &&
-          commands.push(
-            ...createDefaultStrategyCommands(
-              defaultValues.defaultStrategy,
-              data.defaultStrategy
-            )
-          );
-        dirtyFields.offVariation &&
-          commands.push(
-            ...createOffVariationCommands(
-              defaultValues.offVariation,
-              data.offVariation
-            )
-          );
-        data.resetSampling && commands.push(createResetSampleSeedCommand());
+        const hasDirtyField = (field) =>
+          field && JSON.stringify(field).includes('true');
 
-        dirtyFields.prerequisites &&
-          commands.push(
-            ...createPrerequisitesCommands(
-              defaultValues.prerequisites,
-              data.prerequisites
-            )
+        if (saveFeatureType === SaveFeatureType.SCHEDULE) {
+          const defaultValues = getDefaultValues(
+            feature,
+            currentEnvironment.requireComment
           );
 
-        dispatch(
-          updateFeatureTargeting({
+          const prerequisitesList = [];
+          if (hasDirtyField(dirtyFields.prerequisites)) {
+            const defaultFeatureIds = new Map(
+              defaultValues.prerequisites.map((o) => [
+                o.featureId,
+                o.variationId
+              ])
+            );
+            const currentFeatureIds = new Map(
+              data.prerequisites.map((v) => [v.featureId, v.variationId])
+            );
+
+            // Handle remove prerequisite
+            defaultValues.prerequisites.forEach(({ featureId }) => {
+              if (!currentFeatureIds.has(featureId)) {
+                prerequisitesList.push(
+                  createPrerequisiteChange(featureId, null, ChangeType.DELETE)
+                );
+              }
+            });
+
+            // Handle add & update prerequisite
+            data.prerequisites.forEach(({ featureId, variationId }) => {
+              if (!defaultFeatureIds.has(featureId)) {
+                prerequisitesList.push(
+                  createPrerequisiteChange(
+                    featureId,
+                    variationId,
+                    ChangeType.CREATE
+                  )
+                );
+              } else if (defaultFeatureIds.get(featureId) !== variationId) {
+                prerequisitesList.push(
+                  createPrerequisiteChange(
+                    featureId,
+                    variationId,
+                    ChangeType.UPDATE
+                  )
+                );
+              }
+            });
+          }
+
+          const targets = [];
+          if (hasDirtyField(dirtyFields.targets)) {
+            defaultValues.targets.forEach((org, idx) => {
+              const val = data.targets[idx];
+
+              // Handle user removal from variation
+              const removedUsers = org.users.filter(
+                (u) => !val.users.includes(u)
+              );
+              if (removedUsers.length > 0) {
+                targets.push(
+                  createTargetChange(
+                    org.variationId,
+                    removedUsers,
+                    ChangeType.DELETE
+                  )
+                );
+              }
+
+              // Handle user addition to variation
+              const addedUsers = val.users.filter(
+                (u) => !org.users.includes(u)
+              );
+              if (addedUsers.length > 0) {
+                targets.push(
+                  createTargetChange(
+                    val.variationId,
+                    addedUsers,
+                    ChangeType.CREATE
+                  )
+                );
+              }
+            });
+          }
+
+          const rules = [];
+          if (hasDirtyField(dirtyFields.rules)) {
+            const orgRules = defaultValues.rules;
+            const valRules = data.rules;
+
+            const orgRuleIds = orgRules.map((r) => r.id);
+            const valRuleIds = valRules.map((r) => r.id);
+
+            const getRuleById = (rules, id) => rules.find((r) => r.id === id);
+
+            const processRuleChange = (type, ruleData) => {
+              const ruleChange = new RuleChange();
+              ruleChange.setChangeType(type);
+              ruleChange.setRule(ruleData);
+              rules.push(ruleChange);
+            };
+
+            const processRemovedRules = () => {
+              orgRules
+                .filter((r) => !valRuleIds.includes(r.id))
+                .forEach((r) => {
+                  console.log('remove rule');
+                  const rule = new Rule();
+                  rule.setId(r.id);
+                  processRuleChange(ChangeType.DELETE, rule);
+                });
+            };
+
+            const processAddedRules = () => {
+              valRules
+                .filter((r) => !orgRuleIds.includes(r.id))
+                .forEach((r) => {
+                  console.log('add rule');
+                  const rule = new Rule();
+                  rule.setId(r.id);
+                  rule.setStrategy(createStrategy(r.strategy));
+                  rule.setClausesList(createClauses(r.clauses));
+                  processRuleChange(ChangeType.CREATE, rule);
+                });
+            };
+
+            const processUpdatedRules = () => {
+              orgRuleIds
+                .filter((id) => valRuleIds.includes(id))
+                .forEach((rid) => {
+                  let ruleUpdated = false;
+                  const orgRule = getRuleById(orgRules, rid);
+                  const valRule = getRuleById(valRules, rid);
+
+                  const orgClauseIds = orgRule.clauses.map((c) => c.id);
+                  const valClauseIds = valRule.clauses.map((c) => c.id);
+                  const commonClauseIds = orgClauseIds.filter((id) =>
+                    valClauseIds.includes(id)
+                  );
+
+                  if (orgClauseIds.some((id) => !valClauseIds.includes(id))) {
+                    console.log('delete clause');
+                    ruleUpdated = true;
+                  }
+                  if (valClauseIds.some((id) => !orgClauseIds.includes(id))) {
+                    console.log('add clause');
+                    ruleUpdated = true;
+                  }
+
+                  commonClauseIds.forEach((cid) => {
+                    const orgClause = getRuleById(orgRule.clauses, cid);
+                    const valClause = getRuleById(valRule.clauses, cid);
+
+                    if (orgClause.attribute !== valClause.attribute) {
+                      console.log('change attribute');
+                      ruleUpdated = true;
+                    }
+                    if (orgClause.operator !== valClause.operator) {
+                      console.log('change operator');
+                      ruleUpdated = true;
+                    }
+
+                    const orgValues = new Set(orgClause.values);
+                    const valValues = new Set(valClause.values);
+                    const commonValues = [...orgValues].filter((v) =>
+                      valValues.has(v)
+                    );
+
+                    [...orgValues]
+                      .filter((v) => !commonValues.includes(v))
+                      .forEach(() => {
+                        console.log('remove clause value command');
+                        ruleUpdated = true;
+                      });
+                    [...valValues]
+                      .filter((v) => !commonValues.includes(v))
+                      .forEach(() => {
+                        console.log('add clause value command');
+                        ruleUpdated = true;
+                      });
+                  });
+
+                  if (
+                    orgRule.strategy.option.value !==
+                    valRule.strategy.option.value
+                  ) {
+                    console.log('change strategy command');
+                    ruleUpdated = true;
+                  }
+
+                  if (
+                    !deepEqual(
+                      orgRule.strategy.rolloutStrategy,
+                      valRule.strategy.rolloutStrategy
+                    )
+                  ) {
+                    console.log('change rollout strategy command');
+                    ruleUpdated = true;
+                  }
+
+                  if (
+                    !deepEqual(
+                      defaultValues.defaultStrategy,
+                      data.defaultStrategy
+                    )
+                  ) {
+                    console.log('change default strategy command');
+                    ruleUpdated = true;
+                  }
+
+                  if (ruleUpdated) {
+                    const rule = new Rule();
+                    rule.setId(rid);
+                    rule.setClausesList(createClauses(valRule.clauses));
+                    rule.setStrategy(createStrategy(valRule.strategy));
+                    processRuleChange(ChangeType.UPDATE, rule);
+                  }
+                });
+            };
+
+            processRemovedRules();
+            processAddedRules();
+            processUpdatedRules();
+          }
+
+          const updatePayload = {
             environmentId: currentEnvironment.id,
-            id: feature.id,
+            id: featureId,
             comment: data.comment,
-            commands: commands
-          })
-        ).then(() => {
-          setIsConfirmDialogOpen(false);
-          dispatch(
-            getFeature({
-              environmentId: currentEnvironment.id,
-              id: featureId
-            })
-          ).then((response) => {
-            const featurePayload = response.payload as Feature.AsObject;
-            reset(
-              getDefaultValues(
-                featurePayload,
-                currentEnvironment.requireComment
+            enabled: dirtyFields.enabled ? data.enabled : undefined,
+            prerequisitesList: prerequisitesList.length && prerequisitesList,
+            targets: targets.length && targets,
+            rules: rules.length && rules,
+            defaultStrategy:
+              hasDirtyField(dirtyFields.defaultStrategy) &&
+              data.defaultStrategy,
+            offVariation:
+              hasDirtyField(dirtyFields.offVariation) && data.offVariation,
+            resetSampling: data.resetSampling
+          };
+
+          await prepareUpdate(updateFeature, updatePayload);
+        } else if (saveFeatureType === SaveFeatureType.UPDATE_NOW) {
+          const commands: Array<Command> = [];
+          const defaultValues = getDefaultValues(
+            feature,
+            currentEnvironment.requireComment
+          );
+          dirtyFields.enabled &&
+            commands.push(...createEnabledCommands(defaultValues, data));
+          dirtyFields.targets &&
+            commands.push(
+              ...createTargetCommands(defaultValues.targets, data.targets)
+            );
+          dirtyFields.rules &&
+            commands.push(
+              ...createRuleCommands(defaultValues.rules, data.rules)
+            );
+          dirtyFields.rules &&
+            commands.push(
+              ...createClauseCommands(defaultValues.rules, data.rules)
+            );
+          dirtyFields.rules &&
+            commands.push(
+              ...createStrategyCommands(defaultValues.rules, data.rules)
+            );
+          dirtyFields.defaultStrategy &&
+            commands.push(
+              ...createDefaultStrategyCommands(
+                defaultValues.defaultStrategy,
+                data.defaultStrategy
               )
             );
-          });
-        });
+          dirtyFields.offVariation &&
+            commands.push(
+              ...createOffVariationCommands(
+                defaultValues.offVariation,
+                data.offVariation
+              )
+            );
+          data.resetSampling && commands.push(createResetSampleSeedCommand());
+          dirtyFields.prerequisites &&
+            commands.push(
+              ...createPrerequisitesCommands(
+                defaultValues.prerequisites,
+                data.prerequisites
+              )
+            );
+
+          const updatePayload = {
+            environmentId: currentEnvironment.id,
+            id: featureId,
+            comment: data.comment,
+            commands: commands
+          };
+          await prepareUpdate(updateFeatureTargeting, updatePayload);
+        }
       },
       [dispatch, dirtyFields, feature]
     );
@@ -260,7 +520,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     // Check if only switch is enabled/disabled or other fields are also changed
     // If only switch is enabled/disabled, then show Enable/Disable now and Schedule radio options in Confirm dialog
     // If other fields are also changed, then hide Enable/Disable now and Schedule radio options in Confirm dialog
-    const isSwitchEnabledConfirm = dirtyFieldsKeys(dirtyFields);
+    // const isSwitchEnabledConfirm = dirtyFieldsKeys(dirtyFields);
 
     return (
       <FormProvider {...methods}>
@@ -271,13 +531,15 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
         {isConfirmDialogOpen && (
           <FeatureConfirmDialog
             open={isConfirmDialogOpen}
-            handleSubmit={handleSubmit(handleUpdate)}
+            handleSubmit={(arg) => {
+              handleSubmit((data) => handleUpdate(data, arg))();
+            }}
             onClose={() => setIsConfirmDialogOpen(false)}
             title={f(messages.feature.confirm.title)}
             description={f(messages.feature.confirm.description)}
             displayResetSampling={true}
             featureId={featureId}
-            isSwitchEnabledConfirm={isSwitchEnabledConfirm}
+            // isSwitchEnabledConfirm={isSwitchEnabledConfirm}
             isEnabled={
               dirtyFields.enabled &&
               getDefaultValues(feature, currentEnvironment.requireComment)
@@ -289,6 +551,32 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     );
   }
 );
+
+function createPrerequisiteChange(featureId, variationId, changeType) {
+  const prerequisiteChange = new PrerequisiteChange();
+  prerequisiteChange.setChangeType(changeType);
+
+  const p = new Prerequisite();
+  p.setFeatureId(featureId);
+  if (variationId !== null) {
+    p.setVariationId(variationId);
+  }
+
+  prerequisiteChange.setPrerequisite(p);
+  return prerequisiteChange;
+}
+
+function createTargetChange(variationId, usersList, changeType) {
+  const targetChange = new TargetChange();
+  targetChange.setChangeType(changeType);
+
+  const target = new Target();
+  target.setVariation(variationId);
+  target.setUsersList(usersList);
+
+  targetChange.setTarget(target);
+  return targetChange;
+}
 
 const createStrategyDefaultValue = (
   strategy: Strategy.AsObject,
@@ -401,6 +689,7 @@ export function createRuleCommands(org, val): Command[] {
   org
     .filter((r) => !valIds.includes(r.id))
     .forEach((r) => {
+      console.log('delete rule command');
       const command = new DeleteRuleCommand();
       command.setId(r.id);
       commands.push(
@@ -411,6 +700,7 @@ export function createRuleCommands(org, val): Command[] {
   val
     .filter((r) => !orgIds.includes(r.id))
     .forEach((r) => {
+      console.log('add rule command');
       const command = new AddRuleCommand();
       command.setRule(createRule(r));
       commands.push(
@@ -431,6 +721,7 @@ export function createRuleCommands(org, val): Command[] {
       valIds.slice(0, orgIdsAfterDeletedIdsRemoved.length).toString() !==
         orgIdsAfterDeletedIdsRemoved.toString()
     ) {
+      console.log('rule deleted order changed');
       orderChanged = true;
       commands.push(createChangeRulesOrderCommand(valIds));
     }
@@ -444,6 +735,7 @@ export function createRuleCommands(org, val): Command[] {
       orgIdsAfterDeletedIdsRemoved.toString() !==
         valIds.slice(0, orgIdsAfterDeletedIdsRemoved.length).toString()
     ) {
+      console.log('rule added order changed');
       orderChanged = true;
       commands.push(createChangeRulesOrderCommand(valIds));
     }
@@ -456,6 +748,7 @@ export function createRuleCommands(org, val): Command[] {
     orgIds.every((orgId) => valIds.includes(orgId)) &&
     orgIds.toString() !== valIds.toString()
   ) {
+    console.log('rule order changed');
     commands.push(createChangeRulesOrderCommand(valIds));
   }
   return commands;
@@ -510,6 +803,7 @@ const createClauses = (clauses: RuleClauseSchema[]): Clause[] => {
 
 const createClause = (clause: RuleClauseSchema): Clause => {
   const c = new Clause();
+  c.setId(clause.id);
   c.setAttribute(clause.attribute);
   c.setOperator(
     Number(clause.operator) as Clause.OperatorMap[keyof Clause.OperatorMap]
@@ -537,6 +831,7 @@ export const createClauseCommands = (
     orgRule.clauses
       .filter((c) => !clauseIds.includes(c.id))
       .forEach((c) => {
+        console.log('delete clause command', c);
         const command = new DeleteClauseCommand();
         command.setRuleId(rid);
         command.setId(c.id);
@@ -547,6 +842,7 @@ export const createClauseCommands = (
     valRule.clauses
       .filter((c) => !clauseIds.includes(c.id))
       .forEach((c) => {
+        console.log('add clause command', c);
         const command = new AddClauseCommand();
         command.setRuleId(rid);
         command.setClause(createClause(c));
@@ -657,6 +953,7 @@ const createStrategyCommands = (
         orgRule.strategy.option.value == Strategy.Type.ROLLOUT.toString() ||
         valRule.strategy.option.value == Strategy.Type.ROLLOUT.toString()
       ) {
+        console.log('change rule strategy command');
         const command = new ChangeRuleStrategyCommand();
         command.setRuleId(rid);
         command.setStrategy(createStrategy(valRule.strategy));
