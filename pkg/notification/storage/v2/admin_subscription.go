@@ -162,7 +162,13 @@ func (s *adminSubscriptionStorage) ListAdminSubscriptions(
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
-	subscriptions := make([]*proto.Subscription, 0)
+	var offset int
+	var limit int
+	if options != nil {
+		offset = options.Offset
+		limit = options.Limit
+	}
+	subscriptions := make([]*proto.Subscription, 0, limit)
 	for rows.Next() {
 		subscription := proto.Subscription{}
 		err := rows.Scan(
@@ -181,10 +187,6 @@ func (s *adminSubscriptionStorage) ListAdminSubscriptions(
 	}
 	if rows.Err() != nil {
 		return nil, 0, 0, err
-	}
-	var offset int
-	if options != nil {
-		offset = options.Offset
 	}
 	nextOffset := offset + len(subscriptions)
 	var totalCount int64
