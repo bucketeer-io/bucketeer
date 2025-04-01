@@ -145,20 +145,8 @@ func (a *App) Run() error {
 		),
 	})
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-	defer signal.Stop(ch)
-
-	go func() {
-		select {
-		case s := <-ch:
-			logger.Info("App is stopping due to signal", zap.Stringer("signal", s))
-			cancel()
-		case <-ctx.Done():
-		}
-	}()
 	return a.cmds[cmd].Run(ctx, metrics, logger)
 }
