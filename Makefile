@@ -397,7 +397,7 @@ minikube-load-images:
 		docker save ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} -o $$IMAGE.tar; \
 		docker cp $$IMAGE.tar minikube:/home/docker; \
 		rm $$IMAGE.tar; \
-		minikube ssh "docker load -i /home/docker/$$IMAGE.tar"; \
+		minikube ssh "sudo docker load -i /home/docker/$$IMAGE.tar"; \
 		minikube ssh "rm /home/docker/$$IMAGE.tar"; \
 	done
 
