@@ -840,7 +840,7 @@ func (s *NotificationService) listSubscriptionsMySQL(
 ) ([]*notificationproto.Subscription, string, int64, error) {
 	var filters []*mysql.FilterV2
 	if organizationId != "" {
-		// New console
+		// console v3
 		filters = append(filters, &mysql.FilterV2{
 			Column:   "env.organization_id",
 			Operator: mysql.OperatorEqual,
