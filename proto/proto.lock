@@ -7256,6 +7256,11 @@
                 "id": 3,
                 "name": "action_type",
                 "type": "ActionType"
+              },
+              {
+                "id": 4,
+                "name": "executed_at",
+                "type": "int64"
               }
             ]
           },

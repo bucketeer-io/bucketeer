@@ -64,7 +64,7 @@ func TestRunDatetimeWatcher(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "success: assess: false",
+			desc: "success: scheduled clause does not satisfy the time condition",
 			setup: func(w *datetimeWatcher) {
 				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(),
@@ -112,7 +112,7 @@ func TestRunDatetimeWatcher(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "success: assess: true",
+			desc: "success: scheduled clause satisfies the time condition",
 			setup: func(w *datetimeWatcher) {
 				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(),
@@ -170,42 +170,6 @@ func TestRunDatetimeWatcher(t *testing.T) {
 			}
 			err := w.Run(context.Background())
 			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-func TestDatetimeWatcherAssessRule(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	patterns := []struct {
-		desc           string
-		datetimeClause *autoopsproto.DatetimeClause
-		nowTimestamp   int64
-		expected       bool
-	}{
-		{
-			desc: "false",
-			datetimeClause: &autoopsproto.DatetimeClause{
-				Time: 1000000001,
-			},
-			nowTimestamp: 1000000000,
-			expected:     false,
-		},
-		{
-			desc: "true",
-			datetimeClause: &autoopsproto.DatetimeClause{
-				Time: 1000000000,
-			},
-			nowTimestamp: 1000000000,
-			expected:     true,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			w := newNewDatetimeWatcherWithMock(t, mockController)
-			actual := w.assessRule(p.datetimeClause, p.nowTimestamp)
-			assert.Equal(t, p.expected, actual)
 		})
 	}
 }
