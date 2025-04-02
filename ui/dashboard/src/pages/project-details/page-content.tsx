@@ -34,7 +34,7 @@ const PageContent = ({ project }: { project: Project }) => {
   return (
     <PageLayout.Content className="pt-4">
       <Tabs>
-        <TabsList>
+        <TabsList className="px-6">
           {projectTabs.map((item, index) => (
             <TabsLink key={index} to={`${url}${item.to}`}>
               {item.title}

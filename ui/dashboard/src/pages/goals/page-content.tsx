@@ -11,6 +11,7 @@ import Icon from 'components/icon';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from 'components/tabs';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import { GoalActions, GoalFilters } from './types';
 
@@ -74,18 +75,20 @@ const PageContent = ({
           });
         }}
       >
-        <TabsList>
+        <TabsList className="px-6">
           <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value={filters.status}>
-          <CollectionLoader
-            onAdd={onAdd}
-            filters={filters}
-            setFilters={onChangeFilters}
-            onActions={onHandleActions}
-          />
+        <TabsContent value={filters.status} className="mt-0">
+          <TableListContainer>
+            <CollectionLoader
+              onAdd={onAdd}
+              filters={filters}
+              setFilters={onChangeFilters}
+              onActions={onHandleActions}
+            />
+          </TableListContainer>
         </TabsContent>
       </Tabs>
     </PageLayout.Content>

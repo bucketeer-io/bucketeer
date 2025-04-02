@@ -25,7 +25,7 @@ const Filter = ({
 }: FilterProps) => {
   const { t } = useTranslation(['common', 'form']);
   return (
-    <div className="flex lg:items-center justify-between flex-col lg:flex-row">
+    <div className="flex lg:items-center justify-between flex-col lg:flex-row px-6">
       <div className="w-full lg:w-[365px]">
         <SearchInput
           placeholder={`${t('form:placeholder-search-input')}`}
@@ -33,7 +33,7 @@ const Filter = ({
           onChange={onSearchChange}
         />
       </div>
-      <div className="flex items-center gap-4 mt-3 lg:mt-0">
+      <div className="flex items-center gap-4 mt-3 lg:mt-0 flex-wrap">
         <Button variant="text" className="flex-1 lg:flex-none">
           <Icon icon={IconLaunchOutlined} size="sm" />
           {t('documentation')}
