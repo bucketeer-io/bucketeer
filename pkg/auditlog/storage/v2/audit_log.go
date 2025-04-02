@@ -129,8 +129,10 @@ func (s *auditLogStorage) ListAuditLogs(
 		return nil, 0, 0, err
 	}
 	var limit int
+	var offset int
 	if options != nil {
 		limit = options.Limit
+		offset = options.Offset
 	}
 	defer rows.Close()
 	auditLogs := make([]*proto.AuditLog, 0, limit)
@@ -160,7 +162,7 @@ func (s *auditLogStorage) ListAuditLogs(
 	if rows.Err() != nil {
 		return nil, 0, 0, err
 	}
-	nextOffset := options.Offset + len(auditLogs)
+	nextOffset := offset + len(auditLogs)
 	var totalCount int64
 	coountQuery, coountWhereArgs := mysql.ConstructQueryAndWhereArgs(
 		selectAuditLogV2CountSQL,
