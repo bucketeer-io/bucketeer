@@ -212,5 +212,6 @@
   "sort-desc": "Newest to Oldest",
   "no-options-found": "No options found",
   "create-goal": "Create Goal",
-  "create-a-new-goal": "Create a new Goal"
+  "create-a-new-goal": "Create a new Goal",
+  "create-a-new-flag": "Create a new Flag"
 }

@@ -1,5 +1,12 @@
 import { FC, memo, ReactNode } from 'react';
-import { StylesConfig, ActionMeta, MultiValue, GroupBase } from 'react-select';
+import {
+  StylesConfig,
+  ActionMeta,
+  MultiValue,
+  GroupBase,
+  OptionProps,
+  components
+} from 'react-select';
 import ReactCreatableSelect, { CreatableProps } from 'react-select/creatable';
 import Spinner from 'components/spinner';
 
@@ -16,6 +23,7 @@ export interface NoOptionsMessageProps {
 
 export interface CreatableSelectProps
   extends CreatableProps<Option, true, GroupBase<Option>> {
+  isMulti?: true;
   loading?: boolean;
   options?: Option[];
   disabled?: boolean;
@@ -100,8 +108,40 @@ export const colourStyles: StylesConfig<Option, true> = {
   })
 };
 
+type CustomOptionProps = OptionProps<Option, true, GroupBase<Option>> & {
+  createNewOption?: ReactNode;
+};
+
+export const CustomOption = ({
+  children,
+  createNewOption,
+  ...props
+}: CustomOptionProps) => {
+  const { innerRef, innerProps, options, data } = props || {};
+
+  const isLastOption = (options.at(-1) as Option)?.value === data?.value;
+
+  if (isLastOption) {
+    return (
+      <div>
+        <div
+          {...innerRef}
+          {...innerProps}
+          className="px-3 py-2 hover:!bg-gray-100"
+        >
+          {children}
+        </div>
+        {!data?.__isNew__ && createNewOption}
+      </div>
+    );
+  }
+
+  return <components.Option {...props}>{children}</components.Option>;
+};
+
 export const CreatableSelect: FC<CreatableSelectProps> = memo(
   ({
+    isMulti = true,
     loading = false,
     disabled,
     isSearchable,
@@ -115,18 +155,20 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
     onCreateOption,
     formatCreateLabel,
     noOptionsMessage,
+    components,
     ...props
   }) => {
     return (
       <ReactCreatableSelect
         {...props}
-        isMulti
+        isMulti={isMulti}
         options={options}
         placeholder={placeholder}
         className={className}
         classNamePrefix="react-select"
         styles={colourStyles}
         components={{
+          ...components,
           DropdownIndicator: null,
           LoadingIndicator: () => <Spinner className="size-5 mr-4" />
         }}
