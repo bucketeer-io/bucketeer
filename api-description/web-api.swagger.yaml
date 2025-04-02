@@ -9364,6 +9364,9 @@ definitions:
         $ref: '#/definitions/protobufAny'
       actionType:
         $ref: '#/definitions/autoopsActionType'
+      executedAt:
+        type: string
+        format: int64
   bucketeerautoopsDeleteClauseCommand:
     type: object
     properties:
