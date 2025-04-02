@@ -12,9 +12,9 @@ export const currentEnvironmentRole = (
     : account.environmentRoles[0].environment.id;
 
   let curEnvRole = account.environmentRoles.find(environmentRole => {
-    const { environment } = environmentRole;
-    if (environment.id && curEnvId) return environment.id === curEnvId;
-    return environment.urlCode === curEnvId;
+    const { environment } = environmentRole || {};
+    const environmentId = environment?.id || environment?.urlCode;
+    return environmentId === curEnvId;
   });
   if (!curEnvRole) {
     curEnvRole = account.environmentRoles[0];
@@ -35,11 +35,9 @@ export const getCurrentProject = (
   try {
     return unwrapUndefinable(
       roles.find(role => {
-        const { environment } = role;
-
-        if (!!environment.id && !!currentEnvId)
-          return environment.id == currentEnvId;
-        return role.environment.urlCode == currentEnvId;
+        const { environment } = role || {};
+        const environmentId = environment?.id || environment?.urlCode;
+        return environmentId === currentEnvId;
       })
     )?.project;
   } catch {
