@@ -281,12 +281,12 @@ func (p pushSender) listPushes(ctx context.Context, environmentId string) ([]*pu
 		Limit:  mysql.QueryNoLimit,
 		Offset: 0,
 		Filters: []*mysql.FilterV2{
-			&mysql.FilterV2{
+			{
 				Column:   "deleted",
 				Operator: mysql.OperatorEqual,
 				Value:    false,
 			},
-			&mysql.FilterV2{
+			{
 				Column:   "environment_id",
 				Operator: mysql.OperatorEqual,
 				Value:    environmentId,
