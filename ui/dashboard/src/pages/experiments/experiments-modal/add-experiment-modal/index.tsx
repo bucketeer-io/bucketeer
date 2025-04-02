@@ -478,7 +478,13 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                         />
                       )}
                       noOptionsMessage={() => (
-                        <p>{t('common:no-options-found')}</p>
+                        <div className="w-full">
+                          <p className="py-2">{t('common:no-options-found')}</p>
+                          <CreateNewOptionButton
+                            text={t('common:create-a-new-flag')}
+                            onClick={onOpenCreateFlagModal}
+                          />
+                        </div>
                       )}
                       formatOptionLabel={item => (
                         <div className="flex items-center h-full w-full justify-between gap-x-2">
@@ -596,7 +602,13 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                         />
                       )}
                       noOptionsMessage={() => (
-                        <p>{t('common:no-options-found')}</p>
+                        <div className="w-full">
+                          <p className="py-2">{t('common:no-options-found')}</p>
+                          <CreateNewOptionButton
+                            text={t('common:create-a-new-goal')}
+                            onClick={onOpenCreateGoalModal}
+                          />
+                        </div>
                       )}
                       components={{
                         Option: props => (
