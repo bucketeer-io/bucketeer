@@ -18,7 +18,6 @@ import TextArea from 'components/textarea';
 
 export type CreateGoalModalProps = {
   isOpen: boolean;
-  loading?: boolean;
   onClose: () => void;
 };
 
@@ -34,11 +33,7 @@ const formSchema = yup.object().shape({
   description: yup.string()
 });
 
-const CreateGoalModal = ({
-  isOpen,
-  loading,
-  onClose
-}: CreateGoalModalProps) => {
+const CreateGoalModal = ({ isOpen, onClose }: CreateGoalModalProps) => {
   const { t } = useTranslation(['common', 'form']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -54,7 +49,11 @@ const CreateGoalModal = ({
     }
   });
 
-  const { control, setValue } = form;
+  const {
+    control,
+    formState: { isSubmitting },
+    setValue
+  } = form;
 
   const onSubmit: SubmitHandler<CreateGoalForm> = useCallback(async values => {
     try {
@@ -153,7 +152,7 @@ const CreateGoalModal = ({
           </div>
           <ButtonBar
             secondaryButton={
-              <Button loading={loading}>{t(`create-goal`)}</Button>
+              <Button loading={isSubmitting}>{t(`create-goal`)}</Button>
             }
             primaryButton={
               <Button type="button" onClick={onClose} variant="secondary">

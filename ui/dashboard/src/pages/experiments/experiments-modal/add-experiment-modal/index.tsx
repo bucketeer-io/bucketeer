@@ -20,7 +20,6 @@ import { experimentFormSchema } from 'pages/experiments/form-schema';
 import CreateFlagForm from 'pages/feature-flags/flags-modal/add-flag-modal/create-flag-form';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import { CreatableSelect, CustomOption } from 'components/creatable-select';
 import { ReactDatePicker } from 'components/date-time-picker';
 import Divider from 'components/divider';
 import {
@@ -36,6 +35,7 @@ import DialogModal from 'components/modal/dialog';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
 import CreateGoalModal from 'elements/create-goal-modal';
+import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 
 interface AddExperimentModalProps {
   isOpen: boolean;
@@ -98,7 +98,7 @@ const CreateNewOptionButton = ({
   <Button
     type="button"
     variant="text"
-    className="h-8 self-center w-full hover:bg-gray-100"
+    className="h-10 self-center w-full bg-white hover:bg-gray-100 sticky left-0 right-0 bottom-0 border-t border-gray-200"
     onClick={onClick}
   >
     <Icon icon={IconPlus} color="primary-500" size={'xs'} />
@@ -451,69 +451,36 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                     />
                   </Form.Label>
                   <Form.Control>
-                    <CreatableSelect
-                      value={
-                        featureFlagOptions
-                          .filter(item => item.value === field.value)
-                          ?.map(item => ({
-                            label: item.label,
-                            value: item.value
-                          })) || []
-                      }
-                      isMulti={undefined}
-                      disabled={isLoadingFeature}
-                      loading={isLoadingFeature}
+                    <DropdownMenuWithSearch
+                      hidden={isOpenCreateFlagModal}
+                      isLoading={isLoadingFeature}
                       placeholder={t(`experiments.select-flag`)}
+                      label={
+                        featureFlagOptions.find(
+                          item => item.value === field.value
+                        )?.label || ''
+                      }
                       options={featureFlagOptions?.map(flag => ({
                         label: flag.label,
                         value: flag.value,
                         enabled: flag.enabled
                       }))}
-                      onChange={value => field.onChange(value.at(-1)?.value)}
-                      onCreateOption={onOpenCreateFlagModal}
-                      formatCreateLabel={() => (
+                      selectedOptions={[field.value]}
+                      additionalElement={item => (
+                        <FeatureFlagStatus
+                          status={t(
+                            item.enabled ? 'experiments.on' : 'experiments.off'
+                          )}
+                          enabled={item.enabled as boolean}
+                        />
+                      )}
+                      createNewOption={
                         <CreateNewOptionButton
                           text={t('common:create-a-new-flag')}
                           onClick={onOpenCreateFlagModal}
                         />
-                      )}
-                      noOptionsMessage={() => (
-                        <div className="w-full">
-                          <p className="py-2">{t('common:no-options-found')}</p>
-                          <CreateNewOptionButton
-                            text={t('common:create-a-new-flag')}
-                            onClick={onOpenCreateFlagModal}
-                          />
-                        </div>
-                      )}
-                      formatOptionLabel={item => (
-                        <div className="flex items-center h-full w-full justify-between gap-x-2">
-                          <p className="w-full truncate">{item.label}</p>
-                          {!item?.__isNew__ && (
-                            <FeatureFlagStatus
-                              status={t(
-                                item.enabled
-                                  ? 'experiments.on'
-                                  : 'experiments.off'
-                              )}
-                              enabled={item.enabled as boolean}
-                            />
-                          )}
-                        </div>
-                      )}
-                      components={{
-                        Option: props => (
-                          <CustomOption
-                            {...props}
-                            createNewOption={
-                              <CreateNewOptionButton
-                                text={t('common:create-a-new-flag')}
-                                onClick={onOpenCreateFlagModal}
-                              />
-                            }
-                          />
-                        )
-                      }}
+                      }
+                      onSelectOption={field.onChange}
                     />
                   </Form.Control>
                   <Form.Message />
@@ -584,44 +551,37 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                     />
                   </Form.Label>
                   <Form.Control>
-                    <CreatableSelect
-                      disabled={isLoadingGoals}
-                      loading={isLoadingGoals}
+                    <DropdownMenuWithSearch
+                      isMultiselect
+                      hidden={isOpenCreateGoalModal}
+                      isLoading={isLoadingGoals}
                       placeholder={t(`experiments.select-goal`)}
-                      options={goalOptions?.map(goal => ({
-                        label: goal.label,
-                        value: goal.value
-                      }))}
-                      onChange={value =>
-                        field.onChange(value.map(goal => goal.value))
+                      label={
+                        field.value
+                          ?.map(
+                            item =>
+                              goalOptions.find(goal => goal.value === item)
+                                ?.label
+                          )
+                          ?.join(', ') || ''
                       }
-                      formatCreateLabel={() => (
+                      options={goalOptions}
+                      selectedOptions={field.value as string[]}
+                      createNewOption={
                         <CreateNewOptionButton
                           text={t('common:create-a-new-goal')}
                           onClick={onOpenCreateGoalModal}
                         />
-                      )}
-                      noOptionsMessage={() => (
-                        <div className="w-full">
-                          <p className="py-2">{t('common:no-options-found')}</p>
-                          <CreateNewOptionButton
-                            text={t('common:create-a-new-goal')}
-                            onClick={onOpenCreateGoalModal}
-                          />
-                        </div>
-                      )}
-                      components={{
-                        Option: props => (
-                          <CustomOption
-                            {...props}
-                            createNewOption={
-                              <CreateNewOptionButton
-                                text={t('common:create-a-new-goal')}
-                                onClick={onOpenCreateGoalModal}
-                              />
-                            }
-                          />
-                        )
+                      }
+                      onSelectOption={value => {
+                        const isExisted = field.value?.find(
+                          item => item === value
+                        );
+                        field.onChange(
+                          isExisted
+                            ? field.value?.filter(item => item !== value)
+                            : [...field.value, value]
+                        );
                       }}
                     />
                   </Form.Control>
@@ -681,9 +641,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
           onClose={onHiddenCreateFlagModal}
         >
           <CreateFlagForm
-            className={
-              'flex flex-col flex-1 h-full overflow-auto p-5 pb-[170px]'
-            }
+            className={'flex flex-col flex-1 h-full overflow-auto pb-[170px]'}
             onClose={onHiddenCreateFlagModal}
           />
         </DialogModal>
