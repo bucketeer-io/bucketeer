@@ -20,7 +20,7 @@ import { experimentFormSchema } from 'pages/experiments/form-schema';
 import CreateFlagForm from 'pages/feature-flags/flags-modal/add-flag-modal/create-flag-form';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import { CreatableSelect, CustomOption } from 'components/creatable-select';
+import { CreatableSelect, CustomMenuList } from 'components/creatable-select';
 import { ReactDatePicker } from 'components/date-time-picker';
 import Divider from 'components/divider';
 import {
@@ -98,7 +98,7 @@ const CreateNewOptionButton = ({
   <Button
     type="button"
     variant="text"
-    className="h-8 self-center w-full hover:bg-gray-100"
+    className="self-center w-full bg-white hover:bg-gray-100 sticky left-0 right-0 bottom-0 border-t border-gray-200"
     onClick={onClick}
   >
     <Icon icon={IconPlus} color="primary-500" size={'xs'} />
@@ -469,21 +469,13 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                         value: flag.value,
                         enabled: flag.enabled
                       }))}
+                      menuPlacement="top"
+                      isHiddenCreateNewOption
                       onChange={value => field.onChange(value.at(-1)?.value)}
                       onCreateOption={onOpenCreateFlagModal}
-                      formatCreateLabel={() => (
-                        <CreateNewOptionButton
-                          text={t('common:create-a-new-flag')}
-                          onClick={onOpenCreateFlagModal}
-                        />
-                      )}
                       noOptionsMessage={() => (
                         <div className="w-full">
                           <p className="py-2">{t('common:no-options-found')}</p>
-                          <CreateNewOptionButton
-                            text={t('common:create-a-new-flag')}
-                            onClick={onOpenCreateFlagModal}
-                          />
                         </div>
                       )}
                       formatOptionLabel={item => (
@@ -502,8 +494,8 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                         </div>
                       )}
                       components={{
-                        Option: props => (
-                          <CustomOption
+                        MenuList: props => (
+                          <CustomMenuList
                             {...props}
                             createNewOption={
                               <CreateNewOptionButton
@@ -588,6 +580,8 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                       disabled={isLoadingGoals}
                       loading={isLoadingGoals}
                       placeholder={t(`experiments.select-goal`)}
+                      menuPlacement="top"
+                      isHiddenCreateNewOption
                       options={goalOptions?.map(goal => ({
                         label: goal.label,
                         value: goal.value
@@ -595,24 +589,14 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                       onChange={value =>
                         field.onChange(value.map(goal => goal.value))
                       }
-                      formatCreateLabel={() => (
-                        <CreateNewOptionButton
-                          text={t('common:create-a-new-goal')}
-                          onClick={onOpenCreateGoalModal}
-                        />
-                      )}
                       noOptionsMessage={() => (
                         <div className="w-full">
                           <p className="py-2">{t('common:no-options-found')}</p>
-                          <CreateNewOptionButton
-                            text={t('common:create-a-new-goal')}
-                            onClick={onOpenCreateGoalModal}
-                          />
                         </div>
                       )}
                       components={{
-                        Option: props => (
-                          <CustomOption
+                        MenuList: props => (
+                          <CustomMenuList
                             {...props}
                             createNewOption={
                               <CreateNewOptionButton
@@ -681,9 +665,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
           onClose={onHiddenCreateFlagModal}
         >
           <CreateFlagForm
-            className={
-              'flex flex-col flex-1 h-full overflow-auto p-5 pb-[170px]'
-            }
+            className={'flex flex-col flex-1 h-full overflow-auto pb-[170px]'}
             onClose={onHiddenCreateFlagModal}
           />
         </DialogModal>

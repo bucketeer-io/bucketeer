@@ -4,8 +4,10 @@ import {
   ActionMeta,
   MultiValue,
   GroupBase,
-  OptionProps,
-  components
+  components,
+  MenuListProps,
+  CSSObjectWithLabel,
+  OptionProps
 } from 'react-select';
 import ReactCreatableSelect, { CreatableProps } from 'react-select/creatable';
 import Spinner from 'components/spinner';
@@ -30,13 +32,14 @@ export interface CreatableSelectProps
   isSearchable?: boolean;
   defaultValues?: MultiValue<Option>;
   closeMenuOnSelect?: boolean;
+  value?: MultiValue<Option>;
+  placeholder?: string;
   className?: string;
+  isHiddenCreateNewOption?: boolean;
   onChange: (
     options: MultiValue<Option>,
     actionMeta: ActionMeta<Option>
   ) => void;
-  value?: MultiValue<Option>;
-  placeholder?: string;
   onCreateOption?: (v: string) => void;
   formatCreateLabel?: (v: string) => JSX.Element;
   noOptionsMessage?: (props: NoOptionsMessageProps) => ReactNode;
@@ -51,7 +54,28 @@ const fontSize = '1rem';
 const lineHeight = '1.25rem';
 const minHeight = '3rem';
 
-export const colourStyles: StylesConfig<Option, true> = {
+const optionStyle = (
+  styles: CSSObjectWithLabel,
+  props: OptionProps<Option, true, GroupBase<Option>>,
+  isHiddenCreateNewOption: boolean
+) => {
+  const { isFocused, data } = props;
+
+  const isNewOption = data?.__isNew__;
+
+  return {
+    ...styles,
+    backgroundColor: isFocused ? backgroundColor : undefined,
+    color: textColor,
+    ':hover': {
+      backgroundColor: '#FAFAFC !important',
+      cursor: 'pointer'
+    },
+    display: isNewOption && isHiddenCreateNewOption ? 'none' : 'flex'
+  };
+};
+
+export const colorStyles: StylesConfig<Option, true> = {
   control: (styles, { isDisabled }) => ({
     ...styles,
     backgroundColor: isDisabled ? backgroundColorDisabled : backgroundColor,
@@ -64,15 +88,6 @@ export const colourStyles: StylesConfig<Option, true> = {
     minHeight: minHeight,
     boxShadow: 'none !important',
     borderRadius: '8px'
-  }),
-  option: (styles, { isFocused }) => ({
-    ...styles,
-    backgroundColor: isFocused ? backgroundColor : undefined,
-    color: textColor,
-    ':hover': {
-      backgroundColor: '#FAFAFC !important',
-      cursor: 'pointer'
-    }
   }),
   menu: base => ({
     ...base,
@@ -108,35 +123,21 @@ export const colourStyles: StylesConfig<Option, true> = {
   })
 };
 
-type CustomOptionProps = OptionProps<Option, true, GroupBase<Option>> & {
+type CustomMenuListProps = MenuListProps<Option, true, GroupBase<Option>> & {
   createNewOption?: ReactNode;
 };
 
-export const CustomOption = ({
+export const CustomMenuList = ({
   children,
   createNewOption,
   ...props
-}: CustomOptionProps) => {
-  const { innerRef, innerProps, options, data } = props || {};
-
-  const isLastOption = (options.at(-1) as Option)?.value === data?.value;
-
-  if (isLastOption) {
-    return (
-      <div>
-        <div
-          {...innerRef}
-          {...innerProps}
-          className="px-3 py-2 hover:!bg-gray-100"
-        >
-          {children}
-        </div>
-        {!data?.__isNew__ && createNewOption}
-      </div>
-    );
-  }
-
-  return <components.Option {...props}>{children}</components.Option>;
+}: CustomMenuListProps) => {
+  return (
+    <components.MenuList {...props} className="!pb-0">
+      {children}
+      {createNewOption}
+    </components.MenuList>
+  );
 };
 
 export const CreatableSelect: FC<CreatableSelectProps> = memo(
@@ -156,6 +157,8 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
     formatCreateLabel,
     noOptionsMessage,
     components,
+    styles,
+    isHiddenCreateNewOption = false,
     ...props
   }) => {
     return (
@@ -166,7 +169,12 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
         placeholder={placeholder}
         className={className}
         classNamePrefix="react-select"
-        styles={colourStyles}
+        styles={{
+          option: (styles, props) =>
+            optionStyle(styles, props, isHiddenCreateNewOption),
+          ...colorStyles,
+          ...styles
+        }}
         components={{
           ...components,
           DropdownIndicator: null,

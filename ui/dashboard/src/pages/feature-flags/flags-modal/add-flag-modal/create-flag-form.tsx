@@ -207,7 +207,7 @@ const CreateFlagForm = ({
     }
   };
   return (
-    <div className={(cn('w-full p-5 pb-28'), className)}>
+    <div className={cn('w-full p-5 pb-28', className)}>
       <p className="text-gray-700 typo-head-bold-small mb-2">
         {t('form:general-info')}
       </p>
