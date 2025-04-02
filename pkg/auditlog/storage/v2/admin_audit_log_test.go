@@ -195,10 +195,7 @@ func TestListAdminAuditLogs(t *testing.T) {
 	patterns := []struct {
 		desc                string
 		setup               func(*adminAuditLogStorage)
-		whereParts          []mysql.WherePart
-		orders              []*mysql.Order
-		limit               int
-		offset              int
+		options             *mysql.ListOptions
 		expectedResultCount int
 		expectedCursor      int
 		expectedErr         error
@@ -210,10 +207,7 @@ func TestListAdminAuditLogs(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			whereParts:          nil,
-			orders:              nil,
-			limit:               0,
-			offset:              0,
+			options:             nil,
 			expectedResultCount: 0,
 			expectedCursor:      0,
 			expectedErr:         errors.New("error"),
@@ -238,10 +232,10 @@ func TestListAdminAuditLogs(t *testing.T) {
 					[]interface{}{},
 				).Return(row)
 			},
-			whereParts:          nil,
-			orders:              nil,
-			limit:               0,
-			offset:              0,
+			options: &mysql.ListOptions{
+				Filters: nil,
+				Orders:  nil,
+			},
 			expectedResultCount: 0,
 			expectedCursor:      0,
 		},
@@ -270,16 +264,32 @@ func TestListAdminAuditLogs(t *testing.T) {
 					timestamp, entityType,
 				).Return(row)
 			},
-			whereParts: []mysql.WherePart{
-				mysql.NewFilter("timestamp", ">=", timestamp),
-				mysql.NewFilter("entity_type", "=", entityType),
+			options: &mysql.ListOptions{
+				Filters: []*mysql.FilterV2{
+					{
+						Column:   "timestamp",
+						Operator: mysql.OperatorGreaterThanOrEqual,
+						Value:    timestamp,
+					},
+					{
+						Column:   "entity_type",
+						Operator: mysql.OperatorEqual,
+						Value:    entityType,
+					},
+				},
+				Orders: []*mysql.Order{
+					{
+						Column:    "id",
+						Direction: mysql.OrderDirectionAsc,
+					},
+					{
+						Column:    "timestamp",
+						Direction: mysql.OrderDirectionDesc,
+					},
+				},
+				Limit:  limit,
+				Offset: offset,
 			},
-			orders: []*mysql.Order{
-				mysql.NewOrder("id", mysql.OrderDirectionAsc),
-				mysql.NewOrder("timestamp", mysql.OrderDirectionDesc),
-			},
-			limit:               limit,
-			offset:              offset,
 			expectedResultCount: getSize,
 			expectedCursor:      offset + getSize,
 			expectedErr:         nil,
@@ -293,10 +303,7 @@ func TestListAdminAuditLogs(t *testing.T) {
 			}
 			auditLogs, cursor, _, err := storage.ListAdminAuditLogs(
 				context.Background(),
-				p.whereParts,
-				p.orders,
-				p.limit,
-				p.offset,
+				p.options,
 			)
 			assert.Equal(t, p.expectedResultCount, len(auditLogs))
 			if auditLogs != nil {
