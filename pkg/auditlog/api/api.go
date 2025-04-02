@@ -125,7 +125,7 @@ func (s *auditlogService) ListAuditLogs(
 		return nil, dt.Err()
 	}
 	filters := []*mysql.FilterV2{
-		&mysql.FilterV2{
+		{
 			Column:   "environment_id",
 			Operator: mysql.OperatorEqual,
 			Value:    req.EnvironmentId,
@@ -367,17 +367,17 @@ func (s *auditlogService) ListFeatureHistory(
 		return nil, err
 	}
 	filters := []*mysql.FilterV2{
-		&mysql.FilterV2{
+		{
 			Column:   "environment_id",
 			Operator: mysql.OperatorEqual,
 			Value:    req.EnvironmentId,
 		},
-		&mysql.FilterV2{
+		{
 			Column:   "entity_type",
 			Operator: mysql.OperatorEqual,
 			Value:    int32(eventproto.Event_FEATURE),
 		},
-		&mysql.FilterV2{
+		{
 			Column:   "entity_id",
 			Operator: mysql.OperatorEqual,
 			Value:    req.FeatureId,
