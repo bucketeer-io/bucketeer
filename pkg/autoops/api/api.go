@@ -1778,11 +1778,22 @@ func (s *AutoOpsService) executeAutoOpsNoCommand(
 				break
 			}
 		}
-
+		// Check if the clause exists
 		if executeClause == nil {
 			dt, err := statusClauseNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		// Check if the clause is already executed
+		if executeClause.ExecutedAt != 0 {
+			dt, err := statusClauseAlreadyExecuted.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InvalidArgumentError),
 			})
 			if err != nil {
 				return statusInternal.Err()
