@@ -45,7 +45,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
           ))}
         </TabsList>
 
-        <TabsContent className="pt-2 w-full px-6 overflow-auto">
+        <TabsContent className="pt-2 w-full">
           <Routes>
             <Route
               index

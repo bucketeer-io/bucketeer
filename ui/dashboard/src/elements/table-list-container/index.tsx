@@ -11,7 +11,7 @@ const TableListContainer = ({
   return (
     <div
       className={cn(
-        'flex flex-col flex-1 w-full p-6 pt-0 mt-5 overflow-auto',
+        'flex flex-col flex-1 w-full p-6 pt-0 mt-5 overflow-y-hidden overflow-x-auto hidden-scroll',
         className
       )}
     >

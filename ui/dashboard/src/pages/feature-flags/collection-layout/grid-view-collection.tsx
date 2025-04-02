@@ -20,6 +20,7 @@ import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
 import ExpandableTag from 'elements/expandable-tag';
+import TableListContent from 'elements/table-list-content';
 import { FlagActionType } from '../types';
 import {
   FlagNameElement,
@@ -73,110 +74,112 @@ const GridViewCollection = ({
   if (!data?.length) return <div className="pt-32">{emptyState}</div>;
 
   return (
-    <GridViewRoot>
-      {data.map((item, index) => {
-        const {
-          id,
-          name,
-          maintainer,
-          tags,
-          updatedAt,
-          enabled,
-          variationType,
-          variations
-        } = item;
-        return (
-          <GridViewRow key={index}>
-            <FlagNameElement
-              id={id}
-              link={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${id}/targeting`}
-              name={name}
-              maintainer={handleGetMaintainerInfo(maintainer)}
-              variationType={variationType}
-              icon={getDataTypeIcon(variationType)}
-              status={getFlagStatus(item)}
-            />
-            <div
-              id="variations-wrapper"
-              className="flex flex-col gap-y-3 col-span-4 flex-1"
-            >
-              <FlagVariationsElement variations={variations} />
-              <div className="flex items-center flex-wrap w-full gap-2">
-                <ExpandableTag
-                  tags={tags}
-                  filterTags={filterTags}
-                  rowId={item.id}
-                  className={cn('!max-w-[200px] truncate cursor-pointer', {
-                    '!max-w-[350px]': fromXLScreen
-                  })}
-                  wrapperClassName="w-fit"
-                  maxSize={fromXLScreen ? 382 : 232}
-                  onTagClick={tag => handleTagFilters(tag)}
-                />
-                <FlagOperationsElement
-                  autoOpsRules={autoOpsRules}
-                  rollouts={rollouts}
-                  featureId={id}
-                />
-              </div>
-            </div>
-            <div className="flex col-span-3 justify-end self-start gap-x-2">
-              <div className="flex-center">
-                <Icon icon={IconWatch} size={'xxs'} />
-              </div>
-              <DateTooltip
-                trigger={
-                  <div className="text-gray-700 typo-para-small whitespace-nowrap">
-                    {Number(updatedAt) === 0 ? (
-                      t('never')
-                    ) : (
-                      <Trans
-                        i18nKey={'common:time-updated'}
-                        values={{
-                          time: formatDateTime(updatedAt)
-                        }}
-                      />
-                    )}
-                  </div>
-                }
-                date={Number(updatedAt) === 0 ? null : updatedAt}
+    <TableListContent>
+      <GridViewRoot>
+        {data.map((item, index) => {
+          const {
+            id,
+            name,
+            maintainer,
+            tags,
+            updatedAt,
+            enabled,
+            variationType,
+            variations
+          } = item;
+          return (
+            <GridViewRow key={index}>
+              <FlagNameElement
+                id={id}
+                link={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${id}/targeting`}
+                name={name}
+                maintainer={handleGetMaintainerInfo(maintainer)}
+                variationType={variationType}
+                icon={getDataTypeIcon(variationType)}
+                status={getFlagStatus(item)}
               />
-              <div className="flex-center">
-                <Switch
-                  checked={enabled}
-                  onCheckedChange={() =>
-                    onActions(item, enabled ? 'INACTIVE' : 'ACTIVE')
+              <div
+                id="variations-wrapper"
+                className="flex flex-col gap-y-3 col-span-4 flex-1"
+              >
+                <FlagVariationsElement variations={variations} />
+                <div className="flex items-center flex-wrap w-full gap-2">
+                  <ExpandableTag
+                    tags={tags}
+                    filterTags={filterTags}
+                    rowId={item.id}
+                    className={cn('!max-w-[200px] truncate cursor-pointer', {
+                      '!max-w-[350px]': fromXLScreen
+                    })}
+                    wrapperClassName="w-fit"
+                    maxSize={fromXLScreen ? 382 : 232}
+                    onTagClick={tag => handleTagFilters(tag)}
+                  />
+                  <FlagOperationsElement
+                    autoOpsRules={autoOpsRules}
+                    rollouts={rollouts}
+                    featureId={id}
+                  />
+                </div>
+              </div>
+              <div className="flex col-span-3 justify-end self-start gap-x-2">
+                <div className="flex-center">
+                  <Icon icon={IconWatch} size={'xxs'} />
+                </div>
+                <DateTooltip
+                  trigger={
+                    <div className="text-gray-700 typo-para-small whitespace-nowrap">
+                      {Number(updatedAt) === 0 ? (
+                        t('never')
+                      ) : (
+                        <Trans
+                          i18nKey={'common:time-updated'}
+                          values={{
+                            time: formatDateTime(updatedAt)
+                          }}
+                        />
+                      )}
+                    </div>
                   }
+                  date={Number(updatedAt) === 0 ? null : updatedAt}
+                />
+                <div className="flex-center">
+                  <Switch
+                    checked={enabled}
+                    onCheckedChange={() =>
+                      onActions(item, enabled ? 'INACTIVE' : 'ACTIVE')
+                    }
+                  />
+                </div>
+                <Popover
+                  options={compact([
+                    searchOptions.status === 'ARCHIVED'
+                      ? {
+                          label: `${t('unarchive-flag')}`,
+                          icon: IconArchiveOutlined,
+                          value: 'UNARCHIVE'
+                        }
+                      : {
+                          label: `${t('archive-flag')}`,
+                          icon: IconArchiveOutlined,
+                          value: 'ARCHIVE'
+                        },
+                    {
+                      label: `${t('clone-flag')}`,
+                      icon: IconSaveAsFilled,
+                      value: 'CLONE'
+                    }
+                  ])}
+                  icon={IconMoreVertOutlined}
+                  onClick={value => onActions(item, value as FlagActionType)}
+                  align="end"
                 />
               </div>
-              <Popover
-                options={compact([
-                  searchOptions.status === 'ARCHIVED'
-                    ? {
-                        label: `${t('unarchive-flag')}`,
-                        icon: IconArchiveOutlined,
-                        value: 'UNARCHIVE'
-                      }
-                    : {
-                        label: `${t('archive-flag')}`,
-                        icon: IconArchiveOutlined,
-                        value: 'ARCHIVE'
-                      },
-                  {
-                    label: `${t('clone-flag')}`,
-                    icon: IconSaveAsFilled,
-                    value: 'CLONE'
-                  }
-                ])}
-                icon={IconMoreVertOutlined}
-                onClick={value => onActions(item, value as FlagActionType)}
-                align="end"
-              />
-            </div>
-          </GridViewRow>
-        );
-      })}
-    </GridViewRoot>
+            </GridViewRow>
+          );
+        })}
+      </GridViewRoot>
+    </TableListContent>
   );
 };
 

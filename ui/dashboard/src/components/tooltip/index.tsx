@@ -12,6 +12,7 @@ export type TooltipProps = {
   alignOffset?: number;
   asChild?: boolean;
   sideOffset?: number;
+  triggerCls?: string;
 };
 
 const TooltipProvider = TooltipPrimitive.Provider;
@@ -51,14 +52,19 @@ const Tooltip = forwardRef(
       className,
       alignOffset = 0,
       asChild = true,
-      sideOffset = 5
+      sideOffset = 5,
+      triggerCls
     }: TooltipProps,
     ref: Ref<HTMLDivElement>
   ) => {
     return (
       <TooltipProvider delayDuration={delayDuration}>
         <TooltipRoot>
-          <TooltipTrigger type="button" asChild={asChild}>
+          <TooltipTrigger
+            type="button"
+            asChild={asChild}
+            className={triggerCls}
+          >
             {trigger}
           </TooltipTrigger>
           {content && (

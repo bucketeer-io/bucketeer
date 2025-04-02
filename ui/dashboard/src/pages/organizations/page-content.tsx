@@ -11,6 +11,7 @@ import Icon from 'components/icon';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from 'components/tabs';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterOrganizationModal from './organization-modal/filter-organization-modal';
 import { OrganizationActionsType, OrganizationFilters } from './types';
@@ -96,16 +97,15 @@ const PageContent = ({
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
 
-        <TabsContent
-          value={filters.status}
-          className="w-full p-6 pt-0 overflow-auto"
-        >
-          <CollectionLoader
-            onAdd={onAdd}
-            filters={filters}
-            setFilters={onChangeFilters}
-            onActions={onHandleActions}
-          />
+        <TabsContent value={filters.status} className="w-full mt-0">
+          <TableListContainer>
+            <CollectionLoader
+              onAdd={onAdd}
+              filters={filters}
+              setFilters={onChangeFilters}
+              onActions={onHandleActions}
+            />
+          </TableListContainer>
         </TabsContent>
       </Tabs>
     </PageLayout.Content>

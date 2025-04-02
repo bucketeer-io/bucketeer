@@ -11,6 +11,7 @@ import { useFormatDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
 import { Popover } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
+import NameWithTooltip from 'elements/name-with-tooltip';
 import { OrganizationActionsType } from '../types';
 
 export const useColumns = ({
@@ -29,13 +30,17 @@ export const useColumns = ({
       size: 400,
       cell: ({ row }) => {
         const organization = row.original;
+        const { id, name } = organization;
         return (
-          <Link
-            to={`${organization.id}`}
-            className="underline text-primary-500 typo-para-medium"
-          >
-            {organization.name}
-          </Link>
+          <NameWithTooltip
+            id={id}
+            content={<NameWithTooltip.Content content={name} id={id} />}
+            trigger={
+              <Link to={id}>
+                <NameWithTooltip.Trigger id={id} name={name} />
+              </Link>
+            }
+          />
         );
       }
     },

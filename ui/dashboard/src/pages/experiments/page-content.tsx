@@ -12,6 +12,7 @@ import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterExperimentModal from './experiments-modal/filter-experiment-modal';
 import Overview from './overview';
@@ -185,13 +186,15 @@ const PageContent = ({
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value={filters.status as string} className="px-6">
-          <CollectionLoader
-            onAdd={onAdd}
-            filters={filters}
-            setFilters={onChangeFilters}
-            onActions={onHandleActions}
-          />
+        <TabsContent value={filters.status as string} className="mt-0">
+          <TableListContainer>
+            <CollectionLoader
+              onAdd={onAdd}
+              filters={filters}
+              setFilters={onChangeFilters}
+              onActions={onHandleActions}
+            />
+          </TableListContainer>
         </TabsContent>
       </Tabs>
     </PageLayout.Content>

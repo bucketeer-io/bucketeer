@@ -7,6 +7,7 @@ import { isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import MemberDetailsModal from 'pages/members/member-modal/member-details-modal';
 import Filter from 'elements/filter';
+import TableListContainer from 'elements/table-list-container';
 import { OrganizationMembersFilters } from '../types';
 import CollectionLoader from './collection-loader';
 
@@ -45,14 +46,16 @@ const OrganizationMembers = () => {
         searchValue={filters.searchQuery}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
-      <CollectionLoader
-        filters={filterParams}
-        setFilters={onChangeFilters}
-        onActions={member => {
-          setSelectedMember(member);
-          onOpenDetailsModal();
-        }}
-      />
+      <TableListContainer>
+        <CollectionLoader
+          filters={filterParams}
+          setFilters={onChangeFilters}
+          onActions={member => {
+            setSelectedMember(member);
+            onOpenDetailsModal();
+          }}
+        />
+      </TableListContainer>
 
       {isOpenDetailsModal && (
         <MemberDetailsModal

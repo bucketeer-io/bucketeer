@@ -2,9 +2,7 @@ import {
   FunctionComponent,
   PropsWithChildren,
   ReactNode,
-  useEffect,
-  useMemo,
-  useState
+  useMemo
 } from 'react';
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -35,6 +33,7 @@ import {
 } from 'pages/feature-flags/types';
 import Icon, { IconProps } from 'components/icon';
 import { Tooltip } from 'components/tooltip';
+import NameWithTooltip from 'elements/name-with-tooltip';
 
 interface FlagNameElementType {
   id: string;
@@ -180,8 +179,6 @@ export const FlagNameElement = ({
   const { notify } = useToast();
   const { t } = useTranslation(['table']);
 
-  const [isTruncate, setIsTruncate] = useState(false);
-
   const handleCopyId = (id: string) => {
     copyToClipBoard(id);
     notify({
@@ -194,27 +191,6 @@ export const FlagNameElement = ({
     });
   };
 
-  useEffect(() => {
-    const hasMoreThanTwoLines = () => {
-      const pElement = document.getElementById(`text-${id}`);
-      if (pElement) {
-        pElement.style.display = 'none';
-        void pElement.offsetHeight;
-        pElement.style.display = '';
-
-        const style = window.getComputedStyle(pElement);
-        const lineHeight = parseFloat(style.lineHeight);
-        const height = pElement.clientHeight;
-        return setIsTruncate(height / lineHeight > 2);
-      }
-      return setIsTruncate(false);
-    };
-    hasMoreThanTwoLines();
-
-    window.addEventListener('resize', hasMoreThanTwoLines);
-    return () => window.removeEventListener('resize', hasMoreThanTwoLines);
-  }, []);
-
   return (
     <div className="flex items-center col-span-5 w-full max-w-full gap-x-4 overflow-hidden">
       <div className="flex flex-col w-full max-w-full gap-y-2">
@@ -225,37 +201,12 @@ export const FlagNameElement = ({
               variationType={variationType}
             />
           </div>
-          <Tooltip
-            align="start"
-            content={
-              <div
-                style={{
-                  maxWidth: document?.getElementById(`name-${id}`)?.clientWidth
-                }}
-              >
-                {name}
-              </div>
-            }
-            hidden={!isTruncate}
+          <NameWithTooltip
+            id={id}
+            content={<NameWithTooltip.Content content={name} id={id} />}
             trigger={
-              <Link
-                id={`name-${id}`}
-                to={link}
-                className="typo-para-medium text-primary-500 underline relative"
-              >
-                <p className="line-clamp-2 break-all">{name}</p>
-                <p
-                  id={`text-${id}`}
-                  className="absolute left-0 right-0 break-all w-full -z-1 text-transparent invisible"
-                >
-                  {name}
-                </p>
-                <p
-                  id={`text-${id}`}
-                  className="absolute line-clamp-2 break-all min-w-max -z-1 text-transparent invisible h-0"
-                >
-                  {name}
-                </p>
+              <Link to={link}>
+                <NameWithTooltip.Trigger id={id} name={name} />
               </Link>
             }
           />

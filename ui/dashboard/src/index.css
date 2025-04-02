@@ -90,4 +90,14 @@
   [data-radix-popper-content-wrapper] {
     z-index: 9999 !important;
   }
+
+  .hidden-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .hidden-scroll {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
 }

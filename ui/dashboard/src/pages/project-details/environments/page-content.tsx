@@ -72,7 +72,10 @@ const PageContent = ({
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value={filters.status} className="px-6 pb-6">
+        <TabsContent
+          value={filters.status}
+          className="px-6 pb-6 overflow-y-hidden overflow-x-auto"
+        >
           <CollectionLoader
             onAdd={onAdd}
             filters={filters}
