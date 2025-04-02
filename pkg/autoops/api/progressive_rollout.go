@@ -538,7 +538,6 @@ func (s *AutoOpsService) ListProgressiveRollouts(
 	if err != nil {
 		return nil, err
 	}
-	s.logger.Info("List Progressive Rollouts", zap.Any("req", req))
 	progressiveRollout, totalCount, nextOffset, err := s.listProgressiveRollouts(
 		ctx,
 		req,
