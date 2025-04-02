@@ -56,6 +56,7 @@ const (
 	codeNonRepeatableError      = "NonRepeatableError"
 	codeRepeatableError         = "RepeatableError"
 	codeInvalidURLParams        = "InvalidURLParams"
+	codeEmptyField              = "EmptyField"
 
 	codeAll           = "All"
 	codeDiff          = "Diff"

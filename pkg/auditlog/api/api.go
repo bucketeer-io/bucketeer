@@ -429,15 +429,15 @@ func (s *auditlogService) getAccountMapByEmails(
 	localizer locale.Localizer,
 ) (accountMap map[string]*accountproto.AccountV2, err error) {
 	accountMap = make(map[string]*accountproto.AccountV2)
-	var whereParts []mysql.WherePart
-	if len(emails) > 0 {
-		emailInterfaces := make([]interface{}, len(emails))
-		for _, email := range emails {
-			emailInterfaces = append(emailInterfaces, email)
-		}
-		whereParts = append(whereParts, mysql.NewInFilter("email", emailInterfaces))
-	} else {
+	if len(emails) == 0 {
 		return accountMap, nil
+	}
+	emailInterfaces := make([]interface{}, len(emails))
+	for _, email := range emails {
+		emailInterfaces = append(emailInterfaces, email)
+	}
+	whereParts := []mysql.WherePart{
+		mysql.NewInFilter("email", emailInterfaces),
 	}
 
 	accounts, _, _, err := s.accountStorage.ListAccountsV2(

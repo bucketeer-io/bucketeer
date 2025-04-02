@@ -3750,11 +3750,28 @@ func TestGrcpRegisterEvents(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{Timestamp: time.Now().Unix()})
+	bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{
+		Timestamp: time.Now().Unix(),
+		GoalId:    "goal-id-1",
+		UserId:    "user-id-1",
+		User: &userproto.User{
+			Id: "user-id-1",
+		},
+	})
 	if err != nil {
 		t.Fatal("could not serialize goal event")
 	}
-	bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{Timestamp: time.Now().Unix()})
+	bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
+		Timestamp:   time.Now().Unix(),
+		FeatureId:   "feature-id-1",
+		VariationId: "variation-id-1",
+		User: &userproto.User{
+			Id: "user-id-1",
+		},
+		Reason: &featureproto.Reason{
+			Type: featureproto.Reason_DEFAULT,
+		},
+	})
 	if err != nil {
 		t.Fatal("could not serialize evaluation event")
 	}
@@ -3784,7 +3801,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 					&accountproto.EnvironmentAPIKey{
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
-							Id:       "id-0",
+							Id:       "api-key-id-0",
 							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
@@ -3800,7 +3817,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 					&accountproto.EnvironmentAPIKey{
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
-							Id:       "id-0",
+							Id:       "api-key-id-0",
 							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
@@ -3822,7 +3839,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 					&accountproto.EnvironmentAPIKey{
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
-							Id:       "id-0",
+							Id:       "api-key-id-0",
 							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
@@ -3860,7 +3877,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 					&accountproto.EnvironmentAPIKey{
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
-							Id:       "id-0",
+							Id:       "api-key-id-0",
 							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},

@@ -207,5 +207,6 @@
   "update-now": "Update now",
   "time-updated": "Updated {{time}}",
   "default": "Default",
-  "sort-by": "Sort by: {{sortBy}}"
+  "sort-by": "Sort by: {{sortBy}}",
+  "no-options-found": "No options found"
 }
