@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -247,7 +248,7 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 		ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
 		userID := getUserID(e.UserId, e.User)
 		if err := p.countUser(ucKey, userID); err != nil {
-			if err != nil {
+			if !strings.Contains(err.Error(), "client is closed") {
 				p.logger.Error("Failed to increment the evaluation user event in the Redis",
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
@@ -261,14 +262,16 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 		}
 		ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
 		if err := p.countEvent(ecKey); err != nil {
-			p.logger.Error("Failed to increment the evaluation event in the Redis",
-				zap.Error(err),
-				zap.String("environmentId", environmentId),
-				zap.String("eventId", eventID),
-				zap.String("userId", userID),
-				zap.String("eventCountKey", ecKey),
-				zap.Any("evaluationEvent", e),
-			)
+			if !strings.Contains(err.Error(), "client is closed") {
+				p.logger.Error("Failed to increment the evaluation event in the Redis",
+					zap.Error(err),
+					zap.String("environmentId", environmentId),
+					zap.String("eventId", eventID),
+					zap.String("userId", userID),
+					zap.String("eventCountKey", ecKey),
+					zap.Any("evaluationEvent", e),
+				)
+			}
 			return err
 		}
 		evaluationEventCounter.WithLabelValues(
