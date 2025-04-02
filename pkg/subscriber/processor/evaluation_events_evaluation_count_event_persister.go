@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -35,11 +36,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-)
-
-var (
-	// goredis doesn't export a dedicated sentinel for client close error
-	errRedisClientClosed = errors.New("redis: client is closed")
 )
 
 const (
@@ -252,7 +248,7 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 		ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
 		userID := getUserID(e.UserId, e.User)
 		if err := p.countUser(ucKey, userID); err != nil {
-			if !errors.Is(err, errRedisClientClosed) {
+			if !strings.Contains(err.Error(), "client is closed") {
 				p.logger.Error("Failed to increment the evaluation user event in the Redis",
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
@@ -266,7 +262,7 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 		}
 		ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
 		if err := p.countEvent(ecKey); err != nil {
-			if !errors.Is(err, errRedisClientClosed) {
+			if !strings.Contains(err.Error(), "client is closed") {
 				p.logger.Error("Failed to increment the evaluation event in the Redis",
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
