@@ -33,8 +33,11 @@ const GoalResultItem = ({
   const variationValues = useMemo(
     () =>
       (goalResult?.variationResults?.map(vr => {
-        return experiment.variations.find(item => vr.variationId === item.id)
-          ?.value;
+        const variation = experiment.variations.find(
+          item => vr.variationId === item.id
+        );
+        const { name, value } = variation || {};
+        return name || value || '';
       }) as string[]) || [],
     [goalResult, experiment]
   );
