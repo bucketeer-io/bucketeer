@@ -2131,22 +2131,26 @@ func (s *AutoOpsService) listOpsCounts(
 	autoOpsRuleIDs []string,
 	localizer locale.Localizer,
 ) ([]*autoopsproto.OpsCount, string, error) {
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_id", "=", environmentId),
-	}
+	var infilters []*mysql.InFilter
 	fIDs := make([]interface{}, 0, len(featureIDs))
 	for _, fID := range featureIDs {
 		fIDs = append(fIDs, fID)
 	}
 	if len(fIDs) > 0 {
-		whereParts = append(whereParts, mysql.NewInFilter("feature_id", fIDs))
+		infilters = append(infilters, &mysql.InFilter{
+			Column: "feature_id",
+			Values: fIDs,
+		})
 	}
 	aIDs := make([]interface{}, 0, len(autoOpsRuleIDs))
 	for _, aID := range autoOpsRuleIDs {
 		aIDs = append(aIDs, aID)
 	}
 	if len(aIDs) > 0 {
-		whereParts = append(whereParts, mysql.NewInFilter("auto_ops_rule_id", aIDs))
+		infilters = append(infilters, &mysql.InFilter{
+			Column: "auto_ops_rule_id",
+			Values: aIDs,
+		})
 	}
 	limit := int(pageSize)
 	if cursor == "" {
@@ -2164,12 +2168,25 @@ func (s *AutoOpsService) listOpsCounts(
 		return nil, "", dt.Err()
 
 	}
+	options := &mysql.ListOptions{
+		Limit:  limit,
+		Offset: offset,
+		Filters: []*mysql.FilterV2{
+			{
+				Column:   "environment_id",
+				Operator: mysql.OperatorEqual,
+				Value:    environmentId,
+			},
+		},
+		InFilters:   infilters,
+		NullFilters: nil,
+		JSONFilters: nil,
+		SearchQuery: nil,
+		Orders:      nil,
+	}
 	opsCounts, nextCursor, err := s.opsCountStorage.ListOpsCounts(
 		ctx,
-		whereParts,
-		nil,
-		limit,
-		offset,
+		options,
 	)
 	if err != nil {
 		s.logger.Error(

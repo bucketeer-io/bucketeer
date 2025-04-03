@@ -74,10 +74,7 @@ func TestListOpsCounts(t *testing.T) {
 	defer mockController.Finish()
 	patterns := []struct {
 		setup          func(*opsCountStorage)
-		whereParts     []mysql.WherePart
-		orders         []*mysql.Order
-		limit          int
-		offset         int
+		options        *mysql.ListOptions
 		expected       []*proto.OpsCount
 		expectedCursor int
 		expectedErr    error
@@ -88,10 +85,7 @@ func TestListOpsCounts(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			whereParts:     nil,
-			orders:         nil,
-			limit:          0,
-			offset:         0,
+			options:        nil,
 			expected:       nil,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
@@ -106,14 +100,23 @@ func TestListOpsCounts(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			whereParts: []mysql.WherePart{
-				mysql.NewFilter("num", ">=", 5),
+			options: &mysql.ListOptions{
+				Limit:  10,
+				Offset: 5,
+				Filters: []*mysql.FilterV2{
+					{
+						Column:   "num",
+						Operator: mysql.OperatorGreaterThanOrEqual,
+						Value:    5,
+					},
+				},
+				Orders: []*mysql.Order{
+					{
+						Column:    "id",
+						Direction: mysql.OrderDirectionAsc,
+					},
+				},
 			},
-			orders: []*mysql.Order{
-				mysql.NewOrder("id", mysql.OrderDirectionAsc),
-			},
-			limit:          10,
-			offset:         5,
 			expected:       []*proto.OpsCount{},
 			expectedCursor: 5,
 			expectedErr:    nil,
@@ -126,10 +129,7 @@ func TestListOpsCounts(t *testing.T) {
 		}
 		opsCounts, cursor, err := storage.ListOpsCounts(
 			context.Background(),
-			p.whereParts,
-			p.orders,
-			p.limit,
-			p.offset,
+			p.options,
 		)
 		assert.Equal(t, p.expected, opsCounts)
 		assert.Equal(t, p.expectedCursor, cursor)
