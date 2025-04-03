@@ -16,6 +16,7 @@ package notifier
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -189,11 +190,25 @@ func (n *slackNotifier) createDomainEventAttachment(
 ) (*slack.Attachment, error) {
 	// handle loc if multi-lang is necessary
 	localizedMessage := domainevent.LocalizedMessage(notification.Type, localizer)
+
+	id := notification.EntityId
+
+	// For AutoOpsRule and ProgressiveRollout, the id in the url is the feature_id
+	if notification.EntityType == domainproto.Event_AUTOOPS_RULE ||
+		notification.EntityType == domainproto.Event_PROGRESSIVE_ROLLOUT {
+		var entityData map[string]any
+		if err := json.Unmarshal([]byte(notification.EntityData), &entityData); err == nil {
+			if featureID, ok := entityData["feature_id"].(string); ok && featureID != "" {
+				id = featureID
+			}
+		}
+	}
+
 	url, err := domainevent.URL(
 		notification.EntityType,
 		n.webURL,
 		notification.EnvironmentUrlCode,
-		notification.EntityId,
+		id,
 	)
 	if err != nil {
 		return nil, err
