@@ -407,7 +407,7 @@ func ConstructLimitOffsetSQLString(limit, offset int) string {
 type ListOptions struct {
 	Limit       int
 	Filters     []*FilterV2
-	InFilter    *InFilter
+	InFilters   []*InFilter
 	NullFilters []*NullFilter
 	JSONFilters []*JSONFilter
 	SearchQuery *SearchQuery
@@ -422,8 +422,10 @@ func (lo *ListOptions) CreateWhereParts() []WherePart {
 			whereParts = append(whereParts, f)
 		}
 	}
-	if lo.InFilter != nil {
-		whereParts = append(whereParts, lo.InFilter)
+	if lo.InFilters != nil {
+		for _, f := range lo.InFilters {
+			whereParts = append(whereParts, f)
+		}
 	}
 	if lo.NullFilters != nil {
 		for _, f := range lo.NullFilters {
