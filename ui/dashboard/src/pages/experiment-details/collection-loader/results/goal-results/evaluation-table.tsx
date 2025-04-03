@@ -58,7 +58,7 @@ const EvaluationTable = ({
         );
         return {
           ...item,
-          variationName: variation?.value || variation?.name || ''
+          variationName: variation?.name || variation?.value || ''
         };
       }),
     [goalResult, experiment]
@@ -100,6 +100,7 @@ const EvaluationTable = ({
           return (
             <div key={i} className="flex items-center w-full">
               <ResultCell
+                variationId={item.variationId}
                 isFirstItem={true}
                 value={item?.variationName || ''}
                 minSize={270}
