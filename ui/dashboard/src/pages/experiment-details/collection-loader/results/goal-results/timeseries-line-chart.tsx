@@ -13,9 +13,9 @@ import {
   ChartData,
   ChartOptions
 } from 'chart.js';
-import { COLORS } from 'constants/styles';
 import { formatTooltipLabel, formatXAxisLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
+import { getVariationColor } from 'utils/style';
 
 ChartJS.register(
   LineElement,
@@ -47,7 +47,7 @@ const TimeseriesLineChart = memo(
     const chartData: ChartData<'line', (string | number)[], Date> = {
       labels,
       datasets: dataLabels.map((e, i) => {
-        const color = COLORS[i % COLORS.length];
+        const color = getVariationColor(i);
         return {
           label: e,
           data: [...data[i]],

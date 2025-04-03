@@ -162,6 +162,7 @@ const ConversionRateTable = ({
                 isFirstItem={true}
                 value={item?.variationName || ''}
                 minSize={270}
+                currentIndex={i}
               />
               <ResultCell
                 value={

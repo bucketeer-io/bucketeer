@@ -15,9 +15,9 @@ import {
   Point,
   ChartDataset
 } from 'chart.js';
-import { COLORS } from 'constants/styles';
 import { formatTooltipLabel, formatXAxisLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
+import { getVariationColor } from 'utils/style';
 
 ChartJS.register(
   LineElement,
@@ -53,7 +53,7 @@ export const TimeseriesAreaLineChart = memo(
     const datasets: ChartDataset<'line'>[] = [];
 
     dataLabels.forEach((l, i) => {
-      const color = COLORS[i % COLORS.length];
+      const color = getVariationColor(i);
       const hexColor = hexToRgba(color, 0.2);
       datasets.push({
         label: undefined,

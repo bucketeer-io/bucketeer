@@ -1,14 +1,24 @@
+import { CSSProperties } from 'react';
 import { Experiment } from '@types';
-import { cn } from 'utils/style';
+import { cn, getVariationColor } from 'utils/style';
 import { IconInfo } from '@icons';
 import Icon from 'components/icon';
 
-export const Polygon = ({ className }: { className: string }) => (
+export const Polygon = ({
+  className,
+  style
+}: {
+  className?: string;
+  style?: CSSProperties;
+}) => (
   <div
     className={cn(
-      'flex-center size-[14px] border rounded-sm rotate-45',
+      'flex-center size-[14px] border border-white rounded-sm rotate-45',
       className
     )}
+    style={{
+      ...style
+    }}
   />
 );
 
@@ -17,8 +27,16 @@ const HeaderDetails = ({ experiment }: { experiment: Experiment }) => {
     <div className="flex flex-col w-full gap-y-4 mt-4">
       <div className="flex items-center gap-x-1.5">
         <div className="flex items-center">
-          <Polygon className="bg-accent-blue-500 border-transparent size-3" />
-          <Polygon className="bg-accent-pink-500 border-white -ml-0.5 relative z-10" />
+          {experiment.variations?.map((_, index) => (
+            <Polygon
+              key={index}
+              className="size-3"
+              style={{
+                background: getVariationColor(index),
+                zIndex: index
+              }}
+            />
+          ))}
         </div>
         <p className="typo-para-small text-gray-700">
           {experiment.variations?.length} Variations
