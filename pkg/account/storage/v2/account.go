@@ -37,6 +37,8 @@ var (
 	selectAccountV2SQL string
 	//go:embed sql/account_v2/select_account_v2_by_environment_id.sql
 	selectAccountV2ByEnvironmentIDSQL string
+	//go:embed sql/account_v2/select_accounts_v2_by_environment_id.sql
+	selectAccountsV2ByEnvironmentIDSQL string
 	//go:embed sql/account_v2/select_accounts_v2.sql
 	selectAccountsV2SQL string
 	//go:embed sql/account_v2/count_accounts_v2.sql
@@ -209,6 +211,67 @@ func (s *accountStorage) GetAccountV2ByEnvironmentID(
 	}
 	account.OrganizationRole = proto.AccountV2_Role_Organization(organizationRole)
 	return &domain.AccountV2{AccountV2: &account}, nil
+}
+
+func (s *accountStorage) GetAccountsV2ByEnvironmentID(
+	ctx context.Context,
+	emails []string,
+	environmentID string,
+) ([]*proto.AccountV2, error) {
+	rows, err := s.qe.QueryContext(
+		ctx,
+		selectAccountsV2ByEnvironmentIDSQL,
+		emails,
+		environmentID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	accounts := make([]*proto.AccountV2, 0)
+	for rows.Next() {
+		account := &proto.AccountV2{}
+		organization := environmentproto.Organization{}
+		var organizationRole int32
+		err := rows.Scan(
+			&account.Email,
+			&account.Name,
+			&account.FirstName,
+			&account.LastName,
+			&account.Language,
+			&account.AvatarImageUrl,
+			&account.AvatarFileType,
+			&account.AvatarImage,
+			&mysql.JSONObject{Val: &account.Tags},
+			&account.OrganizationId,
+			&organizationRole,
+			&mysql.JSONObject{Val: &account.EnvironmentRoles},
+			&account.Disabled,
+			&account.CreatedAt,
+			&account.UpdatedAt,
+			&account.LastSeen,
+			&mysql.JSONObject{Val: &account.SearchFilters},
+			&organization.Id,
+			&organization.Name,
+			&organization.UrlCode,
+			&organization.Description,
+			&organization.Disabled,
+			&organization.Archived,
+			&organization.Trial,
+			&organization.SystemAdmin,
+			&organization.CreatedAt,
+			&organization.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		account.OrganizationRole = proto.AccountV2_Role_Organization(organizationRole)
+		accounts = append(accounts, account)
+	}
+	if rows.Err() != nil {
+		return nil, err
+	}
+	return accounts, nil
 }
 
 func (s *accountStorage) GetAccountsWithOrganization(

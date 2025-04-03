@@ -186,7 +186,7 @@ func (s *auditlogService) ListAuditLogs(
 		editorEmails = append(editorEmails, auditlog.Editor.Email)
 	}
 	editorEmails = deDuplicateStrings(editorEmails)
-	accounts, err := s.getAccountMapByEmails(ctx, editorEmails, localizer)
+	accounts, err := s.getAccountMapByEmails(ctx, editorEmails, req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -428,26 +428,18 @@ func (s *auditlogService) ListFeatureHistory(
 func (s *auditlogService) getAccountMapByEmails(
 	ctx context.Context,
 	emails []string,
+	environmentID string,
 	localizer locale.Localizer,
 ) (accountMap map[string]*accountproto.AccountV2, err error) {
 	accountMap = make(map[string]*accountproto.AccountV2)
 	if len(emails) == 0 {
 		return accountMap, nil
 	}
-	emailInterfaces := make([]interface{}, len(emails))
-	for _, email := range emails {
-		emailInterfaces = append(emailInterfaces, email)
-	}
-	whereParts := []mysql.WherePart{
-		mysql.NewInFilter("email", emailInterfaces),
-	}
 
-	accounts, _, _, err := s.accountStorage.ListAccountsV2(
+	accounts, err := s.accountStorage.GetAccountsV2ByEnvironmentID(
 		ctx,
-		whereParts,
-		nil,
-		0,
-		0,
+		emails,
+		environmentID,
 	)
 	if err != nil {
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
