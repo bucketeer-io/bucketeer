@@ -193,9 +193,11 @@ func (s *auditlogService) ListAuditLogs(
 
 	for i := range auditlogs {
 		if account, ok := accounts[auditlogs[i].Editor.Email]; ok {
-			auditlogs[i].Editor.AvatarImageUrl = account.AvatarImageUrl
+			auditlogs[i].Editor.AvatarImage = account.AvatarImage
+			auditlogs[i].Editor.AvatarFileType = account.AvatarFileType
 			if auditlogs[i].Editor.PublicApiEditor != nil {
-				auditlogs[i].Editor.PublicApiEditor.AvatarImageUrl = account.AvatarImageUrl
+				auditlogs[i].Editor.PublicApiEditor.AvatarImage = account.AvatarImage
+				auditlogs[i].Editor.PublicApiEditor.AvatarFileType = account.AvatarFileType
 			}
 		}
 	}

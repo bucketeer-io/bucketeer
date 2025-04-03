@@ -8,6 +8,7 @@ import { isNotEmpty } from 'utils/data-type';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import PageLayout from 'elements/page-layout';
+import TableListContent from 'elements/table-list-content';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import GridViewCollection from '../collection-layout/grid-view-collection';
 import { FlagActionType, FlagFilters } from '../types';
@@ -118,7 +119,7 @@ const CollectionLoader = ({
   ) : isError ? (
     <PageLayout.ErrorState onRetry={refetch} />
   ) : (
-    <div className="flex flex-col gap-y-6">
+    <TableListContent className="gap-y-6 min-w-[904px]">
       <GridViewCollection
         filterTags={filters?.tags}
         autoOpsRules={autoOpsRules}
@@ -137,7 +138,7 @@ const CollectionLoader = ({
           onChange={page => setFilters({ page })}
         />
       )}
-    </div>
+    </TableListContent>
   );
 };
 

@@ -16,7 +16,7 @@ import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
 import ExpandableTag from 'elements/expandable-tag';
-import TruncationWithTooltip from 'elements/truncation-with-tooltip';
+import NameWithTooltip from 'elements/name-with-tooltip';
 import { MemberActionsType } from '../types';
 
 export const useColumns = ({
@@ -41,38 +41,56 @@ export const useColumns = ({
         const account = row.original;
         const isPendingInvite = Number(account.lastSeen) < 1;
 
+        const { name, email, firstName, lastName, avatarImageUrl } =
+          account || {};
+
+        const accountName = joinName(firstName, lastName) || name;
+
         return (
           <div className="flex gap-2">
             <AvatarImage
-              image={account?.avatarImageUrl || primaryAvatar}
+              image={avatarImageUrl || primaryAvatar}
               alt="member-avatar"
             />
             <div className="flex flex-col gap-0.5">
               {!isPendingInvite && (
-                <button
-                  onClick={() =>
-                    onActions(account, isOrganizationAdmin ? 'EDIT' : 'DETAILS')
+                <NameWithTooltip
+                  id={email}
+                  content={
+                    <NameWithTooltip.Content content={accountName} id={email} />
                   }
-                  className="underline text-primary-500 typo-para-medium text-left"
-                >
-                  {joinName(account.firstName, account.lastName) ||
-                    account.name}
-                </button>
+                  trigger={
+                    <NameWithTooltip.Trigger
+                      id={email}
+                      name={accountName}
+                      maxLines={1}
+                      className="min-w-[300px]"
+                      onClick={() =>
+                        onActions(
+                          account,
+                          isOrganizationAdmin ? 'EDIT' : 'DETAILS'
+                        )
+                      }
+                    />
+                  }
+                  maxLines={1}
+                />
               )}
-              <TruncationWithTooltip
-                content={account.email}
-                maxSize={320}
-                elementId={`email-${account.email}`}
-                className="w-fit"
-                additionalClassName={['line-clamp-1', 'break-all']}
-              >
-                <div
-                  id={`email-${account.email}`}
-                  className="typo-para-medium text-gray-700"
-                >
-                  {account.email}
-                </div>
-              </TruncationWithTooltip>
+              <NameWithTooltip
+                id={email}
+                content={<NameWithTooltip.Content content={email} id={email} />}
+                trigger={
+                  <NameWithTooltip.Trigger
+                    id={email}
+                    name={email}
+                    maxLines={1}
+                    className="min-w-[300px]"
+                    haveAction={false}
+                  />
+                }
+                maxLines={1}
+              />
+
               {isPendingInvite && (
                 <div className="py-[3px] px-2 w-fit rounded bg-accent-orange-50 typo-para-small text-accent-orange-500">
                   {`Pending invite`}

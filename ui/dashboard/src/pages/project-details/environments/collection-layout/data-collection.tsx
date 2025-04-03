@@ -10,6 +10,7 @@ import { useFormatDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
 import { Popover } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
+import NameWithTooltip from 'elements/name-with-tooltip';
 import { EnvironmentActionsType } from '../types';
 
 export const useColumns = ({
@@ -28,13 +29,23 @@ export const useColumns = ({
       size: 350,
       cell: ({ row }) => {
         const environment = row.original;
+        const { id, name } = environment;
+
         return (
-          <button
-            onClick={() => onActions(environment, 'EDIT')}
-            className="underline text-primary-500 break-all typo-para-medium text-left"
-          >
-            {environment.name}
-          </button>
+          <NameWithTooltip
+            id={id}
+            content={<NameWithTooltip.Content content={name} id={id} />}
+            trigger={
+              <NameWithTooltip.Trigger
+                id={id}
+                name={name}
+                maxLines={1}
+                className="min-w-[300px]"
+                onClick={() => onActions(environment, 'EDIT')}
+              />
+            }
+            maxLines={1}
+          />
         );
       }
     },

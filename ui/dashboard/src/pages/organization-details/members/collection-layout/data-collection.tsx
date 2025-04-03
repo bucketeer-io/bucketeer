@@ -10,6 +10,7 @@ import { useFetchTags } from 'pages/members/collection-loader';
 import { AvatarImage } from 'components/avatar';
 import Icon from 'components/icon';
 import ExpandableTag from 'elements/expandable-tag';
+import NameWithTooltip from 'elements/name-with-tooltip';
 
 export const useColumns = ({
   onActions
@@ -36,25 +37,53 @@ export const useColumns = ({
         const account = row.original;
         const isPendingInvite = Number(account.lastSeen) < 1;
 
+        const { avatarImageUrl, firstName, lastName, name, email } =
+          account || {};
+
+        const accountName = joinName(firstName, lastName) || name;
+
         return (
           <div className="flex gap-2">
             <AvatarImage
-              image={account?.avatarImageUrl || primaryAvatar}
+              image={avatarImageUrl || primaryAvatar}
               alt="member-avatar"
             />
             <div className="flex flex-col gap-0.5">
               {!isPendingInvite && (
-                <button
-                  onClick={() => onActions(account)}
-                  className="underline text-primary-500 typo-para-medium text-left"
-                >
-                  {joinName(account.firstName, account.lastName) ||
-                    account.name}
-                </button>
+                <NameWithTooltip
+                  id={`pending_${email}`}
+                  content={
+                    <NameWithTooltip.Content
+                      content={accountName}
+                      id={`pending_${email}`}
+                    />
+                  }
+                  trigger={
+                    <NameWithTooltip.Trigger
+                      id={`pending_${email}`}
+                      name={accountName}
+                      maxLines={1}
+                      className="min-w-[300px]"
+                      onClick={() => onActions(account)}
+                    />
+                  }
+                  maxLines={1}
+                />
               )}
-              <div className="typo-para-medium text-gray-700">
-                {account.email}
-              </div>
+
+              <NameWithTooltip
+                id={email}
+                content={<NameWithTooltip.Content content={name} id={email} />}
+                trigger={
+                  <NameWithTooltip.Trigger
+                    id={email}
+                    name={email}
+                    maxLines={1}
+                    className="text-gray-700 no-underline cursor-default min-w-[300px]"
+                  />
+                }
+                maxLines={1}
+              />
               {isPendingInvite && (
                 <div className="py-[3px] px-2 w-fit rounded bg-accent-orange-50 typo-para-small text-accent-orange-500">
                   {`Pending invite`}

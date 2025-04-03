@@ -279,14 +279,16 @@ message Editor {
     string token = 1;
     string maintainer = 2;
     string name = 3;
-    string avatar_image_url = 4;
+    bytes avatar_image = 4;
+    string avatar_file_type = 5;
   }
   string email = 1;
   reserved 2;  // bucketeer.account.Account.Role role = 2 [deprecated = true];
   bool is_admin = 3;
   string name = 4;
   PublicAPIEditor public_api_editor = 5;
-  string avatar_image_url = 6;
+  bytes avatar_image = 6;
+  string avatar_file_type = 7;
 }
 
 message Options {

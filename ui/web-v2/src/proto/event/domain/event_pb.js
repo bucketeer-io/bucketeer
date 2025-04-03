@@ -6490,7 +6490,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        avatarImageUrl: jspb.Message.getFieldWithDefault(msg, 6, '')
+        avatarImage: msg.getAvatarImage_asB64(),
+        avatarFileType: jspb.Message.getFieldWithDefault(msg, 7, '')
       };
 
     if (includeInstance) {
@@ -6553,8 +6554,12 @@ proto.bucketeer.event.domain.Editor.deserializeBinaryFromReader = function (
         msg.setPublicApiEditor(value);
         break;
       case 6:
+        var value = /** @type {!Uint8Array} */ (reader.readBytes());
+        msg.setAvatarImage(value);
+        break;
+      case 7:
         var value = /** @type {string} */ (reader.readString());
-        msg.setAvatarImageUrl(value);
+        msg.setAvatarFileType(value);
         break;
       default:
         reader.skipField();
@@ -6607,9 +6612,13 @@ proto.bucketeer.event.domain.Editor.serializeBinaryToWriter = function (
         .serializeBinaryToWriter
     );
   }
-  f = message.getAvatarImageUrl();
+  f = message.getAvatarImage_asU8();
   if (f.length > 0) {
-    writer.writeString(6, f);
+    writer.writeBytes(6, f);
+  }
+  f = message.getAvatarFileType();
+  if (f.length > 0) {
+    writer.writeString(7, f);
   }
 };
 
@@ -6652,7 +6661,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         token: jspb.Message.getFieldWithDefault(msg, 1, ''),
         maintainer: jspb.Message.getFieldWithDefault(msg, 2, ''),
         name: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        avatarImageUrl: jspb.Message.getFieldWithDefault(msg, 4, '')
+        avatarImage: msg.getAvatarImage_asB64(),
+        avatarFileType: jspb.Message.getFieldWithDefault(msg, 5, '')
       };
 
     if (includeInstance) {
@@ -6705,8 +6715,12 @@ proto.bucketeer.event.domain.Editor.PublicAPIEditor.deserializeBinaryFromReader 
           msg.setName(value);
           break;
         case 4:
+          var value = /** @type {!Uint8Array} */ (reader.readBytes());
+          msg.setAvatarImage(value);
+          break;
+        case 5:
           var value = /** @type {string} */ (reader.readString());
-          msg.setAvatarImageUrl(value);
+          msg.setAvatarFileType(value);
           break;
         default:
           reader.skipField();
@@ -6752,9 +6766,13 @@ proto.bucketeer.event.domain.Editor.PublicAPIEditor.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(3, f);
     }
-    f = message.getAvatarImageUrl();
+    f = message.getAvatarImage_asU8();
     if (f.length > 0) {
-      writer.writeString(4, f);
+      writer.writeBytes(4, f);
+    }
+    f = message.getAvatarFileType();
+    if (f.length > 0) {
+      writer.writeString(5, f);
     }
   };
 
@@ -6819,13 +6837,59 @@ proto.bucketeer.event.domain.Editor.PublicAPIEditor.prototype.setName =
   };
 
 /**
- * optional string avatar_image_url = 4;
+ * optional bytes avatar_image = 4;
+ * @return {!(string|Uint8Array)}
+ */
+proto.bucketeer.event.domain.Editor.PublicAPIEditor.prototype.getAvatarImage =
+  function () {
+    return /** @type {!(string|Uint8Array)} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * optional bytes avatar_image = 4;
+ * This is a type-conversion wrapper around `getAvatarImage()`
  * @return {string}
  */
-proto.bucketeer.event.domain.Editor.PublicAPIEditor.prototype.getAvatarImageUrl =
+proto.bucketeer.event.domain.Editor.PublicAPIEditor.prototype.getAvatarImage_asB64 =
   function () {
     return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 4, '')
+      jspb.Message.bytesAsB64(this.getAvatarImage())
+    );
+  };
+
+/**
+ * optional bytes avatar_image = 4;
+ * Note that Uint8Array is not supported on all browsers.
+ * @see http://caniuse.com/Uint8Array
+ * This is a type-conversion wrapper around `getAvatarImage()`
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.event.domain.Editor.PublicAPIEditor.prototype.getAvatarImage_asU8 =
+  function () {
+    return /** @type {!Uint8Array} */ (
+      jspb.Message.bytesAsU8(this.getAvatarImage())
+    );
+  };
+
+/**
+ * @param {!(string|Uint8Array)} value
+ * @return {!proto.bucketeer.event.domain.Editor.PublicAPIEditor} returns this
+ */
+proto.bucketeer.event.domain.Editor.PublicAPIEditor.prototype.setAvatarImage =
+  function (value) {
+    return jspb.Message.setProto3BytesField(this, 4, value);
+  };
+
+/**
+ * optional string avatar_file_type = 5;
+ * @return {string}
+ */
+proto.bucketeer.event.domain.Editor.PublicAPIEditor.prototype.getAvatarFileType =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 5, '')
     );
   };
 
@@ -6833,9 +6897,9 @@ proto.bucketeer.event.domain.Editor.PublicAPIEditor.prototype.getAvatarImageUrl 
  * @param {string} value
  * @return {!proto.bucketeer.event.domain.Editor.PublicAPIEditor} returns this
  */
-proto.bucketeer.event.domain.Editor.PublicAPIEditor.prototype.setAvatarImageUrl =
+proto.bucketeer.event.domain.Editor.PublicAPIEditor.prototype.setAvatarFileType =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 4, value);
+    return jspb.Message.setProto3StringField(this, 5, value);
   };
 
 /**
@@ -6930,21 +6994,67 @@ proto.bucketeer.event.domain.Editor.prototype.hasPublicApiEditor = function () {
 };
 
 /**
- * optional string avatar_image_url = 6;
+ * optional bytes avatar_image = 6;
+ * @return {!(string|Uint8Array)}
+ */
+proto.bucketeer.event.domain.Editor.prototype.getAvatarImage = function () {
+  return /** @type {!(string|Uint8Array)} */ (
+    jspb.Message.getFieldWithDefault(this, 6, '')
+  );
+};
+
+/**
+ * optional bytes avatar_image = 6;
+ * This is a type-conversion wrapper around `getAvatarImage()`
  * @return {string}
  */
-proto.bucketeer.event.domain.Editor.prototype.getAvatarImageUrl = function () {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ''));
+proto.bucketeer.event.domain.Editor.prototype.getAvatarImage_asB64 =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.bytesAsB64(this.getAvatarImage())
+    );
+  };
+
+/**
+ * optional bytes avatar_image = 6;
+ * Note that Uint8Array is not supported on all browsers.
+ * @see http://caniuse.com/Uint8Array
+ * This is a type-conversion wrapper around `getAvatarImage()`
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.event.domain.Editor.prototype.getAvatarImage_asU8 =
+  function () {
+    return /** @type {!Uint8Array} */ (
+      jspb.Message.bytesAsU8(this.getAvatarImage())
+    );
+  };
+
+/**
+ * @param {!(string|Uint8Array)} value
+ * @return {!proto.bucketeer.event.domain.Editor} returns this
+ */
+proto.bucketeer.event.domain.Editor.prototype.setAvatarImage = function (
+  value
+) {
+  return jspb.Message.setProto3BytesField(this, 6, value);
+};
+
+/**
+ * optional string avatar_file_type = 7;
+ * @return {string}
+ */
+proto.bucketeer.event.domain.Editor.prototype.getAvatarFileType = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ''));
 };
 
 /**
  * @param {string} value
  * @return {!proto.bucketeer.event.domain.Editor} returns this
  */
-proto.bucketeer.event.domain.Editor.prototype.setAvatarImageUrl = function (
+proto.bucketeer.event.domain.Editor.prototype.setAvatarFileType = function (
   value
 ) {
-  return jspb.Message.setProto3StringField(this, 6, value);
+  return jspb.Message.setProto3StringField(this, 7, value);
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

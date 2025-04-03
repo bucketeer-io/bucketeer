@@ -6,6 +6,7 @@ import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
+import TableListContent from 'elements/table-list-content';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { MemberActionsType, MembersFilters } from '../types';
@@ -71,7 +72,7 @@ const CollectionLoader = ({
   return isError ? (
     <PageLayout.ErrorState onRetry={refetch} />
   ) : (
-    <>
+    <TableListContent className="min-w-[1000px]">
       <DataTable
         isLoading={isLoading || isLoadingTags}
         data={accounts}
@@ -86,7 +87,7 @@ const CollectionLoader = ({
           onChange={page => setFilters({ page })}
         />
       )}
-    </>
+    </TableListContent>
   );
 };
 

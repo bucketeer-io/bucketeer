@@ -20148,7 +20148,12 @@
               },
               {
                 "id": 6,
-                "name": "avatar_image_url",
+                "name": "avatar_image",
+                "type": "bytes"
+              },
+              {
+                "id": 7,
+                "name": "avatar_file_type",
                 "type": "string"
               }
             ],
@@ -20176,7 +20181,12 @@
                   },
                   {
                     "id": 4,
-                    "name": "avatar_image_url",
+                    "name": "avatar_image",
+                    "type": "bytes"
+                  },
+                  {
+                    "id": 5,
+                    "name": "avatar_file_type",
                     "type": "string"
                   }
                 ]

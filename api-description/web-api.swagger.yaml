@@ -7819,7 +7819,10 @@ definitions:
         type: string
       name:
         type: string
-      avatarImageUrl:
+      avatarImage:
+        type: string
+        format: byte
+      avatarFileType:
         type: string
   ExperimentGoalReference:
     type: object
@@ -9686,7 +9689,10 @@ definitions:
         type: string
       publicApiEditor:
         $ref: '#/definitions/EditorPublicAPIEditor'
-      avatarImageUrl:
+      avatarImage:
+        type: string
+        format: byte
+      avatarFileType:
         type: string
   domainEventEntityType:
     type: string
