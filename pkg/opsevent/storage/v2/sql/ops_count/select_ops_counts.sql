@@ -1,0 +1,10 @@
+SELECT
+	id,
+	auto_ops_rule_id,
+	clause_id,
+	updated_at,
+	ops_event_count,
+	evaluation_count,
+	feature_id
+FROM
+	ops_count
