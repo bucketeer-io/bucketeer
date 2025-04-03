@@ -61,7 +61,7 @@ const ConversionRateTable = ({
         );
         return {
           ...item,
-          variationName: variation?.value || variation?.name || ''
+          variationName: variation?.name || variation?.value || ''
         };
       }),
     [goalResult, experiment]
@@ -158,6 +158,7 @@ const ConversionRateTable = ({
           return (
             <div key={i} className="flex items-center w-full">
               <ResultCell
+                variationId={item.variationId}
                 isFirstItem={true}
                 value={item?.variationName || ''}
                 minSize={270}
