@@ -44,9 +44,9 @@ func (m *MockOpsCountStorage) EXPECT() *MockOpsCountStorageMockRecorder {
 }
 
 // ListOpsCounts mocks base method.
-func (m *MockOpsCountStorage) ListOpsCounts(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*autoops.OpsCount, int, error) {
+func (m *MockOpsCountStorage) ListOpsCounts(ctx context.Context, options *mysql.ListOptions) ([]*autoops.OpsCount, int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListOpsCounts", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListOpsCounts", ctx, options)
 	ret0, _ := ret[0].([]*autoops.OpsCount)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(error)
@@ -54,9 +54,9 @@ func (m *MockOpsCountStorage) ListOpsCounts(ctx context.Context, whereParts []my
 }
 
 // ListOpsCounts indicates an expected call of ListOpsCounts.
-func (mr *MockOpsCountStorageMockRecorder) ListOpsCounts(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockOpsCountStorageMockRecorder) ListOpsCounts(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOpsCounts", reflect.TypeOf((*MockOpsCountStorage)(nil).ListOpsCounts), ctx, whereParts, orders, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOpsCounts", reflect.TypeOf((*MockOpsCountStorage)(nil).ListOpsCounts), ctx, options)
 }
 
 // UpsertOpsCount mocks base method.
