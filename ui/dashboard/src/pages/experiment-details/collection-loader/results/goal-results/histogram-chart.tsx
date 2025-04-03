@@ -11,8 +11,8 @@ import {
   Tooltip,
   Filler
 } from 'chart.js';
-import { COLORS } from 'constants/styles';
 import { formatLongDateTime } from 'utils/date-time';
+import { getVariationColor } from 'utils/style';
 
 ChartJS.register(
   BarElement,
@@ -40,7 +40,7 @@ export const HistogramChart = memo(
         return {
           label: e,
           data: hist[i] || [],
-          backgroundColor: COLORS[i % COLORS.length]
+          backgroundColor: getVariationColor(i)
         };
       })
     };
