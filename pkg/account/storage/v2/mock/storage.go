@@ -145,6 +145,21 @@ func (mr *MockAccountStorageMockRecorder) GetAccountV2ByEnvironmentID(ctx, email
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountV2ByEnvironmentID", reflect.TypeOf((*MockAccountStorage)(nil).GetAccountV2ByEnvironmentID), ctx, email, environmentID)
 }
 
+// GetAccountsV2ByEnvironmentID mocks base method.
+func (m *MockAccountStorage) GetAccountsV2ByEnvironmentID(ctx context.Context, emails []string, environmentID string) ([]*account.AccountV2, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountsV2ByEnvironmentID", ctx, emails, environmentID)
+	ret0, _ := ret[0].([]*account.AccountV2)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountsV2ByEnvironmentID indicates an expected call of GetAccountsV2ByEnvironmentID.
+func (mr *MockAccountStorageMockRecorder) GetAccountsV2ByEnvironmentID(ctx, emails, environmentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountsV2ByEnvironmentID", reflect.TypeOf((*MockAccountStorage)(nil).GetAccountsV2ByEnvironmentID), ctx, emails, environmentID)
+}
+
 // GetAccountsWithOrganization mocks base method.
 func (m *MockAccountStorage) GetAccountsWithOrganization(ctx context.Context, email string) ([]*domain.AccountWithOrganization, error) {
 	m.ctrl.T.Helper()

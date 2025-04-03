@@ -218,11 +218,26 @@ func (s *accountStorage) GetAccountsV2ByEnvironmentID(
 	emails []string,
 	environmentID string,
 ) ([]*proto.AccountV2, error) {
+	if len(emails) == 0 {
+		return nil, nil
+	}
+	emailsArg := make([]interface{}, len(emails))
+	for i, email := range emails {
+		emailsArg[i] = email
+	}
+	whereParts := []mysql.WherePart{
+		mysql.NewInFilter("a.email", emailsArg),
+		mysql.NewFilter("e.id", "=", environmentID),
+	}
+	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
+	query := fmt.Sprintf(
+		selectAccountsV2ByEnvironmentIDSQL,
+		whereSQL,
+	)
 	rows, err := s.qe.QueryContext(
 		ctx,
-		selectAccountsV2ByEnvironmentIDSQL,
-		emails,
-		environmentID,
+		query,
+		whereArgs...,
 	)
 	if err != nil {
 		return nil, err
@@ -231,7 +246,6 @@ func (s *accountStorage) GetAccountsV2ByEnvironmentID(
 	accounts := make([]*proto.AccountV2, 0)
 	for rows.Next() {
 		account := &proto.AccountV2{}
-		organization := environmentproto.Organization{}
 		var organizationRole int32
 		err := rows.Scan(
 			&account.Email,
@@ -251,16 +265,6 @@ func (s *accountStorage) GetAccountsV2ByEnvironmentID(
 			&account.UpdatedAt,
 			&account.LastSeen,
 			&mysql.JSONObject{Val: &account.SearchFilters},
-			&organization.Id,
-			&organization.Name,
-			&organization.UrlCode,
-			&organization.Description,
-			&organization.Disabled,
-			&organization.Archived,
-			&organization.Trial,
-			&organization.SystemAdmin,
-			&organization.CreatedAt,
-			&organization.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err

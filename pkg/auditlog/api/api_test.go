@@ -120,9 +120,9 @@ func TestListAuditLogsMySQL(t *testing.T) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
-				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().ListAccountsV2(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return([]*accountproto.AccountV2{}, 0, int64(0), nil)
+				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAccountsV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.AccountV2{}, nil)
 			},
 			input:    &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
 			expected: &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
@@ -138,9 +138,9 @@ func TestListAuditLogsMySQL(t *testing.T) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
-				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().ListAccountsV2(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return([]*accountproto.AccountV2{}, 0, int64(0), nil)
+				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAccountsV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.AccountV2{}, nil)
 			},
 			input:    &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
 			expected: &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},

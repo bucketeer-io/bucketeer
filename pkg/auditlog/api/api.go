@@ -442,6 +442,14 @@ func (s *auditlogService) getAccountMapByEmails(
 		environmentID,
 	)
 	if err != nil {
+		s.logger.Error(
+			"Failed to list feature history",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Strings("emails", emails),
+				zap.String("environmentId", environmentID),
+			)...,
+		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
