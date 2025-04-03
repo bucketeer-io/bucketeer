@@ -44,7 +44,7 @@ TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 const Tooltip = forwardRef(
   (
     {
-      delayDuration = 700,
+      delayDuration = 200,
       align = 'center',
       hidden,
       content,
