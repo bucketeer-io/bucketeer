@@ -1,4 +1,4 @@
-import { cn } from 'utils/style';
+import { cn, getVariationColor } from 'utils/style';
 import { IconInfo } from '@icons';
 import { Polygon } from 'pages/experiment-details/elements/header-details';
 import Icon from 'components/icon';
@@ -56,13 +56,15 @@ export const ResultCell = ({
   value,
   minSize,
   isFirstItem,
-  className
+  className,
+  currentIndex
 }: {
   variationId?: string;
   value: string | number | boolean;
   minSize: number;
   isFirstItem?: boolean;
   className?: string;
+  currentIndex?: number;
 }) => {
   const isBooleanValue = ['true', 'false'].includes(value as string);
   const id = variationId || '';
@@ -75,12 +77,13 @@ export const ResultCell = ({
       )}
       style={{ minWidth: minSize }}
     >
-      {isFirstItem && isBooleanValue && (
+      {isFirstItem && typeof currentIndex === 'number' && (
         <Polygon
-          className={cn('border-none size-3', {
-            'bg-accent-blue-500': value === 'true',
-            'bg-accent-pink-500': value === 'false'
-          })}
+          className="border-none size-3"
+          style={{
+            background: getVariationColor(currentIndex),
+            zIndex: currentIndex
+          }}
         />
       )}
 

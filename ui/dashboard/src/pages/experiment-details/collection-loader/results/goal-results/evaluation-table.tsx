@@ -100,6 +100,7 @@ const EvaluationTable = ({
           return (
             <div key={i} className="flex items-center w-full">
               <ResultCell
+                currentIndex={i}
                 variationId={item.variationId}
                 isFirstItem={true}
                 value={item?.variationName || ''}
