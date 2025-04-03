@@ -191,7 +191,7 @@ func (n *slackNotifier) createDomainEventAttachment(
 	// handle loc if multi-lang is necessary
 	localizedMessage := domainevent.LocalizedMessage(notification.Type, localizer)
 
-	ID := notification.EntityId
+	id := notification.EntityId
 
 	// For AutoOpsRule and ProgressiveRollout, the id in the url is the feature_id
 	if notification.EntityType == domainproto.Event_AUTOOPS_RULE ||
@@ -199,7 +199,7 @@ func (n *slackNotifier) createDomainEventAttachment(
 		var entityData map[string]any
 		if err := json.Unmarshal([]byte(notification.EntityData), &entityData); err == nil {
 			if featureID, ok := entityData["feature_id"].(string); ok && featureID != "" {
-				ID = featureID
+				id = featureID
 			}
 		}
 	}
@@ -208,7 +208,7 @@ func (n *slackNotifier) createDomainEventAttachment(
 		notification.EntityType,
 		n.webURL,
 		notification.EnvironmentUrlCode,
-		ID,
+		id,
 	)
 	if err != nil {
 		return nil, err
