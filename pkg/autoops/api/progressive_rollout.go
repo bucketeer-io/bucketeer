@@ -980,13 +980,13 @@ func (s *AutoOpsService) listProgressiveRollouts(
 		}
 		return nil, 0, 0, dt.Err()
 	}
-	var inFilter *mysql.InFilter = nil
+	var inFilters []*mysql.InFilter = nil
 	if len(req.FeatureIds) > 0 {
 		fIDs := s.convToInterfaceSlice(req.FeatureIds)
-		inFilter = &mysql.InFilter{
+		inFilters = append(inFilters, &mysql.InFilter{
 			Column: "feature_id",
 			Values: fIDs,
-		}
+		})
 	}
 	orders, err := s.newListProgressiveRolloutsOrdersMySQL(
 		req.OrderBy,
@@ -1012,7 +1012,7 @@ func (s *AutoOpsService) listProgressiveRollouts(
 	listOptions := &mysql.ListOptions{
 		Filters:     filters,
 		Orders:      orders,
-		InFilter:    inFilter,
+		InFilters:   inFilters,
 		NullFilters: nil,
 		JSONFilters: nil,
 		SearchQuery: nil,

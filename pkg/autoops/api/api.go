@@ -1527,12 +1527,12 @@ func (s *AutoOpsService) listAutoOpsRules(
 	for _, fID := range featureIds {
 		fIDs = append(fIDs, fID)
 	}
-	var infilter *mysql.InFilter
+	var inFilters []*mysql.InFilter
 	if len(fIDs) > 0 {
-		infilter = &mysql.InFilter{
+		inFilters = append(inFilters, &mysql.InFilter{
 			Column: "aor.feature_id",
 			Values: fIDs,
-		}
+		})
 	}
 	limit := int(pageSize)
 	if cursor == "" {
@@ -1554,7 +1554,7 @@ func (s *AutoOpsService) listAutoOpsRules(
 		Limit:       limit,
 		Offset:      offset,
 		Filters:     filters,
-		InFilter:    infilter,
+		InFilters:   inFilters,
 		NullFilters: nil,
 		JSONFilters: nil,
 		SearchQuery: nil,

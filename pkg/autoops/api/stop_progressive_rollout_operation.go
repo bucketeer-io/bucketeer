@@ -37,14 +37,16 @@ func executeStopProgressiveRolloutOperation(
 			Value:    environmentId,
 		},
 	}
-	inFilter := &mysql.InFilter{
-		Column: "feature_id",
-		Values: featureIDs,
+	inFilters := []*mysql.InFilter{
+		{
+			Column: "feature_id",
+			Values: featureIDs,
+		},
 	}
 	options := &mysql.ListOptions{
 		Filters:     filters,
 		Orders:      nil,
-		InFilter:    inFilter,
+		InFilters:   inFilters,
 		NullFilters: nil,
 		JSONFilters: nil,
 		SearchQuery: nil,
