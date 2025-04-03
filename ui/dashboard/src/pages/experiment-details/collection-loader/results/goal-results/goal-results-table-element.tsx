@@ -37,7 +37,6 @@ export const ResultHeaderCell = ({
       />
       {isShowIcon && tooltip && (
         <Tooltip
-          delayDuration={300}
           trigger={
             <div className="flex-center size-fit">
               <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
