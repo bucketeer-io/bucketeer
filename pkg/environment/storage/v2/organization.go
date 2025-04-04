@@ -19,7 +19,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -54,9 +53,7 @@ type OrganizationStorage interface {
 	GetSystemAdminOrganization(ctx context.Context) (*domain.Organization, error)
 	ListOrganizations(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		options *mysql.ListOptions,
 	) ([]*proto.Organization, int, int64, error)
 }
 
@@ -177,17 +174,17 @@ func (s *organizationStorage) GetSystemAdminOrganization(ctx context.Context) (*
 
 func (s *organizationStorage) ListOrganizations(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.Organization, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(selectOrganizationsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectOrganizationsSQL, options)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
+	}
+	var limit, offset int
+	if options != nil {
+		limit = options.Limit
+		offset = options.Offset
 	}
 	defer rows.Close()
 	organizations := make([]*proto.Organization, 0, limit)
@@ -219,8 +216,8 @@ func (s *organizationStorage) ListOrganizations(
 	}
 	nextOffset := offset + len(organizations)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countOrganizationsSQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countOrganizationsSQL, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
