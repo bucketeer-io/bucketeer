@@ -631,6 +631,12 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
         <CreateGoalModal
           isOpen={isOpenCreateGoalModal}
           onClose={onHiddenCreateGoalModal}
+          onCompleted={goal => {
+            form.setValue('goalIds', [
+              ...(form.getValues('goalIds') || []),
+              goal.id
+            ]);
+          }}
         />
       )}
       {isOpenCreateFlagModal && (
@@ -643,6 +649,9 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
           <CreateFlagForm
             className={'flex flex-col flex-1 h-full overflow-auto pb-[170px]'}
             onClose={onHiddenCreateFlagModal}
+            onCompleted={flag => {
+              form.setValue('featureId', flag.id);
+            }}
           />
         </DialogModal>
       )}

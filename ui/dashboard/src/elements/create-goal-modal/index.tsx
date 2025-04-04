@@ -8,6 +8,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
+import { Goal } from '@types';
 import { onGenerateSlug } from 'utils/converts';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -19,6 +20,7 @@ import TextArea from 'components/textarea';
 export type CreateGoalModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onCompleted?: (goal: Goal) => void;
 };
 
 interface CreateGoalForm {
@@ -33,7 +35,11 @@ const formSchema = yup.object().shape({
   description: yup.string()
 });
 
-const CreateGoalModal = ({ isOpen, onClose }: CreateGoalModalProps) => {
+const CreateGoalModal = ({
+  isOpen,
+  onClose,
+  onCompleted
+}: CreateGoalModalProps) => {
   const { t } = useTranslation(['common', 'form']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -74,6 +80,7 @@ const CreateGoalModal = ({ isOpen, onClose }: CreateGoalModalProps) => {
             </span>
           )
         });
+        onCompleted?.(resp.goal);
         invalidateGoals(queryClient);
         onClose();
         form.reset();

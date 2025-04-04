@@ -12,7 +12,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
 import { v4 as uuid } from 'uuid';
-import { FeatureVariation, FeatureVariationType } from '@types';
+import { Feature, FeatureVariation, FeatureVariationType } from '@types';
 import { onGenerateSlug } from 'utils/converts';
 import { cn } from 'utils/style';
 import {
@@ -92,10 +92,12 @@ export const flagTypeOptions = [
 
 const CreateFlagForm = ({
   className,
-  onClose
+  onClose,
+  onCompleted
 }: {
   className?: string;
   onClose: () => void;
+  onCompleted?: (flag: Feature) => void;
 }) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -192,6 +194,7 @@ const CreateFlagForm = ({
           message: 'Feature flag created successfully.'
         });
         invalidateFeatures(queryClient);
+        onCompleted?.(resp.feature);
         onClose();
       }
     } catch (error) {
