@@ -422,9 +422,6 @@ func (s *auditlogService) getAccountMapByEmails(
 	if len(emails) == 0 {
 		return accountMap, nil
 	}
-	if len(emails) == 0 {
-		return nil, nil
-	}
 	emailsArg := make([]interface{}, len(emails))
 	for i, email := range emails {
 		emailsArg[i] = email
