@@ -625,22 +625,9 @@ func (s *NotificationService) ListAdminSubscriptions(
 	if err != nil {
 		return nil, err
 	}
-	var whereParts []mysql.WherePart
-	sourceTypesValues := make([]interface{}, len(req.SourceTypes))
-	for i, st := range req.SourceTypes {
-		sourceTypesValues[i] = int32(st)
-	}
-	if len(sourceTypesValues) > 0 {
-		whereParts = append(
-			whereParts,
-			mysql.NewJSONFilter("source_types", mysql.JSONContainsNumber, sourceTypesValues),
-		)
-	}
+	var disabled *bool
 	if req.Disabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
-	}
-	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"name"}, req.SearchKeyword))
+		disabled = &req.Disabled.Value
 	}
 	orders, err := s.newAdminSubscriptionListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -650,14 +637,18 @@ func (s *NotificationService) ListAdminSubscriptions(
 		)
 		return nil, err
 	}
+
 	subscriptions, cursor, totalCount, err := s.listAdminSubscriptionsMySQL(
 		ctx,
-		whereParts,
+		req.SourceTypes,
+		disabled,
+		req.SearchKeyword,
 		orders,
 		req.PageSize,
 		req.Cursor,
 		localizer,
 	)
+
 	if err != nil {
 		return nil, err
 	}
@@ -708,26 +699,18 @@ func (s *NotificationService) ListEnabledAdminSubscriptions(
 	if err != nil {
 		return nil, err
 	}
-	var whereParts []mysql.WherePart
-	whereParts = append(whereParts, mysql.NewFilter("disabled", "=", false))
-	sourceTypesValues := make([]interface{}, len(req.SourceTypes))
-	for i, st := range req.SourceTypes {
-		sourceTypesValues[i] = int32(st)
-	}
-	if len(sourceTypesValues) > 0 {
-		whereParts = append(
-			whereParts,
-			mysql.NewJSONFilter("source_types", mysql.JSONContainsNumber, sourceTypesValues),
-		)
-	}
+	var disabled = false
 	subscriptions, cursor, _, err := s.listAdminSubscriptionsMySQL(
 		ctx,
-		whereParts,
+		req.SourceTypes,
+		&disabled,
+		"",
 		nil,
 		req.PageSize,
 		req.Cursor,
 		localizer,
 	)
+
 	if err != nil {
 		return nil, err
 	}
@@ -739,12 +722,41 @@ func (s *NotificationService) ListEnabledAdminSubscriptions(
 
 func (s *NotificationService) listAdminSubscriptionsMySQL(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
+	sourceTypes []notificationproto.Subscription_SourceType,
+	disabled *bool,
+	searchKeyword string,
 	orders []*mysql.Order,
 	pageSize int64,
 	cursor string,
 	localizer locale.Localizer,
 ) ([]*notificationproto.Subscription, string, int64, error) {
+	var filters []*mysql.FilterV2
+	if disabled != nil {
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "disabled",
+			Operator: mysql.OperatorEqual,
+			Value:    disabled,
+		})
+	}
+	sourceTypesValues := make([]interface{}, len(sourceTypes))
+	for i, st := range sourceTypes {
+		sourceTypesValues[i] = int32(st)
+	}
+	var jsonFilters []*mysql.JSONFilter
+	if len(sourceTypesValues) > 0 {
+		jsonFilters = append(jsonFilters, &mysql.JSONFilter{
+			Column: "source_types",
+			Func:   mysql.JSONContainsNumber,
+			Values: sourceTypesValues,
+		})
+	}
+	var seachQuery *mysql.SearchQuery
+	if searchKeyword != "" {
+		seachQuery = &mysql.SearchQuery{
+			Columns: []string{"name"},
+			Keyword: searchKeyword,
+		}
+	}
 	limit := int(pageSize)
 	if cursor == "" {
 		cursor = "0"
@@ -760,12 +772,20 @@ func (s *NotificationService) listAdminSubscriptionsMySQL(
 		}
 		return nil, "", 0, dt.Err()
 	}
+	options := &mysql.ListOptions{
+		Limit:       limit,
+		Offset:      offset,
+		Filters:     filters,
+		InFilter:    nil,
+		NullFilters: nil,
+		JSONFilters: jsonFilters,
+		SearchQuery: seachQuery,
+		Orders:      orders,
+	}
+
 	subscriptions, nextCursor, totalCount, err := s.adminSubscriptionStorage.ListAdminSubscriptions(
 		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
+		options,
 	)
 	if err != nil {
 		s.logger.Error(

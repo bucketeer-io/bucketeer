@@ -7,7 +7,7 @@ import {
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { COLORS } from 'constants/styles';
-import { useScreen, useToast } from 'hooks';
+import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import {
   AutoOpsRule,
@@ -31,10 +31,9 @@ import {
   FeatureActivityStatus,
   FlagOperationType
 } from 'pages/feature-flags/types';
-import Divider from 'components/divider';
 import Icon, { IconProps } from 'components/icon';
 import { Tooltip } from 'components/tooltip';
-import TruncationWithTooltip from 'elements/truncation-with-tooltip';
+import NameWithTooltip from 'elements/name-with-tooltip';
 
 interface FlagNameElementType {
   id: string;
@@ -47,13 +46,11 @@ interface FlagNameElementType {
 }
 
 export const GridViewRoot = ({ children }: PropsWithChildren) => (
-  <div className="flex flex-col w-ful min-w-max overflow-visible gap-y-4">
-    {children}
-  </div>
+  <div className="flex flex-col w-full gap-y-4">{children}</div>
 );
 
 export const GridViewRow = ({ children }: PropsWithChildren) => (
-  <div className="flex items-center w-full min-w-fit p-5 gap-x-4 xxl:gap-x-10 rounded shadow-card bg-white self-stretch">
+  <div className="grid grid-cols-12 items-center w-full max-w-full p-5 gap-x-10 xxl:gap-x-10 rounded shadow-card bg-white self-stretch">
     {children}
   </div>
 );
@@ -130,7 +127,7 @@ export const FlagVariationPolygon = ({
         zIndex: index
       }}
       className={cn(
-        'flex-center size-[14px] min-w-[14px] border border-white rounded rotate-45',
+        'flex-center size-[14px] min-w-[14px] border border-gray-200 rounded rotate-45',
         className
       )}
     />
@@ -181,7 +178,6 @@ export const FlagNameElement = ({
 }: FlagNameElementType) => {
   const { notify } = useToast();
   const { t } = useTranslation(['table']);
-  const { isXXLScreen } = useScreen();
 
   const handleCopyId = (id: string) => {
     copyToClipBoard(id);
@@ -196,8 +192,8 @@ export const FlagNameElement = ({
   };
 
   return (
-    <div className="flex items-center w-full min-w-[400px] max-w-[400px] xxl:min-w-[500px] gap-x-4">
-      <div className="flex flex-col flex-1 w-full gap-y-2">
+    <div className="flex items-center col-span-5 w-full max-w-full gap-x-4 overflow-hidden">
+      <div className="flex flex-col w-full max-w-full gap-y-2">
         <div className="flex items-center w-full gap-x-2">
           <div className="flex-center size-fit">
             <VariationTypeTooltip
@@ -205,23 +201,15 @@ export const FlagNameElement = ({
               variationType={variationType}
             />
           </div>
-          <div>
-            <TruncationWithTooltip
-              content={name}
-              elementId={id}
-              maxSize={isXXLScreen ? 320 : 220}
-              className="w-fit max-w-[220px] xxl:max-w-[320px]"
-              tooltipWrapperCls="left-0 translate-x-0"
-            >
-              <Link
-                id={id}
-                to={link}
-                className="typo-para-medium text-primary-500 underline w-full"
-              >
-                <p className="truncate">{name}</p>
+          <NameWithTooltip
+            id={id}
+            content={<NameWithTooltip.Content content={name} id={id} />}
+            trigger={
+              <Link to={link}>
+                <NameWithTooltip.Trigger id={id} name={name} />
               </Link>
-            </TruncationWithTooltip>
-          </div>
+            }
+          />
           {maintainer && (
             <Tooltip
               asChild={false}
@@ -240,7 +228,7 @@ export const FlagNameElement = ({
           />
         </div>
         <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
-          {truncateBySide(id, 55)}
+          <p className="truncate">{truncateBySide(id, 55)}</p>
           <div onClick={() => handleCopyId(id)}>
             <Icon
               icon={IconCopy}
@@ -261,19 +249,10 @@ export const FlagVariationsElement = ({
 }) => {
   const { t } = useTranslation(['common', 'table']);
 
+  const variationsWrapperWidth =
+    document.getElementById('variations-wrapper')?.offsetWidth;
+
   const variationCount = variations?.length;
-
-  const _variations = useMemo(() => {
-    if (variationCount <= 2) return [variations?.map(item => item.name)];
-    const vars: string[][] = [];
-
-    variations.forEach(item => {
-      if (!vars.length || vars[vars.length - 1]?.length > 1) {
-        vars.push([item.name]);
-      } else vars[vars.length - 1] = [...vars[vars.length - 1], item.name];
-    });
-    return vars;
-  }, [variations, variationCount]);
 
   if (!variationCount)
     return (
@@ -286,60 +265,51 @@ export const FlagVariationsElement = ({
           <FlagVariationPolygon index={0} />
         </div>
         <p className="typo-para-small text-gray-700 truncate flex-1">
-          {_variations[variationCount]}
+          {variations[variationCount].name}
         </p>
       </div>
     );
   return (
-    <div className="flex items-center gap-x-2 w-full">
-      <div className="flex items-center">
-        {variations.map((_, index) => (
-          <FlagVariationPolygon key={index} index={index} />
-        ))}
-      </div>
-      <p className="typo-para-small whitespace-nowrap text-gray-700">
-        {`${variationCount} ${variationCount > 1 ? t('variations') : t('table:results.variation')}`}
-      </p>
+    <div className="flex w-fit max-w-full">
       <Tooltip
         asChild={false}
+        align="start"
         trigger={
-          <div className="flex-center size-fit">
-            <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
+          <div className="flex items-center w-full gap-2">
+            <div className="flex items-center w-full flex-wrap gap-y-1">
+              {variations.map((_, index) => (
+                <FlagVariationPolygon key={index} index={index} />
+              ))}
+            </div>
+            <p className="typo-para-small whitespace-nowrap text-gray-700">
+              {`${variationCount} ${variationCount > 1 ? t('variations') : t('table:results.variation')}`}
+            </p>
+            <div className="flex-center size-fit">
+              <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
+            </div>
           </div>
         }
         content={
-          <div className="flex flex-col gap-y-3 w-full max-w-[420px]">
-            {_variations.map((item, index) => (
-              <div className="flex items-center w-full gap-3" key={index}>
-                {item.map((variation, variationIndex) => (
-                  <div
-                    className={cn('flex items-center gap-x-1 max-w-[140px]', {
-                      'w-[140px]': _variations.length > 1
-                    })}
-                    key={variationIndex}
-                  >
-                    {variationIndex !== 0 && (
-                      <Divider
-                        className={cn('h-2 min-w-px bg-white/15 border-none', {
-                          'mr-2.5': variationIndex !== 0
-                        })}
-                      />
-                    )}
-                    <div className="flex-center size-4">
-                      <FlagVariationPolygon
-                        index={
-                          index === 0
-                            ? variationIndex
-                            : variationIndex + index + 1
-                        }
-                        className="border-none"
-                      />
-                    </div>
-                    <p className="typo-para-small text-white break-all truncate">
-                      {variation}
-                    </p>
-                  </div>
-                ))}
+          <div
+            style={{
+              maxWidth: variationsWrapperWidth
+            }}
+            className="flex flex-col gap-y-2 w-full"
+          >
+            {variations.map((item, index) => (
+              <div
+                className={'flex items-center gap-x-1 max-w-full'}
+                key={index}
+              >
+                <div className="flex-center size-4">
+                  <FlagVariationPolygon
+                    index={index === 0 ? index : index + index + 1}
+                    className="border-white/10"
+                  />
+                </div>
+                <p className="typo-para-small text-white break-all truncate">
+                  {item.name || item.value}
+                </p>
               </div>
             ))}
           </div>

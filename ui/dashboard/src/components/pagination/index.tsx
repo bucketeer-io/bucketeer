@@ -1,4 +1,6 @@
+import { useMemo } from 'react';
 import { LIST_PAGE_SIZE } from 'constants/app';
+import { cn } from 'utils/style';
 import PaginationActions from './pagination-actions';
 import PaginationCell from './pagination-cell';
 import PaginationCount from './pagination-count';
@@ -18,19 +20,27 @@ const Pagination = ({
   onChange
 }: PaginationProps) => {
   const cursor = pageSize * (page - 1);
+  const isShowPaginationAction = useMemo(
+    () => totalCount > pageSize,
+    [totalCount, pageSize]
+  );
 
   return (
-    <div className="flex items-center justify-between">
-      <PaginationCount
-        totalItems={totalCount}
-        value={totalCount < pageSize ? totalCount : pageSize}
-      />
-      <PaginationActions
-        pageIndex={cursor === 0 ? 1 : cursor / pageSize + 1}
-        totalItems={totalCount}
-        itemsPerPage={pageSize}
-        onPageChange={onChange}
-      />
+    <div className={cn('flex items-center justify-between')}>
+      {totalCount > 0 && (
+        <PaginationCount
+          totalItems={totalCount}
+          value={totalCount < pageSize ? totalCount : pageSize}
+        />
+      )}
+      {isShowPaginationAction && (
+        <PaginationActions
+          pageIndex={cursor === 0 ? 1 : cursor / pageSize + 1}
+          totalItems={totalCount}
+          itemsPerPage={pageSize}
+          onPageChange={onChange}
+        />
+      )}
     </div>
   );
 };

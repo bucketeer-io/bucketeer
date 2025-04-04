@@ -94,113 +94,115 @@ const OrganizationSettings = ({
   };
 
   return (
-    <div className="p-5 shadow-card rounded-lg bg-white">
-      <p className="text-gray-800 typo-head-bold-small">
-        {t('form:general-info')}
-      </p>
-      <FormProvider {...form}>
-        <Form onSubmit={form.handleSubmit(onSubmit)}>
-          <Form.Field
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <Form.Item>
-                <Form.Label required>{t('name')}</Form.Label>
-                <Form.Control>
-                  <Input
-                    placeholder={`${t('form:placeholder-name')}`}
-                    {...field}
-                  />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Form.Field
-            control={form.control}
-            name="urlCode"
-            render={({ field }) => (
-              <Form.Item>
-                <Form.Label required>{t('form:url-code')}</Form.Label>
-                <Form.Control>
-                  <Input
-                    disabled
-                    placeholder={`${t('form:placeholder-code')}`}
-                    {...field}
-                  />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Form.Field
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <Form.Item>
-                <Form.Label optional>{t('form:description')}</Form.Label>
-                <Form.Control>
-                  <TextArea
-                    placeholder={t('form:placeholder-desc')}
-                    rows={4}
-                    {...field}
-                  />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Form.Field
-            control={form.control}
-            name="ownerEmail"
-            render={({ field }) => (
-              <Form.Item>
-                <Form.Label required>{t('form:owner-email')}</Form.Label>
-                <Form.Control className="w-full">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      placeholder={t('form:owner-email')}
-                      label={
-                        accounts?.accounts.find(
-                          item => item.email === field.value
-                        )?.email
-                      }
-                      variant="secondary"
-                      className="w-full"
-                    />
-                    <DropdownMenuContent
-                      className="w-[400px]"
-                      align="start"
+    <div className="w-full px-6">
+      <div className="p-5 shadow-card rounded-lg bg-white">
+        <p className="text-gray-800 typo-head-bold-small">
+          {t('form:general-info')}
+        </p>
+        <FormProvider {...form}>
+          <Form onSubmit={form.handleSubmit(onSubmit)}>
+            <Form.Field
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Label required>{t('name')}</Form.Label>
+                  <Form.Control>
+                    <Input
+                      placeholder={`${t('form:placeholder-name')}`}
                       {...field}
-                    >
-                      {accounts?.accounts?.map((item, index) => (
-                        <DropdownMenuItem
-                          {...field}
-                          key={index}
-                          value={item.email}
-                          label={item.email}
-                          onSelectOption={value => {
-                            field.onChange(value);
-                          }}
-                        />
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Button
-            loading={form.formState.isSubmitting}
-            disabled={!form.formState.isDirty}
-            type="submit"
-            className="w-fit mt-6"
-          >
-            {t(`save`)}
-          </Button>
-        </Form>
-      </FormProvider>
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+            <Form.Field
+              control={form.control}
+              name="urlCode"
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Label required>{t('form:url-code')}</Form.Label>
+                  <Form.Control>
+                    <Input
+                      disabled
+                      placeholder={`${t('form:placeholder-code')}`}
+                      {...field}
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+            <Form.Field
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Label optional>{t('form:description')}</Form.Label>
+                  <Form.Control>
+                    <TextArea
+                      placeholder={t('form:placeholder-desc')}
+                      rows={4}
+                      {...field}
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+            <Form.Field
+              control={form.control}
+              name="ownerEmail"
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Label required>{t('form:owner-email')}</Form.Label>
+                  <Form.Control className="w-full">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        placeholder={t('form:owner-email')}
+                        label={
+                          accounts?.accounts.find(
+                            item => item.email === field.value
+                          )?.email
+                        }
+                        variant="secondary"
+                        className="w-full"
+                      />
+                      <DropdownMenuContent
+                        className="w-[400px]"
+                        align="start"
+                        {...field}
+                      >
+                        {accounts?.accounts?.map((item, index) => (
+                          <DropdownMenuItem
+                            {...field}
+                            key={index}
+                            value={item.email}
+                            label={item.email}
+                            onSelectOption={value => {
+                              field.onChange(value);
+                            }}
+                          />
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+            <Button
+              loading={form.formState.isSubmitting}
+              disabled={!form.formState.isDirty}
+              type="submit"
+              className="w-fit mt-6"
+            >
+              {t(`save`)}
+            </Button>
+          </Form>
+        </FormProvider>
+      </div>
     </div>
   );
 };

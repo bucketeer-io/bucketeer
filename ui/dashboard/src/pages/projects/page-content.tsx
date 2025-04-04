@@ -11,6 +11,7 @@ import Button from 'components/button';
 import Icon from 'components/icon';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterProjectModal from './project-modal/filter-project-modal';
 import { ProjectFilters } from './types';
@@ -86,7 +87,7 @@ const PageContent = ({
           }}
         />
       )}
-      <div className="mt-5 flex flex-col flex-1">
+      <TableListContainer>
         <CollectionLoader
           onAdd={onAdd}
           filters={filters}
@@ -94,7 +95,7 @@ const PageContent = ({
           onActionHandler={onActionHandler}
           organizationId={currentEnvironment.organizationId}
         />
-      </div>
+      </TableListContainer>
     </PageLayout.Content>
   );
 };

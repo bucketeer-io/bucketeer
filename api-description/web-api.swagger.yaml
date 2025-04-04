@@ -1945,7 +1945,7 @@ paths:
         - auto_ops_rule
   /v1/auto_ops_rule/execute:
     post:
-      summary: Execute
+      summary: Execute Auto Ops Rule
       description: Execute an auto ops rule.
       operationId: web.v1.auto_ops_rule.execute
       responses:
@@ -6115,6 +6115,64 @@ paths:
             $ref: '#/definitions/autoopsCreateProgressiveRolloutRequest'
       tags:
         - progressive_rollout
+  /v1/progressive_rollout/execute:
+    post:
+      summary: Execute Progressive Rollout
+      description: Execute a progressive rollout.
+      operationId: web.v1.progressive_rollout.execute
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/autoopsExecuteProgressiveRolloutResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/autoopsExecuteProgressiveRolloutRequest'
+      tags:
+        - progressive_rollout
   /v1/progressive_rollout/stop:
     patch:
       summary: Stop
@@ -9010,6 +9068,18 @@ definitions:
     properties:
       clauseId:
         type: string
+  autoopsExecuteProgressiveRolloutRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      changeProgressiveRolloutTriggeredAtCommand:
+        $ref: '#/definitions/autoopsChangeProgressiveRolloutScheduleTriggeredAtCommand'
+        description: deprecated
+      environmentId:
+        type: string
+      scheduleId:
+        type: string
   autoopsExecuteProgressiveRolloutResponse:
     type: object
   autoopsGetAutoOpsRuleResponse:
@@ -9294,6 +9364,9 @@ definitions:
         $ref: '#/definitions/protobufAny'
       actionType:
         $ref: '#/definitions/autoopsActionType'
+      executedAt:
+        type: string
+        format: int64
   bucketeerautoopsDeleteClauseCommand:
     type: object
     properties:

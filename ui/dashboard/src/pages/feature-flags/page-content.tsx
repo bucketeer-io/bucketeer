@@ -11,6 +11,7 @@ import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterFlagModal from './flags-modal/filter-flag-modal';
 import Overview from './overview';
@@ -128,21 +129,23 @@ const PageContent = ({
         }}
       >
         {!isHiddenTab && (
-          <TabsList>
+          <TabsList className="px-6">
             <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
             <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
           </TabsList>
         )}
 
-        <TabsContent value={filters.status}>
-          <CollectionLoader
-            filters={filters}
-            onAdd={onAdd}
-            setFilters={setFilters}
-            setSummary={setSummary}
-            onHandleActions={onHandleActions}
-            onClearFilters={onClearFilters}
-          />
+        <TabsContent value={filters.status} className="pb-6">
+          <TableListContainer>
+            <CollectionLoader
+              filters={filters}
+              onAdd={onAdd}
+              setFilters={setFilters}
+              setSummary={setSummary}
+              onHandleActions={onHandleActions}
+              onClearFilters={onClearFilters}
+            />
+          </TableListContainer>
         </TabsContent>
       </Tabs>
     </PageLayout.Content>

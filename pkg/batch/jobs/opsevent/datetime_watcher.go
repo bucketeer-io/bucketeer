@@ -16,6 +16,7 @@ package opsevent
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
@@ -76,7 +77,7 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 		}
 		for _, a := range autoOpsRules {
 			aor := &autoopsdomain.AutoOpsRule{AutoOpsRule: a}
-			if aor.IsFinished() || aor.IsStopped() {
+			if aor.IsFinished() || aor.IsStopped() || aor.OpsType != autoopsproto.OpsType_SCHEDULE {
 				continue
 			}
 			executeClauseID, err := w.getExecuteClauseId(ctx, env.Id, aor)
@@ -124,34 +125,50 @@ func (w *datetimeWatcher) getExecuteClauseId(
 	environmentId string,
 	a *autoopsdomain.AutoOpsRule,
 ) (string, error) {
-	nowTimestamp := time.Now().Unix()
-	var latestExecuteClauseId = ""
-	var latestDatetime = int64(0)
+	var nextClauseID string
+	for _, clause := range a.Clauses {
+		// Skip clauses that were executed
+		if clause.ExecutedAt != 0 {
+			continue
+		}
+		// Set the next scheduled clause
+		nextClauseID = clause.Id
+		break
+	}
 	dateClauses, err := a.ExtractDatetimeClauses()
 	if err != nil {
 		return "", err
 	}
-	for id, c := range dateClauses {
-		if w.assessRule(c, nowTimestamp) {
-			if c.Time >= latestDatetime {
-				latestDatetime = c.Time
-				latestExecuteClauseId = id
-			}
-		}
-	}
-	if latestExecuteClauseId != "" {
-		w.logger.Info("Clause satisfies condition",
+	dateClause := dateClauses[nextClauseID]
+	if dateClause == nil {
+		w.logger.Error("Datetime clause is nil",
 			zap.String("environmentId", environmentId),
 			zap.String("featureId", a.FeatureId),
 			zap.String("autoOpsRuleId", a.Id),
-			zap.String("clauseId", latestExecuteClauseId),
+			zap.String("clauseId", nextClauseID),
 		)
-		return latestExecuteClauseId, nil
-	} else {
-		return "", nil
+		return "", fmt.Errorf("datetime clause not found")
 	}
-}
-
-func (w *datetimeWatcher) assessRule(datetimeClause *autoopsproto.DatetimeClause, nowTimestamp int64) bool {
-	return datetimeClause.Time <= nowTimestamp
+	// Check if the scheduled time is older than now
+	if dateClause.Time <= time.Now().Unix() {
+		w.logger.Info("Scheduled operation satisfies the time condition",
+			zap.String("environmentId", environmentId),
+			zap.String("featureId", a.FeatureId),
+			zap.String("autoOpsRuleId", a.Id),
+			zap.String("clauseId", nextClauseID),
+			zap.Int64("clauseTime", dateClause.Time),
+			zap.Any("dateClauses", dateClause),
+		)
+		return nextClauseID, nil
+	}
+	w.logger.Debug("Scheduled operation does not satisfy the time condition",
+		zap.String("environmentId", environmentId),
+		zap.String("featureId", a.FeatureId),
+		zap.String("autoOpsRuleId", a.Id),
+		zap.String("clauseId", nextClauseID),
+		zap.Int64("clauseTime", dateClause.Time),
+		zap.Any("dateClauses", dateClause),
+	)
+	// Nothing to execute
+	return "", nil
 }

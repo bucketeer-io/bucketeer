@@ -40,9 +40,10 @@ var (
 		codes.InvalidArgument,
 		"autoops: at least one event rate clause must be specified",
 	)
-	statusClauseIDRequired    = gstatus.New(codes.InvalidArgument, "autoops: clause id must be specified")
-	statusClauseNotFound      = gstatus.New(codes.NotFound, "autoops: clause not found")
-	statusIncompatibleOpsType = gstatus.New(
+	statusClauseIDRequired      = gstatus.New(codes.InvalidArgument, "autoops: clause id must be specified")
+	statusClauseNotFound        = gstatus.New(codes.NotFound, "autoops: clause not found")
+	statusClauseAlreadyExecuted = gstatus.New(codes.InvalidArgument, "autoops: clause is already executed")
+	statusIncompatibleOpsType   = gstatus.New(
 		codes.InvalidArgument,
 		"autoops: ops type is incompatible with ops clause",
 	)
@@ -87,13 +88,9 @@ var (
 		codes.NotFound,
 		"autoops: ops event rate clause goal does not exist",
 	)
-	statusAlreadyExists               = gstatus.New(codes.AlreadyExists, "autoops: already exists")
-	statusUnauthenticated             = gstatus.New(codes.Unauthenticated, "autoops: unauthenticated")
-	statusPermissionDenied            = gstatus.New(codes.PermissionDenied, "autoops: permission denied")
-	statusProgressiveRolloutNoCommand = gstatus.New(
-		codes.InvalidArgument,
-		"autoops: no command for a progressive rollout",
-	)
+	statusAlreadyExists                       = gstatus.New(codes.AlreadyExists, "autoops: already exists")
+	statusUnauthenticated                     = gstatus.New(codes.Unauthenticated, "autoops: unauthenticated")
+	statusPermissionDenied                    = gstatus.New(codes.PermissionDenied, "autoops: permission denied")
 	statusProgressiveRolloutFeatureIDRequired = gstatus.New(
 		codes.InvalidArgument,
 		"autoops: feature id must be specified for a progressive rollout",
