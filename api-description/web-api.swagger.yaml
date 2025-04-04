@@ -7822,8 +7822,10 @@ definitions:
       avatarImage:
         type: string
         format: byte
+        title: this is not save in auditlog table
       avatarFileType:
         type: string
+        title: this is not save in auditlog table
   ExperimentGoalReference:
     type: object
     properties:
@@ -8726,8 +8728,6 @@ definitions:
       previousEntityData:
         type: string
         title: JSON string of the previous entity data
-      entityName:
-        type: string
   auditlogListAdminAuditLogsRequestOrderBy:
     type: string
     enum:
@@ -9692,8 +9692,10 @@ definitions:
       avatarImage:
         type: string
         format: byte
+        title: this is not save in auditlog table
       avatarFileType:
         type: string
+        title: this is not save in auditlog table
   domainEventEntityType:
     type: string
     enum:

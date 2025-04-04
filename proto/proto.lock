@@ -5429,11 +5429,6 @@
                 "id": 11,
                 "name": "previous_entity_data",
                 "type": "string"
-              },
-              {
-                "id": 12,
-                "name": "entity_name",
-                "type": "string"
               }
             ]
           }

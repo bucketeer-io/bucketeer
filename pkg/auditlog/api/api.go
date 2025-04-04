@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"sort"
 	"strconv"
 
@@ -169,20 +168,8 @@ func (s *auditlogService) ListAuditLogs(
 		}
 		return nil, dt.Err()
 	}
-	editorEmails := make([]string, len(auditlogs))
-	for i, auditlog := range auditlogs {
-		auditlogs[i].LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
-		// unmarshal json string to map entity name
-		var entityData map[string]interface{}
-		err := json.Unmarshal([]byte(auditlog.EntityData), &entityData)
-		if err != nil {
-			continue
-		}
-		if entityName, ok := entityData["name"]; ok {
-			auditlogs[i].EntityName = entityName.(string)
-		} else {
-			auditlogs[i].EntityName = auditlog.EntityId
-		}
+	editorEmails := make([]string, 0, len(auditlogs))
+	for _, auditlog := range auditlogs {
 		editorEmails = append(editorEmails, auditlog.Editor.Email)
 	}
 	editorEmails = deDuplicateStrings(editorEmails)
@@ -435,11 +422,20 @@ func (s *auditlogService) getAccountMapByEmails(
 	if len(emails) == 0 {
 		return accountMap, nil
 	}
-
-	accounts, err := s.accountStorage.GetAccountsV2ByEnvironmentID(
+	if len(emails) == 0 {
+		return nil, nil
+	}
+	emailsArg := make([]interface{}, len(emails))
+	for i, email := range emails {
+		emailsArg[i] = email
+	}
+	whereParts := []mysql.WherePart{
+		mysql.NewInFilter("a.email", emailsArg),
+		mysql.NewFilter("e.id", "=", environmentID),
+	}
+	accounts, err := s.accountStorage.GetAvatarAccountsV2(
 		ctx,
-		emails,
-		environmentID,
+		whereParts,
 	)
 	if err != nil {
 		s.logger.Error(

@@ -108,8 +108,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             f
           ),
         entityData: jspb.Message.getFieldWithDefault(msg, 10, ''),
-        previousEntityData: jspb.Message.getFieldWithDefault(msg, 11, ''),
-        entityName: jspb.Message.getFieldWithDefault(msg, 12, '')
+        previousEntityData: jspb.Message.getFieldWithDefault(msg, 11, '')
       };
 
     if (includeInstance) {
@@ -217,10 +216,6 @@ proto.bucketeer.auditlog.AuditLog.deserializeBinaryFromReader = function (
         var value = /** @type {string} */ (reader.readString());
         msg.setPreviousEntityData(value);
         break;
-      case 12:
-        var value = /** @type {string} */ (reader.readString());
-        msg.setEntityName(value);
-        break;
       default:
         reader.skipField();
         break;
@@ -311,10 +306,6 @@ proto.bucketeer.auditlog.AuditLog.serializeBinaryToWriter = function (
   f = message.getPreviousEntityData();
   if (f.length > 0) {
     writer.writeString(11, f);
-  }
-  f = message.getEntityName();
-  if (f.length > 0) {
-    writer.writeString(12, f);
   }
 };
 
@@ -580,22 +571,6 @@ proto.bucketeer.auditlog.AuditLog.prototype.setPreviousEntityData = function (
   value
 ) {
   return jspb.Message.setProto3StringField(this, 11, value);
-};
-
-/**
- * optional string entity_name = 12;
- * @return {string}
- */
-proto.bucketeer.auditlog.AuditLog.prototype.getEntityName = function () {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 12, ''));
-};
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.auditlog.AuditLog} returns this
- */
-proto.bucketeer.auditlog.AuditLog.prototype.setEntityName = function (value) {
-  return jspb.Message.setProto3StringField(this, 12, value);
 };
 
 goog.object.extend(exports, proto.bucketeer.auditlog);

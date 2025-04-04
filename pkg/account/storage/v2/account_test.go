@@ -285,15 +285,13 @@ func TestGetAccountV2ByEnvironmentID(t *testing.T) {
 }
 
 func TestGetAccountsV2ByEnvironmentID(t *testing.T) {
-	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	patterns := []struct {
-		desc          string
-		setup         func(*accountStorage)
-		expectedErr   error
-		emails        []string
-		environmentID string
+		desc        string
+		setup       func(*accountStorage)
+		expectedErr error
+		whereParts  []mysql.WherePart
 	}{
 		{
 			desc: "Error",
@@ -302,9 +300,10 @@ func TestGetAccountsV2ByEnvironmentID(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			expectedErr:   errors.New("error"),
-			emails:        []string{"test@example.com"},
-			environmentID: "env-0",
+			expectedErr: errors.New("error"),
+			whereParts: []mysql.WherePart{
+				mysql.NewFilter("num", ">=", 5),
+			},
 		},
 		{
 			desc: "Success",
@@ -317,21 +316,22 @@ func TestGetAccountsV2ByEnvironmentID(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			expectedErr:   nil,
-			emails:        []string{"test@example.com"},
-			environmentID: "env-0",
+			expectedErr: nil,
+			whereParts: []mysql.WherePart{
+				mysql.NewFilter("num", ">=", 5),
+			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			storage := newAccountStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			_, err := storage.GetAccountsV2ByEnvironmentID(
+			_, err := storage.GetAvatarAccountsV2(
 				context.Background(),
-				p.emails,
-				p.environmentID,
+				p.whereParts,
 			)
 			assert.Equal(t, p.expectedErr, err)
 		})

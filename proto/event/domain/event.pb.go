@@ -886,8 +886,8 @@ type Editor struct {
 	IsAdmin         bool                    `protobuf:"varint,3,opt,name=is_admin,json=isAdmin,proto3" json:"is_admin"`
 	Name            string                  `protobuf:"bytes,4,opt,name=name,proto3" json:"name"`
 	PublicApiEditor *Editor_PublicAPIEditor `protobuf:"bytes,5,opt,name=public_api_editor,json=publicApiEditor,proto3" json:"public_api_editor"`
-	AvatarImage     []byte                  `protobuf:"bytes,6,opt,name=avatar_image,json=avatarImage,proto3" json:"avatar_image"`
-	AvatarFileType  string                  `protobuf:"bytes,7,opt,name=avatar_file_type,json=avatarFileType,proto3" json:"avatar_file_type"`
+	AvatarImage     []byte                  `protobuf:"bytes,6,opt,name=avatar_image,json=avatarImage,proto3" json:"avatar_image"`            // this is not save in auditlog table
+	AvatarFileType  string                  `protobuf:"bytes,7,opt,name=avatar_file_type,json=avatarFileType,proto3" json:"avatar_file_type"` // this is not save in auditlog table
 }
 
 func (x *Editor) Reset() {
@@ -12004,8 +12004,8 @@ type Editor_PublicAPIEditor struct {
 	Token          string `protobuf:"bytes,1,opt,name=token,proto3" json:"token"`
 	Maintainer     string `protobuf:"bytes,2,opt,name=maintainer,proto3" json:"maintainer"`
 	Name           string `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
-	AvatarImage    []byte `protobuf:"bytes,4,opt,name=avatar_image,json=avatarImage,proto3" json:"avatar_image"`
-	AvatarFileType string `protobuf:"bytes,5,opt,name=avatar_file_type,json=avatarFileType,proto3" json:"avatar_file_type"`
+	AvatarImage    []byte `protobuf:"bytes,4,opt,name=avatar_image,json=avatarImage,proto3" json:"avatar_image"`            // this is not save in auditlog table
+	AvatarFileType string `protobuf:"bytes,5,opt,name=avatar_file_type,json=avatarFileType,proto3" json:"avatar_file_type"` // this is not save in auditlog table
 }
 
 func (x *Editor_PublicAPIEditor) Reset() {

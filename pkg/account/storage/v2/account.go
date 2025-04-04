@@ -37,8 +37,8 @@ var (
 	selectAccountV2SQL string
 	//go:embed sql/account_v2/select_account_v2_by_environment_id.sql
 	selectAccountV2ByEnvironmentIDSQL string
-	//go:embed sql/account_v2/select_accounts_v2_by_environment_id.sql
-	selectAccountsV2ByEnvironmentIDSQL string
+	//go:embed sql/account_v2/select_avatar_accounts_v2.sql
+	selectAvatarAccountsV2SQL string
 	//go:embed sql/account_v2/select_accounts_v2.sql
 	selectAccountsV2SQL string
 	//go:embed sql/account_v2/count_accounts_v2.sql
@@ -213,25 +213,13 @@ func (s *accountStorage) GetAccountV2ByEnvironmentID(
 	return &domain.AccountV2{AccountV2: &account}, nil
 }
 
-func (s *accountStorage) GetAccountsV2ByEnvironmentID(
+func (s *accountStorage) GetAvatarAccountsV2(
 	ctx context.Context,
-	emails []string,
-	environmentID string,
+	whereParts []mysql.WherePart,
 ) ([]*proto.AccountV2, error) {
-	if len(emails) == 0 {
-		return nil, nil
-	}
-	emailsArg := make([]interface{}, len(emails))
-	for i, email := range emails {
-		emailsArg[i] = email
-	}
-	whereParts := []mysql.WherePart{
-		mysql.NewInFilter("a.email", emailsArg),
-		mysql.NewFilter("e.id", "=", environmentID),
-	}
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	query := fmt.Sprintf(
-		selectAccountsV2ByEnvironmentIDSQL,
+		selectAvatarAccountsV2SQL,
 		whereSQL,
 	)
 	rows, err := s.qe.QueryContext(
@@ -249,22 +237,8 @@ func (s *accountStorage) GetAccountsV2ByEnvironmentID(
 		var organizationRole int32
 		err := rows.Scan(
 			&account.Email,
-			&account.Name,
-			&account.FirstName,
-			&account.LastName,
-			&account.Language,
-			&account.AvatarImageUrl,
 			&account.AvatarFileType,
 			&account.AvatarImage,
-			&mysql.JSONObject{Val: &account.Tags},
-			&account.OrganizationId,
-			&organizationRole,
-			&mysql.JSONObject{Val: &account.EnvironmentRoles},
-			&account.Disabled,
-			&account.CreatedAt,
-			&account.UpdatedAt,
-			&account.LastSeen,
-			&mysql.JSONObject{Val: &account.SearchFilters},
 		)
 		if err != nil {
 			return nil, err
@@ -273,7 +247,7 @@ func (s *accountStorage) GetAccountsV2ByEnvironmentID(
 		accounts = append(accounts, account)
 	}
 	if rows.Err() != nil {
-		return nil, err
+		return nil, rows.Err()
 	}
 	return accounts, nil
 }
@@ -331,7 +305,7 @@ func (s *accountStorage) GetAccountsWithOrganization(
 		})
 	}
 	if rows.Err() != nil {
-		return nil, err
+		return nil, rows.Err()
 	}
 	return accountsWithOrg, nil
 }
@@ -387,7 +361,7 @@ func (s *accountStorage) ListAccountsV2(
 		accounts = append(accounts, &account)
 	}
 	if rows.Err() != nil {
-		return nil, 0, 0, err
+		return nil, 0, 0, rows.Err()
 	}
 	nextOffset := offset + len(accounts)
 	var totalCount int64
