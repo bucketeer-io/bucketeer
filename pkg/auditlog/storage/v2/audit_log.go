@@ -19,7 +19,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
@@ -45,9 +44,7 @@ type AuditLogStorage interface {
 	CreateAuditLog(ctx context.Context, auditLog *domain.AuditLog) error
 	ListAuditLogs(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		options *mysql.ListOptions,
 	) ([]*proto.AuditLog, int, int64, error)
 }
 
@@ -124,17 +121,18 @@ func (s *auditLogStorage) CreateAuditLog(ctx context.Context, auditLog *domain.A
 
 func (s *auditLogStorage) ListAuditLogs(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.AuditLog, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(selectAuditLogV2SQL, whereSQL, orderBySQL, limitOffsetSQL)
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAuditLogV2SQL, options)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
+	}
+	var limit int
+	var offset int
+	if options != nil {
+		limit = options.Limit
+		offset = options.Offset
 	}
 	defer rows.Close()
 	auditLogs := make([]*proto.AuditLog, 0, limit)
@@ -166,8 +164,11 @@ func (s *auditLogStorage) ListAuditLogs(
 	}
 	nextOffset := offset + len(auditLogs)
 	var totalCount int64
-	countQuery := fmt.Sprintf(selectAuditLogV2CountSQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	coountQuery, coountWhereArgs := mysql.ConstructQueryAndWhereArgs(
+		selectAuditLogV2CountSQL,
+		options,
+	)
+	err = s.qe.QueryRowContext(ctx, coountQuery, coountWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
