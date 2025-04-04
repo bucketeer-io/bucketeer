@@ -398,14 +398,10 @@ const CreateFlagForm = ({
           <Form.Field
             control={form.control}
             name="variations"
-            render={({ field }) => (
+            render={() => (
               <Form.Item>
                 <Form.Control>
-                  <Variations
-                    variationType={watch('variationType')}
-                    variations={currentVariations}
-                    onChangeVariations={field.onChange}
-                  />
+                  <Variations variationType={watch('variationType')} />
                 </Form.Control>
               </Form.Item>
             )}
