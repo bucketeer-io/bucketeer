@@ -27,4 +27,3 @@ SELECT
     ) as goals
 FROM
     experiment ex
-%s %s %s
