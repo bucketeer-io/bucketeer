@@ -88,9 +88,9 @@ func (mr *MockOrganizationStorageMockRecorder) GetSystemAdminOrganization(ctx an
 }
 
 // ListOrganizations mocks base method.
-func (m *MockOrganizationStorage) ListOrganizations(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*environment.Organization, int, int64, error) {
+func (m *MockOrganizationStorage) ListOrganizations(ctx context.Context, options *mysql.ListOptions) ([]*environment.Organization, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListOrganizations", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListOrganizations", ctx, options)
 	ret0, _ := ret[0].([]*environment.Organization)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -99,9 +99,9 @@ func (m *MockOrganizationStorage) ListOrganizations(ctx context.Context, wherePa
 }
 
 // ListOrganizations indicates an expected call of ListOrganizations.
-func (mr *MockOrganizationStorageMockRecorder) ListOrganizations(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockOrganizationStorageMockRecorder) ListOrganizations(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockOrganizationStorage)(nil).ListOrganizations), ctx, whereParts, orders, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOrganizations", reflect.TypeOf((*MockOrganizationStorage)(nil).ListOrganizations), ctx, options)
 }
 
 // UpdateOrganization mocks base method.

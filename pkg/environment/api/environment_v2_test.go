@@ -150,7 +150,7 @@ func TestListEnvironmentsV2(t *testing.T) {
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().ListEnvironmentsV2(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("error"))
 			},
 			input:       &proto.ListEnvironmentsV2Request{},
@@ -161,7 +161,7 @@ func TestListEnvironmentsV2(t *testing.T) {
 			desc: "success",
 			setup: func(s *EnvironmentService) {
 				s.environmentStorage.(*storagemock.MockEnvironmentStorage).EXPECT().ListEnvironmentsV2(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.EnvironmentV2{}, 0, int64(0), nil)
 			},
 			input:       &proto.ListEnvironmentsV2Request{PageSize: 2, Cursor: ""},

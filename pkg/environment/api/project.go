@@ -126,22 +126,28 @@ func (s *EnvironmentService) ListProjects(
 	if err != nil {
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{}
+	var infilter *mysql.InFilter
 	if len(req.OrganizationIds) > 0 {
 		oIDs := convToInterfaceSlice(req.OrganizationIds)
-		whereParts = append(whereParts, mysql.NewInFilter("project.organization_id", oIDs))
+		infilter = &mysql.InFilter{
+			Column: "project.organization_id",
+			Values: oIDs,
+		}
 	}
+	var filters []*mysql.FilterV2
 	if req.Disabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("project.disabled", "=", req.Disabled.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "project.disabled",
+			Operator: mysql.OperatorEqual,
+			Value:    req.Disabled.Value,
+		})
 	}
+	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		whereParts = append(
-			whereParts,
-			mysql.NewSearchQuery(
-				[]string{"project.id", "project.name", "project.url_code", "project.creator_email"},
-				req.SearchKeyword,
-			),
-		)
+		searchQuery = &mysql.SearchQuery{
+			Columns: []string{"project.id", "project.name", "project.url_code", "project.creator_email"},
+			Keyword: req.SearchKeyword,
+		}
 	}
 	orders, err := s.newProjectListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -167,12 +173,19 @@ func (s *EnvironmentService) ListProjects(
 		}
 		return nil, dt.Err()
 	}
+	options := &mysql.ListOptions{
+		Limit:       limit,
+		Offset:      offset,
+		Filters:     filters,
+		InFilter:    infilter,
+		Orders:      orders,
+		SearchQuery: searchQuery,
+		JSONFilters: nil,
+		NullFilters: nil,
+	}
 	projects, nextCursor, totalCount, err := s.projectStorage.ListProjects(
 		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
+		options,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -1209,22 +1222,27 @@ func (s *EnvironmentService) ListProjectsV2(
 		)
 		return nil, err
 	}
-	var whereParts []mysql.WherePart
+	var filters []*mysql.FilterV2
 	if req.OrganizationId != "" {
-		whereParts = append(whereParts,
-			mysql.NewFilter("project.organization_id", "=", req.OrganizationId))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "project.organization_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.OrganizationId,
+		})
 	}
 	if req.Disabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("project.disabled", "=", req.Disabled.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "project.disabled",
+			Operator: mysql.OperatorEqual,
+			Value:    req.Disabled.Value,
+		})
 	}
+	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		whereParts = append(
-			whereParts,
-			mysql.NewSearchQuery(
-				[]string{"project.id", "project.name", "project.url_code", "project.creator_email"},
-				req.SearchKeyword,
-			),
-		)
+		searchQuery = &mysql.SearchQuery{
+			Columns: []string{"project.id", "project.name", "project.url_code", "project.creator_email"},
+			Keyword: req.SearchKeyword,
+		}
 	}
 	orders, err := s.newProjectListV2Orders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -1250,12 +1268,18 @@ func (s *EnvironmentService) ListProjectsV2(
 		}
 		return nil, dt.Err()
 	}
+	options := &mysql.ListOptions{
+		Limit:       limit,
+		Offset:      offset,
+		SearchQuery: searchQuery,
+		Filters:     filters,
+		NullFilters: nil,
+		JSONFilters: nil,
+		Orders:      orders,
+	}
 	projects, nextCursor, totalCount, err := s.projectStorage.ListProjects(
 		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
+		options,
 	)
 	if err != nil {
 		s.logger.Error(

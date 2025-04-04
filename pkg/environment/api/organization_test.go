@@ -142,7 +142,7 @@ func TestListOrganizationsMySQL(t *testing.T) {
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().ListOrganizations(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("error"))
 			},
 			input:       &proto.ListOrganizationsRequest{},
@@ -153,7 +153,7 @@ func TestListOrganizationsMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *EnvironmentService) {
 				s.orgStorage.(*storagemock.MockOrganizationStorage).EXPECT().ListOrganizations(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Organization{}, 0, int64(0), nil)
 			},
 			input:       &proto.ListOrganizationsRequest{PageSize: 2, Cursor: ""},
