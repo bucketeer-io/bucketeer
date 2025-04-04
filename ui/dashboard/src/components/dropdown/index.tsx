@@ -23,6 +23,7 @@ export type DropdownOption = {
   icon?: FunctionComponent;
   description?: boolean;
   haveCheckbox?: boolean;
+  [key: string]: DropdownValue | boolean | FunctionComponent | undefined;
 };
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
