@@ -109,23 +109,47 @@ func (s *experimentService) ListExperiments(
 	if err != nil {
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "deleted",
+			Operator: mysql.OperatorEqual,
+			Value:    false,
+		},
+		{
+			Column:   "environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.EnvironmentId,
+		},
 	}
 	if req.Archived != nil {
-		whereParts = append(whereParts, mysql.NewFilter("archived", "=", req.Archived.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "archived",
+			Operator: mysql.OperatorEqual,
+			Value:    req.Archived.Value,
+		})
 	}
 	if req.FeatureId != "" {
-		whereParts = append(whereParts, mysql.NewFilter("feature_id", "=", req.FeatureId))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "feature_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.FeatureId,
+		})
 	}
 	if req.FeatureVersion != nil {
-		whereParts = append(whereParts, mysql.NewFilter("feature_version", "=", req.FeatureVersion.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "feature_version",
+			Operator: mysql.OperatorEqual,
+			Value:    req.FeatureVersion.Value,
+		})
 	}
 	if req.StartAt != 0 {
 		// When a start timestamp is provided,
 		// use it as the lower bound for filtering.
-		whereParts = append(whereParts, mysql.NewFilter("start_at", ">=", req.StartAt))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "start_at",
+			Operator: mysql.OperatorGreaterThanOrEqual,
+			Value:    req.StartAt,
+		})
 	}
 	if req.StopAt != 0 {
 		// When a stop timestamp is provided:
@@ -134,24 +158,44 @@ func (s *experimentService) ListExperiments(
 		// - If req.StartAt is not provided, treat req.StopAt as a relative cutoff timestamp.
 		// (This selects experiments with stop_at >= req.StopAt.)
 		// It treats it as a relative duration when the `startAt` is not provide
-		operator := ">="
 		if req.StartAt != 0 {
-			operator = "<="
+			filters = append(filters, &mysql.FilterV2{
+				Column:   "stop_at",
+				Operator: mysql.OperatorLessThanOrEqual,
+				Value:    req.StopAt,
+			})
+		} else {
+			filters = append(filters, &mysql.FilterV2{
+				Column:   "stop_at",
+				Operator: mysql.OperatorGreaterThanOrEqual,
+				Value:    req.StopAt,
+			})
 		}
-		whereParts = append(whereParts, mysql.NewFilter("stop_at", operator, req.StopAt))
 	}
+	if req.Maintainer != "" {
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "maintainer",
+			Operator: mysql.OperatorEqual,
+			Value:    req.Maintainer,
+		})
+	}
+	var inFilter *mysql.InFilter
 	if len(req.Statuses) > 0 {
 		statuses := make([]interface{}, 0, len(req.Statuses))
 		for _, sts := range req.Statuses {
 			statuses = append(statuses, sts)
 		}
-		whereParts = append(whereParts, mysql.NewInFilter("status", statuses))
+		inFilter = &mysql.InFilter{
+			Column: "status",
+			Values: statuses,
+		}
 	}
-	if req.Maintainer != "" {
-		whereParts = append(whereParts, mysql.NewFilter("maintainer", "=", req.Maintainer))
-	}
+	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"name", "description"}, req.SearchKeyword))
+		searchQuery = &mysql.SearchQuery{
+			Columns: []string{"name", "description"},
+			Keyword: req.SearchKeyword,
+		}
 	}
 	orders, err := s.newExperimentListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -177,12 +221,19 @@ func (s *experimentService) ListExperiments(
 		}
 		return nil, dt.Err()
 	}
+	options := &mysql.ListOptions{
+		Limit:       limit,
+		Offset:      offset,
+		Filters:     filters,
+		Orders:      orders,
+		InFilter:    inFilter,
+		SearchQuery: searchQuery,
+		NullFilters: nil,
+		JSONFilters: nil,
+	}
 	experiments, nextCursor, totalCount, err := s.experimentStorage.ListExperiments(
 		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
+		options,
 	)
 	if err != nil {
 		s.logger.Error(

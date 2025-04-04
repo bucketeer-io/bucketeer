@@ -137,7 +137,7 @@ func TestListExperimentsMySQL(t *testing.T) {
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *experimentService) {
 				s.experimentStorage.(*storagemock.MockExperimentStorage).EXPECT().ListExperiments(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*experimentproto.Experiment{
 					{Id: "id-1"},
 				}, 0, int64(0), nil)
