@@ -19,6 +19,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -181,7 +182,21 @@ func (s *projectStorage) ListProjects(
 	ctx context.Context,
 	options *mysql.ListOptions,
 ) ([]*proto.Project, int, int64, error) {
-	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectProjectsSQL, options)
+	// We do not use ConstructQueryAndWhereArgs() here,
+	// because select_projects.sql defines the variable strings in a complex constructed way.
+	var query string
+	var whereArgs []any
+	if options != nil {
+		var whereSQL string
+		whereParts := options.CreateWhereParts()
+		whereSQL, whereArgs = mysql.ConstructWhereSQLString(whereParts)
+		orderBySQL := mysql.ConstructOrderBySQLString(options.Orders)
+		limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
+		query = fmt.Sprintf(selectProjectsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	} else {
+		query = selectProjectsSQL
+		whereArgs = []interface{}{}
+	}
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
