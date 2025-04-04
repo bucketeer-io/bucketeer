@@ -293,10 +293,7 @@ func TestListProjects(t *testing.T) {
 	patterns := []struct {
 		desc           string
 		setup          func(*projectStorage)
-		whereParts     []mysql.WherePart
-		orders         []*mysql.Order
-		limit          int
-		offset         int
+		options        *mysql.ListOptions
 		expected       []*proto.Project
 		expectedCursor int
 		expectedErr    error
@@ -308,10 +305,7 @@ func TestListProjects(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			whereParts:     nil,
-			orders:         nil,
-			limit:          0,
-			offset:         0,
+			options:        nil,
 			expected:       nil,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
@@ -332,14 +326,23 @@ func TestListProjects(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			whereParts: []mysql.WherePart{
-				mysql.NewFilter("num", ">=", 5),
+			options: &mysql.ListOptions{
+				Limit:  10,
+				Offset: 5,
+				Filters: []*mysql.FilterV2{
+					{
+						Column:   "num",
+						Operator: mysql.OperatorGreaterThanOrEqual,
+						Value:    5,
+					},
+				},
+				Orders: []*mysql.Order{
+					{
+						Column:    "id",
+						Direction: mysql.OrderDirectionAsc,
+					},
+				},
 			},
-			orders: []*mysql.Order{
-				mysql.NewOrder("id", mysql.OrderDirectionAsc),
-			},
-			limit:          10,
-			offset:         5,
 			expected:       []*proto.Project{},
 			expectedCursor: 5,
 			expectedErr:    nil,
@@ -353,10 +356,11 @@ func TestListProjects(t *testing.T) {
 			}
 			accounts, cursor, _, err := storage.ListProjects(
 				context.Background(),
-				p.whereParts,
-				p.orders,
-				p.limit,
-				p.offset,
+				p.options,
+				// p.whereParts,
+				// p.orders,
+				// p.limit,
+				// p.offset,
 			)
 			assert.Equal(t, p.expected, accounts)
 			assert.Equal(t, p.expectedCursor, cursor)
