@@ -153,7 +153,7 @@ func TestCreatePushMySQL(t *testing.T) {
 			desc: "err: ErrAlreadyExists",
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Push{}, 0, int64(0), nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -178,7 +178,7 @@ func TestCreatePushMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Push{}, 0, int64(0), nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -267,7 +267,7 @@ func TestCreatePushNoCommandMySQL(t *testing.T) {
 			desc: "err: ErrAlreadyExists",
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Push{}, 0, int64(0), nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -290,7 +290,7 @@ func TestCreatePushNoCommandMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Push{}, 0, int64(0), nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -392,7 +392,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 			desc: "err: ErrNotFound",
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Push{}, 0, int64(0), nil)
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -468,7 +468,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 			desc: "success: addPushTags",
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Push{}, 0, int64(0), nil)
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -499,7 +499,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Push{}, 0, int64(0), nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
@@ -912,7 +912,7 @@ func TestListPushesMySQL(t *testing.T) {
 			desc: "err: ErrInternal",
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("error"))
 			},
 			input:       &pushproto.ListPushesRequest{EnvironmentId: "ns0"},
@@ -933,7 +933,7 @@ func TestListPushesMySQL(t *testing.T) {
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Push{}, 0, int64(0), nil)
 			},
 			input:       &pushproto.ListPushesRequest{PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
