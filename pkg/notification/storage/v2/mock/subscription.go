@@ -87,9 +87,9 @@ func (mr *MockSubscriptionStorageMockRecorder) GetSubscription(ctx, id, environm
 }
 
 // ListSubscriptions mocks base method.
-func (m *MockSubscriptionStorage) ListSubscriptions(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*notification.Subscription, int, int64, error) {
+func (m *MockSubscriptionStorage) ListSubscriptions(ctx context.Context, options *mysql.ListOptions) ([]*notification.Subscription, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListSubscriptions", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListSubscriptions", ctx, options)
 	ret0, _ := ret[0].([]*notification.Subscription)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -98,9 +98,9 @@ func (m *MockSubscriptionStorage) ListSubscriptions(ctx context.Context, wherePa
 }
 
 // ListSubscriptions indicates an expected call of ListSubscriptions.
-func (mr *MockSubscriptionStorageMockRecorder) ListSubscriptions(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockSubscriptionStorageMockRecorder) ListSubscriptions(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSubscriptions", reflect.TypeOf((*MockSubscriptionStorage)(nil).ListSubscriptions), ctx, whereParts, orders, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSubscriptions", reflect.TypeOf((*MockSubscriptionStorage)(nil).ListSubscriptions), ctx, options)
 }
 
 // UpdateSubscription mocks base method.
