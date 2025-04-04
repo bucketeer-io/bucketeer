@@ -7819,6 +7819,13 @@ definitions:
         type: string
       name:
         type: string
+      avatarImage:
+        type: string
+        format: byte
+        title: this is not save in auditlog table
+      avatarFileType:
+        type: string
+        title: this is not save in auditlog table
   ExperimentGoalReference:
     type: object
     properties:
@@ -9682,6 +9689,13 @@ definitions:
         type: string
       publicApiEditor:
         $ref: '#/definitions/EditorPublicAPIEditor'
+      avatarImage:
+        type: string
+        format: byte
+        title: this is not save in auditlog table
+      avatarFileType:
+        type: string
+        title: this is not save in auditlog table
   domainEventEntityType:
     type: string
     enum:

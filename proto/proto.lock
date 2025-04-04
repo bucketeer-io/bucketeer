@@ -20140,6 +20140,16 @@
                 "id": 5,
                 "name": "public_api_editor",
                 "type": "PublicAPIEditor"
+              },
+              {
+                "id": 6,
+                "name": "avatar_image",
+                "type": "bytes"
+              },
+              {
+                "id": 7,
+                "name": "avatar_file_type",
+                "type": "string"
               }
             ],
             "reserved_ids": [
@@ -20162,6 +20172,16 @@
                   {
                     "id": 3,
                     "name": "name",
+                    "type": "string"
+                  },
+                  {
+                    "id": 4,
+                    "name": "avatar_image",
+                    "type": "bytes"
+                  },
+                  {
+                    "id": 5,
+                    "name": "avatar_file_type",
                     "type": "string"
                   }
                 ]
