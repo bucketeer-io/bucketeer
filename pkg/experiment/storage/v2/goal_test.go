@@ -50,9 +50,7 @@ func TestCreateGoal(t *testing.T) {
 	}{
 		{
 			setup: func(s *goalStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(gomock.Any()).Return(qe)
-				qe.EXPECT().ExecContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, mysql.ErrDuplicateEntry)
 			},
@@ -64,9 +62,7 @@ func TestCreateGoal(t *testing.T) {
 		},
 		{
 			setup: func(s *goalStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(gomock.Any()).Return(qe)
-				qe.EXPECT().ExecContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
@@ -104,9 +100,7 @@ func TestUpdateGoal(t *testing.T) {
 			setup: func(s *goalStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(gomock.Any()).Return(qe)
-				qe.EXPECT().ExecContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -120,9 +114,7 @@ func TestUpdateGoal(t *testing.T) {
 			setup: func(s *goalStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(gomock.Any()).Return(qe)
-				qe.EXPECT().ExecContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -159,9 +151,7 @@ func TestGetGoal(t *testing.T) {
 			setup: func(s *goalStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(gomock.Any()).Return(qe)
-				qe.EXPECT().QueryRowContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -174,9 +164,7 @@ func TestGetGoal(t *testing.T) {
 			setup: func(s *goalStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(gomock.Any()).Return(qe)
-				qe.EXPECT().QueryRowContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -216,9 +204,7 @@ func TestListGoals(t *testing.T) {
 	}{
 		{
 			setup: func(s *goalStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(gomock.Any()).Return(qe).AnyTimes()
-				qe.EXPECT().QueryContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -238,14 +224,12 @@ func TestListGoals(t *testing.T) {
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(gomock.Any()).Return(qe).AnyTimes()
-				qe.EXPECT().QueryContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				qe.EXPECT().QueryRowContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -286,5 +270,5 @@ func TestListGoals(t *testing.T) {
 
 func newGoalStorageWithMock(t *testing.T, mockController *gomock.Controller) *goalStorage {
 	t.Helper()
-	return &goalStorage{mock.NewMockClient(mockController)}
+	return &goalStorage{mock.NewMockQueryExecer(mockController)}
 }

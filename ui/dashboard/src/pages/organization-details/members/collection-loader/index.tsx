@@ -1,5 +1,4 @@
 import { SortingState } from '@tanstack/react-table';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { sortingListFields } from 'constants/collection';
 import { Account } from '@types';
 import { OrganizationMembersFilters } from 'pages/organization-details/types';
@@ -7,6 +6,7 @@ import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
+import TableListContent from 'elements/table-list-content';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { useFetchMembers } from './use-fetch-members';
@@ -55,7 +55,7 @@ const CollectionLoader = ({
   return isError ? (
     <PageLayout.ErrorState onRetry={refetch} />
   ) : (
-    <>
+    <TableListContent>
       <DataTable
         isLoading={isLoading}
         data={accounts}
@@ -63,14 +63,14 @@ const CollectionLoader = ({
         onSortingChange={onSortingChangeHandler}
         emptyCollection={emptyState}
       />
-      {totalCount > LIST_PAGE_SIZE && !isLoading && (
+      {!isLoading && (
         <Pagination
           page={filters.page}
           totalCount={totalCount}
           onChange={page => setFilters({ page })}
         />
       )}
-    </>
+    </TableListContent>
   );
 };
 

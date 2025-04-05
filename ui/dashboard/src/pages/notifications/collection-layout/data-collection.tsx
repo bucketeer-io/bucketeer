@@ -9,6 +9,8 @@ import { Notification } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
+import DateTooltip from 'elements/date-tooltip';
+import NameWithTooltip from 'elements/name-with-tooltip';
 import { NotificationActionsType } from '../types';
 
 export const useColumns = ({
@@ -26,16 +28,22 @@ export const useColumns = ({
       size: 500,
       cell: ({ row }) => {
         const notification = row.original;
-
+        const { id, name } = notification;
         return (
-          <div className="flex flex-col gap-0.5 max-w-fit">
-            <button
-              onClick={() => onActions(notification, 'EDIT')}
-              className="underline text-primary-500 break-all typo-para-medium text-left"
-            >
-              {notification.name}
-            </button>
-          </div>
+          <NameWithTooltip
+            id={id}
+            content={<NameWithTooltip.Content content={name} id={id} />}
+            trigger={
+              <NameWithTooltip.Trigger
+                id={id}
+                name={name}
+                onClick={() => onActions(notification, 'EDIT')}
+                maxLines={1}
+                className="min-w-[200px]"
+              />
+            }
+            maxLines={1}
+          />
         );
       }
     },
@@ -58,10 +66,17 @@ export const useColumns = ({
       size: 150,
       cell: ({ row }) => {
         const notification = row.original;
+        const isNever = Number(notification.createdAt) === 0;
+
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {formatDateTime(notification.createdAt)}
-          </div>
+          <DateTooltip
+            trigger={
+              <div className="text-gray-700 typo-para-medium">
+                {isNever ? t('never') : formatDateTime(notification.createdAt)}
+              </div>
+            }
+            date={isNever ? null : notification.createdAt}
+          />
         );
       }
     },

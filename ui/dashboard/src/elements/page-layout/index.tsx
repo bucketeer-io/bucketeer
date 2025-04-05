@@ -69,10 +69,7 @@ const PageLayoutHeader = ({ children }: PropsWithChildren) => {
 const PageLayoutContent = ({ children, className }: PageLayoutContentProps) => {
   return (
     <div
-      className={cn(
-        'p-6 flex flex-1 flex-col h-full w-fit min-w-full',
-        className
-      )}
+      className={cn('pt-6 flex flex-1 flex-col h-full min-w-full', className)}
     >
       {children}
     </div>

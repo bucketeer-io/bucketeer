@@ -11,6 +11,7 @@ import Button from 'components/button';
 import Icon from 'components/icon';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterMemberModal from './member-modal/filter-member-modal';
 import { MemberActionsType, MembersFilters } from './types';
@@ -98,7 +99,7 @@ const PageContent = ({
           onClearFilters={onClearFilters}
         />
       )}
-      <div className="mt-5 flex flex-col flex-1">
+      <TableListContainer>
         <CollectionLoader
           onAdd={() => {
             if (isOrganizationAdmin) onAdd();
@@ -108,7 +109,7 @@ const PageContent = ({
           onActions={onHandleActions}
           onClearFilters={onClearFilters}
         />
-      </div>
+      </TableListContainer>
     </PageLayout.Content>
   );
 };

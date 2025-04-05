@@ -37,7 +37,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
   return (
     <PageLayout.Content className="pt-4">
       <Tabs>
-        <TabsList>
+        <TabsList className="px-6">
           {organizationTabs.map((item, index) => (
             <TabsLink key={index} to={`${url}${item.to}`}>
               {item.title}
@@ -45,7 +45,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
           ))}
         </TabsList>
 
-        <TabsContent className="pt-2">
+        <TabsContent className="pt-2 w-full">
           <Routes>
             <Route
               index

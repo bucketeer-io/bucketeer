@@ -353,10 +353,7 @@ func TestListSubscriptions(t *testing.T) {
 	patterns := []struct {
 		desc           string
 		setup          func(*subscriptionStorage)
-		whereParts     []mysql.WherePart
-		orders         []*mysql.Order
-		limit          int
-		offset         int
+		listOpts       *mysql.ListOptions
 		expectedCount  int
 		expectedCursor int
 		expectedErr    error
@@ -368,10 +365,7 @@ func TestListSubscriptions(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			whereParts:     nil,
-			orders:         nil,
-			limit:          0,
-			offset:         0,
+			listOpts:       nil,
 			expectedCount:  0,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
@@ -401,16 +395,36 @@ func TestListSubscriptions(t *testing.T) {
 				).Return(row)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 			},
-			whereParts: []mysql.WherePart{
-				mysql.NewFilter("updated_at", ">=", updatedAt),
-				mysql.NewFilter("disabled", "=", disable),
+			listOpts: &mysql.ListOptions{
+				Limit:  limit,
+				Offset: offset,
+				Filters: []*mysql.FilterV2{
+					{
+						Column:   "updated_at",
+						Operator: mysql.OperatorGreaterThanOrEqual,
+						Value:    updatedAt,
+					},
+					{
+						Column:   "disabled",
+						Operator: mysql.OperatorEqual,
+						Value:    disable,
+					},
+				},
+				InFilter:    nil,
+				NullFilters: nil,
+				JSONFilters: nil,
+				SearchQuery: nil,
+				Orders: []*mysql.Order{
+					{
+						Column:    "id",
+						Direction: mysql.OrderDirectionAsc,
+					},
+					{
+						Column:    "create_at",
+						Direction: mysql.OrderDirectionDesc,
+					},
+				},
 			},
-			orders: []*mysql.Order{
-				mysql.NewOrder("id", mysql.OrderDirectionAsc),
-				mysql.NewOrder("create_at", mysql.OrderDirectionDesc),
-			},
-			limit:          limit,
-			offset:         offset,
 			expectedCount:  getSize,
 			expectedCursor: offset + getSize,
 			expectedErr:    nil,
@@ -435,10 +449,7 @@ func TestListSubscriptions(t *testing.T) {
 					[]interface{}{},
 				).Return(row)
 			},
-			whereParts:     nil,
-			orders:         nil,
-			limit:          0,
-			offset:         0,
+			listOpts:       nil,
 			expectedCount:  0,
 			expectedCursor: 0,
 			expectedErr:    nil,
@@ -452,10 +463,7 @@ func TestListSubscriptions(t *testing.T) {
 			}
 			subscriptions, cursor, _, err := storage.ListSubscriptions(
 				context.Background(),
-				p.whereParts,
-				p.orders,
-				p.limit,
-				p.offset,
+				p.listOpts,
 			)
 			assert.Equal(t, p.expectedCount, len(subscriptions))
 			if subscriptions != nil {

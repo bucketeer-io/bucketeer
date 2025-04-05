@@ -37,6 +37,7 @@ import (
 	mockAutoOpsStorage "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
+	mockFeatureStorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	mockOpsCountStorage "github.com/bucketeer-io/bucketeer/pkg/opsevent/storage/v2/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
@@ -1839,6 +1840,7 @@ func createAutoOpsService(c *gomock.Controller) *AutoOpsService {
 	logger := zap.NewNop()
 	return &AutoOpsService{
 		mysqlClient:      mysqlClientMock,
+		featureStorage:   mockFeatureStorage.NewMockFeatureStorage(c),
 		autoOpsStorage:   mockAutoOpsStorage.NewMockAutoOpsRuleStorage(c),
 		prStorage:        mockAutoOpsStorage.NewMockProgressiveRolloutStorage(c),
 		opsCountStorage:  mockOpsCountStorage.NewMockOpsCountStorage(c),

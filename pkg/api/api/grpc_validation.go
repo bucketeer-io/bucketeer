@@ -25,6 +25,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
+	"github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 var (
@@ -35,7 +36,6 @@ var (
 	errEmptyUserID      = errors.New("gateway: user_id is empty")
 	errEmptyVariationID = errors.New("gateway: variation_id is empty")
 	errEmptyGoalID      = errors.New("gateway: goal_id is empty")
-	errNilUser          = errors.New("gateway: user is nil")
 	errNilReason        = errors.New("gateway: reason is nil")
 )
 
@@ -123,22 +123,13 @@ func (v *eventGoalValidator) validate(ctx context.Context) (string, error) {
 		)
 		return codeEmptyField, errEmptyGoalID
 	}
-	if ev.User == nil {
-		v.logger.Debug(
-			"Nil user",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("id", v.event.Id),
-				zap.Any("user", ev.User),
-			)...,
-		)
-		return codeEmptyField, errNilUser
-	}
-	if ev.User.Id == "" {
+	if (ev.User == nil || (ev.User != nil && ev.User.Id == "")) && ev.UserId == "" {
 		v.logger.Debug(
 			"Empty user_id",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("id", v.event.Id),
-				zap.String("user_id", ev.User.Id),
+				zap.Any("user", ev.User),
+				zap.String("user_id", ev.UserId),
 			)...,
 		)
 		return codeEmptyField, errEmptyUserID
@@ -199,7 +190,15 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 		)
 		return codeEmptyField, errEmptyFeatureID
 	}
-	if ev.VariationId == "" {
+	isErrorReason := ev.Reason != nil && (ev.Reason.Type == feature.Reason_ERROR_NO_EVALUATIONS ||
+		ev.Reason.Type == feature.Reason_ERROR_FLAG_NOT_FOUND ||
+		ev.Reason.Type == feature.Reason_ERROR_WRONG_TYPE ||
+		ev.Reason.Type == feature.Reason_ERROR_USER_ID_NOT_SPECIFIED ||
+		ev.Reason.Type == feature.Reason_ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED ||
+		ev.Reason.Type == feature.Reason_ERROR_EXCEPTION ||
+		ev.Reason.Type == feature.Reason_CLIENT)
+
+	if !isErrorReason && ev.VariationId == "" {
 		v.logger.Debug(
 			"Empty variation_id",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -209,21 +208,13 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 		)
 		return codeEmptyField, errEmptyVariationID
 	}
-	if ev.User == nil {
-		v.logger.Debug(
-			"Nil user",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("id", v.event.Id),
-				zap.Any("user", ev.User),
-			)...,
-		)
-		return codeEmptyField, errNilUser
-	}
-	if ev.User.Id == "" {
+	if (ev.User == nil || (ev.User != nil && ev.User.Id == "")) && ev.UserId == "" {
 		v.logger.Debug(
 			"Empty user_id",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("id", v.event.Id),
+				zap.Any("user", ev.User),
+				zap.String("user_id", ev.UserId),
 			)...,
 		)
 		return codeEmptyField, errEmptyUserID

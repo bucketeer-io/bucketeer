@@ -277,20 +277,6 @@ func (mr *MockClientMockRecorder) ExecContext(ctx, query any, args ...any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecContext", reflect.TypeOf((*MockClient)(nil).ExecContext), varargs...)
 }
 
-// Qe mocks base method.
-func (m *MockClient) Qe(ctx context.Context) mysql.QueryExecer {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Qe", ctx)
-	ret0, _ := ret[0].(mysql.QueryExecer)
-	return ret0
-}
-
-// Qe indicates an expected call of Qe.
-func (mr *MockClientMockRecorder) Qe(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Qe", reflect.TypeOf((*MockClient)(nil).Qe), ctx)
-}
-
 // QueryContext mocks base method.
 func (m *MockClient) QueryContext(ctx context.Context, query string, args ...any) (mysql.Rows, error) {
 	m.ctrl.T.Helper()

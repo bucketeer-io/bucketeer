@@ -378,6 +378,78 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 	}
 }
 
+func TestExecuteProgressiveRolloutNoCommand(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createDisabledFeature(ctx, t, featureClient, featureID)
+	feature := getFeature(t, featureClient, featureID)
+	schedules := createProgressiveRolloutSchedule()
+	createProgressiveRolloutNoCommand(
+		ctx,
+		t,
+		autoOpsClient,
+		featureID,
+		&autoopsproto.ProgressiveRolloutManualScheduleClause{
+			Schedules:   schedules,
+			VariationId: feature.Variations[0].Id,
+		},
+		nil,
+	)
+	progressiveRollouts := listProgressiveRollouts(t, autoOpsClient, featureID)
+	if len(progressiveRollouts) != 1 {
+		t.Fatal("not enough rules")
+	}
+	clause := unmarshalProgressiveRolloutManualClause(t, progressiveRollouts[0].Clause)
+	_, err := autoOpsClient.ExecuteProgressiveRollout(ctx, &autoopsproto.ExecuteProgressiveRolloutRequest{
+		EnvironmentId: *environmentID,
+		Id:            progressiveRollouts[0].Id,
+		ScheduleId:    clause.Schedules[0].ScheduleId,
+	})
+	if err != nil {
+		t.Fatalf("failed to execute progressive rollout: %s", err.Error())
+	}
+	feature = getFeature(t, featureClient, featureID)
+	expectedStrategy := &featureproto.RolloutStrategy{
+		Variations: []*featureproto.RolloutStrategy_Variation{
+			{
+				Variation: feature.Variations[0].Id,
+				Weight:    schedules[0].Weight,
+			},
+			{
+				Variation: feature.Variations[1].Id,
+				Weight:    totalVariationWeight - schedules[0].Weight,
+			},
+		},
+	}
+	if !feature.Enabled {
+		t.Fatalf("Flag shouldn't be disabled at this point")
+	}
+	if !proto.Equal(feature.DefaultStrategy.RolloutStrategy, expectedStrategy) {
+		t.Fatalf("Strategy is not equal. Expected: %s actual: %s", expectedStrategy, feature.Rules[0].Strategy.RolloutStrategy)
+	}
+	actual := listProgressiveRollouts(t, autoOpsClient, featureID)
+	if actual[0].Status != autoopsproto.ProgressiveRollout_RUNNING {
+		t.Fatalf("different status, expected: %v, actual: %v", actual[0].Status, autoopsproto.ProgressiveRollout_RUNNING)
+	}
+	actualClause := unmarshalProgressiveRolloutManualClause(t, actual[0].Clause)
+	if actualClause.VariationId != feature.Variations[0].Id {
+		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, actualClause.VariationId)
+	}
+	if len(actualClause.Schedules) != len(schedules) {
+		t.Fatalf("different length of schedules, expected: %v, actual: %v", len(actualClause.Schedules), len(schedules))
+	}
+	if actualClause.Schedules[0].TriggeredAt == 0 {
+		t.Fatalf("triggered at is empty")
+	}
+}
+
 func TestProgressiveRolloutBatch(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)

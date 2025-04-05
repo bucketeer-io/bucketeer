@@ -57,23 +57,27 @@ const Overview = ({
   const { t } = useTranslation(['table']);
 
   return (
-    <div className="flex flex-wrap items-center w-full gap-6 pb-8">
-      {overviewOptions.map((item, index) => (
-        <OverviewCard
-          key={index}
-          title={t(item.titleKey)}
-          count={summary && item.countKey ? Number(summary[item.countKey]) : 0}
-          color={item.color}
-          icon={item.icon}
-          className={cn('border border-transparent', {
-            'border-gray-300':
-              filterBySummary && item.summaryFilterValue === filterBySummary
-          })}
-          onClick={() =>
-            onChangeFilters(item.filterValues, item.summaryFilterValue)
-          }
-        />
-      ))}
+    <div className="w-full px-6">
+      <div className="flex flex-wrap items-center w-full gap-6 pb-8">
+        {overviewOptions.map((item, index) => (
+          <OverviewCard
+            key={index}
+            title={t(item.titleKey)}
+            count={
+              summary && item.countKey ? Number(summary[item.countKey]) : 0
+            }
+            color={item.color}
+            icon={item.icon}
+            className={cn('border border-transparent', {
+              'border-gray-300':
+                filterBySummary && item.summaryFilterValue === filterBySummary
+            })}
+            onClick={() =>
+              onChangeFilters(item.filterValues, item.summaryFilterValue)
+            }
+          />
+        ))}
+      </div>
     </div>
   );
 };

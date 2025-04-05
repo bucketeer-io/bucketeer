@@ -884,6 +884,37 @@ func TestDatetimeBatchForMultiSchedule(t *testing.T) {
 	}
 }
 
+func TestStopAutoOpsRule(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureClient, featureID)
+	clauses := createDatetimeClausesWithActionType(t, 4)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
+	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+	if len(autoOpsRules) != 1 {
+		t.Fatal("not enough rules")
+	}
+	stopAutoOpsRule(t, autoOpsClient, autoOpsRules[0].Id)
+	resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
+		EnvironmentId: *environmentID,
+		Id:            autoOpsRules[0].Id,
+	})
+	if resp == nil {
+		t.Fatalf("failed to get AutoOpsRule, err %d", err)
+	}
+
+	if resp.AutoOpsRule.AutoOpsStatus != autoopsproto.AutoOpsStatus_STOPPED {
+		t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_STOPPED, resp.AutoOpsRule.AutoOpsStatus)
+	}
+}
+
 func sendHttpWebhook(t *testing.T, url, payload string) {
 	t.Helper()
 	// Create a custom HTTP client with insecure skip verify
@@ -1239,37 +1270,6 @@ func deleteAutoOpsRules(t *testing.T, client autoopsclient.Client, id string) {
 	})
 	if err != nil {
 		t.Fatal("failed to list auto ops rules", err)
-	}
-}
-
-func TestStopAutoOpsRule(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	clauses := createDatetimeClausesWithActionType(t, 4)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	stopAutoOpsRule(t, autoOpsClient, autoOpsRules[0].Id)
-	resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
-		EnvironmentId: *environmentID,
-		Id:            autoOpsRules[0].Id,
-	})
-	if resp == nil {
-		t.Fatalf("failed to get AutoOpsRule, err %d", err)
-	}
-
-	if resp.AutoOpsRule.AutoOpsStatus != autoopsproto.AutoOpsStatus_STOPPED {
-		t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_STOPPED, resp.AutoOpsRule.AutoOpsStatus)
 	}
 }
 

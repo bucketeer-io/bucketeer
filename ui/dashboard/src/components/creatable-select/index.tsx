@@ -1,28 +1,48 @@
-import { FC, memo } from 'react';
-import { StylesConfig, ActionMeta, MultiValue } from 'react-select';
-import ReactCreatableSelect from 'react-select/creatable';
+import { FC, memo, ReactNode } from 'react';
+import {
+  StylesConfig,
+  ActionMeta,
+  MultiValue,
+  GroupBase,
+  components,
+  MenuListProps,
+  CSSObjectWithLabel,
+  OptionProps
+} from 'react-select';
+import ReactCreatableSelect, { CreatableProps } from 'react-select/creatable';
 import Spinner from 'components/spinner';
 
 export interface Option {
   value: string;
   label: string;
+  [key: string]: string | number | boolean;
 }
 
-export interface CreatableSelectProps {
+export interface NoOptionsMessageProps {
+  inputValue: string;
+  [key: string]: string | number | boolean;
+}
+
+export interface CreatableSelectProps
+  extends CreatableProps<Option, true, GroupBase<Option>> {
+  isMulti?: true;
   loading?: boolean;
   options?: Option[];
   disabled?: boolean;
   isSearchable?: boolean;
   defaultValues?: MultiValue<Option>;
   closeMenuOnSelect?: boolean;
+  value?: MultiValue<Option>;
+  placeholder?: string;
   className?: string;
+  isHiddenCreateNewOption?: boolean;
   onChange: (
     options: MultiValue<Option>,
     actionMeta: ActionMeta<Option>
   ) => void;
-  value?: MultiValue<Option>;
-  placeholder?: string;
   onCreateOption?: (v: string) => void;
+  formatCreateLabel?: (v: string) => JSX.Element;
+  noOptionsMessage?: (props: NoOptionsMessageProps) => ReactNode;
 }
 
 const textColor = '#475569';
@@ -34,7 +54,28 @@ const fontSize = '1rem';
 const lineHeight = '1.25rem';
 const minHeight = '3rem';
 
-export const colourStyles: StylesConfig<Option, true> = {
+const optionStyle = (
+  styles: CSSObjectWithLabel,
+  props: OptionProps<Option, true, GroupBase<Option>>,
+  isHiddenCreateNewOption: boolean
+) => {
+  const { isFocused, data } = props;
+
+  const isNewOption = data?.__isNew__;
+
+  return {
+    ...styles,
+    backgroundColor: isFocused ? backgroundColor : undefined,
+    color: textColor,
+    ':hover': {
+      backgroundColor: '#FAFAFC !important',
+      cursor: 'pointer'
+    },
+    display: isNewOption && isHiddenCreateNewOption ? 'none' : 'flex'
+  };
+};
+
+export const colorStyles: StylesConfig<Option, true> = {
   control: (styles, { isDisabled }) => ({
     ...styles,
     backgroundColor: isDisabled ? backgroundColorDisabled : backgroundColor,
@@ -47,15 +88,6 @@ export const colourStyles: StylesConfig<Option, true> = {
     minHeight: minHeight,
     boxShadow: 'none !important',
     borderRadius: '8px'
-  }),
-  option: (styles, { isFocused }) => ({
-    ...styles,
-    backgroundColor: isFocused ? backgroundColor : undefined,
-    color: textColor,
-    ':hover': {
-      backgroundColor: '#FAFAFC !important',
-      cursor: 'pointer'
-    }
   }),
   menu: base => ({
     ...base,
@@ -91,8 +123,26 @@ export const colourStyles: StylesConfig<Option, true> = {
   })
 };
 
+type CustomMenuListProps = MenuListProps<Option, true, GroupBase<Option>> & {
+  createNewOption?: ReactNode;
+};
+
+export const CustomMenuList = ({
+  children,
+  createNewOption,
+  ...props
+}: CustomMenuListProps) => {
+  return (
+    <components.MenuList {...props} className="!pb-0">
+      {children}
+      {createNewOption}
+    </components.MenuList>
+  );
+};
+
 export const CreatableSelect: FC<CreatableSelectProps> = memo(
   ({
+    isMulti = true,
     loading = false,
     disabled,
     isSearchable,
@@ -103,17 +153,30 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
     closeMenuOnSelect,
     value,
     placeholder = '',
-    onCreateOption
+    onCreateOption,
+    formatCreateLabel,
+    noOptionsMessage,
+    components,
+    styles,
+    isHiddenCreateNewOption = false,
+    ...props
   }) => {
     return (
       <ReactCreatableSelect
-        isMulti
+        {...props}
+        isMulti={isMulti}
         options={options}
         placeholder={placeholder}
         className={className}
         classNamePrefix="react-select"
-        styles={colourStyles}
+        styles={{
+          option: (styles, props) =>
+            optionStyle(styles, props, isHiddenCreateNewOption),
+          ...colorStyles,
+          ...styles
+        }}
         components={{
+          ...components,
           DropdownIndicator: null,
           LoadingIndicator: () => <Spinner className="size-5 mr-4" />
         }}
@@ -127,6 +190,8 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
           onChange(newValue as MultiValue<Option>, actionMeta)
         }
         closeMenuOnSelect={closeMenuOnSelect}
+        formatCreateLabel={formatCreateLabel}
+        noOptionsMessage={noOptionsMessage}
       />
     );
   }

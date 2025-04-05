@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'i18n';
 import { isNotEmpty } from 'utils/data-type';
 import { OrganizationFilters } from 'pages/organizations/types';
@@ -58,6 +58,11 @@ const FilterOrganizationModal = ({
   const { t } = useTranslation(['common']);
   const [selectedFilterType, setSelectedFilterType] = useState<Option>();
   const [selectedValue, setSelectedValue] = useState<Option>();
+
+  const isDisabledSubmitBtn = useMemo(
+    () => !selectedFilterType || !selectedValue,
+    [selectedFilterType, selectedValue]
+  );
 
   const onConfirmHandler = () => {
     switch (selectedFilterType?.value) {
@@ -132,21 +137,14 @@ const FilterOrganizationModal = ({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {/* <Button variant={'text'} size={'icon'} className="p-0 size-5">
-            <Icon icon={IconTrash} size={'fit'} />
-          </Button> */}
         </div>
-
-        {/* <Button variant={'text'} size={'sm'} className="px-0 typo-para-medium">
-          <Icon icon={IconAddOutlined} size="sm" />
-          {t('add-filter')}
-        </Button> */}
       </div>
 
       <ButtonBar
         secondaryButton={
-          <Button onClick={onConfirmHandler}>{t(`confirm`)}</Button>
+          <Button disabled={isDisabledSubmitBtn} onClick={onConfirmHandler}>
+            {t(`confirm`)}
+          </Button>
         }
         primaryButton={
           <Button onClick={onClearFilters} variant="secondary">
