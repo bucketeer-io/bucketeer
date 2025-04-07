@@ -1265,6 +1265,15 @@ paths:
           in: path
           required: true
           type: string
+        - name: featureVersion
+          description: |-
+            feature_version
+
+            If not set, it will return the latest version
+          in: query
+          required: false
+          type: integer
+          format: int32
         - name: authorization
           description: The API Key generated on the Admin Console.
           in: header

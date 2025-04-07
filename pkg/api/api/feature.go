@@ -91,8 +91,9 @@ func (s *grpcGatewayService) GetFeature(
 		return nil, err
 	}
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
-		EnvironmentId: envAPIKey.Environment.Id,
-		Id:            req.Id,
+		EnvironmentId:  envAPIKey.Environment.Id,
+		Id:             req.Id,
+		FeatureVersion: req.FeatureVersion,
 	})
 	if err != nil {
 		return nil, err
