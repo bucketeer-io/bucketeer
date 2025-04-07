@@ -4730,11 +4730,11 @@ paths:
       parameters:
         - name: id
           in: query
-          required: false
+          required: true
           type: string
         - name: environmentId
           in: query
-          required: false
+          required: true
           type: string
         - name: featureVersion
           in: query

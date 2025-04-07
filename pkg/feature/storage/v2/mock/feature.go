@@ -44,47 +44,47 @@ func (m *MockFeatureStorage) EXPECT() *MockFeatureStorageMockRecorder {
 }
 
 // CreateFeature mocks base method.
-func (m *MockFeatureStorage) CreateFeature(ctx context.Context, feature *domain.Feature, environmentId string) error {
+func (m *MockFeatureStorage) CreateFeature(ctx context.Context, feature *domain.Feature, environmentID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateFeature", ctx, feature, environmentId)
+	ret := m.ctrl.Call(m, "CreateFeature", ctx, feature, environmentID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateFeature indicates an expected call of CreateFeature.
-func (mr *MockFeatureStorageMockRecorder) CreateFeature(ctx, feature, environmentId any) *gomock.Call {
+func (mr *MockFeatureStorageMockRecorder) CreateFeature(ctx, feature, environmentID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFeature", reflect.TypeOf((*MockFeatureStorage)(nil).CreateFeature), ctx, feature, environmentId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFeature", reflect.TypeOf((*MockFeatureStorage)(nil).CreateFeature), ctx, feature, environmentID)
 }
 
 // GetFeature mocks base method.
-func (m *MockFeatureStorage) GetFeature(ctx context.Context, key, environmentId string) (*domain.Feature, error) {
+func (m *MockFeatureStorage) GetFeature(ctx context.Context, id, environmentID string) (*domain.Feature, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFeature", ctx, key, environmentId)
+	ret := m.ctrl.Call(m, "GetFeature", ctx, id, environmentID)
 	ret0, _ := ret[0].(*domain.Feature)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetFeature indicates an expected call of GetFeature.
-func (mr *MockFeatureStorageMockRecorder) GetFeature(ctx, key, environmentId any) *gomock.Call {
+func (mr *MockFeatureStorageMockRecorder) GetFeature(ctx, id, environmentID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeature", reflect.TypeOf((*MockFeatureStorage)(nil).GetFeature), ctx, key, environmentId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeature", reflect.TypeOf((*MockFeatureStorage)(nil).GetFeature), ctx, id, environmentID)
 }
 
 // GetFeatureByVersion mocks base method.
-func (m *MockFeatureStorage) GetFeatureByVersion(ctx context.Context, key string, version int32, environmentId string) (*domain.Feature, error) {
+func (m *MockFeatureStorage) GetFeatureByVersion(ctx context.Context, id string, version int32, environmentID string) (*domain.Feature, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFeatureByVersion", ctx, key, version, environmentId)
+	ret := m.ctrl.Call(m, "GetFeatureByVersion", ctx, id, version, environmentID)
 	ret0, _ := ret[0].(*domain.Feature)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetFeatureByVersion indicates an expected call of GetFeatureByVersion.
-func (mr *MockFeatureStorageMockRecorder) GetFeatureByVersion(ctx, key, version, environmentId any) *gomock.Call {
+func (mr *MockFeatureStorageMockRecorder) GetFeatureByVersion(ctx, id, version, environmentID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureByVersion", reflect.TypeOf((*MockFeatureStorage)(nil).GetFeatureByVersion), ctx, key, version, environmentId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureByVersion", reflect.TypeOf((*MockFeatureStorage)(nil).GetFeatureByVersion), ctx, id, version, environmentID)
 }
 
 // GetFeatureSummary mocks base method.
@@ -152,15 +152,15 @@ func (mr *MockFeatureStorageMockRecorder) ListFeaturesFilteredByExperiment(ctx, 
 }
 
 // UpdateFeature mocks base method.
-func (m *MockFeatureStorage) UpdateFeature(ctx context.Context, feature *domain.Feature, environmentId string) error {
+func (m *MockFeatureStorage) UpdateFeature(ctx context.Context, feature *domain.Feature, environmentID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateFeature", ctx, feature, environmentId)
+	ret := m.ctrl.Call(m, "UpdateFeature", ctx, feature, environmentID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateFeature indicates an expected call of UpdateFeature.
-func (mr *MockFeatureStorageMockRecorder) UpdateFeature(ctx, feature, environmentId any) *gomock.Call {
+func (mr *MockFeatureStorageMockRecorder) UpdateFeature(ctx, feature, environmentID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFeature", reflect.TypeOf((*MockFeatureStorage)(nil).UpdateFeature), ctx, feature, environmentId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFeature", reflect.TypeOf((*MockFeatureStorage)(nil).UpdateFeature), ctx, feature, environmentID)
 }
