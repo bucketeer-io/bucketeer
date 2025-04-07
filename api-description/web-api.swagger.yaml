@@ -4736,6 +4736,11 @@ paths:
           in: query
           required: false
           type: string
+        - name: featureVersion
+          in: query
+          required: false
+          type: integer
+          format: int32
       tags:
         - Feature
     post:

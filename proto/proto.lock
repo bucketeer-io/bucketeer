@@ -31944,6 +31944,11 @@
                 "id": 3,
                 "name": "environment_id",
                 "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "feature_version",
+                "type": "google.protobuf.Int32Value"
               }
             ],
             "reserved_ids": [

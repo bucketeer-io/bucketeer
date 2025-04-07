@@ -51,12 +51,15 @@ var (
 	countFeaturesByExperimentSQLQuery string
 	//go:embed sql/feature/select_feature.sql
 	selectFeatureSQLQuery string
+	//go:embed sql/feature/select_feature_by_version.sql
+	selectFeatureByVersionSQLQuery string
 )
 
 type FeatureStorage interface {
 	CreateFeature(ctx context.Context, feature *domain.Feature, environmentId string) error
 	UpdateFeature(ctx context.Context, feature *domain.Feature, environmentId string) error
 	GetFeature(ctx context.Context, key, environmentId string) (*domain.Feature, error)
+	GetFeatureByVersion(ctx context.Context, key string, version int32, environmentId string) (*domain.Feature, error)
 	ListFeatures(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -203,6 +206,30 @@ func (s *featureStorage) GetFeature(
 		&feature.Maintainer,
 		&feature.SamplingSeed,
 		&mysql.JSONObject{Val: &feature.Prerequisites},
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrFeatureNotFound
+		}
+		return nil, err
+	}
+	return &domain.Feature{Feature: &feature}, nil
+}
+
+func (s *featureStorage) GetFeatureByVersion(
+	ctx context.Context,
+	key string, version int32, environmentId string,
+) (*domain.Feature, error) {
+	feature := proto.Feature{}
+	feature.AutoOpsSummary = &proto.AutoOpsSummary{}
+	err := s.qe.QueryRowContext(
+		ctx,
+		selectFeatureByVersionSQLQuery,
+		environmentId,
+		key,
+		version,
+	).Scan(
+		&mysql.JSONObject{Val: &feature},
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {

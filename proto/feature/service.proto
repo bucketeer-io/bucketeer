@@ -41,6 +41,7 @@ message GetFeatureRequest {
   string id = 1;
   reserved 2;
   string environment_id = 3;
+  google.protobuf.Int32Value feature_version = 4;
 }
 
 message GetFeatureResponse {
