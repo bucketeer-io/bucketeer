@@ -51,6 +51,8 @@ var (
 	countFeaturesByExperimentSQLQuery string
 	//go:embed sql/feature/select_feature.sql
 	selectFeatureSQLQuery string
+	//go:embed sql/feature/select_features_by_version.sql
+	selectFeaturesByVersionSQLQuery string
 )
 
 type FeatureStorage interface {

@@ -2380,6 +2380,32 @@ func (s *FeatureService) EvaluateFeatures(
 	return &featureproto.EvaluateFeaturesResponse{UserEvaluations: userEvaluations}, nil
 }
 
+func (s *FeatureService) DebugEvaluateFeatures(
+	ctx context.Context,
+	req *featureproto.DebugEvaluateFeaturesRequest,
+) (*featureproto.DebugEvaluateFeaturesResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentId, localizer)
+	if err != nil {
+		return nil, err
+	}
+	err = validateEvaluateFeaturesV2(req, localizer)
+	if err != nil {
+		s.logger.Error(
+			"Invalid argument",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, err
+	}
+
+	return nil, nil
+}
+
 func (s *FeatureService) getTargetFeatures(
 	fs []*featureproto.Feature,
 	id string,

@@ -2468,6 +2468,64 @@ paths:
             $ref: '#/definitions/CodeReferenceServiceUpdateCodeReferenceBody'
       tags:
         - Code Reference
+  /v1/debug_evaluate_features:
+    post:
+      summary: Debug Evaluate Features
+      description: Debug Evaluate features for multiple features and users.
+      operationId: web.v1.feature.debug_evaluate_feature
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureDebugEvaluateFeaturesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureDebugEvaluateFeaturesRequest'
+      tags:
+        - feature
   /v1/environment/archive_environment:
     post:
       summary: Archive
@@ -9430,6 +9488,73 @@ definitions:
         type: array
         items:
           type: string
+  bucketeerfeatureFeature:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      enabled:
+        type: boolean
+      deleted:
+        type: boolean
+      evaluationUndelayable:
+        type: boolean
+      ttl:
+        type: integer
+        format: int32
+      version:
+        type: integer
+        format: int32
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      variations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerfeatureVariation'
+      targets:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureTarget'
+      rules:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureRule'
+      defaultStrategy:
+        $ref: '#/definitions/featureStrategy'
+      offVariation:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+      lastUsedInfo:
+        $ref: '#/definitions/featureFeatureLastUsedInfo'
+      maintainer:
+        type: string
+      variationType:
+        $ref: '#/definitions/FeatureVariationType'
+      archived:
+        type: boolean
+      prerequisites:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featurePrerequisite'
+      samplingSeed:
+        type: string
+      autoOpsSummary:
+        $ref: '#/definitions/featureAutoOpsSummary'
   bucketeerfeatureListTagsRequestOrderBy:
     type: string
     enum:
@@ -11287,7 +11412,7 @@ definitions:
     type: object
     properties:
       feature:
-        $ref: '#/definitions/featureFeature'
+        $ref: '#/definitions/bucketeerfeatureFeature'
   featureCreateFlagTriggerCommand:
     type: object
     properties:
@@ -11354,6 +11479,44 @@ definitions:
     properties:
       segment:
         $ref: '#/definitions/featureSegment'
+  featureDebugEvaluateFeaturesRequest:
+    type: object
+    properties:
+      users:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/userUser'
+      tag:
+        type: string
+      features:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureDebugEvaluateFeaturesRequestFeature'
+      environmentId:
+        type: string
+    required:
+      - users
+      - features
+      - environmentId
+  featureDebugEvaluateFeaturesRequestFeature:
+    type: object
+    properties:
+      id:
+        type: string
+      featureVersion:
+        type: integer
+        format: int32
+        description: If not set, the latest version will be used.
+  featureDebugEvaluateFeaturesResponse:
+    type: object
+    properties:
+      userEvaluations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureUserEvaluations'
   featureDeleteFeatureCommand:
     type: object
   featureDeleteFeatureResponse:
@@ -11422,73 +11585,6 @@ definitions:
         type: string
       variationName:
         type: string
-  featureFeature:
-    type: object
-    properties:
-      id:
-        type: string
-      name:
-        type: string
-      description:
-        type: string
-      enabled:
-        type: boolean
-      deleted:
-        type: boolean
-      evaluationUndelayable:
-        type: boolean
-      ttl:
-        type: integer
-        format: int32
-      version:
-        type: integer
-        format: int32
-      createdAt:
-        type: string
-        format: int64
-      updatedAt:
-        type: string
-        format: int64
-      variations:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/bucketeerfeatureVariation'
-      targets:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureTarget'
-      rules:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureRule'
-      defaultStrategy:
-        $ref: '#/definitions/featureStrategy'
-      offVariation:
-        type: string
-      tags:
-        type: array
-        items:
-          type: string
-      lastUsedInfo:
-        $ref: '#/definitions/featureFeatureLastUsedInfo'
-      maintainer:
-        type: string
-      variationType:
-        $ref: '#/definitions/FeatureVariationType'
-      archived:
-        type: boolean
-      prerequisites:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featurePrerequisite'
-      samplingSeed:
-        type: string
-      autoOpsSummary:
-        $ref: '#/definitions/featureAutoOpsSummary'
   featureFeatureLastUsedInfo:
     type: object
     properties:
@@ -11575,7 +11671,7 @@ definitions:
     type: object
     properties:
       feature:
-        $ref: '#/definitions/featureFeature'
+        $ref: '#/definitions/bucketeerfeatureFeature'
   featureGetFeaturesResponse:
     type: object
     properties:
@@ -11583,7 +11679,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/featureFeature'
+          $ref: '#/definitions/bucketeerfeatureFeature'
   featureGetFlagTriggerResponse:
     type: object
     properties:
@@ -11608,7 +11704,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/featureFeature'
+          $ref: '#/definitions/bucketeerfeatureFeature'
       cursor:
         type: string
   featureListFeaturesRequestOrderBy:
@@ -11635,7 +11731,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/featureFeature'
+          $ref: '#/definitions/bucketeerfeatureFeature'
       cursor:
         type: string
       totalCount:
@@ -11933,7 +12029,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/featureFeature'
+          $ref: '#/definitions/bucketeerfeatureFeature'
   featureSegmentStatus:
     type: string
     enum:
@@ -12092,7 +12188,7 @@ definitions:
     type: object
     properties:
       feature:
-        $ref: '#/definitions/featureFeature'
+        $ref: '#/definitions/bucketeerfeatureFeature'
   featureUpdateFeatureTargetingResponse:
     type: object
   featureUpdateFeatureVariationsResponse:
