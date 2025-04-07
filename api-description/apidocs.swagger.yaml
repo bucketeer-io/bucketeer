@@ -1087,6 +1087,68 @@ paths:
           type: string
       tags:
         - Code References
+  /v1/feature:
+    get:
+      summary: Get
+      description: Get a Feature Flag. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.features.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetFeatureResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+        - name: featureVersion
+          description: |-
+            feature_version
+
+            If not set, it will return the latest version.
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Feature Flags
   /v1/features:
     get:
       summary: List
@@ -1220,67 +1282,6 @@ paths:
       tags:
         - Feature Flags
   /v1/features/{id}:
-    get:
-      summary: Get
-      description: Get a Feature Flag. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.features.get
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayGetFeatureResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: id
-          in: path
-          required: true
-          type: string
-        - name: featureVersion
-          description: |-
-            feature_version
-
-            If not set, it will return the latest version
-          in: query
-          required: false
-          type: integer
-          format: int32
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
-      tags:
-        - Feature Flags
     patch:
       summary: Update
       description: Update a Feature Flag. To call this API, you need a `WRITE` or `ADMIN` API Key role.

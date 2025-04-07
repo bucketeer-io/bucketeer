@@ -43,7 +43,7 @@ message GetFeatureRequest {
   string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
   google.protobuf.Int32Value feature_version = 4
       [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-        description: "If not set, it will return the latest version"
+        description: "If not set, it will return the latest version."
       }];
 }
 

@@ -31967,7 +31967,7 @@
                     "aggregated": [
                       {
                         "name": "description",
-                        "value": "If not set, it will return the latest version"
+                        "value": "If not set, it will return the latest version."
                       }
                     ]
                   }
@@ -38365,7 +38365,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "If not set, it will return the latest version"
+                        "value": "If not set, it will return the latest version."
                       }
                     ]
                   }
@@ -39755,7 +39755,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/features/{id}"
+                        "value": "/v1/feature"
                       }
                     ]
                   },
