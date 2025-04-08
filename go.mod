@@ -1,6 +1,7 @@
 module github.com/bucketeer-io/bucketeer
 
 go 1.24.1
+
 require (
 	cloud.google.com/go/bigquery v1.67.0
 	cloud.google.com/go/kms v1.21.0
