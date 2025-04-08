@@ -31938,12 +31938,40 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "feature_version",
+                "type": "google.protobuf.Int32Value",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "If not set, it will return the latest version."
+                      }
+                    ]
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -38315,7 +38343,33 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "feature_version",
+                "type": "google.protobuf.Int32Value",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "feature_version"
+                      },
+                      {
+                        "name": "description",
+                        "value": "If not set, it will return the latest version."
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           },
@@ -39634,7 +39688,7 @@
                     "aggregated": [
                       {
                         "name": "post",
-                        "value": "/v1/features"
+                        "value": "/v1/feature"
                       },
                       {
                         "name": "body",
@@ -39701,7 +39755,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/features/{id}"
+                        "value": "/v1/feature"
                       }
                     ]
                   },
@@ -39827,7 +39881,7 @@
                     "aggregated": [
                       {
                         "name": "patch",
-                        "value": "/v1/features/{id}"
+                        "value": "/v1/feature"
                       },
                       {
                         "name": "body",
@@ -40090,7 +40144,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/push/{id}"
+                        "value": "/v1/push"
                       }
                     ]
                   },
@@ -40153,7 +40207,7 @@
                     "aggregated": [
                       {
                         "name": "patch",
-                        "value": "/v1/push/{id}"
+                        "value": "/v1/push"
                       },
                       {
                         "name": "body",
@@ -40287,7 +40341,7 @@
                     "aggregated": [
                       {
                         "name": "patch",
-                        "value": "/v1/account/{organization_id}/{email}"
+                        "value": "/v1/account"
                       },
                       {
                         "name": "body",
@@ -40354,7 +40408,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/account/{organization_id}/{email}"
+                        "value": "/v1/account"
                       }
                     ]
                   },
@@ -40417,7 +40471,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/account/get-account-by-environment/{environment_id}/{email}"
+                        "value": "/v1/account/get_account_by_environment"
                       }
                     ]
                   },
@@ -40480,7 +40534,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/account/me/{organization_id}"
+                        "value": "/v1/account/get_me"
                       }
                     ]
                   },
@@ -40606,7 +40660,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/code_references/{id}"
+                        "value": "/v1/code_reference"
                       }
                     ]
                   },
@@ -40732,7 +40786,7 @@
                     "aggregated": [
                       {
                         "name": "post",
-                        "value": "/v1/code_references"
+                        "value": "/v1/code_reference"
                       },
                       {
                         "name": "body",
@@ -40799,7 +40853,7 @@
                     "aggregated": [
                       {
                         "name": "patch",
-                        "value": "/v1/code_references/{id}"
+                        "value": "/v1/code_reference"
                       },
                       {
                         "name": "body",
@@ -40866,7 +40920,7 @@
                     "aggregated": [
                       {
                         "name": "delete",
-                        "value": "/v1/code_references/{id}"
+                        "value": "/v1/code_reference"
                       }
                     ]
                   },
@@ -40925,6 +40979,9 @@
         "imports": [
           {
             "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/api/field_behavior.proto"
           },
           {
             "path": "google/protobuf/wrappers.proto"

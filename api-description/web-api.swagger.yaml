@@ -4730,12 +4730,18 @@ paths:
       parameters:
         - name: id
           in: query
-          required: false
+          required: true
           type: string
         - name: environmentId
           in: query
-          required: false
+          required: true
           type: string
+        - name: featureVersion
+          description: If not set, it will return the latest version.
+          in: query
+          required: false
+          type: integer
+          format: int32
       tags:
         - Feature
     post:

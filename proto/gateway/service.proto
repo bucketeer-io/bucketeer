@@ -18,6 +18,7 @@ package bucketeer.gateway;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/gateway";
 
 import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
 import "google/protobuf/wrappers.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -149,7 +150,12 @@ message CreateFeatureResponse {
 }
 
 message GetFeatureRequest {
-  string id = 1;
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.Int32Value feature_version = 2
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        title: "feature_version"
+        description: "If not set, it will return the latest version."
+      }];
 }
 
 message GetFeatureResponse {
@@ -593,7 +599,7 @@ service Gateway {
   }
   rpc CreateFeature(CreateFeatureRequest) returns (CreateFeatureResponse) {
     option (google.api.http) = {
-      post: "/v1/features"
+      post: "/v1/feature"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -613,7 +619,7 @@ service Gateway {
   }
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {
     option (google.api.http) = {
-      get: "/v1/features/{id}"
+      get: "/v1/feature"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",
@@ -651,7 +657,7 @@ service Gateway {
   }
   rpc UpdateFeature(UpdateFeatureRequest) returns (UpdateFeatureResponse) {
     option (google.api.http) = {
-      patch: "/v1/features/{id}"
+      patch: "/v1/feature"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -730,7 +736,7 @@ service Gateway {
   }
   rpc GetPush(GetPushRequest) returns (GetPushResponse) {
     option (google.api.http) = {
-      get: "/v1/push/{id}"
+      get: "/v1/push"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",
@@ -749,7 +755,7 @@ service Gateway {
   }
   rpc UpdatePush(UpdatePushRequest) returns (UpdatePushResponse) {
     option (google.api.http) = {
-      patch: "/v1/push/{id}"
+      patch: "/v1/push"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -791,7 +797,7 @@ service Gateway {
   rpc UpdateAccountV2(UpdateAccountV2Request)
       returns (UpdateAccountV2Response) {
     option (google.api.http) = {
-      patch: "/v1/account/{organization_id}/{email}"
+      patch: "/v1/account"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -811,7 +817,7 @@ service Gateway {
   }
   rpc GetAccountV2(GetAccountV2Request) returns (GetAccountV2Response) {
     option (google.api.http) = {
-      get: "/v1/account/{organization_id}/{email}"
+      get: "/v1/account"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get by Organization ID",
@@ -831,7 +837,7 @@ service Gateway {
   rpc GetAccountV2ByEnvironmentID(GetAccountV2ByEnvironmentIDRequest)
       returns (GetAccountV2ByEnvironmentIDResponse) {
     option (google.api.http) = {
-      get: "/v1/account/get-account-by-environment/{environment_id}/{email}"
+      get: "/v1/account/get_account_by_environment"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get by Environment ID",
@@ -850,7 +856,7 @@ service Gateway {
   }
   rpc GetMe(GetMeRequest) returns (GetMeResponse) {
     option (google.api.http) = {
-      get: "/v1/account/me/{organization_id}"
+      get: "/v1/account/get_me"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Service Account",
@@ -889,7 +895,7 @@ service Gateway {
   rpc GetCodeReference(GetCodeReferenceRequest)
       returns (GetCodeReferenceResponse) {
     option (google.api.http) = {
-      get: "/v1/code_references/{id}"
+      get: "/v1/code_reference"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",
@@ -929,7 +935,7 @@ service Gateway {
   rpc CreateCodeReference(CreateCodeReferenceRequest)
       returns (CreateCodeReferenceResponse) {
     option (google.api.http) = {
-      post: "/v1/code_references"
+      post: "/v1/code_reference"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -950,7 +956,7 @@ service Gateway {
   rpc UpdateCodeReference(UpdateCodeReferenceRequest)
       returns (UpdateCodeReferenceResponse) {
     option (google.api.http) = {
-      patch: "/v1/code_references/{id}"
+      patch: "/v1/code_reference"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -971,7 +977,7 @@ service Gateway {
   rpc DeleteCodeReference(DeleteCodeReferenceRequest)
       returns (DeleteCodeReferenceResponse) {
     option (google.api.http) = {
-      delete: "/v1/code_references/{id}"
+      delete: "/v1/code_reference"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Delete",
