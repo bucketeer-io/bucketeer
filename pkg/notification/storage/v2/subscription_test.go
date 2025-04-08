@@ -410,7 +410,7 @@ func TestListSubscriptions(t *testing.T) {
 						Value:    disable,
 					},
 				},
-				InFilter:    nil,
+				InFilters:   nil,
 				NullFilters: nil,
 				JSONFilters: nil,
 				SearchQuery: nil,
