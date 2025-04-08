@@ -292,8 +292,8 @@ func (p pushSender) listPushes(ctx context.Context, environmentId string) ([]*pu
 				Value:    environmentId,
 			},
 		},
-		InFilter: nil,
-		Orders:   nil,
+		InFilters: nil,
+		Orders:    nil,
 	}
 
 	storage := pushstorage.NewPushStorage(p.mysqlClient)

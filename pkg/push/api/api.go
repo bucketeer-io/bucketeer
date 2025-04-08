@@ -1201,7 +1201,7 @@ func (s *PushService) listPushes(
 		Offset:      offset,
 		Filters:     filters,
 		SearchQuery: searchQuery,
-		InFilter:    nil,
+		InFilters:   nil,
 		Orders:      orders,
 		JSONFilters: nil,
 		NullFilters: nil,
