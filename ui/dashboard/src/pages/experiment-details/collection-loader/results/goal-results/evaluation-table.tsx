@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'i18n';
 import { Experiment, GoalResult } from '@types';
 import { ResultCell, ResultHeaderCell } from './goal-results-table-element';
+import { DatasetReduceType } from './timeseries-area-line-chart';
 
 const headerList = [
   {
@@ -38,10 +39,14 @@ const headerList = [
 
 const EvaluationTable = ({
   experiment,
-  goalResult
+  goalResult,
+  evaluationDataSets,
+  onToggleShowData
 }: {
   experiment: Experiment;
   goalResult: GoalResult;
+  evaluationDataSets: DatasetReduceType[];
+  onToggleShowData: (label: string) => void;
 }) => {
   const { t } = useTranslation(['common', 'table']);
 
@@ -84,6 +89,10 @@ const EvaluationTable = ({
                 Number(experimentCount.userCount)
               : 0;
 
+          const isHidden = evaluationDataSets.find(
+            dataset => dataset.label === item?.variationName
+          )?.hidden;
+
           return (
             <div key={i} className="flex items-center w-full">
               <ResultCell
@@ -92,6 +101,8 @@ const EvaluationTable = ({
                 isFirstItem={true}
                 value={item?.variationName || ''}
                 minSize={270}
+                isChecked={!isHidden}
+                onToggleShowData={onToggleShowData}
               />
               <ResultCell
                 value={Number(evaluationCount?.userCount)}

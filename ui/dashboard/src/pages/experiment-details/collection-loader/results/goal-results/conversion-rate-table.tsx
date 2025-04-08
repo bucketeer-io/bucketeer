@@ -4,15 +4,20 @@ import { Experiment, GoalResult } from '@types';
 import { isNumber } from 'utils/chart';
 import { GoalResultState } from '..';
 import { ResultHeaderCell, ResultCell } from './goal-results-table-element';
+import { DatasetReduceType } from './timeseries-area-line-chart';
 
 const ConversionRateTable = ({
   goalResultState,
   experiment,
-  goalResult
+  goalResult,
+  conversionRateDataSets,
+  onToggleShowData
 }: {
   goalResultState: GoalResultState;
   experiment: Experiment;
   goalResult: GoalResult;
+  conversionRateDataSets: DatasetReduceType[];
+  onToggleShowData: (label: string) => void;
 }) => {
   const { t } = useTranslation(['common', 'table']);
 
@@ -156,14 +161,20 @@ const ConversionRateTable = ({
             ? (probBest.mean * 100).toFixed(1) + ' %'
             : '-';
 
+          const isHidden = conversionRateDataSets.find(
+            dataset => dataset.label === item?.variationName
+          )?.hidden;
+
           return (
             <div key={i} className="flex items-center w-full">
               <ResultCell
                 variationId={item.variationId}
-                isFirstItem={true}
+                isFirstItem
                 value={item?.variationName || ''}
                 minSize={270}
                 currentIndex={i}
+                isChecked={!isHidden}
+                onToggleShowData={onToggleShowData}
               />
               <ResultCell
                 value={
