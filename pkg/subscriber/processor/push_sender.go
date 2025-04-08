@@ -277,17 +277,29 @@ func (p pushSender) getFCMCredentials(ctx context.Context, fcmServiceAccount str
 // Because the `ListPushes` API removes the FCM service account from the response
 // due to security reasons, we list the pushes directly from the storage interface
 func (p pushSender) listPushes(ctx context.Context, environmentId string) ([]*pushproto.Push, error) {
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_id", "=", environmentId),
+	options := &mysql.ListOptions{
+		Limit:  mysql.QueryNoLimit,
+		Offset: 0,
+		Filters: []*mysql.FilterV2{
+			{
+				Column:   "deleted",
+				Operator: mysql.OperatorEqual,
+				Value:    false,
+			},
+			{
+				Column:   "environment_id",
+				Operator: mysql.OperatorEqual,
+				Value:    environmentId,
+			},
+		},
+		InFilter: nil,
+		Orders:   nil,
 	}
+
 	storage := pushstorage.NewPushStorage(p.mysqlClient)
 	pushes, _, _, err := storage.ListPushes(
 		ctx,
-		whereParts,
-		nil, // order by
-		mysql.QueryNoLimit,
-		0, // offset
+		options,
 	)
 	if err != nil {
 		return nil, err
