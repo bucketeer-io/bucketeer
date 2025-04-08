@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
@@ -289,104 +290,139 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	}
 	hourlyTimeStamps := getHourlyTimeStamps(timestamps, timestampUnit)
 	vIDs := getVariationIDs(resp.Feature.Variations)
+
+	variationEventCountsMap := make(map[string][]float64, len(vIDs))
+	variationUserCountsMap := make(map[string][]float64, len(vIDs))
+	variationTotalEventCountsMap := make(map[string]int64, len(vIDs))
+	variationTotalUserCountsMap := make(map[string]int64, len(vIDs))
+
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	var processingErr error
+	errChan := make(chan error, len(vIDs))
+
+	for _, vID := range vIDs {
+		wg.Add(1)
+		go func(variationID string) {
+			defer wg.Done()
+
+			// Get event data
+			eventCountKeys := s.getEventCountKeys(
+				hourlyTimeStamps,
+				req.EnvironmentId,
+				req.FeatureId,
+				variationID,
+			)
+			eventCounts, err := s.getEventCounts(eventCountKeys, timestampUnit)
+			if err != nil {
+				s.logCountError(
+					ctx,
+					err,
+					"Failed to get event counts", req.EnvironmentId, req.FeatureId, variationID,
+					resp.Feature.Version,
+					timestampUnit, req.TimeRange,
+				)
+				errChan <- err
+				return
+			}
+
+			// Get user data
+			userCountKeys := s.getUserCountKeys(
+				hourlyTimeStamps,
+				req.EnvironmentId,
+				req.FeatureId,
+				variationID,
+			)
+			userCounts, err := s.getUserCounts(
+				userCountKeys,
+				req.FeatureId,
+				req.EnvironmentId,
+				timestampUnit,
+			)
+			if err != nil {
+				s.logCountError(
+					ctx,
+					err,
+					"Failed to get user counts", req.EnvironmentId, req.FeatureId, variationID,
+					resp.Feature.Version,
+					timestampUnit, req.TimeRange,
+				)
+				errChan <- err
+				return
+			}
+
+			totalUserCounts, err := s.getTotalUserCounts(
+				userCountKeys,
+				req.FeatureId,
+				req.EnvironmentId,
+			)
+			if err != nil {
+				s.logCountError(
+					ctx,
+					err,
+					"Failed to get total user counts", req.EnvironmentId, req.FeatureId, variationID,
+					resp.Feature.Version,
+					timestampUnit, req.TimeRange,
+				)
+				errChan <- err
+				return
+			}
+
+			mu.Lock()
+			variationEventCountsMap[variationID] = eventCounts
+			variationUserCountsMap[variationID] = userCounts
+			variationTotalEventCountsMap[variationID] = s.getTotalEventCounts(eventCounts)
+			variationTotalUserCountsMap[variationID] = totalUserCounts
+			mu.Unlock()
+		}(vID)
+	}
+
+	wg.Wait()
+	close(errChan)
+
+	for err := range errChan {
+		if err != nil {
+			processingErr = err
+			break
+		}
+	}
+
+	if processingErr != nil {
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
 	variationTSEvents := make([]*ecproto.VariationTimeseries, 0, len(vIDs))
 	variationTSUsers := make([]*ecproto.VariationTimeseries, 0, len(vIDs))
+
 	for _, vID := range vIDs {
-		eventCountKeys := s.getEventCountKeys(
-			hourlyTimeStamps,
-			req.EnvironmentId,
-			req.FeatureId,
-			vID,
-		)
-		userCountKeys := s.getUserCountKeys(
-			hourlyTimeStamps,
-			req.EnvironmentId,
-			req.FeatureId,
-			vID,
-		)
-		eventCounts, err := s.getEventCounts(eventCountKeys, timestampUnit)
-		if err != nil {
-			s.logCountError(
-				ctx,
-				err,
-				"Failed to get event counts", req.EnvironmentId, req.FeatureId, vID,
-				resp.Feature.Version,
-				timestampUnit, req.TimeRange,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		totalEventCounts := s.getTotalEventCounts(eventCounts)
-		userCounts, err := s.getUserCounts(
-			userCountKeys,
-			req.FeatureId,
-			req.EnvironmentId,
-			timestampUnit,
-		)
-		if err != nil {
-			s.logCountError(
-				ctx,
-				err,
-				"Failed to get user counts", req.EnvironmentId, req.FeatureId, vID,
-				resp.Feature.Version,
-				timestampUnit, req.TimeRange,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		totalUserCounts, err := s.getTotalUserCounts(
-			userCountKeys,
-			req.FeatureId,
-			req.EnvironmentId,
-		)
-		if err != nil {
-			s.logCountError(
-				ctx,
-				err,
-				"Failed to get user counts", req.EnvironmentId, req.FeatureId, vID,
-				resp.Feature.Version,
-				timestampUnit, req.TimeRange,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		variationTSUsers = append(variationTSUsers, &ecproto.VariationTimeseries{
-			VariationId: vID,
-			Timeseries: &ecproto.Timeseries{
-				Timestamps:  timestamps,
-				Values:      userCounts,
-				Unit:        timestampUnit,
-				TotalCounts: totalUserCounts,
-			},
-		})
 		variationTSEvents = append(variationTSEvents, &ecproto.VariationTimeseries{
 			VariationId: vID,
 			Timeseries: &ecproto.Timeseries{
 				Timestamps:  timestamps,
-				Values:      eventCounts,
+				Values:      variationEventCountsMap[vID],
 				Unit:        timestampUnit,
-				TotalCounts: totalEventCounts,
+				TotalCounts: variationTotalEventCountsMap[vID],
+			},
+		})
+
+		variationTSUsers = append(variationTSUsers, &ecproto.VariationTimeseries{
+			VariationId: vID,
+			Timeseries: &ecproto.Timeseries{
+				Timestamps:  timestamps,
+				Values:      variationUserCountsMap[vID],
+				Unit:        timestampUnit,
+				TotalCounts: variationTotalUserCountsMap[vID],
 			},
 		})
 	}
+
 	return &ecproto.GetEvaluationTimeseriesCountResponse{
 		EventCounts: variationTSEvents,
 		UserCounts:  variationTSUsers,
