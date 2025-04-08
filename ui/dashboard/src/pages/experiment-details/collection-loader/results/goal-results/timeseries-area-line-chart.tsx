@@ -126,13 +126,12 @@ export const TimeseriesAreaLineChart = memo(
 
           datasets[toggleIndex].hidden = !datasets[toggleIndex].hidden;
           chart.update();
-          if (setDataSets)
-            setDataSets(
-              datasets.map(dataset => ({
-                label: dataset.label,
-                hidden: dataset.hidden || false
-              }))
-            );
+          setDataSets(
+            datasets.map(dataset => ({
+              label: dataset.label,
+              hidden: dataset.hidden || false
+            }))
+          );
         }
       };
 
