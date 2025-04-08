@@ -1,4 +1,11 @@
-import { memo } from 'react';
+import {
+  forwardRef,
+  memo,
+  Ref,
+  useEffect,
+  useImperativeHandle,
+  useRef
+} from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -13,9 +20,11 @@ import {
   ChartData,
   ChartOptions,
   Point,
-  ChartDataset
+  ChartDataset,
+  Legend
 } from 'chart.js';
-import { formatXAxisLabel } from 'utils/chart';
+import { formatTooltipLabel, formatXAxisLabel } from 'utils/chart';
+import { formatLongDateTime } from 'utils/date-time';
 import { getVariationColor } from 'utils/style';
 
 ChartJS.register(
@@ -25,149 +34,222 @@ ChartJS.register(
   TimeScale,
   PointElement,
   TimeSeriesScale,
+  Legend,
   Tooltip,
   Filler
 );
 
+export interface DatasetReduceType {
+  label?: string;
+  hidden: boolean;
+}
+
+export interface ChartToggleLegendRef {
+  toggleLegend: (label: string) => void;
+}
+
 interface TimeseriesAreaLineChartProps {
+  chartType: string;
   label?: string;
   dataLabels: Array<string>;
   timeseries: Array<number | string>;
   upperBoundaries: Array<Array<number>>;
   lowerBoundaries: Array<Array<number>>;
   representatives: Array<Array<number>>;
+  setDataSets: (datasets: DatasetReduceType[]) => void;
 }
 
 export const TimeseriesAreaLineChart = memo(
-  ({
-    label,
-    dataLabels,
-    timeseries,
-    upperBoundaries,
-    lowerBoundaries,
-    representatives
-  }: TimeseriesAreaLineChartProps) => {
-    const labels = timeseries.map(t => new Date(Number(t) * 1000));
+  forwardRef(
+    (
+      {
+        chartType,
+        label,
+        dataLabels,
+        timeseries,
+        upperBoundaries,
+        lowerBoundaries,
+        representatives,
+        setDataSets
+      }: TimeseriesAreaLineChartProps,
+      ref: Ref<ChartToggleLegendRef>
+    ) => {
+      const labels = timeseries.map(t => new Date(Number(t) * 1000));
 
-    const datasets: ChartDataset<'line'>[] = [];
+      const datasets: ChartDataset<'line'>[] = [];
 
-    dataLabels.forEach((l, i) => {
-      const color = getVariationColor(i);
-      const hexColor = hexToRgba(color, 0.2);
-      datasets.push({
-        label: undefined,
-        data: upperBoundaries[i],
-        borderColor: color,
-        backgroundColor: hexColor,
-        fill: '+1'
+      dataLabels.forEach((l, i) => {
+        const color = getVariationColor(i);
+        const hexColor = hexToRgba(color, 0.2);
+        datasets.push({
+          label: undefined,
+          data: upperBoundaries[i],
+          borderWidth: 0,
+          backgroundColor: hexColor,
+          pointRadius: 0,
+          fill: '+1'
+        });
+        datasets.push({
+          label: undefined,
+          data: lowerBoundaries[i],
+          borderWidth: 0,
+          backgroundColor: hexColor,
+          pointRadius: 0,
+          fill: '-1'
+        });
+        datasets.push({
+          label: l,
+          data: representatives[i],
+          borderColor: color,
+          pointRadius: 0,
+          fill: false
+        });
       });
-      datasets.push({
-        label: undefined,
-        data: lowerBoundaries[i],
-        backgroundColor: hexColor,
-        fill: '-1'
-      });
-      datasets.push({
-        label: l,
-        data: representatives[i],
-        borderColor: color,
-        backgroundColor: hexColor,
-        fill: false
-      });
-    });
-    const chartData: ChartData<'line', (number | Point | null)[], Date> = {
-      labels,
-      datasets: datasets
-    };
-    const options: ChartOptions<'line'> = {
-      responsive: true,
-      maintainAspectRatio: false,
-      elements: {
-        point: {
-          radius: 0
+
+      const chartRef = useRef<ChartJS<'line'> | null>(null);
+
+      useImperativeHandle(ref, () => {
+        return {
+          toggleLegend(label: string) {
+            toggleDataset(label);
+          }
+        };
+      }, [chartRef]);
+
+      const toggleDataset = (label: string) => {
+        const chart = chartRef.current;
+        if (chart) {
+          const datasets = chart.data.datasets;
+          const toggleIndex = datasets.findIndex(
+            dataset => dataset?.label === label
+          );
+
+          datasets[toggleIndex].hidden = !datasets[toggleIndex].hidden;
+          chart.update();
+          if (setDataSets)
+            setDataSets(
+              datasets.map(dataset => ({
+                label: dataset.label,
+                hidden: dataset.hidden || false
+              }))
+            );
         }
-      },
-      plugins: {
-        legend: {
-          display: false
-        },
-        title: {
-          display: label ? true : false,
-          text: label
-        },
-        tooltip: {
-          enabled: false
-        }
-      },
-      scales: {
-        x: {
-          title: {
+      };
+
+      const chartData: ChartData<'line', (number | Point | null)[], Date> = {
+        labels,
+        datasets: datasets
+      };
+      const options: ChartOptions<'line'> = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
             display: false
           },
-          grid: {
-            display: true,
-            color: '#E2E8F0',
-            lineWidth: 2,
-            tickWidth: 0
+          title: {
+            display: label ? true : false,
+            text: label
           },
-          border: {
-            dash: [5, 5],
-            color: '#E2E8F0'
-          },
-          ticks: {
-            align: 'center' as const,
-            callback: function (index: string | number) {
-              return formatXAxisLabel(Number(index), labels);
-            },
-            autoSkip: false,
-            minRotation: 0,
-            maxRotation: 0,
-            font: {
-              family: 'Sofia Pro',
-              size: 14,
-              weight: 400
-            },
-            color: '#94A3B8'
+          tooltip: {
+            enabled: true,
+            callbacks: {
+              title: tooltipItems => {
+                const dateString = tooltipItems[0].label;
+
+                const date = new Date(dateString);
+                if (date instanceof Date) {
+                  return formatLongDateTime({
+                    value: String(date.getTime() / 1000)
+                  });
+                }
+                return tooltipItems[0].label;
+              },
+              label: formatTooltipLabel
+            }
           }
         },
-        y: {
-          title: {
-            display: false
-          },
-          border: {
-            dash: [5, 5]
-          },
-          ticks: {
-            font: {
-              family: 'Sofia Pro',
-              size: 14,
-              weight: 400
+        scales: {
+          x: {
+            title: {
+              display: false
             },
-            color: '#94A3B8'
+            grid: {
+              display: true,
+              color: '#E2E8F0',
+              lineWidth: 2,
+              tickWidth: 0
+            },
+            border: {
+              dash: [5, 5],
+              color: '#E2E8F0'
+            },
+            ticks: {
+              align: 'center' as const,
+              callback: function (index: string | number) {
+                return formatXAxisLabel(Number(index), labels);
+              },
+              autoSkip: false,
+              minRotation: 0,
+              maxRotation: 0,
+              font: {
+                family: 'Sofia Pro',
+                size: 14,
+                weight: 400
+              },
+              color: '#94A3B8'
+            }
           },
-          grid: {
-            display: true,
-            color: '#E2E8F0',
-            lineWidth: 2,
-            tickWidth: 0
+          y: {
+            title: {
+              display: false
+            },
+            border: {
+              dash: [5, 5]
+            },
+            ticks: {
+              font: {
+                family: 'Sofia Pro',
+                size: 14,
+                weight: 400
+              },
+              color: '#94A3B8'
+            },
+            grid: {
+              display: true,
+              color: '#E2E8F0',
+              lineWidth: 2,
+              tickWidth: 0
+            }
           }
         }
-      }
-    };
+      };
 
-    return (
-      <div className="flex flex-1 w-full min-w-[650px] h-fit pr-5">
-        <Line
-          style={{
-            width: '100%'
-          }}
-          data={chartData}
-          options={options}
-          datasetIdKey={datasetKeyProvider().toString()}
-        />
-      </div>
-    );
-  }
+      useEffect(() => {
+        if (chartRef.current) {
+          const datasets = chartRef.current?.data?.datasets;
+          setDataSets(
+            datasets.map(dataset => ({
+              label: dataset.label,
+              hidden: dataset.hidden || false
+            }))
+          );
+        }
+      }, [chartRef, chartType]);
+
+      return (
+        <div className="flex flex-1 w-full min-w-[650px] h-fit pr-5">
+          <Line
+            ref={chartRef}
+            height={300}
+            data={chartData}
+            options={options}
+            datasetIdKey={datasetKeyProvider().toString()}
+          />
+        </div>
+      );
+    }
+  )
 );
 
 const hexToRgba = (hex: string, alpha: number) => {

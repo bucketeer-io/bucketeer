@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Experiment, GoalResult } from '@types';
 import { getData, getTimeSeries } from 'utils/chart';
@@ -11,6 +11,10 @@ import ChartDataTypeDropdown from '../chart-data-type-dropdown';
 import ConversionRateChart from './conversion-rate-chart';
 import ConversionRateTable from './conversion-rate-table';
 import EvaluationTable from './evaluation-table';
+import {
+  ChartToggleLegendRef,
+  DatasetReduceType
+} from './timeseries-area-line-chart';
 import TimeSeriesLineChart from './timeseries-line-chart';
 
 const GoalResultItem = ({
@@ -29,6 +33,16 @@ const GoalResultItem = ({
   handleNarrowGoalResult: (goalId: string) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
+
+  const conversionRateChartRef = useRef<ChartToggleLegendRef>(null);
+  const evaluationChartRef = useRef<ChartToggleLegendRef>(null);
+
+  const [conversionRateDataSets, setConversionRateDataSets] = useState<
+    DatasetReduceType[]
+  >([]);
+  const [evaluationDataSets, setEvaluationDataSets] = useState<
+    DatasetReduceType[]
+  >([]);
 
   const variationValues = useMemo(
     () =>
@@ -96,6 +110,10 @@ const GoalResultItem = ({
               <EvaluationTable
                 goalResult={goalResult}
                 experiment={experiment}
+                evaluationDataSets={evaluationDataSets}
+                onToggleShowData={label =>
+                  evaluationChartRef.current?.toggleLegend(label)
+                }
               />
               <ChartDataTypeDropdown
                 tab={goalResultState?.tab}
@@ -105,6 +123,7 @@ const GoalResultItem = ({
                 }
               />
               <TimeSeriesLineChart
+                ref={evaluationChartRef}
                 timeseries={getTimeSeries(
                   goalResult?.variationResults,
                   goalResultState?.chartType,
@@ -115,15 +134,20 @@ const GoalResultItem = ({
                   goalResult?.variationResults,
                   goalResultState?.chartType
                 )}
+                setDataSets={setEvaluationDataSets}
               />
             </div>
           )}
           {goalResultState?.tab === 'CONVERSION' && (
             <div className="flex flex-col gap-y-6">
               <ConversionRateTable
+                conversionRateDataSets={conversionRateDataSets}
                 goalResultState={goalResultState}
                 goalResult={goalResult}
                 experiment={experiment}
+                onToggleShowData={label =>
+                  conversionRateChartRef.current?.toggleLegend(label)
+                }
               />
               <ChartDataTypeDropdown
                 tab={goalResultState?.tab}
@@ -133,9 +157,11 @@ const GoalResultItem = ({
                 }
               />
               <ConversionRateChart
+                ref={conversionRateChartRef}
                 variationValues={variationValues}
                 goalResult={goalResult}
                 goalResultState={goalResultState}
+                setConversionRateDataSets={setConversionRateDataSets}
               />
             </div>
           )}
