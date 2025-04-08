@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
@@ -1041,7 +1042,6 @@ func (s *PushService) listAllPushes(
 	environmentId string,
 	localizer locale.Localizer,
 ) ([]*pushproto.Push, error) {
-	var disabled = false
 	pushes, _, _, err := s.listPushes(
 		ctx,
 		mysql.QueryNoLimit,
@@ -1049,7 +1049,7 @@ func (s *PushService) listAllPushes(
 		"",
 		environmentId,
 		"",
-		&disabled,
+		wrapperspb.Bool(false),
 		nil,
 		localizer,
 	)
@@ -1070,10 +1070,6 @@ func (s *PushService) ListPushes(
 	if err != nil {
 		return nil, err
 	}
-	var disabled *bool
-	if req.Disabled != nil {
-		disabled = &req.Disabled.Value
-	}
 
 	orders, err := s.newListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -1090,8 +1086,7 @@ func (s *PushService) ListPushes(
 		req.OrganizationId,
 		req.EnvironmentId,
 		req.SearchKeyword,
-		disabled,
-		//		whereParts,
+		req.Disabled,
 		orders,
 		localizer,
 	)
@@ -1151,20 +1146,20 @@ func (s *PushService) listPushes(
 	organizationId string,
 	environmentId string,
 	searchKeyword string,
-	disabled *bool,
+	disabled *wrapperspb.BoolValue,
 	orders []*mysql.Order,
 	localizer locale.Localizer,
 ) ([]*pushproto.Push, string, int64, error) {
 	var filters []*mysql.FilterV2
 	if organizationId != "" {
-		// New console
+		// console v3
 		filters = append(filters, &mysql.FilterV2{
 			Column:   "env.organization_id",
 			Operator: mysql.OperatorEqual,
 			Value:    organizationId,
 		})
 	} else {
-		// Current console
+		// console v2
 		filters = append(filters, &mysql.FilterV2{
 			Column:   "push.environment_id",
 			Operator: mysql.OperatorEqual,
@@ -1175,7 +1170,7 @@ func (s *PushService) listPushes(
 		filters = append(filters, &mysql.FilterV2{
 			Column:   "push.disabled",
 			Operator: mysql.OperatorEqual,
-			Value:    *disabled,
+			Value:    disabled.Value,
 		})
 	}
 	var searchQuery *mysql.SearchQuery
