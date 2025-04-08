@@ -381,7 +381,7 @@ func TestListAdminSubscriptions(t *testing.T) {
 						Direction: mysql.OrderDirectionDesc,
 					},
 				},
-				InFilter:    nil,
+				InFilters:   nil,
 				NullFilters: nil,
 				JSONFilters: nil,
 				SearchQuery: nil,

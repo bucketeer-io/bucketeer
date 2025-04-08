@@ -899,7 +899,7 @@ func (s *NotificationService) listSubscriptionsMySQL(
 		Limit:       limit,
 		Offset:      offset,
 		Filters:     filters,
-		InFilter:    nil,
+		InFilters:   nil,
 		NullFilters: nil,
 		JSONFilters: jsonFilters,
 		SearchQuery: seachQuery,
