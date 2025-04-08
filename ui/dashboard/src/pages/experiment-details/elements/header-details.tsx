@@ -48,9 +48,6 @@ const HeaderDetails = ({ experiment }: { experiment: Experiment }) => {
           className="flex-center"
         />
       </div>
-      <div className="flex items-center">
-        <h1 className="text-gray-900 typo-head-bold-huge">{experiment.name}</h1>
-      </div>
     </div>
   );
 };

@@ -66,6 +66,7 @@ const ConversionRateTable = ({
       }),
     [goalResult, experiment]
   );
+
   const baseVariationResult = useMemo(
     () =>
       goalResult?.variationResults?.find(
