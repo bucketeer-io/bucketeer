@@ -2738,7 +2738,10 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        featureVersion:
+          (f = msg.getFeatureVersion()) &&
+          google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -2785,6 +2788,14 @@ proto.bucketeer.feature.GetFeatureRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 4:
+          var value = new google_protobuf_wrappers_pb.Int32Value();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.Int32Value.deserializeBinaryFromReader
+          );
+          msg.setFeatureVersion(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -2827,6 +2838,14 @@ proto.bucketeer.feature.GetFeatureRequest.serializeBinaryToWriter = function (
   if (f.length > 0) {
     writer.writeString(3, f);
   }
+  f = message.getFeatureVersion();
+  if (f != null) {
+    writer.writeMessage(
+      4,
+      f,
+      google_protobuf_wrappers_pb.Int32Value.serializeBinaryToWriter
+    );
+  }
 };
 
 /**
@@ -2863,6 +2882,48 @@ proto.bucketeer.feature.GetFeatureRequest.prototype.getEnvironmentId =
 proto.bucketeer.feature.GetFeatureRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+/**
+ * optional google.protobuf.Int32Value feature_version = 4;
+ * @return {?proto.google.protobuf.Int32Value}
+ */
+proto.bucketeer.feature.GetFeatureRequest.prototype.getFeatureVersion =
+  function () {
+    return /** @type{?proto.google.protobuf.Int32Value} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.Int32Value,
+        4
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.Int32Value|undefined} value
+ * @return {!proto.bucketeer.feature.GetFeatureRequest} returns this
+ */
+proto.bucketeer.feature.GetFeatureRequest.prototype.setFeatureVersion =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 4, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.GetFeatureRequest} returns this
+ */
+proto.bucketeer.feature.GetFeatureRequest.prototype.clearFeatureVersion =
+  function () {
+    return this.setFeatureVersion(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.GetFeatureRequest.prototype.hasFeatureVersion =
+  function () {
+    return jspb.Message.getField(this, 4) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

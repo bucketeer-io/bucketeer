@@ -38,9 +38,13 @@ import "proto/feature/strategy.proto";
 import "proto/feature/target.proto";
 
 message GetFeatureRequest {
-  string id = 1;
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
   reserved 2;
-  string environment_id = 3;
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.Int32Value feature_version = 4
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "If not set, it will return the latest version."
+      }];
 }
 
 message GetFeatureResponse {

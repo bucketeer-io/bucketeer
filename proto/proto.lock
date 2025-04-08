@@ -20140,6 +20140,16 @@
                 "id": 5,
                 "name": "public_api_editor",
                 "type": "PublicAPIEditor"
+              },
+              {
+                "id": 6,
+                "name": "avatar_image",
+                "type": "bytes"
+              },
+              {
+                "id": 7,
+                "name": "avatar_file_type",
+                "type": "string"
               }
             ],
             "reserved_ids": [
@@ -20162,6 +20172,16 @@
                   {
                     "id": 3,
                     "name": "name",
+                    "type": "string"
+                  },
+                  {
+                    "id": 4,
+                    "name": "avatar_image",
+                    "type": "bytes"
+                  },
+                  {
+                    "id": 5,
+                    "name": "avatar_file_type",
                     "type": "string"
                   }
                 ]
@@ -31918,12 +31938,40 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "feature_version",
+                "type": "google.protobuf.Int32Value",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "If not set, it will return the latest version."
+                      }
+                    ]
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -38555,7 +38603,33 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "feature_version",
+                "type": "google.protobuf.Int32Value",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "feature_version"
+                      },
+                      {
+                        "name": "description",
+                        "value": "If not set, it will return the latest version."
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           },
@@ -39941,7 +40015,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/features/{id}"
+                        "value": "/v1/feature"
                       }
                     ]
                   },
@@ -41165,6 +41239,9 @@
         "imports": [
           {
             "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/api/field_behavior.proto"
           },
           {
             "path": "google/protobuf/wrappers.proto"

@@ -53,12 +53,15 @@ var (
 	selectFeatureSQLQuery string
 	//go:embed sql/feature/select_features_by_version.sql
 	selectFeaturesByVersionSQLQuery string
+	//go:embed sql/feature/select_feature_by_version.sql
+	selectFeatureByVersionSQLQuery string
 )
 
 type FeatureStorage interface {
-	CreateFeature(ctx context.Context, feature *domain.Feature, environmentId string) error
-	UpdateFeature(ctx context.Context, feature *domain.Feature, environmentId string) error
-	GetFeature(ctx context.Context, key, environmentId string) (*domain.Feature, error)
+	CreateFeature(ctx context.Context, feature *domain.Feature, environmentID string) error
+	UpdateFeature(ctx context.Context, feature *domain.Feature, environmentID string) error
+	GetFeature(ctx context.Context, id, environmentID string) (*domain.Feature, error)
+	GetFeatureByVersion(ctx context.Context, id string, version int32, environmentID string) (*domain.Feature, error)
 	ListFeatures(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -91,7 +94,7 @@ func NewFeatureStorage(qe mysql.QueryExecer) FeatureStorage {
 func (s *featureStorage) CreateFeature(
 	ctx context.Context,
 	feature *domain.Feature,
-	environmentId string,
+	environmentID string,
 ) error {
 	_, err := s.qe.ExecContext(
 		ctx,
@@ -117,7 +120,7 @@ func (s *featureStorage) CreateFeature(
 		feature.Maintainer,
 		feature.SamplingSeed,
 		mysql.JSONObject{Val: feature.Prerequisites},
-		environmentId,
+		environmentID,
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrDuplicateEntry) {
@@ -131,7 +134,7 @@ func (s *featureStorage) CreateFeature(
 func (s *featureStorage) UpdateFeature(
 	ctx context.Context,
 	feature *domain.Feature,
-	environmentId string,
+	environmentID string,
 ) error {
 	result, err := s.qe.ExecContext(
 		ctx,
@@ -157,7 +160,7 @@ func (s *featureStorage) UpdateFeature(
 		feature.SamplingSeed,
 		mysql.JSONObject{Val: feature.Prerequisites},
 		feature.Id,
-		environmentId,
+		environmentID,
 	)
 	if err != nil {
 		return err
@@ -174,15 +177,15 @@ func (s *featureStorage) UpdateFeature(
 
 func (s *featureStorage) GetFeature(
 	ctx context.Context,
-	key, environmentId string,
+	id, environmentID string,
 ) (*domain.Feature, error) {
 	feature := proto.Feature{}
 	feature.AutoOpsSummary = &proto.AutoOpsSummary{}
 	err := s.qe.QueryRowContext(
 		ctx,
 		selectFeatureSQLQuery,
-		key,
-		environmentId,
+		id,
+		environmentID,
 	).Scan(
 		&feature.Id,
 		&feature.Name,
@@ -205,6 +208,30 @@ func (s *featureStorage) GetFeature(
 		&feature.Maintainer,
 		&feature.SamplingSeed,
 		&mysql.JSONObject{Val: &feature.Prerequisites},
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrFeatureNotFound
+		}
+		return nil, err
+	}
+	return &domain.Feature{Feature: &feature}, nil
+}
+
+func (s *featureStorage) GetFeatureByVersion(
+	ctx context.Context,
+	id string, version int32, environmentID string,
+) (*domain.Feature, error) {
+	feature := proto.Feature{}
+	feature.AutoOpsSummary = &proto.AutoOpsSummary{}
+	err := s.qe.QueryRowContext(
+		ctx,
+		selectFeatureByVersionSQLQuery,
+		environmentID,
+		id,
+		version,
+	).Scan(
+		&mysql.JSONObject{Val: &feature},
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {

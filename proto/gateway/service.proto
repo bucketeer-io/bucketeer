@@ -18,6 +18,7 @@ package bucketeer.gateway;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/gateway";
 
 import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
 import "google/protobuf/wrappers.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -149,7 +150,12 @@ message CreateFeatureResponse {
 }
 
 message GetFeatureRequest {
-  string id = 1;
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.Int32Value feature_version = 2
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        title: "feature_version"
+        description: "If not set, it will return the latest version."
+      }];
 }
 
 message GetFeatureResponse {
@@ -613,7 +619,7 @@ service Gateway {
   }
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {
     option (google.api.http) = {
-      get: "/v1/features/{id}"
+      get: "/v1/feature"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",

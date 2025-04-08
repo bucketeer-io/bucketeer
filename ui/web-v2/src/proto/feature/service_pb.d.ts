@@ -28,6 +28,11 @@ export class GetFeatureRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  hasFeatureVersion(): boolean;
+  clearFeatureVersion(): void;
+  getFeatureVersion(): google_protobuf_wrappers_pb.Int32Value | undefined;
+  setFeatureVersion(value?: google_protobuf_wrappers_pb.Int32Value): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetFeatureRequest.AsObject;
   static toObject(
@@ -53,6 +58,7 @@ export namespace GetFeatureRequest {
   export type AsObject = {
     id: string;
     environmentId: string;
+    featureVersion?: google_protobuf_wrappers_pb.Int32Value.AsObject;
   };
 }
 

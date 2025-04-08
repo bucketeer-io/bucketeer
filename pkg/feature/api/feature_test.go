@@ -64,14 +64,17 @@ func TestGetFeatureMySQL(t *testing.T) {
 		service        *FeatureService
 		context        context.Context
 		setup          func(*FeatureService)
-		input          string
+		input          *featureproto.GetFeatureRequest
 		getExpectedErr func(localizer locale.Localizer) error
 	}{
 		{
 			desc:    "error: id is empty",
 			service: createFeatureServiceNew(mockController),
 			context: createContextWithToken(),
-			input:   "",
+			input: &featureproto.GetFeatureRequest{
+				Id:            "",
+				EnvironmentId: "ns0",
+			},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(t, statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"), localizer)
 			},
@@ -90,7 +93,10 @@ func TestGetFeatureMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
-			input: "fid",
+			input: &featureproto.GetFeatureRequest{
+				Id:            "fid",
+				EnvironmentId: "ns0",
+			},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
 			},
@@ -109,7 +115,33 @@ func TestGetFeatureMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
-			input: "fid",
+			input: &featureproto.GetFeatureRequest{
+				Id:            "fid",
+				EnvironmentId: "ns0",
+			},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "success get feature by version",
+			service: createFeatureServiceNew(mockController),
+			context: createContextWithToken(),
+			setup: func(s *FeatureService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				s.fluiStorage.(*mock.MockFeatureLastUsedInfoStorage).EXPECT().GetFeatureLastUsedInfos(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
+			},
+			input: &featureproto.GetFeatureRequest{
+				Id:             "fid",
+				EnvironmentId:  "ns0",
+				FeatureVersion: wrapperspb.Int32(1),
+			},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
 			},
@@ -119,7 +151,10 @@ func TestGetFeatureMySQL(t *testing.T) {
 			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			context: createContextWithTokenRoleUnassigned(),
 			setup:   func(s *FeatureService) {},
-			input:   "fid",
+			input: &featureproto.GetFeatureRequest{
+				Id:            "fid",
+				EnvironmentId: "ns0",
+			},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
 			},
@@ -135,13 +170,9 @@ func TestGetFeatureMySQL(t *testing.T) {
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 				"accept-language": []string{"ja"},
 			})
-			req := &featureproto.GetFeatureRequest{
-				EnvironmentId: "ns0",
-				Id:            p.input,
-			}
 			localizer := locale.NewLocalizer(ctx)
 
-			_, err := fs.GetFeature(ctx, req)
+			_, err := fs.GetFeature(ctx, p.input)
 			assert.Equal(t, p.getExpectedErr(localizer), err)
 		})
 	}
