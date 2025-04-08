@@ -96,8 +96,8 @@ export const formatXAxisLabel = (index: number, labels: Date[]) => {
     return formatLongDateTime({
       value: String(date.getTime() / 1000),
       overrideOptions: {
-        day: '2-digit',
-        month: '2-digit',
+        day: 'numeric',
+        month: 'short',
         year: undefined
       },
       locale: 'en-US'
