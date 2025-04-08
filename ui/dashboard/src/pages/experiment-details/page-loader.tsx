@@ -44,6 +44,7 @@ const PageLoader = () => {
             onBack={() =>
               navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}`)
             }
+            title={experiment?.name}
           >
             <HeaderDetails experiment={experiment} />
           </PageDetailsHeader>
