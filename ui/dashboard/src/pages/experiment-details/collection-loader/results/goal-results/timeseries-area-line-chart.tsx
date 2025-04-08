@@ -15,8 +15,7 @@ import {
   Point,
   ChartDataset
 } from 'chart.js';
-import { formatTooltipLabel, formatXAxisLabel } from 'utils/chart';
-import { formatLongDateTime } from 'utils/date-time';
+import { formatXAxisLabel } from 'utils/chart';
 import { getVariationColor } from 'utils/style';
 
 ChartJS.register(
@@ -83,6 +82,11 @@ export const TimeseriesAreaLineChart = memo(
     const options: ChartOptions<'line'> = {
       responsive: true,
       maintainAspectRatio: false,
+      elements: {
+        point: {
+          radius: 0
+        }
+      },
       plugins: {
         legend: {
           display: false
@@ -92,21 +96,7 @@ export const TimeseriesAreaLineChart = memo(
           text: label
         },
         tooltip: {
-          enabled: true,
-          callbacks: {
-            title: tooltipItems => {
-              const dateString = tooltipItems[0].label;
-
-              const date = new Date(dateString);
-              if (date instanceof Date) {
-                return formatLongDateTime({
-                  value: String(date.getTime() / 1000)
-                });
-              }
-              return tooltipItems[0].label;
-            },
-            label: formatTooltipLabel
-          }
+          enabled: false
         }
       },
       scales: {

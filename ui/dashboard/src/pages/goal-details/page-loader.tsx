@@ -31,7 +31,6 @@ const PageLoader = () => {
       ) : (
         <>
           <PageDetailsHeader
-            title={goal.name}
             description={`Created ${formatDateTime(goal.createdAt)}`}
             onBack={() =>
               navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_GOALS}`)

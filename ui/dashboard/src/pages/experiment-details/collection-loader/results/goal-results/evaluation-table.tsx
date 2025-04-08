@@ -25,11 +25,6 @@ const headerList = [
     minSize: 123
   },
   {
-    name: 'conversion-rate',
-    tooltipKey: 'conversion-rate-tooltip',
-    minSize: 147
-  },
-  {
     name: 'value-total',
     tooltipKey: 'value-total-tooltip',
     minSize: 125
@@ -76,20 +71,12 @@ const EvaluationTable = ({
             }
             isShowIcon={index > 0}
             minSize={item.minSize}
-            isFormatText={true}
           />
         ))}
       </div>
       <div className="divide-y divide-gray-300">
         {evaluationData?.map((item, i) => {
           const { experimentCount, evaluationCount } = item;
-
-          const conversionRate =
-            Number(evaluationCount?.userCount) > 0
-              ? (Number(experimentCount?.userCount) /
-                  Number(evaluationCount?.userCount)) *
-                100
-              : 0;
 
           const valuePerUser =
             Number(experimentCount.userCount) > 0
@@ -117,10 +104,6 @@ const EvaluationTable = ({
               <ResultCell
                 value={Number(experimentCount?.userCount)}
                 minSize={119}
-              />
-              <ResultCell
-                value={conversionRate.toFixed(1) + ' %'}
-                minSize={147}
               />
               <ResultCell
                 value={Number(experimentCount?.valueSum)}
