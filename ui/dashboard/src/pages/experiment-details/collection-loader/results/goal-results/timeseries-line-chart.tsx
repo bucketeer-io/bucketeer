@@ -24,13 +24,10 @@ import {
 import { formatTooltipLabel, formatXAxisLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
 import { getVariationColor } from 'utils/style';
-<<<<<<< HEAD
 import {
   ChartToggleLegendRef,
   DatasetReduceType
 } from './timeseries-area-line-chart';
-=======
->>>>>>> 76e7257b (fix: decrease the default delay duration of the tooltip)
 
 ChartJS.register(
   LineElement,
@@ -70,7 +67,6 @@ const TimeseriesLineChart = memo(
     ) => {
       const labels = timeseries.map(t => new Date(Number(t) * 1000));
 
-<<<<<<< HEAD
       const chartRef = useRef<ChartJS<
         'line',
         (string | number)[],
@@ -78,12 +74,6 @@ const TimeseriesLineChart = memo(
       > | null>(null);
 
       useImperativeHandle(ref, () => {
-=======
-    const chartData: ChartData<'line', (string | number)[], Date> = {
-      labels,
-      datasets: dataLabels.map((e, i) => {
-        const color = getVariationColor(i);
->>>>>>> 76e7257b (fix: decrease the default delay duration of the tooltip)
         return {
           toggleLegend(label: string) {
             toggleDataset(label);
