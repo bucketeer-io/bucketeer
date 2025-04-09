@@ -12,4 +12,5 @@ INSERT INTO goal_event (
     feature_version, 
     variation_id, 
     reason
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
+) VALUES 
+-- placeholder for multiple value clauses 

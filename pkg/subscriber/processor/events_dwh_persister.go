@@ -48,6 +48,9 @@ type eventsDWHPersisterConfig struct {
 	Timezone                string `json:"timezone"`
 	MaxRetryGoalEventPeriod int    `json:"maxRetryGoalEventPeriod"`
 	RetryGoalEventInterval  int    `json:"retryGoalEventInterval"`
+	// MySQL configuration options
+	UseMySQLStorage bool `json:"useMySQLStorage"`
+	MySQLBatchSize  int  `json:"mysqlBatchSize"`
 }
 
 type eventsDWHPersister struct {
@@ -95,9 +98,29 @@ func NewEventsDWHPersister(
 	if err != nil {
 		return nil, err
 	}
+
 	switch persisterName {
 	case EvaluationCountEventDWHPersisterName:
 		e.subscriberType = subscriberEvaluationEventDWH
+
+		// Check if MySQL storage is enabled in the config
+		var evalOptions []EvalEventWriterOption
+		if persisterConfig.UseMySQLStorage {
+			batchSize := persisterConfig.MySQLBatchSize
+			if batchSize <= 0 {
+				// Default to BigQueryBatchSize if MySQLBatchSize is not specified
+				batchSize = persisterConfig.BigQueryBatchSize
+			}
+
+			evalOptions = append(evalOptions, []EvalEventWriterOption{
+				{
+					UseMySQLStorage: true,
+					MySQLClient:     mysqlClient,
+					BatchSize:       batchSize,
+				},
+			}...)
+		}
+
 		evalEventWriter, err := NewEvalEventWriter(
 			ctx,
 			logger,
@@ -107,13 +130,33 @@ func NewEventsDWHPersister(
 			e.eventsDWHPersisterConfig.BigQueryDataSet,
 			e.eventsDWHPersisterConfig.BigQueryBatchSize,
 			location,
+			evalOptions...,
 		)
 		if err != nil {
 			return nil, err
 		}
 		e.writer = evalEventWriter
+
 	case GoalCountEventDWHPersisterName:
 		e.subscriberType = subscriberGoalEventDWH
+
+		// Check if goal event writer options are provided
+		var goalOptions []GoalEventWriterOption
+		if persisterConfig.UseMySQLStorage {
+			batchSize := persisterConfig.MySQLBatchSize
+			if batchSize <= 0 {
+				// Default to BigQueryBatchSize if MySQLBatchSize is not specified
+				batchSize = persisterConfig.BigQueryBatchSize
+			}
+			goalOptions = append(goalOptions, []GoalEventWriterOption{
+				{
+					UseMySQLStorage: true,
+					MySQLClient:     mysqlClient,
+					BatchSize:       batchSize,
+				},
+			}...)
+		}
+
 		goalEventWriter, err := NewGoalEventWriter(
 			ctx,
 			logger,
@@ -128,6 +171,7 @@ func NewEventsDWHPersister(
 			persistentRedisClient,
 			time.Duration(e.eventsDWHPersisterConfig.MaxRetryGoalEventPeriod)*time.Second,
 			time.Duration(e.eventsDWHPersisterConfig.RetryGoalEventInterval)*time.Second,
+			goalOptions...,
 		)
 		if err != nil {
 			return nil, err
