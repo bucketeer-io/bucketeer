@@ -124,40 +124,20 @@ func (s *auditlogService) ListAuditLogs(
 		}
 		return nil, dt.Err()
 	}
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
-		},
+	whereParts := []mysql.WherePart{
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
 	if req.From != 0 {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "timestamp",
-			Operator: mysql.OperatorGreaterThanOrEqual,
-			Value:    req.From,
-		})
+		whereParts = append(whereParts, mysql.NewFilter("timestamp", ">=", req.From))
 	}
 	if req.To != 0 {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "timestamp",
-			Operator: mysql.OperatorLessThanOrEqual,
-			Value:    req.To,
-		})
+		whereParts = append(whereParts, mysql.NewFilter("timestamp", "<=", req.To))
 	}
 	if req.EntityType != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "entity_type",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EntityType.Value,
-		})
+		whereParts = append(whereParts, mysql.NewFilter("entity_type", "=", req.EntityType.Value))
 	}
-	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"editor"},
-			Keyword: req.SearchKeyword,
-		}
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"editor"}, req.SearchKeyword))
 	}
 	orders, err := s.newAuditLogListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -167,19 +147,12 @@ func (s *auditlogService) ListAuditLogs(
 		)
 		return nil, err
 	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		SearchQuery: searchQuery,
-		JSONFilters: nil,
-		InFilter:    nil,
-		NullFilters: nil,
-		Orders:      orders,
-	}
 	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(
 		ctx,
-		options,
+		whereParts,
+		orders,
+		limit,
+		offset,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -259,34 +232,18 @@ func (s *auditlogService) ListAdminAuditLogs(
 	if err != nil {
 		return nil, err
 	}
-	filters := []*mysql.FilterV2{}
+	whereParts := []mysql.WherePart{}
 	if req.From != 0 {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "timestamp",
-			Operator: mysql.OperatorGreaterThanOrEqual,
-			Value:    req.From,
-		})
+		whereParts = append(whereParts, mysql.NewFilter("timestamp", ">=", req.From))
 	}
 	if req.To != 0 {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "timestamp",
-			Operator: mysql.OperatorLessThanOrEqual,
-			Value:    req.To,
-		})
+		whereParts = append(whereParts, mysql.NewFilter("timestamp", "<=", req.To))
 	}
 	if req.EntityType != nil {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "entity_type",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EntityType.Value,
-		})
+		whereParts = append(whereParts, mysql.NewFilter("entity_type", "=", req.EntityType.Value))
 	}
-	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"editor"},
-			Keyword: req.SearchKeyword,
-		}
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"editor"}, req.SearchKeyword))
 	}
 	orders, err := s.newAdminAuditLogListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -312,19 +269,12 @@ func (s *auditlogService) ListAdminAuditLogs(
 		}
 		return nil, dt.Err()
 	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		SearchQuery: searchQuery,
-		JSONFilters: nil,
-		InFilter:    nil,
-		NullFilters: nil,
-		Orders:      orders,
-	}
 	auditlogs, nextCursor, totalCount, err := s.adminAuditLogStorage.ListAdminAuditLogs(
 		ctx,
-		options,
+		whereParts,
+		orders,
+		limit,
+		offset,
 	)
 	if err != nil {
 		s.logger.Error(
@@ -389,43 +339,19 @@ func (s *auditlogService) ListFeatureHistory(
 	if err != nil {
 		return nil, err
 	}
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
-		},
-		{
-			Column:   "entity_type",
-			Operator: mysql.OperatorEqual,
-			Value:    int32(eventproto.Event_FEATURE),
-		},
-		{
-			Column:   "entity_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.FeatureId,
-		},
+	whereParts := []mysql.WherePart{
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+		mysql.NewFilter("entity_type", "=", int32(eventproto.Event_FEATURE)),
+		mysql.NewFilter("entity_id", "=", req.FeatureId),
 	}
 	if req.From != 0 {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "timestamp",
-			Operator: mysql.OperatorGreaterThanOrEqual,
-			Value:    req.From,
-		})
+		whereParts = append(whereParts, mysql.NewFilter("timestamp", ">=", req.From))
 	}
 	if req.To != 0 {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "timestamp",
-			Operator: mysql.OperatorLessThanOrEqual,
-			Value:    req.To,
-		})
+		whereParts = append(whereParts, mysql.NewFilter("timestamp", "<=", req.To))
 	}
-	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"editor"},
-			Keyword: req.SearchKeyword,
-		}
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"editor"}, req.SearchKeyword))
 	}
 	orders, err := s.newFeatureHistoryAuditLogListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -451,19 +377,12 @@ func (s *auditlogService) ListFeatureHistory(
 		}
 		return nil, dt.Err()
 	}
-	options := &mysql.ListOptions{
-		Limit:       limit,
-		Offset:      offset,
-		Filters:     filters,
-		SearchQuery: searchQuery,
-		JSONFilters: nil,
-		InFilter:    nil,
-		NullFilters: nil,
-		Orders:      orders,
-	}
 	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(
 		ctx,
-		options,
+		whereParts,
+		orders,
+		limit,
+		offset,
 	)
 	if err != nil {
 		s.logger.Error(
