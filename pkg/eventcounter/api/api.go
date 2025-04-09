@@ -32,6 +32,7 @@ import (
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
+	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
 	v2ecstorage "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -297,14 +298,10 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	variationTotalUserCountsMap := make(map[string]int64, len(vIDs))
 
 	var mu sync.Mutex
-	var wg sync.WaitGroup
-	var processingErr error
-	errChan := make(chan error, len(vIDs))
+	var eg errgroup.Group
 
-	for _, vID := range vIDs {
-		wg.Add(1)
-		go func(variationID string) {
-			defer wg.Done()
+	for _, variationID := range vIDs {
+		eg.Go(func() error {
 
 			// Get event data
 			eventCountKeys := s.getEventCountKeys(
@@ -322,8 +319,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 					resp.Feature.Version,
 					timestampUnit, req.TimeRange,
 				)
-				errChan <- err
-				return
+				return err
 			}
 
 			// Get user data
@@ -347,8 +343,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 					resp.Feature.Version,
 					timestampUnit, req.TimeRange,
 				)
-				errChan <- err
-				return
+				return err
 			}
 
 			totalUserCounts, err := s.getTotalUserCounts(
@@ -364,8 +359,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 					resp.Feature.Version,
 					timestampUnit, req.TimeRange,
 				)
-				errChan <- err
-				return
+				return err
 			}
 
 			mu.Lock()
@@ -374,25 +368,17 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 			variationTotalEventCountsMap[variationID] = s.getTotalEventCounts(eventCounts)
 			variationTotalUserCountsMap[variationID] = totalUserCounts
 			mu.Unlock()
-		}(vID)
+
+			return nil
+		})
 	}
 
-	wg.Wait()
-	close(errChan)
-
-	for err := range errChan {
-		if err != nil {
-			processingErr = err
-			break
-		}
-	}
-
-	if processingErr != nil {
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+	if err := eg.Wait(); err != nil {
+		dt, errDt := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
-		if err != nil {
+		if errDt != nil {
 			return nil, statusInternal.Err()
 		}
 		return nil, dt.Err()
