@@ -21,7 +21,8 @@ import {
   ChartData,
   ChartOptions
 } from 'chart.js';
-import { formatTooltipLabel, formatXAxisLabel } from 'utils/chart';
+import 'chartjs-adapter-luxon';
+import { formatTooltipLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
 import { getVariationColor } from 'utils/style';
 import {
@@ -110,7 +111,8 @@ const TimeseriesLineChart = memo(
             data: [...data[i]],
             borderColor: color,
             backgroundColor: color,
-            fill: false
+            fill: false,
+            tension: 0.2
           };
         })
       };
@@ -145,6 +147,13 @@ const TimeseriesLineChart = memo(
           },
           scales: {
             x: {
+              type: 'time',
+              time: {
+                unit: 'day',
+                displayFormats: {
+                  day: 'MMM d'
+                }
+              },
               title: {
                 display: false
               },
@@ -160,9 +169,6 @@ const TimeseriesLineChart = memo(
               },
               ticks: {
                 align: 'center' as const,
-                callback: function (index: string | number) {
-                  return formatXAxisLabel(Number(index), labels);
-                },
                 autoSkip: false,
                 minRotation: 0,
                 maxRotation: 0,
