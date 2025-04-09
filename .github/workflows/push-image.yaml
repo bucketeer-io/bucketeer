@@ -217,36 +217,34 @@ jobs:
     steps:
       - name: Slack notification
         uses: slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d # v2.0.0
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
-            {
-              "text": "",
-              "blocks": [],
-              "attachments": [
-                {
-                  "title": "Image Push Succeeded",
-                  "title_link": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                  "color": "good",
-                  "fields": [
-                    {
-                      "title": "Committer",
-                      "value": "${{ github.event.head_commit.author.name }}"
-                    },
-                    {
-                      "title": "Commit message",
-                      "value": "${{ needs.setup.outputs.COMMIT_MESSAGE }}"
-                    },
-                    {
-                      "title": "Commit URL",
-                      "value": "${{ github.event.head_commit.url }}"
-                    }
-                  ]
-                }
-              ]
-            }
+            "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
+            "text": "",
+            "blocks": [],
+            "attachments": [
+              {
+                "title": "Image Push Succeeded",
+                "title_link": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "color": "good",
+                "fields": [
+                  {
+                    "title": "Committer",
+                    "value": "${{ github.event.head_commit.author.name }}"
+                  },
+                  {
+                    "title": "Commit message",
+                    "value": "${{ needs.setup.outputs.COMMIT_MESSAGE }}"
+                  },
+                  {
+                    "title": "Commit URL",
+                    "value": "${{ github.event.head_commit.url }}"
+                  }
+                ]
+              }
+            ]
 
   notify-failure-to-slack:
     needs: [setup, go, dispatch]
@@ -255,33 +253,31 @@ jobs:
     steps:
       - name: Slack notification
         uses: slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d # v2.0.0
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
-            {
-              "text": "",
-              "blocks": [],
-              "attachments": [
-                {
-                  "title": "Image Push Failed",
-                  "title_link": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                  "color": "danger",
-                  "fields": [
-                    {
-                      "title": "Committer",
-                      "value": "${{ github.event.head_commit.author.name }}"
-                    },
-                    {
-                      "title": "Commit message",
-                      "value": "${{ needs.setup.outputs.COMMIT_MESSAGE }}"
-                    },
-                    {
-                      "title": "Commit URL",
-                      "value": "${{ github.event.head_commit.url }}"
-                    }
-                  ]
-                }
-              ]
-            }
+            "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
+            "text": "",
+            "blocks": [],
+            "attachments": [
+              {
+                "title": "Image Push Failed",
+                "title_link": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "color": "danger",
+                "fields": [
+                  {
+                    "title": "Committer",
+                    "value": "${{ github.event.head_commit.author.name }}"
+                  },
+                  {
+                    "title": "Commit message",
+                    "value": "${{ needs.setup.outputs.COMMIT_MESSAGE }}"
+                  },
+                  {
+                    "title": "Commit URL",
+                    "value": "${{ github.event.head_commit.url }}"
+                  }
+                ]
+              }
+            ]
