@@ -23,7 +23,8 @@ import {
   ChartDataset,
   Legend
 } from 'chart.js';
-import { formatTooltipLabel, formatXAxisLabel } from 'utils/chart';
+import 'chartjs-adapter-luxon';
+import { formatTooltipLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
 import { getVariationColor } from 'utils/style';
 
@@ -90,8 +91,12 @@ export const TimeseriesAreaLineChart = memo(
           backgroundColor: hexColor,
           borderWidth: 0,
           pointRadius: 0,
+          pointHoverRadius: 0,
+          pointHoverBorderWidth: 0,
+          pointHitRadius: 0,
           fill: '+1',
-          value: l
+          value: l,
+          tension: 0.2
         });
         datasets.push({
           label: undefined,
@@ -99,15 +104,20 @@ export const TimeseriesAreaLineChart = memo(
           backgroundColor: hexColor,
           borderWidth: 0,
           pointRadius: 0,
+          pointHoverRadius: 0,
+          pointHoverBorderWidth: 0,
+          pointHitRadius: 0,
           fill: '-1',
-          value: l
+          value: l,
+          tension: 0.2
         });
         datasets.push({
           label: l,
           data: representatives[i],
           borderColor: color,
           fill: false,
-          value: l
+          value: l,
+          tension: 0.2
         });
       });
 
@@ -176,6 +186,13 @@ export const TimeseriesAreaLineChart = memo(
         },
         scales: {
           x: {
+            type: 'time',
+            time: {
+              unit: 'day',
+              displayFormats: {
+                day: 'MMM d'
+              }
+            },
             title: {
               display: false
             },
@@ -191,9 +208,6 @@ export const TimeseriesAreaLineChart = memo(
             },
             ticks: {
               align: 'center' as const,
-              callback: function (index: string | number) {
-                return formatXAxisLabel(Number(index), labels);
-              },
               autoSkip: false,
               minRotation: 0,
               maxRotation: 0,
