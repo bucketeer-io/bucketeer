@@ -11,3 +11,4 @@ SELECT
     previous_entity_data
 FROM
     audit_log
+    %s %s %s
