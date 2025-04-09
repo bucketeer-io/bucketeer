@@ -72,9 +72,9 @@ func (mr *MockAuditLogStorageMockRecorder) CreateAuditLogs(ctx, auditLogs any) *
 }
 
 // ListAuditLogs mocks base method.
-func (m *MockAuditLogStorage) ListAuditLogs(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*auditlog.AuditLog, int, int64, error) {
+func (m *MockAuditLogStorage) ListAuditLogs(ctx context.Context, options *mysql.ListOptions) ([]*auditlog.AuditLog, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAuditLogs", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListAuditLogs", ctx, options)
 	ret0, _ := ret[0].([]*auditlog.AuditLog)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -83,7 +83,7 @@ func (m *MockAuditLogStorage) ListAuditLogs(ctx context.Context, whereParts []my
 }
 
 // ListAuditLogs indicates an expected call of ListAuditLogs.
-func (mr *MockAuditLogStorageMockRecorder) ListAuditLogs(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockAuditLogStorageMockRecorder) ListAuditLogs(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAuditLogs", reflect.TypeOf((*MockAuditLogStorage)(nil).ListAuditLogs), ctx, whereParts, orders, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAuditLogs", reflect.TypeOf((*MockAuditLogStorage)(nil).ListAuditLogs), ctx, options)
 }
