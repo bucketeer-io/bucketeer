@@ -105,19 +105,19 @@ const EvaluationTable = ({
                 onToggleShowData={onToggleShowData}
               />
               <ResultCell
-                value={Number(evaluationCount?.userCount)}
+                value={Number(evaluationCount?.userCount)?.toLocaleString()}
                 minSize={143}
               />
               <ResultCell
-                value={Number(experimentCount?.eventCount)}
+                value={Number(experimentCount?.eventCount)?.toLocaleString()}
                 minSize={123}
               />
               <ResultCell
-                value={Number(experimentCount?.userCount)}
+                value={Number(experimentCount?.userCount)?.toLocaleString()}
                 minSize={119}
               />
               <ResultCell
-                value={Number(experimentCount?.valueSum)}
+                value={Number(experimentCount?.valueSum)?.toLocaleString()}
                 minSize={125}
               />
               <ResultCell value={valuePerUser.toFixed(2)} minSize={123} />

@@ -5,7 +5,6 @@ import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import NotFoundPage from 'pages/not-found';
 import PageDetailsHeader from 'elements/page-details-header';
 import PageLayout from 'elements/page-layout';
-import HeaderDetails from './elements/header-details';
 import PageContent from './page-content';
 
 const PageLoader = () => {
@@ -45,9 +44,7 @@ const PageLoader = () => {
               navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}`)
             }
             title={experiment?.name}
-          >
-            <HeaderDetails experiment={experiment} />
-          </PageDetailsHeader>
+          />
           <PageContent experiment={experiment} />
         </>
       )}
