@@ -27,7 +27,9 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber/storage"
+	storagev2 "github.com/bucketeer-io/bucketeer/pkg/subscriber/storage/v2"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
@@ -47,6 +49,12 @@ type evalEvtWriter struct {
 	logger           *zap.Logger
 }
 
+type EvalEventWriterOption struct {
+	UseMySQLStorage bool
+	MySQLClient     mysql.Client
+	BatchSize       int
+}
+
 func NewEvalEventWriter(
 	ctx context.Context,
 	l *zap.Logger,
@@ -55,7 +63,30 @@ func NewEvalEventWriter(
 	project, ds string,
 	size int,
 	location *time.Location,
+	options ...EvalEventWriterOption,
 ) (Writer, error) {
+	var option EvalEventWriterOption
+	if len(options) > 0 {
+		option = options[0]
+	}
+
+	if option.UseMySQLStorage {
+		if option.MySQLClient == nil {
+			return nil, errors.New("mysql client is required when using MySQL storage")
+		}
+
+		evalStorage := storagev2.NewMysqlEvaluationEventStorage(option.MySQLClient)
+
+		return &evalEvtWriter{
+			writer:           storage.NewMysqlEvalEventWriter(evalStorage),
+			experimentClient: exClient,
+			cache:            cache,
+			location:         location,
+			logger:           l,
+		}, nil
+	}
+
+	// Default BigQuery implementation
 	evt := epproto.EvaluationEvent{}
 	evalQuery, err := writer.NewWriter(
 		ctx,
