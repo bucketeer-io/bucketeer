@@ -48,6 +48,10 @@ export interface ChartToggleLegendRef {
   toggleLegend: (label: string) => void;
 }
 
+interface DatasetType extends ChartDataset<'line'> {
+  value: string;
+}
+
 interface TimeseriesAreaLineChartProps {
   chartType: string;
   label?: string;
@@ -75,8 +79,7 @@ export const TimeseriesAreaLineChart = memo(
       ref: Ref<ChartToggleLegendRef>
     ) => {
       const labels = timeseries.map(t => new Date(Number(t) * 1000));
-
-      const datasets: ChartDataset<'line'>[] = [];
+      const datasets: DatasetType[] = [];
 
       dataLabels.forEach((l, i) => {
         const color = getVariationColor(i);
@@ -84,25 +87,27 @@ export const TimeseriesAreaLineChart = memo(
         datasets.push({
           label: undefined,
           data: upperBoundaries[i],
-          borderWidth: 0,
           backgroundColor: hexColor,
+          borderWidth: 0,
           pointRadius: 0,
-          fill: '+1'
+          fill: '+1',
+          value: l
         });
         datasets.push({
           label: undefined,
           data: lowerBoundaries[i],
-          borderWidth: 0,
           backgroundColor: hexColor,
+          borderWidth: 0,
           pointRadius: 0,
-          fill: '-1'
+          fill: '-1',
+          value: l
         });
         datasets.push({
           label: l,
           data: representatives[i],
           borderColor: color,
-          pointRadius: 0,
-          fill: false
+          fill: false,
+          value: l
         });
       });
 
@@ -119,12 +124,13 @@ export const TimeseriesAreaLineChart = memo(
       const toggleDataset = (label: string) => {
         const chart = chartRef.current;
         if (chart) {
-          const datasets = chart.data.datasets;
-          const toggleIndex = datasets.findIndex(
-            dataset => dataset?.label === label
-          );
+          const datasets: DatasetType[] = chart.data.datasets as DatasetType[];
 
-          datasets[toggleIndex].hidden = !datasets[toggleIndex].hidden;
+          datasets.forEach((dataset, index) => {
+            if (dataset?.value === label)
+              datasets[index].hidden = !datasets[index].hidden;
+          });
+
           chart.update();
           setDataSets(
             datasets.map(dataset => ({
