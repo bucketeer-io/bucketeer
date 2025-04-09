@@ -24,8 +24,8 @@ import {
   Legend
 } from 'chart.js';
 import { formatTooltipLabel, formatXAxisLabel } from 'utils/chart';
-import { getVariationColor } from 'utils/style';
 import { formatLongDateTime } from 'utils/date-time';
+import { getVariationColor } from 'utils/style';
 
 ChartJS.register(
   LineElement,
