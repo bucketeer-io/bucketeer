@@ -158,7 +158,8 @@ gcpMultiCluster:
     name: web-multi-cluster-ingress
     host:
     staticIPName:
-    secretName:
+    tls:
+      secrets:
     rulePaths:
       - path: /
         backend:
