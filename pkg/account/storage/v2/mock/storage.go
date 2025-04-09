@@ -160,6 +160,21 @@ func (mr *MockAccountStorageMockRecorder) GetAccountsWithOrganization(ctx, email
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountsWithOrganization", reflect.TypeOf((*MockAccountStorage)(nil).GetAccountsWithOrganization), ctx, email)
 }
 
+// GetAvatarAccountsV2 mocks base method.
+func (m *MockAccountStorage) GetAvatarAccountsV2(ctx context.Context, whereParts []mysql.WherePart) ([]*account.AccountV2, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAvatarAccountsV2", ctx, whereParts)
+	ret0, _ := ret[0].([]*account.AccountV2)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAvatarAccountsV2 indicates an expected call of GetAvatarAccountsV2.
+func (mr *MockAccountStorageMockRecorder) GetAvatarAccountsV2(ctx, whereParts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvatarAccountsV2", reflect.TypeOf((*MockAccountStorage)(nil).GetAvatarAccountsV2), ctx, whereParts)
+}
+
 // GetEnvironmentAPIKey mocks base method.
 func (m *MockAccountStorage) GetEnvironmentAPIKey(ctx context.Context, apiKey string) (*domain.EnvironmentAPIKey, error) {
 	m.ctrl.T.Helper()

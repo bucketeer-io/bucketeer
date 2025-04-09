@@ -87,9 +87,9 @@ func (mr *MockAdminSubscriptionStorageMockRecorder) GetAdminSubscription(ctx, id
 }
 
 // ListAdminSubscriptions mocks base method.
-func (m *MockAdminSubscriptionStorage) ListAdminSubscriptions(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*notification.Subscription, int, int64, error) {
+func (m *MockAdminSubscriptionStorage) ListAdminSubscriptions(ctx context.Context, options *mysql.ListOptions) ([]*notification.Subscription, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAdminSubscriptions", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListAdminSubscriptions", ctx, options)
 	ret0, _ := ret[0].([]*notification.Subscription)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -98,9 +98,9 @@ func (m *MockAdminSubscriptionStorage) ListAdminSubscriptions(ctx context.Contex
 }
 
 // ListAdminSubscriptions indicates an expected call of ListAdminSubscriptions.
-func (mr *MockAdminSubscriptionStorageMockRecorder) ListAdminSubscriptions(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockAdminSubscriptionStorageMockRecorder) ListAdminSubscriptions(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAdminSubscriptions", reflect.TypeOf((*MockAdminSubscriptionStorage)(nil).ListAdminSubscriptions), ctx, whereParts, orders, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAdminSubscriptions", reflect.TypeOf((*MockAdminSubscriptionStorage)(nil).ListAdminSubscriptions), ctx, options)
 }
 
 // UpdateAdminSubscription mocks base method.

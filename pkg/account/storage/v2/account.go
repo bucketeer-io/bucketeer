@@ -37,6 +37,8 @@ var (
 	selectAccountV2SQL string
 	//go:embed sql/account_v2/select_account_v2_by_environment_id.sql
 	selectAccountV2ByEnvironmentIDSQL string
+	//go:embed sql/account_v2/select_avatar_accounts_v2.sql
+	selectAvatarAccountsV2SQL string
 	//go:embed sql/account_v2/select_accounts_v2.sql
 	selectAccountsV2SQL string
 	//go:embed sql/account_v2/count_accounts_v2.sql
@@ -211,6 +213,45 @@ func (s *accountStorage) GetAccountV2ByEnvironmentID(
 	return &domain.AccountV2{AccountV2: &account}, nil
 }
 
+func (s *accountStorage) GetAvatarAccountsV2(
+	ctx context.Context,
+	whereParts []mysql.WherePart,
+) ([]*proto.AccountV2, error) {
+	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
+	query := fmt.Sprintf(
+		selectAvatarAccountsV2SQL,
+		whereSQL,
+	)
+	rows, err := s.qe.QueryContext(
+		ctx,
+		query,
+		whereArgs...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	accounts := make([]*proto.AccountV2, 0)
+	for rows.Next() {
+		account := &proto.AccountV2{}
+		var organizationRole int32
+		err := rows.Scan(
+			&account.Email,
+			&account.AvatarFileType,
+			&account.AvatarImage,
+		)
+		if err != nil {
+			return nil, err
+		}
+		account.OrganizationRole = proto.AccountV2_Role_Organization(organizationRole)
+		accounts = append(accounts, account)
+	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+	return accounts, nil
+}
+
 func (s *accountStorage) GetAccountsWithOrganization(
 	ctx context.Context,
 	email string,
@@ -264,7 +305,7 @@ func (s *accountStorage) GetAccountsWithOrganization(
 		})
 	}
 	if rows.Err() != nil {
-		return nil, err
+		return nil, rows.Err()
 	}
 	return accountsWithOrg, nil
 }
@@ -320,7 +361,7 @@ func (s *accountStorage) ListAccountsV2(
 		accounts = append(accounts, &account)
 	}
 	if rows.Err() != nil {
-		return nil, 0, 0, err
+		return nil, 0, 0, rows.Err()
 	}
 	nextOffset := offset + len(accounts)
 	var totalCount int64

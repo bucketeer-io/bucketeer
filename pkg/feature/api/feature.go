@@ -73,7 +73,17 @@ func (s *FeatureService) GetFeature(
 		return nil, err
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	feature, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
+	var feature *domain.Feature
+	if req.FeatureVersion != nil {
+		feature, err = featureStorage.GetFeatureByVersion(
+			ctx,
+			req.Id,
+			req.FeatureVersion.Value,
+			req.EnvironmentId,
+		)
+	} else {
+		feature, err = featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
+	}
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{

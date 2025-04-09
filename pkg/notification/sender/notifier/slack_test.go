@@ -15,10 +15,17 @@
 package notifier
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
+
+	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	domainproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	senderproto "github.com/bucketeer-io/bucketeer/proto/notification/sender"
 )
 
 func TestLastDays(t *testing.T) {
@@ -53,6 +60,79 @@ func TestLastDays(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			actual := lastDays(p.inputNow, stopAt)
 			assert.Equal(t, p.expected, actual)
+		})
+	}
+}
+
+func TestCreateDomainEventAttachment(t *testing.T) {
+	t.Parallel()
+
+	webURL := "https://example.com"
+
+	patterns := []struct {
+		desc        string
+		entityType  domainproto.Event_EntityType
+		entityID    string
+		entityData  string
+		expectedURL string
+	}{
+		{
+			desc:        "feature entity",
+			entityType:  domainproto.Event_FEATURE,
+			entityID:    "feature-id-1",
+			entityData:  `{"id": "feature-id-1", "name": "test-feature"}`,
+			expectedURL: "https://example.com/test/features/feature-id-1",
+		},
+		{
+			desc:        "autoops rule with feature_id",
+			entityType:  domainproto.Event_AUTOOPS_RULE,
+			entityID:    "rule-id-1",
+			entityData:  `{"id": "rule-id-1", "feature_id": "feature-id-2", "ops_type": 1}`,
+			expectedURL: "https://example.com/test/features/feature-id-2/autoops",
+		},
+		{
+			desc:        "progressive rollout with feature_id",
+			entityType:  domainproto.Event_PROGRESSIVE_ROLLOUT,
+			entityID:    "rollout-id-1",
+			entityData:  `{"id": "rollout-id-1", "feature_id": "feature-id-3", "type": 1}`,
+			expectedURL: "https://example.com/test/features/feature-id-3/autoops",
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			notification := &senderproto.DomainEventNotification{
+				Editor: &domainproto.Editor{
+					Email: "test@example.com",
+				},
+				EntityType:         p.entityType,
+				EntityId:           p.entityID,
+				EntityData:         p.entityData,
+				Type:               domainproto.Event_FEATURE_CREATED,
+				EnvironmentName:    "test-env",
+				EnvironmentUrlCode: "test",
+			}
+
+			notifier := &slackNotifier{
+				webURL: webURL,
+				logger: zap.NewNop(),
+			}
+
+			md := metadata.New(map[string]string{
+				"accept-language": locale.Ja,
+			})
+			ctx := metadata.NewIncomingContext(context.Background(), md)
+			localizer := locale.NewLocalizer(ctx)
+
+			attachment, err := notifier.createDomainEventAttachment(notification, localizer)
+			assert.NoError(t, err)
+			assert.NotNil(t, attachment)
+
+			assert.Contains(t, attachment.Text, p.expectedURL)
+			assert.Equal(t, notification.Editor.Email, attachment.AuthorName)
+			assert.Contains(t, attachment.Text, notification.EnvironmentName)
+			assert.Contains(t, attachment.Text, notification.EntityId)
 		})
 	}
 }

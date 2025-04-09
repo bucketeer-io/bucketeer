@@ -401,6 +401,62 @@ paths:
       tags:
         - Client and Server SDKs
   /v1/account:
+    get:
+      summary: Get by Organization ID
+      description: Get an Account. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.account.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetAccountV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: email
+          in: query
+          required: false
+          type: string
+        - name: organizationId
+          in: query
+          required: false
+          type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Account
     post:
       summary: Create
       description: Create a new Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.
@@ -454,7 +510,60 @@ paths:
           type: string
       tags:
         - Account
-  /v1/account/get-account-by-environment/{environmentId}/{email}:
+    patch:
+      summary: Update
+      description: Update an Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.account.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateAccountV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateAccountV2Request'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Account
+  /v1/account/get_account_by_environment:
     get:
       summary: Get by Environment ID
       description: Get an Account by Environment ID. To call this API, you need a `READ` API Key role.
@@ -496,13 +605,13 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: environmentId
-          in: path
-          required: true
-          type: string
         - name: email
-          in: path
-          required: true
+          in: query
+          required: false
+          type: string
+        - name: environmentId
+          in: query
+          required: false
           type: string
         - name: authorization
           description: The API Key generated on the Admin Console.
@@ -511,7 +620,7 @@ paths:
           type: string
       tags:
         - Account
-  /v1/account/me/{organizationId}:
+  /v1/account/get_me:
     get:
       summary: Get Service Account
       description: Get the current Account. To call this API, you need a `READ` API Key role.
@@ -554,127 +663,9 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: organizationId
-          in: path
-          required: true
+          in: query
+          required: false
           type: string
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
-      tags:
-        - Account
-  /v1/account/{organizationId}/{email}:
-    get:
-      summary: Get by Organization ID
-      description: Get an Account. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.account.get
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayGetAccountV2Response'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: organizationId
-          in: path
-          required: true
-          type: string
-        - name: email
-          in: path
-          required: true
-          type: string
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
-      tags:
-        - Account
-    patch:
-      summary: Update
-      description: Update an Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.
-      operationId: api.gateway.v1.account.update
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayUpdateAccountV2Response'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: organizationId
-          in: path
-          required: true
-          type: string
-        - name: email
-          in: path
-          required: true
-          type: string
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/GatewayUpdateAccountV2Body'
         - name: authorization
           description: The API Key generated on the Admin Console.
           in: header
@@ -789,6 +780,217 @@ paths:
           type: string
       tags:
         - Account
+  /v1/code_reference:
+    get:
+      summary: Get
+      description: Get a code reference. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.code_references.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: false
+          type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Code References
+    delete:
+      summary: Delete
+      description: Delete a code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.code_references.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayDeleteCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: false
+          type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Code References
+    post:
+      summary: Create
+      description: Create a new code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.code_references.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateCodeReferenceRequest'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Code References
+    patch:
+      summary: Update
+      description: Update a code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.code_references.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateCodeReferenceResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateCodeReferenceRequest'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Code References
   /v1/code_references:
     get:
       summary: List
@@ -872,69 +1074,16 @@ paths:
           type: string
       tags:
         - Code References
-    post:
-      summary: Create
-      description: Create a new code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.
-      operationId: api.gateway.v1.code_references.create
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayCreateCodeReferenceResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/bucketeergatewayCreateCodeReferenceRequest'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
-      tags:
-        - Code References
-  /v1/code_references/{id}:
+  /v1/feature:
     get:
       summary: Get
-      description: Get a code reference. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.code_references.get
+      description: Get a Feature Flag. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.features.get
       responses:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/bucketeergatewayGetCodeReferenceResponse'
+            $ref: '#/definitions/bucketeergatewayGetFeatureResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -968,25 +1117,34 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: id
-          in: path
+          in: query
           required: true
           type: string
+        - name: featureVersion
+          description: |-
+            feature_version
+
+            If not set, it will return the latest version.
+          in: query
+          required: false
+          type: integer
+          format: int32
         - name: authorization
           description: The API Key generated on the Admin Console.
           in: header
           required: true
           type: string
       tags:
-        - Code References
-    delete:
-      summary: Delete
-      description: Delete a code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.
-      operationId: api.gateway.v1.code_references.delete
+        - Feature Flags
+    post:
+      summary: Create
+      description: Create a new Feature Flag. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.features.create
       responses:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/bucketeergatewayDeleteCodeReferenceResponse'
+            $ref: '#/definitions/bucketeergatewayCreateFeatureResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -1019,74 +1177,71 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: id
-          in: path
-          required: true
-          type: string
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
-      tags:
-        - Code References
-    patch:
-      summary: Update
-      description: Update a code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.
-      operationId: api.gateway.v1.code_references.update
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayUpdateCodeReferenceResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: id
-          in: path
-          required: true
-          type: string
         - name: body
           in: body
           required: true
           schema:
-            $ref: '#/definitions/GatewayUpdateCodeReferenceBody'
+            $ref: '#/definitions/bucketeergatewayCreateFeatureRequest'
         - name: authorization
           description: The API Key generated on the Admin Console.
           in: header
           required: true
           type: string
       tags:
-        - Code References
+        - Feature Flags
+    patch:
+      summary: Update
+      description: Update a Feature Flag. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.features.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateFeatureResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateFeatureRequest'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Feature Flags
   /v1/features:
     get:
       summary: List
@@ -1166,69 +1321,16 @@ paths:
           type: string
       tags:
         - Feature Flags
-    post:
-      summary: Create
-      description: Create a new Feature Flag. To call this API, you need a `WRITE` or `ADMIN` API Key role.
-      operationId: api.gateway.v1.features.create
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayCreateFeatureResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/bucketeergatewayCreateFeatureRequest'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
-      tags:
-        - Feature Flags
-  /v1/features/{id}:
+  /v1/push:
     get:
       summary: Get
-      description: Get a Feature Flag. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.features.get
+      description: Get a Push notification. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.pushes.get
       responses:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/bucketeergatewayGetFeatureResponse'
+            $ref: '#/definitions/bucketeergatewayGetPushResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -1262,8 +1364,8 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: id
-          in: path
-          required: true
+          in: query
+          required: false
           type: string
         - name: authorization
           description: The API Key generated on the Admin Console.
@@ -1271,65 +1373,7 @@ paths:
           required: true
           type: string
       tags:
-        - Feature Flags
-    patch:
-      summary: Update
-      description: Update a Feature Flag. To call this API, you need a `WRITE` or `ADMIN` API Key role.
-      operationId: api.gateway.v1.features.update
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayUpdateFeatureResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: id
-          in: path
-          required: true
-          type: string
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/GatewayUpdateFeatureBody'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
-      tags:
-        - Feature Flags
-  /v1/push:
+        - Pushes
     post:
       summary: Create
       description: Create a new Push notification through Google Firebase Cloud Messaging (FCM). To call this API, you need a `WRITE` or `ADMIN` API Key role.
@@ -1383,59 +1427,6 @@ paths:
           type: string
       tags:
         - Pushes
-  /v1/push/{id}:
-    get:
-      summary: Get
-      description: Get a Push notification. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.pushes.get
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayGetPushResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: id
-          in: path
-          required: true
-          type: string
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
-      tags:
-        - Pushes
     patch:
       summary: Update
       description: Update a Push notification. To call this API, you a `WRITE` or `ADMIN` API Key role.
@@ -1477,15 +1468,11 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: id
-          in: path
-          required: true
-          type: string
         - name: body
           in: body
           required: true
           schema:
-            $ref: '#/definitions/GatewayUpdatePushBody'
+            $ref: '#/definitions/bucketeergatewayUpdatePushRequest'
         - name: authorization
           description: The API Key generated on the Admin Console.
           in: header
@@ -1619,136 +1606,6 @@ definitions:
       - NUMBER
       - JSON
     default: STRING
-  GatewayUpdateAccountV2Body:
-    type: object
-    properties:
-      name:
-        type: string
-      avatarImageUrl:
-        type: string
-      organizationRole:
-        $ref: '#/definitions/UpdateAccountV2RequestOrganizationRoleValue'
-      environmentRoles:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/accountAccountV2EnvironmentRole'
-      firstName:
-        type: string
-      lastName:
-        type: string
-      language:
-        type: string
-      lastSeen:
-        type: string
-        format: int64
-      avatar:
-        $ref: '#/definitions/UpdateAccountV2RequestAccountV2Avatar'
-      disabled:
-        type: boolean
-        description: if disabled is true, the account will be disabled. If false, the account will be enabled.
-        title: disabled
-      deleted:
-        type: boolean
-        description: if true, the account will be deleted and other fields will be ignored.
-        title: deleted
-  GatewayUpdateCodeReferenceBody:
-    type: object
-    properties:
-      filePath:
-        type: string
-      lineNumber:
-        type: integer
-        format: int32
-      codeSnippet:
-        type: string
-      contentHash:
-        type: string
-      aliases:
-        type: array
-        items:
-          type: string
-      repositoryBranch:
-        type: string
-      commitHash:
-        type: string
-      fileExtension:
-        type: string
-  GatewayUpdateFeatureBody:
-    type: object
-    properties:
-      comment:
-        type: string
-      environmentId:
-        type: string
-      name:
-        type: string
-      description:
-        type: string
-      tags:
-        $ref: '#/definitions/commonStringListValue'
-      enabled:
-        type: boolean
-      archived:
-        type: boolean
-      variations:
-        $ref: '#/definitions/featureVariationListValue'
-        description: deprecated
-        title: Legacy full-replacement fields (deprecated)
-      prerequisites:
-        $ref: '#/definitions/featurePrerequisiteListValue'
-        description: deprecated
-      targets:
-        $ref: '#/definitions/featureTargetListValue'
-        description: deprecated
-      rules:
-        $ref: '#/definitions/featureRuleListValue'
-        description: deprecated
-      defaultStrategy:
-        $ref: '#/definitions/featureStrategy'
-      offVariation:
-        type: string
-      resetSamplingSeed:
-        type: boolean
-      variationChanges:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureVariationChange'
-        title: New granular change fields (supporting multiple operations per field)
-      ruleChanges:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureRuleChange'
-      prerequisiteChanges:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featurePrerequisiteChange'
-      targetChanges:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureTargetChange'
-      tagChanges:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureTagChange'
-  GatewayUpdatePushBody:
-    type: object
-    properties:
-      tags:
-        type: array
-        items:
-          type: string
-      name:
-        type: string
-      deleted:
-        type: boolean
-        description: if true, the push notification will be deleted and other fields will be ignored.
-        title: deleted
   GetEvaluationsRequestUserEvaluationCondition:
     type: object
     properties:
@@ -2189,21 +2046,161 @@ definitions:
       totalCount:
         type: string
         format: int64
+  bucketeergatewayUpdateAccountV2Request:
+    type: object
+    properties:
+      email:
+        type: string
+      organizationId:
+        type: string
+      name:
+        type: string
+      avatarImageUrl:
+        type: string
+      organizationRole:
+        $ref: '#/definitions/UpdateAccountV2RequestOrganizationRoleValue'
+      environmentRoles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2EnvironmentRole'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
+      lastSeen:
+        type: string
+        format: int64
+      avatar:
+        $ref: '#/definitions/UpdateAccountV2RequestAccountV2Avatar'
+      disabled:
+        type: boolean
+        description: if disabled is true, the account will be disabled. If false, the account will be enabled.
+        title: disabled
+      deleted:
+        type: boolean
+        description: if true, the account will be deleted and other fields will be ignored.
+        title: deleted
   bucketeergatewayUpdateAccountV2Response:
     type: object
     properties:
       account:
         $ref: '#/definitions/accountAccountV2'
+  bucketeergatewayUpdateCodeReferenceRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      filePath:
+        type: string
+      lineNumber:
+        type: integer
+        format: int32
+      codeSnippet:
+        type: string
+      contentHash:
+        type: string
+      aliases:
+        type: array
+        items:
+          type: string
+      repositoryBranch:
+        type: string
+      commitHash:
+        type: string
+      fileExtension:
+        type: string
   bucketeergatewayUpdateCodeReferenceResponse:
     type: object
     properties:
       codeReference:
         $ref: '#/definitions/coderefCodeReference'
+  bucketeergatewayUpdateFeatureRequest:
+    type: object
+    properties:
+      comment:
+        type: string
+      environmentId:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      tags:
+        $ref: '#/definitions/commonStringListValue'
+      enabled:
+        type: boolean
+      archived:
+        type: boolean
+      variations:
+        $ref: '#/definitions/featureVariationListValue'
+        description: deprecated
+        title: Legacy full-replacement fields (deprecated)
+      prerequisites:
+        $ref: '#/definitions/featurePrerequisiteListValue'
+        description: deprecated
+      targets:
+        $ref: '#/definitions/featureTargetListValue'
+        description: deprecated
+      rules:
+        $ref: '#/definitions/featureRuleListValue'
+        description: deprecated
+      defaultStrategy:
+        $ref: '#/definitions/featureStrategy'
+      offVariation:
+        type: string
+      resetSamplingSeed:
+        type: boolean
+      variationChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureVariationChange'
+        title: New granular change fields (supporting multiple operations per field)
+      ruleChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureRuleChange'
+      prerequisiteChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featurePrerequisiteChange'
+      targetChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureTargetChange'
+      tagChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureTagChange'
   bucketeergatewayUpdateFeatureResponse:
     type: object
     properties:
       feature:
         $ref: '#/definitions/featureFeature'
+  bucketeergatewayUpdatePushRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      deleted:
+        type: boolean
+        description: if true, the push notification will be deleted and other fields will be ignored.
+        title: deleted
   bucketeergatewayUpdatePushResponse:
     type: object
     properties:

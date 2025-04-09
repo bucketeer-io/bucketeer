@@ -796,7 +796,7 @@ func TestListAdminSubscriptionsMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *NotificationService) {
 				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().ListAdminSubscriptions(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Subscription{}, 0, int64(0), nil)
 
 			},
@@ -866,7 +866,7 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *NotificationService) {
 				s.adminSubscriptionStorage.(*staragemock.MockAdminSubscriptionStorage).EXPECT().ListAdminSubscriptions(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Subscription{}, 1, int64(1), nil)
 			},
 			isSystemAdmin: true,

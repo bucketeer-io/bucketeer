@@ -239,10 +239,7 @@ func TestListPushs(t *testing.T) {
 	patterns := []struct {
 		desc           string
 		setup          func(*pushStorage)
-		whereParts     []mysql.WherePart
-		orders         []*mysql.Order
-		limit          int
-		offset         int
+		options        *mysql.ListOptions
 		expected       []*proto.Push
 		expectedCursor int
 		expectedErr    error
@@ -254,10 +251,7 @@ func TestListPushs(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			whereParts:     nil,
-			orders:         nil,
-			limit:          0,
-			offset:         0,
+			options:        nil,
 			expected:       nil,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
@@ -278,14 +272,27 @@ func TestListPushs(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			whereParts: []mysql.WherePart{
-				mysql.NewFilter("num", ">=", 5),
+			options: &mysql.ListOptions{
+				Limit:  10,
+				Offset: 5,
+				Filters: []*mysql.FilterV2{
+					&mysql.FilterV2{
+						Column:   "num",
+						Operator: mysql.OperatorGreaterThanOrEqual,
+						Value:    5,
+					},
+				},
+				InFilter:    nil,
+				NullFilters: nil,
+				JSONFilters: nil,
+				SearchQuery: nil,
+				Orders: []*mysql.Order{
+					&mysql.Order{
+						Column:    "id",
+						Direction: mysql.OrderDirectionAsc,
+					},
+				},
 			},
-			orders: []*mysql.Order{
-				mysql.NewOrder("id", mysql.OrderDirectionAsc),
-			},
-			limit:          10,
-			offset:         5,
 			expected:       []*proto.Push{},
 			expectedCursor: 5,
 			expectedErr:    nil,
@@ -299,10 +306,7 @@ func TestListPushs(t *testing.T) {
 			}
 			pushs, cursor, _, err := storage.ListPushes(
 				context.Background(),
-				p.whereParts,
-				p.orders,
-				p.limit,
-				p.offset,
+				p.options,
 			)
 			assert.Equal(t, p.expected, pushs)
 			assert.Equal(t, p.expectedCursor, cursor)

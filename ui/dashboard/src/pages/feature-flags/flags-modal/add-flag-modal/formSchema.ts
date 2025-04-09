@@ -108,7 +108,7 @@ export const formSchema = yup.object().shape({
     .required()
     .matches(
       /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
-      "urlCode must start with a letter or number and only contain letters, numbers, or '-'"
+      "flagId must start with a letter or number and only contain letters, numbers, or '-'"
     ),
   description: descriptionSchema,
   tags: yup.array().min(1).required(),
@@ -117,3 +117,5 @@ export const formSchema = yup.object().shape({
   defaultOnVariation: yup.string().required(),
   defaultOffVariation: yup.string().required()
 });
+
+export type AddFlagForm = yup.InferType<typeof formSchema>;
