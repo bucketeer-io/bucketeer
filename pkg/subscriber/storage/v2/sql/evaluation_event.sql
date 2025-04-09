@@ -10,4 +10,5 @@ INSERT INTO evaluation_event (
     reason, 
     tag, 
     source_id
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
+) VALUES 
+-- placeholder for multiple value clauses 
