@@ -57,11 +57,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/gatewayGetEvaluationRequest'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Client and Server SDKs
   /get_evaluations:
@@ -111,17 +106,12 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/gatewayGetEvaluationsRequest'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Client and Server SDKs
   /get_feature_flags:
     post:
       summary: Get Feature Flags
-      description: Gets all the feature flag in an environment. To call this API, it needs `SERVER` API Key role.
+      description: Gets all the feature flag in an environment. To call this API, you need a `SERVER` API Key role.
       operationId: api.gateway.get_feature_flags
       responses:
         "200":
@@ -165,17 +155,12 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/gatewayGetFeatureFlagsRequest'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Client and Server SDKs
   /get_segment_users:
     post:
       summary: Get Segment Users
-      description: Gets all the segment users in an environment. To call this API, it needs `SERVER` API Key role.
+      description: Gets all the segment users in an environment. To call this API, you need a `SERVER` API Key role.
       operationId: api.gateway.get_segment_users
       responses:
         "200":
@@ -219,11 +204,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/gatewayGetSegmentUsersRequest'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Client and Server SDKs
   /ping:
@@ -267,19 +247,13 @@ paths:
           description: An unexpected error response.
           schema:
             $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Utility
       security: []
   /register_events:
     post:
       summary: Register Events
-      description: This API is for reporting Goal events. To call this API, it needs a `CLIENT` or `SERVER` API Key role.
+      description: This API is for reporting Goal events. To call this API, you need a `CLIENT` or `SERVER` API Key role.
       operationId: api.gateway.register_events
       responses:
         "200":
@@ -323,11 +297,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/gatewayRegisterEventsRequest'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Client and Server SDKs
   /track:
@@ -450,11 +419,6 @@ paths:
           in: query
           required: false
           type: string
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Account
     post:
@@ -503,11 +467,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/bucketeergatewayCreateAccountV2Request'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Account
     patch:
@@ -556,11 +515,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/bucketeergatewayUpdateAccountV2Request'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Account
   /v1/account/get_account_by_environment:
@@ -613,11 +567,6 @@ paths:
           in: query
           required: false
           type: string
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Account
   /v1/account/get_me:
@@ -665,11 +614,6 @@ paths:
         - name: organizationId
           in: query
           required: false
-          type: string
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
           type: string
       tags:
         - Account
@@ -773,11 +717,6 @@ paths:
           required: false
           type: integer
           format: int32
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Account
   /v1/code_reference:
@@ -826,11 +765,6 @@ paths:
           in: query
           required: false
           type: string
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Code References
     delete:
@@ -877,11 +811,6 @@ paths:
         - name: id
           in: query
           required: false
-          type: string
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
           type: string
       tags:
         - Code References
@@ -931,11 +860,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/bucketeergatewayCreateCodeReferenceRequest'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Code References
     patch:
@@ -984,11 +908,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/bucketeergatewayUpdateCodeReferenceRequest'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Code References
   /v1/code_references:
@@ -1067,11 +986,6 @@ paths:
           in: query
           required: false
           type: string
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Code References
   /v1/feature:
@@ -1129,11 +1043,6 @@ paths:
           required: false
           type: integer
           format: int32
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Feature Flags
     post:
@@ -1182,11 +1091,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/bucketeergatewayCreateFeatureRequest'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Feature Flags
     patch:
@@ -1235,11 +1139,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/bucketeergatewayUpdateFeatureRequest'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Feature Flags
   /v1/features:
@@ -1314,11 +1213,6 @@ paths:
             - ASC
             - DESC
           default: ASC
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Feature Flags
   /v1/push:
@@ -1366,11 +1260,6 @@ paths:
         - name: id
           in: query
           required: false
-          type: string
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
           type: string
       tags:
         - Pushes
@@ -1420,11 +1309,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/bucketeergatewayCreatePushRequest'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Pushes
     patch:
@@ -1473,11 +1357,6 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/bucketeergatewayUpdatePushRequest'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
       tags:
         - Pushes
   /v1/pushes:
@@ -1554,11 +1433,6 @@ paths:
         - name: searchKeyword
           in: query
           required: false
-          type: string
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
           type: string
       tags:
         - Pushes
