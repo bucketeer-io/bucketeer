@@ -58,23 +58,23 @@ func NewAutoOpsExecutor(autoOpsClient autoopsclient.Client, opts ...Option) Auto
 	}
 }
 
-func (e *autoOpsExecutor) Execute(ctx context.Context, environmentId, ruleID, clauseId string) error {
+func (e *autoOpsExecutor) Execute(ctx context.Context, environmentID, ruleID, clauseID string) error {
 	resp, err := e.autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
-		EnvironmentId:             environmentId,
-		Id:                        ruleID,
-		ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{ClauseId: clauseId},
+		EnvironmentId: environmentID,
+		Id:            ruleID,
+		ClauseId:      clauseID,
 	})
 	if err != nil {
 		e.logger.Error("Failed to execute auto ops", zap.Error(err),
-			zap.String("environmentId", environmentId),
-			zap.String("ruleID", ruleID),
+			zap.String("environmentId", environmentID),
+			zap.String("ruleId", ruleID),
 		)
 		return err
 	}
 	if resp.AlreadyTriggered {
 		e.logger.Debug("autoOpsRule has already triggered",
-			zap.String("environmentId", environmentId),
-			zap.String("ruleID", ruleID),
+			zap.String("environmentId", environmentID),
+			zap.String("ruleId", ruleID),
 		)
 	}
 	return nil

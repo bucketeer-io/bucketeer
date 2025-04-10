@@ -18,7 +18,7 @@ const SubmitBar = ({
   return (
     <div className="flex items-center justify-between w-full gap-x-6">
       <div className="flex items-center gap-x-2">
-        <h3 className="typo-head-bold-small text-gray-800">
+        <h3 className="typo-head-bold-small text-gray-800 mb-1.5">
           {t('table:feature-flags.variation')}
         </h3>
         <Icon

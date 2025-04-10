@@ -86,7 +86,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
   };
 
   return (
-    <PageLayout.Content>
+    <PageLayout.Content className="p-6">
       <div className="p-5 shadow-card rounded-lg bg-white">
         <p className="text-gray-800 typo-head-bold-small">
           {t('form:general-info')}

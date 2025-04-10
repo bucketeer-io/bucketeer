@@ -17,8 +17,7 @@ spec:
       backend:
         serviceName: {{ .Values.gcpMultiCluster.service.name }}
         servicePort: {{ .Values.service.externalPort }}
-      tls:
-        - secretName: {{ .Values.gcpMultiCluster.ingress.secretName }}
+      tls: {{- toYaml .Values.gcpMultiCluster.ingress.tls.secrets | nindent 8}}
       rules:
         - host: {{ .Values.gcpMultiCluster.ingress.host }}
           http:

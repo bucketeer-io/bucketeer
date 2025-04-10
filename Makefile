@@ -7,13 +7,13 @@ LOCAL_IMPORT_PATH := github.com/bucketeer-io/bucketeer
 # go applications
 GO_APP_DIRS := $(wildcard cmd/*)
 GO_APP_BUILD_TARGETS := $(addprefix build-,$(notdir $(GO_APP_DIRS)))
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
 
-ifndef GOOS
-	GOOS := $(shell go env GOOS)
-endif
-
-ifndef GOARCH
-	GOARCH := $(shell go env GOARCH)
+ifeq ($(GOARCH), arm64)
+	PLATFORM = linux/arm64
+else
+	PLATFORM = linux/x86_64
 endif
 
 LDFLAGS_PACKAGE := github.com/bucketeer-io/bucketeer/pkg/ldflags
@@ -384,10 +384,10 @@ build-docker-images:
 	for APP in `ls bin`; do \
 		./tools/build/show-dockerfile.sh bin $$APP > Dockerfile-app-$$APP; \
 		IMAGE=`./tools/build/show-image-name.sh $$APP`; \
-		docker build -f Dockerfile-app-$$APP -t ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} .; \
+		docker build --platform $(PLATFORM) -f Dockerfile-app-$$APP -t ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} .; \
 		rm Dockerfile-app-$$APP; \
 	done
-	docker build migration/ -t ghcr.io/bucketeer-io/bucketeer-migration:${TAG}
+	docker build --platform $(PLATFORM) migration/ -t ghcr.io/bucketeer-io/bucketeer-migration:${TAG}
 
 # copy go application docker image to minikube
 # please keep the same TAG env as used in build-docker-images, eg: TAG=test make minikube-load-images
@@ -397,7 +397,7 @@ minikube-load-images:
 		docker save ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} -o $$IMAGE.tar; \
 		docker cp $$IMAGE.tar minikube:/home/docker; \
 		rm $$IMAGE.tar; \
-		minikube ssh "docker load -i /home/docker/$$IMAGE.tar"; \
+		minikube ssh "sudo docker load -i /home/docker/$$IMAGE.tar"; \
 		minikube ssh "rm /home/docker/$$IMAGE.tar"; \
 	done
 

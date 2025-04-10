@@ -25,8 +25,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
+	storagemock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -66,9 +66,9 @@ func TestListTagsMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(fs *FeatureService) {
-				fs.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("test"))
+				fs.tagStorage.(*storagemock.MockTagStorage).EXPECT().ListTags(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), errors.New("test"))
 			},
 			input:       &featureproto.ListTagsRequest{EnvironmentId: environmentId},
 			expected:    nil,
@@ -77,18 +77,9 @@ func TestListTagsMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(fs *FeatureService) {
-				rows := mysqlmock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				fs.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mysqlmock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				fs.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				fs.tagStorage.(*storagemock.MockTagStorage).EXPECT().ListTags(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Tag{}, 0, int64(0), nil)
 			},
 			input: &featureproto.ListTagsRequest{
 				PageSize:      2,
@@ -118,21 +109,20 @@ func TestUpsertTags(t *testing.T) {
 	defer mockController.Finish()
 	service := createFeatureServiceNew(mockController)
 	ctx := createContextWithToken()
-	transaction := mysqlmock.NewMockTransaction(mockController)
 	internalErr := errors.New("test")
 	patterns := []struct {
 		desc        string
 		tags        []string
-		setup       func(*mysqlmock.MockTransaction)
+		setup       func(fs *FeatureService)
 		expectedErr error
 	}{
 		{
 			desc: "error: internal error when creating tag",
 			tags: []string{"tag"},
-			setup: func(mt *mysqlmock.MockTransaction) {
-				mt.EXPECT().ExecContext(
+			setup: func(fs *FeatureService) {
+				fs.tagStorage.(*storagemock.MockTagStorage).EXPECT().UpsertTag(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, internalErr)
+				).Return(internalErr)
 			},
 			expectedErr: internalErr,
 		},
@@ -144,10 +134,10 @@ func TestUpsertTags(t *testing.T) {
 		{
 			desc: "success: create new tag",
 			tags: []string{"tag"},
-			setup: func(mt *mysqlmock.MockTransaction) {
-				mt.EXPECT().ExecContext(
+			setup: func(fs *FeatureService) {
+				fs.tagStorage.(*storagemock.MockTagStorage).EXPECT().UpsertTag(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
+				).Return(nil)
 			},
 			expectedErr: nil,
 		},
@@ -156,9 +146,9 @@ func TestUpsertTags(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			if p.setup != nil {
-				p.setup(transaction)
+				p.setup(service)
 			}
-			err := service.upsertTags(ctx, transaction, p.tags, environmentId)
+			err := service.upsertTags(ctx, p.tags, environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

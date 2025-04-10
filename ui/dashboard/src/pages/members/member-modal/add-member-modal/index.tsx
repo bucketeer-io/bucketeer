@@ -253,7 +253,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                     <CreatableSelect
                       disabled={isLoadingTags}
                       loading={isLoadingTags}
-                      placeholder={t(`form:placeholder-tags`)}
+                      placeholder={t(`form:placeholder-member-tags`)}
                       options={tagOptions?.map(tag => ({
                         label: tag.name,
                         value: tag.id

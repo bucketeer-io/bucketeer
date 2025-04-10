@@ -33,7 +33,7 @@ const VariationType = ({ feature }: VariationProps) => {
         }
         variationType={feature.variationType}
       />
-      {isBoolean && <Icon icon={IconFlagSwitch} />}
+      {isBoolean && <Icon icon={IconFlagSwitch} size={'xxs'} />}
       <p
         className={cn('typo-para-small text-gray-600 capitalize', {
           uppercase: isJSON

@@ -810,23 +810,25 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 	evaluationMessages := make([]publisher.Message, 0)
 	metricsMessages := make([]publisher.Message, 0)
 	publish := func(p publisher.Publisher, messages []publisher.Message, typ string) {
-		errors := p.PublishMulti(req.Context(), messages)
+		multiErrs := p.PublishMulti(req.Context(), messages)
 		var repeatableErrors, nonRepeateableErrors float64
-		for id, err := range errors {
+		for id, err := range multiErrs {
 			retriable := err != publisher.ErrBadMessage
 			if retriable {
 				repeatableErrors++
 			} else {
 				nonRepeateableErrors++
 			}
-			s.logger.Error(
-				"Failed to publish event",
-				log.FieldsFromImcomingContext(req.Context()).AddFields(
-					zap.Error(err),
-					zap.String("environmentID", envAPIKey.Environment.Id),
-					zap.String("id", id),
-				)...,
-			)
+			if !errors.Is(err, context.Canceled) {
+				s.logger.Error(
+					"Failed to publish event",
+					log.FieldsFromImcomingContext(req.Context()).AddFields(
+						zap.Error(err),
+						zap.String("environmentID", envAPIKey.Environment.Id),
+						zap.String("id", id),
+					)...,
+				)
+			}
 			errs[id] = &registerEventsResponseError{
 				Retriable: retriable,
 				Message:   "Failed to publish event",
@@ -834,7 +836,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 		}
 		restEventCounter.WithLabelValues(callerGatewayService, typ, codeNonRepeatableError).Add(nonRepeateableErrors)
 		restEventCounter.WithLabelValues(callerGatewayService, typ, codeRepeatableError).Add(repeatableErrors)
-		restEventCounter.WithLabelValues(callerGatewayService, typ, codeOK).Add(float64(len(messages) - len(errors)))
+		restEventCounter.WithLabelValues(callerGatewayService, typ, codeOK).Add(float64(len(messages) - len(multiErrs)))
 	}
 	for _, event := range reqBody.Events {
 		event.EnvironmentId = envAPIKey.Environment.Id

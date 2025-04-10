@@ -25,12 +25,18 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
+	"github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 var (
 	errInvalidIDFormat  = errors.New("gateway: invalid event id format")
 	errInvalidTimestamp = errors.New("gateway: invalid event timestamp")
 	errUnmarshalFailed  = errors.New("gateway: failed to unmarshal event")
+	errEmptyFeatureID   = errors.New("gateway: feature_id is empty")
+	errEmptyUserID      = errors.New("gateway: user_id is empty")
+	errEmptyVariationID = errors.New("gateway: variation_id is empty")
+	errEmptyGoalID      = errors.New("gateway: goal_id is empty")
+	errNilReason        = errors.New("gateway: reason is nil")
 )
 
 type eventValidator interface {
@@ -105,6 +111,30 @@ func (v *eventGoalValidator) validate(ctx context.Context) (string, error) {
 	if err != nil {
 		return codeUnmarshalFailed, errUnmarshalFailed
 	}
+
+	// validate required fields
+	if ev.GoalId == "" {
+		v.logger.Debug(
+			"Empty goal_id",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("id", v.event.Id),
+				zap.String("goal_id", ev.GoalId),
+			)...,
+		)
+		return codeEmptyField, errEmptyGoalID
+	}
+	if (ev.User == nil || (ev.User != nil && ev.User.Id == "")) && ev.UserId == "" {
+		v.logger.Debug(
+			"Empty user_id",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("id", v.event.Id),
+				zap.Any("user", ev.User),
+				zap.String("user_id", ev.UserId),
+			)...,
+		)
+		return codeEmptyField, errEmptyUserID
+	}
+
 	if !validateTimestamp(ev.Timestamp, v.oldestTimestampDuration, v.furthestTimestampDuration) {
 		v.logger.Debug(
 			"Failed to validate goal event timestamp",
@@ -148,6 +178,58 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 	if err != nil {
 		return codeUnmarshalFailed, errUnmarshalFailed
 	}
+
+	// validate required fields
+	if ev.FeatureId == "" {
+		v.logger.Debug(
+			"Empty feature_id",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("id", v.event.Id),
+				zap.String("feature_id", ev.FeatureId),
+			)...,
+		)
+		return codeEmptyField, errEmptyFeatureID
+	}
+	isErrorReason := ev.Reason != nil && (ev.Reason.Type == feature.Reason_ERROR_NO_EVALUATIONS ||
+		ev.Reason.Type == feature.Reason_ERROR_FLAG_NOT_FOUND ||
+		ev.Reason.Type == feature.Reason_ERROR_WRONG_TYPE ||
+		ev.Reason.Type == feature.Reason_ERROR_USER_ID_NOT_SPECIFIED ||
+		ev.Reason.Type == feature.Reason_ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED ||
+		ev.Reason.Type == feature.Reason_ERROR_EXCEPTION ||
+		ev.Reason.Type == feature.Reason_CLIENT)
+
+	if !isErrorReason && ev.VariationId == "" {
+		v.logger.Debug(
+			"Empty variation_id",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("id", v.event.Id),
+				zap.String("variation_id", ev.VariationId),
+			)...,
+		)
+		return codeEmptyField, errEmptyVariationID
+	}
+	if (ev.User == nil || (ev.User != nil && ev.User.Id == "")) && ev.UserId == "" {
+		v.logger.Debug(
+			"Empty user_id",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("id", v.event.Id),
+				zap.Any("user", ev.User),
+				zap.String("user_id", ev.UserId),
+			)...,
+		)
+		return codeEmptyField, errEmptyUserID
+	}
+	if ev.Reason == nil {
+		v.logger.Debug(
+			"Nil reason",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("id", v.event.Id),
+				zap.Any("reason", ev.Reason),
+			)...,
+		)
+		return codeEmptyField, errNilReason
+	}
+
 	if !validateTimestamp(ev.Timestamp, v.oldestTimestampDuration, v.furthestTimestampDuration) {
 		v.logger.Debug(
 			"Failed to validate evaluation event timestamp",

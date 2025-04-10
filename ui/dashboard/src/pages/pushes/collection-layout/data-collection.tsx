@@ -12,6 +12,7 @@ import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
 import ExpandableTag from 'elements/expandable-tag';
+import NameWithTooltip from 'elements/name-with-tooltip';
 import TruncationWithTooltip from '../../../elements/truncation-with-tooltip';
 import { PushActionsType } from '../types';
 
@@ -32,26 +33,25 @@ export const useColumns = ({
       size: 400,
       cell: ({ row }) => {
         const push = row.original;
+        const { id, name } = push;
 
         return (
           <div className="flex flex-col gap-0.5 max-w-fit min-w-[300px]">
-            <TruncationWithTooltip
-              elementId={`name-${push.id}`}
-              content={push.name}
-              maxSize={300}
-              additionalClassName={['max-w-full']}
-              tooltipWrapperCls="left-0 translate-x-0"
-            >
-              <button
-                id={`name-${push.id}`}
-                onClick={() => onActions(push, 'EDIT')}
-                className="underline text-primary-500 break-all line-clamp-1 typo-para-medium text-left"
-              >
-                {push.name}
-              </button>
-            </TruncationWithTooltip>
+            <NameWithTooltip
+              id={id}
+              content={<NameWithTooltip.Content content={name} id={id} />}
+              trigger={
+                <NameWithTooltip.Trigger
+                  id={id}
+                  name={name}
+                  onClick={() => onActions(push, 'EDIT')}
+                  maxLines={1}
+                />
+              }
+              maxLines={1}
+            />
             <div className="typo-para-tiny text-gray-500 break-all line-clamp-1">
-              {truncateTextCenter(push.name)}
+              {truncateTextCenter(id)}
             </div>
           </div>
         );

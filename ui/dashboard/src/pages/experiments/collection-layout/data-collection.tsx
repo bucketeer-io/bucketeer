@@ -26,6 +26,7 @@ import {
 import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
+import NameWithTooltip from 'elements/name-with-tooltip';
 import { ExperimentActionsType } from '../types';
 
 export const ExperimentStatuses = ({
@@ -96,18 +97,27 @@ export const useColumns = ({
       size: 400,
       cell: ({ row }) => {
         const experiment = row.original;
-
+        const { id, name } = experiment;
         return (
           <div className="flex flex-col gap-0.5">
-            <Link
-              to={`/${currenEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${experiment.id}/results`}
-              className="underline text-primary-500 typo-para-medium text-left w-fit max-w-full line-clamp-1 break-all"
-            >
-              {experiment.name}
-            </Link>
+            <NameWithTooltip
+              id={id}
+              content={<NameWithTooltip.Content content={name} id={id} />}
+              trigger={
+                <Link
+                  to={`/${currenEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${id}/results`}
+                >
+                  <NameWithTooltip.Trigger
+                    id={id}
+                    name={name}
+                    className="min-w-[300px]"
+                  />
+                </Link>
+              }
+            />
             <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
-              {truncateTextCenter(experiment.id)}
-              <div onClick={() => handleCopyId(experiment.id)}>
+              {truncateTextCenter(id)}
+              <div onClick={() => handleCopyId(id)}>
                 <Icon
                   icon={IconCopy}
                   size={'sm'}

@@ -23,7 +23,6 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -75,8 +74,7 @@ func (s *FeatureService) ListTags(
 		}
 		return nil, dt.Err()
 	}
-	tagStorage := v2fs.NewTagStorage(s.mysqlClient)
-	tags, nextCursor, totalCount, err := tagStorage.ListTags(
+	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(
 		ctx,
 		whereParts,
 		orders,
@@ -133,11 +131,9 @@ func (s *FeatureService) newListTagsOrdersMySQL(
 
 func (s *FeatureService) upsertTags(
 	ctx context.Context,
-	tx mysql.Transaction,
 	tags []string,
 	environmentId string,
 ) error {
-	tagStorage := v2fs.NewTagStorage(tx)
 	for _, tag := range tags {
 		trimed := strings.TrimSpace(tag)
 		if trimed == "" {
@@ -155,7 +151,7 @@ func (s *FeatureService) upsertTags(
 			)
 			return err
 		}
-		if err := tagStorage.UpsertTag(ctx, t, environmentId); err != nil {
+		if err := s.tagStorage.UpsertTag(ctx, t, environmentId); err != nil {
 			s.logger.Error(
 				"Failed to store tag",
 				log.FieldsFromImcomingContext(ctx).AddFields(

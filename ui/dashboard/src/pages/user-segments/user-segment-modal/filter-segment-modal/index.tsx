@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'i18n';
 import { isNotEmpty } from 'utils/data-type';
 import { UserSegmentsFilters } from 'pages/user-segments/types';
@@ -63,6 +63,11 @@ const FilterUserSegmentModal = ({
   const { t } = useTranslation(['common']);
   const [selectedFilterType, setSelectedFilterType] = useState<Option>();
   const [valueOption, setValueOption] = useState<Option>();
+
+  const isDisabledSubmitBtn = useMemo(
+    () => !selectedFilterType || !valueOption,
+    [selectedFilterType, valueOption]
+  );
 
   const onConfirmHandler = () => {
     switch (selectedFilterType?.value) {
@@ -142,7 +147,9 @@ const FilterUserSegmentModal = ({
 
       <ButtonBar
         secondaryButton={
-          <Button onClick={onConfirmHandler}>{t(`confirm`)}</Button>
+          <Button disabled={isDisabledSubmitBtn} onClick={onConfirmHandler}>
+            {t(`confirm`)}
+          </Button>
         }
         primaryButton={
           <Button onClick={onClearFilters} variant="secondary">

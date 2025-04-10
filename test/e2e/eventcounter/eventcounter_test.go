@@ -19,8 +19,8 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -1875,7 +1875,7 @@ func registerGoalEventWithEvaluations(
 }
 
 func sendHTTPTrack(t *testing.T, userID, goalID, tag string, value float64) {
-	data, err := ioutil.ReadFile(*apiKeyPath)
+	data, err := os.ReadFile(*apiKeyPath)
 	if err != nil {
 		t.Fatal(err)
 	}

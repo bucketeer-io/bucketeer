@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'i18n';
 import { isNotEmpty } from 'utils/data-type';
 import { ProjectFilters } from 'pages/projects/types';
@@ -71,6 +71,11 @@ const FilterProjectModal = ({
     }
   };
 
+  const isDisabledSubmitBtn = useMemo(
+    () => !selectedFilterType || !valueOption,
+    [selectedFilterType, valueOption]
+  );
+
   useEffect(() => {
     if (isNotEmpty(filters?.disabled)) {
       setSelectedFilterType(filterOptions[0]);
@@ -137,7 +142,9 @@ const FilterProjectModal = ({
 
       <ButtonBar
         secondaryButton={
-          <Button onClick={onConfirmHandler}>{t(`confirm`)}</Button>
+          <Button disabled={isDisabledSubmitBtn} onClick={onConfirmHandler}>
+            {t(`confirm`)}
+          </Button>
         }
         primaryButton={
           <Button onClick={onClearFilters} variant="secondary">

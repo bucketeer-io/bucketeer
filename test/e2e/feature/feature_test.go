@@ -29,6 +29,7 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	aoclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -63,6 +64,55 @@ var (
 
 	tags = []string{"e2e-test-tag-1", "e2e-test-tag-2", "e2e-test-tag-3"}
 )
+
+func TestGetFeatureByVersion(t *testing.T) {
+	t.Parallel()
+	featureClient := newFeatureClient(t)
+	req := newCreateFeatureReq(newFeatureID(t))
+	createFeatureNoCmd(t, featureClient, req)
+
+	// update feature to increase version
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := featureClient.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            req.Id,
+		EnvironmentId: *environmentID,
+		Enabled:       wrapperspb.Bool(true),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// wait for the audit log
+	time.Sleep(5 * time.Second)
+
+	// get feature with latest version
+	updatedFeature, err := featureClient.GetFeature(ctx, &feature.GetFeatureRequest{
+		Id:            req.Id,
+		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// get feature by version
+	oldFeature, err := featureClient.GetFeature(ctx, &feature.GetFeatureRequest{
+		Id:             req.Id,
+		FeatureVersion: wrapperspb.Int32(1),
+		EnvironmentId:  *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, oldFeature.Feature.Version, int32(1))
+	assert.Equal(t, updatedFeature.Feature.Version, int32(2))
+	assert.Equal(t, oldFeature.Feature.Id, updatedFeature.Feature.Id)
+	_, err = featureClient.DeleteFeature(ctx, &feature.DeleteFeatureRequest{
+		Id:            req.Id,
+		EnvironmentId: *environmentID,
+		Command:       &feature.DeleteFeatureCommand{},
+	})
+	assert.NoError(t, err)
+}
 
 func TestCreateFeature(t *testing.T) {
 	t.Parallel()
@@ -627,6 +677,76 @@ func TestListFeaturesOrderByUpdatedAt(t *testing.T) {
 		}
 		if !tc.checkSortedFunc(updatedAts) {
 			t.Fatalf("Features aren't sorted by UpdatedAt %s. Features: %v", tc.orderDirection, response.Features)
+		}
+	}
+}
+
+func TestListFeaturesOrderByAutoOps(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	size := int64(3)
+	createRandomIDFeaturesNoCommand(t, 3, client)
+
+	testcases := []struct {
+		orderDirection  feature.ListFeaturesRequest_OrderDirection
+		checkSortedFunc func(a []int32) bool
+	}{
+		{
+			orderDirection:  feature.ListFeaturesRequest_ASC,
+			checkSortedFunc: util.Int32sAreSorted,
+		},
+		{
+			orderDirection:  feature.ListFeaturesRequest_DESC,
+			checkSortedFunc: util.Int32sAreReverseSorted,
+		},
+	}
+
+	for _, tc := range testcases {
+		listReq := &feature.ListFeaturesRequest{
+			PageSize:       size,
+			OrderBy:        feature.ListFeaturesRequest_AUTO_OPS,
+			OrderDirection: tc.orderDirection,
+			EnvironmentId:  *environmentID,
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		response, err := client.ListFeatures(ctx, listReq)
+		if err != nil {
+			t.Fatal(err)
+		}
+		autoOps := make([]int32, 0, len(response.Features))
+		for _, f := range response.Features {
+			autoOps = append(autoOps, f.AutoOpsSummary.ScheduleCount+
+				f.AutoOpsSummary.KillSwitchCount+
+				f.AutoOpsSummary.ProgressiveRolloutCount,
+			)
+		}
+		if !tc.checkSortedFunc(autoOps) {
+			t.Fatalf("Features aren't sorted by AutoOps %s. Features: %v", tc.orderDirection, response.Features)
+		}
+	}
+}
+
+func TestListFeaturesFilterStatus(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	size := int64(3)
+	createRandomIDFeaturesNoCommand(t, 3, client)
+
+	listReq := &feature.ListFeaturesRequest{
+		PageSize:      size,
+		EnvironmentId: *environmentID,
+		Status:        feature.FeatureLastUsedInfo_NEW,
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	response, err := client.ListFeatures(ctx, listReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range response.Features {
+		if f.LastUsedInfo != nil && f.LastUsedInfo.LastUsedAt > 0 {
+			t.Errorf("LastUsedInfo: %v, LastUsedInfo: %v", f.LastUsedInfo, response.Features)
 		}
 	}
 }
@@ -1796,6 +1916,13 @@ func createRandomIDFeatures(t *testing.T, size int, client featureclient.Client)
 	t.Helper()
 	for i := 0; i < size; i++ {
 		createFeature(t, client, newCreateFeatureCommand(newFeatureID(t)))
+	}
+}
+
+func createRandomIDFeaturesNoCommand(t *testing.T, size int, client featureclient.Client) {
+	t.Helper()
+	for i := 0; i < size; i++ {
+		createFeatureNoCmd(t, client, newCreateFeatureReq(newFeatureID(t)))
 	}
 }
 

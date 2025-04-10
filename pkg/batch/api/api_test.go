@@ -411,9 +411,12 @@ func TestEventCountWatcher(t *testing.T) {
 				},
 				nil,
 			)
-		mysqlMockClient.EXPECT().Qe(
-			gomock.Any(),
-		).AnyTimes().Return(mysqlMockQueryExecer)
+		mysqlMockClient.EXPECT().
+			ExecContext(
+				gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			Times(2).
+			Return(nil, nil)
 		mysqlMockQueryExecer.EXPECT().ExecContext(
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 			gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),

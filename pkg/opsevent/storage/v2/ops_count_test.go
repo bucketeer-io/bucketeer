@@ -49,11 +49,7 @@ func TestUpsertOpsCount(t *testing.T) {
 	}{
 		{
 			setup: func(s *opsCountStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().ExecContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
@@ -88,11 +84,7 @@ func TestListOpsCounts(t *testing.T) {
 	}{
 		{
 			setup: func(s *opsCountStorage) {
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().QueryContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -110,11 +102,7 @@ func TestListOpsCounts(t *testing.T) {
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				qe := mock.NewMockQueryExecer(mockController)
-				s.client.(*mock.MockClient).EXPECT().Qe(
-					gomock.Any(),
-				).Return(qe)
-				qe.EXPECT().QueryContext(
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
@@ -151,5 +139,5 @@ func TestListOpsCounts(t *testing.T) {
 
 func newOpsCountStorageWithMock(t *testing.T, mockController *gomock.Controller) *opsCountStorage {
 	t.Helper()
-	return &opsCountStorage{mock.NewMockClient(mockController)}
+	return &opsCountStorage{mock.NewMockQueryExecer(mockController)}
 }

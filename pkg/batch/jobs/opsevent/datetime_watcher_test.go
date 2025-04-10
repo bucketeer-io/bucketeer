@@ -64,7 +64,7 @@ func TestRunDatetimeWatcher(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "success: assess: false",
+			desc: "success: scheduled clause does not satisfy the time condition",
 			setup: func(w *datetimeWatcher) {
 				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(),
@@ -97,12 +97,14 @@ func TestRunDatetimeWatcher(t *testing.T) {
 								FeatureId:     "fid-0",
 								Clauses:       []*autoopsproto.Clause{{Clause: c}},
 								AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
+								OpsType:       autoopsproto.OpsType_SCHEDULE,
 							},
 							{
 								Id:            "id-1",
 								FeatureId:     "fid-1",
 								Clauses:       []*autoopsproto.Clause{{Clause: c}},
 								AutoOpsStatus: autoopsproto.AutoOpsStatus_FINISHED,
+								OpsType:       autoopsproto.OpsType_SCHEDULE,
 							},
 						},
 					},
@@ -112,7 +114,7 @@ func TestRunDatetimeWatcher(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "success: assess: true",
+			desc: "success: scheduled clause satisfies the time condition",
 			setup: func(w *datetimeWatcher) {
 				w.envClient.(*envclientemock.MockClient).EXPECT().ListEnvironmentsV2(
 					gomock.Any(),
@@ -128,9 +130,11 @@ func TestRunDatetimeWatcher(t *testing.T) {
 					},
 					nil,
 				)
-				dc := &autoopsproto.DatetimeClause{Time: time.Now().Unix()}
-				c, err := anypb.New(dc)
+				clause1, err := anypb.New(&autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, -2).Unix()})
 				require.NoError(t, err)
+				clause2, err := anypb.New(&autoopsproto.DatetimeClause{Time: time.Now().AddDate(0, 0, -1).Unix()})
+				require.NoError(t, err)
+
 				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListAutoOpsRules(
 					gomock.Any(),
 					&autoopsproto.ListAutoOpsRulesRequest{
@@ -143,21 +147,35 @@ func TestRunDatetimeWatcher(t *testing.T) {
 							{
 								Id:            "id-0",
 								FeatureId:     "fid-0",
-								Clauses:       []*autoopsproto.Clause{{Id: "clause-id-0", Clause: c}},
+								Clauses:       []*autoopsproto.Clause{{Id: "clause-id-0", ExecutedAt: 0, Clause: clause1}},
 								AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
+								OpsType:       autoopsproto.OpsType_SCHEDULE,
 							},
 							{
 								Id:            "id-1",
 								FeatureId:     "fid-1",
-								Clauses:       []*autoopsproto.Clause{{Id: "clause-id-1", Clause: c}},
+								Clauses:       []*autoopsproto.Clause{{Id: "clause-id-1", ExecutedAt: 1, Clause: clause1}},
 								AutoOpsStatus: autoopsproto.AutoOpsStatus_FINISHED,
+								OpsType:       autoopsproto.OpsType_SCHEDULE,
+							},
+							{
+								Id:        "id-2",
+								FeatureId: "fid-2",
+								Clauses: []*autoopsproto.Clause{
+									{Id: "clause-id-2", ExecutedAt: 1, Clause: clause1},
+									{Id: "clause-id-3", ExecutedAt: 0, Clause: clause2},
+								},
+								AutoOpsStatus: autoopsproto.AutoOpsStatus_RUNNING,
+								OpsType:       autoopsproto.OpsType_SCHEDULE,
 							},
 						},
 					},
 					nil,
 				)
 				w.autoOpsExecutor.(*executormock.MockAutoOpsExecutor).
-					EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+					EXPECT().Execute(gomock.Any(), "ns0", "id-0", "clause-id-0").Return(nil)
+				w.autoOpsExecutor.(*executormock.MockAutoOpsExecutor).
+					EXPECT().Execute(gomock.Any(), "ns0", "id-2", "clause-id-3").Return(nil)
 			},
 			expectedErr: nil,
 		},
@@ -170,42 +188,6 @@ func TestRunDatetimeWatcher(t *testing.T) {
 			}
 			err := w.Run(context.Background())
 			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-func TestDatetimeWatcherAssessRule(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	patterns := []struct {
-		desc           string
-		datetimeClause *autoopsproto.DatetimeClause
-		nowTimestamp   int64
-		expected       bool
-	}{
-		{
-			desc: "false",
-			datetimeClause: &autoopsproto.DatetimeClause{
-				Time: 1000000001,
-			},
-			nowTimestamp: 1000000000,
-			expected:     false,
-		},
-		{
-			desc: "true",
-			datetimeClause: &autoopsproto.DatetimeClause{
-				Time: 1000000000,
-			},
-			nowTimestamp: 1000000000,
-			expected:     true,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			w := newNewDatetimeWatcherWithMock(t, mockController)
-			actual := w.assessRule(p.datetimeClause, p.nowTimestamp)
-			assert.Equal(t, p.expected, actual)
 		})
 	}
 }

@@ -16,6 +16,9 @@ export class Clause extends jspb.Message {
   getActionType(): ActionTypeMap[keyof ActionTypeMap];
   setActionType(value: ActionTypeMap[keyof ActionTypeMap]): void;
 
+  getExecutedAt(): number;
+  setExecutedAt(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Clause.AsObject;
   static toObject(includeInstance: boolean, msg: Clause): Clause.AsObject;
@@ -39,6 +42,7 @@ export namespace Clause {
     id: string;
     clause?: google_protobuf_any_pb.Any.AsObject;
     actionType: ActionTypeMap[keyof ActionTypeMap];
+    executedAt: number;
   };
 }
 

@@ -13,4 +13,3 @@ FROM
     subscription sub
 JOIN
     environment_v2 env ON sub.environment_id = env.id
-    %s %s %s

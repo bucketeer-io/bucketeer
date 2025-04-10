@@ -3,12 +3,12 @@ import { useQueryAccounts } from '@queries/accounts';
 import { useQueryAutoOps } from '@queries/auto-ops';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { Feature, FeatureCountByStatus } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import PageLayout from 'elements/page-layout';
+import TableListContent from 'elements/table-list-content';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import GridViewCollection from '../collection-layout/grid-view-collection';
 import { FlagActionType, FlagFilters } from '../types';
@@ -119,7 +119,7 @@ const CollectionLoader = ({
   ) : isError ? (
     <PageLayout.ErrorState onRetry={refetch} />
   ) : (
-    <>
+    <TableListContent className="gap-y-6 min-w-[904px]">
       <GridViewCollection
         filterTags={filters?.tags}
         autoOpsRules={autoOpsRules}
@@ -131,14 +131,14 @@ const CollectionLoader = ({
         handleTagFilters={handleTagFilters}
       />
 
-      {totalCount > LIST_PAGE_SIZE && !isLoading && (
+      {!isLoading && (
         <Pagination
           page={filters.page}
           totalCount={totalCount}
           onChange={page => setFilters({ page })}
         />
       )}
-    </>
+    </TableListContent>
   );
 };
 

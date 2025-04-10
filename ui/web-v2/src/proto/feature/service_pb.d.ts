@@ -11,6 +11,7 @@ import * as proto_feature_command_pb from '../../proto/feature/command_pb';
 import * as proto_feature_feature_pb from '../../proto/feature/feature_pb';
 import * as proto_feature_scheduled_update_pb from '../../proto/feature/scheduled_update_pb';
 import * as proto_feature_evaluation_pb from '../../proto/feature/evaluation_pb';
+import * as proto_feature_feature_last_used_info_pb from '../../proto/feature/feature_last_used_info_pb';
 import * as proto_user_user_pb from '../../proto/user/user_pb';
 import * as proto_feature_segment_pb from '../../proto/feature/segment_pb';
 import * as proto_feature_flag_trigger_pb from '../../proto/feature/flag_trigger_pb';
@@ -26,6 +27,11 @@ export class GetFeatureRequest extends jspb.Message {
 
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
+
+  hasFeatureVersion(): boolean;
+  clearFeatureVersion(): void;
+  getFeatureVersion(): google_protobuf_wrappers_pb.Int32Value | undefined;
+  setFeatureVersion(value?: google_protobuf_wrappers_pb.Int32Value): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetFeatureRequest.AsObject;
@@ -52,6 +58,7 @@ export namespace GetFeatureRequest {
   export type AsObject = {
     id: string;
     environmentId: string;
+    featureVersion?: google_protobuf_wrappers_pb.Int32Value.AsObject;
   };
 }
 
@@ -212,6 +219,11 @@ export class ListFeaturesRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getStatus(): proto_feature_feature_last_used_info_pb.FeatureLastUsedInfo.StatusMap[keyof proto_feature_feature_last_used_info_pb.FeatureLastUsedInfo.StatusMap];
+  setStatus(
+    value: proto_feature_feature_last_used_info_pb.FeatureLastUsedInfo.StatusMap[keyof proto_feature_feature_last_used_info_pb.FeatureLastUsedInfo.StatusMap]
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListFeaturesRequest.AsObject;
   static toObject(
@@ -247,6 +259,7 @@ export namespace ListFeaturesRequest {
     archived?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     hasPrerequisites?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     environmentId: string;
+    status: proto_feature_feature_last_used_info_pb.FeatureLastUsedInfo.StatusMap[keyof proto_feature_feature_last_used_info_pb.FeatureLastUsedInfo.StatusMap];
   };
 
   export interface OrderByMap {
@@ -256,6 +269,7 @@ export namespace ListFeaturesRequest {
     UPDATED_AT: 3;
     TAGS: 4;
     ENABLED: 5;
+    AUTO_OPS: 6;
   }
 
   export const OrderBy: OrderByMap;

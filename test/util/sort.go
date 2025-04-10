@@ -39,6 +39,29 @@ func Int64sAreReverseSorted(a []int64) bool {
 	return sort.IsSorted(sort.Reverse(Int64Slice(a)))
 }
 
+// Int32Slice attaches the methods of sort.Interface to []int32, sorting in increasing order.
+type Int32Slice []int32
+
+func (p Int32Slice) Len() int {
+	return len(p)
+}
+
+func (p Int32Slice) Less(i, j int) bool {
+	return p[i] < p[j]
+}
+
+func (p Int32Slice) Swap(i, j int) {
+	p[i], p[j] = p[j], p[i]
+}
+
+func Int32sAreSorted(a []int32) bool {
+	return sort.IsSorted(Int32Slice(a))
+}
+
+func Int32sAreReverseSorted(a []int32) bool {
+	return sort.IsSorted(sort.Reverse(Int32Slice(a)))
+}
+
 func StringsAreReverseSorted(a []string) bool {
 	return sort.IsSorted(sort.Reverse(sort.StringSlice(a)))
 }

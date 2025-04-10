@@ -12,6 +12,7 @@ import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import TableListContainer from 'elements/table-list-container';
 import CollectionLoader from './collection-loader';
 import FilterExperimentModal from './experiments-modal/filter-experiment-modal';
 import Overview from './overview';
@@ -179,19 +180,21 @@ const PageContent = ({
         value={filters.status}
         onValueChange={status => onChangeTab(status as ExperimentTab)}
       >
-        <TabsList className={isHiddenTab ? 'hidden' : ''}>
+        <TabsList className={isHiddenTab ? 'hidden' : 'px-6'}>
           <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
           <TabsTrigger value="FINISHED">{t(`finished`)}</TabsTrigger>
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value={filters.status as string}>
-          <CollectionLoader
-            onAdd={onAdd}
-            filters={filters}
-            setFilters={onChangeFilters}
-            onActions={onHandleActions}
-          />
+        <TabsContent value={filters.status as string} className="mt-0">
+          <TableListContainer>
+            <CollectionLoader
+              onAdd={onAdd}
+              filters={filters}
+              setFilters={onChangeFilters}
+              onActions={onHandleActions}
+            />
+          </TableListContainer>
         </TabsContent>
       </Tabs>
     </PageLayout.Content>

@@ -34,7 +34,7 @@ export const experimentFormSchema = yup.object().shape({
       const startDate = new Date(+startAtValue * 1000);
       const startTime = startDate.getTime();
       const endTime = endDate.getTime();
-      if (startTime && endTime && endTime < startTime) {
+      if (startTime && endTime && endTime <= startTime) {
         return context.createError({
           message: 'Stop at must be later than the start at.',
           path: context.path

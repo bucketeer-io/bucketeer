@@ -8,4 +8,3 @@ SELECT
     name
 FROM
     admin_subscription
-    %s %s %s

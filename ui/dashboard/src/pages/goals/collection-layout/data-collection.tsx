@@ -19,6 +19,7 @@ import { IconArrowDown, IconCopy, IconTrash } from '@icons';
 import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
+import NameWithTooltip from 'elements/name-with-tooltip';
 import { GoalActions } from '../types';
 
 const Tag = ({ tag, type }: { tag: string; type: ConnectionType }) => {
@@ -70,18 +71,24 @@ export const useColumns = ({
       size: 500,
       cell: ({ row }) => {
         const goal = row.original;
+        const { id, name } = goal;
 
         return (
           <div className="flex flex-col gap-0.5 max-w-fit">
-            <Link
-              to={`/${currentEnvironment.urlCode}${PAGE_PATH_GOALS}/${goal.id}`}
-              className="underline text-primary-500 break-all typo-para-medium text-left truncate"
-            >
-              {goal.name}
-            </Link>
+            <NameWithTooltip
+              id={id}
+              content={<NameWithTooltip.Content content={name} id={id} />}
+              trigger={
+                <Link
+                  to={`/${currentEnvironment.urlCode}${PAGE_PATH_GOALS}/${id}`}
+                >
+                  <NameWithTooltip.Trigger id={id} name={name} />
+                </Link>
+              }
+            />
             <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
-              {truncateTextCenter(goal.id)}
-              <div onClick={() => handleCopyId(goal.id)}>
+              {truncateTextCenter(id)}
+              <div onClick={() => handleCopyId(id)}>
                 <Icon
                   icon={IconCopy}
                   size={'sm'}

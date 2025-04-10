@@ -35,6 +35,7 @@ import (
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
+	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	v2os "github.com/bucketeer-io/bucketeer/pkg/opsevent/storage/v2"
@@ -65,6 +66,7 @@ type AutoOpsService struct {
 	opsCountStorage  v2os.OpsCountStorage
 	autoOpsStorage   v2as.AutoOpsRuleStorage
 	prStorage        v2as.ProgressiveRolloutStorage
+	featureStorage   v2fs.FeatureStorage
 	featureClient    featureclient.Client
 	experimentClient experimentclient.Client
 	accountClient    accountclient.Client
@@ -92,6 +94,7 @@ func NewAutoOpsService(
 	return &AutoOpsService{
 		mysqlClient:      mysqlClient,
 		opsCountStorage:  v2os.NewOpsCountStorage(mysqlClient),
+		featureStorage:   v2fs.NewFeatureStorage(mysqlClient),
 		autoOpsStorage:   v2as.NewAutoOpsRuleStorage(mysqlClient),
 		prStorage:        v2as.NewProgressiveRolloutStorage(mysqlClient),
 		featureClient:    featureClient,
@@ -1611,14 +1614,14 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			return err
 		}
 
-		var executeClause *autoopsproto.Clause = nil
+		var executeClause *autoopsproto.Clause
 		for _, c := range autoOpsRule.Clauses {
 			if c.Id == req.ExecuteAutoOpsRuleCommand.ClauseId {
 				executeClause = c
 				break
 			}
 		}
-
+		// Check if the clause exists
 		if executeClause == nil {
 			dt, err := statusClauseNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -1629,7 +1632,17 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			}
 			return dt.Err()
 		}
-
+		// Check if the clause is already executed
+		if executeClause.ExecutedAt != 0 {
+			dt, err := statusClauseAlreadyExecuted.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InvalidArgumentError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
 		ftStorage := ftstorage.NewFeatureStorage(tx)
 		feature, err := ftStorage.GetFeature(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
 		if err != nil {
@@ -1666,6 +1679,10 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			)
 			return err
 		}
+		// Set the `executed_at`, so it won't be executed twice
+		executeClause.ExecutedAt = time.Now().Unix()
+		// Update the status if needed.
+		// When it executes the last clause, it will change to finished status.
 		opsStatus := autoopsproto.AutoOpsStatus_RUNNING
 		if autoOpsRule.Clauses[len(autoOpsRule.Clauses)-1].Id == req.ExecuteAutoOpsRuleCommand.ClauseId {
 			opsStatus = autoopsproto.AutoOpsStatus_FINISHED
@@ -1761,11 +1778,22 @@ func (s *AutoOpsService) executeAutoOpsNoCommand(
 				break
 			}
 		}
-
+		// Check if the clause exists
 		if executeClause == nil {
 			dt, err := statusClauseNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		// Check if the clause is already executed
+		if executeClause.ExecutedAt != 0 {
+			dt, err := statusClauseAlreadyExecuted.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InvalidArgumentError),
 			})
 			if err != nil {
 				return statusInternal.Err()
@@ -1809,6 +1837,10 @@ func (s *AutoOpsService) executeAutoOpsNoCommand(
 			)
 			return err
 		}
+		// Set the `executed_at`, so it won't be executd twice
+		executeClause.ExecutedAt = time.Now().Unix()
+		// Update the status if needed.
+		// When it executes the last clause, it will change to finished status.
 		opsStatus := autoopsproto.AutoOpsStatus_RUNNING
 		if autoOpsRule.Clauses[len(autoOpsRule.Clauses)-1].Id == req.ClauseId {
 			opsStatus = autoopsproto.AutoOpsStatus_FINISHED

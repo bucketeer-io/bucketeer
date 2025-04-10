@@ -1,12 +1,12 @@
 import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { sortingListFields } from 'constants/collection';
 import { UserSegment } from '@types';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
+import TableListContent from 'elements/table-list-content';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { UserSegmentsActionsType, UserSegmentsFilters } from '../types';
@@ -67,7 +67,7 @@ const CollectionLoader = ({
   return isError ? (
     <PageLayout.ErrorState onRetry={refetch} />
   ) : (
-    <>
+    <TableListContent>
       <DataTable
         isLoading={isLoading}
         data={userSegments}
@@ -75,14 +75,14 @@ const CollectionLoader = ({
         onSortingChange={onSortingChangeHandler}
         emptyCollection={emptyState}
       />
-      {totalCount > LIST_PAGE_SIZE && !isLoading && (
+      {!isLoading && (
         <Pagination
           page={filters.page as number}
           totalCount={totalCount}
           onChange={page => setFilters({ page })}
         />
       )}
-    </>
+    </TableListContent>
   );
 };
 

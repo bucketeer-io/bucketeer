@@ -15,6 +15,7 @@ import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
+import NameWithTooltip from 'elements/name-with-tooltip';
 import TruncationWithTooltip from 'elements/truncation-with-tooltip';
 import { APIKeyActionsType } from '../types';
 
@@ -60,18 +61,27 @@ export const useColumns = ({
       size: 500,
       cell: ({ row }) => {
         const apiKey = row.original;
-
+        const { id, name } = apiKey;
         return (
           <div className="flex flex-col gap-0.5 max-w-fit">
-            <button
-              onClick={() => onActions(apiKey, 'EDIT')}
-              className="underline text-primary-500 break-all line-clamp-1 typo-para-medium text-left"
-            >
-              {apiKey.name}
-            </button>
+            <NameWithTooltip
+              id={id}
+              content={<NameWithTooltip.Content content={name} id={id} />}
+              trigger={
+                <NameWithTooltip.Trigger
+                  id={id}
+                  name={name}
+                  maxLines={1}
+                  className="min-w-[300px]"
+                  onClick={() => onActions(apiKey, 'EDIT')}
+                />
+              }
+              maxLines={1}
+            />
+
             <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
-              {truncateTextCenter(apiKey.id)}
-              <div onClick={() => handleCopyId(apiKey.id)}>
+              {truncateTextCenter(id)}
+              <div onClick={() => handleCopyId(id)}>
                 <Icon
                   icon={IconCopy}
                   size={'sm'}

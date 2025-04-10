@@ -59,7 +59,7 @@ const Variations = ({
   const isJSON = useMemo(() => feature.variationType === 'JSON', [feature]);
 
   const formItemClassName = useMemo(
-    () => 'flex flex-col pt-6 pb-0 h-full self-stretch',
+    () => 'flex flex-col justify-end py-0 h-full self-stretch',
     []
   );
 
@@ -129,96 +129,96 @@ const Variations = ({
       {fields.map((variation, variationIndex) => (
         <div
           key={variation.variationField}
-          className="flex items-end w-full gap-x-2"
+          className="flex flex-col w-full gap-y-4 pt-6"
         >
-          <Form.Field
-            control={control}
-            name={`variations.${variationIndex}.value`}
-            render={({ field }) => {
-              return (
+          {isBoolean && <VariationLabel index={variationIndex} className="" />}
+          <div className="flex items-end w-full gap-x-2">
+            <Form.Field
+              control={control}
+              name={`variations.${variationIndex}.value`}
+              render={({ field }) => {
+                return (
+                  <Form.Item
+                    className={cn(formItemClassName, 'w-[20%]', {
+                      'w-[10%]': isBoolean,
+                      'flex-1 w-full': isJSON
+                    })}
+                  >
+                    <Form.Label required={isBoolean}>
+                      {isBoolean ? (
+                        t(field.value ? 'true' : 'false')
+                      ) : (
+                        <VariationLabel index={variationIndex} />
+                      )}
+                    </Form.Label>
+                    <Form.Control>
+                      {isJSON ? (
+                        <TextArea
+                          {...field}
+                          rows={3}
+                          placeholder={t('form:feature-flags.value')}
+                        />
+                      ) : (
+                        <Input
+                          {...field}
+                          disabled={isBoolean}
+                          placeholder={t('form:feature-flags.value')}
+                          className={cn('px-3', {
+                            capitalize: isBoolean
+                          })}
+                        />
+                      )}
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                );
+              }}
+            />
+            <Form.Field
+              control={control}
+              name={`variations.${variationIndex}.name`}
+              render={({ field }) => (
                 <Form.Item
-                  className={cn(formItemClassName, 'w-[20%]', {
-                    'w-[10%]': isBoolean,
+                  className={cn(formItemClassName, 'w-[30%]', {
                     'flex-1 w-full': isJSON
                   })}
                 >
-                  {isBoolean && (
-                    <VariationLabel index={variationIndex} className="mb-3" />
-                  )}
-                  <Form.Label required={isBoolean}>
-                    {isBoolean ? (
-                      t(field.value ? 'true' : 'false')
-                    ) : (
-                      <VariationLabel index={variationIndex} />
-                    )}
-                  </Form.Label>
+                  <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
-                    {isJSON ? (
-                      <TextArea
-                        {...field}
-                        rows={3}
-                        placeholder={t('form:feature-flags.value')}
-                      />
-                    ) : (
-                      <Input
-                        {...field}
-                        disabled={isBoolean}
-                        placeholder={t('form:feature-flags.value')}
-                        className={cn('px-3', {
-                          capitalize: isBoolean
-                        })}
-                      />
-                    )}
+                    <Input {...field} placeholder={t('name')} />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>
-              );
-            }}
-          />
-          <Form.Field
-            control={control}
-            name={`variations.${variationIndex}.name`}
-            render={({ field }) => (
-              <Form.Item
-                className={cn(formItemClassName, 'w-[30%]', {
-                  'flex-1 w-full': isJSON
-                })}
-              >
-                <Form.Label required>{t('name')}</Form.Label>
-                <Form.Control>
-                  <Input {...field} placeholder={t('name')} />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Form.Field
-            control={control}
-            name={`variations.${variationIndex}.description`}
-            render={({ field }) => (
-              <Form.Item
-                className={cn(formItemClassName, 'flex-1', {
-                  'flex-1 w-full': isJSON
-                })}
-              >
-                <Form.Label>{t('form:description')}</Form.Label>
-                <Form.Control>
-                  <Input {...field} placeholder={t('form:description')} />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Button
-            variant="grey"
-            size="icon"
-            type="button"
-            className="p-0 size-5 mb-4"
-            disabled={isDisableRemoveBtn(variation.id)}
-            onClick={() => remove(variationIndex)}
-          >
-            <Icon icon={IconTrash} size="sm" />
-          </Button>
+              )}
+            />
+            <Form.Field
+              control={control}
+              name={`variations.${variationIndex}.description`}
+              render={({ field }) => (
+                <Form.Item
+                  className={cn(formItemClassName, 'flex-1', {
+                    'flex-1 w-full': isJSON
+                  })}
+                >
+                  <Form.Label>{t('form:description')}</Form.Label>
+                  <Form.Control>
+                    <Input {...field} placeholder={t('form:description')} />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+            <Button
+              variant="grey"
+              size="icon"
+              type="button"
+              className="p-0 size-5 mb-4"
+              disabled={isDisableRemoveBtn(variation.id)}
+              onClick={() => remove(variationIndex)}
+            >
+              <Icon icon={IconTrash} size="sm" />
+            </Button>
+          </div>
         </div>
       ))}
       <Button

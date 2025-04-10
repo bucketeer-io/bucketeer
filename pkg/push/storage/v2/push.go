@@ -19,7 +19,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/push/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -49,22 +48,20 @@ type PushStorage interface {
 	GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error)
 	ListPushes(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		option *mysql.ListOptions,
 	) ([]*proto.Push, int, int64, error)
 }
 
 type pushStorage struct {
-	client mysql.Client
+	qe mysql.QueryExecer
 }
 
-func NewPushStorage(client mysql.Client) PushStorage {
-	return &pushStorage{client: client}
+func NewPushStorage(qe mysql.QueryExecer) PushStorage {
+	return &pushStorage{qe: qe}
 }
 
 func (s *pushStorage) CreatePush(ctx context.Context, e *domain.Push, environmentId string) error {
-	_, err := s.client.Qe(ctx).ExecContext(
+	_, err := s.qe.ExecContext(
 		ctx,
 		insertPushSQL,
 		e.Id,
@@ -87,7 +84,7 @@ func (s *pushStorage) CreatePush(ctx context.Context, e *domain.Push, environmen
 }
 
 func (s *pushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmentId string) error {
-	result, err := s.client.Qe(ctx).ExecContext(
+	result, err := s.qe.ExecContext(
 		ctx,
 		updatePushSQL,
 		e.FcmServiceAccount,
@@ -115,7 +112,7 @@ func (s *pushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmen
 
 func (s *pushStorage) GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error) {
 	push := proto.Push{}
-	err := s.client.Qe(ctx).QueryRowContext(
+	err := s.qe.QueryRowContext(
 		ctx,
 		selectPushSQL,
 		id,
@@ -143,18 +140,20 @@ func (s *pushStorage) GetPush(ctx context.Context, id, environmentId string) (*d
 
 func (s *pushStorage) ListPushes(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.Push, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(listPushesSQL, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(listPushesSQL, options)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
+	var offset int
+	var limit int
+	if options != nil {
+		offset = options.Offset
+		limit = options.Limit
+	}
+
 	defer rows.Close()
 	pushes := make([]*proto.Push, 0, limit)
 	for rows.Next() {
@@ -181,8 +180,8 @@ func (s *pushStorage) ListPushes(
 	}
 	nextOffset := offset + len(pushes)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countPushesSQL, whereSQL)
-	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countPushesSQL, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

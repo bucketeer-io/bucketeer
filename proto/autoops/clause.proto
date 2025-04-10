@@ -23,6 +23,7 @@ message Clause {
   string id = 1;
   google.protobuf.Any clause = 2;
   ActionType action_type = 3;
+  int64 executed_at = 4;
 }
 
 enum ActionType {

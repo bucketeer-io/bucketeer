@@ -10,6 +10,7 @@ import EditProjectModal from 'pages/projects/project-modal/edit-project-modal';
 import FilterProjectModal from 'pages/projects/project-modal/filter-project-modal';
 import { ProjectFilters } from 'pages/projects/types';
 import Filter from 'elements/filter';
+import TableListContainer from 'elements/table-list-container';
 
 const OrganizationProjects = () => {
   const { organizationId } = useParams();
@@ -40,7 +41,7 @@ const OrganizationProjects = () => {
   };
 
   return (
-    <>
+    <div className="flex flex-col flex-1 size-full">
       <Filter
         onOpenFilter={onOpenFilterModal}
         searchValue={filters.searchQuery}
@@ -69,16 +70,18 @@ const OrganizationProjects = () => {
           project={selectedProject!}
         />
       )}
-      <CollectionLoader
-        filters={filters}
-        organizationId={organizationId}
-        setFilters={onChangeFilters}
-        onActionHandler={value => {
-          setSelectedProject(value);
-          onOpenEditModal();
-        }}
-      />
-    </>
+      <TableListContainer className="self-stretch">
+        <CollectionLoader
+          filters={filters}
+          organizationId={organizationId}
+          setFilters={onChangeFilters}
+          onActionHandler={value => {
+            setSelectedProject(value);
+            onOpenEditModal();
+          }}
+        />
+      </TableListContainer>
+    </div>
   );
 };
 

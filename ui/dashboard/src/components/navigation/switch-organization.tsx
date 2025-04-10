@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { switchOrganization } from '@api/auth';
 import { useAuth } from 'auth';
 import { PAGE_PATH_ROOT } from 'constants/routing';
+import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
-import { jwtDecode } from 'jwt-decode';
+import { clearCurrentEnvIdStorage } from 'storage/environment';
 import { getOrgIdStorage, setOrgIdStorage } from 'storage/organization';
 import { getTokenStorage, setTokenStorage } from 'storage/token';
-import { DecodedToken } from '@types';
 import { cn } from 'utils/style';
 import { IconChecked } from '@icons';
 import Icon from 'components/icon';
@@ -61,6 +61,7 @@ const SwitchOrganization = ({
   const navigate = useNavigate();
   const { t } = useTranslation(['common', 'form']);
   const { myOrganizations, onMeFetcher } = useAuth();
+  const { errorNotify } = useToast();
   const organizationId = getOrgIdStorage();
   const [searchValue, setSearchValue] = useState('');
   const [organizations, setOrganizations] = useState(myOrganizations);
@@ -85,13 +86,12 @@ const SwitchOrganization = ({
 
   const onChangeOrganization = useCallback(
     async (organizationId: string) => {
-      setIsLoading(true);
-      setOrgIdStorage(organizationId);
-      const token = getTokenStorage();
-      if (token?.accessToken) {
-        const parsedToken: DecodedToken = jwtDecode(token?.accessToken);
-
-        if (parsedToken.organization_id !== organizationId) {
+      try {
+        setIsLoading(true);
+        const token = getTokenStorage();
+        if (token?.accessToken) {
+          setOrgIdStorage(organizationId);
+          clearCurrentEnvIdStorage();
           const resp = await switchOrganization({
             accessToken: token.accessToken,
             organizationId
@@ -99,12 +99,15 @@ const SwitchOrganization = ({
           if (resp.token) {
             setTokenStorage(resp.token);
             await onMeFetcher({ organizationId });
-            setIsLoading(false);
             onCloseSwitchOrg();
             onCloseSetting();
             navigate(PAGE_PATH_ROOT);
           }
         }
+      } catch (error) {
+        errorNotify(error);
+      } finally {
+        setIsLoading(false);
       }
     },
     [currentOrganization]
@@ -171,8 +174,8 @@ const SwitchOrganization = ({
                   active={currentOrganization === item.id}
                   onClick={() => {
                     if (currentOrganization === item.id) return;
-                    setCurrentOrganization(item.id);
                     onChangeOrganization(item.id);
+                    setCurrentOrganization(item.id);
                   }}
                 />
               ))}

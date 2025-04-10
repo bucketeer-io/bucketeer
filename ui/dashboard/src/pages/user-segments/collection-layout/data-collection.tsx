@@ -12,6 +12,8 @@ import { useFormatDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
 import { Popover } from 'components/popover';
 import Spinner from 'components/spinner';
+import DateTooltip from 'elements/date-tooltip';
+import NameWithTooltip from 'elements/name-with-tooltip';
 import { UserSegmentsActionsType } from '../types';
 
 export const useColumns = ({
@@ -39,14 +41,18 @@ export const useColumns = ({
       size: 350,
       cell: ({ row }) => {
         const segment = row.original;
+        const { id, name } = segment;
+
         return (
           <div
             onClick={() => onActionHandler(segment, 'EDIT')}
-            className="flex items-center gap-x-2 cursor-pointer"
+            className="flex items-center gap-x-2 cursor-pointer min-w-[300px]"
           >
-            <p className="underline text-primary-500 typo-para-medium line-clamp-2 break-all">
-              {segment.name}
-            </p>
+            <NameWithTooltip
+              id={id}
+              content={<NameWithTooltip.Content content={name} id={id} />}
+              trigger={<NameWithTooltip.Trigger id={id} name={name} />}
+            />
             {getUploadingStatus(segment) && <Spinner />}
           </div>
         );
@@ -93,13 +99,15 @@ export const useColumns = ({
       accessorKey: 'status',
       header: `${t('status')}`,
       size: 150,
+      minSize: 150,
+      maxSize: 150,
       cell: ({ row }) => {
         const segment = row.original;
         const isUploading = getUploadingStatus(segment);
         return (
           <div
             className={cn(
-              'typo-para-small text-accent-green-500 bg-accent-green-50 px-2 py-[3px] w-fit rounded',
+              'typo-para-small text-accent-green-500 bg-accent-green-50 px-2 py-[3px] w-fit text-center whitespace-nowrap rounded',
               {
                 'bg-gray-200 text-gray-600': !segment.isInUseStatus,
                 'bg-accent-orange-50 text-accent-orange-500': isUploading
@@ -121,12 +129,18 @@ export const useColumns = ({
       size: 200,
       cell: ({ row }) => {
         const segment = row.original;
+        const isNever = Number(segment.updatedAt) === 0;
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {Number(segment.updatedAt) === 0
-              ? t('never')
-              : formatDateTime(segment.updatedAt)}
-          </div>
+          <DateTooltip
+            trigger={
+              <div className="text-gray-700 typo-para-medium">
+                {Number(segment.updatedAt) === 0
+                  ? t('never')
+                  : formatDateTime(segment.updatedAt)}
+              </div>
+            }
+            date={isNever ? null : segment.updatedAt}
+          />
         );
       }
     },

@@ -1,6 +1,5 @@
 import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { sortingListFields } from 'constants/collection';
 import { Experiment } from '@types';
 import { useSearchParams } from 'utils/search-params';
@@ -8,6 +7,7 @@ import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
+import TableListContent from 'elements/table-list-content';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { ExperimentActionsType, ExperimentFilters } from '../types';
@@ -65,8 +65,6 @@ const CollectionLoader = ({
         (!!searchOptions?.statuses?.length && !filters?.filterByTab)
       }
       description="No experiments match your search filters. Try changing your filters."
-      buttonText="Clear Filters"
-      buttonVariant={'secondary'}
       onClear={() => {
         setFilters(
           {
@@ -86,7 +84,7 @@ const CollectionLoader = ({
   return isError ? (
     <PageLayout.ErrorState onRetry={refetch} />
   ) : (
-    <>
+    <TableListContent>
       <DataTable
         isLoading={isLoading}
         data={experiments}
@@ -94,14 +92,14 @@ const CollectionLoader = ({
         onSortingChange={onSortingChangeHandler}
         emptyCollection={emptyState}
       />
-      {totalCount > LIST_PAGE_SIZE && !isLoading && (
+      {!isLoading && (
         <Pagination
           page={filters.page}
           totalCount={totalCount}
           onChange={page => setFilters({ page })}
         />
       )}
-    </>
+    </TableListContent>
   );
 };
 

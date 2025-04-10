@@ -37,10 +37,10 @@ export const useToast = () => {
       }
     );
 
-  const errorNotify = (error: unknown) =>
+  const errorNotify = (error?: unknown, message?: string) =>
     notify({
       messageType: 'error',
-      message: (error as Error)?.message || 'Something went wrong.'
+      message: message || (error as Error)?.message || 'Something went wrong.'
     });
 
   return {

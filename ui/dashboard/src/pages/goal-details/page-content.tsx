@@ -89,7 +89,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
   const connections = goal.experiments?.length || goal.autoOpsRules?.length;
 
   return (
-    <PageLayout.Content className="gap-y-6 overflow-auto">
+    <PageLayout.Content className="p-6 gap-y-6 overflow-auto">
       <GoalUpdateForm goal={goal} onSubmit={onUpdateGoal} />
       {connections > 0 && <GoalConnections goal={goal} />}
       <GoalActions

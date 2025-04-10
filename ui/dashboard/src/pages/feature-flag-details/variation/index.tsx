@@ -6,7 +6,8 @@ import { invalidateFeature } from '@queries/feature-details';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
-import { Feature } from '@types';
+import { isEqual } from 'lodash';
+import { Feature, FeatureVariation, VariationChange } from '@types';
 import Form from 'components/form';
 import ConfirmationRequiredModal from '../elements/confirm-required-modal';
 import { variationsFormSchema } from './form-schema';
@@ -38,10 +39,47 @@ const Variation = ({ feature }: VariationProps) => {
       comment: '',
       resetSampling: false
     },
-    mode: 'all'
+    mode: 'onChange'
   });
 
   const { getValues } = form;
+
+  const getVariationChanges = useCallback(
+    (variations: FeatureVariation[]) => {
+      const variationChanges: VariationChange[] = [];
+      const { variations: variationsFeature } = feature;
+      variationsFeature.forEach(variation => {
+        const existingVariation = variations.find(v => v.id === variation.id);
+        if (!existingVariation) {
+          variationChanges.push({
+            changeType: 'DELETE',
+            variation
+          });
+        } else {
+          const isEqualObj = isEqual(existingVariation, variation);
+          if (!isEqualObj)
+            variationChanges.push({
+              changeType: 'UPDATE',
+              variation: existingVariation
+            });
+        }
+      });
+
+      variations.forEach(variation => {
+        const existingVariation = variationsFeature.find(
+          v => v.id === variation.id
+        );
+        if (!existingVariation) {
+          variationChanges.push({
+            changeType: 'CREATE',
+            variation
+          });
+        }
+      });
+      return variationChanges;
+    },
+    [feature]
+  );
 
   const onSubmit = useCallback(async () => {
     try {
@@ -55,7 +93,8 @@ const Variation = ({ feature }: VariationProps) => {
         offVariation,
         variations: {
           values: variations
-        }
+        },
+        variationChanges: getVariationChanges(variations)
       });
       if (resp) {
         notify({
@@ -70,7 +109,13 @@ const Variation = ({ feature }: VariationProps) => {
         onCloseConfirmDialog();
       }
     } catch (error) {
-      errorNotify(error);
+      errorNotify(
+        error,
+        'There is an Experiment scheduled to start or running. Please stop the Experiment before updating it.'
+      );
+      form.resetField('variations', {
+        defaultValue: feature.variations
+      });
     }
   }, [feature]);
 
@@ -103,7 +148,12 @@ const Variation = ({ feature }: VariationProps) => {
           {openConfirmDialog && (
             <ConfirmationRequiredModal
               isOpen={openConfirmDialog}
-              onClose={onCloseConfirmDialog}
+              onClose={() => {
+                onCloseConfirmDialog();
+                form.setValue('comment', '');
+                form.setValue('resetSampling', false);
+                form.setValue('requireComment', false);
+              }}
               onSubmit={form.handleSubmit(onSubmit)}
             />
           )}

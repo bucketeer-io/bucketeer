@@ -10,8 +10,14 @@ import {
   useAuth
 } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
+import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
-import { setCurrentEnvIdStorage } from 'storage/environment';
+import {
+  clearCurrentEnvIdStorage,
+  getCurrentEnvIdStorage,
+  setCurrentEnvIdStorage
+} from 'storage/environment';
+import { clearOrgIdStorage } from 'storage/organization';
 import { Environment, Project } from '@types';
 import { cn } from 'utils/style';
 import { IconChevronRight, IconFolder, IconNoData } from '@icons';
@@ -24,8 +30,8 @@ import SearchInput from 'components/search-input';
 const MyProjects = () => {
   const { t } = useTranslation(['common']);
   const navigate = useNavigate();
-  const { consoleAccount } = useAuth();
-
+  const { consoleAccount, logout } = useAuth();
+  const { errorNotify } = useToast();
   const [isShowProjectsList, setIsShowProjectsList] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [projects, setProjects] = useState<Project[]>();
@@ -33,24 +39,40 @@ const MyProjects = () => {
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>();
   const [environments, setEnvironments] = useState<Environment[]>();
 
-  const handleChangeData = useCallback(() => {
-    const { environmentRoles } = consoleAccount!;
-    const currentProjects = getUniqueProjects(environmentRoles);
-    const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-    const { id, urlCode } = currentEnvironment || {};
-    const currentProject = getCurrentProject(environmentRoles, id || urlCode);
-
-    const currentEnvironments = getEnvironmentsByProjectId(
-      environmentRoles,
-      currentProject.id
-    );
-
-    setCurrentEnvIdStorage(id || urlCode);
-    setProjects(currentProjects);
-    setSelectedProject(currentProject);
-    setSelectedEnvironment(currentEnvironment);
-    setEnvironments(currentEnvironments);
+  const handleInitLoadData = useCallback(() => {
+    const lastEnvironmentId = getCurrentEnvIdStorage();
+    handleChangeData(lastEnvironmentId as string);
   }, [consoleAccount]);
+
+  const handleChangeData = useCallback(
+    (lastEnvironmentId?: string) => {
+      const { environmentRoles } = consoleAccount!;
+      const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+      const { id, urlCode } = currentEnvironment || {};
+
+      const environmentId = lastEnvironmentId || id || urlCode;
+      const currentProjects = getUniqueProjects(environmentRoles);
+      const currentProject = getCurrentProject(environmentRoles, environmentId);
+
+      if (!currentProject) {
+        clearCurrentEnvIdStorage();
+        clearOrgIdStorage();
+        errorNotify(null, 'The environment is not found.');
+        return logout();
+      }
+      const currentEnvironments = getEnvironmentsByProjectId(
+        environmentRoles,
+        currentProject.id
+      );
+
+      setCurrentEnvIdStorage(environmentId);
+      setProjects(currentProjects);
+      setSelectedProject(currentProject);
+      setSelectedEnvironment(currentEnvironment);
+      setEnvironments(currentEnvironments);
+    },
+    [consoleAccount]
+  );
 
   const onOpenChange = useCallback(
     (v: boolean) => {
@@ -110,75 +132,77 @@ const MyProjects = () => {
   );
 
   useEffect(() => {
-    if (consoleAccount) handleChangeData();
+    if (consoleAccount) handleInitLoadData();
   }, [consoleAccount]);
 
   return (
     <Popover.Root onOpenChange={onOpenChange} open={isShowProjectsList}>
-      <Popover.Content align="start" className="border-none mt-2 z-20">
-        <div className="w-[600px] bg-white rounded-lg shadow-menu">
-          <div className="flex items-center justify-between px-5 py-4">
-            <h1 className="typo-head-bold-huge text-gray-900 capitalize">
-              {t(`navigation.my-projects`)}
-            </h1>
-            <Popover.Close>
-              <Icon icon={IconCloseRound} size="sm" color="gray-500" />
-            </Popover.Close>
-          </div>
-          <Divider />
-          <div className="p-5">
-            <SearchInput
-              placeholder={t(`search`)}
-              value={searchValue}
-              onChange={onSearchProject}
-            />
-            {projects && projects?.length > 0 ? (
-              <div className="mt-5 grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-3">
-                  <List.Title>{t(`projects`)}</List.Title>
-                  <ScrollArea className="h-[120px] pr-2">
-                    <List
-                      items={
-                        projects?.map(item => ({
-                          label: item.name,
-                          value: item.id,
-                          selected: item.id === selectedProject?.id,
-                          expanded: item.id === selectedProject?.id,
-                          onSelect: () => onChangeProject(item)
-                        })) || []
-                      }
-                    />
-                  </ScrollArea>
-                </div>
-                <div className="flex flex-col gap-3">
-                  <List.Title>{t(`environments`)}</List.Title>
-                  <ScrollArea className="h-[120px] pr-2">
-                    <List
-                      items={
-                        environments
-                          ?.filter(i => i.id !== selectedEnvironment?.id)
-                          .map(item => ({
+      <Popover.Portal>
+        <Popover.Content align="start" className="border-none mt-2 z-20">
+          <div className="w-[600px] bg-white rounded-lg shadow-menu">
+            <div className="flex items-center justify-between px-5 py-4">
+              <h1 className="typo-head-bold-huge text-gray-900 capitalize">
+                {t(`navigation.my-projects`)}
+              </h1>
+              <Popover.Close>
+                <Icon icon={IconCloseRound} size="sm" color="gray-500" />
+              </Popover.Close>
+            </div>
+            <Divider />
+            <div className="p-5">
+              <SearchInput
+                placeholder={t(`search`)}
+                value={searchValue}
+                onChange={onSearchProject}
+              />
+              {projects && projects?.length > 0 ? (
+                <div className="mt-5 grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-3">
+                    <List.Title>{t(`projects`)}</List.Title>
+                    <ScrollArea className="h-[120px] pr-2">
+                      <List
+                        items={
+                          projects?.map(item => ({
                             label: item.name,
                             value: item.id,
-                            selected: item.id === selectedEnvironment?.id,
-                            onSelect: () => onHandleChange(item)
+                            selected: item.id === selectedProject?.id,
+                            expanded: item.id === selectedProject?.id,
+                            onSelect: () => onChangeProject(item)
                           })) || []
-                      }
-                    />
-                  </ScrollArea>
+                        }
+                      />
+                    </ScrollArea>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    <List.Title>{t(`environments`)}</List.Title>
+                    <ScrollArea className="h-[120px] pr-2">
+                      <List
+                        items={
+                          environments
+                            ?.filter(i => i.id !== selectedEnvironment?.id)
+                            .map(item => ({
+                              label: item.name,
+                              value: item.id,
+                              selected: item.id === selectedEnvironment?.id,
+                              onSelect: () => onHandleChange(item)
+                            })) || []
+                        }
+                      />
+                    </ScrollArea>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex flex-col justify-center items-center gap-3 pt-10 pb-4">
-                <IconNoData />
-                <div className="typo-para-medium text-gray-500">
-                  {t(`navigation.no-projects`)}
+              ) : (
+                <div className="flex flex-col justify-center items-center gap-3 pt-10 pb-4">
+                  <IconNoData />
+                  <div className="typo-para-medium text-gray-500">
+                    {t(`navigation.no-projects`)}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      </Popover.Content>
+        </Popover.Content>
+      </Popover.Portal>
       <Popover.Trigger className="w-full">
         <div
           className={cn(

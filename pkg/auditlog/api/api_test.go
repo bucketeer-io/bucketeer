@@ -28,6 +28,7 @@ import (
 	gstatus "google.golang.org/grpc/status"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
+	v2asmock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
 	v2alsmock "github.com/bucketeer-io/bucketeer/pkg/auditlog/storage/v2/mock"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -90,7 +91,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context: createContextWithToken(t, true),
 			setup: func(s *auditlogService) {
-				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
@@ -116,9 +117,12 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context: createContextWithToken(t, true),
 			setup: func(s *auditlogService) {
-				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
+				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAvatarAccountsV2(
+					gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.AccountV2{}, nil)
 			},
 			input:    &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
 			expected: &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
@@ -131,9 +135,12 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
-				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
+				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAvatarAccountsV2(
+					gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.AccountV2{}, nil)
 			},
 			input:    &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
 			expected: &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
@@ -198,7 +205,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 		{
 			desc: "err: ErrInternal",
 			setup: func(s *auditlogService) {
-				s.mysqlAdminStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
+				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
@@ -209,7 +216,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *auditlogService) {
-				s.mysqlAdminStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
+				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
@@ -270,7 +277,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
-				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
@@ -298,7 +305,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
-				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
@@ -315,7 +322,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: createContextWithTokenRoleUnassigned(t),
 			setup: func(s *auditlogService) {
-				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
@@ -366,10 +373,11 @@ func newAuditLogServiceWithGetAccountByEnvironmentMock(t *testing.T, mockControl
 	}
 	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
 	return &auditlogService{
-		accountClient:     accountClientMock,
-		mysqlStorage:      v2alsmock.NewMockAuditLogStorage(mockController),
-		mysqlAdminStorage: v2alsmock.NewMockAdminAuditLogStorage(mockController),
-		logger:            logger.Named("api"),
+		accountClient:        accountClientMock,
+		accountStorage:       v2asmock.NewMockAccountStorage(mockController),
+		auditLogStorage:      v2alsmock.NewMockAuditLogStorage(mockController),
+		adminAuditLogStorage: v2alsmock.NewMockAdminAuditLogStorage(mockController),
+		logger:               logger.Named("api"),
 	}
 }
 
@@ -382,8 +390,8 @@ func createAuditLogs(t *testing.T) []*proto.AuditLog {
 	localizer := locale.NewLocalizer(ctx)
 	msgUnknown := domainevent.LocalizedMessage(domaineventproto.Event_UNKNOWN, localizer)
 	return []*proto.AuditLog{
-		{Id: "id-0", LocalizedMessage: msgUnknown},
-		{Id: "id-1", LocalizedMessage: msgUnknown},
+		{Id: "id-0", LocalizedMessage: msgUnknown, Editor: &domaineventproto.Editor{}},
+		{Id: "id-1", LocalizedMessage: msgUnknown, Editor: &domaineventproto.Editor{}},
 	}
 }
 

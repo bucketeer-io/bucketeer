@@ -73,9 +73,9 @@ func (mr *MockPushStorageMockRecorder) GetPush(ctx, id, environmentId any) *gomo
 }
 
 // ListPushes mocks base method.
-func (m *MockPushStorage) ListPushes(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*push.Push, int, int64, error) {
+func (m *MockPushStorage) ListPushes(ctx context.Context, option *mysql.ListOptions) ([]*push.Push, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListPushes", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListPushes", ctx, option)
 	ret0, _ := ret[0].([]*push.Push)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -84,9 +84,9 @@ func (m *MockPushStorage) ListPushes(ctx context.Context, whereParts []mysql.Whe
 }
 
 // ListPushes indicates an expected call of ListPushes.
-func (mr *MockPushStorageMockRecorder) ListPushes(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockPushStorageMockRecorder) ListPushes(ctx, option any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPushes", reflect.TypeOf((*MockPushStorage)(nil).ListPushes), ctx, whereParts, orders, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPushes", reflect.TypeOf((*MockPushStorage)(nil).ListPushes), ctx, option)
 }
 
 // UpdatePush mocks base method.

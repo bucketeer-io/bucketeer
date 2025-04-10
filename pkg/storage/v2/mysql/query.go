@@ -113,11 +113,12 @@ func NewInFilter(column string, values []interface{}) WherePart {
 }
 
 func (f *InFilter) SQLString() (sql string, args []interface{}) {
+	var sb strings.Builder
 	if f.Column == "" || len(f.Values) == 0 {
 		return "", nil
+	} else {
+		sb.WriteString(fmt.Sprintf(" %s IN (", f.Column))
 	}
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("%s IN (", f.Column))
 	for i := range f.Values {
 		if i != 0 {
 			sb.WriteString(", ")
@@ -143,10 +144,12 @@ func NewNullFilter(column string, isNull bool) WherePart {
 }
 
 func (f *NullFilter) SQLString() (sql string, args []interface{}) {
+	var sb strings.Builder
 	if f.Column == "" {
 		return "", nil
+	} else {
+		sb.WriteString(" ")
 	}
-	var sb strings.Builder
 	if f.IsNull {
 		sb.WriteString(fmt.Sprintf("%s IS NULL", f.Column))
 	} else {
@@ -255,11 +258,12 @@ func NewSearchQuery(columns []string, keyword string) WherePart {
 }
 
 func (q *SearchQuery) SQLString() (sql string, args []interface{}) {
+	var sb strings.Builder
 	if len(q.Columns) == 0 {
 		return "", nil
+	} else {
+		sb.WriteString(" (")
 	}
-	var sb strings.Builder
-	sb.WriteString("(")
 	for i, col := range q.Columns {
 		if i != 0 {
 			sb.WriteString(" OR ")
@@ -273,11 +277,12 @@ func (q *SearchQuery) SQLString() (sql string, args []interface{}) {
 }
 
 func ConstructWhereSQLString(wps []WherePart) (sql string, args []interface{}) {
+	var sb strings.Builder
 	if len(wps) == 0 {
 		return "", nil
+	} else {
+		sb.WriteString(" WHERE ")
 	}
-	var sb strings.Builder
-	sb.WriteString("WHERE ")
 	for i, wp := range wps {
 		if i != 0 {
 			sb.WriteString(" AND ")
@@ -322,11 +327,12 @@ func NewOrder(column string, direction OrderDirection) *Order {
 }
 
 func ConstructOrderBySQLString(orders []*Order) string {
+	var sb strings.Builder
 	if len(orders) == 0 {
 		return ""
+	} else {
+		sb.WriteString(" ORDER BY ")
 	}
-	var sb strings.Builder
-	sb.WriteString("ORDER BY ")
 	for i, o := range orders {
 		if i != 0 {
 			sb.WriteString(", ")
@@ -359,11 +365,12 @@ type Orders struct {
 }
 
 func (o *Orders) SQLString() (sql string, args []interface{}) {
+	var sb strings.Builder
 	if len(o.Orders) == 0 {
 		return "", nil
+	} else {
+		sb.WriteString("ORDER BY ")
 	}
-	var sb strings.Builder
-	sb.WriteString("ORDER BY ")
 	for i, o := range o.Orders {
 		if i != 0 {
 			sb.WriteString(", ")
@@ -389,12 +396,12 @@ func ConstructLimitOffsetSQLString(limit, offset int) string {
 		return ""
 	}
 	if limit == QueryNoLimit && offset != QueryNoOffset {
-		return fmt.Sprintf("LIMIT %d OFFSET %d", queryLimitAllRows, offset)
+		return fmt.Sprintf(" LIMIT %d OFFSET %d", queryLimitAllRows, offset)
 	}
 	if limit != QueryNoLimit && offset == QueryNoOffset {
-		return fmt.Sprintf("LIMIT %d", limit)
+		return fmt.Sprintf(" LIMIT %d", limit)
 	}
-	return fmt.Sprintf("LIMIT %d OFFSET %d", limit, offset)
+	return fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
 }
 
 type ListOptions struct {

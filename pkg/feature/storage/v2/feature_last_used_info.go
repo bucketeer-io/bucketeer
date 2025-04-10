@@ -17,11 +17,19 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/feature"
+)
+
+var (
+	//go:embed sql/feature_last_used_info/select_feature_last_used_infos.sql
+	selectFeatureLastUsedInfosSQL string
+	//go:embed sql/feature_last_used_info/upsert_feature_last_used_info.sql
+	upsertFeatureLastUsedInfoSQL string
 )
 
 type FeatureLastUsedInfoStorage interface {
@@ -59,19 +67,7 @@ func (s *featureLastUsedInfoStorage) GetFeatureLastUsedInfos(
 		mysql.NewFilter("environment_id", "=", environmentId),
 	}
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	query := fmt.Sprintf(`
-		SELECT
-			feature_id,
-			version,
-			last_used_at,
-			client_oldest_version,
-			client_latest_version,
-			created_at
-		FROM
-			feature_last_used_info
-		%s
-	`, whereSQL,
-	)
+	query := fmt.Sprintf(selectFeatureLastUsedInfosSQL, whereSQL)
 	rows, err := s.qe.QueryContext(
 		ctx,
 		query,
@@ -116,28 +112,9 @@ func (s *featureLastUsedInfoStorage) UpsertFeatureLastUsedInfo(
 	flui *domain.FeatureLastUsedInfo,
 	environmentId string,
 ) error {
-	query := `
-		INSERT INTO feature_last_used_info (
-			id,
-			feature_id,
-			version,
-			last_used_at,
-			client_oldest_version,
-			client_latest_version,
-			created_at,
-			environment_id
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?
-		) ON DUPLICATE KEY UPDATE
-			feature_id = VALUES(feature_id),
-			version = VALUES(version),
-			last_used_at = VALUES(last_used_at),
-			client_oldest_version = VALUES(client_oldest_version),
-			client_latest_version = VALUES(client_latest_version)
-	`
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
+		upsertFeatureLastUsedInfoSQL,
 		flui.ID(),
 		flui.FeatureId,
 		flui.Version,

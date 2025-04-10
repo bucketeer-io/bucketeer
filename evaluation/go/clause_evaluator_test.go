@@ -187,6 +187,47 @@ func TestGreaterSemver(t *testing.T) {
 			values:      []string{"2.1.1", "v2.0.9", "2.1.0"},
 			expected:    true,
 		},
+		// with 'v' prefix
+		{
+			targetValue: "v1.0.0",
+			values:      []string{"v1.0.0", "v0.0", "v1.0.1"},
+			expected:    false,
+		},
+		{
+			targetValue: "v1.0.0",
+			values:      []string{"v1.0.0", "v1.0.1", "0.0.7"},
+			expected:    false,
+		},
+		{
+			targetValue: "v0.0.8",
+			values:      []string{"v1.0.0", "v0.0.9", "v1.0.1"},
+			expected:    false,
+		},
+		{
+			targetValue: "v1.1.0",
+			values:      []string{"v1.1.0", "1.0.9", "v1.1.1"},
+			expected:    false,
+		},
+		{
+			targetValue: "v2.1.0",
+			values:      []string{"v2.1.0", "2.0.9", "v2.1.1"},
+			expected:    false,
+		},
+		{
+			targetValue: "v1.0.1",
+			values:      []string{"v1.0.1", "v1.0.0", "0.0.7"},
+			expected:    true,
+		},
+		{
+			targetValue: "v1.1.1",
+			values:      []string{"v1.1.1", "1.0.9", "v1.1.0"},
+			expected:    true,
+		},
+		{
+			targetValue: "v2.1.1",
+			values:      []string{"v2.1.1", "2.0.9", "v2.1.0"},
+			expected:    true,
+		},
 	}
 	clauseEvaluator := &clauseEvaluator{}
 	for i, tc := range testcases {
@@ -454,6 +495,61 @@ func TestGreaterOrEqualSemver(t *testing.T) {
 			values:      []string{"2.1.2", "v2.0.9", "2.1.0"},
 			expected:    true,
 		},
+		{
+			targetValue: "v1.0.0",
+			values:      []string{"v1.0.1", "v0.0", "v1.0.2"},
+			expected:    false,
+		},
+		{
+			targetValue: "v1.0.0",
+			values:      []string{"v1.0.1", "v1.0.2", "0.0.7"},
+			expected:    false,
+		},
+		{
+			targetValue: "v0.0.8",
+			values:      []string{"v1.0.0", "v0.0.9", "v1.0.1"},
+			expected:    false,
+		},
+		{
+			targetValue: "v1.1.0",
+			values:      []string{"v1.1.1", "1.0.9", "v1.1.2"},
+			expected:    false,
+		},
+		{
+			targetValue: "v2.1.0",
+			values:      []string{"v2.1.1", "2.0.9", "v2.1.2"},
+			expected:    false,
+		},
+		{
+			targetValue: "v1.0.0",
+			values:      []string{"v1.0.1", "v1.0.0", "0.0.7"},
+			expected:    true,
+		},
+		{
+			targetValue: "v1.1.1",
+			values:      []string{"v1.1.2", "1.0.9", "v1.1.1"},
+			expected:    true,
+		},
+		{
+			targetValue: "v2.1.1",
+			values:      []string{"v2.1.2", "2.0.9", "v2.1.1"},
+			expected:    true,
+		},
+		{
+			targetValue: "v1.0.1",
+			values:      []string{"v1.0.2", "v1.0.1", "0.0.7"},
+			expected:    true,
+		},
+		{
+			targetValue: "v1.1.1",
+			values:      []string{"v1.1.2", "1.0.9", "v1.1.0"},
+			expected:    true,
+		},
+		{
+			targetValue: "v2.1.1",
+			values:      []string{"v2.1.2", "2.0.9", "v2.1.0"},
+			expected:    true,
+		},
 	}
 	clauseEvaluator := &clauseEvaluator{}
 	for i, tc := range testcases {
@@ -572,6 +668,46 @@ func TestLessThanSemver(t *testing.T) {
 		{
 			targetValue: "2.1.1",
 			values:      []string{"2.1.1", "v2.0.9", "2.1.2"},
+			expected:    true,
+		},
+		{
+			targetValue: "v1.0.0",
+			values:      []string{"v1.0.0", "v0.0", "v0.0.9"},
+			expected:    false,
+		},
+		{
+			targetValue: "v1.0.0",
+			values:      []string{"v1.0.0", "0.0.8", "v0.0.7"},
+			expected:    false,
+		},
+		{
+			targetValue: "v0.0.8",
+			values:      []string{"v0.0.8", "v0.0.7", "0.0.9"},
+			expected:    false,
+		},
+		{
+			targetValue: "v1.1.0",
+			values:      []string{"v1.1.0", "1.0.9", "v1.0.8"},
+			expected:    false,
+		},
+		{
+			targetValue: "v2.1.0",
+			values:      []string{"v2.1.0", "2.0.9", "v2.0.9"},
+			expected:    false,
+		},
+		{
+			targetValue: "v1.0.1",
+			values:      []string{"v1.0.1", "0.0.7", "v1.0.2"},
+			expected:    true,
+		},
+		{
+			targetValue: "v1.1.1",
+			values:      []string{"v1.1.1", "1.0.9", "v1.1.2"},
+			expected:    true,
+		},
+		{
+			targetValue: "v2.1.1",
+			values:      []string{"v2.1.1", "2.0.9", "v2.1.2"},
 			expected:    true,
 		},
 	}
@@ -956,6 +1092,61 @@ func TestLessThanOrEqualSemver(t *testing.T) {
 		{
 			targetValue: "2.1.1",
 			values:      []string{"2.1.0", "v2.0.9", "2.1.2"},
+			expected:    true,
+		},
+		{
+			targetValue: "v1.0.1",
+			values:      []string{"v1.0.0", "v0.0", "v0.0.9"},
+			expected:    false,
+		},
+		{
+			targetValue: "v1.0.1",
+			values:      []string{"v1.0.0", "0.0.8", "v0.0.7"},
+			expected:    false,
+		},
+		{
+			targetValue: "v0.0.9",
+			values:      []string{"v0.0.8", "v0.0.7", "0.0.9"},
+			expected:    false,
+		},
+		{
+			targetValue: "v1.1.1",
+			values:      []string{"v1.1.0", "1.0.9", "v1.0.8"},
+			expected:    false,
+		},
+		{
+			targetValue: "v2.1.1",
+			values:      []string{"v2.1.0", "2.0.9", "v2.0.9"},
+			expected:    false,
+		},
+		{
+			targetValue: "v1.0.1",
+			values:      []string{"v1.0.1", "0.0.7", "v1.0.0"},
+			expected:    true,
+		},
+		{
+			targetValue: "v1.1.1",
+			values:      []string{"v1.1.1", "1.0.9", "v1.1.0"},
+			expected:    true,
+		},
+		{
+			targetValue: "v2.1.1",
+			values:      []string{"v2.1.1", "2.0.9", "v2.1.0"},
+			expected:    true,
+		},
+		{
+			targetValue: "v1.0.1",
+			values:      []string{"v1.0.0", "0.0.7", "v1.0.2"},
+			expected:    true,
+		},
+		{
+			targetValue: "v1.1.1",
+			values:      []string{"v1.1.0", "1.0.9", "v1.1.2"},
+			expected:    true,
+		},
+		{
+			targetValue: "v2.1.1",
+			values:      []string{"v2.1.0", "2.0.9", "v2.1.2"},
 			expected:    true,
 		},
 	}

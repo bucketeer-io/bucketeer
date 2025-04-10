@@ -247,7 +247,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         clause:
           (f = msg.getClause()) &&
           google_protobuf_any_pb.Any.toObject(includeInstance, f),
-        actionType: jspb.Message.getFieldWithDefault(msg, 3, 0)
+        actionType: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        executedAt: jspb.Message.getFieldWithDefault(msg, 4, 0)
       };
 
     if (includeInstance) {
@@ -306,6 +307,10 @@ proto.bucketeer.autoops.Clause.deserializeBinaryFromReader = function (
         );
         msg.setActionType(value);
         break;
+      case 4:
+        var value = /** @type {number} */ (reader.readInt64());
+        msg.setExecutedAt(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -351,6 +356,10 @@ proto.bucketeer.autoops.Clause.serializeBinaryToWriter = function (
   f = message.getActionType();
   if (f !== 0.0) {
     writer.writeEnum(3, f);
+  }
+  f = message.getExecutedAt();
+  if (f !== 0) {
+    writer.writeInt64(4, f);
   }
 };
 
@@ -420,6 +429,22 @@ proto.bucketeer.autoops.Clause.prototype.getActionType = function () {
  */
 proto.bucketeer.autoops.Clause.prototype.setActionType = function (value) {
   return jspb.Message.setProto3EnumField(this, 3, value);
+};
+
+/**
+ * optional int64 executed_at = 4;
+ * @return {number}
+ */
+proto.bucketeer.autoops.Clause.prototype.getExecutedAt = function () {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
+};
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.autoops.Clause} returns this
+ */
+proto.bucketeer.autoops.Clause.prototype.setExecutedAt = function (value) {
+  return jspb.Message.setProto3IntField(this, 4, value);
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

@@ -64,7 +64,7 @@ const PageContent = ({ feature }: { feature: Feature }) => {
   ];
 
   return (
-    <PageLayout.Content className="pt-4">
+    <PageLayout.Content className="p-6 pt-4">
       <Tabs>
         <TabsList>
           {featureFlagTabs.map((item, index) => (

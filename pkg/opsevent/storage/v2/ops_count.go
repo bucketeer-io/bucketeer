@@ -35,11 +35,11 @@ type OpsCountStorage interface {
 }
 
 type opsCountStorage struct {
-	client mysql.Client
+	qe mysql.QueryExecer
 }
 
-func NewOpsCountStorage(client mysql.Client) OpsCountStorage {
-	return &opsCountStorage{client: client}
+func NewOpsCountStorage(qe mysql.QueryExecer) OpsCountStorage {
+	return &opsCountStorage{qe: qe}
 }
 
 func (s *opsCountStorage) UpsertOpsCount(ctx context.Context, environmentId string, oc *domain.OpsCount) error {
@@ -63,7 +63,7 @@ func (s *opsCountStorage) UpsertOpsCount(ctx context.Context, environmentId stri
 			evaluation_count = VALUES(evaluation_count),
 			feature_id = VALUES(feature_id)
 	`
-	_, err := s.client.Qe(ctx).ExecContext(
+	_, err := s.qe.ExecContext(
 		ctx,
 		query,
 		oc.Id,
@@ -104,7 +104,7 @@ func (s *opsCountStorage) ListOpsCounts(
 		%s %s %s
 		`, whereSQL, orderBySQL, limitOffsetSQL,
 	)
-	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, err
 	}

@@ -10,6 +10,7 @@ import Button from 'components/button';
 import Icon from 'components/icon';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
+import TableListContainer from 'elements/table-list-container';
 import FilterAPIKeyModal from './api-key-modal/filter-api-key-modal';
 import CollectionLoader from './collection-loader';
 import { APIKeyActionsType, APIKeysFilters } from './types';
@@ -79,14 +80,14 @@ const PageContent = ({
           }}
         />
       )}
-      <div className="mt-5 flex flex-col flex-1">
+      <TableListContainer>
         <CollectionLoader
           onAdd={onAdd}
           filters={filters}
           setFilters={onChangeFilters}
           onActions={onHandleActions}
         />
-      </div>
+      </TableListContainer>
     </PageLayout.Content>
   );
 };
