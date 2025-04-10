@@ -2,6 +2,7 @@ global:
   image:
     tag: v1.3.0 # x-release-please-version
     imagePullSecrets:
+  useMySQL: true
   pubsub:
     # Type of pubsub to use: redis-stream or google
     type: ""
