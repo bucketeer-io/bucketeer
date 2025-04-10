@@ -933,7 +933,7 @@ func validateEvaluateFeatures(req *featureproto.EvaluateFeaturesRequest, localiz
 	return nil
 }
 
-func validateEvaluateFeaturesV2(req *featureproto.EvaluateFeaturesV2Request, localizer locale.Localizer) error {
+func validateDebugEvaluateFeatures(req *featureproto.DebugEvaluateFeaturesRequest, localizer locale.Localizer) error {
 	if len(req.Users) == 0 {
 		dt, err := statusMissingUser.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -981,6 +981,8 @@ func validateEvaluateFeaturesV2(req *featureproto.EvaluateFeaturesV2Request, loc
 			return dt.Err()
 		}
 	}
+
+	return nil
 }
 
 func validateGetFeatureRequest(req *featureproto.GetFeatureRequest, localizer locale.Localizer) error {

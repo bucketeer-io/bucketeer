@@ -11532,11 +11532,15 @@ definitions:
   featureDebugEvaluateFeaturesResponse:
     type: object
     properties:
-      userEvaluations:
+      evaluations:
         type: array
         items:
           type: object
-          $ref: '#/definitions/featureUserEvaluations'
+          $ref: '#/definitions/featureEvaluation'
+      archivedFeatureIds:
+        type: array
+        items:
+          type: string
   featureDeleteFeatureCommand:
     type: object
   featureDeleteFeatureResponse:

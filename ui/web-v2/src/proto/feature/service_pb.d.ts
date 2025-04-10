@@ -2998,15 +2998,20 @@ export namespace DebugEvaluateFeaturesRequest {
 }
 
 export class DebugEvaluateFeaturesResponse extends jspb.Message {
-  clearUserEvaluationsList(): void;
-  getUserEvaluationsList(): Array<proto_feature_evaluation_pb.UserEvaluations>;
-  setUserEvaluationsList(
-    value: Array<proto_feature_evaluation_pb.UserEvaluations>
+  clearEvaluationsList(): void;
+  getEvaluationsList(): Array<proto_feature_evaluation_pb.Evaluation>;
+  setEvaluationsList(
+    value: Array<proto_feature_evaluation_pb.Evaluation>
   ): void;
-  addUserEvaluations(
-    value?: proto_feature_evaluation_pb.UserEvaluations,
+  addEvaluations(
+    value?: proto_feature_evaluation_pb.Evaluation,
     index?: number
-  ): proto_feature_evaluation_pb.UserEvaluations;
+  ): proto_feature_evaluation_pb.Evaluation;
+
+  clearArchivedFeatureIdsList(): void;
+  getArchivedFeatureIdsList(): Array<string>;
+  setArchivedFeatureIdsList(value: Array<string>): void;
+  addArchivedFeatureIds(value: string, index?: number): string;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DebugEvaluateFeaturesResponse.AsObject;
@@ -3031,7 +3036,8 @@ export class DebugEvaluateFeaturesResponse extends jspb.Message {
 
 export namespace DebugEvaluateFeaturesResponse {
   export type AsObject = {
-    userEvaluationsList: Array<proto_feature_evaluation_pb.UserEvaluations.AsObject>;
+    evaluationsList: Array<proto_feature_evaluation_pb.Evaluation.AsObject>;
+    archivedFeatureIdsList: Array<string>;
   };
 }
 

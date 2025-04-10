@@ -18940,7 +18940,7 @@ proto.bucketeer.feature.DebugEvaluateFeaturesRequest.prototype.setEnvironmentId 
  * @private {!Array<number>}
  * @const
  */
-proto.bucketeer.feature.DebugEvaluateFeaturesResponse.repeatedFields_ = [1];
+proto.bucketeer.feature.DebugEvaluateFeaturesResponse.repeatedFields_ = [1, 2];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -18978,11 +18978,13 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        userEvaluationsList: jspb.Message.toObjectList(
-          msg.getUserEvaluationsList(),
-          proto_feature_evaluation_pb.UserEvaluations.toObject,
+        evaluationsList: jspb.Message.toObjectList(
+          msg.getEvaluationsList(),
+          proto_feature_evaluation_pb.Evaluation.toObject,
           includeInstance
-        )
+        ),
+        archivedFeatureIdsList:
+          (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined : f
       };
 
     if (includeInstance) {
@@ -19023,13 +19025,16 @@ proto.bucketeer.feature.DebugEvaluateFeaturesResponse.deserializeBinaryFromReade
       var field = reader.getFieldNumber();
       switch (field) {
         case 1:
-          var value = new proto_feature_evaluation_pb.UserEvaluations();
+          var value = new proto_feature_evaluation_pb.Evaluation();
           reader.readMessage(
             value,
-            proto_feature_evaluation_pb.UserEvaluations
-              .deserializeBinaryFromReader
+            proto_feature_evaluation_pb.Evaluation.deserializeBinaryFromReader
           );
-          msg.addUserEvaluations(value);
+          msg.addEvaluations(value);
+          break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.addArchivedFeatureIds(value);
           break;
         default:
           reader.skipField();
@@ -19063,52 +19068,56 @@ proto.bucketeer.feature.DebugEvaluateFeaturesResponse.prototype.serializeBinary 
 proto.bucketeer.feature.DebugEvaluateFeaturesResponse.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getUserEvaluationsList();
+    f = message.getEvaluationsList();
     if (f.length > 0) {
       writer.writeRepeatedMessage(
         1,
         f,
-        proto_feature_evaluation_pb.UserEvaluations.serializeBinaryToWriter
+        proto_feature_evaluation_pb.Evaluation.serializeBinaryToWriter
       );
+    }
+    f = message.getArchivedFeatureIdsList();
+    if (f.length > 0) {
+      writer.writeRepeatedString(2, f);
     }
   };
 
 /**
- * repeated UserEvaluations user_evaluations = 1;
- * @return {!Array<!proto.bucketeer.feature.UserEvaluations>}
+ * repeated Evaluation evaluations = 1;
+ * @return {!Array<!proto.bucketeer.feature.Evaluation>}
  */
-proto.bucketeer.feature.DebugEvaluateFeaturesResponse.prototype.getUserEvaluationsList =
+proto.bucketeer.feature.DebugEvaluateFeaturesResponse.prototype.getEvaluationsList =
   function () {
-    return /** @type{!Array<!proto.bucketeer.feature.UserEvaluations>} */ (
+    return /** @type{!Array<!proto.bucketeer.feature.Evaluation>} */ (
       jspb.Message.getRepeatedWrapperField(
         this,
-        proto_feature_evaluation_pb.UserEvaluations,
+        proto_feature_evaluation_pb.Evaluation,
         1
       )
     );
   };
 
 /**
- * @param {!Array<!proto.bucketeer.feature.UserEvaluations>} value
+ * @param {!Array<!proto.bucketeer.feature.Evaluation>} value
  * @return {!proto.bucketeer.feature.DebugEvaluateFeaturesResponse} returns this
  */
-proto.bucketeer.feature.DebugEvaluateFeaturesResponse.prototype.setUserEvaluationsList =
+proto.bucketeer.feature.DebugEvaluateFeaturesResponse.prototype.setEvaluationsList =
   function (value) {
     return jspb.Message.setRepeatedWrapperField(this, 1, value);
   };
 
 /**
- * @param {!proto.bucketeer.feature.UserEvaluations=} opt_value
+ * @param {!proto.bucketeer.feature.Evaluation=} opt_value
  * @param {number=} opt_index
- * @return {!proto.bucketeer.feature.UserEvaluations}
+ * @return {!proto.bucketeer.feature.Evaluation}
  */
-proto.bucketeer.feature.DebugEvaluateFeaturesResponse.prototype.addUserEvaluations =
+proto.bucketeer.feature.DebugEvaluateFeaturesResponse.prototype.addEvaluations =
   function (opt_value, opt_index) {
     return jspb.Message.addToRepeatedWrapperField(
       this,
       1,
       opt_value,
-      proto.bucketeer.feature.UserEvaluations,
+      proto.bucketeer.feature.Evaluation,
       opt_index
     );
   };
@@ -19117,9 +19126,48 @@ proto.bucketeer.feature.DebugEvaluateFeaturesResponse.prototype.addUserEvaluatio
  * Clears the list making it empty but non-null.
  * @return {!proto.bucketeer.feature.DebugEvaluateFeaturesResponse} returns this
  */
-proto.bucketeer.feature.DebugEvaluateFeaturesResponse.prototype.clearUserEvaluationsList =
+proto.bucketeer.feature.DebugEvaluateFeaturesResponse.prototype.clearEvaluationsList =
   function () {
-    return this.setUserEvaluationsList([]);
+    return this.setEvaluationsList([]);
+  };
+
+/**
+ * repeated string archived_feature_ids = 2;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.feature.DebugEvaluateFeaturesResponse.prototype.getArchivedFeatureIdsList =
+  function () {
+    return /** @type {!Array<string>} */ (
+      jspb.Message.getRepeatedField(this, 2)
+    );
+  };
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.feature.DebugEvaluateFeaturesResponse} returns this
+ */
+proto.bucketeer.feature.DebugEvaluateFeaturesResponse.prototype.setArchivedFeatureIdsList =
+  function (value) {
+    return jspb.Message.setField(this, 2, value || []);
+  };
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.feature.DebugEvaluateFeaturesResponse} returns this
+ */
+proto.bucketeer.feature.DebugEvaluateFeaturesResponse.prototype.addArchivedFeatureIds =
+  function (value, opt_index) {
+    return jspb.Message.addToRepeatedField(this, 2, value, opt_index);
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.feature.DebugEvaluateFeaturesResponse} returns this
+ */
+proto.bucketeer.feature.DebugEvaluateFeaturesResponse.prototype.clearArchivedFeatureIdsList =
+  function () {
+    return this.setArchivedFeatureIdsList([]);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

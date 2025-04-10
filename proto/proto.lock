@@ -33787,8 +33787,14 @@
             "fields": [
               {
                 "id": 1,
-                "name": "user_evaluations",
-                "type": "bucketeer.feature.UserEvaluations",
+                "name": "evaluations",
+                "type": "Evaluation",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "archived_feature_ids",
+                "type": "string",
                 "is_repeated": true
               }
             ]
