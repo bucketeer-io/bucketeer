@@ -17,6 +17,7 @@ import {
 } from 'auth';
 import {
   PAGE_PATH_APIKEYS,
+  PAGE_PATH_AUDIT_LOGS,
   PAGE_PATH_AUTH_CALLBACK,
   PAGE_PATH_AUTH_SIGNIN,
   PAGE_PATH_EXPERIMENTS,
@@ -37,6 +38,7 @@ import { getTokenStorage } from 'storage/token';
 import { v4 as uuid } from 'uuid';
 import { ConsoleAccount } from '@types';
 import APIKeysPage from 'pages/api-keys';
+import AuditLogsPage from 'pages/audit-logs';
 import MembersPage from 'pages/members';
 import NotFoundPage from 'pages/not-found';
 import NotificationsPage from 'pages/notifications';
@@ -186,6 +188,7 @@ export const EnvironmentRoot = memo(
           path={`${PAGE_PATH_EXPERIMENTS}/*`}
           element={<ExperimentsRoot />}
         />
+        <Route path={`${PAGE_PATH_AUDIT_LOGS}`} element={<AuditLogsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     );

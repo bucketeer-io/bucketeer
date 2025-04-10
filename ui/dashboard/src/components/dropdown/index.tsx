@@ -58,7 +58,7 @@ const DropdownMenuTrigger = forwardRef<
     label?: ReactNode;
     description?: string;
     isExpand?: boolean;
-    placeholder?: string;
+    placeholder?: ReactNode;
     variant?: 'primary' | 'secondary';
     showArrow?: boolean;
     trigger?: ReactNode;
