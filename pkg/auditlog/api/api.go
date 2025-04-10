@@ -214,6 +214,7 @@ func (s *auditlogService) ListAuditLogs(
 				auditlogs[i].Editor.PublicApiEditor.AvatarFileType = account.AvatarFileType
 			}
 		}
+		auditlogs[i].LocalizedMessage = domainevent.LocalizedMessage(auditlogs[i].Type, localizer)
 	}
 
 	return &proto.ListAuditLogsResponse{
