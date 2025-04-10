@@ -5,6 +5,7 @@ global:
   pubsub:
     type: redis-stream
     redis:
+      serverName: non-persistent-redis
       addr: localenv-redis-headless.default.svc.cluster.local:6379
       poolSize: 25
       minIdle: 25

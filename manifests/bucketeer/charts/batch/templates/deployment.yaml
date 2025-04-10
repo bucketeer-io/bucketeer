@@ -67,6 +67,8 @@ spec:
               value: "{{ .Values.global.pubsub.emulatorHost }}"
             - name: BUCKETEER_BATCH_PUBSUB_TYPE
               value: "{{ .Values.global.pubsub.type }}"
+            - name: BUCKETEER_BATCH_PUBSUB_REDIS_SERVER_NAME
+              value: "{{ .Values.global.pubsub.redis.serverName }}"
             - name: BUCKETEER_BATCH_PUBSUB_REDIS_ADDR
               value: "{{ .Values.global.pubsub.redis.addr }}"
             - name: BUCKETEER_BATCH_PUBSUB_REDIS_POOL_SIZE

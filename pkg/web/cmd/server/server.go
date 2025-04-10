@@ -102,10 +102,11 @@ type server struct {
 	domainTopic                   *string
 	bulkSegmentUsersReceivedTopic *string
 	// PubSub configuration
-	pubSubType          *string
-	pubSubRedisAddr     *string
-	pubSubRedisPoolSize *int
-	pubSubRedisMinIdle  *int
+	pubSubType            *string
+	pubSubRedisServerName *string
+	pubSubRedisAddr       *string
+	pubSubRedisPoolSize   *int
+	pubSubRedisMinIdle    *int
 	// Port
 	accountServicePort       *int
 	authServicePort          *int
@@ -315,6 +316,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubType: cmd.Flag("pubsub-type",
 			"Type of PubSub to use (google or redis).",
 		).Default("google").String(),
+		pubSubRedisServerName: cmd.Flag("pubsub-redis-server-name",
+			"Name of the Redis server for PubSub.",
+		).Default("non-persistent-redis").String(),
 		pubSubRedisAddr: cmd.Flag("pubsub-redis-addr",
 			"Address of the Redis server for PubSub.",
 		).Default("localhost:6379").String(),
@@ -819,7 +823,7 @@ func (s *server) createPublisher(
 			*s.pubSubRedisAddr,
 			redisv3.WithPoolSize(*s.pubSubRedisPoolSize),
 			redisv3.WithMinIdleConns(*s.pubSubRedisMinIdle),
-			redisv3.WithServerName("web-pubsub-redis"),
+			redisv3.WithServerName(*s.pubSubRedisServerName),
 			redisv3.WithLogger(logger),
 		)
 		if err != nil {

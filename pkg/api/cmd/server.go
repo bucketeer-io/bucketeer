@@ -66,10 +66,11 @@ type server struct {
 	oldestEventTimestamp   *time.Duration
 	furthestEventTimestamp *time.Duration
 	// PubSub configurations
-	pubSubType          *string
-	pubSubRedisAddr     *string
-	pubSubRedisPoolSize *int
-	pubSubRedisMinIdle  *int
+	pubSubType            *string
+	pubSubRedisServerName *string
+	pubSubRedisAddr       *string
+	pubSubRedisPoolSize   *int
+	pubSubRedisMinIdle    *int
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -143,6 +144,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubType: cmd.Flag("pubsub-type",
 			"Type of PubSub to use (google, redis, or redis-stream).",
 		).Default("google").String(),
+		pubSubRedisServerName: cmd.Flag("pubsub-redis-server-name",
+			"Name of the Redis server for PubSub.",
+		).Default("non-persistent-redis").String(),
 		pubSubRedisAddr: cmd.Flag("pubsub-redis-addr",
 			"Address of the Redis server for PubSub.",
 		).Default("localhost:6379").String(),
