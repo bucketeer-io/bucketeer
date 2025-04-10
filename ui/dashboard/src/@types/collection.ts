@@ -29,7 +29,8 @@ export type OrderBy =
   | 'STOP_AT'
   | 'STATUS'
   | 'GOALS_COUNT'
-  | 'ENABLED';
+  | 'ENABLED'
+  | 'TIMESTAMP';
 
 export type OrderDirection = 'ASC' | 'DESC';
 
