@@ -39342,32 +39342,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.get_evaluations"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -39409,32 +39383,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.get_evaluation"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -39467,7 +39415,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Gets all the feature flag in an environment. To call this API, it needs `SERVER` API Key role."
+                        "value": "Gets all the feature flag in an environment. To call this API, you need a `SERVER` API Key role."
                       },
                       {
                         "name": "tags",
@@ -39476,32 +39424,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.get_feature_flags"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -39534,7 +39456,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Gets all the segment users in an environment. To call this API, it needs `SERVER` API Key role."
+                        "value": "Gets all the segment users in an environment. To call this API, you need a `SERVER` API Key role."
                       },
                       {
                         "name": "tags",
@@ -39543,32 +39465,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.get_segment_users"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -39601,7 +39497,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "This API is for reporting Goal events. To call this API, it needs a `CLIENT` or `SERVER` API Key role."
+                        "value": "This API is for reporting Goal events. To call this API, you need a `CLIENT` or `SERVER` API Key role."
                       },
                       {
                         "name": "tags",
@@ -39610,32 +39506,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.register_events"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -39714,32 +39584,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.features.create"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -39777,32 +39621,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.features.get"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -39840,32 +39658,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.features.list"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -39907,32 +39699,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.features.update"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -39970,32 +39736,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.ping"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       },
                       {
                         "name": "security"
@@ -40036,32 +39776,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.pushes.list"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -40103,32 +39817,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.pushes.create"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -40166,32 +39854,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.pushes.get"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -40233,32 +39895,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.pushes.update"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -40300,32 +39936,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.account.create"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -40367,32 +39977,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.account.update"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -40430,32 +40014,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.account.get"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -40493,32 +40051,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.account.get_by_environment_id"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -40556,32 +40088,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.account.get_me"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -40619,32 +40125,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.account.list"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -40682,32 +40162,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.code_references.get"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -40745,32 +40199,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.code_references.list"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -40812,32 +40240,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.code_references.create"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -40879,32 +40281,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.code_references.update"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }
@@ -40942,32 +40318,6 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.code_references.delete"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
                       }
                     ]
                   }

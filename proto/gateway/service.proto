@@ -493,15 +493,7 @@ service Gateway {
       summary: "Get Evaluations",
       description: "Gets all the evaluations for a specific user. To call this API, you need a `CLIENT` API Key role.",
       tags: "Client and Server SDKs",
-      operation_id: "api.gateway.get_evaluations",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.get_evaluations"
     };
   }
   rpc GetEvaluation(GetEvaluationRequest) returns (GetEvaluationResponse) {
@@ -513,15 +505,7 @@ service Gateway {
       summary: "Get Evaluation",
       description: "Gets a single evaluation for a specific user. To call this API, you need a `CLIENT` API Key role.",
       tags: "Client and Server SDKs",
-      operation_id: "api.gateway.get_evaluation",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.get_evaluation"
     };
   }
   rpc GetFeatureFlags(GetFeatureFlagsRequest)
@@ -532,17 +516,9 @@ service Gateway {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Feature Flags",
-      description: "Gets all the feature flag in an environment. To call this API, it needs `SERVER` API Key role.",
+      description: "Gets all the feature flag in an environment. To call this API, you need a `SERVER` API Key role.",
       tags: "Client and Server SDKs",
-      operation_id: "api.gateway.get_feature_flags",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.get_feature_flags"
     };
   }
   rpc GetSegmentUsers(GetSegmentUsersRequest)
@@ -553,17 +529,9 @@ service Gateway {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Segment Users",
-      description: "Gets all the segment users in an environment. To call this API, it needs `SERVER` API Key role.",
+      description: "Gets all the segment users in an environment. To call this API, you need a `SERVER` API Key role.",
       tags: "Client and Server SDKs",
-      operation_id: "api.gateway.get_segment_users",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.get_segment_users"
     };
   }
   rpc RegisterEvents(RegisterEventsRequest) returns (RegisterEventsResponse) {
@@ -573,17 +541,9 @@ service Gateway {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Register Events",
-      description: "This API is for reporting Goal events. To call this API, it needs a `CLIENT` or `SERVER` API Key role.",
+      description: "This API is for reporting Goal events. To call this API, you need a `CLIENT` or `SERVER` API Key role.",
       tags: "Client and Server SDKs",
-      operation_id: "api.gateway.register_events",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.register_events"
     };
   }
   rpc Track(TrackRequest) returns (TrackResponse) {
@@ -606,15 +566,7 @@ service Gateway {
       summary: "Create",
       description: "Create a new Feature Flag. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
       tags: "Feature Flags",
-      operation_id: "api.gateway.v1.features.create",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.features.create"
     };
   }
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {
@@ -625,15 +577,7 @@ service Gateway {
       summary: "Get",
       description: "Get a Feature Flag. To call this API, you need a `READ` API Key role.",
       tags: "Feature Flags",
-      operation_id: "api.gateway.v1.features.get",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.features.get"
     };
   }
   rpc ListFeatures(ListFeaturesRequest) returns (ListFeaturesResponse) {
@@ -644,15 +588,7 @@ service Gateway {
       summary: "List",
       description: "List Feature Flags. To call this API, you need a `READ` API Key role.",
       tags: "Feature Flags",
-      operation_id: "api.gateway.v1.features.list",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.features.list"
     };
   }
   rpc UpdateFeature(UpdateFeatureRequest) returns (UpdateFeatureResponse) {
@@ -664,15 +600,7 @@ service Gateway {
       summary: "Update",
       description: "Update a Feature Flag. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
       tags: "Feature Flags",
-      operation_id: "api.gateway.v1.features.update",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.features.update"
     };
   }
   rpc Ping(PingRequest) returns (PingResponse) {
@@ -684,14 +612,6 @@ service Gateway {
       description: "Ping the server to check its availability.",
       tags: "Utility",
       operation_id: "api.gateway.ping",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      },
       security: {},
     };
   };
@@ -703,15 +623,7 @@ service Gateway {
       summary: "List",
       description: "List pushes. To call this API, you need a `READ` API Key role.",
       tags: "Pushes",
-      operation_id: "api.gateway.v1.pushes.list",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.pushes.list"
     };
   }
   rpc CreatePush(CreatePushRequest) returns (CreatePushResponse) {
@@ -723,15 +635,7 @@ service Gateway {
       summary: "Create",
       description: "Create a new Push notification through Google Firebase Cloud Messaging (FCM). To call this API, you need a `WRITE` or `ADMIN` API Key role.",
       tags: "Pushes",
-      operation_id: "api.gateway.v1.pushes.create",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.pushes.create"
     };
   }
   rpc GetPush(GetPushRequest) returns (GetPushResponse) {
@@ -742,15 +646,7 @@ service Gateway {
       summary: "Get",
       description: "Get a Push notification. To call this API, you need a `READ` API Key role.",
       tags: "Pushes",
-      operation_id: "api.gateway.v1.pushes.get",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.pushes.get"
     };
   }
   rpc UpdatePush(UpdatePushRequest) returns (UpdatePushResponse) {
@@ -762,15 +658,7 @@ service Gateway {
       summary: "Update",
       description: "Update a Push notification. To call this API, you a `WRITE` or `ADMIN` API Key role.",
       tags: "Pushes",
-      operation_id: "api.gateway.v1.pushes.update",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.pushes.update"
     };
   }
   rpc CreateAccountV2(CreateAccountV2Request)
@@ -783,15 +671,7 @@ service Gateway {
       summary: "Create",
       description: "Create a new Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
       tags: "Account",
-      operation_id: "api.gateway.v1.account.create",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.account.create"
     };
   }
   rpc UpdateAccountV2(UpdateAccountV2Request)
@@ -804,15 +684,7 @@ service Gateway {
       summary: "Update",
       description: "Update an Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
       tags: "Account",
-      operation_id: "api.gateway.v1.account.update",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.account.update"
     };
   }
   rpc GetAccountV2(GetAccountV2Request) returns (GetAccountV2Response) {
@@ -823,15 +695,7 @@ service Gateway {
       summary: "Get by Organization ID",
       description: "Get an Account. To call this API, you need a `READ` API Key role.",
       tags: "Account",
-      operation_id: "api.gateway.v1.account.get",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.account.get"
     };
   }
   rpc GetAccountV2ByEnvironmentID(GetAccountV2ByEnvironmentIDRequest)
@@ -843,15 +707,7 @@ service Gateway {
       summary: "Get by Environment ID",
       description: "Get an Account by Environment ID. To call this API, you need a `READ` API Key role.",
       tags: "Account",
-      operation_id: "api.gateway.v1.account.get_by_environment_id",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.account.get_by_environment_id"
     };
   }
   rpc GetMe(GetMeRequest) returns (GetMeResponse) {
@@ -862,15 +718,7 @@ service Gateway {
       summary: "Get Service Account",
       description: "Get the current Account. To call this API, you need a `READ` API Key role.",
       tags: "Account",
-      operation_id: "api.gateway.v1.account.get_me",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.account.get_me"
     };
   }
   rpc ListAccountsV2(ListAccountsV2Request) returns (ListAccountsV2Response) {
@@ -881,15 +729,7 @@ service Gateway {
       summary: "List",
       description: "Get list Accounts. To call this API, you need a `READ` API Key role.",
       tags: "Account",
-      operation_id: "api.gateway.v1.account.list",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.account.list"
     };
   }
   rpc GetCodeReference(GetCodeReferenceRequest)
@@ -901,15 +741,7 @@ service Gateway {
       summary: "Get",
       description: "Get a code reference. To call this API, you need a `READ` API Key role.",
       tags: "Code References",
-      operation_id: "api.gateway.v1.code_references.get",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.code_references.get"
     };
   }
   rpc ListCodeReferences(ListCodeReferencesRequest)
@@ -921,15 +753,7 @@ service Gateway {
       summary: "List",
       description: "List code references. To call this API, you need a `READ` API Key role.",
       tags: "Code References",
-      operation_id: "api.gateway.v1.code_references.list",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.code_references.list"
     };
   }
   rpc CreateCodeReference(CreateCodeReferenceRequest)
@@ -942,15 +766,7 @@ service Gateway {
       summary: "Create",
       description: "Create a new code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
       tags: "Code References",
-      operation_id: "api.gateway.v1.code_references.create",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.code_references.create"
     };
   }
   rpc UpdateCodeReference(UpdateCodeReferenceRequest)
@@ -963,15 +779,7 @@ service Gateway {
       summary: "Update",
       description: "Update a code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
       tags: "Code References",
-      operation_id: "api.gateway.v1.code_references.update",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.code_references.update"
     };
   }
   rpc DeleteCodeReference(DeleteCodeReferenceRequest)
@@ -983,15 +791,7 @@ service Gateway {
       summary: "Delete",
       description: "Delete a code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
       tags: "Code References",
-      operation_id: "api.gateway.v1.code_references.delete",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
+      operation_id: "api.gateway.v1.code_references.delete"
     };
   }
 }
