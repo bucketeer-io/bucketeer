@@ -1,8 +1,10 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'auth';
+import dayjs from 'dayjs';
 import { usePartialState } from 'hooks';
 import { pickBy } from 'lodash';
+import { AuditLog } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import { IconCollapse, IconExpand } from '@icons';
@@ -15,9 +17,15 @@ import CollectionLoader from './collection-loader';
 import EntityTypeDropdown from './elements/entity-type-dropdown';
 import { AuditLogsFilters, ExpandOrCollapse } from './types';
 
+export type ExpandOrCollapseRef = {
+  toggle: () => void;
+};
+
 const PageContent = () => {
   const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
+
+  const expandOfCollapseRef = useRef<ExpandOrCollapseRef>(null);
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<AuditLogsFilters> = searchOptions;
@@ -26,7 +34,7 @@ const PageContent = () => {
     page: 1,
     orderBy: 'TIMESTAMP',
     orderDirection: 'DESC',
-    from: Math.trunc(new Date().getTime() / 1000),
+    from: Math.trunc(dayjs().subtract(1, 'month').toDate().getTime() / 1000),
     to: Math.trunc(new Date().getTime() / 1000),
     ...searchFilters
   } as AuditLogsFilters;
@@ -45,30 +53,45 @@ const PageContent = () => {
     [expandOrCollapseAllState]
   );
 
-  const onChangeFilters = (values: Partial<AuditLogsFilters>) => {
-    const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
-    onChangSearchParams(options);
-    setFilters({ ...values });
-  };
+  const onChangeFilters = useCallback(
+    (values: Partial<AuditLogsFilters>) => {
+      const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
+      onChangSearchParams(options);
+      setFilters({ ...values });
+      handleResetExpandAuditLog();
+    },
+    [filters]
+  );
 
-  const handleExpandOrCollapseAll = useCallback(() => {
-    setExpandOrCollapseAllState(
-      isExpandAll ? ExpandOrCollapse.COLLAPSE : ExpandOrCollapse.EXPAND
-    );
-    setExpandedItems([]);
-  }, [isExpandAll]);
+  const handleExpandOrCollapseAll = useCallback(
+    (auditLogs: AuditLog[]) => {
+      setExpandOrCollapseAllState(
+        isExpandAll ? ExpandOrCollapse.COLLAPSE : ExpandOrCollapse.EXPAND
+      );
+      setExpandedItems(isExpandAll ? [] : auditLogs.map(item => item.id));
+    },
+    [isExpandAll]
+  );
 
   const onToggleExpandItem = useCallback(
-    (id: string) => {
+    (id: string, auditLogs: AuditLog[]) => {
       const isExistedItem = expandedItems.find(item => item === id);
-      setExpandedItems(
-        isExistedItem
-          ? expandedItems.filter(item => item !== id)
-          : [...expandedItems, id]
-      );
+      const newExpandItems = isExistedItem
+        ? expandedItems.filter(item => item !== id)
+        : [...expandedItems, id];
+      setExpandedItems(newExpandItems);
+
+      if (newExpandItems.length === auditLogs.length)
+        return setExpandOrCollapseAllState(ExpandOrCollapse.EXPAND);
+      if (expandOrCollapseAllState) setExpandOrCollapseAllState(undefined);
     },
-    [expandedItems]
+    [expandedItems, expandOrCollapseAllState]
   );
+
+  const handleResetExpandAuditLog = useCallback(() => {
+    setExpandOrCollapseAllState(undefined);
+    setExpandedItems([]);
+  }, []);
 
   return (
     <PageLayout.Content className="gap-y-6">
@@ -92,7 +115,7 @@ const PageContent = () => {
             />
             <Button
               variant={'secondary'}
-              onClick={handleExpandOrCollapseAll}
+              onClick={() => expandOfCollapseRef.current?.toggle()}
               className="max-w-[154px]"
             >
               <Icon
@@ -109,11 +132,13 @@ const PageContent = () => {
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
       <CollectionLoader
+        ref={expandOfCollapseRef}
         expandOrCollapseAllState={expandOrCollapseAllState}
         expandedItems={expandedItems}
         filters={filters}
         onChangeFilters={onChangeFilters}
         onToggleExpandItem={onToggleExpandItem}
+        handleExpandOrCollapseAll={handleExpandOrCollapseAll}
       />
     </PageLayout.Content>
   );

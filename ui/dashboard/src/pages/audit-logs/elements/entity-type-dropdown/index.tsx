@@ -18,7 +18,7 @@ interface Props {
 
 const EntityTypeDropdown = memo(
   ({ entityType, isSystemAdmin, onChangeFilters }: Props) => {
-    const { t } = useTranslation(['common']);
+    const { t } = useTranslation(['common', 'form']);
 
     const options = useMemo(() => {
       const {
@@ -81,6 +81,7 @@ const EntityTypeDropdown = memo(
     return (
       <DropdownMenu>
         <DropdownMenuTrigger
+          showClear
           className="max-w-[175px] xxl:max-w-fit"
           label={
             typeof entityType === 'number' ? (

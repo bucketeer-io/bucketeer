@@ -1,16 +1,19 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import DiffViewer, { DiffMethod } from 'react-diff-viewer-continued';
 import { DomainEventType } from '@types';
 import { AuditLogTab } from '../types';
+import { convertJSONToRender, formatJSONWithIndent } from '../utils';
 
 const ReactDiffViewer = memo(
   ({
+    prefix,
     type,
     lineNumber,
     currentTab,
     previousEntityData,
     entityData
   }: {
+    prefix: string;
     type: DomainEventType;
     lineNumber: number;
     currentTab: AuditLogTab;
@@ -22,11 +25,6 @@ const ReactDiffViewer = memo(
       [currentTab]
     );
 
-    const formatJSONWithIndent = useCallback((json: string) => {
-      const parsedJSON = JSON.parse(json) || {};
-      return JSON.stringify(parsedJSON, null, 4);
-    }, []);
-
     const entityDataFormatted = formatJSONWithIndent(entityData);
     const prevEntityDataFormatted = formatJSONWithIndent(previousEntityData);
 
@@ -36,7 +34,6 @@ const ReactDiffViewer = memo(
       () => entityData === previousEntityData,
       [entityData, previousEntityData]
     );
-
     const oldValue = useMemo(() => {
       if (!isChangesTab) return entityDataFormatted;
       if (isCreated) return '';
@@ -48,7 +45,6 @@ const ReactDiffViewer = memo(
       isSameData,
       isCreated
     ]);
-
     const newValue = useMemo(() => {
       if (!isChangesTab || !isSameData || !isDeleted || isCreated)
         return entityDataFormatted;
@@ -61,22 +57,26 @@ const ReactDiffViewer = memo(
       isDeleted
     ]);
 
-    const convertJSONToRender = (json: string) => {
-      if (typeof json != 'string') {
-        json = JSON.stringify(json, null, 4);
-      }
-      json = json
-        .replace(
-          /("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(?=\s*:))/g,
-          '<span style="color: #e439ac">$1</span>'
-        ) // keys
-        .replace(
-          /(:\s*)("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*")/g,
-          '$1<span style="color: #40BF42">$2</span>'
-        ) // string values
-        .replace(/(:\s*)(\d+)/g, '$1<span style="color: #64748B">$2</span>'); // numeric values
-      return json;
-    };
+    useEffect(() => {
+      const handleAddStyleForLine = () => {
+        const rows = document.querySelectorAll(`tr:has(td[class^=${prefix}-])`);
+        const firstRow = rows[0];
+        const lastRow = rows[rows.length - 1];
+        firstRow?.classList?.add('first-line-item');
+        lastRow?.classList?.add('last-line-item');
+      };
+
+      handleAddStyleForLine();
+
+      return () => {
+        document
+          .querySelectorAll(`tr.first-line-item:has(td[class^=${prefix}-])`)
+          ?.forEach(element => element.classList.remove('first-line-item'));
+        document
+          .querySelectorAll(`tr.last-line-item:has(td[class^=${prefix}-])`)
+          ?.forEach(element => element.classList.remove('last-line-item'));
+      };
+    }, [prefix, currentTab]);
 
     return (
       <DiffViewer
@@ -92,7 +92,7 @@ const ReactDiffViewer = memo(
         codeFoldMessageRenderer={() => <></>}
         renderGutter={() => {
           ++lineNumber;
-          return <td>{lineNumber}</td>;
+          return <td className={`${prefix}-${lineNumber}`}>{lineNumber}</td>;
         }}
         renderContent={str => (
           <span
@@ -110,6 +110,15 @@ const ReactDiffViewer = memo(
               removedBackground: '#FCE3F3',
               wordAddedBackground: 'transparent',
               wordRemovedBackground: 'transparent'
+            },
+            dark: {
+              codeFoldGutterBackground: 'transparent',
+              codeFoldBackground: 'transparent',
+              diffViewerBackground: '#F8FAFC',
+              addedBackground: '#DCF4DE',
+              removedBackground: '#FCE3F3',
+              wordAddedBackground: 'transparent',
+              wordRemovedBackground: 'transparent'
             }
           },
           codeFold: {
@@ -117,10 +126,11 @@ const ReactDiffViewer = memo(
           },
           line: {
             display: 'flex',
-            width: 'fit-content'
+            width: 'fit-content',
+            className: 'line'
           },
           content: {
-            marginLeft: 12
+            margin: '0 12px'
           },
           contentText: {
             display: 'flex',
@@ -128,6 +138,9 @@ const ReactDiffViewer = memo(
             fontSize: 14,
             fontFamily: 'Sofia Pro',
             width: 'fit-content'
+          },
+          codeFoldGutter: {
+            display: 'none'
           },
           diffContainer: {
             display: 'flex',
@@ -145,33 +158,26 @@ const ReactDiffViewer = memo(
                   background: '#64748B1F'
                 }
               },
-              ...(isChangesTab
-                ? {
-                    'tr:nth-child(2) td': {
-                      paddingTop: 12,
-                      paddingBottom: 2,
-                      borderTopLeftRadius: 8
-                    },
-                    'tr:nth-last-child(2) td': {
-                      paddingBottom: 12,
-                      borderBottomLeftRadius: 8
-                    }
-                  }
-                : {
-                    'tr:first-child td': {
-                      paddingTop: 12,
-                      paddingBottom: 2,
-                      borderTopLeftRadius: 8
-                    },
-                    'tr:last-child td': {
-                      paddingBottom: 12,
-                      borderBottomLeftRadius: 8
-                    }
-                  })
+              'tr.first-line-item td:first-child': {
+                paddingTop: 12,
+                paddingBottom: 2,
+                borderTopLeftRadius: 8
+              },
+              'tr.first-line-item td:last-child': {
+                marginTop: 12
+              },
+              'tr.last-line-item td:first-child': {
+                paddingBottom: 12,
+                paddingTop: 2,
+                borderBottomLeftRadius: 8
+              },
+              'tr.last-line-item td:last-child': {
+                marginBottom: 12
+              }
             }
           },
           diffAdded: {
-            marginTop: 1
+            marginTop: '1px !important'
           }
         }}
       />

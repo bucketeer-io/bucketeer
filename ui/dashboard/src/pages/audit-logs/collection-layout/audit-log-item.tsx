@@ -1,10 +1,11 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Trans } from 'react-i18next';
 import primaryAvatar from 'assets/avatars/primary.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
-import { AuditLog, DomainEventType } from '@types';
+import { AuditLog } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { formatLongDateTime } from 'utils/date-time';
 import { copyToClipBoard } from 'utils/function';
@@ -15,30 +16,32 @@ import { AvatarImage } from 'components/avatar';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { AuditLogTab } from '../types';
+import { getActionText, getEntityTypeText } from '../utils';
 import ReactDiffViewer from './diff-viewer';
 
 const AuditLogItem = memo(
   ({
     isExpanded,
     auditLog,
-    type,
+    prefix,
     onClick
   }: {
     isExpanded: boolean;
     auditLog: AuditLog;
-    type: DomainEventType;
+    prefix: string;
     onClick: () => void;
   }) => {
     const {
       editor,
-      localizedMessage,
       timestamp,
       options,
       entityData,
-      previousEntityData
+      previousEntityData,
+      type,
+      entityType
     } = auditLog;
 
-    const { t } = useTranslation(['common']);
+    const { t } = useTranslation(['common', 'table']);
     const { notify } = useToast();
 
     const { consoleAccount } = useAuth();
@@ -68,6 +71,17 @@ const AuditLogItem = memo(
           }
         }),
       [timestamp]
+    );
+
+    const buttonCls = useMemo(
+      () =>
+        'typo-para-medium !text-gray-600 !shadow-none border border-gray-200 hover:border-gray-400',
+      []
+    );
+    const buttonActiveCls = useMemo(
+      () =>
+        '!text-accent-pink-500 border-accent-pink-500 hover:!text-accent-pink-500 hover:border-accent-pink-500',
+      []
     );
 
     const handleChangeTab = useCallback((value: AuditLogTab) => {
@@ -114,18 +128,22 @@ const AuditLogItem = memo(
             className="size-10"
           />
           <div className="flex flex-col flex-1 gap-y-1 truncate">
-            <div className="flex items-center gap-x-1.5 max-w-full">
-              <p className="typo-para-medium font-bold text-gray-700">
-                {editor.name || editor.email}
-              </p>
-              <p className="typo-para-medium text-gray-700 min-w-fit">
-                {localizedMessage.message}
-              </p>
-              {parsedEntityData?.name && (
-                <p className="typo-para-medium text-primary-500 underline truncate">
-                  {parsedEntityData?.name}
-                </p>
-              )}
+            <div className="flex items-center gap-x-1.5 max-w-full typo-para-medium font-normal text-gray-700 truncate">
+              <Trans
+                i18nKey="table:audit-log-title"
+                values={{
+                  username: editor.name || editor.email,
+                  action: getActionText(type),
+                  entityType: getEntityTypeText(entityType),
+                  entityName: parsedEntityData?.name
+                }}
+                components={{
+                  b: <span className="font-bold text-gray-700" />,
+                  highlight: (
+                    <span className="text-primary-500 underline truncate" />
+                  )
+                }}
+              />
             </div>
             <div className="flex items-center gap-x-1">
               <Icon icon={IconWatch} size={'sm'} />
@@ -175,11 +193,9 @@ const AuditLogItem = memo(
               variant={'secondary-2'}
               size={'sm'}
               className={cn(
-                'typo-para-medium rounded-r-none !shadow-none border border-gray-200 hover:border-gray-400',
-                {
-                  'text-accent-pink-500 border-accent-pink-500 hover:text-accent-pink-500 hover:border-accent-pink-500':
-                    currentTab === AuditLogTab.CHANGES
-                }
+                'rounded-r-none',
+                buttonCls,
+                currentTab === AuditLogTab.CHANGES && buttonActiveCls
               )}
               onClick={() => handleChangeTab(AuditLogTab.CHANGES)}
             >
@@ -189,11 +205,9 @@ const AuditLogItem = memo(
               variant={'secondary-2'}
               size={'sm'}
               className={cn(
-                'typo-para-medium rounded-l-none !shadow-none border border-gray-200 hover:border-gray-400',
-                {
-                  'text-accent-pink-500 border-accent-pink-500 hover:text-accent-pink-500 hover:border-accent-pink-500':
-                    currentTab === AuditLogTab.SNAPSHOT
-                }
+                'rounded-l-none',
+                buttonCls,
+                currentTab === AuditLogTab.SNAPSHOT && buttonActiveCls
               )}
               onClick={() => handleChangeTab(AuditLogTab.SNAPSHOT)}
             >
@@ -207,6 +221,7 @@ const AuditLogItem = memo(
           })}
         >
           <ReactDiffViewer
+            prefix={prefix}
             type={type}
             lineNumber={lineNumberRef.current}
             currentTab={currentTab}

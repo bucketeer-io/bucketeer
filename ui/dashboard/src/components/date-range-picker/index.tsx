@@ -137,8 +137,6 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
       [staticRanges, range]
     );
 
-    const [isDateSelected, setIsDateSelected] = useState(false);
-
     const handleClear = useCallback(() => {
       setRange({
         startDate: new Date(),
@@ -146,7 +144,7 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
         key: 'selection'
       });
       onChange();
-    }, [onChange]);
+    }, [staticRanges, onChange]);
 
     const handleApply = useCallback(() => {
       const { startDate, endDate } = range;
@@ -162,16 +160,11 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
 
     useEffect(() => {
       if (from && to) {
-        setIsDateSelected(true);
         return setRange({
           ...range,
           startDate: new Date(+from * 1000),
           endDate: new Date(+to * 1000)
         });
-      }
-
-      if (isDateSelected) {
-        setIsDateSelected(false);
       }
     }, [from, to]);
 

@@ -35,7 +35,7 @@ const AuditLogList = ({
 
   return (
     <div className="flex flex-col w-full gap-y-6">
-      {auditLogDates?.map(item => {
+      {auditLogDates?.map((item, index) => {
         return (
           <div key={item} className="flex flex-col items-center w-full gap-y-6">
             <p className="typo-para-medium text-gray-600">
@@ -44,15 +44,15 @@ const AuditLogList = ({
             <div className="flex flex-col w-full gap-y-2">
               {formattedAuditLogs
                 .get(item)
-                ?.map(item => (
+                ?.map((item, i) => (
                   <AuditLogItem
                     isExpanded={
                       expandOrCollapseAllState === ExpandOrCollapse.EXPAND ||
                       expandedItems.includes(item.id)
                     }
                     key={item.id}
+                    prefix={`line-${index}${i}`}
                     auditLog={item}
-                    type={item.type}
                     onClick={() => onToggleExpandItem(item.id)}
                   />
                 ))}
