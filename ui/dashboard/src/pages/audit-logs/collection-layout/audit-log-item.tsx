@@ -53,6 +53,11 @@ const AuditLogItem = memo(
       AuditLogTab.CHANGES
     );
 
+    const isSameData = useMemo(
+      () => !!entityData && entityData === previousEntityData,
+      [entityData, previousEntityData]
+    );
+
     const isHaveEntityData = useMemo(
       () =>
         !!entityData &&
@@ -128,8 +133,8 @@ const AuditLogItem = memo(
         className={cn(
           'flex flex-col w-full p-3 bg-white shadow-card rounded-lg h-[73px] min-h-[73px] transition-all duration-100',
           {
-            'h-fit gap-y-5 min-h-[179px]': isExpanded && isHaveEntityData,
-            'h-fit gap-y-5': !isHaveEntityData && !!options.comment
+            'h-fit gap-y-3 min-h-[179px]': isExpanded && isHaveEntityData,
+            'h-fit gap-y-3': !!options.comment
           }
         )}
       >
@@ -194,8 +199,8 @@ const AuditLogItem = memo(
             </div>
           )}
         </div>
-        {options.comment && (isExpanded || !isHaveEntityData) && (
-          <div className="flex items-center w-full p-3 bg-gray-100 rounded typo-para-medium text-gray-600 break-all">
+        {options.comment && (
+          <div className="flex items-center w-full p-2 bg-gray-100 rounded-r-lg typo-para-tiny text-gray-600 break-all border-l-4 border-primary-500">
             {options.comment}
           </div>
         )}
@@ -210,34 +215,36 @@ const AuditLogItem = memo(
               )}
             >
               <p className="typo-para-small text-gray-500 uppercase">
-                {t('patch')}
+                {t(isSameData ? 'current-version' : 'patch')}
               </p>
-              <div className="flex items-center">
-                <Button
-                  variant={'secondary-2'}
-                  size={'sm'}
-                  className={cn(
-                    'rounded-r-none',
-                    buttonCls,
-                    currentTab === AuditLogTab.CHANGES && buttonActiveCls
-                  )}
-                  onClick={() => handleChangeTab(AuditLogTab.CHANGES)}
-                >
-                  {t(`changes`)}
-                </Button>
-                <Button
-                  variant={'secondary-2'}
-                  size={'sm'}
-                  className={cn(
-                    'rounded-l-none',
-                    buttonCls,
-                    currentTab === AuditLogTab.SNAPSHOT && buttonActiveCls
-                  )}
-                  onClick={() => handleChangeTab(AuditLogTab.SNAPSHOT)}
-                >
-                  {t(`snapshot`)}
-                </Button>
-              </div>
+              {!isSameData && (
+                <div className="flex items-center">
+                  <Button
+                    variant={'secondary-2'}
+                    size={'sm'}
+                    className={cn(
+                      'rounded-r-none',
+                      buttonCls,
+                      currentTab === AuditLogTab.CHANGES && buttonActiveCls
+                    )}
+                    onClick={() => handleChangeTab(AuditLogTab.CHANGES)}
+                  >
+                    {t(`changes`)}
+                  </Button>
+                  <Button
+                    variant={'secondary-2'}
+                    size={'sm'}
+                    className={cn(
+                      'rounded-l-none',
+                      buttonCls,
+                      currentTab === AuditLogTab.SNAPSHOT && buttonActiveCls
+                    )}
+                    onClick={() => handleChangeTab(AuditLogTab.SNAPSHOT)}
+                  >
+                    {t(`snapshot`)}
+                  </Button>
+                </div>
+              )}
             </div>
             {isExpanded && (
               <div
@@ -246,6 +253,7 @@ const AuditLogItem = memo(
                 })}
               >
                 <ReactDiffViewer
+                  isSameData={isSameData}
                   prefix={prefix}
                   lineNumber={lineNumberRef.current}
                   currentTab={currentTab}

@@ -24,7 +24,7 @@ const ReactDateRangePickerComp =
 interface DefaultRangeLabel {
   label: string;
   value: number;
-  type: 'today' | 'day' | 'month';
+  type: 'today' | 'day' | 'month' | 'all-time';
 }
 
 const getDefaultRangesLabels = (
@@ -53,13 +53,19 @@ const getDefaultRangesLabels = (
     type: 'month'
   },
   {
-    label: isLanguageJapanese ? '過去12ヶ月' : 'Last 12 month',
+    label: isLanguageJapanese ? '過去12ヶ月' : 'Last 12 months',
     value: 12,
     type: 'month'
+  },
+  {
+    label: isLanguageJapanese ? '全期間' : 'All Time',
+    value: 0,
+    type: 'all-time'
   }
 ];
 
 export interface StaticRangeOption {
+  type: DefaultRangeLabel['type'];
   label: string;
   isSelected: (range: Range) => boolean;
   range: () => Range;
@@ -69,6 +75,7 @@ interface ReactDateRangePickerProps
   extends Omit<DateRangePickerProps, 'onChange'> {
   from?: string | number;
   to?: string | number;
+  isAllTime?: boolean;
   onChange: (startDate?: number, endDate?: number) => void;
 }
 
@@ -97,6 +104,7 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
   ({
     from,
     to,
+    isAllTime,
     months = 2,
     showPreview = true,
     moveRangeOnFirstSelection = false,
@@ -119,15 +127,20 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
 
       return defaultRangesLabels.map(({ label, type, value }) => {
         const rangeFn = () => ({
-          startDate:
-            type === 'today'
-              ? new Date(new Date().setHours(0, 0, 0, 0))
-              : new Date(
-                  dayjs().subtract(value, type).toDate().setHours(0, 0, 0, 0)
-                ),
-          endDate: new Date(new Date().setHours(23, 59, 59, 999))
+          startDate: ['all-time', 'today'].includes(type)
+            ? new Date(new Date().setHours(0, 0, 0, 0))
+            : new Date(
+                dayjs()
+                  .subtract(value, type === 'month' ? 'month' : 'day')
+                  .toDate()
+                  .setHours(0, 0, 0, 0)
+              ),
+          endDate: new Date(
+            new Date().setHours(23, type === 'all-time' ? 58 : 59, 59, 999)
+          )
         });
         return {
+          type,
           label,
           hasCustomRendering: true,
           range: rangeFn,
@@ -151,8 +164,13 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
       ...staticRanges[0].range(),
       key: 'selection'
     });
+    const [staticRangeSelected, setStaticRangeSelected] = useState<
+      StaticRangeOption | undefined
+    >(undefined);
 
     const triggerLabel = useMemo(() => {
+      if (staticRangeSelected?.type === 'all-time')
+        return staticRanges.at(-1)?.label;
       if (!hasValue) return t('date-range');
       const selectedRange = staticRanges.find(item => item.isSelected(range));
       if (selectedRange) return selectedRange.label;
@@ -174,19 +192,33 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
         }
       });
       return `${fromFormatted} - ${toFormatted}`;
-    }, [staticRanges, hasValue, from, to, range]);
+    }, [staticRanges, hasValue, from, to, range, staticRangeSelected]);
 
     const handleApply = useCallback(() => {
-      const { startDate, endDate } = range;
-      if (startDate && endDate)
-        onChange(
-          truncNumber(startDate.getTime() / 1000),
-          truncNumber(endDate.getTime() / 1000)
-        );
+      if (staticRangeSelected?.type === 'all-time') {
+        onChange(undefined, undefined);
+      } else {
+        const { startDate, endDate } = range;
+        if (startDate && endDate)
+          onChange(
+            truncNumber(startDate.getTime() / 1000),
+            truncNumber(endDate.getTime() / 1000)
+          );
+      }
       onCloseRangePicker();
-    }, [range, onChange]);
+    }, [range, staticRangeSelected, onChange]);
 
     const handleSetRange = useCallback(() => {
+      if (isAllTime) {
+        setStaticRangeSelected(staticRanges.at(-1));
+        return setRange({
+          ...range,
+          startDate: staticRanges.at(-1)!.range().startDate,
+          endDate: staticRanges.at(-1)!.range().endDate
+        });
+      }
+      if (staticRangeSelected?.type === 'all-time')
+        setStaticRangeSelected(undefined);
       if (from && to) {
         setRange({
           ...range,
@@ -194,11 +226,11 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
           endDate: new Date(truncNumber(+to * 1000))
         });
       }
-    }, [from, to, range]);
+    }, [from, to, range, staticRanges, staticRangeSelected]);
 
     useEffect(() => {
       handleSetRange();
-    }, [from, to]);
+    }, [from, to, isAllTime]);
 
     return (
       <>
@@ -244,9 +276,12 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
             inputRanges={[]}
             renderStaticRangeLabel={staticRange => (
               <div
-                className={
-                  staticRange.isSelected(range) ? 'range-selected' : ''
+                onClick={() =>
+                  setStaticRangeSelected(staticRange as StaticRangeOption)
                 }
+                className={cn('flex items-center size-full pl-3', {
+                  'range-selected': staticRange.isSelected(range)
+                })}
               >
                 {staticRange.label}
               </div>

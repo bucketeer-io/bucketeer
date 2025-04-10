@@ -11,6 +11,7 @@ export interface AuditLogsFilters {
   to?: string;
   entityType?: number;
   environmentId?: string;
+  range?: string;
 }
 
 export enum ExpandOrCollapse {

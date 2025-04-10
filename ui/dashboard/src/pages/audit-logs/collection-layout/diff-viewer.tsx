@@ -1,26 +1,25 @@
 import { memo, Suspense, useEffect, useMemo } from 'react';
 import DiffViewer, { DiffMethod } from 'react-diff-viewer-continued';
 import { useInView } from 'react-intersection-observer';
-import { useTranslation } from 'i18n';
 import { AuditLogTab } from '../types';
 import { convertJSONToRender, formatJSONWithIndent } from '../utils';
 
 const ReactDiffViewer = memo(
   ({
+    isSameData,
     prefix,
     lineNumber,
     currentTab,
     previousEntityData,
     entityData
   }: {
+    isSameData: boolean;
     prefix: string;
     lineNumber: number;
     currentTab: AuditLogTab;
     previousEntityData: string;
     entityData: string;
   }) => {
-    const { t } = useTranslation('table');
-
     const { ref, inView } = useInView({
       triggerOnce: true,
       threshold: 0.1
@@ -35,9 +34,19 @@ const ReactDiffViewer = memo(
     const prevEntityDataFormatted = formatJSONWithIndent(previousEntityData);
 
     const oldValue = useMemo(() => {
-      if (!isChangesTab) return entityDataFormatted;
+      if (
+        !isChangesTab ||
+        isSameData ||
+        entityDataFormatted === prevEntityDataFormatted
+      )
+        return entityDataFormatted;
       return prevEntityDataFormatted;
-    }, [isChangesTab, entityDataFormatted, prevEntityDataFormatted]);
+    }, [
+      isChangesTab,
+      entityDataFormatted,
+      prevEntityDataFormatted,
+      isSameData
+    ]);
 
     const newValue = useMemo(() => entityDataFormatted, [entityDataFormatted]);
 
@@ -170,12 +179,6 @@ const ReactDiffViewer = memo(
       }
     }, [prefix, currentTab, inView]);
 
-    if (newValue && oldValue === newValue && isChangesTab) {
-      return (
-        <p className="typo-para-medium text-gray-500">{t('no-data-change')}</p>
-      );
-    }
-
     return (
       <div ref={ref}>
         {inView && (
@@ -184,7 +187,9 @@ const ReactDiffViewer = memo(
               oldValue={memoizedOldValue || ''}
               newValue={memoizedNewValue || ''}
               splitView={false}
-              showDiffOnly={isChangesTab ? true : false}
+              showDiffOnly={
+                isChangesTab && !isSameData && oldValue !== newValue
+              }
               compareMethod={DiffMethod.LINES}
               hideMarkers
               hideLineNumbers

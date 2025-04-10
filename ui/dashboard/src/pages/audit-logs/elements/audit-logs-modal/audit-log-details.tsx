@@ -55,6 +55,15 @@ const AuditLogDetailsModal = ({
 
   const auditLog = collection?.auditLog;
 
+  const isSameData = useMemo(
+    () =>
+      auditLog
+        ? !!auditLog.entityData &&
+          auditLog.entityData === auditLog.previousEntityData
+        : false,
+    [auditLog]
+  );
+
   const isHaveEntityData = useMemo(() => {
     if (!auditLog) return false;
     return (
@@ -167,7 +176,7 @@ const AuditLogDetailsModal = ({
               />
             </div>
             {auditLog?.options?.comment && (
-              <div className="flex items-center w-full p-3 bg-gray-100 rounded typo-para-medium text-gray-600 break-all">
+              <div className="flex items-center w-full p-2 bg-gray-100 rounded-r-lg typo-para-tiny text-gray-600 break-all border-l-4 border-primary-500">
                 {auditLog?.options?.comment}
               </div>
             )}
@@ -177,17 +186,23 @@ const AuditLogDetailsModal = ({
               value={currentTab}
               onValueChange={value => handleChangeTab(value as AuditLogTab)}
             >
-              <TabsList>
-                <TabsTrigger value={AuditLogTab.CHANGES}>
-                  {t(`changes`)}
-                </TabsTrigger>
-                <TabsTrigger value={AuditLogTab.SNAPSHOT}>
-                  {t(`snapshot`)}
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value={currentTab} className="flex flex-col gap-y-4">
+              {!isSameData && (
+                <TabsList>
+                  <TabsTrigger value={AuditLogTab.CHANGES}>
+                    {t(`changes`)}
+                  </TabsTrigger>
+                  <TabsTrigger value={AuditLogTab.SNAPSHOT}>
+                    {t(`snapshot`)}
+                  </TabsTrigger>
+                </TabsList>
+              )}
+              <TabsContent
+                value={currentTab}
+                className={cn('flex flex-col gap-y-4', { 'mt-0': isSameData })}
+              >
                 {auditLog && (
                   <ReactDiffViewer
+                    isSameData={isSameData}
                     prefix="line-00"
                     currentTab={currentTab}
                     lineNumber={lineNumberRef.current}

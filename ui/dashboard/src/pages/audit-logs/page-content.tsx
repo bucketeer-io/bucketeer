@@ -37,16 +37,22 @@ const PageContent = () => {
 
   const initRange = useMemo(() => {
     return {
-      from: truncNumber(
-        new Date(
-          dayjs().subtract(1, 'month').toDate().setHours(0, 0, 0, 0)
-        ).getTime() / 1000
-      ),
-      to: truncNumber(
-        new Date(new Date().setHours(23, 59, 59, 999)).getTime() / 1000
-      )
+      from:
+        searchFilters?.range === 'all-time'
+          ? undefined
+          : truncNumber(
+              new Date(
+                dayjs().subtract(1, 'month').toDate().setHours(0, 0, 0, 0)
+              ).getTime() / 1000
+            ),
+      to:
+        searchFilters?.range === 'all-time'
+          ? undefined
+          : truncNumber(
+              new Date(new Date().setHours(23, 59, 59, 999)).getTime() / 1000
+            )
     };
-  }, []);
+  }, [searchFilters]);
 
   const defaultFilters = {
     page: 1,
@@ -138,12 +144,16 @@ const PageContent = () => {
             <ReactDateRangePicker
               from={filters?.from}
               to={filters?.to}
-              onChange={(startDate, endDate) =>
+              isAllTime={[filters?.range, searchFilters?.range].includes(
+                'all-time'
+              )}
+              onChange={(startDate, endDate) => {
                 onChangeFilters({
                   from: startDate ? startDate?.toString() : undefined,
-                  to: endDate ? endDate?.toString() : undefined
-                })
-              }
+                  to: endDate ? endDate?.toString() : undefined,
+                  range: !startDate && !endDate ? 'all-time' : undefined
+                });
+              }}
             />
             <Button
               variant={'secondary'}

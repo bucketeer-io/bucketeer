@@ -76,7 +76,7 @@
 }
 
 .rdrStaticRangeLabel {
-  @apply !typo-para-medium !px-3 !py-[15px] !leading-[18px] !text-gray-600;
+  @apply !typo-para-medium !h-12 !p-0 !text-gray-600;
 }
 
 .rdrStaticRange.rdrStaticRangeSelected,
@@ -106,7 +106,9 @@
 }
 
 .rdrDateInput input {
-  @apply !typo-para-medium !h-12 p-3 pr-[44px] text-left text-gray-700;
+  background-image: url('../../@icons/customized-icons/calendar-gray.svg');
+  background-position: right 12px center;
+  @apply !typo-para-medium !h-12 bg-auto bg-no-repeat p-3 pr-[44px] text-left text-gray-700;
 }
 
 .rdrDateInput:first-child::before {
@@ -121,12 +123,6 @@
 .rdrDateInput:last-child::before {
   content: 'To';
   @apply typo-para-small absolute -top-[26px] text-gray-600;
-}
-
-.rdrDateInput::after {
-  content: '';
-  background-image: url('../../@icons/customized-icons/calendar-gray.svg');
-  @apply absolute right-3 top-1/2 z-10 size-5 -translate-y-1/2 bg-cover bg-center;
 }
 
 .rdrDateDisplayItemActive {
