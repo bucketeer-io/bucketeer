@@ -188,7 +188,7 @@ export const EnvironmentRoot = memo(
           path={`${PAGE_PATH_EXPERIMENTS}/*`}
           element={<ExperimentsRoot />}
         />
-        <Route path={`${PAGE_PATH_AUDIT_LOGS}`} element={<AuditLogsPage />} />
+        <Route path={`${PAGE_PATH_AUDIT_LOGS}/*`} element={<AuditLogsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     );

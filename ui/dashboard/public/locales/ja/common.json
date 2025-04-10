@@ -220,5 +220,6 @@
   "collapse-all": "Collapse All",
   "changes": "Changes",
   "snapshot": "Snapshot",
-  "patch": "Patch"
+  "patch": "Patch",
+  "audit-log-details": "Audit Log Details"
 }

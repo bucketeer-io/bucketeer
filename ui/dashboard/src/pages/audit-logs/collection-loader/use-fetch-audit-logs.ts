@@ -1,4 +1,3 @@
-import { useQueryAdminAuditLogs } from '@queries/admin-audit-logs';
 import { useQueryAuditLogs } from '@queries/audit-logs';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { OrderBy, OrderDirection } from '@types';
@@ -12,8 +11,7 @@ export const useFetchAuditLogs = ({
   from,
   to,
   entityType,
-  environmentId,
-  isSystemAdmin
+  environmentId
 }: {
   pageSize?: number;
   page?: number;
@@ -25,11 +23,10 @@ export const useFetchAuditLogs = ({
   from?: string;
   to?: string;
   entityType?: number;
-  isSystemAdmin?: boolean;
 }) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
 
-  return (isSystemAdmin ? useQueryAdminAuditLogs : useQueryAuditLogs)({
+  return useQueryAuditLogs({
     params: {
       pageSize: pageSize || LIST_PAGE_SIZE,
       cursor: String(cursor),
@@ -39,7 +36,7 @@ export const useFetchAuditLogs = ({
       from,
       to,
       entityType,
-      ...(isSystemAdmin ? {} : { environmentId })
+      environmentId
     }
   });
 };

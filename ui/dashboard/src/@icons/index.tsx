@@ -14,6 +14,7 @@ import IconExpand from './customized-icons/expand.svg?react';
 import IconInfoFilled from './customized-icons/info-filled.svg?react';
 import IconInfo from './customized-icons/info.svg?react';
 import IconFlagJSON from './customized-icons/json.svg?react';
+import IconLink from './customized-icons/link.svg?react';
 import IconFlagNumber from './customized-icons/number.svg?react';
 import IconOperationArrow from './customized-icons/operation-arrow.svg?react';
 import IconFlagOperation from './customized-icons/operation.svg?react';
@@ -125,6 +126,7 @@ export {
   IconPlus,
   IconExpand,
   IconCollapse,
+  IconLink,
   // Special icons
   IconGoal,
   IconGoogle,

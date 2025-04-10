@@ -84,7 +84,6 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
   }) => {
     const { t } = useTranslation(['common']);
     const popoverCloseRef = useRef<HTMLButtonElement>(null);
-
     const hasValue = useMemo(() => !!from && !!to, [from, to]);
 
     const triggerLabel = useMemo(() => {
@@ -151,6 +150,8 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
 
     const handleApply = useCallback(() => {
       const { startDate, endDate } = range;
+      popoverCloseRef?.current?.click();
+
       if (startDate && endDate)
         onChange(
           Math.trunc(startDate.getTime() / 1000),
@@ -178,7 +179,11 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
       <Popover
         closeRef={popoverCloseRef}
         trigger={
-          <div className="flex items-center gap-x-2 px-4 h-12 border border-gray-400 hover:shadow-border-gray-400 rounded-lg max-w-[200px]">
+          <div
+            className={cn(
+              'flex items-center gap-x-2 px-4 h-12 border border-gray-400 hover:shadow-border-gray-400 rounded-lg max-w-[200px] xxl:max-w-fit'
+            )}
+          >
             {!hasValue && (
               <Icon
                 icon={IconCalendar}
@@ -187,7 +192,9 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
                 className="flex-center"
               />
             )}
-            <p className="typo-para-medium text-gray-600 truncate">{triggerLabel}</p>
+            <p className="typo-para-medium text-gray-600 truncate">
+              {triggerLabel}
+            </p>
             {hasValue && (
               <div
                 className="flex-center cursor-pointer"

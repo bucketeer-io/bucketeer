@@ -4,15 +4,21 @@ import FormLoading from 'elements/form-loading';
 import PageLayout from 'elements/page-layout';
 import TableListContainer from 'elements/table-list-container';
 import { DataCollection } from '../collection-layout/data-collection';
-import { AuditLogsFilters } from '../types';
+import { AuditLogsFilters, ExpandOrCollapse } from '../types';
 import { useFetchAuditLogs } from './use-fetch-audit-logs';
 
 const CollectionLoader = ({
+  expandOrCollapseAllState,
+  expandedItems,
   filters,
-  onChangeFilters
+  onChangeFilters,
+  onToggleExpandItem
 }: {
+  expandOrCollapseAllState?: ExpandOrCollapse;
+  expandedItems: string[];
   filters: AuditLogsFilters;
   onChangeFilters: (filters: Partial<AuditLogsFilters>) => void;
+  onToggleExpandItem: (id: string) => void;
 }) => {
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -24,7 +30,6 @@ const CollectionLoader = ({
     isError
   } = useFetchAuditLogs({
     ...filters,
-    isSystemAdmin: consoleAccount?.isSystemAdmin,
     environmentId: currenEnvironment?.id
   });
 
@@ -35,7 +40,16 @@ const CollectionLoader = ({
     <PageLayout.ErrorState onRetry={refetch} />
   ) : (
     <TableListContainer className="px-6 gap-y-6">
-      {isLoading ? <FormLoading /> : <DataCollection auditLogs={auditLogs} />}
+      {isLoading ? (
+        <FormLoading />
+      ) : (
+        <DataCollection
+          auditLogs={auditLogs}
+          expandOrCollapseAllState={expandOrCollapseAllState}
+          expandedItems={expandedItems}
+          onToggleExpandItem={onToggleExpandItem}
+        />
+      )}
       {!isLoading && (
         <Pagination
           page={filters.page as number}

@@ -34,12 +34,15 @@ const PageContent = () => {
   const [filters, setFilters] =
     usePartialState<AuditLogsFilters>(defaultFilters);
 
-  const [isExpandOrCollapseAll, setIsExpandOrCollapseAll] =
-    useState<ExpandOrCollapse>(ExpandOrCollapse.COLLAPSE);
+  const [expandOrCollapseAllState, setExpandOrCollapseAllState] = useState<
+    ExpandOrCollapse | undefined
+  >(undefined);
+
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   const isExpandAll = useMemo(
-    () => isExpandOrCollapseAll === ExpandOrCollapse.EXPAND,
-    [isExpandOrCollapseAll]
+    () => expandOrCollapseAllState === ExpandOrCollapse.EXPAND,
+    [expandOrCollapseAllState]
   );
 
   const onChangeFilters = (values: Partial<AuditLogsFilters>) => {
@@ -49,13 +52,26 @@ const PageContent = () => {
   };
 
   const handleExpandOrCollapseAll = useCallback(() => {
-    setIsExpandOrCollapseAll(
+    setExpandOrCollapseAllState(
       isExpandAll ? ExpandOrCollapse.COLLAPSE : ExpandOrCollapse.EXPAND
     );
+    setExpandedItems([]);
   }, [isExpandAll]);
 
+  const onToggleExpandItem = useCallback(
+    (id: string) => {
+      const isExistedItem = expandedItems.find(item => item === id);
+      setExpandedItems(
+        isExistedItem
+          ? expandedItems.filter(item => item !== id)
+          : [...expandedItems, id]
+      );
+    },
+    [expandedItems]
+  );
+
   return (
-    <PageLayout.Content className='gap-y-6'>
+    <PageLayout.Content className="gap-y-6">
       <Filter
         action={
           <>
@@ -74,7 +90,11 @@ const PageContent = () => {
                 })
               }
             />
-            <Button variant={'secondary'} onClick={handleExpandOrCollapseAll}>
+            <Button
+              variant={'secondary'}
+              onClick={handleExpandOrCollapseAll}
+              className="max-w-[154px]"
+            >
               <Icon
                 icon={isExpandAll ? IconCollapse : IconExpand}
                 size="sm"
@@ -88,7 +108,13 @@ const PageContent = () => {
         filterCount={isNotEmpty(filters.entityType) ? 1 : undefined}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
-      <CollectionLoader filters={filters} onChangeFilters={onChangeFilters} />
+      <CollectionLoader
+        expandOrCollapseAllState={expandOrCollapseAllState}
+        expandedItems={expandedItems}
+        filters={filters}
+        onChangeFilters={onChangeFilters}
+        onToggleExpandItem={onToggleExpandItem}
+      />
     </PageLayout.Content>
   );
 };

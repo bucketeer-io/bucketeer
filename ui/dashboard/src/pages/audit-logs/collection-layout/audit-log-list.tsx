@@ -1,12 +1,19 @@
 import { useCallback, useMemo } from 'react';
 import { formatLongDateTime } from 'utils/date-time';
+import { ExpandOrCollapse } from '../types';
 import AuditLogItem from './audit-log-item';
 import { FormattedAuditLogs } from './data-collection';
 
 const AuditLogList = ({
-  formattedAuditLogs
+  formattedAuditLogs,
+  expandOrCollapseAllState,
+  expandedItems,
+  onToggleExpandItem
 }: {
   formattedAuditLogs: FormattedAuditLogs;
+  expandOrCollapseAllState?: ExpandOrCollapse;
+  expandedItems: string[];
+  onToggleExpandItem: (id: string) => void;
 }) => {
   const auditLogDates = useMemo(
     () => [...formattedAuditLogs.keys()],
@@ -37,7 +44,18 @@ const AuditLogList = ({
             <div className="flex flex-col w-full gap-y-2">
               {formattedAuditLogs
                 .get(item)
-                ?.map((item, index) => index === 0 && <AuditLogItem key={item.id} auditLog={item} />)}
+                ?.map(item => (
+                  <AuditLogItem
+                    isExpanded={
+                      expandOrCollapseAllState === ExpandOrCollapse.EXPAND ||
+                      expandedItems.includes(item.id)
+                    }
+                    key={item.id}
+                    auditLog={item}
+                    type={item.type}
+                    onClick={() => onToggleExpandItem(item.id)}
+                  />
+                ))}
             </div>
           </div>
         );
