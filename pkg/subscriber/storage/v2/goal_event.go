@@ -129,13 +129,9 @@ func (s *mysqlGoalEventStorage) createGoalEventsBatch(
 		)
 	}
 
-	// Log the query and args for debugging
-	fmt.Printf("SQL Query: %s\n", query.String())
-	fmt.Printf("Args: %+v\n", args)
-
 	_, err := s.qe.ExecContext(ctx, query.String(), args...)
 	if err != nil {
-		return fmt.Errorf("failed to execute batch insert: %w, query: %s, args: %+v", err, query.String(), args)
+		return fmt.Errorf("failed to execute batch insert: %w", err)
 	}
 	return err
 }
