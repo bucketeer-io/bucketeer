@@ -17,7 +17,9 @@ package v2
 
 import (
 	"context"
+	"database/sql"
 	_ "embed"
+	"fmt"
 	"strings"
 
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -88,23 +90,47 @@ func (s *mysqlEvaluationEventStorage) createEvaluationEventsBatch(
 		if i > 0 {
 			query.WriteString(",")
 		}
-		query.WriteString("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+		query.WriteString("(?, ?, FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?, ?)")
+
+		// Validate required fields
+		if event.ID == "" || event.EnvironmentID == "" || event.FeatureID == "" || event.UserID == "" {
+			return fmt.Errorf("missing required fields: id=%s, envId=%s, featureId=%s, userId=%s",
+				event.ID, event.EnvironmentID, event.FeatureID, event.UserID)
+		}
+
+		// Handle potentially null fields
+		userData := sql.NullString{String: event.UserData, Valid: event.UserData != ""}
+		variationID := sql.NullString{String: event.VariationID, Valid: event.VariationID != ""}
+		reason := sql.NullString{String: event.Reason, Valid: event.Reason != ""}
+		tag := sql.NullString{String: event.Tag, Valid: event.Tag != ""}
+		sourceID := sql.NullString{String: event.SourceID, Valid: event.SourceID != ""}
+
+		// Convert timestamp from microseconds to seconds
+		timestampSeconds := event.Timestamp / 1000000
+
 		args = append(
 			args,
 			event.ID,
 			event.EnvironmentID,
-			event.Timestamp,
+			timestampSeconds,
 			event.FeatureID,
 			event.FeatureVersion,
 			event.UserID,
-			event.UserData,
-			event.VariationID,
-			event.Reason,
-			event.Tag,
-			event.SourceID,
+			userData,
+			variationID,
+			reason,
+			tag,
+			sourceID,
 		)
 	}
 
+	// Log the query and args for debugging
+	fmt.Printf("SQL Query: %s\n", query.String())
+	fmt.Printf("Args: %+v\n", args)
+
 	_, err := s.qe.ExecContext(ctx, query.String(), args...)
+	if err != nil {
+		return fmt.Errorf("failed to execute batch insert: %w, query: %s, args: %+v", err, query.String(), args)
+	}
 	return err
 }
