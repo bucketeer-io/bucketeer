@@ -153,5 +153,6 @@
   "comment-for-update": "Comment for update",
   "placeholder-comment": "Enter comment",
   "placeholder-member-tags": "Tags can be used to group members as teams",
-  "kind-filter-value": "Kind: {{value}}"
+  "kind-filter-value": "Kind: {{value}}",
+  "select-range": "Select Range"
 }

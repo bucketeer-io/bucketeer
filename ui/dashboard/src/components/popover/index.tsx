@@ -52,6 +52,7 @@ export type PopoverProps<PopoverValue> = {
   addonSlot?: AddonSlot;
   trigger?: ReactNode;
   triggerLabel?: string;
+  triggerCls?: string;
   icon?: FunctionComponent;
   options?: PopoverOption<PopoverValue>[];
   disabled?: boolean;
@@ -63,6 +64,7 @@ export type PopoverProps<PopoverValue> = {
   closeBtnCls?: string;
   sideOffset?: number;
   onClick?: (value: PopoverValue) => void;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const Popover = forwardRef(
@@ -72,6 +74,7 @@ const Popover = forwardRef(
       expand,
       trigger,
       triggerLabel = '',
+      triggerCls,
       icon,
       addonSlot,
       options,
@@ -82,7 +85,8 @@ const Popover = forwardRef(
       children,
       closeBtnCls,
       sideOffset = 0,
-      onClick
+      onClick,
+      onOpenChange
     }: PopoverProps<PopoverValue>,
     ref: Ref<HTMLDivElement>
   ) => {
@@ -94,14 +98,15 @@ const Popover = forwardRef(
     };
 
     return (
-      <PopoverRoot modal={modal}>
+      <PopoverRoot modal={modal} onOpenChange={onOpenChange}>
         <PopoverTrigger
           className={cn(
             'typo-para-small flex items-center justify-center gap-x-2 text-gray-700 hover:text-gray-600 hover:drop-shadow',
             {
               'flex-row-reverse': addonSlot === 'right',
               'w-full justify-between': expand === 'full'
-            }
+            },
+            triggerCls
           )}
           disabled={disabled}
         >

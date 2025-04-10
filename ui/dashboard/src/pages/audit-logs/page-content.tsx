@@ -45,7 +45,9 @@ const PageContent = () => {
               entityType={filters?.entityType}
               onChangeFilters={onChangeFilters}
             />
-            <ReactDateRangePicker />
+            <ReactDateRangePicker
+              onChange={(startDate, endDate) => console.log(startDate, endDate)}
+            />
           </>
         }
         searchValue={filters.searchQuery as string}

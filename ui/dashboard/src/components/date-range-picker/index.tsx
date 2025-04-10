@@ -1,18 +1,23 @@
 // theme css file
-import { memo, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   defaultStaticRanges,
   createStaticRanges,
   DateRange,
-  DateRangeProps
+  DateRangeProps,
+  Range
 } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 // main css file
 import 'react-date-range/dist/theme/default.css';
+import dayjs from 'dayjs';
 import { useTranslation } from 'i18n';
+import { cn } from 'utils/style';
 import { IconCalendar } from '@icons';
 import Icon from 'components/icon';
 import { Popover } from 'components/popover';
+import ActionBar from './action-bar';
+import './customize-date-range-picker.css';
 import CustomizeNavigator from './customize-navigator';
 
 const ReactDateRangePickerComp =
@@ -27,10 +32,43 @@ const defaultEnRangesLabels = [
   'Last month'
 ];
 
-interface ReactDateRangePickerProps extends DateRangeProps {
+const extraEnRangesLabels = [
+  { label: 'Last 3 months', month: 3 },
+  { label: 'Last 6 months', month: 6 },
+  { label: 'Last 12 months', month: 12 }
+];
+
+export interface StaticRangeOption {
+  label: string;
+  isSelected: (range: Range) => boolean;
+  range: () => Range;
+}
+
+interface ReactDateRangePickerProps extends Omit<DateRangeProps, 'onChange'> {
   from?: string | number;
   to?: string | number;
+  onChange: (startDate?: number, endDate?: number) => void;
 }
+
+const defaultClassNames = {
+  calendarWrapper: 'range__wrapper',
+  months: 'range__months',
+  month: 'range__months--month',
+  monthName: 'range__months--monthName',
+  weekDays: 'w-full',
+  weekDay: 'range__weekDay',
+  days: 'range__days',
+  day: 'range__days--day',
+  dayNumber: cn('absolute__center', 'range__days--number'),
+  dayPassive: 'text-gray-500',
+  dayEndOfWeek: 'range__days--dayEndOfWeek',
+  startEdge: cn('absolute__center', 'range__days--edge'),
+  endEdge: cn('absolute__center', 'range__days--edge'),
+  dayInPreview: 'range__days--dayPreview',
+  dayStartPreview: 'range__days--dayPreview',
+  dayEndPreview: 'range__days--dayPreview',
+  inRange: 'range__days--dayPreview'
+};
 
 export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
   ({
@@ -46,31 +84,65 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
     ...props
   }) => {
     const { t } = useTranslation(['common']);
+    const staticRanges = useMemo(
+      () =>
+        [
+          ...defaultStaticRanges.map((range, rangeIdx) => ({
+            ...range,
+            label: defaultEnRangesLabels[rangeIdx]
+          })),
+          ...createStaticRanges(
+            extraEnRangesLabels.map(({ label, month }) => ({
+              label,
+              range: () => ({
+                startDate: dayjs().subtract(month, 'month').toDate(),
+                endDate: new Date()
+              })
+            }))
+          )
+        ] as StaticRangeOption[],
+      []
+    );
+    const [range, setRange] = useState<Range>({
+      ...staticRanges[0].range(),
+      key: 'selection'
+    });
+    console.log({ range });
+    const staticRangeSelected = useMemo(
+      () => staticRanges.find(item => item.isSelected(range)),
+      [staticRanges, range]
+    );
 
-    const [ranges, setRanges] = useState([
-      {
+    const [isDateSelected, setIsDateSelected] = useState(false);
+
+    console.log(staticRanges);
+
+    const handleClear = useCallback(() => {
+      setRange({
         startDate: new Date(),
         endDate: new Date(),
         key: 'selection'
-      }
-    ]);
-    const [isDateSelected, setIsDateSelected] = useState(false);
+      });
+      onChange();
+    }, [onChange]);
 
-    const staticRanges = defaultStaticRanges.map((range, rangeIdx) => ({
-      ...range,
-      label: defaultEnRangesLabels[rangeIdx]
-    }));
-    console.log(staticRanges[0].range());
+    const handleApply = useCallback(() => {
+      const { startDate, endDate } = range;
+      if (startDate && endDate)
+        onChange(
+          Math.trunc(startDate.getTime() / 1000),
+          Math.trunc(endDate.getTime() / 1000)
+        );
+    }, [range, onChange]);
+
     useEffect(() => {
       if (from && to) {
         setIsDateSelected(true);
-        return setRanges([
-          {
-            ...ranges[0],
-            startDate: new Date(+from * 1000),
-            endDate: new Date(+to * 1000)
-          }
-        ]);
+        return setRange({
+          ...range,
+          startDate: new Date(+from * 1000),
+          endDate: new Date(+to * 1000)
+        });
       }
 
       if (isDateSelected) {
@@ -80,22 +152,28 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
 
     return (
       <Popover
+        onOpenChange={open => {
+          if (!open) handleClear();
+        }}
         trigger={
-          <div className="flex items-center gap-x-2 px-4 h-12 border border-gray-200 rounded-lg">
+          <div className="flex items-center gap-x-2 px-4 h-12 border border-gray-400 hover:shadow-border-gray-400 rounded-lg">
             <Icon icon={IconCalendar} color="gray-500" size="sm" />
             <p className="typo-para-medium text-gray-600">{t('date-range')}</p>
           </div>
         }
-        className="max-h-[501px] w-[777px] max-w-[777px] p-0"
+        className="max-h-[501px] w-[793px] p-0"
+        triggerCls="hover:!drop-shadow-none"
         align="end"
       >
         <ReactDateRangePickerComp
           {...props}
-          onChange={onChange}
+          onChange={item => {
+            setRange(item.selection);
+          }}
           showPreview={showPreview}
           moveRangeOnFirstSelection={moveRangeOnFirstSelection}
           months={months}
-          ranges={ranges}
+          ranges={[range]}
           direction={direction}
           rangeColors={rangeColors}
           showDateDisplay={showDateDisplay}
@@ -106,24 +184,16 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
             />
           )}
           classNames={{
-            calendarWrapper: '!font-sofia-pro w-full',
-            months:
-              'grid grid-cols-2 justify-between w-full divide-x divide-gray-200 overflow-visible',
-            month: 'flex flex-col gap-y-6 col-span-1 w-full',
-            monthName: 'typo-para-medium text-gray-600 p-0',
-            weekDays: 'w-full',
-            weekDay:
-              'flex-center !min-w-[49px] h-[21px] uppercase typo-para-small text-gray-500 px-1.5 first:pl-0 last:pr-0',
-            days: 'w-full gap-y-4',
-            day: 'w-[49px] h-8 typo-para-small text-gray-600 px-1.5 first:pl-0 last:pr-0',
-            dayNumber: 'size-8 absolute top-0 right-2 bottom-0 left-2',
-            dayPassive: 'text-gray-500',
-            startEdge:
-              'size-8 rounded-full absolute top-0 right-1.5 bottom-0 left-1.5',
-            endEdge:
-              'size-8 rounded-full absolute top-0 right-1.5 bottom-0 left-1.5'
-            // dayInPreview: 'h-8 absolute top-0 right-0 bottom-0 left-0 -translate-x-1/2 -translate-y-1/2'
+            ...defaultClassNames,
+            ...props?.classNames
           }}
+        />
+        <ActionBar
+          staticRanges={staticRanges}
+          staticRangeSelected={staticRangeSelected}
+          setRange={setRange}
+          onCancel={handleClear}
+          onApply={handleApply}
         />
       </Popover>
     );
