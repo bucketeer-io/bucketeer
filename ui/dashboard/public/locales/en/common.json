@@ -216,5 +216,6 @@
   "create-a-new-flag": "Create a new Flag",
   "audit-logs": "Audit Logs",
   "audit-logs-subtitle": "View all events that is happening through the platform",
-  "date-range": "Date Range"
+  "date-range": "Date Range",
+  "apply": "Apply"
 }

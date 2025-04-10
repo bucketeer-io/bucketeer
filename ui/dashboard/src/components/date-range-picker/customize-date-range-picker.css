@@ -1,0 +1,59 @@
+.range__wrapper {
+  @apply !w-full !font-sofia-pro;
+}
+
+.range__months {
+  @apply grid w-full grid-cols-2 justify-between divide-x divide-gray-200 overflow-visible p-5;
+}
+
+.range__months--month {
+  @apply col-span-1 flex w-full flex-col gap-y-4 p-0 first:pr-8 last:pl-8;
+}
+
+.range__months--monthName {
+  @apply typo-para-medium leading-4 p-0 pb-2 text-gray-600;
+}
+
+.range__weekDay {
+  @apply flex-center typo-para-small h-[21px] w-12 uppercase text-gray-500 last:w-9;
+}
+
+.range__days {
+  @apply w-full gap-y-[14px];
+}
+
+.range__days--day {
+  @apply relative h-8 w-12;
+}
+
+.absolute__center {
+  @apply !bottom-0 !left-1/2 !right-0 !top-0 !-translate-x-1/2;
+}
+
+.range__days--number {
+  @apply typo-para-small size-8 [&>span::after]:hidden [&>span]:text-gray-600;
+}
+
+.range__days--edge {
+  @apply !size-8 !rounded-full;
+}
+
+.range__days--dayEndOfWeek {
+  @apply w-11 pr-0;
+}
+
+.range__days--dayPreview {
+  @apply top-1/2 !h-8 -translate-y-1/2;
+}
+
+.rdrDay:not(.rdrDayPassive, .rdrDayEndOfWeek):has(span.rdrStartEdge:not(span.rdrEndEdge)) {
+  @apply rounded-l-full bg-primary-500;
+}
+
+.rdrDay:not(.rdrDayPassive):has(span.rdrEndEdge:not(span.rdrStartEdge)) {
+  @apply rounded-r-full bg-primary-500;
+}
+
+.rdrDay.rdrDayStartOfMonth:not(:has(span.rdrStartEdge)) {
+  @apply rounded-full;
+}
