@@ -1,13 +1,13 @@
 import { ReactNode } from 'react';
 import { formatLongDateTime } from 'utils/date-time';
-import { Tooltip } from 'components/tooltip';
+import { Tooltip, TooltipProps } from 'components/tooltip';
 
-type Props = {
+interface Props extends TooltipProps {
   date: string | null;
   trigger: ReactNode;
-};
+}
 
-const DateTooltip = ({ date, trigger }: Props) => {
+const DateTooltip = ({ date, trigger, ...props }: Props) => {
   const dateFormatted = date ? formatLongDateTime({ value: date }) : null;
 
   return (
@@ -15,6 +15,7 @@ const DateTooltip = ({ date, trigger }: Props) => {
       trigger={trigger}
       content={dateFormatted}
       className="bg-gray-800"
+      {...props}
     />
   );
 };

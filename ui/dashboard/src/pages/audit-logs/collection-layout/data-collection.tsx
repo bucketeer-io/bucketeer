@@ -27,7 +27,7 @@ export const DataCollection = memo(
         auditLogs.forEach(item => {
           const { timestamp } = item;
           const date = new Date(+timestamp * 1000);
-          const key = `${date.getMonth()}-${date.getDate()}-${date.getFullYear()}`;
+          const key = `${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}`;
           const isExistedKey = auditLogMap.has(key);
           auditLogMap.set(key, [
             ...(isExistedKey ? auditLogMap.get(key) : []),

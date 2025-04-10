@@ -24,7 +24,6 @@ const AuditLogList = memo(
     const getDateLabel = useCallback((auditLogKey: string) => {
       const date = new Date(auditLogKey);
       const currentDate = new Date();
-
       if (date.getDate() === currentDate.getDate()) return 'Today';
       if (date.getDate() === currentDate.getDate() - 1) return 'Yesterday';
 

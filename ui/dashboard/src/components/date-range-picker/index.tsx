@@ -1,11 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  defaultStaticRanges,
-  createStaticRanges,
-  DateRangePicker,
-  DateRangePickerProps,
-  Range
-} from 'react-date-range';
+import { DateRangePicker, DateRangePickerProps, Range } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import en from 'date-fns/locale/en-US';
@@ -27,19 +21,42 @@ import CustomizeNavigator from './customize-navigator';
 const ReactDateRangePickerComp =
   DateRangePicker as unknown as React.FC<DateRangePickerProps>;
 
-const defaultEnRangesLabels = ['Today', 'Yesterday', 'Last week', 'Last month'];
-const defaultJaRangesLabels = ['今日', '昨日', '先週', '先月'];
+interface DefaultRangeLabel {
+  label: string;
+  value: number;
+  type: 'today' | 'day' | 'month';
+}
 
-const extraEnRangesLabels = [
-  { label: 'Last 3 months', month: 3 },
-  { label: 'Last 6 months', month: 6 },
-  { label: 'Last 12 months', month: 12 }
-];
-
-const extraJaRangesLabels = [
-  { label: '過去3ヶ月', month: 3 },
-  { label: '過去6ヶ月', month: 6 },
-  { label: '過去12ヶ月', month: 12 }
+const getDefaultRangesLabels = (
+  isLanguageJapanese: boolean
+): DefaultRangeLabel[] => [
+  { label: isLanguageJapanese ? '今日' : 'Today', value: 0, type: 'today' },
+  { label: isLanguageJapanese ? '昨日' : 'Yesterday', value: 1, type: 'day' },
+  {
+    label: isLanguageJapanese ? '直近7日' : 'Last 7 days',
+    value: 7,
+    type: 'day'
+  },
+  {
+    label: isLanguageJapanese ? '直近14日' : 'Last 14 days',
+    value: 14,
+    type: 'day'
+  },
+  {
+    label: isLanguageJapanese ? '直近30日' : 'Last 30 days',
+    value: 1,
+    type: 'month'
+  },
+  {
+    label: isLanguageJapanese ? '過去3ヶ月' : 'Last 90 days',
+    value: 3,
+    type: 'month'
+  },
+  {
+    label: isLanguageJapanese ? '過去12ヶ月' : 'Last 12 month',
+    value: 12,
+    type: 'month'
+  }
 ];
 
 export interface StaticRangeOption {
@@ -97,54 +114,47 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
 
     const hasValue = useMemo(() => !!from && !!to, [from, to]);
 
-    const defaultLabels = useMemo(
-      () =>
-        isLanguageJapanese ? defaultJaRangesLabels : defaultEnRangesLabels,
-      [isLanguageJapanese]
-    );
-    const extraLabels = useMemo(
-      () => (isLanguageJapanese ? extraJaRangesLabels : extraEnRangesLabels),
-      [isLanguageJapanese]
-    );
+    const staticRanges = useMemo(() => {
+      const defaultRangesLabels = getDefaultRangesLabels(isLanguageJapanese);
 
-    const staticRanges = useMemo(
-      () =>
-        [
-          ...defaultStaticRanges
-            .filter(
-              range =>
-                !['This Week', 'This Month'].includes(range?.label as string)
-            )
-            .map((range, rangeIdx) => ({
-              ...range,
-              label: defaultLabels[rangeIdx]
-            })),
-          ...createStaticRanges(
-            extraLabels.map(({ label, month }) => ({
-              label,
-              range: () => ({
-                startDate: dayjs().subtract(month, 'month').toDate(),
-                endDate: new Date()
-              })
-            }))
-          )
-        ] as StaticRangeOption[],
-      [defaultLabels, extraLabels]
-    );
+      return defaultRangesLabels.map(({ label, type, value }) => {
+        const rangeFn = () => ({
+          startDate:
+            type === 'today'
+              ? new Date(new Date().setHours(0, 0, 0, 0))
+              : new Date(
+                  dayjs().subtract(value, type).toDate().setHours(0, 0, 0, 0)
+                ),
+          endDate: new Date(new Date().setHours(23, 59, 59, 999))
+        });
+        return {
+          label,
+          hasCustomRendering: true,
+          range: rangeFn,
+          isSelected: (range: Range) => {
+            if (range?.startDate && range?.endDate) {
+              const currentRange = rangeFn();
+              return (
+                truncNumber(currentRange.startDate.getTime() / 1000) ===
+                  truncNumber(range.startDate.getTime() / 1000) &&
+                truncNumber(currentRange.endDate.getTime() / 1000) ===
+                  truncNumber(range.endDate.getTime() / 1000)
+              );
+            }
+            return false;
+          }
+        };
+      });
+    }, [isLanguageJapanese]);
+
+    const [range, setRange] = useState<Range>({
+      ...staticRanges[0].range(),
+      key: 'selection'
+    });
 
     const triggerLabel = useMemo(() => {
       if (!hasValue) return t('date-range');
-      const selectedRange = staticRanges.find(item => {
-        const { startDate, endDate } = item.range();
-
-        if (startDate && endDate) {
-          return (
-            +from! === truncNumber(startDate.getTime() / 1000) &&
-            +to! === truncNumber(endDate.getTime() / 1000)
-          );
-        }
-      });
-
+      const selectedRange = staticRanges.find(item => item.isSelected(range));
       if (selectedRange) return selectedRange.label;
       const fromFormatted = formatLongDateTime({
         value: from as string,
@@ -164,16 +174,10 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
         }
       });
       return `${fromFormatted} - ${toFormatted}`;
-    }, [staticRanges, hasValue, from, to]);
-
-    const [range, setRange] = useState<Range>({
-      ...staticRanges[0].range(),
-      key: 'selection'
-    });
+    }, [staticRanges, hasValue, from, to, range]);
 
     const handleApply = useCallback(() => {
       const { startDate, endDate } = range;
-
       if (startDate && endDate)
         onChange(
           truncNumber(startDate.getTime() / 1000),
@@ -182,14 +186,18 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
       onCloseRangePicker();
     }, [range, onChange]);
 
-    useEffect(() => {
+    const handleSetRange = useCallback(() => {
       if (from && to) {
-        return setRange({
+        setRange({
           ...range,
           startDate: new Date(truncNumber(+from * 1000)),
           endDate: new Date(truncNumber(+to * 1000))
         });
       }
+    }, [from, to, range]);
+
+    useEffect(() => {
+      handleSetRange();
     }, [from, to]);
 
     return (
@@ -215,14 +223,15 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
           title="Date Range Picker"
           isShowHeader={false}
           isOpen={isOpenRangePicker}
-          onClose={onCloseRangePicker}
+          onClose={() => {
+            handleSetRange();
+            onCloseRangePicker();
+          }}
           className="w-[820px] p-0 rounded-lg overflow-y-auto"
         >
           <ReactDateRangePickerComp
             {...props}
-            onChange={item => {
-              setRange(item.selection);
-            }}
+            onChange={item => setRange(item.selection)}
             showPreview={showPreview}
             moveRangeOnFirstSelection={moveRangeOnFirstSelection}
             months={months}
@@ -232,6 +241,16 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
             staticRanges={staticRanges}
             showDateDisplay={showDateDisplay}
             dateDisplayFormat="yyyy/MM/dd"
+            inputRanges={[]}
+            renderStaticRangeLabel={staticRange => (
+              <div
+                className={
+                  staticRange.isSelected(range) ? 'range-selected' : ''
+                }
+              >
+                {staticRange.label}
+              </div>
+            )}
             navigatorRenderer={(currFocusedDate, changeShownDate) => (
               <CustomizeNavigator
                 currFocusedDate={currFocusedDate}
@@ -244,7 +263,14 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
               ...props?.classNames
             }}
           />
-          <ActionBar onCancel={onCloseRangePicker} onApply={handleApply} />
+
+          <ActionBar
+            onCancel={() => {
+              handleSetRange();
+              onCloseRangePicker();
+            }}
+            onApply={handleApply}
+          />
         </DialogModal>
       </>
     );

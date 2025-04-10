@@ -4296,6 +4296,11 @@ react-icons-material-design@^1.0.4:
   resolved "https://registry.yarnpkg.com/react-icons-material-design/-/react-icons-material-design-1.0.4.tgz#424e9d6115fc66b6b5297283ad9e664639515954"
   integrity sha512-oa0iXERobHNRTYw9hn/e0AHsFSCvsbJG45BKN43lE4ZlQXK4C9NDG/M2Qgh6RXdUVQb5h7s/DKWAOGdDXhfyNQ==
 
+react-intersection-observer@^9.16.0:
+  version "9.16.0"
+  resolved "https://registry.yarnpkg.com/react-intersection-observer/-/react-intersection-observer-9.16.0.tgz#7376d54edc47293300961010844d53b273ee0fb9"
+  integrity sha512-w9nJSEp+DrW9KmQmeWHQyfaP6b03v+TdXynaoA964Wxt7mdR3An11z4NNCQgL4gKSK7y1ver2Fq+JKH6CWEzUA==
+
 react-is@^16.13.1, react-is@^16.7.0:
   version "16.13.1"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"

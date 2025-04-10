@@ -119,7 +119,7 @@ const EntityTypeDropdown = memo(
             })
           }
         />
-        <DropdownMenuContent>
+        <DropdownMenuContent align="end" className="min-w-[180px]">
           {options.map((item, index) => (
             <DropdownMenuItem
               key={index}

@@ -1,23 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
 import { useQueryAuditLogDetails } from '@queries/audit-log-details';
-import primaryAvatar from 'assets/avatars/primary.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { getLanguage, useTranslation } from 'i18n';
+import { isJsonString } from 'utils/converts';
 import { formatLongDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
+import AuditLogAvatar from 'pages/audit-logs/collection-layout/audit-log-avatar';
+import AuditLogTitle from 'pages/audit-logs/collection-layout/audit-log-title';
 import ReactDiffViewer from 'pages/audit-logs/collection-layout/diff-viewer';
 import { AuditLogTab } from 'pages/audit-logs/types';
 import {
-  getActionText,
-  getEntityTypeText,
-  getPathName
+  convertJSONToRender,
+  formatJSONWithIndent,
+  getActionText
 } from 'pages/audit-logs/utils';
-import { AvatarImage } from 'components/avatar';
 import SlideModal from 'components/modal/slide';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
+import DateTooltip from 'elements/date-tooltip';
 import FormLoading from 'elements/form-loading';
 
 const AuditLogDetailsModal = ({
@@ -34,7 +35,6 @@ const AuditLogDetailsModal = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { errorNotify } = useToast();
-  const navigate = useNavigate();
   const lineNumberRef = useRef(0);
   const isLanguageJapanese = getLanguage() === 'ja';
 
@@ -55,10 +55,23 @@ const AuditLogDetailsModal = ({
 
   const auditLog = collection?.auditLog;
 
-  const parsedEntityData = useMemo(
-    () => (auditLog?.entityData ? JSON.parse(auditLog?.entityData) : {}),
-    [auditLog?.entityData]
-  );
+  const isHaveEntityData = useMemo(() => {
+    if (!auditLog) return false;
+    return (
+      !!auditLog.entityData &&
+      !!isJsonString(auditLog.entityData) &&
+      !!formatJSONWithIndent(auditLog.entityData) &&
+      !!convertJSONToRender(formatJSONWithIndent(auditLog.entityData))
+    );
+  }, [auditLog]);
+
+  const parsedEntityData = useMemo(() => {
+    try {
+      return auditLog?.entityData ? JSON.parse(auditLog?.entityData) : null;
+    } catch {
+      return null;
+    }
+  }, [auditLog?.entityData]);
 
   const dateTime = useMemo(
     () =>
@@ -102,14 +115,23 @@ const AuditLogDetailsModal = ({
       isOpen={isOpen}
       onClose={onClose}
     >
-      <div className="w-full p-5 pb-28">
+      <div className="w-full p-5 pr-2">
         {isLoading ? (
           <FormLoading />
+        ) : error ? (
+          <div className="typo-para-medium text-gray-500">
+            <Trans
+              i18nKey={'form:not-found-entity'}
+              values={{
+                entity: 'Audit Log'
+              }}
+            />
+          </div>
         ) : (
           <div className="flex flex-col w-full gap-y-5">
             <div className="flex flex-col flex-1 gap-y-3 truncate">
               <div className="flex items-center w-full gap-x-3">
-                <AvatarImage image={primaryAvatar} alt="member-avatar" />
+                <AuditLogAvatar editor={auditLog?.editor} />
                 <div
                   className={cn(
                     'flex items-center gap-x-1.5 max-w-full typo-para-medium font-normal text-gray-700 truncate',
@@ -119,53 +141,30 @@ const AuditLogDetailsModal = ({
                   )}
                 >
                   {auditLog && (
-                    <Trans
-                      i18nKey="table:audit-log-title"
-                      values={{
-                        username:
-                          auditLog?.editor.name || auditLog?.editor.email,
-                        action: getActionText(
-                          auditLog?.type,
-                          isLanguageJapanese
-                        ),
-                        entityType: getEntityTypeText(auditLog?.entityType),
-                        entityName: parsedEntityData?.name,
-                        additionalText:
-                          parsedEntityData?.name && isLanguageJapanese && 'の'
-                      }}
-                      components={{
-                        b: <span className="font-bold text-gray-700 -mt-0.5" />,
-                        highlight: (
-                          <Link
-                            to={
-                              getPathName(
-                                auditLog.id,
-                                auditLog.entityType
-                              ) as string
-                            }
-                            onClick={e => {
-                              e.preventDefault();
-                              const pathName = getPathName(
-                                auditLog.id,
-                                auditLog.entityType
-                              );
-                              if (pathName)
-                                navigate(
-                                  `/${currentEnvironment.urlCode}${pathName}`,
-                                  {
-                                    replace: false
-                                  }
-                                );
-                            }}
-                            className="text-primary-500 underline truncate"
-                          />
-                        )
-                      }}
+                    <AuditLogTitle
+                      isHaveEntityData={isHaveEntityData}
+                      auditLogId={auditLog.id}
+                      action={getActionText(auditLog.type, isLanguageJapanese)}
+                      entityName={parsedEntityData?.name}
+                      entityType={auditLog.entityType}
+                      urlCode={currentEnvironment.urlCode}
+                      username={auditLog.editor.name || auditLog.editor.email}
+                      additionalText={
+                        parsedEntityData?.name && isLanguageJapanese && 'の'
+                      }
                     />
                   )}
                 </div>
               </div>
-              <div className="typo-para-small text-gray-500">{dateTime}</div>
+              <DateTooltip
+                align="start"
+                trigger={
+                  <div className="typo-para-small text-gray-500 w-fit">
+                    {dateTime}
+                  </div>
+                }
+                date={auditLog?.timestamp || null}
+              />
             </div>
             {auditLog?.options?.comment && (
               <div className="flex items-center w-full p-3 bg-gray-100 rounded typo-para-medium text-gray-600 break-all">
@@ -194,7 +193,6 @@ const AuditLogDetailsModal = ({
                     lineNumber={lineNumberRef.current}
                     entityData={auditLog?.entityData}
                     previousEntityData={auditLog.previousEntityData}
-                    type={auditLog.type}
                   />
                 )}
               </TabsContent>

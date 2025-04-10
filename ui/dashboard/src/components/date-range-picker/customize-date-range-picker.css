@@ -3,7 +3,7 @@
 }
 
 .range__months {
-  @apply grid w-full grid-cols-2 gap-x-8 justify-between overflow-visible p-5;
+  @apply grid w-full grid-cols-2 justify-between gap-x-8 overflow-visible p-5;
 }
 
 .range__months--month {
@@ -47,7 +47,9 @@
   @apply top-1/2 !h-10 -translate-y-1/2 !border-none bg-gray-500/10;
 }
 
-.range__days--day:not(.rdrDayEndOfWeek):has(.range__days--edge):has(+ .range__days--day .rdrInRange) {
+.range__days--day:not(.rdrDayEndOfWeek):has(.range__days--edge):has(
+    + .range__days--day .rdrInRange
+  ) {
   @apply rounded-l-full bg-gray-500/10;
 }
 
@@ -56,33 +58,35 @@
 }
 
 .rdrDayPassive {
-  @apply !bg-transparent
+  @apply !bg-transparent;
 }
 
 .range__days--day.rdrDayPassive .range__days--number span {
-  @apply !text-gray-500
+  @apply !text-gray-500;
 }
 .rdrDefinedRangesWrapper {
-  @apply max-w-[175px]
+  @apply max-w-[175px];
 }
 .rdrStaticRanges {
-  @apply p-5 max-w-[175px];
+  @apply max-w-[175px] p-5;
 }
 
 .rdrStaticRange {
   @apply overflow-hidden !rounded-lg border-none;
 }
 
-.rdrStaticRangeSelected {
-  @apply bg-gray-200;
-}
-
 .rdrStaticRangeLabel {
   @apply !typo-para-medium !px-3 !py-[15px] !leading-[18px] !text-gray-600;
 }
 
-.rdrStaticRangeSelected .rdrStaticRangeLabel {
-  @apply !text-gray-700;
+.rdrStaticRange.rdrStaticRangeSelected,
+.rdrStaticRange:hover,
+.rdrStaticRange:focus {
+  @apply !bg-transparent !fill-none !outline-none;
+}
+
+.rdrStaticRangeSelected:has(span .range-selected) {
+  @apply !bg-gray-200 [&>span>div]:text-gray-700;
 }
 
 .rdrInputRanges {
@@ -90,7 +94,7 @@
 }
 
 .rdrDateDisplayWrapper {
-  @apply !mx-5 !mb-0 !mt-10 !bg-white;
+  @apply !mx-5 !mb-0 !mt-11 !bg-white;
 }
 
 .rdrDateDisplay {

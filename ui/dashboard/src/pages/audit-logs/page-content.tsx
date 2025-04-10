@@ -1,11 +1,12 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { defaultStaticRanges } from 'react-date-range';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from 'auth';
+import { useNavigate, useParams } from 'react-router-dom';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import dayjs from 'dayjs';
 import { usePartialState } from 'hooks';
 import { pickBy } from 'lodash';
 import { AuditLog } from '@types';
-import { isNotEmpty } from 'utils/data-type';
+import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import { IconCollapse, IconExpand } from '@icons';
 import Button from 'components/button';
@@ -14,6 +15,7 @@ import Icon from 'components/icon';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
+import AuditLogDetailsModal from './elements/audit-logs-modal/audit-log-details';
 import EntityTypeDropdown from './elements/entity-type-dropdown';
 import { AuditLogsFilters, ExpandOrCollapse } from './types';
 import { truncNumber } from './utils';
@@ -24,23 +26,27 @@ export type ExpandOrCollapseRef = {
 
 const PageContent = () => {
   const { t } = useTranslation(['common']);
-  const { consoleAccount } = useAuth();
+  const params = useParams();
+  const navigate = useNavigate();
 
-  const expandOfCollapseRef = useRef<ExpandOrCollapseRef>(null);
-  const initRange = useMemo(() => {
-    const range = defaultStaticRanges[defaultStaticRanges.length - 1].range();
-    return {
-      from: range.startDate
-        ? truncNumber(range.startDate?.getTime() / 1000)
-        : undefined,
-      to: range.endDate
-        ? truncNumber(range.endDate?.getTime() / 1000)
-        : undefined
-    };
-  }, [defaultStaticRanges]);
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<AuditLogsFilters> = searchOptions;
+
+  const initRange = useMemo(() => {
+    return {
+      from: truncNumber(
+        new Date(
+          dayjs().subtract(1, 'month').toDate().setHours(0, 0, 0, 0)
+        ).getTime() / 1000
+      ),
+      to: truncNumber(
+        new Date(new Date().setHours(23, 59, 59, 999)).getTime() / 1000
+      )
+    };
+  }, []);
 
   const defaultFilters = {
     page: 1,
@@ -60,16 +66,24 @@ const PageContent = () => {
 
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
+  const expandOfCollapseRef = useRef<ExpandOrCollapseRef>(null);
   const isExpandAll = useMemo(
     () => expandOrCollapseAllState === ExpandOrCollapse.EXPAND,
     [expandOrCollapseAllState]
   );
+  const auditLogId = useMemo(() => {
+    const id = params['*'];
+    return id && id !== `${currentEnvironment?.urlCode}/audit-logs` ? id : '';
+  }, [params, currentEnvironment]);
 
   const onChangeFilters = useCallback(
     (values: Partial<AuditLogsFilters>) => {
-      const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
+      const options = pickBy(
+        { ...filters, ...values, page: values?.page || 1 },
+        v => isNotEmpty(v)
+      );
       onChangSearchParams(options);
-      setFilters({ ...values });
+      setFilters({ ...values, page: values?.page || 1 });
       handleResetExpandAuditLog();
     },
     [filters]
@@ -104,6 +118,12 @@ const PageContent = () => {
     setExpandOrCollapseAllState(undefined);
     setExpandedItems([]);
   }, []);
+
+  useEffect(() => {
+    if (isEmptyObject(searchOptions)) {
+      setFilters({ ...defaultFilters });
+    }
+  }, [searchOptions]);
 
   return (
     <PageLayout.Content className="gap-y-6">
@@ -152,6 +172,16 @@ const PageContent = () => {
         onToggleExpandItem={onToggleExpandItem}
         handleExpandOrCollapseAll={handleExpandOrCollapseAll}
       />
+      {!!auditLogId && (
+        <AuditLogDetailsModal
+          auditLogId={auditLogId}
+          isOpen={!!auditLogId}
+          onClose={() => {
+            onChangeFilters({});
+            navigate(`/${currentEnvironment.urlCode}/audit-logs`);
+          }}
+        />
+      )}
     </PageLayout.Content>
   );
 };

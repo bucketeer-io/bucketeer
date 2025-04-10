@@ -1,20 +1,24 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Trans } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
-import primaryAvatar from 'assets/avatars/primary.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation, getLanguage } from 'i18n';
 import { AuditLog } from '@types';
+import { isJsonString } from 'utils/converts';
 import { formatLongDateTime } from 'utils/date-time';
 import { copyToClipBoard } from 'utils/function';
 import { cn } from 'utils/style';
 import { IconChevronDown, IconLink, IconWatch } from '@icons';
-import { AvatarImage } from 'components/avatar';
 import Button from 'components/button';
 import Icon from 'components/icon';
+import DateTooltip from 'elements/date-tooltip';
 import { AuditLogTab } from '../types';
-import { getActionText, getEntityTypeText, getPathName } from '../utils';
+import {
+  convertJSONToRender,
+  formatJSONWithIndent,
+  getActionText
+} from '../utils';
+import AuditLogAvatar from './audit-log-avatar';
+import AuditLogTitle from './audit-log-title';
 import ReactDiffViewer from './diff-viewer';
 
 const AuditLogItem = memo(
@@ -41,7 +45,6 @@ const AuditLogItem = memo(
     const isLanguageJapanese = getLanguage() === 'ja';
     const { t } = useTranslation(['common', 'table']);
     const { notify } = useToast();
-    const navigate = useNavigate();
 
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -50,10 +53,22 @@ const AuditLogItem = memo(
       AuditLogTab.CHANGES
     );
 
-    const parsedEntityData = useMemo(
-      () => JSON.parse(entityData) || {},
-      [entityData]
+    const isHaveEntityData = useMemo(
+      () =>
+        !!entityData &&
+        !!isJsonString(entityData) &&
+        !!formatJSONWithIndent(entityData) &&
+        !!convertJSONToRender(formatJSONWithIndent(entityData)),
+      [entityData, currentTab, isExpanded]
     );
+
+    const parsedEntityData = useMemo(() => {
+      try {
+        return JSON.parse(entityData);
+      } catch {
+        return null;
+      }
+    }, [entityData]);
 
     const lineNumberRef = useRef(0);
     const time = useMemo(
@@ -89,8 +104,9 @@ const AuditLogItem = memo(
 
     const handleCopyId = useCallback(
       (id: string) => {
+        const { VITE_AUTH_REDIRECT_ENDPOINT, BASE_URL } = import.meta.env || {};
         copyToClipBoard(
-          `${import.meta.env.VITE_AUTH_REDIRECT_ENDPOINT}${import.meta.env.BASE_URL}${currentEnvironment.urlCode}/audit-logs/${id}`
+          `${VITE_AUTH_REDIRECT_ENDPOINT}${BASE_URL}${currentEnvironment.urlCode}/audit-logs/${id}`
         );
         notify({
           toastType: 'toast',
@@ -112,16 +128,13 @@ const AuditLogItem = memo(
         className={cn(
           'flex flex-col w-full p-3 bg-white shadow-card rounded-lg h-[73px] min-h-[73px] transition-all duration-100',
           {
-            'h-fit gap-y-5 min-h-[179px]': isExpanded
+            'h-fit gap-y-5 min-h-[179px]': isExpanded && isHaveEntityData,
+            'h-fit gap-y-5': !isHaveEntityData && !!options.comment
           }
         )}
       >
         <div className="flex items-center w-full gap-x-3">
-          <AvatarImage
-            image={primaryAvatar}
-            alt="member-avatar"
-            className="size-10"
-          />
+          <AuditLogAvatar editor={editor} />
           <div className="flex flex-col flex-1 gap-y-1 truncate">
             <div
               className={cn(
@@ -131,123 +144,117 @@ const AuditLogItem = memo(
                 }
               )}
             >
-              <Trans
-                i18nKey="table:audit-log-title"
-                values={{
-                  username: editor.name || editor.email,
-                  action: getActionText(type, isLanguageJapanese),
-                  entityType: getEntityTypeText(entityType),
-                  entityName: parsedEntityData?.name,
-                  additionalText:
-                    parsedEntityData?.name && isLanguageJapanese && 'の'
-                }}
-                components={{
-                  b: <span className="font-bold text-gray-700 -mt-0.5" />,
-                  highlight: (
-                    <Link
-                      to={getPathName(auditLog.id, entityType) as string}
-                      onClick={e => {
-                        e.preventDefault();
-                        const pathName = getPathName(auditLog.id, entityType);
-                        if (pathName)
-                          navigate(
-                            `/${currentEnvironment.urlCode}${pathName}`,
-                            {
-                              replace: false
-                            }
-                          );
-                      }}
-                      className="text-primary-500 underline truncate"
-                    />
-                  )
-                }}
+              <AuditLogTitle
+                isHaveEntityData={isHaveEntityData}
+                auditLogId={auditLog.id}
+                action={getActionText(type, isLanguageJapanese)}
+                entityName={
+                  parsedEntityData?.name || parsedEntityData?.feature_name || ''
+                }
+                entityType={entityType}
+                urlCode={currentEnvironment.urlCode}
+                username={editor.name || editor.email}
+                additionalText={
+                  parsedEntityData?.name && isLanguageJapanese && 'の'
+                }
               />
             </div>
-            <div className="flex items-center gap-x-1">
-              <Icon icon={IconWatch} size={'sm'} />
-              <p className="typo-para-small text-gray-500">{time}</p>
-            </div>
+            <DateTooltip
+              align="start"
+              alignOffset={5}
+              trigger={
+                <div className="flex items-center gap-x-1 w-fit">
+                  <Icon icon={IconWatch} size={'sm'} />
+                  <p className="typo-para-small text-gray-500">{time}</p>
+                </div>
+              }
+              date={timestamp}
+            />
           </div>
-          <div className="flex items-center min-w-fit divide-x divide-gray-200">
-            <Button
-              variant={'text'}
-              className="pr-5 active:scale-75"
-              onClick={() => handleCopyId(auditLog.id)}
-            >
-              <Icon icon={IconLink} color="primary-500" />
-            </Button>
-            <div
-              className={cn('flex-center cursor-pointer pl-5')}
-              onClick={onClick}
-            >
-              <Icon
-                icon={IconChevronDown}
-                className={cn('rotate-0 transition-all duration-100', {
-                  'rotate-180': isExpanded
-                })}
-              />
+          {isHaveEntityData && (
+            <div className="flex items-center min-w-fit divide-x divide-gray-200">
+              <Button
+                variant={'text'}
+                className="pr-5 active:scale-75"
+                onClick={() => handleCopyId(auditLog.id)}
+              >
+                <Icon icon={IconLink} color="primary-500" />
+              </Button>
+              <div
+                className={cn('flex-center cursor-pointer pl-5')}
+                onClick={onClick}
+              >
+                <Icon
+                  icon={IconChevronDown}
+                  className={cn('rotate-0 transition-all duration-100', {
+                    'rotate-180': isExpanded
+                  })}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
-        {options.comment && isExpanded && (
+        {options.comment && (isExpanded || !isHaveEntityData) && (
           <div className="flex items-center w-full p-3 bg-gray-100 rounded typo-para-medium text-gray-600 break-all">
             {options.comment}
           </div>
         )}
-
-        <div
-          className={cn(
-            'flex items-center w-full justify-between h-0 opacity-0 z-[-1]',
-            {
-              'opacity-100 z-[0] h-10': isExpanded
-            }
-          )}
-        >
-          <p className="typo-para-small text-gray-500 uppercase">
-            {t('patch')}
-          </p>
-          <div className="flex items-center">
-            <Button
-              variant={'secondary-2'}
-              size={'sm'}
+        {isHaveEntityData && (
+          <>
+            <div
               className={cn(
-                'rounded-r-none',
-                buttonCls,
-                currentTab === AuditLogTab.CHANGES && buttonActiveCls
+                'flex items-center w-full justify-between h-0 opacity-0 z-[-1]',
+                {
+                  'opacity-100 z-[0] h-10': isExpanded
+                }
               )}
-              onClick={() => handleChangeTab(AuditLogTab.CHANGES)}
             >
-              {t(`changes`)}
-            </Button>
-            <Button
-              variant={'secondary-2'}
-              size={'sm'}
-              className={cn(
-                'rounded-l-none',
-                buttonCls,
-                currentTab === AuditLogTab.SNAPSHOT && buttonActiveCls
-              )}
-              onClick={() => handleChangeTab(AuditLogTab.SNAPSHOT)}
-            >
-              {t(`snapshot`)}
-            </Button>
-          </div>
-        </div>
-        {isExpanded && (
-          <div
-            className={cn('z-[-1] h-0 opacity-0', {
-              'z-[0] h-fit opacity-100': isExpanded
-            })}
-          >
-            <ReactDiffViewer
-              prefix={prefix}
-              type={type}
-              lineNumber={lineNumberRef.current}
-              currentTab={currentTab}
-              previousEntityData={previousEntityData}
-              entityData={entityData}
-            />
-          </div>
+              <p className="typo-para-small text-gray-500 uppercase">
+                {t('patch')}
+              </p>
+              <div className="flex items-center">
+                <Button
+                  variant={'secondary-2'}
+                  size={'sm'}
+                  className={cn(
+                    'rounded-r-none',
+                    buttonCls,
+                    currentTab === AuditLogTab.CHANGES && buttonActiveCls
+                  )}
+                  onClick={() => handleChangeTab(AuditLogTab.CHANGES)}
+                >
+                  {t(`changes`)}
+                </Button>
+                <Button
+                  variant={'secondary-2'}
+                  size={'sm'}
+                  className={cn(
+                    'rounded-l-none',
+                    buttonCls,
+                    currentTab === AuditLogTab.SNAPSHOT && buttonActiveCls
+                  )}
+                  onClick={() => handleChangeTab(AuditLogTab.SNAPSHOT)}
+                >
+                  {t(`snapshot`)}
+                </Button>
+              </div>
+            </div>
+            {isExpanded && (
+              <div
+                className={cn('z-[-1] h-0 opacity-0', {
+                  'z-[0] h-fit opacity-100': isExpanded
+                })}
+              >
+                <ReactDiffViewer
+                  prefix={prefix}
+                  lineNumber={lineNumberRef.current}
+                  currentTab={currentTab}
+                  previousEntityData={previousEntityData}
+                  entityData={entityData}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     );

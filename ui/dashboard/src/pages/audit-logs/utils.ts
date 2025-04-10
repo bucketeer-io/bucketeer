@@ -45,7 +45,8 @@ export const getEntityTypeText = (entityType: DomainEventEntityType) => {
   }
 };
 
-export const convertJSONToRender = (json: string) => {
+export const convertJSONToRender = (json: string | null) => {
+  if (!json) return null;
   if (typeof json != 'string') {
     json = JSON.stringify(json, null, 4);
   }
@@ -63,8 +64,12 @@ export const convertJSONToRender = (json: string) => {
 };
 
 export const formatJSONWithIndent = (json: string) => {
-  const parsedJSON = JSON.parse(json) || {};
-  return JSON.stringify(parsedJSON, null, 4);
+  try {
+    const parsedJSON = JSON.parse(json) || {};
+    return JSON.stringify(parsedJSON, null, 4);
+  } catch {
+    return null;
+  }
 };
 
 export const truncNumber = (num: number) => Math.trunc(num);

@@ -181,5 +181,7 @@
     "scheduled-description": "This flag has a scheduled operation.",
     "kill-description": "This flag has an automatic kill switch."
   },
-  "audit-log-title": "<b>{{username}}</b>が<highlight>{{entityName}}</highlight>{{additionalText}}{{entityType}}を作成しました"
+  "audit-log-title": "<b>{{username}}</b>が<highlight>{{entityName}}</highlight>{{additionalText}}{{entityType}}を作成しました",
+  "no-data-change": "No data change",
+  "audit-log-title-no-entity": "<b>{{username}}</b>が{{entityType}}を{{action}}しました"
 }
