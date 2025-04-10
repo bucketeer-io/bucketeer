@@ -10,6 +10,7 @@ import { cn } from 'utils/style';
 import { IconChevronDown, IconLink, IconWatch } from '@icons';
 import Button from 'components/button';
 import Icon from 'components/icon';
+import { Tooltip } from 'components/tooltip';
 import DateTooltip from 'elements/date-tooltip';
 import { AuditLogTab } from '../types';
 import {
@@ -51,6 +52,13 @@ const AuditLogItem = memo(
 
     const [currentTab, setCurrentTab] = useState<AuditLogTab>(
       AuditLogTab.CHANGES
+    );
+
+    // TODO: Because there is a data issue in the DB, we must check the previous_entity_data if it is empty.
+    // Once the backend fixes this, we can remove this condition.
+    const isOldDataIssue = useMemo(
+      () => !previousEntityData && !!entityData,
+      [entityData, previousEntityData]
     );
 
     const isSameData = useMemo(
@@ -178,24 +186,36 @@ const AuditLogItem = memo(
           </div>
           {isHaveEntityData && (
             <div className="flex items-center min-w-fit divide-x divide-gray-200">
-              <Button
-                variant={'text'}
-                className="pr-5 active:scale-75"
-                onClick={() => handleCopyId(auditLog.id)}
-              >
-                <Icon icon={IconLink} color="primary-500" />
-              </Button>
-              <div
-                className={cn('flex-center cursor-pointer pl-5')}
-                onClick={onClick}
-              >
-                <Icon
-                  icon={IconChevronDown}
-                  className={cn('rotate-0 transition-all duration-100', {
-                    'rotate-180': isExpanded
-                  })}
-                />
-              </div>
+              <Tooltip
+                align="end"
+                sideOffset={-6}
+                content={t('table:copy-entry-link')}
+                trigger={
+                  <Button
+                    variant={'text'}
+                    className="pr-5 active:scale-75"
+                    onClick={() => handleCopyId(auditLog.id)}
+                  >
+                    <Icon icon={IconLink} color="primary-500" size={'sm'} />
+                  </Button>
+                }
+              />
+              <Tooltip
+                align="end"
+                sideOffset={-6}
+                content={t('table:show-entry')}
+                trigger={
+                  <Button variant={'text'} className="pl-5" onClick={onClick}>
+                    <Icon
+                      icon={IconChevronDown}
+                      className={cn('rotate-0 transition-all duration-100', {
+                        'rotate-180': isExpanded
+                      })}
+                      size={'sm'}
+                    />
+                  </Button>
+                }
+              />
             </div>
           )}
         </div>
@@ -216,12 +236,14 @@ const AuditLogItem = memo(
             >
               <p className="typo-para-small text-gray-500 uppercase">
                 {t(
-                  isSameData || currentTab === AuditLogTab.SNAPSHOT
+                  isSameData ||
+                    isOldDataIssue ||
+                    currentTab === AuditLogTab.SNAPSHOT
                     ? 'current-version'
                     : 'updates'
                 )}
               </p>
-              {!isSameData && (
+              {!isSameData && !isOldDataIssue && (
                 <div className="flex items-center">
                   <Button
                     variant={'secondary-2'}
@@ -257,7 +279,7 @@ const AuditLogItem = memo(
                 })}
               >
                 <ReactDiffViewer
-                  isSameData={isSameData}
+                  isSameData={isOldDataIssue || isSameData}
                   prefix={prefix}
                   lineNumber={lineNumberRef.current}
                   currentTab={currentTab}

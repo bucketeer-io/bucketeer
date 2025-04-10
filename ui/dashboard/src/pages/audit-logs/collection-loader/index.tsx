@@ -1,4 +1,5 @@
 import { forwardRef, Ref, useImperativeHandle } from 'react';
+import { useParams } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { AuditLog } from '@types';
 import Pagination from 'components/pagination';
@@ -30,7 +31,8 @@ const CollectionLoader = forwardRef(
     ref: Ref<ExpandOrCollapseRef>
   ) => {
     const { consoleAccount } = useAuth();
-    const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+    const params = useParams();
+    const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
     const {
       data: auditLogCollection,
@@ -39,7 +41,8 @@ const CollectionLoader = forwardRef(
       isError
     } = useFetchAuditLogs({
       ...filters,
-      environmentId: currenEnvironment?.id
+      environmentId: currentEnvironment?.id,
+      enabledFetching: params?.envUrlCode === currentEnvironment?.urlCode
     });
 
     const auditLogs = auditLogCollection?.auditLogs || [];

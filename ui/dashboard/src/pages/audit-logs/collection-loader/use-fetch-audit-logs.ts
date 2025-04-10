@@ -11,7 +11,8 @@ export const useFetchAuditLogs = ({
   from,
   to,
   entityType,
-  environmentId
+  environmentId,
+  enabledFetching = true
 }: {
   pageSize?: number;
   page?: number;
@@ -23,6 +24,7 @@ export const useFetchAuditLogs = ({
   from?: string;
   to?: string;
   entityType?: number;
+  enabledFetching?: boolean;
 }) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
 
@@ -37,6 +39,7 @@ export const useFetchAuditLogs = ({
       to,
       entityType,
       environmentId
-    }
+    },
+    enabled: enabledFetching
   });
 };

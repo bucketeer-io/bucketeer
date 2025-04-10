@@ -71,6 +71,16 @@
   @apply max-w-[175px] p-5;
 }
 
+.range__days--day:has(span span.range__days--all-time) .range__days--edge {
+  @apply bg-transparent;
+}
+
+.range__days--day:has(span span.range__days--all-time)
+  span
+  .range__days--all-time {
+  @apply !text-gray-600;
+}
+
 .rdrStaticRange {
   @apply overflow-hidden !rounded-lg border-none;
 }

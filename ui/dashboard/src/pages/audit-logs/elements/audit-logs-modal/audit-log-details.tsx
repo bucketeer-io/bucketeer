@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans } from 'react-i18next';
+import { useParams } from 'react-router-dom';
 import { useQueryAuditLogDetails } from '@queries/audit-log-details';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
@@ -34,6 +35,8 @@ const AuditLogDetailsModal = ({
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const params = useParams();
+
   const { errorNotify } = useToast();
   const lineNumberRef = useRef(0);
   const isLanguageJapanese = getLanguage() === 'ja';
@@ -50,10 +53,18 @@ const AuditLogDetailsModal = ({
     params: {
       environmentId: currentEnvironment.id,
       id: auditLogId
-    }
+    },
+    enabled: params?.envUrlCode === currentEnvironment?.urlCode
   });
 
   const auditLog = collection?.auditLog;
+
+  // TODO: Because there is a data issue in the DB, we must check the previous_entity_data if it is empty.
+  // Once the backend fixes this, we can remove this condition.
+  const isOldDataIssue = useMemo(
+    () => !auditLog?.previousEntityData && !!auditLog?.entityData,
+    [auditLog]
+  );
 
   const isSameData = useMemo(
     () =>
@@ -185,7 +196,7 @@ const AuditLogDetailsModal = ({
               value={currentTab}
               onValueChange={value => handleChangeTab(value as AuditLogTab)}
             >
-              {!isSameData && (
+              {!isSameData && !isOldDataIssue && (
                 <TabsList>
                   <TabsTrigger value={AuditLogTab.CHANGES}>
                     {t(`changes`)}
@@ -198,7 +209,9 @@ const AuditLogDetailsModal = ({
 
               <p className="typo-para-small text-gray-500 uppercase">
                 {t(
-                  isSameData || currentTab === AuditLogTab.SNAPSHOT
+                  isSameData ||
+                    isOldDataIssue ||
+                    currentTab === AuditLogTab.SNAPSHOT
                     ? 'current-version'
                     : 'updates'
                 )}
@@ -210,7 +223,7 @@ const AuditLogDetailsModal = ({
               >
                 {auditLog && (
                   <ReactDiffViewer
-                    isSameData={isSameData}
+                    isSameData={isOldDataIssue || isSameData}
                     prefix="line-00"
                     currentTab={currentTab}
                     lineNumber={lineNumberRef.current}

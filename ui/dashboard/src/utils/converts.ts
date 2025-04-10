@@ -100,10 +100,8 @@ export const areJsonStringsEqual = (json1: string, json2: string): boolean => {
   try {
     const obj1 = JSON.parse(json1);
     const obj2 = JSON.parse(json2);
-
     return JSON.stringify(obj1) === JSON.stringify(obj2);
-  } catch (error) {
-    console.error('Invalid JSON string:', error);
+  } catch {
     return false;
   }
 };

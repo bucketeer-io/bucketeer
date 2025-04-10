@@ -34,9 +34,16 @@ import {
   PAGE_PATH_USER_SEGMENTS
 } from 'constants/routing';
 import { i18n } from 'i18n';
+import { pickBy } from 'lodash';
+import {
+  getCurrentEnvIdStorage,
+  setCurrentEnvIdStorage
+} from 'storage/environment';
 import { getTokenStorage } from 'storage/token';
 import { v4 as uuid } from 'uuid';
 import { ConsoleAccount } from '@types';
+import { isNotEmpty } from 'utils/data-type';
+import { stringifyParams, useSearchParams } from 'utils/search-params';
 import APIKeysPage from 'pages/api-keys';
 import AuditLogsPage from 'pages/audit-logs';
 import MembersPage from 'pages/members';
@@ -147,16 +154,42 @@ export const Root = memo(() => {
 export const EnvironmentRoot = memo(
   ({ account }: { account: ConsoleAccount }) => {
     const navigate = useNavigate();
-    const { envUrlCode } = useParams();
+    const { envUrlCode, ...params } = useParams();
+    const { searchOptions } = useSearchParams();
 
     const editable = hasEditable(account);
     const currentEnv = getCurrentEnvironment(account);
 
-    useEffect(() => {
-      if (!envUrlCode) {
-        navigate(`${PAGE_PATH_ROOT}${currentEnv.urlCode}${PAGE_PATH_FEATURES}`);
+    const handleCheckEnvCodeOnInit = useCallback(() => {
+      const isExistEnv = account.environmentRoles.find(
+        item => item.environment.urlCode === envUrlCode
+      );
+
+      if (!envUrlCode || !isExistEnv) {
+        return navigate(
+          `${PAGE_PATH_ROOT}${currentEnv.urlCode}${PAGE_PATH_FEATURES}`
+        );
       }
-    }, [account, envUrlCode]);
+
+      const envIdStorage = getCurrentEnvIdStorage();
+      if (envIdStorage === envUrlCode) return;
+      const { environment } = isExistEnv;
+
+      const stringifyQueryParams = stringifyParams(
+        pickBy(searchOptions, v => isNotEmpty(v as string))
+      );
+      const queryParams = isNotEmpty(stringifyQueryParams)
+        ? `?${stringifyQueryParams}`
+        : '';
+      const path = params['*'] ? `/${params['*']}` : '';
+
+      setCurrentEnvIdStorage(environment.id || environment.urlCode);
+      return navigate(
+        `${PAGE_PATH_ROOT}${environment.urlCode}${path}${queryParams}`
+      );
+    }, [envUrlCode, currentEnv, params, searchOptions, account]);
+
+    useEffect(() => handleCheckEnvCodeOnInit(), [account, envUrlCode]);
 
     return (
       <Routes>

@@ -188,7 +188,9 @@ const PageContent = () => {
           isOpen={!!auditLogId}
           onClose={() => {
             onChangeFilters({});
-            navigate(`/${currentEnvironment.urlCode}/audit-logs`);
+            navigate(
+              `/${params?.envUrlCode || currentEnvironment.urlCode}/audit-logs`
+            );
           }}
         />
       )}

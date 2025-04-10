@@ -166,7 +166,7 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
     });
     const [staticRangeSelected, setStaticRangeSelected] = useState<
       StaticRangeOption | undefined
-    >(undefined);
+    >(isAllTime ? staticRanges.at(-1) : undefined);
 
     const triggerLabel = useMemo(() => {
       if (staticRangeSelected?.type === 'all-time')
@@ -285,6 +285,21 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
               >
                 {staticRange.label}
               </div>
+            )}
+            dayContentRenderer={date => (
+              <span
+                onClick={() => setStaticRangeSelected(undefined)}
+                style={{
+                  width: '100%',
+                  height: '100%'
+                }}
+                className={cn('flex-center size-full', {
+                  'range__days--all-time':
+                    staticRangeSelected?.type === 'all-time'
+                })}
+              >
+                {date.getDate()}
+              </span>
             )}
             navigatorRenderer={(currFocusedDate, changeShownDate) => (
               <CustomizeNavigator
