@@ -1,24 +1,27 @@
 import { DomainEventEntityType, DomainEventType } from '@types';
 
-export const getActionText = (type: DomainEventType) => {
+export const getActionText = (
+  type: DomainEventType,
+  isLanguageJapanese: boolean
+) => {
   switch (type.split('_').at(-1)) {
     case 'CREATED':
-      return 'created';
+      return isLanguageJapanese ? '作成しました' : 'created';
     case 'DELETED':
-      return 'deleted';
+      return isLanguageJapanese ? '削除しました' : 'deleted';
     case 'CLONED':
-      return 'cloned';
+      return isLanguageJapanese ? '複製しました' : 'cloned';
     case 'ARCHIVED':
-      return 'archived';
+      return isLanguageJapanese ? 'アーカイブしました' : 'archived';
     case 'UNARCHIVED':
-      return 'unarchived';
+      return isLanguageJapanese ? 'アンアーカイブドしました' : 'unarchived';
     case 'ENABLED':
-      return 'enabled';
+      return isLanguageJapanese ? '有効にしました' : 'enabled';
     case 'DISABLED':
-      return 'disabled';
+      return isLanguageJapanese ? '無効にしました' : 'disabled';
     case 'UPDATED':
     default:
-      return 'updated';
+      return isLanguageJapanese ? '更新しました' : 'updated';
   }
 };
 
@@ -27,7 +30,7 @@ export const getEntityTypeText = (entityType: DomainEventEntityType) => {
     case 'APIKEY':
       return 'api key';
     case 'AUTOOPS_RULE':
-      return 'operations rule';
+      return 'operation rule';
     case 'CODEREF':
       return 'code ref';
     case 'FEATURE':
@@ -62,4 +65,37 @@ export const convertJSONToRender = (json: string) => {
 export const formatJSONWithIndent = (json: string) => {
   const parsedJSON = JSON.parse(json) || {};
   return JSON.stringify(parsedJSON, null, 4);
+};
+
+export const truncNumber = (num: number) => Math.trunc(num);
+
+export const getPathName = (id: string, entityType: DomainEventEntityType) => {
+  switch (entityType) {
+    case 'APIKEY':
+      return '/api-keys';
+    case 'PROGRESSIVE_ROLLOUT':
+    case 'AUTOOPS_RULE':
+      return `/features/${id}/operations`;
+    case 'FEATURE':
+      return `/features/${id}/targeting`;
+    case 'ADMIN_ACCOUNT':
+    case 'ACCOUNT':
+      return '/members';
+    case 'FLAG_TRIGGER':
+      return `/features/${id}/trigger`;
+    case 'GOAL':
+      return `/goals/${id}`;
+    case 'PROJECT':
+      return `/projects/${id}`;
+    case 'ORGANIZATION':
+      return `/organizations/${id}`;
+    case 'PUSH':
+      return `/pushes`;
+    case 'EXPERIMENT':
+      return `/experiments/${id}/results`;
+    case 'SEGMENT':
+      return '/segments';
+    default:
+      return null;
+  }
 };

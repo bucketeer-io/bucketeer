@@ -3,61 +3,128 @@
 }
 
 .range__months {
-  @apply grid w-full grid-cols-2 justify-between divide-x divide-gray-200 overflow-visible p-5;
+  @apply grid w-full grid-cols-2 gap-x-8 justify-between overflow-visible p-5;
 }
 
 .range__months--month {
-  @apply col-span-1 flex w-full flex-col gap-y-4 p-0 first:pr-8 last:pl-8;
+  @apply col-span-1 flex w-full flex-col gap-y-4 p-0;
 }
 
 .range__months--monthName {
-  @apply typo-para-medium leading-4 p-0 pb-2 text-gray-600;
+  @apply hidden;
 }
 
 .range__weekDay {
-  @apply flex-center typo-para-small h-[21px] w-12 uppercase text-gray-500 last:w-9;
+  @apply flex-center typo-para-tiny !h-6 !w-10 !max-w-10 uppercase text-gray-500 last:w-9;
 }
 
 .range__days {
-  @apply w-full gap-y-[14px];
-}
-
-.range__days--day {
-  @apply relative h-8 w-12;
+  @apply w-full gap-y-3;
 }
 
 .absolute__center {
   @apply !bottom-0 !left-1/2 !right-0 !top-0 !-translate-x-1/2;
 }
 
+.rdrStartEdge,
+.rdrEndEdge {
+  @apply size-10 !rounded-full;
+}
+
+.range__days--day {
+  @apply relative size-10;
+}
+
 .range__days--number {
-  @apply typo-para-small size-8 [&>span::after]:hidden [&>span]:text-gray-600;
+  @apply typo-para-small size-10 [&>span::after]:hidden [&>span]:!text-gray-600;
 }
 
-.range__days--edge {
-  @apply !size-8 !rounded-full;
-}
-
-.range__days--dayEndOfWeek {
-  @apply w-11 pr-0;
+.range__days--day:has(.range__days--edge) .range__days--number {
+  @apply [&>span]:!text-white;
 }
 
 .range__days--dayPreview {
-  @apply top-1/2 !h-8 -translate-y-1/2;
+  @apply top-1/2 !h-10 -translate-y-1/2 !border-none bg-gray-500/10;
 }
 
-.rdrDay:not(.rdrDayPassive, .rdrDayEndOfWeek):has(span.rdrStartEdge:not(span.rdrEndEdge)) {
-  @apply rounded-l-full bg-primary-500;
+.range__days--day:not(.rdrDayEndOfWeek):has(.range__days--edge):has(+ .range__days--day .rdrInRange) {
+  @apply rounded-l-full bg-gray-500/10;
 }
 
-.rdrDay:not(.rdrDayPassive):has(span.rdrEndEdge:not(span.rdrStartEdge)) {
-  @apply rounded-r-full bg-primary-500;
+.range__days--day:has(.rdrInRange) + .range__days--day:has(.range__days--edge) {
+  @apply rounded-r-full bg-gray-500/10;
 }
 
-.rdrDay.rdrDayStartOfMonth:not(:has(span.rdrStartEdge)) {
-  @apply rounded-full;
+.rdrDayPassive {
+  @apply !bg-transparent
 }
 
-.rdrDay:not(.rdrDayPassive):has(span.rdrEndEdge:not(span.rdrStartEdge)).rdrDayStartOfWeek {
-  @apply rounded-full
+.range__days--day.rdrDayPassive .range__days--number span {
+  @apply !text-gray-500
+}
+.rdrDefinedRangesWrapper {
+  @apply max-w-[175px]
+}
+.rdrStaticRanges {
+  @apply p-5 max-w-[175px];
+}
+
+.rdrStaticRange {
+  @apply overflow-hidden !rounded-lg border-none;
+}
+
+.rdrStaticRangeSelected {
+  @apply bg-gray-200;
+}
+
+.rdrStaticRangeLabel {
+  @apply !typo-para-medium !px-3 !py-[15px] !leading-[18px] !text-gray-600;
+}
+
+.rdrStaticRangeSelected .rdrStaticRangeLabel {
+  @apply !text-gray-700;
+}
+
+.rdrInputRanges {
+  @apply !hidden;
+}
+
+.rdrDateDisplayWrapper {
+  @apply !mx-5 !mb-0 !mt-10 !bg-white;
+}
+
+.rdrDateDisplay {
+  @apply m-0;
+}
+
+.rdrDateInput {
+  @apply !rounded-lg !border-gray-400;
+}
+
+.rdrDateInput input {
+  @apply !typo-para-medium !h-12 p-3 pr-[44px] text-left text-gray-700;
+}
+
+.rdrDateInput:first-child::before {
+  content: 'From';
+  @apply typo-para-small absolute -top-[26px] text-gray-600;
+}
+
+.rdrDateInput:last-child {
+  @apply !ml-4;
+}
+
+.rdrDateInput:last-child::before {
+  content: 'To';
+  @apply typo-para-small absolute -top-[26px] text-gray-600;
+}
+
+.rdrDateInput::after {
+  content: '';
+  background-image: url('../../@icons/customized-icons/calendar-gray.svg');
+  @apply absolute right-3 top-1/2 z-10 size-5 -translate-y-1/2 bg-cover bg-center;
+}
+
+.rdrDateDisplayItemActive {
+  @apply !border-primary-500;
 }

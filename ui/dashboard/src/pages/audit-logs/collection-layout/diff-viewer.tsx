@@ -137,7 +137,8 @@ const ReactDiffViewer = memo(
             color: '#64748B',
             fontSize: 14,
             fontFamily: 'Sofia Pro',
-            width: 'fit-content'
+            width: 'fit-content',
+            wordBreak: 'break-all'
           },
           codeFoldGutter: {
             display: 'none'

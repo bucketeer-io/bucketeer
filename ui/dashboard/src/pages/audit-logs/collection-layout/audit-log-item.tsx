@@ -1,22 +1,20 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Trans } from 'react-i18next';
+import { Link, useNavigate } from 'react-router-dom';
 import primaryAvatar from 'assets/avatars/primary.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
-import { useTranslation } from 'i18n';
-import { pickBy } from 'lodash';
+import { useTranslation, getLanguage } from 'i18n';
 import { AuditLog } from '@types';
-import { isNotEmpty } from 'utils/data-type';
 import { formatLongDateTime } from 'utils/date-time';
 import { copyToClipBoard } from 'utils/function';
-import { stringifyParams, useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
 import { IconChevronDown, IconLink, IconWatch } from '@icons';
 import { AvatarImage } from 'components/avatar';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { AuditLogTab } from '../types';
-import { getActionText, getEntityTypeText } from '../utils';
+import { getActionText, getEntityTypeText, getPathName } from '../utils';
 import ReactDiffViewer from './diff-viewer';
 
 const AuditLogItem = memo(
@@ -40,13 +38,13 @@ const AuditLogItem = memo(
       type,
       entityType
     } = auditLog;
-
+    const isLanguageJapanese = getLanguage() === 'ja';
     const { t } = useTranslation(['common', 'table']);
     const { notify } = useToast();
+    const navigate = useNavigate();
 
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-    const { searchOptions } = useSearchParams();
 
     const [currentTab, setCurrentTab] = useState<AuditLogTab>(
       AuditLogTab.CHANGES
@@ -91,11 +89,8 @@ const AuditLogItem = memo(
 
     const handleCopyId = useCallback(
       (id: string) => {
-        const requestParams = stringifyParams(
-          pickBy(searchOptions, v => isNotEmpty(v as string))
-        );
         copyToClipBoard(
-          `${import.meta.env.VITE_AUTH_REDIRECT_ENDPOINT}${import.meta.env.BASE_URL}${currentEnvironment.urlCode}/audit-logs/${id}${requestParams ? `?${requestParams}` : ''}`
+          `${import.meta.env.VITE_AUTH_REDIRECT_ENDPOINT}${import.meta.env.BASE_URL}${currentEnvironment.urlCode}/audit-logs/${id}`
         );
         notify({
           toastType: 'toast',
@@ -103,7 +98,7 @@ const AuditLogItem = memo(
           message: <span>{`Copied!`}</span>
         });
       },
-      [currentEnvironment, searchOptions]
+      [currentEnvironment]
     );
 
     useEffect(() => {
@@ -128,19 +123,42 @@ const AuditLogItem = memo(
             className="size-10"
           />
           <div className="flex flex-col flex-1 gap-y-1 truncate">
-            <div className="flex items-center gap-x-1.5 max-w-full typo-para-medium font-normal text-gray-700 truncate">
+            <div
+              className={cn(
+                'flex items-center gap-x-1.5 max-w-full typo-para-medium font-normal text-gray-700 truncate',
+                {
+                  'gap-x-0': isLanguageJapanese
+                }
+              )}
+            >
               <Trans
                 i18nKey="table:audit-log-title"
                 values={{
                   username: editor.name || editor.email,
-                  action: getActionText(type),
+                  action: getActionText(type, isLanguageJapanese),
                   entityType: getEntityTypeText(entityType),
-                  entityName: parsedEntityData?.name
+                  entityName: parsedEntityData?.name,
+                  additionalText:
+                    parsedEntityData?.name && isLanguageJapanese && 'の'
                 }}
                 components={{
-                  b: <span className="font-bold text-gray-700" />,
+                  b: <span className="font-bold text-gray-700 -mt-0.5" />,
                   highlight: (
-                    <span className="text-primary-500 underline truncate" />
+                    <Link
+                      to={getPathName(auditLog.id, entityType) as string}
+                      onClick={e => {
+                        e.preventDefault();
+                        const pathName = getPathName(auditLog.id, entityType);
+                        if (pathName)
+                          navigate(
+                            `/${currentEnvironment.urlCode}${pathName}`,
+                            {
+                              replace: false
+                            }
+                          );
+                      }}
+                      className="text-primary-500 underline truncate"
+                    />
                   )
                 }}
               />
@@ -215,20 +233,22 @@ const AuditLogItem = memo(
             </Button>
           </div>
         </div>
-        <div
-          className={cn('z-[-1] h-0 opacity-0', {
-            'z-[0] h-fit opacity-100': isExpanded
-          })}
-        >
-          <ReactDiffViewer
-            prefix={prefix}
-            type={type}
-            lineNumber={lineNumberRef.current}
-            currentTab={currentTab}
-            previousEntityData={previousEntityData}
-            entityData={entityData}
-          />
-        </div>
+        {isExpanded && (
+          <div
+            className={cn('z-[-1] h-0 opacity-0', {
+              'z-[0] h-fit opacity-100': isExpanded
+            })}
+          >
+            <ReactDiffViewer
+              prefix={prefix}
+              type={type}
+              lineNumber={lineNumberRef.current}
+              currentTab={currentTab}
+              previousEntityData={previousEntityData}
+              entityData={entityData}
+            />
+          </div>
+        )}
       </div>
     );
   }

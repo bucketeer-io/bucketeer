@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { defaultStaticRanges } from 'react-date-range';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from 'auth';
-import dayjs from 'dayjs';
 import { usePartialState } from 'hooks';
 import { pickBy } from 'lodash';
 import { AuditLog } from '@types';
@@ -16,6 +16,7 @@ import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
 import EntityTypeDropdown from './elements/entity-type-dropdown';
 import { AuditLogsFilters, ExpandOrCollapse } from './types';
+import { truncNumber } from './utils';
 
 export type ExpandOrCollapseRef = {
   toggle: () => void;
@@ -26,6 +27,17 @@ const PageContent = () => {
   const { consoleAccount } = useAuth();
 
   const expandOfCollapseRef = useRef<ExpandOrCollapseRef>(null);
+  const initRange = useMemo(() => {
+    const range = defaultStaticRanges[defaultStaticRanges.length - 1].range();
+    return {
+      from: range.startDate
+        ? truncNumber(range.startDate?.getTime() / 1000)
+        : undefined,
+      to: range.endDate
+        ? truncNumber(range.endDate?.getTime() / 1000)
+        : undefined
+    };
+  }, [defaultStaticRanges]);
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<AuditLogsFilters> = searchOptions;
@@ -34,8 +46,8 @@ const PageContent = () => {
     page: 1,
     orderBy: 'TIMESTAMP',
     orderDirection: 'DESC',
-    from: Math.trunc(dayjs().subtract(1, 'month').toDate().getTime() / 1000),
-    to: Math.trunc(new Date().getTime() / 1000),
+    from: initRange.from,
+    to: initRange.to,
     ...searchFilters
   } as AuditLogsFilters;
 

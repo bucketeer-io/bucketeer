@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { DomainEventEntityMap } from '@types';
+import { isNotEmpty } from 'utils/data-type';
 import { AuditLogsFilters } from 'pages/audit-logs/types';
 import {
   DropdownMenu,
@@ -34,6 +35,7 @@ const EntityTypeDropdown = memo(
         ADMIN_SUBSCRIPTION,
         SUBSCRIPTION
       } = DomainEventEntityMap;
+
       return [
         {
           labelKey: 'source-type.feature-flag',
@@ -78,20 +80,25 @@ const EntityTypeDropdown = memo(
       ];
     }, [isSystemAdmin]);
 
+    const entityLabel = useMemo(() => {
+      const labelKey = options.find(
+        item => item.value === Number(entityType)
+      )?.labelKey;
+
+      return labelKey ? t(labelKey) : '';
+    }, [options, entityType, isSystemAdmin]);
+
     return (
       <DropdownMenu>
         <DropdownMenuTrigger
           showClear
           className="max-w-[175px] xxl:max-w-fit"
           label={
-            typeof entityType === 'number' ? (
+            isNotEmpty(entityType) ? (
               <Trans
                 i18nKey={'form:kind-filter-value'}
                 values={{
-                  value: t(
-                    options.find(item => item.value === entityType)?.labelKey ||
-                      ''
-                  )
+                  value: entityLabel
                 }}
               />
             ) : (
