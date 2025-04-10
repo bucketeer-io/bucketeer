@@ -74,7 +74,7 @@ func TestInFilterSQLString(t *testing.T) {
 				Column: "name",
 				Values: []interface{}{"v1", "v2"},
 			},
-			expectedSQL:  "name IN (?, ?)",
+			expectedSQL:  " name IN (?, ?)",
 			expectedArgs: []interface{}{"v1", "v2"},
 		},
 	}
@@ -107,7 +107,7 @@ func TestNullFilterSQLString(t *testing.T) {
 				Column: "name",
 				IsNull: true,
 			},
-			expectedSQL:  "name IS NULL",
+			expectedSQL:  " name IS NULL",
 			expectedArgs: nil,
 		},
 		{
@@ -116,7 +116,7 @@ func TestNullFilterSQLString(t *testing.T) {
 				Column: "name",
 				IsNull: false,
 			},
-			expectedSQL:  "name IS NOT NULL",
+			expectedSQL:  " name IS NOT NULL",
 			expectedArgs: nil,
 		},
 	}
@@ -243,7 +243,7 @@ func TestSearchQuerySQLString(t *testing.T) {
 				Columns: []string{"id", "name"},
 				Keyword: "test",
 			},
-			expectedSQL:  "(id LIKE ? OR name LIKE ?)",
+			expectedSQL:  " (id LIKE ? OR name LIKE ?)",
 			expectedArgs: []interface{}{"%test%", "%test%"},
 		},
 	}
@@ -276,7 +276,7 @@ func TestConstructWhereSQLString(t *testing.T) {
 				NewFilter("name", "=", "feature"),
 				NewJSONFilter("enums", JSONContainsNumber, []interface{}{1, 3}),
 			},
-			expectedSQL:  "WHERE name = ? AND JSON_CONTAINS(enums, ?) ",
+			expectedSQL:  " WHERE name = ? AND JSON_CONTAINS(enums, ?) ",
 			expectedArgs: []interface{}{"feature", "[1, 3]"},
 		},
 	}
@@ -307,7 +307,7 @@ func TestConstructOrderBySQLString(t *testing.T) {
 				NewOrder("created_at", OrderDirectionDesc),
 				NewOrder("id", OrderDirectionAsc),
 			},
-			expectedSQL: "ORDER BY created_at DESC, id ASC ",
+			expectedSQL: " ORDER BY created_at DESC, id ASC ",
 		},
 	}
 	for _, p := range patterns {
@@ -336,19 +336,19 @@ func TestConstructLimitOffsetSQLString(t *testing.T) {
 			desc:        "no limit & offset",
 			limit:       0,
 			offset:      5,
-			expectedSQL: "LIMIT 9223372036854775807 OFFSET 5",
+			expectedSQL: " LIMIT 9223372036854775807 OFFSET 5",
 		},
 		{
 			desc:        "limit & no offset",
 			limit:       10,
 			offset:      0,
-			expectedSQL: "LIMIT 10",
+			expectedSQL: " LIMIT 10",
 		},
 		{
 			desc:        "limit & offset",
 			limit:       10,
 			offset:      5,
-			expectedSQL: "LIMIT 10 OFFSET 5",
+			expectedSQL: " LIMIT 10 OFFSET 5",
 		},
 	}
 	for _, p := range patterns {
