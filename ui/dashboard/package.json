@@ -62,6 +62,7 @@
     "react-chartjs-2": "^5.3.0",
     "react-date-range": "^2.0.1",
     "react-datepicker": "^7.6.0",
+    "react-diff-viewer-continued": "^3.4.0",
     "react-dom": "^18.3.1",
     "react-easy-crop": "^5.2.0",
     "react-error-boundary": "^4.0.13",

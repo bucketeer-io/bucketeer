@@ -2,6 +2,7 @@ import React, {
   forwardRef,
   ReactNode,
   Ref,
+  RefObject,
   useRef,
   type FunctionComponent
 } from 'react';
@@ -63,8 +64,10 @@ export type PopoverProps<PopoverValue> = {
   children?: ReactNode;
   closeBtnCls?: string;
   sideOffset?: number;
+  closeRef?: RefObject<HTMLButtonElement>;
   onClick?: (value: PopoverValue) => void;
   onOpenChange?: (open: boolean) => void;
+  onPointerDownOutside?: () => void;
 };
 
 const Popover = forwardRef(
@@ -85,8 +88,10 @@ const Popover = forwardRef(
       children,
       closeBtnCls,
       sideOffset = 0,
+      closeRef,
       onClick,
-      onOpenChange
+      onOpenChange,
+      onPointerDownOutside
     }: PopoverProps<PopoverValue>,
     ref: Ref<HTMLDivElement>
   ) => {
@@ -94,7 +99,7 @@ const Popover = forwardRef(
 
     const handleSelectItem = (value: PopoverValue) => {
       onClick!(value);
-      if (closeWhenSelected) popoverCloseRef?.current?.click();
+      if (closeWhenSelected) (closeRef ?? popoverCloseRef)?.current?.click();
     };
 
     return (
@@ -128,9 +133,10 @@ const Popover = forwardRef(
             className={className}
             align={align}
             sideOffset={sideOffset}
+            onPointerDownOutside={onPointerDownOutside}
           >
             <PopoverClose
-              ref={popoverCloseRef}
+              ref={closeRef ?? popoverCloseRef}
               className={cn('hidden', closeBtnCls)}
             >
               <Icon icon={IconClose} size={'sm'} className="flex-center" />

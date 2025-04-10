@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
-import { DomainEventEntityType } from '@types';
+import { DomainEventEntityMap } from '@types';
 import { AuditLogsFilters } from 'pages/audit-logs/types';
 import {
   DropdownMenu,
@@ -11,7 +11,7 @@ import {
 } from 'components/dropdown';
 
 interface Props {
-  entityType?: DomainEventEntityType;
+  entityType?: DomainEventEntityMap;
   isSystemAdmin: boolean;
   onChangeFilters: (filters: Partial<AuditLogsFilters>) => void;
 }
@@ -23,57 +23,69 @@ const EntityTypeDropdown = ({
 }: Props) => {
   const { t } = useTranslation(['common']);
 
-  const options = useMemo(
-    () => [
+  const options = useMemo(() => {
+    const {
+      FEATURE,
+      GOAL,
+      EXPERIMENT,
+      SEGMENT,
+      ACCOUNT,
+      APIKEY,
+      AUTOOPS_RULE,
+      PROGRESSIVE_ROLLOUT,
+      PUSH,
+      ADMIN_SUBSCRIPTION,
+      SUBSCRIPTION
+    } = DomainEventEntityMap;
+    return [
       {
         labelKey: 'source-type.feature-flag',
-        value: 'FEATURE'
+        value: FEATURE
       },
       {
         labelKey: 'goal',
-        value: 'GOAL'
+        value: GOAL
       },
       {
         labelKey: 'source-type.experiment',
-        value: 'EXPERIMENT'
+        value: EXPERIMENT
       },
       {
         labelKey: 'navigation.user-segment',
-        value: 'SEGMENT'
+        value: SEGMENT
       },
       {
         labelKey: 'account',
-        value: 'ACCOUNT'
+        value: ACCOUNT
       },
       {
         labelKey: 'source-type.api-key',
-        value: 'APIKEY'
+        value: APIKEY
       },
       {
         labelKey: 'source-type.auto-operation',
-        value: 'AUTOOPS_RULE'
+        value: AUTOOPS_RULE
       },
       {
         labelKey: 'source-type.progressive-rollout',
-        value: 'PROGRESSIVE_ROLLOUT'
+        value: PROGRESSIVE_ROLLOUT
       },
       {
         labelKey: 'source-type.push',
-        value: 'PUSH'
+        value: PUSH
       },
       {
         labelKey: 'source-type.subscription',
-        value: isSystemAdmin ? 'ADMIN_SUBSCRIPTION' : 'SUBSCRIPTION'
+        value: isSystemAdmin ? ADMIN_SUBSCRIPTION : SUBSCRIPTION
       }
-    ],
-    [isSystemAdmin]
-  );
-  console.log(entityType)
+    ];
+  }, [isSystemAdmin]);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         label={
-          entityType ? (
+          typeof entityType === 'number' ? (
             <Trans
               i18nKey={'form:kind-filter-value'}
               values={{
@@ -104,7 +116,7 @@ const EntityTypeDropdown = ({
             value={item.value}
             onSelectOption={value =>
               onChangeFilters({
-                entityType: value as DomainEventEntityType
+                entityType: +value
               })
             }
           />

@@ -4,18 +4,19 @@ import { AuditLogCollection, CollectionParams } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams } from 'utils/search-params';
 
-export interface AdminAuditLogsFetcherParams extends CollectionParams {
+export interface AuditLogsFetcherParams extends CollectionParams {
   from?: string;
   to?: string;
   entityType?: number;
+  environmentId?: string;
 }
 
-export const adminAuditLogsFetcher = async (
-  params?: AdminAuditLogsFetcherParams
+export const auditLogsFetcher = async (
+  params?: AuditLogsFetcherParams
 ): Promise<AuditLogCollection> => {
   const requestParams = stringifyParams(pickBy(params, v => isNotEmpty(v)));
 
   return axiosClient
-    .get<AuditLogCollection>(`/v1/admin_audit_logs?${requestParams}`)
+    .get<AuditLogCollection>(`/v1/audit_logs?${requestParams}`)
     .then(response => response.data);
 };

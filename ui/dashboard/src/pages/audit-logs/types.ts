@@ -1,4 +1,4 @@
-import { DomainEventEntityType, OrderBy, OrderDirection } from '@types';
+import { OrderBy, OrderDirection } from '@types';
 
 export interface AuditLogsFilters {
   pageSize?: number;
@@ -9,6 +9,16 @@ export interface AuditLogsFilters {
   disabled?: boolean;
   from?: string;
   to?: string;
-  entityType?: DomainEventEntityType;
-  environmentId?: string
+  entityType?: number;
+  environmentId?: string;
+}
+
+export enum ExpandOrCollapse {
+  EXPAND = 'EXPAND',
+  COLLAPSE = 'COLLAPSE'
+}
+
+export enum AuditLogTab {
+  CHANGES = 'CHANGES',
+  SNAPSHOT = 'SNAPSHOT'
 }

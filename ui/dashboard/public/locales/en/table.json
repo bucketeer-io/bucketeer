@@ -65,7 +65,9 @@
     "experiment-details-desc": "The result will be created when the experiment starts.",
     "feature-flags-title": "No registered feature flags",
     "feature-flags-desc": "There are no registered feature flags. Add a new one to start managing.",
-    "notifications": "No notifications to show just yet, but don't worry, we're here to keep you in the loop."
+    "notifications": "No notifications to show just yet, but don't worry, we're here to keep you in the loop.",
+    "audit-logs-title": "No registered audit logs",
+    "audit-logs-desc": "There are no audit logs for this environment."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",

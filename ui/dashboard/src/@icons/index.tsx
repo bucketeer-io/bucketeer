@@ -6,9 +6,11 @@ import IconChecked from './customized-icons/checked.svg?react';
 import IconChevronDown from './customized-icons/chevron-down.svg?react';
 import IconChevronRight from './customized-icons/chevron-right.svg?react';
 import IconClose from './customized-icons/close.svg?react';
+import IconCollapse from './customized-icons/collapse.svg?react';
 import IconCopy from './customized-icons/copy.svg?react';
 import IconDisable from './customized-icons/disable.svg?react';
 import IconEmail from './customized-icons/email.svg?react';
+import IconExpand from './customized-icons/expand.svg?react';
 import IconInfoFilled from './customized-icons/info-filled.svg?react';
 import IconInfo from './customized-icons/info.svg?react';
 import IconFlagJSON from './customized-icons/json.svg?react';
@@ -121,7 +123,8 @@ export {
   IconFlagJSON,
   IconWatch,
   IconPlus,
-
+  IconExpand,
+  IconCollapse,
   // Special icons
   IconGoal,
   IconGoogle,
