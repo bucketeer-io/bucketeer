@@ -83,10 +83,11 @@ type Configuration struct {
 	MaxMPS                       int    `json:"maxMPS"`
 	WorkerNum                    int    `json:"workerNum"`
 	// Redis configuration (used when PubSubType is "redis")
-	RedisAddr     string `json:"redisAddr,omitempty"`
-	RedisPoolSize int    `json:"redisPoolSize,omitempty"`
-	RedisMinIdle  int    `json:"redisMinIdle,omitempty"`
-	RedisDB       int    `json:"redisDB,omitempty"`
+	RedisServerName string `json:"redisServerName,omitempty"`
+	RedisAddr       string `json:"redisAddr,omitempty"`
+	RedisPoolSize   int    `json:"redisPoolSize,omitempty"`
+	RedisMinIdle    int    `json:"redisMinIdle,omitempty"`
+	RedisDB         int    `json:"redisDB,omitempty"`
 }
 
 type pubSubSubscriber struct {
@@ -244,14 +245,11 @@ func createRedisClient(ctx context.Context, conf Configuration, logger *zap.Logg
 		pubSubType = string(DefaultPubSubType)
 	}
 
-	// Create a server name for metrics
-	serverName := fmt.Sprintf("subscriber-%s-%s", conf.Topic, conf.Subscription)
-
 	logger.Debug("Creating Redis client",
 		zap.String("address", redisAddr),
 		zap.Int("poolSize", redisPoolSize),
 		zap.Int("minIdle", redisMinIdle),
-		zap.String("serverName", serverName),
+		zap.String("serverName", conf.RedisServerName),
 		zap.String("pubSubType", pubSubType),
 	)
 
@@ -260,7 +258,7 @@ func createRedisClient(ctx context.Context, conf Configuration, logger *zap.Logg
 		redisAddr,
 		redisv3.WithPoolSize(redisPoolSize),
 		redisv3.WithMinIdleConns(redisMinIdle),
-		redisv3.WithServerName(serverName),
+		redisv3.WithServerName(conf.RedisServerName),
 		redisv3.WithLogger(logger),
 	)
 }

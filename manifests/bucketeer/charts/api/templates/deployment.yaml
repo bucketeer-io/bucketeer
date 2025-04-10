@@ -100,6 +100,8 @@ spec:
               value: "{{ .Values.env.traceSamplingProbability }}"
             - name: BUCKETEER_API_PUBSUB_TYPE
               value: "{{ .Values.global.pubsub.type }}"
+            - name: BUCKETEER_API_PUBSUB_REDIS_SERVER_NAME
+              value: "{{ .Values.global.pubsub.redis.serverName }}"
             - name: BUCKETEER_API_PUBSUB_REDIS_ADDR
               value: "{{ .Values.global.pubsub.redis.addr }}"
             - name: BUCKETEER_API_PUBSUB_REDIS_POOL_SIZE
