@@ -217,5 +217,10 @@
   "audit-logs": "Audit Logs",
   "audit-logs-subtitle": "View all events that is happening through the platform",
   "date-range": "Date Range",
-  "apply": "Apply"
+  "apply": "Apply",
+  "expand-all": "Expand All",
+  "collapse-all": "Collapse All",
+  "changes": "Changes",
+  "snapshot": "Snapshot",
+  "patch": "Patch"
 }

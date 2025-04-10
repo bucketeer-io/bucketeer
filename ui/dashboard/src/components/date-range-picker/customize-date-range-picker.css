@@ -57,3 +57,7 @@
 .rdrDay.rdrDayStartOfMonth:not(:has(span.rdrStartEdge)) {
   @apply rounded-full;
 }
+
+.rdrDay:not(.rdrDayPassive):has(span.rdrEndEdge:not(span.rdrStartEdge)).rdrDayStartOfWeek {
+  @apply rounded-full
+}

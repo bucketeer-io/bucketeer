@@ -1,4 +1,4 @@
-import { AnyObject } from "yup";
+import { AnyObject } from 'yup';
 
 export type DomainEventEntityType =
   | 'FEATURE'
@@ -20,21 +20,42 @@ export type DomainEventEntityType =
   | 'TAG'
   | 'CODEREF';
 
+export enum DomainEventEntityMap {
+  FEATURE = 0,
+  GOAL = 1,
+  EXPERIMENT = 2,
+  ACCOUNT = 3,
+  APIKEY = 4,
+  SEGMENT = 5,
+  ENVIRONMENT = 6,
+  ADMIN_ACCOUNT = 7,
+  AUTOOPS_RULE = 8,
+  PUSH = 9,
+  SUBSCRIPTION = 10,
+  ADMIN_SUBSCRIPTION = 11,
+  PROJECT = 12,
+  PROGRESSIVE_ROLLOUT = 14,
+  ORGANIZATION = 15,
+  FLAG_TRIGGER = 16,
+  TAG = 17,
+  CODEREF = 18
+}
+
 export interface PublicApiEditor {
-    token: string;
-    maintainer: string;
-    name: string;
-    avatarImage: string;
-    avatarFileType: string;
+  token: string;
+  maintainer: string;
+  name: string;
+  avatarImage: string;
+  avatarFileType: string;
 }
 
 export interface AuditLogEditor {
-    email: string;
-    isAdmin: boolean;
-    name: string;
-    publicApiEditor: PublicApiEditor;
-    avatarImage: string;
-    avatarFileType: string;
+  email: string;
+  isAdmin: boolean;
+  name: string;
+  publicApiEditor: PublicApiEditor;
+  avatarImage: string;
+  avatarFileType: string;
 }
 
 export interface AuditLog {

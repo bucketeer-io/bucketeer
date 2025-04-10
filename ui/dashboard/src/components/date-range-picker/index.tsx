@@ -1,5 +1,4 @@
-// theme css file
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   defaultStaticRanges,
   createStaticRanges,
@@ -8,12 +7,12 @@ import {
   Range
 } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
-// main css file
 import 'react-date-range/dist/theme/default.css';
 import dayjs from 'dayjs';
 import { useTranslation } from 'i18n';
+import { formatLongDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
-import { IconCalendar } from '@icons';
+import { IconCalendar, IconClose } from '@icons';
 import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import ActionBar from './action-bar';
@@ -84,6 +83,32 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
     ...props
   }) => {
     const { t } = useTranslation(['common']);
+    const popoverCloseRef = useRef<HTMLButtonElement>(null);
+
+    const hasValue = useMemo(() => !!from && !!to, [from, to]);
+
+    const triggerLabel = useMemo(() => {
+      if (!hasValue) return t('date-range');
+      const fromFormatted = formatLongDateTime({
+        value: from as string,
+        overrideOptions: {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        }
+      });
+
+      const toFormatted = formatLongDateTime({
+        value: to as string,
+        overrideOptions: {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        }
+      });
+      return `${fromFormatted} - ${toFormatted}`;
+    }, [hasValue, from, to]);
+
     const staticRanges = useMemo(
       () =>
         [
@@ -107,15 +132,13 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
       ...staticRanges[0].range(),
       key: 'selection'
     });
-    console.log({ range });
+
     const staticRangeSelected = useMemo(
       () => staticRanges.find(item => item.isSelected(range)),
       [staticRanges, range]
     );
 
     const [isDateSelected, setIsDateSelected] = useState(false);
-
-    console.log(staticRanges);
 
     const handleClear = useCallback(() => {
       setRange({
@@ -133,6 +156,7 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
           Math.trunc(startDate.getTime() / 1000),
           Math.trunc(endDate.getTime() / 1000)
         );
+      popoverCloseRef?.current?.click();
     }, [range, onChange]);
 
     useEffect(() => {
@@ -152,13 +176,29 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
 
     return (
       <Popover
-        onOpenChange={open => {
-          if (!open) handleClear();
-        }}
+        closeRef={popoverCloseRef}
         trigger={
-          <div className="flex items-center gap-x-2 px-4 h-12 border border-gray-400 hover:shadow-border-gray-400 rounded-lg">
-            <Icon icon={IconCalendar} color="gray-500" size="sm" />
-            <p className="typo-para-medium text-gray-600">{t('date-range')}</p>
+          <div className="flex items-center gap-x-2 px-4 h-12 border border-gray-400 hover:shadow-border-gray-400 rounded-lg max-w-[200px]">
+            {!hasValue && (
+              <Icon
+                icon={IconCalendar}
+                color="gray-500"
+                size="sm"
+                className="flex-center"
+              />
+            )}
+            <p className="typo-para-medium text-gray-600 truncate">{triggerLabel}</p>
+            {hasValue && (
+              <div
+                className="flex-center cursor-pointer"
+                onClick={e => {
+                  e.stopPropagation();
+                  handleClear();
+                }}
+              >
+                <Icon icon={IconClose} size="sm" className="flex-center" />
+              </div>
+            )}
           </div>
         }
         className="max-h-[501px] w-[793px] p-0"
@@ -192,7 +232,7 @@ export const ReactDateRangePicker: React.FC<ReactDateRangePickerProps> = memo(
           staticRanges={staticRanges}
           staticRangeSelected={staticRangeSelected}
           setRange={setRange}
-          onCancel={handleClear}
+          onCancel={() => popoverCloseRef?.current?.click()}
           onApply={handleApply}
         />
       </Popover>
