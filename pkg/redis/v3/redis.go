@@ -48,7 +48,7 @@ const (
 	ttlCmdName          = "TTL"
 	SetNXCmdName        = "SETNX"
 	xAddCmdName         = "XADD"
-	xGroupCreateCmdName = "XGROUP CREATE"
+	xGroupCreateCmdName = "XGROUP_CREATE"
 	xReadGroupCmdName   = "XREADGROUP"
 	xAckCmdName         = "XACK"
 	xPendingCmdName     = "XPENDING"
