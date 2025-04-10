@@ -224,5 +224,6 @@
   "snapshot": "Snapshot",
   "patch": "Patch",
   "audit-log-details": "Audit Log Details",
-  "current-version": "Current Version"
+  "current-version": "Current Version",
+  "updates": "Updates"
 }

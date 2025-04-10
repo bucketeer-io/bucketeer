@@ -3,7 +3,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation, getLanguage } from 'i18n';
 import { AuditLog } from '@types';
-import { isJsonString } from 'utils/converts';
+import { areJsonStringsEqual, isJsonString } from 'utils/converts';
 import { formatLongDateTime } from 'utils/date-time';
 import { copyToClipBoard } from 'utils/function';
 import { cn } from 'utils/style';
@@ -54,7 +54,7 @@ const AuditLogItem = memo(
     );
 
     const isSameData = useMemo(
-      () => !!entityData && entityData === previousEntityData,
+      () => areJsonStringsEqual(entityData, previousEntityData),
       [entityData, previousEntityData]
     );
 
@@ -200,7 +200,7 @@ const AuditLogItem = memo(
           )}
         </div>
         {options.comment && (
-          <div className="flex items-center w-full p-2 bg-gray-100 rounded-r-lg typo-para-tiny text-gray-600 break-all border-l-4 border-primary-500">
+          <div className="flex items-center w-full p-3 bg-gray-100 rounded typo-para-small text-gray-600 break-all border-l-4 border-gray-500">
             {options.comment}
           </div>
         )}
@@ -215,7 +215,11 @@ const AuditLogItem = memo(
               )}
             >
               <p className="typo-para-small text-gray-500 uppercase">
-                {t(isSameData ? 'current-version' : 'patch')}
+                {t(
+                  isSameData || currentTab === AuditLogTab.SNAPSHOT
+                    ? 'current-version'
+                    : 'updates'
+                )}
               </p>
               {!isSameData && (
                 <div className="flex items-center">

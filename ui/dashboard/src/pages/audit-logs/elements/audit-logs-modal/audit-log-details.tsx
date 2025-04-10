@@ -4,7 +4,7 @@ import { useQueryAuditLogDetails } from '@queries/audit-log-details';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { getLanguage, useTranslation } from 'i18n';
-import { isJsonString } from 'utils/converts';
+import { areJsonStringsEqual, isJsonString } from 'utils/converts';
 import { formatLongDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
 import AuditLogAvatar from 'pages/audit-logs/collection-layout/audit-log-avatar';
@@ -58,8 +58,7 @@ const AuditLogDetailsModal = ({
   const isSameData = useMemo(
     () =>
       auditLog
-        ? !!auditLog.entityData &&
-          auditLog.entityData === auditLog.previousEntityData
+        ? areJsonStringsEqual(auditLog.entityData, auditLog.previousEntityData)
         : false,
     [auditLog]
   );
@@ -140,7 +139,7 @@ const AuditLogDetailsModal = ({
           <div className="flex flex-col w-full gap-y-5">
             <div className="flex flex-col flex-1 gap-y-3 truncate">
               <div className="flex items-center w-full gap-x-3">
-                <AuditLogAvatar editor={auditLog?.editor} />
+                <AuditLogAvatar editor={auditLog?.editor} className="size-8" />
                 <div
                   className={cn(
                     'flex items-center gap-x-1.5 max-w-full typo-para-medium font-normal text-gray-700 truncate',
@@ -176,13 +175,13 @@ const AuditLogDetailsModal = ({
               />
             </div>
             {auditLog?.options?.comment && (
-              <div className="flex items-center w-full p-2 bg-gray-100 rounded-r-lg typo-para-tiny text-gray-600 break-all border-l-4 border-primary-500">
+              <div className="flex items-center w-full p-3 bg-gray-100 rounded typo-para-small text-gray-600 break-all border-l-4 border-gray-500">
                 {auditLog?.options?.comment}
               </div>
             )}
 
             <Tabs
-              className="flex w-full flex-col"
+              className="flex w-full flex-col gap-y-4"
               value={currentTab}
               onValueChange={value => handleChangeTab(value as AuditLogTab)}
             >
@@ -196,9 +195,18 @@ const AuditLogDetailsModal = ({
                   </TabsTrigger>
                 </TabsList>
               )}
+
+              <p className="typo-para-small text-gray-500 uppercase">
+                {t(
+                  isSameData || currentTab === AuditLogTab.SNAPSHOT
+                    ? 'current-version'
+                    : 'updates'
+                )}
+              </p>
+
               <TabsContent
                 value={currentTab}
-                className={cn('flex flex-col gap-y-4', { 'mt-0': isSameData })}
+                className="flex flex-col gap-y-4 mt-0"
               >
                 {auditLog && (
                   <ReactDiffViewer
