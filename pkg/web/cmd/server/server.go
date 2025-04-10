@@ -151,6 +151,7 @@ type server struct {
 	pubSubRedisPoolSize             *int
 	pubSubRedisMinIdle              *int
 	pubSubRedisPartitionCount       *int
+	useMySQL *bool
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -298,6 +299,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"code-reference-service",
 			"bucketeer-code-reference-service address.",
 		).Default("localhost:9001").String(),
+		useMySQL: cmd.Flag(
+			"use-mysql",
+			"Use MySQL instead of BigQuery for event storage.",
+		).Default("false").Bool(),
 		timezone:         cmd.Flag("timezone", "Time zone").Required().String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
@@ -414,15 +419,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	nonPersistentRedisV3Cache := cachev3.NewRedisCache(nonPersistentRedisClient)
 	// bigQueryQuerier
-	bigQueryQuerier, err := s.createBigQueryQuerier(ctx, *s.project, *s.bigQueryDataLocation, registerer, logger)
-	if err != nil {
-		logger.Error("Failed to create BigQuery client",
-			zap.Error(err),
-			zap.String("project", *s.project),
-			zap.String("location", *s.bigQueryDataLocation),
-			zap.String("data-set", *s.bigQueryDataSet),
-		)
-		return err
+	var bigQueryQuerier bqquerier.Client
+	if !*s.useMySQL {
+		bigQueryQuerier, err = s.createBigQueryQuerier(ctx, *s.project, *s.bigQueryDataLocation, registerer, logger)
+		if err != nil {
+			logger.Error("Failed to create BigQuery client",
+				zap.Error(err),
+				zap.String("project", *s.project),
+				zap.String("location", *s.bigQueryDataLocation),
+				zap.String("data-set", *s.bigQueryDataSet),
+			)
+			return err
+		}
 	}
 	// bigQueryDataSet
 	bigQueryDataSet := *s.bigQueryDataSet
@@ -614,6 +622,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		persistentRedisV3Cache,
 		location,
 		logger,
+		eventcounterapi.WithMySQL(*s.useMySQL),
 	)
 	eventCounterServer := rpc.NewServer(eventCounterService, *s.certPath, *s.keyPath,
 		"event-counter-server",
@@ -795,7 +804,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()
-		go bigQueryQuerier.Close()
+		if !*s.useMySQL {
+			go bigQueryQuerier.Close()
+		}
 		go domainTopicPublisher.Stop()
 		go segmentUsersPublisher.Stop()
 		go accountClient.Close()
