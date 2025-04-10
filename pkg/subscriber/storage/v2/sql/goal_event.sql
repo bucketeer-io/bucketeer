@@ -13,4 +13,3 @@ INSERT INTO goal_event (
     variation_id, 
     reason
 ) VALUES 
--- placeholder for multiple value clauses 
