@@ -333,6 +333,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 				userCountKeys,
 				req.FeatureId,
 				req.EnvironmentId,
+				variationID,
 				timestampUnit,
 			)
 			if err != nil {
@@ -350,6 +351,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 				userCountKeys,
 				req.FeatureId,
 				req.EnvironmentId,
+				variationID,
 			)
 			if err != nil {
 				s.logCountError(
@@ -477,13 +479,13 @@ func (s *eventCounterService) getTotalEventCounts(
 
 func (s *eventCounterService) getUserCounts(
 	keys [][]string,
-	featureID, environmentId string,
+	featureID, environmentId, variationID string,
 	unit ecproto.Timeseries_Unit,
 ) ([]float64, error) {
 	if unit == ecproto.Timeseries_HOUR {
 		return s.getHourlyUserCounts(keys, featureID, environmentId)
 	}
-	return s.getDailyUserCounts(keys, featureID, environmentId)
+	return s.getDailyUserCounts(keys, featureID, environmentId, variationID)
 }
 
 func (s *eventCounterService) getHourlyUserCounts(
@@ -504,13 +506,15 @@ func (s *eventCounterService) getHourlyUserCounts(
 
 func (s *eventCounterService) getDailyUserCounts(
 	days [][]string,
-	featureID, environmentId string,
+	featureID, environmentId, variationID string,
 ) ([]float64, error) {
 	counts := make([]float64, 0, len(days))
 	for _, day := range days {
 		c, err := s.countUniqueUser(
 			day,
-			featureID, environmentId,
+			featureID,
+			environmentId,
+			variationID,
 		)
 		if err != nil {
 			return nil, err
@@ -532,12 +536,13 @@ func (s *eventCounterService) flattenAry(
 
 func (s *eventCounterService) getTotalUserCounts(
 	userCountKeys [][]string,
-	featureID, environmentId string,
+	featureID, environmentId, variationID string,
 ) (int64, error) {
 	flat := s.flattenAry(userCountKeys)
 	count, err := s.countUniqueUser(
 		flat,
 		featureID, environmentId,
+		variationID,
 	)
 	if err != nil {
 		return 0, err
@@ -547,12 +552,13 @@ func (s *eventCounterService) getTotalUserCounts(
 
 func (s *eventCounterService) countUniqueUser(
 	userCountKeys []string,
-	featureID, environmentId string,
+	featureID, environmentId, variationID string,
 ) (count float64, err multiError) {
 	key := newPFMergeKey(
 		UserCountPrefix,
 		featureID,
 		environmentId,
+		variationID,
 	)
 	// We need to count the number of unique users in the target term.
 	if e := s.evaluationCountCacher.MergeMultiKeys(key, userCountKeys, pfMergeExpiration); e != nil {
@@ -632,11 +638,11 @@ func (s *eventCounterService) logCountError(
 }
 
 func newPFMergeKey(
-	kind, featureID, environmentId string,
+	kind, featureID, environmentId, variationID string,
 ) string {
 	return cache.MakeKey(
 		fmt.Sprintf("%s:%s", pfMergeKind, kind),
-		fmt.Sprintf("%s:%s", pfMergeKey, featureID),
+		fmt.Sprintf("%s:%s:%s", pfMergeKey, featureID, variationID),
 		environmentId,
 	)
 }
