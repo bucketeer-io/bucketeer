@@ -25,7 +25,7 @@ const Checkbox = forwardRef(
     }: CheckboxProps,
     ref: Ref<HTMLButtonElement>
   ) => {
-    const inputId = useMemo(() => uuid(), []);
+    const inputId = useMemo(() => props?.id ?? uuid(), [props]);
 
     return (
       <div
@@ -43,10 +43,10 @@ const Checkbox = forwardRef(
               }
             )}
             checked={checked}
-            id={inputId}
             ref={ref}
             onCheckedChange={onCheckedChange}
             {...props}
+            id={inputId}
           >
             <CheckboxPrimitive.Indicator
               className={cn('flex-center size-full opacity-0', {

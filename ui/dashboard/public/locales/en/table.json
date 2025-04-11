@@ -171,12 +171,13 @@
     "total-flags": "Total Flags",
     "active-flags": "Active Flags",
     "inactive-flags": "Inactive Flags",
-    "variation-type": "<text>{{type}}</text> variation type",
+    "specific-variation-type": "<text>{{type}}</text> variation type",
     "active-description": "This flag is receiving one or more requests in the last 7 days",
     "inactive-description": "This flag hasn't received any request in the last 7 days",
     "new-description": "This flag didn't receive any request after creation",
     "progressive-description": "This flag has a progressive rollout.",
     "scheduled-description": "This flag has a scheduled operation.",
-    "kill-description": "This flag has an automatic kill switch."
+    "kill-description": "This flag has an automatic kill switch.",
+    "variation-type": "Variation type"
   }
 }
