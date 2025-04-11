@@ -283,6 +283,15 @@ type FeatureServiceEvaluateFeatures = {
   readonly responseType: typeof proto_feature_service_pb.EvaluateFeaturesResponse;
 };
 
+type FeatureServiceDebugEvaluateFeatures = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.DebugEvaluateFeaturesRequest;
+  readonly responseType: typeof proto_feature_service_pb.DebugEvaluateFeaturesResponse;
+};
+
 type FeatureServiceListTags = {
   readonly methodName: string;
   readonly service: typeof FeatureService;
@@ -406,6 +415,7 @@ export class FeatureService {
   static readonly BulkUploadSegmentUsers: FeatureServiceBulkUploadSegmentUsers;
   static readonly BulkDownloadSegmentUsers: FeatureServiceBulkDownloadSegmentUsers;
   static readonly EvaluateFeatures: FeatureServiceEvaluateFeatures;
+  static readonly DebugEvaluateFeatures: FeatureServiceDebugEvaluateFeatures;
   static readonly ListTags: FeatureServiceListTags;
   static readonly CreateFlagTrigger: FeatureServiceCreateFlagTrigger;
   static readonly UpdateFlagTrigger: FeatureServiceUpdateFlagTrigger;
@@ -926,6 +936,21 @@ export class FeatureServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_feature_service_pb.EvaluateFeaturesResponse | null
+    ) => void
+  ): UnaryResponse;
+  debugEvaluateFeatures(
+    requestMessage: proto_feature_service_pb.DebugEvaluateFeaturesRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_feature_service_pb.DebugEvaluateFeaturesResponse | null
+    ) => void
+  ): UnaryResponse;
+  debugEvaluateFeatures(
+    requestMessage: proto_feature_service_pb.DebugEvaluateFeaturesRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_feature_service_pb.DebugEvaluateFeaturesResponse | null
     ) => void
   ): UnaryResponse;
   listTags(

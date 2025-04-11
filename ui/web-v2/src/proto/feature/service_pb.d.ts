@@ -2912,6 +2912,96 @@ export namespace EvaluateFeaturesResponse {
   };
 }
 
+export class DebugEvaluateFeaturesRequest extends jspb.Message {
+  clearUsersList(): void;
+  getUsersList(): Array<proto_user_user_pb.User>;
+  setUsersList(value: Array<proto_user_user_pb.User>): void;
+  addUsers(
+    value?: proto_user_user_pb.User,
+    index?: number
+  ): proto_user_user_pb.User;
+
+  clearFeatureIdsList(): void;
+  getFeatureIdsList(): Array<string>;
+  setFeatureIdsList(value: Array<string>): void;
+  addFeatureIds(value: string, index?: number): string;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DebugEvaluateFeaturesRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: DebugEvaluateFeaturesRequest
+  ): DebugEvaluateFeaturesRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: DebugEvaluateFeaturesRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): DebugEvaluateFeaturesRequest;
+  static deserializeBinaryFromReader(
+    message: DebugEvaluateFeaturesRequest,
+    reader: jspb.BinaryReader
+  ): DebugEvaluateFeaturesRequest;
+}
+
+export namespace DebugEvaluateFeaturesRequest {
+  export type AsObject = {
+    usersList: Array<proto_user_user_pb.User.AsObject>;
+    featureIdsList: Array<string>;
+    environmentId: string;
+  };
+}
+
+export class DebugEvaluateFeaturesResponse extends jspb.Message {
+  clearEvaluationsList(): void;
+  getEvaluationsList(): Array<proto_feature_evaluation_pb.Evaluation>;
+  setEvaluationsList(
+    value: Array<proto_feature_evaluation_pb.Evaluation>
+  ): void;
+  addEvaluations(
+    value?: proto_feature_evaluation_pb.Evaluation,
+    index?: number
+  ): proto_feature_evaluation_pb.Evaluation;
+
+  clearArchivedFeatureIdsList(): void;
+  getArchivedFeatureIdsList(): Array<string>;
+  setArchivedFeatureIdsList(value: Array<string>): void;
+  addArchivedFeatureIds(value: string, index?: number): string;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DebugEvaluateFeaturesResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: DebugEvaluateFeaturesResponse
+  ): DebugEvaluateFeaturesResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: DebugEvaluateFeaturesResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): DebugEvaluateFeaturesResponse;
+  static deserializeBinaryFromReader(
+    message: DebugEvaluateFeaturesResponse,
+    reader: jspb.BinaryReader
+  ): DebugEvaluateFeaturesResponse;
+}
+
+export namespace DebugEvaluateFeaturesResponse {
+  export type AsObject = {
+    evaluationsList: Array<proto_feature_evaluation_pb.Evaluation.AsObject>;
+    archivedFeatureIdsList: Array<string>;
+  };
+}
+
 export class ListTagsRequest extends jspb.Message {
   getPageSize(): number;
   setPageSize(value: number): void;
