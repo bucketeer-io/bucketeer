@@ -1,25 +1,24 @@
-import { cn } from 'utils/style';
+import { cn, getVariationColor } from 'utils/style';
 import { IconInfo } from '@icons';
 import { Polygon } from 'pages/experiment-details/elements/header-details';
+import Checkbox from 'components/checkbox';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
+import NameWithTooltip from 'elements/name-with-tooltip';
 
 export const ResultHeaderCell = ({
   text,
   minSize,
   tooltip,
   isShowIcon = true,
-  className,
-  isFormatText
+  className
 }: {
   text: string;
   minSize: number;
   tooltip: string;
   isShowIcon?: boolean;
   className?: string;
-  isFormatText?: boolean;
 }) => {
-  const formatText = isFormatText ? text.replace(' ', '<br />') : text;
   return (
     <div
       className={cn(
@@ -30,14 +29,9 @@ export const ResultHeaderCell = ({
         minWidth: minSize
       }}
     >
-      <p
-        dangerouslySetInnerHTML={{
-          __html: formatText
-        }}
-      />
+      <p>{text}</p>
       {isShowIcon && tooltip && (
         <Tooltip
-          delayDuration={300}
           trigger={
             <div className="flex-center size-fit">
               <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
@@ -52,17 +46,26 @@ export const ResultHeaderCell = ({
 };
 
 export const ResultCell = ({
+  variationId,
   value,
   minSize,
   isFirstItem,
-  className
+  className,
+  currentIndex,
+  isChecked,
+  onToggleShowData
 }: {
+  variationId?: string;
   value: string | number | boolean;
   minSize: number;
   isFirstItem?: boolean;
   className?: string;
+  currentIndex?: number;
+  isChecked?: boolean;
+  onToggleShowData?: (label: string) => void;
 }) => {
   const isBooleanValue = ['true', 'false'].includes(value as string);
+  const id = variationId || '';
 
   return (
     <div
@@ -72,21 +75,49 @@ export const ResultCell = ({
       )}
       style={{ minWidth: minSize }}
     >
-      {isFirstItem && isBooleanValue && (
-        <Polygon
-          className={cn('border-none size-3', {
-            'bg-accent-blue-500': value === 'true',
-            'bg-accent-pink-500': value === 'false'
+      {isFirstItem ? (
+        <>
+          <Checkbox
+            checked={isChecked}
+            onCheckedChange={() =>
+              onToggleShowData && onToggleShowData(String(value))
+            }
+          />
+          {typeof currentIndex === 'number' && (
+            <Polygon
+              className="border-none size-3"
+              style={{
+                background: getVariationColor(currentIndex),
+                zIndex: currentIndex
+              }}
+            />
+          )}
+          <NameWithTooltip
+            id={id}
+            maxLines={1}
+            content={<NameWithTooltip.Content content={value} id={id} />}
+            trigger={
+              <NameWithTooltip.Trigger
+                id={id}
+                name={String(value)}
+                maxLines={1}
+                haveAction={false}
+                className={cn('typo-para-medium text-gray-800', {
+                  capitalize: isBooleanValue
+                })}
+              />
+            }
+          />
+        </>
+      ) : (
+        <p
+          className={cn('typo-para-medium leading-4 text-gray-800', {
+            capitalize: isBooleanValue
           })}
-        />
+        >
+          {String(value)}
+        </p>
       )}
-      <p
-        className={cn('typo-para-medium leading-4 text-gray-800', {
-          capitalize: isBooleanValue
-        })}
-      >
-        {String(value)}
-      </p>
     </div>
   );
 };
