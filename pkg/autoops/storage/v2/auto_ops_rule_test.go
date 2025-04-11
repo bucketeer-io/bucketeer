@@ -226,7 +226,7 @@ func TestListAutoOpsRules(t *testing.T) {
 						Value:    5,
 					},
 				},
-				InFilter:    nil,
+				InFilters:   nil,
 				NullFilters: nil,
 				JSONFilters: nil,
 				SearchQuery: nil,

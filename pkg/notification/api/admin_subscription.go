@@ -776,7 +776,7 @@ func (s *NotificationService) listAdminSubscriptionsMySQL(
 		Limit:       limit,
 		Offset:      offset,
 		Filters:     filters,
-		InFilter:    nil,
+		InFilters:   nil,
 		NullFilters: nil,
 		JSONFilters: jsonFilters,
 		SearchQuery: seachQuery,
