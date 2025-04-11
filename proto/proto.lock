@@ -33725,14 +33725,9 @@
                 ]
               },
               {
-                "id": 2,
-                "name": "tag",
-                "type": "string"
-              },
-              {
                 "id": 3,
-                "name": "features",
-                "type": "Feature",
+                "name": "feature_ids",
+                "type": "string",
                 "is_repeated": true,
                 "options": [
                   {
@@ -33749,34 +33744,6 @@
                   {
                     "name": "(google.api.field_behavior)",
                     "value": "REQUIRED"
-                  }
-                ]
-              }
-            ],
-            "messages": [
-              {
-                "name": "Feature",
-                "fields": [
-                  {
-                    "id": 1,
-                    "name": "id",
-                    "type": "string"
-                  },
-                  {
-                    "id": 2,
-                    "name": "feature_version",
-                    "type": "int32",
-                    "options": [
-                      {
-                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                        "aggregated": [
-                          {
-                            "name": "description",
-                            "value": "If not set, the latest version will be used."
-                          }
-                        ]
-                      }
-                    ]
                   }
                 ]
               }

@@ -543,17 +543,9 @@ message EvaluateFeaturesResponse {
 }
 
 message DebugEvaluateFeaturesRequest {
-  message Feature {
-    string id = 1;
-    int32 feature_version = 2
-        [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-          description: "If not set, the latest version will be used."
-        }];
-  }
   repeated bucketeer.user.User users = 1
       [(google.api.field_behavior) = REQUIRED];
-  string tag = 2;
-  repeated Feature features = 3 [(google.api.field_behavior) = REQUIRED];
+  repeated string feature_ids = 3 [(google.api.field_behavior) = REQUIRED];
   string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
 }
 

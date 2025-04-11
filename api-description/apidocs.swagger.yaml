@@ -1714,73 +1714,6 @@ definitions:
       - UPDATE
       - DELETE
     default: UNSPECIFIED
-  bucketeerfeatureFeature:
-    type: object
-    properties:
-      id:
-        type: string
-      name:
-        type: string
-      description:
-        type: string
-      enabled:
-        type: boolean
-      deleted:
-        type: boolean
-      evaluationUndelayable:
-        type: boolean
-      ttl:
-        type: integer
-        format: int32
-      version:
-        type: integer
-        format: int32
-      createdAt:
-        type: string
-        format: int64
-      updatedAt:
-        type: string
-        format: int64
-      variations:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/bucketeerfeatureVariation'
-      targets:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureTarget'
-      rules:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureRule'
-      defaultStrategy:
-        $ref: '#/definitions/featureStrategy'
-      offVariation:
-        type: string
-      tags:
-        type: array
-        items:
-          type: string
-      lastUsedInfo:
-        $ref: '#/definitions/featureFeatureLastUsedInfo'
-      maintainer:
-        type: string
-      variationType:
-        $ref: '#/definitions/FeatureVariationType'
-      archived:
-        type: boolean
-      prerequisites:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featurePrerequisite'
-      samplingSeed:
-        type: string
-      autoOpsSummary:
-        $ref: '#/definitions/featureAutoOpsSummary'
   bucketeerfeatureVariation:
     type: object
     properties:
@@ -1890,7 +1823,7 @@ definitions:
     type: object
     properties:
       feature:
-        $ref: '#/definitions/bucketeerfeatureFeature'
+        $ref: '#/definitions/featureFeature'
   bucketeergatewayCreatePushRequest:
     type: object
     properties:
@@ -1929,7 +1862,7 @@ definitions:
     type: object
     properties:
       feature:
-        $ref: '#/definitions/bucketeerfeatureFeature'
+        $ref: '#/definitions/featureFeature'
   bucketeergatewayGetMeResponse:
     type: object
     properties:
@@ -1973,7 +1906,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/bucketeerfeatureFeature'
+          $ref: '#/definitions/featureFeature'
   bucketeergatewayListPushesResponse:
     type: object
     properties:
@@ -2126,7 +2059,7 @@ definitions:
     type: object
     properties:
       feature:
-        $ref: '#/definitions/bucketeerfeatureFeature'
+        $ref: '#/definitions/featureFeature'
   bucketeergatewayUpdatePushRequest:
     type: object
     properties:
@@ -2342,6 +2275,73 @@ definitions:
         type: string
       variationName:
         type: string
+  featureFeature:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      enabled:
+        type: boolean
+      deleted:
+        type: boolean
+      evaluationUndelayable:
+        type: boolean
+      ttl:
+        type: integer
+        format: int32
+      version:
+        type: integer
+        format: int32
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      variations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerfeatureVariation'
+      targets:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureTarget'
+      rules:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureRule'
+      defaultStrategy:
+        $ref: '#/definitions/featureStrategy'
+      offVariation:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+      lastUsedInfo:
+        $ref: '#/definitions/featureFeatureLastUsedInfo'
+      maintainer:
+        type: string
+      variationType:
+        $ref: '#/definitions/FeatureVariationType'
+      archived:
+        type: boolean
+      prerequisites:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featurePrerequisite'
+      samplingSeed:
+        type: string
+      autoOpsSummary:
+        $ref: '#/definitions/featureAutoOpsSummary'
   featureFeatureLastUsedInfo:
     type: object
     properties:
@@ -2672,7 +2672,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/bucketeerfeatureFeature'
+          $ref: '#/definitions/featureFeature'
       archivedFeatureFlagIds:
         type: array
         items:

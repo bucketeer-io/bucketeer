@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
@@ -2413,42 +2412,6 @@ func (s *FeatureService) DebugEvaluateFeatures(
 		)
 		return nil, err
 	}
-
-	featureEvaluations, archivedFS, err := s.evaluateLatestFeatures(ctx, req, localizer)
-	if err != nil {
-		return nil, err
-	}
-
-	olderFeaturesInput := make([]*featureproto.DebugEvaluateFeaturesRequest_Feature, 0)
-	for _, f := range req.Features {
-		isLatest := false
-		for _, eval := range featureEvaluations {
-			if f.Id == eval.Id && (f.FeatureVersion == eval.FeatureVersion || f.FeatureVersion == 0) {
-				isLatest = true
-			}
-		}
-		if !isLatest {
-			olderFeaturesInput = append(olderFeaturesInput, f)
-		}
-	}
-	olderFeatureEvaluations, olderArchivedFS, err := s.evaluateOlderFeatures(ctx, req, localizer)
-	if err != nil {
-		return nil, err
-	}
-	featureEvaluations = append(featureEvaluations, olderFeatureEvaluations...)
-	archivedFS = append(archivedFS, olderArchivedFS...)
-
-	return &featureproto.DebugEvaluateFeaturesResponse{
-		Evaluations:        featureEvaluations,
-		ArchivedFeatureIds: archivedFS,
-	}, nil
-}
-
-func (s *FeatureService) evaluateLatestFeatures(
-	ctx context.Context,
-	req *featureproto.DebugEvaluateFeaturesRequest,
-	localizer locale.Localizer,
-) ([]*featureproto.Evaluation, []string, error) {
 	fs, err, _ := s.flightgroup.Do(
 		req.EnvironmentId,
 		func() (interface{}, error) {
@@ -2468,74 +2431,38 @@ func (s *FeatureService) evaluateLatestFeatures(
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
 		if err != nil {
-			return nil, nil, statusInternal.Err()
+			return nil, statusInternal.Err()
 		}
-		return nil, nil, dt.Err()
+		return nil, dt.Err()
 	}
-	latestFeatures := fs.([]*featureproto.Feature)
-	latestEvaluationResult := make([]*featureproto.Evaluation, 0)
-	archivedFS := make([]string, 0)
+
+	features := fs.([]*featureproto.Feature)
+	var evaluations = make([]*featureproto.Evaluation, 0)
+	var archivedFS = make([]string, 0)
+
 	for i := range req.Users {
-		userEvaluations, err := s.evaluateFeatures(
-			ctx,
-			latestFeatures, req.Users[i], req.EnvironmentId, req.Tag, localizer)
-		if err != nil {
-			s.logger.Error(
-				"Failed to evaluate features",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
+		if len(req.FeatureIds) == 1 {
+			features, err = s.getTargetFeatures(features, req.FeatureIds[0], localizer)
 			if err != nil {
-				return nil, nil, statusInternal.Err()
-			}
-			return nil, nil, dt.Err()
-		}
-
-		for _, f := range req.Features {
-			for _, e := range userEvaluations.Evaluations {
-				if f.Id == e.FeatureId && (f.FeatureVersion == e.FeatureVersion || f.FeatureVersion == 0) {
-					latestEvaluationResult = append(latestEvaluationResult, e)
-					break
+				s.logger.Error(
+					"Failed to get target features",
+					log.FieldsFromImcomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("environmentId", req.EnvironmentId),
+					)...,
+				)
+				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalize(locale.InternalServerError),
+				})
+				if err != nil {
+					return nil, statusInternal.Err()
 				}
+				return nil, dt.Err()
 			}
 		}
-		archivedFS = append(archivedFS, userEvaluations.ArchivedFeatureIds...)
-	}
-	return latestEvaluationResult, archivedFS, nil
-}
-
-func (s *FeatureService) evaluateOlderFeatures(
-	ctx context.Context,
-	req *featureproto.DebugEvaluateFeaturesRequest,
-	localizer locale.Localizer,
-) ([]*featureproto.Evaluation, []string, error) {
-	olderFeatures, err := s.getOlderVersionFeatures(ctx, req.Features, req.EnvironmentId)
-	if err != nil {
-		return nil, nil, err
-	}
-	for i := range olderFeatures {
-		// to avoid duplicate feature IDs when doing topology sort, currently adding version to the ID
-		// TODO: currently not able to evaluate depend features in the past
-		olderFeatures[i].Id = fmt.Sprintf("%s:%d", olderFeatures[i].Id, olderFeatures[i].Version)
-	}
-
-	evaluations := make([]*featureproto.Evaluation, 0)
-	archivedFS := make([]string, 0)
-
-	for i := range req.Users {
 		userEvaluations, err := s.evaluateFeatures(
-			ctx,
-			olderFeatures,
-			req.Users[i],
-			req.EnvironmentId,
-			req.Tag,
-			localizer,
+			ctx, features, req.Users[i], req.EnvironmentId, "", localizer,
 		)
 		if err != nil {
 			s.logger.Error(
@@ -2550,61 +2477,28 @@ func (s *FeatureService) evaluateOlderFeatures(
 				Message: localizer.MustLocalize(locale.InternalServerError),
 			})
 			if err != nil {
-				return nil, nil, statusInternal.Err()
+				return nil, statusInternal.Err()
 			}
-			return nil, nil, dt.Err()
-		}
-		for j := range userEvaluations.Evaluations {
-			// remove version from featureID in response
-			userEvaluations.Evaluations[j].FeatureId = strings.Split(
-				userEvaluations.Evaluations[j].FeatureId, ":",
-			)[0]
+			return nil, dt.Err()
 		}
 
 		evaluations = append(evaluations, userEvaluations.Evaluations...)
 		archivedFS = append(archivedFS, userEvaluations.ArchivedFeatureIds...)
 	}
-	return evaluations, archivedFS, nil
-}
-
-func (s *FeatureService) getOlderVersionFeatures(
-	ctx context.Context,
-	featuresWithVersion []*featureproto.DebugEvaluateFeaturesRequest_Feature,
-	environmentID string,
-) ([]*featureproto.Feature, error) {
-	if len(featuresWithVersion) == 0 {
-		return []*featureproto.Feature{}, nil
+	evaluationResults := make([]*featureproto.Evaluation, 0)
+	for _, eval := range evaluations {
+		for _, id := range req.FeatureIds {
+			if eval.FeatureId == id {
+				evaluationResults = append(evaluationResults, eval)
+				break
+			}
+		}
 	}
 
-	fidVersionSet := make([]interface{}, 0, len(featuresWithVersion))
-	for _, f := range featuresWithVersion {
-		val := fmt.Sprintf(`{"id": "%s", "version": "%d"}`, f.Id, f.FeatureVersion)
-		fidVersionSet = append(fidVersionSet, val)
-	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_id", "=", environmentID),
-		mysql.NewFilter("entity_type", "=", 0), // feature type
-		mysql.NewFilter("TRIM(audit_log.entity_data)", "!=", ""),
-		mysql.NewInFilter(
-			`CAST(JSON_OBJECT(
-				'id', audit_log.entity_data->>'$.id', 
-				'version', audit_log.entity_data->>'$.version') AS CHAR)`,
-			fidVersionSet,
-		),
-	}
-	features, err := s.featureStorage.ListFeaturesByVersion(ctx, whereParts)
-	if err != nil {
-		s.logger.Error(
-			"Failed to list features",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", environmentID),
-			)...,
-		)
-		return nil, err
-	}
-
-	return features, nil
+	return &featureproto.DebugEvaluateFeaturesResponse{
+		Evaluations:        evaluationResults,
+		ArchivedFeatureIds: archivedFS,
+	}, nil
 }
 
 func (s *FeatureService) getTargetFeatures(

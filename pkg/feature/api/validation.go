@@ -958,28 +958,15 @@ func validateDebugEvaluateFeatures(req *featureproto.DebugEvaluateFeaturesReques
 		}
 	}
 
-	if len(req.Features) == 0 {
+	if len(req.FeatureIds) == 0 {
 		dt, err := statusMissingFeatures.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "features"),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_ids"),
 		})
 		if err != nil {
 			return statusInternal.Err()
 		}
 		return dt.Err()
-	}
-
-	for _, feature := range req.Features {
-		if feature.Id == "" {
-			dt, err := statusMissingFeatureID.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
 	}
 
 	return nil
