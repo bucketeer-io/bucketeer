@@ -2,6 +2,7 @@ global:
   image:
     tag: v1.3.0 # x-release-please-version
     imagePullSecrets:
+  useMySQL: true
 
 migration:
   image:
