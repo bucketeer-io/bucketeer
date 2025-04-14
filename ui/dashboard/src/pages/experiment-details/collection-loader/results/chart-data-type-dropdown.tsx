@@ -18,7 +18,7 @@ const ChartDataTypeDropdown = ({
   onSelectOption: (value: DropdownValue) => void;
 }) => {
   const { t } = useTranslation(['table', 'common']);
-  const commonOptions = [
+  const evaluationOptions = [
     {
       label: t('results.evaluation-user'),
       value: 'evaluation-user'
@@ -32,10 +32,6 @@ const ChartDataTypeDropdown = ({
       value: 'goal-user'
     },
     {
-      label: t('results.conversion-rate'),
-      value: 'conversion-rate'
-    },
-    {
       label: t('results.value-total'),
       value: 'value-total'
     },
@@ -44,8 +40,18 @@ const ChartDataTypeDropdown = ({
       value: 'value-user'
     }
   ];
-  const options =
-    tab === 'EVALUATION' ? commonOptions : [commonOptions[3], commonOptions[5]];
+  const conversionOptions = [
+    {
+      label: t('results.conversion-rate'),
+      value: 'conversion-rate'
+    },
+    {
+      label: t('results.value-user'),
+      value: 'value-user'
+    }
+  ];
+
+  const options = tab === 'EVALUATION' ? evaluationOptions : conversionOptions;
 
   return (
     <DropdownMenu>

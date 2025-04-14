@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'i18n';
 import { Experiment, GoalResult } from '@types';
 import { ResultCell, ResultHeaderCell } from './goal-results-table-element';
+import { DatasetReduceType } from './timeseries-area-line-chart';
 
 const headerList = [
   {
@@ -25,11 +26,6 @@ const headerList = [
     minSize: 123
   },
   {
-    name: 'conversion-rate',
-    tooltipKey: 'conversion-rate-tooltip',
-    minSize: 147
-  },
-  {
     name: 'value-total',
     tooltipKey: 'value-total-tooltip',
     minSize: 125
@@ -43,10 +39,14 @@ const headerList = [
 
 const EvaluationTable = ({
   experiment,
-  goalResult
+  goalResult,
+  evaluationDataSets,
+  onToggleShowData
 }: {
   experiment: Experiment;
   goalResult: GoalResult;
+  evaluationDataSets: DatasetReduceType[];
+  onToggleShowData: (label: string) => void;
 }) => {
   const { t } = useTranslation(['common', 'table']);
 
@@ -58,7 +58,7 @@ const EvaluationTable = ({
         );
         return {
           ...item,
-          variationName: variation?.value || variation?.name || ''
+          variationName: variation?.name || variation?.value || ''
         };
       }),
     [goalResult, experiment]
@@ -76,7 +76,6 @@ const EvaluationTable = ({
             }
             isShowIcon={index > 0}
             minSize={item.minSize}
-            isFormatText={true}
           />
         ))}
       </div>
@@ -84,44 +83,41 @@ const EvaluationTable = ({
         {evaluationData?.map((item, i) => {
           const { experimentCount, evaluationCount } = item;
 
-          const conversionRate =
-            Number(evaluationCount?.userCount) > 0
-              ? (Number(experimentCount?.userCount) /
-                  Number(evaluationCount?.userCount)) *
-                100
-              : 0;
-
           const valuePerUser =
             Number(experimentCount.userCount) > 0
               ? Number(experimentCount.valueSum) /
                 Number(experimentCount.userCount)
               : 0;
 
+          const isHidden = evaluationDataSets.find(
+            dataset => dataset.label === item?.variationName
+          )?.hidden;
+
           return (
             <div key={i} className="flex items-center w-full">
               <ResultCell
+                currentIndex={i}
+                variationId={item.variationId}
                 isFirstItem={true}
                 value={item?.variationName || ''}
                 minSize={270}
+                isChecked={!isHidden}
+                onToggleShowData={onToggleShowData}
               />
               <ResultCell
-                value={Number(evaluationCount?.userCount)}
+                value={Number(evaluationCount?.userCount)?.toLocaleString()}
                 minSize={143}
               />
               <ResultCell
-                value={Number(experimentCount?.eventCount)}
+                value={Number(experimentCount?.eventCount)?.toLocaleString()}
                 minSize={123}
               />
               <ResultCell
-                value={Number(experimentCount?.userCount)}
+                value={Number(experimentCount?.userCount)?.toLocaleString()}
                 minSize={119}
               />
               <ResultCell
-                value={conversionRate.toFixed(1) + ' %'}
-                minSize={147}
-              />
-              <ResultCell
-                value={Number(experimentCount?.valueSum)}
+                value={Number(experimentCount?.valueSum)?.toLocaleString()}
                 minSize={125}
               />
               <ResultCell value={valuePerUser.toFixed(2)} minSize={123} />
