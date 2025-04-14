@@ -40,19 +40,20 @@ const (
 
 // StreamPuller is a Redis Stream implementation of the Puller interface
 type StreamPuller struct {
-	redisClient  v3.Client
-	subscription string // Consumer group name
-	topic        string // Stream name
-	consumer     string // Consumer name
-	batchSize    int64
-	blockTime    time.Duration
-	idleTime     time.Duration
-	closed       bool
-	mutex        sync.Mutex
-	done         chan struct{}
-	logger       *zap.Logger
-	messages     chan *puller.Message
-	handler      func(context.Context, *puller.Message) // Store the handler function
+	redisClient    v3.Client
+	subscription   string // Consumer group name
+	topicBase      string // Base stream name
+	partitionCount int    // Number of partitions
+	consumer       string // Consumer name
+	batchSize      int64
+	blockTime      time.Duration
+	idleTime       time.Duration
+	closed         bool
+	mutex          sync.Mutex
+	done           chan struct{}
+	logger         *zap.Logger
+	messages       chan *puller.Message
+	handler        func(context.Context, *puller.Message) // Store the handler function
 }
 
 type StreamPullerOption func(*StreamPuller)
@@ -92,6 +93,19 @@ func WithStreamPullerIdleTime(d time.Duration) StreamPullerOption {
 	}
 }
 
+// WithStreamPullerPartitionCount sets the number of partitions for the puller
+func WithStreamPullerPartitionCount(count int) StreamPullerOption {
+	return func(p *StreamPuller) {
+		p.partitionCount = count
+	}
+}
+
+// getStreamKey returns the partitioned stream name with hash tag
+func (p *StreamPuller) getStreamKey(partition int) string {
+	// Use a hash tag {stream} to ensure keys are routed to the same Redis node
+	return fmt.Sprintf("%s-%d{stream}", p.topicBase, partition)
+}
+
 // NewStreamPuller creates a new Redis Stream puller
 func NewStreamPuller(
 	client v3.Client,
@@ -100,16 +114,17 @@ func NewStreamPuller(
 	opts ...StreamPullerOption,
 ) puller.Puller {
 	p := &StreamPuller{
-		redisClient:  client,
-		subscription: subscription,
-		topic:        topic,
-		consumer:     fmt.Sprintf("%s-%s-%d", subscription, topic, time.Now().UnixNano()),
-		batchSize:    defaultBatchSize,
-		blockTime:    defaultBlockTime,
-		idleTime:     defaultIdleTime,
-		logger:       zap.NewNop(),
-		done:         make(chan struct{}),
-		messages:     make(chan *puller.Message),
+		redisClient:    client,
+		subscription:   subscription,
+		topicBase:      topic,
+		partitionCount: defaultStreamPartitionCount,
+		consumer:       fmt.Sprintf("%s-%s-%d", subscription, topic, time.Now().UnixNano()),
+		batchSize:      defaultBatchSize,
+		blockTime:      defaultBlockTime,
+		idleTime:       defaultIdleTime,
+		logger:         zap.NewNop(),
+		done:           make(chan struct{}),
+		messages:       make(chan *puller.Message),
 	}
 
 	for _, opt := range opts {
@@ -133,15 +148,18 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 	p.handler = handler
 	p.mutex.Unlock()
 
-	// Create consumer group (create stream if it doesn't exist)
-	err := p.redisClient.XGroupCreateMkStream(p.topic, p.subscription, "0")
-	if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
-		p.logger.Error("Failed to create consumer group",
-			zap.Error(err),
-			zap.String("subscription", p.subscription),
-			zap.String("topic", p.topic),
-		)
-		return err
+	// Create consumer groups for all partitions
+	for partition := 0; partition < p.partitionCount; partition++ {
+		streamKey := p.getStreamKey(partition)
+		err := p.redisClient.XGroupCreateMkStream(streamKey, p.subscription, "0")
+		if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
+			p.logger.Error("Failed to create consumer group",
+				zap.Error(err),
+				zap.String("subscription", p.subscription),
+				zap.String("stream", streamKey),
+			)
+			// Continue with other partitions even if this one fails
+		}
 	}
 
 	// Start a background goroutine to reclaim stale messages
@@ -157,7 +175,7 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 		case <-ctxDone:
 			p.logger.Debug("Context canceled, stopping pull",
 				zap.String("subscription", p.subscription),
-				zap.String("topic", p.topic),
+				zap.String("topicBase", p.topicBase),
 			)
 			p.Close()
 			return ctx.Err()
@@ -165,17 +183,25 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 		case <-p.done:
 			p.logger.Debug("Puller closed, stopping pull",
 				zap.String("subscription", p.subscription),
-				zap.String("topic", p.topic),
+				zap.String("topicBase", p.topicBase),
 			)
 			return nil
 
 		default:
-			// ">" means only new messages (that haven't been delivered yet)
-			streams, err := p.redisClient.XReadGroup(
+			// Build streams argument for XREADGROUP
+			// It should alternate between stream keys and ">" for each partition
+			streams := make([]string, 0, p.partitionCount*2)
+			for partition := 0; partition < p.partitionCount; partition++ {
+				streamKey := p.getStreamKey(partition)
+				streams = append(streams, streamKey, ">") // ">" means only new messages
+			}
+
+			// Read from all partitions
+			streamResults, err := p.redisClient.XReadGroup(
 				ctx,
 				p.subscription,
 				p.consumer,
-				[]string{p.topic, ">"},
+				streams,
 				p.batchSize,
 				p.blockTime,
 			)
@@ -192,10 +218,10 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 				}
 
 				// Exponential backoff on error
-				p.logger.Error("Failed to read from stream",
+				p.logger.Error("Failed to read from streams",
 					zap.Error(err),
 					zap.String("subscription", p.subscription),
-					zap.String("topic", p.topic),
+					zap.String("topicBase", p.topicBase),
 					zap.Duration("backoff", backoff),
 				)
 
@@ -214,16 +240,17 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 			// Reset backoff on success
 			backoff = defaultBackoff
 
-			// Process messages
-			for _, s := range streams {
-				for _, msg := range s.Messages {
+			// Process messages from all streams
+			for _, streamResult := range streamResults {
+				for _, msg := range streamResult.Messages {
 					// Create ack and nack functions that will be called by the handler
+					streamKey := streamResult.Stream
 					ackFunc := func() {
-						if err := p.redisClient.XAck(p.topic, p.subscription, msg.ID); err != nil {
+						if err := p.redisClient.XAck(streamKey, p.subscription, msg.ID); err != nil {
 							p.logger.Error("Failed to acknowledge message",
 								zap.Error(err),
 								zap.String("subscription", p.subscription),
-								zap.String("topic", p.topic),
+								zap.String("stream", streamKey),
 								zap.String("id", msg.ID),
 							)
 						}
@@ -234,7 +261,7 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 						// The message will remain in the pending entries list and will be redelivered
 						p.logger.Debug("Message not acknowledged (NACK)",
 							zap.String("subscription", p.subscription),
-							zap.String("topic", p.topic),
+							zap.String("stream", streamKey),
 							zap.String("id", msg.ID),
 						)
 					}
@@ -259,7 +286,7 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 						Data: data,
 						Attributes: map[string]string{
 							"id":     msg.ID,
-							"stream": s.Stream,
+							"stream": streamKey,
 						},
 						Ack:  ackFunc,
 						Nack: nackFunc,
@@ -283,13 +310,13 @@ func (p *StreamPuller) recoveryLoop(ctx context.Context) {
 		case <-ctx.Done():
 			p.logger.Debug("Context canceled, stopping recovery loop",
 				zap.String("subscription", p.subscription),
-				zap.String("topic", p.topic),
+				zap.String("topicBase", p.topicBase),
 			)
 			return
 		case <-p.done:
 			p.logger.Debug("Puller closed, stopping recovery loop",
 				zap.String("subscription", p.subscription),
-				zap.String("topic", p.topic),
+				zap.String("topicBase", p.topicBase),
 			)
 			return
 		case <-ticker.C:
@@ -297,153 +324,163 @@ func (p *StreamPuller) recoveryLoop(ctx context.Context) {
 			if p.handler == nil {
 				p.logger.Debug("No handler registered, skipping recovery",
 					zap.String("subscription", p.subscription),
-					zap.String("topic", p.topic),
+					zap.String("topicBase", p.topicBase),
 				)
 				continue
 			}
 
-			// Retrieve pending messages that have been idle longer than idleTime
-			pendingMessages, err := p.redisClient.XPendingExt(
-				ctx,
-				p.topic,
-				p.subscription,
-				"-", // Start
-				"+", // End
-				10,  // Count
-				p.idleTime,
-			)
-			if err != nil {
-				p.logger.Error("Failed to get pending messages",
-					zap.Error(err),
-					zap.String("subscription", p.subscription),
-					zap.String("topic", p.topic),
+			// Check each partition for stale messages
+			for partition := 0; partition < p.partitionCount; partition++ {
+				streamKey := p.getStreamKey(partition)
+
+				// Retrieve pending messages that have been idle longer than idleTime
+				pendingMessages, err := p.redisClient.XPendingExt(
+					ctx,
+					streamKey,
+					p.subscription,
+					"-", // Start
+					"+", // End
+					10,  // Count
+					p.idleTime,
 				)
-				continue
-			}
-
-			if len(pendingMessages) == 0 {
-				// No stale messages to reclaim
-				continue
-			}
-
-			p.logger.Info("Found stale messages to reclaim",
-				zap.Int("count", len(pendingMessages)),
-				zap.String("subscription", p.subscription),
-				zap.String("topic", p.topic),
-			)
-
-			// Collect message IDs
-			messageIDs := make([]string, len(pendingMessages))
-			for i, pm := range pendingMessages {
-				messageIDs[i] = pm.ID
-				p.logger.Debug("Claiming stale message",
-					zap.String("id", pm.ID),
-					zap.String("previous_consumer", pm.Consumer),
-					zap.String("subscription", p.subscription),
-					zap.String("topic", p.topic),
-				)
-			}
-
-			// Claim the messages for the current consumer
-			claimed, err := p.redisClient.XClaim(
-				ctx,
-				p.topic,
-				p.subscription,
-				p.consumer,
-				p.idleTime,
-				messageIDs,
-			)
-			if err != nil {
-				p.logger.Error("Failed to claim messages",
-					zap.Error(err),
-					zap.String("subscription", p.subscription),
-					zap.String("topic", p.topic),
-				)
-				continue
-			}
-
-			p.logger.Info("Successfully claimed stale messages",
-				zap.Int("claimed_count", len(claimed)),
-				zap.Int("requested_count", len(messageIDs)),
-				zap.String("subscription", p.subscription),
-				zap.String("topic", p.topic),
-			)
-
-			// Reprocess the claimed messages instead of just acknowledging them
-			reprocessedCount := 0
-			for _, msg := range claimed {
-				p.logger.Debug("Reprocessing claimed message",
-					zap.String("subscription", p.subscription),
-					zap.String("topic", p.topic),
-					zap.String("id", msg.ID),
-				)
-
-				// Create ack and nack functions just like in the Pull method
-				ackFunc := func() {
-					if err := p.redisClient.XAck(p.topic, p.subscription, msg.ID); err != nil {
-						p.logger.Error("Failed to acknowledge claimed message",
-							zap.Error(err),
-							zap.String("subscription", p.subscription),
-							zap.String("topic", p.topic),
-							zap.String("id", msg.ID),
-						)
-					}
+				if err != nil {
+					p.logger.Error("Failed to get pending messages",
+						zap.Error(err),
+						zap.String("subscription", p.subscription),
+						zap.String("stream", streamKey),
+					)
+					continue // Continue with next partition
 				}
 
-				nackFunc := func() {
-					// For Redis Streams, not acknowledging a message is equivalent to a NACK
-					// The message will remain in the pending entries list and will be redelivered
-					p.logger.Debug("Claimed message not acknowledged (NACK)",
+				if len(pendingMessages) == 0 {
+					// No stale messages to reclaim for this partition
+					continue
+				}
+
+				p.logger.Info("Found stale messages to reclaim",
+					zap.Int("count", len(pendingMessages)),
+					zap.String("subscription", p.subscription),
+					zap.String("stream", streamKey),
+				)
+
+				// Collect message IDs
+				messageIDs := make([]string, len(pendingMessages))
+				for i, pm := range pendingMessages {
+					messageIDs[i] = pm.ID
+					p.logger.Debug("Claiming stale message",
+						zap.String("id", pm.ID),
+						zap.String("previous_consumer", pm.Consumer),
 						zap.String("subscription", p.subscription),
-						zap.String("topic", p.topic),
-						zap.String("id", msg.ID),
+						zap.String("stream", streamKey),
 					)
 				}
 
-				// Extract data from the message
-				var data []byte
-				for _, value := range msg.Values {
-					if s, ok := value.(string); ok {
-						data = []byte(s)
-						break
-					} else if b, ok := value.([]byte); ok {
-						data = b
-						break
-					}
+				// Claim the messages for the current consumer
+				claimed, err := p.redisClient.XClaim(
+					ctx,
+					streamKey,
+					p.subscription,
+					p.consumer,
+					p.idleTime,
+					messageIDs,
+				)
+				if err != nil {
+					p.logger.Error("Failed to claim messages",
+						zap.Error(err),
+						zap.String("subscription", p.subscription),
+						zap.String("stream", streamKey),
+					)
+					continue
 				}
 
-				// Create a message with Ack/Nack functions
-				message := &puller.Message{
-					ID:   msg.ID,
-					Data: data,
-					Attributes: map[string]string{
-						"stream":  p.topic,
-						"claimed": "true",
-					},
-					Ack:  ackFunc,
-					Nack: nackFunc,
-				}
+				p.logger.Info("Successfully claimed stale messages",
+					zap.Int("claimed_count", len(claimed)),
+					zap.Int("requested_count", len(messageIDs)),
+					zap.String("subscription", p.subscription),
+					zap.String("stream", streamKey),
+				)
 
-				// Process the message in a goroutine to avoid blocking the recovery loop
-				// Create a new context with timeout for the handler
-				handlerCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-
-				go func(ctx context.Context, msg *puller.Message) {
-					defer cancel() // Ensure the context is cancelled when the goroutine exits
-					// Use the same handler that was passed to Pull
-					p.handler(ctx, msg)
-				}(handlerCtx, message)
-
-				reprocessedCount++
+				// Reprocess the claimed messages
+				p.reprocessClaimedMessages(ctx, claimed, streamKey)
 			}
-
-			p.logger.Info("Reprocessing claimed messages",
-				zap.Int("reprocessed_count", reprocessedCount),
-				zap.String("subscription", p.subscription),
-				zap.String("topic", p.topic),
-			)
 		}
 	}
+}
+
+// reprocessClaimedMessages handles claimed messages and reprocesses them
+func (p *StreamPuller) reprocessClaimedMessages(ctx context.Context, claimed []goredis.XMessage, streamKey string) {
+	reprocessedCount := 0
+	for _, msg := range claimed {
+		p.logger.Debug("Reprocessing claimed message",
+			zap.String("subscription", p.subscription),
+			zap.String("stream", streamKey),
+			zap.String("id", msg.ID),
+		)
+
+		// Create ack and nack functions just like in the Pull method
+		ackFunc := func() {
+			if err := p.redisClient.XAck(streamKey, p.subscription, msg.ID); err != nil {
+				p.logger.Error("Failed to acknowledge claimed message",
+					zap.Error(err),
+					zap.String("subscription", p.subscription),
+					zap.String("stream", streamKey),
+					zap.String("id", msg.ID),
+				)
+			}
+		}
+
+		nackFunc := func() {
+			// For Redis Streams, not acknowledging a message is equivalent to a NACK
+			// The message will remain in the pending entries list and will be redelivered
+			p.logger.Debug("Claimed message not acknowledged (NACK)",
+				zap.String("subscription", p.subscription),
+				zap.String("stream", streamKey),
+				zap.String("id", msg.ID),
+			)
+		}
+
+		// Extract data from the message
+		var data []byte
+		for _, value := range msg.Values {
+			if s, ok := value.(string); ok {
+				data = []byte(s)
+				break
+			} else if b, ok := value.([]byte); ok {
+				data = b
+				break
+			}
+		}
+
+		// Create a message with Ack/Nack functions
+		message := &puller.Message{
+			ID:   msg.ID,
+			Data: data,
+			Attributes: map[string]string{
+				"stream":  streamKey,
+				"claimed": "true",
+			},
+			Ack:  ackFunc,
+			Nack: nackFunc,
+		}
+
+		// Process the message in a goroutine to avoid blocking the recovery loop
+		// Create a new context with timeout for the handler
+		handlerCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+
+		go func(ctx context.Context, msg *puller.Message) {
+			defer cancel() // Ensure the context is cancelled when the goroutine exits
+			// Use the same handler that was passed to Pull
+			p.handler(ctx, msg)
+		}(handlerCtx, message)
+
+		reprocessedCount++
+	}
+
+	p.logger.Info("Reprocessing claimed messages",
+		zap.Int("reprocessed_count", reprocessedCount),
+		zap.String("subscription", p.subscription),
+		zap.String("stream", streamKey),
+	)
 }
 
 // Close closes the puller
@@ -463,7 +500,7 @@ func (p *StreamPuller) Close() error {
 
 // SubscriptionName returns the name of the subscription
 func (p *StreamPuller) SubscriptionName() string {
-	return fmt.Sprintf("%s:%s", p.subscription, p.topic)
+	return fmt.Sprintf("%s:%s", p.subscription, p.topicBase)
 }
 
 // Helper function to get the minimum of two durations

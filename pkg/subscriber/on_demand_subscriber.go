@@ -225,6 +225,11 @@ func (s *onDemandSubscriber) createPubSubClient(ctx context.Context) error {
 			return redisErr
 		}
 		factoryOpts = append(factoryOpts, factory.WithRedisClient(redisClient))
+
+		// Add partition count if configured
+		if s.configuration.RedisPartitionCount > 0 {
+			factoryOpts = append(factoryOpts, factory.WithPartitionCount(s.configuration.RedisPartitionCount))
+		}
 	}
 
 	// Create the PubSub client using the factory

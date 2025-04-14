@@ -64,14 +64,12 @@ type Client interface {
 
 // Options represents options for creating a PubSub client.
 type options struct {
-	pubSubType PubSubType
-	// For Google PubSub
-	projectID string
-	// For Redis Streams
-	redisClient v3.Client
-	// Common options
-	metrics metrics.Registerer
-	logger  *zap.Logger
+	pubSubType     PubSubType
+	projectID      string
+	redisClient    v3.Client
+	metrics        metrics.Registerer
+	logger         *zap.Logger
+	partitionCount int
 }
 
 // Option is a function that configures options.
@@ -109,6 +107,13 @@ func WithMetrics(metrics metrics.Registerer) Option {
 func WithLogger(logger *zap.Logger) Option {
 	return func(opts *options) {
 		opts.logger = logger
+	}
+}
+
+// WithPartitionCount sets the number of partitions for Redis Streams
+func WithPartitionCount(count int) Option {
+	return func(opts *options) {
+		opts.partitionCount = count
 	}
 }
 
@@ -159,6 +164,9 @@ func NewClient(ctx context.Context, opts ...Option) (Client, error) {
 		}
 		if options.logger != nil {
 			streamOpts = append(streamOpts, redis.WithStreamLogger(options.logger))
+		}
+		if options.partitionCount > 0 {
+			streamOpts = append(streamOpts, redis.WithStreamPartitionCount(options.partitionCount))
 		}
 
 		// Create Redis Stream client

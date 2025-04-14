@@ -204,6 +204,8 @@ spec:
               value: "{{ .Values.global.pubsub.redis.poolSize }}"
             - name: BUCKETEER_WEB_PUBSUB_REDIS_MIN_IDLE
               value: "{{ .Values.global.pubsub.redis.minIdle }}"
+            - name: BUCKETEER_WEB_PUBSUB_REDIS_PARTITION_COUNT
+              value: "{{ .Values.global.pubsub.redis.partitionCount }}"
             - name: BUCKETEER_WEB_PROJECT
               value: "{{ .Values.global.pubsub.project }}"
             - name: PUBSUB_EMULATOR_HOST
