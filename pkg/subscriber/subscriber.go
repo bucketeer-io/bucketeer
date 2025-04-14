@@ -83,11 +83,12 @@ type Configuration struct {
 	MaxMPS                       int    `json:"maxMPS"`
 	WorkerNum                    int    `json:"workerNum"`
 	// Redis configuration (used when PubSubType is "redis")
-	RedisServerName string `json:"redisServerName,omitempty"`
-	RedisAddr       string `json:"redisAddr,omitempty"`
-	RedisPoolSize   int    `json:"redisPoolSize,omitempty"`
-	RedisMinIdle    int    `json:"redisMinIdle,omitempty"`
-	RedisDB         int    `json:"redisDB,omitempty"`
+	RedisServerName     string `json:"redisServerName,omitempty"`
+	RedisAddr           string `json:"redisAddr,omitempty"`
+	RedisPoolSize       int    `json:"redisPoolSize,omitempty"`
+	RedisMinIdle        int    `json:"redisMinIdle,omitempty"`
+	RedisDB             int    `json:"redisDB,omitempty"`
+	RedisPartitionCount int    `json:"redisPartitionCount,omitempty"`
 }
 
 type pubSubSubscriber struct {
@@ -192,6 +193,11 @@ func (s pubSubSubscriber) createPuller(
 			return nil
 		}
 		factoryOpts = append(factoryOpts, factory.WithRedisClient(redisClient))
+
+		// Add partition count if configured
+		if s.configuration.RedisPartitionCount > 0 {
+			factoryOpts = append(factoryOpts, factory.WithPartitionCount(s.configuration.RedisPartitionCount))
+		}
 	}
 
 	// Create the PubSub client using the factory

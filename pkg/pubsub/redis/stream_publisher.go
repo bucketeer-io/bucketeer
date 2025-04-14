@@ -18,6 +18,8 @@ package redis
 import (
 	"context"
 	"errors"
+	"fmt"
+	"hash/fnv"
 
 	"github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
@@ -33,9 +35,10 @@ var (
 
 // StreamPublisher is a Redis Stream-based implementation of the Publisher interface
 type StreamPublisher struct {
-	redisClient v3.Client
-	stream      string
-	logger      *zap.Logger
+	redisClient    v3.Client
+	streamBase     string // Base name for the stream
+	partitionCount int    // Number of partitions
+	logger         *zap.Logger
 }
 
 type StreamPublisherOption func(*StreamPublisher)
@@ -54,12 +57,20 @@ func WithStreamPublisherLogger(logger *zap.Logger) StreamPublisherOption {
 	}
 }
 
+// WithStreamPublisherPartitionCount sets the number of partitions for the publisher
+func WithStreamPublisherPartitionCount(count int) StreamPublisherOption {
+	return func(p *StreamPublisher) {
+		p.partitionCount = count
+	}
+}
+
 // NewStreamPublisher creates a new Redis Stream publisher
 func NewStreamPublisher(client v3.Client, stream string, opts ...StreamPublisherOption) publisher.Publisher {
 	p := &StreamPublisher{
-		redisClient: client,
-		stream:      stream,
-		logger:      zap.NewNop(),
+		redisClient:    client,
+		streamBase:     stream,
+		partitionCount: defaultStreamPartitionCount,
+		logger:         zap.NewNop(),
 	}
 
 	for _, opt := range opts {
@@ -71,6 +82,25 @@ func NewStreamPublisher(client v3.Client, stream string, opts ...StreamPublisher
 	return p
 }
 
+// calculatePartition computes the partition index for a given key.
+func (p *StreamPublisher) calculatePartition(key string) int {
+	hasher := fnv.New32a()
+	_, err := hasher.Write([]byte(key))
+	if err != nil {
+		// Should not normally error.
+		p.logger.Error("Error hashing key", zap.Error(err), zap.String("key", key))
+		return 0
+	}
+	return int(hasher.Sum32() % uint32(p.partitionCount))
+}
+
+// getStreamKey returns the partitioned stream name with hash tag
+func (p *StreamPublisher) getStreamKey(id string) string {
+	partition := p.calculatePartition(id)
+	// Use a hash tag {stream} to ensure keys are routed to the same Redis node
+	return fmt.Sprintf("%s-%d{stream}", p.streamBase, partition)
+}
+
 // Publish publishes a message to the stream
 func (p *StreamPublisher) Publish(ctx context.Context, msg publisher.Message) error {
 	data, err := proto.Marshal(msg)
@@ -79,24 +109,25 @@ func (p *StreamPublisher) Publish(ctx context.Context, msg publisher.Message) er
 		return ErrStreamPublisherBadMessage
 	}
 
-	// Publish the message to the stream
-	// Use message ID as field name and serialized message as value
-	// The * indicates Redis should auto-generate the ID
+	// Get message ID
 	messageID := msg.GetId()
 	if messageID == "" {
 		messageID = "message"
 	}
+
+	// Determine which stream to use based on message ID
+	streamKey := p.getStreamKey(messageID)
 
 	values := map[string]interface{}{
 		messageID: data,
 	}
 
 	// Add the message to the stream
-	_, err = p.redisClient.XAdd(ctx, p.stream, values)
+	_, err = p.redisClient.XAdd(ctx, streamKey, values)
 	if err != nil {
 		p.logger.Error("Failed to add message to stream",
 			zap.Error(err),
-			zap.String("stream", p.stream),
+			zap.String("stream", streamKey),
 			zap.String("id", msg.GetId()),
 		)
 		return err

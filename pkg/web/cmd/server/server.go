@@ -102,11 +102,12 @@ type server struct {
 	domainTopic                   *string
 	bulkSegmentUsersReceivedTopic *string
 	// PubSub configuration
-	pubSubType            *string
-	pubSubRedisServerName *string
-	pubSubRedisAddr       *string
-	pubSubRedisPoolSize   *int
-	pubSubRedisMinIdle    *int
+	pubSubType                *string
+	pubSubRedisServerName     *string
+	pubSubRedisAddr           *string
+	pubSubRedisPoolSize       *int
+	pubSubRedisMinIdle        *int
+	pubSubRedisPartitionCount *int
 	// Port
 	accountServicePort       *int
 	authServicePort          *int
@@ -328,6 +329,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubRedisMinIdle: cmd.Flag("pubsub-redis-min-idle",
 			"Minimum number of idle connections for Redis PubSub.",
 		).Default("5").Int(),
+		pubSubRedisPartitionCount: cmd.Flag("pubsub-redis-partition-count",
+			"Number of partitions for Redis Streams PubSub.",
+		).Default("16").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -830,6 +834,7 @@ func (s *server) createPublisher(
 			return nil, err
 		}
 		factoryOpts = append(factoryOpts, factory.WithRedisClient(redisClient))
+		factoryOpts = append(factoryOpts, factory.WithPartitionCount(*s.pubSubRedisPartitionCount))
 	}
 
 	// Create the PubSub client using the factory
