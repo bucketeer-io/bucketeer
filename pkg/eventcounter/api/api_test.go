@@ -1390,6 +1390,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 						UserCountPrefix,
 						fID,
 						environmentId,
+						vID,
 					)
 					for idx := range hourlyTimeStamps {
 						s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(pfMergeKey, uc[idx], gomock.Any()).Return(nil)
@@ -1996,7 +1997,7 @@ func TestGetUserCounts(t *testing.T) {
 			if p.setup != nil {
 				p.setup(gs)
 			}
-			actual, _ := gs.getUserCounts(p.keys, featureID, environmentId, p.unit)
+			actual, _ := gs.getUserCounts(p.keys, featureID, environmentId, vID, p.unit)
 			assert.Len(t, actual, p.expectedLen)
 		})
 	}
