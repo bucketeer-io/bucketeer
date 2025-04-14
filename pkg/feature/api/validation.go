@@ -959,7 +959,7 @@ func validateDebugEvaluateFeatures(req *featureproto.DebugEvaluateFeaturesReques
 	}
 
 	if len(req.FeatureIds) == 0 {
-		dt, err := statusMissingFeatures.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusMissingFeatureIDs.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_ids"),
 		})

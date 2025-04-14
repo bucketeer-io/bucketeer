@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -2487,11 +2488,8 @@ func (s *FeatureService) DebugEvaluateFeatures(
 	}
 	evaluationResults := make([]*featureproto.Evaluation, 0)
 	for _, eval := range evaluations {
-		for _, id := range req.FeatureIds {
-			if eval.FeatureId == id {
-				evaluationResults = append(evaluationResults, eval)
-				break
-			}
+		if slices.Contains(req.FeatureIds, eval.FeatureId) {
+			evaluationResults = append(evaluationResults, eval)
 		}
 	}
 

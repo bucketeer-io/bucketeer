@@ -1402,6 +1402,568 @@ func TestEvaluateFeatures(t *testing.T) {
 	}
 }
 
+func TestDebugEvaluateFeatures(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	vID1 := newUUID(t)
+	vID2 := newUUID(t)
+	vID3 := newUUID(t)
+	vID4 := newUUID(t)
+
+	patterns := []struct {
+		desc           string
+		service        *FeatureService
+		context        context.Context
+		setup          func(*FeatureService)
+		input          *featureproto.DebugEvaluateFeaturesRequest
+		expected       *featureproto.DebugEvaluateFeaturesResponse
+		getExpectedErr func(localizer locale.Localizer) error
+	}{
+		{
+			desc:     "fail: ErrMissingUser",
+			context:  createContextWithToken(),
+			service:  createFeatureService(mockController),
+			setup:    nil,
+			input:    &featureproto.DebugEvaluateFeaturesRequest{},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusMissingUser, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "users"), localizer)
+			},
+		},
+		{
+			desc:    "fail: ErrMissingUserID",
+			context: createContextWithToken(),
+			service: createFeatureService(mockController),
+			setup:   nil,
+			input: &featureproto.DebugEvaluateFeaturesRequest{
+				Users: []*userproto.User{
+					{},
+				},
+			},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusMissingUserID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_id"), localizer)
+			},
+		},
+		{
+			desc:    "fail: return errInternal when getting features",
+			context: createContextWithToken(),
+			service: createFeatureService(mockController),
+			setup: func(s *FeatureService) {
+				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, errors.New("error"))
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, 0, int64(0), errors.New("error"))
+			},
+			input: &featureproto.DebugEvaluateFeaturesRequest{
+				FeatureIds:    []string{"feature-id-1", "feature-id-2"},
+				Users:         []*userproto.User{{Id: "test-id"}},
+				EnvironmentId: "ns0",
+			},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
+			},
+		},
+		{
+			desc:    "success: get from cache",
+			context: createContextWithToken(),
+			service: createFeatureService(mockController),
+			setup: func(s *FeatureService) {
+				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id: "feature-id-1",
+								Variations: []*featureproto.Variation{
+									{
+										Id:    vID1,
+										Value: "true",
+									},
+									{
+										Id:    vID2,
+										Value: "false",
+									},
+								},
+								Rules: []*featureproto.Rule{
+									{
+										Id: "rule-1",
+										Strategy: &featureproto.Strategy{
+											Type: featureproto.Strategy_FIXED,
+											FixedStrategy: &featureproto.FixedStrategy{
+												Variation: vID2,
+											},
+										},
+										Clauses: []*featureproto.Clause{
+											{
+												Id:        "clause-1",
+												Attribute: "name",
+												Operator:  featureproto.Clause_SEGMENT,
+												Values: []string{
+													"segment-id",
+												},
+											},
+										},
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: vID1,
+									},
+								},
+								Tags: []string{"android"},
+							},
+							{
+								Id: "feature-id-2",
+								Variations: []*featureproto.Variation{
+									{
+										Id:    vID3,
+										Value: "true",
+									},
+									{
+										Id:    vID4,
+										Value: "false",
+									},
+								},
+								Rules: []*featureproto.Rule{
+									{
+										Id: "rule-1",
+										Strategy: &featureproto.Strategy{
+											Type: featureproto.Strategy_FIXED,
+											FixedStrategy: &featureproto.FixedStrategy{
+												Variation: vID4,
+											},
+										},
+										Clauses: []*featureproto.Clause{
+											{
+												Id:        "clause-1",
+												Attribute: "name",
+												Operator:  featureproto.Clause_SEGMENT,
+												Values: []string{
+													"segment-id",
+												},
+											},
+										},
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: vID3,
+									},
+								},
+								Tags: []string{"ios"},
+							},
+						},
+					}, nil)
+				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					&featureproto.SegmentUsers{
+						SegmentId: "segment-id",
+						Users: []*featureproto.SegmentUser{
+							{
+								SegmentId: "segment-id",
+								UserId:    "user-id-1",
+								State:     featureproto.SegmentUser_INCLUDED,
+								Deleted:   false,
+							},
+							{
+								SegmentId: "segment-id",
+								UserId:    "user-id-2",
+								State:     featureproto.SegmentUser_INCLUDED,
+								Deleted:   false,
+							},
+						},
+					}, nil)
+			},
+			input: &featureproto.DebugEvaluateFeaturesRequest{
+				FeatureIds:    []string{"feature-id-1", "feature-id-2"},
+				Users:         []*userproto.User{{Id: "user-id-1"}},
+				EnvironmentId: "ns0",
+			},
+			expected: &featureproto.DebugEvaluateFeaturesResponse{
+				Evaluations: []*featureproto.Evaluation{
+					{
+						VariationId: vID2,
+						FeatureId:   "feature-id-1",
+						UserId:      "user-id-1",
+						Reason: &featureproto.Reason{
+							Type:   featureproto.Reason_RULE,
+							RuleId: "rule-1",
+						},
+					},
+					{
+						VariationId: vID4,
+						FeatureId:   "feature-id-2",
+						UserId:      "user-id-1",
+						Reason: &featureproto.Reason{
+							Type:   featureproto.Reason_RULE,
+							RuleId: "rule-1",
+						},
+					},
+				},
+			},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "fail: return errInternal when getting segment users",
+			context: createContextWithToken(),
+			service: createFeatureService(mockController),
+			setup: func(s *FeatureService) {
+				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id: "feature-id-1",
+								Variations: []*featureproto.Variation{
+									{
+										Id:    vID1,
+										Value: "true",
+									},
+									{
+										Id:    vID2,
+										Value: "false",
+									},
+								},
+								Rules: []*featureproto.Rule{
+									{
+										Id: "rule-1",
+										Strategy: &featureproto.Strategy{
+											Type: featureproto.Strategy_FIXED,
+											FixedStrategy: &featureproto.FixedStrategy{
+												Variation: vID2,
+											},
+										},
+										Clauses: []*featureproto.Clause{
+											{
+												Id:        "clause-1",
+												Attribute: "name",
+												Operator:  featureproto.Clause_SEGMENT,
+												Values: []string{
+													"id-0",
+												},
+											},
+										},
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: vID1,
+									},
+								},
+								Tags: []string{"android"},
+							},
+						}}, nil)
+				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, errors.New("random error"))
+				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, 0, errors.New("error"))
+			},
+			input: &featureproto.DebugEvaluateFeaturesRequest{
+				FeatureIds:    []string{"feature-id-1"},
+				Users:         []*userproto.User{{Id: "test-id"}},
+				EnvironmentId: "ns0",
+			},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
+			},
+		},
+		{
+			desc:    "success: get users from storage",
+			context: createContextWithToken(),
+			service: createFeatureService(mockController),
+			setup: func(s *FeatureService) {
+				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id: "feature-id-1",
+								Variations: []*featureproto.Variation{
+									{
+										Id:    vID1,
+										Value: "true",
+									},
+									{
+										Id:    vID2,
+										Value: "false",
+									},
+								},
+								Rules: []*featureproto.Rule{
+									{
+										Id: "rule-1",
+										Strategy: &featureproto.Strategy{
+											Type: featureproto.Strategy_FIXED,
+											FixedStrategy: &featureproto.FixedStrategy{
+												Variation: vID2,
+											},
+										},
+										Clauses: []*featureproto.Clause{
+											{
+												Id:        "clause-1",
+												Attribute: "name",
+												Operator:  featureproto.Clause_SEGMENT,
+												Values: []string{
+													"id-0",
+												},
+											},
+										},
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: vID2,
+									},
+								},
+								Tags: []string{"android"},
+							},
+						}}, nil)
+				s.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
+					nil, errors.New("random error"))
+				s.segmentUserStorage.(*mock.MockSegmentUserStorage).EXPECT().ListSegmentUsers(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.SegmentUser{}, 0, nil)
+			},
+			input: &featureproto.DebugEvaluateFeaturesRequest{
+				FeatureIds:    []string{"feature-id-1"},
+				Users:         []*userproto.User{{Id: "test-id"}},
+				EnvironmentId: "ns0",
+			},
+			expected: &featureproto.DebugEvaluateFeaturesResponse{
+				Evaluations: []*featureproto.Evaluation{
+					{
+						FeatureId:   "feature-id-1",
+						UserId:      "test-id",
+						VariationId: vID2,
+						Reason: &featureproto.Reason{
+							Type: featureproto.Reason_DEFAULT,
+						},
+					},
+				},
+			},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "success with viewer account",
+			context: createContextWithTokenRoleUnassigned(),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			setup: func(s *FeatureService) {
+				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, errors.New("error"))
+				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return([]*featureproto.Feature{
+					{
+						Id: "feature-id-1",
+						Variations: []*featureproto.Variation{
+							{
+								Id:    vID1,
+								Value: "true",
+							},
+							{
+								Id:    vID2,
+								Value: "false",
+							},
+						},
+						DefaultStrategy: &featureproto.Strategy{
+							Type: featureproto.Strategy_FIXED,
+							FixedStrategy: &featureproto.FixedStrategy{
+								Variation: vID2,
+							},
+						},
+						Tags: []string{"android"},
+					},
+				}, 0, int64(0), nil)
+			},
+			input: &featureproto.DebugEvaluateFeaturesRequest{
+				FeatureIds:    []string{"feature-id-1"},
+				Users:         []*userproto.User{{Id: "test-id"}},
+				EnvironmentId: "ns0",
+			},
+			expected: &featureproto.DebugEvaluateFeaturesResponse{
+				Evaluations: []*featureproto.Evaluation{
+					{
+						FeatureId:   "feature-id-1",
+						UserId:      "test-id",
+						VariationId: vID2,
+						Reason: &featureproto.Reason{
+							Type: featureproto.Reason_DEFAULT,
+						},
+					},
+				},
+			},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "errPermissionDenied",
+			context: createContextWithTokenRoleUnassigned(),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			setup:   func(s *FeatureService) {},
+			input: &featureproto.DebugEvaluateFeaturesRequest{
+				Users:         []*userproto.User{{Id: "test-id"}},
+				EnvironmentId: "ns0",
+			},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			},
+		},
+		{
+			desc:    "success evaluate multiple users",
+			context: createContextWithToken(),
+			service: createFeatureService(mockController),
+			setup: func(s *FeatureService) {
+				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{
+							{
+								Id: "feature-id-1",
+								Variations: []*featureproto.Variation{
+									{
+										Id:    vID1,
+										Value: "true",
+									},
+									{
+										Id:    vID2,
+										Value: "false",
+									},
+								},
+								Targets: []*featureproto.Target{
+									{
+										Variation: vID1,
+										Users:     []string{"test-id-1"},
+									},
+									{
+										Variation: vID2,
+										Users:     []string{"test-id-2"},
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: vID2,
+									},
+								},
+								Tags: []string{"android"},
+							},
+							{
+								Id: "feature-id-2",
+								Variations: []*featureproto.Variation{
+									{
+										Id:    vID3,
+										Value: "true",
+									},
+									{
+										Id:    vID4,
+										Value: "false",
+									},
+								},
+								Targets: []*featureproto.Target{
+									{
+										Variation: vID3,
+										Users:     []string{"test-id-1"},
+									},
+									{
+										Variation: vID4,
+										Users:     []string{"test-id-2"},
+									},
+								},
+								DefaultStrategy: &featureproto.Strategy{
+									Type: featureproto.Strategy_FIXED,
+									FixedStrategy: &featureproto.FixedStrategy{
+										Variation: vID3,
+									},
+								},
+								Tags: []string{"ios"},
+							},
+						}}, nil)
+			},
+			input: &featureproto.DebugEvaluateFeaturesRequest{
+				FeatureIds:    []string{"feature-id-1", "feature-id-2"},
+				Users:         []*userproto.User{{Id: "test-id-1"}, {Id: "test-id-2"}},
+				EnvironmentId: "ns0",
+			},
+			expected: &featureproto.DebugEvaluateFeaturesResponse{
+				Evaluations: []*featureproto.Evaluation{
+					{
+						FeatureId:   "feature-id-1",
+						UserId:      "test-id-1",
+						VariationId: vID1,
+						Reason: &featureproto.Reason{
+							Type: featureproto.Reason_TARGET,
+						},
+					},
+					{
+						FeatureId:   "feature-id-2",
+						UserId:      "test-id-1",
+						VariationId: vID3,
+						Reason: &featureproto.Reason{
+							Type: featureproto.Reason_TARGET,
+						},
+					},
+					{
+						FeatureId:   "feature-id-1",
+						UserId:      "test-id-2",
+						VariationId: vID2,
+						Reason: &featureproto.Reason{
+							Type: featureproto.Reason_TARGET,
+						},
+					},
+					{
+						FeatureId:   "feature-id-2",
+						UserId:      "test-id-2",
+						VariationId: vID4,
+						Reason: &featureproto.Reason{
+							Type: featureproto.Reason_TARGET,
+						},
+					},
+				},
+			},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			ctx := p.context
+			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+				"accept-language": []string{"ja"},
+			})
+			localizer := locale.NewLocalizer(ctx)
+
+			service := p.service
+			if p.setup != nil {
+				p.setup(service)
+			}
+			resp, err := service.DebugEvaluateFeatures(ctx, p.input)
+			if err != nil {
+				assert.Equal(t, p.getExpectedErr(localizer), err, p.desc)
+				return
+			}
+
+			assert.Equal(t, len(p.expected.Evaluations), len(resp.Evaluations))
+			for i := 0; i < len(resp.Evaluations); i++ {
+				assert.Equal(t, p.expected.Evaluations[i].VariationId, resp.Evaluations[i].VariationId)
+				assert.Equal(t, p.expected.Evaluations[i].Reason, resp.Evaluations[i].Reason)
+				assert.Equal(t, p.expected.Evaluations[i].FeatureId, resp.Evaluations[i].FeatureId)
+				assert.Equal(t, p.expected.Evaluations[i].UserId, resp.Evaluations[i].UserId)
+			}
+		})
+	}
+}
+
 func TestEvaluateSingleFeature(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
