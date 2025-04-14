@@ -100,10 +100,9 @@ func WithStreamPullerPartitionCount(count int) StreamPullerOption {
 	}
 }
 
-// getStreamKey returns the partitioned stream name with hash tag
+// getStreamKey returns the partitioned stream name
 func (p *StreamPuller) getStreamKey(partition int) string {
-	// Use a hash tag {stream} to ensure keys are routed to the same Redis node
-	return fmt.Sprintf("%s-%d{stream}", p.topicBase, partition)
+	return fmt.Sprintf("%s-%d", p.topicBase, partition)
 }
 
 // NewStreamPuller creates a new Redis Stream puller

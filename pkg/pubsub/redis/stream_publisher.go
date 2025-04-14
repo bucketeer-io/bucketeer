@@ -94,11 +94,10 @@ func (p *StreamPublisher) calculatePartition(key string) int {
 	return int(hasher.Sum32() % uint32(p.partitionCount))
 }
 
-// getStreamKey returns the partitioned stream name with hash tag
+// getStreamKey returns the partitioned stream name
 func (p *StreamPublisher) getStreamKey(id string) string {
 	partition := p.calculatePartition(id)
-	// Use a hash tag {stream} to ensure keys are routed to the same Redis node
-	return fmt.Sprintf("%s-%d{stream}", p.streamBase, partition)
+	return fmt.Sprintf("%s-%d", p.streamBase, partition)
 }
 
 // Publish publishes a message to the stream
