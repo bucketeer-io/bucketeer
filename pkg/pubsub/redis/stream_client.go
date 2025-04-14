@@ -26,6 +26,11 @@ import (
 	v3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 )
 
+const (
+	// Default number of partitions for Redis Streams
+	defaultStreamPartitionCount = 16
+)
+
 var (
 	ErrInvalidStreamTopic        = errors.New("redis stream: invalid topic")
 	ErrInvalidStreamSubscription = errors.New("redis stream: invalid subscription")
@@ -33,14 +38,16 @@ var (
 
 // StreamClient is a Redis Streams-based implementation that can create publishers and pullers
 type StreamClient struct {
-	redisClient v3.Client
-	opts        *streamOptions
-	logger      *zap.Logger
+	redisClient    v3.Client
+	opts           *streamOptions
+	logger         *zap.Logger
+	partitionCount int
 }
 
 type streamOptions struct {
-	metrics metrics.Registerer
-	logger  *zap.Logger
+	metrics        metrics.Registerer
+	logger         *zap.Logger
+	partitionCount int
 }
 
 type StreamOption func(*streamOptions)
@@ -59,19 +66,28 @@ func WithStreamLogger(logger *zap.Logger) StreamOption {
 	}
 }
 
+// WithStreamPartitionCount sets the number of partitions for the streams
+func WithStreamPartitionCount(count int) StreamOption {
+	return func(opts *streamOptions) {
+		opts.partitionCount = count
+	}
+}
+
 // NewStreamClient creates a new Redis Streams client
 func NewStreamClient(ctx context.Context, redisClient v3.Client, opts ...StreamOption) (*StreamClient, error) {
 	options := &streamOptions{
-		logger: zap.NewNop(),
+		logger:         zap.NewNop(),
+		partitionCount: defaultStreamPartitionCount,
 	}
 	for _, opt := range opts {
 		opt(options)
 	}
 
 	return &StreamClient{
-		redisClient: redisClient,
-		opts:        options,
-		logger:      options.logger.Named("redis-stream-pubsub"),
+		redisClient:    redisClient,
+		opts:           options,
+		logger:         options.logger.Named("redis-stream-pubsub"),
+		partitionCount: options.partitionCount,
 	}, nil
 }
 
@@ -83,6 +99,7 @@ func (c *StreamClient) CreatePublisher(topic string) (publisher.Publisher, error
 
 	options := []StreamPublisherOption{
 		WithStreamPublisherLogger(c.logger),
+		WithStreamPublisherPartitionCount(c.partitionCount),
 	}
 	if c.opts.metrics != nil {
 		options = append(options, WithStreamPublisherMetrics(c.opts.metrics))
@@ -103,6 +120,7 @@ func (c *StreamClient) CreatePuller(subscription, topic string) (puller.Puller, 
 
 	options := []StreamPullerOption{
 		WithStreamPullerLogger(c.logger),
+		WithStreamPullerPartitionCount(c.partitionCount),
 	}
 	if c.opts.metrics != nil {
 		options = append(options, WithStreamPullerMetrics(c.opts.metrics))

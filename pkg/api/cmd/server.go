@@ -66,11 +66,12 @@ type server struct {
 	oldestEventTimestamp   *time.Duration
 	furthestEventTimestamp *time.Duration
 	// PubSub configurations
-	pubSubType            *string
-	pubSubRedisServerName *string
-	pubSubRedisAddr       *string
-	pubSubRedisPoolSize   *int
-	pubSubRedisMinIdle    *int
+	pubSubType                *string
+	pubSubRedisServerName     *string
+	pubSubRedisAddr           *string
+	pubSubRedisPoolSize       *int
+	pubSubRedisMinIdle        *int
+	pubSubRedisPartitionCount *int
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -156,6 +157,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		pubSubRedisMinIdle: cmd.Flag("pubsub-redis-min-idle",
 			"Minimum number of idle connections for Redis PubSub.",
 		).Default("5").Int(),
+		pubSubRedisPartitionCount: cmd.Flag("pubsub-redis-partition-count",
+			"Number of partitions for Redis Streams PubSub.",
+		).Default("16").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -190,6 +194,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			return err
 		}
 		factoryOpts = append(factoryOpts, factory.WithRedisClient(redisClient))
+		factoryOpts = append(factoryOpts, factory.WithPartitionCount(*s.pubSubRedisPartitionCount))
 	}
 
 	pubsubClient, err := factory.NewClient(pubsubCtx, factoryOpts...)

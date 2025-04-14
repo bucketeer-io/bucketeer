@@ -15,6 +15,8 @@ global:
       poolSize: 25
       # Minimum number of idle connections
       minIdle: 25
+      # Redis stream partition count
+      partitionCount: 16
     # PubSub emulator host (for local development)
     emulatorHost: ""
     # Google Cloud project ID
