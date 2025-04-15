@@ -25,9 +25,10 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	storagemock "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	tagstoragemock "github.com/bucketeer-io/bucketeer/pkg/tag/storage/mock"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
 )
 
 func TestListTagsMySQL(t *testing.T) {
@@ -66,7 +67,7 @@ func TestListTagsMySQL(t *testing.T) {
 		{
 			desc: "errInternal",
 			setup: func(fs *FeatureService) {
-				fs.tagStorage.(*storagemock.MockTagStorage).EXPECT().ListTags(
+				fs.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().ListTags(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
@@ -77,9 +78,9 @@ func TestListTagsMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(fs *FeatureService) {
-				fs.tagStorage.(*storagemock.MockTagStorage).EXPECT().ListTags(
+				fs.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().ListTags(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return([]*featureproto.Tag{}, 0, int64(0), nil)
+				).Return([]*tagproto.Tag{}, 0, int64(0), nil)
 			},
 			input: &featureproto.ListTagsRequest{
 				PageSize:      2,
@@ -120,8 +121,8 @@ func TestUpsertTags(t *testing.T) {
 			desc: "error: internal error when creating tag",
 			tags: []string{"tag"},
 			setup: func(fs *FeatureService) {
-				fs.tagStorage.(*storagemock.MockTagStorage).EXPECT().UpsertTag(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				fs.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
+					gomock.Any(), gomock.Any(),
 				).Return(internalErr)
 			},
 			expectedErr: internalErr,
@@ -135,8 +136,8 @@ func TestUpsertTags(t *testing.T) {
 			desc: "success: create new tag",
 			tags: []string{"tag"},
 			setup: func(fs *FeatureService) {
-				fs.tagStorage.(*storagemock.MockTagStorage).EXPECT().UpsertTag(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				fs.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			expectedErr: nil,
