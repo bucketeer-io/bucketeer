@@ -8,6 +8,74 @@ import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-o
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
 import * as proto_auditlog_auditlog_pb from '../../proto/auditlog/auditlog_pb';
 
+export class GetAuditLogRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetAuditLogRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GetAuditLogRequest
+  ): GetAuditLogRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GetAuditLogRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): GetAuditLogRequest;
+  static deserializeBinaryFromReader(
+    message: GetAuditLogRequest,
+    reader: jspb.BinaryReader
+  ): GetAuditLogRequest;
+}
+
+export namespace GetAuditLogRequest {
+  export type AsObject = {
+    id: string;
+    environmentId: string;
+  };
+}
+
+export class GetAuditLogResponse extends jspb.Message {
+  hasAuditLog(): boolean;
+  clearAuditLog(): void;
+  getAuditLog(): proto_auditlog_auditlog_pb.AuditLog | undefined;
+  setAuditLog(value?: proto_auditlog_auditlog_pb.AuditLog): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetAuditLogResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GetAuditLogResponse
+  ): GetAuditLogResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GetAuditLogResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): GetAuditLogResponse;
+  static deserializeBinaryFromReader(
+    message: GetAuditLogResponse,
+    reader: jspb.BinaryReader
+  ): GetAuditLogResponse;
+}
+
+export namespace GetAuditLogResponse {
+  export type AsObject = {
+    auditLog?: proto_auditlog_auditlog_pb.AuditLog.AsObject;
+  };
+}
+
 export class ListAuditLogsRequest extends jspb.Message {
   getPageSize(): number;
   setPageSize(value: number): void;

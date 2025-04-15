@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"strconv"
 
@@ -95,6 +96,91 @@ func NewAuditLogService(
 
 func (s *auditlogService) Register(server *grpc.Server) {
 	proto.RegisterAuditLogServiceServer(server, s)
+}
+
+func (s *auditlogService) GetAuditLog(
+	ctx context.Context,
+	req *proto.GetAuditLogRequest,
+) (*proto.GetAuditLogResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentId, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if req.Id == "" {
+		s.logger.Error("Missing audit log id",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	auditlog, err := s.auditLogStorage.GetAuditLog(ctx, req.Id, req.EnvironmentId)
+	if err != nil {
+		var dt *status.Status
+		s.logger.Error("Failed to get audit log",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		if errors.Is(err, v2als.ErrAuditLogNotFound) {
+			dt, err = statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError, "auditlog"),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+		} else {
+			dt, err = statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+		}
+		return nil, dt.Err()
+	}
+	auditlog.LocalizedMessage = domainevent.LocalizedMessage(auditlog.Type, localizer)
+
+	accounts, err := s.getAccountMapByEmails(ctx, []string{auditlog.Editor.Email}, req.EnvironmentId, localizer)
+	if err != nil {
+		s.logger.Error("Failed to get account map by emails",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("id", req.Id),
+				zap.String("email", auditlog.Editor.Email),
+			)...,
+		)
+		// return without avatar image
+		return &proto.GetAuditLogResponse{
+			AuditLog: auditlog,
+		}, nil
+	}
+	if account, ok := accounts[auditlog.Editor.Email]; ok {
+		auditlog.Editor.AvatarImage = account.AvatarImage
+		auditlog.Editor.AvatarFileType = account.AvatarFileType
+		if auditlog.Editor.PublicApiEditor != nil {
+			auditlog.Editor.PublicApiEditor.AvatarImage = account.AvatarImage
+			auditlog.Editor.PublicApiEditor.AvatarFileType = account.AvatarFileType
+		}
+	}
+	return &proto.GetAuditLogResponse{
+		AuditLog: auditlog,
+	}, nil
 }
 
 func (s *auditlogService) ListAuditLogs(

@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	"database/sql"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -30,17 +31,21 @@ import (
 
 var (
 	ErrAuditLogAlreadyExists = errors.New("auditlog: auditlog already exists")
+	ErrAuditLogNotFound      = errors.New("auditlog: auditlog not found")
+	//go:embed sql/auditlog/select_audit_log_v2.sql
+	selectAuditLogV2SQL string
 	//go:embed sql/auditlog/insert_audit_logs_v2.sql
 	insertAuditLogsV2SQL string
 	//go:embed sql/auditlog/insert_audit_log_v2.sql
 	insertAuditLogV2SQL string
-	//go:embed sql/auditlog/select_audit_log_v2.sql
-	selectAuditLogV2SQL string
+	//go:embed sql/auditlog/select_audit_logs_v2.sql
+	selectAuditLogsV2SQL string
 	//go:embed sql/auditlog/select_audit_log_v2_count.sql
 	selectAuditLogV2CountSQL string
 )
 
 type AuditLogStorage interface {
+	GetAuditLog(ctx context.Context, id string, environmentID string) (*proto.AuditLog, error)
 	CreateAuditLogs(ctx context.Context, auditLogs []*domain.AuditLog) error
 	CreateAuditLog(ctx context.Context, auditLog *domain.AuditLog) error
 	ListAuditLogs(
@@ -57,6 +62,34 @@ type auditLogStorage struct {
 
 func NewAuditLogStorage(qe mysql.QueryExecer) AuditLogStorage {
 	return &auditLogStorage{qe}
+}
+
+func (s *auditLogStorage) GetAuditLog(ctx context.Context, id string, environmentID string) (*proto.AuditLog, error) {
+	auditLog := &proto.AuditLog{}
+	var et int32
+	var t int32
+	row := s.qe.QueryRowContext(ctx, selectAuditLogV2SQL, environmentID, id)
+	err := row.Scan(
+		&auditLog.Id,
+		&auditLog.Timestamp,
+		&et,
+		&auditLog.EntityId,
+		&t,
+		&mysql.JSONObject{Val: &auditLog.Event},
+		&mysql.JSONObject{Val: &auditLog.Editor},
+		&mysql.JSONObject{Val: &auditLog.Options},
+		&auditLog.EntityData,
+		&auditLog.PreviousEntityData,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrAuditLogNotFound
+		}
+		return nil, err
+	}
+	auditLog.EntityType = eventproto.Event_EntityType(et)
+	auditLog.Type = eventproto.Event_Type(t)
+	return auditLog, nil
 }
 
 func (s *auditLogStorage) CreateAuditLogs(ctx context.Context, auditLogs []*domain.AuditLog) error {
@@ -89,7 +122,7 @@ func (s *auditLogStorage) CreateAuditLogs(ctx context.Context, auditLogs []*doma
 	}
 	_, err := s.qe.ExecContext(ctx, query.String(), args...)
 	if err != nil {
-		if err == mysql.ErrDuplicateEntry {
+		if errors.Is(err, mysql.ErrDuplicateEntry) {
 			return ErrAuditLogAlreadyExists
 		}
 		return err
@@ -114,7 +147,7 @@ func (s *auditLogStorage) CreateAuditLog(ctx context.Context, auditLog *domain.A
 		auditLog.PreviousEntityData,
 	)
 	if err != nil {
-		if err == mysql.ErrDuplicateEntry {
+		if errors.Is(err, mysql.ErrDuplicateEntry) {
 			return ErrAuditLogAlreadyExists
 		}
 		return err
@@ -131,7 +164,7 @@ func (s *auditLogStorage) ListAuditLogs(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(selectAuditLogV2SQL, whereSQL, orderBySQL, limitOffsetSQL)
+	query := fmt.Sprintf(selectAuditLogsV2SQL, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err

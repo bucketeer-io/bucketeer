@@ -71,6 +71,21 @@ func (mr *MockAuditLogStorageMockRecorder) CreateAuditLogs(ctx, auditLogs any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAuditLogs", reflect.TypeOf((*MockAuditLogStorage)(nil).CreateAuditLogs), ctx, auditLogs)
 }
 
+// GetAuditLog mocks base method.
+func (m *MockAuditLogStorage) GetAuditLog(ctx context.Context, id, environmentID string) (*auditlog.AuditLog, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAuditLog", ctx, id, environmentID)
+	ret0, _ := ret[0].(*auditlog.AuditLog)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAuditLog indicates an expected call of GetAuditLog.
+func (mr *MockAuditLogStorageMockRecorder) GetAuditLog(ctx, id, environmentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuditLog", reflect.TypeOf((*MockAuditLogStorage)(nil).GetAuditLog), ctx, id, environmentID)
+}
+
 // ListAuditLogs mocks base method.
 func (m *MockAuditLogStorage) ListAuditLogs(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*auditlog.AuditLog, int, int64, error) {
 	m.ctrl.T.Helper()

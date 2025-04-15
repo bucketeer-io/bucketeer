@@ -10,6 +10,15 @@ var AuditLogService = (function () {
   return AuditLogService;
 })();
 
+AuditLogService.GetAuditLog = {
+  methodName: 'GetAuditLog',
+  service: AuditLogService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_auditlog_service_pb.GetAuditLogRequest,
+  responseType: proto_auditlog_service_pb.GetAuditLogResponse
+};
+
 AuditLogService.ListAuditLogs = {
   methodName: 'ListAuditLogs',
   service: AuditLogService,
@@ -43,6 +52,41 @@ function AuditLogServiceClient(serviceHost, options) {
   this.serviceHost = serviceHost;
   this.options = options || {};
 }
+
+AuditLogServiceClient.prototype.getAuditLog = function getAuditLog(
+  requestMessage,
+  metadata,
+  callback
+) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(AuditLogService.GetAuditLog, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
 
 AuditLogServiceClient.prototype.listAuditLogs = function listAuditLogs(
   requestMessage,
