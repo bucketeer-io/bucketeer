@@ -102,7 +102,7 @@ func WithStreamPullerPartitionCount(count int) StreamPullerOption {
 
 // getStreamKey returns the partitioned stream name
 func (p *StreamPuller) getStreamKey(partition int) string {
-	return fmt.Sprintf("%s-%d", p.topicBase, partition)
+	return fmt.Sprintf("%s-%d{stream}", p.topicBase, partition)
 }
 
 // NewStreamPuller creates a new Redis Stream puller
@@ -192,7 +192,12 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 			streams := make([]string, 0, p.partitionCount*2)
 			for partition := 0; partition < p.partitionCount; partition++ {
 				streamKey := p.getStreamKey(partition)
-				streams = append(streams, streamKey, ">") // ">" means only new messages
+				streams = append(streams, streamKey)
+			}
+
+			// Add the IDs matching each stream key (must have same number of IDs as keys)
+			for partition := 0; partition < p.partitionCount; partition++ {
+				streams = append(streams, ">") // ">" means only new messages
 			}
 
 			// Read from all partitions
