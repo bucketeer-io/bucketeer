@@ -46,6 +46,7 @@ tls:
     secrets:
   service:
     secret:
+  hosts:
 serviceToken:
   secret:
 envoy:
@@ -100,6 +101,7 @@ gcpMultiCluster:
     staticIPName:
     tls:
       secrets:
+      hosts:
     rulePaths:
       - path: /
         backend:

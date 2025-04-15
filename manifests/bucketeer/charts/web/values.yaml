@@ -73,6 +73,7 @@ tls:
     secret:
   bucketeerJP:
     secrets:
+  hosts:
 serviceToken:
   secret:
 oauth:
@@ -160,6 +161,7 @@ gcpMultiCluster:
     staticIPName:
     tls:
       secrets:
+      hosts:
     rulePaths:
       - path: /
         backend:
