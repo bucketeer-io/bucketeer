@@ -97,7 +97,7 @@ func (p *StreamPublisher) calculatePartition(key string) int {
 // getStreamKey returns the partitioned stream name
 func (p *StreamPublisher) getStreamKey(id string) string {
 	partition := p.calculatePartition(id)
-	return fmt.Sprintf("%s-%d", p.streamBase, partition)
+	return fmt.Sprintf("%s-%d{stream}", p.streamBase, partition)
 }
 
 // Publish publishes a message to the stream
