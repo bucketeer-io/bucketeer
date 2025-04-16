@@ -179,16 +179,16 @@ func (s *experimentService) ListExperiments(
 			Value:    req.Maintainer,
 		})
 	}
-	var inFilter *mysql.InFilter
+	var inFilters []*mysql.InFilter
 	if len(req.Statuses) > 0 {
 		statuses := make([]interface{}, 0, len(req.Statuses))
 		for _, sts := range req.Statuses {
 			statuses = append(statuses, sts)
 		}
-		inFilter = &mysql.InFilter{
+		inFilters = append(inFilters, &mysql.InFilter{
 			Column: "status",
 			Values: statuses,
-		}
+		})
 	}
 	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
@@ -226,7 +226,7 @@ func (s *experimentService) ListExperiments(
 		Offset:      offset,
 		Filters:     filters,
 		Orders:      orders,
-		InFilter:    inFilter,
+		InFilters:   inFilters,
 		SearchQuery: searchQuery,
 		NullFilters: nil,
 		JSONFilters: nil,
