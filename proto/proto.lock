@@ -38514,6 +38514,52 @@
             "name": "TrackResponse"
           },
           {
+            "name": "DebugEvaluateFeaturesRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "users",
+                "type": "bucketeer.user.User",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "feature_ids",
+                "type": "string",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "DebugEvaluateFeaturesResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "evaluations",
+                "type": "feature.Evaluation",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "archived_feature_ids",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "CreateFeatureRequest",
             "fields": [
               {
@@ -39776,6 +39822,47 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.track"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DebugEvaluateFeatures",
+                "in_type": "DebugEvaluateFeaturesRequest",
+                "out_type": "DebugEvaluateFeaturesResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/debug_evaluate_features"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Debug Evaluate Features"
+                      },
+                      {
+                        "name": "description",
+                        "value": "This API is for debugging the evaluation of feature flags. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Feature Flags"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.features.debug_evaluate_features"
                       }
                     ]
                   }

@@ -28,6 +28,46 @@ import (
 	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
 )
 
+func (s *grpcGatewayService) DebugEvaluateFeatures(
+	ctx context.Context,
+	req *gwproto.DebugEvaluateFeaturesRequest,
+) (*gwproto.DebugEvaluateFeaturesResponse, error) {
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+		accountproto.APIKey_PUBLIC_API_READ_ONLY,
+		accountproto.APIKey_PUBLIC_API_WRITE,
+		accountproto.APIKey_PUBLIC_API_ADMIN,
+	})
+	if err != nil {
+		s.logger.Error("Failed to check DebugEvaluateFeatures request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Strings("featureIds", req.FeatureIds),
+				zap.Any("users", req.Users),
+			)...,
+		)
+		return nil, err
+	}
+	resp, err := s.featureClient.DebugEvaluateFeatures(ctx, &featureproto.DebugEvaluateFeaturesRequest{
+		Users:         req.Users,
+		FeatureIds:    req.FeatureIds,
+		EnvironmentId: envAPIKey.Environment.Id,
+	})
+	if err != nil {
+		s.logger.Error("Failed to debug evaluate features",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Strings("featureIds", req.FeatureIds),
+				zap.Any("users", req.Users),
+			)...,
+		)
+		return nil, err
+	}
+	return &gwproto.DebugEvaluateFeaturesResponse{
+		Evaluations:        resp.Evaluations,
+		ArchivedFeatureIds: resp.ArchivedFeatureIds,
+	}, nil
+}
+
 func (s *grpcGatewayService) CreateFeature(
 	ctx context.Context,
 	req *gwproto.CreateFeatureRequest,

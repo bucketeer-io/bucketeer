@@ -988,6 +988,55 @@ paths:
           type: string
       tags:
         - Code References
+  /v1/debug_evaluate_features:
+    post:
+      summary: Debug Evaluate Features
+      description: This API is for debugging the evaluation of feature flags. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.features.debug_evaluate_features
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayDebugEvaluateFeaturesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayDebugEvaluateFeaturesRequest'
+      tags:
+        - Feature Flags
   /v1/feature:
     get:
       summary: Get
@@ -1841,6 +1890,33 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
+  bucketeergatewayDebugEvaluateFeaturesRequest:
+    type: object
+    properties:
+      users:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/userUser'
+      featureIds:
+        type: array
+        items:
+          type: string
+    required:
+      - users
+      - featureIds
+  bucketeergatewayDebugEvaluateFeaturesResponse:
+    type: object
+    properties:
+      evaluations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureEvaluation'
+      archivedFeatureIds:
+        type: array
+        items:
+          type: string
   bucketeergatewayDeleteCodeReferenceResponse:
     type: object
   bucketeergatewayGetAccountV2ByEnvironmentIDResponse:
