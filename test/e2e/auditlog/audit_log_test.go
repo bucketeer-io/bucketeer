@@ -39,11 +39,12 @@ var (
 )
 
 func TestListAndGetAuditLog(t *testing.T) {
+	t.Parallel()
 	featureClient := newFeatureClient(t)
 	req := newCreateFeatureReq(newFeatureID(t))
 	createFeatureNoCmd(t, featureClient, req)
 	// wait for the audit log to save
-	time.Sleep(5 * time.Second)
+	time.Sleep(10 * time.Second)
 
 	auditlogClient := newAuditLogClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -51,7 +52,7 @@ func TestListAndGetAuditLog(t *testing.T) {
 	listResp, err := auditlogClient.ListAuditLogs(ctx, &auditlog.ListAuditLogsRequest{
 		EnvironmentId:  *environmentID,
 		EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
-		PageSize:       10,
+		PageSize:       50,
 		Cursor:         "0",
 		OrderBy:        auditlog.ListAuditLogsRequest_TIMESTAMP,
 		OrderDirection: auditlog.ListAuditLogsRequest_DESC,
@@ -60,20 +61,25 @@ func TestListAndGetAuditLog(t *testing.T) {
 		t.Fatal("Failed to list audit logs:", err)
 	}
 
-	_, err = auditlogClient.GetAuditLog(ctx, &auditlog.GetAuditLogRequest{
-		Id:            listResp.AuditLogs[0].Id,
+	var auditLogID string
+	for i := 0; i < len(listResp.AuditLogs); i++ {
+		if listResp.AuditLogs[i].EntityId == req.Id {
+			auditLogID = listResp.AuditLogs[i].Id
+		}
+	}
+
+	getResp, err := auditlogClient.GetAuditLog(ctx, &auditlog.GetAuditLogRequest{
+		Id:            auditLogID,
 		EnvironmentId: *environmentID,
 	})
 	if err != nil {
 		t.Fatal("Failed to get audit log:", err)
 	}
-}
+	if getResp.AuditLog.Id != auditLogID {
+		t.Fatal("GetAuditLog ID error")
+	}
 
-func TestListAdminAuditLog(t *testing.T) {
-	auditlogClient := newAuditLogClient(t)
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	listResp, err := auditlogClient.ListAdminAuditLogs(ctx, &auditlog.ListAdminAuditLogsRequest{
+	listAdminResp, err := auditlogClient.ListAdminAuditLogs(ctx, &auditlog.ListAdminAuditLogsRequest{
 		EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
 		PageSize:       10,
 		Cursor:         "0",
@@ -83,11 +89,11 @@ func TestListAdminAuditLog(t *testing.T) {
 	if err != nil {
 		t.Fatal("Failed to list audit logs:", err)
 	}
-	if len(listResp.AuditLogs) > 10 {
+	if len(listAdminResp.AuditLogs) > 10 {
 		t.Fatal("ListAdminAuditLogs page size error")
 	}
-	for i := 1; i < len(listResp.AuditLogs); i++ {
-		if listResp.AuditLogs[i].Timestamp > listResp.AuditLogs[i-1].Timestamp {
+	for i := 1; i < len(listAdminResp.AuditLogs); i++ {
+		if listAdminResp.AuditLogs[i].Timestamp > listAdminResp.AuditLogs[i-1].Timestamp {
 			t.Fatal("ListAdminAuditLogs order error")
 		}
 	}
