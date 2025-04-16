@@ -11,6 +11,4 @@ SELECT
     previous_entity_data
 FROM
     audit_log
-WHERE
-    environment_id = ? AND
-    id = ?
+    %s %s %s

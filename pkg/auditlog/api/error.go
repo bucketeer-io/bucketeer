@@ -23,6 +23,8 @@ var (
 	statusInternal         = gstatus.New(codes.Internal, "auditlog: internal")
 	statusUnauthenticated  = gstatus.New(codes.Unauthenticated, "auditlog: unauthenticated")
 	statusPermissionDenied = gstatus.New(codes.PermissionDenied, "auditlog: permission denied")
+	statusMissingID        = gstatus.New(codes.InvalidArgument, "auditlog: missing ID")
+	statusNotFound         = gstatus.New(codes.NotFound, "auditlog: not found")
 	statusInvalidCursor    = gstatus.New(codes.InvalidArgument, "auditlog: cursor is invalid")
 	statusInvalidOrderBy   = gstatus.New(codes.InvalidArgument, "auditlog: order_by is invalid")
 )

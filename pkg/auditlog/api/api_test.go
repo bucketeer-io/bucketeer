@@ -52,6 +52,137 @@ func TestNewAuditLogService(t *testing.T) {
 	assert.IsType(t, &auditlogService{}, s)
 }
 
+func TestGetAuditLog(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	createError := func(status *gstatus.Status, msg string, localizer locale.Localizer) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc           string
+		service        *auditlogService
+		context        context.Context
+		setup          func(*auditlogService)
+		input          *proto.GetAuditLogRequest
+		expected       *proto.GetAuditLogResponse
+		getExpectedErr func(localizer locale.Localizer) error
+	}{
+		{
+			desc:    "errPermissionDenied",
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context: createContextWithToken(t, false),
+			setup:   func(s *auditlogService) {},
+			input: &proto.GetAuditLogRequest{
+				Id: "id-1",
+			},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			},
+		},
+		{
+			desc:    "err: missing ID",
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
+			context: createContextWithToken(t, true),
+			setup:   nil,
+			input: &proto.GetAuditLogRequest{
+				Id:            "",
+				EnvironmentId: "env-1",
+			},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id"), localizer)
+			},
+		},
+		{
+			desc:    "err: ErrInternal",
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
+			context: createContextWithToken(t, true),
+			setup: func(s *auditlogService) {
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("test"))
+			},
+			input: &proto.GetAuditLogRequest{
+				Id:            "id-1",
+				EnvironmentId: "env-1",
+			},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
+			},
+		},
+		{
+			desc:    "success",
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
+			context: createContextWithToken(t, true),
+			setup: func(s *auditlogService) {
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().GetAuditLog(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&proto.AuditLog{
+					Id: "id-1",
+					Editor: &domaineventproto.Editor{
+						Email: "test@bucketeer.io",
+					},
+				}, nil)
+				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAvatarAccountsV2(
+					gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.AccountV2{
+					{
+						Email:       "test@bucketeer.io",
+						AvatarImage: []byte{0x1},
+					},
+				}, nil)
+			},
+			input: &proto.GetAuditLogRequest{
+				Id:            "id-1",
+				EnvironmentId: "env-1",
+			},
+			expected: &proto.GetAuditLogResponse{
+				AuditLog: &proto.AuditLog{
+					Id: "id-1",
+					Editor: &domaineventproto.Editor{
+						Email:       "test@bucketeer.io",
+						AvatarImage: []byte{0x1},
+					},
+					LocalizedMessage: domainevent.LocalizedMessage(domaineventproto.Event_UNKNOWN, locale.NewLocalizer(context.Background())),
+				},
+			},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := p.service
+			if p.setup != nil {
+				p.setup(s)
+			}
+			ctx := p.context
+			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+				"accept-language": []string{"en"},
+			})
+			localizer := locale.NewLocalizer(ctx)
+
+			actual, err := s.GetAuditLog(ctx, p.input)
+			if err != nil {
+				assert.Equal(t, p.getExpectedErr(localizer), err)
+				return
+			}
+			assert.Equal(t, p.expected.AuditLog, actual.AuditLog)
+		})
+	}
+}
+
 func TestListAuditLogsMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

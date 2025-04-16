@@ -4,6 +4,15 @@
 import * as proto_auditlog_service_pb from '../../proto/auditlog/service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
+type AuditLogServiceGetAuditLog = {
+  readonly methodName: string;
+  readonly service: typeof AuditLogService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_auditlog_service_pb.GetAuditLogRequest;
+  readonly responseType: typeof proto_auditlog_service_pb.GetAuditLogResponse;
+};
+
 type AuditLogServiceListAuditLogs = {
   readonly methodName: string;
   readonly service: typeof AuditLogService;
@@ -33,6 +42,7 @@ type AuditLogServiceListFeatureHistory = {
 
 export class AuditLogService {
   static readonly serviceName: string;
+  static readonly GetAuditLog: AuditLogServiceGetAuditLog;
   static readonly ListAuditLogs: AuditLogServiceListAuditLogs;
   static readonly ListAdminAuditLogs: AuditLogServiceListAdminAuditLogs;
   static readonly ListFeatureHistory: AuditLogServiceListFeatureHistory;
@@ -83,6 +93,21 @@ export class AuditLogServiceClient {
   readonly serviceHost: string;
 
   constructor(serviceHost: string, options?: grpc.RpcOptions);
+  getAuditLog(
+    requestMessage: proto_auditlog_service_pb.GetAuditLogRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auditlog_service_pb.GetAuditLogResponse | null
+    ) => void
+  ): UnaryResponse;
+  getAuditLog(
+    requestMessage: proto_auditlog_service_pb.GetAuditLogRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auditlog_service_pb.GetAuditLogResponse | null
+    ) => void
+  ): UnaryResponse;
   listAuditLogs(
     requestMessage: proto_auditlog_service_pb.ListAuditLogsRequest,
     metadata: grpc.Metadata,
