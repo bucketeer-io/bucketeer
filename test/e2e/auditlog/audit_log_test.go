@@ -69,6 +69,30 @@ func TestListAndGetAuditLog(t *testing.T) {
 	}
 }
 
+func TestListAdminAuditLog(t *testing.T) {
+	auditlogClient := newAuditLogClient(t)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	listResp, err := auditlogClient.ListAdminAuditLogs(ctx, &auditlog.ListAdminAuditLogsRequest{
+		EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
+		PageSize:       10,
+		Cursor:         "0",
+		OrderBy:        auditlog.ListAdminAuditLogsRequest_TIMESTAMP,
+		OrderDirection: auditlog.ListAdminAuditLogsRequest_DESC,
+	})
+	if err != nil {
+		t.Fatal("Failed to list audit logs:", err)
+	}
+	if len(listResp.AuditLogs) > 10 {
+		t.Fatal("ListAdminAuditLogs page size error")
+	}
+	for i := 1; i < len(listResp.AuditLogs); i++ {
+		if listResp.AuditLogs[i].Timestamp > listResp.AuditLogs[i-1].Timestamp {
+			t.Fatal("ListAdminAuditLogs order error")
+		}
+	}
+}
+
 func newFeatureID(t *testing.T) string {
 	if *testID != "" {
 		return fmt.Sprintf("%s-%s-feature-id-%s", "audit-log", *testID, newUUID(t))
