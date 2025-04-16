@@ -17,7 +17,6 @@ package v2
 
 import (
 	"context"
-	"database/sql"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -82,7 +81,7 @@ func (s *auditLogStorage) GetAuditLog(ctx context.Context, id string, environmen
 		&auditLog.PreviousEntityData,
 	)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrAuditLogNotFound
 		}
 		return nil, err
