@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
+	v2ts "github.com/bucketeer-io/bucketeer/pkg/tag/storage"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
@@ -61,7 +62,7 @@ type FeatureService struct {
 	featureStorage        v2fs.FeatureStorage
 	segmentStorage        v2fs.SegmentStorage
 	segmentUserStorage    v2fs.SegmentUserStorage
-	tagStorage            v2fs.TagStorage
+	tagStorage            v2ts.TagStorage
 	mysqlClient           mysql.Client
 	accountClient         accountclient.Client
 	experimentClient      experimentclient.Client
@@ -103,7 +104,7 @@ func NewFeatureService(
 		featureStorage:        v2fs.NewFeatureStorage(mysqlClient),
 		segmentStorage:        v2fs.NewSegmentStorage(mysqlClient),
 		segmentUserStorage:    v2fs.NewSegmentUserStorage(mysqlClient),
-		tagStorage:            v2fs.NewTagStorage(mysqlClient),
+		tagStorage:            v2ts.NewTagStorage(mysqlClient),
 		mysqlClient:           mysqlClient,
 		accountClient:         accountClient,
 		experimentClient:      experimentClient,

@@ -22,12 +22,13 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/pkg/tag/domain"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
 )
 
 func (s *FeatureService) ListTags(
@@ -91,8 +92,15 @@ func (s *FeatureService) ListTags(
 		)
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
 	}
+	convertedTags := make([]*featureproto.Tag, len(tags))
+	for i, tag := range tags {
+		convertedTags[i] = &featureproto.Tag{
+			Id:   tag.Id,
+			Name: tag.Name,
+		}
+	}
 	return &featureproto.ListTagsResponse{
-		Tags:       tags,
+		Tags:       convertedTags,
 		Cursor:     strconv.Itoa(nextCursor),
 		TotalCount: totalCount,
 	}, nil
@@ -139,7 +147,7 @@ func (s *FeatureService) upsertTags(
 		if trimed == "" {
 			continue
 		}
-		t, err := domain.NewTag(trimed)
+		t, err := domain.NewTag(trimed, environmentId, tagproto.Tag_FEATURE_FLAG)
 		if err != nil {
 			s.logger.Error(
 				"Failed to create domain tag",
@@ -151,7 +159,7 @@ func (s *FeatureService) upsertTags(
 			)
 			return err
 		}
-		if err := s.tagStorage.UpsertTag(ctx, t, environmentId); err != nil {
+		if err := s.tagStorage.UpsertTag(ctx, t); err != nil {
 			s.logger.Error(
 				"Failed to store tag",
 				log.FieldsFromImcomingContext(ctx).AddFields(

@@ -24,6 +24,7 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
+	tagstoragemock "github.com/bucketeer-io/bucketeer/pkg/tag/storage/mock"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	aoclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
@@ -121,7 +122,7 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 		mock.NewMockFeatureStorage(c),
 		mock.NewMockSegmentStorage(c),
 		mock.NewMockSegmentUserStorage(c),
-		mock.NewMockTagStorage(c),
+		tagstoragemock.NewMockTagStorage(c),
 		mysqlmock.NewMockClient(c),
 		a,
 		e,
@@ -154,7 +155,7 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 		flagTriggerStorage:    mock.NewMockFlagTriggerStorage(c),
 		featureStorage:        mock.NewMockFeatureStorage(c),
 		mysqlClient:           mysqlmock.NewMockClient(c),
-		tagStorage:            mock.NewMockTagStorage(c),
+		tagStorage:            tagstoragemock.NewMockTagStorage(c),
 		accountClient:         a,
 		autoOpsClient:         aoclientmock.NewMockClient(c),
 		experimentClient:      experimentclientmock.NewMockClient(c),
