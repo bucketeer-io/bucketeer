@@ -13,7 +13,7 @@ import { isJsonString } from 'utils/converts';
 
 const nameSchema = yup.string().max(FEATURE_NAME_MAX_LENGTH).required();
 const descriptionSchema = yup.string().max(FEATURE_DESCRIPTION_MAX_LENGTH);
-const variationsSchema = yup
+export const variationsSchema = yup
   .array()
   .required()
   .of(
