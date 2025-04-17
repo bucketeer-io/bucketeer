@@ -19,6 +19,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -140,7 +141,22 @@ func (s *environmentStorage) ListEnvironmentsV2(
 	ctx context.Context,
 	options *mysql.ListOptions,
 ) ([]*proto.EnvironmentV2, int, int64, error) {
-	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectEnvironmentsSQL, options)
+	// Because select_environments.sql defines the variable strings in a complex constructed way,
+	//  we do not use ConstructQueryAndWhereArgs() here.
+	var query string
+	var whereArgs []any
+	if options != nil {
+		var whereSQL string
+		whereParts := options.CreateWhereParts()
+		whereSQL, whereArgs = mysql.ConstructWhereSQLString(whereParts)
+		orderBySQL := mysql.ConstructOrderBySQLString(options.Orders)
+		limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
+		query = fmt.Sprintf(selectOrganizationsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	} else {
+		query = selectOrganizationsSQL
+		whereArgs = []interface{}{}
+	}
+
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err

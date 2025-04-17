@@ -357,10 +357,6 @@ func TestListProjects(t *testing.T) {
 			accounts, cursor, _, err := storage.ListProjects(
 				context.Background(),
 				p.options,
-				// p.whereParts,
-				// p.orders,
-				// p.limit,
-				// p.offset,
 			)
 			assert.Equal(t, p.expected, accounts)
 			assert.Equal(t, p.expectedCursor, cursor)

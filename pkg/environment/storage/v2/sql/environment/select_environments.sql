@@ -8,3 +8,4 @@ FROM
 %s
 GROUP BY
     environment_v2.id
+%s %s

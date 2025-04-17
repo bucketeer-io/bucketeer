@@ -126,13 +126,13 @@ func (s *EnvironmentService) ListProjects(
 	if err != nil {
 		return nil, err
 	}
-	var infilter *mysql.InFilter
+	var infilters []*mysql.InFilter
 	if len(req.OrganizationIds) > 0 {
 		oIDs := convToInterfaceSlice(req.OrganizationIds)
-		infilter = &mysql.InFilter{
+		infilters = append(infilters, &mysql.InFilter{
 			Column: "project.organization_id",
 			Values: oIDs,
-		}
+		})
 	}
 	var filters []*mysql.FilterV2
 	if req.Disabled != nil {
@@ -177,7 +177,7 @@ func (s *EnvironmentService) ListProjects(
 		Limit:       limit,
 		Offset:      offset,
 		Filters:     filters,
-		InFilter:    infilter,
+		InFilters:   infilters,
 		Orders:      orders,
 		SearchQuery: searchQuery,
 		JSONFilters: nil,

@@ -177,7 +177,7 @@ func (s *EnvironmentService) ListOrganizations(
 		Limit:       limit,
 		Offset:      offset,
 		Filters:     filters,
-		InFilter:    nil,
+		InFilters:   nil,
 		NullFilters: nil,
 		JSONFilters: nil,
 		SearchQuery: searchQuery,
