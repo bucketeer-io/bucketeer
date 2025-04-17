@@ -158,7 +158,7 @@ func TestListProjectsMySQL(t *testing.T) {
 			desc: "err: ErrInternal",
 			setup: func(s *EnvironmentService) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().ListProjects(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("error"))
 			},
 			input:       &proto.ListProjectsRequest{},
@@ -169,7 +169,7 @@ func TestListProjectsMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *EnvironmentService) {
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().ListProjects(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Project{}, 0, int64(0), nil)
 			},
 			input:       &proto.ListProjectsRequest{PageSize: 2, Cursor: "", OrganizationIds: []string{"org-1", "org-2"}},
@@ -1459,7 +1459,7 @@ func TestListProjectsV2(t *testing.T) {
 					},
 				}, nil)
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().ListProjects(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*environmentproto.Project{{}}, 1, int64(1), nil)
 			},
 			input: &environmentproto.ListProjectsV2Request{
@@ -1526,7 +1526,7 @@ func TestListProjectsV2(t *testing.T) {
 					},
 				}, nil)
 				s.projectStorage.(*storagemock.MockProjectStorage).EXPECT().ListProjects(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("internal error"))
 			},
 			input: &environmentproto.ListProjectsV2Request{

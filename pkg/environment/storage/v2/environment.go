@@ -49,9 +49,7 @@ type EnvironmentStorage interface {
 	GetEnvironmentV2(ctx context.Context, id string) (*domain.EnvironmentV2, error)
 	ListEnvironmentsV2(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		options *mysql.ListOptions,
 	) ([]*proto.EnvironmentV2, int, int64, error)
 }
 
@@ -141,17 +139,32 @@ func (s *environmentStorage) GetEnvironmentV2(ctx context.Context, id string) (*
 
 func (s *environmentStorage) ListEnvironmentsV2(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.EnvironmentV2, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(selectEnvironmentsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	// Because select_environments.sql defines the variable strings in a complex constructed way,
+	//  we do not use ConstructQueryAndWhereArgs() here.
+	var query string
+	var whereArgs []any
+	if options != nil {
+		var whereSQL string
+		whereParts := options.CreateWhereParts()
+		whereSQL, whereArgs = mysql.ConstructWhereSQLString(whereParts)
+		orderBySQL := mysql.ConstructOrderBySQLString(options.Orders)
+		limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
+		query = fmt.Sprintf(selectEnvironmentsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	} else {
+		query = selectEnvironmentsSQL
+		whereArgs = []interface{}{}
+	}
+
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
+	}
+	var limit, offset int
+	if options != nil {
+		limit = options.Limit
+		offset = options.Offset
 	}
 	defer rows.Close()
 	environments := make([]*proto.EnvironmentV2, 0, limit)
@@ -180,8 +193,8 @@ func (s *environmentStorage) ListEnvironmentsV2(
 	}
 	nextOffset := offset + len(environments)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countEnvironmentsSQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countEnvironmentsSQL, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

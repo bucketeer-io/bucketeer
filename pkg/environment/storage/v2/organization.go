@@ -54,9 +54,7 @@ type OrganizationStorage interface {
 	GetSystemAdminOrganization(ctx context.Context) (*domain.Organization, error)
 	ListOrganizations(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		options *mysql.ListOptions,
 	) ([]*proto.Organization, int, int64, error)
 }
 
@@ -177,17 +175,32 @@ func (s *organizationStorage) GetSystemAdminOrganization(ctx context.Context) (*
 
 func (s *organizationStorage) ListOrganizations(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.Organization, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(selectOrganizationsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	// Because select_organizations.sql defines the variable strings in a complex constructed way,
+	//  we do not use ConstructQueryAndWhereArgs() here.
+	var query string
+	var whereArgs []any
+	if options != nil {
+		var whereSQL string
+		whereParts := options.CreateWhereParts()
+		whereSQL, whereArgs = mysql.ConstructWhereSQLString(whereParts)
+		orderBySQL := mysql.ConstructOrderBySQLString(options.Orders)
+		limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
+		query = fmt.Sprintf(selectOrganizationsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	} else {
+		query = selectOrganizationsSQL
+		whereArgs = []interface{}{}
+	}
+	// Construct the SQL query
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
+	}
+	var limit, offset int
+	if options != nil {
+		limit = options.Limit
+		offset = options.Offset
 	}
 	defer rows.Close()
 	organizations := make([]*proto.Organization, 0, limit)
@@ -219,8 +232,8 @@ func (s *organizationStorage) ListOrganizations(
 	}
 	nextOffset := offset + len(organizations)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countOrganizationsSQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countOrganizationsSQL, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

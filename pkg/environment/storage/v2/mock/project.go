@@ -88,9 +88,9 @@ func (mr *MockProjectStorageMockRecorder) GetTrialProjectByEmail(ctx, email, dis
 }
 
 // ListProjects mocks base method.
-func (m *MockProjectStorage) ListProjects(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*environment.Project, int, int64, error) {
+func (m *MockProjectStorage) ListProjects(ctx context.Context, options *mysql.ListOptions) ([]*environment.Project, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListProjects", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListProjects", ctx, options)
 	ret0, _ := ret[0].([]*environment.Project)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -99,9 +99,9 @@ func (m *MockProjectStorage) ListProjects(ctx context.Context, whereParts []mysq
 }
 
 // ListProjects indicates an expected call of ListProjects.
-func (mr *MockProjectStorageMockRecorder) ListProjects(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockProjectStorageMockRecorder) ListProjects(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjects", reflect.TypeOf((*MockProjectStorage)(nil).ListProjects), ctx, whereParts, orders, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjects", reflect.TypeOf((*MockProjectStorage)(nil).ListProjects), ctx, options)
 }
 
 // UpdateProject mocks base method.
