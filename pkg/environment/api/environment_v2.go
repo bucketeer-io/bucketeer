@@ -165,6 +165,7 @@ func (s *EnvironmentService) ListEnvironmentsV2(
 		Filters:     filters,
 		Orders:      orders,
 		SearchQuery: searchQuery,
+		InFilters:   nil,
 		NullFilters: nil,
 		JSONFilters: nil,
 	}

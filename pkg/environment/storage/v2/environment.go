@@ -151,9 +151,9 @@ func (s *environmentStorage) ListEnvironmentsV2(
 		whereSQL, whereArgs = mysql.ConstructWhereSQLString(whereParts)
 		orderBySQL := mysql.ConstructOrderBySQLString(options.Orders)
 		limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
-		query = fmt.Sprintf(selectOrganizationsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+		query = fmt.Sprintf(selectEnvironmentsSQL, whereSQL, orderBySQL, limitOffsetSQL)
 	} else {
-		query = selectOrganizationsSQL
+		query = selectEnvironmentsSQL
 		whereArgs = []interface{}{}
 	}
 

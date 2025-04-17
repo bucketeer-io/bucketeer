@@ -1273,6 +1273,7 @@ func (s *EnvironmentService) ListProjectsV2(
 		Offset:      offset,
 		SearchQuery: searchQuery,
 		Filters:     filters,
+		InFilters:   nil,
 		NullFilters: nil,
 		JSONFilters: nil,
 		Orders:      orders,
