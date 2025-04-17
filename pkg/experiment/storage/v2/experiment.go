@@ -19,7 +19,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -52,9 +51,7 @@ type ExperimentStorage interface {
 	GetExperiment(ctx context.Context, id, environmentId string) (*domain.Experiment, error)
 	ListExperiments(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		options *mysql.ListOptions,
 	) ([]*proto.Experiment, int, int64, error)
 	// GetExperimentSummary returns the total count of experiments by status.
 	GetExperimentSummary(ctx context.Context, environmentID string) (*ExperimentSummary, error)
@@ -199,19 +196,19 @@ func (s *experimentStorage) GetExperiment(
 
 func (s *experimentStorage) ListExperiments(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.Experiment, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(selectExperimentsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectExperimentsSQL, options)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
+	var limit, offset int
+	if options != nil {
+		limit = options.Limit
+		offset = options.Offset
+	}
 	experiments := make([]*proto.Experiment, 0, limit)
 	for rows.Next() {
 		experiment := proto.Experiment{}
@@ -249,8 +246,8 @@ func (s *experimentStorage) ListExperiments(
 	}
 	nextOffset := offset + len(experiments)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countExperimentSQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(
+	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countExperimentSQL, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(
 		&totalCount,
 	)
 	if err != nil {
