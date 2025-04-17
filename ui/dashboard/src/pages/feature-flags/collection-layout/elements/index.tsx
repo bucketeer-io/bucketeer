@@ -6,7 +6,6 @@ import {
 } from 'react';
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { COLORS } from 'constants/styles';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import {
@@ -17,7 +16,7 @@ import {
 } from '@types';
 import { truncateBySide } from 'utils/converts';
 import { copyToClipBoard } from 'utils/function';
-import { cn } from 'utils/style';
+import { cn, getVariationColor } from 'utils/style';
 import {
   IconCalendar,
   IconCopy,
@@ -118,8 +117,7 @@ export const FlagVariationPolygon = ({
   index: number;
   className?: string;
 }) => {
-  const colorIndex = index > 20 ? index % 20 : index;
-  const color = COLORS[colorIndex];
+  const color = getVariationColor(index);
   return (
     <div
       style={{

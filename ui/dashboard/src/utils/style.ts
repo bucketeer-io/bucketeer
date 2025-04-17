@@ -1,5 +1,6 @@
 import type { FunctionComponent } from 'react';
 import { clsx, type ClassValue } from 'clsx';
+import { COLORS } from 'constants/styles';
 import compact from 'lodash/compact';
 import { twMerge } from 'tailwind-merge';
 import type { Color } from '@types';
@@ -17,3 +18,6 @@ export const iconsx = (
 ): FunctionComponent => {
   return compact(inputs)[0] as FunctionComponent;
 };
+
+export const getVariationColor = (index: number) =>
+  COLORS[index % COLORS.length];

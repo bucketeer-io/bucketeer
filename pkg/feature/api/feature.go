@@ -2006,14 +2006,16 @@ func (s *FeatureService) stopProgressiveRollout(
 			Value:    EnvironmentId,
 		},
 	}
-	inFilter := &mysql.InFilter{
-		Column: "feature_id",
-		Values: ids,
+	inFilters := []*mysql.InFilter{
+		{
+			Column: "feature_id",
+			Values: ids,
+		},
 	}
 	listOptions := &mysql.ListOptions{
 		Filters:     filters,
 		Orders:      nil,
-		InFilter:    inFilter,
+		InFilters:   inFilters,
 		NullFilters: nil,
 		JSONFilters: nil,
 		SearchQuery: nil,

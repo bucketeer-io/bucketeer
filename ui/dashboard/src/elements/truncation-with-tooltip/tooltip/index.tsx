@@ -15,7 +15,7 @@ const TooltipWrapper = ({
   <div
     className={cn(
       'flex-center w-[250px] lg:w-[500px] bottom-[calc(100%+16px)]',
-      'opacity-0 transition-all delay-500 group-hover:opacity-100',
+      'opacity-0 transition-all delay-200 group-hover:opacity-100',
       absoluteCenterCls,
       className
     )}

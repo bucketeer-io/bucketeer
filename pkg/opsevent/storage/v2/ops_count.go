@@ -17,20 +17,25 @@ package v2
 
 import (
 	"context"
-	"fmt"
+	_ "embed"
 
 	"github.com/bucketeer-io/bucketeer/pkg/opsevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/autoops"
 )
 
+var (
+	//go:embed sql/ops_count/insert_ops_count.sql
+	insertOpsCountSQL string
+	//go:embed sql/ops_count/select_ops_counts.sql
+	selectOpsCountsSQL string
+)
+
 type OpsCountStorage interface {
 	UpsertOpsCount(ctx context.Context, environmentId string, oc *domain.OpsCount) error
 	ListOpsCounts(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		options *mysql.ListOptions,
 	) ([]*proto.OpsCount, int, error)
 }
 
@@ -43,29 +48,9 @@ func NewOpsCountStorage(qe mysql.QueryExecer) OpsCountStorage {
 }
 
 func (s *opsCountStorage) UpsertOpsCount(ctx context.Context, environmentId string, oc *domain.OpsCount) error {
-	query := `
-		INSERT INTO ops_count (
-			id,
-			auto_ops_rule_id,
-			clause_id,
-			updated_at,
-			ops_event_count,
-			evaluation_count,
-			feature_id,
-			environment_id
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?
-		) ON DUPLICATE KEY UPDATE
-			auto_ops_rule_id = VALUES(auto_ops_rule_id),
-			clause_id = VALUES(clause_id),
-			updated_at = VALUES(updated_at),
-			ops_event_count = VALUES(ops_event_count),
-			evaluation_count = VALUES(evaluation_count),
-			feature_id = VALUES(feature_id)
-	`
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
+		insertOpsCountSQL,
 		oc.Id,
 		oc.AutoOpsRuleId,
 		oc.ClauseId,
@@ -83,27 +68,14 @@ func (s *opsCountStorage) UpsertOpsCount(ctx context.Context, environmentId stri
 
 func (s *opsCountStorage) ListOpsCounts(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.OpsCount, int, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			auto_ops_rule_id,
-			clause_id,
-			updated_at,
-			ops_event_count,
-			evaluation_count,
-			feature_id
-		FROM
-			ops_count
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
+	var limit, offset int
+	if options != nil {
+		limit = options.Limit
+		offset = options.Offset
+	}
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectOpsCountsSQL, options)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, err

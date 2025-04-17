@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
+	tagstoragemock "github.com/bucketeer-io/bucketeer/pkg/tag/storage/mock"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
@@ -567,8 +568,8 @@ func TestCreateFeatureMySQL(t *testing.T) {
 					err := fn(ctx, nil)
 					require.NoError(t, err)
 				}).Return(nil)
-				s.tagStorage.(*mock.MockTagStorage).EXPECT().UpsertTag(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
+					gomock.Any(), gomock.Any(),
 				).Times(3).Return(nil)
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().CreateFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),

@@ -160,7 +160,7 @@ func (a auditLogPersister) createAuditLogsMySQL(
 ) {
 	for i, aud := range auditlogs {
 		if err := createFunc(ctx, aud); err != nil {
-			if errors.Is(err, v2als.ErrAuditLogAlreadyExists) {
+			if errors.Is(err, v2als.ErrAuditLogAlreadyExists) || errors.Is(err, v2als.ErrAdminAuditLogAlreadyExists) {
 				subscriberHandledCounter.WithLabelValues(subscriberAuditLog, codes.NonRepeatableError.String()).Inc()
 				messages[i].Ack()
 			} else {

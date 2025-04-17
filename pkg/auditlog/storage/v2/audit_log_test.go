@@ -36,6 +36,64 @@ func TestNewSubscriptionStorage(t *testing.T) {
 	assert.IsType(t, &auditLogStorage{}, storage)
 }
 
+func TestGetAuditLog(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	id := "id-0"
+	patterns := []struct {
+		desc        string
+		setup       func(*auditLogStorage)
+		input       string
+		expectedErr error
+	}{
+		{
+			desc: "Error",
+			setup: func(s *auditLogStorage) {
+				row := mock.NewMockRow(mockController)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).Return(row)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+			},
+			input:       id,
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *auditLogStorage) {
+				row := mock.NewMockRow(mockController)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).Return(row)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+			},
+			input:       id,
+			expectedErr: nil,
+		},
+	}
+	for _, tt := range patterns {
+		t.Run(tt.desc, func(t *testing.T) {
+			storage := newAuditLogStorageWithMock(t, mockController)
+			if tt.setup != nil {
+				tt.setup(storage)
+			}
+			auditLog, err := storage.GetAuditLog(context.Background(), id, "ns")
+			assert.Equal(t, tt.expectedErr, err)
+			if tt.expectedErr == nil {
+				assert.IsType(t, auditLog, &proto.AuditLog{})
+			}
+		})
+	}
+}
+
 func TestCreateAuditLogs(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

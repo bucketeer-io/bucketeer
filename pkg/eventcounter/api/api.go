@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
@@ -31,6 +32,7 @@ import (
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
+	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
 	v2ecstorage "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -289,104 +291,126 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	}
 	hourlyTimeStamps := getHourlyTimeStamps(timestamps, timestampUnit)
 	vIDs := getVariationIDs(resp.Feature.Variations)
+
+	variationEventCountsMap := make(map[string][]float64, len(vIDs))
+	variationUserCountsMap := make(map[string][]float64, len(vIDs))
+	variationTotalEventCountsMap := make(map[string]int64, len(vIDs))
+	variationTotalUserCountsMap := make(map[string]int64, len(vIDs))
+
+	var mu sync.Mutex
+	var eg errgroup.Group
+
+	for _, variationID := range vIDs {
+		eg.Go(func() error {
+
+			// Get event data
+			eventCountKeys := s.getEventCountKeys(
+				hourlyTimeStamps,
+				req.EnvironmentId,
+				req.FeatureId,
+				variationID,
+			)
+			eventCounts, err := s.getEventCounts(eventCountKeys, timestampUnit)
+			if err != nil {
+				s.logCountError(
+					ctx,
+					err,
+					"Failed to get event counts", req.EnvironmentId, req.FeatureId, variationID,
+					resp.Feature.Version,
+					timestampUnit, req.TimeRange,
+				)
+				return err
+			}
+
+			// Get user data
+			userCountKeys := s.getUserCountKeys(
+				hourlyTimeStamps,
+				req.EnvironmentId,
+				req.FeatureId,
+				variationID,
+			)
+			userCounts, err := s.getUserCounts(
+				userCountKeys,
+				req.FeatureId,
+				req.EnvironmentId,
+				variationID,
+				timestampUnit,
+			)
+			if err != nil {
+				s.logCountError(
+					ctx,
+					err,
+					"Failed to get user counts", req.EnvironmentId, req.FeatureId, variationID,
+					resp.Feature.Version,
+					timestampUnit, req.TimeRange,
+				)
+				return err
+			}
+
+			totalUserCounts, err := s.getTotalUserCounts(
+				userCountKeys,
+				req.FeatureId,
+				req.EnvironmentId,
+				variationID,
+			)
+			if err != nil {
+				s.logCountError(
+					ctx,
+					err,
+					"Failed to get total user counts", req.EnvironmentId, req.FeatureId, variationID,
+					resp.Feature.Version,
+					timestampUnit, req.TimeRange,
+				)
+				return err
+			}
+
+			mu.Lock()
+			variationEventCountsMap[variationID] = eventCounts
+			variationUserCountsMap[variationID] = userCounts
+			variationTotalEventCountsMap[variationID] = s.getTotalEventCounts(eventCounts)
+			variationTotalUserCountsMap[variationID] = totalUserCounts
+			mu.Unlock()
+
+			return nil
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		dt, errDt := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if errDt != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
 	variationTSEvents := make([]*ecproto.VariationTimeseries, 0, len(vIDs))
 	variationTSUsers := make([]*ecproto.VariationTimeseries, 0, len(vIDs))
+
 	for _, vID := range vIDs {
-		eventCountKeys := s.getEventCountKeys(
-			hourlyTimeStamps,
-			req.EnvironmentId,
-			req.FeatureId,
-			vID,
-		)
-		userCountKeys := s.getUserCountKeys(
-			hourlyTimeStamps,
-			req.EnvironmentId,
-			req.FeatureId,
-			vID,
-		)
-		eventCounts, err := s.getEventCounts(eventCountKeys, timestampUnit)
-		if err != nil {
-			s.logCountError(
-				ctx,
-				err,
-				"Failed to get event counts", req.EnvironmentId, req.FeatureId, vID,
-				resp.Feature.Version,
-				timestampUnit, req.TimeRange,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		totalEventCounts := s.getTotalEventCounts(eventCounts)
-		userCounts, err := s.getUserCounts(
-			userCountKeys,
-			req.FeatureId,
-			req.EnvironmentId,
-			timestampUnit,
-		)
-		if err != nil {
-			s.logCountError(
-				ctx,
-				err,
-				"Failed to get user counts", req.EnvironmentId, req.FeatureId, vID,
-				resp.Feature.Version,
-				timestampUnit, req.TimeRange,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		totalUserCounts, err := s.getTotalUserCounts(
-			userCountKeys,
-			req.FeatureId,
-			req.EnvironmentId,
-		)
-		if err != nil {
-			s.logCountError(
-				ctx,
-				err,
-				"Failed to get user counts", req.EnvironmentId, req.FeatureId, vID,
-				resp.Feature.Version,
-				timestampUnit, req.TimeRange,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		variationTSUsers = append(variationTSUsers, &ecproto.VariationTimeseries{
-			VariationId: vID,
-			Timeseries: &ecproto.Timeseries{
-				Timestamps:  timestamps,
-				Values:      userCounts,
-				Unit:        timestampUnit,
-				TotalCounts: totalUserCounts,
-			},
-		})
 		variationTSEvents = append(variationTSEvents, &ecproto.VariationTimeseries{
 			VariationId: vID,
 			Timeseries: &ecproto.Timeseries{
 				Timestamps:  timestamps,
-				Values:      eventCounts,
+				Values:      variationEventCountsMap[vID],
 				Unit:        timestampUnit,
-				TotalCounts: totalEventCounts,
+				TotalCounts: variationTotalEventCountsMap[vID],
+			},
+		})
+
+		variationTSUsers = append(variationTSUsers, &ecproto.VariationTimeseries{
+			VariationId: vID,
+			Timeseries: &ecproto.Timeseries{
+				Timestamps:  timestamps,
+				Values:      variationUserCountsMap[vID],
+				Unit:        timestampUnit,
+				TotalCounts: variationTotalUserCountsMap[vID],
 			},
 		})
 	}
+
 	return &ecproto.GetEvaluationTimeseriesCountResponse{
 		EventCounts: variationTSEvents,
 		UserCounts:  variationTSUsers,
@@ -455,13 +479,13 @@ func (s *eventCounterService) getTotalEventCounts(
 
 func (s *eventCounterService) getUserCounts(
 	keys [][]string,
-	featureID, environmentId string,
+	featureID, environmentId, variationID string,
 	unit ecproto.Timeseries_Unit,
 ) ([]float64, error) {
 	if unit == ecproto.Timeseries_HOUR {
 		return s.getHourlyUserCounts(keys, featureID, environmentId)
 	}
-	return s.getDailyUserCounts(keys, featureID, environmentId)
+	return s.getDailyUserCounts(keys, featureID, environmentId, variationID)
 }
 
 func (s *eventCounterService) getHourlyUserCounts(
@@ -482,13 +506,15 @@ func (s *eventCounterService) getHourlyUserCounts(
 
 func (s *eventCounterService) getDailyUserCounts(
 	days [][]string,
-	featureID, environmentId string,
+	featureID, environmentId, variationID string,
 ) ([]float64, error) {
 	counts := make([]float64, 0, len(days))
 	for _, day := range days {
 		c, err := s.countUniqueUser(
 			day,
-			featureID, environmentId,
+			featureID,
+			environmentId,
+			variationID,
 		)
 		if err != nil {
 			return nil, err
@@ -510,12 +536,13 @@ func (s *eventCounterService) flattenAry(
 
 func (s *eventCounterService) getTotalUserCounts(
 	userCountKeys [][]string,
-	featureID, environmentId string,
+	featureID, environmentId, variationID string,
 ) (int64, error) {
 	flat := s.flattenAry(userCountKeys)
 	count, err := s.countUniqueUser(
 		flat,
 		featureID, environmentId,
+		variationID,
 	)
 	if err != nil {
 		return 0, err
@@ -525,12 +552,13 @@ func (s *eventCounterService) getTotalUserCounts(
 
 func (s *eventCounterService) countUniqueUser(
 	userCountKeys []string,
-	featureID, environmentId string,
+	featureID, environmentId, variationID string,
 ) (count float64, err multiError) {
 	key := newPFMergeKey(
 		UserCountPrefix,
 		featureID,
 		environmentId,
+		variationID,
 	)
 	// We need to count the number of unique users in the target term.
 	if e := s.evaluationCountCacher.MergeMultiKeys(key, userCountKeys, pfMergeExpiration); e != nil {
@@ -610,11 +638,11 @@ func (s *eventCounterService) logCountError(
 }
 
 func newPFMergeKey(
-	kind, featureID, environmentId string,
+	kind, featureID, environmentId, variationID string,
 ) string {
 	return cache.MakeKey(
 		fmt.Sprintf("%s:%s", pfMergeKind, kind),
-		fmt.Sprintf("%s:%s", pfMergeKey, featureID),
+		fmt.Sprintf("%s:%s:%s", pfMergeKey, featureID, variationID),
 		environmentId,
 	)
 }

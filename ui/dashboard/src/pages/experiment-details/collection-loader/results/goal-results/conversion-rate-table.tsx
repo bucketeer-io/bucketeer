@@ -4,15 +4,20 @@ import { Experiment, GoalResult } from '@types';
 import { isNumber } from 'utils/chart';
 import { GoalResultState } from '..';
 import { ResultHeaderCell, ResultCell } from './goal-results-table-element';
+import { DatasetReduceType } from './timeseries-area-line-chart';
 
 const ConversionRateTable = ({
   goalResultState,
   experiment,
-  goalResult
+  goalResult,
+  conversionRateDataSets,
+  onToggleShowData
 }: {
   goalResultState: GoalResultState;
   experiment: Experiment;
   goalResult: GoalResult;
+  conversionRateDataSets: DatasetReduceType[];
+  onToggleShowData: (label: string) => void;
 }) => {
   const { t } = useTranslation(['common', 'table']);
 
@@ -53,6 +58,11 @@ const ConversionRateTable = ({
     [goalResultState]
   );
 
+  const isConversionRateChart = useMemo(
+    () => goalResultState.chartType === 'conversion-rate',
+    [goalResultState]
+  );
+
   const conversionRateData = useMemo(
     () =>
       goalResult?.variationResults?.map(item => {
@@ -61,11 +71,12 @@ const ConversionRateTable = ({
         );
         return {
           ...item,
-          variationName: variation?.value || variation?.name || ''
+          variationName: variation?.name || variation?.value || ''
         };
       }),
     [goalResult, experiment]
   );
+
   const baseVariationResult = useMemo(
     () =>
       goalResult?.variationResults?.find(
@@ -83,6 +94,17 @@ const ConversionRateTable = ({
     );
     return evaluationUserCount > 0
       ? (experimentUserCount / evaluationUserCount) * 100
+      : 0;
+  }, [baseVariationResult]);
+
+  const baseValuePerUser = useMemo(() => {
+    const { valueSum, userCount } = baseVariationResult?.experimentCount || {};
+
+    const experimentValueSum = Number(valueSum);
+    const experimentUserCount = Number(userCount);
+
+    return experimentValueSum > 0
+      ? experimentValueSum / experimentUserCount
       : 0;
   }, [baseVariationResult]);
 
@@ -111,8 +133,6 @@ const ConversionRateTable = ({
             goalValueSumPerUserProbBest,
             goalValueSumPerUserProbBeatBaseline
           } = item;
-          const isConversionRateChart =
-            goalResultState.chartType === 'conversion-rate';
 
           const conversionRate =
             Number(evaluationCount?.userCount) > 0
@@ -130,12 +150,19 @@ const ConversionRateTable = ({
           const isSameVariationId =
             item.variationId === experiment.baseVariationId;
 
-          const improvementValue = isSameVariationId
+          const improvementValueConversionRate = isSameVariationId
             ? 'Baseline'
             : (isNumber(conversionRate - baseConversionRate)
                 ? conversionRate - baseConversionRate
                 : 0
               ).toFixed(1) + ' %';
+
+          const improvementValuePerUser = isSameVariationId
+            ? 'Baseline'
+            : (isNumber(valuePerUser - baseValuePerUser)
+                ? valuePerUser - baseValuePerUser
+                : 0
+              ).toFixed(1);
 
           const probBeatBaseline = isConversionRateChart
             ? cvrProbBeatBaseline
@@ -155,12 +182,20 @@ const ConversionRateTable = ({
             ? (probBest.mean * 100).toFixed(1) + ' %'
             : '-';
 
+          const isHidden = conversionRateDataSets.find(
+            dataset => dataset.label === item?.variationName
+          )?.hidden;
+
           return (
             <div key={i} className="flex items-center w-full">
               <ResultCell
-                isFirstItem={true}
+                variationId={item.variationId}
+                isFirstItem
                 value={item?.variationName || ''}
                 minSize={270}
+                currentIndex={i}
+                isChecked={!isHidden}
+                onToggleShowData={onToggleShowData}
               />
               <ResultCell
                 value={
@@ -170,7 +205,14 @@ const ConversionRateTable = ({
                 }
                 minSize={210}
               />
-              <ResultCell value={improvementValue} minSize={210} />
+              <ResultCell
+                value={
+                  isConversionRateChart
+                    ? improvementValueConversionRate
+                    : improvementValuePerUser
+                }
+                minSize={210}
+              />
               <ResultCell value={probBeatBaselineValue} minSize={210} />
               <ResultCell value={probBestValue} minSize={210} />
             </div>
