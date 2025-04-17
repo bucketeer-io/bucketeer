@@ -53,6 +53,7 @@ func WithLogger(l *zap.Logger) Option {
 
 type TagService struct {
 	mysqlClient   mysql.Client
+	tagStorage    tagstorage.TagStorage
 	accountClient accclient.Client
 	publisher     publisher.Publisher
 	opts          *options
@@ -73,6 +74,7 @@ func NewTagService(
 	}
 	return &TagService{
 		mysqlClient:   mysqlClient,
+		tagStorage:    tagstorage.NewTagStorage(mysqlClient),
 		accountClient: accountClient,
 		publisher:     publisher,
 		opts:          dopts,
@@ -105,16 +107,8 @@ func (s *TagService) CreateTag(
 				zap.Int32("entity_type", int32(req.EntityType)),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, err
 	}
-	tagStorage := tagstorage.NewTagStorage(s.mysqlClient)
 	tag, err := domain.NewTag(strings.TrimSpace(req.Name), req.EnvironmentId, req.EntityType)
 	if err != nil {
 		s.logger.Error(
@@ -128,7 +122,7 @@ func (s *TagService) CreateTag(
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
 	}
 	// Save in the DB
-	if err := tagStorage.UpsertTag(ctx, tag); err != nil {
+	if err := s.tagStorage.UpsertTag(ctx, tag); err != nil {
 		s.logger.Error(
 			"Failed to store the tag",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -242,8 +236,7 @@ func (s *TagService) ListTags(
 		}
 		return nil, dt.Err()
 	}
-	tagStorage := tagstorage.NewTagStorage(s.mysqlClient)
-	tags, nextCursor, totalCount, err := tagStorage.ListTags(
+	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(
 		ctx,
 		whereParts,
 		orders,
@@ -287,17 +280,9 @@ func (s *TagService) DeleteTag(
 				zap.String("id", req.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, err
 	}
-	tagStorage := tagstorage.NewTagStorage(s.mysqlClient)
-	tag, err := tagStorage.GetTag(ctx, req.Id, req.EnvironmentId)
+	tag, err := s.tagStorage.GetTag(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get tag",
@@ -310,7 +295,7 @@ func (s *TagService) DeleteTag(
 		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
 	}
 	// Delete it from DB
-	if err := tagStorage.DeleteTag(ctx, req.Id); err != nil {
+	if err := s.tagStorage.DeleteTag(ctx, req.Id); err != nil {
 		s.logger.Error(
 			"Failed to delete the tag",
 			log.FieldsFromImcomingContext(ctx).AddFields(
