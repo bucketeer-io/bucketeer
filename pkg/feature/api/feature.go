@@ -2440,28 +2440,29 @@ func (s *FeatureService) DebugEvaluateFeatures(
 	features := fs.([]*featureproto.Feature)
 	var evaluations = make([]*featureproto.Evaluation, 0)
 	var archivedFS = make([]string, 0)
+	// If the feature ID is set in the request, it will evaluate a single feature.
+	if len(req.FeatureIds) == 1 {
+		features, err = s.getTargetFeatures(features, req.FeatureIds[0], localizer)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get target features",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+	}
 
 	for i := range req.Users {
-		if len(req.FeatureIds) == 1 {
-			features, err = s.getTargetFeatures(features, req.FeatureIds[0], localizer)
-			if err != nil {
-				s.logger.Error(
-					"Failed to get target features",
-					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("environmentId", req.EnvironmentId),
-					)...,
-				)
-				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalize(locale.InternalServerError),
-				})
-				if err != nil {
-					return nil, statusInternal.Err()
-				}
-				return nil, dt.Err()
-			}
-		}
 		userEvaluations, err := s.evaluateFeatures(
 			ctx, features, req.Users[i], req.EnvironmentId, "", localizer,
 		)
