@@ -2,6 +2,7 @@ import React, {
   forwardRef,
   ReactNode,
   Ref,
+  RefObject,
   useRef,
   type FunctionComponent
 } from 'react';
@@ -52,6 +53,7 @@ export type PopoverProps<PopoverValue> = {
   addonSlot?: AddonSlot;
   trigger?: ReactNode;
   triggerLabel?: string;
+  triggerCls?: string;
   icon?: FunctionComponent;
   options?: PopoverOption<PopoverValue>[];
   disabled?: boolean;
@@ -62,7 +64,10 @@ export type PopoverProps<PopoverValue> = {
   children?: ReactNode;
   closeBtnCls?: string;
   sideOffset?: number;
+  closeRef?: RefObject<HTMLButtonElement>;
   onClick?: (value: PopoverValue) => void;
+  onOpenChange?: (open: boolean) => void;
+  onPointerDownOutside?: () => void;
 };
 
 const Popover = forwardRef(
@@ -72,6 +77,7 @@ const Popover = forwardRef(
       expand,
       trigger,
       triggerLabel = '',
+      triggerCls,
       icon,
       addonSlot,
       options,
@@ -82,7 +88,10 @@ const Popover = forwardRef(
       children,
       closeBtnCls,
       sideOffset = 0,
-      onClick
+      closeRef,
+      onClick,
+      onOpenChange,
+      onPointerDownOutside
     }: PopoverProps<PopoverValue>,
     ref: Ref<HTMLDivElement>
   ) => {
@@ -90,18 +99,19 @@ const Popover = forwardRef(
 
     const handleSelectItem = (value: PopoverValue) => {
       onClick!(value);
-      if (closeWhenSelected) popoverCloseRef?.current?.click();
+      if (closeWhenSelected) (closeRef ?? popoverCloseRef)?.current?.click();
     };
 
     return (
-      <PopoverRoot modal={modal}>
+      <PopoverRoot modal={modal} onOpenChange={onOpenChange}>
         <PopoverTrigger
           className={cn(
             'typo-para-small flex items-center justify-center gap-x-2 text-gray-700 hover:text-gray-600 hover:drop-shadow',
             {
               'flex-row-reverse': addonSlot === 'right',
               'w-full justify-between': expand === 'full'
-            }
+            },
+            triggerCls
           )}
           disabled={disabled}
         >
@@ -123,9 +133,10 @@ const Popover = forwardRef(
             className={className}
             align={align}
             sideOffset={sideOffset}
+            onPointerDownOutside={onPointerDownOutside}
           >
             <PopoverClose
-              ref={popoverCloseRef}
+              ref={closeRef ?? popoverCloseRef}
               className={cn('hidden', closeBtnCls)}
             >
               <Icon icon={IconClose} size={'sm'} className="flex-center" />

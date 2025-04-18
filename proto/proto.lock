@@ -37113,7 +37113,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Debug Evaluate Features"
+                        "value": "Debug Feature Evaluations"
                       },
                       {
                         "name": "description",
@@ -40059,11 +40059,11 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Debug Evaluate Features"
+                        "value": "Debug Feature Evaluations"
                       },
                       {
                         "name": "description",
-                        "value": "This API is for debugging the evaluation of feature flags. To call this API, you need a `READ` API Key role."
+                        "value": "This API is used to debug one or more end-user evaluations. To call this API, you need a `READ` API Key role."
                       },
                       {
                         "name": "tags",

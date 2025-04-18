@@ -133,7 +133,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace (
-	google.golang.org/grpc v1.36.0 => google.golang.org/grpc v1.29.1
-	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20191003035328-700b1226c0bd
-)
+replace k8s.io/code-generator => k8s.io/code-generator v0.0.0-20191003035328-700b1226c0bd

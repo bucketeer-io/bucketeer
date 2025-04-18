@@ -152,5 +152,8 @@
   "destination-env": "Destination Environment",
   "comment-for-update": "Comment for update",
   "placeholder-comment": "Enter comment",
-  "placeholder-member-tags": "Tags can be used to group members as teams"
+  "placeholder-member-tags": "Tags can be used to group members as teams",
+  "kind-filter-value": "Kind: {{value}}",
+  "select-range": "Select Range",
+  "not-found-entity": "Not found {{entity}}"
 }

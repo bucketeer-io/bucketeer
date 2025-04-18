@@ -2531,7 +2531,7 @@ paths:
         - Code Reference
   /v1/debug_evaluate_features:
     post:
-      summary: Debug Evaluate Features
+      summary: Debug Feature Evaluations
       description: Debug Evaluate features for multiple features and users.
       operationId: web.v1.feature.debug_evaluate_feature
       responses:

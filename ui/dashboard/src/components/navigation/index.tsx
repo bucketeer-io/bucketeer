@@ -87,11 +87,6 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
       title: t('management'),
       menus: [
         {
-          label: t(`navigation.audit-logs`),
-          icon: IconSystem.IconLogs,
-          href: `/${envUrlCode}${ROUTING.PAGE_PATH_AUDIT_LOGS}`
-        },
-        {
           label: t(`navigation.feature-flags`),
           icon: IconSystem.IconSwitch,
           href: `/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`
@@ -105,11 +100,16 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           label: t(`navigation.debugger`),
           icon: IconSystem.IconDebugger,
           href: `/${envUrlCode}${ROUTING.PAGE_PATH_DEBUGGER}`
+        },
+        {
+          label: t(`navigation.audit-logs`),
+          icon: IconSystem.IconLogs,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_AUDIT_LOGS}`
         }
       ]
     },
     {
-      title: t('analysis'),
+      title: t('experimentation'),
       menus: [
         {
           label: t(`navigation.goals`),

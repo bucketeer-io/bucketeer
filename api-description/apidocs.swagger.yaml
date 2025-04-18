@@ -990,8 +990,8 @@ paths:
         - Code References
   /v1/debug_evaluate_features:
     post:
-      summary: Debug Evaluate Features
-      description: This API is for debugging the evaluation of feature flags. To call this API, you need a `READ` API Key role.
+      summary: Debug Feature Evaluations
+      description: This API is used to debug one or more end-user evaluations. To call this API, you need a `READ` API Key role.
       operationId: api.gateway.v1.features.debug_evaluate_features
       responses:
         "200":

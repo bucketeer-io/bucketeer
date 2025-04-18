@@ -575,8 +575,8 @@ service Gateway {
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Debug Evaluate Features",
-      description: "This API is for debugging the evaluation of feature flags. To call this API, you need a `READ` API Key role.",
+      summary: "Debug Feature Evaluations",
+      description: "This API is used to debug one or more end-user evaluations. To call this API, you need a `READ` API Key role.",
       tags: "Feature Flags",
       operation_id: "api.gateway.v1.features.debug_evaluate_features"
     };

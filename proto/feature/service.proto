@@ -1408,7 +1408,7 @@ service FeatureService {
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Debug Evaluate Features",
+      summary: "Debug Feature Evaluations",
       description: "Debug Evaluate features for multiple features and users."
       tags: "feature"
       operation_id: "web.v1.feature.debug_evaluate_feature"
