@@ -1553,6 +1553,81 @@ func TestRemoveClauseValue(t *testing.T) {
 	compareClause(t, expected, r.Clauses[0])
 }
 
+func TestDebugEvaluateFeatures(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	featureID1 := newFeatureID(t)
+	req1 := newCreateFeatureReq(featureID1)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	createResp1, err := client.CreateFeature(ctx, req1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	featureID2 := newFeatureID(t)
+	req2 := newCreateFeatureReq(featureID2)
+	createResp2, err := client.CreateFeature(ctx, req2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	enableFeature(t, req2.Id, client)
+
+	_, err = client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id: featureID1,
+		TargetChanges: []*feature.TargetChange{
+			{
+				ChangeType: feature.ChangeType_CREATE,
+				Target: &feature.Target{
+					Users:     []string{"user-id-01", "user-id-02"},
+					Variation: createResp1.Feature.Variations[1].Id,
+				},
+			},
+		},
+		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id: featureID2,
+		TargetChanges: []*feature.TargetChange{
+			{
+				ChangeType: feature.ChangeType_CREATE,
+				Target: &feature.Target{
+					Users:     []string{"user-id-01", "user-id-02"},
+					Variation: createResp2.Feature.Variations[1].Id,
+				},
+			},
+		},
+		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := client.DebugEvaluateFeatures(context.Background(), &feature.DebugEvaluateFeaturesRequest{
+		Users:         []*userproto.User{{Id: "user-id-01"}, {Id: "user-id-02"}},
+		FeatureIds:    []string{featureID1, featureID2},
+		EnvironmentId: *environmentID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(resp.Evaluations) < 4 {
+		t.Fatalf("length of user evaluations is not enough. Expected: >=%d, Actual: %d", 2, len(resp.Evaluations))
+	}
+	for _, evaluation := range resp.Evaluations {
+		if evaluation.FeatureId != featureID1 && evaluation.FeatureId != featureID2 {
+			t.Fatalf("Feature ID is not correct. Expected: %s or %s, Actual: %s", featureID1, featureID2, evaluation.FeatureId)
+		}
+		if evaluation.UserId != "user-id-01" && evaluation.UserId != "user-id-02" {
+			t.Fatalf("User ID is not correct. Expected: user-id-01 or user-id-02, Actual: %s", evaluation.UserId)
+		}
+	}
+}
+
 func TestEvaluateFeatures(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)

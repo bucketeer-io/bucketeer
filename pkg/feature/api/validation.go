@@ -933,6 +933,45 @@ func validateEvaluateFeatures(req *featureproto.EvaluateFeaturesRequest, localiz
 	return nil
 }
 
+func validateDebugEvaluateFeatures(req *featureproto.DebugEvaluateFeaturesRequest, localizer locale.Localizer) error {
+	if len(req.Users) == 0 {
+		dt, err := statusMissingUser.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "users"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+
+	for _, user := range req.Users {
+		if user.Id == "" {
+			dt, err := statusMissingUserID.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_id"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+	}
+
+	if len(req.FeatureIds) == 0 {
+		dt, err := statusMissingFeatureIDs.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_ids"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+
+	return nil
+}
+
 func validateGetFeatureRequest(req *featureproto.GetFeatureRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
 		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{

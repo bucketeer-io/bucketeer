@@ -4076,6 +4076,110 @@ func TestGetTargetFeatures(t *testing.T) {
 	}
 }
 
+func TestGrpcDebugEvaluateFeatures(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		ctx         context.Context
+		setup       func(*grpcGatewayService)
+		expected    *gwproto.DebugEvaluateFeaturesResponse
+		expectedErr error
+	}{
+		{
+			desc: "fails: bad role",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_SDK_CLIENT,
+							Disabled: false,
+						},
+					}, nil,
+				)
+			},
+			expected:    nil,
+			expectedErr: ErrBadRole,
+		},
+		{
+			desc: "fail: debug evaluate features error",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().DebugEvaluateFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, ErrInternal)
+			},
+			expected:    nil,
+			expectedErr: ErrInternal,
+		},
+		{
+			desc: "success",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().DebugEvaluateFeatures(
+					gomock.Any(), gomock.Any(),
+				).Return(&featureproto.DebugEvaluateFeaturesResponse{
+					Evaluations: []*featureproto.Evaluation{
+						{
+							FeatureId: "feature-id-1",
+							UserId:    "user-id-1",
+							Reason: &featureproto.Reason{
+								Type: featureproto.Reason_DEFAULT,
+							},
+						},
+					},
+					ArchivedFeatureIds: []string{"feature-id-2"},
+				}, nil)
+			},
+			expected: &gwproto.DebugEvaluateFeaturesResponse{
+				Evaluations: []*featureproto.Evaluation{
+					{
+						FeatureId: "feature-id-1",
+						UserId:    "user-id-1",
+						Reason: &featureproto.Reason{
+							Type: featureproto.Reason_DEFAULT,
+						},
+					},
+				},
+				ArchivedFeatureIds: []string{"feature-id-2"},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGrpcGatewayServiceWithMock(t, mockController)
+			p.setup(gs)
+			ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
+				"authorization": []string{"test-key"},
+			})
+			actual, err := gs.DebugEvaluateFeatures(ctx, &gwproto.DebugEvaluateFeaturesRequest{})
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
+	}
+}
+
 func TestGrpcGetFeature(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

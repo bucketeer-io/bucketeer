@@ -191,6 +191,7 @@ func createFeatureServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, r
 		fluiStorage:           mock.NewMockFeatureLastUsedInfoStorage(c),
 		flagTriggerStorage:    mock.NewMockFlagTriggerStorage(c),
 		featureStorage:        mock.NewMockFeatureStorage(c),
+		segmentUsersCache:     cachev3mock.NewMockSegmentUsersCache(c),
 		segmentStorage:        mock.NewMockSegmentStorage(c),
 		mysqlClient:           mysqlmock.NewMockClient(c),
 		accountClient:         a,

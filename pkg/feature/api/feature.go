@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -2390,6 +2391,115 @@ func (s *FeatureService) EvaluateFeatures(
 			}}, nil
 	}
 	return &featureproto.EvaluateFeaturesResponse{UserEvaluations: userEvaluations}, nil
+}
+
+func (s *FeatureService) DebugEvaluateFeatures(
+	ctx context.Context,
+	req *featureproto.DebugEvaluateFeaturesRequest,
+) (*featureproto.DebugEvaluateFeaturesResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	_, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentId, localizer)
+	if err != nil {
+		return nil, err
+	}
+	err = validateDebugEvaluateFeatures(req, localizer)
+	if err != nil {
+		s.logger.Error(
+			"Invalid argument",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, err
+	}
+	fs, err, _ := s.flightgroup.Do(
+		req.EnvironmentId,
+		func() (interface{}, error) {
+			return s.getFeatures(ctx, req.EnvironmentId)
+		},
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to list features",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	features := fs.([]*featureproto.Feature)
+	var evaluations = make([]*featureproto.Evaluation, 0)
+	var archivedFS = make([]string, 0)
+	// If the feature ID is set in the request, it will evaluate a single feature.
+	if len(req.FeatureIds) == 1 {
+		features, err = s.getTargetFeatures(features, req.FeatureIds[0], localizer)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get target features",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+	}
+
+	for i := range req.Users {
+		userEvaluations, err := s.evaluateFeatures(
+			ctx, features, req.Users[i], req.EnvironmentId, "", localizer,
+		)
+		if err != nil {
+			s.logger.Error(
+				"Failed to evaluate features",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+
+		evaluations = append(evaluations, userEvaluations.Evaluations...)
+		archivedFS = append(archivedFS, userEvaluations.ArchivedFeatureIds...)
+	}
+	evaluationResults := make([]*featureproto.Evaluation, 0)
+	for _, eval := range evaluations {
+		if slices.Contains(req.FeatureIds, eval.FeatureId) {
+			evaluationResults = append(evaluationResults, eval)
+		}
+	}
+
+	return &featureproto.DebugEvaluateFeaturesResponse{
+		Evaluations:        evaluationResults,
+		ArchivedFeatureIds: archivedFS,
+	}, nil
 }
 
 func (s *FeatureService) getTargetFeatures(

@@ -214,6 +214,26 @@ func (mr *MockClientMockRecorder) CreateSegment(ctx, in any, opts ...any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSegment", reflect.TypeOf((*MockClient)(nil).CreateSegment), varargs...)
 }
 
+// DebugEvaluateFeatures mocks base method.
+func (m *MockClient) DebugEvaluateFeatures(ctx context.Context, in *feature.DebugEvaluateFeaturesRequest, opts ...grpc.CallOption) (*feature.DebugEvaluateFeaturesResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DebugEvaluateFeatures", varargs...)
+	ret0, _ := ret[0].(*feature.DebugEvaluateFeaturesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DebugEvaluateFeatures indicates an expected call of DebugEvaluateFeatures.
+func (mr *MockClientMockRecorder) DebugEvaluateFeatures(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DebugEvaluateFeatures", reflect.TypeOf((*MockClient)(nil).DebugEvaluateFeatures), varargs...)
+}
+
 // DeleteFeature mocks base method.
 func (m *MockClient) DeleteFeature(ctx context.Context, in *feature.DeleteFeatureRequest, opts ...grpc.CallOption) (*feature.DeleteFeatureResponse, error) {
 	m.ctrl.T.Helper()
