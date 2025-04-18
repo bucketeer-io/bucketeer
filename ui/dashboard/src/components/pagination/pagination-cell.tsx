@@ -11,7 +11,7 @@ import { cn } from 'utils/style';
 import Icon from 'components/icon';
 
 const cellVariant = cva(
-  ['size-8 rounded-lg flex items-center justify-center text-gray-500'],
+  ['min-w-8 h-8 p-1 rounded-lg flex items-center justify-center text-gray-500'],
   {
     variants: {
       variant: {

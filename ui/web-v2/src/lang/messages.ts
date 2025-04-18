@@ -1582,15 +1582,15 @@ export const messages = {
             'Estimated likelihood of exceeding baseline (also known as a control group). A criterion of at least 95% is recommended.'
         })
       },
-      probabilityToBest: {
+      probabilityToBeBest: {
         label: defineMessage({
-          id: 'experiment.result.probabilityToBest.label',
-          defaultMessage: 'Probability to best'
+          id: 'experiment.result.probabilityToBeBest.label',
+          defaultMessage: 'Probability to be best'
         }),
         helpText: defineMessage({
-          id: 'experiment.result.probabilityToBest.helpText',
+          id: 'experiment.result.probabilityToBeBest.helpText',
           defaultMessage:
-            'Possibility of being the best variation. Possibility of being presumed to outperform all other variations. We recommend a criterion of at least 95%.'
+            'The probability of being the best-performing variation outperforming all other variations. We recommend using a threshold of at least 95%.'
         })
       }
     },

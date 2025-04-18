@@ -14,6 +14,7 @@ export type ModalProps = {
   onClose: () => void;
   closeOnPressEscape?: boolean;
   closeOnClickOutside?: boolean;
+  isShowHeader?: boolean;
   children?: ReactNode;
   className?: string;
 };
@@ -24,6 +25,7 @@ const DialogModal = ({
   onClose,
   closeOnPressEscape = true,
   closeOnClickOutside = true,
+  isShowHeader = true,
   children,
   className
 }: ModalProps) => {
@@ -52,13 +54,19 @@ const DialogModal = ({
               closeOnClickOutside ? undefined : event => event.preventDefault()
             }
           >
-            <div className="z-10 flex-initial shadow-header">
+            <div
+              className={cn('z-10 flex-initial shadow-header', {
+                hidden: !isShowHeader
+              })}
+            >
               <div
                 className={cn('flex items-center justify-between px-4 py-3.5')}
               >
-                <Dialog.Title className="typo-head-bold-huge">
-                  {title}
-                </Dialog.Title>
+                {title && (
+                  <Dialog.Title className="typo-head-bold-huge">
+                    {title}
+                  </Dialog.Title>
+                )}
                 <Dialog.Description className="hidden" />
                 <Dialog.Close asChild>
                   <Button size="icon-sm" variant="grey" onClick={onClose}>

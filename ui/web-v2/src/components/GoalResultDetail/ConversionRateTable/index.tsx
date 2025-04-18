@@ -47,10 +47,10 @@ const createHeadCells = (): Array<HeaderCell> => [
   {
     id: 'prob-best',
     label: intl.formatMessage(
-      messages.experiment.result.probabilityToBest.label
+      messages.experiment.result.probabilityToBeBest.label
     ),
     helpText: intl.formatMessage(
-      messages.experiment.result.probabilityToBest.helpText
+      messages.experiment.result.probabilityToBeBest.helpText
     )
   }
 ];

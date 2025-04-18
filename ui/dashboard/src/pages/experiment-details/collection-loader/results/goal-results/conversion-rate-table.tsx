@@ -50,8 +50,8 @@ const ConversionRateTable = ({
         minSize: 210
       },
       {
-        name: 'probability-to-best',
-        tooltipKey: 'probability-to-best-tooltip',
+        name: 'probability-to-be-best',
+        tooltipKey: 'probability-to-be-best-tooltip',
         minSize: 210
       }
     ],

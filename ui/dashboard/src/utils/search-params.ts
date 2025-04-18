@@ -21,7 +21,7 @@ export function useSearchParams() {
         }
       );
     },
-    [navigate]
+    [navigate, location]
   );
 
   return { searchOptions, onChangSearchParams };

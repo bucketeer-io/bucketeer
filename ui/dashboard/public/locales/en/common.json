@@ -213,5 +213,18 @@
   "no-options-found": "No options found",
   "create-goal": "Create Goal",
   "create-a-new-goal": "Create a new Goal",
-  "create-a-new-flag": "Create a new Flag"
+  "create-a-new-flag": "Create a new Flag",
+  "audit-logs": "Audit Logs",
+  "audit-logs-subtitle": "View all events that is happening through the platform",
+  "date-range": "Date Range",
+  "apply": "Apply",
+  "expand-all": "Expand All",
+  "collapse-all": "Collapse All",
+  "changes": "Changes",
+  "snapshot": "Snapshot",
+  "patch": "Patch",
+  "audit-log-details": "Audit Log Details",
+  "current-version": "Current Version",
+  "updates": "Updates",
+  "experimentation": "Experimentation"
 }

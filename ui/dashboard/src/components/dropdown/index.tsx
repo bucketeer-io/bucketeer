@@ -4,13 +4,15 @@ import {
   forwardRef,
   FunctionComponent,
   ReactNode,
-  Ref
+  Ref,
+  useCallback,
+  useRef
 } from 'react';
 import { IconExpandMoreRound } from 'react-icons-material-design';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { cva } from 'class-variance-authority';
 import { cn } from 'utils/style';
-import { IconSearch } from '@icons';
+import { IconClose, IconSearch } from '@icons';
 import Checkbox from 'components/checkbox';
 import Icon from 'components/icon';
 import Input, { InputProps } from 'components/input';
@@ -58,10 +60,12 @@ const DropdownMenuTrigger = forwardRef<
     label?: ReactNode;
     description?: string;
     isExpand?: boolean;
-    placeholder?: string;
+    placeholder?: ReactNode;
     variant?: 'primary' | 'secondary';
     showArrow?: boolean;
+    showClear?: boolean;
     trigger?: ReactNode;
+    onClear?: () => void;
   }
 >(
   (
@@ -73,45 +77,71 @@ const DropdownMenuTrigger = forwardRef<
       isExpand,
       placeholder = '',
       showArrow = true,
+      showClear = false,
       trigger,
+      onClear,
       ...props
     },
     ref
-  ) => (
-    <DropdownMenuPrimitive.Trigger
-      type="button"
-      ref={ref}
-      className={cn(
-        triggerVariants({
-          variant
-        }),
-        {
-          'justify-between w-full': isExpand
-        },
-        className,
-        'group'
-      )}
-      {...props}
-    >
-      <div className="flex items-center w-full justify-between typo-para-medium overflow-hidden">
-        {trigger ? (
-          trigger
-        ) : label ? (
-          <p className="max-w-full truncate">
-            {label} {description && <span>{description}</span>}
-          </p>
-        ) : (
-          <p className={'!text-gray-500'}>{placeholder}</p>
-        )}
-      </div>
+  ) => {
+    const clearRef = useRef<HTMLDivElement>(null);
+    const handleTriggerMouseDown = useCallback((e: React.MouseEvent) => {
+      if (clearRef.current && clearRef.current.contains(e.target as Node)) {
+        e.preventDefault();
+      }
+    }, []);
 
-      {showArrow && (
-        <div className="size-6 min-w-6 transition-all duration-200 group-data-[state=closed]:rotate-0 group-data-[state=open]:rotate-180">
-          <Icon icon={IconExpandMoreRound} size={'md'} color="gray-500" />
-        </div>
-      )}
-    </DropdownMenuPrimitive.Trigger>
-  )
+    return (
+      <DropdownMenuPrimitive.Trigger
+        type="button"
+        ref={ref}
+        className={cn(
+          triggerVariants({
+            variant
+          }),
+          {
+            'justify-between w-full': isExpand
+          },
+          className,
+          'group'
+        )}
+        onPointerDown={e => handleTriggerMouseDown(e)}
+        {...props}
+      >
+        <>
+          <div className="flex items-center w-full justify-between typo-para-medium overflow-hidden">
+            {trigger ? (
+              trigger
+            ) : label ? (
+              <p className="max-w-full truncate">
+                {label} {description && <span>{description}</span>}
+              </p>
+            ) : (
+              <p className={'!text-gray-500'}>{placeholder}</p>
+            )}
+          </div>
+          {showClear && label && (
+            <div
+              ref={clearRef}
+              className="size-6 min-w-6 pointer-events-auto"
+              onClick={e => {
+                e.stopPropagation();
+                e.preventDefault();
+                if (onClear) onClear();
+              }}
+            >
+              <Icon icon={IconClose} size={'md'} color="gray-500" />
+            </div>
+          )}
+          {showArrow && (
+            <div className="size-6 min-w-6 transition-all duration-200 group-data-[state=closed]:rotate-0 group-data-[state=open]:rotate-180">
+              <Icon icon={IconExpandMoreRound} size={'md'} color="gray-500" />
+            </div>
+          )}
+        </>
+      </DropdownMenuPrimitive.Trigger>
+    );
+  }
 );
 
 const DropdownMenuContent = forwardRef<

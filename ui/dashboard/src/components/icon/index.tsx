@@ -20,7 +20,7 @@ const Icon = ({ color, size = 'md', icon: SvgIcon, className }: IconProps) => {
   return (
     <i
       className={clsx(
-        'inline-flex',
+        'flex-center inline-flex',
         color && COLOR_MAPPING[color],
         getSizeCls(size),
         className

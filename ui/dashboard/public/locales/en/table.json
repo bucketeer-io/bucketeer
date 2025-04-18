@@ -65,7 +65,9 @@
     "experiment-details-desc": "The result will be created when the experiment starts.",
     "feature-flags-title": "No registered feature flags",
     "feature-flags-desc": "There are no registered feature flags. Add a new one to start managing.",
-    "notifications": "No notifications to show just yet, but don't worry, we're here to keep you in the loop."
+    "notifications": "No notifications to show just yet, but don't worry, we're here to keep you in the loop.",
+    "audit-logs-title": "No registered audit logs",
+    "audit-logs-desc": "There are no audit logs for this environment."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
@@ -134,7 +136,7 @@
     "value-user": "Value / User",
     "improvement": "Improvement",
     "probability-to-beat-baseline": "Probability To Beat Baseline",
-    "probability-to-best": "Probability To Best",
+    "probability-to-be-best": "Probability To Be Best",
     "evaluation-user-tooltip": "The number of unique users for which variations have been returned. The number of users actually assigned to the feature flag variation. It does not include offline users or potential new users.",
     "goal-total-tooltip": "The total number of goal events fired by the client.",
     "goal-user-tooltip": "The number of unique users who fired the goal event. The count will not increase if the same user reaches the goal event multiple times.",
@@ -143,7 +145,7 @@
     "value-user-tooltip": "The total number of values assigned to the goal event per user. It is calculated as (the sum of the numbers assigned to the goal event / the number of unique users who fired the goal event).",
     "improvement-tooltip": "A measure of improvement in an indicator related to variation compared to a baseline (also called a control group). It is calculated by comparing the range of values for variation with the range of values for baseline.",
     "probability-to-beat-baseline-tooltip": "Estimated likelihood of exceeding baseline (also known as a control group). A criterion of at least 95% is recommended.",
-    "probability-to-best-tooltip": "Possibility of being the best variation. Possibility of being presumed to outperform all other variations. We recommend a criterion of at least 95%."
+    "probability-to-be-best-tooltip": "The probability of being the best-performing variation outperforming all other variations. We recommend using a threshold of at least 95%."
   },
   "feature-flags": {
     "confirm-archive-desc": "This will archive and return the default value defined in your code for all users. We recommend removing the code references to \"<text>{{name}}</text>\" from your application before archiving.",
@@ -178,5 +180,10 @@
     "progressive-description": "This flag has a progressive rollout.",
     "scheduled-description": "This flag has a scheduled operation.",
     "kill-description": "This flag has an automatic kill switch."
-  }
+  },
+  "audit-log-title": "<b>{{username}}</b> {{action}} the {{entityType}} <highlight>{{entityName}}</highlight>",
+  "no-data-change": "No data change",
+  "audit-log-title-no-entity": "<b>{{username}}</b> {{action}} a {{entityType}}",
+  "copy-entry-link": "Copy entry details link",
+  "show-entry": "Show entry details"
 }

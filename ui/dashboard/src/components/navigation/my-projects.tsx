@@ -132,7 +132,10 @@ const MyProjects = () => {
   );
 
   useEffect(() => {
-    if (consoleAccount) handleInitLoadData();
+    if (consoleAccount) {
+      const timerId = setTimeout(() => handleInitLoadData(), 50);
+      return () => clearTimeout(timerId);
+    }
   }, [consoleAccount]);
 
   return (
