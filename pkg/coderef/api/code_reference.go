@@ -325,7 +325,7 @@ func (s *CodeReferenceService) CreateCodeReference(
 		},
 		req.EnvironmentId,
 		codeRef,
-		nil,
+		&proto.CodeReference{},
 	)
 	if err != nil {
 		s.logger.Error(
