@@ -225,7 +225,7 @@
   "current-version": "Current Version",
   "updates": "Updates",
   "experimentation": "Experimentation",
-  "debugger-subtitle": "You can diagnose and troubleshoot problems",
+  "debugger-subtitle": "The debugger can verify what variation will be assigned to a specific end-user under different conditions in real-time.",
   "add-attribute": "Add Attribute",
   "evaluate": "Evaluate",
   "debugger-results": "Debugger Results",

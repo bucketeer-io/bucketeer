@@ -1,10 +1,8 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'i18n';
-import { IconInfoFilled } from '@icons';
 import { EvaluationFeature } from 'pages/debugger/types';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
-import Icon from 'components/icon';
-import { Tooltip } from 'components/tooltip';
+import ReasonTooltip from './reason-tooltip';
 import ResultName from './result-name';
 
 export const useColumns = ({
@@ -66,19 +64,7 @@ export const useColumns = ({
       size: 200,
       cell: ({ row }) => {
         const evaluationFeature = row.original;
-        return (
-          <Tooltip
-            content={evaluationFeature?.reason?.type}
-            trigger={
-              <div className="flex items-center gap-x-2">
-                <p className="typo-para-medium text-gray-700">
-                  {evaluationFeature?.reason?.type}
-                </p>
-                <Icon icon={IconInfoFilled} color="gray-500" />
-              </div>
-            }
-          />
-        );
+        return <ReasonTooltip reason={evaluationFeature.reason} />;
       }
     }
   ];

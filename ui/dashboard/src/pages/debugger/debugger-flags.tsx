@@ -8,6 +8,7 @@ import Button from 'components/button';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+import FeatureFlagStatus from 'elements/feature-flag-status';
 import { AddDebuggerFormType } from './form-schema';
 
 const DebuggerFlags = () => {
@@ -30,7 +31,8 @@ const DebuggerFlags = () => {
     () =>
       flags.map(item => ({
         label: item.name,
-        value: item.id
+        value: item.id,
+        enabled: item.enabled
       })),
     [flags]
   );
@@ -65,6 +67,16 @@ const DebuggerFlags = () => {
                           ? 'max-w-[calc(100%-36px)]'
                           : ''
                       }
+                      additionalElement={item => (
+                        <FeatureFlagStatus
+                          status={t(
+                            item.enabled
+                              ? 'form:experiments.on'
+                              : 'form:experiments.off'
+                          )}
+                          enabled={item.enabled as boolean}
+                        />
+                      )}
                       onSelectOption={value => field.onChange(value)}
                     />
                     {flagsSelected.length > 1 && (

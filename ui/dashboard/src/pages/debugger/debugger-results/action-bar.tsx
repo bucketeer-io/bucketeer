@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
+import { IconCollapse, IconExpand } from '@icons';
 import Button from 'components/button';
 import {
   DropdownMenu,
@@ -8,22 +9,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from 'components/dropdown';
-import { GroupByType } from '.';
+import Icon from 'components/icon';
+import { GroupByType } from '../page-content';
 
 interface Props {
+  isExpandAll: boolean;
   groupBy: GroupByType;
-  setGroupBy: (val: GroupByType) => void;
+  onChangeGroupBy: (val: GroupByType) => void;
   onResetFields: () => void;
   onEditFields: () => void;
-  onResetExpandItems: () => void;
+  onToggleExpandAll: () => void;
 }
 
 const ActionBar = ({
+  isExpandAll,
   groupBy,
-  setGroupBy,
+  onChangeGroupBy,
   onResetFields,
   onEditFields,
-  onResetExpandItems
+  onToggleExpandAll
 }: Props) => {
   const { t } = useTranslation(['common']);
 
@@ -65,14 +69,24 @@ const ActionBar = ({
                 label={item.label}
                 value={item.value}
                 onSelectOption={value => {
-                  setGroupBy(value as GroupByType);
-                  onResetExpandItems();
+                  onChangeGroupBy(value as GroupByType);
                 }}
               />
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-
+        <Button
+          variant={'secondary'}
+          className="max-w-[154px]"
+          onClick={onToggleExpandAll}
+        >
+          <Icon
+            icon={isExpandAll ? IconCollapse : IconExpand}
+            size="sm"
+            color="primary-500"
+          />
+          {t(isExpandAll ? 'collapse-all' : 'expand-all')}
+        </Button>
         <Button variant="secondary" onClick={onEditFields}>
           {t('edit-fields')}
         </Button>

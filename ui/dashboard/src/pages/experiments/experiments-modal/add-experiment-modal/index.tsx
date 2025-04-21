@@ -14,7 +14,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
-import { cn } from 'utils/style';
 import { IconInfo, IconPlus } from '@icons';
 import { experimentFormSchema } from 'pages/experiments/form-schema';
 import CreateFlagForm from 'pages/feature-flags/flags-modal/add-flag-modal/create-flag-form';
@@ -36,6 +35,7 @@ import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
 import CreateGoalModal from 'elements/create-goal-modal';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+import FeatureFlagStatus from 'elements/feature-flag-status';
 
 interface AddExperimentModalProps {
   isOpen: boolean;
@@ -66,27 +66,6 @@ export type DefineAudienceField = ControllerRenderProps<
   AddExperimentForm,
   'audience'
 >;
-
-const FeatureFlagStatus = ({
-  status,
-  enabled
-}: {
-  status: string;
-  enabled: boolean;
-}) => {
-  return (
-    <div
-      className={cn(
-        'flex-center py-0.5 px-2 rounded-lg typo-para-small text-white bg-primary-500 border border-gray-300',
-        {
-          'text-gray-700 bg-gray-200': !enabled
-        }
-      )}
-    >
-      {status}
-    </div>
-  );
-};
 
 const CreateNewOptionButton = ({
   text,

@@ -186,5 +186,10 @@
   "audit-log-title-no-entity": "<b>{{username}}</b>が{{entityType}}を{{action}}しました",
   "copy-entry-link": "Copy entry details link",
   "show-entry": "Show entry details",
-  "reason": "Reason"
+  "reason": "Reason",
+  "reason-target-tooltip": "Evaluated using individual targeting",
+  "reason-rule-tooltip": "Evaluated using a custom rule",
+  "reason-default-tooltip": "Evaluated using the default strategy",
+  "reason-offVariation-tooltip": "Evaluated using the off variation",
+  "reason-prerequisite-tooltip": "Evaluated using a prerequisite targeting"
 }

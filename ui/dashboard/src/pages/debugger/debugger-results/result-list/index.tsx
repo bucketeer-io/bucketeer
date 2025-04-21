@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { Account } from '@types';
+import { GroupByType } from 'pages/debugger/page-content';
 import { EvaluationFeature } from 'pages/debugger/types';
 import TableListContent from 'elements/table-list-content';
-import { GroupByType } from '..';
 import ResultItem from './result-item';
 
 const ResultList = ({
@@ -10,13 +10,13 @@ const ResultList = ({
   accounts,
   groupByEvaluateFeatures,
   expandedItems,
-  onToggleCollapseItem
+  onToggleExpandItem
 }: {
   groupBy: GroupByType;
   accounts: Account[];
   groupByEvaluateFeatures: EvaluationFeature[][];
   expandedItems: number[];
-  onToggleCollapseItem: (index: number) => void;
+  onToggleExpandItem: (index: number) => void;
 }) => {
   const handleGetMaintainerInfo = useCallback(
     (email: string) => {
@@ -41,7 +41,7 @@ const ResultList = ({
           group={group}
           isExpand={expandedItems.includes(index)}
           handleGetMaintainerInfo={handleGetMaintainerInfo}
-          onToggleCollapseItem={() => onToggleCollapseItem(index)}
+          onToggleExpandItem={() => onToggleExpandItem(index)}
         />
       ))}
     </TableListContent>

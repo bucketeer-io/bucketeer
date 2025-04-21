@@ -12,12 +12,26 @@ export interface Evaluation {
   userId: string;
   variationId: string;
   variation: FeatureVariation;
-  reason: Reason;
+  reason: EvaluationReason;
   variationValue: string;
   variationName: string;
 }
 
-export interface Reason {
-  type: string;
+export interface EvaluationReason {
+  type: ReasonType;
   ruleId: string;
 }
+
+export type ReasonType =
+  | 'TARGET'
+  | 'RULE'
+  | 'DEFAULT'
+  | 'CLIENT'
+  | 'OFF_VARIATION'
+  | 'PREREQUISITE'
+  | 'ERROR_NO_EVALUATIONS'
+  | 'ERROR_FLAG_NOT_FOUND'
+  | 'ERROR_WRONG_TYPE'
+  | 'ERROR_USER_ID_NOT_SPECIFIED'
+  | 'ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED'
+  | 'ERROR_EXCEPTION';

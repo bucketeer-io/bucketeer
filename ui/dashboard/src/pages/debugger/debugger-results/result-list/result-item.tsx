@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { cn } from 'utils/style';
 import { IconChevronDown } from '@icons';
+import { GroupByType } from 'pages/debugger/page-content';
 import { EvaluationFeature } from 'pages/debugger/types';
 import Icon from 'components/icon';
 import { DataTable } from 'elements/data-table';
-import { GroupByType } from '..';
 import { useColumns } from './data-collection';
 import ResultName from './result-name';
 
@@ -13,7 +13,7 @@ interface Props {
   isExpand: boolean;
   groupBy: GroupByType;
   handleGetMaintainerInfo: (email: string) => string;
-  onToggleCollapseItem: () => void;
+  onToggleExpandItem: () => void;
 }
 
 const ResultItem = ({
@@ -21,7 +21,7 @@ const ResultItem = ({
   isExpand,
   groupBy,
   handleGetMaintainerInfo,
-  onToggleCollapseItem
+  onToggleExpandItem
 }: Props) => {
   const isFlag = useMemo(() => groupBy === 'FLAG', [groupBy]);
 
@@ -59,7 +59,7 @@ const ResultItem = ({
               'rotate-180': isExpand
             }
           )}
-          onClick={onToggleCollapseItem}
+          onClick={onToggleExpandItem}
         >
           <Icon icon={IconChevronDown} />
         </button>
