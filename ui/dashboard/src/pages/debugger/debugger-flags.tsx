@@ -5,14 +5,9 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { IconPlus, IconTrash } from '@icons';
 import Button from 'components/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
+import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import { AddDebuggerFormType } from './form-schema';
 
 const DebuggerFlags = () => {
@@ -30,8 +25,7 @@ const DebuggerFlags = () => {
 
   const flags = flagCollection?.features || [];
 
-  const flagsSelected: string[] = watch('flags');
-
+  const flagsSelected: string[] = [...watch('flags')];
   const flagOptions = useMemo(
     () =>
       flags.map(item => ({
@@ -41,10 +35,9 @@ const DebuggerFlags = () => {
     [flags]
   );
 
-  const flagsRemaining = useMemo(
-    () => flagOptions.filter(item => !flagsSelected.includes(item.value)),
-    [flagsSelected, flagOptions]
-  );
+  const flagsRemaining = useMemo(() => {
+    return flagOptions.filter(item => !flagsSelected.includes(item.value));
+  }, [flagsSelected, flagOptions, flags]);
 
   return (
     <>
@@ -59,29 +52,21 @@ const DebuggerFlags = () => {
                 <Form.Label required>{t('flag')}</Form.Label>
                 <Form.Control>
                   <div className="flex items-center w-full gap-x-4">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        label={
-                          flagOptions.find(flag => flag.value === field.value)
-                            ?.label
-                        }
-                        isExpand
-                        placeholder={t('form:experiments.select-flag')}
-                      />
-                      <DropdownMenuContent
-                        align="start"
-                        className="max-w-[500px] lg:max-w-full"
-                      >
-                        {flagsRemaining.map((flag, i) => (
-                          <DropdownMenuItem
-                            key={i}
-                            label={flag.label}
-                            value={flag.value}
-                            onSelectOption={value => field.onChange(value)}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <DropdownMenuWithSearch
+                      label={
+                        flagOptions.find(flag => flag.value === field.value)
+                          ?.label || ''
+                      }
+                      isExpand
+                      placeholder={t('form:experiments.select-flag')}
+                      options={flagsRemaining}
+                      triggerClassName={
+                        flagsSelected.length > 1
+                          ? 'max-w-[calc(100%-36px)]'
+                          : ''
+                      }
+                      onSelectOption={value => field.onChange(value)}
+                    />
                     {flagsSelected.length > 1 && (
                       <Button
                         type="button"
@@ -94,7 +79,7 @@ const DebuggerFlags = () => {
                           )
                         }
                       >
-                        {<Icon icon={IconTrash} size="sm" />}
+                        <Icon icon={IconTrash} size="sm" />
                       </Button>
                     )}
                   </div>
