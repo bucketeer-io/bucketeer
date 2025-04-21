@@ -10865,6 +10865,9 @@ definitions:
       conversionRate:
         type: number
         format: double
+      expectedLoss:
+        type: number
+        format: double
   eventcounterVariationTimeseries:
     type: object
     properties:

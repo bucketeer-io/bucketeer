@@ -27110,6 +27110,11 @@
                 "id": 23,
                 "name": "conversion_rate",
                 "type": "double"
+              },
+              {
+                "id": 24,
+                "name": "expected_loss",
+                "type": "double"
               }
             ]
           }

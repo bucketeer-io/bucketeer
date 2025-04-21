@@ -201,6 +201,9 @@ func (e ExperimentCalculator) createExperimentResult(
 			}
 		}
 
+		// Calculate expected loss for each variation
+		e.calculateExpectedLoss(goalResult.VariationResults)
+
 		// Calculate Summary for this goal result
 		e.calculateSummary(ctx, goalResult)
 
@@ -752,4 +755,31 @@ func (e ExperimentCalculator) calculateSummary(
 	goalResult.Summary.BestVariations = bestVariations
 	goalResult.Summary.TotalEvaluationUserCount = totalEvaluationUserCount
 	goalResult.Summary.TotalGoalUserCount = totalGoalUserCount
+}
+
+// calculateExpectedLoss calculates the expected loss for each variation in a goal result
+func (e ExperimentCalculator) calculateExpectedLoss(variationResults []*eventcounter.VariationResult) {
+	if len(variationResults) == 0 {
+		return
+	}
+
+	// Find the highest conversion rate across all variations
+	var bestConversionRate float64
+	for _, vr := range variationResults {
+		if vr.ConversionRate > bestConversionRate {
+			bestConversionRate = vr.ConversionRate
+		}
+	}
+
+	// For each variation, calculate the expected loss
+	for _, vr := range variationResults {
+		// Get probability this variation is best from cvrProbBest
+		probBest := 0.0
+		if vr.CvrProbBest != nil {
+			probBest = vr.CvrProbBest.Mean
+		}
+
+		// Calculate expected loss = (BestConversionRate - VariationConversionRate) * (1 - ProbabilityOfBeingBest)
+		vr.ExpectedLoss = (bestConversionRate - vr.ConversionRate) * (1.0 - probBest)
+	}
 }

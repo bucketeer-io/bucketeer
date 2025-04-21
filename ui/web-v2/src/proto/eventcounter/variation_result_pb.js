@@ -221,6 +221,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg,
           23,
           0.0
+        ),
+        expectedLoss: jspb.Message.getFloatingPointFieldWithDefault(
+          msg,
+          24,
+          0.0
         )
       };
 
@@ -467,6 +472,10 @@ proto.bucketeer.eventcounter.VariationResult.deserializeBinaryFromReader =
           var value = /** @type {number} */ (reader.readDouble());
           msg.setConversionRate(value);
           break;
+        case 24:
+          var value = /** @type {number} */ (reader.readDouble());
+          msg.setExpectedLoss(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -682,6 +691,10 @@ proto.bucketeer.eventcounter.VariationResult.serializeBinaryToWriter =
     f = message.getConversionRate();
     if (f !== 0.0) {
       writer.writeDouble(23, f);
+    }
+    f = message.getExpectedLoss();
+    if (f !== 0.0) {
+      writer.writeDouble(24, f);
     }
   };
 
@@ -1606,6 +1619,26 @@ proto.bucketeer.eventcounter.VariationResult.prototype.getConversionRate =
 proto.bucketeer.eventcounter.VariationResult.prototype.setConversionRate =
   function (value) {
     return jspb.Message.setProto3FloatField(this, 23, value);
+  };
+
+/**
+ * optional double expected_loss = 24;
+ * @return {number}
+ */
+proto.bucketeer.eventcounter.VariationResult.prototype.getExpectedLoss =
+  function () {
+    return /** @type {number} */ (
+      jspb.Message.getFloatingPointFieldWithDefault(this, 24, 0.0)
+    );
+  };
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.eventcounter.VariationResult} returns this
+ */
+proto.bucketeer.eventcounter.VariationResult.prototype.setExpectedLoss =
+  function (value) {
+    return jspb.Message.setProto3FloatField(this, 24, value);
   };
 
 goog.object.extend(exports, proto.bucketeer.eventcounter);
