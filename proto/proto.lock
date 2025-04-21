@@ -24465,6 +24465,54 @@
                 "name": "variation_results",
                 "type": "VariationResult",
                 "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "summary",
+                "type": "Summary"
+              }
+            ]
+          },
+          {
+            "name": "Summary",
+            "fields": [
+              {
+                "id": 1,
+                "name": "best_variations",
+                "type": "Variation",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "total_evaluation_user_count",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "total_goal_user_count",
+                "type": "int64"
+              }
+            ],
+            "messages": [
+              {
+                "name": "Variation",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "id",
+                    "type": "string"
+                  },
+                  {
+                    "id": 2,
+                    "name": "probability",
+                    "type": "double"
+                  },
+                  {
+                    "id": 3,
+                    "name": "outperformed",
+                    "type": "bool"
+                  }
+                ]
               }
             ]
           }
@@ -27057,6 +27105,11 @@
                 "id": 22,
                 "name": "goal_value_sum_per_user_percentile975_timeseries",
                 "type": "Timeseries"
+              },
+              {
+                "id": 23,
+                "name": "conversion_rate",
+                "type": "double"
               }
             ]
           }

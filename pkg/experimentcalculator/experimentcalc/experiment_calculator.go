@@ -143,7 +143,8 @@ func (e ExperimentCalculator) createExperimentResult(
 	endAts := listEndAt(experiment.StartAt, experiment.StopAt, time.Now().In(e.location).Unix())
 	for _, goalID := range experiment.GoalIds {
 		goalResult := &eventcounter.GoalResult{
-			GoalId: goalID,
+			GoalId:  goalID,
+			Summary: &eventcounter.Summary{},
 		}
 		for _, v := range experiment.Variations {
 			goalResult.VariationResults = append(goalResult.VariationResults, &eventcounter.VariationResult{
@@ -192,6 +193,17 @@ func (e ExperimentCalculator) createExperimentResult(
 			gr.GoalId = goalID
 			e.appendVariationResult(ctx, timestamp, goalResult, gr.VariationResults)
 		}
+
+		// Calculate conversion rate for each variation after all timestamps have been processed
+		for _, vr := range goalResult.VariationResults {
+			if vr.EvaluationCount != nil && vr.EvaluationCount.UserCount > 0 {
+				vr.ConversionRate = float64(vr.ExperimentCount.UserCount) / float64(vr.EvaluationCount.UserCount) * 100
+			}
+		}
+
+		// Calculate Summary for this goal result
+		e.calculateSummary(ctx, goalResult)
+
 		experimentResult.GoalResults = append(experimentResult.GoalResults, goalResult)
 	}
 
@@ -681,4 +693,63 @@ func contactSamples(samples []dataframe.DataFrame) dataframe.DataFrame {
 		df = df.Concat(sample)
 	}
 	return df
+}
+
+// calculateSummary sets the Summary field of the GoalResult
+func (e ExperimentCalculator) calculateSummary(
+	ctx context.Context,
+	goalResult *eventcounter.GoalResult,
+) {
+	if len(goalResult.VariationResults) == 0 {
+		return
+	}
+
+	// 1. Find best variations (cvr_prob_beat_baseline.mean > 95%)
+	var bestVariations []*eventcounter.Summary_Variation
+	var maxProbability float64
+	var maxProbabilityVariationID string
+
+	for _, vr := range goalResult.VariationResults {
+		if vr.CvrProbBeatBaseline != nil && vr.CvrProbBeatBaseline.Mean > 0.95 {
+			probability := vr.CvrProbBeatBaseline.Mean
+			bestVar := &eventcounter.Summary_Variation{
+				Id:           vr.VariationId,
+				Probability:  probability,
+				Outperformed: false,
+			}
+
+			// Track which variation has the highest probability
+			if probability > maxProbability {
+				maxProbability = probability
+				maxProbabilityVariationID = vr.VariationId
+			}
+
+			bestVariations = append(bestVariations, bestVar)
+		}
+	}
+
+	// Mark the variation with highest probability as outperformed
+	for _, bestVar := range bestVariations {
+		if bestVar.Id == maxProbabilityVariationID {
+			bestVar.Outperformed = true
+		}
+	}
+
+	// 2 & 3. Calculate total counts across all variations
+	var totalEvaluationUserCount int64
+	var totalGoalUserCount int64
+
+	for _, vr := range goalResult.VariationResults {
+		if vr.EvaluationCount != nil {
+			totalEvaluationUserCount += vr.EvaluationCount.UserCount
+		}
+		if vr.ExperimentCount != nil {
+			totalGoalUserCount += vr.ExperimentCount.UserCount
+		}
+	}
+
+	// Set the summary values
+	goalResult.Summary.BestVariations = bestVariations
+	goalResult.Summary.TotalEvaluationUserCount = totalEvaluationUserCount
+	goalResult.Summary.TotalGoalUserCount = totalGoalUserCount
 }

@@ -8013,18 +8013,6 @@ definitions:
         type: string
       status:
         $ref: '#/definitions/experimentExperimentStatus'
-  ListExperimentsResponseSummary:
-    type: object
-    properties:
-      totalWaitingCount:
-        type: string
-        format: int64
-      totalRunningCount:
-        type: string
-        format: int64
-      totalStoppedCount:
-        type: string
-        format: int64
   ListFlagTriggersResponseFlagTriggerWithUrl:
     type: object
     properties:
@@ -9546,6 +9534,20 @@ definitions:
         format: int32
       ownerEmail:
         type: string
+  bucketeereventcounterSummary:
+    type: object
+    properties:
+      bestVariations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/eventcounterSummaryVariation'
+      totalEvaluationUserCount:
+        type: string
+        format: int64
+      totalGoalUserCount:
+        type: string
+        format: int64
   bucketeerfeatureChangeType:
     type: string
     enum:
@@ -10736,6 +10738,8 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/eventcounterVariationResult'
+      summary:
+        $ref: '#/definitions/bucketeereventcounterSummary'
   eventcounterHistogram:
     type: object
     properties:
@@ -10758,6 +10762,16 @@ definitions:
           $ref: '#/definitions/eventcounterExperimentResult'
   eventcounterSummarizeMAUCountsResponse:
     type: object
+  eventcounterSummaryVariation:
+    type: object
+    properties:
+      id:
+        type: string
+      probability:
+        type: number
+        format: double
+      outperformed:
+        type: boolean
   eventcounterTimeseries:
     type: object
     properties:
@@ -10848,6 +10862,9 @@ definitions:
         $ref: '#/definitions/eventcounterTimeseries'
       goalValueSumPerUserPercentile975Timeseries:
         $ref: '#/definitions/eventcounterTimeseries'
+      conversionRate:
+        type: number
+        format: double
   eventcounterVariationTimeseries:
     type: object
     properties:
@@ -11136,7 +11153,19 @@ definitions:
         type: string
         format: int64
       summary:
-        $ref: '#/definitions/ListExperimentsResponseSummary'
+        $ref: '#/definitions/experimentListExperimentsResponseSummary'
+  experimentListExperimentsResponseSummary:
+    type: object
+    properties:
+      totalWaitingCount:
+        type: string
+        format: int64
+      totalRunningCount:
+        type: string
+        format: int64
+      totalStoppedCount:
+        type: string
+        format: int64
   experimentListGoalsRequestOrderBy:
     type: string
     enum:

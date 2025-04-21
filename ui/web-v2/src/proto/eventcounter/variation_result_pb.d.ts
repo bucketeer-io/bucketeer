@@ -195,6 +195,9 @@ export class VariationResult extends jspb.Message {
     value?: proto_eventcounter_timeseries_pb.Timeseries
   ): void;
 
+  getConversionRate(): number;
+  setConversionRate(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): VariationResult.AsObject;
   static toObject(
@@ -240,5 +243,6 @@ export namespace VariationResult {
     goalValueSumPerUserMedianTimeseries?: proto_eventcounter_timeseries_pb.Timeseries.AsObject;
     goalValueSumPerUserPercentile025Timeseries?: proto_eventcounter_timeseries_pb.Timeseries.AsObject;
     goalValueSumPerUserPercentile975Timeseries?: proto_eventcounter_timeseries_pb.Timeseries.AsObject;
+    conversionRate: number;
   };
 }
