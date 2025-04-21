@@ -118,8 +118,11 @@ const AuditLogItem = memo(
     const handleCopyId = useCallback(
       (id: string) => {
         const { VITE_AUTH_REDIRECT_ENDPOINT, BASE_URL } = import.meta.env || {};
+        const origin = VITE_AUTH_REDIRECT_ENDPOINT || window.location.origin;
+        const baseUrl = BASE_URL || '/v3/';
+
         copyToClipBoard(
-          `${VITE_AUTH_REDIRECT_ENDPOINT}${BASE_URL}${currentEnvironment.urlCode}/audit-logs/${id}`
+          `${origin}${baseUrl}${currentEnvironment.urlCode}/audit-logs/${id}`
         );
         notify({
           toastType: 'toast',
