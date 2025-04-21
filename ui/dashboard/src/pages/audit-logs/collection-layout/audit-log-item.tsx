@@ -160,7 +160,7 @@ const AuditLogItem = memo(
             >
               <AuditLogTitle
                 isHaveEntityData={isHaveEntityData}
-                auditLogId={auditLog.id}
+                entityId={parsedEntityData?.id}
                 action={getActionText(type, isLanguageJapanese)}
                 entityName={
                   parsedEntityData?.name || parsedEntityData?.feature_name || ''

@@ -6,7 +6,7 @@ import { getEntityTypeText, getPathName } from '../utils';
 
 interface Props {
   isHaveEntityData: boolean;
-  auditLogId: string;
+  entityId?: string;
   username: string;
   action: string;
   entityType: DomainEventEntityType;
@@ -17,7 +17,7 @@ interface Props {
 
 const AuditLogTitle = ({
   isHaveEntityData,
-  auditLogId,
+  entityId,
   username,
   action,
   entityType,
@@ -46,10 +46,10 @@ const AuditLogTitle = ({
         b: <span className="font-bold text-gray-700 -mt-0.5" />,
         highlight: (
           <Link
-            to={getPathName(auditLogId, entityType) as string}
+            to={getPathName(entityId, entityType) as string}
             onClick={e => {
               e.preventDefault();
-              const pathName = getPathName(auditLogId, entityType);
+              const pathName = getPathName(entityId, entityType);
               if (pathName) navigate(`/${urlCode}${pathName}`);
             }}
             className="text-primary-500 underline truncate"

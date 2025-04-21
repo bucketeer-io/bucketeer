@@ -74,7 +74,11 @@ export const formatJSONWithIndent = (json: string) => {
 
 export const truncNumber = (num: number) => Math.trunc(num);
 
-export const getPathName = (id: string, entityType: DomainEventEntityType) => {
+export const getPathName = (
+  id: string | undefined,
+  entityType: DomainEventEntityType
+) => {
+  if (!id) return null;
   switch (entityType) {
     case 'APIKEY':
       return '/api-keys';
