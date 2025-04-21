@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { urls } from 'configs';
 import { useToast } from 'hooks';
 import { useTranslation, getLanguage } from 'i18n';
 import { AuditLog } from '@types';
@@ -117,10 +118,10 @@ const AuditLogItem = memo(
 
     const handleCopyId = useCallback(
       (id: string) => {
-        const { VITE_AUTH_REDIRECT_ENDPOINT, BASE_URL } = import.meta.env || {};
         copyToClipBoard(
-          `${VITE_AUTH_REDIRECT_ENDPOINT}${BASE_URL}${currentEnvironment.urlCode}/audit-logs/${id}`
+          `${urls.ORIGIN_URL}${currentEnvironment.urlCode}/audit-logs/${id}`
         );
+
         notify({
           toastType: 'toast',
           messageType: 'success',
