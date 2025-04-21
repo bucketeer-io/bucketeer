@@ -117,13 +117,13 @@ const AuditLogItem = memo(
 
     const handleCopyId = useCallback(
       (id: string) => {
-        const { VITE_AUTH_REDIRECT_ENDPOINT, BASE_URL } = import.meta.env || {};
+        const { VITE_AUTH_REDIRECT_ENDPOINT } = import.meta.env || {};
         const origin = VITE_AUTH_REDIRECT_ENDPOINT || window.location.origin;
-        const baseUrl = BASE_URL || '/v3/';
 
         copyToClipBoard(
-          `${origin}${baseUrl}${currentEnvironment.urlCode}/audit-logs/${id}`
+          `${origin}/v3/${currentEnvironment.urlCode}/audit-logs/${id}` // TODO: Remove the `/v3` when the new console is released
         );
+
         notify({
           toastType: 'toast',
           messageType: 'success',
