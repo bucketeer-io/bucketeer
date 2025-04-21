@@ -25,6 +25,7 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
+	ecstorage "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	ft "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
@@ -40,6 +41,7 @@ const goalEventTable = "goal_event"
 
 type goalEvtWriter struct {
 	writer           storage.GoalEventWriter
+	eventStorage     ecstorage.EventStorage
 	experimentClient ec.Client
 	featureClient    ft.Client
 	cache            cachev3.ExperimentsCache
@@ -50,11 +52,12 @@ type goalEvtWriter struct {
 
 func NewGoalEventWriter(
 	ctx context.Context,
-	l *zap.Logger,
+	logger *zap.Logger,
+	eventStorage ecstorage.EventStorage,
 	exClient ec.Client,
 	ftClient ft.Client,
 	cache cachev3.ExperimentsCache,
-	project, ds string,
+	project, dataSet string,
 	size int,
 	location *time.Location,
 ) (Writer, error) {
@@ -62,21 +65,22 @@ func NewGoalEventWriter(
 	goalWriter, err := writer.NewWriter(
 		ctx,
 		project,
-		ds,
+		dataSet,
 		goalEventTable,
 		evt.ProtoReflect().Descriptor(),
-		writer.WithLogger(l),
+		writer.WithLogger(logger),
 	)
 	if err != nil {
 		return nil, err
 	}
 	return &goalEvtWriter{
 		writer:           storage.NewGoalEventWriter(goalWriter, size),
+		eventStorage:     eventStorage,
 		experimentClient: exClient,
 		featureClient:    ftClient,
 		cache:            cache,
 		location:         location,
-		logger:           l,
+		logger:           logger,
 	}, nil
 }
 

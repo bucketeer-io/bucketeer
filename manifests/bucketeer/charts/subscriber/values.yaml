@@ -5,7 +5,6 @@ image:
 namespace: default
 fullnameOverride: "subscriber"
 
-
 env:
   project:
   profile: true
@@ -16,6 +15,8 @@ env:
   mysqlPort:
   mysqlDbName:
   mysqlDbOpenConns: 50
+  bigQueryDataSet:
+  bigQueryDataLocation:
   pubsubEmulatorHost:
   notificationService: localhost:9001
   environmentService: localhost:9001
