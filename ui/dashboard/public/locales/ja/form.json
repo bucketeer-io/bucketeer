@@ -160,6 +160,6 @@
   "user-id": "User ID",
   "enter-to-add-multiple": "Press enter to add multiple IDs.",
   "user-attributes": "User Attributes",
-  "user-attributes-desc": "Nunc vulputate libero et velit interdum, ac aliquet odio mattis.",
+  "user-attributes-desc": "The same attributes will be applied to all the users in the list when evaluating them. User attributes are environment-specific. They are not shared between environments or projects.",
   "key": "Key"
 }
