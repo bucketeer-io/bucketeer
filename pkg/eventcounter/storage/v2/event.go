@@ -117,7 +117,7 @@ func (es *eventStorage) QueryEvaluationCount(
 	featureVersion int32,
 ) ([]*EvaluationEventCount, error) {
 	datasource := fmt.Sprintf("%s.%s", es.dataset, DataTypeEvaluationEvent)
-	query := fmt.Sprintf(userEvaluationSQL, datasource)
+	query := fmt.Sprintf(evaluationCountSQL, datasource)
 	params := []bigquery.QueryParameter{
 		{
 			Name:  "environmentId",
