@@ -15,13 +15,15 @@ interface Props {
   setGroupBy: (val: GroupByType) => void;
   onResetFields: () => void;
   onEditFields: () => void;
+  onResetExpandItems: () => void;
 }
 
 const ActionBar = ({
   groupBy,
   setGroupBy,
   onResetFields,
-  onEditFields
+  onEditFields,
+  onResetExpandItems
 }: Props) => {
   const { t } = useTranslation(['common']);
 
@@ -41,7 +43,7 @@ const ActionBar = ({
 
   return (
     <div className="flex items-center w-full justify-between gap-x-4">
-      <p className="typo-head-bold-small text-gray-800">
+      <p className="typo-head-bold-small text-gray-800 whitespace-nowrap">
         {t('debugger-results')}
       </p>
       <div className="flex items-center gap-x-4">
@@ -62,7 +64,10 @@ const ActionBar = ({
                 key={index}
                 label={item.label}
                 value={item.value}
-                onSelectOption={value => setGroupBy(value as GroupByType)}
+                onSelectOption={value => {
+                  setGroupBy(value as GroupByType);
+                  onResetExpandItems();
+                }}
               />
             ))}
           </DropdownMenuContent>

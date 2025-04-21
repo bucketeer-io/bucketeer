@@ -68,7 +68,10 @@ const DebuggerFlags = () => {
                         isExpand
                         placeholder={t('form:experiments.select-flag')}
                       />
-                      <DropdownMenuContent align="start">
+                      <DropdownMenuContent
+                        align="start"
+                        className="max-w-[500px] lg:max-w-full"
+                      >
                         {flagsRemaining.map((flag, i) => (
                           <DropdownMenuItem
                             key={i}

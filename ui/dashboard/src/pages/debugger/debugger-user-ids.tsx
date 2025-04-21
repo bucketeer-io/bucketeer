@@ -13,7 +13,7 @@ const DebuggerUserIds = () => {
       name={'userIds'}
       control={control}
       render={({ field }) => (
-        <Form.Item>
+        <Form.Item className="py-0">
           <Form.Label required>{t('user-id')}</Form.Label>
           <Form.Control>
             <div className="flex flex-col w-full gap-y-2">
@@ -31,6 +31,7 @@ const DebuggerUserIds = () => {
               </p>
             </div>
           </Form.Control>
+          <Form.Message />
         </Form.Item>
       )}
     />

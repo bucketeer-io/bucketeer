@@ -1,7 +1,7 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'i18n';
 import { IconInfoFilled } from '@icons';
-import { EvaluationFeatureAccount } from 'pages/debugger/types';
+import { EvaluationFeature } from 'pages/debugger/types';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
@@ -13,23 +13,23 @@ export const useColumns = ({
 }: {
   isFlag: boolean;
   handleGetMaintainerInfo: (email: string) => string;
-}): ColumnDef<EvaluationFeatureAccount>[] => {
-  const { t } = useTranslation(['common', 'table']);
+}): ColumnDef<EvaluationFeature>[] => {
+  const { t } = useTranslation(['common', 'table', 'form']);
 
   return [
     {
-      accessorKey: isFlag ? 'feature_id' : 'user_id',
-      header: `${t(isFlag ? 'name' : 'user-id')}`,
-      size: 500,
+      accessorKey: !isFlag ? 'featureId' : 'userId',
+      header: `${t(!isFlag ? 'name' : 'form:user-id')}`,
+      size: 400,
       cell: ({ row }) => {
-        const evaluationFeature = row.original;
-        const { feature, feature_id, user_id } = evaluationFeature;
+        const evaluation = row.original;
+        const { featureId, userId, feature } = evaluation;
         return (
           <ResultName
             feature={feature}
-            id={isFlag ? feature_id : user_id}
+            id={!isFlag ? featureId : userId}
             isFlag={isFlag}
-            name={isFlag ? feature.name : user_id}
+            name={!isFlag ? feature.name : userId}
             variationType={feature.variationType}
             maintainer={handleGetMaintainerInfo(feature.maintainer)}
             onTable
@@ -38,21 +38,22 @@ export const useColumns = ({
       }
     },
     {
-      accessorKey: 'variation_name',
+      accessorKey: 'variationName',
       header: `${t('table:feature-flags.variation')}`,
-      size: 150,
+      size: 500,
       cell: ({ row }) => {
         const evaluationFeature = row.original;
-        const { variation_name, variation_id } = evaluationFeature;
+        const { variationName, variationId, variationValue } =
+          evaluationFeature;
         return (
           <div className="flex w-full col-span-5 gap-x-1.5">
-            <FlagVariationPolygon index={row.index} />
+            <FlagVariationPolygon index={row.index} className="mt-0.5" />
             <div className="flex flex-col flex-1 w-full gap-y-1.5">
               <p className="typo-para-small text-gray-700 break-all">
-                {variation_name}
+                {variationName || variationValue}
               </p>
               <p className="typo-para-small text-gray-500 break-all">
-                {variation_id}
+                {variationId}
               </p>
             </div>
           </div>
@@ -62,16 +63,16 @@ export const useColumns = ({
     {
       accessorKey: 'reason',
       header: `${t('table:reason')}`,
-      size: 150,
+      size: 200,
       cell: ({ row }) => {
         const evaluationFeature = row.original;
         return (
           <Tooltip
-            content={evaluationFeature.reason}
+            content={evaluationFeature?.reason?.type}
             trigger={
               <div className="flex items-center gap-x-2">
                 <p className="typo-para-medium text-gray-700">
-                  {evaluationFeature.reason}
+                  {evaluationFeature?.reason?.type}
                 </p>
                 <Icon icon={IconInfoFilled} color="gray-500" />
               </div>

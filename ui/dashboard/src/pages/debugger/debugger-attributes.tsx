@@ -22,10 +22,18 @@ const DebuggerAttributes = () => {
   });
 
   return (
-    <>
+    <div className="flex flex-col w-full gap-y-5">
+      <div className="flex flex-col w-full gap-y-3">
+        <p className="typo-para-medium text-gray-700">
+          {t('form:user-attributes')}
+        </p>
+        <p className="typo-para-small text-gray-600">
+          {t('form:user-attributes-desc')}
+        </p>
+      </div>
       <div className="flex flex-col w-full gap-y-6">
         {attributes.map((_, index) => (
-          <div key={index} className="flex items-center gap-x-4">
+          <div key={index} className="flex items-end gap-x-4">
             <Form.Field
               name={`attributes.${index}.key`}
               control={control}
@@ -56,7 +64,7 @@ const DebuggerAttributes = () => {
               type="button"
               disabled={attributes.length <= 1}
               variant="grey"
-              className="size-5"
+              className="size-5 mb-4"
               onClick={() => remove(index)}
             >
               {<Icon icon={IconTrash} size="sm" />}
@@ -78,7 +86,7 @@ const DebuggerAttributes = () => {
           {t('add-attribute')}
         </Button>
       </div>
-    </>
+    </div>
   );
 };
 

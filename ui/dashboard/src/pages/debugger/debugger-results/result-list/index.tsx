@@ -1,29 +1,23 @@
 import { useCallback } from 'react';
-import { useQueryAccounts } from '@queries/accounts';
-import { getCurrentEnvironment, useAuth } from 'auth';
-import { EvaluationFeatureAccount } from 'pages/debugger/types';
+import { Account } from '@types';
+import { EvaluationFeature } from 'pages/debugger/types';
+import TableListContent from 'elements/table-list-content';
 import { GroupByType } from '..';
 import ResultItem from './result-item';
 
 const ResultList = ({
   groupBy,
-  evaluationFeatures
+  accounts,
+  groupByEvaluateFeatures,
+  expandedItems,
+  onToggleCollapseItem
 }: {
   groupBy: GroupByType;
-  evaluationFeatures: EvaluationFeatureAccount[];
+  accounts: Account[];
+  groupByEvaluateFeatures: EvaluationFeature[][];
+  expandedItems: number[];
+  onToggleCollapseItem: (index: number) => void;
 }) => {
-  const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-
-  const { data: accountCollection } = useQueryAccounts({
-    params: {
-      organizationId: currentEnvironment?.organizationId,
-      cursor: String(0)
-    }
-  });
-
-  const accounts = accountCollection?.accounts || [];
-
   const handleGetMaintainerInfo = useCallback(
     (email: string) => {
       const existedAccount = accounts?.find(account => account.email === email);
@@ -39,20 +33,18 @@ const ResultList = ({
   );
 
   return (
-    <div className="flex flex-col w-full gap-y-2">
-      {evaluationFeatures.map((item, index) => (
+    <TableListContent className="gap-y-2">
+      {groupByEvaluateFeatures.map((group, index) => (
         <ResultItem
           groupBy={groupBy}
           key={index}
-          featureId={item.id}
-          feature={item.feature}
-          maintainer={item.feature.maintainer}
-          userId={item.user_id}
-          isExpand={false}
+          group={group}
+          isExpand={expandedItems.includes(index)}
           handleGetMaintainerInfo={handleGetMaintainerInfo}
+          onToggleCollapseItem={() => onToggleCollapseItem(index)}
         />
       ))}
-    </div>
+    </TableListContent>
   );
 };
 

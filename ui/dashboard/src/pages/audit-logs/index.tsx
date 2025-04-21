@@ -4,7 +4,7 @@ import PageLayout from 'elements/page-layout';
 import PageLoader from './page-loader';
 
 const AuditLogsPage = () => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'form', 'table']);
 
   return (
     <PageLayout.Root title={t('audit-logs')}>

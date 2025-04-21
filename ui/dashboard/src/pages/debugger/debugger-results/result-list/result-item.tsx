@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { Feature } from '@types';
 import { cn } from 'utils/style';
 import { IconChevronDown } from '@icons';
+import { EvaluationFeature } from 'pages/debugger/types';
 import Icon from 'components/icon';
 import { DataTable } from 'elements/data-table';
 import { GroupByType } from '..';
@@ -9,22 +9,19 @@ import { useColumns } from './data-collection';
 import ResultName from './result-name';
 
 interface Props {
-  feature: Feature;
-  featureId: string;
-  userId: string;
-  maintainer: string;
+  group: EvaluationFeature[];
   isExpand: boolean;
   groupBy: GroupByType;
   handleGetMaintainerInfo: (email: string) => string;
+  onToggleCollapseItem: () => void;
 }
 
 const ResultItem = ({
-  feature,
-  featureId,
-  userId,
+  group,
   isExpand,
   groupBy,
-  handleGetMaintainerInfo
+  handleGetMaintainerInfo,
+  onToggleCollapseItem
 }: Props) => {
   const isFlag = useMemo(() => groupBy === 'FLAG', [groupBy]);
 
@@ -34,15 +31,26 @@ const ResultItem = ({
   });
 
   return (
-    <div className="flex flex-col w-full gap-y-5 p-5">
-      <div className="flex items-center w-full justify-between gap-x-4">
+    <div
+      className={cn(
+        'flex flex-col w-full p-5 pb-0 rounded-lg shadow-card min-h-[86px] transition-all duration-200',
+        {
+          'pb-5 min-h-fit': isExpand
+        }
+      )}
+    >
+      <div
+        className={cn('flex items-center w-full justify-between gap-x-4 pb-5', {
+          'border-b border-gray-200': isExpand
+        })}
+      >
         <ResultName
-          feature={feature}
-          id={isFlag ? featureId : userId}
+          feature={group[0]?.feature}
+          id={isFlag ? group[0]?.featureId : group[0]?.userId}
           isFlag={isFlag}
-          name={isFlag ? feature.name : userId}
-          variationType={feature.variationType}
-          maintainer={handleGetMaintainerInfo(feature.maintainer)}
+          name={isFlag ? group[0]?.feature.name : group[0]?.userId}
+          variationType={group[0]?.feature.variationType}
+          maintainer={handleGetMaintainerInfo(group[0]?.feature.maintainer)}
         />
         <button
           className={cn(
@@ -51,11 +59,21 @@ const ResultItem = ({
               'rotate-180': isExpand
             }
           )}
+          onClick={onToggleCollapseItem}
         >
           <Icon icon={IconChevronDown} />
         </button>
       </div>
-      <DataTable columns={columns} data={[]} />
+      <div
+        className={cn(
+          '[&>table]:m-0 [&>table]:border-collapse [&>table>tbody]:divide-y [&>table>tbody]:divide-gray-200 [&>table>tbody>tr]:rounded-none [&>table>tbody>tr]:shadow-none [&>table>tbody>tr>td]:rounded-none [&>table>tbody>tr:last-child]:rounded-b-lg [&>table>tbody>tr>td:first-child]:pl-0 [&>table>tbody>tr>td:last-child]:pr-0 [&>table>thead>tr>th:first-child]:pl-0 [&>table>thead>tr>th:last-child]:pr-0 h-0 opacity-0 transition-all duration-200 z-[-1] [&>table>tbody>tr>td]:py-4',
+          {
+            'h-fit opacity-100 z-0': isExpand
+          }
+        )}
+      >
+        <DataTable columns={columns} data={group} manualSorting={false} />
+      </div>
     </div>
   );
 };

@@ -19,3 +19,4 @@ export * from './schedule-flag';
 export * from './auto-ops';
 export * from './rollouts';
 export * from './audit-logs';
+export * from './debugger';
