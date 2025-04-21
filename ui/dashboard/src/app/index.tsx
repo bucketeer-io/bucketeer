@@ -20,6 +20,7 @@ import {
   PAGE_PATH_AUDIT_LOGS,
   PAGE_PATH_AUTH_CALLBACK,
   PAGE_PATH_AUTH_SIGNIN,
+  PAGE_PATH_DEBUGGER,
   PAGE_PATH_EXPERIMENTS,
   PAGE_PATH_FEATURES,
   PAGE_PATH_GOALS,
@@ -46,6 +47,7 @@ import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams, useSearchParams } from 'utils/search-params';
 import APIKeysPage from 'pages/api-keys';
 import AuditLogsPage from 'pages/audit-logs';
+import DebuggerPage from 'pages/debugger';
 import MembersPage from 'pages/members';
 import NotFoundPage from 'pages/not-found';
 import NotificationsPage from 'pages/notifications';
@@ -222,6 +224,8 @@ export const EnvironmentRoot = memo(
           element={<ExperimentsRoot />}
         />
         <Route path={`${PAGE_PATH_AUDIT_LOGS}/*`} element={<AuditLogsPage />} />
+        <Route path={`${PAGE_PATH_DEBUGGER}/*`} element={<DebuggerPage />} />
+
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     );

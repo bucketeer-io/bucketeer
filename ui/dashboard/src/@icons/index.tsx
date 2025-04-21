@@ -34,6 +34,7 @@ import IconToastWarning from './customized-icons/toast-warning.svg?react';
 import IconTrash from './customized-icons/trash.svg?react';
 import IconUnion from './customized-icons/union.svg?react';
 import IconUpload from './customized-icons/upload.svg?react';
+import IconUserOutlined from './customized-icons/user-outlined.svg?react';
 import IconUserSettings from './customized-icons/user-settings.svg?react';
 import IconWatch from './customized-icons/watch.svg?react';
 import IconBuilding from './sidebar-icons/building.svg?react';
@@ -127,6 +128,7 @@ export {
   IconExpand,
   IconCollapse,
   IconLink,
+  IconUserOutlined,
   // Special icons
   IconGoal,
   IconGoogle,

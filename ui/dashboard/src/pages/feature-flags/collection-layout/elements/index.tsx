@@ -39,9 +39,11 @@ interface FlagNameElementType {
   icon: FunctionComponent;
   name: string;
   link: string;
-  status: FeatureActivityStatus;
+  status?: FeatureActivityStatus;
   variationType: FeatureVariationType;
   maintainer?: string;
+  className?: string;
+  iconElement?: ReactNode;
 }
 
 export const GridViewRoot = ({ children }: PropsWithChildren) => (
@@ -54,7 +56,7 @@ export const GridViewRow = ({ children }: PropsWithChildren) => (
   </div>
 );
 
-const FlagDataTypeIcon = ({
+export const FlagDataTypeIcon = ({
   icon,
   className
 }: {
@@ -172,7 +174,9 @@ export const FlagNameElement = ({
   maintainer,
   link,
   status,
-  variationType
+  variationType,
+  className,
+  iconElement
 }: FlagNameElementType) => {
   const { notify } = useToast();
   const { t } = useTranslation(['table']);
@@ -190,14 +194,23 @@ export const FlagNameElement = ({
   };
 
   return (
-    <div className="flex items-center col-span-5 w-full max-w-full gap-x-4 overflow-hidden">
+    <div
+      className={cn(
+        'flex items-center col-span-5 w-full max-w-full gap-x-4 overflow-hidden',
+        className
+      )}
+    >
       <div className="flex flex-col w-full max-w-full gap-y-2">
         <div className="flex items-center w-full gap-x-2">
           <div className="flex-center size-fit">
-            <VariationTypeTooltip
-              trigger={<FlagDataTypeIcon icon={icon} className="size-[26px]" />}
-              variationType={variationType}
-            />
+            {iconElement || (
+              <VariationTypeTooltip
+                trigger={
+                  <FlagDataTypeIcon icon={icon} className="size-[26px]" />
+                }
+                variationType={variationType}
+              />
+            )}
           </div>
           <NameWithTooltip
             id={id}
@@ -216,14 +229,16 @@ export const FlagNameElement = ({
               content={maintainer}
             />
           )}
-          <Tooltip
-            asChild={false}
-            align="start"
-            trigger={<FlagStatus status={status} />}
-            content={t(
-              `feature-flags.${status === 'active' ? 'active-description' : status === 'in-active' ? 'inactive-description' : 'new-description'}`
-            )}
-          />
+          {status && (
+            <Tooltip
+              asChild={false}
+              align="start"
+              trigger={<FlagStatus status={status} />}
+              content={t(
+                `feature-flags.${status === 'active' ? 'active-description' : status === 'in-active' ? 'inactive-description' : 'new-description'}`
+              )}
+            />
+          )}
         </div>
         <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
           <p className="truncate">{truncateBySide(id, 55)}</p>

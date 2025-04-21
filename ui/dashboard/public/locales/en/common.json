@@ -226,5 +226,13 @@
   "audit-log-details": "Audit Log Details",
   "current-version": "Current Version",
   "updates": "Updates",
-  "experimentation": "Experimentation"
+  "experimentation": "Experimentation",
+  "debugger-subtitle": "You can diagnose and troubleshoot problems",
+  "add-attribute": "Add Attribute",
+  "evaluate": "Evaluate",
+  "debugger-results": "Debugger Results",
+  "group-by-type": "Group By: {{type}}",
+  "user": "User",
+  "edit-fields": "Edit Fields",
+  "clear-all-fields": "Clear All Fields"
 }
