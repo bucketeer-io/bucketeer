@@ -513,14 +513,25 @@ func (s *auditlogService) getAccountMapByEmails(
 	for i, email := range emails {
 		emailsArg[i] = email
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewInFilter("a.email", emailsArg),
-		mysql.NewFilter("e.id", "=", environmentID),
+	options := &mysql.ListOptions{
+		Limit:  1000,
+		Offset: 0,
+		Orders: nil,
+		InFilters: []*mysql.InFilter{
+			&mysql.InFilter{
+				Column: "a.email",
+				Values: emailsArg,
+			},
+		},
+		Filters: []*mysql.FilterV2{
+			&mysql.FilterV2{
+				Column:   "e.id",
+				Operator: mysql.OperatorEqual,
+				Value:    environmentID,
+			},
+		},
 	}
-	accounts, err := s.accountStorage.GetAvatarAccountsV2(
-		ctx,
-		whereParts,
-	)
+	accounts, err := s.accountStorage.GetAvatarAccountsV2(ctx, options)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list feature history",

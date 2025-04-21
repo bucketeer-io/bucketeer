@@ -291,7 +291,7 @@ func TestGetAccountsV2ByEnvironmentID(t *testing.T) {
 		desc        string
 		setup       func(*accountStorage)
 		expectedErr error
-		whereParts  []mysql.WherePart
+		options     *mysql.ListOptions
 	}{
 		{
 			desc: "Error",
@@ -301,8 +301,21 @@ func TestGetAccountsV2ByEnvironmentID(t *testing.T) {
 				).Return(nil, errors.New("error"))
 			},
 			expectedErr: errors.New("error"),
-			whereParts: []mysql.WherePart{
-				mysql.NewFilter("num", ">=", 5),
+			options: &mysql.ListOptions{
+				Filters: []*mysql.FilterV2{
+					{
+						Column:   "num",
+						Operator: mysql.OperatorEqual,
+						Value:    5,
+					},
+				},
+				InFilters:   nil,
+				NullFilters: nil,
+				JSONFilters: nil,
+				SearchQuery: nil,
+				Orders:      nil,
+				Limit:       10,
+				Offset:      0,
 			},
 		},
 		{
@@ -317,8 +330,21 @@ func TestGetAccountsV2ByEnvironmentID(t *testing.T) {
 				).Return(rows, nil)
 			},
 			expectedErr: nil,
-			whereParts: []mysql.WherePart{
-				mysql.NewFilter("num", ">=", 5),
+			options: &mysql.ListOptions{
+				Filters: []*mysql.FilterV2{
+					{
+						Column:   "num",
+						Operator: mysql.OperatorEqual,
+						Value:    5,
+					},
+				},
+				InFilters:   nil,
+				NullFilters: nil,
+				JSONFilters: nil,
+				SearchQuery: nil,
+				Orders:      nil,
+				Limit:       10,
+				Offset:      0,
 			},
 		},
 	}
@@ -331,7 +357,7 @@ func TestGetAccountsV2ByEnvironmentID(t *testing.T) {
 			}
 			_, err := storage.GetAvatarAccountsV2(
 				context.Background(),
-				p.whereParts,
+				p.options,
 			)
 			assert.Equal(t, p.expectedErr, err)
 		})
@@ -392,10 +418,7 @@ func TestListAccountsV2(t *testing.T) {
 	patterns := []struct {
 		desc           string
 		setup          func(*accountStorage)
-		whereParts     []mysql.WherePart
-		orders         []*mysql.Order
-		limit          int
-		offset         int
+		options        *mysql.ListOptions
 		expected       []*proto.AccountV2
 		expectedCursor int
 		expectedErr    error
@@ -407,10 +430,7 @@ func TestListAccountsV2(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			whereParts:     nil,
-			orders:         nil,
-			limit:          0,
-			offset:         0,
+			options:        nil,
 			expected:       nil,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
@@ -431,14 +451,27 @@ func TestListAccountsV2(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			whereParts: []mysql.WherePart{
-				mysql.NewFilter("num", ">=", 5),
+			options: &mysql.ListOptions{
+				Filters: []*mysql.FilterV2{
+					{
+						Column:   "num",
+						Operator: mysql.OperatorEqual,
+						Value:    5,
+					},
+				},
+				InFilters:   nil,
+				NullFilters: nil,
+				JSONFilters: nil,
+				SearchQuery: nil,
+				Orders: []*mysql.Order{
+					{
+						Column:    "id",
+						Direction: mysql.OrderDirectionAsc,
+					},
+				},
+				Limit:  10,
+				Offset: 5,
 			},
-			orders: []*mysql.Order{
-				mysql.NewOrder("id", mysql.OrderDirectionAsc),
-			},
-			limit:          10,
-			offset:         5,
 			expected:       []*proto.AccountV2{},
 			expectedCursor: 5,
 			expectedErr:    nil,
@@ -452,10 +485,7 @@ func TestListAccountsV2(t *testing.T) {
 			}
 			accounts, cursor, _, err := storage.ListAccountsV2(
 				context.Background(),
-				p.whereParts,
-				p.orders,
-				p.limit,
-				p.offset,
+				p.options,
 			)
 			assert.Equal(t, p.expected, accounts)
 			assert.Equal(t, p.expectedCursor, cursor)

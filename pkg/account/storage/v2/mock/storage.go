@@ -161,18 +161,18 @@ func (mr *MockAccountStorageMockRecorder) GetAccountsWithOrganization(ctx, email
 }
 
 // GetAvatarAccountsV2 mocks base method.
-func (m *MockAccountStorage) GetAvatarAccountsV2(ctx context.Context, whereParts []mysql.WherePart) ([]*account.AccountV2, error) {
+func (m *MockAccountStorage) GetAvatarAccountsV2(ctx context.Context, options *mysql.ListOptions) ([]*account.AccountV2, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAvatarAccountsV2", ctx, whereParts)
+	ret := m.ctrl.Call(m, "GetAvatarAccountsV2", ctx, options)
 	ret0, _ := ret[0].([]*account.AccountV2)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAvatarAccountsV2 indicates an expected call of GetAvatarAccountsV2.
-func (mr *MockAccountStorageMockRecorder) GetAvatarAccountsV2(ctx, whereParts any) *gomock.Call {
+func (mr *MockAccountStorageMockRecorder) GetAvatarAccountsV2(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvatarAccountsV2", reflect.TypeOf((*MockAccountStorage)(nil).GetAvatarAccountsV2), ctx, whereParts)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvatarAccountsV2", reflect.TypeOf((*MockAccountStorage)(nil).GetAvatarAccountsV2), ctx, options)
 }
 
 // GetEnvironmentAPIKey mocks base method.
@@ -223,9 +223,9 @@ func (mr *MockAccountStorageMockRecorder) ListAPIKeys(ctx, whereParts, orders, l
 }
 
 // ListAccountsV2 mocks base method.
-func (m *MockAccountStorage) ListAccountsV2(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*account.AccountV2, int, int64, error) {
+func (m *MockAccountStorage) ListAccountsV2(ctx context.Context, options *mysql.ListOptions) ([]*account.AccountV2, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAccountsV2", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListAccountsV2", ctx, options)
 	ret0, _ := ret[0].([]*account.AccountV2)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -234,9 +234,9 @@ func (m *MockAccountStorage) ListAccountsV2(ctx context.Context, whereParts []my
 }
 
 // ListAccountsV2 indicates an expected call of ListAccountsV2.
-func (mr *MockAccountStorageMockRecorder) ListAccountsV2(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockAccountStorageMockRecorder) ListAccountsV2(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAccountsV2", reflect.TypeOf((*MockAccountStorage)(nil).ListAccountsV2), ctx, whereParts, orders, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAccountsV2", reflect.TypeOf((*MockAccountStorage)(nil).ListAccountsV2), ctx, options)
 }
 
 // ListAllEnvironmentAPIKeys mocks base method.
