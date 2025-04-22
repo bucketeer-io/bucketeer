@@ -542,6 +542,18 @@ message EvaluateFeaturesResponse {
   bucketeer.feature.UserEvaluations user_evaluations = 1;
 }
 
+message DebugEvaluateFeaturesRequest {
+  repeated bucketeer.user.User users = 1
+      [(google.api.field_behavior) = REQUIRED];
+  repeated string feature_ids = 3 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DebugEvaluateFeaturesResponse {
+  repeated Evaluation evaluations = 1;
+  repeated string archived_feature_ids = 2;
+}
+
 message ListTagsRequest {
   enum OrderBy {
     DEFAULT = 0;
@@ -1389,6 +1401,52 @@ service FeatureService {
   }
   rpc EvaluateFeatures(EvaluateFeaturesRequest)
       returns (EvaluateFeaturesResponse) {}
+  rpc DebugEvaluateFeatures(DebugEvaluateFeaturesRequest)
+      returns (DebugEvaluateFeaturesResponse) {
+    option (google.api.http) = {
+      post: "/v1/debug_evaluate_features"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Debug Feature Evaluations",
+      description: "Debug Evaluate features for multiple features and users."
+      tags: "feature"
+      operation_id: "web.v1.feature.debug_evaluate_feature"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the resource is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ListTags(ListTagsRequest) returns (ListTagsResponse) {}
   rpc CreateFlagTrigger(CreateFlagTriggerRequest)
       returns (CreateFlagTriggerResponse) {

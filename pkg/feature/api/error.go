@@ -30,6 +30,7 @@ var (
 	statusMissingUser                = gstatus.New(codes.InvalidArgument, "feature: missing user")
 	statusMissingUserID              = gstatus.New(codes.InvalidArgument, "feature: missing user id")
 	statusMissingUserIDs             = gstatus.New(codes.InvalidArgument, "feature: missing user ids")
+	statusMissingFeatureIDs          = gstatus.New(codes.InvalidArgument, "feature: missing feature ids")
 	statusMissingCommand             = gstatus.New(codes.InvalidArgument, "feature: missing command")
 	statusMissingDefaultOnVariation  = gstatus.New(codes.InvalidArgument, "feature: missing default on variation")
 	statusMissingDefaultOffVariation = gstatus.New(codes.InvalidArgument, "feature: missing default off variation")

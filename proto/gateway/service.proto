@@ -134,6 +134,17 @@ message TrackRequest {
 
 message TrackResponse {}
 
+message DebugEvaluateFeaturesRequest {
+  repeated bucketeer.user.User users = 1
+      [(google.api.field_behavior) = REQUIRED];
+  repeated string feature_ids = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+message DebugEvaluateFeaturesResponse {
+  repeated feature.Evaluation evaluations = 1;
+  repeated string archived_feature_ids = 2;
+}
+
 message CreateFeatureRequest {
   string id = 1;
   string name = 2;
@@ -555,6 +566,19 @@ service Gateway {
       description: "This API is an integration for Google Tab Manager to report Goal events. To call this API, you need a `CLIENT` API Key role.",
       tags: "Client and Server SDKs",
       operation_id: "api.gateway.track"
+    };
+  }
+  rpc DebugEvaluateFeatures(DebugEvaluateFeaturesRequest)
+      returns (DebugEvaluateFeaturesResponse) {
+    option (google.api.http) = {
+      post: "/v1/debug_evaluate_features"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Debug Feature Evaluations",
+      description: "This API is used to debug one or more end-user evaluations. To call this API, you need a `READ` API Key role.",
+      tags: "Feature Flags",
+      operation_id: "api.gateway.v1.features.debug_evaluate_features"
     };
   }
   rpc CreateFeature(CreateFeatureRequest) returns (CreateFeatureResponse) {

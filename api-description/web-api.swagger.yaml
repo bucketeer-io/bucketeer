@@ -2529,6 +2529,64 @@ paths:
             $ref: '#/definitions/CodeReferenceServiceUpdateCodeReferenceBody'
       tags:
         - Code Reference
+  /v1/debug_evaluate_features:
+    post:
+      summary: Debug Feature Evaluations
+      description: Debug Evaluate features for multiple features and users.
+      operationId: web.v1.feature.debug_evaluate_feature
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureDebugEvaluateFeaturesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the resource is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureDebugEvaluateFeaturesRequest'
+      tags:
+        - feature
   /v1/environment/archive_environment:
     post:
       summary: Archive
@@ -11440,6 +11498,36 @@ definitions:
     properties:
       segment:
         $ref: '#/definitions/featureSegment'
+  featureDebugEvaluateFeaturesRequest:
+    type: object
+    properties:
+      users:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/userUser'
+      featureIds:
+        type: array
+        items:
+          type: string
+      environmentId:
+        type: string
+    required:
+      - users
+      - featureIds
+      - environmentId
+  featureDebugEvaluateFeaturesResponse:
+    type: object
+    properties:
+      evaluations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureEvaluation'
+      archivedFeatureIds:
+        type: array
+        items:
+          type: string
   featureDeleteFeatureCommand:
     type: object
   featureDeleteFeatureResponse:
