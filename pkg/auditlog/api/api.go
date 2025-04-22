@@ -210,20 +210,40 @@ func (s *auditlogService) ListAuditLogs(
 		}
 		return nil, dt.Err()
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+	var filters = []*mysql.FilterV2{
+		&mysql.FilterV2{
+			Column:   "environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.EnvironmentId,
+		},
 	}
 	if req.From != 0 {
-		whereParts = append(whereParts, mysql.NewFilter("timestamp", ">=", req.From))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "timestamp",
+			Operator: mysql.OperatorGreaterThanOrEqual,
+			Value:    req.From,
+		})
 	}
 	if req.To != 0 {
-		whereParts = append(whereParts, mysql.NewFilter("timestamp", "<=", req.To))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "timestamp",
+			Operator: mysql.OperatorLessThanOrEqual,
+			Value:    req.To,
+		})
 	}
 	if req.EntityType != nil {
-		whereParts = append(whereParts, mysql.NewFilter("entity_type", "=", req.EntityType.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "entity_type",
+			Operator: mysql.OperatorEqual,
+			Value:    req.EntityType.Value,
+		})
 	}
+	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"editor"}, req.SearchKeyword))
+		searchQuery = &mysql.SearchQuery{
+			Columns: []string{"editor"},
+			Keyword: req.SearchKeyword,
+		}
 	}
 	orders, err := s.newAuditLogListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -233,13 +253,17 @@ func (s *auditlogService) ListAuditLogs(
 		)
 		return nil, err
 	}
-	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(
-		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
-	)
+	options := &mysql.ListOptions{
+		Limit:       limit,
+		Offset:      offset,
+		Filters:     filters,
+		InFilters:   nil,
+		JSONFilters: nil,
+		NullFilters: nil,
+		SearchQuery: searchQuery,
+		Orders:      orders,
+	}
+	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(ctx, options)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list auditlogs",
@@ -426,19 +450,43 @@ func (s *auditlogService) ListFeatureHistory(
 	if err != nil {
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
-		mysql.NewFilter("entity_type", "=", int32(eventproto.Event_FEATURE)),
-		mysql.NewFilter("entity_id", "=", req.FeatureId),
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.EnvironmentId,
+		},
+		{
+			Column:   "entity_type",
+			Operator: mysql.OperatorEqual,
+			Value:    int32(eventproto.Event_FEATURE),
+		},
+		{
+			Column:   "entity_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.FeatureId,
+		},
 	}
 	if req.From != 0 {
-		whereParts = append(whereParts, mysql.NewFilter("timestamp", ">=", req.From))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "timestamp",
+			Operator: mysql.OperatorGreaterThanOrEqual,
+			Value:    req.From,
+		})
 	}
 	if req.To != 0 {
-		whereParts = append(whereParts, mysql.NewFilter("timestamp", "<=", req.To))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "timestamp",
+			Operator: mysql.OperatorLessThanOrEqual,
+			Value:    req.To,
+		})
 	}
+	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"editor"}, req.SearchKeyword))
+		searchQuery = &mysql.SearchQuery{
+			Columns: []string{"editor"},
+			Keyword: req.SearchKeyword,
+		}
 	}
 	orders, err := s.newFeatureHistoryAuditLogListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -464,13 +512,17 @@ func (s *auditlogService) ListFeatureHistory(
 		}
 		return nil, dt.Err()
 	}
-	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(
-		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
-	)
+	options := &mysql.ListOptions{
+		Limit:       limit,
+		Offset:      offset,
+		SearchQuery: searchQuery,
+		Orders:      orders,
+		Filters:     filters,
+		NullFilters: nil,
+		InFilters:   nil,
+		JSONFilters: nil,
+	}
+	auditlogs, nextCursor, totalCount, err := s.auditLogStorage.ListAuditLogs(ctx, options)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list feature history",
