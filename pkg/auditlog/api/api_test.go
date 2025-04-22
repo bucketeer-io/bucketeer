@@ -337,7 +337,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 			desc: "err: ErrInternal",
 			setup: func(s *auditlogService) {
 				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
 			input:       &proto.ListAdminAuditLogsRequest{},
@@ -348,7 +348,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *auditlogService) {
 				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
 			input:       &proto.ListAdminAuditLogsRequest{PageSize: 2, Cursor: ""},
