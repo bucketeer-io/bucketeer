@@ -112,12 +112,14 @@ func (p *publisher) Publish(ctx context.Context, msg Message) (err error) {
 	}
 	var message *pubsub.Message
 	if orderingMsg, ok := msg.(*OrderingEventMessage); ok && orderingMsg.OrderingKey != "" {
+		p.topic.EnableMessageOrdering = true
 		message = &pubsub.Message{
 			Data:        data,
 			Attributes:  map[string]string{idAttribute: msg.GetId()},
 			OrderingKey: orderingMsg.OrderingKey,
 		}
 	} else {
+		p.topic.EnableMessageOrdering = false
 		message = &pubsub.Message{
 			Data:       data,
 			Attributes: map[string]string{idAttribute: msg.GetId()},
@@ -157,12 +159,14 @@ func (p *publisher) PublishMulti(ctx context.Context, messages []Message) (error
 		}
 		var message *pubsub.Message
 		if orderingMsg, ok := msg.(*OrderingEventMessage); ok && orderingMsg.OrderingKey != "" {
+			p.topic.EnableMessageOrdering = true
 			message = &pubsub.Message{
 				Data:        data,
 				Attributes:  map[string]string{idAttribute: id},
 				OrderingKey: orderingMsg.OrderingKey,
 			}
 		} else {
+			p.topic.EnableMessageOrdering = false
 			message = &pubsub.Message{
 				Data:       data,
 				Attributes: map[string]string{idAttribute: id},
