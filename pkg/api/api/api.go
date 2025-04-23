@@ -864,10 +864,13 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				}
 				continue
 			}
-			goalMessages = append(goalMessages, &eventproto.Event{
-				Id:            event.ID,
-				Event:         goalAny,
-				EnvironmentId: event.EnvironmentId,
+			goalMessages = append(goalMessages, &publisher.OrderingEventMessage{
+				Message: &eventproto.Event{
+					Id:            event.ID,
+					Event:         goalAny,
+					EnvironmentId: event.EnvironmentId,
+				},
+				OrderingKey: goal.UserId,
 			})
 		case EvaluationEventType:
 			eval, errCode, err := s.getEvaluationEvent(req.Context(), event)
@@ -888,10 +891,13 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				}
 				continue
 			}
-			evaluationMessages = append(evaluationMessages, &eventproto.Event{
-				Id:            event.ID,
-				Event:         evalAny,
-				EnvironmentId: event.EnvironmentId,
+			evaluationMessages = append(evaluationMessages, &publisher.OrderingEventMessage{
+				Message: &eventproto.Event{
+					Id:            event.ID,
+					Event:         evalAny,
+					EnvironmentId: event.EnvironmentId,
+				},
+				OrderingKey: eval.UserId,
 			})
 		case MetricsEventType:
 			metrics, errCode, err := s.getMetricsEvent(req.Context(), event)

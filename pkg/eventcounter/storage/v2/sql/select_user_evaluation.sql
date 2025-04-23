@@ -4,19 +4,16 @@ SELECT
     feature_version,
     variation_id as variationID,
     reason,
-    timestamp
+    UNIX_SECONDS(timestamp) as timestamp
 FROM
     `%s`
 WHERE
-    timestamp BETWEEN TIMESTAMP(@experimentStartAt)
-    AND LEAST(
-        TIMESTAMP(@experimentEndAt)
-        TIMESTAMP(@goalTimestamp)
-    )
-    AND environment_id = @environmentId
+    environment_id = @environmentId
     AND feature_id = @featureId
+    AND feature_version = @featureVersion
     AND user_id = @userId
-
+    AND timestamp BETWEEN TIMESTAMP(@experimentStartAt)
+    AND TIMESTAMP(@experimentEndAt)
 ORDER BY
     timestamp DESC
 LIMIT 1;

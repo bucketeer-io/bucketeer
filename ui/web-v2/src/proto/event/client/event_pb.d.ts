@@ -20,6 +20,9 @@ export class Event extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getOrderingKey(): string;
+  setOrderingKey(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Event.AsObject;
   static toObject(includeInstance: boolean, msg: Event): Event.AsObject;
@@ -43,6 +46,7 @@ export namespace Event {
     id: string;
     event?: google_protobuf_any_pb.Any.AsObject;
     environmentId: string;
+    orderingKey: string;
   };
 }
 

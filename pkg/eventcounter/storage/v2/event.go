@@ -66,8 +66,9 @@ type EventStorage interface {
 	) ([]*GoalEventCount, error)
 	QueryUserEvaluation(
 		ctx context.Context,
-		environmentID, featureID, userID string,
-		experimentStartAt, experimentEndAt, goalTimestamp time.Time,
+		environmentID, userID, featureID string,
+		featureVersion int32,
+		experimentStartAt, experimentEndAt time.Time,
 	) (*UserEvaluation, error)
 }
 
@@ -255,8 +256,9 @@ func (es *eventStorage) QueryGoalCount(
 
 func (es *eventStorage) QueryUserEvaluation(
 	ctx context.Context,
-	environmentID, featureID, userID string,
-	experimentStartAt, experimentEndAt, goalTimestamp time.Time,
+	environmentID, userID, featureID string,
+	featureVersion int32,
+	experimentStartAt, experimentEndAt time.Time,
 ) (*UserEvaluation, error) {
 	datasource := fmt.Sprintf("%s.%s", es.dataset, DataTypeEvaluationEvent)
 	query := fmt.Sprintf(userEvaluationSQL, datasource)
@@ -266,12 +268,16 @@ func (es *eventStorage) QueryUserEvaluation(
 			Value: environmentID,
 		},
 		{
+			Name:  "userId",
+			Value: userID,
+		},
+		{
 			Name:  "featureId",
 			Value: featureID,
 		},
 		{
-			Name:  "userId",
-			Value: userID,
+			Name:  "featureVersion",
+			Value: featureVersion,
 		},
 		{
 			Name:  "experimentStartAt",
@@ -280,10 +286,6 @@ func (es *eventStorage) QueryUserEvaluation(
 		{
 			Name:  "experimentEndAt",
 			Value: experimentEndAt,
-		},
-		{
-			Name:  "goalTimestamp",
-			Value: goalTimestamp,
 		},
 	}
 	es.logger.Debug("Query user evaluation",

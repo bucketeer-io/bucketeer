@@ -272,7 +272,10 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 		Event:         goal,
 		EnvironmentId: envAPIKey.Environment.Id,
 	}
-	if err := s.goalPublisher.Publish(ctx, event); err != nil {
+	if err := s.goalPublisher.Publish(ctx, &publisher.OrderingEventMessage{
+		Message:     event,
+		OrderingKey: req.Userid,
+	}); err != nil {
 		if err == publisher.ErrBadMessage {
 			eventCounter.WithLabelValues(callerGatewayService, typeGoal, codeNonRepeatableError)
 		} else {
@@ -1296,7 +1299,7 @@ func (s *grpcGatewayService) RegisterEvents(
 			continue
 		}
 		if ptypes.Is(event.Event, grpcGoalEvent) {
-			errorCode, err := validator.validate(ctx)
+			ev, errorCode, err := validator.validate(ctx)
 			if err != nil {
 				eventCounter.WithLabelValues(callerGatewayService, typeGoal, errorCode).Inc()
 				errs[event.Id] = &gwproto.RegisterEventsResponse_Error{
@@ -1305,11 +1308,15 @@ func (s *grpcGatewayService) RegisterEvents(
 				}
 				continue
 			}
-			goalMessages = append(goalMessages, event)
+			goalEv := ev.(*eventproto.GoalEvent)
+			goalMessages = append(goalMessages, &publisher.OrderingEventMessage{
+				Message:     event,
+				OrderingKey: goalEv.UserId,
+			})
 			continue
 		}
 		if ptypes.Is(event.Event, grpcEvaluationEvent) {
-			errorCode, err := validator.validate(ctx)
+			ev, errorCode, err := validator.validate(ctx)
 			if err != nil {
 				eventCounter.WithLabelValues(callerGatewayService, typeEvaluation, errorCode).Inc()
 				errs[event.Id] = &gwproto.RegisterEventsResponse_Error{
@@ -1318,11 +1325,15 @@ func (s *grpcGatewayService) RegisterEvents(
 				}
 				continue
 			}
-			evaluationMessages = append(evaluationMessages, event)
+			evalEv := ev.(*eventproto.EvaluationEvent)
+			evaluationMessages = append(evaluationMessages, &publisher.OrderingEventMessage{
+				Message:     event,
+				OrderingKey: evalEv.UserId,
+			})
 			continue
 		}
 		if ptypes.Is(event.Event, grpcMetricsEvent) {
-			errorCode, err := validator.validate(ctx)
+			_, errorCode, err := validator.validate(ctx)
 			if err != nil {
 				eventCounter.WithLabelValues(callerGatewayService, typeMetrics, errorCode).Inc()
 				errs[event.Id] = &gwproto.RegisterEventsResponse_Error{

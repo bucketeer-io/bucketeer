@@ -28,6 +28,7 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
+	ecstorage "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
@@ -619,7 +620,7 @@ func (s *server) registerPubSubProcessorMap(
 			ctx,
 			onDemandProcessorsConfigMap[processor.EvaluationCountEventDWHPersisterName],
 			mysqlClient,
-			bqQuerierClient,
+			ecstorage.NewEventStorage(bqQuerierClient, bigQueryDataSet, logger),
 			bigQueryDataSet,
 			nonPersistentRedisClient, // use non-persistent redis instance here
 			exClient,
@@ -639,7 +640,7 @@ func (s *server) registerPubSubProcessorMap(
 			ctx,
 			onDemandProcessorsConfigMap[processor.GoalCountEventDWHPersisterName],
 			mysqlClient,
-			bqQuerierClient,
+			ecstorage.NewEventStorage(bqQuerierClient, bigQueryDataSet, logger),
 			bigQueryDataSet,
 			nonPersistentRedisClient, // use non-persistent redis instance here
 			exClient,

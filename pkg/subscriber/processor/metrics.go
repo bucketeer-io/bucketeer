@@ -46,6 +46,7 @@ const (
 	codeEventIssuedAfterExperimentEnded     = "EventIssuedAfterExperimentEnded"
 	codeEventOlderThanExperiment            = "EventOlderThanExperiment"
 	codeExperimentNotFound                  = "ExperimentNotFound"
+	codeUserEvaluationNotFound              = "UserEvaluationNotFound"
 	codeGoalEventIssuedAfterExperimentEnded = "GoalEventIssuedAfterExperimentEnded"
 	codeFailedToEvaluateUser                = "FailedToEvaluateUser"
 	codeFailedToListExperiments             = "FailedToListExperiments"

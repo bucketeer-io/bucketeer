@@ -2166,6 +2166,9 @@ definitions:
       environmentId:
         type: string
         description: service.
+      orderingKey:
+        type: string
+        title: This is optional and used by GCP PubSub
   clientSourceId:
     type: string
     enum:

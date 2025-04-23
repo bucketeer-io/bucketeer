@@ -30,6 +30,7 @@ message Event {
   reserved 3;  // SDK doens't need to set this field. It's set by gateway
                // service.
   string environment_id = 4;
+  string ordering_key = 5;  // This is optional and used by GCP PubSub
 }
 
 message EvaluationEvent {

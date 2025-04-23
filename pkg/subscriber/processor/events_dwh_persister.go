@@ -31,7 +31,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
-	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
 	storage "github.com/bucketeer-io/bucketeer/pkg/subscriber/storage/v2"
@@ -60,7 +59,7 @@ func NewEventsDWHPersister(
 	ctx context.Context,
 	config interface{},
 	mysqlClient mysql.Client,
-	bqQuerierClient bqquerier.Client,
+	eventStorage ecstorage.EventStorage,
 	bigQueryDataSet string,
 	redisClient redisv3.Client,
 	exClient experimentclient.Client,
@@ -116,7 +115,7 @@ func NewEventsDWHPersister(
 		goalEventWriter, err := NewGoalEventWriter(
 			ctx,
 			logger,
-			ecstorage.NewEventStorage(bqQuerierClient, bigQueryDataSet, logger),
+			eventStorage,
 			exClient,
 			ftClient,
 			experimentsCache,

@@ -128,11 +128,13 @@ func TestValidateTimestamp(t *testing.T) {
 
 func TestGrpcValidateGoalEvent(t *testing.T) {
 	t.Parallel()
+	timestamp := time.Now().Unix()
 	patterns := []struct {
-		desc        string
-		inputFunc   func() *eventproto.Event
-		expected    string
-		expectedErr error
+		desc          string
+		inputFunc     func() *eventproto.Event
+		expectedEvent *eventproto.GoalEvent
+		expected      string
+		expectedErr   error
 	}{
 		{
 			desc: "invalid uuid",
@@ -141,8 +143,9 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
 				}
 			},
-			expected:    codeInvalidID,
-			expectedErr: errInvalidIDFormat,
+			expectedEvent: nil,
+			expected:      codeInvalidID,
+			expectedErr:   errInvalidIDFormat,
 		},
 		{
 			desc: "unmarshal fails",
@@ -151,8 +154,9 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
 				}
 			},
-			expected:    codeUnmarshalFailed,
-			expectedErr: errUnmarshalFailed,
+			expectedEvent: nil,
+			expected:      codeUnmarshalFailed,
+			expectedErr:   errUnmarshalFailed,
 		},
 		{
 			desc: "empty goal_id",
@@ -175,8 +179,9 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 					},
 				}
 			},
-			expected:    codeEmptyField,
-			expectedErr: errEmptyGoalID,
+			expectedEvent: nil,
+			expected:      codeEmptyField,
+			expectedErr:   errEmptyGoalID,
 		},
 		{
 			desc: "empty user_id",
@@ -200,8 +205,9 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 					},
 				}
 			},
-			expected:    codeEmptyField,
-			expectedErr: errEmptyUserID,
+			expectedEvent: nil,
+			expected:      codeEmptyField,
+			expectedErr:   errEmptyUserID,
 		},
 		{
 			desc: "invalid timestamp",
@@ -224,14 +230,15 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 					},
 				}
 			},
-			expected:    codeInvalidTimestamp,
-			expectedErr: errInvalidTimestamp,
+			expectedEvent: nil,
+			expected:      codeInvalidTimestamp,
+			expectedErr:   errInvalidTimestamp,
 		},
 		{
 			desc: "success",
 			inputFunc: func() *eventproto.Event {
-				bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{
-					Timestamp: time.Now().Unix(),
+				goalEvent := &eventproto.GoalEvent{
+					Timestamp: timestamp,
 					GoalId:    "goal-id",
 					User: &user.User{
 						Id: "user-id",
@@ -241,7 +248,8 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 							Id: "evaluation-id",
 						},
 					},
-				})
+				}
+				bGoalEvent, err := proto.Marshal(goalEvent)
 				if err != nil {
 					t.Fatal("could not serialize event")
 				}
@@ -253,10 +261,23 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 					},
 				}
 			},
+			expectedEvent: &eventproto.GoalEvent{
+				Timestamp: timestamp,
+				GoalId:    "goal-id",
+				User: &user.User{
+					Id: "user-id",
+				},
+				Evaluations: []*feature.Evaluation{
+					{
+						Id: "evaluation-id",
+					},
+				},
+			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			logger, _ := log.NewLogger()
 			v := &eventGoalValidator{
 				event:                     p.inputFunc(),
@@ -264,7 +285,14 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 				oldestTimestampDuration:   24 * time.Hour,
 				furthestTimestampDuration: 24 * time.Hour,
 			}
-			actual, err := v.validate(context.Background())
+			ev, actual, err := v.validate(context.Background())
+			if p.expectedEvent == nil {
+				assert.Nil(t, ev)
+			} else {
+				goalEv, ok := ev.(*eventproto.GoalEvent)
+				assert.True(t, ok, "Failed to type assert to GoalEvent")
+				assert.True(t, proto.Equal(p.expectedEvent, goalEv))
+			}
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
 		})
@@ -273,11 +301,13 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 
 func TestGrpcValidateEvaluationEvent(t *testing.T) {
 	t.Parallel()
+	timestamp := time.Now().Unix()
 	patterns := []struct {
-		desc        string
-		inputFunc   func() *eventproto.Event
-		expected    string
-		expectedErr error
+		desc          string
+		inputFunc     func() *eventproto.Event
+		expectedEvent *eventproto.EvaluationEvent
+		expected      string
+		expectedErr   error
 	}{
 		{
 			desc: "invalid uuid",
@@ -296,8 +326,9 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
 				}
 			},
-			expected:    codeUnmarshalFailed,
-			expectedErr: errUnmarshalFailed,
+			expectedEvent: nil,
+			expected:      codeUnmarshalFailed,
+			expectedErr:   errUnmarshalFailed,
 		},
 		{
 			desc: "empty feature_id",
@@ -324,8 +355,9 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					},
 				}
 			},
-			expected:    codeEmptyField,
-			expectedErr: errEmptyFeatureID,
+			expectedEvent: nil,
+			expected:      codeEmptyField,
+			expectedErr:   errEmptyFeatureID,
 		},
 		{
 			desc: "empty variation_id",
@@ -352,14 +384,15 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					},
 				}
 			},
-			expected:    codeEmptyField,
-			expectedErr: errEmptyVariationID,
+			expectedEvent: nil,
+			expected:      codeEmptyField,
+			expectedErr:   errEmptyVariationID,
 		},
 		{
 			desc: "empty variation_id with ERROR_NO_EVALUATIONS reason",
 			inputFunc: func() *eventproto.Event {
 				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:   time.Now().Unix(),
+					Timestamp:   timestamp,
 					FeatureId:   "feature-id",
 					VariationId: "",
 					User: &user.User{
@@ -380,6 +413,17 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					},
 				}
 			},
+			expectedEvent: &eventproto.EvaluationEvent{
+				Timestamp:   timestamp,
+				FeatureId:   "feature-id",
+				VariationId: "",
+				User: &user.User{
+					Id: "user-id",
+				},
+				Reason: &feature.Reason{
+					Type: feature.Reason_ERROR_NO_EVALUATIONS,
+				},
+			},
 			expected:    "",
 			expectedErr: nil,
 		},
@@ -387,7 +431,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 			desc: "empty variation_id with ERROR_FLAG_NOT_FOUND reason",
 			inputFunc: func() *eventproto.Event {
 				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:   time.Now().Unix(),
+					Timestamp:   timestamp,
 					FeatureId:   "feature-id",
 					VariationId: "",
 					User: &user.User{
@@ -408,6 +452,17 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					},
 				}
 			},
+			expectedEvent: &eventproto.EvaluationEvent{
+				Timestamp:   timestamp,
+				FeatureId:   "feature-id",
+				VariationId: "",
+				User: &user.User{
+					Id: "user-id",
+				},
+				Reason: &feature.Reason{
+					Type: feature.Reason_ERROR_FLAG_NOT_FOUND,
+				},
+			},
 			expected:    "",
 			expectedErr: nil,
 		},
@@ -415,7 +470,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 			desc: "empty variation_id with ERROR_WRONG_TYPE reason",
 			inputFunc: func() *eventproto.Event {
 				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:   time.Now().Unix(),
+					Timestamp:   timestamp,
 					FeatureId:   "feature-id",
 					VariationId: "",
 					User: &user.User{
@@ -436,6 +491,17 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					},
 				}
 			},
+			expectedEvent: &eventproto.EvaluationEvent{
+				Timestamp:   timestamp,
+				FeatureId:   "feature-id",
+				VariationId: "",
+				User: &user.User{
+					Id: "user-id",
+				},
+				Reason: &feature.Reason{
+					Type: feature.Reason_ERROR_WRONG_TYPE,
+				},
+			},
 			expected:    "",
 			expectedErr: nil,
 		},
@@ -443,7 +509,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 			desc: "empty variation_id with ERROR_USER_ID_NOT_SPECIFIED reason",
 			inputFunc: func() *eventproto.Event {
 				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:   time.Now().Unix(),
+					Timestamp:   timestamp,
 					FeatureId:   "feature-id",
 					VariationId: "",
 					User: &user.User{
@@ -464,6 +530,17 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					},
 				}
 			},
+			expectedEvent: &eventproto.EvaluationEvent{
+				Timestamp:   timestamp,
+				FeatureId:   "feature-id",
+				VariationId: "",
+				User: &user.User{
+					Id: "user-id",
+				},
+				Reason: &feature.Reason{
+					Type: feature.Reason_ERROR_USER_ID_NOT_SPECIFIED,
+				},
+			},
 			expected:    "",
 			expectedErr: nil,
 		},
@@ -471,7 +548,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 			desc: "empty variation_id with ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED reason",
 			inputFunc: func() *eventproto.Event {
 				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:   time.Now().Unix(),
+					Timestamp:   timestamp,
 					FeatureId:   "feature-id",
 					VariationId: "",
 					User: &user.User{
@@ -492,6 +569,17 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					},
 				}
 			},
+			expectedEvent: &eventproto.EvaluationEvent{
+				Timestamp:   timestamp,
+				FeatureId:   "feature-id",
+				VariationId: "",
+				User: &user.User{
+					Id: "user-id",
+				},
+				Reason: &feature.Reason{
+					Type: feature.Reason_ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED,
+				},
+			},
 			expected:    "",
 			expectedErr: nil,
 		},
@@ -499,7 +587,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 			desc: "empty variation_id with ERROR_EXCEPTION reason",
 			inputFunc: func() *eventproto.Event {
 				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:   time.Now().Unix(),
+					Timestamp:   timestamp,
 					FeatureId:   "feature-id",
 					VariationId: "",
 					User: &user.User{
@@ -520,6 +608,17 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					},
 				}
 			},
+			expectedEvent: &eventproto.EvaluationEvent{
+				Timestamp:   timestamp,
+				FeatureId:   "feature-id",
+				VariationId: "",
+				User: &user.User{
+					Id: "user-id",
+				},
+				Reason: &feature.Reason{
+					Type: feature.Reason_ERROR_EXCEPTION,
+				},
+			},
 			expected:    "",
 			expectedErr: nil,
 		},
@@ -527,7 +626,7 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 			desc: "empty variation_id with CLIENT reason",
 			inputFunc: func() *eventproto.Event {
 				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:   time.Now().Unix(),
+					Timestamp:   timestamp,
 					FeatureId:   "feature-id",
 					VariationId: "",
 					User: &user.User{
@@ -547,6 +646,17 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 						Value:   bEvaluationEvent,
 					},
 				}
+			},
+			expectedEvent: &eventproto.EvaluationEvent{
+				Timestamp:   timestamp,
+				FeatureId:   "feature-id",
+				VariationId: "",
+				User: &user.User{
+					Id: "user-id",
+				},
+				Reason: &feature.Reason{
+					Type: feature.Reason_CLIENT,
+				},
 			},
 			expected:    "",
 			expectedErr: nil,
@@ -577,8 +687,9 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					},
 				}
 			},
-			expected:    codeEmptyField,
-			expectedErr: errEmptyUserID,
+			expectedEvent: nil,
+			expected:      codeEmptyField,
+			expectedErr:   errEmptyUserID,
 		},
 		{
 			desc: "nil user",
@@ -603,8 +714,9 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					},
 				}
 			},
-			expected:    codeEmptyField,
-			expectedErr: errEmptyUserID,
+			expectedEvent: nil,
+			expected:      codeEmptyField,
+			expectedErr:   errEmptyUserID,
 		},
 		{
 			desc: "nil reason",
@@ -629,8 +741,9 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					},
 				}
 			},
-			expected:    codeEmptyField,
-			expectedErr: errNilReason,
+			expectedEvent: nil,
+			expected:      codeEmptyField,
+			expectedErr:   errNilReason,
 		},
 		{
 			desc: "invalid timestamp",
@@ -657,14 +770,15 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					},
 				}
 			},
-			expected:    codeInvalidTimestamp,
-			expectedErr: errInvalidTimestamp,
+			expectedEvent: nil,
+			expected:      codeInvalidTimestamp,
+			expectedErr:   errInvalidTimestamp,
 		},
 		{
 			desc: "success",
 			inputFunc: func() *eventproto.Event {
-				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
-					Timestamp:      time.Now().Unix(),
+				evalEvent := &eventproto.EvaluationEvent{
+					Timestamp:      timestamp,
 					FeatureId:      "feature-id",
 					FeatureVersion: 1,
 					VariationId:    "variation-id",
@@ -674,7 +788,8 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					Reason: &feature.Reason{
 						Type: feature.Reason_DEFAULT,
 					},
-				})
+				}
+				bEvaluationEvent, err := proto.Marshal(evalEvent)
 				if err != nil {
 					t.Fatal("could not serialize event")
 				}
@@ -686,10 +801,26 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 					},
 				}
 			},
+			expectedEvent: func() *eventproto.EvaluationEvent {
+				evalEvent := &eventproto.EvaluationEvent{
+					Timestamp:      timestamp,
+					FeatureId:      "feature-id",
+					FeatureVersion: 1,
+					VariationId:    "variation-id",
+					User: &user.User{
+						Id: "user-id",
+					},
+					Reason: &feature.Reason{
+						Type: feature.Reason_DEFAULT,
+					},
+				}
+				return evalEvent
+			}(),
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			logger, _ := log.NewLogger()
 			v := &eventEvaluationValidator{
 				event:                     p.inputFunc(),
@@ -697,7 +828,14 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 				oldestTimestampDuration:   24 * time.Hour,
 				furthestTimestampDuration: 24 * time.Hour,
 			}
-			actual, err := v.validate(context.Background())
+			ev, actual, err := v.validate(context.Background())
+			if p.expectedEvent == nil {
+				assert.Nil(t, ev)
+			} else {
+				evalEv, ok := ev.(*eventproto.EvaluationEvent)
+				assert.True(t, ok, "Failed to type assert to EvaluationEvent")
+				assert.True(t, proto.Equal(p.expectedEvent, evalEv))
+			}
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
 		})
@@ -706,11 +844,13 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 
 func TestGrpcValidateMetrics(t *testing.T) {
 	t.Parallel()
+	timestamp := time.Now().Unix()
 	patterns := []struct {
-		desc        string
-		inputFunc   func() *eventproto.Event
-		expected    string
-		expectedErr error
+		desc          string
+		inputFunc     func() *eventproto.Event
+		expectedEvent *eventproto.MetricsEvent
+		expected      string
+		expectedErr   error
 	}{
 		{
 			desc: "invalid uuid",
@@ -719,8 +859,9 @@ func TestGrpcValidateMetrics(t *testing.T) {
 					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
 				}
 			},
-			expected:    codeInvalidID,
-			expectedErr: errInvalidIDFormat,
+			expectedEvent: nil,
+			expected:      codeInvalidID,
+			expectedErr:   errInvalidIDFormat,
 		},
 		{
 			desc: "unmarshal fails",
@@ -729,35 +870,17 @@ func TestGrpcValidateMetrics(t *testing.T) {
 					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
 				}
 			},
-			expected:    codeUnmarshalFailed,
-			expectedErr: errUnmarshalFailed,
-		},
-		{
-			desc: "invalid timestamp",
-			inputFunc: func() *eventproto.Event {
-				b, err := proto.Marshal(&eventproto.MetricsEvent{
-					Timestamp: int64(999999999999999),
-				})
-				if err != nil {
-					t.Fatal("could not serialize event")
-				}
-				return &eventproto.Event{
-					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
-					Event: &any.Any{
-						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.MetricsEvent",
-						Value:   b,
-					},
-				}
-			},
-			expected:    "",
-			expectedErr: nil,
+			expectedEvent: nil,
+			expected:      codeUnmarshalFailed,
+			expectedErr:   errUnmarshalFailed,
 		},
 		{
 			desc: "success",
 			inputFunc: func() *eventproto.Event {
-				b, err := proto.Marshal(&eventproto.MetricsEvent{
-					Timestamp: time.Now().Unix(),
-				})
+				metricsEvent := &eventproto.MetricsEvent{
+					Timestamp: timestamp,
+				}
+				b, err := proto.Marshal(metricsEvent)
 				if err != nil {
 					t.Fatal("could not serialize event")
 				}
@@ -769,10 +892,17 @@ func TestGrpcValidateMetrics(t *testing.T) {
 					},
 				}
 			},
+			expectedEvent: func() *eventproto.MetricsEvent {
+				metricsEvent := &eventproto.MetricsEvent{
+					Timestamp: timestamp,
+				}
+				return metricsEvent
+			}(),
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			logger, _ := log.NewLogger()
 			v := &eventMetricsValidator{
 				event:                     p.inputFunc(),
@@ -780,7 +910,14 @@ func TestGrpcValidateMetrics(t *testing.T) {
 				furthestTimestampDuration: furthestTimestampDuration,
 				logger:                    logger,
 			}
-			actual, err := v.validate(context.Background())
+			ev, actual, err := v.validate(context.Background())
+			if p.expectedEvent == nil {
+				assert.Nil(t, ev)
+			} else {
+				metricsEv, ok := ev.(*eventproto.MetricsEvent)
+				assert.True(t, ok, "Failed to type assert to MetricsEvent")
+				assert.True(t, proto.Equal(p.expectedEvent, metricsEv))
+			}
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
 		})

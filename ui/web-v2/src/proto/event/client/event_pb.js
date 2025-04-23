@@ -838,7 +838,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         event:
           (f = msg.getEvent()) &&
           google_protobuf_any_pb.Any.toObject(includeInstance, f),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        orderingKey: jspb.Message.getFieldWithDefault(msg, 5, '')
       };
 
     if (includeInstance) {
@@ -895,6 +896,10 @@ proto.bucketeer.event.client.Event.deserializeBinaryFromReader = function (
         var value = /** @type {string} */ (reader.readString());
         msg.setEnvironmentId(value);
         break;
+      case 5:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setOrderingKey(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -940,6 +945,10 @@ proto.bucketeer.event.client.Event.serializeBinaryToWriter = function (
   f = message.getEnvironmentId();
   if (f.length > 0) {
     writer.writeString(4, f);
+  }
+  f = message.getOrderingKey();
+  if (f.length > 0) {
+    writer.writeString(5, f);
   }
 };
 
@@ -1009,6 +1018,22 @@ proto.bucketeer.event.client.Event.prototype.setEnvironmentId = function (
   value
 ) {
   return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+/**
+ * optional string ordering_key = 5;
+ * @return {string}
+ */
+proto.bucketeer.event.client.Event.prototype.getOrderingKey = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.event.client.Event} returns this
+ */
+proto.bucketeer.event.client.Event.prototype.setOrderingKey = function (value) {
+  return jspb.Message.setProto3StringField(this, 5, value);
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

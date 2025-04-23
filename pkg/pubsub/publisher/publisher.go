@@ -47,6 +47,16 @@ type Publisher interface {
 	Stop()
 }
 
+// OrderingEventMessage wraps an Event to implement the Message interface
+type OrderingEventMessage struct {
+	Message
+	OrderingKey string
+}
+
+func (m *OrderingEventMessage) GetId() string {
+	return m.Message.GetId()
+}
+
 type publisher struct {
 	topic  *pubsub.Topic
 	logger *zap.Logger
@@ -100,10 +110,20 @@ func (p *publisher) Publish(ctx context.Context, msg Message) (err error) {
 		p.logger.Error("Failed to marshal message", zap.Error(err), zap.Any("message", msg))
 		return ErrBadMessage
 	}
-	res := p.topic.Publish(ctx, &pubsub.Message{
-		Data:       data,
-		Attributes: map[string]string{idAttribute: msg.GetId()},
-	})
+	var message *pubsub.Message
+	if orderingMsg, ok := msg.(*OrderingEventMessage); ok && orderingMsg.OrderingKey != "" {
+		message = &pubsub.Message{
+			Data:        data,
+			Attributes:  map[string]string{idAttribute: msg.GetId()},
+			OrderingKey: orderingMsg.OrderingKey,
+		}
+	} else {
+		message = &pubsub.Message{
+			Data:       data,
+			Attributes: map[string]string{idAttribute: msg.GetId()},
+		}
+	}
+	res := p.topic.Publish(ctx, message)
 	_, err = res.Get(ctx)
 	return
 }
@@ -135,10 +155,20 @@ func (p *publisher) PublishMulti(ctx context.Context, messages []Message) (error
 			errors[id] = ErrBadMessage
 			continue
 		}
-		results[id] = p.topic.Publish(ctx, &pubsub.Message{
-			Data:       data,
-			Attributes: map[string]string{idAttribute: id},
-		})
+		var message *pubsub.Message
+		if orderingMsg, ok := msg.(*OrderingEventMessage); ok && orderingMsg.OrderingKey != "" {
+			message = &pubsub.Message{
+				Data:        data,
+				Attributes:  map[string]string{idAttribute: id},
+				OrderingKey: orderingMsg.OrderingKey,
+			}
+		} else {
+			message = &pubsub.Message{
+				Data:       data,
+				Attributes: map[string]string{idAttribute: id},
+			}
+		}
+		results[id] = p.topic.Publish(ctx, message)
 	}
 	for id, result := range results {
 		if _, err := result.Get(ctx); err != nil {
