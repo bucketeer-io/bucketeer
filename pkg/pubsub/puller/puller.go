@@ -23,9 +23,10 @@ import (
 )
 
 type Message struct {
-	ID         string
-	Data       []byte
-	Attributes map[string]string
+	ID          string
+	Data        []byte
+	Attributes  map[string]string
+	OrderingKey string // Optional, will be empty for unordered messages
 
 	Ack  func()
 	Nack func()
@@ -69,11 +70,13 @@ func NewPuller(sub *pubsub.Subscription, opts ...Option) Puller {
 func (p *puller) Pull(ctx context.Context, f func(context.Context, *Message)) error {
 	err := p.subscription.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
 		f(ctx, &Message{
-			ID:         msg.ID,
-			Data:       msg.Data,
-			Attributes: msg.Attributes,
-			Ack:        msg.Ack,
-			Nack:       msg.Nack})
+			ID:          msg.ID,
+			Data:        msg.Data,
+			Attributes:  msg.Attributes,
+			OrderingKey: msg.OrderingKey,
+			Ack:         msg.Ack,
+			Nack:        msg.Nack,
+		})
 	})
 	if err != nil {
 		p.logger.Error("Failed to receive message",

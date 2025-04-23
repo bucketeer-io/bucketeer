@@ -197,7 +197,13 @@ func (p *evaluationCountEventPersister) extractEvents(messages map[string]*pulle
 	envEvents := environmentEventMap{}
 	handleBadMessage := func(m *puller.Message, err error) {
 		m.Ack()
-		p.logger.Error("Bad proto message", zap.Error(err), zap.Any("msg", m))
+		p.logger.Error("Bad proto message",
+			zap.Error(err),
+			zap.String("messageID", m.ID),
+			zap.ByteString("data", m.Data),
+			zap.Any("attributes", m.Attributes),
+			zap.String("orderingKey", m.OrderingKey),
+		)
 		subscriberHandledCounter.WithLabelValues(subscriberEvaluationCount, codes.BadMessage.String()).Inc()
 	}
 	for _, m := range messages {
