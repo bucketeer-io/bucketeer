@@ -89,9 +89,9 @@ func (mr *MockExperimentStorageMockRecorder) GetExperimentSummary(ctx, environme
 }
 
 // ListExperiments mocks base method.
-func (m *MockExperimentStorage) ListExperiments(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*experiment.Experiment, int, int64, error) {
+func (m *MockExperimentStorage) ListExperiments(ctx context.Context, options *mysql.ListOptions) ([]*experiment.Experiment, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListExperiments", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListExperiments", ctx, options)
 	ret0, _ := ret[0].([]*experiment.Experiment)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -100,9 +100,9 @@ func (m *MockExperimentStorage) ListExperiments(ctx context.Context, whereParts 
 }
 
 // ListExperiments indicates an expected call of ListExperiments.
-func (mr *MockExperimentStorageMockRecorder) ListExperiments(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockExperimentStorageMockRecorder) ListExperiments(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListExperiments", reflect.TypeOf((*MockExperimentStorage)(nil).ListExperiments), ctx, whereParts, orders, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListExperiments", reflect.TypeOf((*MockExperimentStorage)(nil).ListExperiments), ctx, options)
 }
 
 // UpdateExperiment mocks base method.
