@@ -153,6 +153,7 @@ func TestListTagsMySQL(t *testing.T) {
 		setup       func(*TagService)
 		req         *proto.ListTagsRequest
 		expectedErr error
+		expected    *proto.ListTagsResponse
 	}{
 		{
 			desc:        "errPermissionDenied",
@@ -160,6 +161,7 @@ func TestListTagsMySQL(t *testing.T) {
 			setup:       func(s *TagService) {},
 			req:         &proto.ListTagsRequest{EnvironmentId: "ns0", PageSize: 10, Cursor: "0"},
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected:    nil,
 		},
 		{
 			desc:    "success",
@@ -175,6 +177,11 @@ func TestListTagsMySQL(t *testing.T) {
 				Cursor:        "0",
 			},
 			expectedErr: nil,
+			expected: &proto.ListTagsResponse{
+				Tags:       []*proto.Tag{},
+				Cursor:     "0",
+				TotalCount: 0,
+			},
 		},
 	}
 	for _, p := range patterns {
@@ -183,8 +190,11 @@ func TestListTagsMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			_, err := service.ListTags(ctx, p.req)
+			resp, err := service.ListTags(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
+			if p.expectedErr == nil {
+				assert.Equal(t, p.expected, resp)
+			}
 		})
 	}
 }

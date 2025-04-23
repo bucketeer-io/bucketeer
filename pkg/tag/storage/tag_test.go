@@ -226,6 +226,7 @@ func TestListTags(t *testing.T) {
 		expectedCount  int
 		expectedCursor int
 		expectedErr    error
+		expectedTags   []*proto.Tag
 	}{
 		{
 			desc: "Error",
@@ -241,6 +242,7 @@ func TestListTags(t *testing.T) {
 			expectedCount:  0,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
+			expectedTags:   nil,
 		},
 		{
 			desc: "Success",
@@ -273,6 +275,7 @@ func TestListTags(t *testing.T) {
 			expectedCount:  0,
 			expectedCursor: 0,
 			expectedErr:    nil,
+			expectedTags:   []*proto.Tag{},
 		},
 	}
 	for _, p := range patterns {
@@ -291,6 +294,7 @@ func TestListTags(t *testing.T) {
 			assert.Equal(t, p.expectedCount, len(tags))
 			if tags != nil {
 				assert.IsType(t, []*proto.Tag{}, tags)
+				assert.Equal(t, p.expectedTags, tags)
 			}
 			assert.Equal(t, p.expectedCursor, cursor)
 			assert.Equal(t, p.expectedErr, err)
