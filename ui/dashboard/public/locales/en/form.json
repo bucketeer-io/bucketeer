@@ -163,7 +163,7 @@
     "enable-operation": "Enable Operation",
     "schedule-operation": "Schedule Operation",
     "progress-information": "Progress Information",
-    "stopped-at": "Stopped {stoppedAt} by",
+    "stopped-at": "Stopped {{stoppedAt}} by",
     "user": "User",
     "progress-goal-value": "Goal <b>{{value}}</b>",
     "progress-min-count": "Min Count <b>{{value}}</b>",
@@ -193,5 +193,12 @@
   "daily": "Daily",
   "weekly": "Weekly",
   "ordinal-increment": "{{ordinal}} Increment",
-  "add-increment": "Add Increment"
+  "add-increment": "Add Increment",
+  "ops-count-tooltip": "Goal Count / Evaluation Count * 100",
+  "increments-value": "Increments <b>{{value}}</b>",
+  "frequency-value": "Frequency <b>{{value}}</b>",
+  "start-date-value": "Start Date <b>{{value}}</b>",
+  "rollout-warning-title": "The progressive rollout cannot be created. Please check the following conditions.",
+  "rollout-warning-desc": "Cannot execute more than one progressive rollout at the same time.",
+  "more-info-see-document": "For more information, please see the <comp>Documentation.</comp>"
 }

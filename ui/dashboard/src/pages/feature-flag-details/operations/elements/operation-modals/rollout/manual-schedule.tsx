@@ -21,9 +21,11 @@ import InputGroup from 'components/input-group';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 
 const ManualSchedule = ({
-  variationOptions
+  variationOptions,
+  isDisableCreateRollout
 }: {
   variationOptions: DropdownOption[];
+  isDisableCreateRollout: boolean;
 }) => {
   const { t } = useTranslation(['form']);
   const isLanguageJapanese = getLanguage() === 'ja';
@@ -50,14 +52,13 @@ const ManualSchedule = ({
     () => Number(watchScheduleList.at(-1)?.weight) === 100,
     [watchScheduleList]
   );
-  const isDisableAddIncrement = useMemo(() => {
-    console.log(errors);
-    return (
+  const isDisableAddIncrement = useMemo(
+    () =>
       isLastScheduleWeight100 ||
-      !!errors?.progressiveRollout?.manual?.schedulesList?.length
-    );
-  }, [isLastScheduleWeight100, { ...errors }]);
-  console.log(isDisableAddIncrement);
+      !!errors?.progressiveRollout?.manual?.schedulesList?.length,
+    [isLastScheduleWeight100, { ...errors }]
+  );
+
   const handleAddIncrement = useCallback(() => {
     const newIncrement = handleCreateIncrement({
       lastSchedule: watchScheduleList.at(-1) as ScheduleItem,
@@ -92,6 +93,7 @@ const ManualSchedule = ({
                 }
                 contentClassName="[&>div.wrapper-menu-items>div]:px-4"
                 options={variationOptions}
+                disabled={isDisableCreateRollout}
                 onSelectOption={field.onChange}
               />
             </Form.Control>
@@ -139,6 +141,7 @@ const ManualSchedule = ({
                       value={field.value || ''}
                       type="number"
                       className="pr-8"
+                      disabled={isDisableCreateRollout}
                       onWheel={e => {
                         e.currentTarget.blur();
                       }}
@@ -163,6 +166,7 @@ const ManualSchedule = ({
                 <Form.Control>
                   <ReactDatePicker
                     selected={field.value ?? null}
+                    disabled={isDisableCreateRollout}
                     onChange={date => {
                       if (date) {
                         field.onChange(date);
@@ -178,7 +182,7 @@ const ManualSchedule = ({
             type="button"
             variant={'grey'}
             className="flex-center self-start h-full mt-9 min-w-5"
-            disabled={schedulesList.length <= 1}
+            disabled={schedulesList.length <= 1 || isDisableCreateRollout}
             onClick={() => remove(index)}
           >
             <Icon icon={IconTrash} size={'sm'} />
@@ -189,7 +193,7 @@ const ManualSchedule = ({
         type="button"
         variant={'text'}
         className="w-fit px-0 h-6"
-        disabled={isDisableAddIncrement}
+        disabled={isDisableAddIncrement || isDisableCreateRollout}
         onClick={handleAddIncrement}
       >
         <Icon icon={IconPlus} size={'md'} />

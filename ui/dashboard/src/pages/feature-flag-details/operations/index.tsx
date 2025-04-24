@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition
+} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
@@ -16,6 +22,7 @@ import OperationActions from './elements/operation-actions';
 import EventRateOperationModal from './elements/operation-modals/event-rate';
 import ProgressiveRolloutModal from './elements/operation-modals/rollout';
 import ScheduleOperationModal from './elements/operation-modals/schedule-operation';
+import StopOperationModal from './elements/operation-modals/stop-operation';
 import { OperationTab, OpsTypeMap } from './types';
 
 export interface OperationModalState {
@@ -25,7 +32,7 @@ export interface OperationModalState {
 }
 
 const Operations = ({ feature }: { feature: Feature }) => {
-  const { t } = useTranslation(['common', 'table']);
+  const { t } = useTranslation(['common', 'table', 'form']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { searchOptions, onChangSearchParams } = useSearchParams();
@@ -50,9 +57,19 @@ const Operations = ({ feature }: { feature: Feature }) => {
       selectedData: undefined
     });
 
+  const [isPending, startTransition] = useTransition();
+
   const isSchedule = useMemo(() => action === 'schedule', [action]);
   const isEventRate = useMemo(() => action === 'event-rate', [action]);
   const isRollout = useMemo(() => action === 'rollout', [action]);
+  const isCreateOrUpdate = useMemo(
+    () => ['NEW', 'UPDATE'].includes(operationModalState.actionType),
+    [operationModalState]
+  );
+  const isStop = useMemo(
+    () => operationModalState.actionType === 'STOP',
+    [operationModalState]
+  );
 
   const queryParams = useMemo(
     () => ({
@@ -110,6 +127,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
         actionType,
         selectedData
       });
+      if (!['NEW', 'UPDATE'].includes(actionType)) return;
       if (operationType === OpsTypeMap.SCHEDULE)
         return onOpenOperationModal('/schedule');
 
@@ -121,6 +139,10 @@ const Operations = ({ feature }: { feature: Feature }) => {
     },
     []
   );
+
+  const onStopOperation = useCallback(async () => {
+    // startTransition(() => {});
+  }, [operationModalState]);
 
   useEffect(() => {
     const tab = (searchOptions?.tab || OperationTab.ACTIVE) as OperationTab;
@@ -158,7 +180,6 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
           <TabsContent value={currentTab} className="px-6">
             <CollectionLayout
-              feature={feature}
               currentTab={currentTab}
               rollouts={rollouts}
               operations={operations}
@@ -167,7 +188,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
           </TabsContent>
         </Tabs>
       )}
-      {isSchedule && feature && (
+      {isSchedule && isCreateOrUpdate && feature && (
         <ScheduleOperationModal
           isOpen={isSchedule}
           featureId={feature.id}
@@ -180,7 +201,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
           onSubmitOperationSuccess={onSubmitOperationSuccess}
         />
       )}
-      {isEventRate && feature && (
+      {isEventRate && isCreateOrUpdate && feature && (
         <EventRateOperationModal
           isOpen={isEventRate}
           feature={feature}
@@ -191,15 +212,30 @@ const Operations = ({ feature }: { feature: Feature }) => {
           onSubmitOperationSuccess={onSubmitOperationSuccess}
         />
       )}
-      {isRollout && feature && (
+      {isRollout && isCreateOrUpdate && feature && (
         <ProgressiveRolloutModal
           isOpen={isRollout}
           feature={feature}
           environmentId={currentEnvironment.id}
           actionType={operationModalState.actionType}
           selectedData={operationModalState?.selectedData as Rollout}
+          rollouts={rollouts}
           onClose={onCloseActionModal}
           onSubmitRolloutSuccess={onSubmitRolloutSuccess}
+        />
+      )}
+      {isStop && !!operationModalState?.selectedData && (
+        <StopOperationModal
+          operationType={operationModalState.operationType!}
+          isOpen={isStop && !!operationModalState?.selectedData}
+          onClose={() =>
+            setOperationModalState({
+              operationType: undefined,
+              actionType: 'NEW',
+              selectedData: undefined
+            })
+          }
+          onSubmit={onStopOperation}
         />
       )}
     </div>

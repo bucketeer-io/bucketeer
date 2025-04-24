@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
 import { Rollout } from '@types';
-import { isSameOrBeforeNow } from 'utils/function';
+import { isSameOrBeforeDate } from 'utils/function';
 import { cn } from 'utils/style';
 import {
   IconInfo,
@@ -70,7 +70,7 @@ const ScheduleList = ({
         value: ActionTypeMap.DISABLE
       }
     ],
-    [scheduleData]
+    []
   );
 
   const handleAddDate = useCallback(() => {
@@ -83,7 +83,7 @@ const ScheduleList = ({
 
   const isDisabledField = useCallback(
     (time: Date) => {
-      return !isCreate ? isSameOrBeforeNow(time) : false;
+      return !isCreate ? isSameOrBeforeDate(time) : false;
     },
     [isCreate]
   );

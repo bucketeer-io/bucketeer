@@ -189,5 +189,9 @@
   "no-data-change": "No data change",
   "audit-log-title-no-entity": "<b>{{username}}</b> {{action}} a {{entityType}}",
   "copy-entry-link": "Copy entry details link",
-  "show-entry": "Show entry details"
+  "show-entry": "Show entry details",
+  "stop-schedule": "Stop Schedule",
+  "stop-event-rate": "Stop Event Rate",
+  "stop-rollout": "Stop Progressive Rollout",
+  "stop-operation-type-desc": "The {{type}} will be stopped. Are you sure you want to proceed?"
 }

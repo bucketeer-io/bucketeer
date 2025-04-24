@@ -14,6 +14,7 @@ import {
   IconOperationClone,
   IconOperationDetails,
   IconStoppedByUser,
+  IconTrash,
   IconWatch
 } from '@icons';
 import { OperationActionType } from 'pages/feature-flag-details/types';
@@ -197,7 +198,7 @@ const OperationStatus = ({
             {t(`feature-flags.delete-${translationKey}`)}
           </p>
         ),
-        icon: IconDisable,
+        icon: IconTrash,
         value: 'DELETE',
         color: 'accent-red-500'
       }
@@ -239,14 +240,14 @@ const OperationStatus = ({
       </div>
       <Divider />
       <div className="flex items-center w-full justify-between gap-x-4">
-        <p className="typo-head-bold-medium text-gray-700">
+        <p className="flex items-center typo-head-bold-medium text-gray-700 h-9">
           {t('feature-flags.progress-information')}
         </p>
         {isStopped && (
           <div className="flex items-center gap-x-1.5">
             <DateTooltip
               trigger={
-                <div className="flex items-center gap-x-1.5">
+                <div className="flex items-center typo-para-small text-gray-700 gap-x-1.5">
                   <Icon icon={IconWatch} size={'xxs'} />
                   <Trans
                     i18nKey={'form:feature-flags.stopped-at'}

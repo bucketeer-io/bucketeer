@@ -39,8 +39,7 @@ export const createProgressiveRollout = (feature: Feature) => ({
       {
         scheduleId: uuid(),
         executeAt: createInitialDatetimeClause().time,
-        weight: 10,
-        triggeredAt: '0'
+        weight: 10
       }
     ]
   }
@@ -171,7 +170,7 @@ export const handleCreateIncrement = ({
 
   let weight = lastSchedule ? Number(lastSchedule.weight) : 0;
 
-  if (weight >= 90 || weight + increment >= 100) {
+  if (weight + increment >= 100) {
     weight = 100;
   } else {
     weight = weight + increment;
@@ -179,7 +178,15 @@ export const handleCreateIncrement = ({
   return {
     scheduleId: uuid(),
     executeAt,
-    weight,
-    triggeredAt: '0'
+    weight
+  };
+};
+
+export const getDateTimeDisplay = (value: string) => {
+  const date = dayjs(new Date(+value * 1000)).format('YYYY/MM/DD');
+  const time = dayjs(new Date(+value * 1000)).format('HH:mm');
+  return {
+    date,
+    time
   };
 };

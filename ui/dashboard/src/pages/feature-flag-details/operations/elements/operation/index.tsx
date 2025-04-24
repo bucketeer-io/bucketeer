@@ -11,13 +11,13 @@ interface Props {
 
 const Operation = ({ isCompleted, operation, onActions }: Props) => {
   return (
-    <div className="p-5 shadow-card rounded-lg bg-white">
+    <div className="flex flex-col p-5 shadow-card rounded-lg bg-white gap-y-4">
       <OperationStatus
         operation={operation}
         isCompleted={isCompleted}
         onActions={onActions}
       />
-      <OperationProgress />
+      <OperationProgress operation={operation} />
     </div>
   );
 };

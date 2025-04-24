@@ -89,6 +89,8 @@ export const hasDuplicateTimestamps = (arr: number[]) => {
   return false;
 };
 
-export const isSameOrBeforeNow = (date: Date) => {
-  return dayjs(date).isSame() || dayjs(date).isBefore();
+export const isSameOrBeforeDate = (date: Date, conditionDate = new Date()) => {
+  return (
+    dayjs(date).isSame(conditionDate) || dayjs(date).isBefore(conditionDate)
+  );
 };

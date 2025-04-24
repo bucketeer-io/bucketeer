@@ -1,4 +1,4 @@
-import { AutoOpsRule, Feature, Rollout } from '@types';
+import { AutoOpsRule, Rollout } from '@types';
 import { OperationModalState } from '../..';
 import { OperationTab } from '../../types';
 import ActiveContent from '../active';
@@ -7,20 +7,25 @@ import Overview from '../overview';
 
 const CollectionLayout = ({
   currentTab,
-  feature,
   rollouts,
   operations,
   onOperationActions
 }: {
   currentTab: OperationTab;
-  feature: Feature;
   rollouts: Rollout[];
   operations: AutoOpsRule[];
   onOperationActions: (data: OperationModalState) => void;
 }) => {
   return (
     <div>
-      <Overview onChangeFilters={() => {}} />
+      <Overview
+        onOperationActions={operationType =>
+          onOperationActions({
+            operationType,
+            actionType: 'NEW'
+          })
+        }
+      />
       {currentTab === OperationTab.ACTIVE && (
         <ActiveContent
           rollouts={rollouts}

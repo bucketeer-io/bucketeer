@@ -1,5 +1,7 @@
 import IconAngleDown from './customized-icons/angle-down.svg?react';
 import IconArrowDown from './customized-icons/arrow-down.svg?react';
+import IconArrowLeft from './customized-icons/arrow-left.svg?react';
+import IconArrowRight from './customized-icons/arrow-right.svg?react';
 import IconBackspace from './customized-icons/backspace.svg?react';
 import IconCalendar from './customized-icons/calendar.svg?react';
 import IconChecked from './customized-icons/checked.svg?react';
@@ -21,6 +23,7 @@ import IconOperationClone from './customized-icons/operation-clone.svg?react';
 import IconOperationDetails from './customized-icons/operation-details.svg?react';
 import IconFlagOperation from './customized-icons/operation.svg?react';
 import IconPlus from './customized-icons/plus.svg?react';
+import IconQuestion from './customized-icons/question.svg?react';
 import IconSearch from './customized-icons/search.svg?react';
 import IconSortingDown from './customized-icons/sorting-down.svg?react';
 import IconSortingUp from './customized-icons/sorting-up.svg?react';
@@ -133,6 +136,9 @@ export {
   IconExpand,
   IconCollapse,
   IconLink,
+  IconQuestion,
+  IconArrowLeft,
+  IconArrowRight,
   // Special icons
   IconGoal,
   IconGoogle,

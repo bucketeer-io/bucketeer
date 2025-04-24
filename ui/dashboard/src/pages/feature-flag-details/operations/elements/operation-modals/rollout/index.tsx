@@ -36,6 +36,7 @@ import Form from 'components/form';
 import SlideModal from 'components/modal/slide';
 import ManualSchedule from './manual-schedule';
 import TemplateSchedule from './template-schedule';
+import RolloutWarning from './warning';
 
 export interface OperationModalProps {
   feature: Feature;
@@ -43,6 +44,7 @@ export interface OperationModalProps {
   isOpen: boolean;
   actionType: OperationActionType;
   selectedData?: Rollout;
+  rollouts: Rollout[];
   onClose: () => void;
   onSubmitRolloutSuccess: () => void;
 }
@@ -58,6 +60,7 @@ const ProgressiveRolloutModal = ({
   isOpen,
   actionType,
   selectedData,
+  rollouts,
   onClose,
   onSubmitRolloutSuccess
 }: OperationModalProps) => {
@@ -80,6 +83,13 @@ const ProgressiveRolloutModal = ({
   } = form;
 
   const progressiveRolloutType = watch('progressiveRolloutType');
+
+  const isDisableCreateRollout = useMemo(() => {
+    return (
+      rollouts.length > 0 &&
+      !!rollouts.find(item => ['WAITING', 'RUNNING'].includes(item.status))
+    );
+  }, [rollouts]);
 
   const isTemplateRollout = useMemo(
     () => progressiveRolloutType === RolloutTypeMap.TEMPLATE_SCHEDULE,
@@ -113,6 +123,7 @@ const ProgressiveRolloutModal = ({
               variationId: manual.variationId,
               schedules: manual.schedulesList.map(item => ({
                 ...item,
+                weight: item.weight * 1000,
                 executeAt: Math.trunc(
                   item.executeAt?.getTime() / 1000
                 )?.toString()
@@ -154,6 +165,7 @@ const ProgressiveRolloutModal = ({
               increments: increments.toString(),
               schedules: scheduleList.map(schedule => ({
                 ...schedule,
+                weight: schedule.weight * 1000,
                 executeAt: Math.trunc(
                   schedule.executeAt.getTime() / 1000
                 ).toString()
@@ -191,6 +203,7 @@ const ProgressiveRolloutModal = ({
             <p className="typo-head-bold-small text-gray-800">
               {t('common:source-type.progressive-rollout')}
             </p>
+            {isDisableCreateRollout && <RolloutWarning />}
             <div className="flex items-center">
               <Button
                 type="button"
@@ -201,6 +214,7 @@ const ProgressiveRolloutModal = ({
                   buttonCls,
                   isTemplateRollout && buttonActiveCls
                 )}
+                disabled={isDisableCreateRollout}
                 onClick={() =>
                   handleChangeTab(RolloutTypeMap.TEMPLATE_SCHEDULE)
                 }
@@ -216,15 +230,22 @@ const ProgressiveRolloutModal = ({
                   buttonCls,
                   !isTemplateRollout && buttonActiveCls && buttonActiveCls
                 )}
+                disabled={isDisableCreateRollout}
                 onClick={() => handleChangeTab(RolloutTypeMap.MANUAL_SCHEDULE)}
               >
                 {t(`manual`)}
               </Button>
             </div>
             {isTemplateRollout ? (
-              <TemplateSchedule variationOptions={variationOptions} />
+              <TemplateSchedule
+                variationOptions={variationOptions}
+                isDisableCreateRollout={isDisableCreateRollout}
+              />
             ) : (
-              <ManualSchedule variationOptions={variationOptions} />
+              <ManualSchedule
+                variationOptions={variationOptions}
+                isDisableCreateRollout={isDisableCreateRollout}
+              />
             )}
           </div>
           <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
@@ -238,7 +259,7 @@ const ProgressiveRolloutModal = ({
                 <Button
                   type="submit"
                   loading={isSubmitting}
-                  disabled={!isValid}
+                  disabled={!isValid || isDisableCreateRollout}
                 >
                   {t(`feature-flags.create-operation`)}
                 </Button>

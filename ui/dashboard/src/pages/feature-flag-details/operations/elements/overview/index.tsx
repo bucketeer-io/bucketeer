@@ -1,7 +1,6 @@
 import { FunctionComponent } from 'react';
 import { useTranslation } from 'i18n';
-import { ExperimentStatus, FeatureCountByStatus, IconSize } from '@types';
-import { cn } from 'utils/style';
+import { FeatureCountByStatus, IconSize } from '@types';
 import { IconCalendar, IconFlagOperation, IconOperationArrow } from '@icons';
 import OverviewCard, { OverviewIconColor } from 'elements/overview-card';
 import { OpsTypeMap } from '../../types';
@@ -12,8 +11,7 @@ interface OverviewOption {
   color: OverviewIconColor;
   icon: FunctionComponent;
   iconSize: IconSize;
-  summaryFilterValue: OpsTypeMap;
-  filterValues: ExperimentStatus[];
+  opsType: OpsTypeMap;
   description: string;
 }
 
@@ -24,8 +22,7 @@ const overviewOptions: OverviewOption[] = [
     color: 'brand',
     icon: IconCalendar,
     iconSize: 'xl',
-    summaryFilterValue: OpsTypeMap.SCHEDULE,
-    filterValues: [],
+    opsType: OpsTypeMap.SCHEDULE,
     description: 'table:feature-flags.operations-schedule-desc'
   },
   {
@@ -34,8 +31,7 @@ const overviewOptions: OverviewOption[] = [
     color: 'pink',
     icon: IconFlagOperation,
     iconSize: 'xl',
-    summaryFilterValue: OpsTypeMap.EVENT_RATE,
-    filterValues: [],
+    opsType: OpsTypeMap.EVENT_RATE,
     description: 'table:feature-flags.operations-event-rate-desc'
   },
   {
@@ -44,26 +40,18 @@ const overviewOptions: OverviewOption[] = [
     color: 'blue',
     icon: IconOperationArrow,
     iconSize: 'xl',
-    summaryFilterValue: OpsTypeMap.ROLLOUT,
-    filterValues: [],
+    opsType: OpsTypeMap.ROLLOUT,
     description: 'table:feature-flags.operations-rollout-desc'
   }
 ];
 
 const Overview = ({
-  summary,
-  filterBySummary,
-  onChangeFilters
+  onOperationActions
 }: {
-  summary?: FeatureCountByStatus;
-  filterBySummary?: OpsTypeMap;
-  onChangeFilters: (
-    statuses: ExperimentStatus[],
-    summaryFilterValue: OpsTypeMap
-  ) => void;
+  onOperationActions: (operationType: OpsTypeMap) => void;
 }) => {
   const { t } = useTranslation(['form', 'table']);
-  console.log({ summary });
+
   return (
     <div className="flex flex-col w-full gap-6">
       <p className="typo-head-bold-big text-gray-800">
@@ -72,15 +60,7 @@ const Overview = ({
       <div className="flex flex-wrap items-center w-full gap-6 pb-8">
         {overviewOptions.map(
           (
-            {
-              titleKey,
-              color,
-              icon,
-              iconSize,
-              summaryFilterValue,
-              filterValues,
-              description
-            },
+            { titleKey, color, icon, iconSize, opsType, description },
             index
           ) => (
             <OverviewCard
@@ -94,12 +74,9 @@ const Overview = ({
               color={color}
               icon={icon}
               iconSize={iconSize}
-              className={cn('border border-transparent', {
-                'border-gray-300':
-                  filterBySummary && summaryFilterValue === filterBySummary
-              })}
+              className="border border-transparent"
               iconClassName={'p-4'}
-              onClick={() => onChangeFilters(filterValues, summaryFilterValue)}
+              onClick={() => onOperationActions(opsType)}
             />
           )
         )}

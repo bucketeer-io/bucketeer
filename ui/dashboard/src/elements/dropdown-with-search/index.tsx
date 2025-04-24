@@ -31,6 +31,7 @@ const DropdownMenuWithSearch = ({
   align = 'start',
   contentClassName,
   searchClassName,
+  disabled,
   additionalElement,
   onSelectOption
 }: {
@@ -45,6 +46,7 @@ const DropdownMenuWithSearch = ({
   align?: 'start' | 'center' | 'end';
   contentClassName?: string;
   searchClassName?: string;
+  disabled?: boolean
   additionalElement?: (item: DropdownOption) => ReactNode;
   onSelectOption: (value: DropdownValue) => void;
 }) => {
@@ -104,7 +106,7 @@ const DropdownMenuWithSearch = ({
       }}
     >
       <DropdownMenuTrigger
-        disabled={isLoading}
+        disabled={isLoading || disabled}
         placeholder={placeholder}
         label={label}
         variant="secondary"

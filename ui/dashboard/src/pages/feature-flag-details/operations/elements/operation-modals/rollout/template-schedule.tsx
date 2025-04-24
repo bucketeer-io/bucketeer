@@ -18,9 +18,11 @@ import InputGroup from 'components/input-group';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 
 const TemplateSchedule = ({
-  variationOptions
+  variationOptions,
+  isDisableCreateRollout
 }: {
   variationOptions: DropdownOption[];
+  isDisableCreateRollout: boolean;
 }) => {
   const { t } = useTranslation(['form', 'table', 'common']);
   const { control } = useFormContext<RolloutSchemaType>();
@@ -68,6 +70,7 @@ const TemplateSchedule = ({
                 }
                 contentClassName="[&>div.wrapper-menu-items>div]:px-4"
                 options={variationOptions}
+                disabled={isDisableCreateRollout}
                 onSelectOption={field.onChange}
               />
             </Form.Control>
@@ -85,6 +88,7 @@ const TemplateSchedule = ({
             <Form.Control>
               <ReactDatePicker
                 selected={field.value ?? null}
+                disabled={isDisableCreateRollout}
                 onChange={date => {
                   if (date) {
                     field.onChange(date);
@@ -123,6 +127,7 @@ const TemplateSchedule = ({
                     value={field.value || ''}
                     type="number"
                     className="pr-8"
+                    disabled={isDisableCreateRollout}
                     onWheel={e => {
                       e.currentTarget.blur();
                     }}
@@ -158,6 +163,7 @@ const TemplateSchedule = ({
                         ?.label || ''
                     }
                     isExpand
+                    disabled={isDisableCreateRollout}
                   />
                   <DropdownMenuContent align="end" className="min-w-[243px]">
                     {intervalOptions.map((item, index) => (
