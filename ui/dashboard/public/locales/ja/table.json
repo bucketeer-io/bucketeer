@@ -179,11 +179,15 @@
     "new-description": "This flag didn't receive any request after creation",
     "progressive-description": "This flag has a progressive rollout.",
     "scheduled-description": "This flag has a scheduled operation.",
-    "kill-description": "This flag has an automatic kill switch."
+    "kill-description": "This flag has an automatic kill switch.",
+    "operations-desc": "Automate your release and reduce risks with auto operations",
+    "operations-schedule-desc": "Schedule a flag to turn on or off",
+    "operations-event-rate-desc": "Turn off automatically a flag based on KPI events",
+    "operations-rollout-desc": "Automate to release a feature progressively"
   },
-  "audit-log-title": "<b>{{username}}</b>が<highlight>{{entityName}}</highlight>{{additionalText}}{{entityType}}を作成しました",
+  "audit-log-title": "<b>{{username}}</b> {{action}} the {{entityType}} <highlight>{{entityName}}</highlight>",
   "no-data-change": "No data change",
-  "audit-log-title-no-entity": "<b>{{username}}</b>が{{entityType}}を{{action}}しました",
+  "audit-log-title-no-entity": "<b>{{username}}</b> {{action}} a {{entityType}}",
   "copy-entry-link": "Copy entry details link",
   "show-entry": "Show entry details"
 }

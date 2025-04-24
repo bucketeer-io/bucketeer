@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { debounce } from 'lodash';
+import { cn } from 'utils/style';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,9 @@ const DropdownMenuWithSearch = ({
   selectedOptions,
   isMultiselect,
   createNewOption,
+  align = 'start',
+  contentClassName,
+  searchClassName,
   additionalElement,
   onSelectOption
 }: {
@@ -36,8 +40,11 @@ const DropdownMenuWithSearch = ({
   isLoading?: boolean;
   isMultiselect?: boolean;
   options: DropdownOption[];
-  selectedOptions: string[];
+  selectedOptions?: string[];
   createNewOption?: ReactNode;
+  align?: 'start' | 'center' | 'end';
+  contentClassName?: string;
+  searchClassName?: string;
   additionalElement?: (item: DropdownOption) => ReactNode;
   onSelectOption: (value: DropdownValue) => void;
 }) => {
@@ -105,8 +112,8 @@ const DropdownMenuWithSearch = ({
       />
       <DropdownMenuContent
         ref={contentRef}
-        align="start"
-        className="w-[500px] py-0"
+        align={align}
+        className={cn('w-[500px] py-0', contentClassName)}
       >
         <DropdownMenuSearch
           ref={inputSearchRef}
@@ -116,25 +123,28 @@ const DropdownMenuWithSearch = ({
             debouncedSearch(value);
             handleFocusSearchInput();
           }}
+          className={searchClassName}
         />
-        {dropdownOptions?.length > 0 ? (
-          dropdownOptions.map((item, index) => (
-            <DropdownMenuItem
-              key={index}
-              isSelected={selectedOptions.includes(item.value as string)}
-              isMultiselect={isMultiselect}
-              value={item.value}
-              label={item.label}
-              additionalElement={additionalElement && additionalElement(item)}
-              onSelectOption={onSelectOption}
-              className="justify-between gap-x-4"
-            />
-          ))
-        ) : (
-          <div className="flex-center py-2.5 typo-para-medium text-gray-600">
-            {t('no-options-found')}
-          </div>
-        )}
+        <div className="flex flex-col w-full gap-y-1 py-2 wrapper-menu-items">
+          {dropdownOptions?.length > 0 ? (
+            dropdownOptions.map((item, index) => (
+              <DropdownMenuItem
+                key={index}
+                isSelected={selectedOptions?.includes(item.value as string)}
+                isMultiselect={isMultiselect}
+                value={item.value}
+                label={item.label}
+                additionalElement={additionalElement && additionalElement(item)}
+                onSelectOption={onSelectOption}
+                className="justify-between gap-x-4"
+              />
+            ))
+          ) : (
+            <div className="flex-center py-2.5 typo-para-medium text-gray-600">
+              {t('no-options-found')}
+            </div>
+          )}
+        </div>
         {createNewOption}
       </DropdownMenuContent>
     </DropdownMenu>

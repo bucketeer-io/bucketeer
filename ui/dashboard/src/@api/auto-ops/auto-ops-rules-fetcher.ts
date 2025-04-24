@@ -4,13 +4,13 @@ import { CollectionParams, AutoOpsRuleCollection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams } from 'utils/search-params';
 
-export interface AutoOpsFetcherParams extends CollectionParams {
+export interface AutoOpsRulesFetcherParams extends CollectionParams {
   environmentId: string;
   featureIds?: string[];
 }
 
-export const autoOpsFetcher = async (
-  _params?: AutoOpsFetcherParams
+export const autoOpsRulesFetcher = async (
+  _params?: AutoOpsRulesFetcherParams
 ): Promise<AutoOpsRuleCollection> => {
   const params = pickBy(_params, v => isNotEmpty(v));
 
