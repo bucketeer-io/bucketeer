@@ -56,9 +56,7 @@ type ProjectStorage interface {
 	) (*domain.Project, error)
 	ListProjects(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		options *mysql.ListOptions,
 	) ([]*proto.Project, int, int64, error)
 }
 
@@ -182,19 +180,33 @@ func (s *projectStorage) GetTrialProjectByEmail(
 
 func (s *projectStorage) ListProjects(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.Project, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(selectProjectsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	// We do not use ConstructQueryAndWhereArgs() here,
+	// because select_projects.sql defines the variable strings in a complex constructed way.
+	var query string
+	var whereArgs []any
+	if options != nil {
+		var whereSQL string
+		whereParts := options.CreateWhereParts()
+		whereSQL, whereArgs = mysql.ConstructWhereSQLString(whereParts)
+		orderBySQL := mysql.ConstructOrderBySQLString(options.Orders)
+		limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
+		query = fmt.Sprintf(selectProjectsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	} else {
+		query = selectProjectsSQL
+		whereArgs = []interface{}{}
+	}
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
+	var limit, offset int
+	if options != nil {
+		limit = options.Limit
+		offset = options.Offset
+	}
 	projects := make([]*proto.Project, 0, limit)
 	for rows.Next() {
 		project := proto.Project{}
@@ -222,8 +234,8 @@ func (s *projectStorage) ListProjects(
 	}
 	nextOffset := offset + len(projects)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countProjectsSQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countProjectsSQL, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

@@ -125,21 +125,27 @@ func (s *EnvironmentService) ListOrganizations(
 	if err != nil {
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{}
+	var filters []*mysql.FilterV2
 	if req.Disabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("organization.disabled", "=", req.Disabled.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "organization.disabled",
+			Operator: mysql.OperatorEqual,
+			Value:    req.Disabled.Value,
+		})
 	}
 	if req.Archived != nil {
-		whereParts = append(whereParts, mysql.NewFilter("organization.archived", "=", req.Archived.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "organization.archived",
+			Operator: mysql.OperatorEqual,
+			Value:    req.Archived.Value,
+		})
 	}
+	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		whereParts = append(
-			whereParts,
-			mysql.NewSearchQuery(
-				[]string{"organization.id", "organization.name", "organization.url_code"},
-				req.SearchKeyword,
-			),
-		)
+		searchQuery = &mysql.SearchQuery{
+			Columns: []string{"organization.id", "organization.name", "organization.url_code"},
+			Keyword: req.SearchKeyword,
+		}
 	}
 	orders, err := s.newOrganizationListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -167,7 +173,17 @@ func (s *EnvironmentService) ListOrganizations(
 		}
 		return nil, dt.Err()
 	}
-	organizations, nextCursor, totalCount, err := s.orgStorage.ListOrganizations(ctx, whereParts, orders, limit, offset)
+	options := &mysql.ListOptions{
+		Limit:       limit,
+		Offset:      offset,
+		Filters:     filters,
+		InFilters:   nil,
+		NullFilters: nil,
+		JSONFilters: nil,
+		SearchQuery: searchQuery,
+		Orders:      orders,
+	}
+	organizations, nextCursor, totalCount, err := s.orgStorage.ListOrganizations(ctx, options)
 	if err != nil {
 		s.logger.Error(
 			"failed to list organizations",

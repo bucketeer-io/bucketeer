@@ -101,28 +101,39 @@ func (s *EnvironmentService) ListEnvironmentsV2(
 	if err != nil {
 		return nil, err
 	}
-	var whereParts []mysql.WherePart
+	var filters []*mysql.FilterV2
 	if req.ProjectId != "" {
-		whereParts = append(whereParts, mysql.NewFilter("environment_v2.project_id", "=", req.ProjectId))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "environment_v2.project_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.ProjectId,
+		})
 	}
 	if req.OrganizationId != "" {
-		whereParts = append(whereParts, mysql.NewFilter("environment_v2.organization_id", "=", req.OrganizationId))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "environment_v2.organization_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.OrganizationId,
+		})
 	}
 	if req.Archived != nil {
-		whereParts = append(whereParts, mysql.NewFilter("environment_v2.archived", "=", req.Archived.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "environment_v2.archived",
+			Operator: mysql.OperatorEqual,
+			Value:    req.Archived.Value,
+		})
 	}
+	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		whereParts = append(
-			whereParts,
-			mysql.NewSearchQuery([]string{
+		searchQuery = &mysql.SearchQuery{
+			Columns: []string{
 				"environment_v2.id",
 				"environment_v2.name",
 				"environment_v2.url_code",
 				"environment_v2.description",
 			},
-				req.SearchKeyword,
-			),
-		)
+			Keyword: req.SearchKeyword,
+		}
 	}
 	orders, err := s.newEnvironmentV2ListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -148,12 +159,19 @@ func (s *EnvironmentService) ListEnvironmentsV2(
 		}
 		return nil, dt.Err()
 	}
+	options := &mysql.ListOptions{
+		Limit:       limit,
+		Offset:      offset,
+		Filters:     filters,
+		Orders:      orders,
+		SearchQuery: searchQuery,
+		InFilters:   nil,
+		NullFilters: nil,
+		JSONFilters: nil,
+	}
 	environments, nextCursor, totalCount, err := s.environmentStorage.ListEnvironmentsV2(
 		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
+		options,
 	)
 	if err != nil {
 		s.logger.Error(
