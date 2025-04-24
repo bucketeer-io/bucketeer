@@ -1,17 +1,14 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useTransition
-} from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { autoOpsStop } from '@api/auto-ops';
+import { rolloutStopped } from '@api/rollouts';
 import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
-import { AutoOpsRule, Feature, OpsEventRateClause, Rollout } from '@types';
+import { AutoOpsRule, Feature, Rollout } from '@types';
 import { useSearchParams } from 'utils/search-params';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import Filter from 'elements/filter';
@@ -28,7 +25,7 @@ import { OperationTab, OpsTypeMap } from './types';
 export interface OperationModalState {
   operationType: OpsTypeMap | undefined;
   actionType: OperationActionType;
-  selectedData?: AutoOpsRule | Rollout | OpsEventRateClause;
+  selectedData?: AutoOpsRule | Rollout;
 }
 
 const Operations = ({ feature }: { feature: Feature }) => {
@@ -38,7 +35,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
-
+  const { notify, errorNotify } = useToast();
   const getPathName = useCallback(
     (path?: string) =>
       `/${currentEnvironment.urlCode}/features/${feature.id}/autoops${path}`,
@@ -57,7 +54,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
       selectedData: undefined
     });
 
-  const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(false);
 
   const isSchedule = useMemo(() => action === 'schedule', [action]);
   const isEventRate = useMemo(() => action === 'event-rate', [action]);
@@ -141,7 +138,43 @@ const Operations = ({ feature }: { feature: Feature }) => {
   );
 
   const onStopOperation = useCallback(async () => {
-    // startTransition(() => {});
+    try {
+      if (operationModalState?.selectedData) {
+        setIsLoading(true);
+        let resp = null;
+        const isStopRollout =
+          operationModalState.operationType === OpsTypeMap.ROLLOUT;
+        if (isStopRollout) {
+          resp = await rolloutStopped({
+            environmentId: currentEnvironment.id,
+            id: operationModalState?.selectedData?.id,
+            stoppedBy: 'USER'
+          });
+        } else {
+          resp = await autoOpsStop({
+            environmentId: currentEnvironment.id,
+            id: operationModalState?.selectedData?.id
+          });
+        }
+
+        if (resp) {
+          notify({
+            message: 'Stopped operation successfully.'
+          });
+          refetchRollouts();
+          refetchAutoOpsRules();
+          setOperationModalState({
+            operationType: undefined,
+            actionType: 'NEW',
+            selectedData: undefined
+          });
+        }
+      }
+    } catch (error) {
+      errorNotify(error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [operationModalState]);
 
   useEffect(() => {
@@ -226,6 +259,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
       )}
       {isStop && !!operationModalState?.selectedData && (
         <StopOperationModal
+          loading={isLoading}
           operationType={operationModalState.operationType!}
           isOpen={isStop && !!operationModalState?.selectedData}
           onClose={() =>
