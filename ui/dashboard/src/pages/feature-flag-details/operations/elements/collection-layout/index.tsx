@@ -34,7 +34,11 @@ const CollectionLayout = ({
         />
       )}
       {currentTab === OperationTab.COMPLETED && (
-        <CompletedContent rollouts={rollouts} operations={operations} />
+        <CompletedContent
+          rollouts={rollouts}
+          operations={operations}
+          onOperationActions={onOperationActions}
+        />
       )}
     </div>
   );

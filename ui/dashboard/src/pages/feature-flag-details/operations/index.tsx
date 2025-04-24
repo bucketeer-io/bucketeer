@@ -1,16 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { autoOpsStop } from '@api/auto-ops';
-import { rolloutStopped } from '@api/rollouts';
+import { Trans } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { autoOpsDelete, autoOpsStop } from '@api/auto-ops';
+import { rolloutDelete, rolloutStopped } from '@api/rollouts';
 import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
+import { pickBy } from 'lodash';
 import { AutoOpsRule, Feature, Rollout } from '@types';
-import { useSearchParams } from 'utils/search-params';
+import { isNotEmpty } from 'utils/data-type';
+import { stringifyParams, useSearchParams } from 'utils/search-params';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
+import ConfirmModal from 'elements/confirm-modal';
 import Filter from 'elements/filter';
 import FormLoading from 'elements/form-loading';
 import { OperationActionType } from '../types';
@@ -18,6 +22,7 @@ import CollectionLayout from './elements/collection-layout';
 import OperationActions from './elements/operation-actions';
 import EventRateOperationModal from './elements/operation-modals/event-rate';
 import ProgressiveRolloutModal from './elements/operation-modals/rollout';
+import RolloutCloneModal from './elements/operation-modals/rollout-clone';
 import ScheduleOperationModal from './elements/operation-modals/schedule-operation';
 import StopOperationModal from './elements/operation-modals/stop-operation';
 import { OperationTab, OpsTypeMap } from './types';
@@ -30,12 +35,17 @@ export interface OperationModalState {
 
 const Operations = ({ feature }: { feature: Feature }) => {
   const { t } = useTranslation(['common', 'table', 'form']);
+  const navigate = useNavigate();
+  const { notify, errorNotify } = useToast();
+
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { searchOptions, onChangSearchParams } = useSearchParams();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { notify, errorNotify } = useToast();
+
+  const searchParams = stringifyParams(
+    pickBy(searchOptions, v => isNotEmpty(v as string))
+  );
+
   const getPathName = useCallback(
     (path?: string) =>
       `/${currentEnvironment.urlCode}/features/${feature.id}/autoops${path}`,
@@ -43,7 +53,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
   );
 
   const { id: action, onCloseActionModal } = useActionWithURL({
-    closeModalPath: getPathName(location.search)
+    closeModalPath: getPathName(searchParams ? `?${searchParams}` : '')
   });
 
   const [currentTab, setCurrentTab] = useState(OperationTab.ACTIVE);
@@ -56,15 +66,31 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const isSchedule = useMemo(() => action === 'schedule', [action]);
-  const isEventRate = useMemo(() => action === 'event-rate', [action]);
-  const isRollout = useMemo(() => action === 'rollout', [action]);
-  const isCreateOrUpdate = useMemo(
-    () => ['NEW', 'UPDATE'].includes(operationModalState.actionType),
+  const isScheduleAction = useMemo(() => action === 'schedule', [action]);
+  const isEventRateAction = useMemo(() => action === 'event-rate', [action]);
+  const isRolloutAction = useMemo(() => action === 'rollout', [action]);
+  const isScheduleType = useMemo(
+    () => operationModalState.operationType === 'SCHEDULE',
+    [operationModalState]
+  );
+  const isRolloutType = useMemo(
+    () => operationModalState.operationType === 'ROLLOUT',
+    [operationModalState]
+  );
+  const isOpenModalAction = useMemo(
+    () => ['NEW', 'UPDATE', 'DETAILS'].includes(operationModalState.actionType),
     [operationModalState]
   );
   const isStop = useMemo(
     () => operationModalState.actionType === 'STOP',
+    [operationModalState]
+  );
+  const isDelete = useMemo(
+    () => operationModalState.actionType === 'DELETE',
+    [operationModalState]
+  );
+  const isClone = useMemo(
+    () => operationModalState.actionType === 'CLONE',
     [operationModalState]
   );
 
@@ -98,9 +124,9 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
   const onOpenOperationModal = useCallback(
     (path: string) => {
-      navigate(getPathName(`${path}${location.search}`));
+      navigate(getPathName(`${path}${searchParams ? `?${searchParams}` : ''}`));
     },
-    [location]
+    [searchParams]
   );
 
   const onSubmitOperationSuccess = useCallback(() => {
@@ -124,7 +150,8 @@ const Operations = ({ feature }: { feature: Feature }) => {
         actionType,
         selectedData
       });
-      if (!['NEW', 'UPDATE'].includes(actionType)) return;
+
+      if (!['NEW', 'UPDATE', 'DETAILS'].includes(actionType)) return;
       if (operationType === OpsTypeMap.SCHEDULE)
         return onOpenOperationModal('/schedule');
 
@@ -134,7 +161,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
       if (operationType === OpsTypeMap.ROLLOUT)
         return onOpenOperationModal('/rollout');
     },
-    []
+    [searchParams]
   );
 
   const onStopOperation = useCallback(async () => {
@@ -176,6 +203,44 @@ const Operations = ({ feature }: { feature: Feature }) => {
       setIsLoading(false);
     }
   }, [operationModalState]);
+
+  const onDeleteOperation = useCallback(async () => {
+    try {
+      if (operationModalState?.selectedData) {
+        setIsLoading(true);
+        const isStopRollout =
+          operationModalState.operationType === OpsTypeMap.ROLLOUT;
+        const deleteFn = isStopRollout ? rolloutDelete : autoOpsDelete;
+        const resp = await deleteFn({
+          environmentId: currentEnvironment.id,
+          id: operationModalState?.selectedData?.id
+        });
+
+        if (resp) {
+          notify({
+            message: 'Deleted operation successfully.'
+          });
+          refetchRollouts();
+          refetchAutoOpsRules();
+          onResetModalState();
+        }
+      }
+    } catch (error) {
+      errorNotify(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [operationModalState]);
+
+  const onResetModalState = useCallback(
+    () =>
+      setOperationModalState({
+        operationType: undefined,
+        actionType: 'NEW',
+        selectedData: undefined
+      }),
+    []
+  );
 
   useEffect(() => {
     const tab = (searchOptions?.tab || OperationTab.ACTIVE) as OperationTab;
@@ -221,9 +286,9 @@ const Operations = ({ feature }: { feature: Feature }) => {
           </TabsContent>
         </Tabs>
       )}
-      {isSchedule && isCreateOrUpdate && feature && (
+      {isScheduleAction && isOpenModalAction && feature && (
         <ScheduleOperationModal
-          isOpen={isSchedule}
+          isOpen={isScheduleAction}
           featureId={feature.id}
           environmentId={currentEnvironment.id}
           isEnabledFlag={feature.enabled}
@@ -234,9 +299,9 @@ const Operations = ({ feature }: { feature: Feature }) => {
           onSubmitOperationSuccess={onSubmitOperationSuccess}
         />
       )}
-      {isEventRate && isCreateOrUpdate && feature && (
+      {isEventRateAction && isOpenModalAction && feature && (
         <EventRateOperationModal
-          isOpen={isEventRate}
+          isOpen={isEventRateAction}
           feature={feature}
           environmentId={currentEnvironment.id}
           actionType={operationModalState.actionType}
@@ -245,9 +310,9 @@ const Operations = ({ feature }: { feature: Feature }) => {
           onSubmitOperationSuccess={onSubmitOperationSuccess}
         />
       )}
-      {isRollout && isCreateOrUpdate && feature && (
+      {isRolloutAction && isOpenModalAction && feature && (
         <ProgressiveRolloutModal
-          isOpen={isRollout}
+          isOpen={isRolloutAction}
           feature={feature}
           environmentId={currentEnvironment.id}
           actionType={operationModalState.actionType}
@@ -262,14 +327,39 @@ const Operations = ({ feature }: { feature: Feature }) => {
           loading={isLoading}
           operationType={operationModalState.operationType!}
           isOpen={isStop && !!operationModalState?.selectedData}
-          onClose={() =>
-            setOperationModalState({
-              operationType: undefined,
-              actionType: 'NEW',
-              selectedData: undefined
-            })
-          }
+          onClose={onResetModalState}
           onSubmit={onStopOperation}
+        />
+      )}
+      {isDelete && !!operationModalState?.selectedData && (
+        <ConfirmModal
+          loading={isLoading}
+          isOpen={isDelete && !!operationModalState?.selectedData}
+          title={t(
+            `table:popover.delete-${isRolloutType ? 'rollout' : isScheduleType ? 'operation' : 'kill-switch'}`
+          )}
+          description={
+            <Trans
+              i18nKey={'table:operations.confirm-delete-operation'}
+              values={{
+                type: t(
+                  `form:feature-flags.${isRolloutType ? 'rollout' : isScheduleType ? 'schedule' : 'kill-switch'}`
+                )
+              }}
+              components={{
+                bold: <strong />
+              }}
+            />
+          }
+          onClose={onResetModalState}
+          onSubmit={onDeleteOperation}
+        />
+      )}
+      {isClone && !!operationModalState?.selectedData && (
+        <RolloutCloneModal
+          isOpen={isClone}
+          onClose={onResetModalState}
+          selectedData={operationModalState.selectedData as Rollout}
         />
       )}
     </div>

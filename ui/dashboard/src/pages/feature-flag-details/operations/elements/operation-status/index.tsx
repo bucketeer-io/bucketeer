@@ -149,9 +149,19 @@ const OperationStatus = ({
     if (isRollout)
       return [
         {
-          label: t('feature-flags.delete-rollout'),
-          icon: IconOperationDetails,
-          value: 'DELETE'
+          label: t('clone-operation'),
+          icon: IconOperationClone,
+          value: 'CLONE'
+        },
+        {
+          label: (
+            <p className="text-accent-red-500">
+              {t('feature-flags.delete-rollout')}
+            </p>
+          ),
+          icon: IconTrash,
+          value: 'DELETE',
+          color: 'accent-red-500'
         }
       ];
     return [
@@ -161,11 +171,16 @@ const OperationStatus = ({
         value: 'DETAILS'
       },
       {
-        label: t(
-          `feature-flags.delete-${isKillSwitch ? 'kill-switch' : 'schedule'}`
+        label: (
+          <p className="text-accent-red-500">
+            {t(
+              `feature-flags.delete-${isKillSwitch ? 'kill-switch' : 'schedule'}`
+            )}
+          </p>
         ),
-        icon: IconOperationClone,
-        value: 'DELETE'
+        icon: IconTrash,
+        value: 'DELETE',
+        color: 'accent-red-500'
       }
     ];
   }, [isRollout, isKillSwitch]);

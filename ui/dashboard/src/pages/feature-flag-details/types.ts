@@ -8,7 +8,8 @@ export type OperationActionType =
   | 'UPDATE'
   | 'DETAILS'
   | 'STOP'
-  | 'DELETE';
+  | 'DELETE'
+  | 'CLONE';
 
 export interface ScheduleItem {
   scheduleId?: string;

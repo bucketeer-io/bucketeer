@@ -129,6 +129,8 @@
     "placeholder-variation": "Enter variation value",
     "active-now": "Active now",
     "schedule": "Schedule",
+    "rollout": "Rollout",
+    "kill-switch": "Kill Switch",
     "start-at": "Start at",
     "situation": "Situation",
     "conditioner": "Conditioner",
@@ -200,5 +202,8 @@
   "start-date-value": "Start Date <b>{{value}}</b>",
   "rollout-warning-title": "The progressive rollout cannot be created. Please check the following conditions.",
   "rollout-warning-desc": "Cannot execute more than one progressive rollout at the same time.",
-  "more-info-see-document": "For more information, please see the <comp>Documentation.</comp>"
+  "more-info-see-document": "For more information, please see the <comp>Documentation.</comp>",
+  "clone-operation": "Clone Operation",
+  "set": "Set",
+  "current-progress": "Current Progress"
 }

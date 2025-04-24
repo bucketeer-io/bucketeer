@@ -70,9 +70,7 @@ const RolloutProgress = ({
         {isTemplate && rolloutClause?.interval && (
           <OperationDescription
             titleKey={'form:frequency-value'}
-            value={
-              rolloutClause.interval?.replace('LY', '')?.toLowerCase() || ''
-            }
+            value={rolloutClause.interval?.toLowerCase() || ''}
             isLastItem
             className="[&>p>span]:capitalize"
           />
@@ -84,19 +82,26 @@ const RolloutProgress = ({
             displayLabel={`${firstSchedule.weight || 0}%`}
             displayTime={firstSchedule?.executeAt}
           />
-          {paginatedScheduleList.map(item => (
-            <ProgressDateTimePoint
-              key={item.scheduleId}
-              className="flex flex-1 justify-end items-center relative"
-              displayLabel={`${item.weight / 1000}%`}
-              displayTime={item.executeAt}
-              conditionDate={
-                lastItemWithTriggeredAt
-                  ? new Date(+lastItemWithTriggeredAt.executeAt * 1000)
-                  : undefined
-              }
-            />
-          ))}
+          {paginatedScheduleList.map((item, index) => {
+            const isCurrentActive =
+              item.triggeredAt !== '0' &&
+              (paginatedScheduleList[index + 1]?.triggeredAt === '0' ||
+                !paginatedScheduleList[index + 1]);
+            return (
+              <ProgressDateTimePoint
+                key={item.scheduleId}
+                className="flex flex-1 justify-end items-center relative"
+                displayLabel={`${item.weight / 1000}%`}
+                displayTime={item.executeAt}
+                conditionDate={
+                  lastItemWithTriggeredAt
+                    ? new Date(+lastItemWithTriggeredAt.executeAt * 1000)
+                    : undefined
+                }
+                isCurrentActive={isCurrentActive}
+              />
+            );
+          })}
         </div>
       </div>
       <OperationPagination

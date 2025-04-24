@@ -80,7 +80,11 @@ const ScheduleProgress = ({
             displayLabel={displayLabel}
             displayTime={displayTime}
           />
-          {paginatedClausesList.map(scheduleClause => {
+          {paginatedClausesList.map((scheduleClause, index) => {
+            const isCurrentActive =
+              scheduleClause.executedAt !== '0' &&
+              (paginatedClausesList[index + 1]?.executedAt === '0' ||
+                !paginatedClausesList[index + 1]);
             const time = getTimeClause(scheduleClause);
             return (
               <ProgressDateTimePoint
@@ -91,6 +95,7 @@ const ScheduleProgress = ({
                     ?.label || ''
                 }
                 displayTime={time}
+                isCurrentActive={isCurrentActive}
               />
             );
           })}

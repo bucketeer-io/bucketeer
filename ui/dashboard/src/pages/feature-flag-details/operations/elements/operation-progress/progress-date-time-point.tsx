@@ -6,12 +6,14 @@ export const ProgressDateTimePoint = ({
   displayTime,
   displayLabel,
   className,
-  conditionDate
+  conditionDate,
+  isCurrentActive
 }: {
   displayTime: string;
   displayLabel: string;
   className?: string;
   conditionDate?: Date;
+  isCurrentActive?: boolean;
 }) => {
   const isSameOrBefore = isSameOrBeforeDate(
     new Date(+displayTime * 1000),
@@ -31,7 +33,14 @@ export const ProgressDateTimePoint = ({
           { 'bg-accent-pink-500 border-accent-pink-500': isSameOrBefore }
         )}
       >
-        <span className="typo-para-medium text-gray-700 absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
+        <span
+          className={cn(
+            'typo-para-medium text-gray-700 absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap',
+            {
+              'text-accent-pink-500': isCurrentActive
+            }
+          )}
+        >
           {displayLabel}
         </span>
         <div className="typo-para-tiny text-gray-500 absolute space-y-[2px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center top-[18px]">

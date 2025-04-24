@@ -38,7 +38,10 @@
     "start-experiment": "Start Experiment",
     "archive-flag": "Archive Feature Flag",
     "unarchive-flag": "Unarchive Feature Flag",
-    "clone-flag": "Clone Feature Flag"
+    "clone-flag": "Clone Feature Flag",
+    "delete-rollout": "Delete Rollout",
+    "delete-operation": "Delete Operation",
+    "delete-kill-switch": "Delete Kill Switch"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -93,6 +96,9 @@
   "push": {
     "confirm-enable-desc": "The Push \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
     "confirm-disable-desc": "The Push \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
+  },
+  "operations": {
+    "confirm-delete-operation": "The <bold>{{type}}</bold> will be deleted permanently. Are you sure you want to proceed?"
   },
   "goals": {
     "connections": "Connections",

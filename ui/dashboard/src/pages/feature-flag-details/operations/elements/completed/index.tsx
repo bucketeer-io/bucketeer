@@ -1,14 +1,17 @@
 import { useMemo } from 'react';
 import { AutoOpsRule, Rollout } from '@types';
+import { OperationModalState } from '../..';
 import { OperationCombinedType } from '../../types';
 import Operation from '../operation';
 
 const CompletedContent = ({
   rollouts,
-  operations
+  operations,
+  onOperationActions
 }: {
   rollouts: Rollout[];
   operations: AutoOpsRule[];
+  onOperationActions: (data: OperationModalState) => void;
 }) => {
   const completedStatuses = useMemo(() => ['STOPPED', 'FINISHED'], []);
 
@@ -40,7 +43,7 @@ const CompletedContent = ({
           key={index}
           isCompleted={true}
           operation={item}
-          onActions={() => {}}
+          onActions={onOperationActions}
         />
       ))}
     </div>
