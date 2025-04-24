@@ -8,7 +8,7 @@ const Overview = () => {
     <div className="flex flex-wrap items-center w-full gap-6 pb-8">
       <OverviewCard
         title={t('experiments-connected')}
-        count={10}
+        count={'10'}
         highlightText="+12%"
         description="from last month"
         color="brand"
@@ -16,7 +16,7 @@ const Overview = () => {
       />
       <OverviewCard
         title={t('operations-connected')}
-        count={10}
+        count={'10'}
         highlightText="+12%"
         description="from last month"
         color="pink"
@@ -24,7 +24,7 @@ const Overview = () => {
       />
       <OverviewCard
         title={t('not-in-use')}
-        count={5}
+        count={'5'}
         highlightText="+12%"
         description="from last month"
         color="brand"

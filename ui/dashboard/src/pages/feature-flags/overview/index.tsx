@@ -63,9 +63,7 @@ const Overview = ({
           <OverviewCard
             key={index}
             title={t(item.titleKey)}
-            count={
-              summary && item.countKey ? Number(summary[item.countKey]) : 0
-            }
+            count={`${summary && item.countKey ? summary[item.countKey] : 0}`}
             color={item.color}
             icon={item.icon}
             className={cn('border border-transparent', {

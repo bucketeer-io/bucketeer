@@ -24,7 +24,7 @@ type CardIconProps = {
 
 type CardDescriptionProps = {
   title: ReactNode;
-  count?: number;
+  count?: string;
   description?: ReactNode;
   highlightText?: string;
   highlightType?: 'increase' | 'decrease';
