@@ -2,16 +2,17 @@ import axiosClient from '@api/axios-client';
 import { DatetimeClause, OpsEventRateClause } from '@types';
 import { AutoOpsCreatorResponse } from './auto-ops-creator';
 
-interface ClauseUpdateType<T> {
+export interface ClauseUpdateType<T> {
   id: string;
   delete: boolean;
-  clause: T[];
+  clause: T;
 }
 
 export interface AutoOpsUpdateParams {
+  id: string;
   environmentId: string;
-  updateOpsEventRateClauses?: ClauseUpdateType<OpsEventRateClause>;
-  updateDatetimeClauses?: ClauseUpdateType<DatetimeClause>;
+  updateOpsEventRateClauses?: ClauseUpdateType<OpsEventRateClause>[];
+  updateDatetimeClauses?: ClauseUpdateType<DatetimeClause>[];
 }
 
 export const autoOpsUpdate = async (

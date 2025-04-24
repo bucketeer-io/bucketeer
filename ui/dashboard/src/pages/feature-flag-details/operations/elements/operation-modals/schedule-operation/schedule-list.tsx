@@ -36,9 +36,11 @@ const WarningMessage = ({ description }: { description: string }) => {
 
 const ScheduleList = ({
   isCreate,
+  isCompletedTab,
   rollouts
 }: {
   isCreate: boolean;
+  isCompletedTab: boolean;
   rollouts: Rollout[];
 }) => {
   const { t } = useTranslation(['form', 'common']);
@@ -83,9 +85,9 @@ const ScheduleList = ({
 
   const isDisabledField = useCallback(
     (time: Date) => {
-      return !isCreate ? isSameOrBeforeDate(time) : false;
+      return isCompletedTab || (!isCreate ? isSameOrBeforeDate(time) : false);
     },
-    [isCreate]
+    [isCompletedTab, isCreate]
   );
 
   useEffect(() => {

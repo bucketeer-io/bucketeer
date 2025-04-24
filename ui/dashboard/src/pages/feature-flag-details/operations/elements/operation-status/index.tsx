@@ -198,7 +198,7 @@ const OperationStatus = ({
             {
               label: t(`feature-flags.edit-${translationKey}`),
               icon: IconEditOutlined as FunctionComponent,
-              value: 'EDIT',
+              value: 'UPDATE',
               type: isKillSwitch
             }
           ]),

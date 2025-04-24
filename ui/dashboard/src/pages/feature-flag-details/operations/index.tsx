@@ -93,7 +93,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
     () => operationModalState.actionType === 'CLONE',
     [operationModalState]
   );
-
+  console.log({ isScheduleAction, isOpenModalAction });
   const queryParams = useMemo(
     () => ({
       cursor: String(0),
@@ -288,6 +288,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
       )}
       {isScheduleAction && isOpenModalAction && feature && (
         <ScheduleOperationModal
+          isCompletedTab={currentTab === OperationTab.COMPLETED}
           isOpen={isScheduleAction}
           featureId={feature.id}
           environmentId={currentEnvironment.id}

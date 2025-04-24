@@ -149,17 +149,14 @@ const EventRateOperationModal = ({
   const onSubmit = useCallback(
     async (values: EventRateSchemaType) => {
       try {
-        console.log(values);
         let resp: AutoOpsCreatorResponse | null = null;
 
         if (!isCreate && selectedData) {
+          // Need to update.
           resp = await autoOpsUpdate({
             environmentId,
-            updateDatetimeClauses: {
-              id: selectedData.id,
-              delete: false,
-              clause: []
-            }
+            id: '',
+            updateOpsEventRateClauses: []
           });
         } else {
           resp = await autoOpsCreator({
