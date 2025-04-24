@@ -272,10 +272,7 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 		Event:         goal,
 		EnvironmentId: envAPIKey.Environment.Id,
 	}
-	if err := s.goalPublisher.Publish(ctx, &publisher.OrderingEventMessage{
-		Message:     event,
-		OrderingKey: req.Userid,
-	}); err != nil {
+	if err := s.goalPublisher.PublishWithOrdering(ctx, publisher.NewOrderingMessage(event, req.Userid)); err != nil {
 		if err == publisher.ErrBadMessage {
 			eventCounter.WithLabelValues(callerGatewayService, typeGoal, codeNonRepeatableError)
 		} else {
@@ -1236,16 +1233,16 @@ func (s *grpcGatewayService) RegisterEvents(
 		return nil, ErrMissingEvents
 	}
 	errs := make(map[string]*gwproto.RegisterEventsResponse_Error)
-	goalMessages := make([]publisher.Message, 0)
-	evaluationMessages := make([]publisher.Message, 0)
+	goalMessages := make([]*publisher.OrderingMessage, 0)
+	evaluationMessages := make([]*publisher.OrderingMessage, 0)
 	metricsEvents := make([]*eventproto.MetricsEvent, 0)
 	publish := func(
 		p publisher.Publisher,
-		messages []publisher.Message,
+		messages []*publisher.OrderingMessage,
 		typ string,
 	) map[string]*gwproto.RegisterEventsResponse_Error {
 		errs := make(map[string]*gwproto.RegisterEventsResponse_Error)
-		multiErrs := p.PublishMulti(ctx, messages)
+		multiErrs := p.PublishMultiWithOrdering(ctx, messages)
 		var repeatableErrors, nonRepeateableErrors float64
 		for id, err := range multiErrs {
 			retriable := err != publisher.ErrBadMessage
@@ -1309,10 +1306,7 @@ func (s *grpcGatewayService) RegisterEvents(
 				continue
 			}
 			goalEv := ev.(*eventproto.GoalEvent)
-			goalMessages = append(goalMessages, &publisher.OrderingEventMessage{
-				Message:     event,
-				OrderingKey: goalEv.UserId,
-			})
+			goalMessages = append(goalMessages, publisher.NewOrderingMessage(event, goalEv.UserId))
 			continue
 		}
 		if ptypes.Is(event.Event, grpcEvaluationEvent) {
@@ -1326,10 +1320,7 @@ func (s *grpcGatewayService) RegisterEvents(
 				continue
 			}
 			evalEv := ev.(*eventproto.EvaluationEvent)
-			evaluationMessages = append(evaluationMessages, &publisher.OrderingEventMessage{
-				Message:     event,
-				OrderingKey: evalEv.UserId,
-			})
+			evaluationMessages = append(evaluationMessages, publisher.NewOrderingMessage(event, evalEv.UserId))
 			continue
 		}
 		if ptypes.Is(event.Event, grpcMetricsEvent) {

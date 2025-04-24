@@ -15,8 +15,6 @@ env:
   mysqlPort:
   mysqlDbName:
   mysqlDbOpenConns: 50
-  bigQueryDataSet:
-  bigQueryDataLocation:
   pubsubEmulatorHost:
   notificationService: localhost:9001
   environmentService: localhost:9001
@@ -249,6 +247,7 @@ onDemandProcessors:
     flushTimeout: 30
     project:
     bigQueryDataSet:
+    bigQueryDataLocation:
     bigQueryBatchSize:
     timezone: UTC
   goalCountEventOPSPersister:

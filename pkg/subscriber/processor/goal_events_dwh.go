@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"go.uber.org/zap"
@@ -29,28 +28,17 @@ import (
 	ecstorage "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	ft "github.com/bucketeer-io/bucketeer/pkg/feature/client"
+	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber/storage"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
 
-const (
-	goalEventTable = "goal_event"
-	retryInterval  = 1 * time.Minute // interval to retry pending goals
-	maxDelay       = 6 * time.Hour   // max delay before giving up
-)
-
-// pendingGoal holds a goal event waiting for its evaluation
-// to arrive in BigQuery.
-type pendingGoal struct {
-	event       *eventproto.GoalEvent
-	id          string
-	environment string
-	receivedAt  time.Time
-	experiments []*exproto.Experiment
-}
+const goalEventTable = "goal_event"
 
 type goalEvtWriter struct {
 	writer           storage.GoalEventWriter
@@ -61,28 +49,23 @@ type goalEvtWriter struct {
 	flightgroup      singleflight.Group
 	location         *time.Location
 	logger           *zap.Logger
-
-	pendingMu sync.Mutex
-	pending   map[string]pendingGoal
 }
 
-// NewGoalEventWriter initializes the writer and starts the retry loop.
 func NewGoalEventWriter(
 	ctx context.Context,
 	logger *zap.Logger,
-	eventStorage ecstorage.EventStorage,
 	exClient ec.Client,
 	ftClient ft.Client,
 	cache cachev3.ExperimentsCache,
-	project, dataSet string,
-	size int,
+	project, bigQueryDataSet, bigQueryDataLocation string,
+	bigQueryBatchSize int,
 	location *time.Location,
 ) (Writer, error) {
 	evt := epproto.GoalEvent{}
 	goalWriter, err := writer.NewWriter(
 		ctx,
 		project,
-		dataSet,
+		bigQueryDataSet,
 		goalEventTable,
 		evt.ProtoReflect().Descriptor(),
 		writer.WithLogger(logger),
@@ -90,85 +73,27 @@ func NewGoalEventWriter(
 	if err != nil {
 		return nil, err
 	}
+	eventQuerier, err := bqquerier.NewClient(
+		ctx,
+		project,
+		bigQueryDataLocation,
+		bqquerier.WithLogger(logger),
+	)
+	if err != nil {
+		return nil, err
+	}
 	w := &goalEvtWriter{
-		writer:           storage.NewGoalEventWriter(goalWriter, size),
-		eventStorage:     eventStorage,
+		writer:           storage.NewGoalEventWriter(goalWriter, bigQueryBatchSize),
+		eventStorage:     ecstorage.NewEventStorage(eventQuerier, bigQueryDataSet, logger),
 		experimentClient: exClient,
 		featureClient:    ftClient,
 		cache:            cache,
 		location:         location,
 		logger:           logger,
-		pending:          make(map[string]pendingGoal),
 	}
-	// Start background retry loop
-	go w.retryPending(ctx)
 	return w, nil
 }
 
-// retryPending periodically retries linking pending goals.
-func (w *goalEvtWriter) retryPending(ctx context.Context) {
-	ticker := time.NewTicker(retryInterval)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ticker.C:
-			w.processPending(ctx)
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
-// processPending attempts to link all pending goals.
-func (w *goalEvtWriter) processPending(ctx context.Context) {
-	w.pendingMu.Lock()
-	pending := w.pending
-	w.pending = make(map[string]pendingGoal)
-	w.pendingMu.Unlock()
-
-	for _, pg := range pending {
-		// Give up if too old
-		if time.Since(pg.receivedAt) > maxDelay {
-			w.logger.Warn("giving up on pending goal after max delay", zap.String("id", pg.id))
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeUserEvaluationNotFound).Inc()
-			continue
-		}
-		// Retry linking
-		evals, retriable, err := w.linkGoalEventByExperiment(ctx, pg.event, pg.environment, pg.experiments)
-		if err != nil && retriable {
-			w.enqueuePending(pg)
-			continue
-		}
-		if err != nil {
-			w.logger.Error("failed to link pending goal", zap.Error(err), zap.String("id", pg.id))
-			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToAppendGoalEvents).Inc()
-			continue
-		}
-		// Convert and write
-		events := make([]*epproto.GoalEvent, 0, len(evals))
-		for _, eval := range evals {
-			e, _, err := w.convToGoalEvent(pg.event, eval, pg.id, pg.event.Tag, pg.environment)
-			if err != nil {
-				w.logger.Error("failed to conv pending goal event", zap.Error(err), zap.String("id", pg.id))
-				continue
-			}
-			events = append(events, e)
-		}
-		if _, err := w.writer.AppendRows(ctx, events); err != nil {
-			w.logger.Error("failed to append pending goal events", zap.Error(err))
-		}
-		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeLinked).Inc()
-	}
-}
-
-// enqueuePending adds a goal event to the pending store.
-func (w *goalEvtWriter) enqueuePending(pg pendingGoal) {
-	w.pendingMu.Lock()
-	defer w.pendingMu.Unlock()
-	w.pending[pg.id] = pg
-}
-
-// Write processes incoming events and enqueues or writes them.
 func (w *goalEvtWriter) Write(
 	ctx context.Context,
 	envEvents environmentEventDWHMap,
@@ -178,84 +103,108 @@ func (w *goalEvtWriter) Write(
 	for environmentId, events := range envEvents {
 		experiments, err := w.listExperiments(ctx, environmentId)
 		if err != nil {
-			// Retry all events next time
+			w.logger.Error("failed to list experiments",
+				zap.Error(err),
+				zap.String("environmentId", environmentId),
+			)
+			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToListExperiments).Inc()
+			// Make sure to retry all the events in the next pulling
 			for id := range events {
 				fails[id] = true
 			}
 			continue
 		}
-		for id, evt := range events {
-			ge, ok := evt.(*eventproto.GoalEvent)
-			if !ok {
-				fails[id] = false
-				continue
-			}
-			// Attempt immediate link
-			evals, retriable, err := w.linkGoalEvent(ctx, ge, environmentId, experiments)
-			if err != nil {
-				if errors.Is(err, ecstorage.ErrNoResultsFound) {
-					// Enqueue for retry
-					w.enqueuePending(pendingGoal{
-						event:       ge,
-						id:          id,
-						environment: environmentId,
-						receivedAt:  time.Now(),
-						experiments: experiments,
-					})
-					subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeUserEvaluationNotFound).Inc()
+		if len(experiments) == 0 {
+			continue
+		}
+		for id, event := range events {
+			switch evt := event.(type) {
+			case *eventproto.GoalEvent:
+				e, retriable, err := w.convToGoalEvents(ctx, evt, id, environmentId, experiments)
+				if err != nil {
+					if errors.Is(err, ErrExperimentNotFound) {
+						// If there is nothing to link, we don't report it as an error
+						subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeExperimentNotFound).Inc()
+						continue
+					}
+					if !retriable {
+						w.logger.Error(
+							"Failed to convert to goal event",
+							zap.Error(err),
+							zap.String("id", id),
+							zap.String("environmentId", environmentId),
+							zap.Any("goalEvent", evt),
+						)
+					}
+					fails[id] = retriable
 					continue
 				}
-				fails[id] = retriable
-				continue
-			}
-			// Convert and buffer for write
-			for _, eval := range evals {
-				e, retriable, err := w.convToGoalEvent(ge, eval, id, ge.Tag, environmentId)
-				if err != nil {
-					fails[id] = retriable
-					break
-				}
-				goalEvents = append(goalEvents, e)
+				goalEvents = append(goalEvents, e...)
+				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeLinked).Inc()
+			default:
+				w.logger.Error(
+					"The event is an unexpected message type",
+					zap.String("id", id),
+					zap.String("environmentId", environmentId),
+					zap.Any("goalEvent", evt),
+				)
+				fails[id] = false
 			}
 		}
 	}
-	// Bulk write what we have
-	if fs, err := w.writer.AppendRows(ctx, goalEvents); err != nil {
-		w.logger.Error("Failed to append rows to goal_event table", zap.Error(err))
-	} else {
-		for id, f := range fs {
-			fails[id] = f
+	fs, err := w.writer.AppendRows(ctx, goalEvents)
+	if err != nil {
+		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToAppendGoalEvents).Inc()
+		w.logger.Error("Failed to append rows to goal_event table",
+			zap.Error(err),
+		)
+	}
+	failedToAppendMap := make(map[string]*epproto.GoalEvent)
+	for id, f := range fs {
+		// To log which event has failed to append in the BigQuery, we need to find the event
+		for _, ge := range goalEvents {
+			if id == ge.Id {
+				failedToAppendMap[id] = ge
+			}
 		}
+		// Update the fails map
+		fails[id] = f
+	}
+	if len(failedToAppendMap) > 0 {
+		w.logger.Error("Failed to append goal events",
+			zap.Any("goalEvents", failedToAppendMap),
+		)
 	}
 	return fails
 }
 
 // Convert one or more goal events
-// func (w *goalEvtWriter) convToGoalEvents(
-// 	ctx context.Context,
-// 	e *eventproto.GoalEvent,
-// 	id, environmentID string,
-// 	experiments []*exproto.Experiment,
-// ) ([]*epproto.GoalEvent, bool, error) {
-// 	evals, retriable, err := w.linkGoalEvent(ctx, e, environmentID, experiments)
-// 	if err != nil {
-// 		return nil, retriable, err
-// 	}
-// 	events := make([]*epproto.GoalEvent, 0, len(evals))
-// 	for _, eval := range evals {
-// 		event, retriable, err := w.convToGoalEvent(e, eval, id, e.Tag, environmentID)
-// 		if err != nil {
-// 			return nil, retriable, err
-// 		}
-// 		events = append(events, event)
-// 	}
-// 	return events, false, nil
-// }
+func (w *goalEvtWriter) convToGoalEvents(
+	ctx context.Context,
+	e *eventproto.GoalEvent,
+	id, environmentId string,
+	experiments []*exproto.Experiment,
+) ([]*epproto.GoalEvent, bool, error) {
+	evals, retriable, err := w.linkGoalEvent(ctx, e, environmentId, e.Tag, experiments)
+	if err != nil {
+		return nil, retriable, err
+	}
+	events := make([]*epproto.GoalEvent, 0, len(evals))
+	for _, eval := range evals {
+		event, retriable, err := w.convToGoalEvent(ctx, e, eval, id, e.Tag, environmentId)
+		if err != nil {
+			return nil, retriable, err
+		}
+		events = append(events, event)
+	}
+	return events, false, nil
+}
 
 func (w *goalEvtWriter) convToGoalEvent(
+	ctx context.Context,
 	e *eventproto.GoalEvent,
-	eval *ecstorage.UserEvaluation,
-	id, tag, environmentID string,
+	eval *featureproto.Evaluation,
+	id, tag, environmentId string,
 ) (*epproto.GoalEvent, bool, error) {
 	var ud []byte
 	if e.User != nil {
@@ -282,22 +231,22 @@ func (w *goalEvtWriter) convToGoalEvent(
 		UserId:         userID,
 		Tag:            tag,
 		SourceId:       e.SourceId.String(),
-		EnvironmentId:  environmentID,
+		EnvironmentId:  environmentId,
 		Timestamp:      time.Unix(e.Timestamp, 0).UnixMicro(),
-		FeatureId:      eval.FeatureID,
+		FeatureId:      eval.FeatureId,
 		FeatureVersion: eval.FeatureVersion,
-		VariationId:    eval.VariationID,
-		Reason:         eval.Reason,
+		VariationId:    eval.VariationId,
+		Reason:         eval.Reason.Type.String(),
 	}, false, nil
 }
 
 func (w *goalEvtWriter) linkGoalEvent(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
-	environmentID string,
+	environmentId, tag string,
 	experiments []*exproto.Experiment,
-) ([]*ecstorage.UserEvaluation, bool, error) {
-	evalExp, retriable, err := w.linkGoalEventByExperiment(ctx, event, environmentID, experiments)
+) ([]*featureproto.Evaluation, bool, error) {
+	evalExp, retriable, err := w.linkGoalEventByExperimentByBigQuery(ctx, event, environmentId, tag, experiments)
 	if err != nil {
 		return nil, retriable, err
 	}
@@ -308,9 +257,9 @@ func (w *goalEvtWriter) linkGoalEvent(
 func (w *goalEvtWriter) linkGoalEventByExperiment(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
-	environmentID string,
+	environmentId, tag string,
 	experiments []*exproto.Experiment,
-) ([]*ecstorage.UserEvaluation, bool, error) {
+) ([]*featureproto.Evaluation, bool, error) {
 	// Find the experiment by goal ID
 	// TODO: we must change the console UI not to allow creating
 	// multiple experiments running at the same time,
@@ -336,13 +285,77 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 	if len(exps) == 0 {
 		return nil, false, ErrExperimentNotFound
 	}
-	evals := make([]*ecstorage.UserEvaluation, 0, len(exps))
+	evals := make([]*featureproto.Evaluation, 0, len(exps))
 	for _, exp := range exps {
 		// Get the user evaluation using the experiment info
 		ev, err := w.getUserEvaluation(
 			ctx,
-			environmentID,
-			getUserID(event.UserId, event.User),
+			event.User,
+			environmentId,
+			tag,
+			exp.FeatureId,
+			exp.FeatureVersion,
+		)
+		if err != nil {
+			if errors.Is(err, ErrEvaluationsAreEmpty) {
+				w.logger.Error("evaluations are empty",
+					zap.Error(err),
+					zap.String("environmentId", environmentId),
+					zap.Any("goalEvent", event),
+				)
+				return nil, false, err
+			}
+			w.logger.Error("failed to get user evaluation",
+				zap.Error(err),
+				zap.String("environmentId", environmentId),
+				zap.Any("goalEvent", event),
+			)
+			return nil, true, err
+		}
+		evals = append(evals, ev)
+	}
+	return evals, false, nil
+}
+
+// Link one or more experiments by goal ID
+func (w *goalEvtWriter) linkGoalEventByExperimentByBigQuery(
+	ctx context.Context,
+	event *eventproto.GoalEvent,
+	environmentId, tag string,
+	experiments []*exproto.Experiment,
+) ([]*featureproto.Evaluation, bool, error) {
+	// Find the experiment by goal ID
+	// TODO: we must change the console UI not to allow creating
+	// multiple experiments running at the same time,
+	// using the same feature flag id and goal id
+	var exps []*exproto.Experiment
+	for _, exp := range experiments {
+		if w.findGoalID(event.GoalId, exp.GoalIds) {
+			// If the goal event was issued before the experiment started running,
+			// we ignore those events to avoid issues in the conversion rate
+			if exp.StartAt > event.Timestamp {
+				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeEventOlderThanExperiment).Inc()
+				continue
+			}
+			// If the goal event was issued after the experiment ended,
+			// we ignore those events to avoid issues in the conversion rate
+			if exp.StopAt < event.Timestamp {
+				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeGoalEventIssuedAfterExperimentEnded).Inc()
+				continue
+			}
+			exps = append(exps, exp)
+		}
+	}
+	if len(exps) == 0 {
+		return nil, false, ErrExperimentNotFound
+	}
+	evals := make([]*featureproto.Evaluation, 0, len(exps))
+	for _, exp := range exps {
+		// Get the user evaluation using the experiment info
+		ev, err := w.getUserEvaluationFromBigQuery(
+			ctx,
+			environmentId,
+			event.User.Id,
 			exp.FeatureId,
 			exp.FeatureVersion,
 			exp.StartAt,
@@ -350,14 +363,31 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 			event.Timestamp,
 		)
 		if err != nil {
-			w.logger.Error("Failed to get user evaluation",
+			if errors.Is(err, ecstorage.ErrNoResultsFound) {
+				w.logger.Error("Evaluation not found",
+					zap.Error(err),
+					zap.String("environmentId", environmentId),
+					zap.Any("goalEvent", event),
+				)
+				return nil, false, err
+			}
+			w.logger.Error("failed to get user evaluation",
 				zap.Error(err),
-				zap.String("environmentId", environmentID),
+				zap.String("environmentId", environmentId),
 				zap.Any("goalEvent", event),
 			)
 			return nil, true, err
 		}
-		evals = append(evals, ev)
+		eval := &featureproto.Evaluation{
+			UserId:         ev.UserID,
+			FeatureId:      ev.FeatureID,
+			FeatureVersion: ev.FeatureVersion,
+			VariationId:    ev.VariationID,
+			Reason: &featureproto.Reason{
+				Type: featureproto.Reason_Type(featureproto.Reason_Type_value[ev.Reason]),
+			},
+		}
+		evals = append(evals, eval)
 	}
 	return evals, false, nil
 }
@@ -408,7 +438,51 @@ func (w *goalEvtWriter) listExperiments(
 	return experiments.([]*exproto.Experiment), nil
 }
 
+// TODO: Evaluate the user based on Feature Flag ID and version.
+// By evaluating the user using the latest feature version,
+// it could affect the experiment conversion accuracy
 func (w *goalEvtWriter) getUserEvaluation(
+	ctx context.Context,
+	user *userproto.User,
+	environmentId, tag, featureID string,
+	featureVersion int32,
+) (*featureproto.Evaluation, error) {
+	resp, err := w.featureClient.EvaluateFeatures(ctx, &featureproto.EvaluateFeaturesRequest{
+		EnvironmentId: environmentId,
+		FeatureId:     featureID,
+		Tag:           tag,
+		User:          user,
+	})
+	if err != nil {
+		w.logger.Error(
+			"Failed to evaluate user",
+			zap.Error(err),
+			zap.String("environmentId", environmentId),
+			zap.String("userId", user.Id),
+			zap.String("featureId", featureID),
+			zap.Int32("featureVersion", featureVersion),
+			zap.String("tag", tag),
+		)
+		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToEvaluateUser).Inc()
+		return nil, ErrFailedToEvaluateUser
+	}
+	if len(resp.UserEvaluations.Evaluations) == 0 {
+		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeEvaluationsAreEmpty).Inc()
+		w.logger.Error(
+			"Evaluations are empty",
+			zap.Error(err),
+			zap.String("environmentId", environmentId),
+			zap.String("userId", user.Id),
+			zap.String("featureId", featureID),
+			zap.Int32("featureVersion", featureVersion),
+			zap.String("tag", tag),
+		)
+		return nil, ErrEvaluationsAreEmpty
+	}
+	return resp.UserEvaluations.Evaluations[0], nil
+}
+
+func (w *goalEvtWriter) getUserEvaluationFromBigQuery(
 	ctx context.Context,
 	environmentID, userID, featureID string,
 	featureVersion int32,

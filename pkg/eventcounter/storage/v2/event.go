@@ -314,6 +314,14 @@ func (es *eventStorage) QueryUserEvaluation(
 	var row UserEvaluation
 	err = iter.Next(&row)
 	if err == iterator.Done {
+		es.logger.Error(
+			"User evaluation not found",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("query", query),
+				zap.Any("params", params),
+			)...,
+		)
 		return nil, ErrNoResultsFound
 	}
 	if err != nil {

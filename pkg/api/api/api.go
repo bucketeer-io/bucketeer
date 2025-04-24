@@ -806,11 +806,11 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodRegisterEvents, "").Inc()
 	errs := make(map[string]*registerEventsResponseError)
-	goalMessages := make([]publisher.Message, 0)
-	evaluationMessages := make([]publisher.Message, 0)
-	metricsMessages := make([]publisher.Message, 0)
-	publish := func(p publisher.Publisher, messages []publisher.Message, typ string) {
-		multiErrs := p.PublishMulti(req.Context(), messages)
+	goalMessages := make([]*publisher.OrderingMessage, 0)
+	evaluationMessages := make([]*publisher.OrderingMessage, 0)
+	metricsMessages := make([]*publisher.OrderingMessage, 0)
+	publish := func(p publisher.Publisher, messages []*publisher.OrderingMessage, typ string) {
+		multiErrs := p.PublishMultiWithOrdering(req.Context(), messages)
 		var repeatableErrors, nonRepeateableErrors float64
 		for id, err := range multiErrs {
 			retriable := err != publisher.ErrBadMessage
@@ -864,14 +864,12 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				}
 				continue
 			}
-			goalMessages = append(goalMessages, &publisher.OrderingEventMessage{
-				Message: &eventproto.Event{
-					Id:            event.ID,
-					Event:         goalAny,
-					EnvironmentId: event.EnvironmentId,
-				},
-				OrderingKey: goal.UserId,
-			})
+			eventMsg := &eventproto.Event{
+				Id:            event.ID,
+				Event:         goalAny,
+				EnvironmentId: event.EnvironmentId,
+			}
+			goalMessages = append(goalMessages, publisher.NewOrderingMessage(eventMsg, goal.UserId))
 		case EvaluationEventType:
 			eval, errCode, err := s.getEvaluationEvent(req.Context(), event)
 			if err != nil {
@@ -891,14 +889,12 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				}
 				continue
 			}
-			evaluationMessages = append(evaluationMessages, &publisher.OrderingEventMessage{
-				Message: &eventproto.Event{
-					Id:            event.ID,
-					Event:         evalAny,
-					EnvironmentId: event.EnvironmentId,
-				},
-				OrderingKey: eval.UserId,
-			})
+			eventMsg := &eventproto.Event{
+				Id:            event.ID,
+				Event:         evalAny,
+				EnvironmentId: event.EnvironmentId,
+			}
+			evaluationMessages = append(evaluationMessages, publisher.NewOrderingMessage(eventMsg, eval.UserId))
 		case MetricsEventType:
 			metrics, errCode, err := s.getMetricsEvent(req.Context(), event)
 			if err != nil {
@@ -918,11 +914,11 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				}
 				continue
 			}
-			metricsMessages = append(metricsMessages, &eventproto.Event{
+			metricsMessages = append(metricsMessages, publisher.NewOrderingMessage(&eventproto.Event{
 				Id:            event.ID,
 				Event:         metricsAny,
 				EnvironmentId: event.EnvironmentId,
-			})
+			}, ""))
 		default:
 			errs[event.ID] = &registerEventsResponseError{
 				Retriable: false,

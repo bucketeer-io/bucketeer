@@ -251,8 +251,6 @@ subscriber:
     mysqlHost: localenv-mysql-headless.default.svc.cluster.local
     mysqlPort: 3306
     mysqlDbName: bucketeer
-    bigQueryDataSet: bucketeer
-    bigQueryDataLocation: bucketeer
     bigqueryEmulatorHost: localenv-bq.default.svc.cluster.local:9060
     pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
     notificationService: localhost:9001
@@ -433,6 +431,7 @@ subscriber:
       flushTimeout: 10
       project: bucketeer-test
       bigQueryDataSet: bucketeer
+      bigQueryDataLocation: bucketeer
       bigQueryBatchSize: 10
       timezone: UTC
     goalCountEventOPSPersister:

@@ -21,9 +21,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/runtime/protoiface"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 )
@@ -38,23 +37,15 @@ var (
 
 type Message interface {
 	GetId() string
-	protoiface.MessageV1
+	proto.Message
 }
 
 type Publisher interface {
 	Publish(ctx context.Context, msg Message) error
 	PublishMulti(ctx context.Context, messages []Message) map[string]error
+	PublishWithOrdering(ctx context.Context, msg *OrderingMessage) error
+	PublishMultiWithOrdering(ctx context.Context, messages []*OrderingMessage) map[string]error
 	Stop()
-}
-
-// OrderingEventMessage wraps an Event to implement the Message interface
-type OrderingEventMessage struct {
-	Message
-	OrderingKey string
-}
-
-func (m *OrderingEventMessage) GetId() string {
-	return m.Message.GetId()
 }
 
 type publisher struct {
@@ -97,6 +88,60 @@ func NewPublisher(topic *pubsub.Topic, opts ...Option) Publisher {
 	}
 }
 
+func (p *publisher) publishMessage(ctx context.Context, msg Message, orderingKey string) (err error) {
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		p.logger.Error("Failed to marshal message", zap.Error(err), zap.Any("message", msg))
+		return ErrBadMessage
+	}
+	p.topic.EnableMessageOrdering = orderingKey != ""
+	message := &pubsub.Message{
+		Data:       data,
+		Attributes: map[string]string{idAttribute: msg.GetId()},
+	}
+	if orderingKey != "" {
+		message.OrderingKey = orderingKey
+	}
+	res := p.topic.Publish(ctx, message)
+	_, err = res.Get(ctx)
+	return
+}
+
+func (p *publisher) publishMultiMessages(
+	ctx context.Context,
+	messages []Message,
+	orderingKeys map[string]string,
+) (errors map[string]error) {
+	errors = make(map[string]error)
+	results := make(map[string]*pubsub.PublishResult, len(messages))
+	p.topic.EnableMessageOrdering = len(orderingKeys) > 0
+
+	for _, msg := range messages {
+		id := msg.GetId()
+		data, err := proto.Marshal(msg)
+		if err != nil {
+			p.logger.Error("Failed to marshal message", zap.Error(err), zap.Any("message", msg))
+			errors[id] = ErrBadMessage
+			continue
+		}
+		message := &pubsub.Message{
+			Data:       data,
+			Attributes: map[string]string{idAttribute: id},
+		}
+		if orderingKey, ok := orderingKeys[id]; ok {
+			message.OrderingKey = orderingKey
+		}
+		results[id] = p.topic.Publish(ctx, message)
+	}
+
+	for id, result := range results {
+		if _, err := result.Get(ctx); err != nil {
+			errors[id] = err
+		}
+	}
+	return
+}
+
 func (p *publisher) Publish(ctx context.Context, msg Message) (err error) {
 	startTime := time.Now()
 	defer func() {
@@ -105,29 +150,7 @@ func (p *publisher) Publish(ctx context.Context, msg Message) (err error) {
 		handledCounter.WithLabelValues(topicID, methodPublish, code).Inc()
 		handledHistogram.WithLabelValues(topicID, methodPublish, code).Observe(time.Since(startTime).Seconds())
 	}()
-	data, err := proto.Marshal(msg)
-	if err != nil {
-		p.logger.Error("Failed to marshal message", zap.Error(err), zap.Any("message", msg))
-		return ErrBadMessage
-	}
-	var message *pubsub.Message
-	if orderingMsg, ok := msg.(*OrderingEventMessage); ok && orderingMsg.OrderingKey != "" {
-		p.topic.EnableMessageOrdering = true
-		message = &pubsub.Message{
-			Data:        data,
-			Attributes:  map[string]string{idAttribute: msg.GetId()},
-			OrderingKey: orderingMsg.OrderingKey,
-		}
-	} else {
-		p.topic.EnableMessageOrdering = false
-		message = &pubsub.Message{
-			Data:       data,
-			Attributes: map[string]string{idAttribute: msg.GetId()},
-		}
-	}
-	res := p.topic.Publish(ctx, message)
-	_, err = res.Get(ctx)
-	return
+	return p.publishMessage(ctx, msg, "")
 }
 
 func (p *publisher) PublishMulti(ctx context.Context, messages []Message) (errors map[string]error) {
@@ -147,41 +170,67 @@ func (p *publisher) PublishMulti(ctx context.Context, messages []Message) (error
 		}
 		handledHistogram.WithLabelValues(topicID, methodPublishMulti, histogramCode).Observe(time.Since(startTime).Seconds())
 	}()
-	errors = make(map[string]error)
-	results := make(map[string]*pubsub.PublishResult, len(messages))
-	for _, msg := range messages {
-		id := msg.GetId()
-		data, err := proto.Marshal(msg)
-		if err != nil {
-			p.logger.Error("Failed to marshal message", zap.Error(err), zap.Any("message", msg))
-			errors[id] = ErrBadMessage
-			continue
+	return p.publishMultiMessages(ctx, messages, nil)
+}
+
+func (p *publisher) PublishWithOrdering(ctx context.Context, msg *OrderingMessage) (err error) {
+	startTime := time.Now()
+	defer func() {
+		topicID := p.topic.ID()
+		code := convertErrorToCode(err)
+		handledCounter.WithLabelValues(topicID, methodPublishWithOrderingKey, code).Inc()
+		handledHistogram.WithLabelValues(topicID, methodPublishWithOrderingKey, code).Observe(time.Since(startTime).Seconds())
+	}()
+	return p.publishMessage(ctx, msg.Message, msg.OrderingKey)
+}
+
+func (p *publisher) PublishMultiWithOrdering(
+	ctx context.Context,
+	messages []*OrderingMessage,
+) (errors map[string]error) {
+	startTime := time.Now()
+	defer func() {
+		topicID := p.topic.ID()
+		for _, err := range errors {
+			code := convertErrorToCode(err)
+			handledCounter.WithLabelValues(topicID, methodPublishMultiWithOrderingKey, code).Inc()
 		}
-		var message *pubsub.Message
-		if orderingMsg, ok := msg.(*OrderingEventMessage); ok && orderingMsg.OrderingKey != "" {
-			p.topic.EnableMessageOrdering = true
-			message = &pubsub.Message{
-				Data:        data,
-				Attributes:  map[string]string{idAttribute: id},
-				OrderingKey: orderingMsg.OrderingKey,
-			}
-		} else {
-			p.topic.EnableMessageOrdering = false
-			message = &pubsub.Message{
-				Data:       data,
-				Attributes: map[string]string{idAttribute: id},
-			}
+		if successes := len(messages) - len(errors); successes > 0 {
+			handledCounter.WithLabelValues(topicID, methodPublishMultiWithOrderingKey, codeOK).Add(float64(successes))
 		}
-		results[id] = p.topic.Publish(ctx, message)
+		histogramCode := codeOK
+		if len(errors) > 0 {
+			histogramCode = codeUnknown
+		}
+		handledHistogram.WithLabelValues(
+			topicID,
+			methodPublishMultiWithOrderingKey,
+			histogramCode,
+		).Observe(time.Since(startTime).Seconds())
+	}()
+
+	// Convert OrderingMessages to Messages and create ordering key map
+	msgs := make([]Message, len(messages))
+	orderingKeys := make(map[string]string, len(messages))
+	for i, msg := range messages {
+		msgs[i] = msg.Message
+		orderingKeys[msg.Message.GetId()] = msg.OrderingKey
 	}
-	for id, result := range results {
-		if _, err := result.Get(ctx); err != nil {
-			errors[id] = err
-		}
-	}
-	return
+	return p.publishMultiMessages(ctx, msgs, orderingKeys)
 }
 
 func (p *publisher) Stop() {
 	p.topic.Stop()
+}
+
+type OrderingMessage struct {
+	Message     Message
+	OrderingKey string
+}
+
+func NewOrderingMessage(msg Message, orderingKey string) *OrderingMessage {
+	return &OrderingMessage{
+		Message:     msg,
+		OrderingKey: orderingKey,
+	}
 }

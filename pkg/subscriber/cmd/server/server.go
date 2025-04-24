@@ -28,7 +28,6 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
-	ecstorage "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
@@ -39,7 +38,6 @@ import (
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
-	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
@@ -69,9 +67,6 @@ type server struct {
 	mysqlPort        *int
 	mysqlDBName      *string
 	mysqlDBOpenConns *int
-	// BigQuery
-	bigQueryDataSet      *string
-	bigQueryDataLocation *string
 	// gRPC service
 	environmentService          *string
 	experimentService           *string
@@ -102,21 +97,19 @@ type server struct {
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start subscriber server")
 	server := &server{
-		CmdClause:            cmd,
-		port:                 cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		project:              cmd.Flag("project", "Google Cloud project name.").String(),
-		certPath:             cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
-		keyPath:              cmd.Flag("key", "Path to TLS key.").Required().String(),
-		serviceTokenPath:     cmd.Flag("service-token", "Path to service token.").Required().String(),
-		webURL:               cmd.Flag("web-url", "Web console URL.").Required().String(),
-		mysqlUser:            cmd.Flag("mysql-user", "MySQL user.").Required().String(),
-		mysqlPass:            cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
-		mysqlHost:            cmd.Flag("mysql-host", "MySQL host.").Required().String(),
-		mysqlPort:            cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
-		mysqlDBName:          cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
-		mysqlDBOpenConns:     cmd.Flag("mysql-db-open-conns", "MySQL open connections.").Required().Int(),
-		bigQueryDataSet:      cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").Required().String(),
-		bigQueryDataLocation: cmd.Flag("bigquery-data-location", "BigQuery DataSet Location").Required().String(),
+		CmdClause:        cmd,
+		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		project:          cmd.Flag("project", "Google Cloud project name.").String(),
+		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
+		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
+		serviceTokenPath: cmd.Flag("service-token", "Path to service token.").Required().String(),
+		webURL:           cmd.Flag("web-url", "Web console URL.").Required().String(),
+		mysqlUser:        cmd.Flag("mysql-user", "MySQL user.").Required().String(),
+		mysqlPass:        cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
+		mysqlHost:        cmd.Flag("mysql-host", "MySQL host.").Required().String(),
+		mysqlPort:        cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
+		mysqlDBName:      cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		mysqlDBOpenConns: cmd.Flag("mysql-db-open-conns", "MySQL open connections.").Required().Int(),
 		environmentService: cmd.Flag(
 			"environment-service",
 			"bucketeer-environment-service address.",
@@ -214,17 +207,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	registerer := metrics.DefaultRegisterer()
 
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
-	if err != nil {
-		return err
-	}
-
-	bqQuerierClient, err := s.createBigQueryQuerier(
-		ctx,
-		*s.project,
-		*s.bigQueryDataLocation,
-		registerer,
-		logger,
-	)
 	if err != nil {
 		return err
 	}
@@ -341,8 +323,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		ctx,
 		environmentClient,
 		mysqlClient,
-		bqQuerierClient,
-		*s.bigQueryDataSet,
 		persistentRedisClient,
 		nonPersistentRedisClient,
 		experimentClient,
@@ -409,23 +389,6 @@ func (s *server) createMySQLClient(
 		mysql.WithLogger(logger),
 		mysql.WithMetrics(registerer),
 		mysql.WithMaxOpenConns(*s.mysqlDBOpenConns),
-	)
-}
-
-func (s *server) createBigQueryQuerier(
-	ctx context.Context,
-	project, location string,
-	registerer metrics.Registerer,
-	logger *zap.Logger,
-) (bqquerier.Client, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	return bqquerier.NewClient(
-		ctx,
-		project,
-		location,
-		bqquerier.WithMetrics(registerer),
-		bqquerier.WithLogger(logger),
 	)
 }
 
@@ -502,8 +465,6 @@ func (s *server) registerPubSubProcessorMap(
 	ctx context.Context,
 	environmentClient environmentclient.Client,
 	mysqlClient mysql.Client,
-	bqQuerierClient bqquerier.Client,
-	bigQueryDataSet string,
 	persistentRedisClient redisv3.Client,
 	nonPersistentRedisClient redisv3.Client,
 	exClient experimentclient.Client,
@@ -620,8 +581,6 @@ func (s *server) registerPubSubProcessorMap(
 			ctx,
 			onDemandProcessorsConfigMap[processor.EvaluationCountEventDWHPersisterName],
 			mysqlClient,
-			ecstorage.NewEventStorage(bqQuerierClient, bigQueryDataSet, logger),
-			bigQueryDataSet,
 			nonPersistentRedisClient, // use non-persistent redis instance here
 			exClient,
 			ftClient,
@@ -640,8 +599,6 @@ func (s *server) registerPubSubProcessorMap(
 			ctx,
 			onDemandProcessorsConfigMap[processor.GoalCountEventDWHPersisterName],
 			mysqlClient,
-			ecstorage.NewEventStorage(bqQuerierClient, bigQueryDataSet, logger),
-			bigQueryDataSet,
 			nonPersistentRedisClient, // use non-persistent redis instance here
 			exClient,
 			ftClient,

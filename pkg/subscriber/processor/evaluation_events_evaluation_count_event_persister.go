@@ -202,11 +202,15 @@ func (p *evaluationCountEventPersister) extractEvents(messages map[string]*pulle
 			zap.String("messageID", m.ID),
 			zap.ByteString("data", m.Data),
 			zap.Any("attributes", m.Attributes),
-			zap.String("orderingKey", m.OrderingKey),
-		)
+			zap.String("orderingKey", m.OrderingKey))
 		subscriberHandledCounter.WithLabelValues(subscriberEvaluationCount, codes.BadMessage.String()).Inc()
 	}
 	for _, m := range messages {
+		// Check if message data is empty
+		if len(m.Data) == 0 {
+			handleBadMessage(m, fmt.Errorf("message data is empty"))
+			continue
+		}
 		event := &eventproto.Event{}
 		if err := proto.Unmarshal(m.Data, event); err != nil {
 			handleBadMessage(m, err)

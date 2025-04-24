@@ -24,7 +24,6 @@ import (
 	"go.uber.org/zap"
 
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	ecstorage "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -38,13 +37,14 @@ import (
 )
 
 type eventsDWHPersisterConfig struct {
-	FlushInterval     int    `json:"flushInterval"`
-	FlushTimeout      int    `json:"flushTimeout"`
-	FlushSize         int    `json:"flushSize"`
-	Project           string `json:"project"`
-	BigQueryDataSet   string `json:"bigQueryDataSet"`
-	BigQueryBatchSize int    `json:"bigQueryBatchSize"`
-	Timezone          string `json:"timezone"`
+	FlushInterval        int    `json:"flushInterval"`
+	FlushTimeout         int    `json:"flushTimeout"`
+	FlushSize            int    `json:"flushSize"`
+	Project              string `json:"project"`
+	BigQueryDataSet      string `json:"bigQueryDataSet"`
+	BigQueryDataLocation string `json:"bigQueryDataLocation"`
+	BigQueryBatchSize    int    `json:"bigQueryBatchSize"`
+	Timezone             string `json:"timezone"`
 }
 
 type eventsDWHPersister struct {
@@ -59,8 +59,6 @@ func NewEventsDWHPersister(
 	ctx context.Context,
 	config interface{},
 	mysqlClient mysql.Client,
-	eventStorage ecstorage.EventStorage,
-	bigQueryDataSet string,
 	redisClient redisv3.Client,
 	exClient experimentclient.Client,
 	ftClient featureclient.Client,
@@ -115,12 +113,12 @@ func NewEventsDWHPersister(
 		goalEventWriter, err := NewGoalEventWriter(
 			ctx,
 			logger,
-			eventStorage,
 			exClient,
 			ftClient,
 			experimentsCache,
 			e.eventsDWHPersisterConfig.Project,
 			e.eventsDWHPersisterConfig.BigQueryDataSet,
+			e.eventsDWHPersisterConfig.BigQueryDataLocation,
 			e.eventsDWHPersisterConfig.BigQueryBatchSize,
 			location,
 		)
