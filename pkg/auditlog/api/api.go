@@ -211,7 +211,7 @@ func (s *auditlogService) ListAuditLogs(
 		return nil, dt.Err()
 	}
 	var filters = []*mysql.FilterV2{
-		&mysql.FilterV2{
+		{
 			Column:   "environment_id",
 			Operator: mysql.OperatorEqual,
 			Value:    req.EnvironmentId,
