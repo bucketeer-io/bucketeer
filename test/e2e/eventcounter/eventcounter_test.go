@@ -138,6 +138,9 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 	// Evaluation events must always be sent before goal events
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
 
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
+
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
@@ -272,6 +275,9 @@ func TestExperimentGoalCount(t *testing.T) {
 
 	// Evaluation events must always be sent before goal events
 	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
 
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
@@ -414,6 +420,9 @@ func TestGrpcExperimentResult(t *testing.T) {
 	// Increment evaluation event count
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag, reason)
 
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
+
 	// Register goal variation
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
@@ -431,6 +440,9 @@ func TestGrpcExperimentResult(t *testing.T) {
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[4], experiment.Variations[1].Id, tag, reason)
 	// Increment evaluation event count
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag, reason)
+
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
 
 	// Register goal
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
@@ -576,6 +588,9 @@ func TestExperimentResult(t *testing.T) {
 	// Increment evaluation event count
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
 
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
+
 	// Register goal variation
 	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
@@ -593,6 +608,9 @@ func TestExperimentResult(t *testing.T) {
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[4], f.Variations[1].Id, tag, reason)
 	// Increment evaluation event count
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, reason)
+
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
 
 	// Register goal
 	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
@@ -737,6 +755,9 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	// Evaluation events must always be sent before goal events
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
+
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
 
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
@@ -961,6 +982,9 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 	// Evaluation events must always be sent before goal events
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
+
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
 
 	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())

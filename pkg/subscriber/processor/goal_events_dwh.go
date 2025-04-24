@@ -246,7 +246,7 @@ func (w *goalEvtWriter) linkGoalEvent(
 	environmentId, tag string,
 	experiments []*exproto.Experiment,
 ) ([]*featureproto.Evaluation, bool, error) {
-	evalExp, retriable, err := w.linkGoalEventByExperiment(ctx, event, environmentId, tag, experiments)
+	evalExp, retriable, err := w.linkGoalEventByExperimentByBigQuery(ctx, event, environmentId, tag, experiments)
 	if err != nil {
 		return nil, retriable, err
 	}
@@ -369,7 +369,7 @@ func (w *goalEvtWriter) linkGoalEventByExperimentByBigQuery(
 					zap.String("environmentId", environmentId),
 					zap.Any("goalEvent", event),
 				)
-				return nil, false, err
+				return nil, true, err
 			}
 			w.logger.Error("failed to get user evaluation",
 				zap.Error(err),
