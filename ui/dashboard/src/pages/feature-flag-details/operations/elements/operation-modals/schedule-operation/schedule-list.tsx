@@ -272,6 +272,7 @@ const ScheduleList = ({
         )}
       />
       <Button
+        type="button"
         variant={'text'}
         className="flex items-center h-6 self-start p-0"
         onClick={handleAddDate}

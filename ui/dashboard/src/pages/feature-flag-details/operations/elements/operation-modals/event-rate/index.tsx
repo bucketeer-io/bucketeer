@@ -9,24 +9,33 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryGoals } from '@queries/goals';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
-import { v4 as uuid } from 'uuid';
-import { AutoOpsRule, DatetimeClause, Feature } from '@types';
+import {
+  AutoOpsRule,
+  ClauseActionType,
+  Feature,
+  OpsEventRateClause
+} from '@types';
 import { IconInfo, IconPlus } from '@icons';
 import {
   eventRateSchema,
   EventRateSchemaType
 } from 'pages/feature-flag-details/operations/form-schema';
-import { ActionTypeMap } from 'pages/feature-flag-details/operations/types';
-import {
-  createDatetimeClausesList,
-  createEventRate
-} from 'pages/feature-flag-details/operations/utils';
+import { createEventRate } from 'pages/feature-flag-details/operations/utils';
 import { OperationActionType } from 'pages/feature-flag-details/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
+import Input from 'components/input';
+import InputGroup from 'components/input-group';
 import SlideModal from 'components/modal/slide';
+import CreateGoalModal from 'elements/create-goal-modal';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 
 export interface OperationModalProps {
@@ -56,6 +65,17 @@ const CreateNewOptionButton = ({
     {text}
   </Button>
 );
+
+const conditionOptions = [
+  {
+    label: '>=',
+    value: 'GREATER_OR_EQUAL'
+  },
+  {
+    label: '<=',
+    value: 'LESS_OR_EQUAL'
+  }
+];
 
 const EventRateOperationModal = ({
   feature,
@@ -103,31 +123,27 @@ const EventRateOperationModal = ({
       })),
     [feature]
   );
-
   const handleCreateDefaultValues = () => {
-    if (selectedData) {
-      return selectedData.clauses.map(item => {
-        const time = new Date(+(item.clause as DatetimeClause).time * 1000);
-        return {
-          id: uuid(),
-          actionType: item.actionType as ActionTypeMap,
-          time
-        };
-      });
+    const clause = selectedData?.clauses[0]?.clause as OpsEventRateClause;
+    if (clause) {
+      return {
+        ...clause,
+        minCount: +clause?.minCount || 0
+      } as EventRateSchemaType;
     }
-    return [createDatetimeClausesList()];
+    return createEventRate(feature);
   };
 
   const form = useForm({
     resolver: yupResolver(eventRateSchema),
     defaultValues: {
-      ...createEventRate(feature)
+      ...handleCreateDefaultValues()
     },
     mode: 'onChange'
   });
 
   const {
-    formState: { isValid, isSubmitting }
+    formState: { isValid, isSubmitting, errors }
   } = form;
 
   const onSubmit = useCallback(
@@ -149,8 +165,15 @@ const EventRateOperationModal = ({
           resp = await autoOpsCreator({
             featureId: feature.id,
             environmentId,
-            opsType: 'SCHEDULE',
-            opsEventRateClauses: []
+            opsType: 'EVENT_RATE',
+            opsEventRateClauses: [
+              {
+                ...values,
+                actionType: values.actionType as ClauseActionType,
+                minCount: values.minCount.toString(),
+                threadsholdRate: values.threadsholdRate / 100
+              }
+            ]
           });
         }
 
@@ -188,7 +211,7 @@ const EventRateOperationModal = ({
               <div className="flex flex-col flex-1 pl-4 gap-y-4 border-l border-primary-500">
                 <Form.Field
                   control={form.control}
-                  name={`variation`}
+                  name={`variationId`}
                   render={({ field }) => (
                     <Form.Item className="py-0">
                       <Form.Label required className="relative w-fit">
@@ -203,8 +226,6 @@ const EventRateOperationModal = ({
                       <Form.Control>
                         <DropdownMenuWithSearch
                           align="end"
-                          isLoading={isLoadingGoals}
-                          placeholder={t(`experiments.select-goal`)}
                           label={
                             variationOptions.find(
                               item => item.value === field.value
@@ -221,7 +242,7 @@ const EventRateOperationModal = ({
                 />
                 <Form.Field
                   control={form.control}
-                  name={`goal`}
+                  name={`goalId`}
                   render={({ field }) => (
                     <Form.Item className="py-0">
                       <Form.Label required className="relative w-fit">
@@ -258,6 +279,122 @@ const EventRateOperationModal = ({
                     </Form.Item>
                   )}
                 />
+                <div className="flex flex-col w-full gap-y-1">
+                  <div className="flex flex-1 gap-x-4">
+                    <Form.Field
+                      control={form.control}
+                      name={`operator`}
+                      render={({ field }) => (
+                        <Form.Item className="py-0 flex-1 h-full">
+                          <Form.Label required className="relative w-fit">
+                            {t('condition')}
+                            <Icon
+                              icon={IconInfo}
+                              size="xs"
+                              color="gray-500"
+                              className="absolute -right-6"
+                            />
+                          </Form.Label>
+                          <Form.Control>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                label={
+                                  conditionOptions.find(
+                                    item => item.value === field.value
+                                  )?.label || ''
+                                }
+                                isExpand
+                              />
+                              <DropdownMenuContent
+                                align="end"
+                                className="min-w-[132px]"
+                              >
+                                {conditionOptions.map((item, index) => (
+                                  <DropdownMenuItem
+                                    key={index}
+                                    label={item.label}
+                                    value={item.value}
+                                    onSelectOption={field.onChange}
+                                  />
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </Form.Control>
+                        </Form.Item>
+                      )}
+                    />
+                    <Form.Field
+                      control={form.control}
+                      name={`threadsholdRate`}
+                      render={({ field }) => (
+                        <Form.Item className="py-0 flex-1 h-full">
+                          <Form.Label required className="relative w-fit">
+                            {t('threshold')}
+                            <Icon
+                              icon={IconInfo}
+                              size="xs"
+                              color="gray-500"
+                              className="absolute -right-6"
+                            />
+                          </Form.Label>
+                          <Form.Control>
+                            <InputGroup
+                              className="w-full"
+                              addonSlot="right"
+                              addonSize="md"
+                              addon={'%'}
+                            >
+                              <Input
+                                {...field}
+                                value={field.value || ''}
+                                type="number"
+                                className="pr-8"
+                              />
+                            </InputGroup>
+                          </Form.Control>
+                        </Form.Item>
+                      )}
+                    />
+                    <Form.Field
+                      control={form.control}
+                      name={`minCount`}
+                      render={({ field }) => (
+                        <Form.Item className="py-0 flex-1 h-full">
+                          <Form.Label required className="relative w-fit">
+                            {t('minimum-count')}
+                            <Icon
+                              icon={IconInfo}
+                              size="xs"
+                              color="gray-500"
+                              className="absolute -right-6"
+                            />
+                          </Form.Label>
+                          <Form.Control>
+                            <Input
+                              {...field}
+                              value={field.value || ''}
+                              type="number"
+                              className="pr-4"
+                            />
+                          </Form.Control>
+                        </Form.Item>
+                      )}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-y-0.5">
+                    {errors?.operator?.message && (
+                      <Form.Message>{errors.operator.message}</Form.Message>
+                    )}
+                    {errors?.threadsholdRate?.message && (
+                      <Form.Message>
+                        {errors.threadsholdRate.message}
+                      </Form.Message>
+                    )}
+                    {errors?.minCount?.message && (
+                      <Form.Message>{errors.minCount.message}</Form.Message>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -285,6 +422,16 @@ const EventRateOperationModal = ({
           </div>
         </Form>
       </FormProvider>
+      {isOpenCreateGoalModal && (
+        <CreateGoalModal
+          isOpen={isOpenCreateGoalModal}
+          connectionType="OPERATION"
+          onClose={onHiddenCreateGoalModal}
+          onCompleted={goal => {
+            form.setValue('goalId', goal.id);
+          }}
+        />
+      )}
     </SlideModal>
   );
 };

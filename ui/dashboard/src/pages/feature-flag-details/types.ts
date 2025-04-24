@@ -9,3 +9,10 @@ export type OperationActionType =
   | 'DETAILS'
   | 'STOP'
   | 'DELETE';
+
+export interface ScheduleItem {
+  scheduleId?: string;
+  executeAt: Date;
+  weight: number;
+  triggeredAt?: string;
+}

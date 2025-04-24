@@ -1,5 +1,4 @@
 import { AutoOpsRule, Feature, Rollout } from '@types';
-import TableListContent from 'elements/table-list-content';
 import { OperationModalState } from '../..';
 import { OperationTab } from '../../types';
 import ActiveContent from '../active';
@@ -20,7 +19,7 @@ const CollectionLayout = ({
   onOperationActions: (data: OperationModalState) => void;
 }) => {
   return (
-    <TableListContent>
+    <div>
       <Overview onChangeFilters={() => {}} />
       {currentTab === OperationTab.ACTIVE && (
         <ActiveContent
@@ -32,7 +31,7 @@ const CollectionLayout = ({
       {currentTab === OperationTab.COMPLETED && (
         <CompletedContent rollouts={rollouts} operations={operations} />
       )}
-    </TableListContent>
+    </div>
   );
 };
 

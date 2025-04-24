@@ -66,7 +66,7 @@ const PageContent = ({ feature }: { feature: Feature }) => {
   return (
     <PageLayout.Content className="pt-4">
       <Tabs>
-        <TabsList>
+        <TabsList className="px-6 w-fit min-w-full">
           {featureFlagTabs.map((item, index) => (
             <TabsLink key={index} to={`${url}${item.to}`}>
               {item.title}
@@ -74,7 +74,7 @@ const PageContent = ({ feature }: { feature: Feature }) => {
           ))}
         </TabsList>
 
-        <TabsContent className="pt-2">
+        <TabsContent className="pt-0 pb-6 mt-6">
           <Routes>
             <Route
               index

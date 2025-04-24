@@ -1,0 +1,202 @@
+import { useCallback, useMemo } from 'react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
+import { Trans } from 'react-i18next';
+import { getLanguage, useTranslation } from 'i18n';
+import { cn } from 'utils/style';
+import { IconInfo, IconPlus, IconTrash } from '@icons';
+import { RolloutSchemaType } from 'pages/feature-flag-details/operations/form-schema';
+import {
+  handleCreateIncrement,
+  numberToJapaneseOrdinal,
+  numberToOrdinalWord
+} from 'pages/feature-flag-details/operations/utils';
+import { ScheduleItem } from 'pages/feature-flag-details/types';
+import Button from 'components/button';
+import { ReactDatePicker } from 'components/date-time-picker';
+import { DropdownOption } from 'components/dropdown';
+import Form from 'components/form';
+import Icon from 'components/icon';
+import Input from 'components/input';
+import InputGroup from 'components/input-group';
+import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+
+const ManualSchedule = ({
+  variationOptions
+}: {
+  variationOptions: DropdownOption[];
+}) => {
+  const { t } = useTranslation(['form']);
+  const isLanguageJapanese = getLanguage() === 'ja';
+
+  const {
+    control,
+    formState: { errors },
+    watch
+  } = useFormContext<RolloutSchemaType>();
+  const watchScheduleList = [
+    ...watch('progressiveRollout.manual.schedulesList')
+  ];
+  const {
+    fields: schedulesList,
+    append,
+    remove
+  } = useFieldArray({
+    name: 'progressiveRollout.manual.schedulesList',
+    control,
+    keyName: 'scheduleItemId'
+  });
+
+  const isLastScheduleWeight100 = useMemo(
+    () => Number(watchScheduleList.at(-1)?.weight) === 100,
+    [watchScheduleList]
+  );
+  const isDisableAddIncrement = useMemo(() => {
+    console.log(errors);
+    return (
+      isLastScheduleWeight100 ||
+      !!errors?.progressiveRollout?.manual?.schedulesList?.length
+    );
+  }, [isLastScheduleWeight100, { ...errors }]);
+  console.log(isDisableAddIncrement);
+  const handleAddIncrement = useCallback(() => {
+    const newIncrement = handleCreateIncrement({
+      lastSchedule: watchScheduleList.at(-1) as ScheduleItem,
+      incrementType: 'minute',
+      addValue: 5
+    });
+    append(newIncrement);
+  }, [watchScheduleList]);
+
+  return (
+    <div className="flex flex-col w-full gap-y-4">
+      <Form.Field
+        control={control}
+        name={`progressiveRollout.manual.variationId`}
+        render={({ field }) => (
+          <Form.Item className="py-0">
+            <Form.Label required className="relative w-fit">
+              {t('table:results.variation')}
+              <Icon
+                icon={IconInfo}
+                size="xs"
+                color="gray-500"
+                className="absolute -right-6"
+              />
+            </Form.Label>
+            <Form.Control>
+              <DropdownMenuWithSearch
+                align="end"
+                label={
+                  variationOptions.find(item => item.value === field.value)
+                    ?.label || ''
+                }
+                contentClassName="[&>div.wrapper-menu-items>div]:px-4"
+                options={variationOptions}
+                onSelectOption={field.onChange}
+              />
+            </Form.Control>
+            <Form.Message />
+          </Form.Item>
+        )}
+      />
+
+      {schedulesList.map((item, index) => (
+        <div key={item.scheduleItemId} className="flex w-full gap-x-4">
+          <Form.Field
+            name={`progressiveRollout.manual.schedulesList.${index}.weight`}
+            render={({ field }) => (
+              <Form.Item className="flex flex-col py-0 flex-1 size-full">
+                <Form.Label
+                  required
+                  className={cn('relative w-fit', {
+                    capitalize: !isLanguageJapanese
+                  })}
+                >
+                  <Trans
+                    i18nKey={'form:ordinal-increment'}
+                    values={{
+                      ordinal: isLanguageJapanese
+                        ? numberToJapaneseOrdinal(index + 1)
+                        : numberToOrdinalWord(index + 1)
+                    }}
+                  />
+                  <Icon
+                    icon={IconInfo}
+                    size="xs"
+                    color="gray-500"
+                    className="absolute -right-6"
+                  />
+                </Form.Label>
+                <Form.Control>
+                  <InputGroup
+                    className="w-full max-w-full"
+                    addonSlot="right"
+                    addonSize="md"
+                    addon={'%'}
+                  >
+                    <Input
+                      {...field}
+                      value={field.value || ''}
+                      type="number"
+                      className="pr-8"
+                      onWheel={e => {
+                        e.currentTarget.blur();
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') e.preventDefault();
+                      }}
+                    />
+                  </InputGroup>
+                </Form.Control>
+                <Form.Message className="max-w-full break-all" />
+              </Form.Item>
+            )}
+          />
+          <Form.Field
+            control={control}
+            name={`progressiveRollout.manual.schedulesList.${index}.executeAt`}
+            render={({ field }) => (
+              <Form.Item className="flex flex-col flex-1 py-0 size-full">
+                <Form.Label required>
+                  {t('feature-flags.start-date')}
+                </Form.Label>
+                <Form.Control>
+                  <ReactDatePicker
+                    selected={field.value ?? null}
+                    onChange={date => {
+                      if (date) {
+                        field.onChange(date);
+                      }
+                    }}
+                  />
+                </Form.Control>
+                <Form.Message className="max-w-full break-all" />
+              </Form.Item>
+            )}
+          />
+          <Button
+            type="button"
+            variant={'grey'}
+            className="flex-center self-start h-full mt-9 min-w-5"
+            disabled={schedulesList.length <= 1}
+            onClick={() => remove(index)}
+          >
+            <Icon icon={IconTrash} size={'sm'} />
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant={'text'}
+        className="w-fit px-0 h-6"
+        disabled={isDisableAddIncrement}
+        onClick={handleAddIncrement}
+      >
+        <Icon icon={IconPlus} size={'md'} />
+        {t('add-increment')}
+      </Button>
+    </div>
+  );
+};
+
+export default ManualSchedule;

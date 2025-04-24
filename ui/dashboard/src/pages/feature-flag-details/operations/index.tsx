@@ -10,11 +10,11 @@ import { useSearchParams } from 'utils/search-params';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import Filter from 'elements/filter';
 import FormLoading from 'elements/form-loading';
-import TableListContainer from 'elements/table-list-container';
 import { OperationActionType } from '../types';
 import CollectionLayout from './elements/collection-layout';
 import OperationActions from './elements/operation-actions';
 import EventRateOperationModal from './elements/operation-modals/event-rate';
+import ProgressiveRolloutModal from './elements/operation-modals/rollout';
 import ScheduleOperationModal from './elements/operation-modals/schedule-operation';
 import { OperationTab, OpsTypeMap } from './types';
 
@@ -52,6 +52,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
   const isSchedule = useMemo(() => action === 'schedule', [action]);
   const isEventRate = useMemo(() => action === 'event-rate', [action]);
+  const isRollout = useMemo(() => action === 'rollout', [action]);
 
   const queryParams = useMemo(
     () => ({
@@ -62,10 +63,13 @@ const Operations = ({ feature }: { feature: Feature }) => {
     [feature, currentEnvironment]
   );
 
-  const { data: rolloutCollection, isLoading: isRolloutLoading } =
-    useQueryRollouts({
-      params: queryParams
-    });
+  const {
+    data: rolloutCollection,
+    isLoading: isRolloutLoading,
+    refetch: refetchRollouts
+  } = useQueryRollouts({
+    params: queryParams
+  });
 
   const {
     data: operationCollection,
@@ -85,23 +89,14 @@ const Operations = ({ feature }: { feature: Feature }) => {
     [location]
   );
 
-  // const defaultValues = {
-  //   opsType: OpsTypeMap.SCHEDULE,
-  //   datetimeClausesList: [createDatetimeClausesList()],
-  //   eventRate: createEventRate(feature),
-  //   progressiveRolloutType: RolloutTypeMap.TEMPLATE_SCHEDULE,
-  //   progressiveRollout: createProgressiveRollout(feature)
-  // };
-
-  // const form = useForm({
-  //   resolver: yupResolver(operationFormSchema),
-  //   defaultValues,
-  //   mode: 'onChange'
-  // });
-
   const onSubmitOperationSuccess = useCallback(() => {
     onCloseActionModal();
     refetchAutoOpsRules();
+  }, []);
+
+  const onSubmitRolloutSuccess = useCallback(() => {
+    onCloseActionModal();
+    refetchRollouts();
   }, []);
 
   const onOperationActions = useCallback(
@@ -120,6 +115,9 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
       if (operationType === OpsTypeMap.EVENT_RATE)
         return onOpenOperationModal('/event-rate');
+
+      if (operationType === OpsTypeMap.ROLLOUT)
+        return onOpenOperationModal('/rollout');
     },
     []
   );
@@ -133,7 +131,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
   }, [searchOptions]);
 
   return (
-    <div className="flex flex-col w-full gap-y-6">
+    <div className="flex flex-col w-full gap-y-4 min-w-[900px]">
       <Filter
         searchValue=""
         isShowDocumentation={false}
@@ -153,21 +151,19 @@ const Operations = ({ feature }: { feature: Feature }) => {
             onChangSearchParams({ tab });
           }}
         >
-          <TabsList>
+          <TabsList className="px-6">
             <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
             <TabsTrigger value="COMPLETED">{t(`completed`)}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value={currentTab} className="mt-0">
-            <TableListContainer>
-              <CollectionLayout
-                feature={feature}
-                currentTab={currentTab}
-                rollouts={rollouts}
-                operations={operations}
-                onOperationActions={onOperationActions}
-              />
-            </TableListContainer>
+          <TabsContent value={currentTab} className="px-6">
+            <CollectionLayout
+              feature={feature}
+              currentTab={currentTab}
+              rollouts={rollouts}
+              operations={operations}
+              onOperationActions={onOperationActions}
+            />
           </TabsContent>
         </Tabs>
       )}
@@ -193,6 +189,17 @@ const Operations = ({ feature }: { feature: Feature }) => {
           selectedData={operationModalState?.selectedData as AutoOpsRule}
           onClose={onCloseActionModal}
           onSubmitOperationSuccess={onSubmitOperationSuccess}
+        />
+      )}
+      {isRollout && feature && (
+        <ProgressiveRolloutModal
+          isOpen={isRollout}
+          feature={feature}
+          environmentId={currentEnvironment.id}
+          actionType={operationModalState.actionType}
+          selectedData={operationModalState?.selectedData as Rollout}
+          onClose={onCloseActionModal}
+          onSubmitRolloutSuccess={onSubmitRolloutSuccess}
         />
       )}
     </div>

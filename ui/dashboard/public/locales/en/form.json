@@ -181,5 +181,17 @@
   "placeholder-member-tags": "Tags can be used to group members as teams",
   "kind-filter-value": "Kind: {{value}}",
   "select-range": "Select Range",
-  "not-found-entity": "Not found {{entity}}"
+  "not-found-entity": "Not found {{entity}}",
+  "condition": "Condition",
+  "threshold": "Threshold",
+  "minimum-count": "Minimum Count",
+  "template": "Template",
+  "manual": "Manual",
+  "increments": "Increments",
+  "frequency": "Frequency",
+  "hourly": "Hourly",
+  "daily": "Daily",
+  "weekly": "Weekly",
+  "ordinal-increment": "{{ordinal}} Increment",
+  "add-increment": "Add Increment"
 }
