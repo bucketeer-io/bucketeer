@@ -24,8 +24,10 @@ import (
 )
 
 const (
-	methodPublish      = "Publish"
-	methodPublishMulti = "PublishMulti"
+	methodPublish                     = "Publish"
+	methodPublishMulti                = "PublishMulti"
+	methodPublishWithOrderingKey      = "PublishWithOrderingKey"
+	methodPublishMultiWithOrderingKey = "PublishMultiWithOrderingKey"
 
 	codeOK               = "OK"
 	codeBadMessage       = "BadMessage"

@@ -40,7 +40,7 @@ var (
 )
 
 type eventValidator interface {
-	validate(ctx context.Context) (string, error)
+	validate(ctx context.Context) (interface{}, string, error)
 }
 
 type eventEvaluationValidator struct {
@@ -96,7 +96,7 @@ func newEventValidator(
 	return nil
 }
 
-func (v *eventGoalValidator) validate(ctx context.Context) (string, error) {
+func (v *eventGoalValidator) validate(ctx context.Context) (interface{}, string, error) {
 	if err := uuid.ValidateUUID(v.event.Id); err != nil {
 		v.logger.Warn(
 			"Failed to validate goal event id format",
@@ -105,11 +105,11 @@ func (v *eventGoalValidator) validate(ctx context.Context) (string, error) {
 				zap.String("id", v.event.Id),
 			)...,
 		)
-		return codeInvalidID, errInvalidIDFormat
+		return nil, codeInvalidID, errInvalidIDFormat
 	}
 	ev, err := v.unmarshal(ctx)
 	if err != nil {
-		return codeUnmarshalFailed, errUnmarshalFailed
+		return nil, codeUnmarshalFailed, errUnmarshalFailed
 	}
 
 	// validate required fields
@@ -121,7 +121,7 @@ func (v *eventGoalValidator) validate(ctx context.Context) (string, error) {
 				zap.String("goal_id", ev.GoalId),
 			)...,
 		)
-		return codeEmptyField, errEmptyGoalID
+		return nil, codeEmptyField, errEmptyGoalID
 	}
 	if (ev.User == nil || (ev.User != nil && ev.User.Id == "")) && ev.UserId == "" {
 		v.logger.Debug(
@@ -132,7 +132,7 @@ func (v *eventGoalValidator) validate(ctx context.Context) (string, error) {
 				zap.String("user_id", ev.UserId),
 			)...,
 		)
-		return codeEmptyField, errEmptyUserID
+		return nil, codeEmptyField, errEmptyUserID
 	}
 
 	if !validateTimestamp(ev.Timestamp, v.oldestTimestampDuration, v.furthestTimestampDuration) {
@@ -143,9 +143,9 @@ func (v *eventGoalValidator) validate(ctx context.Context) (string, error) {
 				zap.Int64("timestamp", ev.Timestamp),
 			)...,
 		)
-		return codeInvalidTimestamp, errInvalidTimestamp
+		return nil, codeInvalidTimestamp, errInvalidTimestamp
 	}
-	return "", nil
+	return ev, "", nil
 }
 
 func (v *eventGoalValidator) unmarshal(ctx context.Context) (*eventproto.GoalEvent, error) {
@@ -163,7 +163,7 @@ func (v *eventGoalValidator) unmarshal(ctx context.Context) (*eventproto.GoalEve
 	return ev, nil
 }
 
-func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error) {
+func (v *eventEvaluationValidator) validate(ctx context.Context) (interface{}, string, error) {
 	if err := uuid.ValidateUUID(v.event.Id); err != nil {
 		v.logger.Warn(
 			"Failed to validate evaluation event id format",
@@ -172,11 +172,11 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 				zap.String("id", v.event.Id),
 			)...,
 		)
-		return codeInvalidID, errInvalidIDFormat
+		return nil, codeInvalidID, errInvalidIDFormat
 	}
 	ev, err := v.unmarshal(ctx)
 	if err != nil {
-		return codeUnmarshalFailed, errUnmarshalFailed
+		return nil, codeUnmarshalFailed, errUnmarshalFailed
 	}
 
 	// validate required fields
@@ -188,7 +188,7 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 				zap.String("feature_id", ev.FeatureId),
 			)...,
 		)
-		return codeEmptyField, errEmptyFeatureID
+		return nil, codeEmptyField, errEmptyFeatureID
 	}
 	isErrorReason := ev.Reason != nil && (ev.Reason.Type == feature.Reason_ERROR_NO_EVALUATIONS ||
 		ev.Reason.Type == feature.Reason_ERROR_FLAG_NOT_FOUND ||
@@ -206,7 +206,7 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 				zap.String("variation_id", ev.VariationId),
 			)...,
 		)
-		return codeEmptyField, errEmptyVariationID
+		return nil, codeEmptyField, errEmptyVariationID
 	}
 	if (ev.User == nil || (ev.User != nil && ev.User.Id == "")) && ev.UserId == "" {
 		v.logger.Debug(
@@ -217,7 +217,7 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 				zap.String("user_id", ev.UserId),
 			)...,
 		)
-		return codeEmptyField, errEmptyUserID
+		return nil, codeEmptyField, errEmptyUserID
 	}
 	if ev.Reason == nil {
 		v.logger.Debug(
@@ -227,7 +227,7 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 				zap.Any("reason", ev.Reason),
 			)...,
 		)
-		return codeEmptyField, errNilReason
+		return nil, codeEmptyField, errNilReason
 	}
 
 	if !validateTimestamp(ev.Timestamp, v.oldestTimestampDuration, v.furthestTimestampDuration) {
@@ -238,9 +238,9 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 				zap.Int64("timestamp", ev.Timestamp),
 			)...,
 		)
-		return codeInvalidTimestamp, errInvalidTimestamp
+		return nil, codeInvalidTimestamp, errInvalidTimestamp
 	}
-	return "", nil
+	return ev, "", nil
 }
 
 func (v *eventEvaluationValidator) unmarshal(ctx context.Context) (*eventproto.EvaluationEvent, error) {
@@ -259,7 +259,7 @@ func (v *eventEvaluationValidator) unmarshal(ctx context.Context) (*eventproto.E
 }
 
 // For metrics events we don't need to validate the timestamp
-func (v *eventMetricsValidator) validate(ctx context.Context) (string, error) {
+func (v *eventMetricsValidator) validate(ctx context.Context) (interface{}, string, error) {
 	if err := uuid.ValidateUUID(v.event.Id); err != nil {
 		v.logger.Warn(
 			"Failed to validate metrics event id format",
@@ -268,13 +268,13 @@ func (v *eventMetricsValidator) validate(ctx context.Context) (string, error) {
 				zap.String("id", v.event.Id),
 			)...,
 		)
-		return codeInvalidID, errInvalidIDFormat
+		return nil, codeInvalidID, errInvalidIDFormat
 	}
-	_, err := v.unmarshal(ctx)
+	ev, err := v.unmarshal(ctx)
 	if err != nil {
-		return codeUnmarshalFailed, errUnmarshalFailed
+		return nil, codeUnmarshalFailed, errUnmarshalFailed
 	}
-	return "", nil
+	return ev, "", nil
 }
 
 func (v *eventMetricsValidator) unmarshal(ctx context.Context) (*eventproto.MetricsEvent, error) {

@@ -668,7 +668,7 @@ func TestGetEvaluationsValidation(t *testing.T) {
 					&featureproto.Features{
 						Features: []*featureproto.Feature{},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
@@ -736,7 +736,7 @@ func TestGetEvaluationsZeroFeature(t *testing.T) {
 					&featureproto.Features{
 						Features: []*featureproto.Feature{},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
@@ -943,7 +943,7 @@ func TestGetEvaluationsUserEvaluationsID(t *testing.T) {
 					&featureproto.Features{
 						Features: features,
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -981,7 +981,7 @@ func TestGetEvaluationsUserEvaluationsID(t *testing.T) {
 					&featureproto.Features{
 						Features: multiFeatures,
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -1021,7 +1021,7 @@ func TestGetEvaluationsUserEvaluationsID(t *testing.T) {
 					&featureproto.Features{
 						Features: features,
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -1060,7 +1060,7 @@ func TestGetEvaluationsUserEvaluationsID(t *testing.T) {
 					&featureproto.Features{
 						Features: features,
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -1098,7 +1098,7 @@ func TestGetEvaluationsUserEvaluationsID(t *testing.T) {
 					&featureproto.Features{
 						Features: features,
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -1253,7 +1253,7 @@ func testGetEvaluationsNoSegmentList(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -1375,7 +1375,7 @@ func TestGetEvaluationsEvaluateFeatures(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
@@ -1472,7 +1472,7 @@ func TestGetEvaluationsEvaluateFeatures(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
@@ -1559,7 +1559,7 @@ func TestGetEvaluationsEvaluateFeatures(t *testing.T) {
 					}, nil)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
 					&featureproto.ListSegmentUsersResponse{}, nil)
@@ -1625,7 +1625,7 @@ func TestGetEvaluationsEvaluateFeatures(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
@@ -1711,7 +1711,7 @@ func TestGetEvaluationsEvaluateFeatures(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
@@ -1834,7 +1834,7 @@ func TestGetEvaluation(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
@@ -1930,7 +1930,7 @@ func TestGetEvaluation(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get(gomock.Any(), gomock.Any()).Return(
 					nil, errors.New("random error"))
@@ -2009,7 +2009,7 @@ func TestGetEvaluation(t *testing.T) {
 							},
 						},
 					}, nil)
-				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
+				gs.userPublisher.(*publishermock.MockPublisher).EXPECT().PublishWithOrdering(gomock.Any(), gomock.Any()).Return(nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
 				"POST",
@@ -2228,11 +2228,11 @@ func TestRegisterEvents(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
-				gs.goalPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
+				gs.goalPublisher.(*publishermock.MockPublisher).EXPECT().PublishMultiWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
-				gs.evaluationPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
+				gs.evaluationPublisher.(*publishermock.MockPublisher).EXPECT().PublishMultiWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
-				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
+				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMultiWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
@@ -2273,11 +2273,11 @@ func TestRegisterEvents(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
-				gs.goalPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
+				gs.goalPublisher.(*publishermock.MockPublisher).EXPECT().PublishMultiWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
-				gs.evaluationPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
+				gs.evaluationPublisher.(*publishermock.MockPublisher).EXPECT().PublishMultiWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
-				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
+				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMultiWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(

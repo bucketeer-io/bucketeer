@@ -144,6 +144,34 @@ func (mr *MockPublisherMockRecorder) PublishMulti(ctx, messages any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishMulti", reflect.TypeOf((*MockPublisher)(nil).PublishMulti), ctx, messages)
 }
 
+// PublishMultiWithOrdering mocks base method.
+func (m *MockPublisher) PublishMultiWithOrdering(ctx context.Context, messages []*publisher.OrderingMessage) map[string]error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PublishMultiWithOrdering", ctx, messages)
+	ret0, _ := ret[0].(map[string]error)
+	return ret0
+}
+
+// PublishMultiWithOrdering indicates an expected call of PublishMultiWithOrdering.
+func (mr *MockPublisherMockRecorder) PublishMultiWithOrdering(ctx, messages any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishMultiWithOrdering", reflect.TypeOf((*MockPublisher)(nil).PublishMultiWithOrdering), ctx, messages)
+}
+
+// PublishWithOrdering mocks base method.
+func (m *MockPublisher) PublishWithOrdering(ctx context.Context, msg *publisher.OrderingMessage) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PublishWithOrdering", ctx, msg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PublishWithOrdering indicates an expected call of PublishWithOrdering.
+func (mr *MockPublisherMockRecorder) PublishWithOrdering(ctx, msg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishWithOrdering", reflect.TypeOf((*MockPublisher)(nil).PublishWithOrdering), ctx, msg)
+}
+
 // Stop mocks base method.
 func (m *MockPublisher) Stop() {
 	m.ctrl.T.Helper()
