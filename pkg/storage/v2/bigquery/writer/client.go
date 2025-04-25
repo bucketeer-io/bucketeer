@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	bigqueryEmulatorHostEnv = "BIGQUERY_EMULATOR_HOST"
+	bigqueryWriterEmulatorHostEnv = "BIGQUERY_WRITER_EMULATOR_HOST"
 )
 
 type options struct {
@@ -87,9 +87,10 @@ func NewWriter(
 	if dopts.metrics != nil {
 		RegisterMetrics(dopts.metrics)
 	}
+	isEmulator := os.Getenv(bigqueryWriterEmulatorHostEnv) != ""
 	var gcpOpts []option.ClientOption
-	if bigqueryEmulatorEndpoint := os.Getenv(bigqueryEmulatorHostEnv); bigqueryEmulatorEndpoint != "" {
-		conn, err := grpc.Dial(bigqueryEmulatorEndpoint,
+	if isEmulator {
+		conn, err := grpc.Dial(os.Getenv(bigqueryWriterEmulatorHostEnv),
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		)
 		if err != nil {
@@ -104,7 +105,7 @@ func NewWriter(
 		return nil, err
 	}
 	var managedStream *managedwriter.ManagedStream
-	if os.Getenv(bigqueryEmulatorHostEnv) == "" {
+	if !isEmulator {
 		managedStream, err = c.NewManagedStream(
 			ctx,
 			managedwriter.WithSchemaDescriptor(protodesc.ToDescriptorProto(desc)),
@@ -125,7 +126,7 @@ func NewWriter(
 		dataset:       dataset,
 		table:         table,
 		desc:          desc,
-		emulator:      os.Getenv(bigqueryEmulatorHostEnv) != "",
+		emulator:      isEmulator,
 		opts:          dopts,
 		logger:        logger,
 	}, nil

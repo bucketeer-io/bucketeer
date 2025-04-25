@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	bigqueryEmulatorHostEnv = "BIGQUERY_EMULATOR_HOST"
+	bigqueryQuerierEmulatorHostEnv = "BIGQUERY_QUERIER_EMULATOR_HOST"
 )
 
 type options struct {
@@ -76,9 +76,9 @@ func NewClient(
 	}
 	logger := dopts.logger.Named("bigquery-querier")
 	var gcpOpts []option.ClientOption
-	if bigqueryEmulatorEndpoint := os.Getenv(bigqueryEmulatorHostEnv); bigqueryEmulatorEndpoint != "" {
+	if emulatorEndpoint := os.Getenv(bigqueryQuerierEmulatorHostEnv); emulatorEndpoint != "" {
 		gcpOpts = append(gcpOpts, option.WithoutAuthentication())
-		gcpOpts = append(gcpOpts, option.WithEndpoint(bigqueryEmulatorEndpoint))
+		gcpOpts = append(gcpOpts, option.WithEndpoint(emulatorEndpoint))
 	}
 	cli, err := bigquery.NewClient(ctx, project, gcpOpts...)
 	if err != nil {

@@ -8,7 +8,7 @@ env:
   profile: true
   bucketeerTestEnabled:
   gcpEnabled: true
-  bigqueryEmulatorHost:
+  bigqueryQuerierEmulatorHost:
   pubsubEmulatorHost:
   project:
   mysqlUser:

@@ -27,7 +27,7 @@ web:
     cloudService: hcv
     profile: false
     bucketeerTestEnabled: true
-    bigqueryEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
+    bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
     pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
     project: bucketeer-test
     mysqlUser: bucketeer
@@ -131,7 +131,7 @@ batch-server:
     mysqlHost: localenv-mysql-headless.default.svc.cluster.local
     mysqlPort: 3306
     mysqlDbName: bucketeer
-    bigqueryEmulatorHost: localenv-bq.default.svc.cluster.local:9060
+    bigqueryWriterEmulatorHost: localenv-bq.default.svc.cluster.local:9060
     pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
     notificationService: localhost:9001
     environmentService: localhost:9001
@@ -251,7 +251,8 @@ subscriber:
     mysqlHost: localenv-mysql-headless.default.svc.cluster.local
     mysqlPort: 3306
     mysqlDbName: bucketeer
-    bigqueryEmulatorHost: localenv-bq.default.svc.cluster.local:9060
+    bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
+    bigqueryWriterEmulatorHost: localenv-bq.default.svc.cluster.local:9060
     pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
     notificationService: localhost:9001
     environmentService: localhost:9001

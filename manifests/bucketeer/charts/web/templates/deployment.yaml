@@ -100,8 +100,8 @@ spec:
           env:
             - name: BUCKETEER_WEB_CLOUD_SERVICE
               value: "{{ .Values.env.cloudService }}"
-            - name: BIGQUERY_EMULATOR_HOST
-              value: "{{.Values.env.bigqueryEmulatorHost}}"
+            - name: BIGQUERY_QUERIER_EMULATOR_HOST
+              value: "{{.Values.env.bigqueryQuerierEmulatorHost}}"
             - name: PUBSUB_EMULATOR_HOST
               value: "{{.Values.env.pubsubEmulatorHost}}"
             - name: BUCKETEER_WEB_PROFILE
