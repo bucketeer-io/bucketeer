@@ -2232,7 +2232,7 @@ func TestRegisterEvents(t *testing.T) {
 					nil).MaxTimes(1)
 				gs.evaluationPublisher.(*publishermock.MockPublisher).EXPECT().PublishMultiWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
-				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMultiWithOrdering(gomock.Any(), gomock.Any()).Return(
+				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(
@@ -2277,7 +2277,7 @@ func TestRegisterEvents(t *testing.T) {
 					nil).MaxTimes(1)
 				gs.evaluationPublisher.(*publishermock.MockPublisher).EXPECT().PublishMultiWithOrdering(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
-				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMultiWithOrdering(gomock.Any(), gomock.Any()).Return(
+				gs.metricsPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(gomock.Any(), gomock.Any()).Return(
 					nil).MaxTimes(1)
 			},
 			input: httptest.NewRequest(

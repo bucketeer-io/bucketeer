@@ -808,7 +808,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 	errs := make(map[string]*registerEventsResponseError)
 	goalMessages := make([]*publisher.OrderingMessage, 0)
 	evaluationMessages := make([]*publisher.OrderingMessage, 0)
-	metricsMessages := make([]*publisher.OrderingMessage, 0)
+	metricsMessages := make([]publisher.Message, 0)
 	publish := func(p publisher.Publisher, messages []*publisher.OrderingMessage, typ string) {
 		multiErrs := p.PublishMultiWithOrdering(req.Context(), messages)
 		var repeatableErrors, nonRepeateableErrors float64
@@ -836,8 +836,47 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 		}
 		restEventCounter.WithLabelValues(callerGatewayService, typ, codeNonRepeatableError).Add(nonRepeateableErrors)
 		restEventCounter.WithLabelValues(callerGatewayService, typ, codeRepeatableError).Add(repeatableErrors)
-		restEventCounter.WithLabelValues(callerGatewayService, typ, codeOK).Add(float64(len(messages) - len(multiErrs)))
+		restEventCounter.WithLabelValues(
+			callerGatewayService,
+			typeMetrics,
+			codeOK,
+		).Add(float64(len(messages) - len(multiErrs)))
 	}
+
+	publishMetrics := func(p publisher.Publisher, messages []publisher.Message) {
+		multiErrs := p.PublishMulti(req.Context(), messages)
+		var repeatableErrors, nonRepeateableErrors float64
+		for id, err := range multiErrs {
+			retriable := err != publisher.ErrBadMessage
+			if retriable {
+				repeatableErrors++
+			} else {
+				nonRepeateableErrors++
+			}
+			if !errors.Is(err, context.Canceled) {
+				s.logger.Error(
+					"Failed to publish metrics event",
+					log.FieldsFromImcomingContext(req.Context()).AddFields(
+						zap.Error(err),
+						zap.String("environmentID", envAPIKey.Environment.Id),
+						zap.String("id", id),
+					)...,
+				)
+			}
+			errs[id] = &registerEventsResponseError{
+				Retriable: retriable,
+				Message:   "Failed to publish event",
+			}
+		}
+		restEventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeNonRepeatableError).Add(nonRepeateableErrors)
+		restEventCounter.WithLabelValues(callerGatewayService, typeMetrics, codeRepeatableError).Add(repeatableErrors)
+		restEventCounter.WithLabelValues(
+			callerGatewayService,
+			typeMetrics,
+			codeOK,
+		).Add(float64(len(messages) - len(multiErrs)))
+	}
+
 	for _, event := range reqBody.Events {
 		event.EnvironmentId = envAPIKey.Environment.Id
 		if event.ID == "" {
@@ -845,31 +884,6 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 			return
 		}
 		switch event.Type {
-		case GoalEventType:
-			goal, errCode, err := s.getGoalEvent(req.Context(), event)
-			if err != nil {
-				restEventCounter.WithLabelValues(callerGatewayService, typeMetrics, errCode).Inc()
-				errs[event.ID] = &registerEventsResponseError{
-					Retriable: false,
-					Message:   err.Error(),
-				}
-				continue
-			}
-			goalAny, err := ptypes.MarshalAny(goal)
-			if err != nil {
-				restEventCounter.WithLabelValues(callerGatewayService, typeGoal, codeMarshalAnyFailed).Inc()
-				errs[event.ID] = &registerEventsResponseError{
-					Retriable: false,
-					Message:   err.Error(),
-				}
-				continue
-			}
-			eventMsg := &eventproto.Event{
-				Id:            event.ID,
-				Event:         goalAny,
-				EnvironmentId: event.EnvironmentId,
-			}
-			goalMessages = append(goalMessages, publisher.NewOrderingMessage(eventMsg, goal.UserId))
 		case EvaluationEventType:
 			eval, errCode, err := s.getEvaluationEvent(req.Context(), event)
 			if err != nil {
@@ -895,6 +909,31 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				EnvironmentId: event.EnvironmentId,
 			}
 			evaluationMessages = append(evaluationMessages, publisher.NewOrderingMessage(eventMsg, eval.UserId))
+		case GoalEventType:
+			goal, errCode, err := s.getGoalEvent(req.Context(), event)
+			if err != nil {
+				restEventCounter.WithLabelValues(callerGatewayService, typeMetrics, errCode).Inc()
+				errs[event.ID] = &registerEventsResponseError{
+					Retriable: false,
+					Message:   err.Error(),
+				}
+				continue
+			}
+			goalAny, err := ptypes.MarshalAny(goal)
+			if err != nil {
+				restEventCounter.WithLabelValues(callerGatewayService, typeGoal, codeMarshalAnyFailed).Inc()
+				errs[event.ID] = &registerEventsResponseError{
+					Retriable: false,
+					Message:   err.Error(),
+				}
+				continue
+			}
+			eventMsg := &eventproto.Event{
+				Id:            event.ID,
+				Event:         goalAny,
+				EnvironmentId: event.EnvironmentId,
+			}
+			goalMessages = append(goalMessages, publisher.NewOrderingMessage(eventMsg, goal.UserId))
 		case MetricsEventType:
 			metrics, errCode, err := s.getMetricsEvent(req.Context(), event)
 			if err != nil {
@@ -914,11 +953,11 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				}
 				continue
 			}
-			metricsMessages = append(metricsMessages, publisher.NewOrderingMessage(&eventproto.Event{
+			metricsMessages = append(metricsMessages, &eventproto.Event{
 				Id:            event.ID,
 				Event:         metricsAny,
 				EnvironmentId: event.EnvironmentId,
-			}, ""))
+			})
 		default:
 			errs[event.ID] = &registerEventsResponseError{
 				Retriable: false,
@@ -928,9 +967,12 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 			continue
 		}
 	}
-	publish(s.goalPublisher, goalMessages, typeGoal)
+	// EvaluationEvents and GoalEvents are saved synchronously to ensure the order of events.
+	// Evaluation events must be saved before goal events so the subscriber can link the goal with the evaluation.
 	publish(s.evaluationPublisher, evaluationMessages, typeEvaluation)
-	publish(s.metricsPublisher, metricsMessages, typeMetrics)
+	publish(s.goalPublisher, goalMessages, typeGoal)
+	// Metrics events don't need ordering, so we use a separate publish function
+	publishMetrics(s.metricsPublisher, metricsMessages)
 	if len(errs) > 0 {
 		if s.containsInvalidTimestampError(errs) {
 			restEventCounter.WithLabelValues(callerGatewayService, typeRegisterEvent, codeInvalidTimestampRequest).Inc()

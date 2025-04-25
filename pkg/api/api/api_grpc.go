@@ -1295,20 +1295,6 @@ func (s *grpcGatewayService) RegisterEvents(
 			)
 			continue
 		}
-		if ptypes.Is(event.Event, grpcGoalEvent) {
-			ev, errorCode, err := validator.validate(ctx)
-			if err != nil {
-				eventCounter.WithLabelValues(callerGatewayService, typeGoal, errorCode).Inc()
-				errs[event.Id] = &gwproto.RegisterEventsResponse_Error{
-					Retriable: false,
-					Message:   err.Error(),
-				}
-				continue
-			}
-			goalEv := ev.(*eventproto.GoalEvent)
-			goalMessages = append(goalMessages, publisher.NewOrderingMessage(event, goalEv.UserId))
-			continue
-		}
 		if ptypes.Is(event.Event, grpcEvaluationEvent) {
 			ev, errorCode, err := validator.validate(ctx)
 			if err != nil {
@@ -1321,6 +1307,20 @@ func (s *grpcGatewayService) RegisterEvents(
 			}
 			evalEv := ev.(*eventproto.EvaluationEvent)
 			evaluationMessages = append(evaluationMessages, publisher.NewOrderingMessage(event, evalEv.UserId))
+			continue
+		}
+		if ptypes.Is(event.Event, grpcGoalEvent) {
+			ev, errorCode, err := validator.validate(ctx)
+			if err != nil {
+				eventCounter.WithLabelValues(callerGatewayService, typeGoal, errorCode).Inc()
+				errs[event.Id] = &gwproto.RegisterEventsResponse_Error{
+					Retriable: false,
+					Message:   err.Error(),
+				}
+				continue
+			}
+			goalEv := ev.(*eventproto.GoalEvent)
+			goalMessages = append(goalMessages, publisher.NewOrderingMessage(event, goalEv.UserId))
 			continue
 		}
 		if ptypes.Is(event.Event, grpcMetricsEvent) {
@@ -1345,10 +1345,13 @@ func (s *grpcGatewayService) RegisterEvents(
 			metricsEvents = append(metricsEvents, m)
 		}
 	}
-	// MetricsEvents are saved asynchronously for performance, since there is no user impact even if they are lost.
+	// MetricsEvents are saved asynchronously for performance and saving pubsub cost,
+	// since there is no user impact even if they are lost.
 	s.saveMetricsEventsAsync(metricsEvents, envAPIKey.ProjectId, envAPIKey.Environment.UrlCode)
-	goalErrors := publish(s.goalPublisher, goalMessages, typeGoal)
+	// EvaluationEvents and GoalEvents are saved synchronously to ensure the order of events.
+	// Evaluation events must be saved before goal events so the subscriber can link the goal with the evaluation.
 	evalErrors := publish(s.evaluationPublisher, evaluationMessages, typeEvaluation)
+	goalErrors := publish(s.goalPublisher, goalMessages, typeGoal)
 	errs = s.mergeMaps(errs, goalErrors, evalErrors)
 	if len(errs) > 0 {
 		if s.containsInvalidTimestampError(errs) {
