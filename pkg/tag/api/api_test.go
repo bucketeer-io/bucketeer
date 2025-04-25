@@ -169,7 +169,14 @@ func TestListTagsMySQL(t *testing.T) {
 			setup: func(s *TagService) {
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().ListTags(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return([]*proto.Tag{}, 0, int64(0), nil)
+				).Return([]*proto.Tag{
+					{
+						Id:            "tag-0",
+						Name:          "test-tag",
+						EnvironmentId: "ns0",
+						EntityType:    proto.Tag_FEATURE_FLAG,
+					},
+				}, 0, int64(0), nil)
 			},
 			req: &proto.ListTagsRequest{
 				EnvironmentId: "ns0",
@@ -178,7 +185,14 @@ func TestListTagsMySQL(t *testing.T) {
 			},
 			expectedErr: nil,
 			expected: &proto.ListTagsResponse{
-				Tags:       []*proto.Tag{},
+				Tags: []*proto.Tag{
+					{
+						Id:            "tag-0",
+						Name:          "test-tag",
+						EnvironmentId: "ns0",
+						EntityType:    proto.Tag_FEATURE_FLAG,
+					},
+				},
 				Cursor:     "0",
 				TotalCount: 0,
 			},
