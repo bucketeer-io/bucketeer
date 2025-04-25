@@ -16,6 +16,8 @@ env:
   mysqlPort:
   mysqlDbName:
   mysqlDbOpenConns: 50
+  bigqueryQuerierEmulatorHost:
+  bigqueryWriterEmulatorHost:
   pubsubEmulatorHost:
   notificationService: localhost:9001
   environmentService: localhost:9001

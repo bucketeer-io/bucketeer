@@ -55,8 +55,8 @@ spec:
             - --non-persistent-child-redis-addresses={{ . }}
           {{- end }}
           env:
-            - name: BIGQUERY_EMULATOR_HOST
-              value: "{{.Values.env.bigqueryEmulatorHost}}"
+            - name: BIGQUERY_WRITER_EMULATOR_HOST
+              value: "{{.Values.env.bigqueryWriterEmulatorHost}}"
             - name: BUCKETEER_BATCH_PROJECT
               value: "{{ .Values.env.project }}"
             - name: BUCKETEER_BATCH_PROFILE

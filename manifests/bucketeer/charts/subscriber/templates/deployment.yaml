@@ -51,8 +51,10 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["server"]
           env:
-            - name: BIGQUERY_EMULATOR_HOST
-              value: "{{.Values.env.bigqueryEmulatorHost}}"
+            - name: BIGQUERY_WRITER_EMULATOR_HOST
+              value: "{{.Values.env.bigqueryWriterEmulatorHost}}"
+            - name: BIGQUERY_QUERIER_EMULATOR_HOST
+              value: "{{.Values.env.bigqueryQuerierEmulatorHost}}"
             - name: BUCKETEER_SUBSCRIBER_PROJECT
               value: "{{ .Values.env.project }}"
             - name: BUCKETEER_SUBSCRIBER_PROFILE
