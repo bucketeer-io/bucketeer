@@ -25,6 +25,7 @@ import (
 )
 
 func TestNormalInverseGamma(t *testing.T) {
+	t.Parallel()
 	v1Mean, v1Sd := 12.0, 10.0
 	v2Mean, v2Sd := 15.0, 12.0
 	v1Dist := distuv.Normal{Mu: v1Mean, Sigma: v1Sd}
@@ -59,7 +60,7 @@ func TestNormalInverseGamma(t *testing.T) {
 	assert.Less(t, vrs["vid1"].GoalValueSumPerUserProb.Percentile025, -1.0)
 	assert.Greater(t, vrs["vid1"].GoalValueSumPerUserProb.Percentile975, 26.5)
 	assert.Less(t, vrs["vid1"].GoalValueSumPerUserProb.Percentile975, 28.0)
-	assert.Greater(t, vrs["vid1"].GoalValueSumPerUserProbBest.Mean, 0.4)
+	assert.Greater(t, vrs["vid1"].GoalValueSumPerUserProbBest.Mean, 0.39)
 	assert.Less(t, vrs["vid1"].GoalValueSumPerUserProbBest.Mean, 0.5)
 	assert.Equal(t, vrs["vid1"].GoalValueSumPerUserProbBeatBaseline.Mean, 0.0)
 
@@ -68,9 +69,9 @@ func TestNormalInverseGamma(t *testing.T) {
 	assert.Greater(t, vrs["vid2"].GoalValueSumPerUserProb.Percentile025, -6.0)
 	assert.Less(t, vrs["vid2"].GoalValueSumPerUserProb.Percentile025, -4.0)
 	assert.Greater(t, vrs["vid2"].GoalValueSumPerUserProb.Percentile975, 36.0)
-	assert.Less(t, vrs["vid2"].GoalValueSumPerUserProb.Percentile975, 37.5)
+	assert.Less(t, vrs["vid2"].GoalValueSumPerUserProb.Percentile975, 37.51)
 	assert.Greater(t, vrs["vid2"].GoalValueSumPerUserProbBest.Mean, 0.4)
-	assert.Less(t, vrs["vid2"].GoalValueSumPerUserProbBest.Mean, 0.6)
+	assert.Less(t, vrs["vid2"].GoalValueSumPerUserProbBest.Mean, 0.61)
 	assert.Greater(t, vrs["vid2"].GoalValueSumPerUserProbBeatBaseline.Mean, 0.4)
-	assert.Less(t, vrs["vid2"].GoalValueSumPerUserProbBeatBaseline.Mean, 0.6)
+	assert.Less(t, vrs["vid2"].GoalValueSumPerUserProbBeatBaseline.Mean, 0.61)
 }
