@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useQueryExperimentResultDetails } from '@queries/experiment-result';
-import { useQueryFeature } from '@queries/feature-details';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { cloneDeep } from 'lodash';
-import { Experiment } from '@types';
+import { Experiment, ExperimentResult, Feature } from '@types';
 import PageLayout from 'elements/page-layout';
 import GoalResultItem from './goal-results';
 import { EmptyCollection } from './results-empty';
@@ -24,38 +21,24 @@ export interface GoalResultState {
   goalId: string;
 }
 
-const Results = ({ experiment }: { experiment: Experiment }) => {
-  const params = useParams();
+const Results = ({
+  isLoading,
+  isErrorState,
+  feature,
+  experiment,
+  experimentResult
+}: {
+  isLoading: boolean;
+  isErrorState: boolean;
+  feature?: Feature;
+  experiment: Experiment;
+  experimentResult?: ExperimentResult;
+}) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const [goalResultState, setGoalResultState] = useState<GoalResultState[]>([]);
   const [goalsNarrow, setGoalsNarrow] = useState<string[]>([]);
-
-  const {
-    data: experimentResultCollection,
-    isLoading,
-    isError
-  } = useQueryExperimentResultDetails({
-    params: {
-      experimentId: params?.experimentId || '',
-      environmentId: currentEnvironment.id
-    },
-    retry: experiment.status !== 'WAITING'
-  });
-
-  const experimentResult = experimentResultCollection?.experimentResult;
-
-  const { data: featureResultCollection, isError: featureError } =
-    useQueryFeature({
-      params: {
-        environmentId: currentEnvironment.id,
-        id: experiment.featureId
-      }
-    });
-  const feature = featureResultCollection?.feature;
-
-  const isErrorState = isError || !experimentResult || featureError;
 
   const handleChangeResultState = ({
     index,

@@ -132,19 +132,13 @@ const ConversionRateTable = ({
         {conversionRateData?.map((item, i) => {
           const {
             experimentCount,
-            evaluationCount,
             cvrProbBeatBaseline,
             cvrProbBest,
             goalValueSumPerUserProbBest,
-            goalValueSumPerUserProbBeatBaseline
+            goalValueSumPerUserProbBeatBaseline,
+            conversionRate,
+            expectedLoss
           } = item;
-
-          const conversionRate =
-            Number(evaluationCount?.userCount) > 0
-              ? (Number(experimentCount?.userCount) /
-                  Number(evaluationCount?.userCount)) *
-                100
-              : 0;
 
           const valuePerUser =
             Number(experimentCount.userCount) > 0
@@ -220,8 +214,7 @@ const ConversionRateTable = ({
               />
               <ResultCell value={probBeatBaselineValue} minSize={171.5} />
               <ResultCell value={probBestValue} minSize={171.5} />
-              {/* Need to update when the api done */}
-              <ResultCell value={probBestValue} minSize={163} />
+              <ResultCell value={expectedLoss} minSize={163} />
             </div>
           );
         })}

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
@@ -7,11 +8,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
-import { Experiment } from '@types';
+import { Experiment, ExperimentResult } from '@types';
 import { formatLongDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
 import {
   IconExperiment,
+  IconMember,
   IconNotStartedExperiment,
   IconStartExperiment,
   IconStopExperiment,
@@ -22,7 +24,13 @@ import Button from 'components/button';
 import Icon from 'components/icon';
 import ConfirmModal from 'elements/confirm-modal';
 
-const ExperimentState = ({ experiment }: { experiment: Experiment }) => {
+const ExperimentState = ({
+  experimentResult,
+  experiment
+}: {
+  experiment: Experiment;
+  experimentResult?: ExperimentResult;
+}) => {
   const { t } = useTranslation(['table', 'form']);
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
@@ -32,6 +40,24 @@ const ExperimentState = ({ experiment }: { experiment: Experiment }) => {
   const isRunning = experiment.status === 'RUNNING',
     isWaiting = experiment.status === 'WAITING',
     isStopped = ['STOPPED', 'FORCE_STOPPED'].includes(experiment.status);
+
+  const totalUsers = useMemo(() => {
+    const formatNumber = (num: number): string => {
+      if (!num) return '';
+      if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
+      if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+      if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+      return num.toString();
+    };
+
+    const total = formatNumber(
+      experimentResult?.goalResults?.reduce(
+        (acc, cur) => acc + (+cur?.summary?.totalEvaluationUserCount || 0),
+        0
+      ) || 0
+    );
+    return total || 0;
+  }, [experimentResult]);
 
   const [
     openToggleExperimentModal,
@@ -103,7 +129,7 @@ const ExperimentState = ({ experiment }: { experiment: Experiment }) => {
             )}
           </p>
         </div>
-        <div className="pl-3 typo-para-medium text-gray-700 whitespace-nowrap">
+        <div className="px-3 border-r border-gray-400 typo-para-small text-gray-700 whitespace-nowrap">
           <Trans
             i18nKey={
               isRunning
@@ -129,11 +155,25 @@ const ExperimentState = ({ experiment }: { experiment: Experiment }) => {
             }}
           />
         </div>
+        <div className="flex items-center gap-x-3 pl-3 typo-para-small text-gray-700 whitespace-nowrap">
+          <Icon icon={IconMember} size="sm" />
+          <p>
+            <Trans
+              i18nKey={`table:results.total-users-use`}
+              components={{
+                bold: <strong className="text-gray-700" />
+              }}
+              values={{
+                value: totalUsers
+              }}
+            />
+          </p>
+        </div>
       </div>
       <Button
         disabled={isStopped}
         variant={'text'}
-        className={cn('typo-sm h-10 whitespace-nowrap', {
+        className={cn('!typo-para-small h-10 whitespace-nowrap', {
           'text-accent-red-500 hover:text-accent-red-600': isRunning
         })}
         onClick={onOpenToggleExperimentModal}

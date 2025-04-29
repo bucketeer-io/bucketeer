@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
-import { FeatureVariation } from '@types';
+import { BestVariation, FeatureVariation } from '@types';
 import {
   IconExperiment,
   IconInfo,
@@ -13,15 +13,40 @@ import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 
 const ConfidenceVariants = ({
+  bestVariations,
   variations,
   onOpenRolloutVariant
 }: {
+  bestVariations: BestVariation[];
   variations: FeatureVariation[];
   onOpenRolloutVariant: () => void;
 }) => {
   const { t } = useTranslation(['table']);
-  const variants = useMemo(
-    () => variations.slice(0, variations.length > 2 ? 1 : variations.length),
+  const bestVariation = useMemo(
+    () => bestVariations.find(item => item.isBest),
+    [bestVariations]
+  );
+
+  const variants = useMemo(() => {
+    const results = bestVariation ? [bestVariation] : [];
+    bestVariations.forEach(item => {
+      if (!results.find(v => v?.probability === item.probability)) {
+        results.push(item);
+      }
+    });
+
+    return results;
+  }, [bestVariations, bestVariation]);
+
+  const getVariationName = useCallback(
+    (id?: string) => {
+      if (!id) return null;
+      const variation = variations.find(item => item.id === id);
+      return {
+        name: variation?.name,
+        value: variation?.value
+      };
+    },
     [variations]
   );
   return (
@@ -32,45 +57,56 @@ const ConfidenceVariants = ({
           <Trans
             i18nKey={'table:results.confidence-percent'}
             values={{
-              percent: '100%'
+              percent: `${bestVariation?.probability || 0}%`
             }}
           />
         </div>
-        {variants.map((item, index) => (
-          <div
-            key={item.id}
-            className="flex items-center gap-x-2 pl-3 border-l border-gray-400 typo-para-small text-gray-600"
-          >
-            <Trans
-              i18nKey={'table:results.variant-outperformed-percent'}
-              values={{
-                name: item.name || item.value,
-                percent: '100%'
-              }}
-            />
-            {index === variants.length - 1 && (
-              <div className="flex-center p-1 rounded bg-primary-100/30">
-                <Icon icon={IconOutperformed} size="xxs" color="primary-500" />
-              </div>
-            )}
-          </div>
-        ))}
+        {variants?.map((item, index) => {
+          const variation = getVariationName(item?.id);
+          return (
+            <div
+              key={item?.id}
+              className="flex items-center gap-x-2 pl-3 border-l border-gray-400 typo-para-small text-gray-600"
+            >
+              <Trans
+                i18nKey={'table:results.variant-outperformed-percent'}
+                values={{
+                  name: variation?.name || variation?.value,
+                  percent: `${item?.probability}%`
+                }}
+              />
+              {index === variants.length - 1 && (
+                <div className="flex-center p-1 rounded bg-primary-100/30">
+                  <Icon
+                    icon={IconOutperformed}
+                    size="xxs"
+                    color="primary-500"
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
 
-        {variations.length > 2 && (
+        {variants.length > 2 && (
           <Tooltip
             content={
               <div>
-                {variations.slice(1, variations.length).map((item, index) => (
-                  <div key={index} className="typo-para-medium text-white">
-                    <Trans
-                      i18nKey={'table:results.variant-outperformed-percent'}
-                      values={{
-                        name: item.name || item.value,
-                        percent: '100%'
-                      }}
-                    />
-                  </div>
-                ))}
+                {variants.slice(1, variants.length).map((item, index) => {
+                  const variation = getVariationName(item?.id);
+
+                  return (
+                    <div key={index} className="typo-para-medium text-white">
+                      <Trans
+                        i18nKey={'table:results.variant-outperformed-percent'}
+                        values={{
+                          name: variation?.name || variation?.value,
+                          percent: `${item?.probability}%`
+                        }}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             }
             trigger={

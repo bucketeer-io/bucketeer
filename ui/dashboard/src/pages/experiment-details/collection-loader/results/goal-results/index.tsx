@@ -145,10 +145,14 @@ const GoalResultItem = ({
           />
         </div>
       </div>
-      <ConfidenceVariants
-        variations={experiment.variations}
-        onOpenRolloutVariant={onOpenRolloutVariant}
-      />
+      {goalResult?.summary?.bestVariations?.length > 0 &&
+        experiment?.status === 'RUNNING' && (
+          <ConfidenceVariants
+            bestVariations={goalResult.summary.bestVariations}
+            variations={experiment.variations}
+            onOpenRolloutVariant={onOpenRolloutVariant}
+          />
+        )}
       {isOpenRolloutVariant && (
         <RolloutVariantModal
           isOpen={isOpenRolloutVariant}

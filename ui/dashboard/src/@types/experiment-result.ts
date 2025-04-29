@@ -12,6 +12,19 @@ export interface ExperimentResult {
 export interface GoalResult {
   goalId: string;
   variationResults: VariationResult[];
+  summary: GoalResultSummary;
+}
+
+export interface GoalResultSummary {
+  bestVariations: BestVariation[];
+  totalEvaluationUserCount: string;
+  totalGoalUserCount: string;
+}
+
+export interface BestVariation {
+  id: string;
+  probability: number;
+  isBest: boolean;
 }
 
 export interface VariationResult {
@@ -38,6 +51,9 @@ export interface VariationResult {
   goalValueSumPerUserMedianTimeseries: Timeseries;
   goalValueSumPerUserPercentile025Timeseries: Timeseries;
   goalValueSumPerUserPercentile975Timeseries: Timeseries;
+  conversionRate: number;
+  expectedLoss: number;
+  cvrSamples: number[];
 }
 
 export interface Timeseries {

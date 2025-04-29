@@ -153,7 +153,8 @@
     "rollout-variant": "Rollout variant",
     "rollout": "Rollout",
     "choose-variant": "Choose which variant you want to proceed with.",
-    "variant-percent": "{{name}}: {{percent}}%"
+    "variant-percent": "{{name}}: {{percent}}%",
+    "total-users-use": "Total users in this experiment: <bold>{{value}}</bold>"
   },
   "feature-flags": {
     "confirm-archive-desc": "This will archive and return the default value defined in your code for all users. We recommend removing the code references to \"<text>{{name}}</text>\" from your application before archiving.",
