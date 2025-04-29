@@ -1,3 +1,5 @@
+import { FeatureVariation } from './feature';
+
 export type ExperimentStatus =
   | 'WAITING'
   | 'RUNNING'
@@ -10,12 +12,7 @@ export interface Experiment {
   goalId: string;
   featureId: string;
   featureVersion: number;
-  variations: {
-    id: string;
-    value: string;
-    name: string;
-    description: string;
-  }[];
+  variations: FeatureVariation[];
   startAt: string;
   stopAt: string;
   stopped: boolean;

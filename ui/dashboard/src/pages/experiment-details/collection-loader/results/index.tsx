@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQueryExperimentResultDetails } from '@queries/experiment-result';
+import { useQueryFeature } from '@queries/feature-details';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { cloneDeep } from 'lodash';
 import { Experiment } from '@types';
@@ -44,7 +45,17 @@ const Results = ({ experiment }: { experiment: Experiment }) => {
   });
 
   const experimentResult = experimentResultCollection?.experimentResult;
-  const isErrorState = isError || !experimentResult;
+
+  const { data: featureResultCollection, isError: featureError } =
+    useQueryFeature({
+      params: {
+        environmentId: currentEnvironment.id,
+        id: experiment.featureId
+      }
+    });
+  const feature = featureResultCollection?.feature;
+
+  const isErrorState = isError || !experimentResult || featureError;
 
   const handleChangeResultState = ({
     index,
@@ -101,6 +112,9 @@ const Results = ({ experiment }: { experiment: Experiment }) => {
           key={index}
           isNarrow={goalsNarrow.includes(item.goalId)}
           experiment={experiment}
+          feature={feature}
+          environmentId={currentEnvironment.id}
+          isRequireComment={currentEnvironment.requireComment}
           goalResult={item}
           goalResultState={goalResultState[index]}
           onChangeResultState={(tab, chartType) =>

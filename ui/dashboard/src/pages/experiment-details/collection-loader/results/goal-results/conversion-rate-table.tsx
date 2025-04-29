@@ -26,33 +26,38 @@ const ConversionRateTable = ({
       {
         name: 'variation',
         tooltipKey: '',
-        minSize: 270
+        minSize: 255
       },
       goalResultState?.chartType === 'conversion-rate'
         ? {
             name: 'conversion-rate',
             tooltipKey: 'conversion-rate-tooltip',
-            minSize: 210
+            minSize: 171.5
           }
         : {
             name: 'value-user',
             tooltipKey: 'value-user-tooltip',
-            minSize: 210
+            minSize: 171.5
           },
       {
         name: 'improvement',
         tooltipKey: 'improvement-tooltip',
-        minSize: 210
+        minSize: 171.5
       },
       {
         name: 'probability-to-beat-baseline',
         tooltipKey: 'probability-to-beat-baseline-tooltip',
-        minSize: 210
+        minSize: 171.5
       },
       {
         name: 'probability-to-be-best',
         tooltipKey: 'probability-to-be-best-tooltip',
-        minSize: 210
+        minSize: 171.5
+      },
+      {
+        name: 'expected-loss',
+        tooltipKey: '',
+        minSize: 163
       }
     ],
     [goalResultState]
@@ -192,7 +197,7 @@ const ConversionRateTable = ({
                 variationId={item.variationId}
                 isFirstItem
                 value={item?.variationName || ''}
-                minSize={270}
+                minSize={255}
                 currentIndex={i}
                 isChecked={!isHidden}
                 onToggleShowData={onToggleShowData}
@@ -203,7 +208,7 @@ const ConversionRateTable = ({
                     ? conversionRate.toFixed(1) + ' %'
                     : valuePerUser.toFixed(2)
                 }
-                minSize={210}
+                minSize={171.5}
               />
               <ResultCell
                 value={
@@ -211,10 +216,12 @@ const ConversionRateTable = ({
                     ? improvementValueConversionRate
                     : improvementValuePerUser
                 }
-                minSize={210}
+                minSize={171.5}
               />
-              <ResultCell value={probBeatBaselineValue} minSize={210} />
-              <ResultCell value={probBestValue} minSize={210} />
+              <ResultCell value={probBeatBaselineValue} minSize={171.5} />
+              <ResultCell value={probBestValue} minSize={171.5} />
+              {/* Need to update when the api done */}
+              <ResultCell value={probBestValue} minSize={163} />
             </div>
           );
         })}
