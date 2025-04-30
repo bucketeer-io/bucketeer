@@ -354,7 +354,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 			zap.Any("goalEvent", event),
 			zap.Any("evaluation", eval),
 		)
-		if event.Timestamp <= eval.Timestamp {
+		if event.Timestamp < eval.Timestamp {
 			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeGoalEventIssuedBeforeEvaluation).Inc()
 			w.logger.Error("Goal event issued before evaluation",
 				zap.String("environmentId", environmentID),

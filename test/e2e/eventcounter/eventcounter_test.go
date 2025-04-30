@@ -428,9 +428,10 @@ func TestGrpcExperimentResult(t *testing.T) {
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-time.Hour).Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-2*time.Hour).Unix())
 	// Increment experiment event count
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
 
 	// CVRs is 2/3
 	// Evaluation events must always be sent before goal events
@@ -448,9 +449,10 @@ func TestGrpcExperimentResult(t *testing.T) {
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-time.Hour).Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-2*time.Hour).Unix())
 	// Increment experiment event count
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -596,9 +598,10 @@ func TestExperimentResult(t *testing.T) {
 	registerGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-time.Hour).Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-2*time.Hour).Unix())
 	// Increment experiment event count
 	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
 
 	// CVRs is 2/3
 	// Evaluation events must always be sent before goal events
@@ -616,9 +619,10 @@ func TestExperimentResult(t *testing.T) {
 	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-time.Hour).Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-2*time.Hour).Unix())
 	// Increment experiment event count
 	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -1203,9 +1207,15 @@ func TestHTTPTrack(t *testing.T) {
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
 
-	// Send track events.
-	sendHTTPTrack(t, userID, goalIDs[0], tag, value)
+	// Evaluation events must always be sent before goal events
 	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
+
+	// Send track events
+	// This track event will be converted to a goal event on the backend.
+	sendHTTPTrack(t, userID, goalIDs[0], tag, value)
 
 	// Check the count
 	for i := 0; i < retryTimes; i++ {

@@ -55,9 +55,12 @@ func (w *goalEvtWriter) StartRetryProcessor(ctx context.Context) {
 		for {
 			select {
 			case <-ctx.Done():
+				w.logger.Debug("Goal event retry processor stopped")
 				return
 			case <-ticker.C:
-				w.logger.Debug("Starting goal event retry processor")
+				w.logger.Debug("Starting goal event retry processor",
+					zap.String("now", time.Now().Format(time.RFC3339)),
+					zap.Duration("interval", w.retryGoalEventInterval))
 				w.scanAndProcess(ctx)
 			}
 		}
@@ -69,7 +72,7 @@ func (w *goalEvtWriter) scanAndProcess(ctx context.Context) {
 	total := 0
 	for {
 		// Scan for keys in format: environmentID:goal_event_retry:eventID
-		cursor, keys, err := w.redisClient.Scan(cursor, fmt.Sprintf("*:%s:*", retryGoalEventKeyKind), scanBatchSize)
+		nextCursor, keys, err := w.redisClient.Scan(cursor, fmt.Sprintf("*:%s:*", retryGoalEventKeyKind), scanBatchSize)
 		if err != nil {
 			w.logger.Error("Scan failed", zap.Error(err), zap.Uint64("cursor", cursor))
 			break
@@ -78,6 +81,7 @@ func (w *goalEvtWriter) scanAndProcess(ctx context.Context) {
 			w.processRetryKey(ctx, key)
 		}
 		total += len(keys)
+		cursor = nextCursor
 		if cursor == 0 {
 			w.logger.Debug("Scan complete", zap.Int("totalKeys", total))
 			break
@@ -181,6 +185,13 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
 			lg.Error("Failed to store retry message", zap.Error(err))
 		}
+		return
+	}
+
+	if len(experiments) == 0 {
+		lg.Info("No experiments found, deleting retry message")
+		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageNoExperiments).Inc()
+		w.deleteKey(ctx, key)
 		return
 	}
 

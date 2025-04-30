@@ -142,7 +142,6 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 			p.cacheLastUsedInfoPerEnv(envEvents)
 			updateEvaluationCounter(envEvents)
 		case <-ticker.C:
-			p.logger.Debug("Update evaluation count timer triggered")
 			envEvents := p.extractEvents(batch)
 			// Update the feature flag last-used cache
 			p.cacheLastUsedInfoPerEnv(envEvents)

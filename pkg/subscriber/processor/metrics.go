@@ -46,6 +46,7 @@ const (
 	codeRetryMessageAppendSuccess           = "RetryMessageAppendSuccess"
 	codeRetryMessageNoEvaluations           = "RetryMessageNoEvaluations"
 	codeRetryMessageNoGoalEvents            = "RetryMessageNoGoalEvents"
+	codeRetryMessageNoExperiments           = "RetryMessageNoExperiments"
 	codeGetFeaturesReturnedEmpty            = "GetFeaturesReturnedEmpty"
 	codeEvaluationsAreEmpty                 = "EvaluationsAreEmpty"
 	codeEventIssuedAfterExperimentEnded     = "EventIssuedAfterExperimentEnded"

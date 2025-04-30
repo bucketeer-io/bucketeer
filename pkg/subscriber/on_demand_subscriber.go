@@ -100,10 +100,6 @@ func (s *onDemandSubscriber) Run(ctx context.Context) {
 				continue
 			}
 			if start {
-				s.logger.Debug(
-					"onDemandSubscriber start pulling messages",
-					zap.String("name", s.name),
-				)
 				if !s.IsRunning() {
 					err = s.createPuller()
 					if err != nil {
@@ -115,20 +111,9 @@ func (s *onDemandSubscriber) Run(ctx context.Context) {
 					}
 					s.group = errgroup.Group{}
 					subscription <- struct{}{}
-					s.logger.Debug(
-						"Puller is not running, start pulling messages",
-						zap.String("name", s.name),
-					)
 				}
 			} else {
-				s.logger.Debug(
-					"onDemandSubscriber stop pulling messages",
-					zap.String("name", s.name),
-				)
 				if s.IsRunning() {
-					s.logger.Debug("Puller is running, stop pulling messages",
-						zap.String("name", s.name),
-					)
 					s.unsubscribe()
 				}
 				// delete subscription if it exists
@@ -141,10 +126,6 @@ func (s *onDemandSubscriber) Run(ctx context.Context) {
 					continue
 				}
 				if exists {
-					s.logger.Debug("Subscription exists, delete it now",
-						zap.String("name", s.name),
-						zap.String("subscription", s.configuration.Subscription),
-					)
 					err = s.client.DeleteSubscription(s.configuration.Subscription)
 					if err != nil {
 						s.logger.Error("Failed to delete subscription",
@@ -152,17 +133,7 @@ func (s *onDemandSubscriber) Run(ctx context.Context) {
 							zap.Error(err),
 						)
 						continue
-					} else {
-						s.logger.Debug("Subscription deleted successfully",
-							zap.String("name", s.name),
-							zap.String("subscription", s.configuration.Subscription),
-						)
 					}
-				} else {
-					s.logger.Debug("Subscription does not exist",
-						zap.String("name", s.name),
-						zap.String("subscription", s.configuration.Subscription),
-					)
 				}
 			}
 		case <-ctx.Done():
@@ -187,9 +158,6 @@ func (s *onDemandSubscriber) subscribe(subscription chan struct{}) {
 				err := s.rateLimitedPuller.Run(ctx)
 				if err != nil {
 					if strings.Contains(err.Error(), pubsubErrNotFound) {
-						s.logger.Debug("Failed to pull messages. Subscription does not exist",
-							zap.String("name", s.name),
-							zap.String("subscription", s.configuration.Subscription))
 						s.unsubscribe()
 						return nil
 					}
@@ -205,7 +173,6 @@ func (s *onDemandSubscriber) subscribe(subscription chan struct{}) {
 			if err != nil {
 				s.logger.Error("Failed while running pull messages", zap.Error(err))
 			}
-			s.logger.Debug("Puller stopped subscribing")
 			s.isRunning = false
 		case <-s.ctx.Done():
 			return
