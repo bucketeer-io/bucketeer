@@ -1167,13 +1167,10 @@ func (s *AccountService) ListAccountsV2(
 	values := make([]interface{}, 1)
 	if req.EnvironmentId != nil && req.EnvironmentRole != nil {
 		values[0] = fmt.Sprintf("{\"environment_id\": \"%s\", \"role\": %d}", req.EnvironmentId.Value, req.EnvironmentRole.Value) // nolint:lll
-		//		whereParts = append(whereParts, mysql.NewJSONFilter("environment_roles", mysql.JSONContainsJSON, values))
 	} else if req.EnvironmentId != nil {
 		values[0] = fmt.Sprintf("{\"environment_id\": \"%s\"}", req.EnvironmentId.Value)
-		//		whereParts = append(whereParts, mysql.NewJSONFilter("environment_roles", mysql.JSONContainsJSON, values))
 	} else if req.EnvironmentRole != nil {
 		values[0] = fmt.Sprintf("{\"role\": %d}", req.EnvironmentRole.Value)
-		//		whereParts = append(whereParts, mysql.NewJSONFilter("environment_roles", mysql.JSONContainsJSON, values))
 	}
 	if values[0] != nil && values[0] != "" {
 		jsonFilters = append(
@@ -1186,7 +1183,6 @@ func (s *AccountService) ListAccountsV2(
 	}
 	var seachQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		//		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"email", "first_name", "last_name"}, req.SearchKeyword))
 		seachQuery = &mysql.SearchQuery{
 			Columns: []string{"email", "first_name", "last_name"},
 			Keyword: req.SearchKeyword,

@@ -514,7 +514,7 @@ func (s *auditlogService) getAccountMapByEmails(
 		emailsArg[i] = email
 	}
 	options := &mysql.ListOptions{
-		Limit:  1000,
+		Limit:  0,
 		Offset: 0,
 		Orders: nil,
 		InFilters: []*mysql.InFilter{
