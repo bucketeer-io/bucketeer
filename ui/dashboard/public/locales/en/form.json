@@ -155,5 +155,11 @@
   "placeholder-member-tags": "Tags can be used to group members as teams",
   "kind-filter-value": "Kind: {{value}}",
   "select-range": "Select Range",
-  "not-found-entity": "Not found {{entity}}"
+  "not-found-entity": "Not found {{entity}}",
+  "add-flag": "Add Flag",
+  "user-id": "User ID",
+  "enter-to-add-multiple": "Press enter to add multiple IDs.",
+  "user-attributes": "User Attributes",
+  "user-attributes-desc": "The same attributes will be applied to all the users in the list when evaluating them. User attributes are environment-specific. They are not shared between environments or projects.",
+  "key": "Key"
 }

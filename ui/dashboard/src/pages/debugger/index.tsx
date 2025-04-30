@@ -3,18 +3,18 @@ import PageHeader from 'elements/page-header';
 import PageLayout from 'elements/page-layout';
 import PageLoader from './page-loader';
 
-const AuditLogsPage = () => {
+const DebuggerPage = () => {
   const { t } = useTranslation(['common', 'form', 'table']);
 
   return (
-    <PageLayout.Root title={t('audit-logs')}>
+    <PageLayout.Root title={t('navigation.debugger')}>
       <PageHeader
-        title={t('audit-logs')}
-        description={t('audit-logs-subtitle')}
+        title={t('navigation.debugger')}
+        description={t('debugger-subtitle')}
       />
       <PageLoader />
     </PageLayout.Root>
   );
 };
 
-export default AuditLogsPage;
+export default DebuggerPage;

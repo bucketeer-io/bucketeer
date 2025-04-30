@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { debounce } from 'lodash';
+import { cn } from 'utils/style';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,9 @@ const DropdownMenuWithSearch = ({
   selectedOptions,
   isMultiselect,
   createNewOption,
+  triggerClassName,
+  contentClassName,
+  isExpand,
   additionalElement,
   onSelectOption
 }: {
@@ -36,8 +40,11 @@ const DropdownMenuWithSearch = ({
   isLoading?: boolean;
   isMultiselect?: boolean;
   options: DropdownOption[];
-  selectedOptions: string[];
+  selectedOptions?: string[];
   createNewOption?: ReactNode;
+  triggerClassName?: string;
+  contentClassName?: string;
+  isExpand?: boolean;
   additionalElement?: (item: DropdownOption) => ReactNode;
   onSelectOption: (value: DropdownValue) => void;
 }) => {
@@ -45,6 +52,7 @@ const DropdownMenuWithSearch = ({
 
   const inputSearchRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const [isOpen, setIsOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -97,16 +105,25 @@ const DropdownMenuWithSearch = ({
       }}
     >
       <DropdownMenuTrigger
+        ref={triggerRef}
         disabled={isLoading}
         placeholder={placeholder}
         label={label}
         variant="secondary"
-        className="w-full"
+        className={cn('w-full', triggerClassName)}
       />
       <DropdownMenuContent
         ref={contentRef}
         align="start"
-        className="w-[500px] py-0"
+        className={cn('w-[500px] py-0', contentClassName)}
+        style={
+          isExpand
+            ? {
+                width: triggerRef.current?.offsetWidth,
+                maxWidth: triggerRef.current?.offsetWidth
+              }
+            : {}
+        }
       >
         <DropdownMenuSearch
           ref={inputSearchRef}
@@ -121,7 +138,7 @@ const DropdownMenuWithSearch = ({
           dropdownOptions.map((item, index) => (
             <DropdownMenuItem
               key={index}
-              isSelected={selectedOptions.includes(item.value as string)}
+              isSelected={selectedOptions?.includes(item.value as string)}
               isMultiselect={isMultiselect}
               value={item.value}
               label={item.label}

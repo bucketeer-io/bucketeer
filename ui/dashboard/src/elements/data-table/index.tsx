@@ -17,6 +17,7 @@ import PageLayout from 'elements/page-layout';
 export interface DataTableProps<TData, TValue> {
   data: TData[];
   columns: ColumnDef<TData, TValue>[];
+  manualSorting?: boolean;
   state?: Partial<TableState>;
   emptyCollection?: ReactElement;
   isLoading?: boolean;
@@ -27,6 +28,7 @@ export interface DataTableProps<TData, TValue> {
 export const DataTable = <TData, TValue>({
   data,
   columns,
+  manualSorting = true,
   state,
   emptyCollection,
   isLoading,
@@ -53,7 +55,7 @@ export const DataTable = <TData, TValue>({
     onSortingChange: onSortingChangeHandler,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    manualSorting: true
+    manualSorting
   });
 
   return (

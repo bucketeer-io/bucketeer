@@ -226,5 +226,13 @@
   "audit-log-details": "Audit Log Details",
   "current-version": "Current Version",
   "updates": "Updates",
-  "experimentation": "Experimentation"
+  "experimentation": "Experimentation",
+  "debugger-subtitle": "The debugger can verify what variation will be assigned to a specific end-user under different conditions in real-time.",
+  "add-attribute": "Add Attribute",
+  "evaluate": "Evaluate",
+  "debugger-results": "Debugger Results",
+  "group-by-type": "Group By: {{type}}",
+  "user": "User",
+  "edit-fields": "Edit Fields",
+  "clear-all-fields": "Clear All Fields"
 }
