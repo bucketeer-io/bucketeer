@@ -5,7 +5,6 @@ image:
 namespace: default
 fullnameOverride: "subscriber"
 
-
 env:
   project:
   profile: true
@@ -250,8 +249,11 @@ onDemandProcessors:
     flushTimeout: 30
     project:
     bigQueryDataSet:
+    bigQueryDataLocation:
     bigQueryBatchSize:
     timezone: UTC
+    MaxRetryGoalEventPeriod: 86400 # 1 day
+    RetryGoalEventInterval: 300 # 5 minutes
   goalCountEventOPSPersister:
     flushSize: 20
     flushInterval: 5

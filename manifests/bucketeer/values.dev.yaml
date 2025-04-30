@@ -397,44 +397,47 @@ subscriber:
     # This is the processor's name. It must match the same name defined in the
     # pkg/subscriber/processor/processors.go
     auditLogPersister:
-      flushSize: 100
-      flushInterval: 10
-      flushTimeout: 10
+      flushSize: 10
+      flushInterval: 5
+      flushTimeout: 30
     evaluationCountEventPersister:
-      flushSize: 100
-      flushInterval: 10
+      flushSize: 10
+      flushInterval: 5
       writeCacheInterval: 10
     segmentUserPersister:
       domainEventProject: bucketeer-test
       domainEventTopic: domain
-      flushSize: 100
-      flushInterval: 10
+      flushSize: 10
+      flushInterval: 5
     userEventPersister:
-      flushSize: 100
-      flushInterval: 10
+      flushSize: 10
+      flushInterval: 5
 
   onDemandProcessors:
     evaluationCountEventDWHPersister:
-      flushSize: 100
-      flushInterval: 10
-      flushTimeout: 10
+      flushSize: 10
+      flushInterval: 5
+      flushTimeout: 30
       project: bucketeer-test
       bigQueryDataSet: bucketeer
       bigQueryBatchSize: 10
       timezone: UTC
     evaluationCountEventOPSPersister:
-      flushSize: 100
-      flushInterval: 10
-      flushTimeout: 10
+      flushSize: 10
+      flushInterval: 5
+      flushTimeout: 30
     goalCountEventDWHPersister:
-      flushSize: 100
-      flushInterval: 10
-      flushTimeout: 10
+      flushSize: 10
+      flushInterval: 5
+      flushTimeout: 30
       project: bucketeer-test
       bigQueryDataSet: bucketeer
+      bigQueryDataLocation: bucketeer
       bigQueryBatchSize: 10
       timezone: UTC
+      MaxRetryGoalEventPeriod: 86400 # 1 day
+      RetryGoalEventInterval: 30 # 30 seconds
     goalCountEventOPSPersister:
-      flushSize: 100
-      flushInterval: 10
-      flushTimeout: 10
+      flushSize: 10
+      flushInterval: 5
+      flushTimeout: 30

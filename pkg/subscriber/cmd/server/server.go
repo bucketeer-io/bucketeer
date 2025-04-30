@@ -582,6 +582,7 @@ func (s *server) registerPubSubProcessorMap(
 			onDemandProcessorsConfigMap[processor.EvaluationCountEventDWHPersisterName],
 			mysqlClient,
 			nonPersistentRedisClient, // use non-persistent redis instance here
+			persistentRedisClient,    // use persistent redis instance here for goal retry events
 			exClient,
 			ftClient,
 			processor.EvaluationCountEventDWHPersisterName,
@@ -600,6 +601,7 @@ func (s *server) registerPubSubProcessorMap(
 			onDemandProcessorsConfigMap[processor.GoalCountEventDWHPersisterName],
 			mysqlClient,
 			nonPersistentRedisClient, // use non-persistent redis instance here
+			persistentRedisClient,    // use persistent redis instance here for goal retry events
 			exClient,
 			ftClient,
 			processor.GoalCountEventDWHPersisterName,

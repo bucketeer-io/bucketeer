@@ -25,59 +25,93 @@ import (
 	"golang.org/x/sync/singleflight"
 
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
+	ecstorage "github.com/bucketeer-io/bucketeer/pkg/eventcounter/storage/v2"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	ft "github.com/bucketeer-io/bucketeer/pkg/feature/client"
+	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
+	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber/storage"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
 
-const goalEventTable = "goal_event"
+const (
+	goalEventTable                = "goal_event"
+	defaultRetryGoalEventInterval = 5 * time.Minute
+)
 
 type goalEvtWriter struct {
-	writer           storage.GoalEventWriter
-	experimentClient ec.Client
-	featureClient    ft.Client
-	cache            cachev3.ExperimentsCache
-	flightgroup      singleflight.Group
-	location         *time.Location
-	logger           *zap.Logger
+	writer                  storage.GoalEventWriter
+	eventStorage            ecstorage.EventStorage
+	experimentClient        ec.Client
+	featureClient           ft.Client
+	redisClient             redisv3.Client
+	locker                  *GoalEventLocker
+	cache                   cachev3.ExperimentsCache
+	flightgroup             singleflight.Group
+	location                *time.Location
+	logger                  *zap.Logger
+	maxRetryGoalEventPeriod time.Duration
+	retryGoalEventInterval  time.Duration
 }
 
 func NewGoalEventWriter(
 	ctx context.Context,
-	l *zap.Logger,
+	logger *zap.Logger,
 	exClient ec.Client,
 	ftClient ft.Client,
 	cache cachev3.ExperimentsCache,
-	project, ds string,
-	size int,
+	project, bigQueryDataSet, bigQueryDataLocation string,
+	bigQueryBatchSize int,
 	location *time.Location,
+	redisClient redisv3.Client,
+	maxRetryGoalEventPeriod time.Duration,
+	retryGoalEventInterval time.Duration,
 ) (Writer, error) {
 	evt := epproto.GoalEvent{}
 	goalWriter, err := writer.NewWriter(
 		ctx,
 		project,
-		ds,
+		bigQueryDataSet,
 		goalEventTable,
 		evt.ProtoReflect().Descriptor(),
-		writer.WithLogger(l),
+		writer.WithLogger(logger),
 	)
 	if err != nil {
 		return nil, err
 	}
-	return &goalEvtWriter{
-		writer:           storage.NewGoalEventWriter(goalWriter, size),
-		experimentClient: exClient,
-		featureClient:    ftClient,
-		cache:            cache,
-		location:         location,
-		logger:           l,
-	}, nil
+	eventQuerier, err := bqquerier.NewClient(
+		ctx,
+		project,
+		bigQueryDataLocation,
+		bqquerier.WithLogger(logger),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if retryGoalEventInterval == 0 {
+		retryGoalEventInterval = defaultRetryGoalEventInterval
+	}
+	// Calculate lock TTL as 80% of retry interval
+	lockTTL := retryGoalEventInterval * 4 / 5
+
+	w := &goalEvtWriter{
+		writer:                  storage.NewGoalEventWriter(goalWriter, bigQueryBatchSize),
+		eventStorage:            ecstorage.NewEventStorage(eventQuerier, bigQueryDataSet, logger),
+		experimentClient:        exClient,
+		featureClient:           ftClient,
+		redisClient:             redisClient,
+		locker:                  NewGoalEventLocker(redisClient, lockTTL),
+		cache:                   cache,
+		location:                location,
+		logger:                  logger,
+		maxRetryGoalEventPeriod: maxRetryGoalEventPeriod,
+		retryGoalEventInterval:  retryGoalEventInterval,
+	}
+	w.StartRetryProcessor(ctx)
+	return w, nil
 }
 
 func (w *goalEvtWriter) Write(
@@ -168,16 +202,16 @@ func (w *goalEvtWriter) Write(
 func (w *goalEvtWriter) convToGoalEvents(
 	ctx context.Context,
 	e *eventproto.GoalEvent,
-	id, environmentId string,
+	id, environmentID string,
 	experiments []*exproto.Experiment,
 ) ([]*epproto.GoalEvent, bool, error) {
-	evals, retriable, err := w.linkGoalEvent(ctx, e, environmentId, e.Tag, experiments)
+	evals, retriable, err := w.linkGoalEvent(ctx, e, environmentID, e.Tag, experiments)
 	if err != nil {
 		return nil, retriable, err
 	}
 	events := make([]*epproto.GoalEvent, 0, len(evals))
 	for _, eval := range evals {
-		event, retriable, err := w.convToGoalEvent(ctx, e, eval, id, e.Tag, environmentId)
+		event, retriable, err := w.convToGoalEvent(e, eval, id, e.Tag, environmentID)
 		if err != nil {
 			return nil, retriable, err
 		}
@@ -187,10 +221,9 @@ func (w *goalEvtWriter) convToGoalEvents(
 }
 
 func (w *goalEvtWriter) convToGoalEvent(
-	ctx context.Context,
 	e *eventproto.GoalEvent,
-	eval *featureproto.Evaluation,
-	id, tag, environmentId string,
+	eval *ecstorage.UserEvaluation,
+	id, tag, environmentID string,
 ) (*epproto.GoalEvent, bool, error) {
 	var ud []byte
 	if e.User != nil {
@@ -217,22 +250,22 @@ func (w *goalEvtWriter) convToGoalEvent(
 		UserId:         userID,
 		Tag:            tag,
 		SourceId:       e.SourceId.String(),
-		EnvironmentId:  environmentId,
+		EnvironmentId:  environmentID,
 		Timestamp:      time.Unix(e.Timestamp, 0).UnixMicro(),
-		FeatureId:      eval.FeatureId,
+		FeatureId:      eval.FeatureID,
 		FeatureVersion: eval.FeatureVersion,
-		VariationId:    eval.VariationId,
-		Reason:         eval.Reason.Type.String(),
+		VariationId:    eval.VariationID,
+		Reason:         eval.Reason,
 	}, false, nil
 }
 
 func (w *goalEvtWriter) linkGoalEvent(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
-	environmentId, tag string,
+	environmentID, tag string,
 	experiments []*exproto.Experiment,
-) ([]*featureproto.Evaluation, bool, error) {
-	evalExp, retriable, err := w.linkGoalEventByExperiment(ctx, event, environmentId, tag, experiments)
+) ([]*ecstorage.UserEvaluation, bool, error) {
+	evalExp, retriable, err := w.linkGoalEventByExperiment(ctx, event, environmentID, tag, experiments)
 	if err != nil {
 		return nil, retriable, err
 	}
@@ -243,9 +276,9 @@ func (w *goalEvtWriter) linkGoalEvent(
 func (w *goalEvtWriter) linkGoalEventByExperiment(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
-	environmentId, tag string,
+	environmentID, tag string,
 	experiments []*exproto.Experiment,
-) ([]*featureproto.Evaluation, bool, error) {
+) ([]*ecstorage.UserEvaluation, bool, error) {
 	// Find the experiment by goal ID
 	// TODO: we must change the console UI not to allow creating
 	// multiple experiments running at the same time,
@@ -271,34 +304,66 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 	if len(exps) == 0 {
 		return nil, false, ErrExperimentNotFound
 	}
-	evals := make([]*featureproto.Evaluation, 0, len(exps))
+	evals := make([]*ecstorage.UserEvaluation, 0, len(exps))
 	for _, exp := range exps {
 		// Get the user evaluation using the experiment info
-		ev, err := w.getUserEvaluation(
+		userID := getUserID(event.UserId, event.User)
+		eval, err := w.getUserEvaluation(
 			ctx,
-			event.User,
-			environmentId,
-			tag,
+			environmentID,
+			userID,
 			exp.FeatureId,
 			exp.FeatureVersion,
+			exp.StartAt,
+			exp.StopAt,
 		)
 		if err != nil {
-			if errors.Is(err, ErrEvaluationsAreEmpty) {
-				w.logger.Error("evaluations are empty",
+			if errors.Is(err, ecstorage.ErrNoResultsFound) {
+				w.logger.Error("Evaluation not found",
 					zap.Error(err),
-					zap.String("environmentId", environmentId),
+					zap.String("environmentId", environmentID),
 					zap.Any("goalEvent", event),
 				)
+				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeUserEvaluationNotFound).Inc()
+				if err := w.storeRetryMessage(&retryMessage{
+					GoalEvent:     event,
+					EnvironmentID: environmentID,
+					RetryCount:    0,
+					ID:            fmt.Sprintf("%s-%s-%d", event.GoalId, userID, event.Timestamp),
+				}); err != nil {
+					subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
+					w.logger.Error("Failed to store retry message",
+						zap.Error(err),
+						zap.String("environmentId", environmentID),
+						zap.Any("goalEvent", event),
+					)
+					return nil, true, err
+				}
 				return nil, false, err
 			}
 			w.logger.Error("failed to get user evaluation",
 				zap.Error(err),
-				zap.String("environmentId", environmentId),
+				zap.String("environmentId", environmentID),
 				zap.Any("goalEvent", event),
 			)
+			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToGetUserEvaluation).Inc()
 			return nil, true, err
 		}
-		evals = append(evals, ev)
+		w.logger.Debug("Evaluation found",
+			zap.String("environmentId", environmentID),
+			zap.Any("goalEvent", event),
+			zap.Any("evaluation", eval),
+		)
+		if event.Timestamp <= eval.Timestamp {
+			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeGoalEventIssuedBeforeEvaluation).Inc()
+			w.logger.Error("Goal event issued before evaluation",
+				zap.String("environmentId", environmentID),
+				zap.Any("goalEvent", event),
+				zap.Any("evaluation", eval),
+			)
+			continue
+		}
+		evals = append(evals, eval)
 	}
 	return evals, false, nil
 }
@@ -349,46 +414,23 @@ func (w *goalEvtWriter) listExperiments(
 	return experiments.([]*exproto.Experiment), nil
 }
 
-// TODO: Evaluate the user based on Feature Flag ID and version.
-// By evaluating the user using the latest feature version,
-// it could affect the experiment conversion accuracy
 func (w *goalEvtWriter) getUserEvaluation(
 	ctx context.Context,
-	user *userproto.User,
-	environmentId, tag, featureID string,
+	environmentID, userID, featureID string,
 	featureVersion int32,
-) (*featureproto.Evaluation, error) {
-	resp, err := w.featureClient.EvaluateFeatures(ctx, &featureproto.EvaluateFeaturesRequest{
-		EnvironmentId: environmentId,
-		FeatureId:     featureID,
-		Tag:           tag,
-		User:          user,
-	})
+	experimentStartAt, experimentEndAt int64,
+) (*ecstorage.UserEvaluation, error) {
+	eval, err := w.eventStorage.QueryUserEvaluation(
+		ctx,
+		environmentID,
+		userID,
+		featureID,
+		featureVersion,
+		time.Unix(experimentStartAt, 0),
+		time.Unix(experimentEndAt, 0),
+	)
 	if err != nil {
-		w.logger.Error(
-			"Failed to evaluate user",
-			zap.Error(err),
-			zap.String("environmentId", environmentId),
-			zap.String("userId", user.Id),
-			zap.String("featureId", featureID),
-			zap.Int32("featureVersion", featureVersion),
-			zap.String("tag", tag),
-		)
-		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToEvaluateUser).Inc()
-		return nil, ErrFailedToEvaluateUser
+		return nil, err
 	}
-	if len(resp.UserEvaluations.Evaluations) == 0 {
-		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeEvaluationsAreEmpty).Inc()
-		w.logger.Error(
-			"Evaluations are empty",
-			zap.Error(err),
-			zap.String("environmentId", environmentId),
-			zap.String("userId", user.Id),
-			zap.String("featureId", featureID),
-			zap.Int32("featureVersion", featureVersion),
-			zap.String("tag", tag),
-		)
-		return nil, ErrEvaluationsAreEmpty
-	}
-	return resp.UserEvaluations.Evaluations[0], nil
+	return eval, nil
 }
