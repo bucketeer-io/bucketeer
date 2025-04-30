@@ -106,27 +106,28 @@ const RolloutVariantModal = ({
                 </Form.Item>
               )}
             />
-            {isRequireComment && (
-              <Form.Field
-                control={form.control}
-                name="comment"
-                render={({ field }) => (
-                  <Form.Item className="py-0 w-full">
-                    <Form.Label required={isRequireComment}>
-                      {t('form:comment-for-update')}
-                    </Form.Label>
-                    <Form.Control>
-                      <TextArea
-                        placeholder={`${t('form:placeholder-comment')}`}
-                        rows={3}
-                        {...field}
-                      />
-                    </Form.Control>
-                    <Form.Message />
-                  </Form.Item>
-                )}
-              />
-            )}
+            <Form.Field
+              control={form.control}
+              name="comment"
+              render={({ field }) => (
+                <Form.Item className="py-0 w-full">
+                  <Form.Label
+                    required={isRequireComment}
+                    optional={!isRequireComment}
+                  >
+                    {t('form:comment-for-update')}
+                  </Form.Label>
+                  <Form.Control>
+                    <TextArea
+                      placeholder={`${t('form:placeholder-comment')}`}
+                      rows={3}
+                      {...field}
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
           </div>
           <ButtonBar
             secondaryButton={
