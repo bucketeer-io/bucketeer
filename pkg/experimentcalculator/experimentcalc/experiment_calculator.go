@@ -716,9 +716,9 @@ func (e ExperimentCalculator) calculateSummary(
 		if vr.CvrProbBeatBaseline != nil && vr.CvrProbBeatBaseline.Mean > 0.95 {
 			probability := vr.CvrProbBeatBaseline.Mean
 			bestVar := &eventcounter.Summary_Variation{
-				Id:           vr.VariationId,
-				Probability:  probability,
-				Outperformed: false,
+				Id:          vr.VariationId,
+				Probability: probability,
+				IsBest:      false,
 			}
 
 			// Track which variation has the highest probability
@@ -734,7 +734,7 @@ func (e ExperimentCalculator) calculateSummary(
 	// Mark the variation with highest probability as outperformed
 	for _, bestVar := range bestVariations {
 		if bestVar.Id == maxProbabilityVariationID {
-			bestVar.Outperformed = true
+			bestVar.IsBest = true
 		}
 	}
 

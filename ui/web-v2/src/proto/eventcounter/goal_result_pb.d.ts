@@ -99,8 +99,8 @@ export namespace Summary {
     getProbability(): number;
     setProbability(value: number): void;
 
-    getOutperformed(): boolean;
-    setOutperformed(value: boolean): void;
+    getIsbest(): boolean;
+    setIsbest(value: boolean): void;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): Variation.AsObject;
@@ -127,7 +127,7 @@ export namespace Summary {
     export type AsObject = {
       id: string;
       probability: number;
-      outperformed: boolean;
+      isbest: boolean;
     };
   }
 }

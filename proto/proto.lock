@@ -24509,7 +24509,7 @@
                   },
                   {
                     "id": 3,
-                    "name": "outperformed",
+                    "name": "isBest",
                     "type": "bool"
                   }
                 ]

@@ -29,7 +29,7 @@ message Summary {
   message Variation {
     string id = 1;
     double probability = 2;
-    bool outperformed = 3;
+    bool isBest = 3;
   }
   repeated Variation best_variations = 1;
   int64 total_evaluation_user_count = 2;

@@ -10770,7 +10770,7 @@ definitions:
       probability:
         type: number
         format: double
-      outperformed:
+      isBest:
         type: boolean
   eventcounterTimeseries:
     type: object

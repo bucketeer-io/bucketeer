@@ -581,7 +581,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
         probability: jspb.Message.getFloatingPointFieldWithDefault(msg, 2, 0.0),
-        outperformed: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
+        isbest: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
       };
 
     if (includeInstance) {
@@ -632,7 +632,7 @@ proto.bucketeer.eventcounter.Summary.Variation.deserializeBinaryFromReader =
           break;
         case 3:
           var value = /** @type {boolean} */ (reader.readBool());
-          msg.setOutperformed(value);
+          msg.setIsbest(value);
           break;
         default:
           reader.skipField();
@@ -674,7 +674,7 @@ proto.bucketeer.eventcounter.Summary.Variation.serializeBinaryToWriter =
     if (f !== 0.0) {
       writer.writeDouble(2, f);
     }
-    f = message.getOutperformed();
+    f = message.getIsbest();
     if (f) {
       writer.writeBool(3, f);
     }
@@ -719,10 +719,10 @@ proto.bucketeer.eventcounter.Summary.Variation.prototype.setProbability =
   };
 
 /**
- * optional bool outperformed = 3;
+ * optional bool isBest = 3;
  * @return {boolean}
  */
-proto.bucketeer.eventcounter.Summary.Variation.prototype.getOutperformed =
+proto.bucketeer.eventcounter.Summary.Variation.prototype.getIsbest =
   function () {
     return /** @type {boolean} */ (
       jspb.Message.getBooleanFieldWithDefault(this, 3, false)
@@ -733,10 +733,11 @@ proto.bucketeer.eventcounter.Summary.Variation.prototype.getOutperformed =
  * @param {boolean} value
  * @return {!proto.bucketeer.eventcounter.Summary.Variation} returns this
  */
-proto.bucketeer.eventcounter.Summary.Variation.prototype.setOutperformed =
-  function (value) {
-    return jspb.Message.setProto3BooleanField(this, 3, value);
-  };
+proto.bucketeer.eventcounter.Summary.Variation.prototype.setIsbest = function (
+  value
+) {
+  return jspb.Message.setProto3BooleanField(this, 3, value);
+};
 
 /**
  * repeated Variation best_variations = 1;
