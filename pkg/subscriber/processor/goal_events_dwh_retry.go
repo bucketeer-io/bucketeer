@@ -111,7 +111,10 @@ func (w *goalEvtWriter) processRetryKey(ctx context.Context, key string) {
 
 	now := time.Now().Unix()
 	if now < msg.RetryAt {
-		w.logger.Debug("Not time for retry", zap.Time("retryAt", time.Unix(msg.RetryAt, 0)))
+		w.logger.Debug("Not time for retry",
+			zap.String("retryAt", time.Unix(msg.RetryAt, 0).Format(time.RFC3339)),
+			zap.String("key", key),
+		)
 		return
 	}
 
