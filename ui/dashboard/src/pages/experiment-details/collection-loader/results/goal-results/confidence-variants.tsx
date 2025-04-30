@@ -26,16 +26,15 @@ const ConfidenceVariants = ({
     () => bestVariations.find(item => item.isBest),
     [bestVariations]
   );
-
   const getPercentage = useCallback((probability?: number) => {
     const percent = probability ? probability * 100 : 0;
-    return `${Math.floor(percent)}%`;
+    return `${percent.toFixed(1)}%`;
   }, []);
 
   const variants = useMemo(() => {
     const results = bestVariation ? [bestVariation] : [];
     bestVariations.forEach(item => {
-      if (!results.find(v => v?.probability === item.probability)) {
+      if (!results.find(v => v?.id === item.id)) {
         results.push(item);
       }
     });
@@ -57,7 +56,7 @@ const ConfidenceVariants = ({
   return (
     <div className="flex items-center justify-between w-full gap-x-2 px-4 py-2 rounded-lg bg-gray-100">
       <div className="flex items-center gap-x-3">
-        <div className="flex items-center gap-x-2 typo-head-bold-small text-gray-700">
+        <div className="flex items-center gap-x-2 typo-head-bold-small text-gray-700 whitespace-nowrap">
           <Icon icon={IconExperiment} color="primary-500" size={'sm'} />
           <Trans
             i18nKey={'table:results.confidence-percent'}
@@ -71,7 +70,7 @@ const ConfidenceVariants = ({
           return (
             <div
               key={item?.id}
-              className="flex items-center gap-x-2 pl-3 border-l border-gray-400 typo-para-small text-gray-600"
+              className="flex items-center gap-x-2 pl-3 border-l border-gray-400 typo-para-small text-gray-600 whitespace-nowrap"
             >
               <Trans
                 i18nKey={'table:results.variant-outperformed-percent'}
@@ -80,7 +79,7 @@ const ConfidenceVariants = ({
                   percent: getPercentage(item.probability)
                 }}
               />
-              {index === variants?.slice(0, 2).length - 1 && (
+              {index === 0 && (
                 <div className="flex-center p-1 rounded bg-primary-100/30">
                   <Icon
                     icon={IconOutperformed}
@@ -119,7 +118,7 @@ const ConfidenceVariants = ({
                 <Trans
                   i18nKey={'table:results.more-variants'}
                   values={{
-                    quantity: `+${variations.length - 1}`
+                    quantity: `+${variants.slice(2, variants.length).length}`
                   }}
                 />
                 <Icon icon={IconInfo} size={'xxs'} />
