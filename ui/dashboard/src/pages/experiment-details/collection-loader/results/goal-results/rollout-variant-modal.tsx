@@ -38,6 +38,7 @@ const RolloutVariantModal = ({
     variation: yup.string().required(),
     comment: isRequireComment ? yup.string().required() : yup.string()
   });
+
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
@@ -75,23 +76,29 @@ const RolloutVariantModal = ({
                         defaultValue={field.value}
                         onValueChange={field.onChange}
                       >
-                        {variations.map(({ id, name, value }) => (
-                          <div key={id} className="flex items-center gap-x-2">
-                            <RadioGroupItem value={id} id={id} />
-                            <label
-                              htmlFor={id}
-                              className="flex-1 typo-para-medium text-gray-600"
-                            >
-                              <Trans
-                                i18nKey={'table:results.variant-percent'}
-                                values={{
-                                  name: name || value,
-                                  percent: 100
-                                }}
-                              />
-                            </label>
-                          </div>
-                        ))}
+                        {variations.map(({ id, name, value }) => {
+                          const rolloutVariation =
+                            defaultStrategy?.rolloutStrategy?.variations.find(
+                              item => item.variation === id
+                            );
+                          return (
+                            <div key={id} className="flex items-center gap-x-2">
+                              <RadioGroupItem value={id} id={id} />
+                              <label
+                                htmlFor={id}
+                                className="flex-1 typo-para-medium text-gray-600"
+                              >
+                                <Trans
+                                  i18nKey={'table:results.variant-percent'}
+                                  values={{
+                                    name: name || value,
+                                    percent: `${rolloutVariation ? rolloutVariation.weight / 1000 : 0}`
+                                  }}
+                                />
+                              </label>
+                            </div>
+                          );
+                        })}
                       </RadioGroup>
                     </div>
                   </Form.Control>

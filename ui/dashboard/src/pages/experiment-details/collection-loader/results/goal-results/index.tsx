@@ -145,14 +145,13 @@ const GoalResultItem = ({
           />
         </div>
       </div>
-      {goalResult?.summary?.bestVariations?.length > 0 &&
-        experiment?.status === 'RUNNING' && (
-          <ConfidenceVariants
-            bestVariations={goalResult.summary.bestVariations}
-            variations={experiment.variations}
-            onOpenRolloutVariant={onOpenRolloutVariant}
-          />
-        )}
+      {goalResult?.summary?.bestVariations?.length > 0 && (
+        <ConfidenceVariants
+          bestVariations={goalResult.summary.bestVariations}
+          variations={experiment.variations}
+          onOpenRolloutVariant={onOpenRolloutVariant}
+        />
+      )}
       {isOpenRolloutVariant && (
         <RolloutVariantModal
           isOpen={isOpenRolloutVariant}
@@ -176,8 +175,8 @@ const GoalResultItem = ({
         }
       >
         <TabsList>
-          <TabsTrigger value="EVALUATION">{t(`evaluation`)}</TabsTrigger>
           <TabsTrigger value="CONVERSION">{t(`conversion-rate`)}</TabsTrigger>
+          <TabsTrigger value="EVALUATION">{t(`evaluation`)}</TabsTrigger>
         </TabsList>
 
         <TabsContent value={goalResultState?.tab} className="mt-6">

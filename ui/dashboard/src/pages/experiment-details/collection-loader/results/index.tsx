@@ -75,8 +75,8 @@ const Results = ({
       const _goalResultState = experimentResult?.goalResults.map(
         item =>
           ({
-            tab: 'EVALUATION',
-            chartType: 'evaluation-user',
+            tab: 'CONVERSION',
+            chartType: 'conversion-rate',
             goalId: item.goalId
           }) as GoalResultState
       );

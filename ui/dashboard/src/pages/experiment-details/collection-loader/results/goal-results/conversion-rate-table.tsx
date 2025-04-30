@@ -56,7 +56,7 @@ const ConversionRateTable = ({
       },
       {
         name: 'expected-loss',
-        tooltipKey: '',
+        tooltipKey: 'expected-loss-tooltip',
         minSize: 163
       }
     ],
@@ -154,7 +154,7 @@ const ConversionRateTable = ({
             : (isNumber(conversionRate - baseConversionRate)
                 ? conversionRate - baseConversionRate
                 : 0
-              ).toFixed(1) + ' %';
+              ).toFixed(1) + '%';
 
           const improvementValuePerUser = isSameVariationId
             ? 'Baseline'
@@ -170,7 +170,7 @@ const ConversionRateTable = ({
           const probBeatBaselineValue = isSameVariationId
             ? 'Baseline'
             : isNumber(probBeatBaseline?.mean)
-              ? (probBeatBaseline.mean * 100).toFixed(1) + ' %'
+              ? (probBeatBaseline.mean * 100).toFixed(1) + '%'
               : '-';
 
           const probBest = isConversionRateChart
@@ -178,7 +178,7 @@ const ConversionRateTable = ({
             : goalValueSumPerUserProbBest;
 
           const probBestValue = isNumber(probBest?.mean)
-            ? (probBest.mean * 100).toFixed(1) + ' %'
+            ? (probBest.mean * 100).toFixed(1) + '%'
             : '-';
 
           const isHidden = conversionRateDataSets.find(
@@ -199,7 +199,7 @@ const ConversionRateTable = ({
               <ResultCell
                 value={
                   isConversionRateChart
-                    ? conversionRate.toFixed(1) + ' %'
+                    ? conversionRate.toFixed(1) + '%'
                     : valuePerUser.toFixed(2)
                 }
                 minSize={171.5}
@@ -214,7 +214,7 @@ const ConversionRateTable = ({
               />
               <ResultCell value={probBeatBaselineValue} minSize={171.5} />
               <ResultCell value={probBestValue} minSize={171.5} />
-              <ResultCell value={expectedLoss} minSize={163} />
+              <ResultCell value={`${expectedLoss || 0}%`} minSize={163} />
             </div>
           );
         })}

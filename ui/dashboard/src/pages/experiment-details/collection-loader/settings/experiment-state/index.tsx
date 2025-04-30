@@ -129,7 +129,7 @@ const ExperimentState = ({
             )}
           </p>
         </div>
-        <div className="px-3 border-r border-gray-400 typo-para-small text-gray-700 whitespace-nowrap">
+        <div className="px-3 typo-para-small text-gray-700 whitespace-nowrap">
           <Trans
             i18nKey={
               isRunning
@@ -155,20 +155,22 @@ const ExperimentState = ({
             }}
           />
         </div>
-        <div className="flex items-center gap-x-3 pl-3 typo-para-small text-gray-700 whitespace-nowrap">
-          <Icon icon={IconMember} size="sm" />
-          <p>
-            <Trans
-              i18nKey={`table:results.total-users-use`}
-              components={{
-                bold: <strong className="text-gray-700" />
-              }}
-              values={{
-                value: totalUsers
-              }}
-            />
-          </p>
-        </div>
+        {isRunning && (
+          <div className="flex items-center gap-x-3 pl-3 typo-para-small text-gray-700 whitespace-nowrap border-l border-gray-400">
+            <Icon icon={IconMember} size="sm" />
+            <p>
+              <Trans
+                i18nKey={`table:results.total-users-use`}
+                components={{
+                  bold: <strong className="text-gray-700" />
+                }}
+                values={{
+                  value: totalUsers
+                }}
+              />
+            </p>
+          </div>
+        )}
       </div>
       <Button
         disabled={isStopped}

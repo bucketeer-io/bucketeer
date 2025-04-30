@@ -27,6 +27,11 @@ const ConfidenceVariants = ({
     [bestVariations]
   );
 
+  const getPercentage = useCallback((probability?: number) => {
+    const percent = probability ? probability * 100 : 0;
+    return `${Math.floor(percent)}%`;
+  }, []);
+
   const variants = useMemo(() => {
     const results = bestVariation ? [bestVariation] : [];
     bestVariations.forEach(item => {
@@ -57,11 +62,11 @@ const ConfidenceVariants = ({
           <Trans
             i18nKey={'table:results.confidence-percent'}
             values={{
-              percent: `${bestVariation?.probability || 0}%`
+              percent: getPercentage(bestVariation?.probability)
             }}
           />
         </div>
-        {variants?.map((item, index) => {
+        {variants?.slice(0, 2)?.map((item, index) => {
           const variation = getVariationName(item?.id);
           return (
             <div
@@ -72,10 +77,10 @@ const ConfidenceVariants = ({
                 i18nKey={'table:results.variant-outperformed-percent'}
                 values={{
                   name: variation?.name || variation?.value,
-                  percent: `${item?.probability}%`
+                  percent: getPercentage(item.probability)
                 }}
               />
-              {index === variants.length - 1 && (
+              {index === variants?.slice(0, 2).length - 1 && (
                 <div className="flex-center p-1 rounded bg-primary-100/30">
                   <Icon
                     icon={IconOutperformed}
@@ -92,7 +97,7 @@ const ConfidenceVariants = ({
           <Tooltip
             content={
               <div>
-                {variants.slice(1, variants.length).map((item, index) => {
+                {variants.slice(2, variants.length).map((item, index) => {
                   const variation = getVariationName(item?.id);
 
                   return (
@@ -101,7 +106,7 @@ const ConfidenceVariants = ({
                         i18nKey={'table:results.variant-outperformed-percent'}
                         values={{
                           name: variation?.name || variation?.value,
-                          percent: `${item?.probability}%`
+                          percent: getPercentage(item.probability)
                         }}
                       />
                     </div>
@@ -110,7 +115,7 @@ const ConfidenceVariants = ({
               </div>
             }
             trigger={
-              <div className="flex items-center gap-x-2 typo-para-small text-gray-600 pl-3 border-l border-gray-400">
+              <div className="flex items-center gap-x-2 typo-para-small text-gray-600 pl-3 border-l border-gray-400 whitespace-nowrap">
                 <Trans
                   i18nKey={'table:results.more-variants'}
                   values={{

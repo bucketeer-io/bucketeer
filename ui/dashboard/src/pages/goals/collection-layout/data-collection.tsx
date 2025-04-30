@@ -128,7 +128,7 @@ export const useColumns = ({
               }
               type={goal.connectionType}
             />
-            {connectionCount > 0 && <IconArrowDown />}
+            {connectionCount > 0 && <Icon icon={IconArrowDown} />}
           </button>
         );
       }
