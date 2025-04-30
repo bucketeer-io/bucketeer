@@ -131,6 +131,7 @@ export {
   IconLink,
   IconUserOutlined,
   IconOutperformed,
+  IconUserOutlined,
   // Special icons
   IconGoal,
   IconGoogle,
