@@ -518,13 +518,13 @@ func (s *auditlogService) getAccountMapByEmails(
 		Offset: 0,
 		Orders: nil,
 		InFilters: []*mysql.InFilter{
-			&mysql.InFilter{
+			{
 				Column: "a.email",
 				Values: emailsArg,
 			},
 		},
 		Filters: []*mysql.FilterV2{
-			&mysql.FilterV2{
+			{
 				Column:   "e.id",
 				Operator: mysql.OperatorEqual,
 				Value:    environmentID,
