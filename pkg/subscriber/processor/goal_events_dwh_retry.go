@@ -49,6 +49,8 @@ func (m *retryMessage) GetID() string { return m.ID }
 
 // StartRetryProcessor starts a goroutine to process retry messages
 func (w *goalEvtWriter) StartRetryProcessor(ctx context.Context) {
+	w.logger.Debug("Starting goal event retry processor",
+		zap.Duration("interval", w.retryGoalEventInterval))
 	go func() {
 		ticker := time.NewTicker(w.retryGoalEventInterval)
 		defer ticker.Stop()
@@ -58,9 +60,6 @@ func (w *goalEvtWriter) StartRetryProcessor(ctx context.Context) {
 				w.logger.Debug("Goal event retry processor stopped")
 				return
 			case <-ticker.C:
-				w.logger.Debug("Starting goal event retry processor",
-					zap.String("now", time.Now().Format(time.RFC3339)),
-					zap.Duration("interval", w.retryGoalEventInterval))
 				w.scanAndProcess(ctx)
 			}
 		}
@@ -83,7 +82,6 @@ func (w *goalEvtWriter) scanAndProcess(ctx context.Context) {
 		total += len(keys)
 		cursor = nextCursor
 		if cursor == 0 {
-			w.logger.Debug("Scan complete", zap.Int("totalKeys", total))
 			break
 		}
 	}
@@ -189,7 +187,6 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 	}
 
 	if len(experiments) == 0 {
-		lg.Info("No experiments found, deleting retry message")
 		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageNoExperiments).Inc()
 		w.deleteKey(ctx, key)
 		return
