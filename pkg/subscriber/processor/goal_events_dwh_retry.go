@@ -198,6 +198,7 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 		return
 	}
 	if len(evals) == 0 {
+		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageNoEvaluations).Inc()
 		w.deleteKey(ctx, key)
 		return
 	}
@@ -210,6 +211,7 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 		}
 	}
 	if len(events) == 0 {
+		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageNoGoalEvents).Inc()
 		w.deleteKey(ctx, key)
 		return
 	}
