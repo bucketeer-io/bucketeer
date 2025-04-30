@@ -46,7 +46,7 @@ var (
 	goalCountSQL string
 
 	ErrUnexpectedMultipleResults = errors.New("bigquery: unexpected multiple results")
-	ErrNoResultsFound            = errors.New("bigquery: not results found")
+	ErrNoResultsFound            = errors.New("bigquery: no results found")
 )
 
 type EventStorage interface {
