@@ -164,7 +164,6 @@ func TestGetTag(t *testing.T) {
 					gomock.Any(), // environment_id
 					gomock.Any(), // environment_name
 				).Do(func(args ...interface{}) {
-					// スキャン先のポインタに値を設定
 					*args[0].(*string) = "tag-id-0"
 					*args[1].(*string) = "test-tag"
 					*args[2].(*int64) = int64(1)
@@ -247,15 +246,36 @@ func TestListTags(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *tagStorage) {
+				var nextCallCount = 0
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Next().DoAndReturn(func() bool {
+					nextCallCount++
+					return nextCallCount <= 1
+				}).Times(2)
 				rows.EXPECT().Err().Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
 				).Return(rows, nil)
+				rows.EXPECT().Scan(
+					gomock.Any(), // id
+					gomock.Any(), // name
+					gomock.Any(), // created_at
+					gomock.Any(), // updated_at
+					gomock.Any(), // entity_type
+					gomock.Any(), // environment_id
+					gomock.Any(), // environment_name
+				).Do(func(args ...interface{}) {
+					*args[0].(*string) = "tag-id-0"
+					*args[1].(*string) = "test-tag"
+					*args[2].(*int64) = int64(1)
+					*args[3].(*int64) = int64(2)
+					*args[4].(*int32) = int32(proto.Tag_FEATURE_FLAG)
+					*args[5].(*string) = "env-0"
+					*args[6].(*string) = "test-env"
+				}).Return(nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
@@ -272,10 +292,20 @@ func TestListTags(t *testing.T) {
 			},
 			limit:          10,
 			offset:         0,
-			expectedCount:  0,
-			expectedCursor: 0,
+			expectedCount:  1,
+			expectedCursor: 1,
 			expectedErr:    nil,
-			expectedTags:   []*proto.Tag{},
+			expectedTags: []*proto.Tag{
+				{
+					Id:              "tag-id-0",
+					Name:            "test-tag",
+					CreatedAt:       1,
+					UpdatedAt:       2,
+					EntityType:      proto.Tag_FEATURE_FLAG,
+					EnvironmentId:   "env-0",
+					EnvironmentName: "test-env",
+				},
+			},
 		},
 	}
 	for _, p := range patterns {
