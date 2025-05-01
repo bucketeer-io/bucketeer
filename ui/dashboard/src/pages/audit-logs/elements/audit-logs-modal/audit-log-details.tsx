@@ -162,9 +162,13 @@ const AuditLogDetailsModal = ({
                   {auditLog && (
                     <AuditLogTitle
                       isHaveEntityData={isHaveEntityData}
-                      auditLogId={auditLog.id}
+                      entityId={parsedEntityData?.id}
                       action={getActionText(auditLog.type, isLanguageJapanese)}
-                      entityName={parsedEntityData?.name}
+                      entityName={
+                        parsedEntityData?.name ||
+                        parsedEntityData?.feature_name ||
+                        ''
+                      }
                       entityType={auditLog.entityType}
                       urlCode={currentEnvironment.urlCode}
                       username={auditLog.editor.name || auditLog.editor.email}
