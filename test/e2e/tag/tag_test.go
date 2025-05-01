@@ -18,6 +18,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -81,12 +82,13 @@ func TestUpsertAndListTag(t *testing.T) {
 	}
 	// Check if the create time is equal
 	if targetTag.CreatedAt != tagUpsert[0].CreatedAt {
-		t.Fatalf("Different create time. Expected: %d, Actual: %d",
-			targetTag.CreatedAt, tagUpsert[0].CreatedAt)
+		t.Fatalf("Different create time. Expected: %v\n, Actual: %v",
+			targetTag, tagUpsert[0])
 	}
 	// Check if the update time has changed
 	if targetTag.UpdatedAt == tagUpsert[0].UpdatedAt {
-		t.Fatalf("The tag update time didn't change. Update time: %d", targetTag.UpdatedAt)
+		t.Fatalf("The tag update time didn't change. Expected: %v\n, Actual: %v",
+			targetTag, tagUpsert[0])
 	}
 }
 
@@ -205,19 +207,10 @@ func createTag(
 func findTags(tags []*tagproto.Tag, targetNames []string) []*tagproto.Tag {
 	var result []*tagproto.Tag
 	for _, tag := range tags {
-		if exist := existTag(targetNames, tag.Name); !exist {
+		if exist := slices.Contains(targetNames, tag.Name); !exist {
 			continue
 		}
 		result = append(result, tag)
 	}
 	return result
-}
-
-func existTag(tags []string, target string) bool {
-	for _, tag := range tags {
-		if tag == target {
-			return true
-		}
-	}
-	return false
 }
