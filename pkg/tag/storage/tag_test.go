@@ -338,9 +338,10 @@ func TestListAllEnvironmentTags(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		desc        string
-		setup       func(*tagStorage)
-		expectedErr error
+		desc            string
+		setup           func(*tagStorage)
+		expectedErr     error
+		expectedEnvTags []*proto.EnvironmentTag
 	}{
 		{
 			desc: "Error",
@@ -349,7 +350,8 @@ func TestListAllEnvironmentTags(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			expectedErr: errors.New("error"),
+			expectedErr:     errors.New("error"),
+			expectedEnvTags: nil,
 		},
 		{
 			desc: "Success:Empty",
@@ -363,7 +365,8 @@ func TestListAllEnvironmentTags(t *testing.T) {
 					selectAllEnvironmentTagsSQL,
 				).Return(rows, nil)
 			},
-			expectedErr: nil,
+			expectedErr:     nil,
+			expectedEnvTags: []*proto.EnvironmentTag{},
 		},
 		{
 			desc: "Success:WithData",
@@ -373,9 +376,27 @@ func TestListAllEnvironmentTags(t *testing.T) {
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().DoAndReturn(func() bool {
 					nextCallCount++
-					return nextCallCount <= 2
-				}).Times(3)
-				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
+					return nextCallCount <= 1
+				}).Times(2)
+				rows.EXPECT().Scan(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).Do(func(args ...interface{}) {
+					*args[0].(*string) = "env-0"
+					*args[1].(*string) = "tag-id-0"
+					*args[2].(*string) = "tag-name"
+					*args[3].(*int64) = int64(1)
+					*args[4].(*int64) = int64(2)
+					*args[5].(*int32) = int32(proto.Tag_FEATURE_FLAG)
+					*args[6].(*string) = "tag-env-id-0"
+					*args[7].(*string) = "test-env-name"
+				})
 				rows.EXPECT().Err().Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(),
@@ -383,6 +404,22 @@ func TestListAllEnvironmentTags(t *testing.T) {
 				).Return(rows, nil)
 			},
 			expectedErr: nil,
+			expectedEnvTags: []*proto.EnvironmentTag{
+				{
+					EnvironmentId: "env-0",
+					Tags: []*proto.Tag{
+						{
+							Id:              "tag-id-0",
+							Name:            "tag-name",
+							CreatedAt:       1,
+							UpdatedAt:       2,
+							EntityType:      proto.Tag_FEATURE_FLAG,
+							EnvironmentId:   "tag-env-id-0",
+							EnvironmentName: "test-env-name",
+						},
+					},
+				},
+			},
 		},
 	}
 	for _, p := range patterns {
@@ -396,6 +433,7 @@ func TestListAllEnvironmentTags(t *testing.T) {
 			if err == nil {
 				assert.NotNil(t, envTags)
 				assert.IsType(t, []*proto.EnvironmentTag{}, envTags)
+				assert.Equal(t, p.expectedEnvTags, envTags)
 			}
 		})
 	}
