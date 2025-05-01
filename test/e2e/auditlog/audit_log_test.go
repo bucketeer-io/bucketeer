@@ -9,6 +9,8 @@ import (
 
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	auditlogclient "github.com/bucketeer-io/bucketeer/pkg/auditlog/client"
@@ -20,7 +22,8 @@ import (
 )
 
 const (
-	timeout = 60 * time.Second
+	timeout    = 60 * time.Second
+	maxRetries = 5
 )
 
 var (
@@ -49,7 +52,8 @@ func TestListAndGetAuditLog(t *testing.T) {
 	auditlogClient := newAuditLogClient(t)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	listResp, err := auditlogClient.ListAuditLogs(ctx, &auditlog.ListAuditLogsRequest{
+
+	listResp, err := listAuditLogsWithRetry(t, auditlogClient, &auditlog.ListAuditLogsRequest{
 		EnvironmentId:  *environmentID,
 		EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
 		PageSize:       50,
@@ -68,7 +72,7 @@ func TestListAndGetAuditLog(t *testing.T) {
 		}
 	}
 
-	getResp, err := auditlogClient.GetAuditLog(ctx, &auditlog.GetAuditLogRequest{
+	getResp, err := getAuditLogWithRetry(t, auditlogClient, &auditlog.GetAuditLogRequest{
 		Id:            auditLogID,
 		EnvironmentId: *environmentID,
 	})
@@ -198,4 +202,58 @@ func newAuditLogClient(t *testing.T) auditlogclient.Client {
 		t.Fatal("Failed to create auditlog client:", err)
 	}
 	return auditlogClient
+}
+
+func listAuditLogsWithRetry(
+	t *testing.T,
+	client auditlogclient.Client,
+	req *auditlog.ListAuditLogsRequest,
+) (*auditlog.ListAuditLogsResponse, error) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	for i := range maxRetries {
+		resp, err := client.ListAuditLogs(ctx, req)
+		if err == nil {
+			return resp, nil
+		}
+		if i == maxRetries-1 {
+			return nil, fmt.Errorf("Failed to list audit logs after %d retries: %w", maxRetries, err)
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal || st.Code() == codes.DeadlineExceeded {
+			fmt.Printf("Failed to list audit logs. Error code: %d. Retrying in 5 seconds.\n", st.Code())
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		return nil, err
+	}
+	return nil, fmt.Errorf("Unexpected error: max retries reached")
+}
+
+func getAuditLogWithRetry(
+	t *testing.T,
+	client auditlogclient.Client,
+	req *auditlog.GetAuditLogRequest,
+) (*auditlog.GetAuditLogResponse, error) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	for i := range maxRetries {
+		resp, err := client.GetAuditLog(ctx, req)
+		if err == nil {
+			return resp, nil
+		}
+		if i == maxRetries-1 {
+			return nil, fmt.Errorf("Failed to get audit log after %d retries: %w", maxRetries, err)
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal || st.Code() == codes.DeadlineExceeded {
+			fmt.Printf("Failed to get audit log. Error code: %d. Retrying in 5 seconds.\n", st.Code())
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		return nil, err
+	}
+	return nil, fmt.Errorf("Unexpected error: max retries reached")
 }
