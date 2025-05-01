@@ -354,6 +354,8 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 			zap.Any("goalEvent", event),
 			zap.Any("evaluation", eval),
 		)
+		// Skip goal events that occurred before the evaluation timestamp.
+		// This is intentional to trigger retry logic for proper event linking.
 		if event.Timestamp < eval.Timestamp {
 			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeGoalEventIssuedBeforeEvaluation).Inc()
 			w.logger.Error("Goal event issued before evaluation",

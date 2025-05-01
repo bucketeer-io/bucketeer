@@ -312,42 +312,64 @@ func (w *goalEvtWriter) unlockGoalEventRetryLock(ctx context.Context, key, value
 	}
 }
 
+// computeBackoffAndTTL calculates the next retry interval and TTL for a retry message.
+// It handles exponential backoff with dynamic caps based on the max retry period.
+func (w *goalEvtWriter) computeBackoffAndTTL(
+	retryCount int,
+	firstRetryAt int64,
+	now int64,
+	initialInterval time.Duration,
+	maxRetryPeriod time.Duration,
+) (nextInterval time.Duration, ttl time.Duration, err error) {
+	bo := backoff.NewExponentialBackOff()
+	bo.InitialInterval = initialInterval
+	bo.Multiplier = 2.0
+	// dynamic cap so we never back off past the max period
+	ratio := float64(maxRetryPeriod) / float64(initialInterval)
+	maxExp := int(math.Floor(math.Log2(ratio)))
+	bo.MaxInterval = time.Duration(1<<uint(maxExp)) * initialInterval
+	bo.MaxElapsedTime = maxRetryPeriod
+	bo.Reset()
+
+	// Advance the backoff state retryCount times to get the correct interval
+	for i := 0; i <= retryCount; i++ {
+		nextInterval = bo.NextBackOff()
+	}
+	if nextInterval == backoff.Stop {
+		return 0, 0, fmt.Errorf("retry period exceeded %v", maxRetryPeriod)
+	}
+
+	// Compute TTL: either the full period (first retry) or remaining time
+	ttl = maxRetryPeriod
+	if firstRetryAt != 0 {
+		elapsed := time.Since(time.Unix(firstRetryAt, 0))
+		remaining := maxRetryPeriod - elapsed
+		if remaining <= 0 {
+			return 0, 0, fmt.Errorf("retry period exceeded %v since first retry", maxRetryPeriod)
+		}
+		ttl = remaining
+	}
+
+	return nextInterval, ttl, nil
+}
+
 func (w *goalEvtWriter) storeRetryMessage(msg *retryMessage) error {
 	now := time.Now().Unix()
 	key := fmt.Sprintf("%s:%s:%s", msg.EnvironmentID, retryGoalEventKeyKind, msg.ID)
 
-	// Set up an exponential backoff:
-	bo := backoff.NewExponentialBackOff()
-	bo.InitialInterval = w.retryGoalEventInterval
-	bo.Multiplier = 2.0
-	// dynamic cap so we never back off past the max period
-	ratio := float64(w.maxRetryGoalEventPeriod) / float64(w.retryGoalEventInterval)
-	maxExp := int(math.Floor(math.Log2(ratio)))
-	bo.MaxInterval = time.Duration(1<<uint(maxExp)) * w.retryGoalEventInterval
-	bo.MaxElapsedTime = w.maxRetryGoalEventPeriod
-	bo.Reset()
-
-	// Advance the backoff state msg.RetryCount times to get the correct interval
-	var nextInterval time.Duration
-	for i := 0; i <= msg.RetryCount; i++ {
-		nextInterval = bo.NextBackOff()
-	}
-	if nextInterval == backoff.Stop {
-		return fmt.Errorf("retry period exceeded %v", w.maxRetryGoalEventPeriod)
+	nextInterval, ttl, err := w.computeBackoffAndTTL(
+		msg.RetryCount,
+		msg.FirstRetryAt,
+		now,
+		w.retryGoalEventInterval,
+		w.maxRetryGoalEventPeriod,
+	)
+	if err != nil {
+		return err
 	}
 
 	msg.RetryAt = now + int64(nextInterval.Seconds())
-
-	// Compute TTL: either the full period (first retry) or remaining time
-	ttl := w.maxRetryGoalEventPeriod
-	if msg.FirstRetryAt != 0 {
-		elapsed := time.Since(time.Unix(msg.FirstRetryAt, 0))
-		remaining := w.maxRetryGoalEventPeriod - elapsed
-		if remaining <= 0 {
-			return fmt.Errorf("retry period exceeded %v since first retry", w.maxRetryGoalEventPeriod)
-		}
-		ttl = remaining
-	} else {
+	if msg.FirstRetryAt == 0 {
 		msg.FirstRetryAt = now
 	}
 
