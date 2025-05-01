@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -33,8 +34,6 @@ const (
 	retryGoalEventKeyKind = "goal_event_retry"
 	scanBatchSize         = 100
 	lockTimeout           = 30 * time.Second
-	// We’ll cap the backoff multiplier so intervals don’t explode forever.
-	maxBackoffExponent = 10
 )
 
 type retryMessage struct {
@@ -321,8 +320,10 @@ func (w *goalEvtWriter) storeRetryMessage(msg *retryMessage) error {
 	bo := backoff.NewExponentialBackOff()
 	bo.InitialInterval = w.retryGoalEventInterval
 	bo.Multiplier = 2.0
-	// cap the maximum interval at 2^maxBackoffExponent * initial
-	bo.MaxInterval = time.Duration(1<<maxBackoffExponent) * w.retryGoalEventInterval
+	// dynamic cap so we never back off past the max period
+	ratio := float64(w.maxRetryGoalEventPeriod) / float64(w.retryGoalEventInterval)
+	maxExp := int(math.Floor(math.Log2(ratio)))
+	bo.MaxInterval = time.Duration(1<<uint(maxExp)) * w.retryGoalEventInterval
 	bo.MaxElapsedTime = w.maxRetryGoalEventPeriod
 	bo.Reset()
 
@@ -332,7 +333,7 @@ func (w *goalEvtWriter) storeRetryMessage(msg *retryMessage) error {
 		nextInterval = bo.NextBackOff()
 	}
 	if nextInterval == backoff.Stop {
-		return fmt.Errorf("retry period exceeded %v since first retry", w.maxRetryGoalEventPeriod)
+		return fmt.Errorf("retry period exceeded %v", w.maxRetryGoalEventPeriod)
 	}
 
 	msg.RetryAt = now + int64(nextInterval.Seconds())
