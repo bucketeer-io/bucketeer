@@ -88,9 +88,9 @@ func (mr *MockSegmentStorageMockRecorder) GetSegment(ctx, id, environmentId any)
 }
 
 // ListSegments mocks base method.
-func (m *MockSegmentStorage) ListSegments(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int, isInUseStatus *bool, environmentId string) ([]*feature.Segment, int, int64, map[string][]string, error) {
+func (m *MockSegmentStorage) ListSegments(ctx context.Context, options *mysql.ListOptions, isInUseStatus *bool) ([]*feature.Segment, int, int64, map[string][]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListSegments", ctx, whereParts, orders, limit, offset, isInUseStatus, environmentId)
+	ret := m.ctrl.Call(m, "ListSegments", ctx, options, isInUseStatus)
 	ret0, _ := ret[0].([]*feature.Segment)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -100,9 +100,9 @@ func (m *MockSegmentStorage) ListSegments(ctx context.Context, whereParts []mysq
 }
 
 // ListSegments indicates an expected call of ListSegments.
-func (mr *MockSegmentStorageMockRecorder) ListSegments(ctx, whereParts, orders, limit, offset, isInUseStatus, environmentId any) *gomock.Call {
+func (mr *MockSegmentStorageMockRecorder) ListSegments(ctx, options, isInUseStatus any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSegments", reflect.TypeOf((*MockSegmentStorage)(nil).ListSegments), ctx, whereParts, orders, limit, offset, isInUseStatus, environmentId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSegments", reflect.TypeOf((*MockSegmentStorage)(nil).ListSegments), ctx, options, isInUseStatus)
 }
 
 // UpdateSegment mocks base method.
