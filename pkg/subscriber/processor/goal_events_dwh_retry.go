@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"go.uber.org/zap"
 
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
@@ -32,7 +33,8 @@ const (
 	retryGoalEventKeyKind = "goal_event_retry"
 	scanBatchSize         = 100
 	lockTimeout           = 30 * time.Second
-	maxBackoffExponent    = 10 // cap exponential backoff at 2^10
+	// We’ll cap the backoff multiplier so intervals don’t explode forever.
+	maxBackoffExponent = 10
 )
 
 type retryMessage struct {
@@ -47,7 +49,7 @@ type retryMessage struct {
 
 func (m *retryMessage) GetID() string { return m.ID }
 
-// StartRetryProcessor starts a goroutine to process retry messages
+// StartRetryProcessor kicks off a ticker to scan and process retry keys.
 func (w *goalEvtWriter) StartRetryProcessor(ctx context.Context) {
 	w.logger.Debug("Starting goal event retry processor",
 		zap.Duration("interval", w.retryGoalEventInterval))
@@ -68,9 +70,7 @@ func (w *goalEvtWriter) StartRetryProcessor(ctx context.Context) {
 
 func (w *goalEvtWriter) scanAndProcess(ctx context.Context) {
 	var cursor uint64
-	total := 0
 	for {
-		// Scan for keys in format: environmentID:goal_event_retry:eventID
 		nextCursor, keys, err := w.redisClient.Scan(cursor, fmt.Sprintf("*:%s:*", retryGoalEventKeyKind), scanBatchSize)
 		if err != nil {
 			w.logger.Error("Scan failed", zap.Error(err), zap.Uint64("cursor", cursor))
@@ -79,11 +79,10 @@ func (w *goalEvtWriter) scanAndProcess(ctx context.Context) {
 		for _, key := range keys {
 			w.processRetryKey(ctx, key)
 		}
-		total += len(keys)
-		cursor = nextCursor
-		if cursor == 0 {
+		if nextCursor == 0 {
 			break
 		}
+		cursor = nextCursor
 	}
 }
 
@@ -129,7 +128,6 @@ func (w *goalEvtWriter) handleMessage(ctx context.Context, msg *retryMessage, ke
 		zap.String("goalId", msg.GoalEvent.GoalId),
 		zap.Int("retryCount", msg.RetryCount),
 	)
-
 	if len(msg.FailedEvents) > 0 {
 		w.handleFailedBatch(ctx, msg, key, lg)
 	} else {
@@ -153,6 +151,8 @@ func (w *goalEvtWriter) handleFailedBatch(ctx context.Context, msg *retryMessage
 		w.deleteKey(ctx, key)
 		return
 	}
+
+	// filter out successful ones
 	var still []*epproto.GoalEvent
 	for id, failed := range failures {
 		if failed {
@@ -179,13 +179,13 @@ func (w *goalEvtWriter) handleNewRetry(ctx context.Context, msg *retryMessage, k
 	experiments, err := w.listExperiments(ctx, msg.EnvironmentID)
 	if err != nil {
 		lg.Error("List experiments failed", zap.Error(err))
+		msg.RetryCount++
 		if err := w.storeRetryMessage(msg); err != nil {
 			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
 			lg.Error("Failed to store retry message", zap.Error(err))
 		}
 		return
 	}
-
 	if len(experiments) == 0 {
 		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeRetryMessageNoExperiments).Inc()
 		w.deleteKey(ctx, key)
@@ -317,52 +317,48 @@ func (w *goalEvtWriter) storeRetryMessage(msg *retryMessage) error {
 	now := time.Now().Unix()
 	key := fmt.Sprintf("%s:%s:%s", msg.EnvironmentID, retryGoalEventKeyKind, msg.ID)
 
-	// First retry
-	if msg.FirstRetryAt == 0 {
-		msg.FirstRetryAt = now
-		msg.RetryAt = now + int64(w.retryGoalEventInterval.Seconds())
-		ttl := w.maxRetryGoalEventPeriod
-		data, err := json.Marshal(msg)
-		if err != nil {
-			return err
-		}
-		w.logger.Debug("Storing first retry message",
-			zap.String("key", key),
-			zap.Duration("ttl", ttl),
-			zap.Int64("retryAt", msg.RetryAt),
-		)
-		return w.redisClient.Set(key, data, ttl)
-	}
+	// Set up an exponential backoff:
+	bo := backoff.NewExponentialBackOff()
+	bo.InitialInterval = w.retryGoalEventInterval
+	bo.Multiplier = 2.0
+	// cap the maximum interval at 2^maxBackoffExponent * initial
+	bo.MaxInterval = time.Duration(1<<maxBackoffExponent) * w.retryGoalEventInterval
+	bo.MaxElapsedTime = w.maxRetryGoalEventPeriod
+	bo.Reset()
 
-	// Subsequent retries
-	w.logger.Debug("Storing subsequent retry message",
-		zap.String("key", key),
-		zap.Int64("retryAt", msg.RetryAt),
-	)
-	elapsed := time.Since(time.Unix(msg.FirstRetryAt, 0))
-	remaining := w.maxRetryGoalEventPeriod - elapsed
-	if remaining <= 0 {
+	// Advance the backoff state msg.RetryCount times to get the correct interval
+	var nextInterval time.Duration
+	for i := 0; i <= msg.RetryCount; i++ {
+		nextInterval = bo.NextBackOff()
+	}
+	if nextInterval == backoff.Stop {
 		return fmt.Errorf("retry period exceeded %v since first retry", w.maxRetryGoalEventPeriod)
 	}
-	if remaining < w.retryGoalEventInterval {
-		remaining = w.retryGoalEventInterval
+
+	msg.RetryAt = now + int64(nextInterval.Seconds())
+
+	// Compute TTL: either the full period (first retry) or remaining time
+	ttl := w.maxRetryGoalEventPeriod
+	if msg.FirstRetryAt != 0 {
+		elapsed := time.Since(time.Unix(msg.FirstRetryAt, 0))
+		remaining := w.maxRetryGoalEventPeriod - elapsed
+		if remaining <= 0 {
+			return fmt.Errorf("retry period exceeded %v since first retry", w.maxRetryGoalEventPeriod)
+		}
+		ttl = remaining
+	} else {
+		msg.FirstRetryAt = now
 	}
-	backoff := w.calculateExponentialBackoff(msg)
-	if backoff > remaining {
-		backoff = remaining
-	}
-	msg.RetryAt = now + int64(backoff.Seconds())
+
 	data, err := json.Marshal(msg)
 	if err != nil {
 		return err
 	}
-	return w.redisClient.Set(key, data, remaining)
-}
 
-func (w *goalEvtWriter) calculateExponentialBackoff(msg *retryMessage) time.Duration {
-	exp := msg.RetryCount
-	if exp > maxBackoffExponent {
-		exp = maxBackoffExponent
-	}
-	return time.Duration(1<<uint(exp)) * w.retryGoalEventInterval
+	w.logger.Debug("Storing retry message",
+		zap.String("key", key),
+		zap.Duration("ttl", ttl),
+		zap.Int64("retryAt", msg.RetryAt),
+	)
+	return w.redisClient.Set(key, data, ttl)
 }
