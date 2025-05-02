@@ -97,7 +97,7 @@ func NewGoalEventWriter(
 			featureClient:    ftClient,
 			cache:            cache,
 			location:         location,
-			logger:           l,
+			logger:           logger,
 		}, nil
 	}
 
