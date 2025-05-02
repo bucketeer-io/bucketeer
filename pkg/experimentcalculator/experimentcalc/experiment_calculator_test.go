@@ -30,6 +30,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/stan"
 	metricsmock "github.com/bucketeer-io/bucketeer/pkg/metrics/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
+	"github.com/bucketeer-io/bucketeer/proto/eventcounter"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -161,6 +162,151 @@ func TestListEndAt(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equalf(t, tt.want, listEndAt(tt.args.startAt, tt.args.endAt, tt.args.now),
 				"listEndAt(%v, %v, %v)", tt.args.startAt, tt.args.endAt, tt.args.now)
+		})
+	}
+}
+
+// TestCalculateExpectedLoss tests the calculateExpectedLoss function with various scenarios
+func TestCalculateExpectedLoss(t *testing.T) {
+	logger := zap.NewNop()
+
+	tests := []struct {
+		name           string
+		variations     []*eventcounter.VariationResult
+		expectModified bool               // whether we expect the variations to be modified
+		expected       map[string]float64 // expected expectedLoss values by variation ID
+	}{
+		{
+			name: "basic expected loss calculation",
+			variations: []*eventcounter.VariationResult{
+				{
+					VariationId: "var1",
+					CvrSamples:  []float64{0.1, 0.2, 0.3},
+				},
+				{
+					VariationId: "var2",
+					CvrSamples:  []float64{0.2, 0.1, 0.4},
+				},
+			},
+			expectModified: true,
+			expected: map[string]float64{
+				"var1": ((0.2 - 0.1) + (0.2 - 0.2) + (0.4 - 0.3)) * 100 / 3, // (0.1 + 0 + 0.1) * 100 / 3 = 6.67
+				"var2": ((0.2 - 0.2) + (0.2 - 0.1) + (0.4 - 0.4)) * 100 / 3, // (0 + 0.1 + 0) * 100 / 3 = 3.33
+			},
+		},
+		{
+			name: "three variations with ties",
+			variations: []*eventcounter.VariationResult{
+				{
+					VariationId: "var1",
+					CvrSamples:  []float64{0.5, 0.5, 0.5},
+				},
+				{
+					VariationId: "var2",
+					CvrSamples:  []float64{0.5, 0.6, 0.4},
+				},
+				{
+					VariationId: "var3",
+					CvrSamples:  []float64{0.4, 0.4, 0.6},
+				},
+			},
+			expectModified: true,
+			expected: map[string]float64{
+				"var1": ((0.5 - 0.5) + (0.6 - 0.5) + (0.6 - 0.5)) * 100 / 3, // (0 + 0.1 + 0.1) * 100 / 3 = 6.67
+				"var2": ((0.5 - 0.5) + (0.6 - 0.6) + (0.6 - 0.4)) * 100 / 3, // (0 + 0 + 0.2) * 100 / 3 = 6.67
+				"var3": ((0.5 - 0.4) + (0.6 - 0.4) + (0.6 - 0.6)) * 100 / 3, // (0.1 + 0.2 + 0) * 100 / 3 = 10.0
+			},
+		},
+		{
+			name: "single variation",
+			variations: []*eventcounter.VariationResult{
+				{VariationId: "solo", CvrSamples: []float64{0.1, 0.4, 0.3}},
+			},
+			expectModified: true, // we do run through the code and set ExpectedLoss to 0
+			expected: map[string]float64{
+				"solo": 0.0,
+			},
+		},
+		{
+			name:           "empty variations array",
+			variations:     []*eventcounter.VariationResult{},
+			expectModified: false,
+			expected:       map[string]float64{},
+		},
+		{
+			name: "inconsistent sample lengths",
+			variations: []*eventcounter.VariationResult{
+				{
+					VariationId: "var1",
+					CvrSamples:  []float64{0.1, 0.2, 0.3},
+				},
+				{
+					VariationId: "var2",
+					CvrSamples:  []float64{0.2, 0.1}, // Missing a sample
+				},
+			},
+			expectModified: false,
+			expected: map[string]float64{
+				"var1": 0.0,
+				"var2": 0.0,
+			},
+		},
+		{
+			name: "variation with no samples",
+			variations: []*eventcounter.VariationResult{
+				{
+					VariationId: "var1",
+					CvrSamples:  []float64{0.1, 0.2, 0.3},
+				},
+				{
+					VariationId: "var2",
+					CvrSamples:  []float64{}, // Empty samples
+				},
+			},
+			expectModified: false,
+			expected: map[string]float64{
+				"var1": 0.0,
+				"var2": 0.0,
+			},
+		},
+	}
+
+	// Helper function to capture initial expectedLoss values before calculation
+	saveInitialValues := func(variations []*eventcounter.VariationResult) map[string]float64 {
+		result := make(map[string]float64)
+		for _, v := range variations {
+			result[v.VariationId] = v.ExpectedLoss
+		}
+		return result
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create calculator with test logger
+			calculator := ExperimentCalculator{
+				logger: logger,
+			}
+
+			// Save initial values
+			initialValues := saveInitialValues(tt.variations)
+
+			// Run the calculation
+			calculator.calculateExpectedLoss(tt.variations)
+
+			// Check expected modifications
+			for _, variation := range tt.variations {
+				if tt.expectModified {
+					// For cases where we expect modification, check against calculated values
+					expected := tt.expected[variation.VariationId]
+					assert.InDelta(t, expected, variation.ExpectedLoss, 0.01,
+						"Expected loss for %s should be %f, got %f",
+						variation.VariationId, expected, variation.ExpectedLoss)
+				} else {
+					// For cases where we don't expect modification, values should be unchanged
+					assert.Equal(t, initialValues[variation.VariationId], variation.ExpectedLoss,
+						"Expected loss should not change for %s", variation.VariationId)
+				}
+			}
 		})
 	}
 }

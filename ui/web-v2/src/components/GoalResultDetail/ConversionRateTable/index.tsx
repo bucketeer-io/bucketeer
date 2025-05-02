@@ -71,20 +71,15 @@ export const ConversionRateTable: FC<ConversionRateTableProps> = ({
       (el) => el.variationId == baseVariationId
     )
   );
-  const baseConversionRate =
-    (unwrapUndefinable(baseVariationResult.experimentCount).userCount /
-      unwrapUndefinable(baseVariationResult.evaluationCount).userCount) *
-    100;
+
+  const baseConversionRate = baseVariationResult.conversionRate;
 
   return (
     <Table>
       <TableHeader cells={createHeadCells()} />
       <TableBody>
         {goalResult.variationResultsList.map((variationResult) => {
-          const conversionRate =
-            (unwrapUndefinable(variationResult.experimentCount).userCount /
-              unwrapUndefinable(variationResult.evaluationCount).userCount) *
-            100;
+          const conversionRate = variationResult.conversionRate;
           const cvrProbBeeatBaseline = variationResult.cvrProbBeatBaseline;
           const cvrProbBest = variationResult.cvrProbBest;
           return (

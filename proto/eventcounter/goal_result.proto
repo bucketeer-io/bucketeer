@@ -22,4 +22,16 @@ import "proto/eventcounter/variation_result.proto";
 message GoalResult {
   string goal_id = 1;
   repeated VariationResult variation_results = 2;
+  Summary summary = 3;
+}
+
+message Summary {
+  message Variation {
+    string id = 1;
+    double probability = 2;
+    bool isBest = 3;
+  }
+  repeated Variation best_variations = 1;
+  int64 total_evaluation_user_count = 2;
+  int64 total_goal_user_count = 3;
 }

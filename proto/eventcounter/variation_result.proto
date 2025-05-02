@@ -44,4 +44,7 @@ message VariationResult {
   Timeseries goal_value_sum_per_user_median_timeseries = 20;
   Timeseries goal_value_sum_per_user_percentile025_timeseries = 21;
   Timeseries goal_value_sum_per_user_percentile975_timeseries = 22;
+  double conversion_rate = 23;
+  double expected_loss = 24;
+  repeated double cvr_samples = 25;
 }
