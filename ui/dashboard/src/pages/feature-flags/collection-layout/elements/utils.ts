@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { isNumber } from 'lodash';
 import { Feature, FeatureVariationType } from '@types';
 import {
@@ -23,8 +24,9 @@ export function getFlagStatus(feature: Feature): FeatureActivityStatus {
 
   if (lastUsedAt && isNumber(+lastUsedAt)) {
     const _lastUsedAt = new Date(+lastUsedAt * 1000);
-    if (_lastUsedAt.getDate() - new Date().getDate() > -7)
-      return FeatureActivityStatus.ACTIVE;
+    const daysDifference = dayjs(_lastUsedAt).diff(dayjs(), 'day');
+
+    if (daysDifference > -7) return FeatureActivityStatus.ACTIVE;
   }
   return FeatureActivityStatus.INACTIVE;
 }
