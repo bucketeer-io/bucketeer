@@ -95,7 +95,7 @@ func NewGoalEventWriter(
 		retryGoalEventInterval = defaultRetryGoalEventInterval
 	}
 	// Calculate lock TTL as 80% of retry interval
-	lockTTL := retryGoalEventInterval * 4 / 5
+	lockTTL := time.Duration(float64(retryGoalEventInterval) * 0.8)
 
 	w := &goalEvtWriter{
 		writer:                  storage.NewGoalEventWriter(goalWriter, bigQueryBatchSize),
