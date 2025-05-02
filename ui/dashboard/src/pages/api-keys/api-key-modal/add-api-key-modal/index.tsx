@@ -231,38 +231,38 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
                 className="mt-0.5"
               />
             </div>
+            <Form.Field
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Control>
+                    <RadioGroup
+                      defaultValue={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      {options.map(({ id, label, description, value }) => (
+                        <div
+                          key={id}
+                          className="flex items-center last:border-b-0 border-b py-4 gap-x-5"
+                        >
+                          <label htmlFor={id} className="flex-1 cursor-pointer">
+                            <p className="typo-para-medium text-gray-700">
+                              {label}
+                            </p>
+                            <p className="typo-para-small text-gray-600">
+                              {description}
+                            </p>
+                          </label>
 
-            <RadioGroup defaultValue={getValues('role')}>
-              {options.map(({ id, label, description, value }) => (
-                <div
-                  key={id}
-                  className="flex items-center last:border-b-0 border-b py-4 gap-x-5"
-                >
-                  <label htmlFor={id} className="flex-1 cursor-pointer">
-                    <p className="typo-para-medium text-gray-700">{label}</p>
-                    <p className="typo-para-small text-gray-600">
-                      {description}
-                    </p>
-                  </label>
-                  <Form.Field
-                    control={form.control}
-                    name="role"
-                    render={({ field }) => (
-                      <Form.Item>
-                        <Form.Control>
-                          <RadioGroupItem
-                            onChange={() => field.onChange(value)}
-                            value={value}
-                            id={id}
-                          />
-                        </Form.Control>
-                      </Form.Item>
-                    )}
-                  />
-                </div>
-              ))}
-            </RadioGroup>
-
+                          <RadioGroupItem value={value} id={id} />
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </Form.Control>
+                </Form.Item>
+              )}
+            />
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={
