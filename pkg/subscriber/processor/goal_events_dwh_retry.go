@@ -136,18 +136,13 @@ func (w *goalEvtWriter) handleMessage(ctx context.Context, msg *retryMessage, ke
 
 func (w *goalEvtWriter) handleFailedBatch(ctx context.Context, msg *retryMessage, key string, lg *zap.Logger) {
 	failures, err := w.writer.AppendRows(ctx, msg.FailedEvents)
-	if err != nil && !errors.Is(err, ErrExperimentNotFound) {
+	if err != nil {
 		lg.Error("Append failed batch", zap.Error(err))
 		msg.RetryCount++
 		if err := w.storeRetryMessage(msg); err != nil {
 			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToStoreRetryMessage).Inc()
 			lg.Error("Failed to store retry message", zap.Error(err))
 		}
-		return
-	}
-	if errors.Is(err, ErrExperimentNotFound) {
-		lg.Warn("Experiment not found, deleting retry message")
-		w.deleteKey(ctx, key)
 		return
 	}
 
@@ -317,7 +312,6 @@ func (w *goalEvtWriter) unlockGoalEventRetryLock(ctx context.Context, key, value
 func (w *goalEvtWriter) computeBackoffAndTTL(
 	retryCount int,
 	firstRetryAt int64,
-	now int64,
 	initialInterval time.Duration,
 	maxRetryPeriod time.Duration,
 ) (nextInterval time.Duration, ttl time.Duration, err error) {
@@ -360,7 +354,6 @@ func (w *goalEvtWriter) storeRetryMessage(msg *retryMessage) error {
 	nextInterval, ttl, err := w.computeBackoffAndTTL(
 		msg.RetryCount,
 		msg.FirstRetryAt,
-		now,
 		w.retryGoalEventInterval,
 		w.maxRetryGoalEventPeriod,
 	)
