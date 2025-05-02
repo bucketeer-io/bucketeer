@@ -17,7 +17,8 @@ package v2
 
 import (
 	"context"
-	"embed"
+	_ "embed"
+	"errors"
 	"fmt"
 	"time"
 
@@ -32,13 +33,20 @@ import (
 const (
 	DataTypeEvaluationEvent = "evaluation_event"
 	DataTypeGoalEvent       = "goal_event"
-	EvaluationCountSQLFile  = "sql/evaluation_count.sql"
-	GoalCountSQLFile        = "sql/goal_count.sql"
 )
 
 var (
-	//go:embed sql
-	sql embed.FS
+	//go:embed sql/select_user_evaluation.sql
+	userEvaluationSQL string
+
+	//go:embed sql/evaluation_count.sql
+	evaluationCountSQL string
+
+	//go:embed sql/goal_count.sql
+	goalCountSQL string
+
+	ErrUnexpectedMultipleResults = errors.New("bigquery: unexpected multiple results")
+	ErrNoResultsFound            = errors.New("bigquery: no results found")
 )
 
 type EventStorage interface {
@@ -56,6 +64,12 @@ type EventStorage interface {
 		goalID, featureID string,
 		featureVersion int32,
 	) ([]*GoalEventCount, error)
+	QueryUserEvaluation(
+		ctx context.Context,
+		environmentID, userID, featureID string,
+		featureVersion int32,
+		experimentStartAt, experimentEndAt time.Time,
+	) (*UserEvaluation, error)
 }
 
 type eventStorage struct {
@@ -79,6 +93,15 @@ type GoalEventCount struct {
 	GoalValueVariance float64
 }
 
+type UserEvaluation struct {
+	UserID         string
+	FeatureID      string
+	FeatureVersion int32
+	VariationID    string
+	Reason         string
+	Timestamp      int64
+}
+
 func NewEventStorage(querier bqquerier.Client, dataset string, logger *zap.Logger) EventStorage {
 	return &eventStorage{
 		querier: querier,
@@ -94,20 +117,8 @@ func (es *eventStorage) QueryEvaluationCount(
 	featureID string,
 	featureVersion int32,
 ) ([]*EvaluationEventCount, error) {
-	fileName := EvaluationCountSQLFile
-	q, err := sql.ReadFile(fileName)
-	if err != nil {
-		es.logger.Error(
-			"Failed to read file",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("fileName", fileName),
-			)...,
-		)
-		return nil, err
-	}
 	datasource := fmt.Sprintf("%s.%s", es.dataset, DataTypeEvaluationEvent)
-	query := fmt.Sprintf(string(q), datasource)
+	query := fmt.Sprintf(evaluationCountSQL, datasource)
 	params := []bigquery.QueryParameter{
 		{
 			Name:  "environmentId",
@@ -176,20 +187,8 @@ func (es *eventStorage) QueryGoalCount(
 	goalID, featureID string,
 	featureVersion int32,
 ) ([]*GoalEventCount, error) {
-	fileName := GoalCountSQLFile
-	q, err := sql.ReadFile(fileName)
-	if err != nil {
-		es.logger.Error(
-			"Failed to read file",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("fileName", fileName),
-			)...,
-		)
-		return nil, err
-	}
 	datasource := fmt.Sprintf("%s.%s", es.dataset, DataTypeGoalEvent)
-	query := fmt.Sprintf(string(q), datasource)
+	query := fmt.Sprintf(goalCountSQL, datasource)
 	params := []bigquery.QueryParameter{
 		{
 			Name:  "environmentId",
@@ -253,4 +252,88 @@ func (es *eventStorage) QueryGoalCount(
 		rows = append(rows, &row)
 	}
 	return rows, nil
+}
+
+func (es *eventStorage) QueryUserEvaluation(
+	ctx context.Context,
+	environmentID, userID, featureID string,
+	featureVersion int32,
+	experimentStartAt, experimentEndAt time.Time,
+) (*UserEvaluation, error) {
+	datasource := fmt.Sprintf("%s.%s", es.dataset, DataTypeEvaluationEvent)
+	query := fmt.Sprintf(userEvaluationSQL, datasource)
+	params := []bigquery.QueryParameter{
+		{
+			Name:  "environmentId",
+			Value: environmentID,
+		},
+		{
+			Name:  "userId",
+			Value: userID,
+		},
+		{
+			Name:  "featureId",
+			Value: featureID,
+		},
+		{
+			Name:  "featureVersion",
+			Value: featureVersion,
+		},
+		{
+			Name:  "experimentStartAt",
+			Value: experimentStartAt,
+		},
+		{
+			Name:  "experimentEndAt",
+			Value: experimentEndAt,
+		},
+	}
+	es.logger.Debug("Query user evaluation",
+		zap.String("query", query),
+		zap.Any("params", params),
+	)
+	iter, err := es.querier.ExecQuery(ctx, query, params)
+	if err != nil {
+		es.logger.Error(
+			"Failed to query user evaluation",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("query", query),
+				zap.Any("params", params),
+			)...,
+		)
+		return nil, err
+	}
+
+	// Check if there are unexpected multiple rows
+	if iter.TotalRows > 1 {
+		return nil, ErrUnexpectedMultipleResults
+	}
+
+	// Retrieve the single expected row
+	var row UserEvaluation
+	err = iter.Next(&row)
+	if err == iterator.Done {
+		es.logger.Error(
+			"User evaluation not found",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("query", query),
+				zap.Any("params", params),
+			)...,
+		)
+		return nil, ErrNoResultsFound
+	}
+	if err != nil {
+		es.logger.Error(
+			"Failed to convert user evaluation from the query result",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("query", query),
+				zap.Any("params", params),
+			)...,
+		)
+		return nil, err
+	}
+	return &row, nil
 }

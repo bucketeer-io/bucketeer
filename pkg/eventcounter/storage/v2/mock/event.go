@@ -71,3 +71,18 @@ func (mr *MockEventStorageMockRecorder) QueryGoalCount(ctx, environmentId, start
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryGoalCount", reflect.TypeOf((*MockEventStorage)(nil).QueryGoalCount), ctx, environmentId, startAt, endAt, goalID, featureID, featureVersion)
 }
+
+// QueryUserEvaluation mocks base method.
+func (m *MockEventStorage) QueryUserEvaluation(ctx context.Context, environmentID, userID, featureID string, featureVersion int32, experimentStartAt, experimentEndAt time.Time) (*v2.UserEvaluation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueryUserEvaluation", ctx, environmentID, userID, featureID, featureVersion, experimentStartAt, experimentEndAt)
+	ret0, _ := ret[0].(*v2.UserEvaluation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueryUserEvaluation indicates an expected call of QueryUserEvaluation.
+func (mr *MockEventStorageMockRecorder) QueryUserEvaluation(ctx, environmentID, userID, featureID, featureVersion, experimentStartAt, experimentEndAt any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryUserEvaluation", reflect.TypeOf((*MockEventStorage)(nil).QueryUserEvaluation), ctx, environmentID, userID, featureID, featureVersion, experimentStartAt, experimentEndAt)
+}

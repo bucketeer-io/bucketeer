@@ -142,7 +142,6 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 			p.cacheLastUsedInfoPerEnv(envEvents)
 			updateEvaluationCounter(envEvents)
 		case <-ticker.C:
-			p.logger.Debug("Update evaluation count timer triggered")
 			envEvents := p.extractEvents(batch)
 			// Update the feature flag last-used cache
 			p.cacheLastUsedInfoPerEnv(envEvents)
@@ -197,10 +196,20 @@ func (p *evaluationCountEventPersister) extractEvents(messages map[string]*pulle
 	envEvents := environmentEventMap{}
 	handleBadMessage := func(m *puller.Message, err error) {
 		m.Ack()
-		p.logger.Error("Bad proto message", zap.Error(err), zap.Any("msg", m))
+		p.logger.Error("Bad proto message",
+			zap.Error(err),
+			zap.String("messageID", m.ID),
+			zap.ByteString("data", m.Data),
+			zap.Any("attributes", m.Attributes),
+		)
 		subscriberHandledCounter.WithLabelValues(subscriberEvaluationCount, codes.BadMessage.String()).Inc()
 	}
 	for _, m := range messages {
+		// Check if message data is empty
+		if len(m.Data) == 0 {
+			handleBadMessage(m, fmt.Errorf("message data is empty"))
+			continue
+		}
 		event := &eventproto.Event{}
 		if err := proto.Unmarshal(m.Data, event); err != nil {
 			handleBadMessage(m, err)

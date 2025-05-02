@@ -17,6 +17,7 @@ package processor
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -37,13 +38,16 @@ import (
 )
 
 type eventsDWHPersisterConfig struct {
-	FlushInterval     int    `json:"flushInterval"`
-	FlushTimeout      int    `json:"flushTimeout"`
-	FlushSize         int    `json:"flushSize"`
-	Project           string `json:"project"`
-	BigQueryDataSet   string `json:"bigQueryDataSet"`
-	BigQueryBatchSize int    `json:"bigQueryBatchSize"`
-	Timezone          string `json:"timezone"`
+	FlushInterval           int    `json:"flushInterval"`
+	FlushTimeout            int    `json:"flushTimeout"`
+	FlushSize               int    `json:"flushSize"`
+	Project                 string `json:"project"`
+	BigQueryDataSet         string `json:"bigQueryDataSet"`
+	BigQueryDataLocation    string `json:"bigQueryDataLocation"`
+	BigQueryBatchSize       int    `json:"bigQueryBatchSize"`
+	Timezone                string `json:"timezone"`
+	MaxRetryGoalEventPeriod int    `json:"maxRetryGoalEventPeriod"`
+	RetryGoalEventInterval  int    `json:"retryGoalEventInterval"`
 }
 
 type eventsDWHPersister struct {
@@ -59,6 +63,7 @@ func NewEventsDWHPersister(
 	config interface{},
 	mysqlClient mysql.Client,
 	redisClient redisv3.Client,
+	persistentRedisClient redisv3.Client,
 	exClient experimentclient.Client,
 	ftClient featureclient.Client,
 	persisterName string,
@@ -117,8 +122,12 @@ func NewEventsDWHPersister(
 			experimentsCache,
 			e.eventsDWHPersisterConfig.Project,
 			e.eventsDWHPersisterConfig.BigQueryDataSet,
+			e.eventsDWHPersisterConfig.BigQueryDataLocation,
 			e.eventsDWHPersisterConfig.BigQueryBatchSize,
 			location,
+			persistentRedisClient,
+			time.Duration(e.eventsDWHPersisterConfig.MaxRetryGoalEventPeriod)*time.Second,
+			time.Duration(e.eventsDWHPersisterConfig.RetryGoalEventInterval)*time.Second,
 		)
 		if err != nil {
 			return nil, err
@@ -225,10 +234,20 @@ func (e *eventsDWHPersister) extractEvents(messages map[string]*puller.Message) 
 	envEvents := environmentEventDWHMap{}
 	handleBadMessage := func(m *puller.Message, err error) {
 		m.Ack()
-		e.logger.Error("bad message", zap.Error(err), zap.Any("msg", m))
+		e.logger.Error("Bad proto message",
+			zap.Error(err),
+			zap.String("messageID", m.ID),
+			zap.ByteString("data", m.Data),
+			zap.Any("attributes", m.Attributes),
+		)
 		subscriberHandledCounter.WithLabelValues(e.subscriberType, codes.BadMessage.String()).Inc()
 	}
 	for _, m := range messages {
+		// Check if message data is empty
+		if len(m.Data) == 0 {
+			handleBadMessage(m, fmt.Errorf("message data is empty"))
+			continue
+		}
 		event := &eventproto.Event{}
 		if err := proto.Unmarshal(m.Data, event); err != nil {
 			handleBadMessage(m, err)

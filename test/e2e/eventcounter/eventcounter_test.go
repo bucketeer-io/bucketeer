@@ -54,26 +54,27 @@ import (
 
 const (
 	prefixTestName = "e2e-test"
-	timeout        = 2 * time.Minute
+	timeout        = 3 * time.Minute
 	retryTimes     = 50
 )
 
 const defaultVariationID = "default"
 
 var (
-	webGatewayAddr   = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
-	webGatewayPort   = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
-	webGatewayCert   = flag.String("web-gateway-cert", "", "Web gateway crt file")
-	apiKeyPath       = flag.String("api-key", "", "Client SDK API key for api-gateway")
-	apiKeyServerPath = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
-	gatewayAddr      = flag.String("gateway-addr", "", "Gateway endpoint address")
-	gatewayPort      = flag.Int("gateway-port", 443, "Gateway endpoint port")
-	gatewayCert      = flag.String("gateway-cert", "", "Gateway crt file")
-	serviceTokenPath = flag.String("service-token", "", "Service token path")
-	environmentID    = flag.String("environment-id", "", "Environment id")
-	organizationID   = flag.String("organization-id", "", "Organization ID")
-	testID           = flag.String("test-id", "", "test ID")
-	compareFloatOpt  = cmpopts.EquateApprox(0, 0.0001)
+	webGatewayAddr       = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
+	webGatewayPort       = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
+	webGatewayCert       = flag.String("web-gateway-cert", "", "Web gateway crt file")
+	apiKeyPath           = flag.String("api-key", "", "Client SDK API key for api-gateway")
+	apiKeyServerPath     = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
+	gatewayAddr          = flag.String("gateway-addr", "", "Gateway endpoint address")
+	gatewayPort          = flag.Int("gateway-port", 443, "Gateway endpoint port")
+	gatewayCert          = flag.String("gateway-cert", "", "Gateway crt file")
+	serviceTokenPath     = flag.String("service-token", "", "Service token path")
+	environmentID        = flag.String("environment-id", "", "Environment id")
+	organizationID       = flag.String("organization-id", "", "Organization ID")
+	testID               = flag.String("test-id", "", "test ID")
+	compareFloatOpt      = cmpopts.EquateApprox(0, 0.0001)
+	compareFloatBayesian = cmpopts.EquateApprox(0, 0.03) // 3% tolerance for Bayesian results to avoid flaky tests
 )
 
 func TestGrpcExperimentGoalCount(t *testing.T) {
@@ -119,8 +120,8 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 	}
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local()
-	stopAt := startAt.Local().Add(time.Hour * 2)
+	startAt := time.Now().Add(-time.Hour)
+	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 	variations := make(map[string]*featureproto.Variation)
@@ -135,12 +136,16 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
 
+	// Evaluation events must always be sent before goal events
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
+
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Add(-time.Hour).Unix())
-
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+	grpcRegisterGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Add(-2*time.Hour).Unix())
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -184,7 +189,6 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 		if diff := cmp.Diff(vcA.ValueSumPerUserVariance, float64(0), compareFloatOpt); diff != "" {
 			continue
 		}
-
 		vcB := getVariationCount(resp.VariationCounts, variations[variationVarB].Id)
 		if vcB == nil {
 			t.Fatalf("variation b is missing")
@@ -253,8 +257,8 @@ func TestExperimentGoalCount(t *testing.T) {
 	}
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local()
-	stopAt := startAt.Local().Add(time.Hour * 2)
+	startAt := time.Now().Add(-time.Hour)
+	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestExperimentGoalCount", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 	variations := make(map[string]*featureproto.Variation)
@@ -269,12 +273,16 @@ func TestExperimentGoalCount(t *testing.T) {
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
 
+	// Evaluation events must always be sent before goal events
+	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
+
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.2), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Unix())
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Add(-time.Hour).Unix())
-
-	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+	registerGoalEvent(t, goalIDs[0], userID, tag, float64(0.3), time.Now().Add(-2*time.Hour).Unix())
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -392,8 +400,8 @@ func TestGrpcExperimentResult(t *testing.T) {
 	}
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local()
-	stopAt := startAt.Local().Add(time.Hour * 2)
+	startAt := time.Now().Add(-time.Hour)
+	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
@@ -403,14 +411,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 	time.Sleep(70 * time.Second)
 
 	// CVRs is 3/4
-	// Register goal variation
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
-	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-time.Hour).Unix())
-	// Increment experiment event count
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	// Evaluation events must always be sent before goal events
 	// Register 3 events and 2 user counts for the user index 1, 2 and 3
 	// Register variation a
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag, reason)
@@ -419,20 +420,39 @@ func TestGrpcExperimentResult(t *testing.T) {
 	// Increment evaluation event count
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], experiment.Variations[0].Id, tag, reason)
 
-	// CVRs is 2/3
-	// Register goal
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
+
+	// Register goal variation
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-time.Hour).Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-2*time.Hour).Unix())
 	// Increment experiment event count
-	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
+
+	// CVRs is 2/3
+	// Evaluation events must always be sent before goal events
 	// Register 3 events and 2 user counts for the user index 4 and 5
 	// Register variation
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag, reason)
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[4], experiment.Variations[1].Id, tag, reason)
 	// Increment evaluation event count
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[3], experiment.Variations[1].Id, tag, reason)
+
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
+
+	// Register goal
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-2*time.Hour).Unix())
+	// Increment experiment event count
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -478,9 +498,9 @@ func TestGrpcExperimentResult(t *testing.T) {
 				continue
 			}
 			// These counts are based on the number of events sent earlier
-			if vsA.ExperimentCount.EventCount != 4 || // variation A
+			if vsA.ExperimentCount.EventCount != 5 || // variation A
 				vsA.ExperimentCount.UserCount != 3 ||
-				vsB.ExperimentCount.EventCount != 3 || // variation B
+				vsB.ExperimentCount.EventCount != 4 || // variation B
 				vsB.ExperimentCount.UserCount != 2 {
 				continue
 			}
@@ -550,8 +570,8 @@ func TestExperimentResult(t *testing.T) {
 	}
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local()
-	stopAt := startAt.Local().Add(time.Hour * 2)
+	startAt := time.Now().Add(-time.Hour)
+	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestExperimentResult", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
@@ -561,14 +581,7 @@ func TestExperimentResult(t *testing.T) {
 	time.Sleep(70 * time.Second)
 
 	// CVRs is 3/4
-	// Register goal variation
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
-	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-time.Hour).Unix())
-	// Increment experiment event count
-	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	// Evaluation events must always be sent before goal events
 	// Register 3 events and 2 user counts for user 1, 2 and 3
 	// Register variation a
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
@@ -577,20 +590,39 @@ func TestExperimentResult(t *testing.T) {
 	// Increment evaluation event count
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
 
-	// CVRs is 2/3
-	// Register goal
-	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
-	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
+
+	// Register goal variation
+	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[1], tag, float64(0.2), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-time.Hour).Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Add(-2*time.Hour).Unix())
 	// Increment experiment event count
-	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[2], tag, float64(0.1), time.Now().Unix())
+
+	// CVRs is 2/3
+	// Evaluation events must always be sent before goal events
 	// Register 3 events and 2 user counts for user 4 and 5
 	// Register variation
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, reason)
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[4], f.Variations[1].Id, tag, reason)
 	// Increment evaluation event count
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[3], f.Variations[1].Id, tag, reason)
+
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
+
+	// Register goal
+	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
+	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
+	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Add(-2*time.Hour).Unix())
+	// Increment experiment event count
+	registerGoalEvent(t, goalIDs[0], userIDs[3], tag, float64(0.1), time.Now().Unix())
+	registerGoalEvent(t, goalIDs[0], userIDs[4], tag, float64(0.15), time.Now().Unix())
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -636,9 +668,9 @@ func TestExperimentResult(t *testing.T) {
 				continue
 			}
 			// These counts are based on the number of events sent earlier
-			if vsA.ExperimentCount.EventCount != 4 || // variation A
+			if vsA.ExperimentCount.EventCount != 5 || // variation A
 				vsA.ExperimentCount.UserCount != 3 ||
-				vsB.ExperimentCount.EventCount != 3 || // variation B
+				vsB.ExperimentCount.EventCount != 4 || // variation B
 				vsB.ExperimentCount.UserCount != 2 {
 				continue
 			}
@@ -707,8 +739,8 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	}
 
 	goalIDs := createGoals(ctx, t, experimentClient, 3)
-	startAt := time.Now().Local()
-	stopAt := startAt.Local().Add(time.Hour * 2)
+	startAt := time.Now().Add(-time.Hour)
+	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestGrpcMultiGoalsEventCounter", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
@@ -724,15 +756,19 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
 
+	// Evaluation events must always be sent before goal events
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
+
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
+
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
 	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Add(-time.Hour).Unix())
-
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
-	grpcRegisterEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
+	grpcRegisterGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Add(-2*time.Hour).Unix())
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -930,8 +966,8 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 	}
 
 	goalIDs := createGoals(ctx, t, experimentClient, 3)
-	startAt := time.Now().Local()
-	stopAt := startAt.Local().Add(time.Hour * 2)
+	startAt := time.Now().Add(-time.Hour)
+	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestMultiGoalsEventCounter", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
@@ -947,15 +983,19 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
 
+	// Evaluation events must always be sent before goal events
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
+
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
+
 	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[0], userIDs[0], tag, float64(0.3), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
 	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Unix())
 	// This event will be ignored because the timestamp is older than the experiment startAt time stamp
-	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Add(-time.Hour).Unix())
-
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, reason)
-	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[1].Id, tag, reason)
+	registerGoalEvent(t, goalIDs[1], userIDs[1], tag, float64(0.2), time.Now().Add(-2*time.Hour).Unix())
 
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
@@ -1150,8 +1190,8 @@ func TestHTTPTrack(t *testing.T) {
 	}
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
-	stopAt := startAt.Local().Add(time.Hour * 2)
+	startAt := time.Now().Add(-time.Hour)
+	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx, t, experimentClient, "TestHTTPTrack", featureID, goalIDs, f.Variations[0].Id, startAt, stopAt)
 
@@ -1167,9 +1207,15 @@ func TestHTTPTrack(t *testing.T) {
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
 
-	// Send track events.
-	sendHTTPTrack(t, userID, goalIDs[0], tag, value)
+	// Evaluation events must always be sent before goal events
 	registerEvaluationEvent(t, featureID, f.Version, userID, f.Variations[0].Id, tag, reason)
+
+	// Wait a few seconds so the data in BigQuery becomes available for linking the goal event
+	time.Sleep(10 * time.Second)
+
+	// Send track events
+	// This track event will be converted to a goal event on the backend.
+	sendHTTPTrack(t, userID, goalIDs[0], tag, value)
 
 	// Check the count
 	for i := 0; i < retryTimes; i++ {
@@ -1278,8 +1324,8 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 	}
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
-	stopAt := startAt.Local().Add(time.Hour * 2)
+	startAt := time.Now().Add(-time.Hour)
+	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx,
 		t,
@@ -1296,6 +1342,8 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 	// to ensure that it will subscribe correctly.
 	time.Sleep(70 * time.Second)
 
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
+	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
 	grpcRegisterEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
 
 	for i := 0; i < retryTimes; i++ {
@@ -1332,7 +1380,7 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 		if vcA.UserCount != 1 {
 			continue
 		}
-		if vcA.EventCount != 1 {
+		if vcA.EventCount != 3 {
 			continue
 		}
 		if vcA.ValueSum != float64(0) {
@@ -1406,8 +1454,8 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		variations[v.Value] = v
 	}
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
-	startAt := time.Now().Local().Add(-1 * time.Hour)
-	stopAt := startAt.Local().Add(time.Hour * 2)
+	startAt := time.Now().Add(-time.Hour)
+	stopAt := startAt.Add(time.Hour * 2)
 	experiment := createExperimentWithMultiGoals(
 		ctx,
 		t,
@@ -1425,6 +1473,9 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 	time.Sleep(70 * time.Second)
 
 	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
+	registerEvaluationEvent(t, featureID, f.Version, userID, variations[variationVarA].Id, tag, reason)
+
 	for i := 0; i < retryTimes; i++ {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout")
@@ -1458,7 +1509,7 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		if vcA.UserCount != 1 {
 			continue
 		}
-		if vcA.EventCount != 1 {
+		if vcA.EventCount != 3 {
 			continue
 		}
 		if vcA.ValueSum != float64(0) {
@@ -1819,56 +1870,6 @@ func registerGoalEvent(
 		},
 	}
 	response := util.RegisterEvents(t, events, *gatewayAddr, *apiKeyPath)
-	if len(response.Errors) > 0 {
-		t.Fatalf("Failed to register events. Error: %v", response.Errors)
-	}
-}
-
-// Test for old SDK client
-// Evaluation field in the GoalEvent is deprecated.
-func registerGoalEventWithEvaluations(
-	t *testing.T,
-	featureID string,
-	featureVersion int32,
-	goalID, userID, variationID string,
-	value float64,
-) {
-	t.Helper()
-	c := newGatewayClient(t)
-	defer c.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	goal, err := ptypes.MarshalAny(&eventproto.GoalEvent{
-		Timestamp: time.Now().Unix(),
-		GoalId:    goalID,
-		UserId:    userID,
-		Value:     value,
-		User:      &userproto.User{},
-		Evaluations: []*featureproto.Evaluation{
-			{
-				Id:             fmt.Sprintf("%s-evaluation-id-%s", prefixTestName, newUUID(t)),
-				FeatureId:      featureID,
-				FeatureVersion: featureVersion,
-				UserId:         userID,
-				VariationId:    variationID,
-			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	req := &gatewayproto.RegisterEventsRequest{
-		Events: []*eventproto.Event{
-			{
-				Id:    newUUID(t),
-				Event: goal,
-			},
-		},
-	}
-	response, err := c.RegisterEvents(ctx, req)
-	if err != nil {
-		t.Fatal(err)
-	}
 	if len(response.Errors) > 0 {
 		t.Fatalf("Failed to register events. Error: %v", response.Errors)
 	}
@@ -2438,41 +2439,41 @@ func checkExperimentVariationResultA(t *testing.T, vsA *ecproto.VariationResult,
 		t.Fatalf("variation: %s: evaluation user count is not correct: %d", variationValue, vsA.EvaluationCount.UserCount)
 	}
 	// Experiment
-	if vsA.ExperimentCount.EventCount != 4 {
+	if vsA.ExperimentCount.EventCount != 5 {
 		t.Fatalf("variation: %s: experiment event count is not correct: %d", variationValue, vsA.ExperimentCount.EventCount)
 	}
 	if vsA.ExperimentCount.UserCount != 3 {
 		t.Fatalf("variation: %s: experiment user count is not correct: %d", variationValue, vsA.ExperimentCount.UserCount)
 	}
-	if diff := cmp.Diff(vsA.ExperimentCount.ValueSum, 0.9, compareFloatOpt); diff != "" {
+	if diff := cmp.Diff(vsA.ExperimentCount.ValueSum, 1.0, compareFloatOpt); diff != "" {
 		t.Fatalf("variation: %s: experiment value sum is not correct: %f", variationValue, vsA.ExperimentCount.ValueSum)
 	}
 	// cvr prob best
-	if vsA.CvrProbBest.Mean <= float64(0.0) {
+	if diff := cmp.Diff(vsA.CvrProbBest.Mean, 0.57, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", variationValue, vsA.CvrProbBest.Mean)
 	}
-	if vsA.CvrProbBest.Sd <= float64(0.0) {
+	if diff := cmp.Diff(vsA.CvrProbBest.Sd, 0.49, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", variationValue, vsA.CvrProbBest.Sd)
 	}
-	if vsA.CvrProbBest.Rhat <= float64(0.0) {
+	if diff := cmp.Diff(vsA.CvrProbBest.Rhat, 0.99, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", variationValue, vsA.CvrProbBest.Rhat)
 	}
 	// cvr prob beat baseline
-	if diff := cmp.Diff(vsA.CvrProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
+	if diff := cmp.Diff(vsA.CvrProbBeatBaseline.Mean, 0.0, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", variationValue, vsA.CvrProbBeatBaseline.Mean)
 	}
-	if diff := cmp.Diff(vsA.CvrProbBeatBaseline.Sd, 0.0, compareFloatOpt); diff != "" {
+	if diff := cmp.Diff(vsA.CvrProbBeatBaseline.Sd, 0.0, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", variationValue, vsA.CvrProbBeatBaseline.Sd)
 	}
-	if diff := cmp.Diff(vsA.CvrProbBeatBaseline.Rhat, 0.0, compareFloatOpt); diff != "" {
+	if diff := cmp.Diff(vsA.CvrProbBeatBaseline.Rhat, 0.0, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", variationValue, vsA.CvrProbBeatBaseline.Rhat)
 	}
 	// value sum per user prob best
-	if vsA.GoalValueSumPerUserProbBest.Mean <= float64(0.0) {
+	if diff := cmp.Diff(vsA.GoalValueSumPerUserProbBest.Mean, 0.32, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", variationValue, vsA.GoalValueSumPerUserProbBest.Mean)
 	}
 	// value sum per user prob beat baseline
-	if diff := cmp.Diff(vsA.GoalValueSumPerUserProbBeatBaseline.Mean, 0.0, compareFloatOpt); diff != "" {
+	if diff := cmp.Diff(vsA.GoalValueSumPerUserProbBeatBaseline.Mean, 0.0, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", variationValue, vsA.GoalValueSumPerUserProbBeatBaseline.Mean)
 	}
 }
@@ -2481,7 +2482,6 @@ func checkExperimentVariationResultA(t *testing.T, vsA *ecproto.VariationResult,
 func checkExperimentVariationResultB(t *testing.T, vsB *ecproto.VariationResult, variationValue string) {
 	t.Helper()
 	// Evaluation
-	// Evaluation
 	if vsB.EvaluationCount.EventCount != 3 {
 		t.Fatalf("variation: %s: evaluation event count is not correct: %d", variationValue, vsB.EvaluationCount.EventCount)
 	}
@@ -2489,41 +2489,41 @@ func checkExperimentVariationResultB(t *testing.T, vsB *ecproto.VariationResult,
 		t.Fatalf("variation: %s: evaluation user count is not correct: %d", variationValue, vsB.EvaluationCount.UserCount)
 	}
 	// Experiment
-	if vsB.ExperimentCount.EventCount != 3 {
+	if vsB.ExperimentCount.EventCount != 4 {
 		t.Fatalf("variation: %s: experiment event count is not correct: %d", variationValue, vsB.ExperimentCount.EventCount)
 	}
 	if vsB.ExperimentCount.UserCount != 2 {
 		t.Fatalf("variation: %s: experiment user count is not correct: %d", variationValue, vsB.ExperimentCount.UserCount)
 	}
-	if diff := cmp.Diff(vsB.ExperimentCount.ValueSum, 0.35, compareFloatOpt); diff != "" {
+	if diff := cmp.Diff(vsB.ExperimentCount.ValueSum, 0.50, compareFloatOpt); diff != "" {
 		t.Fatalf("variation: %s: experiment value sum is not correct: %f", variationValue, vsB.ExperimentCount.ValueSum)
 	}
 	// cvr prob best
-	if vsB.CvrProbBest.Mean <= float64(0.0) {
+	if diff := cmp.Diff(vsB.CvrProbBest.Mean, 0.42, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: cvr prob best mean is not correct: %f", variationValue, vsB.CvrProbBest.Mean)
 	}
-	if vsB.CvrProbBest.Sd <= float64(0.0) {
+	if diff := cmp.Diff(vsB.CvrProbBest.Sd, 0.49, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: cvr prob best sd is not correct: %f", variationValue, vsB.CvrProbBest.Sd)
 	}
-	if vsB.CvrProbBest.Rhat <= float64(0.0) {
+	if diff := cmp.Diff(vsB.CvrProbBest.Rhat, 0.99, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: cvr prob best rhat is not correct: %f", variationValue, vsB.CvrProbBest.Rhat)
 	}
 	// cvr prob beat baseline
-	if vsB.CvrProbBeatBaseline.Mean <= float64(0.0) {
+	if diff := cmp.Diff(vsB.CvrProbBeatBaseline.Mean, 0.42, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: cvr prob beat baseline mean is not correct: %f", variationValue, vsB.CvrProbBeatBaseline.Mean)
 	}
-	if vsB.CvrProbBeatBaseline.Sd <= float64(0.0) {
+	if diff := cmp.Diff(vsB.CvrProbBeatBaseline.Sd, 0.49, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: cvr prob beat baseline best sd is not correct: %f", variationValue, vsB.CvrProbBeatBaseline.Sd)
 	}
-	if vsB.CvrProbBeatBaseline.Rhat <= float64(0.0) {
+	if diff := cmp.Diff(vsB.CvrProbBeatBaseline.Rhat, 0.99, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: cvr prob beat baseline best rhat is not correct: %f", variationValue, vsB.CvrProbBeatBaseline.Rhat)
 	}
 	// value sum per user prob best
-	if vsB.GoalValueSumPerUserProbBest.Mean <= float64(0.0) {
+	if diff := cmp.Diff(vsB.GoalValueSumPerUserProbBest.Mean, 0.67, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: value sum per user prob best mean is not correct: %f", variationValue, vsB.GoalValueSumPerUserProbBest.Mean)
 	}
 	// value sum per user prob beat baseline
-	if vsB.GoalValueSumPerUserProbBeatBaseline.Mean <= float64(0.0) {
+	if diff := cmp.Diff(vsB.GoalValueSumPerUserProbBeatBaseline.Mean, 0.67, compareFloatBayesian); diff != "" {
 		t.Fatalf("variation: %s: value sum per user prob beat baseline mean is not correct: %f", variationValue, vsB.GoalValueSumPerUserProbBeatBaseline.Mean)
 	}
 }

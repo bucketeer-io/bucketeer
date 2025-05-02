@@ -292,11 +292,6 @@ func (u *evalGoalUpdater) updateUserCountPerClause(
 			subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeFailedToUpdateUserCount).Inc()
 			return err
 		}
-		u.logger.Debug(
-			"User count updated successfully",
-			zap.String("pfcountKey", key),
-			zap.String("environmentId", environmentId),
-		)
 	}
 	return nil
 }
