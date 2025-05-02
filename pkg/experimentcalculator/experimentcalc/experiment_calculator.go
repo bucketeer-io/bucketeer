@@ -812,62 +812,60 @@ func (e ExperimentCalculator) calculateSummary(
 	goalResult.Summary.TotalGoalUserCount = totalGoalUserCount
 }
 
-// calculateExpectedLoss calculates the expected loss for each variation in a goal result
-// using a Monte Carlo approach with raw CVR samples.
+// calculateExpectedLoss computes the posterior expected loss (regret) for each variation
+// using a Monte Carlo approach over raw CVR samples (vr.CvrSamples).
 func (e ExperimentCalculator) calculateExpectedLoss(variationResults []*eventcounter.VariationResult) {
 	if len(variationResults) == 0 {
 		return
 	}
 
-	// Check if we have CVR samples to use for Monte Carlo
-	if len(variationResults[0].CvrSamples) == 0 {
-		e.logger.Warn("No CVR samples available for expected loss calculation",
-			zap.Int("numVariations", len(variationResults)),
-		)
-		return
-	}
-
-	// Map to store variation IDs for quick access
-	variationMap := make(map[string]*eventcounter.VariationResult)
+	// 1) Ensure every variation has CVR samples
 	for _, vr := range variationResults {
-		variationMap[vr.VariationId] = vr
+		if len(vr.CvrSamples) == 0 {
+			e.logger.Warn("No CVR samples available for expected loss calculation",
+				zap.String("variationId", vr.VariationId),
+			)
+			return
+		}
 	}
 
-	// Get the number of posterior samples
+	// 2) Enforce equal sample counts across all variations
 	numDraws := len(variationResults[0].CvrSamples)
+	for _, vr := range variationResults {
+		if len(vr.CvrSamples) != numDraws {
+			e.logger.Error("Inconsistent CVR sample lengths",
+				zap.String("variationId", vr.VariationId),
+				zap.Int("expectedDraws", numDraws),
+				zap.Int("actualDraws", len(vr.CvrSamples)),
+			)
+			return
+		}
+	}
 
-	// Accumulate sum of (best – this) over all draws
+	// 3) Monte Carlo accumulation of regret
 	regretSum := make(map[string]float64, len(variationResults))
 	for t := 0; t < numDraws; t++ {
-		// Find best in draw t
-		best := 0.0
-		for _, vr := range variationResults {
-			if len(vr.CvrSamples) > t {
-				if s := vr.CvrSamples[t]; s > best {
-					best = s
-				}
+		// find best CVR in this draw
+		best := variationResults[0].CvrSamples[t]
+		for _, vr := range variationResults[1:] {
+			if s := vr.CvrSamples[t]; s > best {
+				best = s
 			}
 		}
-
-		// Add regret (best - thisVariation) for each variation
+		// accumulate (best - this) for each variation
 		for _, vr := range variationResults {
-			if len(vr.CvrSamples) > t {
-				// Only calculate if we have valid samples
-				regretSum[vr.VariationId] += best - vr.CvrSamples[t]
-			}
+			regretSum[vr.VariationId] += best - vr.CvrSamples[t]
 		}
 	}
 
-	// Average regret over all draws to get expected loss
+	// 4) Average and assign expected loss (×100 to match percent scale)
 	for _, vr := range variationResults {
-		if regret, ok := regretSum[vr.VariationId]; ok {
-			// Convert to percentage points to match conversion_rate scale
-			vr.ExpectedLoss = (regret / float64(numDraws)) * 100
-		}
+		avgRegret := regretSum[vr.VariationId] / float64(numDraws)
+		vr.ExpectedLoss = avgRegret * 100
 	}
 
-	e.logger.Info("Calculated expected loss using Monte Carlo approach",
+	e.logger.Debug("Calculated expected loss using Monte Carlo",
 		zap.Int("numVariations", len(variationResults)),
-		zap.Int("numSamples", numDraws),
+		zap.Int("numDraws", numDraws),
 	)
 }
