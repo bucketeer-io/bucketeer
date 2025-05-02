@@ -41,7 +41,14 @@ goog.exportSymbol('proto.bucketeer.eventcounter.VariationResult', null, global);
  * @constructor
  */
 proto.bucketeer.eventcounter.VariationResult = function (opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.eventcounter.VariationResult.repeatedFields_,
+    null
+  );
 };
 goog.inherits(proto.bucketeer.eventcounter.VariationResult, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -52,6 +59,13 @@ if (goog.DEBUG && !COMPILED) {
   proto.bucketeer.eventcounter.VariationResult.displayName =
     'proto.bucketeer.eventcounter.VariationResult';
 }
+
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.eventcounter.VariationResult.repeatedFields_ = [25];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -226,7 +240,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg,
           24,
           0.0
-        )
+        ),
+        cvrSamplesList:
+          (f = jspb.Message.getRepeatedFloatingPointField(msg, 25)) == null
+            ? undefined
+            : f
       };
 
     if (includeInstance) {
@@ -476,6 +494,16 @@ proto.bucketeer.eventcounter.VariationResult.deserializeBinaryFromReader =
           var value = /** @type {number} */ (reader.readDouble());
           msg.setExpectedLoss(value);
           break;
+        case 25:
+          var values = /** @type {!Array<number>} */ (
+            reader.isDelimited()
+              ? reader.readPackedDouble()
+              : [reader.readDouble()]
+          );
+          for (var i = 0; i < values.length; i++) {
+            msg.addCvrSamples(values[i]);
+          }
+          break;
         default:
           reader.skipField();
           break;
@@ -695,6 +723,10 @@ proto.bucketeer.eventcounter.VariationResult.serializeBinaryToWriter =
     f = message.getExpectedLoss();
     if (f !== 0.0) {
       writer.writeDouble(24, f);
+    }
+    f = message.getCvrSamplesList();
+    if (f.length > 0) {
+      writer.writePackedDouble(25, f);
     }
   };
 
@@ -1639,6 +1671,45 @@ proto.bucketeer.eventcounter.VariationResult.prototype.getExpectedLoss =
 proto.bucketeer.eventcounter.VariationResult.prototype.setExpectedLoss =
   function (value) {
     return jspb.Message.setProto3FloatField(this, 24, value);
+  };
+
+/**
+ * repeated double cvr_samples = 25;
+ * @return {!Array<number>}
+ */
+proto.bucketeer.eventcounter.VariationResult.prototype.getCvrSamplesList =
+  function () {
+    return /** @type {!Array<number>} */ (
+      jspb.Message.getRepeatedFloatingPointField(this, 25)
+    );
+  };
+
+/**
+ * @param {!Array<number>} value
+ * @return {!proto.bucketeer.eventcounter.VariationResult} returns this
+ */
+proto.bucketeer.eventcounter.VariationResult.prototype.setCvrSamplesList =
+  function (value) {
+    return jspb.Message.setField(this, 25, value || []);
+  };
+
+/**
+ * @param {number} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.eventcounter.VariationResult} returns this
+ */
+proto.bucketeer.eventcounter.VariationResult.prototype.addCvrSamples =
+  function (value, opt_index) {
+    return jspb.Message.addToRepeatedField(this, 25, value, opt_index);
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.eventcounter.VariationResult} returns this
+ */
+proto.bucketeer.eventcounter.VariationResult.prototype.clearCvrSamplesList =
+  function () {
+    return this.setCvrSamplesList([]);
   };
 
 goog.object.extend(exports, proto.bucketeer.eventcounter);

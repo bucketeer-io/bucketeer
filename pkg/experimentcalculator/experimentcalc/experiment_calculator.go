@@ -19,6 +19,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -255,7 +256,7 @@ func (e ExperimentCalculator) calcGoalResult(
 	goalUc, evalUc := make([]int64, 0, length), make([]int64, 0, length)
 	vrs := make(map[string]*eventcounter.VariationResult, length)
 	valueMeans, valueVars := make([]float64, 0, length), make([]float64, 0, length)
-	baselineIdx, loopIdx := 0, 0
+	baseLineIdx, loopIdx := 0, 0
 
 	for vid, goalVariationCount := range goalVariationCounts {
 		if _, ok := evalVariationCounts[vid]; !ok {
@@ -283,7 +284,7 @@ func (e ExperimentCalculator) calcGoalResult(
 		goalResult.VariationResults = append(goalResult.VariationResults, vr)
 		vrs[vid] = vr
 		if vid == experiment.BaseVariationId {
-			baselineIdx = loopIdx
+			baseLineIdx = loopIdx
 		}
 		loopIdx++
 	}
@@ -303,7 +304,7 @@ func (e ExperimentCalculator) calcGoalResult(
 		}
 	}
 
-	cvrResult, sampleErr := e.binomialModelSample(ctx, vids, goalUc, evalUc, baselineIdx, experiment)
+	cvrResult, sampleErr := e.binomialModelSample(ctx, vids, goalUc, evalUc, baseLineIdx, experiment)
 	if sampleErr != nil {
 		calculationCounter.WithLabelValues(calculationFail).Inc()
 		e.logger.Error("BinomialModelSample error",
@@ -330,7 +331,7 @@ func (e ExperimentCalculator) calcGoalResult(
 			return goalResult
 		}
 	}
-	valueResult := normalInverseGamma(ctx, vids, valueMeans, valueVars, goalUc, baselineIdx, 25000)
+	valueResult := normalInverseGamma(ctx, vids, valueMeans, valueVars, goalUc, baseLineIdx, 25000)
 	for vid, vr := range valueResult {
 		vrs[vid].GoalValueSumPerUserProb = copyDistributionSummary(vr.GoalValueSumPerUserProb)
 		vrs[vid].GoalValueSumPerUserProbBest = copyDistributionSummary(vr.GoalValueSumPerUserProbBest)
@@ -604,10 +605,82 @@ func (e ExperimentCalculator) binomialModelSample(
 		return nil, errFailedToSample
 	}
 
-	variationResults := convertFitSamples(samples, vids, baseLineIdx)
+	variationResults := e.convertFitSamples(ctx, samples, vids, baseLineIdx)
 
 	calculationHistogram.WithLabelValues(binomialModelSampleMethod).Observe(time.Since(startTime).Seconds())
 	return variationResults, nil
+}
+
+// convertFitSamples extracts data from Stan model output and creates VariationResult objects
+func (e ExperimentCalculator) convertFitSamples(
+	ctx context.Context,
+	samples []dataframe.DataFrame,
+	vids []string,
+	baseLineIdx int,
+) map[string]*eventcounter.VariationResult {
+	// 1) Merge all chains
+	allSample := contactSamples(samples)
+
+	// 2) Build parameter names using the correct Stan column pattern: "p.1", "p.2", etc.
+	pNames := make([]string, len(vids))
+	for i := range vids {
+		pNames[i] = fmt.Sprintf("p.%d", i+1)
+	}
+
+	// Get all column names for checking
+	colNames := allSample.Names()
+
+	e.logger.Debug("Available columns in Stan samples",
+		zap.Strings("columnNames", colNames),
+		zap.Strings("expectedColumns", pNames),
+	)
+
+	// 3) Extract each p-column into a []float64
+	draws := make(map[string][]float64, len(vids))
+	for i, name := range pNames {
+		// Check if the column exists in the dataframe
+		colExists := false
+		for _, colName := range colNames {
+			if colName == name {
+				colExists = true
+				break
+			}
+		}
+
+		if colExists {
+			col := allSample.Col(name)
+			draws[vids[i]] = col.Float() // Extract samples for this variation
+		} else {
+			// Log warning if column not found
+			e.logger.Warn("Column not found in Stan samples",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.String("columnName", name),
+					zap.String("variationId", vids[i]),
+				)...,
+			)
+		}
+	}
+
+	// 4) Build your VariationResult map
+	variationResults := make(map[string]*eventcounter.VariationResult, len(vids))
+	for i, vid := range vids {
+		idx := i + 1
+		vr := &eventcounter.VariationResult{
+			VariationId:         vid,
+			CvrProb:             createCvrProb(allSample, samples, idx),
+			CvrProbBest:         createCvrProbBest(allSample, samples, idx),
+			CvrProbBeatBaseline: createCvrProbBeatBaseline(allSample, samples, baseLineIdx, idx),
+		}
+
+		// Add the raw CVR samples if available
+		if samples, ok := draws[vid]; ok {
+			vr.CvrSamples = samples
+		}
+
+		variationResults[vid] = vr
+	}
+
+	return variationResults
 }
 
 //-------------------------------------utility functions----------------------------------------------
@@ -670,24 +743,6 @@ func copyDistributionSummary(from *eventcounter.DistributionSummary) *eventcount
 		}
 	}
 	return e
-}
-
-func convertFitSamples(
-	samples []dataframe.DataFrame,
-	vids []string,
-	baselineIdx int,
-) map[string]*eventcounter.VariationResult {
-	variationResults := make(map[string]*eventcounter.VariationResult)
-	allSample := contactSamples(samples)
-	for i := 1; i < len(vids)+1; i++ {
-		vr := &eventcounter.VariationResult{
-			CvrProb:             createCvrProb(allSample, samples, i),
-			CvrProbBest:         createCvrProbBest(allSample, samples, i),
-			CvrProbBeatBaseline: createCvrProbBeatBaseline(allSample, samples, baselineIdx, i),
-		}
-		variationResults[vids[i-1]] = vr
-	}
-	return variationResults
 }
 
 func contactSamples(samples []dataframe.DataFrame) dataframe.DataFrame {
@@ -758,28 +813,61 @@ func (e ExperimentCalculator) calculateSummary(
 }
 
 // calculateExpectedLoss calculates the expected loss for each variation in a goal result
+// using a Monte Carlo approach with raw CVR samples.
 func (e ExperimentCalculator) calculateExpectedLoss(variationResults []*eventcounter.VariationResult) {
 	if len(variationResults) == 0 {
 		return
 	}
 
-	// Find the highest conversion rate across all variations
-	var bestConversionRate float64
+	// Check if we have CVR samples to use for Monte Carlo
+	if len(variationResults[0].CvrSamples) == 0 {
+		e.logger.Warn("No CVR samples available for expected loss calculation",
+			zap.Int("numVariations", len(variationResults)),
+		)
+		return
+	}
+
+	// Map to store variation IDs for quick access
+	variationMap := make(map[string]*eventcounter.VariationResult)
 	for _, vr := range variationResults {
-		if vr.ConversionRate > bestConversionRate {
-			bestConversionRate = vr.ConversionRate
+		variationMap[vr.VariationId] = vr
+	}
+
+	// Get the number of posterior samples
+	numDraws := len(variationResults[0].CvrSamples)
+
+	// Accumulate sum of (best – this) over all draws
+	regretSum := make(map[string]float64, len(variationResults))
+	for t := 0; t < numDraws; t++ {
+		// Find best in draw t
+		best := 0.0
+		for _, vr := range variationResults {
+			if len(vr.CvrSamples) > t {
+				if s := vr.CvrSamples[t]; s > best {
+					best = s
+				}
+			}
+		}
+
+		// Add regret (best - thisVariation) for each variation
+		for _, vr := range variationResults {
+			if len(vr.CvrSamples) > t {
+				// Only calculate if we have valid samples
+				regretSum[vr.VariationId] += best - vr.CvrSamples[t]
+			}
 		}
 	}
 
-	// For each variation, calculate the expected loss
+	// Average regret over all draws to get expected loss
 	for _, vr := range variationResults {
-		// Get probability this variation is best from cvrProbBest
-		probBest := 0.0
-		if vr.CvrProbBest != nil {
-			probBest = vr.CvrProbBest.Mean
+		if regret, ok := regretSum[vr.VariationId]; ok {
+			// Convert to percentage points to match conversion_rate scale
+			vr.ExpectedLoss = (regret / float64(numDraws)) * 100
 		}
-
-		// Calculate expected loss = (BestConversionRate - VariationConversionRate) * (1 - ProbabilityOfBeingBest)
-		vr.ExpectedLoss = (bestConversionRate - vr.ConversionRate) * (1.0 - probBest)
 	}
+
+	e.logger.Info("Calculated expected loss using Monte Carlo approach",
+		zap.Int("numVariations", len(variationResults)),
+		zap.Int("numSamples", numDraws),
+	)
 }

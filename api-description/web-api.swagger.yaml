@@ -10868,6 +10868,11 @@ definitions:
       expectedLoss:
         type: number
         format: double
+      cvrSamples:
+        type: array
+        items:
+          type: number
+          format: double
   eventcounterVariationTimeseries:
     type: object
     properties:

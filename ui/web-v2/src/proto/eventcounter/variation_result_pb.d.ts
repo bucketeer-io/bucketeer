@@ -201,6 +201,11 @@ export class VariationResult extends jspb.Message {
   getExpectedLoss(): number;
   setExpectedLoss(value: number): void;
 
+  clearCvrSamplesList(): void;
+  getCvrSamplesList(): Array<number>;
+  setCvrSamplesList(value: Array<number>): void;
+  addCvrSamples(value: number, index?: number): number;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): VariationResult.AsObject;
   static toObject(
@@ -248,5 +253,6 @@ export namespace VariationResult {
     goalValueSumPerUserPercentile975Timeseries?: proto_eventcounter_timeseries_pb.Timeseries.AsObject;
     conversionRate: number;
     expectedLoss: number;
+    cvrSamplesList: Array<number>;
   };
 }

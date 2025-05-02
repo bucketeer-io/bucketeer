@@ -27115,6 +27115,12 @@
                 "id": 24,
                 "name": "expected_loss",
                 "type": "double"
+              },
+              {
+                "id": 25,
+                "name": "cvr_samples",
+                "type": "double",
+                "is_repeated": true
               }
             ]
           }
