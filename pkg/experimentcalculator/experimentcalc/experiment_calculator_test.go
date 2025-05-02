@@ -218,6 +218,16 @@ func TestCalculateExpectedLoss(t *testing.T) {
 			},
 		},
 		{
+			name: "single variation",
+			variations: []*eventcounter.VariationResult{
+				{VariationId: "solo", CvrSamples: []float64{0.1, 0.4, 0.3}},
+			},
+			expectModified: true, // we do run through the code and set ExpectedLoss to 0
+			expected: map[string]float64{
+				"solo": 0.0,
+			},
+		},
+		{
 			name:           "empty variations array",
 			variations:     []*eventcounter.VariationResult{},
 			expectModified: false,

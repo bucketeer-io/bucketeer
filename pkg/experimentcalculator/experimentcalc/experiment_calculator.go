@@ -205,6 +205,12 @@ func (e ExperimentCalculator) createExperimentResult(
 		// Calculate expected loss for each variation
 		e.calculateExpectedLoss(goalResult.VariationResults)
 
+		// Clear CvrSamples to reduce database storage
+		for _, vr := range goalResult.VariationResults {
+			// Clear samples after calculation to save storage space
+			vr.CvrSamples = nil
+		}
+
 		// Calculate Summary for this goal result
 		e.calculateSummary(ctx, goalResult)
 
@@ -363,6 +369,12 @@ func (e ExperimentCalculator) appendVariationResult(
 		goalResult.VariationResults[i].CvrProb = copyDistributionSummary(variationResult.CvrProb)
 		goalResult.VariationResults[i].CvrProbBest = copyDistributionSummary(variationResult.CvrProbBest)
 		goalResult.VariationResults[i].CvrProbBeatBaseline = copyDistributionSummary(variationResult.CvrProbBeatBaseline)
+
+		// Copy raw CVR samples for expected loss calculation
+		if len(variationResult.CvrSamples) > 0 {
+			goalResult.VariationResults[i].CvrSamples = make([]float64, len(variationResult.CvrSamples))
+			copy(goalResult.VariationResults[i].CvrSamples, variationResult.CvrSamples)
+		}
 
 		goalResult.VariationResults[i].GoalValueSumPerUserProb =
 			copyDistributionSummary(variationResult.GoalValueSumPerUserProb)
