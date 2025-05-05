@@ -103,7 +103,6 @@ const Variations = () => {
                               'feature-flags.placeholder-variation'
                             )}
                             disabled={isBoolean}
-                            className={isBoolean ? 'capitalize' : ''}
                           />
                         )}
                       </Form.Control>

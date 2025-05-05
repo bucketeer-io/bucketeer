@@ -7,6 +7,7 @@ import { IconInfo } from '@icons';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
+import { Tooltip } from 'components/tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 
 const GeneralInfo = ({
@@ -68,11 +69,14 @@ const GeneralInfo = ({
               <Form.Item className="w-full py-0">
                 <Form.Label required className="relative w-fit !mb-2">
                   {t('feature-flags.flag-id')}
-                  <Icon
-                    icon={IconInfo}
-                    size="xs"
-                    color="gray-500"
-                    className="absolute -right-6"
+                  <Tooltip
+                    content={t('flag-id-tooltip')}
+                    trigger={
+                      <div className="flex-center size-fit absolute top-0 -right-6">
+                        <Icon icon={IconInfo} size="xs" color="gray-500" />
+                      </div>
+                    }
+                    className="max-w-[400px]"
                   />
                 </Form.Label>
                 <Form.Control>
@@ -110,11 +114,14 @@ const GeneralInfo = ({
               <Form.Item className="w-full py-0 overflow-hidden">
                 <Form.Label required className="relative w-fit !mb-2">
                   {t('common:tags')}
-                  <Icon
-                    icon={IconInfo}
-                    size="xs"
-                    color="gray-500"
-                    className="absolute -right-6"
+                  <Tooltip
+                    content={t('tags-tooltip')}
+                    trigger={
+                      <div className="flex-center size-fit absolute top-0 -right-6">
+                        <Icon icon={IconInfo} size="xs" color="gray-500" />
+                      </div>
+                    }
+                    className="max-w-[400px]"
                   />
                 </Form.Label>
                 <Form.Control>

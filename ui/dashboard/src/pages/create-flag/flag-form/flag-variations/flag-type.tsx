@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
 import { v4 as uuid } from 'uuid';
@@ -108,25 +107,13 @@ const FlagType = () => {
             {t('feature-flags.flag-type')}
             <Tooltip
               align="start"
+              alignOffset={-76}
               trigger={
                 <div className="flex-center absolute top-0 -right-6">
                   <Icon icon={IconInfo} size={'sm'} color="gray-500" />
                 </div>
               }
-              content={
-                <Trans
-                  i18nKey={'table:feature-flags.variation-type'}
-                  values={{
-                    type:
-                      field.value === 'JSON'
-                        ? field.value
-                        : field.value?.toLowerCase()
-                  }}
-                  components={{
-                    text: <span className="capitalize" />
-                  }}
-                />
-              }
+              content={t('flag-type-tooltip')}
               className="!z-[100] max-w-[400px]"
             />
           </Form.Label>
