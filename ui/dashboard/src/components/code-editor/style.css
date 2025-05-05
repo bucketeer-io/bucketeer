@@ -26,3 +26,7 @@
 .alwaysShowFoldIcons {
   @apply !hidden;
 }
+
+.highlighted-line span {
+  @apply !bg-gray-400;
+}

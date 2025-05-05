@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Editor, EditorProps, useMonaco } from '@monaco-editor/react';
+import Spinner from 'components/spinner';
 import './style.css';
 
 export default function ReactCodeEditor(props: EditorProps) {
@@ -21,10 +22,6 @@ export default function ReactCodeEditor(props: EditorProps) {
           'editor.foreground': '#475569',
           'editorLineNumber.foreground': '#64748B',
           'editorCursor.foreground': '#000000',
-          'editorSelection.foreground': '#000000',
-          'editor.selectionBackground': '#64748B88',
-          'editor.selectionHighlightBackground': '#add6ff26',
-          'editor.inactiveSelectionBackground': '#64748B44',
           'editorBracketHighlight.foreground1': '#64748B',
           'editorBracketHighlight.foreground2': '#64748B',
           'editorBracketHighlight.foreground3': '#64748B',
@@ -83,13 +80,49 @@ export default function ReactCodeEditor(props: EditorProps) {
         tabCompletion: 'on',
         formatOnType: true,
         formatOnPaste: true,
-        selection: true,
-        selectionHighlight: true,
-        occurrencesHighlight: true,
-        selectionClipboard: true
+        hideCursorInOverviewRuler: true,
+        overviewRulerLanes: 0,
+        overviewRulerBorder: false,
+        columnSelection: true
+      }}
+      onMount={editor => {
+        editor.onDidChangeCursorSelection(() => {
+          const selection = editor.getSelection();
+          const editorDomNode = editor.getDomNode();
+          const highlightedLines =
+            editorDomNode.querySelectorAll('.highlighted-line');
+          highlightedLines?.forEach((line: HTMLElement) =>
+            line.classList.remove('highlighted-line')
+          );
+          if (selection && !selection.isEmpty()) {
+            const selectionLineNumbers = [];
+            for (
+              let i = selection.startLineNumber;
+              i <= selection.endLineNumber;
+              i++
+            ) {
+              selectionLineNumbers.push(i);
+            }
+            if (editorDomNode) {
+              selectionLineNumbers.forEach(lineNumber => {
+                const lineElement = editorDomNode.querySelector(
+                  `.view-line:nth-child(${lineNumber})`
+                );
+                if (lineElement) {
+                  lineElement.classList.add('highlighted-line');
+                }
+              });
+            }
+          }
+        });
       }}
       loading={
-        <div className="flex-center w-full h-[170px] bg-gray-100 animate-pulse duration-200" />
+        <div className="flex-center w-full gap-x-2 h-[170px] bg-gray-100 animate-pulse duration-200">
+          <p className="typo-para-medium text-gray-600 animate-pulse duration-500">
+            Loading...
+          </p>
+          <Spinner />
+        </div>
       }
       {...props}
     />
