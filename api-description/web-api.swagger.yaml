@@ -10658,6 +10658,12 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/eventcounterGoalResult'
+      totalEvaluationUserCount:
+        type: string
+        format: int64
+      totalGoalUserCount:
+        type: string
+        format: int64
   eventcounterGetEvaluationTimeseriesCountResponse:
     type: object
     properties:

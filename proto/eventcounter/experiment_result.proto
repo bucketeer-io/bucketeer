@@ -24,4 +24,6 @@ message ExperimentResult {
   string experiment_id = 2;
   int64 updated_at = 3;
   repeated GoalResult goal_results = 4;
+  int64 total_evaluation_user_count = 5;
+  int64 total_goal_user_count = 6;
 }
