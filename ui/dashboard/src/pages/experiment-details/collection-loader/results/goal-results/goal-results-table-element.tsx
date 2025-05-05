@@ -38,7 +38,7 @@ export const ResultHeaderCell = ({
             </div>
           }
           content={tooltip}
-          className="max-w-[350px]"
+          className="max-w-[320px]"
         />
       )}
     </div>

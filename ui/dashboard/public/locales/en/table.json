@@ -145,7 +145,17 @@
     "value-user-tooltip": "The total number of values assigned to the goal event per user. It is calculated as (the sum of the numbers assigned to the goal event / the number of unique users who fired the goal event).",
     "improvement-tooltip": "A measure of improvement in an indicator related to variation compared to a baseline (also called a control group). It is calculated by comparing the range of values for variation with the range of values for baseline.",
     "probability-to-beat-baseline-tooltip": "Estimated likelihood of exceeding baseline (also known as a control group). A criterion of at least 95% is recommended.",
-    "probability-to-be-best-tooltip": "The probability of being the best-performing variation outperforming all other variations. We recommend using a threshold of at least 95%."
+    "probability-to-be-best-tooltip": "The probability of being the best-performing variation outperforming all other variations. We recommend using a threshold of at least 95%.",
+    "expected-loss": "Expected Loss",
+    "confidence-percent": "{{percent}} Confidence",
+    "variant-outperformed-percent": "{{name}} outperformed baseline by {{percent}}",
+    "more-variants": "{{quantity}} more variants",
+    "rollout-variant": "Rollout variant",
+    "rollout": "Rollout",
+    "choose-variant": "Choose which variant you want to proceed with.",
+    "variant-percent": "{{name}}: {{percent}}%",
+    "total-users-use": "Total users in this experiment: <bold>{{value}}</bold>",
+    "expected-loss-tooltip": "The average opportunity cost of choosing this variation compared to the best possible variation. A lower expected loss indicates less risk of missing out on better performance."
   },
   "feature-flags": {
     "confirm-archive-desc": "This will archive and return the default value defined in your code for all users. We recommend removing the code references to \"<text>{{name}}</text>\" from your application before archiving.",

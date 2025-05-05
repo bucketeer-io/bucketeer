@@ -18,6 +18,7 @@ import IconLink from './customized-icons/link.svg?react';
 import IconFlagNumber from './customized-icons/number.svg?react';
 import IconOperationArrow from './customized-icons/operation-arrow.svg?react';
 import IconFlagOperation from './customized-icons/operation.svg?react';
+import IconOutperformed from './customized-icons/outperformed.svg?react';
 import IconPlus from './customized-icons/plus.svg?react';
 import IconSearch from './customized-icons/search.svg?react';
 import IconSortingDown from './customized-icons/sorting-down.svg?react';
@@ -129,6 +130,7 @@ export {
   IconCollapse,
   IconLink,
   IconUserOutlined,
+  IconOutperformed,
   // Special icons
   IconGoal,
   IconGoogle,

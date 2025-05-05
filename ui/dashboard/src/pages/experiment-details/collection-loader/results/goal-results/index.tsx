@@ -1,6 +1,12 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Experiment, GoalResult } from '@types';
+import { featureUpdater } from '@api/features';
+import { invalidateExperimentDetails } from '@queries/experiment-details';
+import { invalidateExperimentResultDetails } from '@queries/experiment-result';
+import { invalidateFeature } from '@queries/feature-details';
+import { useQueryClient } from '@tanstack/react-query';
+import { useToast, useToggleOpen } from 'hooks';
+import { Experiment, Feature, GoalResult } from '@types';
 import { getData, getTimeSeries } from 'utils/chart';
 import { cn } from 'utils/style';
 import { IconChevronDown } from '@icons';
@@ -8,9 +14,11 @@ import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import { ChartDataType, GoalResultState, GoalResultTab } from '..';
 import ChartDataTypeDropdown from '../chart-data-type-dropdown';
+import ConfidenceVariants from './confidence-variants';
 import ConversionRateChart from './conversion-rate-chart';
 import ConversionRateTable from './conversion-rate-table';
 import EvaluationTable from './evaluation-table';
+import RolloutVariantModal, { RolloutVariant } from './rollout-variant-modal';
 import {
   ChartToggleLegendRef,
   DatasetReduceType
@@ -20,15 +28,21 @@ import TimeSeriesLineChart from './timeseries-line-chart';
 const GoalResultItem = ({
   isNarrow,
   experiment,
+  feature,
   goalResult,
   goalResultState,
+  environmentId,
+  isRequireComment,
   onChangeResultState,
   handleNarrowGoalResult
 }: {
   isNarrow: boolean;
   experiment: Experiment;
+  feature?: Feature;
   goalResult: GoalResult;
   goalResultState: GoalResultState;
+  environmentId: string;
+  isRequireComment: boolean;
   onChangeResultState: (tab?: GoalResultTab, chartType?: ChartDataType) => void;
   handleNarrowGoalResult: (goalId: string) => void;
 }) => {
@@ -36,6 +50,8 @@ const GoalResultItem = ({
 
   const conversionRateChartRef = useRef<ChartToggleLegendRef>(null);
   const evaluationChartRef = useRef<ChartToggleLegendRef>(null);
+  const { notify, errorNotify } = useToast();
+  const queryClient = useQueryClient();
 
   const [conversionRateDataSets, setConversionRateDataSets] = useState<
     DatasetReduceType[]
@@ -43,6 +59,9 @@ const GoalResultItem = ({
   const [evaluationDataSets, setEvaluationDataSets] = useState<
     DatasetReduceType[]
   >([]);
+
+  const [isOpenRolloutVariant, onOpenRolloutVariant, onCloseRolloutVariant] =
+    useToggleOpen(false);
 
   const variationValues = useMemo(
     () =>
@@ -54,6 +73,45 @@ const GoalResultItem = ({
         return name || value || '';
       }) as string[]) || [],
     [goalResult, experiment]
+  );
+
+  const onSubmitRolloutVariation = useCallback(
+    async (values: RolloutVariant) => {
+      try {
+        if (values.variation && feature) {
+          const resp = await featureUpdater({
+            id: feature.id,
+            environmentId,
+            defaultStrategy: {
+              ...feature.defaultStrategy,
+              type: 'FIXED',
+              fixedStrategy: {
+                variation: values.variation
+              }
+            },
+            comment: values?.comment
+          });
+          if (resp) {
+            notify({
+              message: 'Rollout variant updated successfully.'
+            });
+            invalidateFeature(queryClient);
+            invalidateExperimentDetails(queryClient, {
+              environmentId,
+              id: experiment.id
+            });
+            invalidateExperimentResultDetails(queryClient, {
+              environmentId,
+              experimentId: experiment.id
+            });
+            onCloseRolloutVariant();
+          }
+        }
+      } catch (error) {
+        errorNotify(error);
+      }
+    },
+    [feature, environmentId]
   );
 
   return (
@@ -87,6 +145,23 @@ const GoalResultItem = ({
           />
         </div>
       </div>
+      {goalResult?.summary?.bestVariations?.length > 0 && (
+        <ConfidenceVariants
+          bestVariations={goalResult.summary.bestVariations}
+          variations={experiment.variations}
+          onOpenRolloutVariant={onOpenRolloutVariant}
+        />
+      )}
+      {isOpenRolloutVariant && (
+        <RolloutVariantModal
+          isOpen={isOpenRolloutVariant}
+          variations={experiment.variations}
+          defaultStrategy={feature?.defaultStrategy}
+          isRequireComment={isRequireComment}
+          onClose={onCloseRolloutVariant}
+          onSubmit={onSubmitRolloutVariation}
+        />
+      )}
       <Tabs
         className="flex-1 flex h-full flex-col"
         value={goalResultState?.tab}
@@ -100,21 +175,13 @@ const GoalResultItem = ({
         }
       >
         <TabsList>
-          <TabsTrigger value="EVALUATION">{t(`evaluation`)}</TabsTrigger>
           <TabsTrigger value="CONVERSION">{t(`conversion-rate`)}</TabsTrigger>
+          <TabsTrigger value="EVALUATION">{t(`evaluation`)}</TabsTrigger>
         </TabsList>
 
         <TabsContent value={goalResultState?.tab} className="mt-6">
           {goalResultState?.tab === 'EVALUATION' && (
             <div className="flex flex-col gap-y-6">
-              <EvaluationTable
-                goalResult={goalResult}
-                experiment={experiment}
-                evaluationDataSets={evaluationDataSets}
-                onToggleShowData={label =>
-                  evaluationChartRef.current?.toggleLegend(label)
-                }
-              />
               <ChartDataTypeDropdown
                 tab={goalResultState?.tab}
                 chartType={goalResultState?.chartType}
@@ -136,19 +203,18 @@ const GoalResultItem = ({
                 )}
                 setDataSets={setEvaluationDataSets}
               />
+              <EvaluationTable
+                goalResult={goalResult}
+                experiment={experiment}
+                evaluationDataSets={evaluationDataSets}
+                onToggleShowData={label =>
+                  evaluationChartRef.current?.toggleLegend(label)
+                }
+              />
             </div>
           )}
           {goalResultState?.tab === 'CONVERSION' && (
             <div className="flex flex-col gap-y-6">
-              <ConversionRateTable
-                conversionRateDataSets={conversionRateDataSets}
-                goalResultState={goalResultState}
-                goalResult={goalResult}
-                experiment={experiment}
-                onToggleShowData={label =>
-                  conversionRateChartRef.current?.toggleLegend(label)
-                }
-              />
               <ChartDataTypeDropdown
                 tab={goalResultState?.tab}
                 chartType={goalResultState?.chartType}
@@ -162,6 +228,15 @@ const GoalResultItem = ({
                 goalResult={goalResult}
                 goalResultState={goalResultState}
                 setConversionRateDataSets={setConversionRateDataSets}
+              />
+              <ConversionRateTable
+                conversionRateDataSets={conversionRateDataSets}
+                goalResultState={goalResultState}
+                goalResult={goalResult}
+                experiment={experiment}
+                onToggleShowData={label =>
+                  conversionRateChartRef.current?.toggleLegend(label)
+                }
               />
             </div>
           )}
