@@ -11,7 +11,7 @@ const PageLoader = () => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const navigate = useNavigate();
   return (
-    <div className="w-full min-h-screen !max-w-[1144px] overflow-x-auto">
+    <div className="w-full min-h-screen !max-w-[1192px]">
       <PageDetailsHeader
         onBack={() =>
           navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`)

@@ -71,6 +71,10 @@ const FlagForm = () => {
     mode: 'onChange'
   });
 
+  const {
+    formState: { isDirty, isValid, isSubmitting }
+  } = form;
+
   const onBack = useCallback(
     () => navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`),
     [currentEnvironment]
@@ -137,8 +141,8 @@ const FlagForm = () => {
           secondaryButton={
             <Button
               type="submit"
-              disabled={!form.formState.isDirty}
-              loading={form.formState.isSubmitting}
+              disabled={!isDirty || !isValid}
+              loading={isSubmitting}
             >
               {t(`create-flag`)}
             </Button>

@@ -9,10 +9,10 @@ import { IconTrash } from '@icons';
 import { AddFlagForm } from 'pages/create-flag/form-schema';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
+import ReactCodeEditor from 'components/code-editor';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
-import TextArea from 'components/textarea';
 
 const Variations = () => {
   const { t } = useTranslation(['form', 'common', 'table']);
@@ -90,12 +90,12 @@ const Variations = () => {
                       </Form.Label>
                       <Form.Control>
                         {isJSON ? (
-                          <TextArea
-                            {...field}
-                            placeholder={t(
-                              'feature-flags.placeholder-variation'
-                            )}
-                          />
+                          <div className="flex flex-col gap-y-2">
+                            <ReactCodeEditor
+                              value={field.value}
+                              onChange={field.onChange}
+                            />
+                          </div>
                         ) : (
                           <Input
                             {...field}

@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-checkbox": "^1.1.2",
     "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-dropdown-menu": "^2.1.1",
@@ -72,7 +73,6 @@
     "react-intersection-observer": "^9.16.0",
     "react-router-dom": "^6.26.0",
     "react-select": "^5.9.0",
-    "react-syntax-highlighter": "^15.6.1",
     "tailwind-merge": "^2.4.0",
     "timeago.js": "^4.0.2",
     "web-vitals": "^4.2.3",

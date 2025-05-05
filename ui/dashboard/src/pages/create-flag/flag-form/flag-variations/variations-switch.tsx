@@ -16,7 +16,7 @@ const buttonActiveCls =
 const VariationsSwitch = () => {
   const { t } = useTranslation(['form', 'common']);
 
-  const { watch, setValue } = useFormContext<AddFlagForm>();
+  const { watch, setValue, resetField } = useFormContext<AddFlagForm>();
 
   const currentSwitchVariation = watch('switchVariationType');
 
@@ -24,10 +24,10 @@ const VariationsSwitch = () => {
     (value: FlagSwitchVariationType) => {
       const onVariationId = uuid();
       const offVariation = uuid();
+      resetField('variations');
       setValue('switchVariationType', value);
       setValue('defaultOnVariation', onVariationId);
       setValue('defaultOffVariation', offVariation);
-
       if (value === FlagSwitchVariationType.EXPERIMENT) {
         setValue('variationType', 'STRING');
 

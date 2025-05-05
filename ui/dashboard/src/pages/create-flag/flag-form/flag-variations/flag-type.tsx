@@ -63,7 +63,8 @@ const defaultVariations: FeatureVariation[] = [
 
 const FlagType = () => {
   const { t } = useTranslation(['form', 'common']);
-  const { control, watch, setValue, setFocus } = useFormContext<AddFlagForm>();
+  const { control, watch, setValue, setFocus, resetField } =
+    useFormContext<AddFlagForm>();
 
   const variationType = watch('variationType');
 
@@ -84,6 +85,7 @@ const FlagType = () => {
               ...item,
               value: ''
             }));
+      resetField('variations');
       setValue('variations', newVariations);
       setValue('defaultOnVariation', newVariations[0].id);
       setValue('defaultOffVariation', newVariations[1].id);
