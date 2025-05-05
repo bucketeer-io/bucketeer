@@ -234,5 +234,6 @@
   "group-by-type": "Group By: {{type}}",
   "user": "User",
   "edit-fields": "Edit Fields",
-  "clear-all-fields": "Clear All Fields"
+  "clear-all-fields": "Clear All Fields",
+  "update-flag": "Update Feature Flag"
 }
