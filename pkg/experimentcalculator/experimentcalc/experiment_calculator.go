@@ -347,6 +347,12 @@ func (e ExperimentCalculator) calcGoalResult(
 		vrs[vid].CvrProb = copyDistributionSummary(vr.CvrProb)
 		vrs[vid].CvrProbBest = copyDistributionSummary(vr.CvrProbBest)
 		vrs[vid].CvrProbBeatBaseline = copyDistributionSummary(vr.CvrProbBeatBaseline)
+
+		// Copy CvrSamples for expected loss calculation
+		if len(vr.CvrSamples) > 0 {
+			vrs[vid].CvrSamples = make([]float64, len(vr.CvrSamples))
+			copy(vrs[vid].CvrSamples, vr.CvrSamples)
+		}
 	}
 	// Skip the calculation if values are zero.
 	for i := 0; i < len(vids); i++ {
