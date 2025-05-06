@@ -80,6 +80,7 @@ var (
 	ErrFeatureNotFound                            = errors.New("feature: feature not found")
 	ErrDefaultStrategyCannotBeBothFixedAndRollout = errors.New(
 		"feature: default strategy cannot be both fixed and rollout")
+	ErrRuleStrategyCannotBeEmpty = errors.New("feature: rule strategy cannot be empty")
 )
 
 // TODO: think about splitting out ruleset / variation
@@ -397,12 +398,18 @@ func validateStrategy(strategy *feature.Strategy, variations []*feature.Variatio
 	switch strategy.Type {
 	case feature.Strategy_FIXED:
 		if strategy.FixedStrategy == nil {
-			return errors.New("feature: rule strategy cannot be empty")
+			return ErrRuleStrategyCannotBeEmpty
+		}
+		if strategy.RolloutStrategy != nil {
+			return ErrDefaultStrategyCannotBeBothFixedAndRollout
 		}
 		return validateFixedStrategy(strategy.FixedStrategy, variations)
 	case feature.Strategy_ROLLOUT:
 		if strategy.RolloutStrategy == nil {
-			return errors.New("feature: rule strategy cannot be empty")
+			return ErrRuleStrategyCannotBeEmpty
+		}
+		if strategy.FixedStrategy != nil {
+			return ErrDefaultStrategyCannotBeBothFixedAndRollout
 		}
 		return validateRolloutStrategy(strategy.RolloutStrategy, variations)
 	default:
@@ -1109,8 +1116,8 @@ func (f *Feature) Update(
 		incVersion = true
 	}
 	if defaultStrategy != nil {
-		if defaultStrategy.FixedStrategy != nil && defaultStrategy.RolloutStrategy != nil {
-			return nil, ErrDefaultStrategyCannotBeBothFixedAndRollout
+		if err := validateStrategy(defaultStrategy, f.Variations); err != nil {
+			return nil, err
 		}
 		updated.DefaultStrategy = defaultStrategy
 		incVersion = true
