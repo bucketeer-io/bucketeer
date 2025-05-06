@@ -24491,16 +24491,6 @@
                 "name": "best_variations",
                 "type": "Variation",
                 "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "total_evaluation_user_count",
-                "type": "int64"
-              },
-              {
-                "id": 3,
-                "name": "total_goal_user_count",
-                "type": "int64"
               }
             ],
             "messages": [

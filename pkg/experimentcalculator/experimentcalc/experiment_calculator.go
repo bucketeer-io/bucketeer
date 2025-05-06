@@ -830,23 +830,8 @@ func (e ExperimentCalculator) calculateSummary(
 		}
 	}
 
-	// 2 & 3. Calculate total counts across all variations
-	var totalEvaluationUserCount int64
-	var totalGoalUserCount int64
-
-	for _, vr := range goalResult.VariationResults {
-		if vr.EvaluationCount != nil {
-			totalEvaluationUserCount += vr.EvaluationCount.UserCount
-		}
-		if vr.ExperimentCount != nil {
-			totalGoalUserCount += vr.ExperimentCount.UserCount
-		}
-	}
-
 	// Set the summary values
 	goalResult.Summary.BestVariations = bestVariations
-	goalResult.Summary.TotalEvaluationUserCount = totalEvaluationUserCount
-	goalResult.Summary.TotalGoalUserCount = totalGoalUserCount
 }
 
 // calculateExpectedLoss computes the posterior expected loss (regret) for each variation
