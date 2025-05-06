@@ -42,7 +42,7 @@ const RolloutVariantModal = ({
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
-      variation: defaultStrategy?.fixedStrategy?.variation,
+      variation: '',
       comment: ''
     }
   });
