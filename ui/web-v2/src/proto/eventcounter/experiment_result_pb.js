@@ -111,7 +111,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getGoalResultsList(),
           proto_eventcounter_goal_result_pb.GoalResult.toObject,
           includeInstance
-        )
+        ),
+        totalEvaluationUserCount: jspb.Message.getFieldWithDefault(msg, 5, 0),
+        totalGoalUserCount: jspb.Message.getFieldWithDefault(msg, 6, 0)
       };
 
     if (includeInstance) {
@@ -173,6 +175,14 @@ proto.bucketeer.eventcounter.ExperimentResult.deserializeBinaryFromReader =
           );
           msg.addGoalResults(value);
           break;
+        case 5:
+          var value = /** @type {number} */ (reader.readInt64());
+          msg.setTotalEvaluationUserCount(value);
+          break;
+        case 6:
+          var value = /** @type {number} */ (reader.readInt64());
+          msg.setTotalGoalUserCount(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -224,6 +234,14 @@ proto.bucketeer.eventcounter.ExperimentResult.serializeBinaryToWriter =
         f,
         proto_eventcounter_goal_result_pb.GoalResult.serializeBinaryToWriter
       );
+    }
+    f = message.getTotalEvaluationUserCount();
+    if (f !== 0) {
+      writer.writeInt64(5, f);
+    }
+    f = message.getTotalGoalUserCount();
+    if (f !== 0) {
+      writer.writeInt64(6, f);
     }
   };
 
@@ -330,6 +348,42 @@ proto.bucketeer.eventcounter.ExperimentResult.prototype.addGoalResults =
 proto.bucketeer.eventcounter.ExperimentResult.prototype.clearGoalResultsList =
   function () {
     return this.setGoalResultsList([]);
+  };
+
+/**
+ * optional int64 total_evaluation_user_count = 5;
+ * @return {number}
+ */
+proto.bucketeer.eventcounter.ExperimentResult.prototype.getTotalEvaluationUserCount =
+  function () {
+    return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
+  };
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.eventcounter.ExperimentResult} returns this
+ */
+proto.bucketeer.eventcounter.ExperimentResult.prototype.setTotalEvaluationUserCount =
+  function (value) {
+    return jspb.Message.setProto3IntField(this, 5, value);
+  };
+
+/**
+ * optional int64 total_goal_user_count = 6;
+ * @return {number}
+ */
+proto.bucketeer.eventcounter.ExperimentResult.prototype.getTotalGoalUserCount =
+  function () {
+    return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 6, 0));
+  };
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.eventcounter.ExperimentResult} returns this
+ */
+proto.bucketeer.eventcounter.ExperimentResult.prototype.setTotalGoalUserCount =
+  function (value) {
+    return jspb.Message.setProto3IntField(this, 6, value);
   };
 
 goog.object.extend(exports, proto.bucketeer.eventcounter);
