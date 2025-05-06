@@ -214,7 +214,10 @@ const ConversionRateTable = ({
               />
               <ResultCell value={probBeatBaselineValue} minSize={171.5} />
               <ResultCell value={probBestValue} minSize={171.5} />
-              <ResultCell value={`${expectedLoss || 0}%`} minSize={163} />
+              <ResultCell
+                value={`${expectedLoss ? expectedLoss.toFixed(1) : 0}%`}
+                minSize={163}
+              />
             </div>
           );
         })}
