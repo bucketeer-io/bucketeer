@@ -1973,6 +1973,23 @@ func TestUpdate(t *testing.T) {
 			expectedErr:  errNameEmpty,
 		},
 		{
+			desc: "fail: default strategy cannot be both fixed and rollout",
+			inputFunc: func() *Feature {
+				return genF()
+			},
+			defaultStrategy: &feature.Strategy{
+				Type:          feature.Strategy_FIXED,
+				FixedStrategy: &feature.FixedStrategy{Variation: id1.String()},
+				RolloutStrategy: &feature.RolloutStrategy{
+					Variations: []*feature.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 100},
+					},
+				},
+			},
+			expectedFunc: func() *Feature { return nil },
+			expectedErr:  ErrDefaultStrategyCannotBeBothFixedAndRollout,
+		},
+		{
 			desc: "fail: already enabled",
 			inputFunc: func() *Feature {
 				f := genF()
