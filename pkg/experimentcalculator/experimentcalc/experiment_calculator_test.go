@@ -310,3 +310,64 @@ func TestCalculateExpectedLoss(t *testing.T) {
 		})
 	}
 }
+
+// TestExpectedLossWithBinomialModelSamples tests the expected loss calculation with real CVR samples from binomialModelSample
+func TestExpectedLossWithBinomialModelSamples(t *testing.T) {
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	experimentCalculator := creatExperimentCalculator(mockController)
+	experiment := &experimentproto.Experiment{
+		BaseVariationId: "vid1",
+		Variations: []*featureproto.Variation{
+			{
+				Id: "vid1",
+			},
+			{
+				Id: "vid2",
+			},
+		},
+	}
+	ctx := context.TODO()
+
+	// Get variation results with CVR samples from binomialModelSample
+	vrs, err := experimentCalculator.binomialModelSample(
+		ctx,
+		[]string{"vid1", "vid2"},
+		[]int64{38, 51},
+		[]int64{101, 99},
+		0,
+		experiment,
+	)
+	assert.NoError(t, err, "BinomialModelSample should not return an error")
+
+	// Convert map to slice for calculateExpectedLoss
+	variationResults := []*eventcounter.VariationResult{
+		vrs["vid1"],
+		vrs["vid2"],
+	}
+
+	// Ensure we have CVR samples before calculation
+	assert.True(t, len(variationResults[0].CvrSamples) > 0, "vid1 should have CVR samples")
+	assert.True(t, len(variationResults[1].CvrSamples) > 0, "vid2 should have CVR samples")
+
+	// Calculate expected loss
+	experimentCalculator.calculateExpectedLoss(variationResults)
+
+	// Verify expected loss calculation
+	// Since vid2 has higher conversion rate (around 0.5) than vid1 (around 0.37),
+	// the expected loss for vid1 should be higher and vid2 should be lower
+	assert.Greater(t, variationResults[0].ExpectedLoss, variationResults[1].ExpectedLoss,
+		"Expected loss for vid1 should be greater than vid2")
+
+	// Expected loss for vid1 should be positive (around 10-13%)
+	assert.Greater(t, variationResults[0].ExpectedLoss, 0.0,
+		"Expected loss for vid1 should be positive")
+
+	// Expected loss for vid2 (best variation) should be close to 0
+	assert.InDelta(t, 0.0, variationResults[1].ExpectedLoss, 1.0,
+		"Expected loss for vid2 should be close to 0")
+
+	// Log the actual values for reference
+	t.Logf("vid1 expected loss: %.2f%%", variationResults[0].ExpectedLoss)
+	t.Logf("vid2 expected loss: %.2f%%", variationResults[1].ExpectedLoss)
+}

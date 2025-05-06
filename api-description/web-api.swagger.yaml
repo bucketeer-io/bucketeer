@@ -9542,12 +9542,6 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/eventcounterSummaryVariation'
-      totalEvaluationUserCount:
-        type: string
-        format: int64
-      totalGoalUserCount:
-        type: string
-        format: int64
   bucketeerfeatureChangeType:
     type: string
     enum:
@@ -10658,6 +10652,12 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/eventcounterGoalResult'
+      totalEvaluationUserCount:
+        type: string
+        format: int64
+      totalGoalUserCount:
+        type: string
+        format: int64
   eventcounterGetEvaluationTimeseriesCountResponse:
     type: object
     properties:
