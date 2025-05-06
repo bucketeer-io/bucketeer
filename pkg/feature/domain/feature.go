@@ -43,41 +43,44 @@ const (
 )
 
 var (
-	errNameEmpty                     = errors.New("feature: name cannot be empty")
-	errClauseNotFound                = errors.New("feature: clause not found")
-	errClauseAttributeNotEmpty       = errors.New("feature: clause attribute must be empty")
-	errClauseAttributeEmpty          = errors.New("feature: clause attribute cannot be empty")
-	errClauseValuesEmpty             = errors.New("feature: clause values cannot be empty")
-	errClauseAlreadyExists           = errors.New("feature: clause already exists")
-	errRuleMustHaveAtLeastOneClause  = errors.New("feature: rule must have at least one clause")
-	errClauseMustHaveAtLeastOneValue = errors.New("feature: clause must have at least one value")
-	errRuleAlreadyExists             = errors.New("feature: rule already exists")
-	errRuleIDRequired                = errors.New("feature: rule id required")
-	errRuleRequired                  = errors.New("feature: rule required")
-	errRuleNotFound                  = errors.New("feature: rule not found")
-	errTargetNotFound                = errors.New("feature: target not found")
-	errVariationRequired             = errors.New("feature: variation required")
-	errValueNotFound                 = errors.New("feature: value not found")
-	errVariationIDRequired           = errors.New("feature: variation id required")
-	errVariationNameRequired         = errors.New("feature: variation name required")
-	errVariationValueRequired        = errors.New("feature: variation value required")
-	errTargetUsersRequired           = errors.New("feature: target users required")
-	errTargetUserRequired            = errors.New("feature: target user required")
-	errVariationInUse                = errors.New("feature: variation in use")
-	errVariationNotFound             = errors.New("feature: variation not found")
-	errVariationTypeUnmatched        = errors.New("feature: variation value and type are unmatched")
-	errStrategyRequired              = errors.New("feature: strategy required")
-	errUnsupportedStrategy           = errors.New("feature: unsupported strategy")
-	errPrerequisiteAlreadyExists     = errors.New("feature: prerequisite already exists")
-	errPrerequisiteNotFound          = errors.New("feature: prerequisite not found")
-	ErrAlreadyEnabled                = errors.New("feature: already enabled")
-	ErrAlreadyDisabled               = errors.New("feature: already disabled")
-	ErrLastUsedInfoNotFound          = errors.New("feature: last used info not found")
-	errRulesOrderSizeNotEqual        = errors.New("feature: rules order size not equal")
-	errRulesOrderDuplicateIDs        = errors.New("feature: rules order contains duplicate ids")
-	ErrCycleExists                   = errors.New("feature: cycle exists in features")
-	errFeatureIDRequired             = errors.New("feature: feature id required")
-	ErrFeatureNotFound               = errors.New("feature: feature not found")
+	errNameEmpty                                  = errors.New("feature: name cannot be empty")
+	errClauseNotFound                             = errors.New("feature: clause not found")
+	errClauseAttributeNotEmpty                    = errors.New("feature: clause attribute must be empty")
+	errClauseAttributeEmpty                       = errors.New("feature: clause attribute cannot be empty")
+	errClauseValuesEmpty                          = errors.New("feature: clause values cannot be empty")
+	errClauseAlreadyExists                        = errors.New("feature: clause already exists")
+	errRuleMustHaveAtLeastOneClause               = errors.New("feature: rule must have at least one clause")
+	errClauseMustHaveAtLeastOneValue              = errors.New("feature: clause must have at least one value")
+	errRuleAlreadyExists                          = errors.New("feature: rule already exists")
+	errRuleIDRequired                             = errors.New("feature: rule id required")
+	errRuleRequired                               = errors.New("feature: rule required")
+	errRuleNotFound                               = errors.New("feature: rule not found")
+	errTargetNotFound                             = errors.New("feature: target not found")
+	errVariationRequired                          = errors.New("feature: variation required")
+	errValueNotFound                              = errors.New("feature: value not found")
+	errVariationIDRequired                        = errors.New("feature: variation id required")
+	errVariationNameRequired                      = errors.New("feature: variation name required")
+	errVariationValueRequired                     = errors.New("feature: variation value required")
+	errTargetUsersRequired                        = errors.New("feature: target users required")
+	errTargetUserRequired                         = errors.New("feature: target user required")
+	errVariationInUse                             = errors.New("feature: variation in use")
+	errVariationNotFound                          = errors.New("feature: variation not found")
+	errVariationTypeUnmatched                     = errors.New("feature: variation value and type are unmatched")
+	errStrategyRequired                           = errors.New("feature: strategy required")
+	errUnsupportedStrategy                        = errors.New("feature: unsupported strategy")
+	errPrerequisiteAlreadyExists                  = errors.New("feature: prerequisite already exists")
+	errPrerequisiteNotFound                       = errors.New("feature: prerequisite not found")
+	ErrAlreadyEnabled                             = errors.New("feature: already enabled")
+	ErrAlreadyDisabled                            = errors.New("feature: already disabled")
+	ErrLastUsedInfoNotFound                       = errors.New("feature: last used info not found")
+	errRulesOrderSizeNotEqual                     = errors.New("feature: rules order size not equal")
+	errRulesOrderDuplicateIDs                     = errors.New("feature: rules order contains duplicate ids")
+	ErrCycleExists                                = errors.New("feature: cycle exists in features")
+	errFeatureIDRequired                          = errors.New("feature: feature id required")
+	ErrFeatureNotFound                            = errors.New("feature: feature not found")
+	ErrDefaultStrategyCannotBeBothFixedAndRollout = errors.New(
+		"feature: default strategy cannot be both fixed and rollout")
+	ErrRuleStrategyCannotBeEmpty = errors.New("feature: rule strategy cannot be empty")
 )
 
 // TODO: think about splitting out ruleset / variation
@@ -395,12 +398,18 @@ func validateStrategy(strategy *feature.Strategy, variations []*feature.Variatio
 	switch strategy.Type {
 	case feature.Strategy_FIXED:
 		if strategy.FixedStrategy == nil {
-			return errors.New("feature: rule strategy cannot be empty")
+			return ErrRuleStrategyCannotBeEmpty
+		}
+		if strategy.RolloutStrategy != nil {
+			return ErrDefaultStrategyCannotBeBothFixedAndRollout
 		}
 		return validateFixedStrategy(strategy.FixedStrategy, variations)
 	case feature.Strategy_ROLLOUT:
 		if strategy.RolloutStrategy == nil {
-			return errors.New("feature: rule strategy cannot be empty")
+			return ErrRuleStrategyCannotBeEmpty
+		}
+		if strategy.FixedStrategy != nil {
+			return ErrDefaultStrategyCannotBeBothFixedAndRollout
 		}
 		return validateRolloutStrategy(strategy.RolloutStrategy, variations)
 	default:
@@ -1107,6 +1116,9 @@ func (f *Feature) Update(
 		incVersion = true
 	}
 	if defaultStrategy != nil {
+		if err := validateStrategy(defaultStrategy, f.Variations); err != nil {
+			return nil, err
+		}
 		updated.DefaultStrategy = defaultStrategy
 		incVersion = true
 	}

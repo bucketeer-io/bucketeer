@@ -1973,6 +1973,57 @@ func TestUpdate(t *testing.T) {
 			expectedErr:  errNameEmpty,
 		},
 		{
+			desc: "fail: default strategy cannot be both fixed and rollout",
+			inputFunc: func() *Feature {
+				return genF()
+			},
+			defaultStrategy: &feature.Strategy{
+				Type:          feature.Strategy_FIXED,
+				FixedStrategy: &feature.FixedStrategy{Variation: id1.String()},
+				RolloutStrategy: &feature.RolloutStrategy{
+					Variations: []*feature.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 100},
+					},
+				},
+			},
+			expectedFunc: func() *Feature { return nil },
+			expectedErr:  ErrDefaultStrategyCannotBeBothFixedAndRollout,
+		},
+		{
+			desc: "fail: default strategy with non-existent variation",
+			inputFunc: func() *Feature {
+				return genF()
+			},
+			defaultStrategy: &feature.Strategy{
+				Type:          feature.Strategy_FIXED,
+				FixedStrategy: &feature.FixedStrategy{Variation: "non-existent"},
+			},
+			expectedFunc: func() *Feature { return nil },
+			expectedErr:  errVariationNotFound,
+		},
+		{
+			desc: "fail: default strategy with unsupported type",
+			inputFunc: func() *Feature {
+				return genF()
+			},
+			defaultStrategy: &feature.Strategy{
+				Type: 999,
+			},
+			expectedFunc: func() *Feature { return nil },
+			expectedErr:  errUnsupportedStrategy,
+		},
+		{
+			desc: "fail: default strategy is nil",
+			inputFunc: func() *Feature {
+				return genF()
+			},
+			defaultStrategy: &feature.Strategy{
+				Type: feature.Strategy_FIXED,
+			},
+			expectedFunc: func() *Feature { return nil },
+			expectedErr:  ErrRuleStrategyCannotBeEmpty,
+		},
+		{
 			desc: "fail: already enabled",
 			inputFunc: func() *Feature {
 				f := genF()
@@ -3685,6 +3736,122 @@ func TestUpdateTagsGranular(t *testing.T) {
 				}
 				assert.Equal(t, len(actual.Tags), len(tagSet), p.desc)
 				assert.Equal(t, p.expectedFunc().Tags, actual.Tags, p.desc)
+			}
+		})
+	}
+}
+
+func TestValidateStrategy(t *testing.T) {
+	t.Parallel()
+	id1, _ := uuid.NewUUID()
+	id2, _ := uuid.NewUUID()
+	variations := []*feature.Variation{
+		{Id: id1.String(), Value: "true", Name: "n1", Description: "d1"},
+		{Id: id2.String(), Value: "false", Name: "n2", Description: "d2"},
+	}
+	tests := []struct {
+		desc        string
+		strategy    *feature.Strategy
+		variations  []*feature.Variation
+		expectedErr error
+	}{
+		{
+			desc: "success: fixed strategy",
+			strategy: &feature.Strategy{
+				Type:          feature.Strategy_FIXED,
+				FixedStrategy: &feature.FixedStrategy{Variation: id1.String()},
+			},
+			variations:  variations,
+			expectedErr: nil,
+		},
+		{
+			desc: "success: rollout strategy",
+			strategy: &feature.Strategy{
+				Type: feature.Strategy_ROLLOUT,
+				RolloutStrategy: &feature.RolloutStrategy{
+					Variations: []*feature.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 100},
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: nil,
+		},
+		{
+			desc:        "fail: strategy is nil",
+			strategy:    nil,
+			variations:  variations,
+			expectedErr: errStrategyRequired,
+		},
+		{
+			desc: "fail: fixed strategy with non-existent variation",
+			strategy: &feature.Strategy{
+				Type:          feature.Strategy_FIXED,
+				FixedStrategy: &feature.FixedStrategy{Variation: "non-existent"},
+			},
+			variations:  variations,
+			expectedErr: errVariationNotFound,
+		},
+		{
+			desc: "fail: rollout strategy with non-existent variation",
+			strategy: &feature.Strategy{
+				Type: feature.Strategy_ROLLOUT,
+				RolloutStrategy: &feature.RolloutStrategy{
+					Variations: []*feature.RolloutStrategy_Variation{
+						{Variation: "non-existent", Weight: 100},
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: errVariationNotFound,
+		},
+		{
+			desc: "fail: unsupported strategy type",
+			strategy: &feature.Strategy{
+				Type: 999,
+			},
+			variations:  variations,
+			expectedErr: errUnsupportedStrategy,
+		},
+		{
+			desc: "fail: fixed strategy is nil",
+			strategy: &feature.Strategy{
+				Type: feature.Strategy_FIXED,
+			},
+			variations:  variations,
+			expectedErr: ErrRuleStrategyCannotBeEmpty,
+		},
+		{
+			desc: "fail: rollout strategy is nil",
+			strategy: &feature.Strategy{
+				Type: feature.Strategy_ROLLOUT,
+			},
+			variations:  variations,
+			expectedErr: ErrRuleStrategyCannotBeEmpty,
+		},
+		{
+			desc: "fail: both strategies are set",
+			strategy: &feature.Strategy{
+				Type:          feature.Strategy_FIXED,
+				FixedStrategy: &feature.FixedStrategy{Variation: id1.String()},
+				RolloutStrategy: &feature.RolloutStrategy{
+					Variations: []*feature.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 100},
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: ErrDefaultStrategyCannotBeBothFixedAndRollout,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			t.Parallel()
+			err := validateStrategy(tt.strategy, tt.variations)
+			if tt.expectedErr != nil {
+				assert.Equal(t, tt.expectedErr, err)
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}
