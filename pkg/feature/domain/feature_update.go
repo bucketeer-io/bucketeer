@@ -20,6 +20,7 @@ import (
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	"github.com/bucketeer-io/bucketeer/proto/common"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -58,7 +59,7 @@ func (f *Feature) Update(
 	}
 
 	// Apply updates
-	if err := updated.applyBasicUpdates(
+	if err := updated.applyGeneralUpdates(
 		name,
 		description,
 		tags,
@@ -141,29 +142,15 @@ func (f *Feature) validateAllChanges(
 		}
 	}
 
-	for _, change := range variationChanges {
-		// For individual variation changes, only validate the variation value and type
-		if change.Variation == nil {
-			return errVariationRequired
-		}
-		if change.ChangeType != feature.ChangeType_DELETE {
-			if change.Variation.Value == "" {
-				return errVariationValueRequired
-			}
-			if err := validateVariationValue(f.VariationType, change.Variation.Value); err != nil {
-				return err
-			}
-			if change.Variation.Name == "" {
-				return errVariationNameRequired
-			}
-		}
+	if err := f.validateVariationChanges(variationChanges); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// applyBasicUpdates applies simple field updates
-func (f *Feature) applyBasicUpdates(
+// applyGeneralUpdates applies simple field updates
+func (f *Feature) applyGeneralUpdates(
 	name, description *wrapperspb.StringValue,
 	tags *common.StringListValue,
 	enabled *wrapperspb.BoolValue,
@@ -285,12 +272,21 @@ func (f *Feature) applyGranularUpdates(
 		}
 	}
 
-	// Variations
+	// Variations must be processed last because:
+	// 1. When a variation is deleted, it needs to clean up all references to it in rules, targets, and strategies
+	// 2. If a user updates a rule/target to use a variation and then deletes that variation in the same request,
+	//    processing variations last ensures the deletion will clean up any newly created references
+	// 3. This order prevents any invalid state where rules/targets reference non-existent variations
 	for _, change := range variationChanges {
 		switch change.ChangeType {
 		case feature.ChangeType_CREATE:
+			// Generate new UUID for CREATE operations
+			id, err := uuid.NewUUID()
+			if err != nil {
+				return err
+			}
 			if err := f.AddVariation(
-				change.Variation.Id,
+				id.String(),
 				change.Variation.Value,
 				change.Variation.Name,
 				change.Variation.Description,

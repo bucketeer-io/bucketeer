@@ -57,6 +57,8 @@ var (
 	errVariationIDRequired                        = errors.New("feature: variation id required")
 	errVariationNameRequired                      = errors.New("feature: variation name required")
 	errVariationValueRequired                     = errors.New("feature: variation value required")
+	errVariationValueUnique                       = errors.New("feature: variation value must be unique")
+	errVariationsMustHaveAtLeastTwoVariations     = errors.New("feature: variations must have at least two variations")
 	errTargetUsersRequired                        = errors.New("feature: target users required")
 	errTargetUserRequired                         = errors.New("feature: target user required")
 	errVariationInUse                             = errors.New("feature: variation in use")
@@ -105,12 +107,15 @@ func NewFeature(
 		Targets:       []*feature.Target{},
 		Rules:         []*feature.Rule{},
 	}}
-	for i := range variations {
+	if len(variations) < 2 {
+		return nil, errVariationsMustHaveAtLeastTwoVariations
+	}
+	for _, variation := range variations {
 		id, err := uuid.NewUUID()
 		if err != nil {
 			return nil, err
 		}
-		if err = f.AddVariation(id.String(), variations[i].Value, variations[i].Name, variations[i].Description); err != nil {
+		if err = f.AddVariation(id.String(), variation.Value, variation.Name, variation.Description); err != nil {
 			return nil, err
 		}
 	}
@@ -548,7 +553,13 @@ func (f *Feature) RemoveClauseValue(rule string, clause string, value string) er
 }
 
 func (f *Feature) AddVariation(id string, value string, name string, description string) error {
-	if err := validateVariationValue(f.VariationType, value); err != nil {
+	if id == "" {
+		return errVariationIDRequired
+	}
+	if name == "" {
+		return errVariationNameRequired
+	}
+	if err := f.validateVariationValue(id, value); err != nil {
 		return err
 	}
 	variation := &feature.Variation{
@@ -565,11 +576,17 @@ func (f *Feature) AddVariation(id string, value string, name string, description
 	return nil
 }
 
-func validateVariationValue(variationType feature.Feature_VariationType, value string) error {
+func (f *Feature) validateVariationValue(id, value string) error {
 	if value == "" {
 		return errVariationValueRequired
 	}
-	switch variationType {
+	// Check for duplicate values
+	for _, existingVar := range f.Variations {
+		if existingVar.Id != id && existingVar.Value == value {
+			return errVariationValueUnique
+		}
+	}
+	switch f.VariationType {
 	case feature.Feature_BOOLEAN:
 		if value != "true" && value != "false" {
 			return errVariationTypeUnmatched
@@ -592,6 +609,7 @@ func validateVariationValue(variationType feature.Feature_VariationType, value s
 func (f *Feature) addTarget(variationID string) {
 	target := &feature.Target{
 		Variation: variationID,
+		Users:     []string{},
 	}
 	f.Targets = append(f.Targets, target)
 }
@@ -628,7 +646,7 @@ func (f *Feature) ChangeVariation(variation *feature.Variation) error {
 	if variation.Name == "" {
 		return errVariationNameRequired
 	}
-	if err := validateVariationValue(f.VariationType, variation.Value); err != nil {
+	if err := f.validateVariationValue(variation.Id, variation.Value); err != nil {
 		return err
 	}
 	f.Variations[idx] = variation
@@ -1095,47 +1113,6 @@ func (f *Feature) RemoveTargetUsers(target *feature.Target) error {
 	return nil
 }
 
-func validateVariations(variationType feature.Feature_VariationType, variations []*feature.Variation) error {
-	if len(variations) < 2 {
-		return errors.New("feature: variations must have at least two variations")
-	}
-	ids := make(map[string]struct{}, len(variations))
-	for _, v := range variations {
-		if v.Id == "" {
-			return errValueNotFound
-		}
-		if err := uuid.ValidateUUID(v.Id); err != nil {
-			return fmt.Errorf("feature: variation %s id is invalid: %w", v.Id, err)
-		}
-		if _, ok := ids[v.Id]; ok {
-			return errors.New("feature: variation id already exists")
-		}
-		ids[v.Id] = struct{}{}
-		if v.Name == "" {
-			return errors.New("feature: variation name cannot be empty")
-		}
-		if err := validateVariationValue(variationType, v.Value); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// validatePrerequisites checks if the prerequisites are valid.
-// WARNING: This function does not check if the feature id and variation id are valid,
-// Call ValidateFeatureDependencies to check if they are so.
-func validatePrerequisites(prerequisite []*feature.Prerequisite) error {
-	for _, p := range prerequisite {
-		if p.FeatureId == "" {
-			return errors.New("feature: prerequisite id cannot be empty")
-		}
-		if p.VariationId == "" {
-			return errors.New("feature: prerequisite variation id cannot be empty")
-		}
-	}
-	return nil
-}
-
 func validateRules(rules []*feature.Rule, variations []*feature.Variation) error {
 	ids := make(map[string]struct{}, len(variations))
 	for _, r := range rules {
@@ -1162,6 +1139,60 @@ func validateRules(rules []*feature.Rule, variations []*feature.Variation) error
 			return err
 		}
 	}
+	return nil
+}
+
+func (f *Feature) validateVariationChanges(variationChanges []*feature.VariationChange) error {
+	for _, change := range variationChanges {
+		// For individual variation changes, only validate the variation value and type
+		if change.Variation == nil {
+			return errVariationRequired
+		}
+
+		switch change.ChangeType {
+		case feature.ChangeType_CREATE:
+			if change.Variation.Name == "" {
+				return errVariationNameRequired
+			}
+			if err := f.validateVariationValue(change.Variation.Id, change.Variation.Value); err != nil {
+				return err
+			}
+		case feature.ChangeType_UPDATE:
+			// For UPDATE operations, validate ID exists
+			if change.Variation.Id == "" {
+				return errVariationIDRequired
+			}
+			if _, err := f.findVariationIndex(change.Variation.Id); err != nil {
+				return err
+			}
+			if change.Variation.Name == "" {
+				return errVariationNameRequired
+			}
+			if err := f.validateVariationValue(change.Variation.Id, change.Variation.Value); err != nil {
+				return err
+			}
+		case feature.ChangeType_DELETE:
+			// For DELETE operations, just validate the variation exists
+			if change.Variation.Id == "" {
+				return errVariationIDRequired
+			}
+			if _, err := f.findVariationIndex(change.Variation.Id); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Validate that the feature will have at least 2 variations after applying changes
+	deletedCount := 0
+	for _, change := range variationChanges {
+		if change.ChangeType == feature.ChangeType_DELETE {
+			deletedCount++
+		}
+	}
+	if len(f.Variations)-deletedCount < 2 {
+		return errVariationsMustHaveAtLeastTwoVariations
+	}
+
 	return nil
 }
 
