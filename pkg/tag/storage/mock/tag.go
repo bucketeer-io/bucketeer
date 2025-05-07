@@ -88,9 +88,9 @@ func (mr *MockTagStorageMockRecorder) ListAllEnvironmentTags(ctx any) *gomock.Ca
 }
 
 // ListTags mocks base method.
-func (m *MockTagStorage) ListTags(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*tag.Tag, int, int64, error) {
+func (m *MockTagStorage) ListTags(ctx context.Context, options *mysql.ListOptions) ([]*tag.Tag, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListTags", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListTags", ctx, options)
 	ret0, _ := ret[0].([]*tag.Tag)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -99,9 +99,9 @@ func (m *MockTagStorage) ListTags(ctx context.Context, whereParts []mysql.WhereP
 }
 
 // ListTags indicates an expected call of ListTags.
-func (mr *MockTagStorageMockRecorder) ListTags(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockTagStorageMockRecorder) ListTags(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTags", reflect.TypeOf((*MockTagStorage)(nil).ListTags), ctx, whereParts, orders, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTags", reflect.TypeOf((*MockTagStorage)(nil).ListTags), ctx, options)
 }
 
 // UpsertTag mocks base method.
