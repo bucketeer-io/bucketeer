@@ -25,7 +25,3 @@ message Rule {
   Strategy strategy = 2;
   repeated Clause clauses = 3;
 }
-
-message RuleListValue {
-  repeated Rule values = 1;
-}

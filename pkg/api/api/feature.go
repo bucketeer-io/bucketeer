@@ -201,20 +201,22 @@ func (s *grpcGatewayService) UpdateFeature(
 	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 
 	res, err := s.featureClient.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
-		Comment:         req.Comment,
-		EnvironmentId:   envAPIKey.Environment.Id,
-		Id:              req.Id,
-		Name:            req.Name,
-		Description:     req.Description,
-		Tags:            req.Tags,
-		Enabled:         req.Enabled,
-		Archived:        req.Archived,
-		Variations:      req.Variations,
-		Prerequisites:   req.Prerequisites,
-		Targets:         req.Targets,
-		Rules:           req.Rules,
-		DefaultStrategy: req.DefaultStrategy,
-		OffVariation:    req.OffVariation,
+		Comment:             req.Comment,
+		EnvironmentId:       envAPIKey.Environment.Id,
+		Id:                  req.Id,
+		Name:                req.Name,
+		Description:         req.Description,
+		Tags:                req.Tags,
+		Enabled:             req.Enabled,
+		Archived:            req.Archived,
+		DefaultStrategy:     req.DefaultStrategy,
+		OffVariation:        req.OffVariation,
+		ResetSamplingSeed:   req.ResetSamplingSeed,
+		VariationChanges:    req.VariationChanges,
+		RuleChanges:         req.RuleChanges,
+		PrerequisiteChanges: req.PrerequisiteChanges,
+		TargetChanges:       req.TargetChanges,
+		TagChanges:          req.TagChanges,
 	})
 	if err != nil {
 		return nil, err

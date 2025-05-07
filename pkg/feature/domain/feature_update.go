@@ -33,10 +33,6 @@ func (f *Feature) Update(
 	defaultStrategy *feature.Strategy,
 	offVariation *wrapperspb.StringValue,
 	resetSamplingSeed bool,
-	prerequisites *feature.PrerequisiteListValue,
-	targets *feature.TargetListValue,
-	rules *feature.RuleListValue,
-	variations *feature.VariationListValue,
 	prerequisiteChanges []*feature.PrerequisiteChange,
 	targetChanges []*feature.TargetChange,
 	ruleChanges []*feature.RuleChange,
@@ -53,10 +49,6 @@ func (f *Feature) Update(
 		name,
 		defaultStrategy,
 		offVariation,
-		prerequisites,
-		targets,
-		rules,
-		variations,
 		prerequisiteChanges,
 		targetChanges,
 		ruleChanges,
@@ -78,18 +70,7 @@ func (f *Feature) Update(
 	); err != nil {
 		return nil, err
 	}
-	if err := updated.applyLegacyUpdates(
-		prerequisites,
-		targets,
-		rules,
-		variations,
-		prerequisiteChanges,
-		targetChanges,
-		ruleChanges,
-		variationChanges,
-	); err != nil {
-		return nil, err
-	}
+
 	if err := updated.applyGranularUpdates(
 		prerequisiteChanges,
 		targetChanges,
@@ -117,10 +98,6 @@ func (f *Feature) validateAllChanges(
 	name *wrapperspb.StringValue,
 	defaultStrategy *feature.Strategy,
 	offVariation *wrapperspb.StringValue,
-	prerequisites *feature.PrerequisiteListValue,
-	targets *feature.TargetListValue,
-	rules *feature.RuleListValue,
-	variations *feature.VariationListValue,
 	prerequisiteChanges []*feature.PrerequisiteChange,
 	targetChanges []*feature.TargetChange,
 	ruleChanges []*feature.RuleChange,
@@ -141,29 +118,6 @@ func (f *Feature) validateAllChanges(
 	// Validate off variation if provided
 	if offVariation != nil {
 		if err := validateOffVariation(offVariation.Value, f.Variations); err != nil {
-			return err
-		}
-	}
-
-	// Validate legacy updates if provided
-	if prerequisites != nil && len(prerequisiteChanges) == 0 {
-		if err := validatePrerequisites(prerequisites.Values); err != nil {
-			return err
-		}
-	}
-	if targets != nil && len(targetChanges) == 0 {
-		if err := validateTargets(targets.Values, f.Variations); err != nil {
-			return err
-		}
-	}
-	if rules != nil && len(ruleChanges) == 0 {
-		if err := validateRules(rules.Values, f.Variations); err != nil {
-			return err
-		}
-	}
-	if variations != nil && len(variationChanges) == 0 {
-		// For complete variation updates, ensure at least two variations
-		if err := validateVariations(f.VariationType, variations.Values); err != nil {
 			return err
 		}
 	}
@@ -261,32 +215,6 @@ func (f *Feature) applyBasicUpdates(
 		if err := f.ResetSamplingSeed(); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-// applyLegacyUpdates applies legacy field updates
-func (f *Feature) applyLegacyUpdates(
-	prerequisites *feature.PrerequisiteListValue,
-	targets *feature.TargetListValue,
-	rules *feature.RuleListValue,
-	variations *feature.VariationListValue,
-	prerequisiteChanges []*feature.PrerequisiteChange,
-	targetChanges []*feature.TargetChange,
-	ruleChanges []*feature.RuleChange,
-	variationChanges []*feature.VariationChange,
-) error {
-	if prerequisites != nil && len(prerequisiteChanges) == 0 {
-		f.Prerequisites = prerequisites.Values
-	}
-	if targets != nil && len(targetChanges) == 0 {
-		f.Targets = targets.Values
-	}
-	if rules != nil && len(ruleChanges) == 0 {
-		f.Rules = rules.Values
-	}
-	if variations != nil && len(variationChanges) == 0 {
-		f.Variations = variations.Values
 	}
 	return nil
 }

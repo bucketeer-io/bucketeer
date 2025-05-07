@@ -181,44 +181,15 @@ message UpdateFeatureRequest {
   common.StringListValue tags = 6;
   google.protobuf.BoolValue enabled = 7;
   google.protobuf.BoolValue archived = 8;
-
-  // Legacy full-replacement fields (deprecated)
-  VariationListValue variations = 9 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  PrerequisiteListValue prerequisites = 10 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  TargetListValue targets = 11 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  RuleListValue rules = 12 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-
-  Strategy default_strategy = 13;
-  google.protobuf.StringValue off_variation = 14;
-  bool reset_sampling_seed = 15;
-  bool apply_schedule_update = 16;
-
-  // New granular change fields (supporting multiple operations per field)
-  repeated VariationChange variation_changes = 17;
-  repeated RuleChange rule_changes = 18;
-  repeated PrerequisiteChange prerequisite_changes = 19;
-  repeated TargetChange target_changes = 20;
-  repeated TagChange tag_changes = 21;
+  Strategy default_strategy = 9;
+  google.protobuf.StringValue off_variation = 10;
+  bool reset_sampling_seed = 11;
+  bool apply_schedule_update = 12;
+  repeated VariationChange variation_changes = 13;
+  repeated RuleChange rule_changes = 14;
+  repeated PrerequisiteChange prerequisite_changes = 15;
+  repeated TargetChange target_changes = 16;
+  repeated TagChange tag_changes = 17;
 }
 
 message UpdateFeatureResponse {
