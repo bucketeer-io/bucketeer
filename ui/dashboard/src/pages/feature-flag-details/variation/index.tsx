@@ -85,7 +85,7 @@ const Variation = ({ feature }: VariationProps) => {
   }, [feature]);
 
   return (
-    <div className="flex flex-col w-full p-5 pt-0">
+    <div className="p-6 pt-0 w-full min-w-[900px]">
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col w-full gap-y-6">
