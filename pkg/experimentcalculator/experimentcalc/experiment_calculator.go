@@ -217,9 +217,8 @@ func (e ExperimentCalculator) createExperimentResult(
 		experimentResult.GoalResults = append(experimentResult.GoalResults, goalResult)
 	}
 
-	// Calculate total evaluation user count and total goal user count for the experiment
+	// Calculate total evaluation user count (only using the first goal since all goals have the same evaluation users)
 	var totalEvaluationUserCount int64
-	var totalGoalUserCount int64
 
 	// For evaluation user count, we only need to count from one goal since it's the same users
 	// who were evaluated in the experiment
@@ -232,17 +231,7 @@ func (e ExperimentCalculator) createExperimentResult(
 		}
 	}
 
-	// Calculate total goal user count across all goals
-	for _, goalResult := range experimentResult.GoalResults {
-		for _, vr := range goalResult.VariationResults {
-			if vr.ExperimentCount != nil {
-				totalGoalUserCount += vr.ExperimentCount.UserCount
-			}
-		}
-	}
-
 	experimentResult.TotalEvaluationUserCount = totalEvaluationUserCount
-	experimentResult.TotalGoalUserCount = totalGoalUserCount
 
 	return experimentResult, nil
 }
@@ -838,8 +827,17 @@ func (e ExperimentCalculator) calculateSummary(
 		}
 	}
 
+	// Calculate total goal user count by summing across all variations
+	var totalGoalUserCount int64
+	for _, vr := range goalResult.VariationResults {
+		if vr.ExperimentCount != nil {
+			totalGoalUserCount += vr.ExperimentCount.UserCount
+		}
+	}
+
 	// Set the summary values
 	goalResult.Summary.BestVariations = bestVariations
+	goalResult.Summary.GoalUserCount = totalGoalUserCount
 }
 
 // calculateExpectedLoss computes the posterior expected loss (regret) for each variation
