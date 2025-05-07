@@ -69,6 +69,5 @@ func (s *experimentResultStorage) GetExperimentResult(
 	}
 	er.GoalResults = erForGoalResults.GoalResults
 	er.TotalEvaluationUserCount = erForGoalResults.TotalEvaluationUserCount
-	er.TotalGoalUserCount = erForGoalResults.TotalGoalUserCount
 	return &domain.ExperimentResult{ExperimentResult: &er}, nil
 }

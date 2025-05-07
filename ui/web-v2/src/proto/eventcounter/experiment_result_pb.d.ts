@@ -27,9 +27,6 @@ export class ExperimentResult extends jspb.Message {
   getTotalEvaluationUserCount(): number;
   setTotalEvaluationUserCount(value: number): void;
 
-  getTotalGoalUserCount(): number;
-  setTotalGoalUserCount(value: number): void;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ExperimentResult.AsObject;
   static toObject(
@@ -58,6 +55,5 @@ export namespace ExperimentResult {
     updatedAt: number;
     goalResultsList: Array<proto_eventcounter_goal_result_pb.GoalResult.AsObject>;
     totalEvaluationUserCount: number;
-    totalGoalUserCount: number;
   };
 }
