@@ -41,12 +41,7 @@ const VariationList = ({ feature }: VariationProps) => {
   const offVariationValue = useMemo(() => {
     const variation = variations.find(item => item.id === offVariation);
     return variation?.value || variation?.name || '';
-  }, [offVariation, variations]);
-
-  const isBoolean = useMemo(
-    () => feature.variationType === 'BOOLEAN',
-    [feature]
-  );
+  }, [offVariation, [...variations]]);
 
   return (
     <>
@@ -79,18 +74,22 @@ const VariationList = ({ feature }: VariationProps) => {
             <Form.Control>
               <DropdownMenu>
                 <DropdownMenuTrigger
-                  label={offVariationValue}
+                  label={
+                    variations.find(
+                      item =>
+                        item.value === offVariationValue ||
+                        item.name === offVariationValue
+                    )?.name || ''
+                  }
                   isExpand
-                  className={isBoolean ? 'capitalize' : ''}
                 />
                 <DropdownMenuContent align="start">
                   {variations?.map((item, index) => (
                     <DropdownMenuItem
                       {...field}
                       key={index}
-                      label={item.value || item.name}
+                      label={item.name || item.value}
                       value={item.id}
-                      className={isBoolean ? 'capitalize' : ''}
                       onSelectOption={value => field.onChange(value)}
                     />
                   ))}

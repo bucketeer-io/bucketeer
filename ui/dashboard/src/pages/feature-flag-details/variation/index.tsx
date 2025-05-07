@@ -6,7 +6,7 @@ import { invalidateFeature } from '@queries/feature-details';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
-import { Feature } from '@types';
+import { Feature, FeatureVariation, VariationChange } from '@types';
 import Form from 'components/form';
 import ConfirmationRequiredModal from '../elements/confirm-required-modal';
 import { variationsFormSchema } from './form-schema';
@@ -38,10 +38,39 @@ const Variation = ({ feature }: VariationProps) => {
       comment: '',
       resetSampling: false
     },
-    mode: 'all'
+    mode: 'onChange'
   });
 
   const { getValues } = form;
+
+  const handleCheckVariations = useCallback(
+    (variations: FeatureVariation[]) => {
+      const { variations: featureVariations } = feature;
+      const variationChanges: VariationChange[] = [];
+
+      featureVariations.forEach(item => {
+        if (!variations.find(variation => variation.id === item.id)) {
+          variationChanges.push({
+            changeType: 'DELETE',
+            variation: item
+          });
+        }
+      });
+      variations.forEach(item => {
+        if (!featureVariations.find(variation => variation.id === item.id)) {
+          variationChanges.push({
+            changeType: 'CREATE',
+            variation: item
+          });
+        }
+      });
+
+      return {
+        variationChanges
+      };
+    },
+    [feature]
+  );
 
   const onSubmit = useCallback(async () => {
     try {
@@ -55,7 +84,8 @@ const Variation = ({ feature }: VariationProps) => {
         offVariation,
         variations: {
           values: variations
-        }
+        },
+        ...handleCheckVariations(variations)
       });
       if (resp) {
         notify({
@@ -90,6 +120,7 @@ const Variation = ({ feature }: VariationProps) => {
         <Form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col w-full gap-y-6">
             <SubmitBar
+              feature={feature}
               onShowConfirmDialog={() => {
                 form.setValue(
                   'requireComment',

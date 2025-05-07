@@ -130,11 +130,11 @@ interface RuleChange extends ChangeType {
   rule: FeatureRule;
 }
 
-interface PrerequisiteChange extends ChangeType {
+export interface PrerequisiteChange extends ChangeType {
   prerequisite: FeaturePrerequisite;
 }
 
-interface TargetChange extends ChangeType {
+export interface TargetChange extends ChangeType {
   target: FeatureTarget;
 }
 

@@ -9,10 +9,10 @@ import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
+import ReactCodeEditor from 'components/code-editor';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
-import TextArea from 'components/textarea';
 import { VariationForm } from '../form-schema';
 
 const VariationLabel = ({
@@ -59,7 +59,7 @@ const Variations = ({
   const isJSON = useMemo(() => feature.variationType === 'JSON', [feature]);
 
   const formItemClassName = useMemo(
-    () => 'flex flex-col pt-6 pb-0 h-full self-stretch',
+    () => 'flex flex-col flex-1 py-0 h-full self-stretch',
     []
   );
 
@@ -97,12 +97,13 @@ const Variations = ({
     (variationId: string) => {
       return (
         isBoolean ||
+        fields.length <= 2 ||
         [
           ...new Set([offVariation, ...onVariationIds, ...ruleVariationIds])
         ].includes(variationId)
       );
     },
-    [isBoolean, onVariationIds, ruleVariationIds, offVariation]
+    [isBoolean, onVariationIds, ruleVariationIds, offVariation, fields]
   );
   const isProgressiveRolloutsRunningWaiting = (status: OperationStatus) =>
     ['RUNNING', 'WAITING'].includes(status);
@@ -125,95 +126,76 @@ const Variations = ({
   };
 
   return (
-    <>
+    <div className="flex flex-col w-full gap-y-6">
       {fields.map((variation, variationIndex) => (
-        <div
-          key={variation.variationField}
-          className="flex items-end w-full gap-x-2"
-        >
-          <Form.Field
-            control={control}
-            name={`variations.${variationIndex}.value`}
-            render={({ field }) => {
-              return (
-                <Form.Item
-                  className={cn(formItemClassName, 'w-[20%]', {
-                    'w-[10%]': isBoolean,
-                    'flex-1 w-full': isJSON
-                  })}
-                >
-                  {isBoolean && (
-                    <VariationLabel index={variationIndex} className="mb-3" />
+        <div key={variation.variationField} className="flex w-full gap-x-2">
+          <div className="flex flex-col w-full gap-y-3">
+            <VariationLabel index={variationIndex} />
+            <div className="flex flex-col w-full gap-y-5">
+              <div className="flex items-end w-full gap-x-2">
+                <Form.Field
+                  control={control}
+                  name={`variations.${variationIndex}.name`}
+                  render={({ field }) => (
+                    <Form.Item className={cn(formItemClassName)}>
+                      <Form.Label required>{t('name')}</Form.Label>
+                      <Form.Control>
+                        <Input {...field} placeholder={t('name')} />
+                      </Form.Control>
+                      <Form.Message />
+                    </Form.Item>
                   )}
-                  <Form.Label required={isBoolean}>
-                    {isBoolean ? (
-                      t(field.value ? 'true' : 'false')
-                    ) : (
-                      <VariationLabel index={variationIndex} />
-                    )}
-                  </Form.Label>
-                  <Form.Control>
-                    {isJSON ? (
-                      <TextArea
-                        {...field}
-                        rows={3}
-                        placeholder={t('form:feature-flags.value')}
-                      />
-                    ) : (
-                      <Input
-                        {...field}
-                        disabled={isBoolean}
-                        placeholder={t('form:feature-flags.value')}
-                        className={cn('px-3', {
-                          capitalize: isBoolean
-                        })}
-                      />
-                    )}
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              );
-            }}
-          />
-          <Form.Field
-            control={control}
-            name={`variations.${variationIndex}.name`}
-            render={({ field }) => (
-              <Form.Item
-                className={cn(formItemClassName, 'w-[30%]', {
-                  'flex-1 w-full': isJSON
-                })}
-              >
-                <Form.Label required>{t('name')}</Form.Label>
-                <Form.Control>
-                  <Input {...field} placeholder={t('name')} />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
-          <Form.Field
-            control={control}
-            name={`variations.${variationIndex}.description`}
-            render={({ field }) => (
-              <Form.Item
-                className={cn(formItemClassName, 'flex-1', {
-                  'flex-1 w-full': isJSON
-                })}
-              >
-                <Form.Label>{t('form:description')}</Form.Label>
-                <Form.Control>
-                  <Input {...field} placeholder={t('form:description')} />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
+                />
+                <Form.Field
+                  control={control}
+                  name={`variations.${variationIndex}.description`}
+                  render={({ field }) => (
+                    <Form.Item className={cn(formItemClassName)}>
+                      <Form.Label>{t('form:description')}</Form.Label>
+                      <Form.Control>
+                        <Input {...field} placeholder={t('form:description')} />
+                      </Form.Control>
+                      <Form.Message />
+                    </Form.Item>
+                  )}
+                />
+              </div>
+              <Form.Field
+                control={control}
+                name={`variations.${variationIndex}.value`}
+                render={({ field }) => {
+                  return (
+                    <Form.Item className={cn(formItemClassName)}>
+                      <Form.Label required>
+                        {t('form:feature-flags.value')}
+                      </Form.Label>
+                      <Form.Control>
+                        {isJSON ? (
+                          <ReactCodeEditor
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        ) : (
+                          <Input
+                            {...field}
+                            disabled={isBoolean}
+                            placeholder={t('form:feature-flags.value')}
+                            className="px-3"
+                          />
+                        )}
+                      </Form.Control>
+                      <Form.Message />
+                    </Form.Item>
+                  );
+                }}
+              />
+            </div>
+          </div>
           <Button
             variant="grey"
             size="icon"
             type="button"
-            className="p-0 size-5 mb-4"
+            className="p-0 size-5 self-end mb-4"
             disabled={isDisableRemoveBtn(variation.id)}
             onClick={() => remove(variationIndex)}
           >
@@ -226,12 +208,12 @@ const Variations = ({
         variant="text"
         type="button"
         disabled={isDisableAddBtn()}
-        className="h-6 mt-6 px-0 self-start"
+        className="h-6 px-0 self-start"
       >
         <Icon icon={IconAddOutlined} />
         {t(`form:feature-flags.add-variation`)}
       </Button>
-    </>
+    </div>
   );
 };
 
