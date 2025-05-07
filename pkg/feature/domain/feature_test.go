@@ -1910,6 +1910,7 @@ func TestUpdate(t *testing.T) {
 	// New UUID for the additional variation.
 	id4, _ := uuid.NewUUID()
 
+	// Baseline generator for BOOLEAN type.
 	genF := func() *Feature {
 		return &Feature{
 			Feature: &proto.Feature{
@@ -1925,11 +1926,8 @@ func TestUpdate(t *testing.T) {
 					{Id: id2.String(), Value: "false", Name: "n2", Description: "d2"},
 				},
 				Prerequisites: []*proto.Prerequisite{},
-				Targets: []*proto.Target{
-					{Variation: id1.String()},
-					{Variation: id2.String()},
-				},
-				Rules: []*proto.Rule{},
+				Targets:       []*proto.Target{{Variation: id1.String()}, {Variation: id2.String()}},
+				Rules:         []*proto.Rule{},
 				DefaultStrategy: &proto.Strategy{
 					Type:          proto.Strategy_FIXED,
 					FixedStrategy: &proto.FixedStrategy{Variation: id1.String()},
@@ -1938,6 +1936,8 @@ func TestUpdate(t *testing.T) {
 			},
 		}
 	}
+
+	// Define test patterns.
 	patterns := []struct {
 		desc              string
 		inputFunc         func() *Feature
@@ -1962,6 +1962,21 @@ func TestUpdate(t *testing.T) {
 		expectedFunc        func() *Feature
 		expectedErr         error
 	}{
+		{
+			desc:        "success: no changes when updating with same values",
+			inputFunc:   genF,
+			name:        wrapperspb.String("n"),
+			description: wrapperspb.String("d"),
+			tags:        &common.StringListValue{Values: []string{"t1", "t2"}},
+			archived:    wrapperspb.Bool(false),
+			defaultStrategy: &proto.Strategy{
+				Type:          proto.Strategy_FIXED,
+				FixedStrategy: &proto.FixedStrategy{Variation: id1.String()},
+			},
+			offVariation: wrapperspb.String(id1.String()),
+			expectedFunc: genF,
+			expectedErr:  nil,
+		},
 		{
 			desc: "fail: name is empty",
 			inputFunc: func() *Feature {
@@ -2142,7 +2157,7 @@ func TestUpdate(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "success: version not incremented when only non-change fields updated",
+			desc: "success: version incremented when description is updated",
 			inputFunc: func() *Feature {
 				return genF()
 			},
@@ -2150,7 +2165,8 @@ func TestUpdate(t *testing.T) {
 			expectedFunc: func() *Feature {
 				f := genF()
 				f.Description = "d2"
-				f.Version = 0
+				f.Version = 1
+				f.UpdatedAt = time.Now().Unix()
 				return f
 			},
 			expectedErr: nil,
@@ -3294,7 +3310,7 @@ func TestUpdateRulesGranular(t *testing.T) {
 				},
 			},
 			expectedFunc: func() *Feature { return genF() },
-			expectedErr:  errRuleNotFound,
+			expectedErr:  errors.New("uuid: format must be an uuid version 4"),
 		},
 		{
 			desc: "Rule Update - error: clause attribute empty for non-SEGMENT operator",
