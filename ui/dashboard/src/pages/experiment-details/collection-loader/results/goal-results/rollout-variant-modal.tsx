@@ -1,9 +1,10 @@
+import { useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
-import { FeatureRuleStrategy, FeatureVariation } from '@types';
+import { BestVariation, FeatureRuleStrategy, FeatureVariation } from '@types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Form from 'components/form';
@@ -16,6 +17,7 @@ export type RolloutVariantModalProps = {
   variations: FeatureVariation[];
   isRequireComment: boolean;
   defaultStrategy?: FeatureRuleStrategy;
+  bestVariations: BestVariation[];
   onClose: () => void;
   onSubmit: (values: RolloutVariant) => void;
 };
@@ -30,6 +32,7 @@ const RolloutVariantModal = ({
   defaultStrategy,
   variations,
   isRequireComment,
+  bestVariations,
   onClose,
   onSubmit
 }: RolloutVariantModalProps) => {
@@ -39,17 +42,35 @@ const RolloutVariantModal = ({
     comment: isRequireComment ? yup.string().required() : yup.string()
   });
 
+  const bestVariation = useMemo(
+    () =>
+      bestVariations?.reduce(
+        (acc: BestVariation | undefined, curr: BestVariation) =>
+          acc
+            ? curr.probability > (acc?.probability || 0)
+              ? curr
+              : acc
+            : curr,
+        undefined
+      ),
+    [bestVariations]
+  );
+
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
-      variation: defaultStrategy?.fixedStrategy?.variation,
+      variation:
+        bestVariation?.id ||
+        defaultStrategy?.fixedStrategy?.variation ||
+        variations[0]?.id ||
+        '',
       comment: ''
     }
   });
 
   const {
     control,
-    formState: { isValid, isDirty, isSubmitting }
+    formState: { isValid, isSubmitting }
   } = form;
 
   return (
@@ -77,10 +98,9 @@ const RolloutVariantModal = ({
                         onValueChange={field.onChange}
                       >
                         {variations.map(({ id, name, value }) => {
-                          const rolloutVariation =
-                            defaultStrategy?.rolloutStrategy?.variations.find(
-                              item => item.variation === id
-                            );
+                          const rolloutVariation = bestVariations?.find(
+                            item => item.id === id
+                          );
                           return (
                             <div key={id} className="flex items-center gap-x-2">
                               <RadioGroupItem value={id} id={id} />
@@ -92,7 +112,7 @@ const RolloutVariantModal = ({
                                   i18nKey={'table:results.variant-percent'}
                                   values={{
                                     name: name || value,
-                                    percent: `${rolloutVariation ? rolloutVariation.weight / 1000 : 0}`
+                                    percent: `${rolloutVariation ? (rolloutVariation.probability * 100).toFixed(1) : 0}`
                                   }}
                                 />
                               </label>
@@ -131,11 +151,7 @@ const RolloutVariantModal = ({
           </div>
           <ButtonBar
             secondaryButton={
-              <Button
-                type="submit"
-                disabled={!isValid || !isDirty}
-                loading={isSubmitting}
-              >
+              <Button type="submit" disabled={!isValid} loading={isSubmitting}>
                 {t(`common:submit`)}
               </Button>
             }

@@ -157,6 +157,7 @@ const GoalResultItem = ({
           isOpen={isOpenRolloutVariant}
           variations={experiment.variations}
           defaultStrategy={feature?.defaultStrategy}
+          bestVariations={goalResult?.summary?.bestVariations}
           isRequireComment={isRequireComment}
           onClose={onCloseRolloutVariant}
           onSubmit={onSubmitRolloutVariation}

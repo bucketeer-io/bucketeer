@@ -51,10 +51,7 @@ const ExperimentState = ({
     };
 
     const total = formatNumber(
-      experimentResult?.goalResults?.reduce(
-        (acc, cur) => acc + (+cur?.summary?.totalEvaluationUserCount || 0),
-        0
-      ) || 0
+      experimentResult ? +experimentResult?.totalEvaluationUserCount : 0
     );
     return total || 0;
   }, [experimentResult]);

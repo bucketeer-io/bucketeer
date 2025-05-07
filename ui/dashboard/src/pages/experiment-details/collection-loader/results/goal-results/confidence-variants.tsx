@@ -127,7 +127,11 @@ const ConfidenceVariants = ({
           />
         )}
       </div>
-      <Button variant={'text'} onClick={onOpenRolloutVariant}>
+      <Button
+        variant={'text'}
+        onClick={onOpenRolloutVariant}
+        className="typo-para-small"
+      >
         <Icon icon={IconOperationArrow} color="primary-500" size={'sm'} />
         {t('results.rollout-variant')}
       </Button>
