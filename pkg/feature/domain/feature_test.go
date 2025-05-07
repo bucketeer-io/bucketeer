@@ -1090,18 +1090,23 @@ func TestChangeVariationDescription(t *testing.T) {
 
 func TestRemoveVariationUsingFixedStrategy(t *testing.T) {
 	f := makeFeature("test-feature")
-	expected := "variation-C"
+	expected := "variation-D"
+	f.AddVariation(expected, "D", "Variation D", "Thing does D")
 	patterns := []*struct {
 		id       string
 		expected error
 	}{
 		{
 			id:       "variation-A",
-			expected: errVariationInUse,
+			expected: errVariationInUse, // Used in default strategy
 		},
 		{
 			id:       "variation-B",
-			expected: errVariationInUse,
+			expected: errVariationInUse, // Used in default strategy
+		},
+		{
+			id:       "variation-C",
+			expected: errVariationInUse, // Has users in target
 		},
 		{
 			id:       expected,
@@ -1117,7 +1122,7 @@ func TestRemoveVariationUsingFixedStrategy(t *testing.T) {
 		t.Fatalf("Variation not deleted. Actual: %v", f.Variations)
 	}
 	actualSize := len(f.Variations)
-	expectedSize := 2
+	expectedSize := 3
 	if expectedSize != actualSize {
 		t.Fatalf("Different sizes. Expected: %d, actual: %d", expectedSize, actualSize)
 	}
@@ -1125,6 +1130,8 @@ func TestRemoveVariationUsingFixedStrategy(t *testing.T) {
 
 func TestRemoveVariationUsingRolloutStrategy(t *testing.T) {
 	f := makeFeature("test-feature")
+	expected := "variation-D"
+	f.AddVariation(expected, "D", "Variation D", "Thing does D")
 	f.ChangeDefaultStrategy(&proto.Strategy{
 		Type: proto.Strategy_ROLLOUT,
 		RolloutStrategy: &proto.RolloutStrategy{
@@ -1141,21 +1148,28 @@ func TestRemoveVariationUsingRolloutStrategy(t *testing.T) {
 					Variation: "variation-C",
 					Weight:    0,
 				},
+				{
+					Variation: expected,
+					Weight:    0,
+				},
 			},
 		},
 	})
-	expected := "variation-C"
 	patterns := []*struct {
 		id       string
 		expected error
 	}{
 		{
 			id:       "variation-A",
-			expected: errVariationInUse,
+			expected: errVariationInUse, // Used in default strategy with weight > 0
 		},
 		{
 			id:       "variation-B",
-			expected: errVariationInUse,
+			expected: errVariationInUse, // Used in default strategy with weight > 0
+		},
+		{
+			id:       "variation-C",
+			expected: errVariationInUse, // Has users in target
 		},
 		{
 			id:       expected,
@@ -1171,7 +1185,7 @@ func TestRemoveVariationUsingRolloutStrategy(t *testing.T) {
 		t.Fatalf("Variation not deleted. Actual: %v", f.Variations)
 	}
 	actualSize := len(f.Variations)
-	expectedSize := 2
+	expectedSize := 3
 	if expectedSize != actualSize {
 		t.Fatalf("Different sizes. Expected: %d, actual: %d", expectedSize, actualSize)
 	}

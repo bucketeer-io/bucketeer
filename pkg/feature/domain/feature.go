@@ -673,6 +673,14 @@ func (f *Feature) RemoveVariation(id string) error {
 }
 
 func (f *Feature) validateRemoveVariation(id string) error {
+	// Check if the individual targeting has any users
+	idx, err := f.findTarget(id)
+	if err != nil {
+		return err
+	}
+	if len(f.Targets[idx].Users) > 0 {
+		return errVariationInUse
+	}
 	if strategyContainsVariation(id, f.Feature.DefaultStrategy) {
 		return errVariationInUse
 	}
