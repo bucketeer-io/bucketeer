@@ -39,26 +39,30 @@ const (
 )
 
 var (
-	errNameEmpty                                  = errors.New("feature: name cannot be empty")
-	errClauseNotFound                             = errors.New("feature: clause not found")
-	errClauseAttributeNotEmpty                    = errors.New("feature: clause attribute must be empty")
-	errClauseAttributeEmpty                       = errors.New("feature: clause attribute cannot be empty")
-	errClauseValuesEmpty                          = errors.New("feature: clause values cannot be empty")
-	errClauseAlreadyExists                        = errors.New("feature: clause already exists")
-	errRuleMustHaveAtLeastOneClause               = errors.New("feature: rule must have at least one clause")
-	errClauseMustHaveAtLeastOneValue              = errors.New("feature: clause must have at least one value")
-	errRuleAlreadyExists                          = errors.New("feature: rule already exists")
-	errRuleIDRequired                             = errors.New("feature: rule id required")
-	errRuleRequired                               = errors.New("feature: rule required")
-	errRuleNotFound                               = errors.New("feature: rule not found")
-	errTargetNotFound                             = errors.New("feature: target not found")
-	errVariationRequired                          = errors.New("feature: variation required")
-	errValueNotFound                              = errors.New("feature: value not found")
-	errVariationIDRequired                        = errors.New("feature: variation id required")
-	errVariationNameRequired                      = errors.New("feature: variation name required")
-	errVariationValueRequired                     = errors.New("feature: variation value required")
-	errVariationValueUnique                       = errors.New("feature: variation value must be unique")
-	errVariationsMustHaveAtLeastTwoVariations     = errors.New("feature: variations must have at least two variations")
+	errNameEmpty                              = errors.New("feature: name cannot be empty")
+	errClauseNotFound                         = errors.New("feature: clause not found")
+	errClauseAttributeNotEmpty                = errors.New("feature: clause attribute must be empty")
+	errClauseAttributeEmpty                   = errors.New("feature: clause attribute cannot be empty")
+	errClauseValuesEmpty                      = errors.New("feature: clause values cannot be empty")
+	errClauseAlreadyExists                    = errors.New("feature: clause already exists")
+	errRuleMustHaveAtLeastOneClause           = errors.New("feature: rule must have at least one clause")
+	errClauseMustHaveAtLeastOneValue          = errors.New("feature: clause must have at least one value")
+	errRuleAlreadyExists                      = errors.New("feature: rule already exists")
+	errRuleIDRequired                         = errors.New("feature: rule id required")
+	errRuleRequired                           = errors.New("feature: rule required")
+	errRuleNotFound                           = errors.New("feature: rule not found")
+	errTargetNotFound                         = errors.New("feature: target not found")
+	errVariationRequired                      = errors.New("feature: variation required")
+	errValueNotFound                          = errors.New("feature: value not found")
+	errVariationIDRequired                    = errors.New("feature: variation id required")
+	errVariationNameRequired                  = errors.New("feature: variation name required")
+	errVariationValueRequired                 = errors.New("feature: variation value required")
+	errVariationValueUnique                   = errors.New("feature: variation value must be unique")
+	errVariationsMustHaveAtLeastTwoVariations = errors.New("feature: variations must have at least two variations")
+	errInvalidDefaultOnVariationIndex         = errors.New(
+		"feature: invalid default on variation index. Index is out of range")
+	errInvalidDefaultOffVariationIndex = errors.New(
+		"feature: invalid default off variation index. Index is out of range")
 	errTargetUsersRequired                        = errors.New("feature: target users required")
 	errTargetUserRequired                         = errors.New("feature: target user required")
 	errVariationInUse                             = errors.New("feature: variation in use")
@@ -109,6 +113,12 @@ func NewFeature(
 	}}
 	if len(variations) < 2 {
 		return nil, errVariationsMustHaveAtLeastTwoVariations
+	}
+	if defaultOnVariationIndex < 0 || defaultOnVariationIndex >= len(variations) {
+		return nil, errInvalidDefaultOnVariationIndex
+	}
+	if defaultOffVariationIndex < 0 || defaultOffVariationIndex >= len(variations) {
+		return nil, errInvalidDefaultOffVariationIndex
 	}
 	for _, variation := range variations {
 		id, err := uuid.NewUUID()

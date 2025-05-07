@@ -133,59 +133,149 @@ func makeFeature(id string) *Feature {
 }
 
 func TestNewFeature(t *testing.T) {
-	id := "id"
-	name := "name"
-	description := "description"
-	variations := []*proto.Variation{
+	t.Parallel()
+	patterns := []*struct {
+		desc                     string
+		id                       string
+		name                     string
+		description              string
+		variationType            feature.Feature_VariationType
+		variations               []*feature.Variation
+		tags                     []string
+		defaultOnVariationIndex  int
+		defaultOffVariationIndex int
+		maintainer               string
+		expected                 error
+	}{
 		{
-			Value:       "A",
-			Name:        "Variation A",
-			Description: "Thing does A",
+			desc:          "err: variations must have at least two variations",
+			id:            "test-feature",
+			name:          "test feature",
+			description:   "test feature description",
+			variationType: feature.Feature_BOOLEAN,
+			variations: []*feature.Variation{
+				{
+					Value:       "true",
+					Name:        "Variation A",
+					Description: "Thing does A",
+				},
+			},
+			tags:                     []string{},
+			defaultOnVariationIndex:  0,
+			defaultOffVariationIndex: 0,
+			maintainer:               "test@example.com",
+			expected:                 errVariationsMustHaveAtLeastTwoVariations,
 		},
 		{
-			Value:       "B",
-			Name:        "Variation B",
-			Description: "Thing does B",
+			desc:          "err: invalid default on variation index",
+			id:            "test-feature",
+			name:          "test feature",
+			description:   "test feature description",
+			variationType: feature.Feature_BOOLEAN,
+			variations: []*feature.Variation{
+				{
+					Value:       "true",
+					Name:        "Variation A",
+					Description: "Thing does A",
+				},
+				{
+					Value:       "false",
+					Name:        "Variation B",
+					Description: "Thing does B",
+				},
+			},
+			tags:                     []string{},
+			defaultOnVariationIndex:  2, // Out of range
+			defaultOffVariationIndex: 0,
+			maintainer:               "test@example.com",
+			expected:                 errInvalidDefaultOnVariationIndex,
 		},
 		{
-			Value:       "C",
-			Name:        "Variation C",
-			Description: "Thing does C",
+			desc:          "err: invalid default off variation index",
+			id:            "test-feature",
+			name:          "test feature",
+			description:   "test feature description",
+			variationType: feature.Feature_BOOLEAN,
+			variations: []*feature.Variation{
+				{
+					Value:       "true",
+					Name:        "Variation A",
+					Description: "Thing does A",
+				},
+				{
+					Value:       "false",
+					Name:        "Variation B",
+					Description: "Thing does B",
+				},
+			},
+			tags:                     []string{},
+			defaultOnVariationIndex:  0,
+			defaultOffVariationIndex: 2, // Out of range
+			maintainer:               "test@example.com",
+			expected:                 errInvalidDefaultOffVariationIndex,
+		},
+		{
+			desc:          "success",
+			id:            "test-feature",
+			name:          "test feature",
+			description:   "test feature description",
+			variationType: feature.Feature_BOOLEAN,
+			variations: []*feature.Variation{
+				{
+					Value:       "true",
+					Name:        "Variation A",
+					Description: "Thing does A",
+				},
+				{
+					Value:       "false",
+					Name:        "Variation B",
+					Description: "Thing does B",
+				},
+			},
+			tags:                     []string{"tag1", "tag2"},
+			defaultOnVariationIndex:  0,
+			defaultOffVariationIndex: 1,
+			maintainer:               "test@example.com",
+			expected:                 nil,
 		},
 	}
-	variationType := feature.Feature_STRING
-	tags := []string{"android", "ios", "web"}
-	defaultOnVariationIndex := 0
-	defaultOffVariationIndex := 2
-	maintainer := "bucketeer@example.com"
-	f, err := NewFeature(
-		id,
-		name,
-		description,
-		variationType,
-		variations,
-		tags,
-		defaultOnVariationIndex,
-		defaultOffVariationIndex,
-		maintainer,
-	)
-	strategy := &feature.Strategy{
-		Type:          feature.Strategy_FIXED,
-		FixedStrategy: &feature.FixedStrategy{Variation: f.Variations[defaultOnVariationIndex].Id},
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			f, err := NewFeature(
+				p.id,
+				p.name,
+				p.description,
+				p.variationType,
+				p.variations,
+				p.tags,
+				p.defaultOnVariationIndex,
+				p.defaultOffVariationIndex,
+				p.maintainer,
+			)
+			assert.Equal(t, p.expected, err)
+			if err == nil {
+				assert.Equal(t, p.id, f.Id)
+				assert.Equal(t, p.name, f.Name)
+				assert.Equal(t, p.description, f.Description)
+				assert.Equal(t, p.variationType, f.VariationType)
+				assert.Equal(t, p.tags, f.Tags)
+				assert.Equal(t, p.maintainer, f.Maintainer)
+				assert.Equal(t, int32(1), f.Version)
+				assert.NotEmpty(t, f.CreatedAt)
+				assert.NotEmpty(t, f.UpdatedAt)
+				assert.False(t, f.Enabled)
+				assert.False(t, f.Deleted)
+				assert.False(t, f.Archived)
+				assert.Empty(t, f.Prerequisites)
+				assert.Empty(t, f.Rules)
+				assert.NotEmpty(t, f.Variations)
+				assert.NotEmpty(t, f.Targets)
+				assert.NotEmpty(t, f.DefaultStrategy)
+				assert.NotEmpty(t, f.OffVariation)
+			}
+		})
 	}
-	assert.NoError(t, err)
-	assert.Equal(t, id, f.Id)
-	assert.Equal(t, name, f.Name)
-	assert.Equal(t, description, f.Description)
-	for i := range variations {
-		assert.Equal(t, variations[i].Name, f.Variations[i].Name)
-		assert.Equal(t, variations[i].Description, f.Variations[i].Description)
-	}
-	assert.Equal(t, tags, f.Tags)
-	assert.Equal(t, tags, f.Tags)
-	assert.Equal(t, f.Variations[defaultOffVariationIndex].Id, f.OffVariation)
-	assert.Equal(t, strategy, f.DefaultStrategy)
-	assert.Equal(t, maintainer, f.Maintainer)
 }
 
 func TestAddVariation(t *testing.T) {
