@@ -18629,6 +18629,38 @@
               {
                 "name": "JAVASCRIPT",
                 "integer": 7
+              },
+              {
+                "name": "FLUTTER",
+                "integer": 8
+              },
+              {
+                "name": "REACT",
+                "integer": 9
+              },
+              {
+                "name": "REACT_NATIVE",
+                "integer": 10
+              },
+              {
+                "name": "OPEN_FEATURE_KOTLIN",
+                "integer": 100
+              },
+              {
+                "name": "OPEN_FEATURE_SWIFT",
+                "integer": 101
+              },
+              {
+                "name": "OPEN_FEATURE_JAVASCRIPT",
+                "integer": 102
+              },
+              {
+                "name": "OPEN_FEATURE_GO",
+                "integer": 103
+              },
+              {
+                "name": "OPEN_FEATURE_NODEJS",
+                "integer": 104
               }
             ],
             "reserved_ids": [
