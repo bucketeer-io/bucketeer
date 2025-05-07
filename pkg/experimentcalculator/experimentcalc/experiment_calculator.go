@@ -221,12 +221,20 @@ func (e ExperimentCalculator) createExperimentResult(
 	var totalEvaluationUserCount int64
 	var totalGoalUserCount int64
 
-	// Calculate totals across all goal results and their variations
-	for _, goalResult := range experimentResult.GoalResults {
-		for _, vr := range goalResult.VariationResults {
+	// For evaluation user count, we only need to count from one goal since it's the same users
+	// who were evaluated in the experiment
+	if len(experimentResult.GoalResults) > 0 {
+		firstGoalResult := experimentResult.GoalResults[0]
+		for _, vr := range firstGoalResult.VariationResults {
 			if vr.EvaluationCount != nil {
 				totalEvaluationUserCount += vr.EvaluationCount.UserCount
 			}
+		}
+	}
+
+	// Calculate total goal user count across all goals
+	for _, goalResult := range experimentResult.GoalResults {
+		for _, vr := range goalResult.VariationResults {
 			if vr.ExperimentCount != nil {
 				totalGoalUserCount += vr.ExperimentCount.UserCount
 			}
