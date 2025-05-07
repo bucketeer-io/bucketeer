@@ -112,8 +112,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_eventcounter_goal_result_pb.GoalResult.toObject,
           includeInstance
         ),
-        totalEvaluationUserCount: jspb.Message.getFieldWithDefault(msg, 5, 0),
-        totalGoalUserCount: jspb.Message.getFieldWithDefault(msg, 6, 0)
+        totalEvaluationUserCount: jspb.Message.getFieldWithDefault(msg, 5, 0)
       };
 
     if (includeInstance) {
@@ -179,10 +178,6 @@ proto.bucketeer.eventcounter.ExperimentResult.deserializeBinaryFromReader =
           var value = /** @type {number} */ (reader.readInt64());
           msg.setTotalEvaluationUserCount(value);
           break;
-        case 6:
-          var value = /** @type {number} */ (reader.readInt64());
-          msg.setTotalGoalUserCount(value);
-          break;
         default:
           reader.skipField();
           break;
@@ -238,10 +233,6 @@ proto.bucketeer.eventcounter.ExperimentResult.serializeBinaryToWriter =
     f = message.getTotalEvaluationUserCount();
     if (f !== 0) {
       writer.writeInt64(5, f);
-    }
-    f = message.getTotalGoalUserCount();
-    if (f !== 0) {
-      writer.writeInt64(6, f);
     }
   };
 
@@ -366,24 +357,6 @@ proto.bucketeer.eventcounter.ExperimentResult.prototype.getTotalEvaluationUserCo
 proto.bucketeer.eventcounter.ExperimentResult.prototype.setTotalEvaluationUserCount =
   function (value) {
     return jspb.Message.setProto3IntField(this, 5, value);
-  };
-
-/**
- * optional int64 total_goal_user_count = 6;
- * @return {number}
- */
-proto.bucketeer.eventcounter.ExperimentResult.prototype.getTotalGoalUserCount =
-  function () {
-    return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 6, 0));
-  };
-
-/**
- * @param {number} value
- * @return {!proto.bucketeer.eventcounter.ExperimentResult} returns this
- */
-proto.bucketeer.eventcounter.ExperimentResult.prototype.setTotalGoalUserCount =
-  function (value) {
-    return jspb.Message.setProto3IntField(this, 6, value);
   };
 
 goog.object.extend(exports, proto.bucketeer.eventcounter);

@@ -434,7 +434,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getBestVariationsList(),
           proto.bucketeer.eventcounter.Summary.Variation.toObject,
           includeInstance
-        )
+        ),
+        goalUserCount: jspb.Message.getFieldWithDefault(msg, 2, 0)
       };
 
     if (includeInstance) {
@@ -484,6 +485,10 @@ proto.bucketeer.eventcounter.Summary.deserializeBinaryFromReader = function (
         );
         msg.addBestVariations(value);
         break;
+      case 2:
+        var value = /** @type {number} */ (reader.readInt64());
+        msg.setGoalUserCount(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -521,6 +526,10 @@ proto.bucketeer.eventcounter.Summary.serializeBinaryToWriter = function (
       f,
       proto.bucketeer.eventcounter.Summary.Variation.serializeBinaryToWriter
     );
+  }
+  f = message.getGoalUserCount();
+  if (f !== 0) {
+    writer.writeInt64(2, f);
   }
 };
 
@@ -771,5 +780,23 @@ proto.bucketeer.eventcounter.Summary.prototype.clearBestVariationsList =
   function () {
     return this.setBestVariationsList([]);
   };
+
+/**
+ * optional int64 goal_user_count = 2;
+ * @return {number}
+ */
+proto.bucketeer.eventcounter.Summary.prototype.getGoalUserCount = function () {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
+};
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.eventcounter.Summary} returns this
+ */
+proto.bucketeer.eventcounter.Summary.prototype.setGoalUserCount = function (
+  value
+) {
+  return jspb.Message.setProto3IntField(this, 2, value);
+};
 
 goog.object.extend(exports, proto.bucketeer.eventcounter);

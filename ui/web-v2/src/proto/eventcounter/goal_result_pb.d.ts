@@ -61,6 +61,9 @@ export class Summary extends jspb.Message {
     index?: number
   ): Summary.Variation;
 
+  getGoalUserCount(): number;
+  setGoalUserCount(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Summary.AsObject;
   static toObject(includeInstance: boolean, msg: Summary): Summary.AsObject;
@@ -82,6 +85,7 @@ export class Summary extends jspb.Message {
 export namespace Summary {
   export type AsObject = {
     bestVariationsList: Array<Summary.Variation.AsObject>;
+    goalUserCount: number;
   };
 
   export class Variation extends jspb.Message {
