@@ -53,8 +53,6 @@ var (
 	selectFeatureSQLQuery string
 	//go:embed sql/feature/select_feature_by_version.sql
 	selectFeatureByVersionSQLQuery string
-	//go:embed sql/feature/select_features_by_version.sql
-	selectFeaturesByVersionSQLQuery string
 )
 
 type FeatureStorage interface {
@@ -68,10 +66,6 @@ type FeatureStorage interface {
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.Feature, int, int64, error)
-	ListFeaturesByVersion(
-		ctx context.Context,
-		whereParts []mysql.WherePart,
-	) ([]*proto.Feature, error)
 	GetFeatureSummary(
 		ctx context.Context,
 		environmentID string,
@@ -318,35 +312,6 @@ func (s *featureStorage) ListFeatures(
 		return nil, 0, 0, err
 	}
 	return features, nextOffset, totalCount, nil
-}
-
-func (s *featureStorage) ListFeaturesByVersion(
-	ctx context.Context,
-	whereParts []mysql.WherePart,
-) ([]*proto.Feature, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	query := fmt.Sprintf(selectFeaturesByVersionSQLQuery, whereSQL)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	features := make([]*proto.Feature, 0)
-	for rows.Next() {
-		feature := proto.Feature{}
-		feature.AutoOpsSummary = &proto.AutoOpsSummary{}
-		err := rows.Scan(
-			&mysql.JSONObject{Val: &feature},
-		)
-		if err != nil {
-			return nil, err
-		}
-		features = append(features, &feature)
-	}
-	if rows.Err() != nil {
-		return nil, err
-	}
-	return features, nil
 }
 
 func (s *featureStorage) GetFeatureSummary(
