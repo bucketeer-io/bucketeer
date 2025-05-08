@@ -53,6 +53,7 @@ const (
 	xAckCmdName         = "XACK"
 	xPendingCmdName     = "XPENDING"
 	xClaimCmdName       = "XCLAIM"
+	xInfoGroupsCmdName  = "XINFO_GROUPS"
 )
 
 var (
@@ -118,6 +119,7 @@ type Client interface {
 		stream, group, consumer string,
 		minIdle time.Duration,
 		ids []string) ([]goredis.XMessage, error)
+	XInfoGroups(ctx context.Context, stream string) ([]goredis.XInfoGroup, error)
 }
 
 type client struct {
@@ -1054,4 +1056,38 @@ func (c *client) XClaim(ctx context.Context,
 	}
 
 	return messages, err
+}
+
+// XInfoGroups gets information about consumer groups for a stream
+func (c *client) XInfoGroups(ctx context.Context, stream string) ([]goredis.XInfoGroup, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, xInfoGroupsCmdName).Inc()
+
+	// Execute XInfoGroups command
+	cmd := c.rc.XInfoGroups(ctx, stream)
+	groups, err := cmd.Result()
+
+	code := convertErrorToMetricsCode(err)
+	redis.HandledCounter.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		xInfoGroupsCmdName,
+		code,
+	).Inc()
+	redis.HandledHistogram.WithLabelValues(
+		clientVersion,
+		c.opts.serverName,
+		xInfoGroupsCmdName,
+		code,
+	).Observe(time.Since(startTime).Seconds())
+
+	if err != nil && err != goredis.Nil {
+		c.logger.Error("Failed to get stream groups info",
+			zap.String("stream", stream),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	return groups, err
 }
