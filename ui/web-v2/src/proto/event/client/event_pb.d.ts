@@ -1044,7 +1044,7 @@ export interface SourceIdMap {
   OPEN_FEATURE_SWIFT: 101;
   OPEN_FEATURE_JAVASCRIPT: 102;
   OPEN_FEATURE_GO: 103;
-  OPEN_FEATURE_NODEJS: 104;
+  OPEN_FEATURE_NODE: 104;
 }
 
 export const SourceId: SourceIdMap;

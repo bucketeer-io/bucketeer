@@ -18659,7 +18659,7 @@
                 "integer": 103
               },
               {
-                "name": "OPEN_FEATURE_NODEJS",
+                "name": "OPEN_FEATURE_NODE",
                 "integer": 104
               }
             ],

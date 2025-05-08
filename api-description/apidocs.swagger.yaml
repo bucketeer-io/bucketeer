@@ -2183,7 +2183,7 @@ definitions:
       - OPEN_FEATURE_SWIFT
       - OPEN_FEATURE_JAVASCRIPT
       - OPEN_FEATURE_GO
-      - OPEN_FEATURE_NODEJS
+      - OPEN_FEATURE_NODE
     default: UNKNOWN
   coderefCodeReference:
     type: object
