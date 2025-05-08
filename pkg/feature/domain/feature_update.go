@@ -172,24 +172,16 @@ func (f *Feature) applyGeneralUpdates(
 	}
 	if enabled != nil {
 		if enabled.Value {
-			if err := f.Enable(); err != nil {
-				return err
-			}
+			_ = f.Enable()
 		} else {
-			if err := f.Disable(); err != nil {
-				return err
-			}
+			_ = f.Disable()
 		}
 	}
 	if archived != nil {
 		if archived.Value {
-			if err := f.Archive(); err != nil {
-				return err
-			}
+			_ = f.Archive()
 		} else {
-			if err := f.Unarchive(); err != nil {
-				return err
-			}
+			_ = f.Unarchive()
 		}
 	}
 	if defaultStrategy != nil {

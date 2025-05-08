@@ -408,7 +408,7 @@ func TestEnable(t *testing.T) {
 	}{
 		{
 			origin:      true,
-			expectedErr: ErrAlreadyEnabled,
+			expectedErr: nil,
 		},
 		{
 			origin:      false,
@@ -432,7 +432,7 @@ func TestDisable(t *testing.T) {
 	}{
 		{
 			origin:      false,
-			expectedErr: ErrAlreadyDisabled,
+			expectedErr: nil,
 		},
 		{
 			origin:      true,
@@ -1990,6 +1990,7 @@ func TestUpdate(t *testing.T) {
 			name:        wrapperspb.String("test-feature"),
 			description: wrapperspb.String("test description"),
 			tags:        &common.StringListValue{Values: []string{"tag1"}},
+			enabled:     wrapperspb.Bool(true),
 			archived:    wrapperspb.Bool(false),
 			defaultStrategy: &feature.Strategy{
 				Type: feature.Strategy_FIXED,

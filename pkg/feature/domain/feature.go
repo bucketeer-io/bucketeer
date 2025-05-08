@@ -72,8 +72,6 @@ var (
 	errUnsupportedStrategy                        = errors.New("feature: unsupported strategy")
 	errPrerequisiteAlreadyExists                  = errors.New("feature: prerequisite already exists")
 	errPrerequisiteNotFound                       = errors.New("feature: prerequisite not found")
-	ErrAlreadyEnabled                             = errors.New("feature: already enabled")
-	ErrAlreadyDisabled                            = errors.New("feature: already disabled")
 	ErrLastUsedInfoNotFound                       = errors.New("feature: last used info not found")
 	errRulesOrderSizeNotEqual                     = errors.New("feature: rules order size not equal")
 	errRulesOrderDuplicateIDs                     = errors.New("feature: rules order contains duplicate ids")
@@ -203,18 +201,12 @@ func (f *Feature) RemoveTag(tag string) error {
 }
 
 func (f *Feature) Enable() error {
-	if f.Enabled {
-		return ErrAlreadyEnabled
-	}
 	f.Enabled = true
 	f.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (f *Feature) Disable() error {
-	if !f.Enabled {
-		return ErrAlreadyDisabled
-	}
 	f.Enabled = false
 	f.UpdatedAt = time.Now().Unix()
 	return nil

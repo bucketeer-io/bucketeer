@@ -1616,24 +1616,6 @@ func (s *FeatureService) convUpdateFeatureError(err error, localizer locale.Loca
 			return statusInternal.Err()
 		}
 		return dt.Err()
-	case domain.ErrAlreadyDisabled:
-		dt, err := statusNothingChange.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.NothingToChange),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	case domain.ErrAlreadyEnabled:
-		dt, err := statusNothingChange.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.NothingToChange),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
 	default:
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
