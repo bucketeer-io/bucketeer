@@ -21,7 +21,7 @@ import {
 } from '../utils';
 import AuditLogAvatar from './audit-log-avatar';
 import AuditLogTitle from './audit-log-title';
-import ReactDiffViewer from './diff-viewer';
+import AuditLogJSONCompare from './json-compare';
 
 const AuditLogItem = memo(
   ({
@@ -279,7 +279,7 @@ const AuditLogItem = memo(
                   'z-[0] h-fit opacity-100': isExpanded
                 })}
               >
-                <ReactDiffViewer
+                <AuditLogJSONCompare
                   isSameData={isOldDataIssue || isSameData}
                   prefix={prefix}
                   lineNumber={lineNumberRef.current}

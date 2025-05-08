@@ -161,5 +161,11 @@
   "enter-to-add-multiple": "Press enter to add multiple IDs.",
   "user-attributes": "User Attributes",
   "user-attributes-desc": "The same attributes will be applied to all the users in the list when evaluating them. User attributes are environment-specific. They are not shared between environments or projects.",
-  "key": "Key"
+  "key": "Key",
+  "custom": "Custom",
+  "release": "Release",
+  "kill-switch": "Kill Switch",
+  "flag-id-tooltip": "Feature flag ID can only contain letters (a-z, A-Z), numbers (0-9), and hyphens (-). No spaces or special characters are allowed.",
+  "tags-tooltip": "Tags help optimize feature flag evaluations by limiting which flags are processed. Using specific tags improves response times and reduces network traffic. Tags are recommended for better performance as your system grows.",
+  "flag-type-tooltip": "Select the data type for your feature flag's variations. This cannot be changed after creation."
 }

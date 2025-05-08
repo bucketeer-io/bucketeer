@@ -1,0 +1,32 @@
+.editor-wrapper div:first-child,
+.editor-wrapper div .monaco-editor {
+  @apply overflow-hidden !border-none !outline-none;
+}
+
+.editor-wrapper div .monaco-editor .margin {
+  @apply !w-fit !min-w-10 bg-[#64748B1F];
+}
+
+.editor-wrapper div .monaco-editor {
+  @apply !select-auto;
+}
+
+.no-user-select {
+  @apply !select-auto;
+}
+
+.line-numbers {
+  @apply !w-full !text-center;
+}
+
+.editor-wrapper div .monaco-editor .margin-view-overlays {
+  @apply !w-fit !min-w-10;
+}
+
+.alwaysShowFoldIcons {
+  @apply !hidden;
+}
+
+.highlighted-line span {
+  @apply !bg-gray-400;
+}
