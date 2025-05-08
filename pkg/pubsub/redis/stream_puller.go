@@ -150,14 +150,28 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 	// Create consumer groups for all partitions
 	for partition := 0; partition < p.partitionCount; partition++ {
 		streamKey := p.getStreamKey(partition)
-		err := p.redisClient.XGroupCreateMkStream(streamKey, p.subscription, "0")
-		if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
-			p.logger.Error("Failed to create consumer group",
+
+		// Check if the consumer group exists before attempting to create it
+		groupExists, err := p.consumerGroupExists(ctx, streamKey, p.subscription)
+		if err != nil {
+			p.logger.Warn("Failed to check if consumer group exists",
 				zap.Error(err),
 				zap.String("subscription", p.subscription),
 				zap.String("stream", streamKey),
 			)
-			// Continue with other partitions even if this one fails
+		}
+
+		// Only create the group if it doesn't exist
+		if !groupExists {
+			err := p.redisClient.XGroupCreateMkStream(streamKey, p.subscription, "0")
+			if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
+				p.logger.Error("Failed to create consumer group",
+					zap.Error(err),
+					zap.String("subscription", p.subscription),
+					zap.String("stream", streamKey),
+				)
+				// Continue with other partitions even if this one fails
+			}
 		}
 	}
 
@@ -302,6 +316,39 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 			}
 		}
 	}
+}
+
+// consumerGroupExists checks if a consumer group exists for a stream
+func (p *StreamPuller) consumerGroupExists(ctx context.Context, streamKey, groupName string) (bool, error) {
+	// Check if the stream exists first
+	exists, err := p.redisClient.Exists(streamKey)
+	if err != nil {
+		return false, fmt.Errorf("failed to check if stream exists: %w", err)
+	}
+
+	// If stream doesn't exist, the group doesn't exist either
+	if exists == 0 {
+		return false, nil
+	}
+
+	// Stream exists, check if the group exists
+	groups, err := p.redisClient.XInfoGroups(ctx, streamKey)
+	if err != nil {
+		// If we get a "no such key" or "stream doesn't exist" error, return false
+		if err.Error() == "ERR no such key" || err.Error() == "ERR stream does not exist" {
+			return false, nil
+		}
+		return false, err
+	}
+
+	// Check if the group exists in the returned groups
+	for _, group := range groups {
+		if group.Name == groupName {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // recoveryLoop periodically checks for stale messages and reclaims them

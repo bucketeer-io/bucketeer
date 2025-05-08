@@ -414,6 +414,21 @@ func (mr *MockClientMockRecorder) XGroupCreateMkStream(stream, group, start any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "XGroupCreateMkStream", reflect.TypeOf((*MockClient)(nil).XGroupCreateMkStream), stream, group, start)
 }
 
+// XInfoGroups mocks base method.
+func (m *MockClient) XInfoGroups(ctx context.Context, stream string) ([]redis0.XInfoGroup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "XInfoGroups", ctx, stream)
+	ret0, _ := ret[0].([]redis0.XInfoGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// XInfoGroups indicates an expected call of XInfoGroups.
+func (mr *MockClientMockRecorder) XInfoGroups(ctx, stream any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "XInfoGroups", reflect.TypeOf((*MockClient)(nil).XInfoGroups), ctx, stream)
+}
+
 // XPendingExt mocks base method.
 func (m *MockClient) XPendingExt(ctx context.Context, stream, group, start, end string, count int64, idle time.Duration) ([]redis0.XPendingExt, error) {
 	m.ctrl.T.Helper()
