@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { featureUpdater } from '@api/features';
+import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures } from '@queries/features';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -79,13 +80,14 @@ const PageLoader = () => {
         message: 'Updated feature flag successfully.'
       });
       invalidateFeatures(queryClient);
+      invalidateFeature(queryClient);
       mutation.reset();
     },
     onError: error => errorToast(error)
   });
 
   const handleUpdateFeature = useCallback(
-    (params: Partial<FeatureUpdaterParams>) => {
+    async (params: Partial<FeatureUpdaterParams>) => {
       if (selectedFlag?.id) {
         mutation.mutate({
           id: selectedFlag.id,
@@ -104,6 +106,7 @@ const PageLoader = () => {
         <ArchiveModal
           isArchiving={isArchiving}
           isOpen={openConfirmModal}
+          isLoading={mutation.isPending}
           isShowWarning={
             isArchiving &&
             getFlagStatus(selectedFlag) === FeatureActivityStatus.ACTIVE
@@ -126,9 +129,10 @@ const PageLoader = () => {
               components={{ text: <span /> }}
             />
           }
-          onSubmit={() =>
+          onSubmit={({ comment }) =>
             handleUpdateFeature({
-              archived: isArchiving
+              archived: isArchiving,
+              comment
             })
           }
         />

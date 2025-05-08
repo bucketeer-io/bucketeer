@@ -3,6 +3,7 @@ import { ID_CLONE, ID_NEW } from 'constants/routing';
 import CreateFlagPage from 'pages/create-flag';
 import ExperimentDetailsPage from 'pages/experiment-details';
 import ExperimentsPage from 'pages/experiments';
+import FeatureFlagDetailsPage from 'pages/feature-flag-details';
 import FeatureFlagsPage from 'pages/feature-flags';
 import GoalDetailsPage from 'pages/goal-details';
 import GoalsPage from 'pages/goals';
@@ -56,7 +57,7 @@ export const FeatureFlagsRoot = () => {
       <Route index element={<FeatureFlagsPage />} />
       <Route path={ID_NEW} element={<CreateFlagPage />} />
       <Route path={`${ID_CLONE}/:flagId`} element={<FeatureFlagsPage />} />
-      {/* <Route path=":flagId/*" element={<FeatureFlagDetailsPage />} /> */}
+      <Route path=":flagId/*" element={<FeatureFlagDetailsPage />} />
     </Routes>
   );
 };
