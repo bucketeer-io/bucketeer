@@ -18,7 +18,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -215,13 +214,9 @@ func (s *accountStorage) GetAccountV2ByEnvironmentID(
 
 func (s *accountStorage) GetAvatarAccountsV2(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
+	options *mysql.ListOptions,
 ) ([]*proto.AccountV2, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	query := fmt.Sprintf(
-		selectAvatarAccountsV2SQL,
-		whereSQL,
-	)
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAvatarAccountsV2SQL, options)
 	rows, err := s.qe.QueryContext(
 		ctx,
 		query,
@@ -312,24 +307,19 @@ func (s *accountStorage) GetAccountsWithOrganization(
 
 func (s *accountStorage) ListAccountsV2(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.AccountV2, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(
-		selectAccountsV2SQL,
-		whereSQL,
-		orderBySQL,
-		limitOffsetSQL,
-	)
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAccountsV2SQL, options)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
+	var limit, offset int
+	if options != nil {
+		offset = options.Offset
+		limit = options.Limit
+	}
 	accounts := make([]*proto.AccountV2, 0, limit)
 	for rows.Next() {
 		account := proto.AccountV2{}
@@ -365,8 +355,8 @@ func (s *accountStorage) ListAccountsV2(
 	}
 	nextOffset := offset + len(accounts)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countAccountsV2SQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countAccountsV2SQL, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

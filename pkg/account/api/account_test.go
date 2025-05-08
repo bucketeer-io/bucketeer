@@ -1765,7 +1765,7 @@ func TestListAccountsV2MySQL(t *testing.T) {
 				}, nil)
 
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAccountsV2(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
 			input:       &accountproto.ListAccountsV2Request{OrganizationId: "org0"},
@@ -1787,7 +1787,7 @@ func TestListAccountsV2MySQL(t *testing.T) {
 				}, nil)
 
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAccountsV2(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*accountproto.AccountV2{}, 0, int64(0), nil)
 			},
 			input:       &accountproto.ListAccountsV2Request{PageSize: 2, Cursor: "", OrganizationId: "org0"},

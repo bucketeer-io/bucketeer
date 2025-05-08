@@ -29,13 +29,11 @@ type AccountStorage interface {
 	DeleteAccountV2(ctx context.Context, a *domain.AccountV2) error
 	GetAccountV2(ctx context.Context, email, organizationID string) (*domain.AccountV2, error)
 	GetAccountV2ByEnvironmentID(ctx context.Context, email, environmentID string) (*domain.AccountV2, error)
-	GetAvatarAccountsV2(ctx context.Context, whereParts []mysql.WherePart) ([]*proto.AccountV2, error)
+	GetAvatarAccountsV2(ctx context.Context, options *mysql.ListOptions) ([]*proto.AccountV2, error)
 	GetAccountsWithOrganization(ctx context.Context, email string) ([]*domain.AccountWithOrganization, error)
 	ListAccountsV2(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		options *mysql.ListOptions,
 	) ([]*proto.AccountV2, int, int64, error)
 	GetSystemAdminAccountV2(ctx context.Context, email string) (*domain.AccountV2, error)
 	CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentID string) error

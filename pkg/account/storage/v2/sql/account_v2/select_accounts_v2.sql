@@ -18,6 +18,3 @@ SELECT
     search_filters,
     JSON_LENGTH(environment_roles) as environment_count
 FROM account_v2
-%s  
-%s  
-%s  

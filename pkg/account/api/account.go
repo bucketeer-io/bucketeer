@@ -1129,40 +1129,64 @@ func (s *AccountService) ListAccountsV2(
 	if err != nil {
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("organization_id", "=", req.OrganizationId),
+	var filters = []*mysql.FilterV2{
+		{
+			Column:   "organization_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.OrganizationId,
+		},
 	}
 	if req.Disabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "disabled",
+			Operator: mysql.OperatorEqual,
+			Value:    req.Disabled.Value,
+		})
 	}
 	tagValues := make([]interface{}, 0, len(req.Tags))
 	for _, tag := range req.Tags {
 		tagValues = append(tagValues, tag)
 	}
+	var jsonFilters []*mysql.JSONFilter
 	if len(tagValues) > 0 {
-		whereParts = append(
-			whereParts,
-			mysql.NewJSONFilter("tags", mysql.JSONContainsString, tagValues),
-		)
+		jsonFilters = append(
+			jsonFilters,
+			&mysql.JSONFilter{
+				Column: "tags",
+				Func:   mysql.JSONContainsString,
+				Values: tagValues,
+			})
 	}
 	if req.OrganizationRole != nil {
-		whereParts = append(whereParts, mysql.NewFilter("organization_role", "=", req.OrganizationRole.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "organization_role",
+			Operator: mysql.OperatorEqual,
+			Value:    req.OrganizationRole.Value,
+		})
 	}
+	values := make([]interface{}, 1)
 	if req.EnvironmentId != nil && req.EnvironmentRole != nil {
-		values := make([]interface{}, 1)
 		values[0] = fmt.Sprintf("{\"environment_id\": \"%s\", \"role\": %d}", req.EnvironmentId.Value, req.EnvironmentRole.Value) // nolint:lll
-		whereParts = append(whereParts, mysql.NewJSONFilter("environment_roles", mysql.JSONContainsJSON, values))
 	} else if req.EnvironmentId != nil {
-		values := make([]interface{}, 1)
 		values[0] = fmt.Sprintf("{\"environment_id\": \"%s\"}", req.EnvironmentId.Value)
-		whereParts = append(whereParts, mysql.NewJSONFilter("environment_roles", mysql.JSONContainsJSON, values))
 	} else if req.EnvironmentRole != nil {
-		values := make([]interface{}, 1)
 		values[0] = fmt.Sprintf("{\"role\": %d}", req.EnvironmentRole.Value)
-		whereParts = append(whereParts, mysql.NewJSONFilter("environment_roles", mysql.JSONContainsJSON, values))
 	}
+	if values[0] != nil && values[0] != "" {
+		jsonFilters = append(
+			jsonFilters,
+			&mysql.JSONFilter{
+				Column: "environment_roles",
+				Func:   mysql.JSONContainsJSON,
+				Values: values,
+			})
+	}
+	var seachQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"email", "first_name", "last_name"}, req.SearchKeyword))
+		seachQuery = &mysql.SearchQuery{
+			Columns: []string{"email", "first_name", "last_name"},
+			Keyword: req.SearchKeyword,
+		}
 	}
 	orders, err := s.newAccountV2ListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -1188,13 +1212,17 @@ func (s *AccountService) ListAccountsV2(
 		}
 		return nil, dt.Err()
 	}
-	accounts, nextCursor, totalCount, err := s.accountStorage.ListAccountsV2(
-		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
-	)
+	options := &mysql.ListOptions{
+		Limit:       limit,
+		Filters:     filters,
+		Offset:      offset,
+		JSONFilters: jsonFilters,
+		SearchQuery: seachQuery,
+		Orders:      orders,
+		NullFilters: nil,
+		InFilters:   nil,
+	}
+	accounts, nextCursor, totalCount, err := s.accountStorage.ListAccountsV2(ctx, options)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list accounts",
