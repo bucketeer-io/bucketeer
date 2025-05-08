@@ -4,7 +4,7 @@ SELECT
     feature_version as featureVersion,
     variation_id as variationID,
     reason,
-    UNIX_TIMESTAMP(timestamp) as timestamp
+    CAST(UNIX_TIMESTAMP(timestamp) AS SIGNED) as timestamp
 FROM
     evaluation_event
 WHERE
