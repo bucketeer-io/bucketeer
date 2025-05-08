@@ -17,6 +17,7 @@ import NotFoundPage from 'pages/not-found';
 import { Tabs, TabsList, TabsContent, TabsLink } from 'components/tabs-link';
 import PageLayout from 'elements/page-layout';
 import HistoryPage from './history';
+import SettingsPage from './settings';
 import { TabItem } from './types';
 
 const PageContent = ({ feature }: { feature: Feature }) => {
@@ -86,6 +87,12 @@ const PageContent = ({ feature }: { feature: Feature }) => {
               path={`${PAGE_PATH_FEATURE_HISTORY}/*`}
               element={<HistoryPage feature={feature} />}
             />
+
+            <Route
+              path={PAGE_PATH_FEATURE_SETTING}
+              element={<SettingsPage feature={feature} />}
+            />
+
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </TabsContent>
