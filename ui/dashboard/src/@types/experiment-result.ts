@@ -7,6 +7,7 @@ export interface ExperimentResult {
   experimentId: string;
   updatedAt: string;
   goalResults: GoalResult[];
+  totalEvaluationUserCount: string;
 }
 
 export interface GoalResult {
@@ -17,7 +18,6 @@ export interface GoalResult {
 
 export interface GoalResultSummary {
   bestVariations: BestVariation[];
-  totalEvaluationUserCount: string;
   totalGoalUserCount: string;
 }
 
