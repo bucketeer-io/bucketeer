@@ -63,12 +63,13 @@ var (
 	// Test parameters
 	numEvalEvents     = flags.Int("num-eval-events", defaultNumEvaluationEvents, "Number of evaluation events to generate")
 	numGoalEvents     = flags.Int("num-goal-events", defaultNumGoalEvents, "Number of goal events to generate")
-	concurrentWorkers = flags.Int("concurrent-workers", defaultConcurrentWorkers, "Number of concurrent workers for sending events")
-	environmentID     = flags.String("environment-id", "", "Environment ID to use for events")
-	featureCount      = flags.Int("feature-count", 10, "Number of unique features to use")
-	userCount         = flags.Int("user-count", 100, "Number of unique users to use")
-	tagCount          = flags.Int("tag-count", 5, "Number of unique tags to use")
-	goalCount         = flags.Int("goal-count", 5, "Number of unique goals to use")
+	concurrentWorkers = flags.Int("concurrent-workers", defaultConcurrentWorkers,
+		"Number of concurrent workers for sending events")
+	environmentID = flags.String("environment-id", "", "Environment ID to use for events")
+	featureCount  = flags.Int("feature-count", 10, "Number of unique features to use")
+	userCount     = flags.Int("user-count", 100, "Number of unique users to use")
+	tagCount      = flags.Int("tag-count", 5, "Number of unique tags to use")
+	goalCount     = flags.Int("goal-count", 5, "Number of unique goals to use")
 
 	// Random data generation
 	userDataSize  = flags.Int("user-data-size", defaultUserDataSize, "Size of user data map")
@@ -119,7 +120,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create logger: %v", err)
 	}
-	defer logger.Sync()
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			// We can't use the logger itself here as we're syncing it
+			fmt.Fprintf(os.Stderr, "failed to sync logger: %v\n", err)
+		}
+	}()
 
 	// Generate test data
 	logger.Info("Generating random test data...")
