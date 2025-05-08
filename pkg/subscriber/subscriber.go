@@ -187,7 +187,7 @@ func (s pubSubSubscriber) createPuller(
 		factoryOpts = append(factoryOpts, factory.WithProjectID(s.configuration.Project))
 	} else if pubSubType == factory.RedisStream {
 		// Create Redis client
-		redisClient, redisErr := createRedisClient(ctx, s.configuration, s.logger)
+		redisClient, redisErr := createRedisClient(ctx, s.configuration, s.logger, s.opts.metrics)
 		if redisErr != nil {
 			s.logger.Error("Failed to create Redis client", zap.Error(redisErr))
 			return nil
@@ -230,7 +230,10 @@ func (s pubSubSubscriber) createPuller(
 }
 
 // createRedisClient creates a Redis client from the configuration
-func createRedisClient(ctx context.Context, conf Configuration, logger *zap.Logger) (redisv3.Client, error) {
+func createRedisClient(ctx context.Context,
+	conf Configuration,
+	logger *zap.Logger,
+	metrics metrics.Registerer) (redisv3.Client, error) {
 	redisAddr := conf.RedisAddr
 	if redisAddr == "" {
 		return nil, fmt.Errorf("redis address is required for Redis PubSub")
@@ -265,6 +268,7 @@ func createRedisClient(ctx context.Context, conf Configuration, logger *zap.Logg
 		redisv3.WithPoolSize(redisPoolSize),
 		redisv3.WithMinIdleConns(redisMinIdle),
 		redisv3.WithServerName(conf.RedisServerName),
+		redisv3.WithMetrics(metrics),
 		redisv3.WithLogger(logger),
 	)
 }

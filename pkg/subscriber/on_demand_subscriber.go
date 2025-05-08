@@ -219,7 +219,7 @@ func (s *onDemandSubscriber) createPubSubClient(ctx context.Context) error {
 		factoryOpts = append(factoryOpts, factory.WithProjectID(s.configuration.Project))
 	} else if pubSubType == factory.RedisStream {
 		// Create Redis client
-		redisClient, redisErr := createRedisClient(ctx, s.configuration.Configuration, s.logger)
+		redisClient, redisErr := createRedisClient(ctx, s.configuration.Configuration, s.logger, s.opts.metrics)
 		if redisErr != nil {
 			s.logger.Error("Failed to create Redis client", zap.Error(redisErr))
 			return redisErr

@@ -828,6 +828,7 @@ func (s *server) createPublisher(
 			redisv3.WithPoolSize(*s.pubSubRedisPoolSize),
 			redisv3.WithMinIdleConns(*s.pubSubRedisMinIdle),
 			redisv3.WithServerName(*s.pubSubRedisServerName),
+			redisv3.WithMetrics(registerer),
 			redisv3.WithLogger(logger),
 		)
 		if err != nil {
