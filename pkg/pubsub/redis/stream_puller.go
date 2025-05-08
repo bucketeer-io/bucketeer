@@ -18,6 +18,7 @@ package redis
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -154,7 +155,7 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 		// Check if the consumer group exists before attempting to create it
 		groupExists, err := p.consumerGroupExists(ctx, streamKey, p.subscription)
 		if err != nil {
-			p.logger.Warn("Failed to check if consumer group exists",
+			p.logger.Debug("Failed to check if consumer group exists",
 				zap.Error(err),
 				zap.String("subscription", p.subscription),
 				zap.String("stream", streamKey),
@@ -164,7 +165,7 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 		// Only create the group if it doesn't exist
 		if !groupExists {
 			err := p.redisClient.XGroupCreateMkStream(streamKey, p.subscription, "0")
-			if err != nil && err.Error() != "BUSYGROUP Consumer Group name already exists" {
+			if err != nil && !strings.Contains(strings.ToLower(err.Error()), "busygroup") {
 				p.logger.Error("Failed to create consumer group",
 					zap.Error(err),
 					zap.String("subscription", p.subscription),
