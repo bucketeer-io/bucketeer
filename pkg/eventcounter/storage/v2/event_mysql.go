@@ -37,6 +37,9 @@ var (
 
 	//go:embed sql/goal_event_mysql.sql
 	goalEventMySQLQuery string
+
+	//go:embed sql/user_evaluation_mysql.sql
+	userEvaluationMySQLQuery string
 )
 
 type mysqlEventStorage struct {
@@ -178,4 +181,76 @@ func (es *mysqlEventStorage) QueryGoalCount(
 	}
 
 	return results, nil
+}
+
+func (es *mysqlEventStorage) QueryUserEvaluation(
+	ctx context.Context,
+	environmentID, userID, featureID string,
+	featureVersion int32,
+	experimentStartAt, experimentEndAt time.Time,
+) (*UserEvaluation, error) {
+	rows, err := es.qe.QueryContext(
+		ctx,
+		userEvaluationMySQLQuery,
+		environmentID,
+		featureID,
+		featureVersion,
+		userID,
+		experimentStartAt,
+		experimentEndAt,
+	)
+	if err != nil {
+		es.logger.Error(
+			"Failed to query user evaluation",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", environmentID),
+				zap.String("userId", userID),
+				zap.String("featureId", featureID),
+				zap.Int32("featureVersion", featureVersion),
+				zap.Time("experimentStartAt", experimentStartAt),
+				zap.Time("experimentEndAt", experimentEndAt),
+			)...,
+		)
+		return nil, err
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return nil, ErrNoResultsFound
+	}
+
+	var ue UserEvaluation
+	if err := rows.Scan(
+		&ue.UserID,
+		&ue.FeatureID,
+		&ue.FeatureVersion,
+		&ue.VariationID,
+		&ue.Reason,
+		&ue.Timestamp,
+	); err != nil {
+		es.logger.Error(
+			"Failed to scan user evaluation",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
+
+	if rows.Next() {
+		return nil, ErrUnexpectedMultipleResults
+	}
+
+	if err := rows.Err(); err != nil {
+		es.logger.Error(
+			"Error after scanning user evaluation",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
+
+	return &ue, nil
 }
