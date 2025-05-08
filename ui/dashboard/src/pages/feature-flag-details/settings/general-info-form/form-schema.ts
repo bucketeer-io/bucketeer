@@ -1,6 +1,7 @@
+import { i18n } from 'i18n';
 import * as yup from 'yup';
 
-const requiredMessage = 'This field is required.';
+const requiredMessage = i18n.t('message:required-field');
 
 export const generalInfoFormSchema = yup.object().shape({
   maintainer: yup.string().required(requiredMessage),

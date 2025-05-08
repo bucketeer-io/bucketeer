@@ -21,7 +21,7 @@ import { generalInfoFormSchema, GeneralInfoFormType } from './form-schema';
 import SaveWithCommentModal from './modals/save-with-comment';
 
 const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
-  const { t } = useTranslation(['form', 'common', 'table']);
+  const { t } = useTranslation(['form', 'common', 'table', 'message']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { notify, errorNotify } = useToast();
@@ -97,7 +97,7 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
       const { flagId, comment, tags, ...rest } = values;
       if (currentEnvironment.requireComment && !comment)
         return setError('comment', {
-          message: 'This field is required.'
+          message: t('message:required-field')
         });
 
       const resp = await featureUpdater({
@@ -112,7 +112,7 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
 
       if (resp) {
         notify({
-          message: 'Feature flag updated successfully.'
+          message: t('message:flag-updated')
         });
         form.reset({
           ...values,
