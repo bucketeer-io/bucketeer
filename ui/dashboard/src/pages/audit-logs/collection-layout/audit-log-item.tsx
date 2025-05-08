@@ -1,6 +1,11 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { urls } from 'configs';
+import {
+  PAGE_PATH_FEATURE_HISTORY,
+  PAGE_PATH_FEATURES
+} from 'constants/routing';
 import { useToast } from 'hooks';
 import { useTranslation, getLanguage } from 'i18n';
 import { AuditLog } from '@types';
@@ -50,6 +55,7 @@ const AuditLogItem = memo(
 
     const { consoleAccount } = useAuth();
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+    const params = useParams();
 
     const [currentTab, setCurrentTab] = useState<AuditLogTab>(
       AuditLogTab.CHANGES
@@ -118,8 +124,10 @@ const AuditLogItem = memo(
 
     const handleCopyId = useCallback(
       (id: string) => {
+        const flagId = params?.flagId;
+
         copyToClipBoard(
-          `${urls.ORIGIN_URL}${currentEnvironment.urlCode}/audit-logs/${id}`
+          `${urls.ORIGIN_URL}${currentEnvironment.urlCode}${flagId ? `${PAGE_PATH_FEATURES}/${flagId}${PAGE_PATH_FEATURE_HISTORY}` : '/audit-logs'}/${id}`
         );
 
         notify({
@@ -128,7 +136,7 @@ const AuditLogItem = memo(
           message: <span>{`Copied!`}</span>
         });
       },
-      [currentEnvironment]
+      [currentEnvironment, params]
     );
 
     useEffect(() => {

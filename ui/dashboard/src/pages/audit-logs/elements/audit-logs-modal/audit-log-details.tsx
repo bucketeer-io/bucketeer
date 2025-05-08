@@ -25,10 +25,12 @@ import FormLoading from 'elements/form-loading';
 const AuditLogDetailsModal = ({
   auditLogId,
   isOpen,
+  title,
   onClose
 }: {
   auditLogId: string;
   isOpen: boolean;
+  title?: string;
   onClose: () => void;
 }) => {
   const { t } = useTranslation(['common', 'table']);
@@ -130,7 +132,7 @@ const AuditLogDetailsModal = ({
 
   return (
     <SlideModal
-      title={t('audit-log-details')}
+      title={title || t('audit-log-details')}
       isOpen={isOpen}
       onClose={onClose}
     >

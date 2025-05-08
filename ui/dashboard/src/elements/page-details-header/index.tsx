@@ -10,6 +10,7 @@ export type PageDetailsHeaderProps = {
   title?: string;
   description?: string;
   children?: ReactNode;
+  additionElement?: ReactNode;
   onBack: () => void;
 };
 
@@ -17,6 +18,7 @@ const PageDetailsHeader = ({
   title,
   description,
   children,
+  additionElement,
   onBack
 }: PageDetailsHeaderProps) => {
   return (
@@ -31,9 +33,14 @@ const PageDetailsHeader = ({
         >
           <Icon icon={IconArrowBackFilled} size="xxs" />
         </button>
-        {title && (
-          <h1 className="text-gray-900 flex-1 typo-head-bold-huge">{title}</h1>
-        )}
+        <div className="flex items-center gap-x-2">
+          {title && (
+            <h1 className="text-gray-900 flex-1 typo-head-bold-huge -mt-1">
+              {title}
+            </h1>
+          )}
+          {additionElement}
+        </div>
       </div>
 
       {description && (
