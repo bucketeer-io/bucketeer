@@ -90,9 +90,11 @@ func NewGoalEventWriter(
 		}
 
 		goalStorage := storagev2.NewMysqlGoalEventStorage(option.MySQLClient)
+		mysqlEventStorage := ecstorage.NewMySQLEventStorage(option.MySQLClient, logger)
 
 		return &goalEvtWriter{
 			writer:           storage.NewMysqlGoalEventWriter(goalStorage),
+			eventStorage:     mysqlEventStorage,
 			experimentClient: exClient,
 			featureClient:    ftClient,
 			cache:            cache,
