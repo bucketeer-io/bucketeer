@@ -19,7 +19,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -60,22 +59,12 @@ type FeatureStorage interface {
 	UpdateFeature(ctx context.Context, feature *domain.Feature, environmentID string) error
 	GetFeature(ctx context.Context, id, environmentID string) (*domain.Feature, error)
 	GetFeatureByVersion(ctx context.Context, id string, version int32, environmentID string) (*domain.Feature, error)
-	ListFeatures(
-		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
-	) ([]*proto.Feature, int, int64, error)
+	ListFeatures(ctx context.Context, options *mysql.ListOptions) ([]*proto.Feature, int, int64, error)
 	GetFeatureSummary(
 		ctx context.Context,
 		environmentID string,
 	) (*proto.FeatureSummary, error)
-	ListFeaturesFilteredByExperiment(
-		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
-	) ([]*proto.Feature, int, int64, error)
+	ListFeaturesFilteredByExperiment(ctx context.Context, options *mysql.ListOptions) ([]*proto.Feature, int, int64, error)
 	ListAllEnvironmentFeatures(
 		ctx context.Context,
 	) ([]*proto.EnvironmentFeature, error)
@@ -242,19 +231,19 @@ func (s *featureStorage) GetFeatureByVersion(
 
 func (s *featureStorage) ListFeatures(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.Feature, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(selectFeaturesSQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectFeaturesSQLQuery, options)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
+	var limit, offset int
+	if options != nil {
+		limit = options.Limit
+		offset = options.Offset
+	}
 	features := make([]*proto.Feature, 0, limit)
 	for rows.Next() {
 		feature := proto.Feature{}
@@ -306,8 +295,8 @@ func (s *featureStorage) ListFeatures(
 	}
 	nextOffset := offset + len(features)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countFeatureSQLQuery, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countFeatureSQLQuery, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -332,19 +321,19 @@ func (s *featureStorage) GetFeatureSummary(
 
 func (s *featureStorage) ListFeaturesFilteredByExperiment(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.Feature, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(selectFeaturesByExperimentSQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectFeaturesByExperimentSQLQuery, options)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
+	var limit, offset int
+	if options != nil {
+		limit = options.Limit
+		offset = options.Offset
+	}
 	features := make([]*proto.Feature, 0, limit)
 	for rows.Next() {
 		feature := proto.Feature{}
@@ -396,8 +385,8 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 	}
 	nextOffset := offset + len(features)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countFeaturesByExperimentSQLQuery, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countFeaturesByExperimentSQLQuery, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
