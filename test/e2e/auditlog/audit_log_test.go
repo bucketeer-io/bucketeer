@@ -22,6 +22,7 @@ import (
 )
 
 const (
+	timeout    = 60 * time.Second
 	maxRetries = 15
 )
 
