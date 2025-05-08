@@ -187,7 +187,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			*s.pubSubRedisAddr,
 			redisv3.WithPoolSize(*s.pubSubRedisPoolSize),
 			redisv3.WithMinIdleConns(*s.pubSubRedisMinIdle),
-			redisv3.WithServerName("api-pubsub-redis"),
+			redisv3.WithServerName(*s.pubSubRedisServerName),
 			redisv3.WithLogger(logger),
 		)
 		if err != nil {
