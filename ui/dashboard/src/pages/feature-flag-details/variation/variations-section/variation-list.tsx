@@ -12,12 +12,13 @@ import {
 } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
+import { Tooltip } from 'components/tooltip';
 import { VariationProps } from '..';
 import { VariationForm } from '../form-schema';
 import Variations from './variations';
 
 const VariationList = ({ feature }: VariationProps) => {
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'table']);
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -38,9 +39,9 @@ const VariationList = ({ feature }: VariationProps) => {
   const offVariation = watch('offVariation');
   const variations = watch('variations');
 
-  const offVariationValue = useMemo(() => {
+  const offVariationId = useMemo(() => {
     const variation = variations.find(item => item.id === offVariation);
-    return variation?.value || variation?.name || '';
+    return variation?.id || '';
   }, [offVariation, [...variations]]);
 
   return (
@@ -64,22 +65,22 @@ const VariationList = ({ feature }: VariationProps) => {
           <Form.Item className="pt-6 pb-0">
             <Form.Label required className="relative w-fit mb-6">
               {t('form:off-variation')}
-              <Icon
-                icon={IconInfo}
-                size="xs"
-                color="gray-500"
-                className="absolute -right-6"
+              <Tooltip
+                content={t('table:feature-flags.off-variation-tooltip')}
+                trigger={
+                  <div className="flex-center size-fit absolute top-0 -right-6">
+                    <Icon icon={IconInfo} size="xs" color="gray-500" />
+                  </div>
+                }
+                className="max-w-[310px]"
               />
             </Form.Label>
             <Form.Control>
               <DropdownMenu>
                 <DropdownMenuTrigger
                   label={
-                    variations.find(
-                      item =>
-                        item.value === offVariationValue ||
-                        item.name === offVariationValue
-                    )?.name || ''
+                    variations.find(item => item.id === offVariationId)?.name ||
+                    ''
                   }
                   isExpand
                 />

@@ -6,6 +6,7 @@ import { invalidateFeature } from '@queries/feature-details';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
+import { useTranslation } from 'i18n';
 import { Feature, FeatureVariation, VariationChange } from '@types';
 import Form from 'components/form';
 import ConfirmationRequiredModal from '../elements/confirm-required-modal';
@@ -18,6 +19,7 @@ export interface VariationProps {
 }
 
 const Variation = ({ feature }: VariationProps) => {
+  const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
@@ -89,11 +91,7 @@ const Variation = ({ feature }: VariationProps) => {
       });
       if (resp) {
         notify({
-          message: (
-            <span>
-              <b>{feature.name}</b> {` has been successfully updated!`}
-            </span>
-          )
+          message: t('flag-updated')
         });
 
         invalidateFeature(queryClient);

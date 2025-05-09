@@ -206,6 +206,7 @@
   "unarchive-flag": "Unarchive Flag",
   "update-now": "Update now",
   "time-updated": "Updated {{time}}",
+  "time-created": "Created {{time}}",
   "true": "True",
   "false": "False",
   "and": "And",

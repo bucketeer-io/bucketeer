@@ -13,6 +13,7 @@ import ReactCodeEditor from 'components/code-editor';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
+import { Tooltip } from 'components/tooltip';
 import { VariationForm } from '../form-schema';
 
 const VariationLabel = ({
@@ -40,7 +41,7 @@ const Variations = ({
   feature: Feature;
   rollouts: Rollout[];
 }) => {
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'table']);
 
   const { control, watch } = useFormContext<VariationForm>();
 
@@ -119,11 +120,22 @@ const Variations = ({
   const onAddVariation = () => {
     append({
       id: uuid(),
-      value: '',
+      value: isJSON ? '{}' : '',
       name: '',
       description: ''
     });
   };
+
+  const getTooltipContent = useCallback(
+    (variationId: string) => {
+      if (onVariationIds.includes(variationId))
+        return t('table:feature-flags.default-variation-disabled-delete');
+      if (offVariation === variationId)
+        return t('table:feature-flags.off-variation-disabled-delete');
+      return '';
+    },
+    [offVariation, onVariationIds]
+  );
 
   return (
     <div className="flex flex-col w-full gap-y-6">
@@ -133,6 +145,31 @@ const Variations = ({
             <VariationLabel index={variationIndex} />
             <div className="flex flex-col w-full gap-y-5">
               <div className="flex items-end w-full gap-x-2">
+                {!isJSON && (
+                  <Form.Field
+                    control={control}
+                    name={`variations.${variationIndex}.value`}
+                    render={({ field }) => {
+                      return (
+                        <Form.Item className={cn(formItemClassName)}>
+                          <Form.Label required>
+                            {t('form:feature-flags.value')}
+                          </Form.Label>
+                          <Form.Control>
+                            <Input
+                              {...field}
+                              disabled={isBoolean}
+                              placeholder={t('form:feature-flags.value')}
+                              className="px-3"
+                            />
+                          </Form.Control>
+                          <Form.Message />
+                        </Form.Item>
+                      );
+                    }}
+                  />
+                )}
+
                 <Form.Field
                   control={control}
                   name={`variations.${variationIndex}.name`}
@@ -160,47 +197,48 @@ const Variations = ({
                   )}
                 />
               </div>
-              <Form.Field
-                control={control}
-                name={`variations.${variationIndex}.value`}
-                render={({ field }) => {
-                  return (
-                    <Form.Item className={cn(formItemClassName)}>
-                      <Form.Label required>
-                        {t('form:feature-flags.value')}
-                      </Form.Label>
-                      <Form.Control>
-                        {isJSON ? (
+              {isJSON && (
+                <Form.Field
+                  control={control}
+                  name={`variations.${variationIndex}.value`}
+                  render={({ field }) => {
+                    return (
+                      <Form.Item className={cn(formItemClassName)}>
+                        <Form.Label required>
+                          {t('form:feature-flags.value')}
+                        </Form.Label>
+                        <Form.Control>
                           <ReactCodeEditor
                             value={field.value}
                             onChange={field.onChange}
                           />
-                        ) : (
-                          <Input
-                            {...field}
-                            disabled={isBoolean}
-                            placeholder={t('form:feature-flags.value')}
-                            className="px-3"
-                          />
-                        )}
-                      </Form.Control>
-                      <Form.Message />
-                    </Form.Item>
-                  );
-                }}
-              />
+                        </Form.Control>
+                        <Form.Message />
+                      </Form.Item>
+                    );
+                  }}
+                />
+              )}
             </div>
           </div>
-          <Button
-            variant="grey"
-            size="icon"
-            type="button"
-            className="p-0 size-5 self-end mb-4"
-            disabled={isDisableRemoveBtn(variation.id)}
-            onClick={() => remove(variationIndex)}
-          >
-            <Icon icon={IconTrash} size="sm" />
-          </Button>
+          <Tooltip
+            align="end"
+            alignOffset={-20}
+            content={getTooltipContent(variation.id)}
+            trigger={
+              <Button
+                variant="grey"
+                size="icon"
+                type="button"
+                className="p-0 size-5 self-end mb-4"
+                disabled={isDisableRemoveBtn(variation.id)}
+                onClick={() => remove(variationIndex)}
+              >
+                <Icon icon={IconTrash} size="sm" />
+              </Button>
+            }
+            className="max-w-[350px]"
+          />
         </div>
       ))}
       <Button

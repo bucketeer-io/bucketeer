@@ -10,9 +10,9 @@ import {
   IconFlagSwitch,
   IconInfo
 } from '@icons';
-import { VariationTypeTooltip } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
 import Icon from 'components/icon';
+import { Tooltip } from 'components/tooltip';
 
 const SubmitBar = ({
   feature,
@@ -41,8 +41,10 @@ const SubmitBar = ({
         <h3 className="typo-head-bold-small text-gray-800">
           {t('table:feature-flags.variation')}
         </h3>
-        <VariationTypeTooltip
-          align="center"
+        <Tooltip
+          align="start"
+          alignOffset={-50}
+          content={t('table:feature-flags.variation-type-tooltip')}
           trigger={
             <div className="flex-center h-full">
               <Icon
@@ -53,7 +55,7 @@ const SubmitBar = ({
               />
             </div>
           }
-          variationType={feature.variationType}
+          className="max-w-[300px]"
         />
         <Icon icon={flagTypeIcon} size="sm" />
         <p

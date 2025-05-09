@@ -1,6 +1,6 @@
 import * as yup from 'yup';
 import { FeatureVariationType } from '@types';
-import { variationsSchema } from 'pages/feature-flags/flags-modal/add-flag-modal/formSchema';
+import { variationsSchema } from 'pages/create-flag/form-schema';
 
 export const variationsFormSchema = yup.object().shape({
   variationType: yup.mixed<FeatureVariationType>().required(),
