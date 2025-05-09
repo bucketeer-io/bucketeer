@@ -44,6 +44,7 @@ var (
 
 func TestListAndGetAuditLog(t *testing.T) {
 	t.Parallel()
+	startTime := time.Now()
 	featureClient := newFeatureClient(t)
 	req := newCreateFeatureReq(newFeatureID(t))
 	createFeatureNoCmd(t, featureClient, req)
@@ -54,16 +55,18 @@ func TestListAndGetAuditLog(t *testing.T) {
 
 	var auditLogID string
 	cursor := "0"
-	maxLogs := 1000 // Maximum number of logs to fetch
+	maxLogs := 500 // Maximum number of logs to fetch
 	totalLogs := 0
 	for {
 		listResp, err := listAuditLogsWithRetry(t, auditlogClient, &auditlog.ListAuditLogsRequest{
 			EnvironmentId:  *environmentID,
 			EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
-			PageSize:       100,
+			PageSize:       50,
 			Cursor:         cursor,
 			OrderBy:        auditlog.ListAuditLogsRequest_TIMESTAMP,
 			OrderDirection: auditlog.ListAuditLogsRequest_DESC,
+			From:           startTime.Add(-10 * time.Second).Unix(), // Add a difference of 10 seconds to avoid no rows error
+			To:             time.Now().Unix(),
 		})
 		if err != nil {
 			t.Fatal("Failed to list audit logs:", err)
@@ -239,7 +242,7 @@ func listAuditLogsWithRetry(
 		}
 		st, _ := status.FromError(err)
 		if st.Code() == codes.Unavailable || st.Code() == codes.Internal || st.Code() == codes.DeadlineExceeded {
-			fmt.Printf("Failed to list audit logs. Error code: %d. Retrying in %d seconds.\n", st.Code(), sleepTimeBetweenRequests)
+			fmt.Printf("Failed to list audit logs. Error code: %d. Retrying in %d seconds.\n", st.Code(), sleepTimeBetweenRequests/time.Second)
 			time.Sleep(sleepTimeBetweenRequests)
 			continue
 		}
@@ -266,7 +269,7 @@ func getAuditLogWithRetry(
 		}
 		st, _ := status.FromError(err)
 		if st.Code() == codes.Unavailable || st.Code() == codes.Internal || st.Code() == codes.DeadlineExceeded {
-			fmt.Printf("Failed to get audit log. Error code: %d. Retrying in %d seconds.\n", st.Code(), sleepTimeBetweenRequests)
+			fmt.Printf("Failed to get audit log. Error code: %d. Retrying in %d seconds.\n", st.Code(), sleepTimeBetweenRequests/time.Second)
 			time.Sleep(sleepTimeBetweenRequests)
 			continue
 		}
@@ -293,7 +296,7 @@ func listAdminAuditLogsWithRetry(
 		}
 		st, _ := status.FromError(err)
 		if st.Code() == codes.Unavailable || st.Code() == codes.Internal || st.Code() == codes.DeadlineExceeded {
-			fmt.Printf("Failed to list admin audit logs. Error code: %d. Retrying in %d seconds.\n", st.Code(), sleepTimeBetweenRequests)
+			fmt.Printf("Failed to list admin audit logs. Error code: %d. Retrying in %d seconds.\n", st.Code(), sleepTimeBetweenRequests/time.Second)
 			time.Sleep(sleepTimeBetweenRequests)
 			continue
 		}
