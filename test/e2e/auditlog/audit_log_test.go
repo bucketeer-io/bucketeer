@@ -22,8 +22,9 @@ import (
 )
 
 const (
-	timeout    = 60 * time.Second
-	maxRetries = 15
+	timeout                  = 60 * time.Second
+	sleepTimeBetweenRequests = 10 * time.Second
+	maxRetries               = 15
 )
 
 var (
@@ -46,28 +47,46 @@ func TestListAndGetAuditLog(t *testing.T) {
 	featureClient := newFeatureClient(t)
 	req := newCreateFeatureReq(newFeatureID(t))
 	createFeatureNoCmd(t, featureClient, req)
-	// wait for the audit log to save
-	time.Sleep(10 * time.Second)
+	// wait for the audit log to be saved
+	time.Sleep(20 * time.Second)
 
 	auditlogClient := newAuditLogClient(t)
 
-	listResp, err := listAuditLogsWithRetry(t, auditlogClient, &auditlog.ListAuditLogsRequest{
-		EnvironmentId:  *environmentID,
-		EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
-		PageSize:       100,
-		Cursor:         "0",
-		OrderBy:        auditlog.ListAuditLogsRequest_TIMESTAMP,
-		OrderDirection: auditlog.ListAuditLogsRequest_DESC,
-	})
-	if err != nil {
-		t.Fatal("Failed to list audit logs:", err)
+	var auditLogID string
+	cursor := "0"
+	maxLogs := 1000 // Maximum number of logs to fetch
+	totalLogs := 0
+	for {
+		listResp, err := listAuditLogsWithRetry(t, auditlogClient, &auditlog.ListAuditLogsRequest{
+			EnvironmentId:  *environmentID,
+			EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
+			PageSize:       100,
+			Cursor:         cursor,
+			OrderBy:        auditlog.ListAuditLogsRequest_TIMESTAMP,
+			OrderDirection: auditlog.ListAuditLogsRequest_DESC,
+		})
+		if err != nil {
+			t.Fatal("Failed to list audit logs:", err)
+		}
+
+		totalLogs += len(listResp.AuditLogs)
+		// Search for the target audit log in the current batch
+		for _, log := range listResp.AuditLogs {
+			if log.EntityId == req.Id {
+				auditLogID = log.Id
+				break
+			}
+		}
+
+		// Break if we found the target log, reached max logs, or reached the end
+		if auditLogID != "" || listResp.Cursor == "" || len(listResp.AuditLogs) == 0 || totalLogs >= maxLogs {
+			break
+		}
+		cursor = listResp.Cursor
 	}
 
-	var auditLogID string
-	for i := 0; i < len(listResp.AuditLogs); i++ {
-		if listResp.AuditLogs[i].EntityId == req.Id {
-			auditLogID = listResp.AuditLogs[i].Id
-		}
+	if auditLogID == "" {
+		t.Fatal("Failed to find audit log for the created feature")
 	}
 
 	getResp, err := getAuditLogWithRetry(t, auditlogClient, &auditlog.GetAuditLogRequest{
@@ -89,7 +108,7 @@ func TestListAndGetAuditLog(t *testing.T) {
 		OrderDirection: auditlog.ListAdminAuditLogsRequest_DESC,
 	})
 	if err != nil {
-		t.Fatal("Failed to list audit logs:", err)
+		t.Fatal("Failed to list admin audit logs", err)
 	}
 	if len(listAdminResp.AuditLogs) > 10 {
 		t.Fatal("ListAdminAuditLogs page size error")
@@ -220,8 +239,8 @@ func listAuditLogsWithRetry(
 		}
 		st, _ := status.FromError(err)
 		if st.Code() == codes.Unavailable || st.Code() == codes.Internal || st.Code() == codes.DeadlineExceeded {
-			fmt.Printf("Failed to list audit logs. Error code: %d. Retrying in 5 seconds.\n", st.Code())
-			time.Sleep(10 * time.Second)
+			fmt.Printf("Failed to list audit logs. Error code: %d. Retrying in %d seconds.\n", st.Code(), sleepTimeBetweenRequests)
+			time.Sleep(sleepTimeBetweenRequests)
 			continue
 		}
 		return nil, err
@@ -247,8 +266,8 @@ func getAuditLogWithRetry(
 		}
 		st, _ := status.FromError(err)
 		if st.Code() == codes.Unavailable || st.Code() == codes.Internal || st.Code() == codes.DeadlineExceeded {
-			fmt.Printf("Failed to get audit log. Error code: %d. Retrying in 5 seconds.\n", st.Code())
-			time.Sleep(10 * time.Second)
+			fmt.Printf("Failed to get audit log. Error code: %d. Retrying in %d seconds.\n", st.Code(), sleepTimeBetweenRequests)
+			time.Sleep(sleepTimeBetweenRequests)
 			continue
 		}
 		return nil, err
@@ -274,8 +293,8 @@ func listAdminAuditLogsWithRetry(
 		}
 		st, _ := status.FromError(err)
 		if st.Code() == codes.Unavailable || st.Code() == codes.Internal || st.Code() == codes.DeadlineExceeded {
-			fmt.Printf("Failed to list admin audit logs. Error code: %d. Retrying in 5 seconds.\n", st.Code())
-			time.Sleep(10 * time.Second)
+			fmt.Printf("Failed to list admin audit logs. Error code: %d. Retrying in %d seconds.\n", st.Code(), sleepTimeBetweenRequests)
+			time.Sleep(sleepTimeBetweenRequests)
 			continue
 		}
 		return nil, err
