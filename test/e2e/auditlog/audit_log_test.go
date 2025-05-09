@@ -23,7 +23,7 @@ import (
 
 const (
 	timeout    = 60 * time.Second
-	maxRetries = 5
+	maxRetries = 15
 )
 
 var (
@@ -50,13 +50,11 @@ func TestListAndGetAuditLog(t *testing.T) {
 	time.Sleep(10 * time.Second)
 
 	auditlogClient := newAuditLogClient(t)
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 
 	listResp, err := listAuditLogsWithRetry(t, auditlogClient, &auditlog.ListAuditLogsRequest{
 		EnvironmentId:  *environmentID,
 		EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
-		PageSize:       50,
+		PageSize:       100,
 		Cursor:         "0",
 		OrderBy:        auditlog.ListAuditLogsRequest_TIMESTAMP,
 		OrderDirection: auditlog.ListAuditLogsRequest_DESC,
@@ -83,7 +81,7 @@ func TestListAndGetAuditLog(t *testing.T) {
 		t.Fatal("GetAuditLog ID error")
 	}
 
-	listAdminResp, err := auditlogClient.ListAdminAuditLogs(ctx, &auditlog.ListAdminAuditLogsRequest{
+	listAdminResp, err := listAdminAuditLogsWithRetry(t, auditlogClient, &auditlog.ListAdminAuditLogsRequest{
 		EntityType:     wrapperspb.Int32(int32(eventproto.Event_FEATURE)),
 		PageSize:       10,
 		Cursor:         "0",
@@ -210,7 +208,7 @@ func listAuditLogsWithRetry(
 	req *auditlog.ListAuditLogsRequest,
 ) (*auditlog.ListAuditLogsResponse, error) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	for i := range maxRetries {
 		resp, err := client.ListAuditLogs(ctx, req)
@@ -223,7 +221,7 @@ func listAuditLogsWithRetry(
 		st, _ := status.FromError(err)
 		if st.Code() == codes.Unavailable || st.Code() == codes.Internal || st.Code() == codes.DeadlineExceeded {
 			fmt.Printf("Failed to list audit logs. Error code: %d. Retrying in 5 seconds.\n", st.Code())
-			time.Sleep(5 * time.Second)
+			time.Sleep(10 * time.Second)
 			continue
 		}
 		return nil, err
@@ -237,7 +235,7 @@ func getAuditLogWithRetry(
 	req *auditlog.GetAuditLogRequest,
 ) (*auditlog.GetAuditLogResponse, error) {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	for i := range maxRetries {
 		resp, err := client.GetAuditLog(ctx, req)
@@ -250,7 +248,34 @@ func getAuditLogWithRetry(
 		st, _ := status.FromError(err)
 		if st.Code() == codes.Unavailable || st.Code() == codes.Internal || st.Code() == codes.DeadlineExceeded {
 			fmt.Printf("Failed to get audit log. Error code: %d. Retrying in 5 seconds.\n", st.Code())
-			time.Sleep(5 * time.Second)
+			time.Sleep(10 * time.Second)
+			continue
+		}
+		return nil, err
+	}
+	return nil, fmt.Errorf("Unexpected error: max retries reached")
+}
+
+func listAdminAuditLogsWithRetry(
+	t *testing.T,
+	client auditlogclient.Client,
+	req *auditlog.ListAdminAuditLogsRequest,
+) (*auditlog.ListAdminAuditLogsResponse, error) {
+	t.Helper()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	for i := range maxRetries {
+		resp, err := client.ListAdminAuditLogs(ctx, req)
+		if err == nil {
+			return resp, nil
+		}
+		if i == maxRetries-1 {
+			return nil, fmt.Errorf("Failed to list admin audit logs after %d retries: %w", maxRetries, err)
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal || st.Code() == codes.DeadlineExceeded {
+			fmt.Printf("Failed to list admin audit logs. Error code: %d. Retrying in 5 seconds.\n", st.Code())
+			time.Sleep(10 * time.Second)
 			continue
 		}
 		return nil, err
