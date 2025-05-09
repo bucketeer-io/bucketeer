@@ -211,5 +211,15 @@
   "reason-rule-tooltip": "Evaluated using a custom rule",
   "reason-default-tooltip": "Evaluated using the default strategy",
   "reason-offVariation-tooltip": "Evaluated using the off variation",
-  "reason-prerequisite-tooltip": "Evaluated using a prerequisite targeting"
+  "reason-prerequisite-tooltip": "Evaluated using a prerequisite targeting",
+  "evaluation": {
+    "user-count": "User Count",
+    "event-count": "Event Count",
+    "variation-counts": "Variation Counts",
+    "total-evaluations": "Total evaluations <desc>{{value}}</desc>",
+    "last-24h": "過去24時間",
+    "last-7-days": "過去7日",
+    "last-14-days": "過去14日",
+    "last-30-days": "過去30日"
+  }
 }

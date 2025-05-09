@@ -12,8 +12,8 @@ export enum EvaluationTimeRange {
 }
 
 export interface EvaluationCollection {
-  userCounts: EvaluationCounter;
-  eventCounts: EvaluationCounter;
+  userCounts: EvaluationCounter[];
+  eventCounts: EvaluationCounter[];
 }
 
 export interface EvaluationCounter {
