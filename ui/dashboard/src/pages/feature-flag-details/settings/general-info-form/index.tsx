@@ -15,6 +15,7 @@ import Button from 'components/button';
 import { CreatableSelect } from 'components/creatable-select';
 import Form from 'components/form';
 import Input from 'components/input';
+import TextArea from 'components/textarea';
 import Card from 'elements/card';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import { generalInfoFormSchema, GeneralInfoFormType } from './form-schema';
@@ -186,7 +187,15 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
               <Form.Item className="w-full py-0">
                 <Form.Label>{t('description')}</Form.Label>
                 <Form.Control>
-                  <Input {...field} placeholder={t('placeholder-desc')} />
+                  <TextArea
+                    {...field}
+                    placeholder={t('placeholder-desc')}
+                    rows={2}
+                    style={{
+                      resize: 'vertical',
+                      maxHeight: 98
+                    }}
+                  />
                 </Form.Control>
                 <Form.Message />
               </Form.Item>
