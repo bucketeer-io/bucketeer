@@ -18,8 +18,9 @@ export type ArchiveModalProps = {
   title: string;
   description: React.ReactElement | string;
   className?: string;
+  isLoading?: boolean;
   onClose: () => void;
-  onSubmit: () => void;
+  onSubmit: ({ comment }: { comment?: string }) => Promise<void>;
 };
 
 const ArchiveModal = ({
@@ -29,6 +30,7 @@ const ArchiveModal = ({
   title,
   description,
   className,
+  isLoading,
   onClose,
   onSubmit
 }: ArchiveModalProps) => {
@@ -97,7 +99,11 @@ const ArchiveModal = ({
 
       <ButtonBar
         secondaryButton={
-          <Button loading={isSubmitting} disabled={!isValid} onClick={onSubmit}>
+          <Button
+            loading={isSubmitting || isLoading}
+            disabled={!isValid}
+            onClick={form.handleSubmit(onSubmit)}
+          >
             {t(isArchiving ? `archive-flag` : 'unarchive-flag')}
           </Button>
         }
