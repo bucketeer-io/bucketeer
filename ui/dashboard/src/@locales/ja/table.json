@@ -220,6 +220,7 @@
     "last-24h": "過去24時間",
     "last-7-days": "過去7日",
     "last-14-days": "過去14日",
-    "last-30-days": "過去30日"
+    "last-30-days": "過去30日",
+    "tooltip-content": "Shows real-time counts of evaluation events and unique users who received this flag."
   }
 }

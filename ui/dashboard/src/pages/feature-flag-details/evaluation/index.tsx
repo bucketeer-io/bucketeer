@@ -39,7 +39,8 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
       environmentId: currentEnvironment.id,
       featureId: feature.id,
       timeRange
-    }
+    },
+    gcTime: 0
   });
 
   const timeRangeOptions: TimeRangeOption[] = useMemo(
@@ -104,6 +105,7 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
   return (
     <PageLayout.Content className="p-6 pt-0 gap-y-6 min-w-[900px]">
       <FilterBar
+        isLoading={isLoading}
         timeRangeOptions={timeRangeOptions}
         timeRangeLabel={timeRangeLabel}
         onChangeTimeRange={range => setTimeRange(range)}
