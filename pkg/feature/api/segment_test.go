@@ -750,7 +750,7 @@ func TestListSegmentsMySQL(t *testing.T) {
 			),
 			setup: func(s *FeatureService) {
 				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().ListSegments(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.Segment{
 					{
 						Id: "id",
@@ -781,7 +781,7 @@ func TestListSegmentsMySQL(t *testing.T) {
 			),
 			setup: func(s *FeatureService) {
 				s.segmentStorage.(*storagemock.MockSegmentStorage).EXPECT().ListSegments(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.Segment{
 					{
 						Id: "id",
