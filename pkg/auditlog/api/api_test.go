@@ -223,7 +223,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			context: createContextWithToken(t, true),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
 			input:    &proto.ListAuditLogsRequest{EnvironmentId: "ns0"},
@@ -249,7 +249,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			context: createContextWithToken(t, true),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAvatarAccountsV2(
 					gomock.Any(), gomock.Any(),
@@ -267,7 +267,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAvatarAccountsV2(
 					gomock.Any(), gomock.Any(),
@@ -337,7 +337,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 			desc: "err: ErrInternal",
 			setup: func(s *auditlogService) {
 				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
 			input:       &proto.ListAdminAuditLogsRequest{},
@@ -348,7 +348,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(s *auditlogService) {
 				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
 			input:       &proto.ListAdminAuditLogsRequest{PageSize: 2, Cursor: ""},
@@ -409,7 +409,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
 			input:    &proto.ListFeatureHistoryRequest{EnvironmentId: "ns0"},
@@ -437,7 +437,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
 			input: &proto.ListFeatureHistoryRequest{
@@ -454,7 +454,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			context: createContextWithTokenRoleUnassigned(t),
 			setup: func(s *auditlogService) {
 				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
 			input: &proto.ListFeatureHistoryRequest{
