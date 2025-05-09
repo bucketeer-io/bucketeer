@@ -55,9 +55,9 @@ spec:
             - name: BUCKETEER_API_GCP_TRACE_ENABLED
               value: "{{.Values.env.gcpEnabled}}"
             - name: BUCKETEER_API_PROJECT
-              value: "{{ .Values.env.project }}"
+              value: "{{ .Values.global.pubsub.project }}"
             - name: PUBSUB_EMULATOR_HOST
-              value: "{{.Values.env.pubsubEmulatorHost}}"
+              value: "{{ .Values.global.pubsub.emulatorHost }}"
             - name: BUCKETEER_API_GOAL_TOPIC
               value: "{{ .Values.env.goalTopic }}"
             - name: BUCKETEER_API_EVALUATION_TOPIC
@@ -78,6 +78,8 @@ spec:
               value: "{{ .Values.env.redis.poolMaxIdle }}"
             - name: BUCKETEER_API_REDIS_POOL_MAX_ACTIVE
               value: "{{ .Values.env.redis.poolMaxActive }}"
+            - name: BUCKETEER_API_PUBSUB_REDIS_PARTITION_COUNT
+              value: "{{ .Values.global.pubsub.redis.partitionCount }}"
             - name: BUCKETEER_API_OLDEST_EVENT_TIMESTAMP
               value: "{{ .Values.env.oldestEventTimestamp }}"
             - name: BUCKETEER_API_FURTHEST_EVENT_TIMESTAMP
@@ -98,6 +100,16 @@ spec:
               value: "{{ .Values.env.logLevel }}"
             - name: BUCKETEER_API_TRACE_SAMPLING_PROBABILITY
               value: "{{ .Values.env.traceSamplingProbability }}"
+            - name: BUCKETEER_API_PUBSUB_TYPE
+              value: "{{ .Values.global.pubsub.type }}"
+            - name: BUCKETEER_API_PUBSUB_REDIS_SERVER_NAME
+              value: "{{ .Values.global.pubsub.redis.serverName }}"
+            - name: BUCKETEER_API_PUBSUB_REDIS_ADDR
+              value: "{{ .Values.global.pubsub.redis.addr }}"
+            - name: BUCKETEER_API_PUBSUB_REDIS_POOL_SIZE
+              value: "{{ .Values.global.pubsub.redis.poolSize }}"
+            - name: BUCKETEER_API_PUBSUB_REDIS_MIN_IDLE
+              value: "{{ .Values.global.pubsub.redis.minIdle }}"
             - name: BUCKETEER_API_SERVICE_TOKEN
               value: /usr/local/service-token/token
             - name: BUCKETEER_API_CERT
