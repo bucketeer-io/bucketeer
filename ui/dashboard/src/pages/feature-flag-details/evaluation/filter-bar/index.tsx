@@ -9,7 +9,7 @@ import {
 } from 'components/dropdown';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
-import { TimeRangeOption } from '..';
+import { TimeRangeOption } from '../types';
 
 const FilterBar = ({
   isLoading,

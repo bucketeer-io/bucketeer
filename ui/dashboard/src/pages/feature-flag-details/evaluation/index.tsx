@@ -1,8 +1,12 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryEvaluation } from '@queries/evaluation';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
+import { pickBy } from 'lodash';
 import { EvaluationTimeRange, Feature } from '@types';
+import { isEmptyObject, isNotEmpty } from 'utils/data-type';
+import { useSearchParams } from 'utils/search-params';
 import {
   ChartToggleLegendRef,
   DatasetReduceType
@@ -14,31 +18,32 @@ import PageLayout from 'elements/page-layout';
 import { EvaluationChart } from './evaluation-chart';
 import EvaluationTable from './evaluation-table';
 import FilterBar from './filter-bar';
-
-type EvaluationTab = 'EVENT_COUNT' | 'USER_COUNT';
-
-export interface TimeRangeOption {
-  label: string;
-  value: EvaluationTimeRange;
-}
+import { EvaluationFilters, EvaluationTab, TimeRangeOption } from './types';
 
 const EvaluationPage = ({ feature }: { feature: Feature }) => {
   const { t } = useTranslation(['common', 'table']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const evaluationChartRef = useRef<ChartToggleLegendRef>(null);
+  const { searchOptions, onChangSearchParams } = useSearchParams();
+  const searchFilters: Partial<EvaluationFilters> = searchOptions;
 
-  const [timeRange, setTimeRange] = useState<EvaluationTimeRange>(
-    EvaluationTimeRange.THIRTY_DAYS
-  );
-  const [currentTab, setCurrentTab] = useState<EvaluationTab>('EVENT_COUNT');
   const [dataSets, setDataSets] = useState<DatasetReduceType[]>([]);
+
+  const defaultFilters = {
+    tab: EvaluationTab.EVENT_COUNT,
+    period: EvaluationTimeRange.THIRTY_DAYS,
+    ...searchFilters
+  } as EvaluationFilters;
+
+  const [filters, setFilters] =
+    usePartialState<EvaluationFilters>(defaultFilters);
 
   const { data: evaluationCollection, isLoading } = useQueryEvaluation({
     params: {
       environmentId: currentEnvironment.id,
       featureId: feature.id,
-      timeRange
+      timeRange: filters.period
     },
     gcTime: 0
   });
@@ -66,16 +71,17 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
   );
 
   const timeRangeLabel = useMemo(
-    () => timeRangeOptions.find(item => item.value === timeRange)?.label || '',
-    [timeRangeOptions, timeRange]
+    () =>
+      timeRangeOptions.find(item => item.value === filters.period)?.label || '',
+    [timeRangeOptions, filters]
   );
 
   const countData = useMemo(
     () =>
-      (currentTab === 'EVENT_COUNT'
+      (filters.tab === EvaluationTab.EVENT_COUNT
         ? evaluationCollection?.eventCounts
         : evaluationCollection?.userCounts) || [],
-    [currentTab, evaluationCollection]
+    [filters, evaluationCollection]
   );
 
   const variationValues: Option[] = useMemo(
@@ -94,7 +100,7 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
     [countData]
   );
 
-  const data = useMemo(
+  const chartData = useMemo(
     () =>
       countData.map(vt => {
         return vt.timeseries?.values?.map((v: number) => Math.round(v));
@@ -102,41 +108,61 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
     [countData]
   );
 
+  const onChangeFilters = (values: Partial<EvaluationFilters>) => {
+    const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
+    onChangSearchParams(options);
+    setFilters({ ...values });
+  };
+
+  useEffect(() => {
+    if (isEmptyObject(searchOptions)) {
+      onChangeFilters({ ...defaultFilters });
+    }
+  }, [searchOptions]);
+
   return (
     <PageLayout.Content className="p-6 pt-0 gap-y-6 min-w-[900px]">
       <FilterBar
         isLoading={isLoading}
         timeRangeOptions={timeRangeOptions}
         timeRangeLabel={timeRangeLabel}
-        onChangeTimeRange={range => setTimeRange(range)}
+        onChangeTimeRange={range =>
+          onChangeFilters({
+            period: range
+          })
+        }
       />
       <Card className="h-full">
         <Tabs
           className="flex-1 flex h-full flex-col"
-          value={currentTab}
-          onValueChange={value => setCurrentTab(value as EvaluationTab)}
+          value={filters.tab}
+          onValueChange={value =>
+            onChangeFilters({
+              tab: value as EvaluationTab
+            })
+          }
         >
           <TabsList>
-            <TabsTrigger value="EVENT_COUNT">
+            <TabsTrigger value={EvaluationTab.EVENT_COUNT}>
               {t(`table:evaluation.event-count`)}
             </TabsTrigger>
-            <TabsTrigger value="USER_COUNT">
+            <TabsTrigger value={EvaluationTab.USER_COUNT}>
               {t(`table:evaluation.user-count`)}
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value={currentTab as EvaluationTab}>
+          <TabsContent value={filters.tab}>
             {isLoading ? (
               <PageLayout.LoadingState />
             ) : (
               <>
                 <EvaluationChart
                   ref={evaluationChartRef}
-                  data={data}
+                  data={chartData}
                   variationValues={variationValues}
                   timeseries={timeseries}
                   unit={
-                    timeRange === EvaluationTimeRange.TWENTY_FOUR_HOURS
+                    filters.period === EvaluationTimeRange.TWENTY_FOUR_HOURS
                       ? 'hour'
                       : 'day'
                   }
