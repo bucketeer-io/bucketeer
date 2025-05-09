@@ -20,7 +20,6 @@ import (
 	"github.com/jinzhu/copier"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	"github.com/bucketeer-io/bucketeer/proto/common"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -45,7 +44,38 @@ func (f *Feature) Update(
 		return nil, err
 	}
 
-	// Validate all changes first
+	// We split variation changes into two separate steps to handle dependencies correctly:
+	//
+	// Step 1: Apply variation creations and updates first.
+	// - This ensures newly created or updated variations exist when validating and applying other changes
+	//   (e.g., rules, targets, offVariation, defaultStrategy).
+	// - Without this step, validations referencing newly created variations would fail.
+	//
+	// Step 2: Apply variation deletions last.
+	// - Deleting variations last ensures that any references to deleted variations (including references
+	//   created or updated in the same request) are properly cleaned up.
+	// - If deletions were processed earlier, we could end up with invalid references to non-existent variations.
+	//
+	// This two-step approach maintains data integrity and prevents invalid intermediate states.
+
+	// Step 1: Apply variation creations and updates first
+	var variationCreationsAndUpdates, variationDeletions []*feature.VariationChange
+	for _, change := range variationChanges {
+		if change.ChangeType == feature.ChangeType_DELETE {
+			variationDeletions = append(variationDeletions, change)
+		} else {
+			variationCreationsAndUpdates = append(variationCreationsAndUpdates, change)
+		}
+	}
+
+	if err := updated.validateVariationChanges(variationCreationsAndUpdates); err != nil {
+		return nil, err
+	}
+	if err := updated.applyVariationChanges(variationCreationsAndUpdates); err != nil {
+		return nil, err
+	}
+
+	// Step 2: Validate all other changes now that new variations exist
 	if err := updated.validateAllChanges(
 		name,
 		defaultStrategy,
@@ -53,12 +83,11 @@ func (f *Feature) Update(
 		prerequisiteChanges,
 		targetChanges,
 		ruleChanges,
-		variationChanges,
 	); err != nil {
 		return nil, err
 	}
 
-	// Apply updates
+	// Apply general updates
 	if err := updated.applyGeneralUpdates(
 		name,
 		description,
@@ -72,22 +101,29 @@ func (f *Feature) Update(
 		return nil, err
 	}
 
-	if err := updated.applyGranularUpdates(
+	// Apply remaining granular updates (prerequisites, targets, rules, tags)
+	if err := updated.applyGranularChanges(
 		prerequisiteChanges,
 		targetChanges,
 		ruleChanges,
-		variationChanges,
 		tagChanges,
 	); err != nil {
 		return nil, err
 	}
 
-	// Check if there are any changes before incrementing version
+	// Step 3: Apply variation deletions last
+	if err := updated.validateVariationChanges(variationDeletions); err != nil {
+		return nil, err
+	}
+	if err := updated.applyVariationChanges(variationDeletions); err != nil {
+		return nil, err
+	}
+
+	// Increment version and update timestamp if there are changes
 	if updated.hasChangesComparedTo(f) {
 		if err := updated.IncrementVersion(); err != nil {
 			return nil, err
 		}
-		// Set UpdatedAt only if there are actual changes
 		updated.UpdatedAt = time.Now().Unix()
 	}
 
@@ -102,7 +138,6 @@ func (f *Feature) validateAllChanges(
 	prerequisiteChanges []*feature.PrerequisiteChange,
 	targetChanges []*feature.TargetChange,
 	ruleChanges []*feature.RuleChange,
-	variationChanges []*feature.VariationChange,
 ) error {
 	// Validate name if provided
 	if name != nil && name.Value == "" {
@@ -140,10 +175,6 @@ func (f *Feature) validateAllChanges(
 		if err := validateRules([]*feature.Rule{change.Rule}, f.Variations); err != nil {
 			return err
 		}
-	}
-
-	if err := f.validateVariationChanges(variationChanges); err != nil {
-		return err
 	}
 
 	return nil
@@ -198,12 +229,39 @@ func (f *Feature) applyGeneralUpdates(
 	return nil
 }
 
-// applyGranularUpdates applies granular field updates
-func (f *Feature) applyGranularUpdates(
+// applyVariationChanges handles only variation creations, updates, and deletions.
+func (f *Feature) applyVariationChanges(
+	variationChanges []*feature.VariationChange,
+) error {
+	for _, change := range variationChanges {
+		switch change.ChangeType {
+		case feature.ChangeType_CREATE:
+			if err := f.AddVariation(
+				change.Variation.Id,
+				change.Variation.Value,
+				change.Variation.Name,
+				change.Variation.Description,
+			); err != nil {
+				return err
+			}
+		case feature.ChangeType_UPDATE:
+			if err := f.ChangeVariation(change.Variation); err != nil {
+				return err
+			}
+		case feature.ChangeType_DELETE:
+			if err := f.RemoveVariation(change.Variation.Id); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// applyGranularChanges handles prerequisites, targets, rules, and tags updates.
+func (f *Feature) applyGranularChanges(
 	prerequisiteChanges []*feature.PrerequisiteChange,
 	targetChanges []*feature.TargetChange,
 	ruleChanges []*feature.RuleChange,
-	variationChanges []*feature.VariationChange,
 	tagChanges []*feature.TagChange,
 ) error {
 	// Prerequisites
@@ -259,38 +317,6 @@ func (f *Feature) applyGranularUpdates(
 			}
 		case feature.ChangeType_DELETE:
 			if err := f.RemoveRule(change.Rule.Id); err != nil {
-				return err
-			}
-		}
-	}
-
-	// Variations must be processed last because:
-	// 1. When a variation is deleted, it needs to clean up all references to it in rules, targets, and strategies
-	// 2. If a user updates a rule/target to use a variation and then deletes that variation in the same request,
-	//    processing variations last ensures the deletion will clean up any newly created references
-	// 3. This order prevents any invalid state where rules/targets reference non-existent variations
-	for _, change := range variationChanges {
-		switch change.ChangeType {
-		case feature.ChangeType_CREATE:
-			// Generate new UUID for CREATE operations
-			id, err := uuid.NewUUID()
-			if err != nil {
-				return err
-			}
-			if err := f.AddVariation(
-				id.String(),
-				change.Variation.Value,
-				change.Variation.Name,
-				change.Variation.Description,
-			); err != nil {
-				return err
-			}
-		case feature.ChangeType_UPDATE:
-			if err := f.ChangeVariation(change.Variation); err != nil {
-				return err
-			}
-		case feature.ChangeType_DELETE:
-			if err := f.RemoveVariation(change.Variation.Id); err != nil {
 				return err
 			}
 		}

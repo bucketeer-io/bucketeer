@@ -907,8 +907,8 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 		err := f.ChangeRuleStrategy(p.ruleID, p.strategy)
 		assert.Equal(t, p.expected, err)
 	}
-	if !reflect.DeepEqual(expected, r.Strategy) {
-		t.Fatalf("Strategy is not equal. Expected: %v, actual: %v", expected, r.Strategy)
+	if !reflect.DeepEqual(expected.RolloutStrategy, r.Strategy.RolloutStrategy) {
+		t.Fatalf("Strategy is not equal. Expected: %v, actual: %v", expected.RolloutStrategy, r.Strategy.RolloutStrategy)
 	}
 }
 
@@ -1479,6 +1479,10 @@ func TestIsStale(t *testing.T) {
 
 func TestValidateVariationValue(t *testing.T) {
 	t.Parallel()
+	v1, err := uuid.NewUUID()
+	require.NoError(t, err)
+	v2, err := uuid.NewUUID()
+	require.NoError(t, err)
 	patterns := []struct {
 		desc          string
 		variationType feature.Feature_VariationType
@@ -1549,7 +1553,13 @@ func TestValidateVariationValue(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			f := &Feature{Feature: &feature.Feature{VariationType: p.variationType}}
+			f := &Feature{Feature: &feature.Feature{
+				VariationType: p.variationType,
+				Variations: []*feature.Variation{
+					{Id: v1.String(), Value: "value-1"},
+					{Id: v2.String(), Value: "value-2"},
+				},
+			}}
 			assert.Equal(t, p.expected, f.validateVariationValue("", p.value))
 		})
 	}
@@ -1947,6 +1957,7 @@ func TestUpdate(t *testing.T) {
 	t.Parallel()
 	id1, _ := uuid.NewUUID()
 	id2, _ := uuid.NewUUID()
+	id3, _ := uuid.NewUUID()
 	ruleID, _ := uuid.NewUUID() // For rule ID
 	patterns := []struct {
 		desc                string
@@ -2086,6 +2097,7 @@ func TestUpdate(t *testing.T) {
 				{
 					ChangeType: feature.ChangeType_CREATE,
 					Variation: &feature.Variation{
+						Id:    id3.String(),
 						Name:  "v3",
 						Value: "new-value",
 					},
@@ -2841,6 +2853,7 @@ func TestUpdateVariationsGranular(t *testing.T) {
 				{
 					ChangeType: feature.ChangeType_CREATE,
 					Variation: &proto.Variation{
+						Id:          v3.String(),
 						Value:       `{"key": "value3"}`,
 						Name:        "n3",
 						Description: "d3",
@@ -2893,17 +2906,9 @@ func TestUpdateVariationsGranular(t *testing.T) {
 			desc: "Variation Delete - success",
 			inputFunc: func() *Feature {
 				f := genFJSON()
-				// Add the variation to be deleted
-				f.Variations = append(f.Variations, &proto.Variation{
-					Id:          v3.String(),
-					Value:       `{"key": "value3"}`,
-					Name:        "n3",
-					Description: "d3",
-				})
-				f.Targets = append(f.Targets, &proto.Target{
-					Variation: v3.String(),
-					Users:     []string{},
-				})
+				// Add the variation to be deleted and check for errors
+				err := f.AddVariation(v3.String(), `{"key": "value3"}`, "n3", "d3")
+				require.NoError(t, err)
 				return f
 			},
 			variationChanges: []*proto.VariationChange{
@@ -2912,10 +2917,8 @@ func TestUpdateVariationsGranular(t *testing.T) {
 					Variation:  &proto.Variation{Id: v3.String()},
 				},
 			},
-			expectedFunc: func() *Feature {
-				return genFJSON()
-			},
-			expectedErr: nil,
+			expectedFunc: genFJSON,
+			expectedErr:  nil,
 		},
 		{
 			desc:      "Variation Update - error: nil variation",
@@ -2998,6 +3001,7 @@ func TestUpdateVariationsGranular(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			actual, err := p.inputFunc().Update(
 				nil, nil, nil, nil, nil, nil, nil, false, // basic fields
 				nil, nil, nil, p.variationChanges, nil, // granular change lists

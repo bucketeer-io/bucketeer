@@ -1161,6 +1161,9 @@ func (f *Feature) validateVariationChanges(variationChanges []*feature.Variation
 
 		switch change.ChangeType {
 		case feature.ChangeType_CREATE:
+			if err := uuid.ValidateUUID(change.Variation.Id); err != nil {
+				return err
+			}
 			if change.Variation.Name == "" {
 				return errVariationNameRequired
 			}
