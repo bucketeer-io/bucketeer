@@ -9,4 +9,4 @@ SELECT id,
        disabled,
        created_at,
        updated_at
-FROM flag_trigger %s %s %s
+FROM flag_trigger

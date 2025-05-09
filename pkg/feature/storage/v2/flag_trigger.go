@@ -20,7 +20,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -58,9 +57,7 @@ type FlagTriggerStorage interface {
 	GetFlagTriggerByToken(ctx context.Context, token string) (*domain.FlagTrigger, error)
 	ListFlagTriggers(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		options *mysql.ListOptions,
 	) ([]*proto.FlagTrigger, int, int64, error)
 }
 
@@ -217,19 +214,19 @@ func (f flagTriggerStorage) GetFlagTriggerByToken(
 
 func (f flagTriggerStorage) ListFlagTriggers(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.FlagTrigger, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(listFlagTriggersSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(listFlagTriggersSQL, options)
 	rows, err := f.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
+	var limit, offset int
+	if options != nil {
+		limit = options.Limit
+		offset = options.Offset
+	}
 	flagTriggers := make([]*proto.FlagTrigger, 0, limit)
 	for rows.Next() {
 		trigger := proto.FlagTrigger{}
@@ -253,8 +250,8 @@ func (f flagTriggerStorage) ListFlagTriggers(
 	}
 	nextOffset := offset + len(flagTriggers)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countFlagTriggersSQL, whereSQL)
-	if err := f.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount); err != nil {
+	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countFlagTriggersSQL, options)
+	if err := f.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount); err != nil {
 		return nil, 0, 0, err
 	}
 	return flagTriggers, nextOffset, totalCount, nil

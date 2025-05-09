@@ -883,9 +883,17 @@ func (s *FeatureService) ListFlagTriggers(
 		)
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("feature_id", "=", request.FeatureId),
-		mysql.NewFilter("environment_id", "=", request.EnvironmentId),
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "feature_id",
+			Operator: mysql.OperatorEqual,
+			Value:    request.FeatureId,
+		},
+		{
+			Column:   "environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    request.EnvironmentId,
+		},
 	}
 	orders, err := s.newListFlagTriggerOrders(request.OrderBy, request.OrderDirection, localizer)
 	if err != nil {
@@ -911,13 +919,17 @@ func (s *FeatureService) ListFlagTriggers(
 		}
 		return nil, dt.Err()
 	}
-	flagTriggers, nextOffset, totalCount, _ := s.flagTriggerStorage.ListFlagTriggers(
-		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
-	)
+	options := &mysql.ListOptions{
+		Limit:       limit,
+		Offset:      offset,
+		Orders:      orders,
+		Filters:     filters,
+		NullFilters: nil,
+		JSONFilters: nil,
+		InFilters:   nil,
+		SearchQuery: nil,
+	}
+	flagTriggers, nextOffset, totalCount, _ := s.flagTriggerStorage.ListFlagTriggers(ctx, options)
 	triggerWithUrls := make([]*featureproto.ListFlagTriggersResponse_FlagTriggerWithUrl, 0, len(flagTriggers))
 	for _, trigger := range flagTriggers {
 		triggerURL := s.generateTriggerURL(ctx, trigger.Token, true)
