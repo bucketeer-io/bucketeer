@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
+import { isEqual } from 'lodash';
 import { Feature, FeatureVariation, VariationChange } from '@types';
 import Form from 'components/form';
 import ConfirmationRequiredModal from '../elements/confirm-required-modal';
@@ -59,11 +60,20 @@ const Variation = ({ feature }: VariationProps) => {
         }
       });
       variations.forEach(item => {
-        if (!featureVariations.find(variation => variation.id === item.id)) {
+        const currentVariation = featureVariations.find(
+          variation => variation.id === item.id
+        );
+        if (!currentVariation) {
           variationChanges.push({
             changeType: 'CREATE',
             variation: item
           });
+        } else {
+          if (!isEqual(currentVariation, item))
+            variationChanges.push({
+              changeType: 'UPDATE',
+              variation: item
+            });
         }
       });
 
@@ -84,9 +94,6 @@ const Variation = ({ feature }: VariationProps) => {
         comment,
         resetSamplingSeed: resetSampling,
         offVariation,
-        variations: {
-          values: variations
-        },
         ...handleCheckVariations(variations)
       });
       if (resp) {

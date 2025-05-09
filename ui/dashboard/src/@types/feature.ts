@@ -138,7 +138,7 @@ export interface TargetChange extends ChangeType {
   target: FeatureTarget;
 }
 
-interface TagChange extends ChangeType {
+export interface TagChange extends ChangeType {
   tag: string;
 }
 
@@ -148,23 +148,8 @@ export interface FeatureUpdaterParams {
   id: string;
   name: string;
   description: string;
-  tags: {
-    values: string[];
-  };
   enabled: boolean;
   archived: boolean;
-  variations: {
-    values: FeatureVariation[];
-  };
-  prerequisites: {
-    values: FeaturePrerequisite[];
-  };
-  targets: {
-    values: FeatureTarget[];
-  };
-  rules: {
-    values: FeatureRule[];
-  };
   defaultStrategy: FeatureRuleStrategy;
   offVariation: string;
   resetSamplingSeed: boolean;

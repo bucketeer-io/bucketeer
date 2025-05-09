@@ -94,17 +94,47 @@ const Variations = ({
     return [];
   }, [feature]);
 
+  const targetVariationIds = useMemo(() => {
+    if (feature?.targets?.length) {
+      const ids = feature.targets.map(target => target.variation);
+      return [...new Set(ids)];
+    }
+    return [];
+  }, [feature]);
+
+  const prerequisiteVariationIds = useMemo(() => {
+    if (feature?.prerequisites?.length) {
+      const ids = feature.prerequisites.map(pre => pre.variationId);
+      return [...new Set(ids)];
+    }
+    return [];
+  }, [feature]);
+
   const isDisableRemoveBtn = useCallback(
     (variationId: string) => {
       return (
         isBoolean ||
         fields.length <= 2 ||
         [
-          ...new Set([offVariation, ...onVariationIds, ...ruleVariationIds])
+          ...new Set([
+            offVariation,
+            ...onVariationIds,
+            ...ruleVariationIds,
+            ...targetVariationIds,
+            ...prerequisiteVariationIds
+          ])
         ].includes(variationId)
       );
     },
-    [isBoolean, onVariationIds, ruleVariationIds, offVariation, fields]
+    [
+      isBoolean,
+      onVariationIds,
+      ruleVariationIds,
+      offVariation,
+      fields,
+      targetVariationIds,
+      prerequisiteVariationIds
+    ]
   );
   const isProgressiveRolloutsRunningWaiting = (status: OperationStatus) =>
     ['RUNNING', 'WAITING'].includes(status);
@@ -132,9 +162,23 @@ const Variations = ({
         return t('table:feature-flags.default-variation-disabled-delete');
       if (offVariation === variationId)
         return t('table:feature-flags.off-variation-disabled-delete');
+      if (
+        [
+          ...ruleVariationIds,
+          ...targetVariationIds,
+          ...prerequisiteVariationIds
+        ].includes(variationId)
+      )
+        return t('table:feature-flags.in-used-variation-disabled-delete');
       return '';
     },
-    [offVariation, onVariationIds]
+    [
+      offVariation,
+      onVariationIds,
+      ruleVariationIds,
+      targetVariationIds,
+      prerequisiteVariationIds
+    ]
   );
 
   return (

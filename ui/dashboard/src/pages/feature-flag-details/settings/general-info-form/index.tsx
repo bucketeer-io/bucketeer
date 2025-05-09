@@ -11,7 +11,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { uniqBy } from 'lodash';
-import { Feature } from '@types';
+import { Feature, TagChange } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { IconWatch } from '@icons';
 import Button from 'components/button';
@@ -98,6 +98,35 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
     return currentAccount?.email || maintainer;
   }, [accounts, maintainer]);
 
+  const handleCheckTags = useCallback(
+    (tagValues: string[]) => {
+      const tagChanges: TagChange[] = [];
+      const { tags } = feature;
+      tags?.forEach(item => {
+        if (!tagValues.find(tag => tag === item)) {
+          tagChanges.push({
+            changeType: 'DELETE',
+            tag: item
+          });
+        }
+      });
+      tagValues.forEach(item => {
+        const currentTag = tags.find(tag => tag === item);
+        if (!currentTag) {
+          tagChanges.push({
+            changeType: 'CREATE',
+            tag: item
+          });
+        }
+      });
+
+      return {
+        tagChanges
+      };
+    },
+    [feature]
+  );
+
   const onSubmit = useCallback(async () => {
     try {
       const values = getValues();
@@ -111,9 +140,7 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
         id: flagId,
         environmentId: currentEnvironment.id,
         comment,
-        tags: {
-          values: tags
-        },
+        ...handleCheckTags(tags),
         ...rest
       });
 
@@ -131,7 +158,7 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
     } catch (error) {
       errorNotify(error);
     }
-  }, [currentEnvironment]);
+  }, [currentEnvironment, feature]);
 
   return (
     <FormProvider {...form}>

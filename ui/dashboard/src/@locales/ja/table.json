@@ -198,7 +198,8 @@
     "variation-type-tooltip": "The data type of this feature flag's variations. This type was set during creation and cannot be modified.",
     "off-variation-tooltip": "The variation served to users when the feature flag is turned off or disabled.",
     "off-variation-disabled-delete": "This variation cannot be deleted because it is used in the off-variation settings.",
-    "default-variation-disabled-delete": "This variation cannot be deleted because it is used in the default variation settings."
+    "default-variation-disabled-delete": "This variation cannot be deleted because it is used in the default variation settings.",
+    "in-used-variation-disabled-delete": "This variation cannot be deleted because it is used in targeting rules or has users assigned to the individual targeting."
   },
   "audit-log-title": "<b>{{username}}</b>が<highlight>{{entityName}}</highlight>{{additionalText}}{{entityType}}を作成しました",
   "no-data-change": "No data change",
