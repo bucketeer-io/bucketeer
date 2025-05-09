@@ -29,10 +29,7 @@ import "proto/feature/feature.proto";
 import "proto/feature/service.proto";
 import "proto/feature/variation.proto";
 import "proto/feature/strategy.proto";
-import "proto/feature/prerequisite.proto";
-import "proto/feature/rule.proto";
 import "proto/feature/segment.proto";
-import "proto/feature/target.proto";
 import "proto/push/push.proto";
 import "proto/push/service.proto";
 import "proto/account/service.proto";
@@ -193,41 +190,14 @@ message UpdateFeatureRequest {
   common.StringListValue tags = 6;
   google.protobuf.BoolValue enabled = 7;
   google.protobuf.BoolValue archived = 8;
-  // Legacy full-replacement fields (deprecated)
-  feature.VariationListValue variations = 9 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  feature.PrerequisiteListValue prerequisites = 10 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  feature.TargetListValue targets = 11 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  feature.RuleListValue rules = 12 [
-    deprecated = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "deprecated"
-    }
-  ];
-  feature.Strategy default_strategy = 13;
-  google.protobuf.StringValue off_variation = 14;
-  bool reset_sampling_seed = 15;
-
-  // New granular change fields (supporting multiple operations per field)
-  repeated feature.VariationChange variation_changes = 16;
-  repeated feature.RuleChange rule_changes = 17;
-  repeated feature.PrerequisiteChange prerequisite_changes = 18;
-  repeated feature.TargetChange target_changes = 19;
-  repeated feature.TagChange tag_changes = 20;
+  feature.Strategy default_strategy = 9;
+  google.protobuf.StringValue off_variation = 10;
+  bool reset_sampling_seed = 11;
+  repeated feature.VariationChange variation_changes = 12;
+  repeated feature.RuleChange rule_changes = 13;
+  repeated feature.PrerequisiteChange prerequisite_changes = 14;
+  repeated feature.TargetChange target_changes = 15;
+  repeated feature.TagChange tag_changes = 16;
 }
 
 message UpdateFeatureResponse {

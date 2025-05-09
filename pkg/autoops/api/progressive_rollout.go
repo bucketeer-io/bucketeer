@@ -641,10 +641,6 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 			defaultStrategy,
 			nil,   // offVariation
 			false, // resetSamplingSeed
-			nil,   // prerequisites
-			nil,   // targets
-			nil,   // rules
-			nil,   // variations
 			nil,   // prerequisiteChanges
 			nil,   // targetChanges
 			nil,   // ruleChanges
@@ -817,10 +813,6 @@ func (s *AutoOpsService) executeProgressiveRolloutNoCommand(
 			defaultStrategy,
 			nil,   // offVariation
 			false, // resetSamplingSeed
-			nil,   // prerequisites
-			nil,   // targets
-			nil,   // rules
-			nil,   // variations
 			nil,   // prerequisiteChanges
 			nil,   // targetChanges
 			nil,   // ruleChanges

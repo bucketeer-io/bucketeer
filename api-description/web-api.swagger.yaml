@@ -11944,14 +11944,6 @@ definitions:
     required:
       - changeType
       - prerequisite
-  featurePrerequisiteListValue:
-    type: object
-    properties:
-      values:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featurePrerequisite'
   featureReason:
     type: object
     properties:
@@ -12032,14 +12024,6 @@ definitions:
     required:
       - changeType
       - rule
-  featureRuleListValue:
-    type: object
-    properties:
-      values:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureRule'
   featureScheduleFlagChangeRequest:
     type: object
     properties:
@@ -12216,14 +12200,6 @@ definitions:
     required:
       - changeType
       - target
-  featureTargetListValue:
-    type: object
-    properties:
-      values:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureTarget'
   featureUnarchiveFeatureCommand:
     type: object
   featureUnarchiveFeatureResponse:
@@ -12249,19 +12225,6 @@ definitions:
         type: boolean
       archived:
         type: boolean
-      variations:
-        $ref: '#/definitions/featureVariationListValue'
-        description: deprecated
-        title: Legacy full-replacement fields (deprecated)
-      prerequisites:
-        $ref: '#/definitions/featurePrerequisiteListValue'
-        description: deprecated
-      targets:
-        $ref: '#/definitions/featureTargetListValue'
-        description: deprecated
-      rules:
-        $ref: '#/definitions/featureRuleListValue'
-        description: deprecated
       defaultStrategy:
         $ref: '#/definitions/featureStrategy'
       offVariation:
@@ -12275,7 +12238,6 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureVariationChange'
-        title: New granular change fields (supporting multiple operations per field)
       ruleChanges:
         type: array
         items:
@@ -12410,14 +12372,6 @@ definitions:
     required:
       - changeType
       - variation
-  featureVariationListValue:
-    type: object
-    properties:
-      values:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/bucketeerfeatureVariation'
   googlerpcStatus:
     type: object
     properties:

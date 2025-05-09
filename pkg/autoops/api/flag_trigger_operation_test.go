@@ -66,7 +66,7 @@ func TestEnableFeature(t *testing.T) {
 			feature: &featureproto.Feature{
 				Enabled: true,
 			},
-			updateCallTimes: 0,
+			updateCallTimes: 1,
 			expected:        true,
 			expectedErr:     nil,
 		},
@@ -143,7 +143,7 @@ func TestDisableFeature(t *testing.T) {
 			feature: &featureproto.Feature{
 				Enabled: false,
 			},
-			updateCallTimes: 0,
+			updateCallTimes: 1,
 			expected:        false,
 			expectedErr:     nil,
 		},
