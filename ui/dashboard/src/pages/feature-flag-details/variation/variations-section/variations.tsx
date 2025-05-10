@@ -96,7 +96,9 @@ const Variations = ({
 
   const targetVariationIds = useMemo(() => {
     if (feature?.targets?.length) {
-      const ids = feature.targets.map(target => target.variation);
+      const ids = feature.targets
+        .filter(target => target.users?.length > 0)
+        ?.map(item => item.variation);
       return [...new Set(ids)];
     }
     return [];

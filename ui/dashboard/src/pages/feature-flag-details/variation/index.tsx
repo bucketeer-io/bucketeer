@@ -20,7 +20,7 @@ export interface VariationProps {
 }
 
 const Variation = ({ feature }: VariationProps) => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'message']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
@@ -98,7 +98,7 @@ const Variation = ({ feature }: VariationProps) => {
       });
       if (resp) {
         notify({
-          message: t('flag-updated')
+          message: t('message:flag-updated')
         });
 
         invalidateFeature(queryClient);
