@@ -144,6 +144,11 @@
     "prerequisites": "Prerequisites",
     "add-prerequisites": "Add Prerequisites",
     "disable-now": "Disable now",
+    "add-user-id": "Add user id",
+    "already-targeted": "Already targeted",
+    "value-already-targeted": "{{value}} already target in {{targetedIn}}",
+    "prerequisite-flags": "This flag is a prerequisite of {{quantity}} other {{flag}}.",
+    "prerequisite-flags-desc": "Changes to the targeting rules may affect the variations served by the flags below.",
     "schedule-info": "You can update or delete the schedule on the Auto Operations tab on the Feature Flag details page.",
     "flag-switch": "{{name}} has been {{state}}.",
     "schedule-configured": "Schedule has been configured for {{name}}."
@@ -172,5 +177,17 @@
   "placeholder-maintainer": "Enter maintainer",
   "clone-flag-desc": "Cloning the flag will copy its targeting configuration and on/off state for all environments",
   "archive-flag-desc": "This flag will be archived across all environments and will only appear in your list when filtered for",
-  "unarchive-flag-desc": "This flag will be unarchive across all environments"
+  "unarchive-flag-desc": "This flag will be unarchive across all environments",
+  "placeholder-value": "Enter value",
+  "before": "Before",
+  "after": "After",
+  "contains": "Contains",
+  "partially-matches": "Partially matches",
+  "starts-with": "Starts with",
+  "ends-with": "Ends with",
+  "is-included-in": "Is included in",
+  "select-rollout-percentage": "Select rollout percentage",
+  "rollout": "Rollout",
+  "off-variation": "Off Variation",
+  "reset-sampling": "Reset random sampling"
 }

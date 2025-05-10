@@ -6,25 +6,29 @@ import {
   VARIATION_NUMBER_VALUE_MAX_LENGTH,
   VARIATION_VALUE_MAX_LENGTH
 } from 'constants/feature-flag';
+import { i18n } from 'i18n';
 import * as yup from 'yup';
 import { FeatureVariation, FeatureVariationType } from '@types';
 import { isNumber } from 'utils/chart';
 import { isJsonString } from 'utils/converts';
 import { FlagSwitchVariationType } from './types';
 
+const translation = i18n.t;
+const requiredMessage = translation('message:required-field');
+
 const nameSchema = yup.string().max(FEATURE_NAME_MAX_LENGTH).required();
 const descriptionSchema = yup.string().max(FEATURE_DESCRIPTION_MAX_LENGTH);
-const variationsSchema = yup
+export const variationsSchema = yup
   .array()
   .required()
   .of(
     yup
       .object()
       .shape({
-        id: yup.string().required('This field is required'),
+        id: yup.string().required(requiredMessage),
         value: yup
           .string()
-          .required('This field is required')
+          .required(requiredMessage)
           .test('isNumber', (value, context) => {
             if (
               context?.from &&
@@ -32,7 +36,7 @@ const variationsSchema = yup
               (!isNumber(+value) || value.startsWith(' '))
             ) {
               return context.createError({
-                message: 'This must be a number.',
+                message: translation('message:validation.must-be-number'),
                 path: context.path
               });
             }
@@ -45,7 +49,7 @@ const variationsSchema = yup
               !isJsonString(value)
             ) {
               return context.createError({
-                message: 'This must be a JSON.',
+                message: translation('message:validation.must-be-json'),
                 path: context.path
               });
             }
@@ -58,7 +62,9 @@ const variationsSchema = yup
               value.length >= VARIATION_VALUE_MAX_LENGTH
             ) {
               return context.createError({
-                message: `The maximum length for this field is ${VARIATION_VALUE_MAX_LENGTH} characters.`,
+                message: translation('message:validation.max-length-string', {
+                  count: VARIATION_VALUE_MAX_LENGTH
+                }),
                 path: context.path
               });
             }
@@ -71,7 +77,9 @@ const variationsSchema = yup
               value.length >= VARIATION_NUMBER_VALUE_MAX_LENGTH
             ) {
               return context.createError({
-                message: `The maximum length for this field is ${VARIATION_NUMBER_VALUE_MAX_LENGTH} numbers.`,
+                message: translation('message:validation.max-length-number', {
+                  count: VARIATION_NUMBER_VALUE_MAX_LENGTH
+                }),
                 path: context.path
               });
             }
@@ -87,7 +95,7 @@ const variationsSchema = yup
                 .length > 1
             ) {
               return context.createError({
-                message: `This must be unique.`,
+                message: translation('message:validation.must-be-unique'),
                 path: context.path
               });
             }
@@ -95,7 +103,7 @@ const variationsSchema = yup
           }),
         name: yup
           .string()
-          .required('This field is required')
+          .required(requiredMessage)
           .max(VARIATION_NAME_MAX_LENGTH),
         description: yup.string().max(VARIATION_DESCRIPTION_MAX_LENGTH)
       })
@@ -109,7 +117,7 @@ export const formSchema = yup.object().shape({
     .required()
     .matches(
       /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
-      "flagId must start with a letter or number and only contain letters, numbers, or '-'"
+      translation('message:validation.flag-id-rule')
     ),
   description: descriptionSchema,
   tags: yup.array().min(1).required(),

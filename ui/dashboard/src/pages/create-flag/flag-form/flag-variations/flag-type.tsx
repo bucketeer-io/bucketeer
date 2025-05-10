@@ -76,14 +76,16 @@ const FlagType = () => {
       value: FeatureVariationType,
       onChange: (value: FeatureVariationType) => void
     ) => {
+      const isBoolean = value === 'BOOLEAN';
+      const isJSON = value === 'JSON';
       const cloneVariations = cloneDeep(defaultVariations);
-      const newVariations =
-        value === 'BOOLEAN'
-          ? cloneVariations
-          : cloneVariations.map(item => ({
-              ...item,
-              value: ''
-            }));
+      const newVariations = isBoolean
+        ? cloneVariations
+        : cloneVariations.map(item => ({
+            ...item,
+            value: isJSON ? '{}' : ''
+          }));
+
       resetField('variations');
       setValue('variations', newVariations);
       setValue('defaultOnVariation', newVariations[0].id);

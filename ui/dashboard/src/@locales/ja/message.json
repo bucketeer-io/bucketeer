@@ -1,4 +1,12 @@
 {
   "required-field": "This field is required.",
-  "flag-updated": "Feature flag updated successfully."
+  "flag-updated": "Feature flag updated successfully.",
+  "validation": {
+    "must-be-number": "This must be a number",
+    "must-be-json": "This must be a JSON",
+    "must-be-unique": "This must be unique",
+    "max-length-number": "The maximum length for this field is {{count}} numbers.",
+    "max-length-string": "The maximum length for this field is {{count}} characters.",
+    "flag-id-rule": "flagId must start with a letter or number and only contain letters, numbers, or '-'"
+  }
 }

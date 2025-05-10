@@ -55,7 +55,7 @@ export default function ReactCodeEditor(props: EditorProps) {
         },
         lineNumbersMinChars: 3,
         bracketPairColorization: { enabled: true },
-        scrollBeyondLastLine: false,
+        scrollBeyondLastLine: true,
         smoothScrolling: true,
         wordWrap: 'on',
         automaticLayout: true,

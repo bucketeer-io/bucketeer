@@ -23,10 +23,20 @@
   @apply !w-fit !min-w-10;
 }
 
-.alwaysShowFoldIcons {
-  @apply !hidden;
+.margin-view-overlays {
+  @apply !pointer-events-none;
+}
+
+.editor-wrapper .alwaysShowFoldIcons,
+.editor-wrapper .cldr,
+.editor-wrapper .codicon {
+  @apply !pointer-events-none !z-[-1] !hidden;
 }
 
 .highlighted-line span {
   @apply !bg-gray-400;
+}
+
+.editor-wrapper .overflow-guard {
+  @apply !flex !gap-x-4;
 }

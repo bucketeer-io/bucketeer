@@ -6,7 +6,7 @@ import { invalidateExperimentResultDetails } from '@queries/experiment-result';
 import { invalidateFeature } from '@queries/feature-details';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast, useToggleOpen } from 'hooks';
-import { Experiment, Feature, GoalResult } from '@types';
+import { Experiment, Feature, GoalResult, StrategyType } from '@types';
 import { getData, getTimeSeries } from 'utils/chart';
 import { cn } from 'utils/style';
 import { IconChevronDown } from '@icons';
@@ -84,7 +84,7 @@ const GoalResultItem = ({
             environmentId,
             defaultStrategy: {
               ...feature.defaultStrategy,
-              type: 'FIXED',
+              type: StrategyType.FIXED,
               fixedStrategy: {
                 variation: values.variation
               }

@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { Trans } from 'react-i18next';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryAccounts } from '@queries/accounts';
@@ -10,13 +11,17 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { uniqBy } from 'lodash';
-import { Feature } from '@types';
+import { Feature, TagChange } from '@types';
+import { useFormatDateTime } from 'utils/date-time';
+import { IconWatch } from '@icons';
 import Button from 'components/button';
 import { CreatableSelect } from 'components/creatable-select';
 import Form from 'components/form';
+import Icon from 'components/icon';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
 import Card from 'elements/card';
+import DateTooltip from 'elements/date-tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import { generalInfoFormSchema, GeneralInfoFormType } from './form-schema';
 import SaveWithCommentModal from './modals/save-with-comment';
@@ -27,6 +32,7 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
+  const formatDateTime = useFormatDateTime();
 
   const [isOpenSaveModal, onOpenSaveModal, onCloseSaveModal] =
     useToggleOpen(false);
@@ -92,6 +98,35 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
     return currentAccount?.email || maintainer;
   }, [accounts, maintainer]);
 
+  const handleCheckTags = useCallback(
+    (tagValues: string[]) => {
+      const tagChanges: TagChange[] = [];
+      const { tags } = feature;
+      tags?.forEach(item => {
+        if (!tagValues.find(tag => tag === item)) {
+          tagChanges.push({
+            changeType: 'DELETE',
+            tag: item
+          });
+        }
+      });
+      tagValues.forEach(item => {
+        const currentTag = tags.find(tag => tag === item);
+        if (!currentTag) {
+          tagChanges.push({
+            changeType: 'CREATE',
+            tag: item
+          });
+        }
+      });
+
+      return {
+        tagChanges
+      };
+    },
+    [feature]
+  );
+
   const onSubmit = useCallback(async () => {
     try {
       const values = getValues();
@@ -105,9 +140,7 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
         id: flagId,
         environmentId: currentEnvironment.id,
         comment,
-        tags: {
-          values: tags
-        },
+        ...handleCheckTags(tags),
         ...rest
       });
 
@@ -125,15 +158,36 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
     } catch (error) {
       errorNotify(error);
     }
-  }, [currentEnvironment]);
+  }, [currentEnvironment, feature]);
 
   return (
     <FormProvider {...form}>
       <Form onSubmit={form.handleSubmit(onSubmit)}>
         <Card>
-          <p className="typo-head-bold-small text-gray-800">
-            {t('general-info')}
-          </p>
+          <div className="flex items-center gap-x-2">
+            <p className="typo-head-bold-small text-gray-800">
+              {t('general-info')}
+            </p>
+            <DateTooltip
+              trigger={
+                <div className="flex items-center gap-x-2 text-gray-700 typo-para-small whitespace-nowrap -mb-1">
+                  <Icon icon={IconWatch} size={'xxs'} />
+                  {Number(feature.createdAt) === 0 ? (
+                    t('never')
+                  ) : (
+                    <Trans
+                      i18nKey={'common:time-created'}
+                      values={{
+                        time: formatDateTime(feature.createdAt)
+                      }}
+                    />
+                  )}
+                </div>
+              }
+              date={Number(feature.createdAt) === 0 ? null : feature.createdAt}
+            />
+          </div>
+
           <Form.Field
             name="maintainer"
             render={({ field }) => (
