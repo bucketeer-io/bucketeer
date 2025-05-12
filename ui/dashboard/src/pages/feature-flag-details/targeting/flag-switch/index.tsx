@@ -24,11 +24,11 @@ const FlagSwitch = () => {
 
   const options = [
     {
-      label: t('true'),
+      label: t('common:true'),
       value: true
     },
     {
-      label: t('false'),
+      label: t('common:false'),
       value: false
     }
   ];

@@ -96,7 +96,7 @@ export const formSchema = yup.object().shape({
       variationId: yup.string().required(requiredMessage)
     })
   ),
-  targetIndividualRules: yup
+  individualRules: yup
     .array()
     .required()
     .of(
