@@ -48,8 +48,8 @@ const PrerequisiteRule = ({
             {prerequisites.map((prerequisite, prerequisiteIndex) => (
               <ConditionForm
                 key={prerequisiteIndex}
-                prerequisites={prerequisites}
                 features={features}
+                featureId={feature.id}
                 prerequisite={prerequisite}
                 prerequisiteIndex={prerequisiteIndex}
                 type={prerequisiteIndex === 0 ? 'if' : 'and'}
