@@ -1,12 +1,13 @@
 import { useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
-import { DefaultRuleStrategyType, Feature } from '@types';
+import { Feature, StrategyType } from '@types';
 import { IconCircleDashed, IconInfo, IconPercentage } from '@icons';
 import Card from 'pages/feature-flag-details/elements/card';
+import Form from 'components/form';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
-import { TargetingSchema } from '../form-schema';
+import { DefaultRuleSchema, TargetingSchema } from '../form-schema';
 import Strategy from '../segment-rule/strategy';
 import { VariationOption } from '../segment-rule/variation';
 import { getDefaultRolloutStrategy } from '../utils';
@@ -14,7 +15,7 @@ import { getDefaultRolloutStrategy } from '../utils';
 const DefaultRule = ({ feature }: { feature: Feature }) => {
   const { t } = useTranslation(['form']);
 
-  const { watch, setFocus, setValue } = useFormContext<TargetingSchema>();
+  const { control, watch, setFocus } = useFormContext<TargetingSchema>();
 
   const commonName = 'defaultRule';
   const defaultRule = watch(commonName);
@@ -25,21 +26,21 @@ const DefaultRule = ({ feature }: { feature: Feature }) => {
     const variations = feature.variations.map(item => ({
       label: item.name || item.value,
       value: item.id,
-      type: DefaultRuleStrategyType.FIXED,
+      type: StrategyType.FIXED,
       variationValue: item.value
     }));
     return [
       ...variations,
       {
         label: t('form:manual-percentage'),
-        value: DefaultRuleStrategyType.MANUAL,
-        type: DefaultRuleStrategyType.MANUAL,
+        value: StrategyType.MANUAL,
+        type: StrategyType.MANUAL,
         icon: IconPercentage
       },
       {
         label: t('common:source-type.progressive-rollout'),
-        value: DefaultRuleStrategyType.ROLLOUT,
-        type: DefaultRuleStrategyType.ROLLOUT,
+        value: StrategyType.ROLLOUT,
+        type: StrategyType.ROLLOUT,
         icon: IconCircleDashed
       }
     ];
@@ -51,14 +52,13 @@ const DefaultRule = ({ feature }: { feature: Feature }) => {
   );
 
   const handleSelectStrategy = useCallback(
-    (item: VariationOption) => {
+    (item: VariationOption, onChange: (item: DefaultRuleSchema) => void) => {
       const { type, value } = item;
-      const isFixed = type === DefaultRuleStrategyType.FIXED;
-      const isRollout = type === DefaultRuleStrategyType.ROLLOUT;
-
-      setValue(commonName, {
+      const isFixed = type === StrategyType.FIXED;
+      const isRollout = type === StrategyType.ROLLOUT;
+      onChange({
         ...defaultRule,
-        type: type as DefaultRuleStrategyType,
+        type: type as StrategyType,
         currentOption: value,
         fixedStrategy: {
           variation: isFixed ? value : ''
@@ -99,13 +99,25 @@ const DefaultRule = ({ feature }: { feature: Feature }) => {
           {t('targeting.default-rule-desc')}
         </p>
       </div>
-      <Strategy
-        feature={feature}
-        rootName={commonName}
-        strategyName={'manualStrategy'}
-        variationOptions={variationOptions}
-        percentageValueCount={percentageValueCount}
-        handleSelectStrategy={handleSelectStrategy}
+      <Form.Field
+        control={control}
+        name="defaultRule"
+        render={({ field }) => {
+          return (
+            <Form.Item>
+              <Strategy
+                feature={feature}
+                rootName={commonName}
+                strategyName={'manualStrategy'}
+                variationOptions={variationOptions}
+                percentageValueCount={percentageValueCount}
+                handleSelectStrategy={item =>
+                  handleSelectStrategy(item, field.onChange)
+                }
+              />
+            </Form.Item>
+          );
+        }}
       />
     </Card>
   );

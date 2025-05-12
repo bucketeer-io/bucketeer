@@ -20,7 +20,6 @@ import { PrerequisiteSchema } from '../types';
 interface Props {
   features: Feature[];
   type: 'if' | 'and';
-  prerequisite: PrerequisiteSchema;
   isDisabledDelete: boolean;
   prerequisiteIndex: number;
   featureId: string;
@@ -32,7 +31,6 @@ const ConditionForm = forwardRef(
     {
       features,
       type,
-      prerequisite,
       isDisabledDelete,
       prerequisiteIndex,
       featureId,
@@ -51,9 +49,7 @@ const ConditionForm = forwardRef(
       () => `prerequisites.${prerequisiteIndex}`,
       [prerequisiteIndex]
     );
-
     const currentFeatureId = watch(`${commonName}.featureId`);
-
     const currentFeature = useMemo(
       () => features.find(item => item.id === currentFeatureId),
       [currentFeatureId, features]
@@ -147,10 +143,8 @@ const ConditionForm = forwardRef(
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         label={
-                          variationOptions?.find(item =>
-                            [field.value, prerequisite.variationId].includes(
-                              item.value
-                            )
+                          variationOptions?.find(
+                            item => field.value === item.value
                           )?.label
                         }
                         placeholder={t('experiments.select-variation')}

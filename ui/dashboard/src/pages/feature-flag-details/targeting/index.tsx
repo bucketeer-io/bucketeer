@@ -33,7 +33,8 @@ import {
   handleCheckIndividualRules,
   handleCheckPrerequisites,
   handleCheckSegmentRules,
-  handleCreateDefaultValues
+  handleCreateDefaultValues,
+  handleGetDefaultRuleStrategy
 } from './utils';
 
 const TargetingDivider = () => (
@@ -56,7 +57,6 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
   });
 
   const features = useMemo(() => collection?.features || [], [collection]);
-  console.log({ feature });
 
   const form = useForm<TargetingSchema>({
     resolver: yupResolver(formSchema),
@@ -65,8 +65,9 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
 
   const {
     control,
-    formState: { isDirty, isValid },
-    watch
+    formState: { isDirty, isValid, isSubmitting },
+    watch,
+    reset
   } = form;
 
   const isShowRules = watch('isShowRules');
@@ -118,8 +119,13 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
   const onSubmit = useCallback(
     async (values: TargetingSchema) => {
       try {
-        const { enabled, individualRules, segmentRules, prerequisites } =
-          values;
+        const {
+          enabled,
+          individualRules,
+          segmentRules,
+          prerequisites,
+          defaultRule
+        } = values;
         const {
           id,
           rules,
@@ -130,6 +136,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
           id,
           environmentId: currentEnvironment.id,
           enabled,
+          defaultStrategy: handleGetDefaultRuleStrategy(defaultRule),
           ruleChanges: handleCheckSegmentRules(rules, segmentRules),
           targetChanges: handleCheckIndividualRules(targets, individualRules),
           prerequisiteChanges: handleCheckPrerequisites(
@@ -144,6 +151,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
           });
           invalidateFeature(queryClient);
           invalidateFeatures(queryClient);
+          reset(handleCreateDefaultValues(resp.feature));
         }
       } catch (error) {
         errorNotify(error);
@@ -222,7 +230,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
               </Button>
             }
             secondaryButton={
-              <Button disabled={!isDirty || !isValid}>
+              <Button loading={isSubmitting} disabled={!isDirty || !isValid}>
                 {t('save-with-comment')}
               </Button>
             }

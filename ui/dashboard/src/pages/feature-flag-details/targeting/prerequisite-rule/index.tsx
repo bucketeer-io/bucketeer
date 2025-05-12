@@ -45,12 +45,11 @@ const PrerequisiteRule = ({
                 <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
               </div>
             </div>
-            {prerequisites.map((prerequisite, prerequisiteIndex) => (
+            {prerequisites.map((_, prerequisiteIndex) => (
               <ConditionForm
                 key={prerequisiteIndex}
                 features={features}
                 featureId={feature.id}
-                prerequisite={prerequisite}
                 prerequisiteIndex={prerequisiteIndex}
                 type={prerequisiteIndex === 0 ? 'if' : 'and'}
                 isDisabledDelete={prerequisites.length <= 1}
