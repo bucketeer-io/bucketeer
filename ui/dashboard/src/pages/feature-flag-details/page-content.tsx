@@ -18,6 +18,7 @@ import { Tabs, TabsList, TabsContent, TabsLink } from 'components/tabs-link';
 import PageLayout from 'elements/page-layout';
 import HistoryPage from './history';
 import SettingsPage from './settings';
+import TargetingPage from './targeting';
 import { TabItem } from './types';
 import Variation from './variation';
 
@@ -95,6 +96,10 @@ const PageContent = ({ feature }: { feature: Feature }) => {
             <Route
               path={PAGE_PATH_FEATURE_VARIATION}
               element={<Variation feature={feature} />}
+            />
+            <Route
+              path={PAGE_PATH_FEATURE_TARGETING}
+              element={<TargetingPage feature={feature} />}
             />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
