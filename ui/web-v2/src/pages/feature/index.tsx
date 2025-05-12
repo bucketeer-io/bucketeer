@@ -324,13 +324,14 @@ export const FeatureIndexPage: FC = memo(() => {
           variationType: data.variationType,
           variations: data.variations.map((variation) => {
             return {
+              id: variation.id,
               value: variation.value,
               name: variation.name,
               description: variation.description
             };
           }),
-          defaultOnVariationIndex: data.onVariation.value,
-          defaultOffVariationIndex: data.offVariation.value
+          defaultOnVariationId: data.onVariation.value,
+          defaultOffVariationId: data.offVariation.value
         })
       ).then(() => {
         setOpen(false);

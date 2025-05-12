@@ -55,6 +55,7 @@ export const featuresAdapter = createEntityAdapter({
 export const { selectAll, selectById } = featuresAdapter.getSelectors();
 
 export interface VariationParams {
+  id: string;
   value: string;
   name: string;
   description: string;
@@ -67,8 +68,8 @@ export interface CreateFeatureParams {
   tagsList: Array<string>;
   variationType: Feature.VariationTypeMap[keyof Feature.VariationTypeMap];
   variations: VariationParams[];
-  defaultOnVariationIndex: number;
-  defaultOffVariationIndex: number;
+  defaultOnVariationId: string;
+  defaultOffVariationId: string;
 }
 
 export const createFeature = createAsyncThunk<
@@ -82,6 +83,7 @@ export const createFeature = createAsyncThunk<
 
   params.variations.forEach((v) => {
     const variation = new Variation();
+    variation.setId(v.id);
     variation.setValue(v.value);
     variation.setName(v.name);
     variation.setDescription(v.description);
@@ -95,16 +97,19 @@ export const createFeature = createAsyncThunk<
   cmd.setTagsList(params.tagsList);
   cmd.setVariationsList(variations);
   cmd.setVariationType(params.variationType);
-  if (params.defaultOnVariationIndex >= 0) {
-    const int32Value = new Int32Value();
-    int32Value.setValue(params.defaultOnVariationIndex);
-    cmd.setDefaultOnVariationIndex(int32Value);
-  }
-  if (params.defaultOffVariationIndex >= 0) {
-    const int32Value = new Int32Value();
-    int32Value.setValue(params.defaultOffVariationIndex);
-    cmd.setDefaultOffVariationIndex(int32Value);
-  }
+
+  // TODO: Remove default index and use generated variation id here
+
+  // if (params.defaultOnVariationIndex >= 0) {
+  //   const int32Value = new Int32Value();
+  //   int32Value.setValue(params.defaultOnVariationIndex);
+  //   cmd.setDefaultOnVariationIndex(int32Value);
+  // }
+  // if (params.defaultOffVariationIndex >= 0) {
+  //   const int32Value = new Int32Value();
+  //   int32Value.setValue(params.defaultOffVariationIndex);
+  //   cmd.setDefaultOffVariationIndex(int32Value);
+  // }
   request.setCommand(cmd);
   await featureGrpc.createFeature(request);
   return params.id;
