@@ -99,8 +99,9 @@ const SegmentVariation = ({
       name={commonName}
       render={({ field }) => {
         return (
-          <Form.Item>
+          <Form.Item className="py-0">
             <Strategy
+              label={t('feature-flags.variation')}
               feature={feature}
               rootName={commonName}
               strategyName="rolloutStrategy"

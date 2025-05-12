@@ -17,7 +17,7 @@ import Checkbox from 'components/checkbox';
 import Icon from 'components/icon';
 import Input, { InputProps } from 'components/input';
 
-export type DropdownValue = number | string | boolean;
+export type DropdownValue = number | string;
 
 export type DropdownOption = {
   label: ReactNode;
