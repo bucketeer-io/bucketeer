@@ -76,7 +76,7 @@ const PrerequisiteRule = ({
               disabled={isDisableAddPrerequisite}
               onClick={() => onAddPrerequisite()}
             >
-              <Icon icon={IconPlus} className="flex-center" size={'sm'} />{' '}
+              <Icon icon={IconPlus} className="flex-center" size={'sm'} />
               {t('form:feature-flags.add-prerequisites')}
             </Button>
           </Card>

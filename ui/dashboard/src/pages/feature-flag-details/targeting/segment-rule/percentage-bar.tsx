@@ -15,7 +15,7 @@ const PercentageBar = ({ weight, currentIndex, isRoundedFull }: Props) => {
       })}
       style={{
         width: `${weight || 0}%`,
-        backgroundColor: COLORS[currentIndex % 15]
+        backgroundColor: COLORS[currentIndex % COLORS.length]
       }}
     />
   );

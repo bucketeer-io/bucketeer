@@ -338,7 +338,12 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
           />
           <ButtonBar
             primaryButton={
-              <Button type="button" variant={'secondary-2'} className="size-12">
+              <Button
+                type="button"
+                variant={'secondary-2'}
+                className="size-12"
+                onClick={() => reset(handleCreateDefaultValues(feature))}
+              >
                 <Icon icon={IconDebugger} color="gray-500" />
               </Button>
             }

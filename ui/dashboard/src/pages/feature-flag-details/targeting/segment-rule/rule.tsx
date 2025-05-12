@@ -311,7 +311,6 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                     name={getFieldName('values', clauseIndex)}
                     render={({ field }) => {
                       const { value, ...rest } = field;
-                      console.log(value);
                       const fieldValue = isDate
                         ? value[0]
                           ? Number(value[0]) * 1000
