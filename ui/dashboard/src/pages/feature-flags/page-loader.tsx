@@ -107,11 +107,12 @@ const PageLoader = () => {
       try {
         if (selectedFlag) {
           const { scheduleType, comment, scheduleAt } = additionalValues || {};
-          const isEnable = scheduleType === 'ENABLE';
           let resp;
           if (['ENABLE', 'DISABLE'].includes(scheduleType as string)) {
-            resp = await handleUpdateFeature({
-              enabled: isEnable,
+            resp = await featureUpdater({
+              id: selectedFlag.id,
+              environmentId: currentEnvironment.id,
+              enabled: !selectedFlag.enabled,
               comment
             });
           } else {
@@ -132,7 +133,6 @@ const PageLoader = () => {
               message: t('message:flag-updated')
             });
             invalidateFeatures(queryClient);
-            onCloseConfirmModal();
             onCloseConfirmRequiredModal();
           }
         }
@@ -195,7 +195,7 @@ const PageLoader = () => {
           isOpen={openConfirmRequiredModal}
           feature={selectedFlag}
           isShowScheduleSelect={true}
-          isShowRolloutWarning={true}
+          isShowRolloutWarning={selectedFlag.enabled}
           onClose={onCloseConfirmRequiredModal}
           onSubmit={handleToggleFeatureState}
         />
