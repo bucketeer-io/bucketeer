@@ -82,7 +82,10 @@ const FlagSwitch = () => {
                               }}
                             />
                           </div>
-                          <p className="capitalize">{`${field.value}`}</p>
+                          <p className="capitalize">
+                            {options.find(item => !!item.value === field.value)
+                              ?.label || ''}
+                          </p>
                         </div>
                       }
                     />
@@ -99,7 +102,7 @@ const FlagSwitch = () => {
                           }
                           label={item.label}
                           value={item.value}
-                          onSelectOption={field.onChange}
+                          onSelectOption={value => field.onChange(!!value)}
                         />
                       ))}
                     </DropdownMenuContent>

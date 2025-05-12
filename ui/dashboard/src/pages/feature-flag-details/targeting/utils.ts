@@ -148,7 +148,12 @@ export const handleCreateDefaultValues = (feature: Feature) => {
       manualStrategy: _defaultStrategy?.rolloutStrategy
     },
     enabled,
-    isShowRules: enabled
+    isShowRules: enabled,
+    comment: '',
+    requireComment: false,
+    resetSampling: false,
+    scheduleType: enabled ? 'DISABLE' : 'ENABLE',
+    scheduleAt: String(Math.floor((new Date().getTime() + 3600000) / 1000))
   } as TargetingSchema;
 };
 

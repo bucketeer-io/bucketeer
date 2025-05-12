@@ -29,12 +29,13 @@ import { TargetingSchema } from '../form-schema';
 import { RuleClauseType } from '../types';
 
 interface Props {
+  feature: Feature;
   features: Feature[];
   segmentIndex: number;
   userSegments?: UserSegment[];
 }
 
-const RuleForm = ({ features, segmentIndex, userSegments }: Props) => {
+const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
   const { t } = useTranslation(['form', 'common', 'table']);
 
   const methods = useFormContext<TargetingSchema>();
@@ -57,14 +58,18 @@ const RuleForm = ({ features, segmentIndex, userSegments }: Props) => {
     clauseId: clauses.find(clause => clause.id === item.id)?.clauseId
   }));
 
-  const flagOptions = useMemo(
-    () =>
-      features?.map(item => ({
+  const flagOptions = useMemo(() => {
+    const flagsSelected = clausesWatch
+      .filter(item => item.type === RuleClauseType.FEATURE_FLAG)
+      ?.map(item => item.attribute);
+
+    return features
+      ?.filter(item => ![...flagsSelected, feature.id]?.includes(item.id))
+      .map(item => ({
         label: item.name,
         value: item.id
-      })),
-    [features]
-  );
+      }));
+  }, [features, [...clausesWatch], feature]);
 
   const segmentOptions = userSegments?.map(item => ({
     label: item.name,

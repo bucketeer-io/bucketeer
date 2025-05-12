@@ -141,6 +141,7 @@ const TargetSegmentRule = ({
                 </div>
                 <Fragment>
                   <RuleForm
+                    feature={feature}
                     features={features}
                     segmentIndex={segmentIndex}
                     userSegments={userSegments}

@@ -1,8 +1,14 @@
 import { useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { Trans } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import {
+  PAGE_PATH_FEATURE_AUTOOPS,
+  PAGE_PATH_FEATURES
+} from 'constants/routing';
 import { useTranslation } from 'i18n';
-import { Feature, StrategyType } from '@types';
-import { IconCircleDashed, IconInfo, IconPercentage } from '@icons';
+import { Feature, Rollout, StrategyType } from '@types';
+import { IconInfo, IconInfoFilled, IconPercentage } from '@icons';
 import Card from 'pages/feature-flag-details/elements/card';
 import Form from 'components/form';
 import Icon from 'components/icon';
@@ -13,7 +19,15 @@ import { VariationOption } from '../segment-rule/variation';
 import { getDefaultRolloutStrategy } from '../utils';
 import DefaultRuleRollout from './rollout';
 
-const DefaultRule = ({ feature }: { feature: Feature }) => {
+const DefaultRule = ({
+  urlCode,
+  feature,
+  waitingRunningRollouts
+}: {
+  urlCode: string;
+  feature: Feature;
+  waitingRunningRollouts: Rollout[];
+}) => {
   const { t } = useTranslation(['form']);
 
   const { control, watch, setFocus } = useFormContext<TargetingSchema>();
@@ -37,13 +51,13 @@ const DefaultRule = ({ feature }: { feature: Feature }) => {
         value: StrategyType.MANUAL,
         type: StrategyType.MANUAL,
         icon: IconPercentage
-      },
-      {
-        label: t('common:source-type.progressive-rollout'),
-        value: StrategyType.ROLLOUT,
-        type: StrategyType.ROLLOUT,
-        icon: IconCircleDashed
       }
+      // {
+      //   label: t('common:source-type.progressive-rollout'),
+      //   value: StrategyType.ROLLOUT,
+      //   type: StrategyType.ROLLOUT,
+      //   icon: IconCircleDashed
+      // }
     ];
   }, [feature]);
 
@@ -83,6 +97,24 @@ const DefaultRule = ({ feature }: { feature: Feature }) => {
 
   return (
     <Card>
+      {waitingRunningRollouts.length > 0 && (
+        <div className="flex items-center gap-x-3 p-4 rounded bg-accent-blue-50 border-l-4 border-accent-blue-500 text-accent-blue-500 typo-para-medium">
+          <Icon icon={IconInfoFilled} color="accent-blue-500" size="sm" />
+          <div className="flex items-center gap-x-1">
+            <Trans
+              i18nKey={'form:targeting.rollout-running-message'}
+              components={{
+                comp: (
+                  <Link
+                    className="text-primary-500 underline"
+                    to={`/${urlCode}${PAGE_PATH_FEATURES}/${feature.id}${PAGE_PATH_FEATURE_AUTOOPS}`}
+                  />
+                )
+              }}
+            />
+          </div>
+        </div>
+      )}
       <div className="flex flex-col w-full gap-y-3">
         <div className="flex items-center gap-x-2">
           <p className="typo-para-medium text-gray-700">

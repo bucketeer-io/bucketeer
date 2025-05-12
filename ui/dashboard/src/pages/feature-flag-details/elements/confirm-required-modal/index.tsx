@@ -1,5 +1,7 @@
+import { ReactNode } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
+import { cn } from 'utils/style';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
@@ -9,6 +11,7 @@ import TextArea from 'components/textarea';
 
 export type ConfirmationRequiredModalProps = {
   isOpen: boolean;
+  children?: ReactNode;
   onClose: () => void;
   onSubmit: () => void;
 };
@@ -20,6 +23,7 @@ export interface ConfirmRequiredForm {
 
 const ConfirmationRequiredModal = ({
   isOpen,
+  children,
   onClose,
   onSubmit
 }: ConfirmationRequiredModalProps) => {
@@ -32,6 +36,7 @@ const ConfirmationRequiredModal = ({
   } = useFormContext();
 
   const isRequireComment = watch('requireComment');
+  const isShowSchedule = watch('scheduleType') === 'SCHEDULE';
 
   return (
     <DialogModal
@@ -46,30 +51,36 @@ const ConfirmationRequiredModal = ({
         </div>
 
         <div className="flex flex-col w-full px-5 pb-5">
-          <Form.Field
-            control={control}
-            name="comment"
-            render={({ field }) => (
-              <Form.Item className="py-0">
-                <Form.Label required={isRequireComment}>
-                  {t('form:comment-for-update')}
-                </Form.Label>
-                <Form.Control>
-                  <TextArea
-                    placeholder={`${t('form:placeholder-comment')}`}
-                    rows={3}
-                    {...field}
-                  />
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
-          />
+          {!isShowSchedule && (
+            <Form.Field
+              control={control}
+              name="comment"
+              render={({ field }) => (
+                <Form.Item className="py-0">
+                  <Form.Label required={isRequireComment}>
+                    {t('form:comment-for-update')}
+                  </Form.Label>
+                  <Form.Control>
+                    <TextArea
+                      placeholder={`${t('form:placeholder-comment')}`}
+                      rows={3}
+                      {...field}
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+          )}
           <Form.Field
             control={control}
             name="resetSampling"
             render={({ field }) => (
-              <Form.Item className="flex flex-col w-full py-0 gap-y-4 mt-5">
+              <Form.Item
+                className={cn('flex flex-col w-full py-0 gap-y-4 mt-5', {
+                  'mt-0': isShowSchedule
+                })}
+              >
                 <Form.Control>
                   <Checkbox
                     ref={field.ref}
@@ -82,6 +93,7 @@ const ConfirmationRequiredModal = ({
               </Form.Item>
             )}
           />
+          {children}
         </div>
         <ButtonBar
           secondaryButton={

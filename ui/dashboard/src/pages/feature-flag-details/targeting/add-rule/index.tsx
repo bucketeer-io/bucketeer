@@ -14,13 +14,15 @@ import {
 } from 'components/dropdown';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
-import { IndividualRuleItem, RuleCategory } from '../types';
+import { RuleCategory } from '../types';
 
 const AddRule = ({
-  individualRules,
+  isDisableAddPrerequisite,
+  isDisableAddIndividualRules,
   onAddRule
 }: {
-  individualRules: IndividualRuleItem[];
+  isDisableAddPrerequisite: boolean;
+  isDisableAddIndividualRules: boolean;
   onAddRule: (rule: RuleCategory) => void;
 }) => {
   const { t } = useTranslation(['form', 'table']);
@@ -31,14 +33,15 @@ const AddRule = ({
         label: t('feature-flags.prerequisites'),
         value: RuleCategory.PREREQUISITE,
         tooltip: t('targeting.prerequisite-tooltip'),
-        icon: IconPrerequisite
+        icon: IconPrerequisite,
+        disabled: isDisableAddPrerequisite
       },
       {
         label: t('targeting.individual-targeting'),
         value: RuleCategory.INDIVIDUAL,
         tooltip: t('targeting.individual-tooltip'),
         icon: IconUserOutlined,
-        disabled: individualRules.length > 0
+        disabled: isDisableAddIndividualRules
       },
       {
         label: t('targeting.custom-rule'),
@@ -47,7 +50,7 @@ const AddRule = ({
         icon: IconSetting
       }
     ],
-    [individualRules]
+    [isDisableAddIndividualRules, isDisableAddPrerequisite]
   );
 
   return (

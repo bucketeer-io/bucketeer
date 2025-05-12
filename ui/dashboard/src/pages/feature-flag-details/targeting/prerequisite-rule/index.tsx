@@ -6,12 +6,14 @@ import Icon from 'components/icon';
 import Card from '../../elements/card';
 import { PrerequisiteSchema } from '../types';
 import ConditionForm from './condition';
-import PrerequisiteBanner from './prequisite-banner';
+import PrerequisiteBanner from './prerequisite-banner';
 
 interface Props {
   feature: Feature;
   features: Feature[];
   prerequisites: PrerequisiteSchema[];
+  hasPrerequisiteFlags: Feature[];
+  isDisableAddPrerequisite: boolean;
   onRemovePrerequisite: (index: number) => void;
   onAddPrerequisite: () => void;
 }
@@ -20,21 +22,19 @@ const PrerequisiteRule = ({
   feature,
   features,
   prerequisites,
+  hasPrerequisiteFlags,
+  isDisableAddPrerequisite,
   onRemovePrerequisite,
   onAddPrerequisite
 }: Props) => {
   const { t } = useTranslation(['table', 'form']);
 
   return (
-    prerequisites.length > 0 && (
-      <div className="flex flex-col gap-y-6 w-full">
-        {feature?.prerequisites?.length > 0 && (
-          <PrerequisiteBanner
-            features={features}
-            prerequisite={feature.prerequisites}
-          />
-        )}
-
+    <div className="flex flex-col gap-y-6 w-full">
+      {hasPrerequisiteFlags?.length > 0 && (
+        <PrerequisiteBanner hasPrerequisiteFlags={hasPrerequisiteFlags} />
+      )}
+      {prerequisites.length > 0 && (
         <div className="flex flex-col w-full gap-y-6">
           <Card>
             <div>
@@ -52,7 +52,6 @@ const PrerequisiteRule = ({
                 featureId={feature.id}
                 prerequisiteIndex={prerequisiteIndex}
                 type={prerequisiteIndex === 0 ? 'if' : 'and'}
-                isDisabledDelete={prerequisites.length <= 1}
                 onDeleteCondition={() =>
                   onRemovePrerequisite(prerequisiteIndex)
                 }
@@ -63,20 +62,16 @@ const PrerequisiteRule = ({
               type="button"
               variant={'text'}
               className="w-fit gap-x-2 h-6 !p-0"
+              disabled={isDisableAddPrerequisite}
               onClick={() => onAddPrerequisite()}
             >
-              <Icon
-                icon={IconPlus}
-                color="primary-500"
-                className="flex-center"
-                size={'sm'}
-              />{' '}
+              <Icon icon={IconPlus} className="flex-center" size={'sm'} />{' '}
               {t('form:feature-flags.add-prerequisites')}
             </Button>
           </Card>
         </div>
-      </div>
-    )
+      )}
+    </div>
   );
 };
 
