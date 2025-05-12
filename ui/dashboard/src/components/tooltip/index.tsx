@@ -14,6 +14,7 @@ export type TooltipProps = {
   sideOffset?: number;
   triggerCls?: string;
   side?: 'top' | 'right' | 'bottom' | 'left';
+  showArrow?: boolean;
 };
 
 const TooltipProvider = TooltipPrimitive.Provider;
@@ -55,7 +56,8 @@ const Tooltip = forwardRef(
       asChild = true,
       sideOffset = 5,
       triggerCls,
-      side = 'top'
+      side = 'top',
+      showArrow = true
     }: TooltipProps,
     ref: Ref<HTMLDivElement>
   ) => {
@@ -80,7 +82,7 @@ const Tooltip = forwardRef(
               side={side}
             >
               {content}
-              <TooltipArrow className="fill-gray-700" />
+              {showArrow && <TooltipArrow className="fill-gray-700" />}
             </TooltipContent>
           )}
         </TooltipRoot>

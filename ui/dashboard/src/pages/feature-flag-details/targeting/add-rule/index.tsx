@@ -6,7 +6,6 @@ import {
   IconSetting,
   IconUserOutlined
 } from '@icons';
-import Button from 'components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,27 +14,32 @@ import {
 } from 'components/dropdown';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
+import { RuleCategory } from '../types';
 
-const AddRule = () => {
+const AddRule = ({
+  onAddRule
+}: {
+  onAddRule: (rule: RuleCategory) => void;
+}) => {
   const { t } = useTranslation(['form', 'table']);
 
   const options = useMemo(
     () => [
       {
         label: t('feature-flags.prerequisites'),
-        value: 'prerequisites',
+        value: RuleCategory.PREREQUISITE,
         tooltip: t('targeting.prerequisite-tooltip'),
         icon: IconPrerequisite
       },
       {
         label: t('targeting.individual-targeting'),
-        value: 'individual',
+        value: RuleCategory.INDIVIDUAL,
         tooltip: t('targeting.individual-tooltip'),
         icon: IconUserOutlined
       },
       {
         label: t('targeting.custom-rule'),
-        value: 'custom',
+        value: RuleCategory.CUSTOM,
         tooltip: t('targeting.custom-rule-tooltip'),
         icon: IconSetting
       }
@@ -47,10 +51,10 @@ const AddRule = () => {
     <DropdownMenu>
       <DropdownMenuTrigger
         trigger={
-          <Button variant="text" className="h-6 p-0">
+          <div className="flex items-center gap-x-2 h-6 p-0 typo-para-medium text-primary-500">
             <Icon icon={IconPlus} size={'md'} />
             {t('table:feature-flags.add-rule')}
-          </Button>
+          </div>
         }
         showArrow={false}
         className="w-full [&>div]:flex-center border-dashed !shadow-none"
@@ -59,15 +63,18 @@ const AddRule = () => {
         {options.map((item, index) => (
           <Tooltip
             side="right"
+            sideOffset={10}
             align="start"
-            className="max-w-[172px] bg-white text-gray-600 shadow-card"
+            className="w-[180px] p-3 bg-white typo-para-small text-gray-600 shadow-card"
             key={index}
             content={item.tooltip}
+            showArrow={false}
             trigger={
               <DropdownMenuItem
                 icon={item.icon}
                 label={item.label}
                 value={item.value}
+                onSelectOption={value => onAddRule(value as RuleCategory)}
               />
             }
           />
