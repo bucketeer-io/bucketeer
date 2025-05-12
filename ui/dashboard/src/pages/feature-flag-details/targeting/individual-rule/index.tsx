@@ -131,6 +131,7 @@ const IndividualRule = ({ individualRules }: Props) => {
                         variant={'secondary-2'}
                         type="button"
                         size={'icon'}
+                        tabIndex={-1}
                         onClick={() =>
                           handleCopyUserId(field.value?.join(', '))
                         }

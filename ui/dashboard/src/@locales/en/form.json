@@ -295,5 +295,6 @@
     "for": "For",
     "total-duration": "Total duration: <b>{{value}}</b>",
     "rollout-running-message": "To update the Default Strategy, you must stop or delete the current <comp>Progressive Rollout</comp>"
-  }
+  },
+  "has-rollout-running": "There is a <comp>Progressive Rollout</comp> in progress. It will stop it."
 }

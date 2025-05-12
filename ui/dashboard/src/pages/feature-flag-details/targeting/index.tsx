@@ -15,14 +15,13 @@ import { Feature } from '@types';
 import { IconDebugger } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import { ReactDatePicker } from 'components/date-time-picker';
 import Divider from 'components/divider';
 import Form from 'components/form';
 import Icon from 'components/icon';
-import { RadioGroup, RadioGroupItem } from 'components/radio';
-import ToastMessage from 'components/toast';
 import PageLayout from 'elements/page-layout';
-import ConfirmationRequiredModal from '../elements/confirm-required-modal';
+import ConfirmationRequiredModal, {
+  ConfirmRequiredValues
+} from '../elements/confirm-required-modal';
 import AddRule from './add-rule';
 import AudienceTraffic from './audience-traffic';
 import { initialPrerequisite } from './constants';
@@ -88,9 +87,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
     control,
     formState: { isDirty, isValid, dirtyFields },
     watch,
-    setValue,
-    reset,
-    resetField
+    reset
   } = form;
 
   const isShowRules = watch('isShowRules');
@@ -167,33 +164,23 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
     [prerequisites, feature]
   );
 
-  const handleOpenConfirmModal = useCallback(() => {
-    if (currentEnvironment.requireComment) setValue('requireComment', true);
-    onOpenConfirmModal();
-  }, [currentEnvironment]);
-
-  const handleCloseConfirmModal = useCallback(() => {
-    setValue('requireComment', false);
-    resetField('comment', {
-      defaultValue: ''
-    });
-    onCloseConfirmModal();
-  }, [currentEnvironment]);
-
   const onSubmit = useCallback(
-    async (values: TargetingSchema) => {
+    async (
+      values: TargetingSchema,
+      additionalValues?: ConfirmRequiredValues
+    ) => {
       try {
         const {
           enabled,
           individualRules,
           segmentRules,
           prerequisites,
-          defaultRule,
-          comment,
-          resetSampling,
-          scheduleType,
-          scheduleAt
+          defaultRule
         } = values;
+
+        const { comment, resetSampling, scheduleType, scheduleAt } =
+          additionalValues || {};
+
         const {
           id,
           rules,
@@ -243,7 +230,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
               isScheduleUpdate ? feature : (resp as FeatureResponse)?.feature
             )
           );
-          handleCloseConfirmModal();
+          onCloseConfirmModal();
         }
       } catch (error) {
         errorNotify(error);
@@ -256,7 +243,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
     <PageLayout.Content className="p-6 pt-0 gap-y-6 min-w-[900px]">
       <FormProvider {...form}>
         <Form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(values => onSubmit(values))}
           className="flex flex-col w-full items-center"
         >
           <AudienceTraffic />
@@ -335,107 +322,26 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
               <Button
                 type="button"
                 disabled={!isDirty || !isValid}
-                onClick={handleOpenConfirmModal}
+                onClick={onOpenConfirmModal}
               >
                 {t('save-with-comment')}
               </Button>
             }
           />
-          {isOpenConfirmModal && (
-            <ConfirmationRequiredModal
-              isOpen={isOpenConfirmModal}
-              onClose={handleCloseConfirmModal}
-              onSubmit={form.handleSubmit(onSubmit)}
-            >
-              {isShowUpdateSchedule && (
-                <>
-                  <Form.Field
-                    control={form.control}
-                    name="scheduleType"
-                    render={({ field }) => (
-                      <Form.Item className="flex flex-col w-full py-0 gap-y-4 mt-5">
-                        <Form.Control>
-                          <RadioGroup
-                            defaultValue={field.value}
-                            className="flex flex-col w-full gap-y-4"
-                            onValueChange={value => {
-                              field.onChange(value);
-                              if (value === 'SCHEDULE')
-                                setValue('requireComment', false);
-                            }}
-                          >
-                            <div className="flex items-center gap-x-2">
-                              <RadioGroupItem
-                                id="active_now"
-                                value={feature.enabled ? 'DISABLE' : 'ENABLE'}
-                              />
-                              <label
-                                htmlFor="active_now"
-                                className="typo-para-medium leading-4 text-gray-700 cursor-pointer"
-                              >
-                                {t('update-now')}
-                              </label>
-                            </div>
-
-                            <div className="flex items-center gap-x-2">
-                              <RadioGroupItem id="schedule" value="SCHEDULE" />
-                              <label
-                                htmlFor="schedule"
-                                className="typo-para-medium leading-4 text-gray-700 cursor-pointer"
-                              >
-                                {t('form:feature-flags.schedule')}
-                              </label>
-                            </div>
-                          </RadioGroup>
-                        </Form.Control>
-                        <Form.Message />
-                      </Form.Item>
-                    )}
-                  />
-                  {form.watch('scheduleType') === 'SCHEDULE' && (
-                    <div className="flex flex-col w-full gap-y-5 mt-5">
-                      <ToastMessage
-                        toastType="info-message"
-                        messageType="info"
-                        message={t('form:feature-flags.schedule-info')}
-                      />
-                      <Form.Field
-                        control={form.control}
-                        name="scheduleAt"
-                        render={({ field }) => (
-                          <Form.Item className="py-0">
-                            <Form.Label required>
-                              {t('form:feature-flags:start-at')}
-                            </Form.Label>
-                            <Form.Control>
-                              <ReactDatePicker
-                                minDate={new Date()}
-                                selected={
-                                  field.value
-                                    ? new Date(+field.value * 1000)
-                                    : null
-                                }
-                                onChange={date => {
-                                  if (date) {
-                                    field.onChange(
-                                      String(date?.getTime() / 1000)
-                                    );
-                                  }
-                                }}
-                              />
-                            </Form.Control>
-                            <Form.Message />
-                          </Form.Item>
-                        )}
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-            </ConfirmationRequiredModal>
-          )}
         </Form>
       </FormProvider>
+      {isOpenConfirmModal && (
+        <ConfirmationRequiredModal
+          feature={feature}
+          isOpen={isOpenConfirmModal}
+          isShowScheduleSelect={isShowUpdateSchedule}
+          isShowRolloutWarning={true}
+          onClose={onCloseConfirmModal}
+          onSubmit={additionalValues =>
+            form.handleSubmit(values => onSubmit(values, additionalValues))()
+          }
+        />
+      )}
     </PageLayout.Content>
   );
 };
