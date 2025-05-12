@@ -1,10 +1,11 @@
-import { isEqual } from 'lodash';
+import { isEqual, omit } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import {
-  DefaultRuleStrategyType,
   Feature,
+  FeatureChangeType,
   FeaturePrerequisite,
   FeatureRule,
+  FeatureRuleChange,
   FeatureRuleClause,
   FeatureRuleClauseOperator,
   FeatureRuleStrategy,
@@ -15,7 +16,12 @@ import {
   StrategyType,
   TargetChange
 } from '@types';
-import { RuleSchema, TargetingSchema } from './form-schema';
+import {
+  DefaultRuleSchema,
+  RuleSchema,
+  StrategySchema,
+  TargetingSchema
+} from './form-schema';
 import { IndividualRuleItem, RuleClauseType } from './types';
 
 export const getAlreadyTargetedVariation = (
@@ -42,16 +48,25 @@ export const getDefaultRolloutStrategy = (feature: Feature) =>
 export const getDefaultStrategy = (
   feature: Feature,
   defaultStrategy: FeatureRuleStrategy
-) => ({
-  ...defaultStrategy,
-  rolloutStrategy: defaultStrategy?.rolloutStrategy?.variations?.length
-    ? defaultStrategy?.rolloutStrategy?.variations
-    : getDefaultRolloutStrategy(feature),
-  currentOption:
-    defaultStrategy?.type === StrategyType.FIXED
-      ? defaultStrategy?.fixedStrategy?.variation
-      : StrategyType.ROLLOUT
-});
+) => {
+  const { type, fixedStrategy, rolloutStrategy } = defaultStrategy || {};
+  return {
+    ...defaultStrategy,
+    fixedStrategy: {
+      variation: fixedStrategy?.variation || ''
+    },
+    rolloutStrategy: rolloutStrategy?.variations?.length
+      ? rolloutStrategy.variations?.map(item => ({
+          ...item,
+          weight: item.weight / 1000 || 0
+        }))
+      : getDefaultRolloutStrategy(feature),
+    currentOption:
+      type === StrategyType.FIXED
+        ? fixedStrategy?.variation
+        : StrategyType.ROLLOUT
+  };
+};
 
 export const getDefaultRule = (feature: Feature) => ({
   id: uuid(),
@@ -125,11 +140,12 @@ export const handleCreateDefaultValues = (feature: Feature) => {
     segmentRules,
     defaultRule: {
       ..._defaultStrategy,
-      type:
+      type: defaultStrategy?.type,
+      currentOption:
         defaultStrategy?.type === StrategyType.FIXED
           ? defaultStrategy?.fixedStrategy?.variation
-          : DefaultRuleStrategyType.MANUAL,
-      manualStrategy: getDefaultRolloutStrategy(feature)
+          : StrategyType.MANUAL,
+      manualStrategy: _defaultStrategy?.rolloutStrategy
     },
     enabled,
     isShowRules: enabled
@@ -151,11 +167,67 @@ export const createVariationLabel = (variation: FeatureVariation): string => {
   return label;
 };
 
+const handleGetStrategy = (
+  strategy?: StrategySchema
+): Partial<FeatureRuleStrategy> => {
+  const { type, fixedStrategy, rolloutStrategy } = strategy || {};
+  if (type === StrategyType.FIXED)
+    return {
+      type,
+      fixedStrategy: {
+        variation: fixedStrategy?.variation || ''
+      }
+    };
+  return {
+    type,
+    rolloutStrategy: {
+      variations:
+        rolloutStrategy?.map(item => ({
+          ...item,
+          weight: item.weight * 1000
+        })) || []
+    }
+  };
+};
+
+export const handleGetDefaultRuleStrategy = (
+  defaultRule?: DefaultRuleSchema
+): Partial<FeatureRuleStrategy> => {
+  const { currentOption, manualStrategy } = defaultRule || {};
+  if (currentOption === StrategyType.MANUAL) {
+    return {
+      type: StrategyType.ROLLOUT,
+      rolloutStrategy: {
+        variations:
+          manualStrategy?.map(item => ({
+            ...item,
+            weight: item.weight * 1000
+          })) || []
+      }
+    };
+  }
+  return handleGetStrategy(defaultRule as unknown as StrategySchema);
+};
+
 export const handleCheckSegmentRules = (
   featureRules: FeatureRule[],
   segmentRules?: RuleSchema[]
 ) => {
   const ruleChanges: RuleChange[] = [];
+
+  const getRuleItem = (rule: RuleSchema, type: FeatureChangeType) => {
+    return {
+      changeType: type,
+      rule: {
+        id: rule.id,
+        clauses: rule.clauses.map(
+          clause => omit(clause, 'type') as FeatureRuleClause
+        ),
+        strategy: handleGetStrategy(rule.strategy)
+      }
+    };
+  };
+
   featureRules.forEach(item => {
     const currentRule = segmentRules?.find(rule => rule.id === item.id);
     if (!currentRule) {
@@ -164,15 +236,16 @@ export const handleCheckSegmentRules = (
         rule: item
       });
     }
+    const formattedRule = {
+      ...currentRule,
+      clauses: currentRule?.clauses?.map(item => omit(item, 'type')),
+      strategy: handleGetStrategy(currentRule?.strategy)
+    } as FeatureRuleChange;
 
-    if (currentRule && !isEqual(currentRule, item)) {
+    if (currentRule && !isEqual(formattedRule, item)) {
       ruleChanges.push({
         changeType: 'UPDATE',
-        rule: {
-          id: currentRule.id,
-          clauses: currentRule.clauses as FeatureRuleClause[],
-          strategy: currentRule.strategy as unknown as FeatureRuleStrategy
-        }
+        rule: formattedRule
       });
     }
   });
@@ -180,14 +253,7 @@ export const handleCheckSegmentRules = (
   segmentRules?.forEach(item => {
     const currentRule = featureRules?.find(rule => rule.id === item.id);
     if (!currentRule) {
-      ruleChanges.push({
-        changeType: 'CREATE',
-        rule: {
-          id: item.id,
-          clauses: item.clauses as FeatureRuleClause[],
-          strategy: item.strategy as unknown as FeatureRuleStrategy
-        }
-      });
+      ruleChanges.push(getRuleItem(item, 'CREATE'));
     }
   });
   return ruleChanges;
@@ -209,7 +275,12 @@ export const handleCheckIndividualRules = (
       });
     }
 
-    if (currentTarget && !isEqual(currentTarget, item)) {
+    const targetObj = {
+      users: currentTarget?.users,
+      variation: currentTarget?.variationId
+    };
+
+    if (currentTarget && !isEqual(targetObj, item)) {
       targetChanges.push({
         changeType: 'UPDATE',
         target: {

@@ -1,6 +1,6 @@
 import { i18n } from 'i18n';
 import * as yup from 'yup';
-import { DefaultRuleStrategyType, StrategyType } from '@types';
+import { StrategyType } from '@types';
 import { RuleClauseType } from './types';
 
 export type RuleClauseSchema = yup.InferType<typeof ruleClauseSchema>;
@@ -35,7 +35,7 @@ const strategySchema = yup.object().shape({
   currentOption: yup.string(),
   type: yup
     .string()
-    .oneOf([StrategyType.FIXED, StrategyType.ROLLOUT])
+    .oneOf([StrategyType.FIXED, StrategyType.ROLLOUT, StrategyType.MANUAL])
     .required(requiredMessage),
   fixedStrategy: yup
     .object()
@@ -43,7 +43,7 @@ const strategySchema = yup.object().shape({
       variation: yup.string()
     })
     .when('type', {
-      is: (type: string) => type === StrategyType.ROLLOUT,
+      is: (type: string) => type !== StrategyType.FIXED,
       then: schema => schema,
       otherwise: schema => schema.required(requiredMessage)
     }),
@@ -56,7 +56,7 @@ const strategySchema = yup.object().shape({
       })
     )
     .when('type', {
-      is: (type: string) => type === StrategyType.FIXED,
+      is: (type: string) => type !== StrategyType.ROLLOUT,
       then: schema => schema,
       otherwise: schema => schema.required(requiredMessage)
     })
@@ -93,11 +93,7 @@ export const defaultRuleSchema = yup.object().shape({
   currentOption: yup.string(),
   type: yup
     .string()
-    .oneOf([
-      DefaultRuleStrategyType.FIXED,
-      DefaultRuleStrategyType.ROLLOUT,
-      DefaultRuleStrategyType.MANUAL
-    ])
+    .oneOf([StrategyType.FIXED, StrategyType.ROLLOUT, StrategyType.MANUAL])
     .required(requiredMessage),
   fixedStrategy: yup
     .object()
@@ -105,16 +101,41 @@ export const defaultRuleSchema = yup.object().shape({
       variation: yup.string()
     })
     .when('type', {
-      is: (type: string) => type === StrategyType.ROLLOUT,
+      is: (type: StrategyType) => type !== StrategyType.FIXED,
       then: schema => schema,
       otherwise: schema => schema.required(requiredMessage)
     }),
-  manualStrategy: yup.array().of(
-    yup.object().shape({
-      variation: yup.string().required(requiredMessage),
-      weight: yup.number().required(requiredMessage)
+  manualStrategy: yup
+    .array()
+    .of(
+      yup.object().shape({
+        variation: yup.string().required(requiredMessage),
+        weight: yup.number().required(requiredMessage)
+      })
+    )
+    .when('type', {
+      is: (type: string) => type !== StrategyType.MANUAL,
+      then: schema => schema,
+      otherwise: schema => schema.required(requiredMessage)
     })
-  ),
+    .test('sum', (value, context) => {
+      if (context.parent?.type !== StrategyType.MANUAL) {
+        return true;
+      }
+      if (value) {
+        const total = value
+          .map(v => Number(v.weight))
+          .reduce((total, current) => {
+            return total + (current || 0);
+          }, 0);
+        if (total !== 100)
+          return context.createError({
+            message: translation('message:validation.should-be-percent'),
+            path: context.path
+          });
+      }
+      return true;
+    }),
   rolloutStrategy: yup
     .array()
     .of(
@@ -124,7 +145,7 @@ export const defaultRuleSchema = yup.object().shape({
       })
     )
     .when('type', {
-      is: (type: string) => type === StrategyType.FIXED,
+      is: (type: string) => type !== StrategyType.ROLLOUT,
       then: schema => schema,
       otherwise: schema => schema.required(requiredMessage)
     })

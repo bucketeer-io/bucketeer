@@ -1,11 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
-import {
-  DefaultRuleStrategyType,
-  Feature,
-  RuleStrategyVariation,
-  StrategyType
-} from '@types';
+import { Feature, RuleStrategyVariation, StrategyType } from '@types';
 import { cn } from 'utils/style';
 import { IconInfo } from '@icons';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
@@ -64,6 +59,9 @@ const Strategy = ({
     clearErrors(`${rootName}.${strategyName}`);
   };
 
+  const isShowPercentage =
+    (type === StrategyType.ROLLOUT && strategyName === 'rolloutStrategy') ||
+    currentOption === StrategyType.MANUAL;
   return (
     <div>
       <Form.Label
@@ -141,68 +139,60 @@ const Strategy = ({
             }}
           />
 
-          {[StrategyType.ROLLOUT, DefaultRuleStrategyType.MANUAL].includes(
-            type
-          ) && (
-            <>
-              <Form.Field
-                control={control}
-                name={`${rootName}.${strategyName}`}
-                render={({ field }) => {
-                  return (
-                    <Form.Item className="flex flex-col w-full gap-y-2">
-                      <Form.Control>
-                        <>
-                          {percentageValueCount > 0 && (
-                            <div className="flex items-center w-full p-0.5 border border-gray-400 rounded-full">
-                              {field.value?.map(
-                                (
-                                  item: RuleStrategyVariation,
-                                  index: number
-                                ) => (
-                                  <PercentageBar
-                                    key={index}
-                                    weight={item.weight}
-                                    currentIndex={index}
-                                    isRoundedFull={percentageValueCount === 1}
-                                  />
-                                )
-                              )}
-                            </div>
-                          )}
-                          <div className="flex flex-col gap-y-4">
+          <div className={isShowPercentage ? 'flex' : 'hidden'}>
+            <Form.Field
+              control={control}
+              name={`${rootName}.${strategyName}`}
+              render={({ field }) => {
+                return (
+                  <Form.Item className="flex flex-col w-full gap-y-2">
+                    <Form.Control>
+                      <>
+                        {percentageValueCount > 0 && (
+                          <div className="flex items-center w-full p-0.5 border border-gray-400 rounded-full">
                             {field.value?.map(
-                              (
-                                rollout: RuleStrategyVariation,
-                                index: number
-                              ) => (
-                                <PercentageInput
+                              (item: RuleStrategyVariation, index: number) => (
+                                <PercentageBar
                                   key={index}
-                                  variationOptions={variationOptions}
-                                  feature={feature}
-                                  name={`${rootName}.${strategyName}.${index}.weight`}
-                                  variationId={rollout.variation}
-                                  handleChangeRolloutWeight={value => {
-                                    field.value[index] = {
-                                      ...field.value[index],
-                                      weight: +value
-                                    };
-                                    field.onChange(field.value);
-                                    handleCheckError(field.value);
-                                  }}
+                                  weight={item.weight}
+                                  currentIndex={index}
+                                  isRoundedFull={percentageValueCount === 1}
                                 />
                               )
                             )}
                           </div>
-                        </>
-                      </Form.Control>
-                      <Form.Message />
-                    </Form.Item>
-                  );
-                }}
-              />
-            </>
-          )}
+                        )}
+                        <div className="flex flex-col gap-y-4">
+                          {field.value?.map(
+                            (rollout: RuleStrategyVariation, index: number) => (
+                              <PercentageInput
+                                key={index}
+                                variationOptions={variationOptions}
+                                feature={feature}
+                                name={`${rootName}.${strategyName}.${index}.weight`}
+                                variationId={rollout.variation}
+                                handleChangeRolloutWeight={value => {
+                                  field.value[index] = {
+                                    ...field.value[index],
+                                    weight: +value
+                                  };
+                                  field.onChange(field.value, {
+                                    shouldValidate: true
+                                  });
+                                  handleCheckError(field.value);
+                                }}
+                              />
+                            )
+                          )}
+                        </div>
+                      </>
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                );
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>
