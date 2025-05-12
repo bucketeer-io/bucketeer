@@ -1,20 +1,16 @@
 import { FunctionComponent, useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
-import {
-  DefaultRuleStrategyType,
-  Feature,
-  RuleStrategyVariation,
-  StrategyType
-} from '@types';
+import { Feature, RuleStrategyVariation, StrategyType } from '@types';
 import { IconPercentage } from '@icons';
-import { RuleSchema } from '../form-schema';
+import Form from 'components/form';
+import { RuleSchema, StrategySchema } from '../form-schema';
 import Strategy from './strategy';
 
 export interface VariationOption {
   label: string;
   value: string;
-  type: StrategyType | DefaultRuleStrategyType;
+  type: StrategyType;
   variationValue?: string;
   icon?: FunctionComponent;
 }
@@ -33,7 +29,7 @@ const SegmentVariation = ({
   const { t } = useTranslation(['table', 'common', 'form']);
 
   const methods = useFormContext();
-  const { watch, setValue, setFocus } = methods;
+  const { watch, setFocus } = methods;
   const commonName = `segmentRules.${segmentIndex}.strategy`;
   const rolloutStrategy: RuleStrategyVariation[] = watch(
     `${commonName}.rolloutStrategy`
@@ -62,7 +58,7 @@ const SegmentVariation = ({
   }, [feature]);
 
   const handleSelectStrategy = useCallback(
-    (item: VariationOption) => {
+    (item: VariationOption, onChange: (item: StrategySchema) => void) => {
       const { type, value } = item;
       const isFixed = type === StrategyType.FIXED;
       segmentRules[segmentIndex] = {
@@ -77,7 +73,8 @@ const SegmentVariation = ({
           rolloutStrategy: isFixed ? [] : defaultRolloutStrategy
         }
       };
-      setValue(commonName, segmentRules[segmentIndex].strategy);
+
+      onChange(segmentRules[segmentIndex].strategy);
       if (!isFixed) {
         let timerId: NodeJS.Timeout | null = null;
         if (timerId) clearTimeout(timerId);
@@ -98,13 +95,24 @@ const SegmentVariation = ({
   );
 
   return (
-    <Strategy
-      feature={feature}
-      rootName={commonName}
-      strategyName="rolloutStrategy"
-      percentageValueCount={percentageValueCount}
-      variationOptions={variationOptions}
-      handleSelectStrategy={handleSelectStrategy}
+    <Form.Field
+      name={commonName}
+      render={({ field }) => {
+        return (
+          <Form.Item>
+            <Strategy
+              feature={feature}
+              rootName={commonName}
+              strategyName="rolloutStrategy"
+              percentageValueCount={percentageValueCount}
+              variationOptions={variationOptions}
+              handleSelectStrategy={item =>
+                handleSelectStrategy(item, field.onChange)
+              }
+            />
+          </Form.Item>
+        );
+      }}
     />
   );
 };

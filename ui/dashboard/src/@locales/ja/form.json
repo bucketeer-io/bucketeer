@@ -147,8 +147,6 @@
     "add-user-id": "Add user id",
     "already-targeted": "Already targeted",
     "value-already-targeted": "{{value}} already target in {{targetedIn}}",
-    "prerequisite-flags": "This flag is a prerequisite of {{quantity}} other {{flag}}.",
-    "prerequisite-flags-desc": "Changes to the targeting rules may affect the variations served by the flags below.",
     "schedule-info": "You can update or delete the schedule on the Auto Operations tab on the Feature Flag details page.",
     "flag-switch": "{{name}} has been {{state}}.",
     "schedule-configured": "Schedule has been configured for {{name}}.",
@@ -290,6 +288,11 @@
     "custom-rule-tooltip": "Combine user attributes, segments, and feature flags for a specific audience.",
     "individual": "Individual",
     "default-rule": "Default Rule",
-    "default-rule-desc": "When targeting is ON and contexts don't match any targeting rules"
+    "default-rule-desc": "When targeting is ON and contexts don't match any targeting rules",
+    "prerequisite-flags": "This flag is a prerequisite of {{quantity}} other {{flag}}.",
+    "prerequisite-flags-desc": "Changes to the targeting rules may affect the variations served by the flags below.",
+    "rollout-to": "Rollout to",
+    "for": "For",
+    "total-duration": "Total duration: <b>{{value}}</b>"
   }
 }
