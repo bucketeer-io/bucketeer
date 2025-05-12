@@ -1,9 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
-import { Feature, RuleStrategyVariation, StrategyType } from '@types';
+import { RuleStrategyVariation, StrategyType } from '@types';
 import { cn } from 'utils/style';
-import { IconInfo } from '@icons';
-import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +16,6 @@ import PercentageInput from './percentage-input';
 import { VariationOption } from './variation';
 
 interface Props {
-  feature: Feature;
   rootName: string;
   strategyName: 'rolloutStrategy' | 'manualStrategy';
   variationOptions: VariationOption[];
@@ -29,7 +26,6 @@ interface Props {
 }
 
 const Strategy = ({
-  feature,
   rootName,
   strategyName,
   variationOptions,
@@ -70,12 +66,6 @@ const Strategy = ({
           className={cn('relative w-fit mb-2 ml-14 text-gray-700')}
         >
           {label}
-          <Icon
-            icon={IconInfo}
-            size="xs"
-            color="gray-500"
-            className="absolute -right-6"
-          />
         </Form.Label>
       )}
       <div className="flex w-full gap-x-4">
@@ -99,15 +89,6 @@ const Strategy = ({
                         <DropdownMenuTrigger
                           trigger={
                             <div className="flex items-center gap-x-2 typo-para-medium text-gray-700">
-                              {feature.variationType === 'BOOLEAN' &&
-                                option?.variationValue && (
-                                  <FlagVariationPolygon
-                                    index={
-                                      option?.variationValue === 'true' ? 0 : 1
-                                    }
-                                    className="!z-0"
-                                  />
-                                )}
                               {option?.icon && (
                                 <Icon icon={option.icon} size={'sm'} />
                               )}
@@ -166,7 +147,6 @@ const Strategy = ({
                               <PercentageInput
                                 key={index}
                                 variationOptions={variationOptions}
-                                feature={feature}
                                 name={`${rootName}.${strategyName}.${index}.weight`}
                                 variationId={rollout.variation}
                                 handleChangeRolloutWeight={value => {

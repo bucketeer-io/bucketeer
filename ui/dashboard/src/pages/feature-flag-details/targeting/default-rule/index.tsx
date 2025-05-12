@@ -13,6 +13,7 @@ import Card from 'pages/feature-flag-details/elements/card';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
+import VariationLabel from 'elements/variation-label';
 import { DefaultRuleSchema, TargetingSchema } from '../form-schema';
 import Strategy from '../segment-rule/strategy';
 import { VariationOption } from '../segment-rule/variation';
@@ -38,8 +39,8 @@ const DefaultRule = ({
   const defaultRolloutStrategy = getDefaultRolloutStrategy(feature);
 
   const variationOptions: VariationOption[] = useMemo(() => {
-    const variations = feature.variations.map(item => ({
-      label: item.name || item.value,
+    const variations = feature.variations.map((item, index) => ({
+      label: <VariationLabel label={item.name || item.value} index={index} />,
       value: item.id,
       type: StrategyType.FIXED,
       variationValue: item.value
@@ -121,11 +122,15 @@ const DefaultRule = ({
             {t('targeting.default-rule')}
           </p>
           <Tooltip
+            align="start"
+            alignOffset={-68}
+            content={t('form:targeting.tooltip.default-rule')}
             trigger={
               <div className="flex-center size-fit">
                 <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
               </div>
             }
+            className="max-w-[400px]"
           />
         </div>
         <p className="typo-para-small text-gray-500">
@@ -139,7 +144,6 @@ const DefaultRule = ({
           return (
             <Form.Item className="flex flex-col py-0 gap-y-6">
               <Strategy
-                feature={feature}
                 rootName={commonName}
                 strategyName={'manualStrategy'}
                 variationOptions={variationOptions}

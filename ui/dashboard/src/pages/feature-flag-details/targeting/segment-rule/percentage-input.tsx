@@ -1,6 +1,4 @@
 import { useFormContext } from 'react-hook-form';
-import { Feature } from '@types';
-import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Form from 'components/form';
 import Input from 'components/input';
 import InputGroup from 'components/input-group';
@@ -8,7 +6,6 @@ import { VariationOption } from './variation';
 
 interface Props {
   name: string;
-  feature?: Feature;
   variationOptions?: VariationOption[];
   variationId?: string;
   showVariationName?: boolean;
@@ -16,7 +13,6 @@ interface Props {
 }
 
 const PercentageInput = ({
-  feature,
   name,
   variationOptions,
   variationId,
@@ -62,14 +58,6 @@ const PercentageInput = ({
                 </InputGroup>
                 {showVariationName && (
                   <div className="flex items-center gap-x-2 typo-para-small text-gray-600">
-                    {feature?.variationType === 'BOOLEAN' &&
-                      currentOption?.variationValue && (
-                        <FlagVariationPolygon
-                          index={
-                            currentOption.variationValue === 'true' ? 0 : 1
-                          }
-                        />
-                      )}
                     {currentOption?.label}
                   </div>
                 )}

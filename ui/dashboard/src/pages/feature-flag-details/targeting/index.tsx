@@ -11,6 +11,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
+import { v4 as uuid } from 'uuid';
 import { Feature } from '@types';
 import { IconDebugger } from '@icons';
 import Button from 'components/button';
@@ -91,8 +92,9 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
   } = form;
 
   const isShowRules = watch('isShowRules');
-
+  const enabledWatch = watch('enabled');
   const prerequisitesWatch = [...(watch('prerequisites') || [])];
+  const segmentRulesWatch = [...(watch('segmentRules') || [])];
 
   const hasPrerequisiteFlags = features.filter(item =>
     item.prerequisites.find(p => p.featureId === feature.id)
@@ -138,6 +140,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
     fields: segmentRules,
     append: segmentRulesAppend,
     remove: segmentRulesRemove,
+    update: segmentRulesUpdate,
     swap: segmentRulesSwap
   } = useFieldArray({
     control,
@@ -161,7 +164,22 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
       }
       segmentRulesAppend(getDefaultRule(feature));
     },
-    [prerequisites, feature]
+    [feature]
+  );
+
+  const handleSwapSegmentRule = useCallback(
+    (indexA: number, indexB: number) => {
+      segmentRulesUpdate(indexA, {
+        ...segmentRulesWatch[indexA],
+        id: uuid()
+      });
+      segmentRulesUpdate(indexB, {
+        ...segmentRulesWatch[indexB],
+        id: uuid()
+      });
+      segmentRulesSwap(indexA, indexB);
+    },
+    [segmentRulesWatch]
   );
 
   const onSubmit = useCallback(
@@ -250,7 +268,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
           <TargetingDivider />
           <FlagSwitch />
           <TargetingDivider />
-          {!feature.enabled && <FlagOffDescription />}
+          {(!feature.enabled || !enabledWatch) && <FlagOffDescription />}
           {isShowRules && (
             <>
               {(prerequisites?.length > 0 ||
@@ -270,12 +288,16 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
                   <TargetingDivider />
                 </>
               )}
-              <AddRule
-                isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
-                isDisableAddIndividualRules={individualRules?.length > 0}
-                onAddRule={onAddRule}
-              />
-              <TargetingDivider />
+              {(!prerequisitesWatch?.length || !individualRules?.length) && (
+                <>
+                  <AddRule
+                    isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
+                    isDisableAddIndividualRules={individualRules?.length > 0}
+                    onAddRule={onAddRule}
+                  />
+                  <TargetingDivider />
+                </>
+              )}
               {individualRules?.length > 0 && (
                 <>
                   <IndividualRule individualRules={individualRules} />
@@ -294,7 +316,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
                     features={features}
                     segmentRules={segmentRules}
                     segmentRulesRemove={segmentRulesRemove}
-                    segmentRulesSwap={segmentRulesSwap}
+                    segmentRulesSwap={handleSwapSegmentRule}
                   />
                   <TargetingDivider />
                   <AddRule
@@ -306,7 +328,9 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
               )}
             </>
           )}
-          <TargetingDivider />
+          {(segmentRules.length > 0 || individualRules.length > 0) && (
+            <TargetingDivider />
+          )}
           <DefaultRule
             urlCode={currentEnvironment.urlCode}
             feature={feature}

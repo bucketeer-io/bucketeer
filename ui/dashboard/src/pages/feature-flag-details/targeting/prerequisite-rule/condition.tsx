@@ -15,6 +15,9 @@ import {
 } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
+import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+import FeatureFlagStatus from 'elements/feature-flag-status';
+import VariationLabel from 'elements/variation-label';
 import { PrerequisiteSchema } from '../types';
 
 interface Props {
@@ -55,14 +58,17 @@ const ConditionForm = forwardRef(
         .filter(f => ![...featuresSelected, featureId].includes(f.id))
         .map(item => ({
           label: item.name,
-          value: item.id
+          value: item.id,
+          enabled: item.enabled
         }));
     }, [features, prerequisitesWatch, featureId]);
 
     const variationOptions = useMemo(
       () =>
-        currentFeature?.variations?.map(item => ({
-          label: item.name || item.value,
+        currentFeature?.variations?.map((item, index) => ({
+          label: (
+            <VariationLabel label={item.name || item.value} index={index} />
+          ),
           value: item.id
         })),
       [currentFeature]
@@ -90,26 +96,24 @@ const ConditionForm = forwardRef(
                 <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px]">
                   <Form.Label required>{t('feature-flags.flag')}</Form.Label>
                   <Form.Control>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        label={truncateBySide(currentFeature?.name || '', 50)}
-                        placeholder={t('experiments.select-flag')}
-                        className="w-full"
-                        disabled={!flagOptions?.length}
-                      />
-                      <DropdownMenuContent align="start" {...field}>
-                        {flagOptions?.map((item, index) => (
-                          <DropdownMenuItem
-                            key={index}
-                            label={item.label}
-                            value={item.value}
-                            onSelectOption={value => {
-                              field.onChange(value);
-                            }}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <DropdownMenuWithSearch
+                      label={truncateBySide(currentFeature?.name || '', 50)}
+                      placeholder={t('experiments.select-flag')}
+                      isExpand
+                      options={flagOptions}
+                      selectedOptions={field.value}
+                      additionalElement={item => (
+                        <FeatureFlagStatus
+                          status={t(
+                            item.enabled ? 'experiments.on' : 'experiments.off'
+                          )}
+                          enabled={item.enabled as boolean}
+                        />
+                      )}
+                      onSelectOption={value => {
+                        field.onChange(value);
+                      }}
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>

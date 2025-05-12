@@ -3,6 +3,7 @@ import { Feature } from '@types';
 import { IconInfo, IconPlus } from '@icons';
 import Button from 'components/button';
 import Icon from 'components/icon';
+import { Tooltip } from 'components/tooltip';
 import Card from '../../elements/card';
 import { PrerequisiteSchema } from '../types';
 import ConditionForm from './condition';
@@ -42,7 +43,17 @@ const PrerequisiteRule = ({
                 <p className="typo-para-medium leading-4 text-gray-700">
                   {t('form:feature-flags.prerequisites')}
                 </p>
-                <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
+                <Tooltip
+                  align="start"
+                  alignOffset={-105}
+                  content={t('form:targeting.tooltip.prerequisites')}
+                  trigger={
+                    <div className="flex-center size-fit">
+                      <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
+                    </div>
+                  }
+                  className="max-w-[400px]"
+                />
               </div>
             </div>
             {prerequisites.map((_, prerequisiteIndex) => (

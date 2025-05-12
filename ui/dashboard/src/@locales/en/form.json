@@ -142,6 +142,7 @@
     "receiving-state": "is {{state}} and receiving",
     "flag": "Flag",
     "prerequisites": "Prerequisites",
+    "prerequisite": "Prerequisite",
     "add-prerequisites": "Add Prerequisites",
     "disable-now": "Disable now",
     "add-user-id": "Add user id",
@@ -180,7 +181,7 @@
     "kill-switch": "Kill Switch",
     "rollout": "Rollout",
     "context-kind": "Context kind",
-    "attribute": "Attribute",
+    "attribute-key": "Attribute Key",
     "operator": "Operator",
     "values": "Values"
   },
@@ -283,6 +284,11 @@
     "view-targeting-rules": "View Targeting Rules",
     "individual-targeting": "Individual Targeting",
     "custom-rule": "Custom Rule",
+    "custom-rules": "Custom Rules",
+    "target": "Target",
+    "targets": "Targets",
+    "rule": "Rule",
+    "rules": "Rules",
     "prerequisite-tooltip": "Manage dependencies between flags.",
     "individual-tooltip": "Target specific users.",
     "custom-rule-tooltip": "Combine user attributes, segments, and feature flags for a specific audience.",
@@ -294,7 +300,18 @@
     "rollout-to": "Rollout to",
     "for": "For",
     "total-duration": "Total duration: <b>{{value}}</b>",
-    "rollout-running-message": "To update the Default Strategy, you must stop or delete the current <comp>Progressive Rollout</comp>"
+    "rollout-running-message": "To update the Default Strategy, you must stop or delete the current <comp>Progressive Rollout</comp>",
+    "tooltip": {
+      "flag-on": "Flag is ON. Users are evaluated in order: Prerequisites → Individual Targets → Rules → Default Rule.",
+      "flag-off": "Flag is OFF.  All users will receive the selected \"Off variation\" regardless of prerequisites, individual targets, or rules.",
+      "prerequisites": "Specify other feature flags that must be enabled and return a specific variation for this flag to be evaluated. If any prerequisite fails, this flag returns the off variation.",
+      "individual-target": "Target specific users directly by their user ID (Unique ID). These users will receive the selected variation regardless of rules or rollout conditions.",
+      "custom-rules": "Define conditions based on user attributes (e.g., app version, genre) to assign variations. Rules are evaluated in order, and the first matching rule determines the variation.",
+      "default-rule": "If no prerequisites, targets, or custom rules match, users will receive the variation defined here. This acts as the fallback behavior for all other users.",
+      "attribute": "The user attribute used for targeting. This must match the attribute passed when initializing the client SDK (e.g., appVersion, genre, os).",
+      "value": "One or more expected values for the selected attribute. If the user’s attribute matches any of these values, the condition will evaluate as true."
+    },
+    "individual-target": "Individual Target"
   },
   "has-rollout-running": "There is a <comp>Progressive Rollout</comp> in progress. It will stop it."
 }
