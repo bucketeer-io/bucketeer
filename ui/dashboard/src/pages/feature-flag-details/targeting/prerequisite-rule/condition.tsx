@@ -20,7 +20,6 @@ import { PrerequisiteSchema } from '../types';
 interface Props {
   features: Feature[];
   type: 'if' | 'and';
-  isDisabledDelete: boolean;
   prerequisiteIndex: number;
   featureId: string;
   onDeleteCondition: () => void;
@@ -28,14 +27,7 @@ interface Props {
 
 const ConditionForm = forwardRef(
   (
-    {
-      features,
-      type,
-      isDisabledDelete,
-      prerequisiteIndex,
-      featureId,
-      onDeleteCondition
-    }: Props,
+    { features, type, prerequisiteIndex, featureId, onDeleteCondition }: Props,
     ref: Ref<HTMLDivElement>
   ) => {
     const { t } = useTranslation(['form', 'common', 'table']);
@@ -173,7 +165,6 @@ const ConditionForm = forwardRef(
             <div className="flex items-end self-stretch">
               <Button
                 type="button"
-                disabled={isDisabledDelete}
                 variant={'grey'}
                 className="flex-center text-gray-500 hover:text-gray-600"
                 onClick={onDeleteCondition}

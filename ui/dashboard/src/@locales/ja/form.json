@@ -290,9 +290,10 @@
     "default-rule": "Default Rule",
     "default-rule-desc": "When targeting is ON and contexts don't match any targeting rules",
     "prerequisite-flags": "This flag is a prerequisite of {{quantity}} other {{flag}}.",
-    "prerequisite-flags-desc": "Changes to the targeting rules may affect the variations served by the flags below.",
+    "prerequisite-flags-desc": "Changes to the targeting rules may affect the variations served by the {{text}} below.",
     "rollout-to": "Rollout to",
     "for": "For",
-    "total-duration": "Total duration: <b>{{value}}</b>"
+    "total-duration": "Total duration: <b>{{value}}</b>",
+    "rollout-running-message": "To update the Default Strategy, you must stop or delete the current <comp>Progressive Rollout</comp>"
   }
 }

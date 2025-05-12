@@ -182,25 +182,39 @@ export const formSchema = yup.object().shape({
     yup.object().shape({
       variationId: yup.string().required(requiredMessage),
       name: yup.string(),
-      users: yup
-        .array()
-        .required(requiredMessage)
-        .test('required', (value, context) => {
-          if ((Array.isArray(value) && !value.length) || !value) {
-            return context.createError({
-              message: requiredMessage,
-              path: context.path
-            });
-          }
-
-          return true;
-        })
+      users: yup.array().required(requiredMessage)
     })
   ),
   segmentRules: yup.array().of(rulesSchema),
   defaultRule: defaultRuleSchema,
   enabled: yup.boolean().required(requiredMessage),
-  isShowRules: yup.boolean().required(requiredMessage)
+  isShowRules: yup.boolean().required(requiredMessage),
+  requireComment: yup.boolean(),
+  resetSampling: yup.boolean(),
+  comment: yup.string().when('requireComment', {
+    is: (requireComment: boolean) => requireComment,
+    then: schema => schema.required(requiredMessage),
+    otherwise: schema => schema
+  }),
+  scheduleType: yup.string().oneOf(['ENABLE', 'DISABLE', 'SCHEDULE']),
+  scheduleAt: yup.string().test('test', function (value, context) {
+    const scheduleType = context.from && context.from[0].value.scheduleType;
+    if (scheduleType === 'SCHEDULE') {
+      if (!value)
+        return context.createError({
+          message: requiredMessage,
+          path: context.path
+        });
+      if (+value * 1000 < new Date().getTime())
+        return context.createError({
+          message: translation(
+            'message:validation.operation.later-than-current-time'
+          ),
+          path: context.path
+        });
+    }
+    return true;
+  })
 });
 
 export type TargetingSchema = yup.InferType<typeof formSchema>;
