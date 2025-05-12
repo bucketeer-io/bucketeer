@@ -8,10 +8,13 @@ import { TargetingSchema } from '../form-schema';
 const FlagOffDescription = () => {
   const { t } = useTranslation(['form']);
   const { watch, setValue } = useFormContext();
+
   const isShowRules = watch('isShowRules');
   const prerequisiteCount = watch('prerequisites')?.length;
   const individualRulesWatch: TargetingSchema['individualRules'] =
     watch('individualRules');
+  const segmentRuleCount = watch('segmentRules')?.length;
+
   const individualRuleCount = useMemo(() => {
     const count = individualRulesWatch?.reduce((acc, curr) => {
       if (curr?.users?.length) acc++;
@@ -19,7 +22,6 @@ const FlagOffDescription = () => {
     }, 0);
     return count || 0;
   }, [individualRulesWatch]);
-  const segmentRuleCount = watch('segmentRules')?.length;
 
   const hiddenRuleDesc = useMemo(() => {
     const getText = (count: number, key: string) =>

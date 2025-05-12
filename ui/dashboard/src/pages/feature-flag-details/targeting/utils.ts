@@ -177,7 +177,7 @@ export const createVariationLabel = (variation: FeatureVariation): string => {
 };
 
 const handleGetStrategy = (
-  strategy?: StrategySchema
+  strategy?: StrategySchema | FeatureRuleStrategy
 ): Partial<FeatureRuleStrategy> => {
   const { type, fixedStrategy, rolloutStrategy } = strategy || {};
   if (type === StrategyType.FIXED)
@@ -191,7 +191,11 @@ const handleGetStrategy = (
     type,
     rolloutStrategy: {
       variations:
-        rolloutStrategy?.map(item => ({
+        ((rolloutStrategy as FeatureRuleStrategy['rolloutStrategy'])?.variations
+          ? (rolloutStrategy as FeatureRuleStrategy['rolloutStrategy'])
+              ?.variations
+          : (rolloutStrategy as StrategySchema['rolloutStrategy'])
+        )?.map(item => ({
           ...item,
           weight: item.weight * 1000
         })) || []
@@ -249,19 +253,24 @@ export const handleCheckSegmentRules = (
 
   segmentRules?.forEach(item => {
     const currentRule = featureRules?.find(rule => rule.id === item.id);
-    if (!currentRule) {
-      ruleChanges.push(getRuleItem(item, 'CREATE'));
-    }
+    if (!currentRule) ruleChanges.push(getRuleItem(item, 'CREATE'));
+
     const formattedRule = {
+      ...currentRule,
+      clauses: currentRule?.clauses,
+      strategy: handleGetStrategy(item?.strategy)
+    } as FeatureRuleChange;
+
+    const formattedItem = {
       ...item,
       clauses: item?.clauses?.map(item => omit(item, 'type')),
       strategy: handleGetStrategy(item?.strategy)
     } as FeatureRuleChange;
 
-    if (currentRule && !isEqual(formattedRule, item)) {
+    if (currentRule && !isEqual(formattedRule, formattedItem)) {
       ruleChanges.push({
         changeType: 'UPDATE',
-        rule: formattedRule
+        rule: formattedItem
       });
     }
   });
