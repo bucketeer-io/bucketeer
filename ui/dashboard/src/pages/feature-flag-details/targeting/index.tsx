@@ -1,17 +1,22 @@
 import { useCallback, useMemo } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryFeatures } from '@queries/features';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { cloneDeep } from 'lodash';
 import { Feature } from '@types';
 import Divider from 'components/divider';
 import Form from 'components/form';
 import PageLayout from 'elements/page-layout';
 import AddRule from './add-rule';
 import AudienceTraffic from './audience-traffic';
+import { initialIndividualRule, initialPrerequisite } from './constants';
 import FlagOffDescription from './flag-off-description';
 import FlagSwitch from './flag-switch';
 import { formSchema, TargetingSchema } from './form-schema';
+import IndividualRule from './individual-rule';
+import PrerequisiteRule from './prerequisite-rule';
+import { RuleCategory } from './types';
 
 const TargetingDivider = () => (
   <Divider vertical className="!h-6 w-px self-center my-4" />
@@ -35,13 +40,45 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
     defaultValues: {
       prerequisites: [],
       rules: [],
-      targetIndividualRules: [],
+      individualRules: [],
       defaultStrategy: {},
       enabled: feature.enabled,
       isShowRules: feature.enabled
     }
   });
-  console.log(features);
+
+  const { control, watch, setValue } = form;
+
+  const {
+    fields: prerequisites,
+    append: prerequisiteAppend,
+    remove: prerequisiteRemove
+  } = useFieldArray({
+    control,
+    name: 'prerequisites'
+  });
+
+  const {
+    fields: individualRules,
+    append: individualAppend,
+    remove: individualRemove
+  } = useFieldArray({
+    control,
+    name: 'individualRules'
+  });
+
+  const onAddRule = useCallback(
+    (rule: RuleCategory) => {
+      if (rule === RuleCategory.PREREQUISITE) {
+        prerequisiteAppend(cloneDeep(initialPrerequisite));
+      }
+      if (rule === RuleCategory.INDIVIDUAL) {
+        individualAppend(cloneDeep(initialIndividualRule));
+      }
+    },
+    [prerequisites]
+  );
+
   const onSubmit = useCallback(async (values: TargetingSchema) => {
     console.log(values);
   }, []);
@@ -63,7 +100,26 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
               <TargetingDivider />
             </>
           )}
-          <AddRule />
+
+          {prerequisites?.length > 0 && (
+            <>
+              <PrerequisiteRule
+                features={features}
+                feature={feature}
+                prerequisites={prerequisites}
+                onRemovePrerequisite={prerequisiteRemove}
+                onAddPrerequisite={() => onAddRule(RuleCategory.PREREQUISITE)}
+              />
+              <TargetingDivider />
+            </>
+          )}
+          <AddRule onAddRule={onAddRule} />
+          {individualRules?.length > 0 && (
+            <>
+              <IndividualRule individualRules={individualRules} />
+              <TargetingDivider />
+            </>
+          )}
         </Form>
       </FormProvider>
     </PageLayout.Content>
