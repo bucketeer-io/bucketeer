@@ -11,6 +11,7 @@ import { DefaultRuleSchema, TargetingSchema } from '../form-schema';
 import Strategy from '../segment-rule/strategy';
 import { VariationOption } from '../segment-rule/variation';
 import { getDefaultRolloutStrategy } from '../utils';
+import DefaultRuleRollout from './rollout';
 
 const DefaultRule = ({ feature }: { feature: Feature }) => {
   const { t } = useTranslation(['form']);
@@ -104,7 +105,7 @@ const DefaultRule = ({ feature }: { feature: Feature }) => {
         name="defaultRule"
         render={({ field }) => {
           return (
-            <Form.Item>
+            <Form.Item className="flex flex-col py-0 gap-y-6">
               <Strategy
                 feature={feature}
                 rootName={commonName}
@@ -115,6 +116,10 @@ const DefaultRule = ({ feature }: { feature: Feature }) => {
                   handleSelectStrategy(item, field.onChange)
                 }
               />
+              {defaultRule.type === StrategyType.ROLLOUT &&
+                defaultRule.currentOption === StrategyType.ROLLOUT && (
+                  <DefaultRuleRollout />
+                )}
             </Form.Item>
           );
         }}
