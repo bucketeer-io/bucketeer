@@ -6,7 +6,10 @@ import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
 import { DetailSkeleton } from '../../components/DetailSkeleton';
-import { FeatureConfirmDialog } from '../../components/FeatureConfirmDialog';
+import {
+  FeatureConfirmDialog,
+  SaveFeatureType
+} from '../../components/FeatureConfirmDialog';
 import { FeatureVariationsForm } from '../../components/FeatureVariationsForm';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
@@ -14,7 +17,8 @@ import {
   selectById as selectFeatureById,
   updateFeatureVariations,
   getFeature,
-  createCommand
+  createCommand,
+  updateFeature
 } from '../../modules/features';
 import { useCurrentEnvironment } from '../../modules/me';
 import {
@@ -30,6 +34,8 @@ import { AppDispatch } from '../../store';
 
 import { VariationForm, variationsFormSchema } from './formSchema';
 import { createResetSampleSeedCommand } from './targeting';
+import { ChangeType, VariationChange } from '../../proto/feature/service_pb';
+import { Variation } from '../../proto/feature/variation_pb';
 
 interface FeatureVariationsPageProps {
   featureId: string;
@@ -75,39 +81,116 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
     const handleUpdate = useCallback(
-      async (data: VariationForm) => {
-        const commands: Array<Command> = [];
-        dirtyFields.variations &&
-          commands.push(
-            ...createVariationCommands(feature.variationsList, data.variations)
+      async (data: VariationForm, saveFeatureType) => {
+        const prepareUpdate = async (actionType, payload) => {
+          dispatch(actionType(payload)).then(() => {
+            setIsConfirmDialogOpen(false);
+            dispatch(
+              getFeature({
+                environmentId: currentEnvironment.id,
+                id: featureId
+              })
+            ).then((response) => {
+              const featurePayload = response.payload as Feature.AsObject;
+              reset({
+                variationType: featurePayload.variationType.toString(),
+                variations: featurePayload.variationsList,
+                requireComment: currentEnvironment.requireComment,
+                comment: ''
+              });
+            });
+          });
+        };
+
+        if (saveFeatureType === SaveFeatureType.SCHEDULE) {
+          const variationChangeList = [];
+
+          const orgVariations = feature.variationsList;
+          const valVariations = data.variations;
+
+          const orgVariationIds = new Set(orgVariations.map((v) => v.id));
+          const valVariationIds = new Set(valVariations.map((v) => v.id));
+
+          const variationIds = [...orgVariationIds].filter((id) =>
+            valVariationIds.has(id)
           );
-        data.resetSampling && commands.push(createResetSampleSeedCommand());
-        dispatch(
-          updateFeatureVariations({
+
+          const createVariationChange = (type, variationData) => {
+            const variationChange = new VariationChange();
+            variationChange.setChangeType(type);
+
+            const variation = new Variation();
+            variation.setId(variationData.id);
+            variation.setName(variationData.name);
+            variation.setValue(variationData.value);
+            variation.setDescription(variationData.description);
+
+            variationChange.setVariation(variation);
+            return variationChange;
+          };
+
+          orgVariations
+            .filter((v) => !variationIds.includes(v.id))
+            .forEach((v) => {
+              console.log('remove variation');
+              variationChangeList.push(
+                createVariationChange(ChangeType.DELETE, v)
+              );
+            });
+
+          valVariations
+            .filter((v) => !orgVariationIds.has(v.id))
+            .forEach((v) => {
+              console.log('add variation');
+              variationChangeList.push(
+                createVariationChange(ChangeType.CREATE, v)
+              );
+            });
+
+          variationIds.forEach((vid) => {
+            const orgVariation = orgVariations.find((v) => v.id === vid);
+            const valVariation = valVariations.find((v) => v.id === vid);
+
+            if (
+              orgVariation.value !== valVariation.value ||
+              orgVariation.name !== valVariation.name ||
+              orgVariation.description !== valVariation.description
+            ) {
+              console.log('update variation');
+              variationChangeList.push(
+                createVariationChange(ChangeType.UPDATE, valVariation)
+              );
+            }
+          });
+
+          await prepareUpdate(updateFeature, {
             environmentId: currentEnvironment.id,
             id: feature.id,
             comment: data.comment,
-            commands: commands
-          })
-        ).then(() => {
-          setIsConfirmDialogOpen(false);
-          dispatch(
-            getFeature({
-              environmentId: currentEnvironment.id,
-              id: featureId
-            })
-          ).then((response) => {
-            const featurePayload = response.payload as Feature.AsObject;
-            reset({
-              variationType: featurePayload.variationType.toString(),
-              variations: featurePayload.variationsList,
-              requireComment: currentEnvironment.requireComment,
-              comment: ''
-            });
+            variations: variationChangeList
           });
-        });
+        } else {
+          const commands: Array<Command> = [];
+          if (dirtyFields.variations) {
+            commands.push(
+              ...createVariationCommands(
+                feature.variationsList,
+                data.variations
+              )
+            );
+          }
+          if (data.resetSampling) {
+            commands.push(createResetSampleSeedCommand());
+          }
+          await prepareUpdate(updateFeatureVariations, {
+            environmentId: currentEnvironment.id,
+            id: feature.id,
+            comment: data.comment,
+            commands
+          });
+        }
       },
-      [feature, dispatch, dirtyFields]
+      [feature, dispatch, dirtyFields, featureId, reset, currentEnvironment]
     );
 
     if (isLoading) {
@@ -126,7 +209,9 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
         {isConfirmDialogOpen && (
           <FeatureConfirmDialog
             open={isConfirmDialogOpen}
-            handleSubmit={handleSubmit(handleUpdate)}
+            handleSubmit={(arg) => {
+              handleSubmit((data) => handleUpdate(data, arg))();
+            }}
             onClose={() => setIsConfirmDialogOpen(false)}
             title={f(messages.feature.confirm.title)}
             description={f(messages.feature.confirm.description)}
