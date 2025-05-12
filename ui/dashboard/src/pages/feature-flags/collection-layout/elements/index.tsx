@@ -31,7 +31,7 @@ import {
   FlagOperationType
 } from 'pages/feature-flags/types';
 import Icon, { IconProps } from 'components/icon';
-import { Tooltip } from 'components/tooltip';
+import { Tooltip, TooltipProps } from 'components/tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 
 interface FlagNameElementType {
@@ -141,16 +141,18 @@ export const VariationTypeTooltip = ({
   trigger,
   variationType,
   asChild = false,
-  className
+  className,
+  align = 'start'
 }: {
   trigger: ReactNode;
   variationType: FeatureVariationType;
   asChild?: boolean;
   className?: string;
+  align?: TooltipProps['align'];
 }) => (
   <Tooltip
     asChild={asChild}
-    align="start"
+    align={align}
     trigger={trigger}
     content={
       <Trans
