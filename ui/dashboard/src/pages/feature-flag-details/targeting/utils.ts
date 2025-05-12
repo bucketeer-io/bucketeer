@@ -1,13 +1,21 @@
+import { isEqual } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import {
+  DefaultRuleStrategyType,
   Feature,
   FeaturePrerequisite,
+  FeatureRule,
+  FeatureRuleClause,
   FeatureRuleClauseOperator,
   FeatureRuleStrategy,
   FeatureTarget,
   FeatureVariation,
-  StrategyType
+  PrerequisiteChange,
+  RuleChange,
+  StrategyType,
+  TargetChange
 } from '@types';
+import { RuleSchema, TargetingSchema } from './form-schema';
 import { IndividualRuleItem, RuleClauseType } from './types';
 
 export const getAlreadyTargetedVariation = (
@@ -115,10 +123,17 @@ export const handleCreateDefaultValues = (feature: Feature) => {
     prerequisites: _prerequisites,
     individualRules,
     segmentRules,
-    defaultStrategy: _defaultStrategy,
+    defaultRule: {
+      ..._defaultStrategy,
+      type:
+        defaultStrategy?.type === StrategyType.FIXED
+          ? defaultStrategy?.fixedStrategy?.variation
+          : DefaultRuleStrategyType.MANUAL,
+      manualStrategy: getDefaultRolloutStrategy(feature)
+    },
     enabled,
     isShowRules: enabled
-  };
+  } as TargetingSchema;
 };
 
 export const createVariationLabel = (variation: FeatureVariation): string => {
@@ -134,4 +149,121 @@ export const createVariationLabel = (variation: FeatureVariation): string => {
     return label.slice(0, maxLength - ellipsis.length) + ellipsis;
   }
   return label;
+};
+
+export const handleCheckSegmentRules = (
+  featureRules: FeatureRule[],
+  segmentRules?: RuleSchema[]
+) => {
+  const ruleChanges: RuleChange[] = [];
+  featureRules.forEach(item => {
+    const currentRule = segmentRules?.find(rule => rule.id === item.id);
+    if (!currentRule) {
+      ruleChanges.push({
+        changeType: 'DELETE',
+        rule: item
+      });
+    }
+
+    if (currentRule && !isEqual(currentRule, item)) {
+      ruleChanges.push({
+        changeType: 'UPDATE',
+        rule: {
+          id: currentRule.id,
+          clauses: currentRule.clauses as FeatureRuleClause[],
+          strategy: currentRule.strategy as unknown as FeatureRuleStrategy
+        }
+      });
+    }
+  });
+
+  segmentRules?.forEach(item => {
+    const currentRule = featureRules?.find(rule => rule.id === item.id);
+    if (!currentRule) {
+      ruleChanges.push({
+        changeType: 'CREATE',
+        rule: {
+          id: item.id,
+          clauses: item.clauses as FeatureRuleClause[],
+          strategy: item.strategy as unknown as FeatureRuleStrategy
+        }
+      });
+    }
+  });
+  return ruleChanges;
+};
+
+export const handleCheckIndividualRules = (
+  featureTargets: FeatureTarget[],
+  individualRules?: TargetingSchema['individualRules']
+) => {
+  const targetChanges: TargetChange[] = [];
+  featureTargets.forEach(item => {
+    const currentTarget = individualRules?.find(
+      rule => rule.variationId === item.variation
+    );
+    if (!currentTarget) {
+      targetChanges.push({
+        changeType: 'DELETE',
+        target: item
+      });
+    }
+
+    if (currentTarget && !isEqual(currentTarget, item)) {
+      targetChanges.push({
+        changeType: 'UPDATE',
+        target: {
+          users: currentTarget.users,
+          variation: currentTarget.variationId
+        }
+      });
+    }
+  });
+
+  individualRules?.forEach(item => {
+    const currentTarget = featureTargets?.find(
+      target => target.variation === item.variationId
+    );
+    if (!currentTarget) {
+      targetChanges.push({
+        changeType: 'CREATE',
+        target: {
+          users: item.users,
+          variation: item.variationId
+        }
+      });
+    }
+  });
+  return targetChanges;
+};
+
+export const handleCheckPrerequisites = (
+  featurePrerequisites: FeaturePrerequisite[],
+  prerequisites?: TargetingSchema['prerequisites']
+) => {
+  const prerequisiteChanges: PrerequisiteChange[] = [];
+  featurePrerequisites.forEach(item => {
+    const currentTarget = prerequisites?.find(
+      pre => pre.variationId === item.variationId
+    );
+    if (!currentTarget) {
+      prerequisiteChanges.push({
+        changeType: 'DELETE',
+        prerequisite: item
+      });
+    }
+  });
+
+  prerequisites?.forEach(item => {
+    const currentTarget = featurePrerequisites?.find(
+      pre => pre.variationId === item.variationId
+    );
+    if (!currentTarget) {
+      prerequisiteChanges.push({
+        changeType: 'CREATE',
+        prerequisite: item
+      });
+    }
+  });
+  return prerequisiteChanges;
 };

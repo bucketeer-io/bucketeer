@@ -19,6 +19,7 @@ const FlagOffDescription = () => {
       <p>{t('targeting.flag-off-desc')}</p>
       <Button
         variant="text"
+        type="button"
         className="w-fit h-4 p-0 underline"
         onClick={() => setValue('isShowRules', !isShowRules)}
       >

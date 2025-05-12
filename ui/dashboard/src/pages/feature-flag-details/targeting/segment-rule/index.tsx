@@ -15,13 +15,16 @@ import { IconClose, IconInfo } from '@icons';
 import Icon from 'components/icon';
 import Card from '../../elements/card';
 import { RuleSchema, TargetingSchema } from '../form-schema';
+import { getDefaultRolloutStrategy } from '../utils';
 import RuleForm from './rule';
+import SegmentVariation from './variation';
 
 interface RuleSchemaFields extends RuleSchema {
   segmentId: string;
 }
 
 interface Props {
+  feature: Feature;
   features: Feature[];
   segmentRules: RuleSchemaFields[];
   segmentRulesRemove: (index: number) => void;
@@ -29,6 +32,7 @@ interface Props {
 }
 
 const TargetSegmentRule = ({
+  feature,
   features,
   segmentRules,
   segmentRulesRemove,
@@ -74,13 +78,11 @@ const TargetSegmentRule = ({
             className="flex flex-col w-full gap-y-6"
           >
             <Card>
-              <div>
-                <div className="flex items-center gap-x-2">
-                  <p className="typo-para-medium leading-4 text-gray-700">
-                    {t('feature-flags.rules')}
-                  </p>
-                  <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
-                </div>
+              <div className="flex items-center gap-x-2">
+                <p className="typo-para-medium leading-4 text-gray-700">
+                  {t('feature-flags.rules')}
+                </p>
+                <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
               </div>
               <Card className="shadow-none border border-gray-400">
                 <div className="flex items-center justify-between w-full">
@@ -140,20 +142,17 @@ const TargetSegmentRule = ({
                 <Fragment>
                   <RuleForm
                     features={features}
-                    isDisabledDelete={segment.clauses.length <= 1}
                     segmentIndex={segmentIndex}
                     userSegments={userSegments}
                   />
-                  {/* <SegmentVariation
+                  <SegmentVariation
                     feature={feature}
-                    defaultRolloutStrategy={defaultRolloutStrategy}
+                    defaultRolloutStrategy={getDefaultRolloutStrategy(feature)}
                     segmentIndex={segmentIndex}
-                    targetSegmentRules={targetSegmentRules}
-                    onChangeTargetSegmentRules={onChangeTargetSegmentRules}
-                  /> */}
+                    segmentRules={segmentRules}
+                  />
                 </Fragment>
               </Card>
-              {/* <AddRuleButton onAddRule={onAddRule} /> */}
             </Card>
           </div>
         ))}

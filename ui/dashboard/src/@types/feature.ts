@@ -44,6 +44,11 @@ export enum StrategyType {
   FIXED = 'FIXED',
   ROLLOUT = 'ROLLOUT'
 }
+export enum DefaultRuleStrategyType {
+  FIXED = 'FIXED',
+  MANUAL = 'MANUAL',
+  ROLLOUT = 'ROLLOUT'
+}
 
 export interface FeatureRuleStrategy {
   type: StrategyType;
@@ -126,7 +131,7 @@ export interface VariationChange extends ChangeType {
   variation: FeatureVariation;
 }
 
-interface RuleChange extends ChangeType {
+export interface RuleChange extends ChangeType {
   rule: FeatureRule;
 }
 

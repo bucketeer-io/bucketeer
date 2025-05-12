@@ -1,12 +1,14 @@
 import { useFormContext } from 'react-hook-form';
 import { Feature } from '@types';
+import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Form from 'components/form';
 import Input from 'components/input';
 import InputGroup from 'components/input-group';
-import { createVariationLabel } from '../utils';
+import { VariationOption } from './variation';
 
 interface Props {
   feature: Feature;
+  variationOptions: VariationOption[];
   variationId: string;
   name: string;
   handleChangeRolloutWeight: (value: number) => void;
@@ -14,11 +16,15 @@ interface Props {
 
 const PercentageInput = ({
   feature,
+  variationOptions,
   variationId,
   name,
   handleChangeRolloutWeight
 }: Props) => {
   const { control } = useFormContext();
+  const currentOption = variationOptions.find(
+    item => item.value === variationId
+  );
 
   return (
     <Form.Field
@@ -52,11 +58,15 @@ const PercentageInput = ({
                     className="text-right pl-[5px]"
                   />
                 </InputGroup>
-                <p className="typo-para-small text-gray-600">
-                  {createVariationLabel(
-                    feature.variations.find(item => item.id === variationId)!
-                  )}
-                </p>
+                <div className="flex items-center gap-x-2 typo-para-small text-gray-600">
+                  {feature.variationType === 'BOOLEAN' &&
+                    currentOption?.variationValue && (
+                      <FlagVariationPolygon
+                        index={currentOption.variationValue === 'true' ? 0 : 1}
+                      />
+                    )}
+                  {currentOption?.label}
+                </div>
               </div>
             </Form.Control>
             <Form.Message />

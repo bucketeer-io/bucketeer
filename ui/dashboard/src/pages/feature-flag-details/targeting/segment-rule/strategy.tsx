@@ -1,8 +1,14 @@
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
-import { Feature, RuleStrategyVariation, StrategyType } from '@types';
+import {
+  DefaultRuleStrategyType,
+  Feature,
+  RuleStrategyVariation,
+  StrategyType
+} from '@types';
 import { cn } from 'utils/style';
 import { IconInfo } from '@icons';
+import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,36 +17,53 @@ import {
 } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
+import { StrategySchema } from '../form-schema';
 import PercentageBar from './percentage-bar';
 import PercentageInput from './percentage-input';
 import { VariationOption } from './variation';
 
 interface Props {
   feature: Feature;
-  strategyName: string;
+  rootName: string;
+  strategyName: 'rolloutStrategy' | 'manualStrategy';
   variationOptions: VariationOption[];
   percentageValueCount: number;
   label?: string;
   isRequired?: boolean;
   handleSelectStrategy: (item: VariationOption) => void;
-  handleChangeRolloutWeight: (value: number, index: number) => void;
 }
 
 const Strategy = ({
   feature,
+  rootName,
   strategyName,
   variationOptions,
   percentageValueCount,
   label,
   isRequired = true,
-  handleSelectStrategy,
-  handleChangeRolloutWeight
+  handleSelectStrategy
 }: Props) => {
-  const { t } = useTranslation(['table', 'common', 'form']);
-  const { control, watch } = useFormContext();
+  const { t } = useTranslation(['table', 'common', 'form', 'message']);
+  const { control, watch, setError, clearErrors } = useFormContext();
 
-  const type = watch(`${strategyName}.type`);
-  const currentOption = watch(`${strategyName}.currentOption`);
+  const type = watch(`${rootName}.type`);
+  const currentOption = watch(`${rootName}.currentOption`);
+
+  const handleCheckError = (values: StrategySchema['rolloutStrategy']) => {
+    const total = values
+      ?.map(v => Number(v.weight))
+      .reduce((acc: number, current: number) => {
+        return acc + (current || 0);
+      }, 0);
+
+    if (total !== 100) {
+      return setError(`${rootName}.${strategyName}`, {
+        message: t('message:validation.should-be-percent')
+      });
+    }
+    clearErrors(`${rootName}.${strategyName}`);
+  };
+
   return (
     <div>
       <Form.Label
@@ -66,45 +89,65 @@ const Strategy = ({
         <div className="flex flex-col w-full gap-x-2">
           <Form.Field
             control={control}
-            name={`${strategyName}.currentOption`}
-            render={({ field }) => (
-              <Form.Item className="flex flex-col flex-1 py-0 w-full">
-                <Form.Control>
-                  <DropdownMenu>
-                    <div className="flex flex-col gap-y-2 w-full">
-                      <DropdownMenuTrigger
-                        label={
-                          variationOptions.find(
-                            item => item.value === currentOption
-                          )?.label || ''
-                        }
-                        isExpand
-                        className="w-full"
-                      />
-                    </div>
-                    <DropdownMenuContent align="start">
-                      {variationOptions.map((item, index) => (
-                        <DropdownMenuItem
-                          {...field}
-                          key={index}
-                          label={item.label}
-                          value={item.value}
-                          onSelectOption={() => handleSelectStrategy(item)}
+            name={`${rootName}.currentOption`}
+            render={({ field }) => {
+              const option = variationOptions.find(
+                item => item.value === currentOption
+              );
+
+              return (
+                <Form.Item className="flex flex-col flex-1 py-0 w-full">
+                  <Form.Control>
+                    <DropdownMenu>
+                      <div className="flex flex-col gap-y-2 w-full">
+                        <DropdownMenuTrigger
+                          trigger={
+                            <div className="flex items-center gap-x-2 typo-para-medium text-gray-700">
+                              {feature.variationType === 'BOOLEAN' &&
+                                option?.variationValue && (
+                                  <FlagVariationPolygon
+                                    index={
+                                      option?.variationValue === 'true' ? 0 : 1
+                                    }
+                                    className="!z-0"
+                                  />
+                                )}
+                              {option?.icon && (
+                                <Icon icon={option.icon} size={'sm'} />
+                              )}
+                              {option?.label || ''}
+                            </div>
+                          }
+                          isExpand
+                          className="w-full"
                         />
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </Form.Control>
-                <Form.Message />
-              </Form.Item>
-            )}
+                      </div>
+                      <DropdownMenuContent align="start">
+                        {variationOptions.map((item, index) => (
+                          <DropdownMenuItem
+                            {...field}
+                            key={index}
+                            label={item.label}
+                            value={item.value}
+                            onSelectOption={() => handleSelectStrategy(item)}
+                          />
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              );
+            }}
           />
 
-          {type === StrategyType.ROLLOUT && (
+          {[StrategyType.ROLLOUT, DefaultRuleStrategyType.MANUAL].includes(
+            type
+          ) && (
             <>
               <Form.Field
                 control={control}
-                name={`${strategyName}.rolloutStrategy`}
+                name={`${rootName}.${strategyName}`}
                 render={({ field }) => {
                   return (
                     <Form.Item className="flex flex-col w-full gap-y-2">
@@ -135,12 +178,18 @@ const Strategy = ({
                               ) => (
                                 <PercentageInput
                                   key={index}
+                                  variationOptions={variationOptions}
                                   feature={feature}
-                                  name={`${strategyName}.rolloutStrategy.${index}.weight`}
+                                  name={`${rootName}.${strategyName}.${index}.weight`}
                                   variationId={rollout.variation}
-                                  handleChangeRolloutWeight={value =>
-                                    handleChangeRolloutWeight(value, index)
-                                  }
+                                  handleChangeRolloutWeight={value => {
+                                    field.value[index] = {
+                                      ...field.value[index],
+                                      weight: +value
+                                    };
+                                    field.onChange(field.value);
+                                    handleCheckError(field.value);
+                                  }}
                                 />
                               )
                             )}

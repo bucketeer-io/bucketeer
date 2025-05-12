@@ -5,6 +5,7 @@ import IconCalendar from './customized-icons/calendar.svg?react';
 import IconChecked from './customized-icons/checked.svg?react';
 import IconChevronDown from './customized-icons/chevron-down.svg?react';
 import IconChevronRight from './customized-icons/chevron-right.svg?react';
+import IconCircleDashed from './customized-icons/circle-dashed.svg?react';
 import IconClose from './customized-icons/close.svg?react';
 import IconCollapse from './customized-icons/collapse.svg?react';
 import IconCopy from './customized-icons/copy.svg?react';
@@ -21,6 +22,7 @@ import IconOperationArrow from './customized-icons/operation-arrow.svg?react';
 import IconFlagOperation from './customized-icons/operation.svg?react';
 import IconOutperformed from './customized-icons/outperformed.svg?react';
 import IconPencil from './customized-icons/pencil.svg?react';
+import IconPercentage from './customized-icons/percentage.svg?react';
 import IconPlus from './customized-icons/plus.svg?react';
 import IconPrerequisite from './customized-icons/prerequisite.svg?react';
 import IconSearch from './customized-icons/search.svg?react';
@@ -139,6 +141,8 @@ export {
   IconUserOutlined,
   IconPencil,
   IconPrerequisite,
+  IconPercentage,
+  IconCircleDashed,
   // Special icons
   IconGoal,
   IconGoogle,
