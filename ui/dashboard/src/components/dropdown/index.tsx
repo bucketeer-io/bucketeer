@@ -17,7 +17,7 @@ import Checkbox from 'components/checkbox';
 import Icon from 'components/icon';
 import Input, { InputProps } from 'components/input';
 
-export type DropdownValue = number | string;
+export type DropdownValue = number | string | boolean;
 
 export type DropdownOption = {
   label: ReactNode;
@@ -174,6 +174,7 @@ const DropdownMenuItem = forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     icon?: FunctionComponent;
+    iconElement?: ReactNode;
     isMultiselect?: boolean;
     isSelected?: boolean;
     label?: ReactNode;
@@ -188,6 +189,7 @@ const DropdownMenuItem = forwardRef<
     {
       className,
       icon,
+      iconElement,
       label,
       value,
       description,
@@ -217,11 +219,18 @@ const DropdownMenuItem = forwardRef<
       {...props}
     >
       {isMultiselect && <Checkbox checked={isSelected} />}
-      {icon && (
-        <div className="flex-center size-5">
-          <Icon icon={icon} size={'xs'} color="gray-600" />
-        </div>
-      )}
+      {(iconElement || icon) &&
+        (iconElement ? (
+          iconElement
+        ) : (
+          <div className="flex-center size-5">
+            <Icon
+              icon={icon as FunctionComponent}
+              size={'xs'}
+              color="gray-600"
+            />
+          </div>
+        ))}
 
       <div className="flex flex-col gap-y-1.5 w-full overflow-hidden">
         <div className="typo-para-medium leading-5 text-gray-700 truncate">

@@ -32,6 +32,7 @@ import IconFlagOperation from './customized-icons/operation.svg?react';
 import IconOutperformed from './customized-icons/outperformed.svg?react';
 import IconPencil from './customized-icons/pencil.svg?react';
 import IconPlus from './customized-icons/plus.svg?react';
+import IconPrerequisite from './customized-icons/prerequisite.svg?react';
 import IconQuestion from './customized-icons/question.svg?react';
 import IconSearch from './customized-icons/search.svg?react';
 import IconSortingDown from './customized-icons/sorting-down.svg?react';
@@ -165,6 +166,7 @@ export {
   IconCalendarXL,
   IconOperationArrowXL,
   IconFlagOperationXL,
+  IconPrerequisite,
   // Special icons
   IconGoal,
   IconGoogle,
