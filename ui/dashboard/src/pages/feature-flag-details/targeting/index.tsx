@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import { autoOpsCreator } from '@api/auto-ops';
 import { FeatureResponse, featureUpdater } from '@api/features';
@@ -12,7 +12,7 @@ import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
 import { v4 as uuid } from 'uuid';
-import { Feature } from '@types';
+import { Evaluation, Feature } from '@types';
 import { IconDebugger } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -26,6 +26,8 @@ import ConfirmationRequiredModal, {
 import AddRule from './add-rule';
 import AudienceTraffic from './audience-traffic';
 import { initialPrerequisite } from './constants';
+import CreateDebuggerForm from './debugger/create-form';
+import TargetingDebuggerResults from './debugger/results';
 import DefaultRule from './default-rule';
 import FlagOffDescription from './flag-off-description';
 import FlagSwitch from './flag-switch';
@@ -57,6 +59,13 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
   const [isOpenConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
 
+  const [isOpenDebuggerModal, onOpenDebuggerModal, onCloseDebuggerModal] =
+    useToggleOpen(false);
+
+  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const [isOpenResults, onOpenResultsModal, onCloseResultsModal] =
+    useToggleOpen(false);
+
   const { data: rolloutCollection } = useQueryRollouts({
     params: {
       cursor: String(0),
@@ -68,8 +77,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
   const { data: collection } = useQueryFeatures({
     params: {
       cursor: String(0),
-      environmentId: currentEnvironment.id,
-      archived: false
+      environmentId: currentEnvironment.id
     },
     enabled: !!currentEnvironment?.id
   });
@@ -78,6 +86,10 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
       ['WAITING', 'RUNNING'].includes(item.status)
     ) || [];
   const features = useMemo(() => collection?.features || [], [collection]);
+  const activeFeatures = useMemo(
+    () => features.filter(item => !item.archived) || [],
+    [features]
+  );
 
   const form = useForm<TargetingSchema>({
     resolver: yupResolver(formSchema),
@@ -96,7 +108,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
   const prerequisitesWatch = [...(watch('prerequisites') || [])];
   const segmentRulesWatch = [...(watch('segmentRules') || [])];
 
-  const hasPrerequisiteFlags = features.filter(item =>
+  const hasPrerequisiteFlags = activeFeatures.filter(item =>
     item.prerequisites.find(p => p.featureId === feature.id)
   );
 
@@ -111,7 +123,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
 
   const isDisableAddPrerequisite = useMemo(() => {
     if (!features?.length) return true;
-    const filterFeatures = features.filter(f => f.id !== feature.id);
+    const filterFeatures = activeFeatures.filter(f => f.id !== feature.id);
     const featuresSelected = prerequisitesWatch.map(
       (item: PrerequisiteSchema) => item.featureId
     );
@@ -120,7 +132,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
       !filterFeatures.filter(f => !featuresSelected.includes(f.id))?.length ||
       filterFeatures?.length === prerequisitesWatch?.length
     );
-  }, [prerequisitesWatch, features, feature]);
+  }, [prerequisitesWatch, activeFeatures, feature]);
 
   const {
     fields: prerequisites,
@@ -276,7 +288,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
                 <>
                   <PrerequisiteRule
                     isDisableAddPrerequisite={isDisableAddPrerequisite}
-                    features={features}
+                    features={activeFeatures}
                     feature={feature}
                     prerequisites={prerequisites}
                     hasPrerequisiteFlags={hasPrerequisiteFlags}
@@ -342,7 +354,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
                 type="button"
                 variant={'secondary-2'}
                 className="size-12"
-                onClick={() => reset(handleCreateDefaultValues(feature))}
+                onClick={onOpenDebuggerModal}
               >
                 <Icon icon={IconDebugger} color="gray-500" />
               </Button>
@@ -369,6 +381,32 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
           onSubmit={additionalValues =>
             form.handleSubmit(values => onSubmit(values, additionalValues))()
           }
+        />
+      )}
+      {isOpenDebuggerModal && (
+        <CreateDebuggerForm
+          isOpen={isOpenDebuggerModal}
+          feature={feature}
+          evaluations={evaluations}
+          onClose={onCloseDebuggerModal}
+          setEvaluations={setEvaluations}
+          onShowResults={onOpenResultsModal}
+        />
+      )}
+      {isOpenResults && (
+        <TargetingDebuggerResults
+          isOpen={isOpenResults}
+          features={features}
+          evaluations={evaluations}
+          onClose={() => {
+            setEvaluations([]);
+            onCloseResultsModal();
+          }}
+          onClearFields={() => {
+            onCloseResultsModal();
+            setEvaluations([]);
+            onOpenDebuggerModal();
+          }}
         />
       )}
     </PageLayout.Content>

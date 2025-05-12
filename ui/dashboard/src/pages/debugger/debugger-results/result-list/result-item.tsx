@@ -13,7 +13,7 @@ interface Props {
   isExpand: boolean;
   groupBy: GroupByType;
   handleGetMaintainerInfo: (email: string) => string;
-  onToggleExpandItem: () => void;
+  onToggleExpandItem?: () => void;
 }
 
 const ResultItem = ({
@@ -52,17 +52,19 @@ const ResultItem = ({
           variationType={group[0]?.feature.variationType}
           maintainer={handleGetMaintainerInfo(group[0]?.feature.maintainer)}
         />
-        <button
-          className={cn(
-            'flex-center size-5 rotate-0 transition-all duration-200',
-            {
-              'rotate-180': isExpand
-            }
-          )}
-          onClick={onToggleExpandItem}
-        >
-          <Icon icon={IconChevronDown} />
-        </button>
+        {onToggleExpandItem && (
+          <button
+            className={cn(
+              'flex-center size-5 rotate-0 transition-all duration-200',
+              {
+                'rotate-180': isExpand
+              }
+            )}
+            onClick={onToggleExpandItem}
+          >
+            <Icon icon={IconChevronDown} />
+          </button>
+        )}
       </div>
       <div
         className={cn(
