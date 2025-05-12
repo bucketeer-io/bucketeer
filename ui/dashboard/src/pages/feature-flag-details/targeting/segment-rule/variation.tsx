@@ -1,35 +1,40 @@
-import { useCallback, useMemo } from 'react';
+import { FunctionComponent, useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
-import { Feature, RuleStrategyVariation, StrategyType } from '@types';
+import {
+  DefaultRuleStrategyType,
+  Feature,
+  RuleStrategyVariation,
+  StrategyType
+} from '@types';
+import { IconPercentage } from '@icons';
 import { RuleSchema } from '../form-schema';
-import { createVariationLabel } from '../utils';
 import Strategy from './strategy';
 
 export interface VariationOption {
   label: string;
   value: string;
-  type: StrategyType;
+  type: StrategyType | DefaultRuleStrategyType;
+  variationValue?: string;
+  icon?: FunctionComponent;
 }
 
 const SegmentVariation = ({
   feature,
   defaultRolloutStrategy,
   segmentIndex,
-  targetSegmentRules,
-  onChangeTargetSegmentRules
+  segmentRules
 }: {
   feature: Feature;
   defaultRolloutStrategy: RuleStrategyVariation[];
   segmentIndex: number;
-  targetSegmentRules: RuleSchema[];
-  onChangeTargetSegmentRules: (value: RuleSchema[]) => void;
+  segmentRules: RuleSchema[];
 }) => {
   const { t } = useTranslation(['table', 'common', 'form']);
 
   const methods = useFormContext();
-  const { watch, setValue, setFocus, trigger } = methods;
-  const commonName = `rules.${segmentIndex}.strategy`;
+  const { watch, setValue, setFocus } = methods;
+  const commonName = `segmentRules.${segmentIndex}.strategy`;
   const rolloutStrategy: RuleStrategyVariation[] = watch(
     `${commonName}.rolloutStrategy`
   );
@@ -40,16 +45,18 @@ const SegmentVariation = ({
   );
   const variationOptions: VariationOption[] = useMemo(() => {
     const variations = feature.variations.map(item => ({
-      label: createVariationLabel(item),
+      label: item.name || item.value,
       value: item.id,
-      type: StrategyType.FIXED
+      type: StrategyType.FIXED,
+      variationValue: item.value
     }));
     return [
       ...variations,
       {
-        label: t('form:select-rollout-percentage'),
+        label: t('form:manual-percentage'),
         value: StrategyType.ROLLOUT,
-        type: StrategyType.ROLLOUT
+        type: StrategyType.ROLLOUT,
+        icon: IconPercentage
       }
     ];
   }, [feature]);
@@ -58,11 +65,11 @@ const SegmentVariation = ({
     (item: VariationOption) => {
       const { type, value } = item;
       const isFixed = type === StrategyType.FIXED;
-      targetSegmentRules[segmentIndex] = {
-        ...targetSegmentRules[segmentIndex],
+      segmentRules[segmentIndex] = {
+        ...segmentRules[segmentIndex],
         strategy: {
-          ...targetSegmentRules[segmentIndex].strategy,
-          type,
+          ...segmentRules[segmentIndex].strategy,
+          type: type as StrategyType,
           currentOption: value,
           fixedStrategy: {
             variation: isFixed ? value : ''
@@ -70,7 +77,7 @@ const SegmentVariation = ({
           rolloutStrategy: isFixed ? [] : defaultRolloutStrategy
         }
       };
-      setValue(commonName, targetSegmentRules[segmentIndex].strategy);
+      setValue(commonName, segmentRules[segmentIndex].strategy);
       if (!isFixed) {
         let timerId: NodeJS.Timeout | null = null;
         if (timerId) clearTimeout(timerId);
@@ -79,53 +86,25 @@ const SegmentVariation = ({
           100
         );
       }
-      return onChangeTargetSegmentRules([...targetSegmentRules]);
     },
     [
       feature,
       variationOptions,
       defaultRolloutStrategy,
-      targetSegmentRules,
+      segmentRules,
       segmentIndex,
       commonName
     ]
   );
 
-  const handleChangeRolloutWeight = useCallback(
-    (weight: number, itemIndex: number) => {
-      const newRollout = targetSegmentRules[
-        segmentIndex
-      ]?.strategy?.rolloutStrategy?.map((item, index) => {
-        if (index === itemIndex) {
-          return {
-            ...item,
-            weight
-          };
-        }
-        return item;
-      });
-      targetSegmentRules[segmentIndex] = {
-        ...targetSegmentRules[segmentIndex],
-        strategy: {
-          ...targetSegmentRules[segmentIndex].strategy,
-          rolloutStrategy: newRollout
-        }
-      };
-      setValue(commonName, targetSegmentRules[segmentIndex].strategy);
-      trigger(commonName);
-      return onChangeTargetSegmentRules([...targetSegmentRules]);
-    },
-    [targetSegmentRules, commonName, segmentIndex]
-  );
-
   return (
     <Strategy
       feature={feature}
-      strategyName={commonName}
+      rootName={commonName}
+      strategyName="rolloutStrategy"
       percentageValueCount={percentageValueCount}
       variationOptions={variationOptions}
       handleSelectStrategy={handleSelectStrategy}
-      handleChangeRolloutWeight={handleChangeRolloutWeight}
     />
   );
 };

@@ -13,6 +13,7 @@ export type NotifyProps = {
   t?: Toast;
   duration?: number;
   toastChildren?: ReactNode;
+  className?: string;
 };
 
 export const useToast = () => {
@@ -22,7 +23,8 @@ export const useToast = () => {
     messageType = 'success',
     message,
     duration = 5000,
-    toastChildren
+    toastChildren,
+    className
   }: NotifyProps) =>
     toast.custom(
       t => (
@@ -32,6 +34,7 @@ export const useToast = () => {
           message={message}
           t={t}
           toastChildren={toastChildren}
+          className={className}
         />
       ),
       {

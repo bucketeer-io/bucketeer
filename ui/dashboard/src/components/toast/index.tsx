@@ -40,6 +40,7 @@ const ToastMessage = ({
   messageType = 'success',
   message,
   t,
+  className,
   toastChildren
 }: NotifyProps) => {
   const [isExpand, setIsExpand] = useState(false);
@@ -52,7 +53,7 @@ const ToastMessage = ({
           ? IconToastInfo
           : IconToastWarning;
   return (
-    <div className={toastVariants({ toastType, messageType })}>
+    <div className={cn(toastVariants({ toastType, messageType }), className)}>
       <div
         className={cn('flex gap-x-2', {
           'items-center': ['info-message', 'prerequisite-message'].includes(
