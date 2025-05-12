@@ -271,5 +271,18 @@
       "execute-at": "The exact date and time when this rollout phase will take effect, updating the user distribution."
     }
   },
-  "has-rollout-running": "There is a <comp>Progressive Rollout</comp> in progress. It will stop it."
+  "has-rollout-running": "There is a <comp>Progressive Rollout</comp> in progress. It will stop it.",
+  "targeting": {
+    "all-audience-traffic": "All Audience Traffic",
+    "flag-switch-on": "Flag is <switch></switch> serving variations based on rules",
+    "flag-switch-off": "Flag is <switch></switch> serving the off variation",
+    "flag-off-desc": "The flag is off, and no audience traffic will evaluate the rules below.",
+    "hide-rules": "Hide Rules",
+    "view-targeting-rules": "View Targeting Rules",
+    "individual-targeting": "Individual Targeting",
+    "custom-rule": "Custom Rule",
+    "prerequisite-tooltip": "Manage dependencies between flags.",
+    "individual-tooltip": "Target specific users.",
+    "custom-rule-tooltip": "Combine user attributes, segments, and feature flags for a specific audience."
+  }
 }
