@@ -17,24 +17,24 @@ import Icon from 'components/icon';
 import { PrerequisiteSchema } from '../types';
 
 interface Props {
-  prerequisites: PrerequisiteSchema[];
   features: Feature[];
   type: 'if' | 'and';
   prerequisite: PrerequisiteSchema;
   isDisabledDelete: boolean;
   prerequisiteIndex: number;
+  featureId: string;
   onDeleteCondition: () => void;
 }
 
 const ConditionForm = forwardRef(
   (
     {
-      prerequisites,
       features,
       type,
       prerequisite,
       isDisabledDelete,
       prerequisiteIndex,
+      featureId,
       onDeleteCondition
     }: Props,
     ref: Ref<HTMLDivElement>
@@ -44,29 +44,31 @@ const ConditionForm = forwardRef(
     const methods = useFormContext();
     const { control, watch } = methods;
 
+    const prerequisitesWatch = [...watch('prerequisites')];
+
     const commonName = useMemo(
       () => `prerequisites.${prerequisiteIndex}`,
       [prerequisiteIndex]
     );
 
-    const featureId = watch(`${commonName}.featureId`);
+    const currentFeatureId = watch(`${commonName}.featureId`);
 
     const currentFeature = useMemo(
-      () => features.find(item => item.id === featureId),
-      [featureId, features]
+      () => features.find(item => item.id === currentFeatureId),
+      [currentFeatureId, features]
     );
 
     const flagOptions = useMemo(() => {
-      const featuresSelected = prerequisites.map(
+      const featuresSelected = prerequisitesWatch.map(
         (item: PrerequisiteSchema) => item.featureId
       );
       return features
-        .filter(f => !featuresSelected.includes(f.id))
+        .filter(f => ![...featuresSelected, featureId].includes(f.id))
         .map(item => ({
           label: item.name,
           value: item.id
         }));
-    }, [features, prerequisites]);
+    }, [features, prerequisitesWatch, featureId]);
 
     const variationOptions = useMemo(
       () =>

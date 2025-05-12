@@ -118,7 +118,7 @@ export const formSchema = yup.object().shape({
           })
       })
     ),
-  rules: yup.array().of(rulesSchema),
+  segmentRules: yup.array().of(rulesSchema),
   defaultStrategy: strategySchema,
   enabled: yup.boolean().required(requiredMessage),
   isShowRules: yup.boolean().required(requiredMessage)
