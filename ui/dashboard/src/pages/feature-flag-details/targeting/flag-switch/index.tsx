@@ -25,11 +25,11 @@ const FlagSwitch = () => {
   const options = [
     {
       label: t('common:true'),
-      value: true
+      value: 1
     },
     {
       label: t('common:false'),
-      value: false
+      value: 0
     }
   ];
 
@@ -53,7 +53,7 @@ const FlagSwitch = () => {
                       switch: (
                         <Switch
                           className="-mb-1"
-                          checked={field.value}
+                          checked={!!field.value}
                           onCheckedChange={field.onChange}
                         />
                       )

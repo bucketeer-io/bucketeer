@@ -64,22 +64,20 @@ const Strategy = ({
     currentOption === StrategyType.MANUAL;
   return (
     <div>
-      <Form.Label
-        required={isRequired}
-        className={cn('relative w-fit mb-5 text-gray-700', {
-          'mb-2 ml-14': label
-        })}
-      >
-        {label ? label : t('feature-flags.variation')}
-        {!label && (
+      {label && (
+        <Form.Label
+          required={isRequired}
+          className={cn('relative w-fit mb-2 ml-14 text-gray-700')}
+        >
+          {label}
           <Icon
             icon={IconInfo}
             size="xs"
             color="gray-500"
             className="absolute -right-6"
           />
-        )}
-      </Form.Label>
+        </Form.Label>
+      )}
       <div className="flex w-full gap-x-4">
         <p className="typo-para-small text-gray-600 mt-3 uppercase">
           {t('feature-flags.serve')}

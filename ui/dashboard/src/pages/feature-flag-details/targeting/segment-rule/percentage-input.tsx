@@ -7,22 +7,24 @@ import InputGroup from 'components/input-group';
 import { VariationOption } from './variation';
 
 interface Props {
-  feature: Feature;
-  variationOptions: VariationOption[];
-  variationId: string;
   name: string;
+  feature?: Feature;
+  variationOptions?: VariationOption[];
+  variationId?: string;
+  showVariationName?: boolean;
   handleChangeRolloutWeight: (value: number) => void;
 }
 
 const PercentageInput = ({
   feature,
+  name,
   variationOptions,
   variationId,
-  name,
+  showVariationName = true,
   handleChangeRolloutWeight
 }: Props) => {
   const { control } = useFormContext();
-  const currentOption = variationOptions.find(
+  const currentOption = variationOptions?.find(
     item => item.value === variationId
   );
 
@@ -37,7 +39,7 @@ const PercentageInput = ({
             ? value.toString().slice(1)
             : value;
         return (
-          <Form.Item className="flex flex-col w-full gap-y-2 py-0">
+          <Form.Item className="flex flex-col w-fit gap-y-2 py-0">
             <Form.Control>
               <div className="flex items-center gap-x-2">
                 <InputGroup
@@ -58,15 +60,19 @@ const PercentageInput = ({
                     className="text-right pl-[5px]"
                   />
                 </InputGroup>
-                <div className="flex items-center gap-x-2 typo-para-small text-gray-600">
-                  {feature.variationType === 'BOOLEAN' &&
-                    currentOption?.variationValue && (
-                      <FlagVariationPolygon
-                        index={currentOption.variationValue === 'true' ? 0 : 1}
-                      />
-                    )}
-                  {currentOption?.label}
-                </div>
+                {showVariationName && (
+                  <div className="flex items-center gap-x-2 typo-para-small text-gray-600">
+                    {feature?.variationType === 'BOOLEAN' &&
+                      currentOption?.variationValue && (
+                        <FlagVariationPolygon
+                          index={
+                            currentOption.variationValue === 'true' ? 0 : 1
+                          }
+                        />
+                      )}
+                    {currentOption?.label}
+                  </div>
+                )}
               </div>
             </Form.Control>
             <Form.Message />
