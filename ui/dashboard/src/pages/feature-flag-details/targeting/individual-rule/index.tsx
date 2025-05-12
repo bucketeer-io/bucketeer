@@ -13,6 +13,7 @@ import { CreatableSelect, Option } from 'components/creatable-select';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Card from '../../elements/card';
+import { TargetingSchema } from '../form-schema';
 import { IndividualRuleItem } from '../types';
 import { getAlreadyTargetedVariation } from '../utils';
 
@@ -25,19 +26,17 @@ const UserMessage = ({ message }: { message: ReactNode }) => {
 };
 
 const IndividualRule = ({ individualRules }: Props) => {
-  const { t } = useTranslation(['table', 'form', 'common']);
+  const { t } = useTranslation(['table', 'form', 'common', 'message']);
   const { notify } = useToast();
 
-  const methods = useFormContext();
+  const methods = useFormContext<TargetingSchema>();
 
   const { control } = methods;
 
   const handleCopyUserId = (value: string) => {
     copyToClipBoard(value);
     notify({
-      toastType: 'toast',
-      messageType: 'success',
-      message: 'Copied'
+      message: t('message:copied')
     });
   };
 
@@ -56,14 +55,11 @@ const IndividualRule = ({ individualRules }: Props) => {
           <div key={index} className="flex flex-col w-full gap-y-4">
             <Form.Field
               control={control}
-              name={`targetIndividualRules.${index}.users`}
+              name={`individualRules.${index}.users`}
               render={({ field }) => {
                 return (
                   <Form.Item className="py-0">
-                    <Form.Label
-                      required
-                      className="flex items-center gap-x-2 !mb-2"
-                    >
+                    <Form.Label className="flex items-center gap-x-2 !mb-2">
                       <p className="uppercase">{t('feature-flags.serve')}</p>
                       <FlagVariationPolygon index={index} className="!z-0" />
                       <p>{item?.name}</p>

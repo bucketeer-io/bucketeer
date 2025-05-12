@@ -14,11 +14,13 @@ import {
 } from 'components/dropdown';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
-import { RuleCategory } from '../types';
+import { IndividualRuleItem, RuleCategory } from '../types';
 
 const AddRule = ({
+  individualRules,
   onAddRule
 }: {
+  individualRules: IndividualRuleItem[];
   onAddRule: (rule: RuleCategory) => void;
 }) => {
   const { t } = useTranslation(['form', 'table']);
@@ -35,7 +37,8 @@ const AddRule = ({
         label: t('targeting.individual-targeting'),
         value: RuleCategory.INDIVIDUAL,
         tooltip: t('targeting.individual-tooltip'),
-        icon: IconUserOutlined
+        icon: IconUserOutlined,
+        disabled: individualRules.length > 0
       },
       {
         label: t('targeting.custom-rule'),
@@ -44,7 +47,7 @@ const AddRule = ({
         icon: IconSetting
       }
     ],
-    []
+    [individualRules]
   );
 
   return (
@@ -74,6 +77,7 @@ const AddRule = ({
                 icon={item.icon}
                 label={item.label}
                 value={item.value}
+                disabled={item?.disabled}
                 onSelectOption={value => onAddRule(value as RuleCategory)}
               />
             }
