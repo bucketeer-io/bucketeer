@@ -335,7 +335,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
           feature={feature}
           isOpen={isOpenConfirmModal}
           isShowScheduleSelect={isShowUpdateSchedule}
-          isShowRolloutWarning={true}
+          isShowRolloutWarning={feature.enabled}
           onClose={onCloseConfirmModal}
           onSubmit={additionalValues =>
             form.handleSubmit(values => onSubmit(values, additionalValues))()
