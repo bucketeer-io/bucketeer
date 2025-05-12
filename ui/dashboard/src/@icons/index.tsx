@@ -31,6 +31,7 @@ import IconStopExperiment from './customized-icons/stop-experiment.svg?react';
 import IconFlagString from './customized-icons/string.svg?react';
 import IconFlagSwitch from './customized-icons/switch.svg?react';
 import IconTargetSegments from './customized-icons/target-segments.svg?react';
+import IconThreeLines from './customized-icons/three-lines.svg?react';
 import IconToastError from './customized-icons/toast-error.svg?react';
 import IconToastInfo from './customized-icons/toast-info.svg?react';
 import IconToastSuccess from './customized-icons/toast-success.svg?react';
@@ -137,6 +138,7 @@ export {
   IconDocument,
   IconUserOutlined,
   IconPencil,
+  IconThreeLines,
   // Special icons
   IconGoal,
   IconGoogle,

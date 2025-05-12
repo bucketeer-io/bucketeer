@@ -211,5 +211,16 @@
   "reason-rule-tooltip": "Evaluated using a custom rule",
   "reason-default-tooltip": "Evaluated using the default strategy",
   "reason-offVariation-tooltip": "Evaluated using the off variation",
-  "reason-prerequisite-tooltip": "Evaluated using a prerequisite targeting"
+  "reason-prerequisite-tooltip": "Evaluated using a prerequisite targeting",
+  "evaluation": {
+    "user-count": "User Count",
+    "event-count": "Event Count",
+    "variation-counts": "Variation Counts",
+    "total-evaluations": "Total evaluations <desc>{{value}}</desc>",
+    "last-24h": "Last 24 hours",
+    "last-7-days": "Last 7 days",
+    "last-14-days": "Last 14 days",
+    "last-30-days": "Last 30 days",
+    "tooltip-content": "Shows real-time counts of evaluation events and unique users who received this flag."
+  }
 }
