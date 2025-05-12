@@ -3,13 +3,22 @@ import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
 import { cn } from 'utils/style';
 import Button from 'components/button';
+import { TargetingSchema } from '../form-schema';
 
 const FlagOffDescription = () => {
   const { t } = useTranslation(['form']);
   const { watch, setValue } = useFormContext();
   const isShowRules = watch('isShowRules');
   const prerequisiteCount = watch('prerequisites')?.length;
-  const individualRuleCount = watch('individualRules')?.length;
+  const individualRulesWatch: TargetingSchema['individualRules'] =
+    watch('individualRules');
+  const individualRuleCount = useMemo(() => {
+    const count = individualRulesWatch?.reduce((acc, curr) => {
+      if (curr?.users?.length) acc++;
+      return acc;
+    }, 0);
+    return count || 0;
+  }, [individualRulesWatch]);
   const segmentRuleCount = watch('segmentRules')?.length;
 
   const hiddenRuleDesc = useMemo(() => {

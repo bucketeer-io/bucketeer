@@ -106,6 +106,7 @@ const Strategy = ({
                             key={index}
                             label={item.label}
                             value={item.value}
+                            icon={item?.icon}
                             onSelectOption={() => handleSelectStrategy(item)}
                           />
                         ))}
