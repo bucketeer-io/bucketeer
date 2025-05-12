@@ -1084,7 +1084,7 @@ func TestListFlagTriggers(t *testing.T) {
 			),
 			setup: func(s *FeatureService) {
 				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().ListFlagTriggers(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.FlagTrigger{}, 0, int64(0), nil)
 			},
 			input:    &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: ""},
@@ -1102,7 +1102,7 @@ func TestListFlagTriggers(t *testing.T) {
 			),
 			setup: func(s *FeatureService) {
 				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().ListFlagTriggers(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*proto.FlagTrigger{}, 0, int64(0), nil)
 			},
 			input:    &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
