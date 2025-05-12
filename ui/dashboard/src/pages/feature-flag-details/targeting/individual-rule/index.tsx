@@ -12,6 +12,7 @@ import Button from 'components/button';
 import { CreatableSelect, Option } from 'components/creatable-select';
 import Form from 'components/form';
 import Icon from 'components/icon';
+import { Tooltip } from 'components/tooltip';
 import Card from '../../elements/card';
 import { TargetingSchema } from '../form-schema';
 import { IndividualRuleItem } from '../types';
@@ -45,9 +46,19 @@ const IndividualRule = ({ individualRules }: Props) => {
       <div>
         <div className="flex items-center gap-x-2">
           <p className="typo-para-medium leading-4 text-gray-700">
-            {t('form:targeting.individual')}
+            {t('form:targeting.individual-target')}
           </p>
-          <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
+          <Tooltip
+            align="start"
+            alignOffset={-105}
+            content={t('form:targeting.tooltip.individual-target')}
+            trigger={
+              <div className="flex-center size-fit">
+                <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
+              </div>
+            }
+            className="max-w-[400px]"
+          />
         </div>
       </div>
       {individualRules.map((item, index) => (

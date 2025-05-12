@@ -7,7 +7,7 @@ import {
 } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
-import ToastMessage from 'components/toast';
+import InfoMessage from 'components/info-message';
 
 const PrerequisiteBanner = ({
   hasPrerequisiteFlags
@@ -19,8 +19,8 @@ const PrerequisiteBanner = ({
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   return (
-    <ToastMessage
-      message={
+    <InfoMessage
+      title={
         <Trans
           i18nKey={'form:targeting.prerequisite-flags'}
           values={{
@@ -31,41 +31,28 @@ const PrerequisiteBanner = ({
           }}
         />
       }
-      messageType="info"
-      toastType="prerequisite-message"
-      className="!w-full !max-w-full"
-      toastChildren={
-        <div className="flex flex-col w-full gap-y-3">
-          <p className="typo-para-medium text-gray-600">
-            <Trans
-              i18nKey={`form:targeting.prerequisite-flags-desc`}
-              values={{
-                text: t(
-                  hasPrerequisiteFlags.length > 1
-                    ? 'table:flags'
-                    : 'common:flag'
-                )?.toLowerCase()
-              }}
-            />
-          </p>
-          <ul className="flex flex-col w-full gap-y-2">
-            {hasPrerequisiteFlags.map((item, index) => (
-              <li
-                className="flex items-center gap-x-2 typo-para-medium"
-                key={index}
-              >
-                <p className="text-gray-700">{index + 1}.</p>
-                <Link
-                  to={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${item.id}${PAGE_PATH_FEATURE_TARGETING}`}
-                  className="underline text-primary-500"
-                >
-                  {item.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+      description={
+        <Trans
+          i18nKey={`form:targeting.prerequisite-flags-desc`}
+          values={{
+            text: t(
+              hasPrerequisiteFlags.length > 1 ? 'table:flags' : 'common:flag'
+            )?.toLowerCase()
+          }}
+        />
       }
+      linkElements={hasPrerequisiteFlags.map((item, index) => (
+        <li
+          key={index}
+          className="typo-para-small text-primary-500 underline w-fit max-w-full truncate"
+        >
+          <Link
+            to={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${item.id}${PAGE_PATH_FEATURE_TARGETING}`}
+          >
+            {item.name}
+          </Link>
+        </li>
+      ))}
     />
   );
 };

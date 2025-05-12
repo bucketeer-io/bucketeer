@@ -98,15 +98,19 @@ const handleCreatePrerequisites = (prerequisites: FeaturePrerequisite[]) =>
 const handleCreateIndividualRules = (
   targets: FeatureTarget[],
   variations: FeatureVariation[]
-) =>
-  targets.map(({ variation, users }) => {
-    const currentVariation = variations.find(item => item.id === variation);
-    return {
-      variationId: variation,
-      users,
-      name: currentVariation?.name || currentVariation?.value || ''
-    };
-  });
+) => {
+  const hasUsers = targets.find(item => item?.users.length);
+  if (hasUsers)
+    return targets.map(({ variation, users }) => {
+      const currentVariation = variations.find(item => item.id === variation);
+      return {
+        variationId: variation,
+        users,
+        name: currentVariation?.name || currentVariation?.value || ''
+      };
+    });
+  return [];
+};
 
 const getClauseType = (operator: FeatureRuleClauseOperator) => {
   const { FEATURE_FLAG, BEFORE, AFTER, SEGMENT } = FeatureRuleClauseOperator;
@@ -241,10 +245,17 @@ export const handleCheckSegmentRules = (
         rule: item
       });
     }
+  });
+
+  segmentRules?.forEach(item => {
+    const currentRule = featureRules?.find(rule => rule.id === item.id);
+    if (!currentRule) {
+      ruleChanges.push(getRuleItem(item, 'CREATE'));
+    }
     const formattedRule = {
-      ...currentRule,
-      clauses: currentRule?.clauses?.map(item => omit(item, 'type')),
-      strategy: handleGetStrategy(currentRule?.strategy)
+      ...item,
+      clauses: item?.clauses?.map(item => omit(item, 'type')),
+      strategy: handleGetStrategy(item?.strategy)
     } as FeatureRuleChange;
 
     if (currentRule && !isEqual(formattedRule, item)) {
@@ -252,13 +263,6 @@ export const handleCheckSegmentRules = (
         changeType: 'UPDATE',
         rule: formattedRule
       });
-    }
-  });
-
-  segmentRules?.forEach(item => {
-    const currentRule = featureRules?.find(rule => rule.id === item.id);
-    if (!currentRule) {
-      ruleChanges.push(getRuleItem(item, 'CREATE'));
     }
   });
   return ruleChanges;
@@ -287,9 +291,9 @@ export const handleCheckIndividualRules = (
 
     if (currentTarget && !isEqual(targetObj, item)) {
       targetChanges.push({
-        changeType: 'UPDATE',
+        changeType: currentTarget.users.length ? 'UPDATE' : 'DELETE',
         target: {
-          users: currentTarget.users,
+          users: currentTarget.users.length ? currentTarget.users : item.users,
           variation: currentTarget.variationId
         }
       });

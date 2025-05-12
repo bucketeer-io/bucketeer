@@ -1,14 +1,15 @@
-import { FunctionComponent, useCallback, useMemo } from 'react';
+import { FunctionComponent, ReactNode, useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
 import { Feature, RuleStrategyVariation, StrategyType } from '@types';
 import { IconPercentage } from '@icons';
 import Form from 'components/form';
+import VariationLabel from 'elements/variation-label';
 import { RuleSchema, StrategySchema } from '../form-schema';
 import Strategy from './strategy';
 
 export interface VariationOption {
-  label: string;
+  label: ReactNode;
   value: string;
   type: StrategyType;
   variationValue?: string;
@@ -40,8 +41,8 @@ const SegmentVariation = ({
     [rolloutStrategy]
   );
   const variationOptions: VariationOption[] = useMemo(() => {
-    const variations = feature.variations.map(item => ({
-      label: item.name || item.value,
+    const variations = feature.variations.map((item, index) => ({
+      label: <VariationLabel label={item.name || item.value} index={index} />,
       value: item.id,
       type: StrategyType.FIXED,
       variationValue: item.value
@@ -102,7 +103,6 @@ const SegmentVariation = ({
           <Form.Item className="py-0">
             <Strategy
               label={t('feature-flags.variation')}
-              feature={feature}
               rootName={commonName}
               strategyName="rolloutStrategy"
               percentageValueCount={percentageValueCount}

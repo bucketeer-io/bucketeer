@@ -18,7 +18,7 @@ import { TargetingSchema } from '../form-schema';
 
 const FlagSwitch = () => {
   const { t } = useTranslation(['form', 'common']);
-  const { control, watch } = useFormContext<TargetingSchema>();
+  const { control, watch, setValue } = useFormContext<TargetingSchema>();
 
   const enabledWatch = watch('enabled');
 
@@ -54,18 +54,24 @@ const FlagSwitch = () => {
                         <Switch
                           className="-mb-1"
                           checked={!!field.value}
-                          onCheckedChange={field.onChange}
+                          onCheckedChange={checked => {
+                            field.onChange(checked);
+                            setValue('isShowRules', checked);
+                          }}
                         />
                       )
                     }}
                   />
                   <Tooltip
-                    content={t('targeting.all-audience-traffic')}
+                    content={t(
+                      `targeting.tooltip.flag-${field.value ? 'on' : 'off'}`
+                    )}
                     trigger={
                       <div className="flex-center size-fit -mb-1">
                         <Icon icon={IconInfo} size="xxs" color="gray-500" />
                       </div>
                     }
+                    className="max-w-[400px]"
                   />
                 </div>
                 {!enabledWatch && (

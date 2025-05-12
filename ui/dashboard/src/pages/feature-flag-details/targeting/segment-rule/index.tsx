@@ -13,6 +13,7 @@ import { useTranslation } from 'i18n';
 import { Feature } from '@types';
 import { IconClose, IconInfo } from '@icons';
 import Icon from 'components/icon';
+import { Tooltip } from 'components/tooltip';
 import Card from '../../elements/card';
 import { RuleSchema, TargetingSchema } from '../form-schema';
 import { getDefaultRolloutStrategy } from '../utils';
@@ -82,7 +83,17 @@ const TargetSegmentRule = ({
                 <p className="typo-para-medium leading-4 text-gray-700">
                   {t('feature-flags.rules')}
                 </p>
-                <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
+                <Tooltip
+                  align="start"
+                  alignOffset={-68}
+                  content={t('form:targeting.tooltip.custom-rules')}
+                  trigger={
+                    <div className="flex-center size-fit">
+                      <Icon icon={IconInfo} size={'xxs'} color="gray-500" />
+                    </div>
+                  }
+                  className="max-w-[400px]"
+                />
               </div>
               <Card className="shadow-none border border-gray-400">
                 <div className="flex items-center justify-between w-full">

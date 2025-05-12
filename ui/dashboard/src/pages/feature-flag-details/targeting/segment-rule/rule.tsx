@@ -20,6 +20,9 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import { Tooltip } from 'components/tooltip';
+import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+import FeatureFlagStatus from 'elements/feature-flag-status';
+import VariationLabel from 'elements/variation-label';
 import {
   conditionerCompareOptions,
   conditionerDateOptions,
@@ -67,7 +70,8 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
       ?.filter(item => ![...flagsSelected, feature.id]?.includes(item.id))
       .map(item => ({
         label: item.name,
-        value: item.id
+        value: item.id,
+        enabled: item.enabled
       }));
   }, [features, [...clausesWatch], feature]);
 
@@ -80,7 +84,11 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
     `segmentRules.${segmentIndex}.clauses.${index}.${name}` as FieldPath<TargetingSchema>;
 
   const handleChangeConditioner = useCallback(
-    (value: RuleClauseType, index: number) => {
+    (
+      value: RuleClauseType,
+      index: number,
+      onChange: (value: RuleClauseType) => void
+    ) => {
       let _value = '';
       switch (value) {
         case RuleClauseType.COMPARE:
@@ -99,6 +107,9 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
           break;
       }
       setValue(getFieldName('operator', index), _value);
+      const currentType = watch(getFieldName('type', index));
+      if (currentType !== value) setValue(getFieldName('values', index), []);
+      onChange(value);
     },
     [clauses]
   );
@@ -115,8 +126,8 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
           const featureId = isFlag ? clause?.attribute : '';
           const variationOptions = features
             ?.find(item => item.id === featureId)
-            ?.variations?.map(v => ({
-              label: v.name || v.value,
+            ?.variations?.map((v, index) => ({
+              label: <VariationLabel label={v.name || v.value} index={index} />,
               value: v.id
             }));
 
@@ -164,10 +175,10 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                                     label={item.label}
                                     value={item.value}
                                     onSelectOption={value => {
-                                      field.onChange(value);
                                       handleChangeConditioner(
                                         value as RuleClauseType,
-                                        clauseIndex
+                                        clauseIndex,
+                                        field.onChange
                                       );
                                     }}
                                   />
@@ -190,53 +201,49 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                             <Form.Label required className="relative w-fit">
                               {isFlag
                                 ? t(`feature-flags.feature-flag`)
-                                : isCompare
-                                  ? t(`feature-flags.attribute`)
-                                  : t(`feature-flags.values`)}
+                                : t(`feature-flags.attribute-key`)}
 
                               {!isFlag && (
                                 <Tooltip
+                                  content={t('targeting.tooltip.attribute')}
                                   trigger={
                                     <div className="flex-center size-fit absolute top-0.5 -right-5">
                                       <Icon icon={IconInfo} size="xxs" />
                                     </div>
                                   }
+                                  className="max-w-[300px]"
                                 />
                               )}
                             </Form.Label>
                             <Form.Control>
                               {isFlag ? (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger
-                                    label={truncateBySide(
-                                      features?.find(item =>
-                                        [
-                                          field.value,
-                                          clause?.attribute
-                                        ].includes(item.id)
-                                      )?.name || '',
-                                      50
-                                    )}
-                                    placeholder={t('common:select-value')}
-                                    className="w-full"
-                                  />
-                                  <DropdownMenuContent
-                                    align="start"
-                                    {...field}
-                                    className="max-w-[500px]"
-                                  >
-                                    {flagOptions?.map((item, index) => (
-                                      <DropdownMenuItem
-                                        key={index}
-                                        label={item.label}
-                                        value={item.value}
-                                        onSelectOption={value =>
-                                          field.onChange(value)
-                                        }
-                                      />
-                                    ))}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                <DropdownMenuWithSearch
+                                  label={truncateBySide(
+                                    features?.find(item =>
+                                      [field.value, clause?.attribute].includes(
+                                        item.id
+                                      )
+                                    )?.name || '',
+                                    50
+                                  )}
+                                  placeholder={t('experiments.select-flag')}
+                                  isExpand
+                                  options={flagOptions}
+                                  selectedOptions={field.value}
+                                  additionalElement={item => (
+                                    <FeatureFlagStatus
+                                      status={t(
+                                        item.enabled
+                                          ? 'experiments.on'
+                                          : 'experiments.off'
+                                      )}
+                                      enabled={item.enabled as boolean}
+                                    />
+                                  )}
+                                  onSelectOption={value => {
+                                    field.onChange(value);
+                                  }}
+                                />
                               ) : (
                                 <Input {...field} />
                               )}
@@ -304,6 +311,7 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                     name={getFieldName('values', clauseIndex)}
                     render={({ field }) => {
                       const { value, ...rest } = field;
+                      console.log(value);
                       const fieldValue = isDate
                         ? value[0]
                           ? Number(value[0]) * 1000
@@ -315,15 +323,17 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                             {isFlag
                               ? t('table:feature-flags.variation')
                               : isDate
-                                ? t('feature-flags.date')
+                                ? t('feature-flags.value')
                                 : t('feature-flags.values')}
                             {!isFlag && !isDate && (
                               <Tooltip
+                                content={t('targeting.tooltip.value')}
                                 trigger={
                                   <div className="flex-center size-fit absolute top-0.5 -right-5">
                                     <Icon icon={IconInfo} size="xxs" />
                                   </div>
                                 }
+                                className="max-w-[310px]"
                               />
                             )}
                           </Form.Label>
@@ -331,8 +341,7 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                             {isDate ? (
                               <ReactDatePicker
                                 {...omit(rest, 'ref')}
-                                showTimeSelect={false}
-                                dateFormat={'yyyy/MM/dd'}
+                                timeFormat="HH:mm"
                                 selected={
                                   fieldValue ? new Date(fieldValue) : null
                                 }
