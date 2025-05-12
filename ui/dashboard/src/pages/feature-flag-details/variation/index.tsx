@@ -1,15 +1,19 @@
 import { useCallback, useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useQueryExperiments } from '@queries/experiments';
 import { invalidateFeature } from '@queries/feature-details';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { isEqual } from 'lodash';
 import { Feature, FeatureVariation, VariationChange } from '@types';
 import Form from 'components/form';
+import InfoMessage from 'components/info-message';
 import ConfirmationRequiredModal from '../elements/confirm-required-modal';
 import { variationsFormSchema } from './form-schema';
 import SubmitBar from './submit-bar';
@@ -17,6 +21,7 @@ import VariationsSection from './variations-section';
 
 export interface VariationProps {
   feature: Feature;
+  isRunningExperiment?: boolean;
 }
 
 const Variation = ({ feature }: VariationProps) => {
@@ -29,6 +34,18 @@ const Variation = ({ feature }: VariationProps) => {
     useToggleOpen(false);
 
   const { notify, errorNotify } = useToast();
+
+  const { data: experimentCollection } = useQueryExperiments({
+    params: {
+      cursor: String(0),
+      environmentId: currentEnvironment.id,
+      featureId: feature.id,
+      statuses: ['WAITING', 'RUNNING']
+    }
+  });
+
+  const isRunningExperiment =
+    !!experimentCollection && experimentCollection?.experiments?.length > 0;
 
   const form = useForm({
     resolver: yupResolver(variationsFormSchema),
@@ -134,7 +151,32 @@ const Variation = ({ feature }: VariationProps) => {
                 onOpenConfirmDialog();
               }}
             />
-            <VariationsSection feature={feature} />
+            {isRunningExperiment && (
+              <InfoMessage
+                title={t('message:validation.experiment-running-warning')}
+                description={t(
+                  'message:validation.experiment-running-warning-desc'
+                )}
+                linkElements={experimentCollection.experiments.map(
+                  (item, index) => (
+                    <li
+                      key={index}
+                      className="typo-para-small text-primary-500 underline w-fit max-w-full truncate"
+                    >
+                      <Link
+                        to={`/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${item.id}/results`}
+                      >
+                        {item.name}
+                      </Link>
+                    </li>
+                  )
+                )}
+              />
+            )}
+            <VariationsSection
+              feature={feature}
+              isRunningExperiment={isRunningExperiment}
+            />
           </div>
           {openConfirmDialog && (
             <ConfirmationRequiredModal

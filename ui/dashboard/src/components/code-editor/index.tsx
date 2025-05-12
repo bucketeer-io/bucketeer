@@ -3,7 +3,11 @@ import { Editor, EditorProps, useMonaco } from '@monaco-editor/react';
 import Spinner from 'components/spinner';
 import './style.css';
 
-export default function ReactCodeEditor(props: EditorProps) {
+interface ReactCodeEditorProps extends EditorProps {
+  readOnly?: boolean;
+}
+
+export default function ReactCodeEditor(props: ReactCodeEditorProps) {
   const monaco = useMonaco();
 
   useEffect(() => {
@@ -83,7 +87,8 @@ export default function ReactCodeEditor(props: EditorProps) {
         hideCursorInOverviewRuler: true,
         overviewRulerLanes: 0,
         overviewRulerBorder: false,
-        columnSelection: true
+        columnSelection: true,
+        readOnly: props?.readOnly
       }}
       onMount={editor => {
         editor.onDidChangeCursorSelection(() => {

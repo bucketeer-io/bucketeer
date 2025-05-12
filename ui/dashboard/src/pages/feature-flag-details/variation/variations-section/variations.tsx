@@ -4,7 +4,14 @@ import { Trans } from 'react-i18next';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
-import { Feature, OperationStatus, Rollout, StrategyType } from '@types';
+import {
+  AutoOpsRule,
+  Feature,
+  OperationStatus,
+  OpsEventRateClause,
+  Rollout,
+  StrategyType
+} from '@types';
 import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
@@ -36,10 +43,14 @@ const VariationLabel = ({
 
 const Variations = ({
   feature,
-  rollouts
+  rollouts,
+  isRunningExperiment,
+  eventRateOperations
 }: {
   feature: Feature;
   rollouts: Rollout[];
+  isRunningExperiment?: boolean;
+  eventRateOperations: AutoOpsRule[];
 }) => {
   const { t } = useTranslation(['common', 'form', 'table']);
 
@@ -112,10 +123,24 @@ const Variations = ({
     return [];
   }, [feature]);
 
+  const rolloutVariationIds = useMemo(
+    () => rollouts?.map(item => item.clause.variationId),
+    [rollouts]
+  );
+
+  const eventRateVariationIds = useMemo(
+    () =>
+      eventRateOperations
+        ?.flatMap(item => item.clauses)
+        ?.map(item => (item?.clause as OpsEventRateClause)?.variationId),
+    [eventRateOperations]
+  );
+
   const isDisableRemoveBtn = useCallback(
     (variationId: string) => {
       return (
         isBoolean ||
+        isRunningExperiment ||
         fields.length <= 2 ||
         [
           ...new Set([
@@ -123,7 +148,9 @@ const Variations = ({
             ...onVariationIds,
             ...ruleVariationIds,
             ...targetVariationIds,
-            ...prerequisiteVariationIds
+            ...prerequisiteVariationIds,
+            ...rolloutVariationIds,
+            ...eventRateVariationIds
           ])
         ].includes(variationId)
       );
@@ -135,7 +162,10 @@ const Variations = ({
       offVariation,
       fields,
       targetVariationIds,
-      prerequisiteVariationIds
+      prerequisiteVariationIds,
+      isRunningExperiment,
+      rolloutVariationIds,
+      eventRateVariationIds
     ]
   );
   const isProgressiveRolloutsRunningWaiting = (status: OperationStatus) =>
@@ -144,9 +174,10 @@ const Variations = ({
   const isDisableAddBtn = useCallback(
     () =>
       isBoolean ||
+      isRunningExperiment ||
       rollouts.filter(item => isProgressiveRolloutsRunningWaiting(item.status))
         ?.length > 0,
-    [isBoolean, rollouts]
+    [isBoolean, rollouts, isRunningExperiment]
   );
 
   const onAddVariation = () => {
@@ -204,7 +235,7 @@ const Variations = ({
                           <Form.Control>
                             <Input
                               {...field}
-                              disabled={isBoolean}
+                              disabled={isBoolean || isRunningExperiment}
                               placeholder={t('form:feature-flags.value')}
                               className="px-3"
                             />
@@ -223,7 +254,11 @@ const Variations = ({
                     <Form.Item className={cn(formItemClassName)}>
                       <Form.Label required>{t('name')}</Form.Label>
                       <Form.Control>
-                        <Input {...field} placeholder={t('name')} />
+                        <Input
+                          {...field}
+                          placeholder={t('name')}
+                          disabled={isRunningExperiment}
+                        />
                       </Form.Control>
                       <Form.Message />
                     </Form.Item>
@@ -236,7 +271,11 @@ const Variations = ({
                     <Form.Item className={cn(formItemClassName)}>
                       <Form.Label>{t('form:description')}</Form.Label>
                       <Form.Control>
-                        <Input {...field} placeholder={t('form:description')} />
+                        <Input
+                          {...field}
+                          placeholder={t('form:description')}
+                          disabled={isRunningExperiment}
+                        />
                       </Form.Control>
                       <Form.Message />
                     </Form.Item>
@@ -255,6 +294,7 @@ const Variations = ({
                         </Form.Label>
                         <Form.Control>
                           <ReactCodeEditor
+                            readOnly={isRunningExperiment}
                             value={field.value}
                             onChange={field.onChange}
                           />

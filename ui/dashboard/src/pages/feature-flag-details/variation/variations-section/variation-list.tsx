@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useQueryAutoOps } from '@queries/auto-ops';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
@@ -17,7 +18,7 @@ import { VariationProps } from '..';
 import { VariationForm } from '../form-schema';
 import Variations from './variations';
 
-const VariationList = ({ feature }: VariationProps) => {
+const VariationList = ({ feature, isRunningExperiment }: VariationProps) => {
   const { t } = useTranslation(['common', 'form', 'table']);
 
   const { consoleAccount } = useAuth();
@@ -33,6 +34,21 @@ const VariationList = ({ feature }: VariationProps) => {
   });
 
   const rollouts = rolloutCollection?.progressiveRollouts || [];
+
+  const { data: operationCollection } = useQueryAutoOps({
+    params: {
+      cursor: String(0),
+      environmentId: currentEnvironment?.id,
+      featureIds: [feature?.id]
+    }
+  });
+
+  const autoOps = operationCollection?.autoOpsRules || [];
+  const eventRateOperations = autoOps?.filter(
+    item =>
+      item.opsType === 'EVENT_RATE' &&
+      ['WAITING', 'RUNNING'].includes(item.autoOpsStatus)
+  );
 
   const { control, watch } = useFormContext<VariationForm>();
 
@@ -52,7 +68,12 @@ const VariationList = ({ feature }: VariationProps) => {
         render={() => (
           <Form.Item className="flex flex-col w-full py-0">
             <Form.Control>
-              <Variations feature={feature} rollouts={rollouts} />
+              <Variations
+                feature={feature}
+                rollouts={rollouts}
+                isRunningExperiment={isRunningExperiment}
+                eventRateOperations={eventRateOperations}
+              />
             </Form.Control>
           </Form.Item>
         )}
@@ -83,6 +104,7 @@ const VariationList = ({ feature }: VariationProps) => {
                     ''
                   }
                   isExpand
+                  disabled={isRunningExperiment}
                 />
                 <DropdownMenuContent align="start">
                   {variations?.map((item, index) => (

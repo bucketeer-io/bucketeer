@@ -1,4 +1,3 @@
-import { AnyObject } from 'yup';
 import { OperationStatus } from './goal';
 
 export type AutoOpsType = 'TYPE_UNKNOWN' | 'SCHEDULE' | 'EVENT_RATE';
@@ -9,13 +8,7 @@ export interface AutoOpsRule {
   id: string;
   featureId: string;
   opsType: AutoOpsType;
-  clauses: [
-    {
-      id: string;
-      clause: AnyObject;
-      actionType: ClauseActionType;
-    }
-  ];
+  clauses: AutoOpsRuleClause[];
   createdAt: string;
   updatedAt: string;
   deleted: boolean;
@@ -26,6 +19,13 @@ export interface AutoOpsRule {
 export interface AutoOpsRuleCollection {
   autoOpsRules: AutoOpsRule[];
   cursor: string;
+}
+
+export interface AutoOpsRuleClause {
+  id: string;
+  clause: OpsEventRateClause | DatetimeClause;
+  actionType: ClauseActionType;
+  executedAt: string;
 }
 
 export interface OpsEventRateClause {
