@@ -184,64 +184,67 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                     <Form.Field
                       control={control}
                       name={getFieldName('attribute', clauseIndex)}
-                      render={({ field }) => (
-                        <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
-                          <Form.Label required className="relative w-fit">
-                            {isFlag
-                              ? t(`feature-flags.feature-flag`)
-                              : isCompare
-                                ? t(`feature-flags.attribute`)
-                                : t(`feature-flags.values`)}
+                      render={({ field }) => {
+                        return (
+                          <Form.Item className="flex flex-col flex-1 self-stretch py-0 min-w-[170px] order-2">
+                            <Form.Label required className="relative w-fit">
+                              {isFlag
+                                ? t(`feature-flags.feature-flag`)
+                                : isCompare
+                                  ? t(`feature-flags.attribute`)
+                                  : t(`feature-flags.values`)}
 
-                            {!isFlag && (
-                              <Tooltip
-                                trigger={
-                                  <div className="flex-center size-fit absolute top-0.5 -right-5">
-                                    <Icon icon={IconInfo} size="xxs" />
-                                  </div>
-                                }
-                              />
-                            )}
-                          </Form.Label>
-                          <Form.Control>
-                            {isFlag ? (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger
-                                  label={truncateBySide(
-                                    flagOptions?.find(
-                                      item =>
-                                        item.value ===
-                                        (field.value || clause?.attribute)
-                                    )?.label || '',
-                                    50
-                                  )}
-                                  placeholder={t('common:select-value')}
-                                  className="w-full"
+                              {!isFlag && (
+                                <Tooltip
+                                  trigger={
+                                    <div className="flex-center size-fit absolute top-0.5 -right-5">
+                                      <Icon icon={IconInfo} size="xxs" />
+                                    </div>
+                                  }
                                 />
-                                <DropdownMenuContent
-                                  align="start"
-                                  {...field}
-                                  className="max-w-[500px]"
-                                >
-                                  {flagOptions?.map((item, index) => (
-                                    <DropdownMenuItem
-                                      key={index}
-                                      label={item.label}
-                                      value={item.value}
-                                      onSelectOption={value =>
-                                        field.onChange(value)
-                                      }
-                                    />
-                                  ))}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            ) : (
-                              <Input {...field} />
-                            )}
-                          </Form.Control>
-                          <Form.Message />
-                        </Form.Item>
-                      )}
+                              )}
+                            </Form.Label>
+                            <Form.Control>
+                              {isFlag ? (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger
+                                    label={truncateBySide(
+                                      features?.find(item =>
+                                        [
+                                          field.value,
+                                          clause?.attribute
+                                        ].includes(item.id)
+                                      )?.name || '',
+                                      50
+                                    )}
+                                    placeholder={t('common:select-value')}
+                                    className="w-full"
+                                  />
+                                  <DropdownMenuContent
+                                    align="start"
+                                    {...field}
+                                    className="max-w-[500px]"
+                                  >
+                                    {flagOptions?.map((item, index) => (
+                                      <DropdownMenuItem
+                                        key={index}
+                                        label={item.label}
+                                        value={item.value}
+                                        onSelectOption={value =>
+                                          field.onChange(value)
+                                        }
+                                      />
+                                    ))}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              ) : (
+                                <Input {...field} />
+                              )}
+                            </Form.Control>
+                            <Form.Message />
+                          </Form.Item>
+                        );
+                      }}
                     />
                   )}
                   <Form.Field
