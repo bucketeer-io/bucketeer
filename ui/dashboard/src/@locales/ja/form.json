@@ -180,7 +180,11 @@
     "create-operation": "Create Operation",
     "conflict-rollout": "There is a conflict with a Progressive Rollout Operation.",
     "kill-switch": "Kill Switch",
-    "rollout": "Rollout"
+    "rollout": "Rollout",
+    "context-kind": "Context kind",
+    "attribute": "Attribute",
+    "operator": "Operator",
+    "values": "Values"
   },
   "origin-env": "Origin Environment",
   "destination-env": "Destination Environment",
@@ -215,7 +219,7 @@
   "starts-with": "Starts with",
   "ends-with": "Ends with",
   "is-included-in": "Is included in",
-  "select-rollout-percentage": "Select rollout percentage",
+  "manual-percentage": "Manual Percentage",
   "rollout": "Rollout",
   "off-variation": "Off Variation",
   "reset-sampling": "Reset random sampling",
@@ -283,6 +287,9 @@
     "custom-rule": "Custom Rule",
     "prerequisite-tooltip": "Manage dependencies between flags.",
     "individual-tooltip": "Target specific users.",
-    "custom-rule-tooltip": "Combine user attributes, segments, and feature flags for a specific audience."
+    "custom-rule-tooltip": "Combine user attributes, segments, and feature flags for a specific audience.",
+    "individual": "Individual",
+    "default-rule": "Default Rule",
+    "default-rule-desc": "When targeting is ON and contexts don't match any targeting rules"
   }
 }

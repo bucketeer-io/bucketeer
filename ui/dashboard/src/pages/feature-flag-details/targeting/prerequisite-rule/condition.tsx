@@ -3,6 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
+import { truncateBySide } from 'utils/converts';
 import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
 import Button from 'components/button';
@@ -103,7 +104,7 @@ const ConditionForm = forwardRef(
                   <Form.Control>
                     <DropdownMenu>
                       <DropdownMenuTrigger
-                        label={currentFeature?.name}
+                        label={truncateBySide(currentFeature?.name || '', 50)}
                         placeholder={t('experiments.select-flag')}
                         className="w-full"
                         disabled={!flagOptions?.length}

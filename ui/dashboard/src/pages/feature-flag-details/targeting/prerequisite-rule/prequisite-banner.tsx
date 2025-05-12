@@ -15,7 +15,7 @@ const PrerequisiteBanner = ({
     <ToastMessage
       message={
         <Trans
-          i18nKey={'form:.feature-flags.prerequisite-flags'}
+          i18nKey={'form:targeting.prerequisite-flags'}
           values={{
             quantity: prerequisite.length,
             flag: prerequisite.length > 1 ? 'flags' : 'flag'
@@ -28,7 +28,7 @@ const PrerequisiteBanner = ({
       toastChildren={
         <div className="flex flex-col w-full gap-y-3">
           <p className="typo-para-medium text-gray-600">
-            {t('feature-flags.prerequisite-flags-desc')}
+            {t('targeting.prerequisite-flags-desc')}
           </p>
           <ul className="flex flex-col w-full gap-y-5">
             {prerequisite.map((item, index) => (

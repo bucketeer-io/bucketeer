@@ -190,8 +190,6 @@
     "target-segments": "Target Segments",
     "target-individuals": "Target Individuals",
     "set-prerequisites": "Set Prerequisites",
-    "default-rule": "Default Rule",
-    "default-rule-desc": "When targeting is ON and contexts don't match any targeting rules",
     "rules": "Rules",
     "rule-index": "Rule {{index}}",
     "total-flags": "Total Flags",
