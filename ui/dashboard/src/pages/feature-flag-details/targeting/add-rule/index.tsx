@@ -57,7 +57,7 @@ const AddRule = ({
     <DropdownMenu>
       <DropdownMenuTrigger
         trigger={
-          <div className="flex items-center gap-x-2 h-6 p-0 typo-para-medium text-primary-500">
+          <div className="flex items-center gap-x-2 h-6 p-0 typo-para-medium !text-primary-500">
             <Icon icon={IconPlus} size={'md'} />
             {t('table:feature-flags.add-rule')}
           </div>
