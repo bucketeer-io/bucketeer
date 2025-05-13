@@ -73,14 +73,10 @@ func (s *AccountService) CreateAPIKey(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusInternal, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		handler, err := command.NewAPIKeyCommandHandler(
@@ -99,14 +95,12 @@ func (s *AccountService) CreateAPIKey(
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAPIKeyAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+			return nil, NewError(statusAlreadyExists, &errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			}, map[string]string{
+				"field": "apiKey",
 			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to create api key",
@@ -115,14 +109,10 @@ func (s *AccountService) CreateAPIKey(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusInternal, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 	return &proto.CreateAPIKeyResponse{
 		ApiKey: key.APIKey,
@@ -154,14 +144,10 @@ func (s *AccountService) createAPIKeyNoCommand(
 				zap.String("maintainer", req.Maintainer),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusInternal, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
@@ -169,14 +155,12 @@ func (s *AccountService) createAPIKeyNoCommand(
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAPIKeyAlreadyExists) {
-			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+			return nil, NewError(statusAlreadyExists, &errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			}, map[string]string{
+				"field": "apiKey",
 			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to create api key",
@@ -188,14 +172,10 @@ func (s *AccountService) createAPIKeyNoCommand(
 				zap.String("maintainer", req.Maintainer),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusInternal, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 
 	prev := &domain.APIKey{}
@@ -275,14 +255,12 @@ func (s *AccountService) ChangeAPIKeyName(
 		req.Command,
 	); err != nil {
 		if err == v2as.ErrAPIKeyNotFound || err == v2as.ErrAPIKeyUnexpectedAffectedRows {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+			return nil, NewError(statusNotFound, &errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
+			}, map[string]string{
+				"field": "apiKey",
 			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to change api key name",
@@ -293,14 +271,10 @@ func (s *AccountService) ChangeAPIKeyName(
 				zap.String("name", req.Command.Name),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusInternal, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 	return &proto.ChangeAPIKeyNameResponse{}, nil
 }
@@ -337,14 +311,12 @@ func (s *AccountService) EnableAPIKey(
 		req.Command,
 	); err != nil {
 		if err == v2as.ErrAPIKeyNotFound || err == v2as.ErrAPIKeyUnexpectedAffectedRows {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+			return nil, NewError(statusNotFound, &errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
+			}, map[string]string{
+				"field": "apiKey",
 			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to enable api key",
@@ -354,14 +326,10 @@ func (s *AccountService) EnableAPIKey(
 				zap.String("id", req.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusInternal, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 	return &proto.EnableAPIKeyResponse{}, nil
 }
@@ -398,14 +366,12 @@ func (s *AccountService) DisableAPIKey(
 		req.Command,
 	); err != nil {
 		if errors.Is(err, v2as.ErrAPIKeyNotFound) || errors.Is(err, v2as.ErrAPIKeyUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+			return nil, NewError(statusNotFound, &errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
+			}, map[string]string{
+				"field": "apiKey",
 			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to disable api key",
@@ -415,14 +381,10 @@ func (s *AccountService) DisableAPIKey(
 				zap.String("id", req.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusInternal, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 	return &proto.DisableAPIKeyResponse{}, nil
 }
@@ -458,26 +420,20 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 		return nil, err
 	}
 	if req.Id == "" {
-		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusMissingAPIKeyID, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 	apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAPIKeyNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+			return nil, NewError(statusNotFound, &errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
+			}, map[string]string{
+				"field": "apiKey",
 			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get api key",
@@ -487,14 +443,10 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 				zap.String("id", req.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusInternal, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 	if apiKey == nil {
 		s.logger.Error(
@@ -526,14 +478,12 @@ func (s *AccountService) ListAPIKeys(
 		return nil, err
 	}
 	if req.OrganizationId == "" {
-		dt, err := statusInvalidListAPIKeyRequest.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusInvalidListAPIKeyRequest, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id"),
+		}, map[string]string{
+			"field": "organization_id",
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 	whereParts := []mysql.WherePart{}
 	whereParts = append(whereParts, mysql.NewFilter("environment_v2.organization_id", "=", req.OrganizationId))
@@ -565,14 +515,10 @@ func (s *AccountService) ListAPIKeys(
 	}
 	offset, err := strconv.Atoi(cursor)
 	if err != nil {
-		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusInvalidCursor, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 	apiKeys, nextCursor, totalCount, err := s.accountStorage.ListAPIKeys(
 		ctx,
@@ -589,14 +535,10 @@ func (s *AccountService) ListAPIKeys(
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusInternal, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 
 	// for security, obfuscate the returned key
@@ -633,14 +575,10 @@ func (s *AccountService) newAPIKeyListOrders(
 	case proto.ListAPIKeysRequest_STATE:
 		column = "api_key.disabled"
 	default:
-		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusInvalidOrderBy, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 	direction := mysql.OrderDirectionAsc
 	if orderDirection == proto.ListAPIKeysRequest_DESC {
@@ -659,26 +597,18 @@ func (s *AccountService) GetEnvironmentAPIKey(
 		return nil, err
 	}
 	if req.ApiKey == "" {
-		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusMissingAPIKeyID, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 	envAPIKey, err := s.accountStorage.GetEnvironmentAPIKey(ctx, req.ApiKey)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAPIKeyNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+			return nil, NewError(statusNotFound, &errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
 			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to get environment api key",
@@ -687,14 +617,10 @@ func (s *AccountService) GetEnvironmentAPIKey(
 				zap.String("apiKey", req.ApiKey),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusInternal, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 	// for security, obfuscate the returned key
 	shadowLen := int(float64(len(envAPIKey.ApiKey.ApiKey)) * apiKeyShadowPercentage)
@@ -749,14 +675,12 @@ func (s *AccountService) UpdateAPIKey(
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAPIKeyNotFound) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+			return nil, NewError(statusNotFound, &errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
+			}, map[string]string{
+				"field": "apiKey",
 			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
 		}
 		s.logger.Error(
 			"Failed to update api key",
@@ -766,14 +690,10 @@ func (s *AccountService) UpdateAPIKey(
 				zap.String("id", req.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		return nil, NewError(statusInternal, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
 	}
 	e, err := domainevent.NewEvent(
 		editor,

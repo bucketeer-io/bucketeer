@@ -15,11 +15,14 @@
 package api
 
 import (
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	gstatus "google.golang.org/grpc/status"
+	"google.golang.org/protobuf/runtime/protoiface"
 )
 
 var (
+	errorDomain                 = "account.bucketeer.io"
 	statusInternal              = gstatus.New(codes.Internal, "account: internal")
 	statusInvalidCursor         = gstatus.New(codes.InvalidArgument, "account: cursor is invalid")
 	statusNoCommand             = gstatus.New(codes.InvalidArgument, "account: command must not be empty")
@@ -60,3 +63,113 @@ var (
 	statusSearchFilterIDNotFound   = gstatus.New(codes.InvalidArgument, "account: search filter ID not found")
 	statusInvalidListAPIKeyRequest = gstatus.New(codes.InvalidArgument, "account: invalid list api key request")
 )
+
+// ToDo: Once the front-end i18n support is complete, localizedMessage will no longer be necessary, so delete it.
+func NewError(status *gstatus.Status, localizedMessage *errdetails.LocalizedMessage, anotherDetailData ...map[string]string) error {
+	var details []*errdetails.ErrorInfo
+	var reason string
+	var messageKey string
+	var metadatas []map[string]string
+	switch status {
+	case statusInternal:
+		reason = "INTERNAL"
+		messageKey = "account.internal"
+	case statusAlreadyExists:
+		reason = "ALREADY_EXISTS"
+		messageKey = "account.already_exists"
+	case statusNotFound:
+		reason = "NOT_FOUND"
+		messageKey = "account.not_found"
+	case statusMissingAPIKeyID:
+		reason = "MISSING"
+		messageKey = "account.missing"
+		metadatas = []map[string]string{
+			{
+				"messageKey": messageKey,
+				"field":      "api_key_id",
+			},
+		}
+	case statusMissingAPIKeyName:
+		reason = "MISSING"
+		messageKey = "account.missing"
+		metadatas = []map[string]string{
+			{
+				"messageKey": messageKey,
+				"field":      "api_key_name",
+			},
+		}
+	case statusInvalidListAPIKeyRequest:
+		reason = "INVALID"
+		messageKey = "account.invalid"
+	case statusInvalidCursor:
+		reason = "INVALID"
+		messageKey = "account.invalid"
+		metadatas = []map[string]string{
+			{
+				"messageKey": messageKey,
+				"field":      "cursor",
+			},
+		}
+	case statusInvalidOrderBy:
+		reason = "INVALID"
+		messageKey = "account.invalid"
+		metadatas = []map[string]string{
+			{
+				"messageKey": messageKey,
+				"field":      "order_by",
+			},
+		}
+	case statusInvalidEmail:
+		reason = "INVALID"
+		messageKey = "account.invalid"
+		metadatas = []map[string]string{
+			{
+				"messageKey": messageKey,
+				"field":      "email",
+			},
+		}
+	case statusNoCommand:
+		reason = "INVALID"
+		messageKey = "account.invalid.no_command"
+		metadatas = []map[string]string{
+			{
+				"messageKey": messageKey,
+				"field":      "command",
+			},
+		}
+	default:
+		reason = "UNKNOWN"
+		messageKey = "account.unknown"
+	}
+	// when adding multiple details
+	for _, md := range anotherDetailData {
+		for k, v := range md {
+			metadatas = append(metadatas, map[string]string{
+				"messageKey": messageKey,
+				k:            v,
+			})
+		}
+	}
+
+	for _, md := range metadatas {
+		details = append(details, &errdetails.ErrorInfo{
+			Reason:   reason,
+			Domain:   errorDomain,
+			Metadata: md,
+		})
+	}
+
+	detailMessages := make([]protoiface.MessageV1, len(details))
+	for i, d := range details {
+		detailMessages[i] = d
+	}
+	if localizedMessage != nil {
+		detailMessages = append(detailMessages, localizedMessage)
+	}
+
+	dt, err := status.WithDetails(detailMessages...)
+	if err != nil {
+		return statusInternal.Err()
+	}
+	return dt.Err()
+}

@@ -48,12 +48,10 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 	})
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(status, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
 		})
-		require.NoError(t, err)
-		return st.Err()
 	}
 
 	patterns := []struct {
@@ -135,12 +133,10 @@ func TestCreateAPIKeyMySQLNoCommand(t *testing.T) {
 	})
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(status, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
 		})
-		require.NoError(t, err)
-		return st.Err()
 	}
 
 	patterns := []struct {
@@ -224,13 +220,11 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 		"accept-language": []string{"ja"},
 	})
 	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+	createError := func(status *gstatus.Status, msg string, anotherDetailData ...map[string]string) error {
+		return NewError(status, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
+		}, anotherDetailData...)
 	}
 
 	patterns := []struct {
@@ -271,7 +265,9 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 					Name: "",
 				},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError), map[string]string{
+				"field": "apiKey",
+			}),
 		},
 		{
 			desc: "errInternal",
@@ -341,13 +337,11 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 		"accept-language": []string{"ja"},
 	})
 	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+	createError := func(status *gstatus.Status, msg string, anotherDetailData ...map[string]string) error {
+		return NewError(status, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
+		}, anotherDetailData...)
 	}
 
 	patterns := []struct {
@@ -386,7 +380,9 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 				Id:      "id",
 				Command: &accountproto.EnableAPIKeyCommand{},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError), map[string]string{
+				"field": "apiKey",
+			}),
 		},
 		{
 			desc: "errInternal",
@@ -452,13 +448,11 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 		"accept-language": []string{"ja"},
 	})
 	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+	createError := func(status *gstatus.Status, msg string, anotherDetailData ...map[string]string) error {
+		return NewError(status, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
+		}, anotherDetailData...)
 	}
 
 	patterns := []struct {
@@ -497,7 +491,9 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 				Id:      "id",
 				Command: &accountproto.DisableAPIKeyCommand{},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError), map[string]string{
+				"field": "apiKey",
+			}),
 		},
 		{
 			desc: "errInternal",
@@ -557,13 +553,11 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	createError := func(localizer locale.Localizer, status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+	createError := func(localizer locale.Localizer, status *gstatus.Status, msg string, anotherDetailData ...map[string]string) error {
+		return NewError(status, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
+		}, anotherDetailData...)
 	}
 
 	patterns := []struct {
@@ -591,7 +585,9 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 			},
 			req: &accountproto.GetAPIKeyRequest{Id: "id"},
 			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(localizer, statusNotFound, localizer.MustLocalize(locale.NotFoundError))
+				return createError(localizer, statusNotFound, localizer.MustLocalize(locale.NotFoundError), map[string]string{
+					"field": "apiKey",
+				})
 			},
 		},
 		{
@@ -694,12 +690,10 @@ func TestListAPIKeysMySQL(t *testing.T) {
 	defer mockController.Finish()
 
 	createError := func(localizer locale.Localizer, status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(status, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
 		})
-		require.NoError(t, err)
-		return st.Err()
 	}
 
 	patterns := []struct {
