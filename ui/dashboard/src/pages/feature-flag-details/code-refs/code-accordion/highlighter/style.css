@@ -1,0 +1,11 @@
+.token.plain {
+  @apply !text-gray-700;
+}
+
+.token.boolean {
+    @apply !text-accent-pink-500;
+  }
+
+.token.comment {
+  @apply !text-accent-green-600;
+}

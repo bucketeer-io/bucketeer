@@ -222,5 +222,20 @@
     "last-14-days": "Last 14 days",
     "last-30-days": "Last 30 days",
     "tooltip-content": "Shows real-time counts of evaluation events and unique users who received this flag."
+  },
+  "code-refs": {
+    "title": "Code Refs",
+    "description": "References to this feature flag found in your codebase",
+    "repository-name": "Repository: <text>{{name}}</text>",
+    "branch-name": "Branch: <text>{{name}}</text>",
+    "file-extension-name": "File Extension: <text>{{name}}</text>",
+    "all": "All",
+    "single-ref": "{{count}} reference found in <highlight>{{branchLink}}</highlight> branch",
+    "multiple-refs": "{{count}} references found in <highlight>{{branchLink}}</highlight> branches",
+    "view-in-src": "View in source",
+    "enable": "Enable code references",
+    "enable-desc": "Quickly see instances of feature flags being leveraged in your codebase, with direct links from Bucketeer to the platform of your choice.",
+    "empty": "No registered code references",
+    "empty-desc": "There are no code references in your codebase yet. When a reference is added, it will appear here."
   }
 }

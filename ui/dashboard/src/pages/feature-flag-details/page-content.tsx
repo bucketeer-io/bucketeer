@@ -16,6 +16,7 @@ import { Feature } from '@types';
 import NotFoundPage from 'pages/not-found';
 import { Tabs, TabsList, TabsContent, TabsLink } from 'components/tabs-link';
 import PageLayout from 'elements/page-layout';
+import CodeReferencesPage from './code-refs';
 import EvaluationPage from './evaluation';
 import HistoryPage from './history';
 import SettingsPage from './settings';
@@ -100,6 +101,10 @@ const PageContent = ({ feature }: { feature: Feature }) => {
             <Route
               path={`${PAGE_PATH_FEATURE_EVALUATION}/*`}
               element={<EvaluationPage feature={feature} />}
+            />
+            <Route
+              path={`${PAGE_PATH_FEATURE_CODE_REFS}/*`}
+              element={<CodeReferencesPage feature={feature} />}
             />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
