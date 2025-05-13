@@ -45,9 +45,13 @@ const CodeHighlighter = ({
               <div
                 {...lineProps}
                 key={i}
-                className={cn(lineProps?.className, 'typo-para-small', {
+                className={cn(lineProps?.className, {
                   'bg-primary-100': isIncludeFeatureId
                 })}
+                style={{
+                  ...lineProps?.style,
+                  fontSize: 13
+                }}
               >
                 <span
                   className={cn(
