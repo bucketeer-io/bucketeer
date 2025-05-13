@@ -65,7 +65,11 @@ var (
 )
 
 // ToDo: Once the front-end i18n support is complete, localizedMessage will no longer be necessary, so delete it.
-func NewError(status *gstatus.Status, localizedMessage *errdetails.LocalizedMessage, anotherDetailData ...map[string]string) error {
+func NewError(
+	status *gstatus.Status,
+	localizedMessage *errdetails.LocalizedMessage,
+	anotherDetailData ...map[string]string,
+) error {
 	var details []*errdetails.ErrorInfo
 	var reason string
 	var messageKey string
