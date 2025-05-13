@@ -28,6 +28,10 @@ export default defineConfig({
           {
             name: 'Sofia Pro',
             src: './src/assets/fonts/sofiapro/*.ttf'
+          },
+          {
+            name: 'FiraCode',
+            src: './src/assets/fonts/firacode/*.ttf'
           }
         ]
       }

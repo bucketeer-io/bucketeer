@@ -138,7 +138,8 @@ const theme = {
       'rgba(29, 29, 29, 0.35) 0px 10px 38px -10px, rgba(29, 29, 29, 0.20) 0px 10px 20px -15px'
   },
   fontFamily: {
-    'sofia-pro': ['Sofia Pro', 'sans-serif']
+    'sofia-pro': ['Sofia Pro', 'sans-serif'],
+    'fira-code': ['FiraCode', 'monospace']
   },
   extend: {
     animation: {

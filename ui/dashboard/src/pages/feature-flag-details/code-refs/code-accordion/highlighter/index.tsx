@@ -30,7 +30,7 @@ const CodeHighlighter = ({
     >
       {({ style, tokens, getLineProps, getTokenProps }) => (
         <pre
-          className="w-max min-w-full"
+          className="w-max min-w-full font-fira-code"
           style={{
             ...style,
             backgroundColor: '#F8FAFC'
@@ -38,23 +38,20 @@ const CodeHighlighter = ({
         >
           {tokens.map((line, i) => {
             const lineProps = getLineProps({ line });
-
+            const isIncludeFeatureId = line.some(token =>
+              token.content.includes(featureId)
+            );
             return (
               <div
                 {...lineProps}
                 key={i}
-                style={{
-                  backgroundColor: line.some(token =>
-                    token.content.includes(featureId)
-                  )
-                    ? '#e8e4f1'
-                    : 'transparent',
-                  fontSize: 14
-                }}
+                className={cn(lineProps?.className, 'typo-para-small', {
+                  'bg-primary-100': isIncludeFeatureId
+                })}
               >
                 <span
                   className={cn(
-                    'inline-block w-16 text-right pr-4 select-none bg-primary-400 text-white text-opacity-90',
+                    'inline-block w-10 text-right pr-2 select-none text-gray-600 text-opacity-90',
                     i === 0 && 'pt-3',
                     i === tokens.length - 1 && 'pb-3'
                   )}
