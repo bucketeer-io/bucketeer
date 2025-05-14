@@ -1,4 +1,5 @@
 import type { PropsWithChildren, ReactNode } from 'react';
+import emptyStateCode from 'assets/empty-state/code.svg';
 import emptyStateError from 'assets/empty-state/error.svg';
 import emptyStateNoData from 'assets/empty-state/no-data.svg';
 import emptyStateNoSearch from 'assets/empty-state/no-search.svg';
@@ -7,7 +8,7 @@ import { cn } from 'utils/style';
 import Button, { type ButtonProps } from 'components/button';
 
 export interface EmptyStateProps {
-  variant: 'error' | 'no-data' | 'no-search';
+  variant: 'error' | 'no-data' | 'no-search' | 'invalid';
   size: 'sm' | 'md' | 'lg';
   children: ReactNode;
   className?: string;
@@ -48,6 +49,9 @@ const EmptyStateIllustration = () => {
 
     case 'no-search':
       return <img alt="No Search" className="w-fit" src={emptyStateNoSearch} />;
+
+    case 'invalid':
+      return <img alt="Invalid" className="w-fit" src={emptyStateCode} />;
   }
 };
 

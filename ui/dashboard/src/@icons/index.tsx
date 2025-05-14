@@ -1,6 +1,7 @@
 import IconAngleDown from './customized-icons/angle-down.svg?react';
 import IconArrowDown from './customized-icons/arrow-down.svg?react';
 import IconBackspace from './customized-icons/backspace.svg?react';
+import IconBitbucket from './customized-icons/bitbucket.svg?react';
 import IconCalendar from './customized-icons/calendar.svg?react';
 import IconChecked from './customized-icons/checked.svg?react';
 import IconChevronDown from './customized-icons/chevron-down.svg?react';
@@ -12,6 +13,8 @@ import IconDisable from './customized-icons/disable.svg?react';
 import IconDocument from './customized-icons/document.svg?react';
 import IconEmail from './customized-icons/email.svg?react';
 import IconExpand from './customized-icons/expand.svg?react';
+import IconGitHub from './customized-icons/github.svg?react';
+import IconGitLab from './customized-icons/gitlab.svg?react';
 import IconInfoFilled from './customized-icons/info-filled.svg?react';
 import IconInfo from './customized-icons/info.svg?react';
 import IconFlagJSON from './customized-icons/json.svg?react';
@@ -139,6 +142,9 @@ export {
   IconUserOutlined,
   IconPencil,
   IconThreeLines,
+  IconGitHub,
+  IconGitLab,
+  IconBitbucket,
   // Special icons
   IconGoal,
   IconGoogle,
