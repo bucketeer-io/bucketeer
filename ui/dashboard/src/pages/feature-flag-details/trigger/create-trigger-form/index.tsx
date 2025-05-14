@@ -49,7 +49,7 @@ const CreateTriggerForm = forwardRef(
     const triggerTypeOptions = useMemo(
       () => [
         {
-          label: t('trigger.webhook'),
+          label: `${t('trigger.dropdown-desc')}`,
           value: TriggerType.WEBHOOK,
           icon: IconWebhook
         }
@@ -165,14 +165,8 @@ const CreateTriggerForm = forwardRef(
               name="type"
               render={({ field }) => (
                 <Form.Item className="py-0 w-full">
-                  <Form.Label
-                    required
-                    className="flex items-center gap-x-2 relative w-full !mb-2 [&>span:last-child]:-ml-1"
-                  >
+                  <Form.Label required className="!mb-2">
                     {t('trigger.trigger-type')}
-                    <p className="w-fit whitespace-nowrap text-gray-500 absolute left-24">
-                      ({t('trigger.dropdown-desc')})
-                    </p>
                   </Form.Label>
                   <Form.Control>
                     <DropdownMenu>
@@ -213,14 +207,8 @@ const CreateTriggerForm = forwardRef(
               name="action"
               render={({ field }) => (
                 <Form.Item className="py-0 w-full">
-                  <Form.Label
-                    required
-                    className="flex items-center gap-x-2 relative w-full !mb-2 [&>span:last-child]:-ml-1"
-                  >
+                  <Form.Label required className="!mb-2">
                     {t('trigger.action')}
-                    <p className="w-fit whitespace-nowrap text-gray-500 absolute left-14">
-                      ({t('trigger.dropdown-desc')})
-                    </p>
                   </Form.Label>
                   <Form.Control>
                     <DropdownMenu>
