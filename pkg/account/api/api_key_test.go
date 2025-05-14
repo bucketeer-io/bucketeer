@@ -728,7 +728,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 			context: createContextWithDefaultToken(t, true),
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAPIKeys(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("error"))
 			},
 			input: &accountproto.ListAPIKeysRequest{
@@ -773,7 +773,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 			context: createContextWithDefaultToken(t, true),
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAPIKeys(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*accountproto.APIKey{}, 0, int64(0), nil)
 			},
 			input: &accountproto.ListAPIKeysRequest{
@@ -805,7 +805,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 					},
 				}, nil).AnyTimes()
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAPIKeys(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*accountproto.APIKey{}, 0, int64(0), nil)
 			},
 			input: &accountproto.ListAPIKeysRequest{

@@ -42,12 +42,7 @@ type AccountStorage interface {
 	GetAPIKeyByAPIKey(ctx context.Context, apiKey string, environmentID string) (*domain.APIKey, error)
 	GetEnvironmentAPIKey(ctx context.Context, apiKey string) (*domain.EnvironmentAPIKey, error)
 	ListAllEnvironmentAPIKeys(ctx context.Context) ([]*domain.EnvironmentAPIKey, error)
-	ListAPIKeys(
-		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
-	) ([]*proto.APIKey, int, int64, error)
+	ListAPIKeys(ctx context.Context, options *mysql.ListOptions) ([]*proto.APIKey, int, int64, error)
 }
 
 type accountStorage struct {
