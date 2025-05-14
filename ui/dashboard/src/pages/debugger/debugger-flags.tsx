@@ -41,6 +41,11 @@ const DebuggerFlags = () => {
     return flagOptions.filter(item => !flagsSelected.includes(item.value));
   }, [flagsSelected, flagOptions, flags]);
 
+  const isDisabledAddBtn = useMemo(
+    () => !flagsRemaining.length || flagsSelected?.length === flags.length,
+    [flagsRemaining, flagsSelected, flags]
+  );
+
   return (
     <>
       <div className="flex flex-col w-full gap-y-6">
@@ -105,9 +110,10 @@ const DebuggerFlags = () => {
           type="button"
           variant="text"
           className="w-fit px-0 h-6"
+          disabled={isDisabledAddBtn}
           onClick={() => setValue('flags', [...flagsSelected, ''])}
         >
-          <Icon icon={IconPlus} size="md" color="primary-500" />
+          <Icon icon={IconPlus} size="md" />
           {t('form:add-flag')}
         </Button>
       </div>
