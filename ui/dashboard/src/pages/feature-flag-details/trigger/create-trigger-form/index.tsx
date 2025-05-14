@@ -9,7 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { TriggerActionType, TriggerItemType, TriggerType } from '@types';
-import { IconInfo, IconWebhook } from '@icons';
+import { IconWebhook } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import {
@@ -21,7 +21,6 @@ import {
 import Form from 'components/form';
 import Icon from 'components/icon';
 import TextArea from 'components/textarea';
-import { Tooltip } from 'components/tooltip';
 import FeatureFlagStatus from 'elements/feature-flag-status';
 import { CreateTriggerSchema, formSchema } from './form-schema';
 
@@ -166,17 +165,14 @@ const CreateTriggerForm = forwardRef(
               name="type"
               render={({ field }) => (
                 <Form.Item className="py-0 w-full">
-                  <Form.Label required className="relative w-fit !mb-2">
+                  <Form.Label
+                    required
+                    className="flex items-center gap-x-2 relative w-full !mb-2 [&>span:last-child]:-ml-1"
+                  >
                     {t('trigger.trigger-type')}
-                    <Tooltip
-                      content={'tooltip'}
-                      trigger={
-                        <div className="flex-center size-fit absolute top-0 -right-6">
-                          <Icon icon={IconInfo} size="xs" color="gray-500" />
-                        </div>
-                      }
-                      className="max-w-[400px]"
-                    />
+                    <p className="w-fit whitespace-nowrap text-gray-500 absolute left-24">
+                      ({t('trigger.dropdown-desc')})
+                    </p>
                   </Form.Label>
                   <Form.Control>
                     <DropdownMenu>
@@ -217,17 +213,14 @@ const CreateTriggerForm = forwardRef(
               name="action"
               render={({ field }) => (
                 <Form.Item className="py-0 w-full">
-                  <Form.Label required className="relative w-fit !mb-2">
+                  <Form.Label
+                    required
+                    className="flex items-center gap-x-2 relative w-full !mb-2 [&>span:last-child]:-ml-1"
+                  >
                     {t('trigger.action')}
-                    <Tooltip
-                      content={'tooltip'}
-                      trigger={
-                        <div className="flex-center size-fit absolute top-0 -right-6">
-                          <Icon icon={IconInfo} size="xs" color="gray-500" />
-                        </div>
-                      }
-                      className="max-w-[400px]"
-                    />
+                    <p className="w-fit whitespace-nowrap text-gray-500 absolute left-14">
+                      ({t('trigger.dropdown-desc')})
+                    </p>
                   </Form.Label>
                   <Form.Control>
                     <DropdownMenu>

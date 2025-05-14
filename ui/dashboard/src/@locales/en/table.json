@@ -240,7 +240,7 @@
   },
   "trigger": {
     "title": "Trigger",
-    "description": "Use triggers to remotely turn a flag on or off",
+    "description": "Use triggers to turn a flag on or off remotely. See the <comp>documentation <icon></icon></comp>",
     "generic-trigger": "Generic Trigger",
     "flag-target": "Flag Target",
     "trigger-url": "Trigger URL",
@@ -249,8 +249,8 @@
     "trigger-type": "Trigger type",
     "action": "Action",
     "save-trigger": "Save Trigger",
-    "off-to-on": "off -> on",
-    "on-to-off": "on -> off",
+    "turn-on-flag": "Turn the flag ON",
+    "turn-off-flag": "Turn the flag OFF",
     "edit-desc": "Edit Description",
     "reset-url": "Reset URL",
     "delete-trigger": "Delete Trigger",
@@ -264,6 +264,7 @@
     "reset-trigger-desc": "The current URL will become invalid. Ensure that you copy and store the new URL.",
     "delete-trigger-desc": "The trigger will be deleted permanently. Are you sure you want to proceed?",
     "disable-trigger-desc": "The trigger will be disabled. Are you sure you want to proceed?",
-    "enable-trigger-desc": "The trigger will be enabled. Are you sure you want to proceed?"
+    "enable-trigger-desc": "The trigger will be enabled. Are you sure you want to proceed?",
+    "dropdown-desc": "Webhook: Change the feature flag ON/OFF status via HTTP request"
   }
 }

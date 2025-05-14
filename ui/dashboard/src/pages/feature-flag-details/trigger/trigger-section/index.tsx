@@ -1,4 +1,7 @@
 import { Fragment, useCallback, useMemo, useRef, useState } from 'react';
+import { Trans } from 'react-i18next';
+import { IconLaunchOutlined } from 'react-icons-material-design';
+import { Link } from 'react-router-dom';
 import { triggerDelete } from '@api/trigger/triggers-delete';
 import {
   triggerUpdate,
@@ -26,7 +29,7 @@ interface ActionState {
 }
 
 const TriggerList = ({ feature }: { feature: Feature }) => {
-  const { t } = useTranslation(['table', 'message']);
+  const { t } = useTranslation(['table', 'message', 'common']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const formRef = useRef<HTMLDivElement>(null);
@@ -82,7 +85,7 @@ const TriggerList = ({ feature }: { feature: Feature }) => {
           ? 'enable'
           : 'delete';
     return t(`trigger.${key}-trigger-desc`);
-  }, []);
+  }, [isReset, isDisable, isEnable]);
 
   const mutationState = useMutation({
     mutationFn: async (params: TriggerUpdateParams) => {
@@ -142,9 +145,21 @@ const TriggerList = ({ feature }: { feature: Feature }) => {
   return (
     <Card className="gap-y-6">
       <p className="typo-head-bold-small text-gray-800">{t('trigger.title')}</p>
-      <p className="typo-para-small text-gray-500">
-        {t('trigger.description')}
-      </p>
+      <div className="flex items-center typo-para-small text-gray-500 gap-x-1">
+        <Trans
+          i18nKey={'table:trigger.description'}
+          components={{
+            comp: (
+              <Link
+                to={`https://docs.bucketeer.io/feature-flags/creating-feature-flags/triggers/`}
+                target="_blank"
+                className="flex items-center gap-x-1 text-primary-500 underline"
+              />
+            ),
+            icon: <Icon icon={IconLaunchOutlined} size="sm" />
+          }}
+        />
+      </div>
       {isLoading ? (
         <FormLoading />
       ) : (
@@ -152,23 +167,23 @@ const TriggerList = ({ feature }: { feature: Feature }) => {
           {triggers.map((trigger, index) => (
             <Fragment key={index}>
               {isEdit &&
-                actionState?.trigger?.flagTrigger?.id ===
-                  trigger?.flagTrigger?.id && (
-                  <CreateTriggerForm
-                    ref={formRef}
-                    selectedTrigger={actionState?.trigger}
-                    featureId={feature.id}
-                    environmentId={currentEnvironment.id}
-                    onCancel={onReset}
-                    setTriggerNewlyCreated={setTriggerNewlyCreated}
-                  />
-                )}
-
-              <TriggerItem
-                trigger={trigger}
-                triggerNewlyCreated={triggerNewlyCreated}
-                onActions={action => onActions(trigger, action)}
-              />
+              actionState?.trigger?.flagTrigger?.id ===
+                trigger?.flagTrigger?.id ? (
+                <CreateTriggerForm
+                  ref={formRef}
+                  selectedTrigger={actionState?.trigger}
+                  featureId={feature.id}
+                  environmentId={currentEnvironment.id}
+                  onCancel={onReset}
+                  setTriggerNewlyCreated={setTriggerNewlyCreated}
+                />
+              ) : (
+                <TriggerItem
+                  trigger={trigger}
+                  triggerNewlyCreated={triggerNewlyCreated}
+                  onActions={action => onActions(trigger, action)}
+                />
+              )}
             </Fragment>
           ))}
           {isShowCreateForm && !isEdit ? (

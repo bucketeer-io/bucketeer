@@ -128,7 +128,7 @@ const TriggerItem = ({
                 {t('trigger.flag-target')}
               </p>
               <p className="typo-para-medium text-gray-700">
-                {t(`trigger.${isOnFlag ? 'off-to-on' : 'on-to-off'}`)}
+                {t(`trigger.${isOnFlag ? 'turn-on-flag' : 'turn-off-flag'}`)}
               </p>
             </div>
             <div className="flex flex-col gap-y-3 col-span-4">
