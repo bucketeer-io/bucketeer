@@ -314,8 +314,12 @@ func (s *accountStorage) ListAPIKeys(
 	}
 	nextOffset := offset + len(apiKeys)
 	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(selectAPIKeyV2CountSQLQuery, options)
-	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
+	if options != nil {
+		whereQuery, countWhereArgs := mysql.ConstructWhereSQLString(options.CreateWhereParts())
+		err = s.qe.QueryRowContext(ctx, selectAPIKeyV2CountSQLQuery+whereQuery, countWhereArgs...).Scan(&totalCount)
+	} else {
+		err = s.qe.QueryRowContext(ctx, selectAPIKeyV2CountSQLQuery).Scan(&totalCount)
+	}
 	if err != nil {
 		return nil, 0, 0, err
 	}

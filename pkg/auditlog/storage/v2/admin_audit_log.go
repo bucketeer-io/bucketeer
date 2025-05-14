@@ -162,8 +162,12 @@ func (s *adminAuditLogStorage) ListAdminAuditLogs(
 	}
 	nextOffset := offset + len(auditLogs)
 	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(selectAdminAuditLogV2CountSQL, options)
-	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
+	if options != nil {
+		whereQuery, countWhereArgs := mysql.ConstructWhereSQLString(options.CreateWhereParts())
+		err = s.qe.QueryRowContext(ctx, selectAdminAuditLogV2CountSQL+whereQuery, countWhereArgs...).Scan(&totalCount)
+	} else {
+		err = s.qe.QueryRowContext(ctx, selectAdminAuditLogV2CountSQL).Scan(&totalCount)
+	}
 	if err != nil {
 		return nil, 0, 0, err
 	}

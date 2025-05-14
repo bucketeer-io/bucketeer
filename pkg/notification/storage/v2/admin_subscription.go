@@ -190,8 +190,15 @@ func (s *adminSubscriptionStorage) ListAdminSubscriptions(
 	}
 	nextOffset := offset + len(subscriptions)
 	var totalCount int64
-	countQuery, countQueryWhereArgs := mysql.ConstructQueryAndWhereArgs(selectAdminSubscriptionV2CountSQLQuery, options)
-	err = s.qe.QueryRowContext(ctx, countQuery, countQueryWhereArgs...).Scan(&totalCount)
+	if options != nil {
+		whereQuery, countWhereArgs := mysql.ConstructWhereSQLString(options.CreateWhereParts())
+		err = s.qe.QueryRowContext(
+			ctx,
+			selectAdminSubscriptionV2CountSQLQuery+whereQuery,
+			countWhereArgs...).Scan(&totalCount)
+	} else {
+		err = s.qe.QueryRowContext(ctx, selectAdminSubscriptionV2CountSQLQuery).Scan(&totalCount)
+	}
 	if err != nil {
 		return nil, 0, 0, err
 	}

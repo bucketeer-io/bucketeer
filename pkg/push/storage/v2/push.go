@@ -180,8 +180,12 @@ func (s *pushStorage) ListPushes(
 	}
 	nextOffset := offset + len(pushes)
 	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countPushesSQL, options)
-	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
+	if options != nil {
+		whereQuery, countWhereArgs := mysql.ConstructWhereSQLString(options.CreateWhereParts())
+		err = s.qe.QueryRowContext(ctx, countPushesSQL+whereQuery, countWhereArgs...).Scan(&totalCount)
+	} else {
+		err = s.qe.QueryRowContext(ctx, countPushesSQL).Scan(&totalCount)
+	}
 	if err != nil {
 		return nil, 0, 0, err
 	}

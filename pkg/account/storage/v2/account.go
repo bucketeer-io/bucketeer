@@ -355,8 +355,12 @@ func (s *accountStorage) ListAccountsV2(
 	}
 	nextOffset := offset + len(accounts)
 	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countAccountsV2SQL, options)
-	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
+	if options != nil {
+		whereQuery, countWhereArgs := mysql.ConstructWhereSQLString(options.CreateWhereParts())
+		err = s.qe.QueryRowContext(ctx, countAccountsV2SQL+whereQuery, countWhereArgs...).Scan(&totalCount)
+	} else {
+		err = s.qe.QueryRowContext(ctx, countAccountsV2SQL).Scan(&totalCount)
+	}
 	if err != nil {
 		return nil, 0, 0, err
 	}
