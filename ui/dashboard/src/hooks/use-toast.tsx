@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import toast, { Toast } from 'react-hot-toast';
+import { useTranslation } from 'i18n';
 import ToastMessage from 'components/toast';
 
 type ToastType = 'toast' | 'info-message' | 'prerequisite-message';
@@ -15,6 +16,7 @@ export type NotifyProps = {
 };
 
 export const useToast = () => {
+  const { t } = useTranslation(['message']);
   const notify = ({
     toastType = 'toast',
     messageType = 'success',
@@ -40,7 +42,7 @@ export const useToast = () => {
   const errorNotify = (error?: unknown, message?: string) =>
     notify({
       messageType: 'error',
-      message: message || (error as Error)?.message || 'Something went wrong.'
+      message: message || (error as Error)?.message || t('something-went-wrong')
     });
 
   return {

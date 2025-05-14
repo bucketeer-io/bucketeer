@@ -1,6 +1,6 @@
 import { FunctionComponent } from 'react';
 import { PropsWithChildren } from 'react';
-import { AddonSlot } from '@types';
+import { AddonSlot, Color } from '@types';
 import { cn } from 'utils/style';
 import Icon from 'components/icon';
 
@@ -44,6 +44,7 @@ export type PopoverItemProps = {
   icon?: FunctionComponent;
   label?: string;
   disabled?: boolean;
+  color?: Color;
   onClick?: () => void;
 };
 
@@ -53,6 +54,7 @@ const PopoverItem = ({
   icon,
   label,
   disabled,
+  color,
   onClick
 }: PopoverItemProps) => {
   return (
@@ -69,7 +71,11 @@ const PopoverItem = ({
             disabled ? 'text-gray-400' : 'text-gray-600'
           )}
         >
-          <Icon icon={icon} size={type === 'item' ? 'xxs' : 'sm'} />
+          <Icon
+            icon={icon}
+            size={type === 'item' ? 'xxs' : 'sm'}
+            color={color}
+          />
         </span>
       )}
       {label && <span className={'typo-para-small select-none'}>{label}</span>}

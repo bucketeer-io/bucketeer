@@ -10,5 +10,9 @@
     "flag-id-rule": "flagId must start with a letter or number and only contain letters, numbers, or '-'",
     "experiment-running-warning": "Variation changes might impact experiment accuracy",
     "experiment-running-warning-desc": "To maintain the integrity and accuracy of experiment results, adding, deleting, or modifying variation values is not allowed while the experiment is running."
-  }
+  },
+  "copied": "Copied",
+  "copy-trigger-url": "Copy and store this URL. Once you leave this page, the URL will be hidden.",
+  "trigger-created": "Trigger created successfully.",
+  "something-went-wrong": "Something went wrong."
 }

@@ -20,6 +20,7 @@ import CodeReferencesPage from './code-refs';
 import EvaluationPage from './evaluation';
 import HistoryPage from './history';
 import SettingsPage from './settings';
+import TriggerPage from './trigger';
 import { TabItem } from './types';
 import Variation from './variation';
 
@@ -105,6 +106,10 @@ const PageContent = ({ feature }: { feature: Feature }) => {
             <Route
               path={`${PAGE_PATH_FEATURE_CODE_REFS}/*`}
               element={<CodeReferencesPage feature={feature} />}
+            />
+            <Route
+              path={`${PAGE_PATH_FEATURE_TRIGGER}/*`}
+              element={<TriggerPage feature={feature} />}
             />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

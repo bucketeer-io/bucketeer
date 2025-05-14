@@ -237,5 +237,27 @@
     "enable-desc": "Quickly see instances of feature flags being leveraged in your codebase, with direct links from Bucketeer to the platform of your choice.",
     "empty": "No registered code references",
     "empty-desc": "There are no code references in your codebase yet. When a reference is added, it will appear here."
+  },
+  "trigger": {
+    "title": "Trigger",
+    "description": "Use triggers to remotely turn a flag on or off",
+    "generic-trigger": "Generic Trigger",
+    "flag-target": "Flag Target",
+    "trigger-url": "Trigger URL",
+    "triggered-times": "Triggered Times",
+    "last-triggered": "Last Triggered",
+    "trigger-type": "Trigger type",
+    "action": "Action",
+    "save-trigger": "Save Trigger",
+    "off-to-on": "off -> on",
+    "on-to-off": "on -> off",
+    "edit-desc": "Edit Description",
+    "reset-url": "Reset URL",
+    "delete-trigger": "Delete Trigger",
+    "disable-trigger": "Disable Trigger",
+    "add-trigger": "Add Trigger",
+    "webhook": "Webhook",
+    "turn-flag-status": "Turn the flag <status></status>",
+    "select-action": "Select action"
   }
 }

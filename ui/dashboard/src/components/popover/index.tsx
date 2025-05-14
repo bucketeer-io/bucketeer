@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 import type { PopoverContentProps } from '@radix-ui/react-popover';
-import { AddonSlot } from '@types';
+import { AddonSlot, Color } from '@types';
 import { cn } from 'utils/style';
 import { IconClose } from '@icons';
 import Icon from 'components/icon';
@@ -22,6 +22,7 @@ export type PopoverOption<PopoverValue> = {
   description?: string;
   disabled?: boolean;
   tooltip?: string;
+  color?: Color;
 };
 
 export type PopoverValue = number | string;
@@ -152,6 +153,7 @@ const Popover = forwardRef(
                           type="item"
                           addonSlot={addonSlot}
                           icon={item.icon}
+                          color={item?.color}
                           label={item.label}
                           disabled={item?.disabled}
                           onClick={() =>
