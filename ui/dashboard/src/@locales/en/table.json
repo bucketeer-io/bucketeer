@@ -242,7 +242,6 @@
     "title": "Trigger",
     "description": "Use triggers to turn a flag on or off remotely. See the <comp>documentation <icon></icon></comp>",
     "generic-trigger": "Generic Trigger",
-    "flag-target": "Flag Target",
     "trigger-url": "Trigger URL",
     "triggered-times": "Triggered Times",
     "last-triggered": "Last Triggered",
