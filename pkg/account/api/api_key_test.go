@@ -34,6 +34,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	testutil "github.com/bucketeer-io/bucketeer/test/util"
 )
 
 func TestCreateAPIKeyMySQL(t *testing.T) {
@@ -116,7 +117,9 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			_, err := service.CreateAPIKey(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, p.desc)
+			if !testutil.CompareErrorDetails(p.expectedErr, err) {
+				t.Errorf("expected error %v, but got %v", p.expectedErr, err)
+			}
 		})
 	}
 }
@@ -204,7 +207,9 @@ func TestCreateAPIKeyMySQLNoCommand(t *testing.T) {
 				p.setup(service)
 			}
 			_, err := service.CreateAPIKey(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, p.desc)
+			if !testutil.CompareErrorDetails(p.expectedErr, err) {
+				t.Errorf("expected error %v, but got %v", p.expectedErr, err)
+			}
 		})
 	}
 }
@@ -321,7 +326,9 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			_, err := service.ChangeAPIKeyName(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, p.desc)
+			if !testutil.CompareErrorDetails(p.expectedErr, err) {
+				t.Errorf("expected error %v, but got %v", p.expectedErr, err)
+			}
 		})
 	}
 }
@@ -432,7 +439,9 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			_, err := service.EnableAPIKey(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, p.desc)
+			if !testutil.CompareErrorDetails(p.expectedErr, err) {
+				t.Errorf("expected error %v, but got %v", p.expectedErr, err)
+			}
 		})
 	}
 }
@@ -543,7 +552,9 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			_, err := service.DisableAPIKey(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, p.desc)
+			if !testutil.CompareErrorDetails(p.expectedErr, err) {
+				t.Errorf("expected error %v, but got %v", p.expectedErr, err)
+			}
 		})
 	}
 }
@@ -676,7 +687,9 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 			}
 			localizer := locale.NewLocalizer(ctx)
 			res, err := service.GetAPIKey(ctx, p.req)
-			assert.Equal(t, p.getExpectedErr(localizer), err)
+			if !testutil.CompareErrorDetails(p.getExpectedErr(localizer), err) {
+				t.Errorf("expected error %v, but got %v", p.getExpectedErr(localizer), err)
+			}
 			if err == nil {
 				assert.NotNil(t, res)
 			}
@@ -826,7 +839,9 @@ func TestListAPIKeysMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			actual, err := service.ListAPIKeys(ctx, p.input)
-			assert.Equal(t, p.getExpectedErr(localizer), err, p.desc)
+			if !testutil.CompareErrorDetails(p.getExpectedErr(localizer), err) {
+				t.Errorf("expected error %v, but got %v", p.getExpectedErr(localizer), err)
+			}
 			assert.Equal(t, p.expected, actual, p.desc)
 		})
 	}
