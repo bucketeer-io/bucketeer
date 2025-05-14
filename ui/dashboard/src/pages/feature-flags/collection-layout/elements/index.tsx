@@ -342,7 +342,7 @@ export const FlagVariationsElement = ({
               >
                 <div className="flex-center size-4">
                   <FlagVariationPolygon
-                    index={index === 0 ? index : index + index + 1}
+                    index={index}
                     className="border-white/10"
                   />
                 </div>
