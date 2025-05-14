@@ -18,7 +18,7 @@ import PopoverItem from './popover-item';
 export type PopoverOption<PopoverValue> = {
   value: PopoverValue;
   icon?: FunctionComponent;
-  label: string;
+  label: ReactNode;
   description?: string;
   disabled?: boolean;
   tooltip?: string;

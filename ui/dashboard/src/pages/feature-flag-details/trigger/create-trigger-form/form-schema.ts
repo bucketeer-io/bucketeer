@@ -4,7 +4,7 @@ import { TriggerActionType, TriggerType } from '@types';
 
 const translation = i18n.t;
 
-const requiredMessage = translation('message.required-field');
+const requiredMessage = translation('message:required-field');
 
 export const formSchema = yup.object().shape({
   type: yup.mixed<TriggerType>().required(requiredMessage),

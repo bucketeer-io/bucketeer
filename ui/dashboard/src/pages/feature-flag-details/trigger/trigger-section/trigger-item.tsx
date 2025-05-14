@@ -44,7 +44,7 @@ const TriggerItem = ({
     [id, triggerNewlyCreated]
   );
 
-  const handleCopy = useCallback(() => {
+  const handleCopy = useCallback((url: string) => {
     copyToClipBoard(url);
     notify({
       message: t('message:copied')
@@ -88,7 +88,10 @@ const TriggerItem = ({
                 date={Number(updatedAt) === 0 ? null : updatedAt}
               />
             </div>
-            <TriggerPopover onActions={onActions} />
+            <TriggerPopover
+              trigger={trigger.flagTrigger}
+              onActions={onActions}
+            />
           </div>
         </div>
         {description && (
@@ -106,7 +109,7 @@ const TriggerItem = ({
               <Button
                 variant={'secondary-2'}
                 className="px-3"
-                onClick={handleCopy}
+                onClick={() => handleCopy(triggerNewlyCreated?.url || url)}
               >
                 <Icon icon={IconCopy} size="sm" />
               </Button>

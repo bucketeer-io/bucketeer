@@ -1,18 +1,21 @@
-import React from 'react';
 import {
+  IconCheckCircleOutlineOutlined,
   IconEditOutlined,
   IconMoreHorizOutlined,
   IconRefreshOutlined
 } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
 import { compact } from 'lodash';
+import { Trigger } from '@types';
 import { IconDisable, IconTrash } from '@icons';
 import { Popover } from 'components/popover';
 import { TriggerAction } from '../types';
 
 const TriggerPopover = ({
+  trigger,
   onActions
 }: {
+  trigger: Trigger;
   onActions: (action: TriggerAction) => void;
 }) => {
   const { t } = useTranslation(['table']);
@@ -27,9 +30,9 @@ const TriggerPopover = ({
           color: 'gray-600'
         },
         {
-          label: `${t('trigger.disable-trigger')}`,
-          icon: IconDisable,
-          value: TriggerAction.DISABLE
+          label: `${t(`trigger.${trigger.disabled ? 'enable-trigger' : 'disable-trigger'}`)}`,
+          icon: trigger.disabled ? IconCheckCircleOutlineOutlined : IconDisable,
+          value: trigger.disabled ? TriggerAction.ENABLE : TriggerAction.DISABLE
         },
         {
           label: `${t('trigger.reset-url')}`,
@@ -37,7 +40,11 @@ const TriggerPopover = ({
           value: TriggerAction.RESET
         },
         {
-          label: `${t('trigger.delete-trigger')}`,
+          label: (
+            <span className="text-accent-red-500">
+              {t('trigger.delete-trigger')}
+            </span>
+          ),
           icon: IconTrash,
           value: TriggerAction.DELETE,
           color: 'accent-red-500'

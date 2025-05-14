@@ -1,4 +1,4 @@
-import { FunctionComponent } from 'react';
+import { FunctionComponent, ReactNode } from 'react';
 import { PropsWithChildren } from 'react';
 import { AddonSlot, Color } from '@types';
 import { cn } from 'utils/style';
@@ -42,7 +42,7 @@ export type PopoverItemProps = {
   type: 'trigger' | 'item';
   addonSlot?: AddonSlot;
   icon?: FunctionComponent;
-  label?: string;
+  label?: ReactNode;
   disabled?: boolean;
   color?: Color;
   onClick?: () => void;

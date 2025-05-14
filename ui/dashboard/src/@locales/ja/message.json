@@ -14,5 +14,7 @@
   "copied": "Copied",
   "copy-trigger-url": "Copy and store this URL. Once you leave this page, the URL will be hidden.",
   "trigger-created": "Trigger created successfully.",
+  "trigger-updated": "Trigger updated successfully.",
+  "trigger-deleted": "Trigger deleted successfully.",
   "something-went-wrong": "Something went wrong."
 }

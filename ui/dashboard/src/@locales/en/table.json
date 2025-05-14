@@ -255,9 +255,15 @@
     "reset-url": "Reset URL",
     "delete-trigger": "Delete Trigger",
     "disable-trigger": "Disable Trigger",
+    "enable-trigger": "Enable Trigger",
     "add-trigger": "Add Trigger",
     "webhook": "Webhook",
     "turn-flag-status": "Turn the flag <status></status>",
-    "select-action": "Select action"
+    "select-action": "Select action",
+    "reset-trigger-url": "Reset Trigger URL",
+    "reset-trigger-desc": "The current URL will become invalid. Ensure that you copy and store the new URL.",
+    "delete-trigger-desc": "The trigger will be deleted permanently. Are you sure you want to proceed?",
+    "disable-trigger-desc": "The trigger will be disabled. Are you sure you want to proceed?",
+    "enable-trigger-desc": "The trigger will be enabled. Are you sure you want to proceed?"
   }
 }
