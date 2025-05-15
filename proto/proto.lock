@@ -31613,6 +31613,10 @@
               {
                 "name": "ERROR_EXCEPTION",
                 "integer": 25
+              },
+              {
+                "name": "ERROR_CACHE_NOT_FOUND",
+                "integer": 26
               }
             ]
           }
