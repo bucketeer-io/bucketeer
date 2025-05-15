@@ -296,10 +296,12 @@ func (s *featureStorage) ListFeatures(
 	}
 	nextOffset := offset + len(features)
 	var totalCount int64
-	whereParts := options.CreateWhereParts()
-	whereQuery, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	countQuery := fmt.Sprintf(countFeatureSQLQuery, whereQuery)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	if options != nil {
+		whereQuery, whereArgs := mysql.ConstructWhereSQLString(options.CreateWhereParts())
+		err = s.qe.QueryRowContext(ctx, countFeatureSQLQuery+whereQuery, whereArgs...).Scan(&totalCount)
+	} else {
+		err = s.qe.QueryRowContext(ctx, countFeatureSQLQuery).Scan(&totalCount)
+	}
 	if err != nil {
 		return nil, 0, 0, err
 	}
