@@ -218,5 +218,8 @@ func (s *subscriptionStorage) ListSubscriptions(
 	var totalCount int64
 	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgsOnlyUseWherePart(selectSubscriptionV2CountSQLQuery, options)
 	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, 0, err
+	}
 	return subscriptions, nextOffset, totalCount, nil
 }
