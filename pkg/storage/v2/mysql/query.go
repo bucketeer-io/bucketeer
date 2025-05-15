@@ -362,7 +362,8 @@ func ConstructQueryAndWhereArgs(baseQuery string, options *ListOptions) (query s
 
 // ConstructQueryAndWhereArgsOnlyUseWherePart builds a query with only the WHERE part.
 // This Function is intended to be used when the purpose is
-// to generate a query that does not require any conditions other than the Where clause, such as "SELECT COUNT(1) FROM XXX".
+// to generate a query that does not require any conditions other than the Where clause,
+// such as "SELECT COUNT(1) FROM XXX".
 func ConstructQueryAndWhereArgsOnlyUseWherePart(
 	baseQuery string,
 	options *ListOptions,
