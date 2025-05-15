@@ -360,6 +360,20 @@ func ConstructQueryAndWhereArgs(baseQuery string, options *ListOptions) (query s
 	return
 }
 
+// ConstructQueryAndWhereArgsOnlyUseWherePart builds a query with only the WHERE part.
+// This Function is intended to be used when the purpose is
+// to generate a query that does not require any conditions other than the Where clause, such as "SELECT COUNT(1) FROM XXX".
+func ConstructQueryAndWhereArgsOnlyUseWherePart(
+	baseQuery string,
+	options *ListOptions,
+) (query string, whereArgs []interface{}) {
+	if options != nil {
+		whereQuery, whereArgs := ConstructWhereSQLString(options.CreateWhereParts())
+		return baseQuery + whereQuery, whereArgs
+	}
+	return baseQuery, []interface{}{}
+}
+
 type Orders struct {
 	Orders []*Order
 }

@@ -234,12 +234,8 @@ func (s *projectStorage) ListProjects(
 	}
 	nextOffset := offset + len(projects)
 	var totalCount int64
-	if options != nil {
-		whereQuery, countWhereArgs := mysql.ConstructWhereSQLString(options.CreateWhereParts())
-		err = s.qe.QueryRowContext(ctx, countProjectsSQL+whereQuery, countWhereArgs...).Scan(&totalCount)
-	} else {
-		err = s.qe.QueryRowContext(ctx, countProjectsSQL).Scan(&totalCount)
-	}
+	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgsOnlyUseWherePart(countProjectsSQL, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
