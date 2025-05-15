@@ -191,7 +191,7 @@ func (s *progressiveRolloutStorage) ListProgressiveRollouts(
 	}
 	nextOffset := offset + len(progressiveRollouts)
 	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgsOnlyUseWherePart(countOpsProgressiveRolloutsSQL, options)
+	countQuery, countWhereArgs := mysql.ConstructCountQuery(countOpsProgressiveRolloutsSQL, options)
 	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

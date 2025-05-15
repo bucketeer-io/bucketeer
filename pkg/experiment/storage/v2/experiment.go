@@ -246,7 +246,7 @@ func (s *experimentStorage) ListExperiments(
 	}
 	nextOffset := offset + len(experiments)
 	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgsOnlyUseWherePart(countExperimentSQL, options)
+	countQuery, countWhereArgs := mysql.ConstructCountQuery(countExperimentSQL, options)
 	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

@@ -216,7 +216,7 @@ func (s *subscriptionStorage) ListSubscriptions(
 	}
 	nextOffset := offset + len(subscriptions)
 	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgsOnlyUseWherePart(
+	countQuery, countWhereArgs := mysql.ConstructCountQuery(
 		selectSubscriptionV2CountSQLQuery,
 		options,
 	)

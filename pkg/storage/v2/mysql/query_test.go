@@ -358,3 +358,113 @@ func TestConstructLimitOffsetSQLString(t *testing.T) {
 		})
 	}
 }
+
+func TestConstructCountQuery(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc         string
+		baseQuery    string
+		options      *ListOptions
+		expectedSQL  string
+		expectedArgs []interface{}
+	}{
+		{
+			desc:         "Empty options",
+			baseQuery:    "SELECT COUNT(1) FROM feature",
+			options:      nil,
+			expectedSQL:  "SELECT COUNT(1) FROM feature",
+			expectedArgs: []interface{}{},
+		},
+		{
+			desc:      "With filter",
+			baseQuery: "SELECT COUNT(1) FROM feature",
+			options: &ListOptions{
+				Filters: []*FilterV2{
+					{
+						Column:   "name",
+						Operator: OperatorEqual,
+						Value:    "feature-1",
+					},
+				},
+			},
+			expectedSQL:  "SELECT COUNT(1) FROM feature WHERE name = ? ",
+			expectedArgs: []interface{}{"feature-1"},
+		},
+		{
+			desc:      "With multiple filters",
+			baseQuery: "SELECT COUNT(1) FROM feature",
+			options: &ListOptions{
+				Filters: []*FilterV2{
+					{
+						Column:   "name",
+						Operator: OperatorEqual,
+						Value:    "feature-1",
+					},
+					{
+						Column:   "environment_id",
+						Operator: OperatorEqual,
+						Value:    "env-1",
+					},
+				},
+			},
+			expectedSQL:  "SELECT COUNT(1) FROM feature WHERE name = ? AND environment_id = ? ",
+			expectedArgs: []interface{}{"feature-1", "env-1"},
+		},
+		{
+			desc:      "With search query",
+			baseQuery: "SELECT COUNT(1) FROM feature",
+			options: &ListOptions{
+				SearchQuery: &SearchQuery{
+					Columns: []string{"name", "description"},
+					Keyword: "test",
+				},
+			},
+			expectedSQL:  "SELECT COUNT(1) FROM feature WHERE  (name LIKE ? OR description LIKE ?) ",
+			expectedArgs: []interface{}{"%test%", "%test%"},
+		},
+		{
+			desc:      "With complex filters",
+			baseQuery: "SELECT COUNT(1) FROM feature",
+			options: &ListOptions{
+				Filters: []*FilterV2{
+					{
+						Column:   "name",
+						Operator: OperatorEqual,
+						Value:    "feature-1",
+					},
+				},
+				InFilters: []*InFilter{
+					{
+						Column: "environment_id",
+						Values: []interface{}{"env-1", "env-2"},
+					},
+				},
+				NullFilters: []*NullFilter{
+					{
+						Column: "deleted_at",
+						IsNull: true,
+					},
+				},
+			},
+			expectedSQL:  "SELECT COUNT(1) FROM feature WHERE name = ? AND  environment_id IN (?, ?) AND  deleted_at IS NULL ",
+			expectedArgs: []interface{}{"feature-1", "env-1", "env-2"},
+		},
+		{
+			desc:      "Limit and offset are omitted from the query",
+			baseQuery: "SELECT COUNT(1) FROM feature",
+			options: &ListOptions{
+				Limit:  10,
+				Offset: 5,
+			},
+			expectedSQL:  "SELECT COUNT(1) FROM feature",
+			expectedArgs: []interface{}{},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			sql, args := ConstructCountQuery(p.baseQuery, p.options)
+			assert.Equal(t, p.expectedSQL, sql)
+			assert.Equal(t, p.expectedArgs, args)
+		})
+	}
+}
