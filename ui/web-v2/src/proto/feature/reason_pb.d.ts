@@ -47,6 +47,7 @@ export namespace Reason {
     ERROR_USER_ID_NOT_SPECIFIED: 23;
     ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED: 24;
     ERROR_EXCEPTION: 25;
+    ERROR_CACHE_NOT_FOUND: 26;
   }
 
   export const Type: TypeMap;
