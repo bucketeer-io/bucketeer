@@ -34,6 +34,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	testutil "github.com/bucketeer-io/bucketeer/test/util"
 )
 
 func TestCreateAPIKeyMySQL(t *testing.T) {
@@ -48,12 +49,10 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 	})
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(status, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
 		})
-		require.NoError(t, err)
-		return st.Err()
 	}
 
 	patterns := []struct {
@@ -118,7 +117,9 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			_, err := service.CreateAPIKey(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, p.desc)
+			if !testutil.CompareErrorDetails(p.expectedErr, err) {
+				t.Errorf("expected error %v, but got %v", p.expectedErr, err)
+			}
 		})
 	}
 }
@@ -135,12 +136,10 @@ func TestCreateAPIKeyMySQLNoCommand(t *testing.T) {
 	})
 	localizer := locale.NewLocalizer(ctx)
 	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(status, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
 		})
-		require.NoError(t, err)
-		return st.Err()
 	}
 
 	patterns := []struct {
@@ -208,7 +207,9 @@ func TestCreateAPIKeyMySQLNoCommand(t *testing.T) {
 				p.setup(service)
 			}
 			_, err := service.CreateAPIKey(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, p.desc)
+			if !testutil.CompareErrorDetails(p.expectedErr, err) {
+				t.Errorf("expected error %v, but got %v", p.expectedErr, err)
+			}
 		})
 	}
 }
@@ -224,13 +225,11 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 		"accept-language": []string{"ja"},
 	})
 	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+	createError := func(status *gstatus.Status, msg string, anotherDetailData ...map[string]string) error {
+		return NewError(status, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
+		}, anotherDetailData...)
 	}
 
 	patterns := []struct {
@@ -271,7 +270,9 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 					Name: "",
 				},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError), map[string]string{
+				"field": "apiKey",
+			}),
 		},
 		{
 			desc: "errInternal",
@@ -325,7 +326,9 @@ func TestChangeAPIKeyNameMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			_, err := service.ChangeAPIKeyName(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, p.desc)
+			if !testutil.CompareErrorDetails(p.expectedErr, err) {
+				t.Errorf("expected error %v, but got %v", p.expectedErr, err)
+			}
 		})
 	}
 }
@@ -341,13 +344,11 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 		"accept-language": []string{"ja"},
 	})
 	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+	createError := func(status *gstatus.Status, msg string, anotherDetailData ...map[string]string) error {
+		return NewError(status, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
+		}, anotherDetailData...)
 	}
 
 	patterns := []struct {
@@ -386,7 +387,9 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 				Id:      "id",
 				Command: &accountproto.EnableAPIKeyCommand{},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError), map[string]string{
+				"field": "apiKey",
+			}),
 		},
 		{
 			desc: "errInternal",
@@ -436,7 +439,9 @@ func TestEnableAPIKeyMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			_, err := service.EnableAPIKey(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, p.desc)
+			if !testutil.CompareErrorDetails(p.expectedErr, err) {
+				t.Errorf("expected error %v, but got %v", p.expectedErr, err)
+			}
 		})
 	}
 }
@@ -452,13 +457,11 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 		"accept-language": []string{"ja"},
 	})
 	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+	createError := func(status *gstatus.Status, msg string, anotherDetailData ...map[string]string) error {
+		return NewError(status, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
+		}, anotherDetailData...)
 	}
 
 	patterns := []struct {
@@ -497,7 +500,9 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 				Id:      "id",
 				Command: &accountproto.DisableAPIKeyCommand{},
 			},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError), map[string]string{
+				"field": "apiKey",
+			}),
 		},
 		{
 			desc: "errInternal",
@@ -547,7 +552,9 @@ func TestDisableAPIKeyMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			_, err := service.DisableAPIKey(ctx, p.req)
-			assert.Equal(t, p.expectedErr, err, p.desc)
+			if !testutil.CompareErrorDetails(p.expectedErr, err) {
+				t.Errorf("expected error %v, but got %v", p.expectedErr, err)
+			}
 		})
 	}
 }
@@ -557,13 +564,11 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	createError := func(localizer locale.Localizer, status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+	createError := func(localizer locale.Localizer, status *gstatus.Status, msg string, anotherDetailData ...map[string]string) error {
+		return NewError(status, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
+		}, anotherDetailData...)
 	}
 
 	patterns := []struct {
@@ -591,7 +596,9 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 			},
 			req: &accountproto.GetAPIKeyRequest{Id: "id"},
 			getExpectedErr: func(localizer locale.Localizer) error {
-				return createError(localizer, statusNotFound, localizer.MustLocalize(locale.NotFoundError))
+				return createError(localizer, statusNotFound, localizer.MustLocalize(locale.NotFoundError), map[string]string{
+					"field": "apiKey",
+				})
 			},
 		},
 		{
@@ -680,7 +687,9 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 			}
 			localizer := locale.NewLocalizer(ctx)
 			res, err := service.GetAPIKey(ctx, p.req)
-			assert.Equal(t, p.getExpectedErr(localizer), err)
+			if !testutil.CompareErrorDetails(p.getExpectedErr(localizer), err) {
+				t.Errorf("expected error %v, but got %v", p.getExpectedErr(localizer), err)
+			}
 			if err == nil {
 				assert.NotNil(t, res)
 			}
@@ -694,12 +703,10 @@ func TestListAPIKeysMySQL(t *testing.T) {
 	defer mockController.Finish()
 
 	createError := func(localizer locale.Localizer, status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(status, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: msg,
 		})
-		require.NoError(t, err)
-		return st.Err()
 	}
 
 	patterns := []struct {
@@ -832,7 +839,9 @@ func TestListAPIKeysMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			actual, err := service.ListAPIKeys(ctx, p.input)
-			assert.Equal(t, p.getExpectedErr(localizer), err, p.desc)
+			if !testutil.CompareErrorDetails(p.getExpectedErr(localizer), err) {
+				t.Errorf("expected error %v, but got %v", p.getExpectedErr(localizer), err)
+			}
 			assert.Equal(t, p.expected, actual, p.desc)
 		})
 	}
