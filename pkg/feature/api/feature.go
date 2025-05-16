@@ -1030,10 +1030,6 @@ func (s *FeatureService) UpdateFeature(
 			req.DefaultStrategy,
 			req.OffVariation,
 			req.ResetSamplingSeed,
-			req.Prerequisites,
-			req.Targets,
-			req.Rules,
-			req.Variations,
 			req.PrerequisiteChanges,
 			req.TargetChanges,
 			req.RuleChanges,
@@ -1752,24 +1748,6 @@ func (s *FeatureService) convUpdateFeatureError(err error, localizer locale.Loca
 		dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.NotFoundError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	case domain.ErrAlreadyDisabled:
-		dt, err := statusNothingChange.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.NothingToChange),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	case domain.ErrAlreadyEnabled:
-		dt, err := statusNothingChange.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.NothingToChange),
 		})
 		if err != nil {
 			return statusInternal.Err()

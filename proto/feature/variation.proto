@@ -24,7 +24,3 @@ message Variation {
   string name = 3;
   string description = 4;
 }
-
-message VariationListValue {
-  repeated Variation values = 1;
-}

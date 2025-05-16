@@ -18,7 +18,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -275,19 +274,19 @@ func (s *accountStorage) GetEnvironmentAPIKey(
 
 func (s *accountStorage) ListAPIKeys(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.APIKey, int, int64, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(selectAPIKeyV2SQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
+	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAPIKeyV2SQLQuery, options)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
+	var limit, offset int
+	if options.Limit != 0 {
+		limit = options.Limit
+		offset = options.Offset
+	}
 	apiKeys := make([]*proto.APIKey, 0, limit)
 	for rows.Next() {
 		apiKey := proto.APIKey{}
@@ -315,8 +314,8 @@ func (s *accountStorage) ListAPIKeys(
 	}
 	nextOffset := offset + len(apiKeys)
 	var totalCount int64
-	countQuery := fmt.Sprintf(selectAPIKeyV2CountSQLQuery, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	countQuery, countWhereArgs := mysql.ConstructCountQuery(selectAPIKeyV2CountSQLQuery, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}

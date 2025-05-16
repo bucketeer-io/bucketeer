@@ -18629,6 +18629,38 @@
               {
                 "name": "JAVASCRIPT",
                 "integer": 7
+              },
+              {
+                "name": "FLUTTER",
+                "integer": 8
+              },
+              {
+                "name": "REACT",
+                "integer": 9
+              },
+              {
+                "name": "REACT_NATIVE",
+                "integer": 10
+              },
+              {
+                "name": "OPEN_FEATURE_KOTLIN",
+                "integer": 100
+              },
+              {
+                "name": "OPEN_FEATURE_SWIFT",
+                "integer": 101
+              },
+              {
+                "name": "OPEN_FEATURE_JAVASCRIPT",
+                "integer": 102
+              },
+              {
+                "name": "OPEN_FEATURE_GO",
+                "integer": 103
+              },
+              {
+                "name": "OPEN_FEATURE_NODE",
+                "integer": 104
               }
             ],
             "reserved_ids": [
@@ -31509,17 +31541,6 @@
                 "type": "string"
               }
             ]
-          },
-          {
-            "name": "PrerequisiteListValue",
-            "fields": [
-              {
-                "id": 1,
-                "name": "values",
-                "type": "Prerequisite",
-                "is_repeated": true
-              }
-            ]
           }
         ],
         "package": {
@@ -31592,6 +31613,10 @@
               {
                 "name": "ERROR_EXCEPTION",
                 "integer": 25
+              },
+              {
+                "name": "ERROR_CACHE_NOT_FOUND",
+                "integer": 26
               }
             ]
           }
@@ -31645,17 +31670,6 @@
                 "id": 3,
                 "name": "clauses",
                 "type": "Clause",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "RuleListValue",
-            "fields": [
-              {
-                "id": 1,
-                "name": "values",
-                "type": "Rule",
                 "is_repeated": true
               }
             ]
@@ -32763,130 +32777,50 @@
               },
               {
                 "id": 9,
-                "name": "variations",
-                "type": "VariationListValue",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 10,
-                "name": "prerequisites",
-                "type": "PrerequisiteListValue",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 11,
-                "name": "targets",
-                "type": "TargetListValue",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 12,
-                "name": "rules",
-                "type": "RuleListValue",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 13,
                 "name": "default_strategy",
                 "type": "Strategy"
               },
               {
-                "id": 14,
+                "id": 10,
                 "name": "off_variation",
                 "type": "google.protobuf.StringValue"
               },
               {
-                "id": 15,
+                "id": 11,
                 "name": "reset_sampling_seed",
                 "type": "bool"
               },
               {
-                "id": 16,
+                "id": 12,
                 "name": "apply_schedule_update",
                 "type": "bool"
               },
               {
-                "id": 17,
+                "id": 13,
                 "name": "variation_changes",
                 "type": "VariationChange",
                 "is_repeated": true
               },
               {
-                "id": 18,
+                "id": 14,
                 "name": "rule_changes",
                 "type": "RuleChange",
                 "is_repeated": true
               },
               {
-                "id": 19,
+                "id": 15,
                 "name": "prerequisite_changes",
                 "type": "PrerequisiteChange",
                 "is_repeated": true
               },
               {
-                "id": 20,
+                "id": 16,
                 "name": "target_changes",
                 "type": "TargetChange",
                 "is_repeated": true
               },
               {
-                "id": 21,
+                "id": 17,
                 "name": "tag_changes",
                 "type": "TagChange",
                 "is_repeated": true
@@ -38366,17 +38300,6 @@
                 "is_repeated": true
               }
             ]
-          },
-          {
-            "name": "TargetListValue",
-            "fields": [
-              {
-                "id": 1,
-                "name": "values",
-                "type": "Target",
-                "is_repeated": true
-              }
-            ]
           }
         ],
         "package": {
@@ -38416,17 +38339,6 @@
                 "id": 4,
                 "name": "description",
                 "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "VariationListValue",
-            "fields": [
-              {
-                "id": 1,
-                "name": "values",
-                "type": "Variation",
-                "is_repeated": true
               }
             ]
           }
@@ -39016,125 +38928,45 @@
               },
               {
                 "id": 9,
-                "name": "variations",
-                "type": "feature.VariationListValue",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 10,
-                "name": "prerequisites",
-                "type": "feature.PrerequisiteListValue",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 11,
-                "name": "targets",
-                "type": "feature.TargetListValue",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 12,
-                "name": "rules",
-                "type": "feature.RuleListValue",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "deprecated"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": 13,
                 "name": "default_strategy",
                 "type": "feature.Strategy"
               },
               {
-                "id": 14,
+                "id": 10,
                 "name": "off_variation",
                 "type": "google.protobuf.StringValue"
               },
               {
-                "id": 15,
+                "id": 11,
                 "name": "reset_sampling_seed",
                 "type": "bool"
               },
               {
-                "id": 16,
+                "id": 12,
                 "name": "variation_changes",
                 "type": "feature.VariationChange",
                 "is_repeated": true
               },
               {
-                "id": 17,
+                "id": 13,
                 "name": "rule_changes",
                 "type": "feature.RuleChange",
                 "is_repeated": true
               },
               {
-                "id": 18,
+                "id": 14,
                 "name": "prerequisite_changes",
                 "type": "feature.PrerequisiteChange",
                 "is_repeated": true
               },
               {
-                "id": 19,
+                "id": 15,
                 "name": "target_changes",
                 "type": "feature.TargetChange",
                 "is_repeated": true
               },
               {
-                "id": 20,
+                "id": 16,
                 "name": "tag_changes",
                 "type": "feature.TagChange",
                 "is_repeated": true
@@ -40954,16 +40786,7 @@
             "path": "proto/feature/strategy.proto"
           },
           {
-            "path": "proto/feature/prerequisite.proto"
-          },
-          {
-            "path": "proto/feature/rule.proto"
-          },
-          {
             "path": "proto/feature/segment.proto"
-          },
-          {
-            "path": "proto/feature/target.proto"
           },
           {
             "path": "proto/push/push.proto"

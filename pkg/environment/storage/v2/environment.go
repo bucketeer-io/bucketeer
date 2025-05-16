@@ -193,7 +193,7 @@ func (s *environmentStorage) ListEnvironmentsV2(
 	}
 	nextOffset := offset + len(environments)
 	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countEnvironmentsSQL, options)
+	countQuery, countWhereArgs := mysql.ConstructCountQuery(countEnvironmentsSQL, options)
 	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

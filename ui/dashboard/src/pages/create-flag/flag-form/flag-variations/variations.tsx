@@ -37,7 +37,7 @@ const Variations = () => {
   const onAddVariation = () => {
     append({
       id: uuid(),
-      value: '',
+      value: isJSON ? '{}' : '',
       name: '',
       description: ''
     });

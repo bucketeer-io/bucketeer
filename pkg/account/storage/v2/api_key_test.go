@@ -338,10 +338,7 @@ func TestListAPIKeys(t *testing.T) {
 	patterns := []struct {
 		desc           string
 		setup          func(*accountStorage)
-		whereParts     []mysql.WherePart
-		orders         []*mysql.Order
-		limit          int
-		offset         int
+		options        *mysql.ListOptions
 		expectedCount  int
 		expectedCursor int
 		expectedErr    error
@@ -353,10 +350,7 @@ func TestListAPIKeys(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			whereParts:     nil,
-			orders:         nil,
-			limit:          0,
-			offset:         0,
+			options:        nil,
 			expectedCount:  0,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
@@ -390,16 +384,36 @@ func TestListAPIKeys(t *testing.T) {
 					createdAt, updatedAt,
 				).Return(row)
 			},
-			whereParts: []mysql.WherePart{
-				mysql.NewFilter("create_at", ">=", createdAt),
-				mysql.NewFilter("update_at", "<", updatedAt),
+			options: &mysql.ListOptions{
+				Filters: []*mysql.FilterV2{
+					{
+						Column:   "create_at",
+						Operator: mysql.OperatorGreaterThanOrEqual,
+						Value:    createdAt,
+					},
+					{
+						Column:   "update_at",
+						Operator: mysql.OperatorLessThan,
+						Value:    updatedAt,
+					},
+				},
+				Orders: []*mysql.Order{
+					{
+						Column:    "id",
+						Direction: mysql.OrderDirectionAsc,
+					},
+					{
+						Column:    "name",
+						Direction: mysql.OrderDirectionDesc,
+					},
+				},
+				Limit:       limit,
+				Offset:      offset,
+				JSONFilters: nil,
+				InFilters:   nil,
+				NullFilters: nil,
+				SearchQuery: nil,
 			},
-			orders: []*mysql.Order{
-				mysql.NewOrder("id", mysql.OrderDirectionAsc),
-				mysql.NewOrder("name", mysql.OrderDirectionDesc),
-			},
-			limit:          limit,
-			offset:         offset,
 			expectedCount:  getSize,
 			expectedCursor: offset + getSize,
 			expectedErr:    nil,
@@ -434,10 +448,16 @@ func TestListAPIKeys(t *testing.T) {
 					[]interface{}{},
 				).Return(row)
 			},
-			whereParts:     []mysql.WherePart{},
-			orders:         []*mysql.Order{},
-			limit:          0,
-			offset:         0,
+			options: &mysql.ListOptions{
+				Filters:     []*mysql.FilterV2{},
+				Orders:      []*mysql.Order{},
+				Limit:       0,
+				Offset:      0,
+				JSONFilters: nil,
+				InFilters:   nil,
+				NullFilters: nil,
+				SearchQuery: nil,
+			},
 			expectedCount:  getSize,
 			expectedCursor: getSize,
 			expectedErr:    nil,
@@ -449,13 +469,7 @@ func TestListAPIKeys(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			apiKeys, cursor, _, err := storage.ListAPIKeys(
-				context.Background(),
-				p.whereParts,
-				p.orders,
-				p.limit,
-				p.offset,
-			)
+			apiKeys, cursor, _, err := storage.ListAPIKeys(context.Background(), p.options)
 			assert.Equal(t, p.expectedCount, len(apiKeys))
 			if len(apiKeys) > 0 {
 				assert.IsType(t, apiKeys, []*proto.APIKey{})

@@ -2086,19 +2086,6 @@ definitions:
         type: boolean
       archived:
         type: boolean
-      variations:
-        $ref: '#/definitions/featureVariationListValue'
-        description: deprecated
-        title: Legacy full-replacement fields (deprecated)
-      prerequisites:
-        $ref: '#/definitions/featurePrerequisiteListValue'
-        description: deprecated
-      targets:
-        $ref: '#/definitions/featureTargetListValue'
-        description: deprecated
-      rules:
-        $ref: '#/definitions/featureRuleListValue'
-        description: deprecated
       defaultStrategy:
         $ref: '#/definitions/featureStrategy'
       offVariation:
@@ -2110,7 +2097,6 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureVariationChange'
-        title: New granular change fields (supporting multiple operations per field)
       ruleChanges:
         type: array
         items:
@@ -2176,6 +2162,14 @@ definitions:
       - GO_SERVER
       - NODE_SERVER
       - JAVASCRIPT
+      - FLUTTER
+      - REACT
+      - REACT_NATIVE
+      - OPEN_FEATURE_KOTLIN
+      - OPEN_FEATURE_SWIFT
+      - OPEN_FEATURE_JAVASCRIPT
+      - OPEN_FEATURE_GO
+      - OPEN_FEATURE_NODE
     default: UNKNOWN
   coderefCodeReference:
     type: object
@@ -2475,14 +2469,6 @@ definitions:
     required:
       - changeType
       - prerequisite
-  featurePrerequisiteListValue:
-    type: object
-    properties:
-      values:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featurePrerequisite'
   featureReason:
     type: object
     properties:
@@ -2505,6 +2491,7 @@ definitions:
       - ERROR_USER_ID_NOT_SPECIFIED
       - ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED
       - ERROR_EXCEPTION
+      - ERROR_CACHE_NOT_FOUND
     default: TARGET
   featureRolloutStrategy:
     type: object
@@ -2544,14 +2531,6 @@ definitions:
     required:
       - changeType
       - rule
-  featureRuleListValue:
-    type: object
-    properties:
-      values:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureRule'
   featureSegmentUser:
     type: object
     properties:
@@ -2628,14 +2607,6 @@ definitions:
     required:
       - changeType
       - target
-  featureTargetListValue:
-    type: object
-    properties:
-      values:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/featureTarget'
   featureUserEvaluations:
     type: object
     properties:
@@ -2672,14 +2643,6 @@ definitions:
     required:
       - changeType
       - variation
-  featureVariationListValue:
-    type: object
-    properties:
-      values:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/bucketeerfeatureVariation'
   gatewayGetEvaluationRequest:
     type: object
     properties:

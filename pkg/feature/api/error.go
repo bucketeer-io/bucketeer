@@ -103,7 +103,6 @@ var (
 	statusNotFound                     = gstatus.New(codes.NotFound, "feature: not found")
 	statusSegmentNotFound              = gstatus.New(codes.NotFound, "feature: segment not found")
 	statusAlreadyExists                = gstatus.New(codes.AlreadyExists, "feature: already exists")
-	statusNothingChange                = gstatus.New(codes.FailedPrecondition, "feature: no change")
 	statusSegmentUsersAlreadyUploading = gstatus.New(
 		codes.FailedPrecondition,
 		"feature: segment users already uploading",

@@ -21,7 +21,3 @@ message Prerequisite {
   string feature_id = 1;
   string variation_id = 2;
 }
-
-message PrerequisiteListValue {
-  repeated Prerequisite values = 1;
-}

@@ -1,0 +1,20 @@
+{
+  "required-field": "This field is required.",
+  "flag-updated": "Feature flag updated successfully.",
+  "validation": {
+    "must-be-number": "This must be a number",
+    "must-be-json": "This must be a JSON",
+    "must-be-unique": "This must be unique",
+    "max-length-number": "The maximum length for this field is {{count}} numbers.",
+    "max-length-string": "The maximum length for this field is {{count}} characters.",
+    "flag-id-rule": "flagId must start with a letter or number and only contain letters, numbers, or '-'",
+    "experiment-running-warning": "Variation changes might impact experiment accuracy",
+    "experiment-running-warning-desc": "To maintain the integrity and accuracy of experiment results, adding, deleting, or modifying variation values is not allowed while the experiment is running."
+  },
+  "copied": "Copied",
+  "copy-trigger-url": "Copy and store this URL. Once you leave this page, the URL will be hidden.",
+  "trigger-created": "Trigger created successfully.",
+  "trigger-updated": "Trigger updated successfully.",
+  "trigger-deleted": "Trigger deleted successfully.",
+  "something-went-wrong": "Something went wrong."
+}

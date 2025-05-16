@@ -21,7 +21,3 @@ message Target {
   string variation = 1;
   repeated string users = 2;
 }
-
-message TargetListValue {
-  repeated Target values = 1;
-}

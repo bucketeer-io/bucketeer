@@ -6781,7 +6781,7 @@ proto.bucketeer.feature.TagChange.prototype.setTag = function (value) {
  * @const
  */
 proto.bucketeer.feature.UpdateFeatureRequest.repeatedFields_ = [
-  17, 18, 19, 20, 21
+  13, 14, 15, 16, 17
 ];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -6839,24 +6839,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         archived:
           (f = msg.getArchived()) &&
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
-        variations:
-          (f = msg.getVariations()) &&
-          proto_feature_variation_pb.VariationListValue.toObject(
-            includeInstance,
-            f
-          ),
-        prerequisites:
-          (f = msg.getPrerequisites()) &&
-          proto_feature_prerequisite_pb.PrerequisiteListValue.toObject(
-            includeInstance,
-            f
-          ),
-        targets:
-          (f = msg.getTargets()) &&
-          proto_feature_target_pb.TargetListValue.toObject(includeInstance, f),
-        rules:
-          (f = msg.getRules()) &&
-          proto_feature_rule_pb.RuleListValue.toObject(includeInstance, f),
         defaultStrategy:
           (f = msg.getDefaultStrategy()) &&
           proto_feature_strategy_pb.Strategy.toObject(includeInstance, f),
@@ -6865,12 +6847,12 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
         resetSamplingSeed: jspb.Message.getBooleanFieldWithDefault(
           msg,
-          15,
+          11,
           false
         ),
         applyScheduleUpdate: jspb.Message.getBooleanFieldWithDefault(
           msg,
-          16,
+          12,
           false
         ),
         variationChangesList: jspb.Message.toObjectList(
@@ -6991,40 +6973,6 @@ proto.bucketeer.feature.UpdateFeatureRequest.deserializeBinaryFromReader =
           msg.setArchived(value);
           break;
         case 9:
-          var value = new proto_feature_variation_pb.VariationListValue();
-          reader.readMessage(
-            value,
-            proto_feature_variation_pb.VariationListValue
-              .deserializeBinaryFromReader
-          );
-          msg.setVariations(value);
-          break;
-        case 10:
-          var value = new proto_feature_prerequisite_pb.PrerequisiteListValue();
-          reader.readMessage(
-            value,
-            proto_feature_prerequisite_pb.PrerequisiteListValue
-              .deserializeBinaryFromReader
-          );
-          msg.setPrerequisites(value);
-          break;
-        case 11:
-          var value = new proto_feature_target_pb.TargetListValue();
-          reader.readMessage(
-            value,
-            proto_feature_target_pb.TargetListValue.deserializeBinaryFromReader
-          );
-          msg.setTargets(value);
-          break;
-        case 12:
-          var value = new proto_feature_rule_pb.RuleListValue();
-          reader.readMessage(
-            value,
-            proto_feature_rule_pb.RuleListValue.deserializeBinaryFromReader
-          );
-          msg.setRules(value);
-          break;
-        case 13:
           var value = new proto_feature_strategy_pb.Strategy();
           reader.readMessage(
             value,
@@ -7032,7 +6980,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.deserializeBinaryFromReader =
           );
           msg.setDefaultStrategy(value);
           break;
-        case 14:
+        case 10:
           var value = new google_protobuf_wrappers_pb.StringValue();
           reader.readMessage(
             value,
@@ -7040,15 +6988,15 @@ proto.bucketeer.feature.UpdateFeatureRequest.deserializeBinaryFromReader =
           );
           msg.setOffVariation(value);
           break;
-        case 15:
+        case 11:
           var value = /** @type {boolean} */ (reader.readBool());
           msg.setResetSamplingSeed(value);
           break;
-        case 16:
+        case 12:
           var value = /** @type {boolean} */ (reader.readBool());
           msg.setApplyScheduleUpdate(value);
           break;
-        case 17:
+        case 13:
           var value = new proto.bucketeer.feature.VariationChange();
           reader.readMessage(
             value,
@@ -7056,7 +7004,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.deserializeBinaryFromReader =
           );
           msg.addVariationChanges(value);
           break;
-        case 18:
+        case 14:
           var value = new proto.bucketeer.feature.RuleChange();
           reader.readMessage(
             value,
@@ -7064,7 +7012,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.deserializeBinaryFromReader =
           );
           msg.addRuleChanges(value);
           break;
-        case 19:
+        case 15:
           var value = new proto.bucketeer.feature.PrerequisiteChange();
           reader.readMessage(
             value,
@@ -7073,7 +7021,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.deserializeBinaryFromReader =
           );
           msg.addPrerequisiteChanges(value);
           break;
-        case 20:
+        case 16:
           var value = new proto.bucketeer.feature.TargetChange();
           reader.readMessage(
             value,
@@ -7081,7 +7029,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.deserializeBinaryFromReader =
           );
           msg.addTargetChanges(value);
           break;
-        case 21:
+        case 17:
           var value = new proto.bucketeer.feature.TagChange();
           reader.readMessage(
             value,
@@ -7173,43 +7121,10 @@ proto.bucketeer.feature.UpdateFeatureRequest.serializeBinaryToWriter =
         google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
       );
     }
-    f = message.getVariations();
-    if (f != null) {
-      writer.writeMessage(
-        9,
-        f,
-        proto_feature_variation_pb.VariationListValue.serializeBinaryToWriter
-      );
-    }
-    f = message.getPrerequisites();
-    if (f != null) {
-      writer.writeMessage(
-        10,
-        f,
-        proto_feature_prerequisite_pb.PrerequisiteListValue
-          .serializeBinaryToWriter
-      );
-    }
-    f = message.getTargets();
-    if (f != null) {
-      writer.writeMessage(
-        11,
-        f,
-        proto_feature_target_pb.TargetListValue.serializeBinaryToWriter
-      );
-    }
-    f = message.getRules();
-    if (f != null) {
-      writer.writeMessage(
-        12,
-        f,
-        proto_feature_rule_pb.RuleListValue.serializeBinaryToWriter
-      );
-    }
     f = message.getDefaultStrategy();
     if (f != null) {
       writer.writeMessage(
-        13,
+        9,
         f,
         proto_feature_strategy_pb.Strategy.serializeBinaryToWriter
       );
@@ -7217,23 +7132,23 @@ proto.bucketeer.feature.UpdateFeatureRequest.serializeBinaryToWriter =
     f = message.getOffVariation();
     if (f != null) {
       writer.writeMessage(
-        14,
+        10,
         f,
         google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
       );
     }
     f = message.getResetSamplingSeed();
     if (f) {
-      writer.writeBool(15, f);
+      writer.writeBool(11, f);
     }
     f = message.getApplyScheduleUpdate();
     if (f) {
-      writer.writeBool(16, f);
+      writer.writeBool(12, f);
     }
     f = message.getVariationChangesList();
     if (f.length > 0) {
       writer.writeRepeatedMessage(
-        17,
+        13,
         f,
         proto.bucketeer.feature.VariationChange.serializeBinaryToWriter
       );
@@ -7241,7 +7156,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.serializeBinaryToWriter =
     f = message.getRuleChangesList();
     if (f.length > 0) {
       writer.writeRepeatedMessage(
-        18,
+        14,
         f,
         proto.bucketeer.feature.RuleChange.serializeBinaryToWriter
       );
@@ -7249,7 +7164,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.serializeBinaryToWriter =
     f = message.getPrerequisiteChangesList();
     if (f.length > 0) {
       writer.writeRepeatedMessage(
-        19,
+        15,
         f,
         proto.bucketeer.feature.PrerequisiteChange.serializeBinaryToWriter
       );
@@ -7257,7 +7172,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.serializeBinaryToWriter =
     f = message.getTargetChangesList();
     if (f.length > 0) {
       writer.writeRepeatedMessage(
-        20,
+        16,
         f,
         proto.bucketeer.feature.TargetChange.serializeBinaryToWriter
       );
@@ -7265,7 +7180,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.serializeBinaryToWriter =
     f = message.getTagChangesList();
     if (f.length > 0) {
       writer.writeRepeatedMessage(
-        21,
+        17,
         f,
         proto.bucketeer.feature.TagChange.serializeBinaryToWriter
       );
@@ -7540,177 +7455,13 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasArchived =
   };
 
 /**
- * optional VariationListValue variations = 9;
- * @return {?proto.bucketeer.feature.VariationListValue}
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.getVariations =
-  function () {
-    return /** @type{?proto.bucketeer.feature.VariationListValue} */ (
-      jspb.Message.getWrapperField(
-        this,
-        proto_feature_variation_pb.VariationListValue,
-        9
-      )
-    );
-  };
-
-/**
- * @param {?proto.bucketeer.feature.VariationListValue|undefined} value
- * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.setVariations =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 9, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearVariations =
-  function () {
-    return this.setVariations(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasVariations =
-  function () {
-    return jspb.Message.getField(this, 9) != null;
-  };
-
-/**
- * optional PrerequisiteListValue prerequisites = 10;
- * @return {?proto.bucketeer.feature.PrerequisiteListValue}
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.getPrerequisites =
-  function () {
-    return /** @type{?proto.bucketeer.feature.PrerequisiteListValue} */ (
-      jspb.Message.getWrapperField(
-        this,
-        proto_feature_prerequisite_pb.PrerequisiteListValue,
-        10
-      )
-    );
-  };
-
-/**
- * @param {?proto.bucketeer.feature.PrerequisiteListValue|undefined} value
- * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.setPrerequisites =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 10, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearPrerequisites =
-  function () {
-    return this.setPrerequisites(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasPrerequisites =
-  function () {
-    return jspb.Message.getField(this, 10) != null;
-  };
-
-/**
- * optional TargetListValue targets = 11;
- * @return {?proto.bucketeer.feature.TargetListValue}
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.getTargets =
-  function () {
-    return /** @type{?proto.bucketeer.feature.TargetListValue} */ (
-      jspb.Message.getWrapperField(
-        this,
-        proto_feature_target_pb.TargetListValue,
-        11
-      )
-    );
-  };
-
-/**
- * @param {?proto.bucketeer.feature.TargetListValue|undefined} value
- * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.setTargets = function (
-  value
-) {
-  return jspb.Message.setWrapperField(this, 11, value);
-};
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearTargets =
-  function () {
-    return this.setTargets(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasTargets =
-  function () {
-    return jspb.Message.getField(this, 11) != null;
-  };
-
-/**
- * optional RuleListValue rules = 12;
- * @return {?proto.bucketeer.feature.RuleListValue}
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.getRules = function () {
-  return /** @type{?proto.bucketeer.feature.RuleListValue} */ (
-    jspb.Message.getWrapperField(this, proto_feature_rule_pb.RuleListValue, 12)
-  );
-};
-
-/**
- * @param {?proto.bucketeer.feature.RuleListValue|undefined} value
- * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.setRules = function (
-  value
-) {
-  return jspb.Message.setWrapperField(this, 12, value);
-};
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearRules =
-  function () {
-    return this.setRules(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasRules = function () {
-  return jspb.Message.getField(this, 12) != null;
-};
-
-/**
- * optional Strategy default_strategy = 13;
+ * optional Strategy default_strategy = 9;
  * @return {?proto.bucketeer.feature.Strategy}
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.getDefaultStrategy =
   function () {
     return /** @type{?proto.bucketeer.feature.Strategy} */ (
-      jspb.Message.getWrapperField(this, proto_feature_strategy_pb.Strategy, 13)
+      jspb.Message.getWrapperField(this, proto_feature_strategy_pb.Strategy, 9)
     );
   };
 
@@ -7720,7 +7471,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getDefaultStrategy =
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.setDefaultStrategy =
   function (value) {
-    return jspb.Message.setWrapperField(this, 13, value);
+    return jspb.Message.setWrapperField(this, 9, value);
   };
 
 /**
@@ -7738,11 +7489,11 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearDefaultStrategy =
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasDefaultStrategy =
   function () {
-    return jspb.Message.getField(this, 13) != null;
+    return jspb.Message.getField(this, 9) != null;
   };
 
 /**
- * optional google.protobuf.StringValue off_variation = 14;
+ * optional google.protobuf.StringValue off_variation = 10;
  * @return {?proto.google.protobuf.StringValue}
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.getOffVariation =
@@ -7751,7 +7502,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getOffVariation =
       jspb.Message.getWrapperField(
         this,
         google_protobuf_wrappers_pb.StringValue,
-        14
+        10
       )
     );
   };
@@ -7762,7 +7513,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getOffVariation =
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.setOffVariation =
   function (value) {
-    return jspb.Message.setWrapperField(this, 14, value);
+    return jspb.Message.setWrapperField(this, 10, value);
   };
 
 /**
@@ -7780,17 +7531,17 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearOffVariation =
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasOffVariation =
   function () {
-    return jspb.Message.getField(this, 14) != null;
+    return jspb.Message.getField(this, 10) != null;
   };
 
 /**
- * optional bool reset_sampling_seed = 15;
+ * optional bool reset_sampling_seed = 11;
  * @return {boolean}
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.getResetSamplingSeed =
   function () {
     return /** @type {boolean} */ (
-      jspb.Message.getBooleanFieldWithDefault(this, 15, false)
+      jspb.Message.getBooleanFieldWithDefault(this, 11, false)
     );
   };
 
@@ -7800,17 +7551,17 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getResetSamplingSeed =
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.setResetSamplingSeed =
   function (value) {
-    return jspb.Message.setProto3BooleanField(this, 15, value);
+    return jspb.Message.setProto3BooleanField(this, 11, value);
   };
 
 /**
- * optional bool apply_schedule_update = 16;
+ * optional bool apply_schedule_update = 12;
  * @return {boolean}
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.getApplyScheduleUpdate =
   function () {
     return /** @type {boolean} */ (
-      jspb.Message.getBooleanFieldWithDefault(this, 16, false)
+      jspb.Message.getBooleanFieldWithDefault(this, 12, false)
     );
   };
 
@@ -7820,11 +7571,11 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getApplyScheduleUpdate =
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.setApplyScheduleUpdate =
   function (value) {
-    return jspb.Message.setProto3BooleanField(this, 16, value);
+    return jspb.Message.setProto3BooleanField(this, 12, value);
   };
 
 /**
- * repeated VariationChange variation_changes = 17;
+ * repeated VariationChange variation_changes = 13;
  * @return {!Array<!proto.bucketeer.feature.VariationChange>}
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.getVariationChangesList =
@@ -7833,7 +7584,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getVariationChangesList =
       jspb.Message.getRepeatedWrapperField(
         this,
         proto.bucketeer.feature.VariationChange,
-        17
+        13
       )
     );
   };
@@ -7844,7 +7595,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getVariationChangesList =
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.setVariationChangesList =
   function (value) {
-    return jspb.Message.setRepeatedWrapperField(this, 17, value);
+    return jspb.Message.setRepeatedWrapperField(this, 13, value);
   };
 
 /**
@@ -7856,7 +7607,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.addVariationChanges =
   function (opt_value, opt_index) {
     return jspb.Message.addToRepeatedWrapperField(
       this,
-      17,
+      13,
       opt_value,
       proto.bucketeer.feature.VariationChange,
       opt_index
@@ -7873,7 +7624,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearVariationChangesList
   };
 
 /**
- * repeated RuleChange rule_changes = 18;
+ * repeated RuleChange rule_changes = 14;
  * @return {!Array<!proto.bucketeer.feature.RuleChange>}
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.getRuleChangesList =
@@ -7882,7 +7633,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getRuleChangesList =
       jspb.Message.getRepeatedWrapperField(
         this,
         proto.bucketeer.feature.RuleChange,
-        18
+        14
       )
     );
   };
@@ -7893,7 +7644,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getRuleChangesList =
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.setRuleChangesList =
   function (value) {
-    return jspb.Message.setRepeatedWrapperField(this, 18, value);
+    return jspb.Message.setRepeatedWrapperField(this, 14, value);
   };
 
 /**
@@ -7905,7 +7656,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.addRuleChanges =
   function (opt_value, opt_index) {
     return jspb.Message.addToRepeatedWrapperField(
       this,
-      18,
+      14,
       opt_value,
       proto.bucketeer.feature.RuleChange,
       opt_index
@@ -7922,7 +7673,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearRuleChangesList =
   };
 
 /**
- * repeated PrerequisiteChange prerequisite_changes = 19;
+ * repeated PrerequisiteChange prerequisite_changes = 15;
  * @return {!Array<!proto.bucketeer.feature.PrerequisiteChange>}
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.getPrerequisiteChangesList =
@@ -7931,7 +7682,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getPrerequisiteChangesLis
       jspb.Message.getRepeatedWrapperField(
         this,
         proto.bucketeer.feature.PrerequisiteChange,
-        19
+        15
       )
     );
   };
@@ -7942,7 +7693,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getPrerequisiteChangesLis
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.setPrerequisiteChangesList =
   function (value) {
-    return jspb.Message.setRepeatedWrapperField(this, 19, value);
+    return jspb.Message.setRepeatedWrapperField(this, 15, value);
   };
 
 /**
@@ -7954,7 +7705,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.addPrerequisiteChanges =
   function (opt_value, opt_index) {
     return jspb.Message.addToRepeatedWrapperField(
       this,
-      19,
+      15,
       opt_value,
       proto.bucketeer.feature.PrerequisiteChange,
       opt_index
@@ -7971,7 +7722,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearPrerequisiteChangesL
   };
 
 /**
- * repeated TargetChange target_changes = 20;
+ * repeated TargetChange target_changes = 16;
  * @return {!Array<!proto.bucketeer.feature.TargetChange>}
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.getTargetChangesList =
@@ -7980,7 +7731,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getTargetChangesList =
       jspb.Message.getRepeatedWrapperField(
         this,
         proto.bucketeer.feature.TargetChange,
-        20
+        16
       )
     );
   };
@@ -7991,7 +7742,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getTargetChangesList =
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.setTargetChangesList =
   function (value) {
-    return jspb.Message.setRepeatedWrapperField(this, 20, value);
+    return jspb.Message.setRepeatedWrapperField(this, 16, value);
   };
 
 /**
@@ -8003,7 +7754,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.addTargetChanges =
   function (opt_value, opt_index) {
     return jspb.Message.addToRepeatedWrapperField(
       this,
-      20,
+      16,
       opt_value,
       proto.bucketeer.feature.TargetChange,
       opt_index
@@ -8020,7 +7771,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearTargetChangesList =
   };
 
 /**
- * repeated TagChange tag_changes = 21;
+ * repeated TagChange tag_changes = 17;
  * @return {!Array<!proto.bucketeer.feature.TagChange>}
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.getTagChangesList =
@@ -8029,7 +7780,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getTagChangesList =
       jspb.Message.getRepeatedWrapperField(
         this,
         proto.bucketeer.feature.TagChange,
-        21
+        17
       )
     );
   };
@@ -8040,7 +7791,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getTagChangesList =
  */
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.setTagChangesList =
   function (value) {
-    return jspb.Message.setRepeatedWrapperField(this, 21, value);
+    return jspb.Message.setRepeatedWrapperField(this, 17, value);
   };
 
 /**
@@ -8052,7 +7803,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.addTagChanges =
   function (opt_value, opt_index) {
     return jspb.Message.addToRepeatedWrapperField(
       this,
-      21,
+      17,
       opt_value,
       proto.bucketeer.feature.TagChange,
       opt_index

@@ -37,6 +37,14 @@ var (
 	selectSegmentsSQL string
 	//go:embed sql/segment/count_segments.sql
 	countSegmentsSQL string
+	//go:embed sql/segment/get_segment.sql
+	getSegmentSQLQuery string
+	//go:embed sql/segment/update_segment.sql
+	updateSegmentSQLQuery string
+	//go:embed sql/segment/insert_segment.sql
+	insertSegmentSQLQuery string
+	//go:embed sql/segment/delete_segment.sql
+	deleteSegmentSQLQuery string
 )
 
 type SegmentStorage interface {
@@ -45,11 +53,8 @@ type SegmentStorage interface {
 	GetSegment(ctx context.Context, id, environmentId string) (*domain.Segment, []string, error)
 	ListSegments(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		options *mysql.ListOptions,
 		isInUseStatus *bool,
-		environmentId string,
 	) ([]*proto.Segment, int, int64, map[string][]string, error)
 	DeleteSegment(ctx context.Context, id string) error
 }
@@ -67,28 +72,9 @@ func (s *segmentStorage) CreateSegment(
 	segment *domain.Segment,
 	environmentId string,
 ) error {
-	query := `
-		INSERT INTO segment (
-			id,
-			name,
-			description,
-			rules,
-			created_at,
-			updated_at,
-			version,
-			deleted,
-			included_user_count,
-			excluded_user_count,
-			status,
-			environment_id
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-			?, ?
-		)
-	`
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
+		insertSegmentSQLQuery,
 		segment.Id,
 		segment.Name,
 		segment.Description,
@@ -116,27 +102,9 @@ func (s *segmentStorage) UpdateSegment(
 	segment *domain.Segment,
 	environmentId string,
 ) error {
-	query := `
-		UPDATE 
-			segment
-		SET
-			name = ?,
-			description = ?,
-			rules = ?,
-			created_at = ?,
-			updated_at = ?,
-			version = ?,
-			deleted = ?,
-			included_user_count = ?,
-			excluded_user_count = ?,
-			status = ?
-		WHERE
-			id = ? AND
-			environment_id = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
+		updateSegmentSQLQuery,
 		segment.Name,
 		segment.Description,
 		mysql.JSONObject{Val: segment.Rules},
@@ -169,38 +137,10 @@ func (s *segmentStorage) GetSegment(
 ) (*domain.Segment, []string, error) {
 	segment := proto.Segment{}
 	var status int32
-	query := `
-		SELECT
-			id,
-			name,
-			description,
-			rules,
-			created_at,
-			updated_at,
-			version,
-			deleted,
-			included_user_count,
-			excluded_user_count,
-			status,
-			(
-				SELECT 
-					GROUP_CONCAT(id)
-				FROM 
-					feature
-				WHERE
-					environment_id = ? AND
-					rules LIKE concat("%%", segment.id, "%%")
-			) AS feature_ids
-		FROM
-			segment
-		WHERE
-			id = ? AND
-			environment_id = ?
-	`
 	featureIDs := new(sql.NullString)
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
+		getSegmentSQLQuery,
 		environmentId,
 		id,
 		environmentId,
@@ -235,15 +175,21 @@ func (s *segmentStorage) GetSegment(
 
 func (s *segmentStorage) ListSegments(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 	isInUseStatus *bool,
-	environmentId string,
 ) ([]*proto.Segment, int, int64, map[string][]string, error) {
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
+	// Because select_segments.sql defines the variable strings in a complex constructed way,
+	//  we do not use ConstructQueryAndWhereArgs() here.
+	var whereSQL, orderBySQL, limitOffsetSQL string
+	var whereArgs []any
+	if options != nil {
+		whereParts := options.CreateWhereParts()
+		whereSQL, whereArgs = mysql.ConstructWhereSQLString(whereParts)
+		orderBySQL = mysql.ConstructOrderBySQLString(options.Orders)
+		limitOffsetSQL = mysql.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
+	} else {
+		whereArgs = []interface{}{}
+	}
 	var isInUseStatusSQL string
 	if isInUseStatus != nil {
 		if *isInUseStatus {
@@ -258,6 +204,11 @@ func (s *segmentStorage) ListSegments(
 		return nil, 0, 0, nil, err
 	}
 	defer rows.Close()
+	var limit, offset int
+	if options != nil {
+		limit = options.Limit
+		offset = options.Offset
+	}
 	segments := make([]*proto.Segment, 0, limit)
 	featureIDsMap := map[string][]string{}
 	for rows.Next() {
@@ -312,11 +263,7 @@ func (s *segmentStorage) ListSegments(
 }
 
 func (s *segmentStorage) DeleteSegment(ctx context.Context, id string) error {
-	query := `
-		DELETE FROM segment
-			WHERE id = ?
-	`
-	result, err := s.qe.ExecContext(ctx, query, id)
+	result, err := s.qe.ExecContext(ctx, deleteSegmentSQLQuery, id)
 	if err != nil {
 		return err
 	}

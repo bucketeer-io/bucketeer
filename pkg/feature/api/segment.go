@@ -791,15 +791,31 @@ func (s *FeatureService) ListSegments(
 		)
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("seg.deleted", "=", false),
-		mysql.NewFilter("seg.environment_id", "=", req.EnvironmentId),
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "seg.deleted",
+			Operator: mysql.OperatorEqual,
+			Value:    false,
+		},
+		{
+			Column:   "seg.environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.EnvironmentId,
+		},
 	}
 	if req.Status != nil {
-		whereParts = append(whereParts, mysql.NewFilter("seg.status", "=", req.Status.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "seg.status",
+			Operator: mysql.OperatorEqual,
+			Value:    req.Status.Value,
+		})
 	}
+	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"seg.name", "seg.description"}, req.SearchKeyword))
+		searchQuery = &mysql.SearchQuery{
+			Columns: []string{"seg.name", "seg.description"},
+			Keyword: req.SearchKeyword,
+		}
 	}
 	orders, err := s.newSegmentListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -829,14 +845,20 @@ func (s *FeatureService) ListSegments(
 	if req.IsInUseStatus != nil {
 		isInUseStatus = &req.IsInUseStatus.Value
 	}
+	options := &mysql.ListOptions{
+		Limit:       limit,
+		Offset:      offset,
+		Filters:     filters,
+		NullFilters: nil,
+		JSONFilters: nil,
+		InFilters:   nil,
+		SearchQuery: searchQuery,
+		Orders:      orders,
+	}
 	segments, nextCursor, totalCount, featureIDsMap, err := s.segmentStorage.ListSegments(
 		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
+		options,
 		isInUseStatus,
-		req.EnvironmentId,
 	)
 	if err != nil {
 		s.logger.Error(

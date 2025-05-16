@@ -535,20 +535,37 @@ func (s *AccountService) ListAPIKeys(
 		}
 		return nil, dt.Err()
 	}
-	whereParts := []mysql.WherePart{}
-	whereParts = append(whereParts, mysql.NewFilter("environment_v2.organization_id", "=", req.OrganizationId))
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "environment_v2.organization_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.OrganizationId,
+		},
+	}
+	var inFilters []*mysql.InFilter
 	if len(req.EnvironmentIds) > 0 {
 		environmentIds := make([]interface{}, 0, len(req.EnvironmentIds))
 		for _, id := range req.EnvironmentIds {
 			environmentIds = append(environmentIds, id)
 		}
-		whereParts = append(whereParts, mysql.NewInFilter("api_key.environment_id", environmentIds))
+		inFilters = append(inFilters, &mysql.InFilter{
+			Column: "api_key.environment_id",
+			Values: environmentIds,
+		})
 	}
 	if req.Disabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("api_key.disabled", "=", req.Disabled.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "api_key.disabled",
+			Operator: mysql.OperatorEqual,
+			Value:    req.Disabled.Value,
+		})
 	}
+	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"api_key.name"}, req.SearchKeyword))
+		searchQuery = &mysql.SearchQuery{
+			Columns: []string{"api_key.name"},
+			Keyword: req.SearchKeyword,
+		}
 	}
 	orders, err := s.newAPIKeyListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -574,13 +591,17 @@ func (s *AccountService) ListAPIKeys(
 		}
 		return nil, dt.Err()
 	}
-	apiKeys, nextCursor, totalCount, err := s.accountStorage.ListAPIKeys(
-		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
-	)
+	listOptions := &mysql.ListOptions{
+		Filters:     filters,
+		InFilters:   inFilters,
+		SearchQuery: searchQuery,
+		Limit:       limit,
+		Offset:      offset,
+		Orders:      orders,
+		NullFilters: nil,
+		JSONFilters: nil,
+	}
+	apiKeys, nextCursor, totalCount, err := s.accountStorage.ListAPIKeys(ctx, listOptions)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list api keys",

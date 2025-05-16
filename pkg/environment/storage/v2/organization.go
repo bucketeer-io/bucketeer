@@ -232,7 +232,7 @@ func (s *organizationStorage) ListOrganizations(
 	}
 	nextOffset := offset + len(organizations)
 	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countOrganizationsSQL, options)
+	countQuery, countWhereArgs := mysql.ConstructCountQuery(countOrganizationsSQL, options)
 	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

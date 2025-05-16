@@ -108,9 +108,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
         disabled={goal.isInUseStatus}
       >
         {(goal.experiments?.length > 0 || goal.isInUseStatus) && (
-          <InfoMessage
-            description={t('form:goal-details.archive-warning-desc')}
-          />
+          <InfoMessage title={t('form:goal-details.archive-warning-desc')} />
         )}
       </GoalActions>
       <GoalActions
@@ -121,9 +119,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
         onClick={onOpenDeleteModal}
       >
         {(goal.experiments?.length > 0 || goal.isInUseStatus) && (
-          <InfoMessage
-            description={t('form:goal-details.delete-warning-desc')}
-          />
+          <InfoMessage title={t('form:goal-details.delete-warning-desc')} />
         )}
       </GoalActions>
       {isOpenDeleteModal && (

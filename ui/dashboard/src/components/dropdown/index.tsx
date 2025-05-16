@@ -45,7 +45,7 @@ const triggerVariants = cva(
         primary:
           'border-primary-500 hover:shadow-border-primary-500 [&>*]:text-primary-500',
         secondary:
-          'border-gray-400 hover:shadow-border-gray-400 [&_p]:text-gray-700 [&_span]:text-gray-600 [&>i]:text-gray-500'
+          'border-gray-400 hover:shadow-border-gray-400 [&_div]:text-gray-700 [&_span]:text-gray-600 [&>i]:text-gray-500'
       }
     },
     defaultVariants: {
@@ -113,9 +113,9 @@ const DropdownMenuTrigger = forwardRef<
             {trigger ? (
               trigger
             ) : label ? (
-              <p className="max-w-full truncate">
+              <div className="max-w-full truncate">
                 {label} {description && <span>{description}</span>}
-              </p>
+              </div>
             ) : (
               <p className={'!text-gray-500'}>{placeholder}</p>
             )}
@@ -171,7 +171,7 @@ const DropdownMenuItem = forwardRef<
     icon?: FunctionComponent;
     isMultiselect?: boolean;
     isSelected?: boolean;
-    label?: string;
+    label?: ReactNode;
     value: DropdownValue;
     description?: string;
     closeWhenSelected?: boolean;
@@ -219,9 +219,9 @@ const DropdownMenuItem = forwardRef<
       )}
 
       <div className="flex flex-col gap-y-1.5 w-full overflow-hidden">
-        <p className="typo-para-medium leading-5 text-gray-700 truncate">
+        <div className="typo-para-medium leading-5 text-gray-700 truncate">
           {label}
-        </p>
+        </div>
         {description && (
           <p className="typo-para-small leading-[14px] text-gray-500">
             {description}

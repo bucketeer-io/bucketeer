@@ -234,7 +234,7 @@ func (s *projectStorage) ListProjects(
 	}
 	nextOffset := offset + len(projects)
 	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countProjectsSQL, options)
+	countQuery, countWhereArgs := mysql.ConstructCountQuery(countProjectsSQL, options)
 	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

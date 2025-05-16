@@ -20,3 +20,6 @@ export * from './auto-ops';
 export * from './rollouts';
 export * from './audit-logs';
 export * from './debugger';
+export * from './evaluation';
+export * from './code-refs';
+export * from './trigger';
