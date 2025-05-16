@@ -146,12 +146,8 @@ func (s *tagStorage) ListTags(
 	}
 	nextOffset := offset + len(tags)
 	var totalCount int64
-	if options != nil {
-		whereQuery, countWhereArgs := mysql.ConstructWhereSQLString(options.CreateWhereParts())
-		err = s.qe.QueryRowContext(ctx, countTagsSQL+whereQuery, countWhereArgs...).Scan(&totalCount)
-	} else {
-		err = s.qe.QueryRowContext(ctx, countTagsSQL).Scan(&totalCount)
-	}
+	countQuery, countWhereArgs := mysql.ConstructCountQuery(countTagsSQL, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
