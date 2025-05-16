@@ -360,6 +360,21 @@ func ConstructQueryAndWhereArgs(baseQuery string, options *ListOptions) (query s
 	return
 }
 
+// ConstructCountQuery builds a count query with optional filtering.
+// It takes a base count SQL query and ListOptions, and returns the complete query and its arguments.
+// The base SQL should be a valid COUNT query (e.g., "SELECT COUNT(1) FROM table").
+// Additional WHERE clauses from ListOptions will be appended to the base query.
+func ConstructCountQuery(baseQuery string, options *ListOptions) (query string, whereArgs []interface{}) {
+	if options != nil {
+		whereQuery, whereArgs := ConstructWhereSQLString(options.CreateWhereParts())
+		if whereArgs == nil {
+			whereArgs = []interface{}{}
+		}
+		return baseQuery + whereQuery, whereArgs
+	}
+	return baseQuery, []interface{}{}
+}
+
 type Orders struct {
 	Orders []*Order
 }

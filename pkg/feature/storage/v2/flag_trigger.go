@@ -250,7 +250,7 @@ func (f flagTriggerStorage) ListFlagTriggers(
 	}
 	nextOffset := offset + len(flagTriggers)
 	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(countFlagTriggersSQL, options)
+	countQuery, countWhereArgs := mysql.ConstructCountQuery(countFlagTriggersSQL, options)
 	if err := f.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount); err != nil {
 		return nil, 0, 0, err
 	}

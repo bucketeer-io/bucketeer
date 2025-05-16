@@ -314,7 +314,7 @@ func (s *accountStorage) ListAPIKeys(
 	}
 	nextOffset := offset + len(apiKeys)
 	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructQueryAndWhereArgs(selectAPIKeyV2CountSQLQuery, options)
+	countQuery, countWhereArgs := mysql.ConstructCountQuery(selectAPIKeyV2CountSQLQuery, options)
 	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
