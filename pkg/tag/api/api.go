@@ -195,34 +195,19 @@ func (s *TagService) ListTags(
 	if err != nil {
 		return nil, err
 	}
-	filters := []*mysql.FilterV2{}
+	whereParts := []mysql.WherePart{}
 	if req.OrganizationId != "" {
 		// New console
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "env.organization_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.OrganizationId,
-		})
+		whereParts = append(whereParts, mysql.NewFilter("env.organization_id", "=", req.OrganizationId))
 	} else {
 		// Current console
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "tag.environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
-		})
+		whereParts = append(whereParts, mysql.NewFilter("tag.environment_id", "=", req.EnvironmentId))
 	}
-	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"tag.name"},
-			Keyword: req.SearchKeyword,
-		}
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"tag.name"}, req.SearchKeyword))
 	}
 	if req.EntityType != proto.Tag_UNSPECIFIED {
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "tag.entity_type",
-			Operator: mysql.OperatorEqual,
-		})
+		whereParts = append(whereParts, mysql.NewFilter("tag.entity_type", "=", req.EntityType))
 	}
 	orders, err := s.newListTagsOrdersMySQL(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -251,17 +236,13 @@ func (s *TagService) ListTags(
 		}
 		return nil, dt.Err()
 	}
-	options := &mysql.ListOptions{
-		Filters:     filters,
-		SearchQuery: searchQuery,
-		Orders:      orders,
-		Limit:       limit,
-		Offset:      offset,
-		JSONFilters: nil,
-		InFilters:   nil,
-		NullFilters: nil,
-	}
-	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(ctx, options)
+	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(
+		ctx,
+		whereParts,
+		orders,
+		limit,
+		offset,
+	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list tags",

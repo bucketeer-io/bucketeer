@@ -19,6 +19,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/tag/domain"
@@ -48,7 +49,9 @@ type TagStorage interface {
 	GetTag(ctx context.Context, id, environmentId string) (*domain.Tag, error)
 	ListTags(
 		ctx context.Context,
-		options *mysql.ListOptions,
+		whereParts []mysql.WherePart,
+		orders []*mysql.Order,
+		limit, offset int,
 	) ([]*proto.Tag, int, int64, error)
 	ListAllEnvironmentTags(ctx context.Context) ([]*proto.EnvironmentTag, error)
 	DeleteTag(ctx context.Context, id string) error
@@ -108,20 +111,19 @@ func (s *tagStorage) GetTag(ctx context.Context, id, environmentId string) (*dom
 
 func (s *tagStorage) ListTags(
 	ctx context.Context,
-	options *mysql.ListOptions,
+	whereParts []mysql.WherePart,
+	orders []*mysql.Order,
+	limit, offset int,
 ) ([]*proto.Tag, int, int64, error) {
-	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectTagsSQL, options)
-
+	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
+	orderBySQL := mysql.ConstructOrderBySQLString(orders)
+	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
+	query := fmt.Sprintf(selectTagsSQL, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
-	var limit, offset int
-	if options != nil {
-		limit = options.Limit
-		offset = options.Offset
-	}
 	tags := make([]*proto.Tag, 0, limit)
 	for rows.Next() {
 		var entityType int32
@@ -145,10 +147,9 @@ func (s *tagStorage) ListTags(
 		return nil, 0, 0, err
 	}
 	nextOffset := offset + len(tags)
+	countQuery := fmt.Sprintf(countTagsSQL, whereSQL)
 	var totalCount int64
-	countQuery, countWhereArgs := mysql.ConstructCountQuery(countTagsSQL, options)
-	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs).Scan(&totalCount)
-	if err != nil {
+	if err := s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount); err != nil {
 		return nil, 0, 0, err
 	}
 	return tags, nextOffset, totalCount, nil

@@ -218,7 +218,10 @@ func TestListTags(t *testing.T) {
 	patterns := []struct {
 		desc           string
 		setup          func(*tagStorage)
-		options        *mysql.ListOptions
+		whereParts     []mysql.WherePart
+		orders         []*mysql.Order
+		limit          int
+		offset         int
 		expectedCount  int
 		expectedCursor int
 		expectedErr    error
@@ -231,7 +234,10 @@ func TestListTags(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			options:        nil,
+			whereParts:     nil,
+			orders:         nil,
+			limit:          10,
+			offset:         0,
 			expectedCount:  0,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
@@ -278,27 +284,14 @@ func TestListTags(t *testing.T) {
 					gomock.Any(),
 				).Return(row)
 			},
-			options: &mysql.ListOptions{
-				Filters: []*mysql.FilterV2{
-					{
-						Column:   "tag.environment_id",
-						Operator: mysql.OperatorEqual,
-						Value:    "env-0",
-					},
-				},
-				Orders: []*mysql.Order{
-					{
-						Column:    "tag.name",
-						Direction: mysql.OrderDirectionAsc,
-					},
-				},
-				Offset:      0,
-				Limit:       10,
-				JSONFilters: nil,
-				InFilters:   nil,
-				NullFilters: nil,
-				SearchQuery: nil,
+			whereParts: []mysql.WherePart{
+				mysql.NewFilter("tag.environment_id", "=", "env-0"),
 			},
+			orders: []*mysql.Order{
+				mysql.NewOrder("tag.name", mysql.OrderDirectionAsc),
+			},
+			limit:          10,
+			offset:         0,
 			expectedCount:  1,
 			expectedCursor: 1,
 			expectedErr:    nil,
@@ -321,7 +314,13 @@ func TestListTags(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			tags, cursor, _, err := storage.ListTags(context.Background(), p.options)
+			tags, cursor, _, err := storage.ListTags(
+				context.Background(),
+				p.whereParts,
+				p.orders,
+				p.limit,
+				p.offset,
+			)
 			assert.Equal(t, p.expectedCount, len(tags))
 			if tags != nil {
 				assert.IsType(t, []*proto.Tag{}, tags)
