@@ -8479,7 +8479,7 @@
                         "aggregated": [
                           {
                             "name": "description",
-                            "value": "If true, the clause will be deleted."
+                            "value": "If true and the number of clause is greater than 1, the clause will be deleted"
                           }
                         ]
                       }
@@ -8488,7 +8488,18 @@
                   {
                     "id": 3,
                     "name": "clause",
-                    "type": "OpsEventRateClause"
+                    "type": "OpsEventRateClause",
+                    "options": [
+                      {
+                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                        "aggregated": [
+                          {
+                            "name": "description",
+                            "value": "The clause value, must be fully filled if update or create clause action is requested."
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               },
@@ -8521,7 +8532,7 @@
                         "aggregated": [
                           {
                             "name": "description",
-                            "value": "If true, the clause will be deleted."
+                            "value": "If true and the number of clause is greater than 1, the clause will be deleted"
                           }
                         ]
                       }
@@ -8530,7 +8541,18 @@
                   {
                     "id": 3,
                     "name": "clause",
-                    "type": "DatetimeClause"
+                    "type": "DatetimeClause",
+                    "options": [
+                      {
+                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                        "aggregated": [
+                          {
+                            "name": "description",
+                            "value": "The clause value, must be fully filled if update or create clause action is requested."
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               }
