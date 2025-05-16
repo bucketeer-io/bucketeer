@@ -23,6 +23,14 @@ export type PopoverOption<PopoverValue> = {
   disabled?: boolean;
   tooltip?: string;
   color?: Color;
+  [key: string]:
+    | string
+    | number
+    | boolean
+    | ReactNode
+    | FunctionComponent
+    | PopoverValue
+    | undefined;
 };
 
 export type PopoverValue = number | string;
@@ -153,8 +161,8 @@ const Popover = forwardRef(
                           type="item"
                           addonSlot={addonSlot}
                           icon={item.icon}
-                          color={item?.color}
                           label={item.label}
+                          color={item?.color}
                           disabled={item?.disabled}
                           onClick={() =>
                             onClick && handleSelectItem(item.value)

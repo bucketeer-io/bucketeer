@@ -16,5 +16,11 @@
   "trigger-created": "Trigger created successfully.",
   "trigger-updated": "Trigger updated successfully.",
   "trigger-deleted": "Trigger deleted successfully.",
-  "something-went-wrong": "Something went wrong."
+  "something-went-wrong": "Something went wrong.",
+  "operation": {
+    "stopped": "Operation stopped successfully.",
+    "the-weight": "The weight",
+    "must-be-greater-value": "{{name}} must be greater than or equal to {{value}}",
+    "must-be-less-value": "{{name}} must be less than or equal to {{value}}"
+  }
 }

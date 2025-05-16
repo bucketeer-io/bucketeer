@@ -1,5 +1,7 @@
 import IconAngleDown from './customized-icons/angle-down.svg?react';
 import IconArrowDown from './customized-icons/arrow-down.svg?react';
+import IconArrowLeft from './customized-icons/arrow-left.svg?react';
+import IconArrowRight from './customized-icons/arrow-right.svg?react';
 import IconBackspace from './customized-icons/backspace.svg?react';
 import IconBitbucket from './customized-icons/bitbucket.svg?react';
 import IconCalendar from './customized-icons/calendar.svg?react';
@@ -21,16 +23,20 @@ import IconFlagJSON from './customized-icons/json.svg?react';
 import IconLink from './customized-icons/link.svg?react';
 import IconFlagNumber from './customized-icons/number.svg?react';
 import IconOperationArrow from './customized-icons/operation-arrow.svg?react';
+import IconOperationClone from './customized-icons/operation-clone.svg?react';
+import IconOperationDetails from './customized-icons/operation-details.svg?react';
 import IconFlagOperation from './customized-icons/operation.svg?react';
 import IconOutperformed from './customized-icons/outperformed.svg?react';
 import IconPencil from './customized-icons/pencil.svg?react';
 import IconPlus from './customized-icons/plus.svg?react';
+import IconQuestion from './customized-icons/question.svg?react';
 import IconSearch from './customized-icons/search.svg?react';
 import IconSortingDown from './customized-icons/sorting-down.svg?react';
 import IconSortingUp from './customized-icons/sorting-up.svg?react';
 import IconSorting from './customized-icons/sorting.svg?react';
 import IconStartExperiment from './customized-icons/start-experiment.svg?react';
 import IconStopExperiment from './customized-icons/stop-experiment.svg?react';
+import IconStoppedByUser from './customized-icons/stopped-by-user.svg?react';
 import IconFlagString from './customized-icons/string.svg?react';
 import IconFlagSwitch from './customized-icons/switch.svg?react';
 import IconTargetSegments from './customized-icons/target-segments.svg?react';
@@ -147,6 +153,12 @@ export {
   IconGitLab,
   IconBitbucket,
   IconWebhook,
+  IconQuestion,
+  IconArrowLeft,
+  IconArrowRight,
+  IconOperationClone,
+  IconOperationDetails,
+  IconStoppedByUser,
   // Special icons
   IconGoal,
   IconGoogle,
