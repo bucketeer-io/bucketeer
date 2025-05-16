@@ -196,6 +196,7 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 		ev.Reason.Type == feature.Reason_ERROR_USER_ID_NOT_SPECIFIED ||
 		ev.Reason.Type == feature.Reason_ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED ||
 		ev.Reason.Type == feature.Reason_ERROR_EXCEPTION ||
+		ev.Reason.Type == feature.Reason_ERROR_CACHE_NOT_FOUND ||
 		ev.Reason.Type == feature.Reason_CLIENT)
 
 	if !isErrorReason && ev.VariationId == "" {
