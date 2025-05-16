@@ -2491,6 +2491,7 @@ definitions:
       - ERROR_USER_ID_NOT_SPECIFIED
       - ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED
       - ERROR_EXCEPTION
+      - ERROR_CACHE_NOT_FOUND
     default: TARGET
   featureRolloutStrategy:
     type: object

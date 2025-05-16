@@ -524,6 +524,34 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			desc: "empty variation_id with ERROR_CACHE_NOT_FOUND reason",
+			inputFunc: func() *eventproto.Event {
+				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
+					Timestamp:   time.Now().Unix(),
+					FeatureId:   "feature-id",
+					VariationId: "",
+					User: &user.User{
+						Id: "user-id",
+					},
+					Reason: &feature.Reason{
+						Type: feature.Reason_ERROR_CACHE_NOT_FOUND,
+					},
+				})
+				if err != nil {
+					t.Fatal("could not serialize event")
+				}
+				return &eventproto.Event{
+					Id: "0efe416e-2fd2-4996-b5c3-194f05444f1f",
+					Event: &any.Any{
+						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
+						Value:   bEvaluationEvent,
+					},
+				}
+			},
+			expected:    "",
+			expectedErr: nil,
+		},
+		{
 			desc: "empty variation_id with CLIENT reason",
 			inputFunc: func() *eventproto.Event {
 				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
