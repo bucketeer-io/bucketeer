@@ -42,19 +42,11 @@ func (s *FeatureService) ListTags(
 	if err != nil {
 		return nil, err
 	}
-	filters := []*mysql.FilterV2{
-		{
-			Column:   "environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    req.EnvironmentId,
-		},
+	whereParts := []mysql.WherePart{
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
-	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		searchQuery = &mysql.SearchQuery{
-			Columns: []string{"id"},
-			Keyword: req.SearchKeyword,
-		}
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id"}, req.SearchKeyword))
 	}
 	orders, err := s.newListTagsOrdersMySQL(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -83,14 +75,13 @@ func (s *FeatureService) ListTags(
 		}
 		return nil, dt.Err()
 	}
-	options := &mysql.ListOptions{
-		Filters:     filters,
-		SearchQuery: searchQuery,
-		Orders:      orders,
-		Limit:       limit,
-		Offset:      offset,
-	}
-	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(ctx, options)
+	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(
+		ctx,
+		whereParts,
+		orders,
+		limit,
+		offset,
+	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list tags",
