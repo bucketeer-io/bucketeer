@@ -56,10 +56,22 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	gatewayapi "github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
 	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	tagapi "github.com/bucketeer-io/bucketeer/pkg/tag/api"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	auditlogproto "github.com/bucketeer-io/bucketeer/proto/auditlog"
+	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	coderefproto "github.com/bucketeer-io/bucketeer/proto/coderef"
+	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	eventcounterproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
+	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
+	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
 )
 
 const (
@@ -541,6 +553,29 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go accountServer.Run()
+
+	// Account REST Gateway
+	accountRestAddr := fmt.Sprintf(":%d", *s.accountServicePort+1000) // REST on port 10091
+	accountGrpcAddr := fmt.Sprintf("localhost:%d", *s.accountServicePort)
+	accountGateway, err := gatewayapi.NewGateway(
+		accountGrpcAddr,
+		accountRestAddr,
+		gatewayapi.WithLogger(logger.Named("account-gateway")),
+		gatewayapi.WithMetrics(registerer),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create account gateway: %v", err)
+	}
+
+	go func() {
+		if err := accountGateway.Start(
+			ctx,
+			accountproto.RegisterAccountServiceHandlerFromEndpoint,
+		); err != nil {
+			logger.Error("failed to start account gateway", zap.Error(err))
+		}
+	}()
+
 	// auditLogService
 	auditLogService := auditlogapi.NewAuditLogService(
 		accountClient,
@@ -555,6 +590,29 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go auditLogServer.Run()
+
+	// Audit Log REST Gateway
+	auditLogRestAddr := fmt.Sprintf(":%d", *s.auditLogServicePort+1000) // REST on port 10093
+	auditLogGrpcAddr := fmt.Sprintf("localhost:%d", *s.auditLogServicePort)
+	auditLogGateway, err := gatewayapi.NewGateway(
+		auditLogGrpcAddr,
+		auditLogRestAddr,
+		gatewayapi.WithLogger(logger.Named("auditlog-gateway")),
+		gatewayapi.WithMetrics(registerer),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create audit log gateway: %v", err)
+	}
+
+	go func() {
+		if err := auditLogGateway.Start(
+			ctx,
+			auditlogproto.RegisterAuditLogServiceHandlerFromEndpoint,
+		); err != nil {
+			logger.Error("failed to start audit log gateway", zap.Error(err))
+		}
+	}()
+
 	// autoOpsService
 	autoOpsService := autoopsapi.NewAutoOpsService(
 		mysqlClient,
@@ -576,6 +634,29 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go autoOpsServer.Run()
+
+	// Auto Ops REST Gateway
+	autoOpsRestAddr := fmt.Sprintf(":%d", *s.autoOpsServicePort+1000) // REST on port 10094
+	autoOpsGrpcAddr := fmt.Sprintf("localhost:%d", *s.autoOpsServicePort)
+	autoOpsGateway, err := gatewayapi.NewGateway(
+		autoOpsGrpcAddr,
+		autoOpsRestAddr,
+		gatewayapi.WithLogger(logger.Named("autoops-gateway")),
+		gatewayapi.WithMetrics(registerer),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create auto ops gateway: %v", err)
+	}
+
+	go func() {
+		if err := autoOpsGateway.Start(
+			ctx,
+			autoopsproto.RegisterAutoOpsServiceHandlerFromEndpoint,
+		); err != nil {
+			logger.Error("failed to start auto ops gateway", zap.Error(err))
+		}
+	}()
+
 	// environmentService
 	environmentService := environmentapi.NewEnvironmentService(
 		accountClient,
@@ -591,6 +672,29 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go environmentServer.Run()
+
+	// Environment REST Gateway
+	environmentRestAddr := fmt.Sprintf(":%d", *s.environmentServicePort+1000) // REST on port 10095
+	environmentGrpcAddr := fmt.Sprintf("localhost:%d", *s.environmentServicePort)
+	environmentGateway, err := gatewayapi.NewGateway(
+		environmentGrpcAddr,
+		environmentRestAddr,
+		gatewayapi.WithLogger(logger.Named("environment-gateway")),
+		gatewayapi.WithMetrics(registerer),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create environment gateway: %v", err)
+	}
+
+	go func() {
+		if err := environmentGateway.Start(
+			ctx,
+			environmentproto.RegisterEnvironmentServiceHandlerFromEndpoint,
+		); err != nil {
+			logger.Error("failed to start environment gateway", zap.Error(err))
+		}
+	}()
+
 	// eventCounterService
 	eventCounterService := eventcounterapi.NewEventCounterService(
 		mysqlClient,
@@ -612,6 +716,29 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go eventCounterServer.Run()
+
+	// Event Counter REST Gateway
+	eventCounterRestAddr := fmt.Sprintf(":%d", *s.eventCounterServicePort+1000) // REST on port 10096
+	eventCounterGrpcAddr := fmt.Sprintf("localhost:%d", *s.eventCounterServicePort)
+	eventCounterGateway, err := gatewayapi.NewGateway(
+		eventCounterGrpcAddr,
+		eventCounterRestAddr,
+		gatewayapi.WithLogger(logger.Named("eventcounter-gateway")),
+		gatewayapi.WithMetrics(registerer),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create event counter gateway: %v", err)
+	}
+
+	go func() {
+		if err := eventCounterGateway.Start(
+			ctx,
+			eventcounterproto.RegisterEventCounterServiceHandlerFromEndpoint,
+		); err != nil {
+			logger.Error("failed to start event counter gateway", zap.Error(err))
+		}
+	}()
+
 	// experimentService
 	experimentService := experimentapi.NewExperimentService(
 		featureClient,
@@ -629,6 +756,29 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go experimentServer.Run()
+
+	// Experiment REST Gateway
+	experimentRestAddr := fmt.Sprintf(":%d", *s.experimentServicePort+1000) // REST on port 10097
+	experimentGrpcAddr := fmt.Sprintf("localhost:%d", *s.experimentServicePort)
+	experimentGateway, err := gatewayapi.NewGateway(
+		experimentGrpcAddr,
+		experimentRestAddr,
+		gatewayapi.WithLogger(logger.Named("experiment-gateway")),
+		gatewayapi.WithMetrics(registerer),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create experiment gateway: %v", err)
+	}
+
+	go func() {
+		if err := experimentGateway.Start(
+			ctx,
+			experimentproto.RegisterExperimentServiceHandlerFromEndpoint,
+		); err != nil {
+			logger.Error("failed to start experiment gateway", zap.Error(err))
+		}
+	}()
+
 	// featureService
 	featureService, err := s.createFeatureService(
 		ctx,
@@ -654,6 +804,29 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go featureServer.Run()
+
+	// Feature REST Gateway
+	featureRestAddr := fmt.Sprintf(":%d", *s.featureServicePort+1000) // REST on port 10098
+	featureGrpcAddr := fmt.Sprintf("localhost:%d", *s.featureServicePort)
+	featureGateway, err := gatewayapi.NewGateway(
+		featureGrpcAddr,
+		featureRestAddr,
+		gatewayapi.WithLogger(logger.Named("feature-gateway")),
+		gatewayapi.WithMetrics(registerer),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create feature gateway: %v", err)
+	}
+
+	go func() {
+		if err := featureGateway.Start(
+			ctx,
+			featureproto.RegisterFeatureServiceHandlerFromEndpoint,
+		); err != nil {
+			logger.Error("failed to start feature gateway", zap.Error(err))
+		}
+	}()
+
 	// notificationService
 	notificationService := notificationapi.NewNotificationService(
 		mysqlClient,
@@ -669,6 +842,29 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go notificationServer.Run()
+
+	// Notification REST Gateway
+	notificationRestAddr := fmt.Sprintf(":%d", *s.notificationServicePort+1000) // REST on port 10100
+	notificationGrpcAddr := fmt.Sprintf("localhost:%d", *s.notificationServicePort)
+	notificationGateway, err := gatewayapi.NewGateway(
+		notificationGrpcAddr,
+		notificationRestAddr,
+		gatewayapi.WithLogger(logger.Named("notification-gateway")),
+		gatewayapi.WithMetrics(registerer),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create notification gateway: %v", err)
+	}
+
+	go func() {
+		if err := notificationGateway.Start(
+			ctx,
+			notificationproto.RegisterNotificationServiceHandlerFromEndpoint,
+		); err != nil {
+			logger.Error("failed to start notification gateway", zap.Error(err))
+		}
+	}()
+
 	// pushService
 	pushService := pushapi.NewPushService(
 		mysqlClient,
@@ -686,6 +882,29 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go pushServer.Run()
+
+	// Push REST Gateway
+	pushRestAddr := fmt.Sprintf(":%d", *s.pushServicePort+1000) // REST on port 10101
+	pushGrpcAddr := fmt.Sprintf("localhost:%d", *s.pushServicePort)
+	pushGateway, err := gatewayapi.NewGateway(
+		pushGrpcAddr,
+		pushRestAddr,
+		gatewayapi.WithLogger(logger.Named("push-gateway")),
+		gatewayapi.WithMetrics(registerer),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create push gateway: %v", err)
+	}
+
+	go func() {
+		if err := pushGateway.Start(
+			ctx,
+			pushproto.RegisterPushServiceHandlerFromEndpoint,
+		); err != nil {
+			logger.Error("failed to start push gateway", zap.Error(err))
+		}
+	}()
+
 	// tagService
 	tagService := tagapi.NewTagService(
 		mysqlClient,
@@ -701,6 +920,67 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go tagServer.Run()
+
+	// Tag REST Gateway
+	tagRestAddr := fmt.Sprintf(":%d", *s.tagServicePort+1000) // REST on port 10104
+	tagGrpcAddr := fmt.Sprintf("localhost:%d", *s.tagServicePort)
+	tagGateway, err := gatewayapi.NewGateway(
+		tagGrpcAddr,
+		tagRestAddr,
+		gatewayapi.WithLogger(logger.Named("tag-gateway")),
+		gatewayapi.WithMetrics(registerer),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create tag gateway: %v", err)
+	}
+
+	go func() {
+		if err := tagGateway.Start(
+			ctx,
+			tagproto.RegisterTagServiceHandlerFromEndpoint,
+		); err != nil {
+			logger.Error("failed to start tag gateway", zap.Error(err))
+		}
+	}()
+
+	// codeReferenceService
+	codeReferenceService := coderefapi.NewCodeReferenceService(
+		accountClient,
+		mysqlClient,
+		domainTopicPublisher,
+		coderefapi.WithLogger(logger),
+	)
+	codeReferenceServer := rpc.NewServer(codeReferenceService, *s.certPath, *s.keyPath,
+		"code-reference-server",
+		rpc.WithPort(*s.codeReferenceServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	go codeReferenceServer.Run()
+
+	// Code Reference REST Gateway
+	codeRefRestAddr := fmt.Sprintf(":%d", *s.codeReferenceServicePort+1000) // REST on port 10105
+	codeRefGrpcAddr := fmt.Sprintf("localhost:%d", *s.codeReferenceServicePort)
+	codeRefGateway, err := gatewayapi.NewGateway(
+		codeRefGrpcAddr,
+		codeRefRestAddr,
+		gatewayapi.WithLogger(logger.Named("coderef-gateway")),
+		gatewayapi.WithMetrics(registerer),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create code reference gateway: %v", err)
+	}
+
+	go func() {
+		if err := codeRefGateway.Start(
+			ctx,
+			coderefproto.RegisterCodeReferenceServiceHandlerFromEndpoint,
+		); err != nil {
+			logger.Error("failed to start code reference gateway", zap.Error(err))
+		}
+	}()
+
 	webConsoleServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
 		rest.WithLogger(logger),
@@ -717,27 +997,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rest.WithMetrics(registerer),
 	)
 	go dashboardServer.Run()
-	// codeReferenceService
-	codeReferenceService := coderefapi.NewCodeReferenceService(
-		accountClient,
-		mysqlClient,
-		domainTopicPublisher,
-		coderefapi.WithLogger(logger),
-	)
-	codeReferenceServer := rpc.NewServer(codeReferenceService, *s.certPath, *s.keyPath,
-		"code-reference-server",
-		rpc.WithPort(*s.codeReferenceServicePort),
-		rpc.WithVerifier(verifier),
-		rpc.WithMetrics(registerer),
-		rpc.WithLogger(logger),
-	)
-	go codeReferenceServer.Run()
 	// To detach this pod from Kubernetes Service before the app servers stop, we stop the health check service first.
 	// Then, after 10 seconds of sleep, the app servers can be shut down, as no new requests are expected to be sent.
 	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.
 	defer func() {
 		go healthcheckServer.Stop(serverShutDownTimeout)
 		time.Sleep(serverShutDownTimeout)
+		// Stop gRPC servers
 		go authServer.Stop(serverShutDownTimeout)
 		go accountServer.Stop(serverShutDownTimeout)
 		go auditLogServer.Stop(serverShutDownTimeout)
@@ -751,6 +1017,19 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go tagServer.Stop(serverShutDownTimeout)
 		go webConsoleServer.Stop(serverShutDownTimeout)
 		go codeReferenceServer.Stop(serverShutDownTimeout)
+		// Stop REST gateways
+		go accountGateway.Stop(context.Background())
+		go auditLogGateway.Stop(context.Background())
+		go autoOpsGateway.Stop(context.Background())
+		go environmentGateway.Stop(context.Background())
+		go eventCounterGateway.Stop(context.Background())
+		go experimentGateway.Stop(context.Background())
+		go featureGateway.Stop(context.Background())
+		go notificationGateway.Stop(context.Background())
+		go pushGateway.Stop(context.Background())
+		go tagGateway.Stop(context.Background())
+		go codeRefGateway.Stop(context.Background())
+		// Close clients
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()
