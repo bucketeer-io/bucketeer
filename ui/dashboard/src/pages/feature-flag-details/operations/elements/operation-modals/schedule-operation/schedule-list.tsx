@@ -35,12 +35,12 @@ const WarningMessage = ({ description }: { description: string }) => {
 
 const ScheduleList = ({
   isCreate,
-  isCompletedTab,
+  isFinishedTab,
   rollouts,
   selectedData
 }: {
   isCreate: boolean;
-  isCompletedTab: boolean;
+  isFinishedTab: boolean;
   rollouts: Rollout[];
   selectedData?: AutoOpsRule;
 }) => {
@@ -87,10 +87,10 @@ const ScheduleList = ({
   const isDisabledField = useCallback(
     (wasPassed?: boolean) => {
       return (
-        (isCompletedTab && !!selectedData) || (!isCreate ? !!wasPassed : false)
+        (isFinishedTab && !!selectedData) || (!isCreate ? !!wasPassed : false)
       );
     },
-    [isCompletedTab, isCreate, selectedData]
+    [isFinishedTab, isCreate, selectedData]
   );
 
   useEffect(() => {
@@ -105,7 +105,7 @@ const ScheduleList = ({
 
         const conflictIndexes: number[] = [];
         scheduleData.forEach((item, index) => {
-          const timeString = Math.round(item.time.getTime() / 1000).toString();
+          const timeString = Math.trunc(item.time.getTime() / 1000).toString();
           if (
             flatMapRolloutItems.find(item => {
               return item?.executeAt === timeString;
@@ -224,6 +224,7 @@ const ScheduleList = ({
                                   </Form.Label>
                                   <ReactDatePicker
                                     dateFormat={'HH:mm'}
+                                    timeFormat="HH:mm"
                                     selected={field.value ?? null}
                                     showTimeSelectOnly={true}
                                     className={cn('w-[124px]', {
@@ -281,11 +282,11 @@ const ScheduleList = ({
         type="button"
         variant={'text'}
         className="flex items-center h-6 self-start p-0"
-        disabled={isCompletedTab && !!selectedData}
+        disabled={isFinishedTab && !!selectedData}
         onClick={handleAddDate}
       >
         <Icon icon={IconPlus} size="md" className="flex-center" />
-        {t('feature-flags.date')}
+        {t('add-schedule')}
       </Button>
 
       {conflictWithRolloutIndexes.length > 0 && (

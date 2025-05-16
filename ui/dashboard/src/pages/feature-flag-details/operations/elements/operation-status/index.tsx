@@ -116,11 +116,11 @@ const StoppedBy = ({ stoppedBy }: { stoppedBy: RolloutStoppedBy }) => {
 };
 
 const OperationStatus = ({
-  isCompleted,
+  isFinished,
   operation,
   onActions
 }: {
-  isCompleted: boolean;
+  isFinished: boolean;
   operation: OperationCombinedType;
   onActions: (data: OperationModalState) => void;
 }) => {
@@ -224,8 +224,8 @@ const OperationStatus = ({
   }, [isKillSwitch, isRollout]);
 
   const popoverOptions = useMemo(
-    () => (isCompleted ? completedOptions : operationOptions),
-    [isCompleted, isKillSwitch, operationOptions, completedOptions]
+    () => (isFinished ? completedOptions : operationOptions),
+    [isFinished, isKillSwitch, operationOptions, completedOptions]
   );
 
   const titleKey = useMemo(() => {

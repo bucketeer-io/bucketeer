@@ -35,7 +35,7 @@ export enum RolloutTypeMap {
 
 export enum OperationTab {
   ACTIVE = 'ACTIVE',
-  COMPLETED = 'COMPLETED'
+  FINISHED = 'FINISHED'
 }
 
 export type OperationCombinedType = Rollout & AutoOpsRule;

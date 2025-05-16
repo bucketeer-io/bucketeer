@@ -4,6 +4,7 @@ import IconArrowLeft from './customized-icons/arrow-left.svg?react';
 import IconArrowRight from './customized-icons/arrow-right.svg?react';
 import IconBackspace from './customized-icons/backspace.svg?react';
 import IconBitbucket from './customized-icons/bitbucket.svg?react';
+import IconCalendarXL from './customized-icons/calendar-xl.svg?react';
 import IconCalendar from './customized-icons/calendar.svg?react';
 import IconChecked from './customized-icons/checked.svg?react';
 import IconChevronDown from './customized-icons/chevron-down.svg?react';
@@ -22,9 +23,11 @@ import IconInfo from './customized-icons/info.svg?react';
 import IconFlagJSON from './customized-icons/json.svg?react';
 import IconLink from './customized-icons/link.svg?react';
 import IconFlagNumber from './customized-icons/number.svg?react';
+import IconOperationArrowXL from './customized-icons/operation-arrow-xl.svg?react';
 import IconOperationArrow from './customized-icons/operation-arrow.svg?react';
 import IconOperationClone from './customized-icons/operation-clone.svg?react';
 import IconOperationDetails from './customized-icons/operation-details.svg?react';
+import IconFlagOperationXL from './customized-icons/operation-xl.svg?react';
 import IconFlagOperation from './customized-icons/operation.svg?react';
 import IconOutperformed from './customized-icons/outperformed.svg?react';
 import IconPencil from './customized-icons/pencil.svg?react';
@@ -159,6 +162,9 @@ export {
   IconOperationClone,
   IconOperationDetails,
   IconStoppedByUser,
+  IconCalendarXL,
+  IconOperationArrowXL,
+  IconFlagOperationXL,
   // Special icons
   IconGoal,
   IconGoogle,

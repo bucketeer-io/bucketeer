@@ -250,8 +250,10 @@ const Operations = ({ feature }: { feature: Feature }) => {
           }}
         >
           <TabsList className="px-6">
-            <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
-            <TabsTrigger value="COMPLETED">{t(`completed`)}</TabsTrigger>
+            <TabsTrigger value={OperationTab.ACTIVE}>{t(`active`)}</TabsTrigger>
+            <TabsTrigger value={OperationTab.FINISHED}>
+              {t(`finished`)}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value={currentTab} className="px-6">
@@ -265,7 +267,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
       )}
       {isScheduleAction && isOpenModalAction && feature && (
         <ScheduleOperationModal
-          isCompletedTab={currentTab === OperationTab.COMPLETED}
+          isFinishedTab={currentTab === OperationTab.FINISHED}
           isOpen={isScheduleAction}
           featureId={feature.id}
           environmentId={currentEnvironment.id}

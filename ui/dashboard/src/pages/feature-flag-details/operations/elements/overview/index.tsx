@@ -1,7 +1,11 @@
 import { FunctionComponent } from 'react';
 import { useTranslation } from 'i18n';
 import { FeatureCountByStatus, IconSize } from '@types';
-import { IconCalendar, IconFlagOperation, IconOperationArrow } from '@icons';
+import {
+  IconCalendarXL,
+  IconFlagOperationXL,
+  IconOperationArrowXL
+} from '@icons';
 import OverviewCard, { OverviewIconColor } from 'elements/overview-card';
 import { OpsTypeMap } from '../../types';
 
@@ -20,7 +24,7 @@ const overviewOptions: OverviewOption[] = [
     titleKey: 'feature-flags.schedule',
     countKey: 'total',
     color: 'brand',
-    icon: IconCalendar,
+    icon: IconCalendarXL,
     iconSize: 'xl',
     opsType: OpsTypeMap.SCHEDULE,
     description: 'table:feature-flags.operations-schedule-desc'
@@ -29,7 +33,7 @@ const overviewOptions: OverviewOption[] = [
     titleKey: 'feature-flags.event-rate',
     countKey: 'active',
     color: 'pink',
-    icon: IconFlagOperation,
+    icon: IconFlagOperationXL,
     iconSize: 'xl',
     opsType: OpsTypeMap.EVENT_RATE,
     description: 'table:feature-flags.operations-event-rate-desc'
@@ -38,7 +42,7 @@ const overviewOptions: OverviewOption[] = [
     titleKey: 'feature-flags.progressive-rollout',
     countKey: 'inactive',
     color: 'blue',
-    icon: IconOperationArrow,
+    icon: IconOperationArrowXL,
     iconSize: 'xl',
     opsType: OpsTypeMap.ROLLOUT,
     description: 'table:feature-flags.operations-rollout-desc'

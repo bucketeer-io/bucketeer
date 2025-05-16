@@ -36,7 +36,7 @@ const ActiveContent = ({
       {sortedData?.map((item, index) => (
         <Operation
           key={index}
-          isCompleted={false}
+          isFinished={false}
           operation={item}
           onActions={onOperationActions}
         />

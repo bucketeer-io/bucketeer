@@ -215,5 +215,6 @@
   "select-rollout-percentage": "Select rollout percentage",
   "rollout": "Rollout",
   "off-variation": "Off Variation",
-  "reset-sampling": "Reset random sampling"
+  "reset-sampling": "Reset random sampling",
+  "add-schedule": "Add Schedule"
 }

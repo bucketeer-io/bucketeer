@@ -30,7 +30,7 @@ const CollectionLayout = ({
           onOperationActions={onOperationActions}
         />
       )}
-      {currentTab === OperationTab.COMPLETED && (
+      {currentTab === OperationTab.FINISHED && (
         <CompletedContent
           operations={operations}
           onOperationActions={onOperationActions}

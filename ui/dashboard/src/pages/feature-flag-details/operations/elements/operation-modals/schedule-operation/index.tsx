@@ -13,6 +13,7 @@ import { useTranslation } from 'i18n';
 import { isEqual } from 'lodash';
 import { AutoOpsRule, DatetimeClause, Rollout } from '@types';
 import { isSameOrBeforeDate } from 'utils/function';
+import { cn } from 'utils/style';
 import {
   dateTimeClauseListSchema,
   DateTimeClauseListType
@@ -30,7 +31,7 @@ import SlideModal from 'components/modal/slide';
 import ScheduleList from './schedule-list';
 
 export interface OperationModalProps {
-  isCompletedTab: boolean;
+  isFinishedTab: boolean;
   featureId: string;
   environmentId: string;
   isOpen: boolean;
@@ -43,7 +44,7 @@ export interface OperationModalProps {
 }
 
 const ScheduleOperationModal = ({
-  isCompletedTab,
+  isFinishedTab,
   featureId,
   environmentId,
   isOpen,
@@ -207,7 +208,14 @@ const ScheduleOperationModal = ({
                 }}
                 components={{
                   comp: (
-                    <div className="flex-center typo-para-small text-gray-600 px-2 py-[1px] border border-gray-400 rounded mb-[-4px]" />
+                    <div
+                      className={cn(
+                        'flex-center typo-para-small text-gray-600 px-2 py-[1px] border border-gray-400 rounded mb-[-4px]',
+                        {
+                          'bg-primary-500 text-white': isEnabledFlag
+                        }
+                      )}
+                    />
                   )
                 }}
               />
@@ -215,7 +223,7 @@ const ScheduleOperationModal = ({
             <Divider />
             <ScheduleList
               selectedData={selectedData}
-              isCompletedTab={isCompletedTab}
+              isFinishedTab={isFinishedTab}
               isCreate={isCreate}
               rollouts={rollouts}
             />
@@ -231,7 +239,7 @@ const ScheduleOperationModal = ({
                 <Button
                   type="submit"
                   loading={isSubmitting}
-                  disabled={!isValid || (isCompletedTab && !!selectedData)}
+                  disabled={!isValid || (isFinishedTab && !!selectedData)}
                 >
                   {t(
                     isCreate
