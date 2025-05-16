@@ -8113,9 +8113,10 @@ definitions:
         description: The clause ID, if not set, a new date time clause will be created.
       deleted:
         type: boolean
-        description: If true, the clause will be deleted.
+        description: If true and the number of clause is greater than 1, the clause will be deleted
       clause:
         $ref: '#/definitions/autoopsDatetimeClause'
+        description: The clause value, must be fully filled if update or create clause action is requested.
   UpdateAutoOpsRuleRequestUpdateOpsEventRateClause:
     type: object
     properties:
@@ -8124,9 +8125,10 @@ definitions:
         description: The clause ID, if not set, a new event rate clause will be created.
       deleted:
         type: boolean
-        description: If true, the clause will be deleted.
+        description: If true and the number of clause is greater than 1, the clause will be deleted
       clause:
         $ref: '#/definitions/autoopsOpsEventRateClause'
+        description: The clause value, must be fully filled if update or create clause action is requested.
   UpdateExperimentRequestUpdatedStatus:
     type: object
     properties:
