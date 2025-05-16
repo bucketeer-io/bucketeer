@@ -240,5 +240,8 @@
   "clear-all-fields": "Clear All Fields",
   "update-flag": "Update Feature Flag",
   "sort-asc": "Oldest to Newest",
-  "sort-desc": "Newest to Oldest"
+  "sort-desc": "Newest to Oldest",
+  "new-operation": "New Operation",
+  "update-operation": "Update Operation",
+  "completed": "Completed"
 }

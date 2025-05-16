@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { useQueryAccounts } from '@queries/accounts';
-import { useQueryAutoOps } from '@queries/auto-ops';
+import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { Feature, FeatureCountByStatus } from '@types';
@@ -49,7 +49,7 @@ const CollectionLoader = ({
     }
   });
 
-  const { data: autoOpsCollection } = useQueryAutoOps({
+  const { data: autoOpsCollection } = useQueryAutoOpsRules({
     params: {
       environmentId: currenEnvironment?.id,
       cursor: String(0)

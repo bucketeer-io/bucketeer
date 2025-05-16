@@ -12,6 +12,7 @@ interface FilterProps {
   action?: ReactNode;
   searchValue: string;
   filterCount?: number;
+  isShowDocumentation?: boolean;
   onSearchChange: (value: string) => void;
   onOpenFilter?: () => void;
 }
@@ -20,6 +21,7 @@ const Filter = ({
   action,
   searchValue,
   filterCount,
+  isShowDocumentation = true,
   onSearchChange,
   onOpenFilter
 }: FilterProps) => {
@@ -34,10 +36,12 @@ const Filter = ({
         />
       </div>
       <div className="flex items-center gap-4 mt-3 lg:mt-0 flex-wrap">
-        <Button variant="text" className="flex-1 lg:flex-none">
-          <Icon icon={IconLaunchOutlined} size="sm" />
-          {t('documentation')}
-        </Button>
+        {isShowDocumentation && (
+          <Button variant="text" className="flex-1 lg:flex-none">
+            <Icon icon={IconLaunchOutlined} size="sm" />
+            {t('documentation')}
+          </Button>
+        )}
         {onOpenFilter && (
           <Button
             variant="secondary"

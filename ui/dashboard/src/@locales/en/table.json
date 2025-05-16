@@ -38,7 +38,10 @@
     "start-experiment": "Start Experiment",
     "archive-flag": "Archive Feature Flag",
     "unarchive-flag": "Unarchive Feature Flag",
-    "clone-flag": "Clone Feature Flag"
+    "clone-flag": "Clone Feature Flag",
+    "delete-rollout": "Delete Rollout",
+    "delete-operation": "Delete Operation",
+    "delete-kill-switch": "Delete Kill Switch"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -93,6 +96,9 @@
   "push": {
     "confirm-enable-desc": "The Push \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
     "confirm-disable-desc": "The Push \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
+  },
+  "operations": {
+    "confirm-delete-operation": "The <bold>{{type}}</bold> will be deleted permanently. Are you sure you want to proceed?"
   },
   "goals": {
     "connections": "Connections",
@@ -199,7 +205,11 @@
     "off-variation-tooltip": "The variation served to users when the feature flag is turned off or disabled.",
     "off-variation-disabled-delete": "This variation cannot be deleted because it is used in the off-variation settings.",
     "default-variation-disabled-delete": "This variation cannot be deleted because it is used in the default variation settings.",
-    "in-used-variation-disabled-delete": "This variation cannot be deleted because it is used in targeting rules or has users assigned to the individual targeting."
+    "in-used-variation-disabled-delete": "This variation cannot be deleted because it is used in targeting rules or has users assigned to the individual targeting.",
+    "operations-desc": "Automate your release and reduce risks with auto operations",
+    "operations-schedule-desc": "Schedule a flag to turn on or off",
+    "operations-event-rate-desc": "Turn off automatically a flag based on KPI events",
+    "operations-rollout-desc": "Automate to release a feature progressively"
   },
   "audit-log-title": "<b>{{username}}</b> {{action}} the {{entityType}} <highlight>{{entityName}}</highlight>",
   "no-data-change": "No data change",
@@ -265,5 +275,9 @@
     "disable-trigger-desc": "The trigger will be disabled. Are you sure you want to proceed?",
     "enable-trigger-desc": "The trigger will be enabled. Are you sure you want to proceed?",
     "dropdown-desc": "Webhook: Change the feature flag ON/OFF status via HTTP request"
-  }
+  },
+  "stop-schedule": "Stop Schedule",
+  "stop-event-rate": "Stop Event Rate",
+  "stop-rollout": "Stop Progressive Rollout",
+  "stop-operation-type-desc": "The {{type}} will be stopped. Are you sure you want to proceed?"
 }
