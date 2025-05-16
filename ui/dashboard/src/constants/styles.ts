@@ -120,7 +120,7 @@ export const SPECIFIC_COLORS = {
 
 export const COLORS = [
   '#59289C',
-  '#774BAA',
+  '#F350A0',
   '#8664ED',
   '#9E90B5',
   '#2154A0',
