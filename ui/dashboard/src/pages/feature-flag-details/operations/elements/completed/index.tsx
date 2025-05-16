@@ -1,21 +1,19 @@
 import { useMemo } from 'react';
-import { AutoOpsRule, Rollout } from '@types';
+import { AutoOpsRule } from '@types';
 import { OperationModalState } from '../..';
 import { OperationCombinedType } from '../../types';
 import Operation from '../operation';
 
 const CompletedContent = ({
-  rollouts,
   operations,
   onOperationActions
 }: {
-  rollouts: Rollout[];
   operations: AutoOpsRule[];
   onOperationActions: (data: OperationModalState) => void;
 }) => {
   const completedStatuses = useMemo(() => ['STOPPED', 'FINISHED'], []);
 
-  const operationCompletedData = useMemo(
+  const scheduleCompletedData = useMemo(
     () =>
       operations?.filter(item =>
         completedStatuses.includes(item.autoOpsStatus)
@@ -23,17 +21,12 @@ const CompletedContent = ({
     [operations, completedStatuses]
   );
 
-  const rolloutCompletedData = useMemo(
-    () => rollouts?.filter(item => completedStatuses.includes(item.status)),
-    [rollouts, completedStatuses]
-  );
-
   const sortedData: OperationCombinedType[] = useMemo(
     () =>
-      [...operationCompletedData, ...rolloutCompletedData].sort(
+      [...scheduleCompletedData].sort(
         (a, b) => Number(a.createdAt) - Number(b.createdAt)
       ) as OperationCombinedType[],
-    [operationCompletedData, rolloutCompletedData]
+    [scheduleCompletedData]
   );
 
   return (

@@ -1,4 +1,4 @@
-import { AutoOpsRule, Rollout } from '@types';
+import { AutoOpsRule } from '@types';
 import { OperationModalState } from '../..';
 import { OperationTab } from '../../types';
 import ActiveContent from '../active';
@@ -7,12 +7,10 @@ import Overview from '../overview';
 
 const CollectionLayout = ({
   currentTab,
-  rollouts,
   operations,
   onOperationActions
 }: {
   currentTab: OperationTab;
-  rollouts: Rollout[];
   operations: AutoOpsRule[];
   onOperationActions: (data: OperationModalState) => void;
 }) => {
@@ -28,14 +26,12 @@ const CollectionLayout = ({
       />
       {currentTab === OperationTab.ACTIVE && (
         <ActiveContent
-          rollouts={rollouts}
           operations={operations}
           onOperationActions={onOperationActions}
         />
       )}
       {currentTab === OperationTab.COMPLETED && (
         <CompletedContent
-          rollouts={rollouts}
           operations={operations}
           onOperationActions={onOperationActions}
         />

@@ -257,7 +257,6 @@ const Operations = ({ feature }: { feature: Feature }) => {
           <TabsContent value={currentTab} className="px-6">
             <CollectionLayout
               currentTab={currentTab}
-              rollouts={rollouts}
               operations={operations}
               onOperationActions={onOperationActions}
             />
