@@ -41,6 +41,7 @@ local-deps:
 	go install go.uber.org/mock/mockgen@v0.4.0; \
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.20.0; \
+	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.20.0; \
 	go install github.com/nilslice/protolock/...@v0.15.0; \
 	go install github.com/mikefarah/yq/v4@v4.28.2
 
