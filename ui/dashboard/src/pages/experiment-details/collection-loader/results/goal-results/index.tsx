@@ -65,14 +65,18 @@ const GoalResultItem = ({
 
   const variationValues = useMemo(
     () =>
-      (goalResult?.variationResults?.map(vr => {
+      goalResult?.variationResults?.map(vr => {
         const variation = experiment.variations.find(
           item => vr.variationId === item.id
         );
-        const { name, value } = variation || {};
-        return name || value || '';
-      }) as string[]) || [],
-    [goalResult, experiment]
+        const { name, value, id } = variation || {};
+        return {
+          label: name || value || '',
+          value: id || '',
+          variationType: feature?.variationType
+        };
+      }) || [],
+    [goalResult, experiment, feature]
   );
 
   const onSubmitRolloutVariation = useCallback(
@@ -205,11 +209,12 @@ const GoalResultItem = ({
                 setDataSets={setEvaluationDataSets}
               />
               <EvaluationTable
+                variationType={feature?.variationType}
                 goalResult={goalResult}
                 experiment={experiment}
                 evaluationDataSets={evaluationDataSets}
-                onToggleShowData={label =>
-                  evaluationChartRef.current?.toggleLegend(label)
+                onToggleShowData={variationId =>
+                  evaluationChartRef.current?.toggleLegend(variationId)
                 }
               />
             </div>
@@ -231,12 +236,13 @@ const GoalResultItem = ({
                 setConversionRateDataSets={setConversionRateDataSets}
               />
               <ConversionRateTable
+                variationType={feature?.variationType}
                 conversionRateDataSets={conversionRateDataSets}
                 goalResultState={goalResultState}
                 goalResult={goalResult}
                 experiment={experiment}
-                onToggleShowData={label =>
-                  conversionRateChartRef.current?.toggleLegend(label)
+                onToggleShowData={variationId =>
+                  conversionRateChartRef.current?.toggleLegend(variationId)
                 }
               />
             </div>

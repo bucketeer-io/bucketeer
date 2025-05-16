@@ -1,7 +1,8 @@
+import { useCallback } from 'react';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { EvaluationCounter, Feature } from '@types';
-import { getVariationColor } from 'utils/style';
+import { getVariationColor, getVariationSpecificColor } from 'utils/style';
 import { DatasetReduceType } from 'pages/experiment-details/collection-loader/results/goal-results/timeseries-area-line-chart';
 import { Polygon } from 'pages/experiment-details/elements/header-details';
 import Checkbox from 'components/checkbox';
@@ -20,7 +21,19 @@ const EvaluationTable = ({
   onToggleShowData: (variationId: string) => void;
 }) => {
   const { t } = useTranslation(['table']);
-
+  const getVariation = useCallback(
+    (item: EvaluationCounter) =>
+      feature.variations.find(v => v.id === item.variationId),
+    [feature]
+  );
+  const getVariationLabel = useCallback(
+    (item: EvaluationCounter) => {
+      if (item.variationId === 'default') return 'default value';
+      const variation = getVariation(item);
+      return variation?.name || variation?.value || '';
+    },
+    [feature]
+  );
   return (
     <div className="flex flex-col gap-y-6 w-full min-w-[650px]">
       <div className="flex items-center w-full">
@@ -43,6 +56,7 @@ const EvaluationTable = ({
         const isHidden = dataSets?.find(
           dataset => dataset.label === item?.variationId
         )?.hidden;
+        const variation = getVariation(item);
         return (
           <div
             key={index}
@@ -58,15 +72,15 @@ const EvaluationTable = ({
               <Polygon
                 className="border-none size-3"
                 style={{
-                  background: getVariationColor(index),
+                  background:
+                    feature.variationType === 'BOOLEAN'
+                      ? getVariationSpecificColor(variation?.value || '')
+                      : getVariationColor(index),
                   zIndex: index
                 }}
               />
               <p className="typo-para-small text-gray-700">
-                {item.variationId === 'default'
-                  ? 'default value'
-                  : feature.variations.find(v => v.id === item.variationId)
-                      ?.name || ''}
+                {getVariationLabel(item)}
               </p>
             </div>
             <div className="w-[60%] typo-para-medium text-gray-700">

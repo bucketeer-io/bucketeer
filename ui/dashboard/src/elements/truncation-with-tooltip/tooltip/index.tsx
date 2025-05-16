@@ -14,7 +14,7 @@ const TooltipWrapper = ({
 }) => (
   <div
     className={cn(
-      'flex-center w-[250px] lg:w-[500px] bottom-[calc(100%+16px)]',
+      'flex-center w-[250px] lg:w-[500px] bottom-[calc(100%+8px)]',
       'opacity-0 transition-all delay-200 group-hover:opacity-100',
       absoluteCenterCls,
       className
@@ -54,7 +54,7 @@ const TooltipArrow = () => (
       absoluteCenterCls
     )}
   >
-    <Icon icon={IconAngleDown} className="!text-gray-700" size={'md'} />
+    <Icon icon={IconAngleDown} className="!text-gray-700" size={'fit'} />
   </div>
 );
 

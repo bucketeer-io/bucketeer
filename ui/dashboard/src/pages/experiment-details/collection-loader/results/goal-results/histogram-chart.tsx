@@ -13,6 +13,7 @@ import {
 } from 'chart.js';
 import { formatLongDateTime } from 'utils/date-time';
 import { getVariationColor } from 'utils/style';
+import { DataLabel } from './timeseries-line-chart';
 
 ChartJS.register(
   BarElement,
@@ -27,7 +28,7 @@ ChartJS.register(
 
 interface HistogramChartProps {
   label: string;
-  dataLabels: Array<string>;
+  dataLabels: Array<DataLabel>;
   hist: Array<Array<number | string>>;
   bins: Array<number>;
 }
@@ -38,7 +39,7 @@ export const HistogramChart = memo(
       labels: bins,
       datasets: dataLabels.map((e, i) => {
         return {
-          label: e,
+          label: e.label,
           data: hist[i] || [],
           backgroundColor: getVariationColor(i)
         };

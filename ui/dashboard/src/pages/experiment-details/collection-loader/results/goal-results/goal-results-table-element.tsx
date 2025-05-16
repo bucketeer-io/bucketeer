@@ -1,4 +1,5 @@
-import { cn, getVariationColor } from 'utils/style';
+import { FeatureVariationType } from '@types';
+import { cn, getVariationColor, getVariationSpecificColor } from 'utils/style';
 import { IconInfo } from '@icons';
 import { Polygon } from 'pages/experiment-details/elements/header-details';
 import Checkbox from 'components/checkbox';
@@ -53,6 +54,7 @@ export const ResultCell = ({
   className,
   currentIndex,
   isChecked,
+  variationType,
   onToggleShowData
 }: {
   variationId?: string;
@@ -62,9 +64,11 @@ export const ResultCell = ({
   className?: string;
   currentIndex?: number;
   isChecked?: boolean;
-  onToggleShowData?: (label: string) => void;
+  variationType?: FeatureVariationType;
+  onToggleShowData?: (variationId: string) => void;
 }) => {
-  const isBooleanValue = ['true', 'false'].includes(value as string);
+  const isBooleanValue =
+    variationType === 'BOOLEAN' && ['true', 'false'].includes(value as string);
   const id = variationId || '';
 
   return (
@@ -79,15 +83,15 @@ export const ResultCell = ({
         <>
           <Checkbox
             checked={isChecked}
-            onCheckedChange={() =>
-              onToggleShowData && onToggleShowData(String(value))
-            }
+            onCheckedChange={() => onToggleShowData && onToggleShowData(id)}
           />
           {typeof currentIndex === 'number' && (
             <Polygon
               className="border-none size-3"
               style={{
-                background: getVariationColor(currentIndex),
+                background: isBooleanValue
+                  ? getVariationSpecificColor(value as string)
+                  : getVariationColor(currentIndex),
                 zIndex: currentIndex
               }}
             />
