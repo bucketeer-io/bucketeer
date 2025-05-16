@@ -315,7 +315,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		webConsoleEnvJSPath: cmd.Flag("web-console-env-js-path", "console env js path").Required().String(),
 		// PubSub configuration
 		pubSubType: cmd.Flag("pubsub-type",
-			"Type of PubSub to use (google or redis).",
+			"Type of PubSub to use (google or redis-stream).",
 		).Default("google").String(),
 		pubSubRedisServerName: cmd.Flag("pubsub-redis-server-name",
 			"Name of the Redis server for PubSub.",

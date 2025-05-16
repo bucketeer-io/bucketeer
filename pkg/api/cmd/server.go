@@ -143,7 +143,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Default("24h").Duration(),
 		// PubSub configurations
 		pubSubType: cmd.Flag("pubsub-type",
-			"Type of PubSub to use (google, redis, or redis-stream).",
+			"Type of PubSub to use (google or redis-stream).",
 		).Default("google").String(),
 		pubSubRedisServerName: cmd.Flag("pubsub-redis-server-name",
 			"Name of the Redis server for PubSub.",
