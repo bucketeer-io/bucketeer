@@ -55,7 +55,7 @@ const ScheduleOperationModal = ({
   onClose,
   onSubmitOperationSuccess
 }: OperationModalProps) => {
-  const { t } = useTranslation(['form', 'common']);
+  const { t } = useTranslation(['form', 'common', 'message']);
   const { notify, errorNotify } = useToast();
 
   const isCreate = useMemo(() => actionType === 'NEW', [actionType]);
@@ -181,7 +181,7 @@ const ScheduleOperationModal = ({
         if (resp) {
           onSubmitOperationSuccess();
           notify({
-            message: `Schedule operation ${isCreate ? 'created' : 'updated'} successfully`
+            message: t(`message:operation.${isCreate ? 'created' : 'updated'}`)
           });
         }
       } catch (error) {

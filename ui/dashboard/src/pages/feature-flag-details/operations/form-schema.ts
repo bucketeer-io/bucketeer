@@ -8,16 +8,17 @@ import {
   isArraySorted,
   isTimestampArraySorted
 } from 'utils/function';
-import {
-  ActionTypeMap,
-  IntervalMap,
-  OpsTypeMap,
-  RolloutTypeMap
-} from './types';
+import { ActionTypeMap, IntervalMap, RolloutTypeMap } from './types';
 
 const translation = i18n.t;
 
 const requiredMessage = translation('message:required-field');
+const laterThanCurrentTimeMessage = translation(
+  'message:validation.operation.later-than-current-time'
+);
+const increasingOrderMessage = translation(
+  'message:validation.operation.date-increasing-order'
+);
 
 export const schedulesListSchema = yup
   .array()
@@ -76,7 +77,7 @@ export const schedulesListSchema = yup
             const isValidDate = value.getTime() > new Date().getTime();
             if (!isValidDate)
               return context.createError({
-                message: 'This must be later than the current time.',
+                message: laterThanCurrentTimeMessage,
                 path: context.path
               });
           }
@@ -95,7 +96,7 @@ export const schedulesListSchema = yup
             ).isSorted;
             if (!isValidDates)
               return context.createError({
-                message: 'The date must be in increasing order.',
+                message: increasingOrderMessage,
                 path: context.path
               });
           }
@@ -115,8 +116,9 @@ export const schedulesListSchema = yup
             );
             if (!isValidIntervals)
               return context.createError({
-                message:
-                  'The scheduled time interval must be at least 5 minutes apart.',
+                message: translation(
+                  'message:validation.operation.schedule-interval'
+                ),
                 path: context.path
               });
           }
@@ -146,7 +148,7 @@ export const dateTimeClauseListSchema = yup.object().shape({
               !context?.from[0]?.value?.wasPassed
             ) {
               return context.createError({
-                message: 'This must be later than the current time.',
+                message: laterThanCurrentTimeMessage,
                 path: context.path
               });
             }
@@ -162,8 +164,9 @@ export const dateTimeClauseListSchema = yup.object().shape({
         );
         if (hasDuplicate) {
           return context.createError({
-            message:
-              'You cannot have multiple schedules at the same date and time.',
+            message: translation(
+              'message:validation.operation.schedules-same-time'
+            ),
             path: context.path
           });
         }
@@ -173,7 +176,7 @@ export const dateTimeClauseListSchema = yup.object().shape({
 
         if (!sortedState.isSorted) {
           return context.createError({
-            message: 'The date must be in increasing order.',
+            message: increasingOrderMessage,
             path: context.path
           });
         }
@@ -216,8 +219,14 @@ export const rolloutSchema = yup.object().shape({
         .number()
         .transform(value => (isNaN(value) ? undefined : value))
         .required(requiredMessage)
-        .min(1, 'Increments must be greater than or equal to 1')
-        .max(100, 'Increments must be less than or equal to 100'),
+        .min(
+          1,
+          translation('message:validation.operation.increments-greater-than')
+        )
+        .max(
+          100,
+          translation('message:validation.operation.increments-less-than')
+        ),
       startDate: yup
         .date()
         .required(requiredMessage)
@@ -230,7 +239,7 @@ export const rolloutSchema = yup.object().shape({
           ) {
             if (value.getTime() < new Date().getTime())
               return context.createError({
-                message: 'This must be later than the current time.',
+                message: laterThanCurrentTimeMessage,
                 path: context.path
               });
           }
@@ -248,111 +257,3 @@ export const rolloutSchema = yup.object().shape({
   })
 });
 export type RolloutSchemaType = yup.InferType<typeof rolloutSchema>;
-
-export const operationFormSchema = yup.object().shape({
-  opsType: yup.mixed<OpsTypeMap>().required(),
-  datetimeClausesList: yup
-    .array()
-    .of(
-      yup.object().shape({
-        id: yup.string(),
-        actionType: yup.mixed<ActionTypeMap>().required(),
-        time: yup
-          .date()
-          .test('isLaterThanNow', (value, context) => {
-            if (value && value?.getTime() < new Date().getTime()) {
-              return context.createError({
-                message: 'This must be later than the current time.',
-                path: context.path
-              });
-            }
-            return true;
-          })
-          .required(requiredMessage)
-      })
-    )
-    .test('isAscending', (value, context) => {
-      if (value?.length) {
-        const hasDuplicate = hasDuplicateTimestamps(
-          value?.map(item => item.time?.getTime() ?? 0) || []
-        );
-        if (hasDuplicate) {
-          return context.createError({
-            message:
-              'You cannot have multiple schedules at the same date and time.',
-            path: context.path
-          });
-        }
-        const isSorted = isTimestampArraySorted(
-          value?.map(item => item.time?.getTime() ?? 0) || []
-        );
-
-        if (!isSorted) {
-          return context.createError({
-            message: 'The date must be in increasing order.',
-            path: context.path
-          });
-        }
-      }
-      return true;
-    }),
-  eventRate: yup.object().shape({
-    variation: yup.string(),
-    goal: yup
-      .string()
-      .nullable()
-      .test('required', (value, context) => {
-        if (
-          context.from &&
-          context.from[1].value.opsType === OpsTypeMap.EVENT_RATE
-        ) {
-          return value != null;
-        }
-        return true;
-      }),
-    minCount: yup
-      .number()
-      .transform(value => (isNaN(value) ? undefined : value))
-      .required()
-      .min(1)
-      .max(AUTOOPS_MAX_MIN_COUNT),
-    threadsholdRate: yup
-      .number()
-      .transform(value => (isNaN(value) ? undefined : value))
-      .required()
-      .moreThan(0)
-      .max(100),
-    operator: yup.string()
-  }),
-  progressiveRolloutType: yup.mixed<RolloutTypeMap>().required(),
-  progressiveRollout: yup.object().shape({
-    template: yup.object().shape({
-      variationId: yup.string().required(),
-      increments: yup
-        .number()
-        .transform(value => (isNaN(value) ? undefined : value))
-        .required()
-        .min(1)
-        .max(100),
-      datetime: yup.object().shape({
-        time: yup.date().test('isLaterThanNow', (value, context) => {
-          if (
-            value &&
-            context.from &&
-            context.from[3].value.progressiveRolloutType === 'TEMPLATE_SCHEDULE'
-          ) {
-            return value.getTime() > new Date().getTime();
-          }
-          return true;
-        })
-      }),
-      schedulesList: schedulesListSchema,
-      interval: yup.mixed<IntervalMap[keyof IntervalMap]>().required()
-    }),
-    manual: yup.object().shape({
-      variationId: yup.string().required(),
-      schedulesList: schedulesListSchema
-    })
-  })
-});
-export type OperationForm = yup.InferType<typeof operationFormSchema>;

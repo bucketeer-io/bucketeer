@@ -5,6 +5,7 @@ import { autoOpsDelete, autoOpsStop } from '@api/auto-ops';
 import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import {
   PAGE_PATH_FEATURE_AUTOOPS,
   PAGE_PATH_FEATURES
@@ -125,7 +126,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
   const onSubmitOperationSuccess = useCallback(() => {
     onCloseActionModal();
     refetchAutoOpsRules();
-  }, []);
+  }, [searchParams]);
 
   const onOperationActions = useCallback(
     ({
@@ -197,7 +198,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
         if (resp) {
           notify({
-            message: 'Deleted operation successfully.'
+            message: t('message:operation.deleted')
           });
           refetchAutoOpsRules();
           onResetModalState();
@@ -231,11 +232,9 @@ const Operations = ({ feature }: { feature: Feature }) => {
   return (
     <div className="flex flex-col w-full gap-y-4 min-w-[900px]">
       <Filter
-        searchValue=""
-        isShowDocumentation={false}
-        onSearchChange={() => {}}
-        onOpenFilter={() => {}}
         action={<OperationActions onOperationActions={onOperationActions} />}
+        className="justify-end"
+        link={DOCUMENTATION_LINKS.FLAG_OPERATION}
       />
       {isRolloutLoading || isOperationLoading ? (
         <FormLoading />

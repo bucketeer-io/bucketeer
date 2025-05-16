@@ -21,17 +21,14 @@ const CompletedContent = ({
     [operations, completedStatuses]
   );
 
-  const sortedData: OperationCombinedType[] = useMemo(
-    () =>
-      [...scheduleCompletedData].sort(
-        (a, b) => Number(a.createdAt) - Number(b.createdAt)
-      ) as OperationCombinedType[],
+  const operationData = useMemo(
+    () => [...scheduleCompletedData] as OperationCombinedType[],
     [scheduleCompletedData]
   );
 
   return (
     <div className="flex flex-col w-full gap-y-6">
-      {sortedData?.map((item, index) => (
+      {operationData?.map((item, index) => (
         <Operation
           key={index}
           isFinished={true}

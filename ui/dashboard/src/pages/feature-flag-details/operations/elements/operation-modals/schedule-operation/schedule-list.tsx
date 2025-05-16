@@ -3,13 +3,7 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
 import { AutoOpsRule, Rollout } from '@types';
 import { cn } from 'utils/style';
-import {
-  IconInfo,
-  IconInfoFilled,
-  IconPlus,
-  IconTrash,
-  IconWatch
-} from '@icons';
+import { IconInfoFilled, IconPlus, IconTrash, IconWatch } from '@icons';
 import { DateTimeClauseListType } from 'pages/feature-flag-details/operations/form-schema';
 import { ActionTypeMap } from 'pages/feature-flag-details/operations/types';
 import { createDatetimeClausesList } from 'pages/feature-flag-details/operations/utils';
@@ -141,15 +135,7 @@ const ScheduleList = ({
                       control={control}
                       render={({ field }) => (
                         <Form.Item className="py-0">
-                          <Form.Label required className="relative w-fit">
-                            {t('common:state')}
-                            <Icon
-                              icon={IconInfo}
-                              size="xs"
-                              color="gray-500"
-                              className="absolute -right-6"
-                            />
-                          </Form.Label>
+                          <Form.Label required>{t('common:state')}</Form.Label>
                           <Form.Control>
                             <DropdownMenu>
                               <DropdownMenuTrigger
