@@ -168,7 +168,7 @@ func TestListTagsMySQL(t *testing.T) {
 			service: createTagService(mockController),
 			setup: func(s *TagService) {
 				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().ListTags(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return([]*proto.Tag{
 					{
 						Id:            "tag-0",
