@@ -134,11 +134,17 @@ export const dateTimeClauseListSchema = yup.object().shape({
       yup.object().shape({
         id: yup.string(),
         actionType: yup.mixed<ActionTypeMap>().required(),
+        wasPassed: yup.boolean(),
         time: yup
           .date()
           .required(requiredMessage)
           .test('isLaterThanNow', (value, context) => {
-            if (value && value?.getTime() < new Date().getTime()) {
+            if (
+              value &&
+              value?.getTime() < new Date().getTime() &&
+              context?.from &&
+              !context?.from[0]?.value?.wasPassed
+            ) {
               return context.createError({
                 message: 'This must be later than the current time.',
                 path: context.path

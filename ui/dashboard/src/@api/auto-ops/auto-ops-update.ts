@@ -3,9 +3,9 @@ import { DatetimeClause, OpsEventRateClause } from '@types';
 import { AutoOpsCreatorResponse } from './auto-ops-creator';
 
 export interface ClauseUpdateType<T> {
-  id: string;
-  delete: boolean;
-  clause: T;
+  id?: string;
+  deleted?: boolean;
+  clause?: T;
 }
 
 export interface AutoOpsUpdateParams {

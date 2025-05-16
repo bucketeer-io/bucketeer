@@ -12,6 +12,7 @@ export const createInitialDatetimeClause = (lastTime?: number) => ({
 export const createDatetimeClausesList = (lastTime?: number) => ({
   id: uuid(),
   actionType: ActionTypeMap.ENABLE,
+  wasPassed: false,
   ...createInitialDatetimeClause(lastTime)
 });
 

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
 import { AutoOpsRule, Rollout } from '@types';
-import { isSameOrBeforeDate } from 'utils/function';
 import { cn } from 'utils/style';
 import {
   IconInfo,
@@ -86,10 +85,9 @@ const ScheduleList = ({
   }, [scheduleData]);
 
   const isDisabledField = useCallback(
-    (time: Date) => {
+    (wasPassed?: boolean) => {
       return (
-        (isCompletedTab && !!selectedData) ||
-        (!isCreate ? isSameOrBeforeDate(time) : false)
+        (isCompletedTab && !!selectedData) || (!isCreate ? !!wasPassed : false)
       );
     },
     [isCompletedTab, isCreate, selectedData]
@@ -161,7 +159,7 @@ const ScheduleList = ({
                                   )?.label
                                 }
                                 className="w-[124px] uppercase"
-                                disabled={isDisabledField(item.time)}
+                                disabled={isDisabledField(item.wasPassed)}
                               />
                               <DropdownMenuContent
                                 align="start"
@@ -208,7 +206,7 @@ const ScheduleList = ({
                                           index
                                         )
                                     })}
-                                    disabled={isDisabledField(field.value)}
+                                    disabled={isDisabledField(item.wasPassed)}
                                     onChange={date => {
                                       if (date) {
                                         field.onChange(date);
@@ -234,7 +232,7 @@ const ScheduleList = ({
                                           index
                                         )
                                     })}
-                                    disabled={isDisabledField(field.value)}
+                                    disabled={isDisabledField(item.wasPassed)}
                                     onChange={date => {
                                       if (date) {
                                         field.onChange(date);
@@ -264,7 +262,8 @@ const ScheduleList = ({
                       size={'icon-sm'}
                       className="self-end mb-2"
                       disabled={
-                        scheduleData.length <= 1 || isDisabledField(item.time)
+                        scheduleData.length <= 1 ||
+                        isDisabledField(item.wasPassed)
                       }
                       onClick={() => remove(index)}
                     >

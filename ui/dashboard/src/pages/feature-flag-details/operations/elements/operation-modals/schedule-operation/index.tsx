@@ -12,6 +12,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { isEqual } from 'lodash';
 import { AutoOpsRule, DatetimeClause, Rollout } from '@types';
+import { isSameOrBeforeDate } from 'utils/function';
 import {
   dateTimeClauseListSchema,
   DateTimeClauseListType
@@ -65,7 +66,8 @@ const ScheduleOperationModal = ({
         return {
           id: item.id,
           actionType: item.actionType as ActionTypeMap,
-          time
+          time,
+          wasPassed: isSameOrBeforeDate(time)
         };
       });
     }
@@ -89,11 +91,17 @@ const ScheduleOperationModal = ({
       if (selectedData) {
         const updateDatetimeClauses: ClauseUpdateType<DatetimeClause>[] = [];
         const { clauses } = selectedData;
-        const clausesFormatted = clauses.map(clause => ({
-          actionType: clause.actionType,
-          id: clause.id,
-          time: new Date(+(clause.clause as DatetimeClause)?.time * 1000)
-        }));
+        const clausesFormatted = clauses.map(clause => {
+          const time = new Date(
+            +(clause.clause as DatetimeClause)?.time * 1000
+          );
+          return {
+            actionType: clause.actionType,
+            id: clause.id,
+            time,
+            wasPassed: isSameOrBeforeDate(time)
+          };
+        });
         clausesFormatted.forEach(item => {
           const currentClause = datetimeClausesList.find(
             clause => clause?.id === item.id
@@ -101,11 +109,7 @@ const ScheduleOperationModal = ({
           if (!currentClause) {
             updateDatetimeClauses.push({
               id: item.id,
-              delete: true,
-              clause: {
-                actionType: item.actionType,
-                time: Math.trunc(item.time.getTime() / 1000)?.toString()
-              }
+              deleted: true
             });
           }
         });
@@ -114,14 +118,19 @@ const ScheduleOperationModal = ({
           const currentClause = clausesFormatted.find(
             clause => clause.id === item?.id
           );
+          if (!currentClause) {
+            updateDatetimeClauses.push({
+              clause: {
+                actionType: item.actionType,
+                time: Math.trunc(item.time.getTime() / 1000)?.toString()
+              }
+            });
+          }
 
-          if (
-            !currentClause ||
-            (currentClause && !isEqual(currentClause, item))
-          ) {
+          if (currentClause && !isEqual(currentClause, item)) {
             updateDatetimeClauses.push({
               id: item.id || '',
-              delete: false,
+              deleted: false,
               clause: {
                 actionType: item.actionType,
                 time: Math.trunc(item.time.getTime() / 1000)?.toString()
