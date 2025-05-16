@@ -30,6 +30,16 @@ go: remove-go
 			--include_imports \
 			--descriptor_set_out=${GIT_TOP_DIR}/proto/$$f/proto_descriptor.pb \
 			${GIT_TOP_DIR}/proto/$$f/*.proto; \
+		protoc \
+			--proto_path=${GIT_TOP_DIR} \
+			--proto_path=${PROTOBUF_INCLUDE_DIR} \
+			--proto_path=${GOOGLEAPIS} \
+			--proto_path=${OPENAPI} \
+			--grpc-gateway_out=${GIT_TOP_DIR} \
+			--grpc-gateway_opt=paths=source_relative \
+			--grpc-gateway_opt=logtostderr=true \
+			--grpc-gateway_opt=generate_unbound_methods=true \
+			${GIT_TOP_DIR}/proto/$$f/*.proto; \
 	done
 	# Because there are old projects using empty in the `environment_id`
 	# we must remove the `omitempty` option from the generated files.
@@ -41,6 +51,24 @@ go: remove-go
 			sed -i 's/,omitempty//g' ${GIT_TOP_DIR}/proto/$$f/*.pb.go; \
 		fi \
 	done
+
+.PHONY: grpc-gateway
+grpc-gateway:
+	for f in ${PROTO_WITH_DESCRIPTOR_FOLDERS}; do \
+		protoc \
+			--proto_path=${GIT_TOP_DIR} \
+			--proto_path=${PROTOBUF_INCLUDE_DIR} \
+			--proto_path=${GOOGLEAPIS} \
+			--proto_path=${OPENAPI} \
+			--grpc-gateway_out=${GIT_TOP_DIR} \
+			--grpc-gateway_opt=paths=source_relative \
+			--grpc-gateway_opt=logtostderr=true \
+			--grpc-gateway_opt=generate_unbound_methods=true \
+			${GIT_TOP_DIR}/proto/$$f/*.proto; \
+	done
+
+.PHONY: go-all
+go-all: go
 
 .PHONY: openapi-api-gen
 openapi-api-gen:
