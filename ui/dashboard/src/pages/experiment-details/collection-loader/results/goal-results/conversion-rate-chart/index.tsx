@@ -8,6 +8,7 @@ import {
   DatasetReduceType,
   TimeseriesAreaLineChart
 } from '../timeseries-area-line-chart';
+import { DataLabel } from '../timeseries-line-chart';
 
 const ConversionRateChart = forwardRef(
   (
@@ -17,7 +18,7 @@ const ConversionRateChart = forwardRef(
       goalResultState,
       setConversionRateDataSets
     }: {
-      variationValues: string[];
+      variationValues: DataLabel[];
       goalResult: GoalResult;
       goalResultState: GoalResultState;
       setConversionRateDataSets: (datasets: DatasetReduceType[]) => void;
