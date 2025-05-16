@@ -376,17 +376,28 @@ func (s *FeatureService) checkSegmentInUse(
 	localizer locale.Localizer,
 ) error {
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("feature.environment_id", "=", environmentId),
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "deleted",
+			Operator: mysql.OperatorEqual,
+			Value:    false,
+		},
+		{
+			Column:   "feature.environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    environmentId,
+		},
 	}
-	features, _, _, err := featureStorage.ListFeatures(
-		ctx,
-		whereParts,
-		nil,
-		mysql.QueryNoLimit,
-		mysql.QueryNoOffset,
-	)
+	options := &mysql.ListOptions{
+		Filters:     filters,
+		JSONFilters: nil,
+		Orders:      nil,
+		NullFilters: nil,
+		InFilters:   nil,
+		Limit:       mysql.QueryNoLimit,
+		Offset:      mysql.QueryNoOffset,
+	}
+	features, _, _, err := featureStorage.ListFeatures(ctx, options)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list features",
