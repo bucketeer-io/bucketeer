@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { rolloutCreator, RolloutCreatorParams } from '@api/rollouts';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useQueryExperiments } from '@queries/experiments';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
@@ -33,6 +34,7 @@ import {
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Form from 'components/form';
+import InfoMessage from 'components/info-message';
 import SlideModal from 'components/modal/slide';
 import ManualSchedule from './manual-schedule';
 import TemplateSchedule from './template-schedule';
@@ -41,6 +43,7 @@ import RolloutWarning from './warning';
 export interface OperationModalProps {
   feature: Feature;
   environmentId: string;
+  urlCode: string;
   isOpen: boolean;
   actionType: OperationActionType;
   selectedData?: Rollout;
@@ -57,6 +60,7 @@ const buttonActiveCls =
 const ProgressiveRolloutModal = ({
   feature,
   environmentId,
+  urlCode,
   isOpen,
   actionType,
   selectedData,
@@ -66,6 +70,32 @@ const ProgressiveRolloutModal = ({
 }: OperationModalProps) => {
   const { t } = useTranslation(['form', 'common', 'table', 'message']);
   const { notify, errorNotify } = useToast();
+
+  const { data: experimentCollection } = useQueryExperiments({
+    params: {
+      cursor: String(0),
+      environmentId,
+      featureId: feature.id,
+      statuses: ['WAITING', 'RUNNING']
+    },
+    refetchOnMount: 'always'
+  });
+
+  const experiments = experimentCollection?.experiments || [];
+  const hasRolloutRunning = useMemo(() => {
+    return (
+      rollouts.length > 0 &&
+      !!rollouts.find(item => ['WAITING', 'RUNNING'].includes(item.status))
+    );
+  }, [rollouts]);
+
+  const isDisableCreateRollout = useMemo(() => {
+    return (
+      experiments.length > 0 ||
+      hasRolloutRunning ||
+      feature.variations.length !== 2
+    );
+  }, [experiments, hasRolloutRunning, feature]);
 
   const form = useForm({
     resolver: yupResolver(rolloutSchema),
@@ -83,13 +113,6 @@ const ProgressiveRolloutModal = ({
   } = form;
 
   const progressiveRolloutType = watch('progressiveRolloutType');
-
-  const isDisableCreateRollout = useMemo(() => {
-    return (
-      rollouts.length > 0 &&
-      !!rollouts.find(item => ['WAITING', 'RUNNING'].includes(item.status))
-    );
-  }, [rollouts]);
 
   const isTemplateRollout = useMemo(
     () => progressiveRolloutType === RolloutTypeMap.TEMPLATE_SCHEDULE,
@@ -166,7 +189,7 @@ const ProgressiveRolloutModal = ({
               schedules: scheduleList.map(schedule => ({
                 ...schedule,
                 weight: schedule.weight * 1000,
-                executeAt: Math.trunc(
+                executeAt: Math.round(
                   schedule.executeAt.getTime() / 1000
                 ).toString()
               })) as RolloutSchedule[],
@@ -200,10 +223,30 @@ const ProgressiveRolloutModal = ({
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-y-5 w-full p-5 pb-28">
-            <p className="typo-head-bold-small text-gray-800">
-              {t('common:source-type.progressive-rollout')}
-            </p>
-            {isDisableCreateRollout && <RolloutWarning />}
+            <div className="flex flex-col gap-y-2 w-full">
+              <p className="typo-head-bold-small text-gray-800">
+                {t('common:source-type.progressive-rollout')}
+              </p>
+              <p className="typo-para-small text-gray-500">
+                {t(
+                  isTemplateRollout
+                    ? 'rollout-template-desc'
+                    : 'rollout-manual-desc'
+                )}
+              </p>
+            </div>
+            {!feature.enabled && !isDisableCreateRollout && (
+              <InfoMessage title={t('rollout-enable-flag')} />
+            )}
+            {isDisableCreateRollout && (
+              <RolloutWarning
+                urlCode={urlCode}
+                experiments={experiments}
+                hasRolloutRunning={hasRolloutRunning}
+                variations={feature.variations}
+              />
+            )}
+
             <div className="flex items-center">
               <Button
                 type="button"
