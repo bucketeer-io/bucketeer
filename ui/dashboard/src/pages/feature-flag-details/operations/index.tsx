@@ -27,6 +27,7 @@ import CollectionLayout from './elements/collection-layout';
 import OperationActions from './elements/operation-actions';
 import EventRateOperationModal from './elements/operation-modals/event-rate';
 import ProgressiveRolloutModal from './elements/operation-modals/rollout';
+import RolloutCloneModal from './elements/operation-modals/rollout-clone';
 import ScheduleOperationModal from './elements/operation-modals/schedule-operation';
 import StopOperationModal from './elements/operation-modals/stop-operation';
 import { OperationActionType, OperationTab, OpsTypeMap } from './types';
@@ -347,6 +348,34 @@ const Operations = ({ feature }: { feature: Feature }) => {
           onSubmitRolloutSuccess={onSubmitRolloutSuccess}
         />
       )}
+      {isRolloutAction &&
+        operationModalState.actionType === 'NEW' &&
+        feature && (
+          <ProgressiveRolloutModal
+            isOpen={isRolloutAction}
+            feature={feature}
+            urlCode={currentEnvironment.urlCode}
+            environmentId={currentEnvironment.id}
+            actionType={operationModalState.actionType}
+            selectedData={operationModalState?.selectedData as Rollout}
+            rollouts={rollouts}
+            onClose={onCloseActionModal}
+            onSubmitRolloutSuccess={onSubmitRolloutSuccess}
+          />
+        )}
+      {isRolloutAction &&
+        operationModalState?.selectedData &&
+        operationModalState.actionType === 'DETAILS' &&
+        feature && (
+          <RolloutCloneModal
+            isOpen={
+              isRolloutAction && operationModalState.actionType === 'DETAILS'
+            }
+            selectedData={operationModalState?.selectedData as Rollout}
+            onClose={onCloseActionModal}
+          />
+        )}
+
       {isStop && !!operationModalState?.selectedData && (
         <StopOperationModal
           loading={isLoading}
