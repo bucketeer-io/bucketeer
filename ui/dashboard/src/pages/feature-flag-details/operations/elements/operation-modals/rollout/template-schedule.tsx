@@ -15,6 +15,7 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import InputGroup from 'components/input-group';
+import { Tooltip } from 'components/tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 
 const TemplateSchedule = ({
@@ -54,11 +55,16 @@ const TemplateSchedule = ({
           <Form.Item className="py-0">
             <Form.Label required className="relative w-fit">
               {t('table:results.variation')}
-              <Icon
-                icon={IconInfo}
-                size="xs"
-                color="gray-500"
-                className="absolute -right-6"
+              <Tooltip
+                align="start"
+                alignOffset={-73}
+                content={t('rollout-tooltips.template.variation')}
+                trigger={
+                  <div className="flex-center size-fit absolute top-0 -right-6">
+                    <Icon icon={IconInfo} size="xs" color="gray-500" />
+                  </div>
+                }
+                className="max-w-[300px]"
               />
             </Form.Label>
             <Form.Control>
@@ -84,7 +90,20 @@ const TemplateSchedule = ({
         name={`progressiveRollout.template.startDate`}
         render={({ field }) => (
           <Form.Item className="py-0">
-            <Form.Label required>{t('feature-flags.start-date')}</Form.Label>
+            <Form.Label required className="relative w-fit">
+              {t('feature-flags.start-date')}
+              <Tooltip
+                align="start"
+                alignOffset={-73}
+                content={t('rollout-tooltips.template.start-date')}
+                trigger={
+                  <div className="flex-center size-fit absolute top-0 -right-6">
+                    <Icon icon={IconInfo} size="xs" color="gray-500" />
+                  </div>
+                }
+                className="max-w-[300px]"
+              />
+            </Form.Label>
             <Form.Control>
               <ReactDatePicker
                 selected={field.value ?? null}
@@ -108,11 +127,16 @@ const TemplateSchedule = ({
             <Form.Item className="py-0 flex-1 h-full">
               <Form.Label required className="relative w-fit">
                 {t('increments')}
-                <Icon
-                  icon={IconInfo}
-                  size="xs"
-                  color="gray-500"
-                  className="absolute -right-6"
+                <Tooltip
+                  align="start"
+                  alignOffset={-73}
+                  content={t('rollout-tooltips.template.increment')}
+                  trigger={
+                    <div className="flex-center size-fit absolute top-0 -right-6">
+                      <Icon icon={IconInfo} size="xs" color="gray-500" />
+                    </div>
+                  }
+                  className="max-w-[300px]"
                 />
               </Form.Label>
               <Form.Control>
@@ -148,11 +172,16 @@ const TemplateSchedule = ({
             <Form.Item className="py-0 flex-1 h-full">
               <Form.Label required className="relative w-fit">
                 {t('frequency')}
-                <Icon
-                  icon={IconInfo}
-                  size="xs"
-                  color="gray-500"
-                  className="absolute -right-6"
+                <Tooltip
+                  align="start"
+                  alignOffset={-150}
+                  content={t('rollout-tooltips.template.frequency')}
+                  trigger={
+                    <div className="flex-center size-fit absolute top-0 -right-6">
+                      <Icon icon={IconInfo} size="xs" color="gray-500" />
+                    </div>
+                  }
+                  className="max-w-[300px]"
                 />
               </Form.Label>
               <Form.Control>

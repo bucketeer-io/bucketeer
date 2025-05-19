@@ -338,6 +338,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
         <ProgressiveRolloutModal
           isOpen={isRolloutAction}
           feature={feature}
+          urlCode={currentEnvironment.urlCode}
           environmentId={currentEnvironment.id}
           actionType={operationModalState.actionType}
           selectedData={operationModalState?.selectedData as Rollout}

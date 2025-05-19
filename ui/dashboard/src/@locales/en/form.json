@@ -249,5 +249,24 @@
   "more-info-see-document": "For more information, please see the <comp>Documentation.</comp>",
   "clone-operation": "Clone Operation",
   "set": "Set",
-  "current-progress": "Current Progress"
+  "current-progress": "Current Progress",
+  "rollout-experiment-warning": "To create a Progressive Rollout, you must stop the current <comp>Experiment.</comp>",
+  "rollout-variations-warning": "The flag must have only 2 variations.",
+  "rollout-enable-flag": "Progressive Rollout will enable the flag when it starts.",
+  "rollout-manual-desc": "Configure each rollout step manually. You define the variation, the percentage of users to receive it, and the exact time for each step to execute.",
+  "rollout-template-desc": "Automate a multi-step rollout by setting a starting time, percentage increment, and rollout frequency. The system will schedule and apply each phase based on your inputs.",
+  "rollout-tooltips": {
+    "template": {
+      "variation": "Select the variation to roll out over time. Avoid using the same variation configured as the OFF variation to prevent evaluation issues.",
+      "start-date": "The date and time when the first rollout phase begins.",
+      "increment": "The percentage increase applied to each rollout phase. For example, using 10% will divide the rollout into 10 equal stages.",
+      "frequency": "The time interval between each rollout phase. Based on the Start Date, Bucketeer will automatically release each stage hourly, daily, or weekly."
+    },
+    "manual": {
+      "variation": "Select the variation to gradually roll out. This must be different from the OFF variation to prevent conflicts during evaluation.",
+      "weight": "The percentage of users who will receive this variation when this phase is executed.",
+      "execute-at": "The exact date and time when this rollout phase will take effect, updating the user distribution."
+    }
+  },
+  "has-rollout-running": "There is a <comp>Progressive Rollout</comp> in progress. It will stop it."
 }
