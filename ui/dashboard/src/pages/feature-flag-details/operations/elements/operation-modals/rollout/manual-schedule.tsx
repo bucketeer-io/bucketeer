@@ -77,7 +77,7 @@ const ManualSchedule = ({
         render={({ field }) => (
           <Form.Item className="py-0">
             <Form.Label required className="relative w-fit">
-              {t('table:results.variation')}
+              {t('flag-variation')}
               <Tooltip
                 align="start"
                 alignOffset={-73}

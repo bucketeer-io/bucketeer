@@ -100,7 +100,10 @@ const ScheduleList = ({
 
         const conflictIndexes: number[] = [];
         scheduleData.forEach((item, index) => {
-          const timeString = Math.round(item.time.getTime() / 1000).toString();
+          const timeString = Math.trunc(
+            dayjs(item.time)?.set('second', 0)?.valueOf() / 1000
+          )?.toString();
+
           if (
             flatMapRolloutItems.find(item => {
               const executeAtTime = dayjs(+item?.executeAt * 1000)?.set(
@@ -110,6 +113,7 @@ const ScheduleList = ({
               const executeAtString = (
                 executeAtTime.valueOf() / 1000
               )?.toString();
+
               return executeAtString === timeString;
             })
           ) {

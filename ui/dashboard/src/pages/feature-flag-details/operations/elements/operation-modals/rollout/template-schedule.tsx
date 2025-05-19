@@ -1,8 +1,11 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
+import dayjs from 'dayjs';
 import { useTranslation } from 'i18n';
+import { v4 as uuid } from 'uuid';
 import { IconInfo } from '@icons';
 import { RolloutSchemaType } from 'pages/feature-flag-details/operations/form-schema';
+import { IntervalMap } from 'pages/feature-flag-details/operations/types';
 import { ReactDatePicker } from 'components/date-time-picker';
 import {
   DropdownMenu,
@@ -26,25 +29,80 @@ const TemplateSchedule = ({
   isDisableCreateRollout: boolean;
 }) => {
   const { t } = useTranslation(['form', 'table', 'common']);
-  const { control } = useFormContext<RolloutSchemaType>();
+  const { control, watch, setValue } = useFormContext<RolloutSchemaType>();
+
+  const scheduleList = watch('progressiveRollout.template.schedulesList');
 
   const intervalOptions = useMemo(
     () => [
       {
         label: t('hourly'),
-        value: 'HOURLY'
+        value: IntervalMap.HOURLY
       },
       {
         label: t('daily'),
-        value: 'DAILY'
+        value: IntervalMap.DAILY
       },
       {
         label: t('weekly'),
-        value: 'WEEKLY'
+        value: IntervalMap.WEEKLY
       }
     ],
     []
   );
+
+  const handleChangeScheduleList = ({
+    increments,
+    interval,
+    startDate
+  }: {
+    increments?: number;
+    interval?: IntervalMap;
+    startDate?: Date;
+  }) => {
+    const _increments =
+      increments || watch('progressiveRollout.template.increments');
+    const _interval = interval || watch('progressiveRollout.template.interval');
+    const _startDate =
+      startDate || watch('progressiveRollout.template.startDate');
+    if (!_increments)
+      return setValue('progressiveRollout.template.schedulesList', [], {
+        shouldValidate: true
+      });
+    const newScheduleList = Array(Math.ceil(100 / _increments))
+      .fill('')
+      .map((_, index) => {
+        const time = dayjs(_startDate)
+          .add(
+            index,
+            _interval === IntervalMap.HOURLY
+              ? 'hour'
+              : interval === IntervalMap.DAILY
+                ? 'day'
+                : 'week'
+          )
+          .toDate();
+
+        const weight = (index + 1) * _increments;
+
+        return {
+          scheduleId: uuid(),
+          executeAt: time,
+          weight: weight > 100 ? 100 : Math.round(weight * 100) / 100,
+          triggeredAt: ''
+        };
+      });
+    setValue('progressiveRollout.template.schedulesList', newScheduleList, {
+      shouldValidate: true
+    });
+  };
+
+  useEffect(() => {
+    handleChangeScheduleList({
+      increments: 10,
+      interval: IntervalMap.HOURLY
+    });
+  }, []);
 
   return (
     <div className="flex flex-col w-full gap-y-4">
@@ -54,7 +112,7 @@ const TemplateSchedule = ({
         render={({ field }) => (
           <Form.Item className="py-0">
             <Form.Label required className="relative w-fit">
-              {t('table:results.variation')}
+              {t('flag-variation')}
               <Tooltip
                 align="start"
                 alignOffset={-73}
@@ -111,6 +169,9 @@ const TemplateSchedule = ({
                 onChange={date => {
                   if (date) {
                     field.onChange(date);
+                    handleChangeScheduleList({
+                      startDate: date
+                    });
                   }
                 }}
               />
@@ -158,6 +219,12 @@ const TemplateSchedule = ({
                     onKeyDown={e => {
                       if (e.key === 'Enter') e.preventDefault();
                     }}
+                    onChange={value => {
+                      field.onChange(+value);
+                      handleChangeScheduleList({
+                        increments: +value
+                      });
+                    }}
                   />
                 </InputGroup>
               </Form.Control>
@@ -200,7 +267,13 @@ const TemplateSchedule = ({
                         key={index}
                         label={item.label}
                         value={item.value}
-                        onSelectOption={field.onChange}
+                        onSelectOption={value => {
+                          field.onChange(value);
+
+                          handleChangeScheduleList({
+                            interval: value as IntervalMap
+                          });
+                        }}
                       />
                     ))}
                   </DropdownMenuContent>
@@ -209,6 +282,28 @@ const TemplateSchedule = ({
             </Form.Item>
           )}
         />
+      </div>
+      <div className="flex flex-col w-full gap-y-3">
+        {scheduleList?.map((item, index) => (
+          <div key={index} className="flex items-center w-full gap-x-4">
+            <div className="flex flex-1">
+              <InputGroup
+                className="w-full"
+                addonSlot="right"
+                addonSize="md"
+                addon={'%'}
+              >
+                <Input value={item.weight} className="pr-8" disabled />
+              </InputGroup>
+            </div>
+            <div className="flex flex-1">
+              <ReactDatePicker
+                selected={item.executeAt ?? null}
+                disabled={true}
+              />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

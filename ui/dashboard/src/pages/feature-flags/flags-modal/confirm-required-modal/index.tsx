@@ -51,7 +51,7 @@ const ConfirmationRequiredModal = ({
   isOnFlagList,
   onClose
 }: ConfirmationRequiredModalProps) => {
-  const { t } = useTranslation(['common', 'form', 'table']);
+  const { t } = useTranslation(['common', 'form', 'table', 'message']);
   const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
@@ -91,12 +91,14 @@ const ConfirmationRequiredModal = ({
         if (scheduleType === 'SCHEDULE') {
           if (!value)
             return context.createError({
-              message: `This field is required.`,
+              message: t('message:required-field'),
               path: context.path
             });
           if (+value * 1000 < new Date().getTime())
             return context.createError({
-              message: `This must be later than the current time.`,
+              message: t(
+                'message:validation.operation.later-than-current-time'
+              ),
               path: context.path
             });
         }
