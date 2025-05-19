@@ -223,10 +223,11 @@
   "threshold": "Threshold",
   "minimum-count": "Minimum Count",
   "event-rate-tooltip": {
-    "variation": "",
-    "goal": "",
-    "condition": "",
-    "threshold": "",
-    "min-count": ""
-  }
+    "variation": "The specific variation to monitor. Bucketeer will track how often users assigned to this variation trigger the goal event.",
+    "goal": "The target event (e.g. error, visit, conversion) used to calculate the event rate. This must be set up as a goal in your environment.",
+    "condition": "The comparison used to evaluate the event rate. For example, \">= 5%\" will trigger the kill switch if the rate meets or exceeds 5%.",
+    "threshold": "The event rate percentage that must be met to trigger the kill switch. Calculated as: <br /> (Goal Event Count) / (Evaluation Count for the Variation)",
+    "min-count": "The minimum number of events required before the condition is evaluated. Helps avoid false triggers from small sample sizes."
+  },
+  "flag-variation": "Flag Variation"
 }

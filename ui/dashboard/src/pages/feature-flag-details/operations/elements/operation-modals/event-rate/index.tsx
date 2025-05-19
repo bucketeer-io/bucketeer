@@ -223,7 +223,7 @@ const EventRateOperationModal = ({
                   render={({ field }) => (
                     <Form.Item className="py-0">
                       <Form.Label required className="relative w-fit">
-                        {t('table:results.variation')}
+                        {t('form:flag-variation')}
                         <Tooltip
                           content={t('event-rate-tooltip.variation')}
                           trigger={
@@ -235,6 +235,7 @@ const EventRateOperationModal = ({
                               />
                             </div>
                           }
+                          className="max-w-[300px]"
                         />
                       </Form.Label>
                       <Form.Control>
@@ -273,6 +274,7 @@ const EventRateOperationModal = ({
                               />
                             </div>
                           }
+                          className="max-w-[300px]"
                         />
                       </Form.Label>
                       <Form.Control>
@@ -321,6 +323,7 @@ const EventRateOperationModal = ({
                                   />
                                 </div>
                               }
+                              className="max-w-[300px]"
                             />
                           </Form.Label>
                           <Form.Control>
@@ -360,7 +363,15 @@ const EventRateOperationModal = ({
                           <Form.Label required className="relative w-fit">
                             {t('threshold')}
                             <Tooltip
-                              content={t('event-rate-tooltip.threshold')}
+                              align="start"
+                              alignOffset={-250}
+                              content={
+                                <p
+                                  dangerouslySetInnerHTML={{
+                                    __html: t('event-rate-tooltip.threshold')
+                                  }}
+                                />
+                              }
                               trigger={
                                 <div className="flex-center absolute top-0 -right-6">
                                   <Icon
@@ -370,6 +381,7 @@ const EventRateOperationModal = ({
                                   />
                                 </div>
                               }
+                              className="max-w-[450px]"
                             />
                           </Form.Label>
                           <Form.Control>
@@ -399,6 +411,8 @@ const EventRateOperationModal = ({
                           <Form.Label required className="relative w-fit">
                             {t('minimum-count')}
                             <Tooltip
+                              align="end"
+                              alignOffset={-10}
                               content={t('event-rate-tooltip.min-count')}
                               trigger={
                                 <div className="flex-center absolute top-0 -right-6">
@@ -409,6 +423,7 @@ const EventRateOperationModal = ({
                                   />
                                 </div>
                               }
+                              className="max-w-[300px]"
                             />
                           </Form.Label>
                           <Form.Control>
@@ -471,7 +486,10 @@ const EventRateOperationModal = ({
           connectionType="OPERATION"
           onClose={onHiddenCreateGoalModal}
           onCompleted={goal => {
-            form.setValue('goalId', goal.id);
+            form.setValue('goalId', goal.id, {
+              shouldDirty: true,
+              shouldValidate: true
+            });
           }}
         />
       )}

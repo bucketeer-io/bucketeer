@@ -30,13 +30,13 @@ const overviewOptions: OverviewOption[] = [
     description: 'table:feature-flags.operations-schedule-desc'
   },
   {
-    titleKey: 'feature-flags.event-rate',
+    titleKey: 'table:feature-flags.kill-switch',
     countKey: 'active',
     color: 'pink',
     icon: IconFlagOperationXL,
     iconSize: 'xl',
     opsType: OpsTypeMap.EVENT_RATE,
-    description: 'table:feature-flags.operations-event-rate-desc'
+    description: 'table:feature-flags.kill-switch-desc'
   },
   {
     titleKey: 'feature-flags.progressive-rollout',
@@ -78,7 +78,7 @@ const Overview = ({
               color={color}
               icon={icon}
               iconSize={iconSize}
-              className="border border-transparent"
+              className="items-start border border-transparent min-h-full self-stretch min-w-[300px]"
               iconClassName={'p-4'}
               onClick={() => onOperationActions(opsType)}
             />
