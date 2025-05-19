@@ -1,14 +1,16 @@
 import { useMemo } from 'react';
-import { AutoOpsRule } from '@types';
+import { AutoOpsCount, AutoOpsRule } from '@types';
 import { OperationModalState } from '../..';
 import { OperationCombinedType } from '../../types';
 import Operation from '../operation';
 
 const ActiveContent = ({
   operations,
+  opsCounts,
   onOperationActions
 }: {
   operations: AutoOpsRule[];
+  opsCounts: AutoOpsCount[];
   onOperationActions: (data: OperationModalState) => void;
 }) => {
   const activeStatuses = useMemo(() => ['WAITING', 'RUNNING'], []);
@@ -49,6 +51,7 @@ const ActiveContent = ({
           key={index}
           isFinished={false}
           operation={item}
+          opsCounts={opsCounts}
           onActions={onOperationActions}
         />
       ))}

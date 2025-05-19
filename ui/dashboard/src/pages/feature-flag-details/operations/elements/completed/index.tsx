@@ -1,14 +1,16 @@
 import { useMemo } from 'react';
-import { AutoOpsRule } from '@types';
+import { AutoOpsCount, AutoOpsRule } from '@types';
 import { OperationModalState } from '../..';
 import { OperationCombinedType } from '../../types';
 import Operation from '../operation';
 
 const CompletedContent = ({
   operations,
+  opsCounts,
   onOperationActions
 }: {
   operations: AutoOpsRule[];
+  opsCounts: AutoOpsCount[];
   onOperationActions: (data: OperationModalState) => void;
 }) => {
   const completedStatuses = useMemo(() => ['STOPPED', 'FINISHED'], []);
@@ -49,6 +51,7 @@ const CompletedContent = ({
           key={index}
           isFinished={true}
           operation={item}
+          opsCounts={opsCounts}
           onActions={onOperationActions}
         />
       ))}

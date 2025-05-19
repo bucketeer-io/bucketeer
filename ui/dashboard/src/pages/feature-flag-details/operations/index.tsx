@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { autoOpsDelete, autoOpsStop } from '@api/auto-ops';
+import { useQueryAutoOpsCount } from '@queries/auto-ops-count';
 import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -118,6 +119,26 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
   const rollouts = rolloutCollection?.progressiveRollouts || [];
   const operations = operationCollection?.autoOpsRules || [];
+
+  const eventRateActiveIds = operations
+    ?.filter(
+      item =>
+        ['RUNNING', 'WAITING'].includes(item.autoOpsStatus) &&
+        item.opsType === 'EVENT_RATE'
+    )
+    ?.map(item => item.id);
+
+  const { data: opsCountCollection } = useQueryAutoOpsCount({
+    params: {
+      cursor: String(0),
+      environmentId: currentEnvironment.id,
+      featureIds: [feature.id],
+      autoOpsRuleIds: eventRateActiveIds
+    },
+    enabled: !!eventRateActiveIds.length
+  });
+
+  const opsCounts = opsCountCollection?.opsCounts || [];
 
   const onOpenOperationModal = useCallback(
     (path: string) => {
@@ -262,6 +283,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
             <CollectionLayout
               currentTab={currentTab}
               operations={operations}
+              opsCounts={opsCounts}
               onOperationActions={onOperationActions}
             />
           </TabsContent>

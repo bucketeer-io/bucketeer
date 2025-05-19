@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'i18n';
-import { OpsEventRateClause } from '@types';
+import { AutoOpsCount, OpsEventRateClause } from '@types';
 import { cn } from 'utils/style';
 import { IconQuestion } from '@icons';
 import { OperationCombinedType } from 'pages/feature-flag-details/operations/types';
@@ -34,9 +34,11 @@ const PercentItem = ({
 };
 
 const EventRateProgress = ({
-  operation
+  operation,
+  opsCounts
 }: {
   operation: OperationCombinedType;
+  opsCounts: AutoOpsCount[];
 }) => {
   const { t } = useTranslation(['form', 'table']);
   const clause: OpsEventRateClause = useMemo(
@@ -44,21 +46,45 @@ const EventRateProgress = ({
     [operation]
   );
   const { goalId, minCount, threadsholdRate } = clause;
-  // Need to update when the api completed
-  const currentEventRate: number = 32;
-  const numberOfSteps =
-    Math.round(threadsholdRate * 100) > 10
-      ? 10
-      : Math.round(threadsholdRate * 100);
-  const step = (threadsholdRate * 100) / numberOfSteps;
 
-  const stepArray = Array.from({ length: numberOfSteps }, (_, index) =>
-    Math.round(step + index * step)
+  const opsCount = opsCounts.find(
+    opsCount => opsCount.autoOpsRuleId === operation.id
   );
 
-  const barWidth = Math.min(
-    (currentEventRate / (threadsholdRate * 100)) * 100,
-    100
+  const currentEventRate = useMemo(() => {
+    if (opsCount && (+opsCount?.opsEventCount || 0) >= (+minCount || 0)) {
+      const { opsEventCount, evaluationCount } = opsCount || {};
+      const eventCount =
+        +opsEventCount > +evaluationCount ? +evaluationCount : +opsEventCount;
+      return Math.round((+eventCount / +evaluationCount) * 100 * 100) / 100;
+    }
+    return 0;
+  }, [opsCount, minCount]);
+
+  const numberOfSteps = useMemo(
+    () =>
+      Math.round(threadsholdRate * 100) > 10
+        ? 10
+        : Math.round(threadsholdRate * 100),
+    [threadsholdRate]
+  );
+
+  const step = useMemo(
+    () => (threadsholdRate * 100) / numberOfSteps,
+    [threadsholdRate, numberOfSteps]
+  );
+
+  const stepArray = useMemo(
+    () =>
+      Array.from({ length: numberOfSteps }, (_, index) =>
+        Math.round(step + index * step)
+      ),
+    [numberOfSteps, step]
+  );
+
+  const barWidth = useMemo(
+    () => Math.min((currentEventRate / (threadsholdRate * 100)) * 100, 100),
+    [currentEventRate, threadsholdRate]
   );
 
   return (

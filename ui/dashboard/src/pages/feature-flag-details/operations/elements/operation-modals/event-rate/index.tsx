@@ -30,6 +30,7 @@ import Icon from 'components/icon';
 import Input from 'components/input';
 import InputGroup from 'components/input-group';
 import SlideModal from 'components/modal/slide';
+import { Tooltip } from 'components/tooltip';
 import CreateGoalModal from 'elements/create-goal-modal';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 
@@ -187,9 +188,7 @@ const EventRateOperationModal = ({
         if (resp) {
           onSubmitOperationSuccess();
           notify({
-            message: t(
-              `message:operation.event-rate-${isCreate ? 'created' : 'updated'}`
-            )
+            message: t(`message:operation.${isCreate ? 'created' : 'updated'}`)
           });
         }
       } catch (error) {
@@ -225,11 +224,17 @@ const EventRateOperationModal = ({
                     <Form.Item className="py-0">
                       <Form.Label required className="relative w-fit">
                         {t('table:results.variation')}
-                        <Icon
-                          icon={IconInfo}
-                          size="xs"
-                          color="gray-500"
-                          className="absolute -right-6"
+                        <Tooltip
+                          content={t('event-rate-tooltip.variation')}
+                          trigger={
+                            <div className="flex-center absolute top-0 -right-6">
+                              <Icon
+                                icon={IconInfo}
+                                size="xs"
+                                color="gray-500"
+                              />
+                            </div>
+                          }
                         />
                       </Form.Label>
                       <Form.Control>
@@ -257,11 +262,17 @@ const EventRateOperationModal = ({
                     <Form.Item className="py-0">
                       <Form.Label required className="relative w-fit">
                         {t('common:goal')}
-                        <Icon
-                          icon={IconInfo}
-                          size="xs"
-                          color="gray-500"
-                          className="absolute -right-6"
+                        <Tooltip
+                          content={t('event-rate-tooltip.goal')}
+                          trigger={
+                            <div className="flex-center absolute top-0 -right-6">
+                              <Icon
+                                icon={IconInfo}
+                                size="xs"
+                                color="gray-500"
+                              />
+                            </div>
+                          }
                         />
                       </Form.Label>
                       <Form.Control>
@@ -299,11 +310,17 @@ const EventRateOperationModal = ({
                         <Form.Item className="py-0 flex-1 h-full">
                           <Form.Label required className="relative w-fit">
                             {t('condition')}
-                            <Icon
-                              icon={IconInfo}
-                              size="xs"
-                              color="gray-500"
-                              className="absolute -right-6"
+                            <Tooltip
+                              content={t('event-rate-tooltip.condition')}
+                              trigger={
+                                <div className="flex-center absolute top-0 -right-6">
+                                  <Icon
+                                    icon={IconInfo}
+                                    size="xs"
+                                    color="gray-500"
+                                  />
+                                </div>
+                              }
                             />
                           </Form.Label>
                           <Form.Control>
@@ -342,11 +359,17 @@ const EventRateOperationModal = ({
                         <Form.Item className="py-0 flex-1 h-full">
                           <Form.Label required className="relative w-fit">
                             {t('threshold')}
-                            <Icon
-                              icon={IconInfo}
-                              size="xs"
-                              color="gray-500"
-                              className="absolute -right-6"
+                            <Tooltip
+                              content={t('event-rate-tooltip.threshold')}
+                              trigger={
+                                <div className="flex-center absolute top-0 -right-6">
+                                  <Icon
+                                    icon={IconInfo}
+                                    size="xs"
+                                    color="gray-500"
+                                  />
+                                </div>
+                              }
                             />
                           </Form.Label>
                           <Form.Control>
@@ -375,11 +398,17 @@ const EventRateOperationModal = ({
                         <Form.Item className="py-0 flex-1 h-full">
                           <Form.Label required className="relative w-fit">
                             {t('minimum-count')}
-                            <Icon
-                              icon={IconInfo}
-                              size="xs"
-                              color="gray-500"
-                              className="absolute -right-6"
+                            <Tooltip
+                              content={t('event-rate-tooltip.min-count')}
+                              trigger={
+                                <div className="flex-center absolute top-0 -right-6">
+                                  <Icon
+                                    icon={IconInfo}
+                                    size="xs"
+                                    color="gray-500"
+                                  />
+                                </div>
+                              }
                             />
                           </Form.Label>
                           <Form.Control>

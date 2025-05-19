@@ -221,5 +221,12 @@
   "add-schedule": "Add Schedule",
   "condition": "Condition",
   "threshold": "Threshold",
-  "minimum-count": "Minimum Count"
+  "minimum-count": "Minimum Count",
+  "event-rate-tooltip": {
+    "variation": "",
+    "goal": "",
+    "condition": "",
+    "threshold": "",
+    "min-count": ""
+  }
 }
