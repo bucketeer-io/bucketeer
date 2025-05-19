@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
@@ -36,6 +37,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
+	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
 )
 
 const command = "server"
@@ -307,6 +310,31 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	defer server.Stop(10 * time.Second)
 	go server.Run()
+
+	// Set up REST gateway for API service
+	restPort := *s.port + 1000
+	restAddr := fmt.Sprintf(":%d", restPort)
+	grpcAddr := fmt.Sprintf("localhost:%d", *s.port)
+
+	apiGateway, err := gateway.NewGateway(
+		grpcAddr,
+		restAddr,
+		gateway.WithLogger(logger.Named("api-gateway")),
+		gateway.WithMetrics(registerer),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create API gateway: %v", err)
+	}
+
+	go func() {
+		if err := apiGateway.Start(
+			ctx,
+			gwproto.RegisterGatewayHandlerFromEndpoint,
+		); err != nil {
+			logger.Error("failed to start API gateway", zap.Error(err))
+		}
+	}()
+	defer apiGateway.Stop(context.Background())
 
 	restHealthChecker := health.NewRestChecker(
 		api.Version, api.Service,
