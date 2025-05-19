@@ -64,7 +64,7 @@ const ProgressiveRolloutModal = ({
   onClose,
   onSubmitRolloutSuccess
 }: OperationModalProps) => {
-  const { t } = useTranslation(['form', 'common', 'table']);
+  const { t } = useTranslation(['form', 'common', 'table', 'message']);
   const { notify, errorNotify } = useToast();
 
   const form = useForm({
@@ -180,7 +180,7 @@ const ProgressiveRolloutModal = ({
 
         if (resp) {
           notify({
-            message: `Progressive Rollout created successfully`
+            message: t('message:operation.created')
           });
           onSubmitRolloutSuccess();
         }
