@@ -223,16 +223,12 @@ const ProgressiveRolloutModal = ({
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-y-5 w-full p-5 pb-28">
-            <div className="flex flex-col gap-y-2 w-full">
+            <div className="flex flex-col gap-y-3 w-full">
               <p className="typo-head-bold-small text-gray-800">
                 {t('common:source-type.progressive-rollout')}
               </p>
               <p className="typo-para-small text-gray-500">
-                {t(
-                  isTemplateRollout
-                    ? 'rollout-template-desc'
-                    : 'rollout-manual-desc'
-                )}
+                {t('table:feature-flags.rollout-create-desc')}
               </p>
             </div>
             {!feature.enabled && !isDisableCreateRollout && (
@@ -246,38 +242,48 @@ const ProgressiveRolloutModal = ({
                 variations={feature.variations}
               />
             )}
-
-            <div className="flex items-center">
-              <Button
-                type="button"
-                variant={'secondary-2'}
-                size={'sm'}
-                className={cn(
-                  'rounded-r-none',
-                  buttonCls,
-                  isTemplateRollout && buttonActiveCls
+            <div className="flex flex-col w-full gap-y-3">
+              <div className="flex items-center">
+                <Button
+                  type="button"
+                  variant={'secondary-2'}
+                  size={'sm'}
+                  className={cn(
+                    'rounded-r-none',
+                    buttonCls,
+                    isTemplateRollout && buttonActiveCls
+                  )}
+                  disabled={isDisableCreateRollout}
+                  onClick={() =>
+                    handleChangeTab(RolloutTypeMap.TEMPLATE_SCHEDULE)
+                  }
+                >
+                  {t(`template`)}
+                </Button>
+                <Button
+                  type="button"
+                  variant={'secondary-2'}
+                  size={'sm'}
+                  className={cn(
+                    'rounded-l-none',
+                    buttonCls,
+                    !isTemplateRollout && buttonActiveCls && buttonActiveCls
+                  )}
+                  disabled={isDisableCreateRollout}
+                  onClick={() =>
+                    handleChangeTab(RolloutTypeMap.MANUAL_SCHEDULE)
+                  }
+                >
+                  {t(`manual`)}
+                </Button>
+              </div>
+              <p className="typo-para-small text-gray-500">
+                {t(
+                  isTemplateRollout
+                    ? 'rollout-template-desc'
+                    : 'rollout-manual-desc'
                 )}
-                disabled={isDisableCreateRollout}
-                onClick={() =>
-                  handleChangeTab(RolloutTypeMap.TEMPLATE_SCHEDULE)
-                }
-              >
-                {t(`template`)}
-              </Button>
-              <Button
-                type="button"
-                variant={'secondary-2'}
-                size={'sm'}
-                className={cn(
-                  'rounded-l-none',
-                  buttonCls,
-                  !isTemplateRollout && buttonActiveCls && buttonActiveCls
-                )}
-                disabled={isDisableCreateRollout}
-                onClick={() => handleChangeTab(RolloutTypeMap.MANUAL_SCHEDULE)}
-              >
-                {t(`manual`)}
-              </Button>
+              </p>
             </div>
             {isTemplateRollout ? (
               <TemplateSchedule

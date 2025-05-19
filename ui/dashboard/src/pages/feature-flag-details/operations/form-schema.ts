@@ -127,6 +127,8 @@ export const schedulesListSchema = yup
   )
   .required(requiredMessage);
 
+export type SchedulesListType = yup.InferType<typeof schedulesListSchema>;
+
 export const dateTimeClauseListSchema = yup.object().shape({
   datetimeClausesList: yup
     .array()
