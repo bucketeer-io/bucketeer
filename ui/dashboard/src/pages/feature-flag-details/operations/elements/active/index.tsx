@@ -45,7 +45,7 @@ const ActiveContent = ({
   );
 
   return (
-    <div className="flex flex-col w-full gap-y-6">
+    <div className="flex flex-col w-full gap-y-6 pb-6">
       {operationData?.map((item, index) => (
         <Operation
           key={index}
