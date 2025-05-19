@@ -84,7 +84,7 @@ jobs:
       - name: Install protoc-gen-go
         run: go install github.com/golang/protobuf/protoc-gen-go@${{ env.PROTOC_GEN_GO_VERSION }}
       - name: Install protoc-gen-go-grpc
-        run: go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@${{ env.PROTOC_GEN_GO_GRPC_VERSION }}
+        run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@${{ env.PROTOC_GEN_GO_GRPC_VERSION }}
       - name: Install goimports
         run: go install golang.org/x/tools/cmd/goimports
       - name: Install mockgen
@@ -105,7 +105,7 @@ jobs:
           version: ${{ env.PROTOC_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install protoc-gen-go-grpc
-        run: go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@${{ env.PROTOC_GEN_GO_GRPC_VERSION }}
+        run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@${{ env.PROTOC_GEN_GO_GRPC_VERSION }}
       - name:  Check proto format
         uses: jidicula/clang-format-action@4726374d1aa3c6aecf132e5197e498979588ebc8 # v4.15.0
         with:
@@ -131,7 +131,7 @@ jobs:
       - name: Install protoc-gen-go
         run: go install github.com/golang/protobuf/protoc-gen-go@${{ env.PROTOC_GEN_GO_VERSION }}
       - name: Install protoc-gen-go-grpc
-        run: go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@${{ env.PROTOC_GEN_GO_GRPC_VERSION }}
+        run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@${{ env.PROTOC_GEN_GO_GRPC_VERSION }}
       - name: Generate proto go files
         run: make proto-go
       - name: Check proto go descriptor
@@ -153,7 +153,7 @@ jobs:
       - name: Install protoc-gen-go
         run: go install github.com/golang/protobuf/protoc-gen-go@${{ env.PROTOC_GEN_GO_VERSION }}
       - name: Install protoc-gen-go-grpc
-        run: go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@${{ env.PROTOC_GEN_GO_GRPC_VERSION }}
+        run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@${{ env.PROTOC_GEN_GO_GRPC_VERSION }}
       - name: Check proto go files
         run: make proto-go-check
 
