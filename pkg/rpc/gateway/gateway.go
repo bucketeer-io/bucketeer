@@ -110,13 +110,12 @@ func (g *Gateway) Start(ctx context.Context,
 	return nil
 }
 
-func (g *Gateway) Stop(ctx context.Context) error {
+func (g *Gateway) Stop(ctx context.Context) {
 	if g.httpServer != nil {
 		if err := g.httpServer.Shutdown(ctx); err != nil {
-			return fmt.Errorf("failed to shutdown HTTP server: %v", err)
+			g.logger.Error("failed to shutdown HTTP server", zap.Error(err))
 		}
 	}
-	return nil
 }
 
 func (g *Gateway) createClientConn() (*grpc.ClientConn, error) {

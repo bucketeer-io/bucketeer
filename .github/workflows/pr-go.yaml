@@ -19,6 +19,7 @@ env:
   PROTOLOCK_VERSION: v0.16.0
   PROTOC_GEN_GO_VERSION: v1.5.2
   PROTOC_GEN_OPENAPI_V2: v2.20.0
+  PROTOC_GEN_GO_GRPC_VERSION: v2.20.0
   MOCKGEN_VERSION: v0.4.0
 
 jobs:
@@ -82,6 +83,8 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install protoc-gen-go
         run: go install github.com/golang/protobuf/protoc-gen-go@${{ env.PROTOC_GEN_GO_VERSION }}
+      - name: Install protoc-gen-go-grpc
+        run: go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@${{ env.PROTOC_GEN_GO_GRPC_VERSION }}
       - name: Install goimports
         run: go install golang.org/x/tools/cmd/goimports
       - name: Install mockgen
@@ -101,6 +104,8 @@ jobs:
         with:
           version: ${{ env.PROTOC_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install protoc-gen-go-grpc
+        run: go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@${{ env.PROTOC_GEN_GO_GRPC_VERSION }}
       - name:  Check proto format
         uses: jidicula/clang-format-action@4726374d1aa3c6aecf132e5197e498979588ebc8 # v4.15.0
         with:
@@ -125,6 +130,8 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install protoc-gen-go
         run: go install github.com/golang/protobuf/protoc-gen-go@${{ env.PROTOC_GEN_GO_VERSION }}
+      - name: Install protoc-gen-go-grpc
+        run: go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@${{ env.PROTOC_GEN_GO_GRPC_VERSION }}
       - name: Generate proto go files
         run: make proto-go
       - name: Check proto go descriptor
@@ -145,6 +152,8 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install protoc-gen-go
         run: go install github.com/golang/protobuf/protoc-gen-go@${{ env.PROTOC_GEN_GO_VERSION }}
+      - name: Install protoc-gen-go-grpc
+        run: go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@${{ env.PROTOC_GEN_GO_GRPC_VERSION }}
       - name: Check proto go files
         run: make proto-go-check
 
@@ -161,6 +170,8 @@ jobs:
         with:
           version: ${{ env.PROTOC_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install protoc-gen-go
+        run: go install github.com/golang/protobuf/protoc-gen-go@${{ env.PROTOC_GEN_GO_VERSION }}
       - name: Install protoc-gen-openapi
         run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@${{ env.PROTOC_GEN_OPENAPI_V2 }}
       - name: Generate proto go files
