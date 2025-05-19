@@ -27,7 +27,7 @@ const StopOperationModal = ({
       operationType === OpsTypeMap.SCHEDULE
         ? 'schedule'
         : operationType === OpsTypeMap.EVENT_RATE
-          ? 'event-rate'
+          ? 'kill-switch'
           : 'rollout',
     [operationType]
   );
@@ -53,7 +53,7 @@ const StopOperationModal = ({
       <ButtonBar
         secondaryButton={
           <Button loading={loading} onClick={onSubmit}>
-            {t(`submit`)}
+            {t(`stop`)}
           </Button>
         }
         primaryButton={

@@ -277,7 +277,8 @@
     "dropdown-desc": "Webhook: Change the feature flag ON/OFF status via HTTP request"
   },
   "stop-schedule": "Stop Schedule",
-  "stop-event-rate": "Stop Event Rate",
+  "stop-kill-switch": "Stop Kill Switch",
   "stop-rollout": "Stop Progressive Rollout",
-  "stop-operation-type-desc": "The {{type}} will be stopped. Are you sure you want to proceed?"
+  "stop-operation-type-desc": "The {{type}} will be stopped. Are you sure you want to proceed?",
+  "current-event-rate-tooltip": "Goal Count / Evaluation Count * 100"
 }

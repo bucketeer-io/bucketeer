@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { autoOpsDelete, autoOpsStop } from '@api/auto-ops';
+import { rolloutDelete, rolloutStopped } from '@api/rollouts';
 import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -23,6 +24,7 @@ import Filter from 'elements/filter';
 import FormLoading from 'elements/form-loading';
 import CollectionLayout from './elements/collection-layout';
 import OperationActions from './elements/operation-actions';
+import ProgressiveRolloutModal from './elements/operation-modals/rollout';
 import ScheduleOperationModal from './elements/operation-modals/schedule-operation';
 import StopOperationModal from './elements/operation-modals/stop-operation';
 import { OperationActionType, OperationTab, OpsTypeMap } from './types';
@@ -67,6 +69,8 @@ const Operations = ({ feature }: { feature: Feature }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const isScheduleAction = useMemo(() => action === 'schedule', [action]);
+  const isRolloutAction = useMemo(() => action === 'rollout', [action]);
+
   const isScheduleType = useMemo(
     () => operationModalState.operationType === 'SCHEDULE',
     [operationModalState]
@@ -128,6 +132,11 @@ const Operations = ({ feature }: { feature: Feature }) => {
     refetchAutoOpsRules();
   }, [searchParams]);
 
+  const onSubmitRolloutSuccess = useCallback(() => {
+    onCloseActionModal();
+    refetchRollouts();
+  }, [searchParams]);
+
   const onOperationActions = useCallback(
     ({
       operationType,
@@ -160,7 +169,13 @@ const Operations = ({ feature }: { feature: Feature }) => {
         let resp = null;
         const isStopRollout =
           operationModalState.operationType === OpsTypeMap.ROLLOUT;
-        if (!isStopRollout) {
+        if (isStopRollout) {
+          resp = await rolloutStopped({
+            environmentId: currentEnvironment.id,
+            id: operationModalState?.selectedData?.id,
+            stoppedBy: 'USER'
+          });
+        } else {
           resp = await autoOpsStop({
             environmentId: currentEnvironment.id,
             id: operationModalState?.selectedData?.id
@@ -191,7 +206,10 @@ const Operations = ({ feature }: { feature: Feature }) => {
     try {
       if (operationModalState?.selectedData) {
         setIsLoading(true);
-        const resp = await autoOpsDelete({
+        const isStopRollout =
+          operationModalState.operationType === OpsTypeMap.ROLLOUT;
+        const deleteFn = isStopRollout ? rolloutDelete : autoOpsDelete;
+        const resp = await deleteFn({
           environmentId: currentEnvironment.id,
           id: operationModalState?.selectedData?.id
         });
@@ -201,6 +219,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
             message: t('message:operation.deleted')
           });
           refetchAutoOpsRules();
+          refetchRollouts();
           onResetModalState();
         }
       }
@@ -259,6 +278,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
             <CollectionLayout
               currentTab={currentTab}
               operations={operations}
+              rollouts={rollouts}
               onOperationActions={onOperationActions}
             />
           </TabsContent>
@@ -276,6 +296,18 @@ const Operations = ({ feature }: { feature: Feature }) => {
           selectedData={operationModalState?.selectedData as AutoOpsRule}
           onClose={onCloseActionModal}
           onSubmitOperationSuccess={onSubmitOperationSuccess}
+        />
+      )}
+      {isRolloutAction && isOpenModalAction && feature && (
+        <ProgressiveRolloutModal
+          isOpen={isRolloutAction}
+          feature={feature}
+          environmentId={currentEnvironment.id}
+          actionType={operationModalState.actionType}
+          selectedData={operationModalState?.selectedData as Rollout}
+          rollouts={rollouts}
+          onClose={onCloseActionModal}
+          onSubmitRolloutSuccess={onSubmitRolloutSuccess}
         />
       )}
       {isStop && !!operationModalState?.selectedData && (

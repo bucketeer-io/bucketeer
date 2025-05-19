@@ -11,7 +11,6 @@ import {
   IconCalendar,
   IconDisable,
   IconFlagOperation,
-  IconOperationClone,
   IconOperationDetails,
   IconStoppedByUser,
   IconTrash,
@@ -151,11 +150,6 @@ const OperationStatus = ({
   const completedOptions: PopoverOption<PopoverValue>[] = useMemo(() => {
     if (isRollout)
       return [
-        {
-          label: t('clone-operation'),
-          icon: IconOperationClone,
-          value: 'CLONE'
-        },
         {
           label: (
             <p className="text-accent-red-500">
