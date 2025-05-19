@@ -247,7 +247,7 @@ func (p *StreamPuller) Pull(ctx context.Context, handler func(context.Context, *
 				select {
 				case <-time.After(backoff):
 					// Exponential backoff with maximum
-					backoff = min(backoff*2, maxBackoff)
+					backoff = time.Duration(min(int64(backoff*2), int64(maxBackoff)))
 				case <-ctxDone:
 					return ctx.Err()
 				case <-p.done:
@@ -553,12 +553,4 @@ func (p *StreamPuller) Close() error {
 // SubscriptionName returns the name of the subscription
 func (p *StreamPuller) SubscriptionName() string {
 	return fmt.Sprintf("%s:%s", p.subscription, p.topicBase)
-}
-
-// Helper function to get the minimum of two durations
-func min(a, b time.Duration) time.Duration {
-	if a < b {
-		return a
-	}
-	return b
 }
