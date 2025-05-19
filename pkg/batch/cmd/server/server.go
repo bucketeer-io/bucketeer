@@ -16,6 +16,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -56,8 +57,10 @@ import (
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
+	batchproto "github.com/bucketeer-io/bucketeer/proto/batch"
 )
 
 const (
@@ -587,8 +590,33 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go server.Run()
 
+	// Setup REST gateway for batch service
+	restPort := *s.port + 1000
+	restAddr := fmt.Sprintf(":%d", restPort)
+	grpcAddr := fmt.Sprintf("localhost:%d", *s.port)
+
+	batchGateway, err := gateway.NewGateway(
+		grpcAddr,
+		restAddr,
+		gateway.WithLogger(logger.Named("batch-gateway")),
+		gateway.WithMetrics(registerer),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create batch gateway: %v", err)
+	}
+
+	go func() {
+		if err := batchGateway.Start(
+			ctx,
+			batchproto.RegisterBatchServiceHandlerFromEndpoint,
+		); err != nil {
+			logger.Error("failed to start batch gateway", zap.Error(err))
+		}
+	}()
+
 	defer func() {
 		server.Stop(serverShutDownTimeout)
+		batchGateway.Stop(context.Background())
 		accountClient.Close()
 		notificationClient.Close()
 		experimentClient.Close()
