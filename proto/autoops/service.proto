@@ -594,7 +594,7 @@ service AutoOpsService {
       get: "/v1/auto_ops_rule/ops_counts"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "List ops counts"
+      summary: "List Ops Counts"
       description: "List ops counts."
       tags: "ops_count"
       operation_id: "web.v1.auto_ops_rule.list_ops_counts"

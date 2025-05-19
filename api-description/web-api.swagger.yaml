@@ -2064,7 +2064,7 @@ paths:
         - auto_ops_rule
   /v1/auto_ops_rule/ops_counts:
     get:
-      summary: List ops counts
+      summary: List Ops Counts
       description: List ops counts.
       operationId: web.v1.auto_ops_rule.list_ops_counts
       responses:
