@@ -100,6 +100,10 @@ const EventRateProgress = ({
         />
         <OperationDescription
           titleKey={'form:feature-flags.progress-current-goal'}
+          value={opsCount?.opsEventCount || 0}
+        />
+        <OperationDescription
+          titleKey={'form:feature-flags.progress-current-event-rate'}
           value={`${currentEventRate}/100 (${currentEventRate}%)`}
           isLastItem
         />
@@ -113,7 +117,10 @@ const EventRateProgress = ({
         />
       </div>
 
-      <div className="bg-gray-100 rounded px-12 pt-14 pb-8 relative">
+      <div className="bg-gray-100 rounded px-12 pt-16 pb-10 relative">
+        <p className="absolute right-10 top-1.5 typo-para-medium text-accent-pink-500">
+          {t('form:threshold')}
+        </p>
         <div className="flex h-[4px] bg-gray-200 relative">
           <div
             className="bg-accent-pink-500 absolute h-1 "

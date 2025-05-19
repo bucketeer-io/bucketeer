@@ -207,9 +207,14 @@ const EventRateOperationModal = ({
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-y-5 w-full p-5 pb-28">
-            <p className="typo-head-bold-small text-gray-800">
-              {t('feature-flags.event-rate')}
-            </p>
+            <div className="flex flex-col gap-y-3">
+              <p className="typo-head-bold-small text-gray-800">
+                {t('feature-flags.kill-switch')}
+              </p>
+              <p className="typo-para-small text-gray-500">
+                {t('table:feature-flags.event-rate-create-desc')}
+              </p>
+            </div>
             <div className="flex items-center w-full">
               <div className="pr-4">
                 <p className="flex-center w-[42px] h-[26px] rounded-[3px] bg-accent-pink-50 typo-para-small text-accent-pink-500">
