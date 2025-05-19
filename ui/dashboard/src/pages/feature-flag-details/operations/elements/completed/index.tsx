@@ -15,15 +15,31 @@ const CompletedContent = ({
 
   const scheduleCompletedData = useMemo(
     () =>
-      operations?.filter(item =>
-        completedStatuses.includes(item.autoOpsStatus)
+      operations?.filter(
+        item =>
+          completedStatuses.includes(item.autoOpsStatus) &&
+          item.opsType === 'SCHEDULE'
+      ),
+    [operations, completedStatuses]
+  );
+
+  const eventRateCompletedData = useMemo(
+    () =>
+      operations?.filter(
+        item =>
+          completedStatuses.includes(item.autoOpsStatus) &&
+          item.opsType === 'EVENT_RATE'
       ),
     [operations, completedStatuses]
   );
 
   const operationData = useMemo(
-    () => [...scheduleCompletedData] as OperationCombinedType[],
-    [scheduleCompletedData]
+    () =>
+      [
+        ...eventRateCompletedData,
+        ...scheduleCompletedData
+      ] as OperationCombinedType[],
+    [scheduleCompletedData, eventRateCompletedData]
   );
 
   return (

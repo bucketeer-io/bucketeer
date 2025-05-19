@@ -38,7 +38,7 @@ const EventRateProgress = ({
 }: {
   operation: OperationCombinedType;
 }) => {
-  const { t } = useTranslation(['form']);
+  const { t } = useTranslation(['form', 'table']);
   const clause: OpsEventRateClause = useMemo(
     () => (operation.clauses[0]?.clause || {}) as OpsEventRateClause,
     [operation]
@@ -78,7 +78,7 @@ const EventRateProgress = ({
           isLastItem
         />
         <Tooltip
-          content={t('ops-count-tooltip')}
+          content={t('table:current-event-rate-tooltip')}
           trigger={
             <div className="flex-center size-4">
               <Icon icon={IconQuestion} size={'xxs'} />

@@ -22,7 +22,7 @@ export const createEventRate = (feature: Feature) => ({
   minCount: 50,
   threadsholdRate: 50,
   operator: 'GREATER_OR_EQUAL' as OpsEventRateClauseOperator,
-  actionType: ActionTypeMap.ENABLE
+  actionType: ActionTypeMap.DISABLE
 });
 
 export const createProgressiveRollout = (feature: Feature) => ({

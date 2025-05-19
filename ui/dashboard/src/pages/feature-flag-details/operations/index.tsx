@@ -23,6 +23,7 @@ import Filter from 'elements/filter';
 import FormLoading from 'elements/form-loading';
 import CollectionLayout from './elements/collection-layout';
 import OperationActions from './elements/operation-actions';
+import EventRateOperationModal from './elements/operation-modals/event-rate';
 import ScheduleOperationModal from './elements/operation-modals/schedule-operation';
 import StopOperationModal from './elements/operation-modals/stop-operation';
 import { OperationActionType, OperationTab, OpsTypeMap } from './types';
@@ -67,6 +68,8 @@ const Operations = ({ feature }: { feature: Feature }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const isScheduleAction = useMemo(() => action === 'schedule', [action]);
+  const isEventRateAction = useMemo(() => action === 'event-rate', [action]);
+
   const isScheduleType = useMemo(
     () => operationModalState.operationType === 'SCHEDULE',
     [operationModalState]
@@ -273,6 +276,18 @@ const Operations = ({ feature }: { feature: Feature }) => {
           isEnabledFlag={feature.enabled}
           rollouts={rollouts}
           actionType={operationModalState.actionType}
+          selectedData={operationModalState?.selectedData as AutoOpsRule}
+          onClose={onCloseActionModal}
+          onSubmitOperationSuccess={onSubmitOperationSuccess}
+        />
+      )}
+      {isEventRateAction && isOpenModalAction && feature && (
+        <EventRateOperationModal
+          isOpen={isEventRateAction}
+          feature={feature}
+          environmentId={currentEnvironment.id}
+          actionType={operationModalState.actionType}
+          isFinishedTab={currentTab === OperationTab.FINISHED}
           selectedData={operationModalState?.selectedData as AutoOpsRule}
           onClose={onCloseActionModal}
           onSubmitOperationSuccess={onSubmitOperationSuccess}

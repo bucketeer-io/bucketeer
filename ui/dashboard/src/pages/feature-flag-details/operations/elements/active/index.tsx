@@ -23,9 +23,23 @@ const ActiveContent = ({
     [operations, activeStatuses]
   );
 
+  const eventRateActiveData = useMemo(
+    () =>
+      operations?.filter(
+        item =>
+          activeStatuses.includes(item.autoOpsStatus) &&
+          item.opsType === 'EVENT_RATE'
+      ),
+    [operations, activeStatuses]
+  );
+
   const operationData = useMemo(
-    () => [...scheduleActiveData] as OperationCombinedType[],
-    [scheduleActiveData]
+    () =>
+      [
+        ...eventRateActiveData,
+        ...scheduleActiveData
+      ] as OperationCombinedType[],
+    [eventRateActiveData, scheduleActiveData]
   );
 
   return (

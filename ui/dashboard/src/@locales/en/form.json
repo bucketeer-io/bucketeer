@@ -177,7 +177,9 @@
     "start-date": "Start Date",
     "time": "Time",
     "create-operation": "Create Operation",
-    "conflict-rollout": "There is a conflict with a Progressive Rollout Operation."
+    "conflict-rollout": "There is a conflict with a Progressive Rollout Operation.",
+    "kill-switch": "Kill Switch",
+    "rollout": "Rollout"
   },
   "origin-env": "Origin Environment",
   "destination-env": "Destination Environment",
@@ -216,5 +218,8 @@
   "rollout": "Rollout",
   "off-variation": "Off Variation",
   "reset-sampling": "Reset random sampling",
-  "add-schedule": "Add Schedule"
+  "add-schedule": "Add Schedule",
+  "condition": "Condition",
+  "threshold": "Threshold",
+  "minimum-count": "Minimum Count"
 }
