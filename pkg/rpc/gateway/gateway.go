@@ -118,14 +118,26 @@ func (g *Gateway) Start(ctx context.Context,
 	}
 
 	go func() {
-		if err := g.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			g.logger.Error("failed to serve HTTP", zap.Error(err))
+		var err error
+		// Determine whether to use HTTPS or HTTP based on keyPath and certPath
+		if g.opts.keyPath != "" && g.opts.certPath != "" {
+			g.logger.Info("starting gateway with HTTPS",
+				zap.String("cert_path", g.opts.certPath),
+				zap.String("key_path", g.opts.keyPath))
+			err = g.httpServer.ListenAndServeTLS(g.opts.certPath, g.opts.keyPath)
+		} else {
+			g.logger.Info("starting gateway with HTTP (no TLS)")
+			err = g.httpServer.ListenAndServe()
+		}
+		if err != nil && err != http.ErrServerClosed {
+			g.logger.Error("failed to serve HTTP/HTTPS", zap.Error(err))
 		}
 	}()
 
 	g.logger.Info("gateway started",
 		zap.String("grpc_addr", g.grpcAddr),
 		zap.String("rest_addr", g.restAddr),
+		zap.Bool("tls_enabled", g.opts.keyPath != "" && g.opts.certPath != ""),
 	)
 
 	return nil

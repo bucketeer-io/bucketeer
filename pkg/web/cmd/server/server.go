@@ -537,6 +537,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithLogger(logger.Named("account-gateway")),
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithKeyPath(*s.keyPath),
 		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
@@ -576,6 +577,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithLogger(logger.Named("auditlog-gateway")),
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithKeyPath(*s.keyPath),
 		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
@@ -622,6 +624,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithLogger(logger.Named("autoops-gateway")),
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithKeyPath(*s.keyPath),
 		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
@@ -662,6 +665,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithLogger(logger.Named("environment-gateway")),
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithKeyPath(*s.keyPath),
 		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
@@ -708,6 +712,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithLogger(logger.Named("eventcounter-gateway")),
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithKeyPath(*s.keyPath),
 		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
@@ -750,6 +755,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithLogger(logger.Named("experiment-gateway")),
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithKeyPath(*s.keyPath),
 		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
@@ -800,6 +806,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithLogger(logger.Named("feature-gateway")),
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithKeyPath(*s.keyPath),
 		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
@@ -840,6 +847,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithLogger(logger.Named("notification-gateway")),
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithKeyPath(*s.keyPath),
 		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
@@ -882,6 +890,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithLogger(logger.Named("push-gateway")),
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithKeyPath(*s.keyPath),
 		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
@@ -922,6 +931,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithLogger(logger.Named("tag-gateway")),
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithKeyPath(*s.keyPath),
 		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
@@ -962,6 +972,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithLogger(logger.Named("coderef-gateway")),
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithKeyPath(*s.keyPath),
 		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {

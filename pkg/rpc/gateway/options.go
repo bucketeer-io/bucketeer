@@ -45,6 +45,7 @@ type options struct {
 	initialWindowSize         int32
 	initialConnWindowSize     int32
 	certPath                  string
+	keyPath                   string
 	perRPCCredentials         credentials.PerRPCCredentials
 }
 
@@ -66,6 +67,7 @@ var defaultOptions = options{
 	initialWindowSize:         1024 * 1024 * 2, // 2MB
 	initialConnWindowSize:     1024 * 1024 * 2, // 2MB
 	certPath:                  "",
+	keyPath:                   "",
 	perRPCCredentials:         nil,
 }
 
@@ -144,6 +146,12 @@ func WithInitialConnWindowSize(initialConnWindowSize int32) Option {
 func WithCertPath(certPath string) Option {
 	return func(o *options) {
 		o.certPath = certPath
+	}
+}
+
+func WithKeyPath(keyPath string) Option {
+	return func(o *options) {
+		o.keyPath = keyPath
 	}
 }
 
