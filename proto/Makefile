@@ -110,6 +110,7 @@ go-check: go
 .PHONY: remove-go
 remove-go:
 	find . -name "*.pb.go" -type f -delete; \
+	find . -name "*.pb.gw.go" -type f -delete; \
 	find . -name "proto_descriptor.pb" -type f -delete
 
 .PHONY: go-descriptor
