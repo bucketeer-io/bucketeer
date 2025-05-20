@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 )
@@ -43,6 +44,8 @@ type options struct {
 	permitWithoutStream       bool
 	initialWindowSize         int32
 	initialConnWindowSize     int32
+	certPath                  string
+	perRPCCredentials         credentials.PerRPCCredentials
 }
 
 var defaultOptions = options{
@@ -62,6 +65,8 @@ var defaultOptions = options{
 	permitWithoutStream:       true,
 	initialWindowSize:         1024 * 1024 * 2, // 2MB
 	initialConnWindowSize:     1024 * 1024 * 2, // 2MB
+	certPath:                  "",
+	perRPCCredentials:         nil,
 }
 
 func WithMetrics(metrics metrics.Registerer) Option {
@@ -133,5 +138,17 @@ func WithInitialWindowSize(initialWindowSize int32) Option {
 func WithInitialConnWindowSize(initialConnWindowSize int32) Option {
 	return func(o *options) {
 		o.initialConnWindowSize = initialConnWindowSize
+	}
+}
+
+func WithCertPath(certPath string) Option {
+	return func(o *options) {
+		o.certPath = certPath
+	}
+}
+
+func WithPerRPCCredentials(creds credentials.PerRPCCredentials) Option {
+	return func(o *options) {
+		o.perRPCCredentials = creds
 	}
 }
