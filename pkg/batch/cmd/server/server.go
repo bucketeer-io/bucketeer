@@ -601,6 +601,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gateway.WithLogger(logger.Named("batch-gateway")),
 		gateway.WithMetrics(registerer),
 		gateway.WithCertPath(*s.certPath),
+		gateway.WithKeyPath(*s.keyPath),
 		gateway.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
