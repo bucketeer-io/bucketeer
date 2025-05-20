@@ -4,6 +4,7 @@ import { Trans } from 'react-i18next';
 import { autoOpsCreator } from '@api/auto-ops';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures } from '@queries/features';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -137,6 +138,7 @@ const ConfirmationRequiredModal = ({
             )
           });
           invalidateFeatures(queryClient);
+          invalidateFeature(queryClient);
           onClose();
         }
       } catch (error) {

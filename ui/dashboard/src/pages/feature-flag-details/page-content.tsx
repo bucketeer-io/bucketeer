@@ -19,6 +19,7 @@ import PageLayout from 'elements/page-layout';
 import CodeReferencesPage from './code-refs';
 import EvaluationPage from './evaluation';
 import HistoryPage from './history';
+import Operations from './operations';
 import SettingsPage from './settings';
 import TriggerPage from './trigger';
 import { TabItem } from './types';
@@ -110,6 +111,10 @@ const PageContent = ({ feature }: { feature: Feature }) => {
             <Route
               path={`${PAGE_PATH_FEATURE_TRIGGER}/*`}
               element={<TriggerPage feature={feature} />}
+            />
+            <Route
+              path={`${PAGE_PATH_FEATURE_AUTOOPS}/*`}
+              element={<Operations feature={feature} />}
             />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
