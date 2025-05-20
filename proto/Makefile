@@ -52,24 +52,6 @@ go: remove-go
 		fi \
 	done
 
-.PHONY: grpc-gateway
-grpc-gateway:
-	for f in ${PROTO_WITH_DESCRIPTOR_FOLDERS}; do \
-		protoc \
-			--proto_path=${GIT_TOP_DIR} \
-			--proto_path=${PROTOBUF_INCLUDE_DIR} \
-			--proto_path=${GOOGLEAPIS} \
-			--proto_path=${OPENAPI} \
-			--grpc-gateway_out=${GIT_TOP_DIR} \
-			--grpc-gateway_opt=paths=source_relative \
-			--grpc-gateway_opt=logtostderr=true \
-			--grpc-gateway_opt=generate_unbound_methods=true \
-			${GIT_TOP_DIR}/proto/$$f/*.proto; \
-	done
-
-.PHONY: go-all
-go-all: go
-
 .PHONY: openapi-api-gen
 openapi-api-gen:
 	protoc \

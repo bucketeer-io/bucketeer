@@ -243,11 +243,18 @@ func local_request_AutoOpsService_ExecuteAutoOps_0(ctx context.Context, marshale
 
 }
 
+var (
+	filter_AutoOpsService_ListOpsCounts_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
 func request_AutoOpsService_ListOpsCounts_0(ctx context.Context, marshaler runtime.Marshaler, client AutoOpsServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ListOpsCountsRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AutoOpsService_ListOpsCounts_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -260,7 +267,10 @@ func local_request_AutoOpsService_ListOpsCounts_0(ctx context.Context, marshaler
 	var protoReq ListOpsCountsRequest
 	var metadata runtime.ServerMetadata
 
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_AutoOpsService_ListOpsCounts_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -636,7 +646,7 @@ func RegisterAutoOpsServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 
 	})
 
-	mux.Handle("POST", pattern_AutoOpsService_ListOpsCounts_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_AutoOpsService_ListOpsCounts_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -644,7 +654,7 @@ func RegisterAutoOpsServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.autoops.AutoOpsService/ListOpsCounts", runtime.WithHTTPPathPattern("/bucketeer.autoops.AutoOpsService/ListOpsCounts"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/bucketeer.autoops.AutoOpsService/ListOpsCounts", runtime.WithHTTPPathPattern("/v1/auto_ops_rule/ops_counts"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1006,13 +1016,13 @@ func RegisterAutoOpsServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 
 	})
 
-	mux.Handle("POST", pattern_AutoOpsService_ListOpsCounts_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_AutoOpsService_ListOpsCounts_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.autoops.AutoOpsService/ListOpsCounts", runtime.WithHTTPPathPattern("/bucketeer.autoops.AutoOpsService/ListOpsCounts"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/bucketeer.autoops.AutoOpsService/ListOpsCounts", runtime.WithHTTPPathPattern("/v1/auto_ops_rule/ops_counts"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -1178,7 +1188,7 @@ var (
 
 	pattern_AutoOpsService_ExecuteAutoOps_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "auto_ops_rule", "execute"}, ""))
 
-	pattern_AutoOpsService_ListOpsCounts_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"bucketeer.autoops.AutoOpsService", "ListOpsCounts"}, ""))
+	pattern_AutoOpsService_ListOpsCounts_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "auto_ops_rule", "ops_counts"}, ""))
 
 	pattern_AutoOpsService_CreateProgressiveRollout_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "progressive_rollout"}, ""))
 
