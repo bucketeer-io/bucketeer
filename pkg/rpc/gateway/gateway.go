@@ -22,6 +22,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -61,13 +62,6 @@ func NewGateway(grpcAddr, restAddr string, opts ...Option) (*Gateway, error) {
 func (g *Gateway) Start(ctx context.Context,
 	registerFunc func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error,
 ) error {
-	// Create a client connection to the gRPC server
-	conn, err := g.createClientConn()
-	if err != nil {
-		return fmt.Errorf("failed to create client connection: %v", err)
-	}
-	defer conn.Close()
-
 	// Create a new ServeMux for the REST gateway
 	mux := runtime.NewServeMux(
 		runtime.WithErrorHandler(runtime.DefaultHTTPErrorHandler),
@@ -81,12 +75,39 @@ func (g *Gateway) Start(ctx context.Context,
 		}),
 	)
 
+	// Create gRPC dial options with proper credentials and settings
+	var dialOpts []grpc.DialOption
+	if g.opts.certPath != "" {
+		creds, err := credentials.NewClientTLSFromFile(g.opts.certPath, "")
+		if err != nil {
+			return fmt.Errorf("failed to create TLS credentials: %v", err)
+		}
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(creds))
+	} else {
+		g.logger.Warn("starting gateway without TLS credentials")
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+
+	// Add perRPCCredentials if provided
+	if g.opts.perRPCCredentials != nil {
+		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(g.opts.perRPCCredentials))
+	}
+
+	// Add keepalive parameters
+	dialOpts = append(dialOpts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
+		Time:                g.opts.keepaliveTime,
+		Timeout:             g.opts.keepaliveTimeout,
+		PermitWithoutStream: g.opts.permitWithoutStream,
+	}))
+
+	// Add window size parameters
+	dialOpts = append(dialOpts,
+		grpc.WithInitialWindowSize(g.opts.initialWindowSize),
+		grpc.WithInitialConnWindowSize(g.opts.initialConnWindowSize),
+	)
+
 	// Register the REST gateway handlers
-	if err := registerFunc(ctx,
-		mux,
-		g.grpcAddr,
-		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
-	); err != nil {
+	if err := registerFunc(ctx, mux, g.grpcAddr, dialOpts); err != nil {
 		return fmt.Errorf("failed to register gateway handlers: %v", err)
 	}
 
@@ -116,22 +137,4 @@ func (g *Gateway) Stop(ctx context.Context) {
 			g.logger.Error("failed to shutdown HTTP server", zap.Error(err))
 		}
 	}
-}
-
-func (g *Gateway) createClientConn() (*grpc.ClientConn, error) {
-	opts := []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:                g.opts.keepaliveTime,
-			Timeout:             g.opts.keepaliveTimeout,
-			PermitWithoutStream: g.opts.permitWithoutStream,
-		}),
-		grpc.WithInitialWindowSize(g.opts.initialWindowSize),
-		grpc.WithInitialConnWindowSize(g.opts.initialConnWindowSize),
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), g.opts.timeout)
-	defer cancel()
-
-	return grpc.DialContext(ctx, g.grpcAddr, opts...)
 }

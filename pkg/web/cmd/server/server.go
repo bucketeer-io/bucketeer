@@ -562,6 +562,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		accountRestAddr,
 		gatewayapi.WithLogger(logger.Named("account-gateway")),
 		gatewayapi.WithMetrics(registerer),
+		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create account gateway: %v", err)
@@ -599,6 +601,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		auditLogRestAddr,
 		gatewayapi.WithLogger(logger.Named("auditlog-gateway")),
 		gatewayapi.WithMetrics(registerer),
+		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create audit log gateway: %v", err)
@@ -643,6 +647,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		autoOpsRestAddr,
 		gatewayapi.WithLogger(logger.Named("autoops-gateway")),
 		gatewayapi.WithMetrics(registerer),
+		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create auto ops gateway: %v", err)
@@ -681,6 +687,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		environmentRestAddr,
 		gatewayapi.WithLogger(logger.Named("environment-gateway")),
 		gatewayapi.WithMetrics(registerer),
+		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create environment gateway: %v", err)
@@ -725,6 +733,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		eventCounterRestAddr,
 		gatewayapi.WithLogger(logger.Named("eventcounter-gateway")),
 		gatewayapi.WithMetrics(registerer),
+		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create event counter gateway: %v", err)
@@ -765,6 +775,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentRestAddr,
 		gatewayapi.WithLogger(logger.Named("experiment-gateway")),
 		gatewayapi.WithMetrics(registerer),
+		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create experiment gateway: %v", err)
@@ -813,6 +825,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		featureRestAddr,
 		gatewayapi.WithLogger(logger.Named("feature-gateway")),
 		gatewayapi.WithMetrics(registerer),
+		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create feature gateway: %v", err)
@@ -851,6 +865,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		notificationRestAddr,
 		gatewayapi.WithLogger(logger.Named("notification-gateway")),
 		gatewayapi.WithMetrics(registerer),
+		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create notification gateway: %v", err)
@@ -891,6 +907,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		pushRestAddr,
 		gatewayapi.WithLogger(logger.Named("push-gateway")),
 		gatewayapi.WithMetrics(registerer),
+		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create push gateway: %v", err)
@@ -929,6 +947,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		tagRestAddr,
 		gatewayapi.WithLogger(logger.Named("tag-gateway")),
 		gatewayapi.WithMetrics(registerer),
+		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create tag gateway: %v", err)
@@ -967,6 +987,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		codeRefRestAddr,
 		gatewayapi.WithLogger(logger.Named("coderef-gateway")),
 		gatewayapi.WithMetrics(registerer),
+		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create code reference gateway: %v", err)

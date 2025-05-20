@@ -364,6 +364,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		restAddr,
 		gateway.WithLogger(logger.Named("api-gateway")),
 		gateway.WithMetrics(registerer),
+		gateway.WithCertPath(*s.certPath),
+		gateway.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create API gateway: %v", err)
