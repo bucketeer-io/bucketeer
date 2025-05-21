@@ -564,7 +564,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
 		gatewayapi.WithKeyPath(*s.keyPath),
-		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create account gateway: %v", err)
@@ -604,7 +603,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
 		gatewayapi.WithKeyPath(*s.keyPath),
-		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create audit log gateway: %v", err)
@@ -651,7 +649,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
 		gatewayapi.WithKeyPath(*s.keyPath),
-		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create auto ops gateway: %v", err)
@@ -692,7 +689,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
 		gatewayapi.WithKeyPath(*s.keyPath),
-		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create environment gateway: %v", err)
@@ -739,7 +735,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
 		gatewayapi.WithKeyPath(*s.keyPath),
-		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create event counter gateway: %v", err)
@@ -782,7 +777,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
 		gatewayapi.WithKeyPath(*s.keyPath),
-		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create experiment gateway: %v", err)
@@ -833,7 +827,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
 		gatewayapi.WithKeyPath(*s.keyPath),
-		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create feature gateway: %v", err)
@@ -874,7 +867,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
 		gatewayapi.WithKeyPath(*s.keyPath),
-		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create notification gateway: %v", err)
@@ -917,7 +909,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
 		gatewayapi.WithKeyPath(*s.keyPath),
-		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create push gateway: %v", err)
@@ -958,7 +949,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
 		gatewayapi.WithKeyPath(*s.keyPath),
-		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create tag gateway: %v", err)
@@ -999,7 +989,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		gatewayapi.WithMetrics(registerer),
 		gatewayapi.WithCertPath(*s.certPath),
 		gatewayapi.WithKeyPath(*s.keyPath),
-		gatewayapi.WithPerRPCCredentials(creds),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create code reference gateway: %v", err)

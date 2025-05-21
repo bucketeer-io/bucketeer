@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/grpc/credentials"
 
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 )
@@ -46,7 +45,6 @@ type options struct {
 	initialConnWindowSize     int32
 	certPath                  string
 	keyPath                   string
-	perRPCCredentials         credentials.PerRPCCredentials
 }
 
 var defaultOptions = options{
@@ -68,7 +66,6 @@ var defaultOptions = options{
 	initialConnWindowSize:     1024 * 1024 * 2, // 2MB
 	certPath:                  "",
 	keyPath:                   "",
-	perRPCCredentials:         nil,
 }
 
 func WithMetrics(metrics metrics.Registerer) Option {
@@ -152,11 +149,5 @@ func WithCertPath(certPath string) Option {
 func WithKeyPath(keyPath string) Option {
 	return func(o *options) {
 		o.keyPath = keyPath
-	}
-}
-
-func WithPerRPCCredentials(creds credentials.PerRPCCredentials) Option {
-	return func(o *options) {
-		o.perRPCCredentials = creds
 	}
 }

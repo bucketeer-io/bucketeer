@@ -88,11 +88,6 @@ func (g *Gateway) Start(ctx context.Context,
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
-	// Add perRPCCredentials if provided
-	if g.opts.perRPCCredentials != nil {
-		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(g.opts.perRPCCredentials))
-	}
-
 	// Add keepalive parameters
 	dialOpts = append(dialOpts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
 		Time:                g.opts.keepaliveTime,
