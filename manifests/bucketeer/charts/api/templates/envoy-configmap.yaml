@@ -250,12 +250,12 @@ data:
                                 - name: content-type
                                   string_match:
                                     exact: application/grpc
-                              route:
-                                cluster: api
-                                timeout: 15s
-                                retry_policy:
-                                  retry_on: 5xx
-                                  num_retries: 3
+                            route:
+                              cluster: api
+                              timeout: 15s
+                              retry_policy:
+                                retry_on: 5xx
+                                num_retries: 3
               transport_socket:
                 name: envoy.transport_sockets.tls
                 typed_config:
