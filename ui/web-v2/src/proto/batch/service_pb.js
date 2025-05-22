@@ -23,8 +23,6 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var google_api_annotations_pb = require('../../google/api/annotations_pb.js');
-goog.object.extend(proto, google_api_annotations_pb);
 goog.exportSymbol('proto.bucketeer.batch.BatchJob', null, global);
 goog.exportSymbol('proto.bucketeer.batch.BatchJobRequest', null, global);
 goog.exportSymbol('proto.bucketeer.batch.BatchJobResponse', null, global);
