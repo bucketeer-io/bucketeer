@@ -11302,11 +11302,6 @@
             ]
           }
         ],
-        "imports": [
-          {
-            "path": "google/api/annotations.proto"
-          }
-        ],
         "package": {
           "name": "bucketeer.batch"
         },
