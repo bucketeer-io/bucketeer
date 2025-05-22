@@ -5,6 +5,9 @@ global:
 
 env:
   project: bucketeer-test
+  demo:
+    demoEnabled: false
+    demoTrialPeriod: 7
   profile: false
   gcpEnabled: false
   mysqlUser: bucketeer

@@ -43,6 +43,7 @@ web:
     pubSubRedisPoolSize: ${global.pubsub.redis.poolSize}
     pubSubRedisMinIdle: ${global.pubsub.redis.minIdle}
     pubsubEmulatorHost: ${global.pubsub.emulatorHost}
+    demoEnabled: false
     mysqlUser: bucketeer
     mysqlPass: bucketeer
     mysqlHost: localenv-mysql-headless.default.svc.cluster.local
@@ -142,6 +143,9 @@ batch-server:
   env:
     project: bucketeer-test
     profile: false
+    demo:
+      demoEnabled: false
+      demoTrialPeriod: 7
     gcpEnabled: false
     mysqlUser: bucketeer
     mysqlPass: bucketeer

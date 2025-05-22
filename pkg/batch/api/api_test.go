@@ -31,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	cacher "github.com/bucketeer-io/bucketeer/pkg/batch/jobs/cacher"
 	deleter "github.com/bucketeer-io/bucketeer/pkg/batch/jobs/deleter"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/demo"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/experiment"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/mau"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
@@ -864,6 +865,7 @@ func newBatchService(t *testing.T,
 			redisMockClient,
 		),
 		deleter.NewTagDeleter(mysqlMockClient),
+		demo.NewDemoDataDeleter(mysqlMockClient),
 		logger,
 	)
 	return service

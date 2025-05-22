@@ -66,6 +66,8 @@ spec:
               value: "{{.Values.env.bucketeerTestEnabled}}"
             - name: BUCKETEER_WEB_GCP_TRACE_ENABLED
               value: "{{.Values.env.gcpEnabled}}"
+            - name: BUCKETEER_WEB_DEMO_ENABLED
+              value: "{{ .Values.env.demoEnabled }}"
             - name: BUCKETEER_WEB_MYSQL_USER
               value: "{{ .Values.env.mysqlUser }}"
             - name: BUCKETEER_WEB_MYSQL_PASS

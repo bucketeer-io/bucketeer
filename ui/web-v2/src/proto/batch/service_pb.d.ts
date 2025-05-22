@@ -80,6 +80,7 @@ export interface BatchJobMap {
   AUTOOPSRULESCACHER: 16;
   EXPERIMENTCACHER: 17;
   TAGDELETER: 18;
+  DEMODATADELETER: 19;
 }
 
 export const BatchJob: BatchJobMap;

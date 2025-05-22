@@ -36,6 +36,7 @@ import (
 	accountstotage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
+	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	envdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	envstotage "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -43,6 +44,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	acproto "github.com/bucketeer-io/bucketeer/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
 	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -87,6 +89,7 @@ func WithLogger(logger *zap.Logger) Option {
 type authService struct {
 	issuer              string
 	audience            string
+	demoEnabled         bool
 	signer              token.Signer
 	config              *auth.OAuthConfig
 	mysqlClient         mysql.Client
@@ -94,6 +97,7 @@ type authService struct {
 	projectStorage      envstotage.ProjectStorage
 	environmentStorage  envstotage.EnvironmentStorage
 	accountClient       accountclient.Client
+	environmentClient   environmentclient.Client
 	verifier            token.Verifier
 	googleAuthenticator auth.Authenticator
 	opts                *options
@@ -103,10 +107,12 @@ type authService struct {
 func NewAuthService(
 	issuer string,
 	audience string,
+	demoEnabled bool,
 	signer token.Signer,
 	verifier token.Verifier,
 	mysqlClient mysql.Client,
 	accountClient accountclient.Client,
+	environmentClient environmentclient.Client,
 	config *auth.OAuthConfig,
 	opts ...Option,
 ) rpc.Service {
@@ -118,6 +124,7 @@ func NewAuthService(
 	service := &authService{
 		issuer:              issuer,
 		audience:            audience,
+		demoEnabled:         demoEnabled,
 		signer:              signer,
 		config:              config,
 		mysqlClient:         mysqlClient,
@@ -125,6 +132,7 @@ func NewAuthService(
 		environmentStorage:  envstotage.NewEnvironmentStorage(mysqlClient),
 		projectStorage:      envstotage.NewProjectStorage(mysqlClient),
 		accountClient:       accountClient,
+		environmentClient:   environmentClient,
 		verifier:            verifier,
 		googleAuthenticator: google.NewAuthenticator(
 			&config.GoogleConfig, logger,
@@ -520,6 +528,14 @@ func (s *authService) getOrganizationsByEmail(
 		return nil, dt.Err()
 	}
 	if len(orgResp.Organizations) == 0 {
+		// create a demo organization and account for the user.
+		if s.demoEnabled {
+			org, err := s.createDemoOrganization(ctx, email)
+			if err != nil {
+				return nil, err
+			}
+			return []*envproto.Organization{org}, nil
+		}
 		s.logger.Error(
 			"The account is not registered in any organization",
 			zap.String("email", email),
@@ -778,6 +794,44 @@ func (s *authService) checkAccountStatus(
 		return nil, err
 	}
 	return nil, dt.Err()
+}
+
+func (s *authService) createDemoOrganization(
+	ctx context.Context,
+	email string,
+) (*envproto.Organization, error) {
+	id, err := uuid.NewUUID()
+	if err != nil {
+		s.logger.Error("Failed to generate UUID for demo organization", zap.Error(err))
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  locale.NewLocalizer(ctx).GetLocale(),
+			Message: locale.NewLocalizer(ctx).MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+	createOrgResp, err := s.environmentClient.CreateOrganization(ctx, &envproto.CreateOrganizationRequest{
+		Name:          id.String(),
+		UrlCode:       id.String(),
+		IsTrial:       true,
+		IsSystemAdmin: false,
+		OwnerEmail:    email,
+	})
+	if err != nil {
+		s.logger.Error("Failed to create demo organization", zap.Error(err))
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  locale.NewLocalizer(ctx).GetLocale(),
+			Message: locale.NewLocalizer(ctx).MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
+	}
+
+	return createOrgResp.Organization, nil
 }
 
 func (s *authService) hasSystemAdminOrganization(orgs []*envproto.Organization) bool {
