@@ -39,6 +39,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
 	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc"
 )
 
 const command = "server"
@@ -359,8 +361,15 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	restAddr := fmt.Sprintf(":%d", restPort)
 	grpcAddr := fmt.Sprintf("localhost:%d", *s.port)
 
+	// Create a HandlerRegistrar adapter function that matches gateway.HandlerRegistrar signature
+	gatewayHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		return gwproto.RegisterGatewayHandlerFromEndpoint(ctx, mux, grpcAddr, opts)
+	}
+
 	apiGateway, err := gateway.NewGateway(
-		grpcAddr,
 		restAddr,
 		gateway.WithLogger(logger.Named("api-gateway")),
 		gateway.WithMetrics(registerer),
@@ -374,7 +383,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go func() {
 		if err := apiGateway.Start(
 			ctx,
-			gwproto.RegisterGatewayHandlerFromEndpoint,
+			gatewayHandler,
 		); err != nil {
 			logger.Error("failed to start API gateway", zap.Error(err))
 		}

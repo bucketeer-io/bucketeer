@@ -72,6 +72,8 @@ import (
 	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
 	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
 	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -135,6 +137,7 @@ type server struct {
 	dashboardServicePort     *int
 	tagServicePort           *int
 	codeReferenceServicePort *int
+	unifiedGatewayPort       *int
 	// Service
 	accountService       *string
 	authService          *string
@@ -156,6 +159,7 @@ type server struct {
 	cloudService           *string
 	// web console
 	webConsoleEnvJSPath *string
+	unifiedGateway      *gatewayapi.Gateway
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -266,6 +270,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"code-reference-service-port",
 			"Port to bind to code reference service.",
 		).Default("9105").Int(),
+		unifiedGatewayPort: cmd.Flag(
+			"unified-gateway-port",
+			"Port to bind to unified gateway.",
+		).Default("9106").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -554,30 +562,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go accountServer.Run()
 
-	// Account REST Gateway
-	accountRestAddr := fmt.Sprintf(":%d", *s.accountServicePort+1000) // REST on port 10091
-	accountGrpcAddr := fmt.Sprintf("localhost:%d", *s.accountServicePort)
-	accountGateway, err := gatewayapi.NewGateway(
-		accountGrpcAddr,
-		accountRestAddr,
-		gatewayapi.WithLogger(logger.Named("account-gateway")),
-		gatewayapi.WithMetrics(registerer),
-		gatewayapi.WithCertPath(*s.certPath),
-		gatewayapi.WithKeyPath(*s.keyPath),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create account gateway: %v", err)
-	}
-
-	go func() {
-		if err := accountGateway.Start(
-			ctx,
-			accountproto.RegisterAccountServiceHandlerFromEndpoint,
-		); err != nil {
-			logger.Error("failed to start account gateway", zap.Error(err))
-		}
-	}()
-
 	// auditLogService
 	auditLogService := auditlogapi.NewAuditLogService(
 		accountClient,
@@ -593,30 +577,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go auditLogServer.Run()
 
-	// Audit Log REST Gateway
-	auditLogRestAddr := fmt.Sprintf(":%d", *s.auditLogServicePort+1000) // REST on port 10093
-	auditLogGrpcAddr := fmt.Sprintf("localhost:%d", *s.auditLogServicePort)
-	auditLogGateway, err := gatewayapi.NewGateway(
-		auditLogGrpcAddr,
-		auditLogRestAddr,
-		gatewayapi.WithLogger(logger.Named("auditlog-gateway")),
-		gatewayapi.WithMetrics(registerer),
-		gatewayapi.WithCertPath(*s.certPath),
-		gatewayapi.WithKeyPath(*s.keyPath),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create audit log gateway: %v", err)
-	}
-
-	go func() {
-		if err := auditLogGateway.Start(
-			ctx,
-			auditlogproto.RegisterAuditLogServiceHandlerFromEndpoint,
-		); err != nil {
-			logger.Error("failed to start audit log gateway", zap.Error(err))
-		}
-	}()
-
 	// autoOpsService
 	autoOpsService := autoopsapi.NewAutoOpsService(
 		mysqlClient,
@@ -627,9 +587,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		domainTopicPublisher,
 		autoopsapi.WithLogger(logger),
 	)
-	if err != nil {
-		return err
-	}
 	autoOpsServer := rpc.NewServer(autoOpsService, *s.certPath, *s.keyPath,
 		"auto-ops-server",
 		rpc.WithPort(*s.autoOpsServicePort),
@@ -638,30 +595,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go autoOpsServer.Run()
-
-	// Auto Ops REST Gateway
-	autoOpsRestAddr := fmt.Sprintf(":%d", *s.autoOpsServicePort+1000) // REST on port 10094
-	autoOpsGrpcAddr := fmt.Sprintf("localhost:%d", *s.autoOpsServicePort)
-	autoOpsGateway, err := gatewayapi.NewGateway(
-		autoOpsGrpcAddr,
-		autoOpsRestAddr,
-		gatewayapi.WithLogger(logger.Named("autoops-gateway")),
-		gatewayapi.WithMetrics(registerer),
-		gatewayapi.WithCertPath(*s.certPath),
-		gatewayapi.WithKeyPath(*s.keyPath),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create auto ops gateway: %v", err)
-	}
-
-	go func() {
-		if err := autoOpsGateway.Start(
-			ctx,
-			autoopsproto.RegisterAutoOpsServiceHandlerFromEndpoint,
-		); err != nil {
-			logger.Error("failed to start auto ops gateway", zap.Error(err))
-		}
-	}()
 
 	// environmentService
 	environmentService := environmentapi.NewEnvironmentService(
@@ -678,30 +611,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go environmentServer.Run()
-
-	// Environment REST Gateway
-	environmentRestAddr := fmt.Sprintf(":%d", *s.environmentServicePort+1000) // REST on port 10095
-	environmentGrpcAddr := fmt.Sprintf("localhost:%d", *s.environmentServicePort)
-	environmentGateway, err := gatewayapi.NewGateway(
-		environmentGrpcAddr,
-		environmentRestAddr,
-		gatewayapi.WithLogger(logger.Named("environment-gateway")),
-		gatewayapi.WithMetrics(registerer),
-		gatewayapi.WithCertPath(*s.certPath),
-		gatewayapi.WithKeyPath(*s.keyPath),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create environment gateway: %v", err)
-	}
-
-	go func() {
-		if err := environmentGateway.Start(
-			ctx,
-			environmentproto.RegisterEnvironmentServiceHandlerFromEndpoint,
-		); err != nil {
-			logger.Error("failed to start environment gateway", zap.Error(err))
-		}
-	}()
 
 	// eventCounterService
 	eventCounterService := eventcounterapi.NewEventCounterService(
@@ -725,30 +634,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go eventCounterServer.Run()
 
-	// Event Counter REST Gateway
-	eventCounterRestAddr := fmt.Sprintf(":%d", *s.eventCounterServicePort+1000) // REST on port 10096
-	eventCounterGrpcAddr := fmt.Sprintf("localhost:%d", *s.eventCounterServicePort)
-	eventCounterGateway, err := gatewayapi.NewGateway(
-		eventCounterGrpcAddr,
-		eventCounterRestAddr,
-		gatewayapi.WithLogger(logger.Named("eventcounter-gateway")),
-		gatewayapi.WithMetrics(registerer),
-		gatewayapi.WithCertPath(*s.certPath),
-		gatewayapi.WithKeyPath(*s.keyPath),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create event counter gateway: %v", err)
-	}
-
-	go func() {
-		if err := eventCounterGateway.Start(
-			ctx,
-			eventcounterproto.RegisterEventCounterServiceHandlerFromEndpoint,
-		); err != nil {
-			logger.Error("failed to start event counter gateway", zap.Error(err))
-		}
-	}()
-
 	// experimentService
 	experimentService := experimentapi.NewExperimentService(
 		featureClient,
@@ -766,30 +651,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go experimentServer.Run()
-
-	// Experiment REST Gateway
-	experimentRestAddr := fmt.Sprintf(":%d", *s.experimentServicePort+1000) // REST on port 10097
-	experimentGrpcAddr := fmt.Sprintf("localhost:%d", *s.experimentServicePort)
-	experimentGateway, err := gatewayapi.NewGateway(
-		experimentGrpcAddr,
-		experimentRestAddr,
-		gatewayapi.WithLogger(logger.Named("experiment-gateway")),
-		gatewayapi.WithMetrics(registerer),
-		gatewayapi.WithCertPath(*s.certPath),
-		gatewayapi.WithKeyPath(*s.keyPath),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create experiment gateway: %v", err)
-	}
-
-	go func() {
-		if err := experimentGateway.Start(
-			ctx,
-			experimentproto.RegisterExperimentServiceHandlerFromEndpoint,
-		); err != nil {
-			logger.Error("failed to start experiment gateway", zap.Error(err))
-		}
-	}()
 
 	// featureService
 	featureService, err := s.createFeatureService(
@@ -817,30 +678,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go featureServer.Run()
 
-	// Feature REST Gateway
-	featureRestAddr := fmt.Sprintf(":%d", *s.featureServicePort+1000) // REST on port 10098
-	featureGrpcAddr := fmt.Sprintf("localhost:%d", *s.featureServicePort)
-	featureGateway, err := gatewayapi.NewGateway(
-		featureGrpcAddr,
-		featureRestAddr,
-		gatewayapi.WithLogger(logger.Named("feature-gateway")),
-		gatewayapi.WithMetrics(registerer),
-		gatewayapi.WithCertPath(*s.certPath),
-		gatewayapi.WithKeyPath(*s.keyPath),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create feature gateway: %v", err)
-	}
-
-	go func() {
-		if err := featureGateway.Start(
-			ctx,
-			featureproto.RegisterFeatureServiceHandlerFromEndpoint,
-		); err != nil {
-			logger.Error("failed to start feature gateway", zap.Error(err))
-		}
-	}()
-
 	// notificationService
 	notificationService := notificationapi.NewNotificationService(
 		mysqlClient,
@@ -856,30 +693,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go notificationServer.Run()
-
-	// Notification REST Gateway
-	notificationRestAddr := fmt.Sprintf(":%d", *s.notificationServicePort+1000) // REST on port 10100
-	notificationGrpcAddr := fmt.Sprintf("localhost:%d", *s.notificationServicePort)
-	notificationGateway, err := gatewayapi.NewGateway(
-		notificationGrpcAddr,
-		notificationRestAddr,
-		gatewayapi.WithLogger(logger.Named("notification-gateway")),
-		gatewayapi.WithMetrics(registerer),
-		gatewayapi.WithCertPath(*s.certPath),
-		gatewayapi.WithKeyPath(*s.keyPath),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create notification gateway: %v", err)
-	}
-
-	go func() {
-		if err := notificationGateway.Start(
-			ctx,
-			notificationproto.RegisterNotificationServiceHandlerFromEndpoint,
-		); err != nil {
-			logger.Error("failed to start notification gateway", zap.Error(err))
-		}
-	}()
 
 	// pushService
 	pushService := pushapi.NewPushService(
@@ -899,30 +712,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go pushServer.Run()
 
-	// Push REST Gateway
-	pushRestAddr := fmt.Sprintf(":%d", *s.pushServicePort+1000) // REST on port 10101
-	pushGrpcAddr := fmt.Sprintf("localhost:%d", *s.pushServicePort)
-	pushGateway, err := gatewayapi.NewGateway(
-		pushGrpcAddr,
-		pushRestAddr,
-		gatewayapi.WithLogger(logger.Named("push-gateway")),
-		gatewayapi.WithMetrics(registerer),
-		gatewayapi.WithCertPath(*s.certPath),
-		gatewayapi.WithKeyPath(*s.keyPath),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create push gateway: %v", err)
-	}
-
-	go func() {
-		if err := pushGateway.Start(
-			ctx,
-			pushproto.RegisterPushServiceHandlerFromEndpoint,
-		); err != nil {
-			logger.Error("failed to start push gateway", zap.Error(err))
-		}
-	}()
-
 	// tagService
 	tagService := tagapi.NewTagService(
 		mysqlClient,
@@ -938,30 +727,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go tagServer.Run()
-
-	// Tag REST Gateway
-	tagRestAddr := fmt.Sprintf(":%d", *s.tagServicePort+1000) // REST on port 10104
-	tagGrpcAddr := fmt.Sprintf("localhost:%d", *s.tagServicePort)
-	tagGateway, err := gatewayapi.NewGateway(
-		tagGrpcAddr,
-		tagRestAddr,
-		gatewayapi.WithLogger(logger.Named("tag-gateway")),
-		gatewayapi.WithMetrics(registerer),
-		gatewayapi.WithCertPath(*s.certPath),
-		gatewayapi.WithKeyPath(*s.keyPath),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create tag gateway: %v", err)
-	}
-
-	go func() {
-		if err := tagGateway.Start(
-			ctx,
-			tagproto.RegisterTagServiceHandlerFromEndpoint,
-		); err != nil {
-			logger.Error("failed to start tag gateway", zap.Error(err))
-		}
-	}()
 
 	// codeReferenceService
 	codeReferenceService := coderefapi.NewCodeReferenceService(
@@ -979,30 +744,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go codeReferenceServer.Run()
 
-	// Code Reference REST Gateway
-	codeRefRestAddr := fmt.Sprintf(":%d", *s.codeReferenceServicePort+1000) // REST on port 10105
-	codeRefGrpcAddr := fmt.Sprintf("localhost:%d", *s.codeReferenceServicePort)
-	codeRefGateway, err := gatewayapi.NewGateway(
-		codeRefGrpcAddr,
-		codeRefRestAddr,
-		gatewayapi.WithLogger(logger.Named("coderef-gateway")),
-		gatewayapi.WithMetrics(registerer),
-		gatewayapi.WithCertPath(*s.certPath),
-		gatewayapi.WithKeyPath(*s.keyPath),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create code reference gateway: %v", err)
-	}
-
-	go func() {
-		if err := codeRefGateway.Start(
-			ctx,
-			coderefproto.RegisterCodeReferenceServiceHandlerFromEndpoint,
-		); err != nil {
-			logger.Error("failed to start code reference gateway", zap.Error(err))
-		}
-	}()
-
+	// Start the web console and dashboard servers
 	webConsoleServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
 		rest.WithLogger(logger),
@@ -1019,6 +761,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rest.WithMetrics(registerer),
 	)
 	go dashboardServer.Run()
+
+	// Start unified gateway for all REST API endpoints
+	unifiedGateway, err := s.startUnifiedGateway(ctx,
+		registerer,
+		logger.Named("grpc-unified-gateway"),
+	)
+	if err != nil {
+		return err
+	}
+	s.unifiedGateway = unifiedGateway
+
 	// To detach this pod from Kubernetes Service before the app servers stop, we stop the health check service first.
 	// Then, after 10 seconds of sleep, the app servers can be shut down, as no new requests are expected to be sent.
 	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.
@@ -1039,18 +792,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go tagServer.Stop(serverShutDownTimeout)
 		go webConsoleServer.Stop(serverShutDownTimeout)
 		go codeReferenceServer.Stop(serverShutDownTimeout)
-		// Stop REST gateways
-		go accountGateway.Stop(context.Background())
-		go auditLogGateway.Stop(context.Background())
-		go autoOpsGateway.Stop(context.Background())
-		go environmentGateway.Stop(context.Background())
-		go eventCounterGateway.Stop(context.Background())
-		go experimentGateway.Stop(context.Background())
-		go featureGateway.Stop(context.Background())
-		go notificationGateway.Stop(context.Background())
-		go pushGateway.Stop(context.Background())
-		go tagGateway.Stop(context.Background())
-		go codeRefGateway.Stop(context.Background())
+		// Stop the unified REST gateway
+		go s.unifiedGateway.Stop(context.Background())
 		// Close clients
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()
@@ -1232,4 +975,145 @@ func (s *server) createFeatureService(
 	)
 
 	return featureService, nil
+}
+
+func (s *server) startUnifiedGateway(
+	ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (*gatewayapi.Gateway, error) {
+	// Unified REST gateway for all services
+	unifiedGatewayAddr := fmt.Sprintf(":%d", *s.unifiedGatewayPort) // Use a single port for all REST services
+
+	// Create the unified gateway
+	unifiedGateway, err := gatewayapi.NewGateway(
+		unifiedGatewayAddr,
+		gatewayapi.WithLogger(logger),
+		gatewayapi.WithMetrics(registerer),
+		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithKeyPath(*s.keyPath),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create unified gateway: %v", err)
+	}
+
+	// Define handler registrars with specific gRPC addresses for each service
+	accountHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		accountGrpcAddr := fmt.Sprintf("localhost:%d", *s.accountServicePort)
+		return accountproto.RegisterAccountServiceHandlerFromEndpoint(ctx, mux, accountGrpcAddr, opts)
+	}
+
+	auditLogHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		auditLogGrpcAddr := fmt.Sprintf("localhost:%d", *s.auditLogServicePort)
+		return auditlogproto.RegisterAuditLogServiceHandlerFromEndpoint(ctx, mux, auditLogGrpcAddr, opts)
+	}
+
+	autoOpsHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		autoOpsGrpcAddr := fmt.Sprintf("localhost:%d", *s.autoOpsServicePort)
+		return autoopsproto.RegisterAutoOpsServiceHandlerFromEndpoint(ctx, mux, autoOpsGrpcAddr, opts)
+	}
+
+	environmentHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		environmentGrpcAddr := fmt.Sprintf("localhost:%d", *s.environmentServicePort)
+		return environmentproto.RegisterEnvironmentServiceHandlerFromEndpoint(ctx, mux, environmentGrpcAddr, opts)
+	}
+
+	eventCounterHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		eventCounterGrpcAddr := fmt.Sprintf("localhost:%d", *s.eventCounterServicePort)
+		return eventcounterproto.RegisterEventCounterServiceHandlerFromEndpoint(ctx, mux, eventCounterGrpcAddr, opts)
+	}
+
+	experimentHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		experimentGrpcAddr := fmt.Sprintf("localhost:%d", *s.experimentServicePort)
+		return experimentproto.RegisterExperimentServiceHandlerFromEndpoint(ctx, mux, experimentGrpcAddr, opts)
+	}
+
+	featureHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		featureGrpcAddr := fmt.Sprintf("localhost:%d", *s.featureServicePort)
+		return featureproto.RegisterFeatureServiceHandlerFromEndpoint(ctx, mux, featureGrpcAddr, opts)
+	}
+
+	notificationHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		notificationGrpcAddr := fmt.Sprintf("localhost:%d", *s.notificationServicePort)
+		return notificationproto.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, notificationGrpcAddr, opts)
+	}
+
+	pushHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		pushGrpcAddr := fmt.Sprintf("localhost:%d", *s.pushServicePort)
+		return pushproto.RegisterPushServiceHandlerFromEndpoint(ctx, mux, pushGrpcAddr, opts)
+	}
+
+	tagHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		tagGrpcAddr := fmt.Sprintf("localhost:%d", *s.tagServicePort)
+		return tagproto.RegisterTagServiceHandlerFromEndpoint(ctx, mux, tagGrpcAddr, opts)
+	}
+
+	codeRefHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		codeRefGrpcAddr := fmt.Sprintf("localhost:%d", *s.codeReferenceServicePort)
+		return coderefproto.RegisterCodeReferenceServiceHandlerFromEndpoint(ctx, mux, codeRefGrpcAddr, opts)
+	}
+
+	// Start the unified gateway with all handlers
+	go func() {
+		if err := unifiedGateway.Start(
+			ctx,
+			accountHandler,
+			auditLogHandler,
+			autoOpsHandler,
+			environmentHandler,
+			eventCounterHandler,
+			experimentHandler,
+			featureHandler,
+			notificationHandler,
+			pushHandler,
+			tagHandler,
+			codeRefHandler,
+		); err != nil {
+			logger.Error("failed to start unified gateway", zap.Error(err))
+		}
+	}()
+
+	logger.Info("unified gateway started", zap.String("address", unifiedGatewayAddr))
+	return unifiedGateway, nil
+}
+
+func (s *server) Stop(ctx context.Context) error {
+	// Stop the unified gateway instead of individual gateways
+	if s.unifiedGateway != nil {
+		s.unifiedGateway.Stop(ctx)
+	}
+	return nil
 }

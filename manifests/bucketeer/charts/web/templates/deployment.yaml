@@ -172,6 +172,8 @@ spec:
               value: "{{ .Values.env.dashboardServicePort }}"
             - name: BUCKETEER_WEB_CODE_REFERENCE_SERVICE_PORT
               value: "{{ .Values.env.coderefServicePort }}"
+            - name: BUCKETEER_WEB_UNIFIED_GATEWAY_PORT
+              value: "{{ .Values.env.unifiedGatewayPort }}"
             - name: BUCKETEER_WEB_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_WEB_AUTH_SERVICE

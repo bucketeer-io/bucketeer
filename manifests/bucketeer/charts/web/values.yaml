@@ -55,6 +55,8 @@ env:
   webConsoleServicePort: 9102
   dashboardServicePort: 9103
   tagServicePort: 9104
+  coderefServicePort: 9105
+  unifiedGatewayPort: 9106
   metricsPort: 9002
   timezone: UTC
   emailFilter:
