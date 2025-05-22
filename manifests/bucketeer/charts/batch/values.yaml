@@ -8,6 +8,9 @@ namespace: default
 
 env:
   project:
+  demo:
+    demoEnabled: false
+    demoTrialPeriod: 7 # days
   profile: true
   gcpEnabled: true
   mysqlUser:
