@@ -30,15 +30,17 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 )
 
+// HandlerRegistrar is a function that registers a gRPC-Gateway handler
+type HandlerRegistrar func(context.Context, *runtime.ServeMux, []grpc.DialOption) error
+
 type Gateway struct {
 	httpServer *http.Server
-	grpcAddr   string
 	restAddr   string
 	opts       *options
 	logger     *zap.Logger
 }
 
-func NewGateway(grpcAddr, restAddr string, opts ...Option) (*Gateway, error) {
+func NewGateway(restAddr string, opts ...Option) (*Gateway, error) {
 	options := defaultOptions
 	for _, opt := range opts {
 		opt(&options)
@@ -52,7 +54,6 @@ func NewGateway(grpcAddr, restAddr string, opts ...Option) (*Gateway, error) {
 	}
 
 	return &Gateway{
-		grpcAddr: grpcAddr,
 		restAddr: restAddr,
 		opts:     &options,
 		logger:   options.logger.Named("gateway"),
@@ -60,7 +61,7 @@ func NewGateway(grpcAddr, restAddr string, opts ...Option) (*Gateway, error) {
 }
 
 func (g *Gateway) Start(ctx context.Context,
-	registerFunc func(context.Context, *runtime.ServeMux, string, []grpc.DialOption) error,
+	registerFuncs ...HandlerRegistrar,
 ) error {
 	// Create a new ServeMux for the REST gateway
 	mux := runtime.NewServeMux(
@@ -101,9 +102,11 @@ func (g *Gateway) Start(ctx context.Context,
 		grpc.WithInitialConnWindowSize(g.opts.initialConnWindowSize),
 	)
 
-	// Register the REST gateway handlers
-	if err := registerFunc(ctx, mux, g.grpcAddr, dialOpts); err != nil {
-		return fmt.Errorf("failed to register gateway handlers: %v", err)
+	// Register all the provided handler registrars
+	for _, registerFunc := range registerFuncs {
+		if err := registerFunc(ctx, mux, dialOpts); err != nil {
+			return fmt.Errorf("failed to register gateway handler: %v", err)
+		}
 	}
 
 	// Create and start the HTTP server
@@ -130,10 +133,9 @@ func (g *Gateway) Start(ctx context.Context,
 	}()
 
 	g.logger.Info("gateway started",
-		zap.String("grpc_addr", g.grpcAddr),
 		zap.String("rest_addr", g.restAddr),
 		zap.Bool("tls_enabled", g.opts.keyPath != "" && g.opts.certPath != ""),
-	)
+		zap.Int("handlers_registered", len(registerFuncs)))
 
 	return nil
 }

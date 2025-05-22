@@ -21,7 +21,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	acclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
@@ -595,8 +597,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	restAddr := fmt.Sprintf(":%d", restPort)
 	grpcAddr := fmt.Sprintf("localhost:%d", *s.port)
 
+	// Create a HandlerRegistrar adapter function that matches gateway.HandlerRegistrar signature
+	batchHandler := func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+		return batchproto.RegisterBatchServiceHandlerFromEndpoint(ctx, mux, grpcAddr, opts)
+	}
+
 	batchGateway, err := gateway.NewGateway(
-		grpcAddr,
 		restAddr,
 		gateway.WithLogger(logger.Named("batch-gateway")),
 		gateway.WithMetrics(registerer),
@@ -610,7 +616,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go func() {
 		if err := batchGateway.Start(
 			ctx,
-			batchproto.RegisterBatchServiceHandlerFromEndpoint,
+			batchHandler,
 		); err != nil {
 			logger.Error("failed to start batch gateway", zap.Error(err))
 		}

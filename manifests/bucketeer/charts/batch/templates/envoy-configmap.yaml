@@ -97,6 +97,39 @@ data:
                 http2_protocol_options: {}
           ignore_health_on_host_removal: true
 
+        - name: batch-rest
+          type: strict_dns
+          lb_policy: {{ .Values.envoy.lbPolicy }}
+          connect_timeout: 5s
+          dns_lookup_family: V4_ONLY
+          load_assignment:
+            cluster_name: batch-rest
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: localhost
+                          port_value: 10090
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+              common_tls_context:
+                alpn_protocols:
+                  - h2
+                tls_certificates:
+                  - certificate_chain:
+                      filename: /usr/local/certs/service/tls.crt
+                    private_key:
+                      filename: /usr/local/certs/service/tls.key
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              explicit_http_config:
+                http2_protocol_options: {}
+          ignore_health_on_host_removal: true
+
       listeners:
         - name: ingress
           address:
@@ -143,6 +176,22 @@ data:
                                 prefix: /
                               route:
                                 cluster: batch
+                                retry_policy:
+                                  num_retries: 3
+                                  retry_on: 5xx
+                                timeout: 3600s
+                        - name: batch_rest_services
+                          domains:
+                            - '*'
+                          routes:
+                            - match:
+                                headers:
+                                  - name: content-type
+                                    string_match:
+                                      exact: application/json
+                                prefix: /
+                              route:
+                                cluster: batch-rest
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
