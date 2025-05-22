@@ -25,6 +25,9 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc"
+
 	accountapi "github.com/bucketeer-io/bucketeer/pkg/account/api"
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	auditlogapi "github.com/bucketeer-io/bucketeer/pkg/auditlog/api"
@@ -72,8 +75,6 @@ import (
 	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
 	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
 	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"google.golang.org/grpc"
 )
 
 const (

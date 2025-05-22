@@ -22,6 +22,9 @@ import (
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc"
+
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
@@ -39,8 +42,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
 	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"google.golang.org/grpc"
 )
 
 const command = "server"
