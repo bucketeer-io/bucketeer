@@ -180,10 +180,6 @@ data:
                                   num_retries: 3
                                   retry_on: 5xx
                                 timeout: 3600s
-                        - name: batch_rest_services
-                          domains:
-                            - '*'
-                          routes:
                             - match:
                                 headers:
                                   - name: content-type

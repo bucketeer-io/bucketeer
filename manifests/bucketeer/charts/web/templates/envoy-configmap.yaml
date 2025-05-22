@@ -778,35 +778,6 @@ data:
                           "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
                     route_config:
                       virtual_hosts:
-                        - name: rest-gateway
-                          domains:
-                            - "*"
-                          typed_per_filter_config:
-                            envoy.filters.http.cors:
-                              "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.CorsPolicy
-                              allow_origin_string_match:
-                                - prefix: "*"
-                              allow_headers: "content-type, authorization"
-                              allow_methods: "GET,POST,PATCH,DELETE,OPTIONS"
-                              allow_credentials: true
-                              max_age: "86400"
-                          routes:
-                            - match:
-                                prefix: /v1/
-                              route:
-                                cluster: openapi-gateway
-                                timeout: 60s
-                                retry_policy:
-                                  retry_on: 5xx
-                                  num_retries: 3
-                            - match:
-                                prefix: /bucketeer.batch.BatchService
-                              route:
-                                cluster: batch
-                                timeout: 3600s
-                                retry_policy:
-                                  retry_on: 5xx
-                                  num_retries: 3
                         - name: web-gateway
                           domains:
                             - "*"
@@ -816,7 +787,7 @@ data:
                               allow_origin_string_match:
                                 - prefix: "*"
                               allow_headers: "content-type, x-grpc-web, authorization"
-                              allow_methods: "GET,POST,PATCH,DELETE"
+                              allow_methods: "GET,POST,PATCH,DELETE,OPTIONS,PUT"
                               allow_credentials: true
                           routes:
                             - match:
@@ -824,6 +795,10 @@ data:
                               route:
                                 cluster: account
                                 timeout: 15s
+                                headers:
+                                  - name: content-type
+                                    string_match:
+                                      exact: application/grpc
                                 retry_policy:
                                   retry_on: 5xx
                                   num_retries: 3
@@ -832,6 +807,10 @@ data:
                               route:
                                 cluster: auditlog
                                 timeout: 15s
+                                headers:
+                                  - name: content-type
+                                    string_match:
+                                      exact: application/grpc
                                 retry_policy:
                                   retry_on: 5xx
                                   num_retries: 3
@@ -840,6 +819,10 @@ data:
                               route:
                                 cluster: auth
                                 timeout: 15s
+                                headers:
+                                  - name: content-type
+                                    string_match:
+                                      exact: application/grpc
                                 retry_policy:
                                   retry_on: 5xx
                                   num_retries: 3
@@ -848,6 +831,10 @@ data:
                               route:
                                 cluster: autoops
                                 timeout: 15s
+                                headers:
+                                  - name: content-type
+                                    string_match:
+                                      exact: application/grpc
                                 retry_policy:
                                   retry_on: 5xx
                                   num_retries: 3
@@ -944,6 +931,18 @@ data:
                               route:
                                 cluster: dashboard
                                 timeout: 15s
+                                retry_policy:
+                                  retry_on: 5xx
+                                  num_retries: 3
+                            - match:
+                                prefix: /v1/
+                              route:
+                                cluster: openapi-gateway
+                                headers:
+                                  - name: content-type
+                                    string_match:
+                                      exact: application/json
+                                timeout: 60s
                                 retry_policy:
                                   retry_on: 5xx
                                   num_retries: 3

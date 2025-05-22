@@ -238,12 +238,12 @@ data:
                                 - name: content-type
                                   string_match:
                                     exact: application/json
-                              route:
-                                cluster: grpc-gateway
-                                timeout: 60s
-                                retry_policy:
-                                  retry_on: 5xx
-                                  num_retries: 3
+                            route:
+                              cluster: grpc-gateway
+                              timeout: 60s
+                              retry_policy:
+                                retry_on: 5xx
+                                num_retries: 3
                           - match:
                               prefix: /
                               headers:
