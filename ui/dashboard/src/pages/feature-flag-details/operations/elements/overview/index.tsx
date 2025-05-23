@@ -78,7 +78,7 @@ const Overview = ({
               color={color}
               icon={icon}
               iconSize={iconSize}
-              className="border border-transparent"
+              className="items-start border border-transparent min-h-full self-stretch min-w-[300px]"
               iconClassName={'p-4'}
               onClick={() => onOperationActions(opsType)}
             />

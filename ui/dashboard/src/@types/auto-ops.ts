@@ -41,3 +41,18 @@ export interface DatetimeClause {
   time: string;
   actionType: ClauseActionType;
 }
+
+export interface AutoOpsCountCollection {
+  cursor: string;
+  opsCounts: AutoOpsCount[];
+}
+
+export interface AutoOpsCount {
+  id: string;
+  autoOpsRuleId: string;
+  clauseId: string;
+  updatedAt: string;
+  opsEventCount: string;
+  evaluationCount: string;
+  featureId: string;
+}
