@@ -874,7 +874,7 @@ data:
                             - match:
                                 prefix: /webhook
                               route:
-                                cluster: feature
+                                cluster: openapi-gateway
                                 timeout: 60s
                                 retry_policy:
                                   retry_on: 5xx
