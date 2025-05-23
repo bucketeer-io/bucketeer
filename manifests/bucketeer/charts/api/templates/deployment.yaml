@@ -32,9 +32,6 @@ spec:
         - name: envoy-config
           configMap:
             name: {{ template "api.fullname" . }}-envoy-config
-        - name: secret
-          secret:
-            secretName: {{ template "api.fullname" . }}
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
@@ -173,9 +170,6 @@ spec:
           volumeMounts:
             - name: envoy-config
               mountPath: /usr/local/conf
-              readOnly: true
-            - name: secret
-              mountPath: /usr/local/secret
               readOnly: true
             - name: service-cert-secret
               mountPath: /usr/local/certs/service

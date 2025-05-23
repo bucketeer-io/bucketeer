@@ -82,7 +82,7 @@ proto-lock-commit-force:
 	make -C proto lock-commit-force
 
 .PHONY: proto-all
-proto-all: proto-fmt proto-lock-commit proto-go proto-web proto-go-descriptor proto-openapi-gen
+proto-all: proto-fmt proto-lock-commit proto-go proto-web proto-openapi-gen
 
 .PHONY: proto-go
 proto-go:
@@ -95,14 +95,6 @@ proto-web:
 .PHONY: proto-go-check
 proto-go-check:
 	make -C proto go-check
-
-.PHONY: proto-go-descriptor
-proto-go-descriptor:
-	make -C proto go-descriptor
-
-.PHONY: proto-go-descriptor-check
-proto-go-descriptor-check:
-	make -C proto go-descriptor-check
 
 .PHONY: proto-openapi-gen
 proto-openapi-gen:
