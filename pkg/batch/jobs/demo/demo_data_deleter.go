@@ -22,8 +22,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
@@ -90,7 +88,7 @@ func (d *demoDataDeleter) Run(ctx context.Context) error {
 	demoEnabled, err := strconv.ParseBool(os.Getenv("BUCKETEER_BATCH_DEMO_ENABLED"))
 	if err != nil {
 		d.logger.Error("Could not parse BUCKETEER_BATCH_DEMO_ENABLED", zap.Error(err))
-		return status.Error(codes.Internal, "Could not parse BUCKETEER_BATCH_DEMO_ENABLED")
+		return err
 	}
 	if !demoEnabled {
 		d.logger.Info("Batch demo data deleter is disabled")
@@ -144,7 +142,7 @@ func (d *demoDataDeleter) getOutdatedOrganizations(ctx context.Context) ([]*envp
 	trialPeriod, err := strconv.Atoi(os.Getenv("DEMO_TRIAL_PERIOD_DAY"))
 	if err != nil {
 		d.logger.Error("Could not parse DEMO_TRIAL_PERIOD_DAY", zap.Error(err))
-		return nil, status.Error(codes.Internal, "Could not parse DEMO_TRIAL_PERIOD_DAY")
+		return nil, err
 	}
 	filters := []*mysql.FilterV2{
 		{
@@ -167,7 +165,7 @@ func (d *demoDataDeleter) getOutdatedOrganizations(ctx context.Context) ([]*envp
 	organizations, _, _, err := d.organizationStorage.ListOrganizations(ctx, options)
 	if err != nil {
 		d.logger.Error("Could not list organizations", zap.Error(err))
-		return nil, status.Error(codes.Internal, "Could not list organizations")
+		return nil, err
 	}
 	return organizations, nil
 }
@@ -195,7 +193,7 @@ func (d *demoDataDeleter) getOutdatedEnvironments(
 	environments, _, _, err := d.environmentStorage.ListEnvironmentsV2(ctx, options)
 	if err != nil {
 		d.logger.Error("Could not list environments", zap.Error(err))
-		return nil, status.Error(codes.Internal, "Could not list environments")
+		return nil, err
 	}
 	return environments, nil
 }
