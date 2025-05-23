@@ -59,6 +59,10 @@ spec:
               value: "{{.Values.env.bigqueryWriterEmulatorHost}}"
             - name: BUCKETEER_BATCH_PROJECT
               value: "{{ .Values.env.project }}"
+            - name: BUCKETEER_BATCH_DEMO_ENABLED
+              value: "{{ .Values.env.demo.demoEnabled }}"
+            - name: DEMO_TRIAL_PERIOD_DAY
+              value: "{{ .Values.env.demo.demoTrialPeriod }}"
             - name: BUCKETEER_BATCH_PROFILE
               value: "{{.Values.env.profile}}"
             - name: BUCKETEER_BATCH_GCP_TRACE_ENABLED
