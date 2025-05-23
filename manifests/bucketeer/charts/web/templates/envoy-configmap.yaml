@@ -793,10 +793,6 @@ data:
                           routes:
                             - match:
                                 prefix: /bucketeer.account.AccountService
-                                headers:
-                                  - name: content-type
-                                    string_match:
-                                      exact: application/grpc
                               route:
                                 cluster: account
                                 timeout: 15s
@@ -805,10 +801,6 @@ data:
                                   num_retries: 3
                             - match:
                                 prefix: /bucketeer.auditlog.AuditLogService
-                                headers:
-                                  - name: content-type
-                                    string_match:
-                                      exact: application/grpc
                               route:
                                 cluster: auditlog
                                 timeout: 15s
@@ -817,10 +809,6 @@ data:
                                   num_retries: 3
                             - match:
                                 prefix: /bucketeer.auth.AuthService
-                                headers:
-                                  - name: content-type
-                                    string_match:
-                                      exact: application/grpc
                               route:
                                 cluster: auth
                                 timeout: 15s
@@ -829,10 +817,6 @@ data:
                                   num_retries: 3
                             - match:
                                 prefix: /bucketeer.autoops.AutoOpsService
-                                headers:
-                                  - name: content-type
-                                    string_match:
-                                      exact: application/grpc
                               route:
                                 cluster: autoops
                                 timeout: 15s
