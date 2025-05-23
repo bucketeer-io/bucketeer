@@ -56,9 +56,7 @@ export const schedulesListSchema = yup
             );
             if (!isValidWeight)
               return context.createError({
-                message: translation('message:operation.must-be-increasing', {
-                  name: translation('message:operation.the-weight')
-                }),
+                message: increasingOrderMessage,
                 path: context.path
               });
           }
@@ -128,6 +126,8 @@ export const schedulesListSchema = yup
     })
   )
   .required(requiredMessage);
+
+export type SchedulesListType = yup.InferType<typeof schedulesListSchema>;
 
 export const dateTimeClauseListSchema = yup.object().shape({
   datetimeClausesList: yup

@@ -11,7 +11,6 @@ import {
   IconCalendar,
   IconDisable,
   IconFlagOperation,
-  IconOperationClone,
   IconOperationDetails,
   IconStoppedByUser,
   IconTrash,
@@ -149,24 +148,6 @@ const OperationStatus = ({
   }, [operation]);
 
   const completedOptions: PopoverOption<PopoverValue>[] = useMemo(() => {
-    if (isRollout)
-      return [
-        {
-          label: t('clone-operation'),
-          icon: IconOperationClone,
-          value: 'CLONE'
-        },
-        {
-          label: (
-            <p className="text-accent-red-500">
-              {t('feature-flags.delete-rollout')}
-            </p>
-          ),
-          icon: IconTrash,
-          value: 'DELETE',
-          color: 'accent-red-500'
-        }
-      ];
     return [
       {
         label: t('feature-flags.operation-details'),
@@ -177,7 +158,7 @@ const OperationStatus = ({
         label: (
           <p className="text-accent-red-500">
             {t(
-              `feature-flags.delete-${isKillSwitch ? 'kill-switch' : 'schedule'}`
+              `feature-flags.delete-${isKillSwitch ? 'kill-switch' : isRollout ? 'rollout' : 'schedule'}`
             )}
           </p>
         ),
