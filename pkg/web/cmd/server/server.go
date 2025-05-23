@@ -66,6 +66,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	auditlogproto "github.com/bucketeer-io/bucketeer/proto/auditlog"
+	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	coderefproto "github.com/bucketeer-io/bucketeer/proto/coderef"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -1007,6 +1008,14 @@ func (s *server) startUnifiedGateway(
 		return accountproto.RegisterAccountServiceHandlerFromEndpoint(ctx, mux, accountGrpcAddr, opts)
 	}
 
+	authHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		authGrpcAddr := fmt.Sprintf("localhost:%d", *s.authServicePort)
+		return authproto.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, authGrpcAddr, opts)
+	}
+
 	auditLogHandler := func(ctx context.Context,
 		mux *runtime.ServeMux,
 		opts []grpc.DialOption,
@@ -1092,6 +1101,7 @@ func (s *server) startUnifiedGateway(
 		if err := unifiedGateway.Start(
 			ctx,
 			accountHandler,
+			authHandler,
 			auditLogHandler,
 			autoOpsHandler,
 			environmentHandler,
