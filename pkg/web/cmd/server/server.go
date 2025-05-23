@@ -25,6 +25,9 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc"
+
 	accountapi "github.com/bucketeer-io/bucketeer/pkg/account/api"
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	auditlogapi "github.com/bucketeer-io/bucketeer/pkg/auditlog/api"
@@ -56,10 +59,23 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	gatewayapi "github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
 	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	tagapi "github.com/bucketeer-io/bucketeer/pkg/tag/api"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	auditlogproto "github.com/bucketeer-io/bucketeer/proto/auditlog"
+	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
+	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	coderefproto "github.com/bucketeer-io/bucketeer/proto/coderef"
+	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	eventcounterproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
+	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
+	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
 )
 
 const (
@@ -116,6 +132,7 @@ type server struct {
 	dashboardServicePort     *int
 	tagServicePort           *int
 	codeReferenceServicePort *int
+	unifiedGatewayPort       *int
 	// Service
 	accountService       *string
 	authService          *string
@@ -137,6 +154,7 @@ type server struct {
 	cloudService           *string
 	// web console
 	webConsoleEnvJSPath *string
+	unifiedGateway      *gatewayapi.Gateway
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -247,6 +265,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"code-reference-service-port",
 			"Port to bind to code reference service.",
 		).Default("9105").Int(),
+		unifiedGatewayPort: cmd.Flag(
+			"unified-gateway-port",
+			"Port to bind to unified gateway.",
+		).Default("9106").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -515,6 +537,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go accountServer.Run()
+
 	// auditLogService
 	auditLogService := auditlogapi.NewAuditLogService(
 		accountClient,
@@ -529,6 +552,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go auditLogServer.Run()
+
 	// autoOpsService
 	autoOpsService := autoopsapi.NewAutoOpsService(
 		mysqlClient,
@@ -539,9 +563,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		domainTopicPublisher,
 		autoopsapi.WithLogger(logger),
 	)
-	if err != nil {
-		return err
-	}
 	autoOpsServer := rpc.NewServer(autoOpsService, *s.certPath, *s.keyPath,
 		"auto-ops-server",
 		rpc.WithPort(*s.autoOpsServicePort),
@@ -550,6 +571,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go autoOpsServer.Run()
+
 	// environmentService
 	environmentService := environmentapi.NewEnvironmentService(
 		accountClient,
@@ -565,6 +587,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go environmentServer.Run()
+
 	// eventCounterService
 	eventCounterService := eventcounterapi.NewEventCounterService(
 		mysqlClient,
@@ -586,6 +609,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go eventCounterServer.Run()
+
 	// experimentService
 	experimentService := experimentapi.NewExperimentService(
 		featureClient,
@@ -603,6 +627,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go experimentServer.Run()
+
 	// featureService
 	featureService, err := s.createFeatureService(
 		ctx,
@@ -628,6 +653,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go featureServer.Run()
+
 	// notificationService
 	notificationService := notificationapi.NewNotificationService(
 		mysqlClient,
@@ -643,6 +669,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go notificationServer.Run()
+
 	// pushService
 	pushService := pushapi.NewPushService(
 		mysqlClient,
@@ -660,6 +687,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go pushServer.Run()
+
 	// tagService
 	tagService := tagapi.NewTagService(
 		mysqlClient,
@@ -675,6 +703,24 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go tagServer.Run()
+
+	// codeReferenceService
+	codeReferenceService := coderefapi.NewCodeReferenceService(
+		accountClient,
+		mysqlClient,
+		domainTopicPublisher,
+		coderefapi.WithLogger(logger),
+	)
+	codeReferenceServer := rpc.NewServer(codeReferenceService, *s.certPath, *s.keyPath,
+		"code-reference-server",
+		rpc.WithPort(*s.codeReferenceServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	go codeReferenceServer.Run()
+
+	// Start the web console and dashboard servers
 	webConsoleServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
 		rest.WithLogger(logger),
@@ -691,27 +737,24 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rest.WithMetrics(registerer),
 	)
 	go dashboardServer.Run()
-	// codeReferenceService
-	codeReferenceService := coderefapi.NewCodeReferenceService(
-		accountClient,
-		mysqlClient,
-		domainTopicPublisher,
-		coderefapi.WithLogger(logger),
+
+	// Start unified gateway for all REST API endpoints
+	unifiedGateway, err := s.startUnifiedGateway(ctx,
+		registerer,
+		logger.Named("grpc-unified-gateway"),
 	)
-	codeReferenceServer := rpc.NewServer(codeReferenceService, *s.certPath, *s.keyPath,
-		"code-reference-server",
-		rpc.WithPort(*s.codeReferenceServicePort),
-		rpc.WithVerifier(verifier),
-		rpc.WithMetrics(registerer),
-		rpc.WithLogger(logger),
-	)
-	go codeReferenceServer.Run()
+	if err != nil {
+		return err
+	}
+	s.unifiedGateway = unifiedGateway
+
 	// To detach this pod from Kubernetes Service before the app servers stop, we stop the health check service first.
 	// Then, after 10 seconds of sleep, the app servers can be shut down, as no new requests are expected to be sent.
 	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.
 	defer func() {
 		go healthcheckServer.Stop(serverShutDownTimeout)
 		time.Sleep(serverShutDownTimeout)
+		// Stop gRPC servers
 		go authServer.Stop(serverShutDownTimeout)
 		go accountServer.Stop(serverShutDownTimeout)
 		go auditLogServer.Stop(serverShutDownTimeout)
@@ -725,6 +768,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go tagServer.Stop(serverShutDownTimeout)
 		go webConsoleServer.Stop(serverShutDownTimeout)
 		go codeReferenceServer.Stop(serverShutDownTimeout)
+		// Stop the unified REST gateway
+		go s.unifiedGateway.Stop(context.Background())
+		// Close clients
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()
@@ -879,4 +925,154 @@ func (s *server) createFeatureService(
 	)
 
 	return featureService, nil
+}
+
+func (s *server) startUnifiedGateway(
+	ctx context.Context,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) (*gatewayapi.Gateway, error) {
+	// Unified REST gateway for all services
+	unifiedGatewayAddr := fmt.Sprintf(":%d", *s.unifiedGatewayPort) // Use a single port for all REST services
+
+	// Create the unified gateway
+	unifiedGateway, err := gatewayapi.NewGateway(
+		unifiedGatewayAddr,
+		gatewayapi.WithLogger(logger),
+		gatewayapi.WithMetrics(registerer),
+		gatewayapi.WithCertPath(*s.certPath),
+		gatewayapi.WithKeyPath(*s.keyPath),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create unified gateway: %v", err)
+	}
+
+	// Define handler registrars with specific gRPC addresses for each service
+	accountHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		accountGrpcAddr := fmt.Sprintf("localhost:%d", *s.accountServicePort)
+		return accountproto.RegisterAccountServiceHandlerFromEndpoint(ctx, mux, accountGrpcAddr, opts)
+	}
+
+	authHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		authGrpcAddr := fmt.Sprintf("localhost:%d", *s.authServicePort)
+		return authproto.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, authGrpcAddr, opts)
+	}
+
+	auditLogHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		auditLogGrpcAddr := fmt.Sprintf("localhost:%d", *s.auditLogServicePort)
+		return auditlogproto.RegisterAuditLogServiceHandlerFromEndpoint(ctx, mux, auditLogGrpcAddr, opts)
+	}
+
+	autoOpsHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		autoOpsGrpcAddr := fmt.Sprintf("localhost:%d", *s.autoOpsServicePort)
+		return autoopsproto.RegisterAutoOpsServiceHandlerFromEndpoint(ctx, mux, autoOpsGrpcAddr, opts)
+	}
+
+	environmentHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		environmentGrpcAddr := fmt.Sprintf("localhost:%d", *s.environmentServicePort)
+		return environmentproto.RegisterEnvironmentServiceHandlerFromEndpoint(ctx, mux, environmentGrpcAddr, opts)
+	}
+
+	eventCounterHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		eventCounterGrpcAddr := fmt.Sprintf("localhost:%d", *s.eventCounterServicePort)
+		return eventcounterproto.RegisterEventCounterServiceHandlerFromEndpoint(ctx, mux, eventCounterGrpcAddr, opts)
+	}
+
+	experimentHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		experimentGrpcAddr := fmt.Sprintf("localhost:%d", *s.experimentServicePort)
+		return experimentproto.RegisterExperimentServiceHandlerFromEndpoint(ctx, mux, experimentGrpcAddr, opts)
+	}
+
+	featureHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		featureGrpcAddr := fmt.Sprintf("localhost:%d", *s.featureServicePort)
+		return featureproto.RegisterFeatureServiceHandlerFromEndpoint(ctx, mux, featureGrpcAddr, opts)
+	}
+
+	notificationHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		notificationGrpcAddr := fmt.Sprintf("localhost:%d", *s.notificationServicePort)
+		return notificationproto.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, notificationGrpcAddr, opts)
+	}
+
+	pushHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		pushGrpcAddr := fmt.Sprintf("localhost:%d", *s.pushServicePort)
+		return pushproto.RegisterPushServiceHandlerFromEndpoint(ctx, mux, pushGrpcAddr, opts)
+	}
+
+	tagHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		tagGrpcAddr := fmt.Sprintf("localhost:%d", *s.tagServicePort)
+		return tagproto.RegisterTagServiceHandlerFromEndpoint(ctx, mux, tagGrpcAddr, opts)
+	}
+
+	codeRefHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		codeRefGrpcAddr := fmt.Sprintf("localhost:%d", *s.codeReferenceServicePort)
+		return coderefproto.RegisterCodeReferenceServiceHandlerFromEndpoint(ctx, mux, codeRefGrpcAddr, opts)
+	}
+
+	// Start the unified gateway with all handlers
+	go func() {
+		if err := unifiedGateway.Start(
+			ctx,
+			accountHandler,
+			authHandler,
+			auditLogHandler,
+			autoOpsHandler,
+			environmentHandler,
+			eventCounterHandler,
+			experimentHandler,
+			featureHandler,
+			notificationHandler,
+			pushHandler,
+			tagHandler,
+			codeRefHandler,
+		); err != nil {
+			logger.Error("failed to start unified gateway", zap.Error(err))
+		}
+	}()
+
+	logger.Info("unified gateway started", zap.String("address", unifiedGatewayAddr))
+	return unifiedGateway, nil
+}
+
+func (s *server) Stop(ctx context.Context) error {
+	// Stop the unified gateway instead of individual gateways
+	if s.unifiedGateway != nil {
+		s.unifiedGateway.Stop(ctx)
+	}
+	return nil
 }

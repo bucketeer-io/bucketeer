@@ -16,10 +16,14 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/api/api"
@@ -36,6 +40,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
+	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
 )
 
 const command = "server"
@@ -307,6 +313,40 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	defer server.Stop(10 * time.Second)
 	go server.Run()
+
+	// Set up REST gateway for API service
+	restPort := *s.port + 1000
+	restAddr := fmt.Sprintf(":%d", restPort)
+	grpcAddr := fmt.Sprintf("localhost:%d", *s.port)
+
+	// Create a HandlerRegistrar adapter function that matches gateway.HandlerRegistrar signature
+	gatewayHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		return gwproto.RegisterGatewayHandlerFromEndpoint(ctx, mux, grpcAddr, opts)
+	}
+
+	apiGateway, err := gateway.NewGateway(
+		restAddr,
+		gateway.WithLogger(logger.Named("api-gateway")),
+		gateway.WithMetrics(registerer),
+		gateway.WithCertPath(*s.certPath),
+		gateway.WithKeyPath(*s.keyPath),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create API gateway: %v", err)
+	}
+
+	go func() {
+		if err := apiGateway.Start(
+			ctx,
+			gatewayHandler,
+		); err != nil {
+			logger.Error("failed to start API gateway", zap.Error(err))
+		}
+	}()
+	defer apiGateway.Stop(context.Background())
 
 	restHealthChecker := health.NewRestChecker(
 		api.Version, api.Service,

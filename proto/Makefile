@@ -30,6 +30,16 @@ go: remove-go
 			--include_imports \
 			--descriptor_set_out=${GIT_TOP_DIR}/proto/$$f/proto_descriptor.pb \
 			${GIT_TOP_DIR}/proto/$$f/*.proto; \
+		protoc \
+			--proto_path=${GIT_TOP_DIR} \
+			--proto_path=${PROTOBUF_INCLUDE_DIR} \
+			--proto_path=${GOOGLEAPIS} \
+			--proto_path=${OPENAPI} \
+			--grpc-gateway_out=${GIT_TOP_DIR} \
+			--grpc-gateway_opt=paths=source_relative \
+			--grpc-gateway_opt=logtostderr=true \
+			--grpc-gateway_opt=generate_unbound_methods=true \
+			${GIT_TOP_DIR}/proto/$$f/*.proto; \
 	done
 	# Because there are old projects using empty in the `environment_id`
 	# we must remove the `omitempty` option from the generated files.
@@ -82,17 +92,8 @@ go-check: go
 .PHONY: remove-go
 remove-go:
 	find . -name "*.pb.go" -type f -delete; \
+	find . -name "*.pb.gw.go" -type f -delete; \
 	find . -name "proto_descriptor.pb" -type f -delete
-
-.PHONY: go-descriptor
-go-descriptor:
-	DIR=$(GIT_TOP_DIR) DESCRIPTOR_PATH=$(GIT_TOP_DIR)/proto bash $(GIT_TOP_DIR)/tools/gen/descriptor.sh
-
-.PHONY: go-descriptor-check
-go-descriptor-check: go-descriptor
-	$(eval api_gateway_values_path := manifests/bucketeer/charts/api-gateway/values.yaml)
-	$(eval web_gateway_values_path := manifests/bucketeer/charts/web-gateway/values.yaml)
-	test -z "$$(git diff --name-only | grep -e "$(api_gateway_values_path)\|$(web_gateway_values_path)")"
 
 .PHONY: check
 check: fmt-check lock-check
