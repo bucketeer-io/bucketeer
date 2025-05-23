@@ -937,10 +937,6 @@ data:
                                   num_retries: 3
                             - match:
                                 prefix: /v1/
-                                headers:
-                                  - name: content-type
-                                    string_match:
-                                      exact: application/json
                               route:
                                 cluster: openapi-gateway
                                 timeout: 60s
