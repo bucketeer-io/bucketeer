@@ -23,7 +23,7 @@
   },
   "copied": "Copied",
   "copy-trigger-url": "Copy and store this URL. Once you leave this page, the URL will be hidden.",
-  "something-went-wrong": "Something went wrong.",
+  "something-went-wrong": "Oops! Something went wrong.",
   "operation": {
     "the-weight": "The weight",
     "must-be-greater-value": "{{name}} must be greater than or equal to {{value}}",

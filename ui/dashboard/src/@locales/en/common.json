@@ -244,6 +244,7 @@
   "new-operation": "New Operation",
   "update-operation": "Update Operation",
   "completed": "Completed",
+  "stop": "Stop",
   "is": "Is",
   "updated": "updated",
   "created": "created",
@@ -265,6 +266,5 @@
   "has-prerequisites": "Has Prerequisites",
   "has-experiment": "Has Experiment",
   "push-notification": "Push Notification",
-  "add": "Add",
-  "stop": "Stop"
+  "add": "Add"
 }
