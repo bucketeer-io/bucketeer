@@ -5,11 +5,8 @@ import {
   EXPERIMENT_NAME_MAX_LENGTH,
   EXPERIMENT_START_AT_OLDEST_DAYS
 } from 'constants/experiment';
-import { requiredMessage } from 'constants/message';
-import { i18n } from 'i18n';
+import { requiredMessage, translation } from 'constants/message';
 import * as yup from 'yup';
-
-const translation = i18n.t;
 
 export const experimentFormSchema = yup.object().shape({
   id: yup.string().max(EXPERIMENT_NAME_MAX_LENGTH),

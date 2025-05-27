@@ -1,11 +1,9 @@
-import { i18n } from 'i18n';
+import { translation } from 'constants/message';
 import * as yup from 'yup';
 import {
   SEGMENT_MAX_FILE_SIZE,
   SEGMENT_SUPPORTED_FORMATS
 } from 'pages/user-segments/constants';
-
-const translation = i18n.t;
 
 export const formSchema = yup.object().shape({
   name: yup.string().required(translation('message:required-field')),

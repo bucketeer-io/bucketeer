@@ -4,7 +4,8 @@ import {
   filterStatusOptions,
   FilterTypes
 } from 'constants/filters';
-import { i18n, useTranslation } from 'i18n';
+import { translation } from 'constants/message';
+import { useTranslation } from 'i18n';
 import { isNotEmpty } from 'utils/data-type';
 import { UserSegmentsFilters } from 'pages/user-segments/types';
 import Button from 'components/button';
@@ -30,8 +31,6 @@ export enum FilterValue {
   IN_USE = 'in-use',
   NOT_IN_USE = 'not-in-use'
 }
-
-const translation = i18n.t;
 
 export const statusOptions: FilterOption[] = [
   {

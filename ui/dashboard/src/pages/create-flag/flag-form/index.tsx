@@ -7,7 +7,6 @@ import { invalidateFeatures } from '@queries/features';
 import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { AxiosError } from 'axios';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -41,7 +40,7 @@ const FlagForm = () => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
   const navigate = useNavigate();
 
@@ -109,15 +108,16 @@ const FlagForm = () => {
       });
       if (resp) {
         notify({
-          message: 'Feature flag created successfully.'
+          message: t('message:collection-action-success', {
+            collection: t('source-type.feature-flag'),
+            action: t('created')
+          })
         });
         invalidateFeatures(queryClient);
         onBack();
       }
     } catch (error) {
-      const _error = error as AxiosError;
-      const { status } = _error || {};
-      errorNotify(error, status === 409 ? 'The same data already exists' : '');
+      errorNotify(error);
     }
   };
 

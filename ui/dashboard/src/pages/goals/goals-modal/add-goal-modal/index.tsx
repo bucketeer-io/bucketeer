@@ -4,9 +4,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateGoals } from '@queries/goals';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { AxiosError } from 'axios';
+import { translation } from 'constants/message';
 import { useToast } from 'hooks';
-import { i18n, useTranslation } from 'i18n';
+import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { ConnectionType } from '@types';
 import { onGenerateSlug } from 'utils/converts';
@@ -31,7 +31,6 @@ export interface AddGoalForm {
   connectionType?: string;
   description?: string;
 }
-const translation = i18n.t;
 
 const formSchema = yup.object().shape({
   id: yup
@@ -88,8 +87,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
       });
       if (resp.goal) addSuccess();
     } catch (error) {
-      const { status } = error as AxiosError;
-      errorNotify(error, status === 409 ? t('message:same-data-exists') : '');
+      errorNotify(error);
     }
   };
 

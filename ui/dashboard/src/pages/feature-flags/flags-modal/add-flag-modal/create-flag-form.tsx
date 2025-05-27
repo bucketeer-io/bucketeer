@@ -7,7 +7,6 @@ import { invalidateFeatures } from '@queries/features';
 import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { AxiosError } from 'axios';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
@@ -104,7 +103,7 @@ const CreateFlagForm = ({
 
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
 
   const { data: collection, isLoading: isLoadingTags } = useQueryTags({
     params: {
@@ -203,12 +202,7 @@ const CreateFlagForm = ({
         onClose();
       }
     } catch (error) {
-      const _error = error as AxiosError;
-      const { status, message } = _error || {};
-      notify({
-        messageType: 'error',
-        message: status === 409 ? t('message:same-data-exists') : message
-      });
+      errorNotify(error);
     }
   };
   return (

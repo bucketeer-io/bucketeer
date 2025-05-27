@@ -5,6 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateGoals } from '@queries/goals';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -31,8 +32,8 @@ interface CreateGoalForm {
 }
 
 const formSchema = yup.object().shape({
-  id: yup.string().required('This field is required'),
-  name: yup.string().required('This field is required'),
+  id: yup.string().required(requiredMessage),
+  name: yup.string().required(requiredMessage),
   description: yup.string()
 });
 
@@ -42,7 +43,7 @@ const CreateGoalModal = ({
   onClose,
   onCompleted
 }: CreateGoalModalProps) => {
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { notify, errorNotify } = useToast();
@@ -68,7 +69,7 @@ const CreateGoalModal = ({
       try {
         const { name, id, description } = values;
         const resp = await goalCreator({
-          connectionType,
+          connectionType: 'EXPERIMENT',
           environmentId: currentEnvironment.id,
           name,
           id,
@@ -77,12 +78,12 @@ const CreateGoalModal = ({
 
         if (resp) {
           notify({
-            message: (
-              <span>
-                <b>{name}</b> {`has been successfully created!`}
-              </span>
-            )
+            message: t('message:collection-action-success', {
+              collection: t('source-type.goal'),
+              action: 'created'
+            })
           });
+
           onCompleted?.(resp.goal);
           invalidateGoals(queryClient);
           onClose();

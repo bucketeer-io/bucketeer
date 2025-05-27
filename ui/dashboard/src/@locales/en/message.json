@@ -23,7 +23,7 @@
   },
   "copied": "Copied",
   "copy-trigger-url": "Copy and store this URL. Once you leave this page, the URL will be hidden.",
-  "something-went-wrong": "Something went wrong.",
+  "something-went-wrong": "Oops! Something went wrong.",
   "operation": {
     "the-weight": "The weight",
     "must-be-greater-value": "{{name}} must be greater than or equal to {{value}}",
@@ -37,5 +37,17 @@
   },
   "collection-action-success": "{{collection}} {{action}} successfully.",
   "max-size-file": "The maximum size of the file is {{size}}MB",
-  "format-file-not-supported": "The file format is not supported"
+  "format-file-not-supported": "The file format is not supported",
+  "page-not-found": "Page not found",
+  "could-not-find-page": "Sorry, we couldn't find the page you're looking for.",
+  "go-back-home": "Go back home",
+  "no-results-found": "No results found",
+  "could-not-find-filter": "We couldn't find what you're looking for",
+  "clear-search-filters": "Clear search & filters",
+  "try-again-later": "We're on it. Please try again later.",
+  "retry": "Retry",
+  "no-data": "No Data",
+  "data-appear": "Your data will appear here!",
+  "env-are-empty": "The environments are empty.",
+  "org-not-found": "The organization is not found."
 }

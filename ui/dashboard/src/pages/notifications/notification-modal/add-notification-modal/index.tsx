@@ -10,10 +10,10 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateNotifications } from '@queries/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { requiredMessage } from 'constants/message';
+import { requiredMessage, translation } from 'constants/message';
 import { languageList } from 'constants/notification';
 import { useToast } from 'hooks';
-import { i18n, useTranslation } from 'i18n';
+import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { NotificationLanguage, SourceType } from '@types';
@@ -58,8 +58,6 @@ export interface AddNotificationForm {
   language: NotificationLanguage;
   types: SourceType[];
 }
-
-const translation = i18n.t;
 
 export const formSchema = yup.object().shape({
   name: yup.string().required(requiredMessage),
