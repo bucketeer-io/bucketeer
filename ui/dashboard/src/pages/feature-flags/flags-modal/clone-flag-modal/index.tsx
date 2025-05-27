@@ -28,7 +28,6 @@ interface CloneFlagModalProps {
   flagId: string;
   isOpen: boolean;
   onClose: () => void;
-  errorToast: (error: Error) => void;
 }
 
 export interface CloneFlagForm {
@@ -45,16 +44,11 @@ const formSchema = yup.object().shape({
   destinationEnvironmentId: yup.string().required()
 });
 
-const CloneFlagModal = ({
-  flagId,
-  isOpen,
-  onClose,
-  errorToast
-}: CloneFlagModalProps) => {
+const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
 
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
@@ -115,13 +109,13 @@ const CloneFlagModal = ({
         onClose();
       }
     } catch (error) {
-      errorToast(error as Error);
+      errorNotify(error);
     }
   };
 
   useEffect(() => {
     if (featureError) {
-      errorToast(featureError);
+      errorNotify(featureError);
     }
   }, [featureError]);
 

@@ -22,7 +22,7 @@ import { FeatureActivityStatus, FlagActionType } from './types';
 const PageLoader = () => {
   const { t } = useTranslation(['common', 'table', 'message']);
   const queryClient = useQueryClient();
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
@@ -31,8 +31,7 @@ const PageLoader = () => {
     isAdd,
     isClone,
     onCloseActionModal,
-    onOpenAddModal,
-    errorToast
+    onOpenAddModal
   } = useActionWithURL({
     idKey: 'flagId',
     closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`
@@ -86,7 +85,7 @@ const PageLoader = () => {
       invalidateFeature(queryClient);
       mutation.reset();
     },
-    onError: error => errorToast(error)
+    onError: error => errorNotify(error)
   });
 
   const handleUpdateFeature = useCallback(
@@ -146,7 +145,6 @@ const PageLoader = () => {
           flagId={flagId}
           isOpen={isClone}
           onClose={onCloseActionModal}
-          errorToast={errorToast}
         />
       )}
       {openConfirmRequiredModal && selectedFlag && (

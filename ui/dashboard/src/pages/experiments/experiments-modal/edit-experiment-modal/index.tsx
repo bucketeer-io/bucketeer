@@ -73,13 +73,13 @@ export type DefineAudienceField = ControllerRenderProps<
 
 const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
   const { t } = useTranslation(['form', 'common', 'message']);
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
 
-  const { id: experimentId, errorToast } = useActionWithURL({
+  const { id: experimentId } = useActionWithURL({
     closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}`
   });
 
@@ -211,7 +211,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
         onClose();
       }
     } catch (error) {
-      errorToast(error as Error);
+      errorNotify(error);
     }
   };
 
@@ -250,7 +250,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
 
   useEffect(() => {
     if (experimentError) {
-      errorToast(experimentError);
+      errorNotify(experimentError);
     }
   }, [experimentError]);
 

@@ -3,9 +3,9 @@ import { organizationCreator } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateOrganizations } from '@queries/organizations';
 import { useQueryClient } from '@tanstack/react-query';
-import { requiredMessage } from 'constants/message';
+import { requiredMessage, translation } from 'constants/message';
 import { useToast } from 'hooks';
-import { i18n, useTranslation } from 'i18n';
+import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { onGenerateSlug } from 'utils/converts';
 import Button from 'components/button';
@@ -28,8 +28,6 @@ export interface AddOrganizationForm {
   isTrial?: boolean;
   description?: string;
 }
-
-const translation = i18n.t;
 
 const formSchema = yup.object().shape({
   name: yup.string().required(requiredMessage),
