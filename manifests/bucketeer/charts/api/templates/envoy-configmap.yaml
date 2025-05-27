@@ -233,14 +233,10 @@ data:
                                 retry_on: 5xx
                                 num_retries: 3
                           - match:
-                              prefix: /
-                              headers:
-                                - name: content-type
-                                  string_match:
-                                    exact: application/grpc
+                              prefix: /bucketeer.gateway.Gateway
                             route:
                               cluster: api
-                              timeout: 15s
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 3
