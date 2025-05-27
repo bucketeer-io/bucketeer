@@ -221,6 +221,18 @@ data:
                             max_age: "86400"
                         routes:
                           - match:
+                              prefix: /v1/gateway
+                              headers:
+                                - name: content-type
+                                  string_match:
+                                    prefix: application/json
+                            route:
+                              cluster: api-rest-v1
+                              timeout: 15s
+                              retry_policy:
+                                retry_on: 5xx
+                                num_retries: 3
+                          - match:
                               prefix: /track
                             route:
                               cluster: grpc-gateway
@@ -237,14 +249,14 @@ data:
                                 retry_on: 5xx
                                 num_retries: 3
                           - match:
-                              prefix: /v1/gateway
+                              prefix: /v1
                               headers:
                                 - name: content-type
                                   string_match:
                                     prefix: application/json
                             route:
-                              cluster: api-rest-v1
-                              timeout: 15s
+                              cluster: grpc-gateway
+                              timeout: 60s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 3
