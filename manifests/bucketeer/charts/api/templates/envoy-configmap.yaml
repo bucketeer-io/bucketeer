@@ -221,11 +221,27 @@ data:
                             max_age: "86400"
                         routes:
                           - match:
+                              prefix: /track
+                            route:
+                              cluster: grpc-gateway
+                              timeout: 60s
+                              retry_policy:
+                                retry_on: 5xx
+                                num_retries: 3
+                          - match:
+                              prefix: /ping
+                            route:
+                              cluster: grpc-gateway
+                              timeout: 60s
+                              retry_policy:
+                                retry_on: 5xx
+                                num_retries: 3
+                          - match:
                               prefix: /v1/gateway
                               headers:
                                 - name: content-type
                                   string_match:
-                                    exact: application/json
+                                    prefix: application/json
                             route:
                               cluster: api-rest-v1
                               timeout: 15s
@@ -233,7 +249,23 @@ data:
                                 retry_on: 5xx
                                 num_retries: 3
                           - match:
-                              prefix: /bucketeer.gateway.Gateway
+                              prefix: /
+                              headers:
+                                - name: content-type
+                                  string_match:
+                                    prefix: application/json
+                            route:
+                              cluster: grpc-gateway
+                              timeout: 60s
+                              retry_policy:
+                                retry_on: 5xx
+                                num_retries: 3
+                          - match:
+                              prefix: /
+                              headers:
+                                - name: content-type
+                                  string_match:
+                                    prefix: application/grpc
                             route:
                               cluster: api
                               timeout: 60s
