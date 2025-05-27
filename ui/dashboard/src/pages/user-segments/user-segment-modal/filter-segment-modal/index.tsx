@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
+import {
+  FilterOption,
+  filterStatusOptions,
+  FilterTypes
+} from 'constants/filters';
 import { i18n, useTranslation } from 'i18n';
 import { isNotEmpty } from 'utils/data-type';
 import { UserSegmentsFilters } from 'pages/user-segments/types';
@@ -21,15 +26,6 @@ export type FilterProps = {
   filters?: Partial<UserSegmentsFilters>;
 };
 
-export interface Option {
-  value: string;
-  label: string;
-}
-
-export enum FilterTypes {
-  STATUS = 'status'
-}
-
 export enum FilterValue {
   IN_USE = 'in-use',
   NOT_IN_USE = 'not-in-use'
@@ -37,14 +33,7 @@ export enum FilterValue {
 
 const translation = i18n.t;
 
-export const filterOptions: Option[] = [
-  {
-    value: FilterTypes.STATUS,
-    label: translation('common:status')
-  }
-];
-
-export const statusOptions: Option[] = [
+export const statusOptions: FilterOption[] = [
   {
     value: FilterValue.IN_USE,
     label: translation('common:in-use')
@@ -63,8 +52,8 @@ const FilterUserSegmentModal = ({
   filters
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
-  const [selectedFilterType, setSelectedFilterType] = useState<Option>();
-  const [valueOption, setValueOption] = useState<Option>();
+  const [selectedFilterType, setSelectedFilterType] = useState<FilterOption>();
+  const [valueOption, setValueOption] = useState<FilterOption>();
 
   const isDisabledSubmitBtn = useMemo(
     () => !selectedFilterType || !valueOption,
@@ -85,7 +74,7 @@ const FilterUserSegmentModal = ({
 
   useEffect(() => {
     if (isNotEmpty(filters?.isInUseStatus)) {
-      setSelectedFilterType(filterOptions[0]);
+      setSelectedFilterType(filterStatusOptions[0]);
       setValueOption(statusOptions[filters?.isInUseStatus ? 0 : 1]);
     } else {
       setSelectedFilterType(undefined);
@@ -114,7 +103,7 @@ const FilterUserSegmentModal = ({
               className="w-full"
             />
             <DropdownMenuContent className="w-[235px]" align="start">
-              {filterOptions.map((item, index) => (
+              {filterStatusOptions.map((item, index) => (
                 <DropdownMenuItem
                   key={index}
                   value={item.value}

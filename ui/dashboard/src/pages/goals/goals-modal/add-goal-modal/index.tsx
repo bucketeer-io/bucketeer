@@ -71,7 +71,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
       notify({
         message: t('message:collection-action-success', {
           collection: t('source-type.goal'),
-          action: t('created').toLowerCase()
+          action: t('created')
         })
       });
       invalidateGoals(queryClient);

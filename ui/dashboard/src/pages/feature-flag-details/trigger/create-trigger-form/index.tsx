@@ -143,7 +143,7 @@ const CreateTriggerForm = forwardRef(
             notify({
               message: t('message:collection-action-success', {
                 collection: t('feature-flags.trigger'),
-                action: t(isEdit ? 'updated' : 'created').toLowerCase()
+                action: t(isEdit ? 'updated' : 'created')
               })
             });
             setTriggerNewlyCreated(isEdit ? undefined : resp);

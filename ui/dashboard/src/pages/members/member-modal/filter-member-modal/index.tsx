@@ -1,4 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import {
+  enabledOptions,
+  FilterOption,
+  FilterTypes,
+  memberFilterOptions,
+  roleOptions
+} from 'constants/filters';
 import { useTranslation } from 'i18n';
 import { isNotEmpty } from 'utils/data-type';
 import { MembersFilters } from 'pages/members/types';
@@ -21,53 +28,6 @@ export type FilterProps = {
   filters?: Partial<MembersFilters>;
 };
 
-export interface Option {
-  value: string;
-  label: string;
-}
-
-export enum FilterTypes {
-  ENABLED = 'enabled',
-  ROLE = 'role'
-}
-
-export const filterOptions: Option[] = [
-  {
-    value: FilterTypes.ENABLED,
-    label: 'Enabled'
-  },
-  {
-    value: FilterTypes.ROLE,
-    label: 'Role'
-  }
-];
-
-export const enabledOptions: Option[] = [
-  {
-    value: 'yes',
-    label: 'Yes'
-  },
-  {
-    value: 'no',
-    label: 'No'
-  }
-];
-
-export const roleOptions: Option[] = [
-  {
-    value: '1',
-    label: 'Member'
-  },
-  {
-    value: '2',
-    label: 'Admin'
-  },
-  {
-    value: '3',
-    label: 'Owner'
-  }
-];
-
 const FilterMemberModal = ({
   onSubmit,
   isOpen,
@@ -76,8 +36,8 @@ const FilterMemberModal = ({
   filters
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
-  const [selectedFilterType, setSelectedFilterType] = useState<Option>();
-  const [valueOption, setValueOption] = useState<Option>();
+  const [selectedFilterType, setSelectedFilterType] = useState<FilterOption>();
+  const [valueOption, setValueOption] = useState<FilterOption>();
 
   const isDisabledSubmitBtn = useMemo(
     () => !selectedFilterType || !valueOption,
@@ -105,11 +65,11 @@ const FilterMemberModal = ({
 
   useEffect(() => {
     if (isNotEmpty(filters?.disabled)) {
-      setSelectedFilterType(filterOptions[0]);
+      setSelectedFilterType(memberFilterOptions[0]);
       return setValueOption(enabledOptions[filters?.disabled ? 1 : 0]);
     }
     if (isNotEmpty(filters?.organizationRole)) {
-      setSelectedFilterType(filterOptions[1]);
+      setSelectedFilterType(memberFilterOptions[1]);
       return setValueOption(
         roleOptions.find(
           item => item.value === String(filters?.organizationRole)
@@ -141,7 +101,7 @@ const FilterMemberModal = ({
               className="w-full"
             />
             <DropdownMenuContent className="w-[235px]" align="start">
-              {filterOptions.map((item, index) => (
+              {memberFilterOptions.map((item, index) => (
                 <DropdownMenuItem
                   key={index}
                   value={item.value}
@@ -151,7 +111,7 @@ const FilterMemberModal = ({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <p className="typo-para-medium text-gray-600">{`is`}</p>
+          <p className="typo-para-medium text-gray-600">{t(`is`)}</p>
           <DropdownMenu>
             <DropdownMenuTrigger
               placeholder={t(`select-value`)}

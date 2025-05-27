@@ -41,7 +41,7 @@ const EditUserSegmentModal = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
 
   const isDisabledUserIds = useMemo(
     () => userSegment.isInUseStatus || userSegment.features?.length > 0,
@@ -75,7 +75,7 @@ const EditUserSegmentModal = ({
       notify({
         message: t('message:collection-action-success', {
           collection: t('source-type.segment'),
-          action: t('updated').toLowerCase()
+          action: t('updated')
         })
       });
       onClose();
@@ -130,11 +130,7 @@ const EditUserSegmentModal = ({
       if (file) setSegmentUploading(userSegment);
       onUpdateSuccess(false);
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message || 'Something went wrong.'
-      });
+      errorNotify(error);
     }
   };
 

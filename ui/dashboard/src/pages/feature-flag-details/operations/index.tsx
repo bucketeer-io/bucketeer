@@ -211,7 +211,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
           notify({
             message: t('message:collection-action-success', {
               collection: t('operation'),
-              action: t('stopped').toLowerCase()
+              action: t('stopped')
             })
           });
           refetchRollouts();
@@ -246,7 +246,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
           notify({
             message: t('message:collection-action-success', {
               collection: t('operation'),
-              action: t('deleted').toLowerCase()
+              action: t('deleted')
             })
           });
           refetchAutoOpsRules();

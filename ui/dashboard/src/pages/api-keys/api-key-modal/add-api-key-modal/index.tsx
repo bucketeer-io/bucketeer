@@ -54,7 +54,7 @@ export const formSchema = yup.object().shape({
 const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
@@ -119,13 +119,10 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
       description: values.description
     }).then(() => {
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {` has been successfully created!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.api-key'),
+          action: t('created')
+        })
       });
       invalidateAPIKeys(queryClient);
       onClose();

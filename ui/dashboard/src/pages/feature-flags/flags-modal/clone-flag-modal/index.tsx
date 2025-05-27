@@ -108,7 +108,7 @@ const CloneFlagModal = ({
         notify({
           message: t('message:collection-action-success', {
             collection: t('common:source-type.feature-flag'),
-            action: t('cloned').toLowerCase()
+            action: t('cloned')
           })
         });
         invalidateFeatures(queryClient);

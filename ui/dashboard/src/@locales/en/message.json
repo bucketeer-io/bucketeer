@@ -1,7 +1,5 @@
 {
   "required-field": "This field is required.",
-  "flag-updated": "Feature flag updated successfully.",
-  "flag-cloned": "Feature flag cloned successfully.",
   "validation": {
     "must-be-number": "This must be a number",
     "must-be-json": "This must be a JSON",
@@ -33,5 +31,11 @@
     "event-rate-created": "Event rate operation created successfully.",
     "event-rate-updated": "Event rate operation updated successfully."
   },
-  "same-data-exists": "The same data already exists"
+  "same-data-exists": "The same data already exists",
+  "empty": {
+    "experiment-match": "No experiments match your search filters. Try changing your filters."
+  },
+  "collection-action-success": "{{collection}} {{action}} successfully.",
+  "max-size-file": "The maximum size of the file is {{size}}MB",
+  "format-file-not-supported": "The file format is not supported"
 }

@@ -67,7 +67,7 @@ const PageLoader = () => {
       notify({
         message: t('message:collection-action-success', {
           collection: t('source-type.goal'),
-          action: t('deleted').toLowerCase()
+          action: t('deleted')
         })
       });
     }
@@ -89,7 +89,7 @@ const PageLoader = () => {
       notify({
         message: t('message:collection-action-success', {
           collection: t('source-type.goal'),
-          action: t('updated').toLowerCase()
+          action: t('updated')
         })
       });
       mutationState.reset();

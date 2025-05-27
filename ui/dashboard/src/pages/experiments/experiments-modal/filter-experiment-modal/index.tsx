@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { filterStatusOptions, statusOptions } from 'constants/filters';
 import { useTranslation } from 'i18n';
 import { ExperimentStatus } from '@types';
 import { isNotEmpty } from 'utils/data-type';
@@ -21,41 +22,6 @@ export type FilterProps = {
   onClearFilters: () => void;
   filters?: Partial<ExperimentFilters>;
 };
-
-export interface Option {
-  value: string;
-  label: string;
-}
-
-export enum FilterTypes {
-  STATUS = 'status'
-}
-
-export const filterOptions: Option[] = [
-  {
-    value: FilterTypes.STATUS,
-    label: 'Status'
-  }
-];
-
-export const statusOptions: Option[] = [
-  {
-    value: 'WAITING',
-    label: 'Waiting'
-  },
-  {
-    value: 'RUNNING',
-    label: 'Running'
-  },
-  {
-    value: 'STOPPED',
-    label: 'Stopped'
-  },
-  {
-    value: 'FORCE_STOPPED',
-    label: 'Force Stopped'
-  }
-];
 
 const FilterExperimentModal = ({
   onSubmit,
@@ -114,12 +80,12 @@ const FilterExperimentModal = ({
           <DropdownMenu>
             <DropdownMenuTrigger
               placeholder={t(`select-filter`)}
-              label={filterOptions[0].label}
+              label={filterStatusOptions[0].label}
               variant="secondary"
               className="w-full"
             />
             <DropdownMenuContent className="w-[235px]" align="start">
-              {filterOptions.map((item, index) => (
+              {filterStatusOptions.map((item, index) => (
                 <DropdownMenuItem
                   key={index}
                   value={item.value}
