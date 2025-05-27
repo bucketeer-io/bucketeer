@@ -146,7 +146,10 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
 
       if (resp) {
         notify({
-          message: t('message:flag-updated')
+          message: t('message:collection-action-success', {
+            collection: t('common:source-type.feature-flag'),
+            action: t('common:updated').toLowerCase()
+          })
         });
         form.reset({
           ...values,

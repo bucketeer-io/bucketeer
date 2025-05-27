@@ -117,7 +117,9 @@ export const formSchema = yup.object().shape({
     .required()
     .matches(
       /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
-      translation('message:validation.flag-id-rule')
+      translation('message:validation.id-rule', {
+        name: translation('common:source-type.feature-flag')
+      })
     ),
   description: descriptionSchema,
   tags: yup.array().min(1).required(),

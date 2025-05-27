@@ -243,5 +243,16 @@
   "update-flag": "Update Feature Flag",
   "new-operation": "New Operation",
   "update-operation": "Update Operation",
-  "completed": "Completed"
+  "completed": "Completed",
+  "is": "Is",
+  "updated": "Updated",
+  "created": "Created",
+  "deleted": "Deleted",
+  "stopped": "Stopped",
+  "cloned": "Cloned",
+  "operation": "Operation",
+  "uploading": "Uploading",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "audit-log": "Audit Log"
 }

@@ -20,7 +20,7 @@ import PageContent from './page-content';
 import { FeatureActivityStatus, FlagActionType } from './types';
 
 const PageLoader = () => {
-  const { t } = useTranslation(['common', 'table']);
+  const { t } = useTranslation(['common', 'table', 'message']);
   const queryClient = useQueryClient();
   const { notify } = useToast();
   const { consoleAccount } = useAuth();
@@ -77,7 +77,10 @@ const PageLoader = () => {
     onSuccess: () => {
       onCloseConfirmModal();
       notify({
-        message: 'Updated feature flag successfully.'
+        message: t('message:collection-action-success', {
+          collection: t('source-type.feature-flag'),
+          action: t('updated').toLowerCase()
+        })
       });
       invalidateFeatures(queryClient);
       invalidateFeature(queryClient);

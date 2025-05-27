@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useToggleOpen } from 'hooks/use-toggle-open';
+import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
 import PageContent from './page-content';
 import AddUserSegmentModal from './user-segment-modal/add-segment-modal';
@@ -14,6 +15,7 @@ import EditUserSegmentModal from './user-segment-modal/edit-segment-modal';
 import FlagsConnectedModal from './user-segment-modal/flags-connected-modal';
 
 const PageLoader = () => {
+  const { t } = useTranslation(['common', 'message']);
   const [selectedSegment, setSelectedSegment] = useState<UserSegment>();
   const [segmentUploading, setSegmentUploading] = useState<UserSegment | null>(
     null
@@ -30,7 +32,7 @@ const PageLoader = () => {
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -44,17 +46,14 @@ const PageLoader = () => {
       onCloseDeleteModal();
       invalidateUserSegments(queryClient);
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{selectedSegment?.name}</b>
-            {` has been deleted successfully!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.segment'),
+          action: t('deleted').toLowerCase()
+        })
       });
       mutation.reset();
-    }
+    },
+    onError: error => errorNotify(error)
   });
 
   const onDeleteSegment = () => {

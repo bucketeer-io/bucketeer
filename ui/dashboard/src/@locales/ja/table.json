@@ -166,7 +166,7 @@
   "feature-flags": {
     "confirm-archive-desc": "This will archive and return the default value defined in your code for all users. We recommend removing the code references to \"<text>{{name}}</text>\" from your application before archiving.",
     "confirm-unarchive-desc": "Are you sure you want to unarchive the feature flag \"<text>{{name}}</text>\"?",
-    "archive-warning": "It is receiving one more requests in the last <text>{{days}}.</text>",
+    "archive-warning": "It is receiving one more requests in the last 7 days.",
     "confirm-required": "Confirmation Required",
     "confirm-required-desc": "This will make changes to the flag and increment the version.",
     "targeting": "Targeting",
@@ -211,9 +211,9 @@
     "operations-event-rate-desc": "Turn off automatically a flag based on KPI events",
     "operations-rollout-desc": "Automate to release a feature progressively"
   },
-  "audit-log-title": "<b>{{username}}</b>が<highlight>{{entityName}}</highlight>{{additionalText}}{{entityType}}を作成しました",
+  "audit-log-title": "<b>{{username}}</b> {{action}} the {{entityType}} <highlight>{{entityName}}</highlight>",
   "no-data-change": "No data change",
-  "audit-log-title-no-entity": "<b>{{username}}</b>が{{entityType}}を{{action}}しました",
+  "audit-log-title-no-entity": "<b>{{username}}</b> {{action}} a {{entityType}}",
   "copy-entry-link": "Copy entry details link",
   "show-entry": "Show entry details",
   "reason": "Reason",
@@ -227,10 +227,10 @@
     "event-count": "Event Count",
     "variation-counts": "Variation Counts",
     "total-evaluations": "Total evaluations <desc>{{value}}</desc>",
-    "last-24h": "過去24時間",
-    "last-7-days": "過去7日",
-    "last-14-days": "過去14日",
-    "last-30-days": "過去30日",
+    "last-24h": "Last 24 hours",
+    "last-7-days": "Last 7 days",
+    "last-14-days": "Last 14 days",
+    "last-30-days": "Last 30 days",
     "tooltip-content": "Shows real-time counts of evaluation events and unique users who received this flag."
   },
   "code-refs": {
@@ -279,5 +279,6 @@
   "stop-schedule": "Stop Schedule",
   "stop-event-rate": "Stop Event Rate",
   "stop-rollout": "Stop Progressive Rollout",
-  "stop-operation-type-desc": "The {{type}} will be stopped. Are you sure you want to proceed?"
+  "stop-operation-type-desc": "The {{type}} will be stopped. Are you sure you want to proceed?",
+  "from-last-month": "from last month"
 }
