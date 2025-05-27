@@ -287,7 +287,7 @@ const FilterFlagModal = ({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <p className="typo-para-medium text-gray-600">{`is`}</p>
+          <p className="typo-para-medium text-gray-600">{t(`is`)}</p>
           <DropdownMenu
             onOpenChange={open => {
               if (open) return handleFocusSearchInput();

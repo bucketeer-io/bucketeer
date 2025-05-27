@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { AxiosError } from 'axios';
 import { useToast } from 'hooks';
-import { useTranslation } from 'i18n';
+import { i18n, useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { ConnectionType } from '@types';
 import { onGenerateSlug } from 'utils/converts';
@@ -31,6 +31,7 @@ export interface AddGoalForm {
   connectionType?: string;
   description?: string;
 }
+const translation = i18n.t;
 
 const formSchema = yup.object().shape({
   id: yup
@@ -38,7 +39,9 @@ const formSchema = yup.object().shape({
     .required()
     .matches(
       /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
-      "Goal ID must start with a letter or number and only contain letters, numbers, or '-'"
+      translation('message:validation.id-rule', {
+        name: translation('common:source-type.feature-flag')
+      })
     ),
   name: yup.string().required(),
   description: yup.string(),
@@ -50,8 +53,8 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['common', 'form', 'message']);
+  const { notify, errorNotify } = useToast();
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -63,14 +66,13 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
     }
   });
 
-  const addSuccess = (name: string) => {
+  const addSuccess = () => {
     {
       notify({
-        message: (
-          <span>
-            <b>{name}</b> {`has been successfully created!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.goal'),
+          action: t('created').toLowerCase()
+        })
       });
       invalidateGoals(queryClient);
       onClose();
@@ -84,16 +86,10 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
         connectionType: values.connectionType as ConnectionType,
         environmentId: currentEnvironment.id
       });
-      if (resp.goal) addSuccess(values.name);
+      if (resp.goal) addSuccess();
     } catch (error) {
-      const { status, message } = error as AxiosError;
-      notify({
-        messageType: 'error',
-        message:
-          status === 409
-            ? 'The Goal ID already exists.'
-            : message || 'Something went wrong.'
-      });
+      const { status } = error as AxiosError;
+      errorNotify(error, status === 409 ? t('message:same-data-exists') : '');
     }
   };
 

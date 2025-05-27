@@ -37,7 +37,7 @@ const EditUserSegmentModal = ({
   onClose,
   setSegmentUploading
 }: EditUserSegmentModalProps) => {
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
@@ -70,16 +70,13 @@ const EditUserSegmentModal = ({
     trigger
   } = form;
 
-  const updateSuccess = (name: string, isUpload = false) => {
+  const updateSuccess = (isUpload = false) => {
     if (!isUpload) {
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{name}</b> {` has been successfully updated!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.segment'),
+          action: t('updated').toLowerCase()
+        })
       });
       onClose();
     }
@@ -87,12 +84,12 @@ const EditUserSegmentModal = ({
     invalidateUserSegments(queryClient);
   };
 
-  const onUpdateSuccess = (name: string, isUpload = false) => {
+  const onUpdateSuccess = (isUpload = false) => {
     let timerId: NodeJS.Timeout | null = null;
     if (timerId) clearTimeout(timerId);
     if (isUpload)
-      return (timerId = setTimeout(() => updateSuccess(name, isUpload), 10000));
-    return updateSuccess(name, isUpload);
+      return (timerId = setTimeout(() => updateSuccess(isUpload), 10000));
+    return updateSuccess(isUpload);
   };
 
   const onSubmit: SubmitHandler<UserSegmentForm> = async values => {
@@ -115,7 +112,7 @@ const EditUserSegmentModal = ({
             state: 'INCLUDED',
             data: base64String
           });
-          onUpdateSuccess(name, true);
+          onUpdateSuccess(true);
         });
       }
 
@@ -131,7 +128,7 @@ const EditUserSegmentModal = ({
         });
       }
       if (file) setSegmentUploading(userSegment);
-      onUpdateSuccess(name, false);
+      onUpdateSuccess(false);
     } catch (error) {
       notify({
         toastType: 'toast',

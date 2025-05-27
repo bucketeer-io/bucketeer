@@ -209,7 +209,10 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
         if (resp) {
           notify({
-            message: t('message:operation.stopped')
+            message: t('message:collection-action-success', {
+              collection: t('operation'),
+              action: t('stopped').toLowerCase()
+            })
           });
           refetchRollouts();
           refetchAutoOpsRules();
@@ -241,7 +244,10 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
         if (resp) {
           notify({
-            message: t('message:operation.deleted')
+            message: t('message:collection-action-success', {
+              collection: t('operation'),
+              action: t('deleted').toLowerCase()
+            })
           });
           refetchAutoOpsRules();
           refetchRollouts();

@@ -103,7 +103,7 @@ const CreateFlagForm = ({
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { notify } = useToast();
 
   const { data: collection, isLoading: isLoadingTags } = useQueryTags({
@@ -193,7 +193,10 @@ const CreateFlagForm = ({
       });
       if (resp) {
         notify({
-          message: 'Feature flag created successfully.'
+          message: t('message:collection-action-success', {
+            collection: t('source-type.feature-flag'),
+            action: t('updated').toLowerCase()
+          })
         });
         invalidateFeatures(queryClient);
         onCompleted?.(resp.feature);
@@ -204,10 +207,7 @@ const CreateFlagForm = ({
       const { status, message } = _error || {};
       notify({
         messageType: 'error',
-        message:
-          status === 409
-            ? 'The same data already exists'
-            : message || 'Something went wrong.'
+        message: status === 409 ? t('message:same-data-exists') : message
       });
     }
   };

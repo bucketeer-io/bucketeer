@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'i18n';
+import { i18n, useTranslation } from 'i18n';
 import { isNotEmpty } from 'utils/data-type';
 import { UserSegmentsFilters } from 'pages/user-segments/types';
 import Button from 'components/button';
@@ -35,21 +35,23 @@ export enum FilterValue {
   NOT_IN_USE = 'not-in-use'
 }
 
+const translation = i18n.t;
+
 export const filterOptions: Option[] = [
   {
     value: FilterTypes.STATUS,
-    label: 'Status'
+    label: translation('common:status')
   }
 ];
 
 export const statusOptions: Option[] = [
   {
     value: FilterValue.IN_USE,
-    label: 'In Use'
+    label: translation('common:in-use')
   },
   {
     value: FilterValue.NOT_IN_USE,
-    label: 'Not In Use'
+    label: translation('common:not-in-use')
   }
 ];
 
