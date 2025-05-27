@@ -13,6 +13,7 @@ import {
   DEMO_SIGN_IN_ENABLED,
   DEMO_SIGN_IN_PASSWORD
 } from 'configs';
+import { requiredMessage, translation } from 'constants/message';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -26,11 +27,17 @@ import InputGroup from 'components/input-group';
 import AuthWrapper from './elements/auth-wrapper';
 
 const formSchema = yup.object().shape({
-  email: yup.string().email().required(),
+  email: yup.string().email().required(requiredMessage),
   password: yup
     .string()
-    .required()
-    .min(4, 'The password you have provided must have at least 4 characters')
+    .required(requiredMessage)
+    .min(
+      4,
+      translation('message:validation.name-at-least-characters', {
+        name: translation('auth:password').toLowerCase(),
+        count: 4
+      })
+    )
 });
 
 const SignInWithEmail = () => {

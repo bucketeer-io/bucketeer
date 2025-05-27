@@ -6,6 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
 import { invalidateProjectDetails } from '@queries/project-details';
 import { useQueryClient } from '@tanstack/react-query';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -17,8 +18,8 @@ import Input from 'components/input';
 import TextArea from 'components/textarea';
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
-  urlCode: yup.string().required(),
+  name: yup.string().required(requiredMessage),
+  urlCode: yup.string().required(requiredMessage),
   description: yup.string()
 });
 

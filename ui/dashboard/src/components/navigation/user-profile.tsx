@@ -5,6 +5,7 @@ import { accountUpdater, AccountAvatar } from '@api/account/account-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
 import defaultAvatar from 'assets/avatars/default.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { requiredMessage, translation } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -28,12 +29,24 @@ import DialogModal from 'components/modal/dialog';
 const formSchema = yup.object().shape({
   firstName: yup
     .string()
-    .required()
-    .min(2, 'The first name you have provided must have at least 2 characters'),
+    .required(requiredMessage)
+    .min(
+      2,
+      translation('message:validation.name-at-least-characters', {
+        count: 2,
+        name: translation('common:first-name').toLowerCase()
+      })
+    ),
   lastName: yup
     .string()
-    .required()
-    .min(2, 'The last name you have provided must have at least 2 characters'),
+    .required(requiredMessage)
+    .min(
+      2,
+      translation('message:validation.name-at-least-characters', {
+        count: 2,
+        name: translation('common:last-name').toLowerCase()
+      })
+    ),
   language: yup.string().required()
 });
 

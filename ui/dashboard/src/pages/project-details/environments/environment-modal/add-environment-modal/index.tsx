@@ -6,6 +6,7 @@ import { invalidateEnvironments } from '@queries/environments';
 import { useQueryProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { requiredMessage, translation } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -39,17 +40,19 @@ export interface AddEnvironmentForm {
 }
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
+  name: yup.string().required(requiredMessage),
   urlCode: yup
     .string()
-    .required()
+    .required(requiredMessage)
     .matches(
       /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
-      "urlCode must start with a letter or number and only contain letters, numbers, or '-'"
+      translation('message:validation.id-rule', {
+        name: translation('common:url-code')
+      })
     ),
   description: yup.string(),
-  projectId: yup.string().required(),
-  requireComment: yup.boolean().required()
+  projectId: yup.string().required(requiredMessage),
+  requireComment: yup.boolean().required(requiredMessage)
 });
 
 const AddEnvironmentModal = ({ isOpen, onClose }: AddEnvironmentModalProps) => {
