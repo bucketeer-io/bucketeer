@@ -48,7 +48,7 @@ const PageLoader = () => {
       notify({
         message: t('message:collection-action-success', {
           collection: t('source-type.segment'),
-          action: t('deleted').toLowerCase()
+          action: t('deleted')
         })
       });
       mutation.reset();

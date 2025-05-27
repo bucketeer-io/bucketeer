@@ -2,6 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryAccounts } from '@queries/accounts';
 import { useQueryTags } from '@queries/tags';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import {
+  booleanOptions,
+  FilterOption,
+  FilterTypes,
+  flagFilterOptions
+} from 'constants/filters';
 import { useTranslation } from 'i18n';
 import { debounce } from 'lodash';
 import { isEmpty, isNotEmpty } from 'utils/data-type';
@@ -27,53 +33,6 @@ export type FilterProps = {
   onClearFilters: () => void;
 };
 
-export interface Option {
-  value: string | number;
-  label: string;
-}
-
-export enum FilterTypes {
-  HAS_EXPERIMENT = 'hasExperiment',
-  HAS_PREREQUISITES = 'hasPrerequisites',
-  MAINTAINER = 'maintainer',
-  ENABLED = 'enabled',
-  TAGS = 'tags'
-}
-
-export const filterOptions: Option[] = [
-  {
-    value: FilterTypes.HAS_EXPERIMENT,
-    label: 'Has Experiment'
-  },
-  {
-    value: FilterTypes.HAS_PREREQUISITES,
-    label: 'Has Prerequisites'
-  },
-  {
-    value: FilterTypes.MAINTAINER,
-    label: 'Maintainer'
-  },
-  {
-    value: FilterTypes.ENABLED,
-    label: 'Enabled'
-  },
-  {
-    value: FilterTypes.TAGS,
-    label: 'Tags'
-  }
-];
-
-export const booleanOptions: Option[] = [
-  {
-    value: 1,
-    label: 'Yes'
-  },
-  {
-    value: 0,
-    label: 'No'
-  }
-];
-
 const FilterFlagModal = ({
   isOpen,
   filters,
@@ -87,8 +46,8 @@ const FilterFlagModal = ({
 
   const inputSearchRef = useRef<HTMLInputElement>(null);
 
-  const [selectedFilter, setSelectedFilter] = useState<Option>(
-    filterOptions[0]
+  const [selectedFilter, setSelectedFilter] = useState<FilterOption>(
+    flagFilterOptions[0]
   );
   const [filterValue, setFilterValue] = useState<string | number | string[]>(
     ''
@@ -192,11 +151,11 @@ const FilterFlagModal = ({
 
       if (isNotEmptyMaintainer) {
         setFilterValue(maintainer!);
-        return setSelectedFilter(filterOptions[2]);
+        return setSelectedFilter(flagFilterOptions[2]);
       }
       if (isNotTagMaintainer) {
         setFilterValue(tags!);
-        return setSelectedFilter(filterOptions[4]);
+        return setSelectedFilter(flagFilterOptions[4]);
       }
       if (
         isNotEmptyExperiment ||
@@ -205,12 +164,12 @@ const FilterFlagModal = ({
       ) {
         setFilterValue(hasExperiment || hasPrerequisites || enabled ? 1 : 0);
         return setSelectedFilter(
-          filterOptions[
+          flagFilterOptions[
             isNotEmptyExperiment ? 0 : isNotEmptyPrerequisites ? 1 : 3
           ]
         );
       }
-      setSelectedFilter(filterOptions[0]);
+      setSelectedFilter(flagFilterOptions[0]);
     }
   }, [filters]);
 
@@ -274,7 +233,7 @@ const FilterFlagModal = ({
               className="w-full"
             />
             <DropdownMenuContent className="w-[235px]" align="start">
-              {filterOptions.map((item, index) => (
+              {flagFilterOptions.map((item, index) => (
                 <DropdownMenuItem
                   key={index}
                   value={item.value}

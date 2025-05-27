@@ -183,9 +183,7 @@ const ScheduleOperationModal = ({
           notify({
             message: t('message:collection-action-success', {
               collection: t('common:operation'),
-              action: t(
-                isCreate ? 'common:created' : 'common:updated'
-              ).toLowerCase()
+              action: t(isCreate ? 'common:created' : 'common:updated')
             })
           });
         }

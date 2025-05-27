@@ -148,7 +148,7 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
         notify({
           message: t('message:collection-action-success', {
             collection: t('common:source-type.feature-flag'),
-            action: t('common:updated').toLowerCase()
+            action: t('common:updated')
           })
         });
         form.reset({

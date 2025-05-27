@@ -46,7 +46,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
       notify({
         message: t('message:collection-action-success', {
           collection: t('source-type.goal'),
-          action: t('deleted').toLowerCase()
+          action: t('deleted')
         })
       });
       navigate(`/${currentEnvironment.urlCode}/${PAGE_PATH_GOALS}`);
@@ -67,7 +67,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
       notify({
         message: t('message:collection-action-success', {
           collection: t('source-type.goal'),
-          action: t('updated').toLowerCase()
+          action: t('updated')
         })
       });
       mutationState.reset();

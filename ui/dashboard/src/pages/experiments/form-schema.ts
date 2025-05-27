@@ -5,20 +5,23 @@ import {
   EXPERIMENT_NAME_MAX_LENGTH,
   EXPERIMENT_START_AT_OLDEST_DAYS
 } from 'constants/experiment';
+import { requiredMessage } from 'constants/message';
 import { i18n } from 'i18n';
 import * as yup from 'yup';
 
 const translation = i18n.t;
-const requiredMessage = translation('message:required-field');
 
 export const experimentFormSchema = yup.object().shape({
   id: yup.string().max(EXPERIMENT_NAME_MAX_LENGTH),
-  name: yup.string().required(),
+  name: yup.string().required(requiredMessage),
   baseVariationId: yup.string().required(requiredMessage),
-  startType: yup.string().oneOf(['manual', 'schedule']).required(),
+  startType: yup
+    .string()
+    .oneOf(['manual', 'schedule'])
+    .required(requiredMessage),
   startAt: yup
     .string()
-    .required()
+    .required(requiredMessage)
     .test(
       'laterThanStartAt',
       translation('message:validation.later-or-equal-days', {
@@ -33,7 +36,7 @@ export const experimentFormSchema = yup.object().shape({
     ),
   stopAt: yup
     .string()
-    .required()
+    .required(requiredMessage)
     .test('laterThanStartAt', (value, context) => {
       const endDate = new Date(+value * 1000);
       const startAtValue = context?.from && context?.from[0]?.value?.startAt;
@@ -68,7 +71,7 @@ export const experimentFormSchema = yup.object().shape({
     }),
   description: yup.string().max(EXPERIMENT_DESCRIPTION_MAX_LENGTH),
   audience: yup.mixed(),
-  featureId: yup.string().required(),
+  featureId: yup.string().required(requiredMessage),
   goalIds: yup
     .array()
     .min(EXPERIMENT_GOAL_MIN_LENGTH)

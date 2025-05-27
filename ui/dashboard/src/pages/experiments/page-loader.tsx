@@ -65,7 +65,7 @@ const PageLoader = () => {
       notify({
         message: t('message:collection-action-success', {
           collection: t('source-type.experiment'),
-          action: t('updated').toLowerCase()
+          action: t('updated')
         })
       });
     },

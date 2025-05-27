@@ -4,6 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidatePushes } from '@queries/pushes';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
@@ -38,17 +39,17 @@ export interface EditPushForm {
 }
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
+  name: yup.string().required(requiredMessage),
   fcmServiceAccount: yup.string(),
-  tags: yup.array().required(),
-  environmentId: yup.string().required()
+  tags: yup.array().required(requiredMessage),
+  environmentId: yup.string().required(requiredMessage)
 });
 
 const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { notify } = useToast();
 
   const { data: collection } = useFetchEnvironments({
@@ -83,13 +84,10 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
       id: push.id
     }).then(() => {
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {` has been successfully updated!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('push-notification'),
+          action: t('updated')
+        })
       });
       invalidatePushes(queryClient);
       onClose();

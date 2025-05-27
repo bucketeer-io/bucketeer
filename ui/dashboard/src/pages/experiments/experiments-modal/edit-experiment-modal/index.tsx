@@ -72,7 +72,7 @@ export type DefineAudienceField = ControllerRenderProps<
 >;
 
 const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
-  const { t } = useTranslation(['form', 'common']);
+  const { t } = useTranslation(['form', 'common', 'message']);
   const { notify } = useToast();
 
   const { consoleAccount } = useAuth();
@@ -160,7 +160,8 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
       },
       featureId: '',
       goalIds: []
-    }
+    },
+    mode: 'onChange'
   });
 
   const {
@@ -197,9 +198,10 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
       });
       if (resp) {
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: 'Experiment updated successfully.'
+          message: t('message:collection-action-success', {
+            collection: t('common:source-type.experiment'),
+            action: t('common:updated')
+          })
         });
         invalidateExperiments(queryClient);
         invalidateExperimentDetails(queryClient, {

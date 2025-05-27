@@ -35,10 +35,10 @@ export interface PageContentForm {
 }
 
 const PageContent = ({ organization }: { organization: Organization }) => {
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { data: accounts, isLoading: isLoadingAccounts } = useQueryAccounts({
     params: {
       cursor: String(0),
@@ -67,21 +67,14 @@ const PageContent = ({ organization }: { organization: Organization }) => {
       });
       if (resp) {
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {`has been successfully updated!`}
-            </span>
-          )
+          message: t('message:collection-action-success', {
+            collection: t('organization'),
+            action: t('updated')
+          })
         });
       }
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message || 'Something went wrong.'
-      });
+      errorNotify(error);
     }
   };
 

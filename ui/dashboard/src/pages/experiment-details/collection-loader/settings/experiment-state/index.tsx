@@ -31,12 +31,12 @@ const ExperimentState = ({
   experiment: Experiment;
   experimentResult?: ExperimentResult;
 }) => {
-  const { t } = useTranslation(['table', 'form']);
+  const { t } = useTranslation(['table', 'form', 'common', 'message']);
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const params = useParams();
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const isRunning = experiment.status === 'RUNNING',
     isWaiting = experiment.status === 'WAITING',
     isStopped = ['STOPPED', 'FORCE_STOPPED'].includes(experiment.status);
@@ -75,14 +75,14 @@ const ExperimentState = ({
         id: params?.experimentId ?? ''
       });
       mutation.reset();
-    },
-    onError: error => {
       notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: error?.message || 'Something went wrong.'
+        message: t('message:collection-action-success', {
+          collection: t('common:source-type.experiment'),
+          action: t('common:created')
+        })
       });
-    }
+    },
+    onError: error => errorNotify(error)
   });
 
   const onToggleExperiment = () => {

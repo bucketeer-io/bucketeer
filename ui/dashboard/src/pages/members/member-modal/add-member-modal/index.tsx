@@ -99,7 +99,7 @@ export const formSchema = yup.object().shape({
 const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
@@ -151,13 +151,10 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
       tags: values.tags ?? []
     }).then(() => {
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.email}</b> {` has been successfully created!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('member'),
+          action: t('created')
+        })
       });
       invalidateAccounts(queryClient);
       onClose();

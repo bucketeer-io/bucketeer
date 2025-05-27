@@ -56,7 +56,7 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
       notify({
         message: t('message:collection-action-success', {
           collection: t('source-type.segment'),
-          action: t('created').toLowerCase()
+          action: t('created')
         })
       });
       onClose();

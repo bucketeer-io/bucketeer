@@ -6,6 +6,7 @@ import {
   VARIATION_NUMBER_VALUE_MAX_LENGTH,
   VARIATION_VALUE_MAX_LENGTH
 } from 'constants/feature-flag';
+import { requiredMessage } from 'constants/message';
 import { i18n } from 'i18n';
 import * as yup from 'yup';
 import { FeatureVariation, FeatureVariationType } from '@types';
@@ -13,7 +14,6 @@ import { isNumber } from 'utils/chart';
 import { isJsonString } from 'utils/converts';
 
 const translation = i18n.t;
-const requiredMessage = translation('message:required-field');
 
 const nameSchema = yup.string().max(FEATURE_NAME_MAX_LENGTH).required();
 const descriptionSchema = yup.string().max(FEATURE_DESCRIPTION_MAX_LENGTH);
@@ -116,7 +116,9 @@ export const formSchema = yup.object().shape({
     .required()
     .matches(
       /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
-      translation('message:validation.flag-id-rule')
+      translation('message:validation.id-rule', {
+        name: translation('common:source-type.feature-flag')
+      })
     ),
   description: descriptionSchema,
   tags: yup.array().min(1).required(),

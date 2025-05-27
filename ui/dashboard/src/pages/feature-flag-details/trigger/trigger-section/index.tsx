@@ -116,7 +116,7 @@ const TriggerList = ({ feature }: { feature: Feature }) => {
       notify({
         message: t('message:collection-action-success', {
           collection: t('feature-flags.trigger'),
-          action: t(isDelete ? 'common:delete' : 'common:updated').toLowerCase()
+          action: t(isDelete ? 'common:delete' : 'common:updated')
         })
       });
       onReset();

@@ -36,7 +36,7 @@ const ArchiveFlag = ({ feature }: { feature: Feature }) => {
       notify({
         message: t('message:collection-action-success', {
           collection: t('common:source-type.feature-flag'),
-          action: t('updated').toLowerCase()
+          action: t('updated')
         })
       });
       invalidateFeature(queryClient);
