@@ -19,7 +19,8 @@
     },
     "later-or-equal-days": "This must be later than or equal to {{count}} days ago.",
     "less-or-equal-days": "This must be less than or equals to {{count}} days.",
-    "stop-later-than-start": "Stop at must be later than the start at."
+    "stop-later-than-start": "Stop at must be later than the start at.",
+    "name-at-least-characters": "The {{name}} you have provided must have at least {{count}} characters"
   },
   "copied": "Copied",
   "copy-trigger-url": "Copy and store this URL. Once you leave this page, the URL will be hidden.",

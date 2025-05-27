@@ -2,6 +2,7 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { GoalUpdaterPayload } from '@api/goal/goal-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Goal } from '@types';
@@ -17,8 +18,8 @@ export interface GoalDetailsForm {
 }
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
-  id: yup.string().required(),
+  name: yup.string().required(requiredMessage),
+  id: yup.string().required(requiredMessage),
   description: yup.string()
 });
 

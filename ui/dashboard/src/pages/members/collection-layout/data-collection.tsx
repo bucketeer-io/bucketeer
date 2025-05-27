@@ -93,7 +93,7 @@ export const useColumns = ({
 
               {isPendingInvite && (
                 <div className="py-[3px] px-2 w-fit rounded bg-accent-orange-50 typo-para-small text-accent-orange-500">
-                  {`Pending invite`}
+                  {t(`table:pending-invite`)}
                 </div>
               )}
             </div>

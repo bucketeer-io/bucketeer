@@ -208,7 +208,10 @@ const ProgressiveRolloutModal = ({
         const resp = await rolloutCreator(payload);
         if (resp) {
           notify({
-            message: t('message:operation.created')
+            message: t(`message:collection-action-success`, {
+              collection: t('common:source-type.progressive-rollout'),
+              action: t(`common:created`)
+            })
           });
           onSubmitRolloutSuccess();
         }

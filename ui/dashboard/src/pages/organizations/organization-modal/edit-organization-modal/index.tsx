@@ -5,6 +5,7 @@ import { useQueryAccounts } from '@queries/accounts';
 import { invalidateOrganizations } from '@queries/organizations';
 import { useQueryClient } from '@tanstack/react-query';
 import { LIST_PAGE_SIZE } from 'constants/app';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -35,9 +36,9 @@ export interface EditOrganizationForm {
 }
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
+  name: yup.string().required(requiredMessage),
   description: yup.string(),
-  ownerEmail: yup.string().email().required()
+  ownerEmail: yup.string().email().required(requiredMessage)
 });
 
 const EditOrganizationModal = ({

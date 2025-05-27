@@ -7,6 +7,7 @@ import { invalidateFeatures } from '@queries/features';
 import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { translation } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
@@ -68,17 +69,17 @@ const defaultVariations: FeatureVariation[] = [
 
 export const flagTypeOptions = [
   {
-    label: 'Boolean',
+    label: translation('form:boolean'),
     value: 'BOOLEAN',
     icon: IconFlagSwitch
   },
   {
-    label: 'String',
+    label: translation('form:string'),
     value: 'STRING',
     icon: IconFlagString
   },
   {
-    label: 'Number',
+    label: translation('form:number'),
     value: 'NUMBER',
     icon: IconFlagNumber
   },

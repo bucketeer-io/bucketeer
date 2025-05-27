@@ -131,7 +131,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
 
   const {
     watch,
-    formState: { isDirty, isValid, isSubmitting }
+    formState: { isDirty, isValid }
   } = form;
 
   const featureId = watch('featureId');
@@ -194,7 +194,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
               <Button
                 type="submit"
                 disabled={!isDirty || !isValid}
-                loading={isSubmitting}
+                loading={mutationState.isPending}
               >
                 {t('common:save')}
               </Button>

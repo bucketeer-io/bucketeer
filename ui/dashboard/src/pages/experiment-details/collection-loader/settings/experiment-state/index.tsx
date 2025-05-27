@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { Trans } from 'react-i18next';
-import { useParams } from 'react-router-dom';
 import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
 import { invalidateExperimentDetails } from '@queries/experiment-details';
 import { invalidateExperiments } from '@queries/experiments';
@@ -35,7 +34,7 @@ const ExperimentState = ({
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const params = useParams();
+
   const { notify, errorNotify } = useToast();
   const isRunning = experiment.status === 'RUNNING',
     isWaiting = experiment.status === 'WAITING',
@@ -66,19 +65,23 @@ const ExperimentState = ({
     mutationFn: async (params: ExperimentUpdaterParams) => {
       return experimentUpdater(params);
     },
-    onSuccess: () => {
+    onSuccess: ({ experiment }, params) => {
       onCloseToggleExperimentModal();
 
       invalidateExperiments(queryClient);
       invalidateExperimentDetails(queryClient, {
         environmentId: currentEnvironment.id,
-        id: params?.experimentId ?? ''
+        id: experiment?.id ?? ''
       });
       mutation.reset();
       notify({
         message: t('message:collection-action-success', {
           collection: t('common:source-type.experiment'),
-          action: t('common:created')
+          action: t(
+            params?.status?.status === 'FORCE_STOPPED'
+              ? 'common:stopped'
+              : 'common:started'
+          )
         })
       });
     },

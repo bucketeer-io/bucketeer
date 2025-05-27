@@ -6,6 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
 import { invalidateProjectDetails } from '@queries/project-details';
 import { useQueryClient } from '@tanstack/react-query';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -17,8 +18,8 @@ import Input from 'components/input';
 import TextArea from 'components/textarea';
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
-  urlCode: yup.string().required(),
+  name: yup.string().required(requiredMessage),
+  urlCode: yup.string().required(requiredMessage),
   description: yup.string()
 });
 
@@ -31,7 +32,7 @@ export interface ProjectSettingsForm {
 const ProjectSettings = ({ project }: { project: Project }) => {
   const { notify } = useToast();
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const params = useParams();
   const projectDetailsId = params.projectId!;
 
@@ -58,13 +59,10 @@ const ProjectSettings = ({ project }: { project: Project }) => {
         });
         invalidateAccounts(queryClient);
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {`has been successfully updated!`}
-            </span>
-          )
+          message: t('message:collection-action-success', {
+            collection: t('project'),
+            action: t('updated')
+          })
         });
       }
     } catch (error) {
