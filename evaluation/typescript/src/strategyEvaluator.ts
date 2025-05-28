@@ -33,7 +33,6 @@ class StrategyEvaluator {
   ): string {
     const bucketeer = new Bucketeer();
     
-    // Audience control: Check if user should be included in experiment
     const audience = strategy.getAudience();
     if (audience !== undefined) {
       if (audience.getPercentage() > 0 && audience.getPercentage() < 100) {
@@ -52,7 +51,6 @@ class StrategyEvaluator {
       }
     }
     
-    // Original A/B split logic for users in experiment traffic
     const input = `${featureID}-${userID}-${samplingSeed}`;
     const bucket = bucketeer.bucket(input);
 

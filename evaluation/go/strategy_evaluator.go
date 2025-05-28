@@ -49,7 +49,6 @@ func (e *strategyEvaluator) rollout(
 ) (string, error) {
 	b := bucketeer{}
 
-	// Traffic control: Check if user should be included in experiment
 	if strategy.GetAudience() != nil {
 		audience := strategy.GetAudience()
 		if audience.GetPercentage() > 0 && audience.GetPercentage() < 100 {
@@ -68,7 +67,6 @@ func (e *strategyEvaluator) rollout(
 		}
 	}
 
-	// Original A/B split logic for users in experiment traffic
 	bucket := b.bucket(fmt.Sprintf("%s-%s-%s", featureID, userID, samplingSeed))
 	// Iterate through the variant and increment the threshold by the percentage of each variant.
 	// return the first variant where the bucket is smaller than the threshold.
