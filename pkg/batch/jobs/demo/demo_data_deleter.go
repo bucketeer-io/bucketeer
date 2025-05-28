@@ -205,29 +205,31 @@ func (d *demoDataDeleter) deleteDataFromEnvironment(
 	args := []interface{}{
 		environmentID,
 	}
-	for _, target := range targetEntities {
-		query := fmt.Sprintf(`
-		DELETE FROM
-			%s
-		WHERE
-			environment_id = ?
-	`, target)
-		_, err := d.mysqlClient.ExecContext(
-			ctx,
-			query,
-			args...,
-		)
-		if err != nil {
-			d.logger.Error("Failed to delete data from environment",
-				zap.String("table", target),
-				zap.String("environmentId", environmentID),
-				zap.Error(err),
-			)
-			return err
-		}
-	}
 
-	return nil
+	return d.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		for _, target := range targetEntities {
+			query := fmt.Sprintf(`
+				DELETE FROM
+					%s
+				WHERE
+					environment_id = ?`,
+				target)
+			_, err := d.mysqlClient.ExecContext(
+				ctxWithTx,
+				query,
+				args...,
+			)
+			if err != nil {
+				d.logger.Error("Failed to delete data from environment",
+					zap.String("table", target),
+					zap.String("environmentId", environmentID),
+					zap.Error(err),
+				)
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (d *demoDataDeleter) deleteEnvironments(ctx context.Context, organizationIDs []string) error {
@@ -274,37 +276,38 @@ func (d *demoDataDeleter) deleteOrganizations(ctx context.Context, organizationI
 		mysql.NewInFilter("organization_id", convToInterfaceSlice(organizationIDs)),
 	}
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	for _, target := range targetEntitiesInOrganization {
-		query := fmt.Sprintf("DELETE FROM %s %s", target, whereSQL)
+	return d.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
+		for _, target := range targetEntitiesInOrganization {
+			query := fmt.Sprintf("DELETE FROM %s %s", target, whereSQL)
+			_, err := d.mysqlClient.ExecContext(
+				ctxWithTx,
+				query,
+				whereArgs...,
+			)
+			if err != nil {
+				d.logger.Error("Failed to delete organization entity",
+					zap.Error(err),
+					zap.String("table", target),
+				)
+				return err
+			}
+		}
+		whereParts = []mysql.WherePart{
+			mysql.NewInFilter("id", convToInterfaceSlice(organizationIDs)),
+		}
+		whereSQL, whereArgs = mysql.ConstructWhereSQLString(whereParts)
+		query := fmt.Sprintf("DELETE FROM organization %s", whereSQL)
 		_, err := d.mysqlClient.ExecContext(
 			ctx,
 			query,
 			whereArgs...,
 		)
 		if err != nil {
-			d.logger.Error("Failed to delete organization entity",
-				zap.Error(err),
-				zap.String("table", target),
-			)
+			d.logger.Error("Failed to delete organizations", zap.Error(err))
 			return err
 		}
-	}
-
-	whereParts = []mysql.WherePart{
-		mysql.NewInFilter("id", convToInterfaceSlice(organizationIDs)),
-	}
-	whereSQL, whereArgs = mysql.ConstructWhereSQLString(whereParts)
-	query := fmt.Sprintf("DELETE FROM organization %s", whereSQL)
-	_, err := d.mysqlClient.ExecContext(
-		ctx,
-		query,
-		whereArgs...,
-	)
-	if err != nil {
-		d.logger.Error("Failed to delete organizations", zap.Error(err))
-		return err
-	}
-	return nil
+		return nil
+	})
 }
 
 func convToInterfaceSlice(
