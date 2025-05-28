@@ -28,6 +28,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	orgmock "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	proto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
@@ -93,20 +94,6 @@ func TestDemoDataDeleter_Run(t *testing.T) {
 				d.organizationStorage.(*orgmock.MockOrganizationStorage).EXPECT().ListOrganizations(
 					gomock.Any(), gomock.Any(),
 				).Return([]*proto.Organization{}, 0, int64(0), nil)
-				d.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
-				d.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
-				for i := 0; i < len(targetEntitiesInOrganization); i++ {
-					d.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
-						gomock.Any(), gomock.Any(), gomock.Any(),
-					).Return(nil, nil)
-				}
-				d.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
 			},
 		},
 		{
@@ -125,10 +112,29 @@ func TestDemoDataDeleter_Run(t *testing.T) {
 				d.environmentStorage.(*orgmock.MockEnvironmentStorage).EXPECT().ListEnvironmentsV2(
 					gomock.Any(), gomock.Any(),
 				).Return([]*proto.EnvironmentV2{}, 0, int64(0), nil)
+				d.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
+				d.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
+				d.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				for i := 0; i < len(targetEntitiesInOrganization); i++ {
+					d.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+						gomock.Any(), gomock.Any(), gomock.Any(),
+					).Return(nil, nil)
+				}
+				d.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
 			},
 		},
 		{
-			desc: "success: no outdated environments",
+			desc: "success",
 			setup: func(t *testing.T, d *demoDataDeleter) {
 				err := os.Setenv("BUCKETEER_BATCH_DEMO_ENABLED", "true")
 				if err != nil {
@@ -146,11 +152,18 @@ func TestDemoDataDeleter_Run(t *testing.T) {
 					{Id: "env1", OrganizationId: "org1"},
 					{Id: "env2", OrganizationId: "org2"},
 				}, 0, int64(0), nil)
-				// equal to number of target x number of environments
-				for i := 0; i < 2*len(targetEntities); i++ {
-					d.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
-						gomock.Any(), gomock.Any(), gomock.Any(),
-					).Return(nil, nil)
+				// equal to number of environments
+				for i := 0; i < 2; i++ {
+					d.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+						gomock.Any(), gomock.Any(),
+					).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+						_ = fn(ctx, nil)
+					}).Return(nil)
+					for j := 0; j < len(targetEntities); j++ {
+						d.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+							gomock.Any(), gomock.Any(), gomock.Any(),
+						).Return(nil, nil)
+					}
 				}
 				d.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -158,6 +171,11 @@ func TestDemoDataDeleter_Run(t *testing.T) {
 				d.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
+				d.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
 				for i := 0; i < len(targetEntitiesInOrganization); i++ {
 					d.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
 						gomock.Any(), gomock.Any(), gomock.Any(),
