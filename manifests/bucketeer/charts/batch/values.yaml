@@ -8,9 +8,6 @@ namespace: default
 
 env:
   project:
-  demo:
-    demoEnabled: false
-    demoTrialPeriod: 7 # days
   profile: true
   gcpEnabled: true
   mysqlUser:
@@ -33,6 +30,7 @@ env:
   batchService: localhost:9001
   webURL:
   logLevel: info
+  grpcGatewayPort: 9089
   port: 9090
   metricsPort: 9002
   timezone: UTC

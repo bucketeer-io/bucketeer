@@ -11,7 +11,6 @@ env:
   bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
   pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
   project: bucketeer-test
-  demoEnabled: false
   mysqlUser: bucketeer
   mysqlPass: bucketeer
   mysqlHost: localenv-mysql-headless.default.svc.cluster.local

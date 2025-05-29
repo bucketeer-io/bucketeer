@@ -47,48 +47,6 @@ spec:
         - name: env-js
           configMap:
             name: {{ template "web.name" . }}-env-js
-        - name: envoy-account-descriptor-secret
-          secret:
-            secretName: {{ template "web.fullname" . }}-account
-        - name: envoy-auditlog-descriptor-secret
-          secret:
-            secretName: {{ template "web.fullname" . }}-auditlog
-        - name: envoy-auth-descriptor-secret
-          secret:
-            secretName: {{ template "web.fullname" . }}-auth
-        - name: envoy-autoops-descriptor-secret
-          secret:
-            secretName: {{ template "web.fullname" . }}-autoops
-        - name: envoy-environment-descriptor-secret
-          secret:
-            secretName: {{ template "web.fullname" . }}-environment
-        - name: envoy-eventcounter-descriptor-secret
-          secret:
-            secretName: {{ template "web.fullname" . }}-eventcounter
-        - name: envoy-experiment-descriptor-secret
-          secret:
-            secretName: {{ template "web.fullname" . }}-experiment
-        - name: envoy-experiment-calculator-descriptor-secret
-          secret:
-            secretName: {{ template "web.fullname" . }}-experimentcalculator
-        - name: envoy-feature-descriptor-secret
-          secret:
-            secretName: {{ template "web.fullname" . }}-feature
-        - name: envoy-notification-descriptor-secret
-          secret:
-            secretName: {{ template "web.fullname" . }}-notification
-        - name: envoy-push-descriptor-secret
-          secret:
-            secretName: {{ template "web.fullname" . }}-push
-        - name: envoy-tag-descriptor-secret
-          secret:
-            secretName: {{ template "web.fullname" . }}-tag
-        - name: envoy-batch-descriptor-secret
-          secret:
-            secretName: {{ template "web.fullname" . }}-batch
-        - name: envoy-code-reference-descriptor-secret
-          secret:
-            secretName: {{ template "web.fullname" . }}-code-reference
       {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "web.fullname" . }}
       {{- end }}
@@ -102,18 +60,12 @@ spec:
               value: "{{ .Values.env.cloudService }}"
             - name: BIGQUERY_QUERIER_EMULATOR_HOST
               value: "{{.Values.env.bigqueryQuerierEmulatorHost}}"
-            - name: PUBSUB_EMULATOR_HOST
-              value: "{{.Values.env.pubsubEmulatorHost}}"
             - name: BUCKETEER_WEB_PROFILE
               value: "{{.Values.env.profile}}"
             - name: BUCKETEER_TEST_ENABLED
               value: "{{.Values.env.bucketeerTestEnabled}}"
             - name: BUCKETEER_WEB_GCP_TRACE_ENABLED
               value: "{{.Values.env.gcpEnabled}}"
-            - name: BUCKETEER_WEB_PROJECT
-              value: "{{ .Values.env.project }}"
-            - name: BUCKETEER_WEB_DEMO_ENABLED
-              value: "{{ .Values.env.demoEnabled }}"
             - name: BUCKETEER_WEB_MYSQL_USER
               value: "{{ .Values.env.mysqlUser }}"
             - name: BUCKETEER_WEB_MYSQL_PASS
@@ -148,6 +100,8 @@ spec:
               value: "{{ .Values.env.domainTopic }}"
             - name: BUCKETEER_WEB_BULK_SEGMENT_USERS_RECEIVED_TOPIC
               value: "{{ .Values.env.bulkSegmentUsersReceivedTopic }}"
+            - name: BUCKETEER_WEB_GRPC_GATEWAY_PORT
+              value: "{{ .Values.env.grpcGatewayPort }}"
             - name: BUCKETEER_WEB_HEALTH_CHECK_SERVICE_PORT
               value: "{{ .Values.env.healthCheckServicePort }}"
             - name: BUCKETEER_WEB_ACCOUNT_SERVICE_PORT
@@ -178,6 +132,8 @@ spec:
               value: "{{ .Values.env.dashboardServicePort }}"
             - name: BUCKETEER_WEB_CODE_REFERENCE_SERVICE_PORT
               value: "{{ .Values.env.coderefServicePort }}"
+            - name: BUCKETEER_WEB_UNIFIED_GATEWAY_PORT
+              value: "{{ .Values.env.unifiedGatewayPort }}"
             - name: BUCKETEER_WEB_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_WEB_AUTH_SERVICE
@@ -200,6 +156,22 @@ spec:
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_WEB_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_WEB_PUBSUB_TYPE
+              value: "{{ .Values.global.pubsub.type }}"
+            - name: BUCKETEER_WEB_PUBSUB_REDIS_SERVER_NAME
+              value: "{{ .Values.global.pubsub.redis.serverName }}"
+            - name: BUCKETEER_WEB_PUBSUB_REDIS_ADDR
+              value: "{{ .Values.global.pubsub.redis.addr }}"
+            - name: BUCKETEER_WEB_PUBSUB_REDIS_POOL_SIZE
+              value: "{{ .Values.global.pubsub.redis.poolSize }}"
+            - name: BUCKETEER_WEB_PUBSUB_REDIS_MIN_IDLE
+              value: "{{ .Values.global.pubsub.redis.minIdle }}"
+            - name: BUCKETEER_WEB_PUBSUB_REDIS_PARTITION_COUNT
+              value: "{{ .Values.global.pubsub.redis.partitionCount }}"
+            - name: BUCKETEER_WEB_PROJECT
+              value: "{{ .Values.global.pubsub.project }}"
+            - name: PUBSUB_EMULATOR_HOST
+              value: "{{ .Values.global.pubsub.emulatorHost }}"
             - name: BUCKETEER_WEB_OAUTH_PUBLIC_KEY
               value: /usr/local/oauth-key/public.pem
             - name: BUCKETEER_WEB_OAUTH_PRIVATE_KEY
@@ -285,47 +257,6 @@ spec:
           volumeMounts:
             - name: envoy-config
               mountPath: /usr/local/conf/
-              readOnly: true
-            - name: envoy-account-descriptor-secret
-              mountPath: /usr/local/account-secret
-              readOnly: true
-            - name: envoy-auditlog-descriptor-secret
-              mountPath: /usr/local/auditlog-secret
-              readOnly: true
-            - name: envoy-auth-descriptor-secret
-              mountPath: /usr/local/auth-secret
-              readOnly: true
-            - name: envoy-autoops-descriptor-secret
-              mountPath: /usr/local/autoops-secret
-              readOnly: true
-            - name: envoy-environment-descriptor-secret
-              mountPath: /usr/local/environment-secret
-              readOnly: true
-            - name: envoy-eventcounter-descriptor-secret
-              mountPath: /usr/local/eventcounter-secret
-              readOnly: true
-            - name: envoy-experiment-descriptor-secret
-              mountPath: /usr/local/experiment-secret
-            - name: envoy-experiment-calculator-descriptor-secret
-              mountPath: /usr/local/experiment-calculator-secret
-              readOnly: true
-            - name: envoy-feature-descriptor-secret
-              mountPath: /usr/local/feature-secret
-              readOnly: true
-            - name: envoy-notification-descriptor-secret
-              mountPath: /usr/local/notification-secret
-              readOnly: true
-            - name: envoy-push-descriptor-secret
-              mountPath: /usr/local/push-secret
-              readOnly: true
-            - name: envoy-tag-descriptor-secret
-              mountPath: /usr/local/tag-secret
-              readOnly: true
-            - name: envoy-batch-descriptor-secret
-              mountPath: /usr/local/batch-secret
-              readOnly: true
-            - name: envoy-code-reference-descriptor-secret
-              mountPath: /usr/local/code-reference-secret
               readOnly: true
             - name: service-cert-secret
               mountPath: /usr/local/certs/service
