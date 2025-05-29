@@ -44,7 +44,7 @@ const DebuggerResults = ({
   const accounts = accountCollection?.accounts || [];
 
   return (
-    <TableListContainer className="mt-0 gap-y-6">
+    <TableListContainer className="pt-0 gap-y-6">
       <ActionBar
         isExpandAll={isExpandAll}
         groupBy={groupBy}

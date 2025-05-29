@@ -28,7 +28,7 @@ export const useColumns = ({
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 250,
+      size: 299,
       cell: ({ row }) => {
         const project = row.original;
         const { id, name } = project;
@@ -40,12 +40,7 @@ export const useColumns = ({
               <Link
                 to={`/${currentEnvironment.urlCode}${PAGE_PATH_PROJECTS}/${id}`}
               >
-                <NameWithTooltip.Trigger
-                  id={id}
-                  name={name}
-                  maxLines={1}
-                  className="min-w-[300px]"
-                />
+                <NameWithTooltip.Trigger id={id} name={name} maxLines={1} />
               </Link>
             }
             maxLines={1}
@@ -56,8 +51,7 @@ export const useColumns = ({
     {
       accessorKey: 'creatorEmail',
       header: `${t('maintainer')}`,
-      size: 350,
-      maxSize: 350,
+      size: 299,
       cell: ({ row }) => {
         const project = row.original;
         const { id, creatorEmail } = project;
@@ -75,7 +69,6 @@ export const useColumns = ({
                 id={`maintainer-${project.id}`}
                 name={creatorEmail}
                 maxLines={1}
-                className="min-w-[300px]"
                 haveAction={false}
               />
             }
@@ -87,7 +80,7 @@ export const useColumns = ({
     {
       accessorKey: 'environmentCount',
       header: `${t('environments')}`,
-      size: 120,
+      size: 130,
       cell: ({ row }) => {
         const project = row.original;
         return (
@@ -100,7 +93,7 @@ export const useColumns = ({
     {
       accessorKey: 'featureFlagCount',
       header: t('table:flags'),
-      size: 100,
+      size: 70,
       cell: ({ row }) => {
         const project = row.original;
         return (
@@ -113,7 +106,7 @@ export const useColumns = ({
     {
       accessorKey: 'createdAt',
       header: `${t('table:created-at')}`,
-      size: 160,
+      size: 128,
       cell: ({ row }) => {
         const project = row.original;
         return (
@@ -130,7 +123,7 @@ export const useColumns = ({
     },
     {
       accessorKey: 'action',
-      size: 60,
+      size: 20,
       header: '',
       meta: {
         align: 'center',

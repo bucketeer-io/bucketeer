@@ -115,7 +115,11 @@ const SwitchOrganization = ({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node) &&
+        (event.target as Element).id !== 'switch-organization'
+      ) {
         onCloseSwitchOrg();
       }
     }
