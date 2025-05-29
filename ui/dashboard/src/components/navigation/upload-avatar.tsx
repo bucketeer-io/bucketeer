@@ -26,6 +26,7 @@ export type UploadAvatarProps = {
 type AvatarOption = {
   id: string;
   image: string;
+  border: string;
 };
 
 enum AvatarColor {
@@ -40,27 +41,33 @@ enum AvatarColor {
 const avatarOptions: AvatarOption[] = [
   {
     id: AvatarColor.PRIMARY,
-    image: primaryAvatar
+    image: primaryAvatar,
+    border: 'border-primary-500'
   },
   {
     id: AvatarColor.PINK,
-    image: pinkAvatar
+    image: pinkAvatar,
+    border: 'border-accent-pink-500'
   },
   {
     id: AvatarColor.GREEN,
-    image: greenAvatar
+    image: greenAvatar,
+    border: 'border-accent-green-500'
   },
   {
     id: AvatarColor.BLUE,
-    image: blueAvatar
+    image: blueAvatar,
+    border: 'border-accent-blue-500'
   },
   {
     id: AvatarColor.ORANGE,
-    image: orangeAvatar
+    image: orangeAvatar,
+    border: 'border-accent-orange-500'
   },
   {
     id: AvatarColor.RED,
-    image: redAvatar
+    image: redAvatar,
+    border: 'border-accent-red-500'
   }
 ];
 
@@ -72,29 +79,6 @@ const UploadAvatarModal = ({
 }: UploadAvatarProps) => {
   const { t } = useTranslation(['common']);
   const [currentAvatar, setCurrentAvatar] = useState<AvatarOption | null>(null);
-
-  const getBorderColor = useCallback(
-    (avatar: AvatarOption) => {
-      if (!currentAvatar || currentAvatar.id !== avatar.id)
-        return 'border-transparent';
-      switch (currentAvatar.id) {
-        case AvatarColor.PINK:
-          return 'border-accent-pink-500';
-        case AvatarColor.GREEN:
-          return 'border-accent-green-500';
-        case AvatarColor.BLUE:
-          return 'border-accent-blue-500';
-        case AvatarColor.ORANGE:
-          return 'border-accent-orange-500';
-        case AvatarColor.RED:
-          return 'border-accent-red-500';
-        case AvatarColor.PRIMARY:
-        default:
-          return 'border-primary-500';
-      }
-    },
-    [currentAvatar]
-  );
 
   const handleConvertImageToBase64 =
     useCallback(async (): Promise<AccountAvatar | null> => {
@@ -131,8 +115,8 @@ const UploadAvatarModal = ({
               size="xl"
               alt="user-avatar"
               className={cn(
-                'border-[3px] rounded-full cursor-pointer',
-                getBorderColor(avt)
+                'border-[3px] border-transparent rounded-full cursor-pointer',
+                currentAvatar?.id === avt.id && avt.border
               )}
               onClick={() => setCurrentAvatar(avt)}
             />

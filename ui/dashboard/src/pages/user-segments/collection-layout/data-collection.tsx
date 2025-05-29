@@ -27,10 +27,8 @@ export const useColumns = ({
   const formatDateTime = useFormatDateTime();
 
   const getUploadingStatus = useCallback(
-    (segment: UserSegment) => {
-      if (segment.status === 'UPLOADING') return true;
-      if (segmentUploading?.id === segment.id) return true;
-    },
+    (segment: UserSegment) =>
+      segment.status === 'UPLOADING' || segmentUploading?.id === segment.id,
     [segmentUploading]
   );
 

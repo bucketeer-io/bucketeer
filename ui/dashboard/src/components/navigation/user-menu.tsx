@@ -14,7 +14,7 @@ import MenuItemComponent from './menu-item';
 import UploadAvatarModal from './upload-avatar';
 import UserProfileModal from './user-profile';
 
-const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
+const UserMenu = ({ onToggleSwitchOrg }: { onToggleSwitchOrg: () => void }) => {
   const { t } = useTranslation(['common']);
   const { logout, myOrganizations, consoleAccount } = useAuth();
 
@@ -74,7 +74,7 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
       label: consoleAccount?.organization?.name || '',
       icon: IconBuilding,
       actIcon: IconChevronRight,
-      onClick: onOpenSwitchOrg
+      onClick: onToggleSwitchOrg
     },
     {
       label: t(`navigation.logout`),
