@@ -12,7 +12,7 @@ import {
   Rollout,
   StrategyType
 } from '@types';
-import { cn } from 'utils/style';
+import { cn, getVariationSpecificColor } from 'utils/style';
 import { IconTrash } from '@icons';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
@@ -25,13 +25,15 @@ import { VariationForm } from '../form-schema';
 
 const VariationLabel = ({
   index,
-  className
+  className,
+  specificColor
 }: {
   index: number;
   className?: string;
+  specificColor?: string;
 }) => (
   <div className={cn('flex items-center gap-x-2 text-gray-600', className)}>
-    <FlagVariationPolygon index={index} />
+    <FlagVariationPolygon index={index} specificColor={specificColor} />
     <Trans
       i18nKey={'form:feature-flags.variation'}
       values={{
@@ -219,7 +221,12 @@ const Variations = ({
       {fields.map((variation, variationIndex) => (
         <div key={variation.variationField} className="flex w-full gap-x-2">
           <div className="flex flex-col w-full gap-y-3">
-            <VariationLabel index={variationIndex} />
+            <VariationLabel
+              index={variationIndex}
+              specificColor={
+                isBoolean ? getVariationSpecificColor(variation.value) : ''
+              }
+            />
             <div className="flex flex-col w-full gap-y-5">
               <div className="flex items-end w-full gap-x-2">
                 {!isJSON && (
