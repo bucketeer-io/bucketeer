@@ -36,7 +36,7 @@ export const useColumns = ({
     {
       accessorKey: 'email',
       header: `${t('name')}`,
-      size: 350,
+      size: 330,
       cell: ({ row }) => {
         const account = row.original;
         const isPendingInvite = Number(account.lastSeen) < 1;
@@ -64,7 +64,6 @@ export const useColumns = ({
                       id={email}
                       name={accountName}
                       maxLines={1}
-                      className="min-w-[300px]"
                       onClick={() =>
                         onActions(
                           account,
@@ -84,7 +83,6 @@ export const useColumns = ({
                     id={email}
                     name={email}
                     maxLines={1}
-                    className="min-w-[300px]"
                     haveAction={false}
                   />
                 }
@@ -104,7 +102,7 @@ export const useColumns = ({
     {
       accessorKey: 'organizationRole',
       header: `${t('role')}`,
-      size: 180,
+      size: 80,
       cell: ({ row }) => {
         const account = row.original;
         return (
@@ -117,7 +115,7 @@ export const useColumns = ({
     {
       accessorKey: 'tags',
       header: `${t('tags')}`,
-      size: 300,
+      size: 250,
       cell: ({ row }) => {
         const account = row.original;
         const formattedTags = account.tags?.map(
@@ -127,7 +125,8 @@ export const useColumns = ({
           <ExpandableTag
             tags={formattedTags}
             rowId={account.email}
-            className="!max-w-[250px] truncate"
+            maxSize={220}
+            className="!max-w-[220px] truncate"
           />
         );
       }
@@ -135,7 +134,7 @@ export const useColumns = ({
     {
       accessorKey: 'environmentCount',
       header: `${t('environments')}`,
-      size: 120,
+      size: 130,
       cell: ({ row }) => {
         const account = row.original;
         return (
@@ -148,7 +147,7 @@ export const useColumns = ({
     {
       accessorKey: 'lastSeen',
       header: `${t('table:last-seen')}`,
-      size: 180,
+      size: 100,
       cell: ({ row }) => {
         const account = row.original;
         const isNever = Number(account.lastSeen) === 0;
@@ -167,7 +166,7 @@ export const useColumns = ({
     isOrganizationAdmin && {
       accessorKey: 'state',
       header: `${t('state')}`,
-      size: 120,
+      size: 66,
       cell: ({ row }) => {
         const account = row.original;
         const isPendingInvite = Number(account.lastSeen) < 1;
@@ -185,7 +184,7 @@ export const useColumns = ({
     },
     isOrganizationAdmin && {
       accessorKey: 'action',
-      size: 60,
+      size: 20,
       header: '',
       meta: {
         align: 'center',

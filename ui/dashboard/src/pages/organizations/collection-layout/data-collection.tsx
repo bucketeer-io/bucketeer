@@ -27,7 +27,7 @@ export const useColumns = ({
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 400,
+      size: 382,
       cell: ({ row }) => {
         const organization = row.original;
         const { id, name } = organization;
@@ -47,7 +47,7 @@ export const useColumns = ({
     {
       accessorKey: 'projectCount',
       header: `${t('projects')}`,
-      size: 170,
+      size: 140,
       cell: ({ row }) => {
         const organization = row.original;
         return (
@@ -60,7 +60,7 @@ export const useColumns = ({
     {
       accessorKey: 'environmentCount',
       header: `${t('environments')}`,
-      size: 170,
+      size: 140,
       cell: ({ row }) => {
         const organization = row.original;
         return (
@@ -73,7 +73,7 @@ export const useColumns = ({
     {
       accessorKey: 'userCount',
       header: `${t('users')}`,
-      size: 160,
+      size: 128,
       cell: ({ row }) => {
         const organization = row.original;
         return (
@@ -86,7 +86,7 @@ export const useColumns = ({
     {
       accessorKey: 'createdAt',
       header: `${t('table:created-at')}`,
-      size: 180,
+      size: 128,
       cell: ({ row }) => {
         const organization = row.original;
         return (
@@ -103,7 +103,7 @@ export const useColumns = ({
     },
     {
       accessorKey: 'action',
-      size: 60,
+      size: 20,
       header: '',
       meta: {
         align: 'center',

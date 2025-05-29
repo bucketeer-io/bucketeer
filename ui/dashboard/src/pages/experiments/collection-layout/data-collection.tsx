@@ -94,7 +94,7 @@ export const useColumns = ({
       id: 'name',
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 400,
+      size: 390,
       cell: ({ row }) => {
         const experiment = row.original;
         const { id, name } = experiment;
@@ -107,11 +107,7 @@ export const useColumns = ({
                 <Link
                   to={`/${currenEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${id}/results`}
                 >
-                  <NameWithTooltip.Trigger
-                    id={id}
-                    name={name}
-                    className="min-w-[300px]"
-                  />
+                  <NameWithTooltip.Trigger id={id} name={name} />
                 </Link>
               }
             />
@@ -133,7 +129,7 @@ export const useColumns = ({
       id: 'goals_count',
       accessorKey: 'goalIds',
       header: `${t('navigation.goals')}`,
-      size: 150,
+      size: 108,
       cell: ({ row }) => {
         const experiment = row.original;
         return (
@@ -155,13 +151,13 @@ export const useColumns = ({
       id: 'start_at',
       accessorKey: 'startAt',
       header: `${t('form:start-at')}`,
-      size: 200,
+      size: 140,
       cell: ({ row }) => {
         const experiment = row.original;
         return (
           <DateTooltip
             trigger={
-              <div className="text-gray-700 typo-para-medium min-w-[150px]">
+              <div className="text-gray-700 typo-para-medium">
                 {formatLongDateTime({
                   value: experiment.startAt,
                   overrideOptions: {
@@ -184,13 +180,13 @@ export const useColumns = ({
       id: 'stop_at',
       accessorKey: 'stopAt',
       header: `${t('form:end-at')}`,
-      size: 200,
+      size: 140,
       cell: ({ row }) => {
         const experiment = row.original;
         return (
           <DateTooltip
             trigger={
-              <div className="text-gray-700 typo-para-medium min-w-[150px]">
+              <div className="text-gray-700 typo-para-medium">
                 {formatLongDateTime({
                   value: experiment.stopAt,
                   overrideOptions: {
@@ -213,7 +209,7 @@ export const useColumns = ({
       id: 'status',
       accessorKey: 'statuses',
       header: `${t('status')}`,
-      size: 200,
+      size: 135,
       cell: ({ row }) => {
         const experiment = row.original;
 
@@ -222,7 +218,7 @@ export const useColumns = ({
     },
     {
       accessorKey: 'action',
-      size: 60,
+      size: 20,
       header: '',
       meta: {
         align: 'center',

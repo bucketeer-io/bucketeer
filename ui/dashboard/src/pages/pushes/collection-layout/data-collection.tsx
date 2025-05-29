@@ -30,13 +30,13 @@ export const useColumns = ({
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 400,
+      size: 314,
       cell: ({ row }) => {
         const push = row.original;
         const { id, name } = push;
 
         return (
-          <div className="flex flex-col gap-0.5 max-w-fit min-w-[300px]">
+          <div className="flex flex-col gap-0.5 max-w-fit">
             <NameWithTooltip
               id={id}
               content={<NameWithTooltip.Content content={name} id={id} />}
@@ -60,7 +60,8 @@ export const useColumns = ({
     {
       accessorKey: 'tags',
       header: `${t('tags')}`,
-      size: 350,
+      size: 265,
+      enableSorting: false,
       cell: ({ row }) => {
         const push = row.original;
         const formattedTags = push.tags?.map(
@@ -71,7 +72,8 @@ export const useColumns = ({
           <ExpandableTag
             tags={formattedTags}
             rowId={push.id}
-            className="!max-w-[250px] truncate"
+            maxSize={230}
+            className="!max-w-[230px] truncate"
           />
         );
       }
@@ -79,14 +81,14 @@ export const useColumns = ({
     {
       accessorKey: 'environment',
       header: `${t('environment')}`,
-      size: 250,
-      maxSize: 250,
+      size: 148,
+      maxSize: 148,
       cell: ({ row }) => {
         const push = row.original;
         return (
           <TruncationWithTooltip
             elementId={`env-${push.id}`}
-            maxSize={250}
+            maxSize={148}
             content={push.environmentName}
           >
             <div
@@ -102,7 +104,7 @@ export const useColumns = ({
     {
       accessorKey: 'createdAt',
       header: `${t('table:created-at')}`,
-      size: 200,
+      size: 111,
       cell: ({ row }) => {
         const push = row.original;
         return (
@@ -120,7 +122,7 @@ export const useColumns = ({
     {
       accessorKey: 'state',
       header: `${t('state')}`,
-      size: 120,
+      size: 76,
       cell: ({ row }) => {
         const push = row.original;
 
@@ -136,7 +138,7 @@ export const useColumns = ({
     },
     {
       accessorKey: 'action',
-      size: 60,
+      size: 20,
       header: '',
       meta: {
         align: 'center',

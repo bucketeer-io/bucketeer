@@ -8,6 +8,7 @@ export type MenuItem = {
   label: string;
   actIcon?: FunctionComponent;
   href?: string;
+  id?: string;
   onClick?: () => void;
 };
 
@@ -16,6 +17,7 @@ const MenuItemComponent = ({
   label,
   href,
   actIcon,
+  id,
   onClick
 }: MenuItem) => {
   const iconEl = <Icon color="primary-50" size="sm" icon={icon} />;
@@ -32,14 +34,22 @@ const MenuItemComponent = ({
     </NavLink>
   ) : (
     <button
+      id={id}
       className={cn(textClsx, { 'justify-between': actIcon })}
       onClick={onClick}
     >
-      <div className="flex items-center gap-x-2 truncate">
+      <div className="flex items-center gap-x-2 truncate pointer-events-none">
         {iconEl}
         <div className="w-fit truncate">{label}</div>
       </div>
-      {actIcon && <Icon color="primary-50" size="sm" icon={actIcon} />}
+      {actIcon && (
+        <Icon
+          color="primary-50"
+          size="sm"
+          icon={actIcon}
+          className="pointer-events-none"
+        />
+      )}
     </button>
   );
 

@@ -88,7 +88,7 @@ const PageContent = ({
 
   return (
     <PageLayout.Content>
-      <Overview summary={summary} onChangeFilters={() => {}} />
+      <Overview summary={summary} />
       <Filter
         action={
           <>

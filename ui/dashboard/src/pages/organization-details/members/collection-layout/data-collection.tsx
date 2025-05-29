@@ -9,6 +9,7 @@ import { joinName } from 'utils/name';
 import { useFetchTags } from 'pages/members/collection-loader';
 import { AvatarImage } from 'components/avatar';
 import Icon from 'components/icon';
+import DateTooltip from 'elements/date-tooltip';
 import ExpandableTag from 'elements/expandable-tag';
 import NameWithTooltip from 'elements/name-with-tooltip';
 
@@ -30,9 +31,9 @@ export const useColumns = ({
 
   return [
     {
-      accessorKey: 'name',
+      accessorKey: 'email',
       header: `${t('name')}`,
-      size: 350,
+      size: 330,
       cell: ({ row }) => {
         const account = row.original;
         const isPendingInvite = Number(account.lastSeen) < 1;
@@ -63,7 +64,6 @@ export const useColumns = ({
                       id={`pending_${email}`}
                       name={accountName}
                       maxLines={1}
-                      className="min-w-[300px]"
                       onClick={() => onActions(account)}
                     />
                   }
@@ -73,13 +73,13 @@ export const useColumns = ({
 
               <NameWithTooltip
                 id={email}
-                content={<NameWithTooltip.Content content={name} id={email} />}
+                content={<NameWithTooltip.Content content={email} id={email} />}
                 trigger={
                   <NameWithTooltip.Trigger
                     id={email}
                     name={email}
                     maxLines={1}
-                    className="text-gray-700 no-underline cursor-default min-w-[300px]"
+                    className="text-gray-700 no-underline cursor-default"
                   />
                 }
                 maxLines={1}
@@ -97,7 +97,7 @@ export const useColumns = ({
     {
       accessorKey: 'organizationRole',
       header: `${t('role')}`,
-      size: 300,
+      size: 80,
       cell: ({ row }) => {
         const account = row.original;
         return (
@@ -110,7 +110,7 @@ export const useColumns = ({
     {
       accessorKey: 'tags',
       header: `${t('tags')}`,
-      size: 300,
+      size: 256,
       cell: ({ row }) => {
         const account = row.original;
         const formattedTags = account.tags?.map(
@@ -121,7 +121,8 @@ export const useColumns = ({
           <ExpandableTag
             tags={formattedTags}
             rowId={account.email}
-            className="!max-w-[250px] truncate"
+            maxSize={220}
+            className="!max-w-[220px] truncate"
           />
         );
       }
@@ -129,7 +130,7 @@ export const useColumns = ({
     {
       accessorKey: 'environmentCount',
       header: `${t('environments')}`,
-      size: 120,
+      size: 130,
       cell: ({ row }) => {
         const account = row.original;
         return (
@@ -142,21 +143,25 @@ export const useColumns = ({
     {
       accessorKey: 'lastSeen',
       header: `${t('table:last-seen')}`,
-      size: 180,
+      size: 100,
       cell: ({ row }) => {
         const account = row.original;
+        const isNever = Number(account.lastSeen) === 0;
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {Number(account.lastSeen) === 0
-              ? t('never')
-              : formatDateTime(account.lastSeen)}
-          </div>
+          <DateTooltip
+            trigger={
+              <div className="text-gray-700 typo-para-medium">
+                {isNever ? t('never') : formatDateTime(account.lastSeen)}
+              </div>
+            }
+            date={isNever ? null : account.lastSeen}
+          />
         );
       }
     },
     {
       accessorKey: 'action',
-      size: 60,
+      size: 20,
       header: '',
       meta: {
         align: 'center',

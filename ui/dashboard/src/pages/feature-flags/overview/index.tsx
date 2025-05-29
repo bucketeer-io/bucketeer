@@ -44,15 +44,10 @@ const overviewOptions: OverviewOption[] = [
 
 const Overview = ({
   summary,
-  filterBySummary,
-  onChangeFilters
+  filterBySummary
 }: {
   summary?: FeatureCountByStatus;
   filterBySummary?: SummaryType;
-  onChangeFilters: (
-    statuses: ExperimentStatus[],
-    summaryFilterValue: SummaryType
-  ) => void;
 }) => {
   const { t } = useTranslation(['table']);
 
@@ -72,9 +67,6 @@ const Overview = ({
               'border-gray-300':
                 filterBySummary && item.summaryFilterValue === filterBySummary
             })}
-            onClick={() =>
-              onChangeFilters(item.filterValues, item.summaryFilterValue)
-            }
           />
         ))}
       </div>

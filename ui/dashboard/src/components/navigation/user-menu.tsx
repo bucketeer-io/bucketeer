@@ -70,6 +70,7 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
       onClick: onOpenProfileModal
     },
     myOrganizations.length > 1 && {
+      id: 'switch-organization',
       label: consoleAccount?.organization?.name || '',
       icon: IconBuilding,
       actIcon: IconChevronRight,

@@ -67,14 +67,21 @@ export const DataTable = <TData, TValue>({
               <Table.Head
                 key={header.id}
                 onClick={header.column.getToggleSortingHandler()}
-                style={{ width: header.column.columnDef.size }}
+                style={{
+                  width: header.column.columnDef.size
+                }}
                 className={cn({
                   'cursor-pointer select-none':
                     header.column.columnDef.enableSorting !== false
                 })}
               >
                 {header.isPlaceholder ? null : (
-                  <div className="flex items-center gap-3">
+                  <div
+                    className="flex items-center gap-3"
+                    style={{
+                      width: header.column.columnDef.size
+                    }}
+                  >
                     {flexRender(
                       header.column.columnDef.header,
                       header.getContext()
