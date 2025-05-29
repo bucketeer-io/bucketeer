@@ -145,12 +145,12 @@ type server struct {
 	webhookKMSResourceName          *string
 	cloudService                    *string
 	webConsoleEnvJSPath             *string
-	pubSubType                *string
-	pubSubRedisServerName     *string
-	pubSubRedisAddr           *string
-	pubSubRedisPoolSize       *int
-	pubSubRedisMinIdle        *int
-	pubSubRedisPartitionCount *int
+	pubSubType                      *string
+	pubSubRedisServerName           *string
+	pubSubRedisAddr                 *string
+	pubSubRedisPoolSize             *int
+	pubSubRedisMinIdle              *int
+	pubSubRedisPartitionCount       *int
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
