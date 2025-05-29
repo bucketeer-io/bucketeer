@@ -1,7 +1,5 @@
-import { FunctionComponent, ReactNode } from 'react';
+import { FunctionComponent } from 'react';
 import { cva } from 'class-variance-authority';
-import { isNil } from 'lodash';
-import { Color, IconSize } from '@types';
 import { cn } from 'utils/style';
 import { IconChevronRight } from '@icons';
 import Icon from 'components/icon';
@@ -19,14 +17,12 @@ export type OverviewIconColor =
 type CardIconProps = {
   icon: FunctionComponent;
   color: OverviewIconColor;
-  iconSize?: IconSize;
-  iconClassName?: string;
 };
 
 type CardDescriptionProps = {
-  title: ReactNode;
-  count?: string | number;
-  description?: ReactNode;
+  title: string;
+  count: number;
+  description?: string;
   highlightText?: string;
   highlightType?: 'increase' | 'decrease';
 };
@@ -53,32 +49,10 @@ const cardIconVariants = cva('flex-center size-16 p-5 rounded-lg', {
   }
 });
 
-const getIconColor = (color: OverviewIconColor): Color => {
-  switch (color) {
-    case 'green':
-      return 'accent-green-500';
-    case 'yellow':
-      return 'accent-yellow-500';
-    case 'gray':
-      return 'gray-200';
-    case 'pink':
-      return 'accent-pink-500';
-    case 'red':
-      return 'accent-red-500';
-    case 'orange':
-      return 'accent-orange-500';
-    case 'blue':
-      return 'accent-blue-500';
-    case 'brand':
-    default:
-      return 'primary-500';
-  }
-};
-
-const CardIcon = ({ icon, color, iconSize, iconClassName }: CardIconProps) => {
+const CardIcon = ({ icon, color }: CardIconProps) => {
   return (
-    <div className={cn(cardIconVariants({ color }), iconClassName)}>
-      <Icon icon={icon} size={iconSize} color={getIconColor(color)} />
+    <div className={cn(cardIconVariants({ color }))}>
+      <Icon icon={icon} size={'fit'} />
     </div>
   );
 };
@@ -91,18 +65,16 @@ const CardDescription = ({
   highlightType = 'increase'
 }: CardDescriptionProps) => {
   return (
-    <div className="flex flex-col flex-1 gap-y-1 overflow-hidden">
-      <div className="w-full typo-para-medium text-gray-600 truncate capitalize">
+    <div className="flex flex-col flex-1 gap-y-2 overflow-hidden">
+      <p className="w-full typo-para-medium leading-5 text-gray-600 truncate capitalize">
         {title}
-      </div>
-      {!isNil(count) && (
-        <p className="typo-head-bold-huge leading-6 text-gray-900">{count}</p>
-      )}
+      </p>
+      <p className="typo-head-bold-huge leading-6 text-gray-900">{count}</p>
       {(description || highlightText) && (
         <div className="flex items-center gap-x-2">
           {highlightText && (
             <p
-              className={cn('typo-head-bold-huge font-extrabold leading-6', {
+              className={cn('typo-head-bold-huge leading-6', {
                 'text-accent-green-500': highlightType === 'increase',
                 'text-accent-red-500': highlightType === 'decrease'
               })}
@@ -111,9 +83,9 @@ const CardDescription = ({
             </p>
           )}
           {description && (
-            <div className="w-full typo-para-small text-gray-600">
+            <p className="w-full typo-para-small leading-5 text-gray-600 truncate">
               {description}
-            </div>
+            </p>
           )}
         </div>
       )}
@@ -126,8 +98,6 @@ const OverviewCard = ({
   color,
   showArrow,
   className,
-  iconSize = 'fit',
-  iconClassName = '',
   onClick,
   ...props
 }: Props) => {
@@ -139,12 +109,7 @@ const OverviewCard = ({
       )}
       onClick={onClick}
     >
-      <CardIcon
-        icon={icon}
-        color={color}
-        iconSize={iconSize}
-        iconClassName={iconClassName}
-      />
+      <CardIcon icon={icon} color={color} />
       <CardDescription {...props} />
       {showArrow && (
         <Icon icon={IconChevronRight} size={'md'} color="gray-500" />

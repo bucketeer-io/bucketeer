@@ -1,508 +1,447 @@
 global:
-    image:
-        tag: localenv
-        imagePullSecrets:
-    pubsub:
-        type: redis-stream
-        redis:
-            serverName: non-persistent-redis
-            addr: localenv-redis-headless.default.svc.cluster.local:6379
-            poolSize: 25
-            minIdle: 25
-        emulatorHost: localenv-pubsub.default.svc.cluster.local:8089
-        project: bucketeer-test
+  image:
+    tag: localenv
+    imagePullSecrets:
 
 migration:
-    image:
-        repository: ghcr.io/bucketeer-io/bucketeer-migration
-        tag: localenv
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-migration
+    tag: localenv
 
-    imagePullSecrets: []
+  imagePullSecrets: []
 
-    backoffLimit: 0
-    ttlSecondsAfterFinished: 86400
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
 
-    # URL to access the DB to do the migration
-    # E.g. mysql://user:password@host:port/db_name
-    dbUrl: mysql://bucketeer:bucketeer@localenv-mysql.default.svc:3306/bucketeer
+  # URL to access the DB to do the migration
+  # E.g. mysql://user:password@host:port/db_name
+  dbUrl: mysql://bucketeer:bucketeer@localenv-mysql.default.svc:3306/bucketeer
 
-    # The migration baseline
-    # First revision
-    dbBaseline: "20240626022133"
+  # The migration baseline
+  # First revision
+  dbBaseline: "20240626022133"
 
 web:
-    env:
-        gcpEnabled: false
-        cloudService: hcv
-        profile: false
-        bucketeerTestEnabled: true
-        bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
-        project: ${global.pubsub.project}
-        demoEnabled: false
-        pubSubType: ${global.pubsub.type}
-        pubSubRedisAddr: ${global.pubsub.redis.addr}
-        pubSubRedisPoolSize: ${global.pubsub.redis.poolSize}
-        pubSubRedisMinIdle: ${global.pubsub.redis.minIdle}
-        pubsubEmulatorHost: ${global.pubsub.emulatorHost}
-        mysqlUser: bucketeer
-        mysqlPass: bucketeer
-        mysqlHost: localenv-mysql-headless.default.svc.cluster.local
-        mysqlPort: 3306
-        mysqlDbName: bucketeer
-        persistentRedis:
-            serverName: backend
-            addr: localenv-redis-headless.default.svc.cluster.local:6379
-            poolMaxIdle: 25
-            poolMaxActive: 25
-        nonPersistentRedis:
-            serverName: backend
-            addr: localenv-redis-headless.default.svc.cluster.local:6379
-            poolMaxIdle: 25
-            poolMaxActive: 25
-        bigQueryDataSet: bucketeer
-        bigQueryDataLocation: bucketeer
-        domainTopic: domain
-        bulkSegmentUsersReceivedTopic: bulk-segment-users-received
-        timezone: UTC
-        logLevel: info
-        googleTagManagerId:
-    tls:
-        service:
-            secret: bucketeer-service-cert
-        bucketeerJP:
-            secrets:
-                - hosts:
-                      - web-gateway.bucketeer.io
-                  secretName: bucketeer-service-cert
+  env:
+    gcpEnabled: false
+    cloudService: hcv
+    profile: false
+    bucketeerTestEnabled: true
+    bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    project: bucketeer-test
+    demoEnabled: false
+    mysqlUser: bucketeer
+    mysqlPass: bucketeer
+    mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+    mysqlPort: 3306
+    mysqlDbName: bucketeer
+    persistentRedis:
+      serverName: backend
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+      poolMaxIdle: 25
+      poolMaxActive: 25
+    nonPersistentRedis:
+      serverName: backend
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+      poolMaxIdle: 25
+      poolMaxActive: 25
+    bigQueryDataSet: bucketeer
+    bigQueryDataLocation: bucketeer
+    domainTopic: domain
+    bulkSegmentUsersReceivedTopic: bulk-segment-users-received
+    timezone: UTC
+    logLevel: info
+    googleTagManagerId:
+  tls:
+    service:
+      secret: bucketeer-service-cert
+    bucketeerJP:
+      secrets:
+        - hosts:
+            - web-gateway.bucketeer.io
+          secretName: bucketeer-service-cert
 
-    ingress:
-        host: web-gateway.bucketeer.io
+  ingress:
+    host: web-gateway.bucketeer.io
 
-    serviceToken:
-        secret: bucketeer-service-token
-    oauth:
-        key:
-            secret: bucketeer-oauth-key
-        issuer: https://localhost
-        audience: bucketeer
-        google:
-            issuer:
-            clientId:
-            clientSecret:
-            redirectUrls:
-                - https://localhost:9000/auth/callback
-                - https://localhost:9000/v3/auth/callback
-        demoSignIn:
-            enabled: true
-            email: demo@bucketeer.io
-            password: demo
-            organizationId: demo
-            organizationOwnerEmail: demo@bucketeer.io
-            projectId: demo
-            environmentId: demo
-            isSystemAdmin: true
-    webhook:
-        baseURL: https://web-gateway.bucketeer.io
-        kmsResourceName: vault
+  serviceToken:
+    secret: bucketeer-service-token
+  oauth:
+    key:
+      secret: bucketeer-oauth-key
+    issuer: https://localhost
+    audience: bucketeer
+    google:
+      issuer:
+      clientId:
+      clientSecret:
+      redirectUrls:
+        - https://localhost:9000/auth/callback
+        - https://localhost:9000/v3/auth/callback
+    demoSignIn:
+      enabled: true
+      email: demo@bucketeer.io
+      password: demo
+      organizationId: demo
+      organizationOwnerEmail: demo@bucketeer.io
+      projectId: demo
+      environmentId: demo
+      isSystemAdmin: true
+  webhook:
+    baseURL: https://web-gateway.bucketeer.io
+    kmsResourceName: vault
 
 api:
-    env:
-        gcpEnabled: false
-        profile: false
-        pubsubEmulatorHost: ${global.pubsub.emulatorHost}
-        project: ${global.pubsub.project}
-        goalTopic: goal
-        evaluationTopic: evaluation
-        userTopic: user
-        metricsTopic: metrics
-        publishNumGoroutines: 200
-        publishTimeout: 1m
-        pubSubType: ${global.pubsub.type}
-        pubSubRedisAddr: ${global.pubsub.redis.addr}
-        pubSubRedisPoolSize: ${global.pubsub.redis.poolSize}
-        pubSubRedisMinIdle: ${global.pubsub.redis.minIdle}
-        redis:
-            serverName: api-gateway
-            poolMaxIdle: 25
-            poolMaxActive: 25
-            addr: localenv-redis-headless.default.svc.cluster.local:6379
-    tls:
-        bucketeerJP:
-            secrets:
-                - hosts:
-                      - api-gateway.bucketeer.io
-                  secretName: bucketeer-service-cert
-        service:
-            secret: bucketeer-service-cert
-    serviceToken:
-        secret: bucketeer-service-token
-    ingress:
-        host: api-gateway.bucketeer.io
+  env:
+    gcpEnabled: false
+    profile: false
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    project: bucketeer-test
+    goalTopic: goal
+    evaluationTopic: evaluation
+    userTopic: user
+    metricsTopic: metrics
+    publishNumGoroutines: 200
+    publishTimeout: 1m
+    redis:
+      serverName: api-gateway
+      poolMaxIdle: 25
+      poolMaxActive: 25
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+  tls:
+    bucketeerJP:
+      secrets:
+        - hosts:
+            - api-gateway.bucketeer.io
+          secretName: bucketeer-service-cert
+    service:
+      secret: bucketeer-service-cert
+  serviceToken:
+    secret: bucketeer-service-token
+  ingress:
+    host: api-gateway.bucketeer.io
 
 batch-server:
-    env:
-        project: bucketeer-test
-        profile: false
-        demo:
-            demoEnabled: false
-            demoTrialPeriod: 7
-        gcpEnabled: false
-        mysqlUser: bucketeer
-        mysqlPass: bucketeer
-        mysqlHost: localenv-mysql-headless.default.svc.cluster.local
-        mysqlPort: 3306
-        mysqlDbName: bucketeer
-        bigqueryWriterEmulatorHost: localenv-bq.default.svc.cluster.local:9060
-        pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
-        notificationService: localhost:9001
-        environmentService: localhost:9001
-        autoOpsService: localhost:9001
-        experimentService: localhost:9001
-        eventCounterService: localhost:9001
-        featureService: localhost:9001
-        webURL: http://localhost:3000
-        logLevel: debug
-        port: 9090
-        metricsPort: 9002
-        timezone: UTC
-        refreshInterval: 10m
-        domainTopic: domain
-        domainSubscription: domain-subscription
-        pullerNumGoroutines: 5
-        pullerMaxOutstandingMessages: "1000"
-        pullerMaxOutstandingBytes: "1000000000"
-        runningDurationPerBatch: 15s
-        # redis settings
-        persistentRedis:
-            serverName: batch-peristent-redis
-            addr: localenv-redis-headless.default.svc.cluster.local:6379
-            poolMaxIdle: 25
-            poolMaxActive: 25
-        nonPersistentRedis:
-            serverName: batch-non-peristent-redis
-            addr: localenv-redis-headless.default.svc.cluster.local:6379
-            poolMaxIdle: 25
-            poolMaxActive: 25
-        nonPersistentChildRedis:
-            addresses:
-                - localenv-redis-headless.default.svc.cluster.local:6379
-        experimentLockTTL: 1m
+  env:
+    project: bucketeer-test
+    profile: false
+    demo:
+      demoEnabled: false
+      demoTrialPeriod: 7
+    gcpEnabled: false
+    mysqlUser: bucketeer
+    mysqlPass: bucketeer
+    mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+    mysqlPort: 3306
+    mysqlDbName: bucketeer
+    bigqueryWriterEmulatorHost: localenv-bq.default.svc.cluster.local:9060
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    notificationService: localhost:9001
+    environmentService: localhost:9001
+    autoOpsService: localhost:9001
+    experimentService: localhost:9001
+    eventCounterService: localhost:9001
+    featureService: localhost:9001
+    webURL: http://localhost:3000
+    logLevel: debug
+    port: 9090
+    metricsPort: 9002
+    timezone: UTC
+    refreshInterval: 10m
+    domainTopic: domain
+    domainSubscription: domain-subscription
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    runningDurationPerBatch: 15s
+    # redis settings
+    persistentRedis:
+      serverName: batch-peristent-redis
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+      poolMaxIdle: 25
+      poolMaxActive: 25
+    nonPersistentRedis:
+      serverName: batch-non-peristent-redis
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+      poolMaxIdle: 25
+      poolMaxActive: 25
+    nonPersistentChildRedis:
+      addresses:
+        - localenv-redis-headless.default.svc.cluster.local:6379
+    experimentLockTTL: 1m
 
-    tls:
-        service:
-            secret: bucketeer-service-cert
+  tls:
+    service:
+      secret: bucketeer-service-cert
 
-    serviceToken:
-        secret: bucketeer-service-token
+  serviceToken:
+    secret: bucketeer-service-token
 
-    oauth:
-        key:
-            secret: bucketeer-oauth-key
-            public:
-        issuer: https://localhost
-        audience: bucketeer
+  oauth:
+    key:
+      secret: bucketeer-oauth-key
+      public:
+    issuer: https://localhost
+    audience: bucketeer
 
-    cronjob:
-        successfulJobsHistoryLimit: 1
-        failedJobsHistoryLimit: 1
-        webGatewayAddress: https://web.default.svc.cluster.local:9003
-        jobs:
-            - name: experiment-status-updater
-              jobId: ExperimentStatusUpdater
-              schedule: "* * * * *"
-            - name: experiment-running-watcher
-              jobId: ExperimentRunningWatcher
-              schedule: "0 1 * * *"
-            - name: feature-stale-watcher
-              jobId: FeatureStaleWatcher
-              schedule: "0 1 * * MON"
-            - name: mau-count-watcher
-              jobId: MauCountWatcher
-              schedule: "0 1 1 * *"
-            - name: ops-datetime-watcher
-              jobId: DatetimeWatcher
-              schedule: "* * * * *"
-            - name: ops-event-count-watcher
-              jobId: EventCountWatcher
-              schedule: "* * * * *"
-            - name: ops-progressive-rollout-watcher
-              jobId: ProgressiveRolloutWatcher
-              schedule: "* * * * *"
-            - name: redis-counter-deleter
-              jobId: RedisCounterDeleter
-              schedule: "0 0 * * *"
-            - name: experiment-calculator
-              jobId: ExperimentCalculator
-              schedule: "* * * * *"
-            - name: mau-summarizer
-              jobId: MauSummarizer
-              schedule: "30 0 * * *"
-            - name: mau-partition-deleter
-              jobId: MauPartitionDeleter
-              schedule: "0 2 1 * *"
-            - name: mau-partition-creator
-              jobId: MauPartitionCreator
-              schedule: "0 2 2 * *"
-            - name: feature-flag-cacher
-              jobId: FeatureFlagCacher
-              schedule: "* * * * *"
-            - name: segment-user-cacher
-              jobId: SegmentUserCacher
-              schedule: "* * * * *"
-            - name: api-key-cacher
-              jobId: ApiKeyCacher
-              schedule: "* * * * *"
-            - name: experiment-cacher
-              jobId: ExperimentCacher
-              schedule: "* * * * *"
-            - name: auto-ops-rules-cacher
-              jobId: AutoOpsRulesCacher
-              schedule: "* * * * *"
-            - name: tag-deleter
-              jobId: TagDeleter
-              schedule: "* * * * *"
+  cronjob:
+    successfulJobsHistoryLimit: 1
+    failedJobsHistoryLimit: 1
+    webGatewayAddress: https://web.default.svc.cluster.local:9003
+    jobs:
+      - name: experiment-status-updater
+        jobId: ExperimentStatusUpdater
+        schedule: "* * * * *"
+      - name: experiment-running-watcher
+        jobId: ExperimentRunningWatcher
+        schedule: "0 1 * * *"
+      - name: feature-stale-watcher
+        jobId: FeatureStaleWatcher
+        schedule: "0 1 * * MON"
+      - name: mau-count-watcher
+        jobId: MauCountWatcher
+        schedule: "0 1 1 * *"
+      - name: ops-datetime-watcher
+        jobId: DatetimeWatcher
+        schedule: "* * * * *"
+      - name: ops-event-count-watcher
+        jobId: EventCountWatcher
+        schedule: "* * * * *"
+      - name: ops-progressive-rollout-watcher
+        jobId: ProgressiveRolloutWatcher
+        schedule: "* * * * *"
+      - name: redis-counter-deleter
+        jobId: RedisCounterDeleter
+        schedule: "0 0 * * *"
+      - name: experiment-calculator
+        jobId: ExperimentCalculator
+        schedule: "* * * * *"
+      - name: mau-summarizer
+        jobId: MauSummarizer
+        schedule: "30 0 * * *"
+      - name: mau-partition-deleter
+        jobId: MauPartitionDeleter
+        schedule: "0 2 1 * *"
+      - name: mau-partition-creator
+        jobId: MauPartitionCreator
+        schedule: "0 2 2 * *"
+      - name: feature-flag-cacher
+        jobId: FeatureFlagCacher
+        schedule: "* * * * *"
+      - name: segment-user-cacher
+        jobId: SegmentUserCacher
+        schedule: "* * * * *"
+      - name: api-key-cacher
+        jobId: ApiKeyCacher
+        schedule: "* * * * *"
+      - name: experiment-cacher
+        jobId: ExperimentCacher
+        schedule: "* * * * *"
+      - name: auto-ops-rules-cacher
+        jobId: AutoOpsRulesCacher
+        schedule: "* * * * *"
+      - name: tag-deleter
+        jobId: TagDeleter
+        schedule: "* * * * *"
 
 subscriber:
-    env:
-        project: bucketeer-test
-        profile: false
-        gcpEnabled: false
-        mysqlUser: bucketeer
-        mysqlPass: bucketeer
-        mysqlHost: localenv-mysql-headless.default.svc.cluster.local
-        mysqlPort: 3306
-        mysqlDbName: bucketeer
-        bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
-        bigqueryWriterEmulatorHost: localenv-bq.default.svc.cluster.local:9060
-        pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
-        notificationService: localhost:9001
-        environmentService: localhost:9001
-        autoOpsService: localhost:9001
-        experimentService: localhost:9001
-        featureService: localhost:9001
-        webURL: http://localhost:3000
-        logLevel: debug
-        port: 9090
-        metricsPort: 9002
-        refreshInterval: 10m
-        # redis settings
-        persistentRedis:
-            serverName: batch-peristent-redis
-            addr: localenv-redis-headless.default.svc.cluster.local:6379
-            poolMaxIdle: 25
-            poolMaxActive: 25
-        nonPersistentRedis:
-            serverName: batch-non-peristent-redis
-            addr: localenv-redis-headless.default.svc.cluster.local:6379
-            poolMaxIdle: 25
-            poolMaxActive: 25
+  env:
+    project: bucketeer-test
+    profile: false
+    gcpEnabled: false
+    mysqlUser: bucketeer
+    mysqlPass: bucketeer
+    mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+    mysqlPort: 3306
+    mysqlDbName: bucketeer
+    bigqueryQuerierEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
+    bigqueryWriterEmulatorHost: localenv-bq.default.svc.cluster.local:9060
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    notificationService: localhost:9001
+    environmentService: localhost:9001
+    autoOpsService: localhost:9001
+    experimentService: localhost:9001
+    featureService: localhost:9001
+    webURL: http://localhost:3000
+    logLevel: debug
+    port: 9090
+    metricsPort: 9002
+    refreshInterval: 10m
+    # redis settings
+    persistentRedis:
+      serverName: batch-peristent-redis
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+      poolMaxIdle: 25
+      poolMaxActive: 25
+    nonPersistentRedis:
+      serverName: batch-non-peristent-redis
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+      poolMaxIdle: 25
+      poolMaxActive: 25
 
-    tls:
-        service:
-            secret: bucketeer-service-cert
+  tls:
+    service:
+      secret: bucketeer-service-cert
 
-    serviceToken:
-        secret: bucketeer-service-token
+  serviceToken:
+    secret: bucketeer-service-token
 
-    subscribers:
-        # This is the processor's name. It must match the same name defined in the
-        # pkg/subscriber/processor/processors.go
-        auditLogPersister:
-            pubSubType: ${global.pubsub.type}
-            redisAddr: ${global.pubsub.redis.addr}
-            redisPoolSize: ${global.pubsub.redis.poolSize}
-            redisMinIdle: ${global.pubsub.redis.minIdle}
-            project: ${global.pubsub.project}
-            topic: domain
-            subscription: auditlog-persister
-            pullerNumGoroutines: 5
-            pullerMaxOutstandingMessages: 1000
-            pullerMaxOutstandingBytes: 1000000000
-            maxMps: 50
-            workerNum: 1
-        domainEventInformer:
-            pubSubType: ${global.pubsub.type}
-            redisAddr: ${global.pubsub.redis.addr}
-            redisPoolSize: ${global.pubsub.redis.poolSize}
-            redisMinIdle: ${global.pubsub.redis.minIdle}
-            project: ${global.pubsub.project}
-            topic: domain
-            subscription: domain-subscription
-            pullerNumGoroutines: 5
-            pullerMaxOutstandingMessages: 1000
-            pullerMaxOutstandingBytes: 1000000000
-            maxMps: 50
-            workerNum: 1
-        evaluationCountEventPersister:
-            pubSubType: ${global.pubsub.type}
-            redisAddr: ${global.pubsub.redis.addr}
-            redisPoolSize: ${global.pubsub.redis.poolSize}
-            redisMinIdle: ${global.pubsub.redis.minIdle}
-            project: ${global.pubsub.project}
-            topic: evaluation
-            subscription: evaluation-count-sub
-            pullerNumGoroutines: 5
-            pullerMaxOutstandingMessages: 1000
-            pullerMaxOutstandingBytes: 1000000000
-            maxMps: 50
-            workerNum: 1
-        metricsEventPersister:
-            pubSubType: ${global.pubsub.type}
-            redisAddr: ${global.pubsub.redis.addr}
-            redisPoolSize: ${global.pubsub.redis.poolSize}
-            redisMinIdle: ${global.pubsub.redis.minIdle}
-            project: ${global.pubsub.project}
-            topic: metrics
-            subscription: metrics-sub
-            pullerNumGoroutines: 5
-            pullerMaxOutstandingMessages: 1000
-            pullerMaxOutstandingBytes: 1000000000
-            maxMps: 50
-            workerNum: 1
-        pushSender:
-            pubSubType: ${global.pubsub.type}
-            redisAddr: ${global.pubsub.redis.addr}
-            redisPoolSize: ${global.pubsub.redis.poolSize}
-            redisMinIdle: ${global.pubsub.redis.minIdle}
-            project: ${global.pubsub.project}
-            topic: domain
-            subscription: push-sender-domain-sub
-            pullerNumGoroutines: 5
-            pullerMaxOutstandingMessages: 1000
-            pullerMaxOutstandingBytes: 1000000000
-            maxMps: 50
-            workerNum: 1
-        segmentUserPersister:
-            pubSubType: ${global.pubsub.type}
-            redisAddr: ${global.pubsub.redis.addr}
-            redisPoolSize: ${global.pubsub.redis.poolSize}
-            redisMinIdle: ${global.pubsub.redis.minIdle}
-            project: ${global.pubsub.project}
-            topic: bulk-segment-users-received
-            subscription: bulk-segment-users-received-subscription
-            pullerNumGoroutines: 5
-            pullerMaxOutstandingMessages: 1000
-            pullerMaxOutstandingBytes: 1000000000
-            maxMps: 50
-            workerNum: 1
-        userEventPersister:
-            pubSubType: ${global.pubsub.type}
-            redisAddr: ${global.pubsub.redis.addr}
-            redisPoolSize: ${global.pubsub.redis.poolSize}
-            redisMinIdle: ${global.pubsub.redis.minIdle}
-            project: ${global.pubsub.project}
-            topic: user
-            subscription: user-sub
-            pullerNumGoroutines: 5
-            pullerMaxOutstandingMessages: 1000
-            pullerMaxOutstandingBytes: 1000000000
-            maxMps: 50
-            workerNum: 1
+  subscribers:
+    # This is the processor's name. It must match the same name defined in the
+    # pkg/subscriber/processor/processors.go
+    auditLogPersister:
+      project: bucketeer-test
+      topic: domain
+      subscription: auditlog-persister
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    domainEventInformer:
+      project: bucketeer-test
+      topic: domain
+      subscription: domain-subscription
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    evaluationCountEventPersister:
+      project: bucketeer-test
+      topic: evaluation
+      subscription: evaluation-count-sub
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    metricsEventPersister:
+      project: bucketeer-test
+      topic: metrics
+      subscription: metrics-sub
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    pushSender:
+      project: bucketeer-test
+      topic: domain
+      subscription: push-sender-domain-sub
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    segmentUserPersister:
+      project: bucketeer-test
+      topic: bulk-segment-users-received
+      subscription: bulk-segment-users-received-subscription
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    userEventPersister:
+      project: bucketeer-test
+      topic: user
+      subscription: user-sub
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
 
-    onDemandSubscribers:
-        evaluationCountEventDWHPersister:
-            pubSubType: ${global.pubsub.type}
-            redisAddr: ${global.pubsub.redis.addr}
-            redisPoolSize: ${global.pubsub.redis.poolSize}
-            redisMinIdle: ${global.pubsub.redis.minIdle}
-            project: ${global.pubsub.project}
-            topic: evaluation
-            subscription: evaluation-dwh-sub
-            pullerNumGoroutines: 1
-            pullerMaxOutstandingMessages: 1000
-            pullerMaxOutstandingBytes: 1000000000
-            maxMps: 50
-            workerNum: 1
-            checkInterval: 5
-        evaluationCountEventOPSPersister:
-            pubSubType: ${global.pubsub.type}
-            redisAddr: ${global.pubsub.redis.addr}
-            redisPoolSize: ${global.pubsub.redis.poolSize}
-            redisMinIdle: ${global.pubsub.redis.minIdle}
-            project: ${global.pubsub.project}
-            topic: evaluation
-            subscription: evaluation-ops-sub
-            pullerNumGoroutines: 1
-            pullerMaxOutstandingMessages: 1000
-            pullerMaxOutstandingBytes: 1000000000
-            maxMps: 50
-            workerNum: 1
-            checkInterval: 5
-        goalCountEventDWHPersister:
-            pubSubType: ${global.pubsub.type}
-            redisAddr: ${global.pubsub.redis.addr}
-            redisPoolSize: ${global.pubsub.redis.poolSize}
-            redisMinIdle: ${global.pubsub.redis.minIdle}
-            project: ${global.pubsub.project}
-            topic: goal
-            subscription: goal-dwh-sub
-            pullerNumGoroutines: 1
-            pullerMaxOutstandingMessages: 1000
-            pullerMaxOutstandingBytes: 1000000000
-            maxMps: 50
-            workerNum: 1
-            checkInterval: 5
-        goalCountEventOPSPersister:
-            pubSubType: ${global.pubsub.type}
-            redisAddr: ${global.pubsub.redis.addr}
-            redisPoolSize: ${global.pubsub.redis.poolSize}
-            redisMinIdle: ${global.pubsub.redis.minIdle}
-            project: ${global.pubsub.project}
-            topic: goal
-            subscription: goal-ops-sub
-            pullerNumGoroutines: 1
-            pullerMaxOutstandingMessages: 1000
-            pullerMaxOutstandingBytes: 1000000000
-            maxMps: 50
-            workerNum: 1
-            checkInterval: 5
+  onDemandSubscribers:
+    evaluationCountEventDWHPersister:
+      project: bucketeer-test
+      topic: evaluation
+      subscription: evaluation-dwh-sub
+      pullerNumGoroutines: 1
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+      checkInterval: 5
+    evaluationCountEventOPSPersister:
+      project: bucketeer-test
+      topic: evaluation
+      subscription: evaluation-ops-sub
+      pullerNumGoroutines: 1
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+      checkInterval: 5
+    goalCountEventDWHPersister:
+      project: bucketeer-test
+      topic: goal
+      subscription: goal-dwh-sub
+      pullerNumGoroutines: 1
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+      checkInterval: 5
+    goalCountEventOPSPersister:
+      project: bucketeer-test
+      topic: goal
+      subscription: goal-ops-sub
+      pullerNumGoroutines: 1
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+      checkInterval: 5
 
-    # This configuration is used for add custom params to Processors
-    processors:
-        # This is the processor's name. It must match the same name defined in the
-        # pkg/subscriber/processor/processors.go
-        auditLogPersister:
-            flushSize: 10
-            flushInterval: 5
-            flushTimeout: 30
-        evaluationCountEventPersister:
-            flushSize: 10
-            flushInterval: 5
-            writeCacheInterval: 10
-        segmentUserPersister:
-            domainEventProject: bucketeer-test
-            domainEventTopic: domain
-            flushSize: 10
-            flushInterval: 5
-        userEventPersister:
-            flushSize: 10
-            flushInterval: 5
+  # This configuration is used for add custom params to Processors
+  processors:
+    # This is the processor's name. It must match the same name defined in the
+    # pkg/subscriber/processor/processors.go
+    auditLogPersister:
+      flushSize: 10
+      flushInterval: 5
+      flushTimeout: 30
+    evaluationCountEventPersister:
+      flushSize: 10
+      flushInterval: 5
+      writeCacheInterval: 10
+    segmentUserPersister:
+      domainEventProject: bucketeer-test
+      domainEventTopic: domain
+      flushSize: 10
+      flushInterval: 5
+    userEventPersister:
+      flushSize: 10
+      flushInterval: 5
 
-    onDemandProcessors:
-        evaluationCountEventDWHPersister:
-            flushSize: 10
-            flushInterval: 5
-            flushTimeout: 30
-            project: bucketeer-test
-            bigQueryDataSet: bucketeer
-            bigQueryBatchSize: 10
-            timezone: UTC
-        evaluationCountEventOPSPersister:
-            flushSize: 10
-            flushInterval: 5
-            flushTimeout: 30
-        goalCountEventDWHPersister:
-            flushSize: 10
-            flushInterval: 5
-            flushTimeout: 30
-            project: bucketeer-test
-            bigQueryDataSet: bucketeer
-            bigQueryDataLocation: bucketeer
-            bigQueryBatchSize: 10
-            timezone: UTC
-            MaxRetryGoalEventPeriod: 86400 # 1 day
-            RetryGoalEventInterval: 30 # 30 seconds
-        goalCountEventOPSPersister:
-            flushSize: 10
-            flushInterval: 5
-            flushTimeout: 30
+  onDemandProcessors:
+    evaluationCountEventDWHPersister:
+      flushSize: 10
+      flushInterval: 5
+      flushTimeout: 30
+      project: bucketeer-test
+      bigQueryDataSet: bucketeer
+      bigQueryBatchSize: 10
+      timezone: UTC
+    evaluationCountEventOPSPersister:
+      flushSize: 10
+      flushInterval: 5
+      flushTimeout: 30
+    goalCountEventDWHPersister:
+      flushSize: 10
+      flushInterval: 5
+      flushTimeout: 30
+      project: bucketeer-test
+      bigQueryDataSet: bucketeer
+      bigQueryDataLocation: bucketeer
+      bigQueryBatchSize: 10
+      timezone: UTC
+      MaxRetryGoalEventPeriod: 86400 # 1 day
+      RetryGoalEventInterval: 30 # 30 seconds
+    goalCountEventOPSPersister:
+      flushSize: 10
+      flushInterval: 5
+      flushTimeout: 30

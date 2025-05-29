@@ -112,26 +112,24 @@ export const BG_COLOR_MAPPING = {
   'accent-yellow-50': 'bg-accent-yellow-50'
 };
 
-export const SPECIFIC_COLORS = {
-  TRUE: '#59289C',
-  FALSE: '#F350A0',
-  JSON: '#3E8EFF'
-};
-
 export const COLORS = [
-  '#59289C',
-  '#F350A0',
-  '#8664ED',
-  '#9E90B5',
-  '#2154A0',
-  '#3E8EFF',
-  '#7AB2EB',
-  '#803548',
-  '#F350A0',
-  '#B97996',
-  '#2FC49D',
-  '#8B5E50',
-  '#BA9562',
-  '#e28d00',
-  '#ffb802'
+  '#f06292',
+  '#ba68c8',
+  '#64b5f6',
+  '#e57373',
+  '#81c784',
+  '#ffd54f',
+  '#fff176',
+  '#90a4ae',
+  '#a1887f',
+  '#ff8a65',
+  '#ffb74d',
+  '#4dd0e1',
+  '#9575cd',
+  '#4fc3f7',
+  '#e0e0e0',
+  '#7986cb',
+  '#aed581',
+  '#dce775',
+  '#4db6ac'
 ];

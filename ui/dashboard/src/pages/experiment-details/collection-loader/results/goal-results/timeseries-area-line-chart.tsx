@@ -26,8 +26,7 @@ import {
 import 'chartjs-adapter-luxon';
 import { formatTooltipLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
-import { getVariationColor, getVariationSpecificColor } from 'utils/style';
-import { DataLabel } from './timeseries-line-chart';
+import { getVariationColor } from 'utils/style';
 
 ChartJS.register(
   LineElement,
@@ -47,7 +46,7 @@ export interface DatasetReduceType {
 }
 
 export interface ChartToggleLegendRef {
-  toggleLegend: (variationId: string) => void;
+  toggleLegend: (label: string) => void;
 }
 
 interface DatasetType extends ChartDataset<'line'> {
@@ -57,7 +56,7 @@ interface DatasetType extends ChartDataset<'line'> {
 interface TimeseriesAreaLineChartProps {
   chartType: string;
   label?: string;
-  dataLabels: Array<DataLabel>;
+  dataLabels: Array<string>;
   timeseries: Array<number | string>;
   upperBoundaries: Array<Array<number>>;
   lowerBoundaries: Array<Array<number>>;
@@ -85,12 +84,7 @@ export const TimeseriesAreaLineChart = memo(
 
       dataLabels.forEach((l, i) => {
         const color = getVariationColor(i);
-        const specificColor =
-          l?.variationType === 'BOOLEAN'
-            ? getVariationSpecificColor(l.label)
-            : '';
-        const hexColor = hexToRgba(specificColor || color, 0.2);
-
+        const hexColor = hexToRgba(color, 0.2);
         datasets.push({
           label: undefined,
           data: upperBoundaries[i],
@@ -101,7 +95,7 @@ export const TimeseriesAreaLineChart = memo(
           pointHoverBorderWidth: 0,
           pointHitRadius: 0,
           fill: '+1',
-          value: l.value,
+          value: l,
           tension: 0.2
         });
         datasets.push({
@@ -114,15 +108,15 @@ export const TimeseriesAreaLineChart = memo(
           pointHoverBorderWidth: 0,
           pointHitRadius: 0,
           fill: '-1',
-          value: l.value,
+          value: l,
           tension: 0.2
         });
         datasets.push({
-          label: l.label,
+          label: l,
           data: representatives[i],
-          borderColor: specificColor || color,
+          borderColor: color,
           fill: false,
-          value: l.value,
+          value: l,
           tension: 0.2
         });
       });
@@ -131,20 +125,20 @@ export const TimeseriesAreaLineChart = memo(
 
       useImperativeHandle(ref, () => {
         return {
-          toggleLegend(variationId: string) {
-            toggleDataset(variationId);
+          toggleLegend(label: string) {
+            toggleDataset(label);
           }
         };
       }, [chartRef]);
 
-      const toggleDataset = (variationId: string) => {
+      const toggleDataset = (label: string) => {
         const chart = chartRef.current;
         if (chart) {
           const datasets: DatasetType[] = chart.data.datasets as DatasetType[];
+
           datasets.forEach((dataset, index) => {
-            if (dataset?.value === variationId) {
+            if (dataset?.value === label)
               datasets[index].hidden = !datasets[index].hidden;
-            }
           });
 
           chart.update();

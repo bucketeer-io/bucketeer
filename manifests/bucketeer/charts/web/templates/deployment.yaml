@@ -102,6 +102,8 @@ spec:
               value: "{{ .Values.env.cloudService }}"
             - name: BIGQUERY_QUERIER_EMULATOR_HOST
               value: "{{.Values.env.bigqueryQuerierEmulatorHost}}"
+            - name: PUBSUB_EMULATOR_HOST
+              value: "{{.Values.env.pubsubEmulatorHost}}"
             - name: BUCKETEER_WEB_PROFILE
               value: "{{.Values.env.profile}}"
             - name: BUCKETEER_TEST_ENABLED
@@ -198,22 +200,6 @@ spec:
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_WEB_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
-            - name: BUCKETEER_WEB_PUBSUB_TYPE
-              value: "{{ .Values.global.pubsub.type }}"
-            - name: BUCKETEER_WEB_PUBSUB_REDIS_SERVER_NAME
-              value: "{{ .Values.global.pubsub.redis.serverName }}"
-            - name: BUCKETEER_WEB_PUBSUB_REDIS_ADDR
-              value: "{{ .Values.global.pubsub.redis.addr }}"
-            - name: BUCKETEER_WEB_PUBSUB_REDIS_POOL_SIZE
-              value: "{{ .Values.global.pubsub.redis.poolSize }}"
-            - name: BUCKETEER_WEB_PUBSUB_REDIS_MIN_IDLE
-              value: "{{ .Values.global.pubsub.redis.minIdle }}"
-            - name: BUCKETEER_WEB_PUBSUB_REDIS_PARTITION_COUNT
-              value: "{{ .Values.global.pubsub.redis.partitionCount }}"
-            - name: BUCKETEER_WEB_PROJECT
-              value: "{{ .Values.global.pubsub.project }}"
-            - name: PUBSUB_EMULATOR_HOST
-              value: "{{ .Values.global.pubsub.emulatorHost }}"
             - name: BUCKETEER_WEB_OAUTH_PUBLIC_KEY
               value: /usr/local/oauth-key/public.pem
             - name: BUCKETEER_WEB_OAUTH_PRIVATE_KEY

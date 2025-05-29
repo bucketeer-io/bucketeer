@@ -104,7 +104,6 @@ subscribers:
   # This is the processor's name. It must match the same name defined in the
   # pkg/subscriber/processor/processors.go
   auditLogPersister:
-    pubSubType: google
     project:
     topic:
     subscription:
@@ -114,7 +113,6 @@ subscribers:
     maxMps: 50
     workerNum: 1
   domainEventInformer:
-    pubSubType: google
     project:
     topic:
     subscription:
@@ -124,7 +122,6 @@ subscribers:
     maxMps: 50
     workerNum: 1
   evaluationCountEventPersister:
-    pubSubType: google
     project:
     topic:
     subscription:
@@ -134,7 +131,6 @@ subscribers:
     maxMps: 50
     workerNum: 1
   metricsEventPersister:
-    pubSubType: google
     project:
     topic:
     subscription:
@@ -144,7 +140,6 @@ subscribers:
     maxMps: 50
     workerNum: 1
   pushSender:
-    pubSubType: google
     project:
     topic:
     subscription:
@@ -154,7 +149,6 @@ subscribers:
     maxMps: 100
     workerNum: 1
   segmentUserPersister:
-    pubSubType: google
     project:
     topic:
     subscription:
@@ -164,7 +158,6 @@ subscribers:
     maxMps: 50
     workerNum: 1
   userEventPersister:
-    pubSubType: google
     project:
     topic:
     subscription:
@@ -176,7 +169,6 @@ subscribers:
 
 onDemandSubscribers:
   evaluationCountEventDWHPersister:
-    pubSubType: google
     project:
     topic:
     subscription:
@@ -187,7 +179,6 @@ onDemandSubscribers:
     workerNum: 1
     checkInterval: 10
   evaluationCountEventOPSPersister:
-    pubSubType: google
     project:
     topic:
     subscription:
@@ -198,7 +189,6 @@ onDemandSubscribers:
     workerNum: 1
     checkInterval: 10
   goalCountEventDWHPersister:
-    pubSubType: google
     project:
     topic:
     subscription:
@@ -209,7 +199,6 @@ onDemandSubscribers:
     workerNum: 1
     checkInterval: 10
   goalCountEventOPSPersister:
-    pubSubType: google
     project:
     topic:
     subscription:

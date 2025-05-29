@@ -90,8 +90,7 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
         value: item.variationId,
         label:
           feature.variations.find(v => v.id === item.variationId)?.value ||
-          (item.variationId === 'default' ? 'default value' : ''),
-        variationType: feature.variationType
+          (item.variationId === 'default' ? 'default value' : '')
       })) || [],
     [countData, feature]
   );

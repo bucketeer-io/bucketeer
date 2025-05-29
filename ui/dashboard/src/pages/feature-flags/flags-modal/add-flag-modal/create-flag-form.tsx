@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { featureCreator } from '@api/features/feature-creator';
@@ -14,7 +14,7 @@ import { cloneDeep } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { Feature, FeatureVariation, FeatureVariationType } from '@types';
 import { onGenerateSlug } from 'utils/converts';
-import { cn, getVariationSpecificColor } from 'utils/style';
+import { cn } from 'utils/style';
 import {
   IconFlagJSON,
   IconFlagNumber,
@@ -137,8 +137,6 @@ const CreateFlagForm = ({
   const currentFlagOption = flagTypeOptions.find(
     item => item.value === variationType
   );
-
-  const isBoolean = useMemo(() => variationType === 'BOOLEAN', [variationType]);
 
   const currentVariations = watch('variations') as FeatureVariation[];
 
@@ -412,142 +410,116 @@ const CreateFlagForm = ({
             <Form.Field
               control={form.control}
               name={`defaultOnVariation`}
-              render={({ field }) => {
-                const variation = currentVariations?.find(
-                  item => item.id === field.value
-                );
-                const variationIndex = currentVariations?.findIndex(
-                  item => item.id === field.value
-                );
-                return (
-                  <Form.Item className="py-2.5 flex-1">
-                    <Form.Label className="!mb-2">
-                      <Trans
-                        i18nKey={'form:feature-flags.serve-targeting'}
-                        values={{
-                          state: 'ON'
-                        }}
-                      />
-                    </Form.Label>
-                    <Form.Control>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          placeholder={t(`form:placeholder-tags`)}
-                          trigger={
-                            <div className="flex items-center gap-x-2">
-                              <FlagVariationPolygon
-                                index={variationIndex}
-                                specificColor={
-                                  isBoolean
-                                    ? getVariationSpecificColor(
-                                        variation?.value || ''
-                                      )
-                                    : ''
-                                }
-                              />
-                              <Trans
-                                i18nKey={'form:feature-flags.variation'}
-                                values={{
-                                  index:
-                                    currentVariations?.findIndex(
-                                      item => item.id === field.value
-                                    ) + 1
-                                }}
-                              />
-                            </div>
-                          }
-                          variant="secondary"
-                          className="w-full"
-                        />
-                        <DropdownMenuContent align="start" {...field}>
-                          {currentVariations?.map((item, index) => (
-                            <DropdownMenuItem
-                              {...field}
-                              key={index}
-                              value={item.id}
-                              label={`Variation ${index + 1}`}
-                              onSelectOption={() => {
-                                field.onChange(item.id);
+              render={({ field }) => (
+                <Form.Item className="py-2.5 flex-1">
+                  <Form.Label className="!mb-2">
+                    <Trans
+                      i18nKey={'form:feature-flags.serve-targeting'}
+                      values={{
+                        state: 'ON'
+                      }}
+                    />
+                  </Form.Label>
+                  <Form.Control>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        placeholder={t(`form:placeholder-tags`)}
+                        trigger={
+                          <div className="flex items-center gap-x-2">
+                            <FlagVariationPolygon
+                              index={currentVariations?.findIndex(
+                                item => item.id === field.value
+                              )}
+                            />
+                            <Trans
+                              i18nKey={'form:feature-flags.variation'}
+                              values={{
+                                index:
+                                  currentVariations?.findIndex(
+                                    item => item.id === field.value
+                                  ) + 1
                               }}
                             />
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </Form.Control>
-                    <Form.Message />
-                  </Form.Item>
-                );
-              }}
+                          </div>
+                        }
+                        variant="secondary"
+                        className="w-full"
+                      />
+                      <DropdownMenuContent align="start" {...field}>
+                        {currentVariations?.map((item, index) => (
+                          <DropdownMenuItem
+                            {...field}
+                            key={index}
+                            value={item.id}
+                            label={`Variation ${index + 1}`}
+                            onSelectOption={() => {
+                              field.onChange(item.id);
+                            }}
+                          />
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
             />
             <Form.Field
               control={form.control}
               name={`defaultOffVariation`}
-              render={({ field }) => {
-                const variation = currentVariations?.find(
-                  item => item.id === field.value
-                );
-                const variationIndex = currentVariations?.findIndex(
-                  item => item.id === field.value
-                );
-                return (
-                  <Form.Item className="py-2.5 flex-1">
-                    <Form.Label className="!mb-2">
-                      <Trans
-                        i18nKey={'form:feature-flags.serve-targeting'}
-                        values={{
-                          state: 'OFF'
-                        }}
-                      />
-                    </Form.Label>
-                    <Form.Control>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          placeholder={t(`form:placeholder-tags`)}
-                          trigger={
-                            <div className="flex items-center gap-x-2">
-                              <FlagVariationPolygon
-                                index={variationIndex}
-                                specificColor={
-                                  isBoolean
-                                    ? getVariationSpecificColor(
-                                        variation?.value || ''
-                                      )
-                                    : ''
-                                }
-                              />
-                              <Trans
-                                i18nKey={'form:feature-flags.variation'}
-                                values={{
-                                  index:
-                                    currentVariations?.findIndex(
-                                      item => item.id === field.value
-                                    ) + 1
-                                }}
-                              />
-                            </div>
-                          }
-                          variant="secondary"
-                          className="w-full"
-                        />
-                        <DropdownMenuContent align="start" {...field}>
-                          {currentVariations?.map((item, index) => (
-                            <DropdownMenuItem
-                              {...field}
-                              key={index}
-                              value={item.id}
-                              label={`Variation ${index + 1}`}
-                              onSelectOption={() => {
-                                field.onChange(item.id);
+              render={({ field }) => (
+                <Form.Item className="py-2.5 flex-1">
+                  <Form.Label className="!mb-2">
+                    <Trans
+                      i18nKey={'form:feature-flags.serve-targeting'}
+                      values={{
+                        state: 'OFF'
+                      }}
+                    />
+                  </Form.Label>
+                  <Form.Control>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        placeholder={t(`form:placeholder-tags`)}
+                        trigger={
+                          <div className="flex items-center gap-x-2">
+                            <FlagVariationPolygon
+                              index={currentVariations?.findIndex(
+                                item => item.id === field.value
+                              )}
+                            />
+                            <Trans
+                              i18nKey={'form:feature-flags.variation'}
+                              values={{
+                                index:
+                                  currentVariations?.findIndex(
+                                    item => item.id === field.value
+                                  ) + 1
                               }}
                             />
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </Form.Control>
-                    <Form.Message />
-                  </Form.Item>
-                );
-              }}
+                          </div>
+                        }
+                        variant="secondary"
+                        className="w-full"
+                      />
+                      <DropdownMenuContent align="start" {...field}>
+                        {currentVariations?.map((item, index) => (
+                          <DropdownMenuItem
+                            {...field}
+                            key={index}
+                            value={item.id}
+                            label={`Variation ${index + 1}`}
+                            onSelectOption={() => {
+                              field.onChange(item.id);
+                            }}
+                          />
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
             />
           </div>
           <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg z-[999]">

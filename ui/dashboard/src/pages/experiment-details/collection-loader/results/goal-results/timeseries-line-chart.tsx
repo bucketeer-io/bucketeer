@@ -19,14 +19,12 @@ import {
   Tooltip,
   Filler,
   ChartData,
-  ChartOptions,
-  ChartDataset
+  ChartOptions
 } from 'chart.js';
 import 'chartjs-adapter-luxon';
-import { FeatureVariationType } from '@types';
 import { formatTooltipLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
-import { getVariationColor, getVariationSpecificColor } from 'utils/style';
+import { getVariationColor } from 'utils/style';
 import {
   ChartToggleLegendRef,
   DatasetReduceType
@@ -48,19 +46,9 @@ export type TicksType = {
   value: string;
 };
 
-export interface DataLabel {
-  label: string;
-  value: string;
-  variationType?: FeatureVariationType;
-}
-
-interface DatasetType extends ChartDataset<'line'> {
-  value: string;
-}
-
 interface TimeseriesLineChartProps {
   label?: string;
-  dataLabels: Array<DataLabel>;
+  dataLabels: Array<string>;
   timeseries: Array<string | number>;
   data: Array<Array<number | string>>;
   setDataSets: (datasets: DatasetReduceType[]) => void;
@@ -88,18 +76,18 @@ const TimeseriesLineChart = memo(
 
       useImperativeHandle(ref, () => {
         return {
-          toggleLegend(variationId: string) {
-            toggleDataset(variationId);
+          toggleLegend(label: string) {
+            toggleDataset(label);
           }
         };
       }, [chartRef]);
 
-      const toggleDataset = (variationId: string) => {
+      const toggleDataset = (label: string) => {
         const chart = chartRef.current;
         if (chart) {
-          const datasets: DatasetType[] = chart.data.datasets as DatasetType[];
+          const datasets = chart.data.datasets;
           const toggleIndex = datasets.findIndex(
-            dataset => dataset?.value === variationId
+            dataset => dataset?.label === label
           );
 
           datasets[toggleIndex].hidden = !datasets[toggleIndex].hidden;
@@ -117,18 +105,13 @@ const TimeseriesLineChart = memo(
       const chartData: ChartData<'line', (string | number)[], Date> = {
         labels,
         datasets: dataLabels.map((e, i) => {
-          const specificColor =
-            e?.variationType === 'BOOLEAN'
-              ? getVariationSpecificColor(e.label)
-              : '';
           const color = getVariationColor(i);
           return {
-            label: e.label,
+            label: e,
             data: [...data[i]],
-            borderColor: specificColor || color,
-            backgroundColor: specificColor || color,
+            borderColor: color,
+            backgroundColor: color,
             fill: false,
-            value: e.value,
             tension: 0.2
           };
         })

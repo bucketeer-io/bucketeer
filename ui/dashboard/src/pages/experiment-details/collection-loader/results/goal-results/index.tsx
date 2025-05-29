@@ -65,18 +65,14 @@ const GoalResultItem = ({
 
   const variationValues = useMemo(
     () =>
-      goalResult?.variationResults?.map(vr => {
+      (goalResult?.variationResults?.map(vr => {
         const variation = experiment.variations.find(
           item => vr.variationId === item.id
         );
-        const { name, value, id } = variation || {};
-        return {
-          label: name || value || '',
-          value: id || '',
-          variationType: feature?.variationType
-        };
-      }) || [],
-    [goalResult, experiment, feature]
+        const { name, value } = variation || {};
+        return name || value || '';
+      }) as string[]) || [],
+    [goalResult, experiment]
   );
 
   const onSubmitRolloutVariation = useCallback(
@@ -209,12 +205,11 @@ const GoalResultItem = ({
                 setDataSets={setEvaluationDataSets}
               />
               <EvaluationTable
-                variationType={feature?.variationType}
                 goalResult={goalResult}
                 experiment={experiment}
                 evaluationDataSets={evaluationDataSets}
-                onToggleShowData={variationId =>
-                  evaluationChartRef.current?.toggleLegend(variationId)
+                onToggleShowData={label =>
+                  evaluationChartRef.current?.toggleLegend(label)
                 }
               />
             </div>
@@ -236,13 +231,12 @@ const GoalResultItem = ({
                 setConversionRateDataSets={setConversionRateDataSets}
               />
               <ConversionRateTable
-                variationType={feature?.variationType}
                 conversionRateDataSets={conversionRateDataSets}
                 goalResultState={goalResultState}
                 goalResult={goalResult}
                 experiment={experiment}
-                onToggleShowData={variationId =>
-                  conversionRateChartRef.current?.toggleLegend(variationId)
+                onToggleShowData={label =>
+                  conversionRateChartRef.current?.toggleLegend(label)
                 }
               />
             </div>

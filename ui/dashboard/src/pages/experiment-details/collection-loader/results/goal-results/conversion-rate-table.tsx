@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Experiment, FeatureVariationType, GoalResult } from '@types';
+import { Experiment, GoalResult } from '@types';
 import { isNumber } from 'utils/chart';
 import { GoalResultState } from '..';
 import { ResultHeaderCell, ResultCell } from './goal-results-table-element';
@@ -11,14 +11,12 @@ const ConversionRateTable = ({
   experiment,
   goalResult,
   conversionRateDataSets,
-  variationType,
   onToggleShowData
 }: {
   goalResultState: GoalResultState;
   experiment: Experiment;
   goalResult: GoalResult;
   conversionRateDataSets: DatasetReduceType[];
-  variationType?: FeatureVariationType;
   onToggleShowData: (label: string) => void;
 }) => {
   const { t } = useTranslation(['common', 'table']);
@@ -196,7 +194,6 @@ const ConversionRateTable = ({
                 minSize={255}
                 currentIndex={i}
                 isChecked={!isHidden}
-                variationType={variationType}
                 onToggleShowData={onToggleShowData}
               />
               <ResultCell

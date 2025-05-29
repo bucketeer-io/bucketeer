@@ -337,7 +337,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	multiPubSub, err := s.startMultiPubSub(ctx, pubSubProcessors, registerer, logger)
+	multiPubSub, err := s.startMultiPubSub(ctx, pubSubProcessors, logger)
 	if err != nil {
 		return err
 	}
@@ -395,12 +395,10 @@ func (s *server) createMySQLClient(
 func (s *server) startMultiPubSub(
 	ctx context.Context,
 	processors *processor.PubSubProcessors,
-	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (*subscriber.MultiSubscriber, error) {
 	multiSubscriber := subscriber.NewMultiSubscriber(
 		subscriber.WithLogger(logger),
-		subscriber.WithMetrics(registerer),
 	)
 	subscriberConfigBytes, err := os.ReadFile(*s.subscriberConfig)
 	if err != nil {
@@ -427,7 +425,6 @@ func (s *server) startMultiPubSub(
 			multiSubscriber.AddSubscriber(subscriber.NewPubSubSubscriber(
 				name, config, p,
 				subscriber.WithLogger(logger),
-				subscriber.WithMetrics(registerer),
 			))
 		}
 	}
@@ -456,7 +453,6 @@ func (s *server) startMultiPubSub(
 			multiSubscriber.AddSubscriber(subscriber.NewOnDemandSubscriber(
 				name, config, p.(subscriber.OnDemandProcessor),
 				subscriber.WithLogger(logger),
-				subscriber.WithMetrics(registerer),
 			))
 		}
 	}

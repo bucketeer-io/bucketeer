@@ -10,7 +10,6 @@ import {
 import { invalidateTriggers, useQueryTriggers } from '@queries/triggers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Feature, TriggerItemType } from '@types';
@@ -152,7 +151,7 @@ const TriggerList = ({ feature }: { feature: Feature }) => {
           components={{
             comp: (
               <Link
-                to={DOCUMENTATION_LINKS.FLAG_TRIGGER}
+                to={`https://docs.bucketeer.io/feature-flags/creating-feature-flags/triggers/`}
                 target="_blank"
                 className="flex items-center gap-x-1 text-primary-500 underline"
               />
