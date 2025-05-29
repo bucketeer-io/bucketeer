@@ -16,11 +16,14 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	acclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
@@ -57,8 +60,10 @@ import (
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
+	batchproto "github.com/bucketeer-io/bucketeer/proto/batch"
 )
 
 const (
@@ -71,6 +76,7 @@ type server struct {
 	*kingpin.CmdClause
 	// Common
 	port               *int
+	grpcGatewayPort    *int
 	project            *string
 	certPath           *string
 	keyPath            *string
@@ -121,6 +127,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	server := &server{
 		CmdClause:        cmd,
 		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		grpcGatewayPort:  cmd.Flag("grpc-gateway-port", "Port to bind to for gRPC-gateway.").Default("9089").Int(),
 		project:          cmd.Flag("project", "Google Cloud project name.").String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
@@ -593,8 +600,33 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go server.Run()
 
+	// Setup gRPC Gateway for batch service
+	grpcGatewayAddr := fmt.Sprintf(":%d", *s.grpcGatewayPort)
+	grpcAddr := fmt.Sprintf("localhost:%d", *s.port)
+
+	// Create a HandlerRegistrar adapter function that matches gateway.HandlerRegistrar signature
+	batchHandler := func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+		return batchproto.RegisterBatchServiceHandlerFromEndpoint(ctx, mux, grpcAddr, opts)
+	}
+
+	batchGateway, err := gateway.NewGateway(
+		grpcGatewayAddr,
+		gateway.WithLogger(logger.Named("batch-grpc-gateway")),
+		gateway.WithMetrics(registerer),
+		gateway.WithCertPath(*s.certPath),
+		gateway.WithKeyPath(*s.keyPath),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create batch gateway: %v", err)
+	}
+
+	if err := batchGateway.Start(ctx, batchHandler); err != nil {
+		return fmt.Errorf("failed to start batch gateway: %v", err)
+	}
+
 	defer func() {
 		server.Stop(serverShutDownTimeout)
+		batchGateway.Stop(serverShutDownTimeout)
 		accountClient.Close()
 		notificationClient.Close()
 		experimentClient.Close()
