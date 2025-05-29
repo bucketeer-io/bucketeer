@@ -59,4 +59,3 @@ LEFT OUTER JOIN feature_last_used_info ON
 JOIN experiment ON
     feature.id = experiment.feature_id AND
     feature.environment_id = experiment.environment_id
-%s %s %s
