@@ -75,6 +75,7 @@ type server struct {
 	*kingpin.CmdClause
 	// Common
 	port               *int
+	restPort           *int
 	project            *string
 	certPath           *string
 	keyPath            *string
@@ -125,6 +126,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	server := &server{
 		CmdClause:        cmd,
 		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		restPort:         cmd.Flag("rest-port", "Port to bind to for REST gateway.").Default("9089").Int(),
 		project:          cmd.Flag("project", "Google Cloud project name.").String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
@@ -593,8 +595,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go server.Run()
 
 	// Setup REST gateway for batch service
-	restPort := *s.port + 1000
-	restAddr := fmt.Sprintf(":%d", restPort)
+	restAddr := fmt.Sprintf(":%d", *s.restPort)
 	grpcAddr := fmt.Sprintf("localhost:%d", *s.port)
 
 	// Create a HandlerRegistrar adapter function that matches gateway.HandlerRegistrar signature
@@ -604,7 +605,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	batchGateway, err := gateway.NewGateway(
 		restAddr,
-		gateway.WithLogger(logger.Named("batch-gateway")),
+		gateway.WithLogger(logger.Named("batch-grpc-gateway")),
 		gateway.WithMetrics(registerer),
 		gateway.WithCertPath(*s.certPath),
 		gateway.WithKeyPath(*s.keyPath),
@@ -613,18 +614,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return fmt.Errorf("failed to create batch gateway: %v", err)
 	}
 
-	go func() {
-		if err := batchGateway.Start(
-			ctx,
-			batchHandler,
-		); err != nil {
-			logger.Error("failed to start batch gateway", zap.Error(err))
-		}
-	}()
+	if err := batchGateway.Start(ctx, batchHandler); err != nil {
+		return fmt.Errorf("failed to start batch gateway: %v", err)
+	}
 
 	defer func() {
 		server.Stop(serverShutDownTimeout)
-		batchGateway.Stop(context.Background())
+		batchGateway.Stop(serverShutDownTimeout)
 		accountClient.Close()
 		notificationClient.Close()
 		experimentClient.Close()

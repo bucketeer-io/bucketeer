@@ -531,20 +531,20 @@ data:
               explicit_http_config:
                 http2_protocol_options: {}
           ignore_health_on_host_removal: true
-        - name: openapi-gateway
+        - name: web-grpc-gateway
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
           lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
-            cluster_name: openapi-gateway
+            cluster_name: web-grpc-gateway
             endpoints:
               - lb_endpoints:
                   - endpoint:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 9106
+                          port_value: 9089
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
@@ -874,7 +874,7 @@ data:
                             - match:
                                 prefix: /webhook
                               route:
-                                cluster: openapi-gateway
+                                cluster: web-grpc-gateway
                                 timeout: 60s
                                 retry_policy:
                                   retry_on: 5xx
@@ -922,7 +922,7 @@ data:
                             - match:
                                 prefix: /v1/
                               route:
-                                cluster: openapi-gateway
+                                cluster: web-grpc-gateway
                                 timeout: 60s
                                 retry_policy:
                                   retry_on: 5xx

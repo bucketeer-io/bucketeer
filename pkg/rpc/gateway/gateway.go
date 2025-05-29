@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
@@ -115,35 +116,42 @@ func (g *Gateway) Start(ctx context.Context,
 		Handler: mux,
 	}
 
+	// Start the server in a goroutine
+	errChan := make(chan error, 1)
 	go func() {
 		var err error
-		// Determine whether to use HTTPS or HTTP based on keyPath and certPath
 		if g.opts.keyPath != "" && g.opts.certPath != "" {
-			g.logger.Info("starting gateway with HTTPS",
-				zap.String("cert_path", g.opts.certPath),
-				zap.String("key_path", g.opts.keyPath))
 			err = g.httpServer.ListenAndServeTLS(g.opts.certPath, g.opts.keyPath)
 		} else {
 			g.logger.Info("starting gateway with HTTP (no TLS)")
 			err = g.httpServer.ListenAndServe()
 		}
 		if err != nil && err != http.ErrServerClosed {
-			g.logger.Error("failed to serve HTTP/HTTPS", zap.Error(err))
+			errChan <- err
 		}
 	}()
 
-	g.logger.Info("gateway started",
-		zap.String("rest_addr", g.restAddr),
-		zap.Bool("tls_enabled", g.opts.keyPath != "" && g.opts.certPath != ""),
-		zap.Int("handlers_registered", len(registerFuncs)))
-
-	return nil
+	// Check if there was an immediate error
+	select {
+	case err := <-errChan:
+		return fmt.Errorf("failed to start gateway: %v", err)
+	default:
+		// No immediate error, server is starting
+		g.logger.Debug("gateway started",
+			zap.String("rest_addr", g.restAddr),
+			zap.Bool("tls_enabled", g.opts.keyPath != "" && g.opts.certPath != ""),
+			zap.Int("handlers_registered", len(registerFuncs)))
+		return nil
+	}
 }
 
-func (g *Gateway) Stop(ctx context.Context) {
+// Stop gracefully shuts down the HTTP server
+func (g *Gateway) Stop(timeout time.Duration) {
 	if g.httpServer != nil {
-		if err := g.httpServer.Shutdown(ctx); err != nil {
-			g.logger.Error("failed to shutdown HTTP server", zap.Error(err))
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		if err := g.httpServer.Shutdown(shutdownCtx); err != nil {
+			g.logger.Error("failed to shutdown HTTP server gracefully", zap.Error(err))
 		}
 	}
 }

@@ -49,6 +49,7 @@ const command = "server"
 type server struct {
 	*kingpin.CmdClause
 	port                   *int
+	restPort               *int
 	project                *string
 	goalTopic              *string
 	goalTopicProject       *string
@@ -85,6 +86,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	server := &server{
 		CmdClause: cmd,
 		port:      cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		restPort:  cmd.Flag("rest-port", "Port to bind to for REST gateway.").Default("9089").Int(),
 		project:   cmd.Flag("project", "GCP Project id to use for PubSub.").Required().String(),
 		goalTopic: cmd.Flag("goal-topic", "Topic to use for publishing GoalEvent.").Required().String(),
 		goalTopicProject: cmd.Flag(
@@ -358,8 +360,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go server.Run()
 
 	// Set up REST gateway for API service
-	restPort := *s.port + 1000
-	restAddr := fmt.Sprintf(":%d", restPort)
+	restAddr := fmt.Sprintf(":%d", *s.restPort)
 	grpcAddr := fmt.Sprintf("localhost:%d", *s.port)
 
 	// Create a HandlerRegistrar adapter function that matches gateway.HandlerRegistrar signature
@@ -372,7 +373,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	apiGateway, err := gateway.NewGateway(
 		restAddr,
-		gateway.WithLogger(logger.Named("api-gateway")),
+		gateway.WithLogger(logger.Named("api-grpc-ateway")),
 		gateway.WithMetrics(registerer),
 		gateway.WithCertPath(*s.certPath),
 		gateway.WithKeyPath(*s.keyPath),
@@ -381,15 +382,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return fmt.Errorf("failed to create API gateway: %v", err)
 	}
 
-	go func() {
-		if err := apiGateway.Start(
-			ctx,
-			gatewayHandler,
-		); err != nil {
-			logger.Error("failed to start API gateway", zap.Error(err))
-		}
-	}()
-	defer apiGateway.Stop(context.Background())
+	if err := apiGateway.Start(ctx, gatewayHandler); err != nil {
+		return fmt.Errorf("failed to start API gateway: %v", err)
+	}
+	defer apiGateway.Stop(10 * time.Second)
 
 	restHealthChecker := health.NewRestChecker(
 		api.Version, api.Service,
