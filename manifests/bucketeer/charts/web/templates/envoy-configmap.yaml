@@ -544,7 +544,7 @@ data:
                       address:
                         socket_address:
                           address: localhost
-                          port_value: 9089
+                          port_value: {{ .Values.env.grpcGatewayPort }}
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:

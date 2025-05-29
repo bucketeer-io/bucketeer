@@ -41,6 +41,7 @@ env:
   experimentService: localhost:9001
   featureService: localhost:9001
   autoOpsService: localhost:9001
+  grpcGatewayPort: 9089
   healthCheckServicePort: 8000
   accountServicePort: 9091
   authServicePort: 9092
