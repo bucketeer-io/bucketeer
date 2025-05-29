@@ -151,7 +151,7 @@ type server struct {
 	pubSubRedisPoolSize             *int
 	pubSubRedisMinIdle              *int
 	pubSubRedisPartitionCount       *int
-	useMySQL *bool
+	useMySQL                        *bool
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
