@@ -84,6 +84,7 @@ data:
               '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
               explicit_http_config:
                 http2_protocol_options: {}
+          ignore_health_on_host_removal: true
         - name: auth
           type: strict_dns
           connect_timeout: 5s
@@ -516,10 +517,9 @@ data:
           transport_socket:
             name: envoy.transport_sockets.tls
             typed_config:
-              '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
               common_tls_context:
-                alpn_protocols:
-                  - h2
+                alpn_protocols: ["h2"]
                 tls_certificates:
                   - certificate_chain:
                       filename: /usr/local/certs/service/tls.crt
@@ -527,7 +527,38 @@ data:
                       filename: /usr/local/certs/service/tls.key
           typed_extension_protocol_options:
             envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              explicit_http_config:
+                http2_protocol_options: {}
+          ignore_health_on_host_removal: true
+        - name: web-grpc-gateway
+          type: strict_dns
+          connect_timeout: 5s
+          dns_lookup_family: V4_ONLY
+          lb_policy: {{ .Values.envoy.lbPolicy }}
+          load_assignment:
+            cluster_name: web-grpc-gateway
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: localhost
+                          port_value: {{ .Values.env.grpcGatewayPort }}
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+              common_tls_context:
+                alpn_protocols: ["h2"]
+                tls_certificates:
+                  - certificate_chain:
+                      filename: /usr/local/certs/service/tls.crt
+                    private_key:
+                      filename: /usr/local/certs/service/tls.key
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
               explicit_http_config:
                 http2_protocol_options: {}
           ignore_health_on_host_removal: true
@@ -743,123 +774,6 @@ data:
                       - name: envoy.filters.http.grpc_web
                         typed_config:
                           "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb
-                      - name: envoy.filters.http.grpc_json_transcoder
-                        typed_config:
-                          "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                          auto_mapping: true
-                          proto_descriptor: /usr/local/account-secret/account_proto_descriptor.pb
-                          services:
-                            - bucketeer.account.AccountService
-                          print_options:
-                            always_print_primitive_fields: true
-                      - name: envoy.filters.http.grpc_json_transcoder
-                        typed_config:
-                          "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                          auto_mapping: true
-                          proto_descriptor: /usr/local/auditlog-secret/auditlog_proto_descriptor.pb
-                          services:
-                            - bucketeer.auditlog.AuditLogService
-                          print_options:
-                            always_print_primitive_fields: true
-                      - name: envoy.filters.http.grpc_json_transcoder
-                        typed_config:
-                          "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                          auto_mapping: true
-                          proto_descriptor: /usr/local/auth-secret/auth_proto_descriptor.pb
-                          services:
-                            - bucketeer.auth.AuthService
-                          print_options:
-                            always_print_primitive_fields: true
-                      - name: envoy.filters.http.grpc_json_transcoder
-                        typed_config:
-                          "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                          auto_mapping: true
-                          proto_descriptor: /usr/local/autoops-secret/autoops_proto_descriptor.pb
-                          services:
-                            - bucketeer.autoops.AutoOpsService
-                          print_options:
-                            always_print_primitive_fields: true
-                      - name: envoy.filters.http.grpc_json_transcoder
-                        typed_config:
-                          "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                          auto_mapping: true
-                          proto_descriptor: /usr/local/environment-secret/environment_proto_descriptor.pb
-                          services:
-                            - bucketeer.environment.EnvironmentService
-                          print_options:
-                            always_print_primitive_fields: true
-                      - name: envoy.filters.http.grpc_json_transcoder
-                        typed_config:
-                          "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                          auto_mapping: true
-                          proto_descriptor: /usr/local/eventcounter-secret/eventcounter_proto_descriptor.pb
-                          services:
-                            - bucketeer.eventcounter.EventCounterService
-                          print_options:
-                            always_print_primitive_fields: true
-                      - name: envoy.filters.http.grpc_json_transcoder
-                        typed_config:
-                          "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                          auto_mapping: true
-                          proto_descriptor: /usr/local/experiment-secret/experiment_proto_descriptor.pb
-                          services:
-                            - bucketeer.experiment.ExperimentService
-                          print_options:
-                            always_print_primitive_fields: true
-                      - name: envoy.filters.http.grpc_json_transcoder
-                        typed_config:
-                          "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                          auto_mapping: true
-                          proto_descriptor: /usr/local/feature-secret/feature_proto_descriptor.pb
-                          services:
-                            - bucketeer.feature.FeatureService
-                          print_options:
-                            always_print_primitive_fields: true
-                      - name: envoy.filters.http.grpc_json_transcoder
-                        typed_config:
-                          "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                          auto_mapping: true
-                          proto_descriptor: /usr/local/notification-secret/notification_proto_descriptor.pb
-                          services:
-                            - bucketeer.notification.NotificationService
-                          print_options:
-                            always_print_primitive_fields: true
-                      - name: envoy.filters.http.grpc_json_transcoder
-                        typed_config:
-                          "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                          auto_mapping: true
-                          proto_descriptor: /usr/local/push-secret/push_proto_descriptor.pb
-                          services:
-                            - bucketeer.push.PushService
-                          print_options:
-                            always_print_primitive_fields: true
-                      - name: envoy.filters.http.grpc_json_transcoder
-                        typed_config:
-                          "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                          auto_mapping: true
-                          proto_descriptor: /usr/local/tag-secret/tag_proto_descriptor.pb
-                          services:
-                            - bucketeer.tag.TagService
-                          print_options:
-                            always_print_primitive_fields: true
-                      - name: envoy.filters.http.grpc_json_transcoder
-                        typed_config:
-                          "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                          auto_mapping: true
-                          proto_descriptor: /usr/local/batch-secret/batch_proto_descriptor.pb
-                          services:
-                            - bucketeer.batch.BatchService
-                          print_options:
-                            always_print_primitive_fields: true
-                      - name: envoy.filters.http.grpc_json_transcoder
-                        typed_config:
-                          "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                          auto_mapping: true
-                          proto_descriptor: /usr/local/code-reference-secret/code_reference_proto_descriptor.pb
-                          services:
-                            - bucketeer.coderef.CodeReferenceService
-                          print_options:
-                            always_print_primitive_fields: true
                       - name: envoy.filters.http.router
                         typed_config:
                           "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
@@ -874,7 +788,7 @@ data:
                               allow_origin_string_match:
                                 - prefix: "*"
                               allow_headers: "content-type, x-grpc-web, authorization"
-                              allow_methods: "GET,POST,PATCH,DELETE"
+                              allow_methods: "GET,POST,PATCH,DELETE,OPTIONS,PUT"
                               allow_credentials: true
                           routes:
                             - match:
@@ -960,7 +874,7 @@ data:
                             - match:
                                 prefix: /webhook
                               route:
-                                cluster: feature
+                                cluster: web-grpc-gateway
                                 timeout: 60s
                                 retry_policy:
                                   retry_on: 5xx
@@ -1002,6 +916,14 @@ data:
                               route:
                                 cluster: dashboard
                                 timeout: 15s
+                                retry_policy:
+                                  retry_on: 5xx
+                                  num_retries: 3
+                            - match:
+                                prefix: /v1/
+                              route:
+                                cluster: web-grpc-gateway
+                                timeout: 60s
                                 retry_policy:
                                   retry_on: 5xx
                                   num_retries: 3

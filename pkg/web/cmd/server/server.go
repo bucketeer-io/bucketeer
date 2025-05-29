@@ -25,6 +25,9 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc"
+
 	accountapi "github.com/bucketeer-io/bucketeer/pkg/account/api"
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	auditlogapi "github.com/bucketeer-io/bucketeer/pkg/auditlog/api"
@@ -56,10 +59,24 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
+	gatewayapi "github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
 	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	tagapi "github.com/bucketeer-io/bucketeer/pkg/tag/api"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	auditlogproto "github.com/bucketeer-io/bucketeer/proto/auditlog"
+	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
+	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	coderefproto "github.com/bucketeer-io/bucketeer/proto/coderef"
+	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	eventcounterproto "github.com/bucketeer-io/bucketeer/proto/eventcounter"
+	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
+	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
+	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
 )
 
 const (
@@ -73,84 +90,75 @@ const (
 
 type server struct {
 	*kingpin.CmdClause
-	// Common
-	project          *string
-	timezone         *string
-	certPath         *string
-	keyPath          *string
-	serviceTokenPath *string
-	// MySQL
-	mysqlUser   *string
-	mysqlPass   *string
-	mysqlHost   *string
-	mysqlPort   *int
-	mysqlDBName *string
-	// Persistent Redis
-	persistentRedisServerName    *string
-	persistentRedisAddr          *string
-	persistentRedisPoolMaxIdle   *int
-	persistentRedisPoolMaxActive *int
-	// Non Persistent Redis
+	port                            *int
+	project                         *string
+	timezone                        *string
+	certPath                        *string
+	keyPath                         *string
+	serviceTokenPath                *string
+	mysqlUser                       *string
+	mysqlPass                       *string
+	mysqlHost                       *string
+	mysqlPort                       *int
+	mysqlDBName                     *string
+	persistentRedisServerName       *string
+	persistentRedisAddr             *string
+	persistentRedisPoolMaxIdle      *int
+	persistentRedisPoolMaxActive    *int
 	nonPersistentRedisServerName    *string
 	nonPersistentRedisAddr          *string
 	nonPersistentRedisPoolMaxIdle   *int
 	nonPersistentRedisPoolMaxActive *int
-	// BigQuery
-	bigQueryDataSet      *string
-	bigQueryDataLocation *string
-	// PubSub
-	domainTopic                   *string
-	bulkSegmentUsersReceivedTopic *string
-	// PubSub configuration
-	pubSubType                *string
-	pubSubRedisServerName     *string
-	pubSubRedisAddr           *string
-	pubSubRedisPoolSize       *int
-	pubSubRedisMinIdle        *int
-	pubSubRedisPartitionCount *int
-	// Port
-	accountServicePort       *int
-	authServicePort          *int
-	auditLogServicePort      *int
-	autoOpsServicePort       *int
-	environmentServicePort   *int
-	eventCounterServicePort  *int
-	experimentServicePort    *int
-	featureServicePort       *int
-	notificationServicePort  *int
-	pushServicePort          *int
-	webConsoleServicePort    *int
-	dashboardServicePort     *int
-	tagServicePort           *int
-	codeReferenceServicePort *int
-	// Service
-	accountService       *string
-	authService          *string
-	batchService         *string
-	environmentService   *string
-	experimentService    *string
-	featureService       *string
-	autoOpsService       *string
-	codeReferenceService *string
-	// auth
-	refreshTokenTTL     *time.Duration
-	emailFilter         *string
-	oauthConfigPath     *string
-	oauthPublicKeyPath  *string
-	oauthPrivateKeyPath *string
-	// autoOps
-	webhookBaseURL         *string
-	webhookKMSResourceName *string
-	cloudService           *string
-	// web console
-	webConsoleEnvJSPath *string
+	bigQueryDataSet                 *string
+	bigQueryDataLocation            *string
+	domainTopic                     *string
+	bulkSegmentUsersReceivedTopic   *string
+	accountServicePort              *int
+	authServicePort                 *int
+	auditLogServicePort             *int
+	autoOpsServicePort              *int
+	environmentServicePort          *int
+	eventCounterServicePort         *int
+	experimentServicePort           *int
+	featureServicePort              *int
+	notificationServicePort         *int
+	pushServicePort                 *int
+	webConsoleServicePort           *int
+	dashboardServicePort            *int
+	tagServicePort                  *int
+	codeReferenceServicePort        *int
+	webGrpcGatewayPort              *int
+	accountService                  *string
+	authService                     *string
+	batchService                    *string
+	environmentService              *string
+	experimentService               *string
+	featureService                  *string
+	autoOpsService                  *string
+	codeReferenceService            *string
+	refreshTokenTTL                 *time.Duration
+	emailFilter                     *string
+	oauthConfigPath                 *string
+	oauthPublicKeyPath              *string
+	oauthPrivateKeyPath             *string
+	webhookBaseURL                  *string
+	webhookKMSResourceName          *string
+	cloudService                    *string
+	webConsoleEnvJSPath             *string
+	pubSubType                      *string
+	pubSubRedisServerName           *string
+	pubSubRedisAddr                 *string
+	pubSubRedisPoolSize             *int
+	pubSubRedisMinIdle              *int
+	pubSubRedisPartitionCount       *int
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start the server")
 	server := &server{
 		CmdClause:   cmd,
-		project:     cmd.Flag("project", "Google Cloud project name.").String(),
+		port:        cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		project:     cmd.Flag("project", "Google Cloud project name.").Required().String(),
 		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
 		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
 		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
@@ -254,6 +262,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"code-reference-service-port",
 			"Port to bind to code reference service.",
 		).Default("9105").Int(),
+		webGrpcGatewayPort: cmd.Flag(
+			"web-grpc-gateway-port",
+			"Port to bind to web gRPC gateway.",
+		).Default("9089").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -294,7 +306,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"oauth-public-key",
 			"Path to public key used to verify oauth token.",
 		).Required().String(),
-		// auth
 		refreshTokenTTL: cmd.Flag(
 			"refresh-token-ttl",
 			"TTL for refresh token.",
@@ -305,7 +316,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"oauth-private-key",
 			"Path to private key for signing oauth token.",
 		).Required().String(),
-		// autoOps
 		webhookBaseURL: cmd.Flag("webhook-base-url", "the base url for incoming webhooks.").Required().String(),
 		webhookKMSResourceName: cmd.Flag(
 			"webhook-kms-resource-name",
@@ -541,6 +551,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go accountServer.Run()
+
 	// auditLogService
 	auditLogService := auditlogapi.NewAuditLogService(
 		accountClient,
@@ -555,6 +566,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go auditLogServer.Run()
+
 	// autoOpsService
 	autoOpsService := autoopsapi.NewAutoOpsService(
 		mysqlClient,
@@ -565,9 +577,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		domainTopicPublisher,
 		autoopsapi.WithLogger(logger),
 	)
-	if err != nil {
-		return err
-	}
 	autoOpsServer := rpc.NewServer(autoOpsService, *s.certPath, *s.keyPath,
 		"auto-ops-server",
 		rpc.WithPort(*s.autoOpsServicePort),
@@ -576,6 +585,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go autoOpsServer.Run()
+
 	// environmentService
 	environmentService := environmentapi.NewEnvironmentService(
 		accountClient,
@@ -591,6 +601,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go environmentServer.Run()
+
 	// eventCounterService
 	eventCounterService := eventcounterapi.NewEventCounterService(
 		mysqlClient,
@@ -612,6 +623,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go eventCounterServer.Run()
+
 	// experimentService
 	experimentService := experimentapi.NewExperimentService(
 		featureClient,
@@ -629,6 +641,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go experimentServer.Run()
+
 	// featureService
 	featureService, err := s.createFeatureService(
 		ctx,
@@ -654,6 +667,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go featureServer.Run()
+
 	// notificationService
 	notificationService := notificationapi.NewNotificationService(
 		mysqlClient,
@@ -669,6 +683,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go notificationServer.Run()
+
 	// pushService
 	pushService := pushapi.NewPushService(
 		mysqlClient,
@@ -686,6 +701,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go pushServer.Run()
+
 	// tagService
 	tagService := tagapi.NewTagService(
 		mysqlClient,
@@ -701,6 +717,24 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go tagServer.Run()
+
+	// codeReferenceService
+	codeReferenceService := coderefapi.NewCodeReferenceService(
+		accountClient,
+		mysqlClient,
+		domainTopicPublisher,
+		coderefapi.WithLogger(logger),
+	)
+	codeReferenceServer := rpc.NewServer(codeReferenceService, *s.certPath, *s.keyPath,
+		"code-reference-server",
+		rpc.WithPort(*s.codeReferenceServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	go codeReferenceServer.Run()
+
+	// Start the web console and dashboard servers
 	webConsoleServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
 		rest.WithLogger(logger),
@@ -717,27 +751,32 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rest.WithMetrics(registerer),
 	)
 	go dashboardServer.Run()
-	// codeReferenceService
-	codeReferenceService := coderefapi.NewCodeReferenceService(
-		accountClient,
-		mysqlClient,
-		domainTopicPublisher,
-		coderefapi.WithLogger(logger),
+
+	// Set up REST gateway
+	restAddr := fmt.Sprintf(":%d", *s.webGrpcGatewayPort)
+
+	webGrpcGateway, err := gateway.NewGateway(
+		restAddr,
+		gateway.WithLogger(logger.Named("web-grpc-gateway")),
+		gateway.WithMetrics(registerer),
+		gateway.WithCertPath(*s.certPath),
+		gateway.WithKeyPath(*s.keyPath),
 	)
-	codeReferenceServer := rpc.NewServer(codeReferenceService, *s.certPath, *s.keyPath,
-		"code-reference-server",
-		rpc.WithPort(*s.codeReferenceServicePort),
-		rpc.WithVerifier(verifier),
-		rpc.WithMetrics(registerer),
-		rpc.WithLogger(logger),
-	)
-	go codeReferenceServer.Run()
+	if err != nil {
+		return fmt.Errorf("failed to create web gRPC gateway: %v", err)
+	}
+
+	if err := webGrpcGateway.Start(ctx, s.createGatewayHandlers()...); err != nil {
+		return fmt.Errorf("failed to start web gRPC gateway: %v", err)
+	}
+
 	// To detach this pod from Kubernetes Service before the app servers stop, we stop the health check service first.
 	// Then, after 10 seconds of sleep, the app servers can be shut down, as no new requests are expected to be sent.
 	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.
 	defer func() {
 		go healthcheckServer.Stop(serverShutDownTimeout)
 		time.Sleep(serverShutDownTimeout)
+		// Stop gRPC servers
 		go authServer.Stop(serverShutDownTimeout)
 		go accountServer.Stop(serverShutDownTimeout)
 		go auditLogServer.Stop(serverShutDownTimeout)
@@ -751,6 +790,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go tagServer.Stop(serverShutDownTimeout)
 		go webConsoleServer.Stop(serverShutDownTimeout)
 		go codeReferenceServer.Stop(serverShutDownTimeout)
+		go webGrpcGateway.Stop(serverShutDownTimeout)
+		// Close clients
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()
@@ -931,4 +972,57 @@ func (s *server) createFeatureService(
 	)
 
 	return featureService, nil
+}
+
+func (s *server) createGatewayHandlers() []gatewayapi.HandlerRegistrar {
+	return []gatewayapi.HandlerRegistrar{
+		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+			accountGrpcAddr := fmt.Sprintf("localhost:%d", *s.accountServicePort)
+			return accountproto.RegisterAccountServiceHandlerFromEndpoint(ctx, mux, accountGrpcAddr, opts)
+		},
+		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+			authGrpcAddr := fmt.Sprintf("localhost:%d", *s.authServicePort)
+			return authproto.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, authGrpcAddr, opts)
+		},
+		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+			auditLogGrpcAddr := fmt.Sprintf("localhost:%d", *s.auditLogServicePort)
+			return auditlogproto.RegisterAuditLogServiceHandlerFromEndpoint(ctx, mux, auditLogGrpcAddr, opts)
+		},
+		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+			autoOpsGrpcAddr := fmt.Sprintf("localhost:%d", *s.autoOpsServicePort)
+			return autoopsproto.RegisterAutoOpsServiceHandlerFromEndpoint(ctx, mux, autoOpsGrpcAddr, opts)
+		},
+		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+			environmentGrpcAddr := fmt.Sprintf("localhost:%d", *s.environmentServicePort)
+			return environmentproto.RegisterEnvironmentServiceHandlerFromEndpoint(ctx, mux, environmentGrpcAddr, opts)
+		},
+		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+			eventCounterGrpcAddr := fmt.Sprintf("localhost:%d", *s.eventCounterServicePort)
+			return eventcounterproto.RegisterEventCounterServiceHandlerFromEndpoint(ctx, mux, eventCounterGrpcAddr, opts)
+		},
+		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+			experimentGrpcAddr := fmt.Sprintf("localhost:%d", *s.experimentServicePort)
+			return experimentproto.RegisterExperimentServiceHandlerFromEndpoint(ctx, mux, experimentGrpcAddr, opts)
+		},
+		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+			featureGrpcAddr := fmt.Sprintf("localhost:%d", *s.featureServicePort)
+			return featureproto.RegisterFeatureServiceHandlerFromEndpoint(ctx, mux, featureGrpcAddr, opts)
+		},
+		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+			notificationGrpcAddr := fmt.Sprintf("localhost:%d", *s.notificationServicePort)
+			return notificationproto.RegisterNotificationServiceHandlerFromEndpoint(ctx, mux, notificationGrpcAddr, opts)
+		},
+		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+			pushGrpcAddr := fmt.Sprintf("localhost:%d", *s.pushServicePort)
+			return pushproto.RegisterPushServiceHandlerFromEndpoint(ctx, mux, pushGrpcAddr, opts)
+		},
+		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+			tagGrpcAddr := fmt.Sprintf("localhost:%d", *s.tagServicePort)
+			return tagproto.RegisterTagServiceHandlerFromEndpoint(ctx, mux, tagGrpcAddr, opts)
+		},
+		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
+			codeRefGrpcAddr := fmt.Sprintf("localhost:%d", *s.codeReferenceServicePort)
+			return coderefproto.RegisterCodeReferenceServiceHandlerFromEndpoint(ctx, mux, codeRefGrpcAddr, opts)
+		},
+	}
 }

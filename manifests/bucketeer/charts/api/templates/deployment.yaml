@@ -32,9 +32,6 @@ spec:
         - name: envoy-config
           configMap:
             name: {{ template "api.fullname" . }}-envoy-config
-        - name: secret
-          secret:
-            secretName: {{ template "api.fullname" . }}
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
@@ -92,6 +89,8 @@ spec:
               value: "{{ .Values.env.pushService }}"
             - name: BUCKETEER_API_CODE_REF_SERVICE
               value: "{{ .Values.env.codeRefService }}"
+            - name: BUCKETEER_API_GRPC_GATEWAY_PORT
+              value: "{{ .Values.env.grpcGatewayPort }}"
             - name: BUCKETEER_API_PORT
               value: "{{ .Values.env.port }}"
             - name: BUCKETEER_API_METRICS_PORT
@@ -173,9 +172,6 @@ spec:
           volumeMounts:
             - name: envoy-config
               mountPath: /usr/local/conf
-              readOnly: true
-            - name: secret
-              mountPath: /usr/local/secret
               readOnly: true
             - name: service-cert-secret
               mountPath: /usr/local/certs/service
