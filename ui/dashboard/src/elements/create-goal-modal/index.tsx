@@ -9,7 +9,7 @@ import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
-import { Goal } from '@types';
+import { ConnectionType, Goal } from '@types';
 import { onGenerateSlug } from 'utils/converts';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -20,6 +20,7 @@ import TextArea from 'components/textarea';
 
 export type CreateGoalModalProps = {
   isOpen: boolean;
+  connectionType?: ConnectionType;
   onClose: () => void;
   onCompleted?: (goal: Goal) => void;
 };
@@ -38,6 +39,7 @@ const formSchema = yup.object().shape({
 
 const CreateGoalModal = ({
   isOpen,
+  connectionType = 'EXPERIMENT',
   onClose,
   onCompleted
 }: CreateGoalModalProps) => {
@@ -62,33 +64,37 @@ const CreateGoalModal = ({
     setValue
   } = form;
 
-  const onSubmit: SubmitHandler<CreateGoalForm> = useCallback(async values => {
-    try {
-      const { name, id, description } = values;
-      const resp = await goalCreator({
-        connectionType: 'EXPERIMENT',
-        environmentId: currentEnvironment.id,
-        name,
-        id,
-        description
-      });
-
-      if (resp) {
-        notify({
-          message: t('message:collection-action-success', {
-            collection: t('source-type.goal'),
-            action: 'created'
-          })
+  const onSubmit: SubmitHandler<CreateGoalForm> = useCallback(
+    async values => {
+      try {
+        const { name, id, description } = values;
+        const resp = await goalCreator({
+          connectionType: 'EXPERIMENT',
+          environmentId: currentEnvironment.id,
+          name,
+          id,
+          description
         });
-        onCompleted?.(resp.goal);
-        invalidateGoals(queryClient);
-        onClose();
-        form.reset();
+
+        if (resp) {
+          notify({
+            message: t('message:collection-action-success', {
+              collection: t('source-type.goal'),
+              action: 'created'
+            })
+          });
+
+          onCompleted?.(resp.goal);
+          invalidateGoals(queryClient);
+          onClose();
+          form.reset();
+        }
+      } catch (error) {
+        errorNotify(error);
       }
-    } catch (error) {
-      errorNotify(error);
-    }
-  }, []);
+    },
+    [connectionType]
+  );
 
   return (
     <DialogModal

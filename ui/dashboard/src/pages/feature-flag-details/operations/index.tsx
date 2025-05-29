@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { autoOpsDelete, autoOpsStop } from '@api/auto-ops';
+import { useQueryAutoOpsCount } from '@queries/auto-ops-count';
 import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -23,6 +24,7 @@ import Filter from 'elements/filter';
 import FormLoading from 'elements/form-loading';
 import CollectionLayout from './elements/collection-layout';
 import OperationActions from './elements/operation-actions';
+import EventRateOperationModal from './elements/operation-modals/event-rate';
 import ScheduleOperationModal from './elements/operation-modals/schedule-operation';
 import StopOperationModal from './elements/operation-modals/stop-operation';
 import { OperationActionType, OperationTab, OpsTypeMap } from './types';
@@ -67,6 +69,8 @@ const Operations = ({ feature }: { feature: Feature }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const isScheduleAction = useMemo(() => action === 'schedule', [action]);
+  const isEventRateAction = useMemo(() => action === 'event-rate', [action]);
+
   const isScheduleType = useMemo(
     () => operationModalState.operationType === 'SCHEDULE',
     [operationModalState]
@@ -115,6 +119,26 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
   const rollouts = rolloutCollection?.progressiveRollouts || [];
   const operations = operationCollection?.autoOpsRules || [];
+
+  const eventRateActiveIds = operations
+    ?.filter(
+      item =>
+        ['RUNNING', 'WAITING'].includes(item.autoOpsStatus) &&
+        item.opsType === 'EVENT_RATE'
+    )
+    ?.map(item => item.id);
+
+  const { data: opsCountCollection } = useQueryAutoOpsCount({
+    params: {
+      cursor: String(0),
+      environmentId: currentEnvironment.id,
+      featureIds: [feature.id],
+      autoOpsRuleIds: eventRateActiveIds
+    },
+    enabled: !!eventRateActiveIds.length
+  });
+
+  const opsCounts = opsCountCollection?.opsCounts || [];
 
   const onOpenOperationModal = useCallback(
     (path: string) => {
@@ -265,6 +289,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
             <CollectionLayout
               currentTab={currentTab}
               operations={operations}
+              opsCounts={opsCounts}
               onOperationActions={onOperationActions}
             />
           </TabsContent>
@@ -279,6 +304,18 @@ const Operations = ({ feature }: { feature: Feature }) => {
           isEnabledFlag={feature.enabled}
           rollouts={rollouts}
           actionType={operationModalState.actionType}
+          selectedData={operationModalState?.selectedData as AutoOpsRule}
+          onClose={onCloseActionModal}
+          onSubmitOperationSuccess={onSubmitOperationSuccess}
+        />
+      )}
+      {isEventRateAction && isOpenModalAction && feature && (
+        <EventRateOperationModal
+          isOpen={isEventRateAction}
+          feature={feature}
+          environmentId={currentEnvironment.id}
+          actionType={operationModalState.actionType}
+          isFinishedTab={currentTab === OperationTab.FINISHED}
           selectedData={operationModalState?.selectedData as AutoOpsRule}
           onClose={onCloseActionModal}
           onSubmitOperationSuccess={onSubmitOperationSuccess}

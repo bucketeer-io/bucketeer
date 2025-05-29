@@ -170,14 +170,17 @@
     "progress-information": "Progress Information",
     "stopped-at": "Stopped {{stoppedAt}} by",
     "user": "User",
-    "progress-goal-value": "Goal <b>{{value}}</b>",
-    "progress-min-count": "Min Count <b>{{value}}</b>",
-    "progress-current-goal": "Current Goal Count <b>{{value}}</b>",
+    "progress-goal-value": "Goal: <b>{{value}}</b>",
+    "progress-min-count": "Min Count: <b>{{value}}</b>",
+    "progress-current-goal": "Current Goal Count: <b>{{value}}</b>",
+    "progress-current-event-rate": "Current Event Rate: <b>{{value}}</b>",
     "current-state": "Current State <comp>{{state}}</comp>",
     "start-date": "Start Date",
     "time": "Time",
     "create-operation": "Create Operation",
-    "conflict-rollout": "There is a conflict with a Progressive Rollout Operation."
+    "conflict-rollout": "There is a conflict with a Progressive Rollout Operation.",
+    "kill-switch": "Kill Switch",
+    "rollout": "Rollout"
   },
   "origin-env": "Origin Environment",
   "destination-env": "Destination Environment",
@@ -216,5 +219,16 @@
   "rollout": "Rollout",
   "off-variation": "Off Variation",
   "reset-sampling": "Reset random sampling",
-  "add-schedule": "Add Schedule"
+  "add-schedule": "Add Schedule",
+  "condition": "Condition",
+  "threshold": "Threshold",
+  "minimum-count": "Minimum Count",
+  "event-rate-tooltip": {
+    "variation": "The specific variation to monitor. Bucketeer will track how often users assigned to this variation trigger the goal event.",
+    "goal": "The target event (e.g. error, visit, conversion) used to calculate the event rate. This must be set up as a goal in your environment.",
+    "condition": "The comparison used to evaluate the event rate. For example, \">= 5%\" will trigger the kill switch if the rate meets or exceeds 5%.",
+    "threshold": "The event rate percentage that must be met to trigger the kill switch. Calculated as: <br /> (Goal Event Count) / (Evaluation Count for the Variation)",
+    "min-count": "The minimum number of events required before the condition is evaluated. Helps avoid false triggers from small sample sizes."
+  },
+  "flag-variation": "Flag Variation"
 }

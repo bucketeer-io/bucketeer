@@ -265,5 +265,6 @@
   "has-prerequisites": "Has Prerequisites",
   "has-experiment": "Has Experiment",
   "push-notification": "Push Notification",
-  "add": "Add"
+  "add": "Add",
+  "stop": "Stop"
 }
