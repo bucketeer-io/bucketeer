@@ -14,6 +14,10 @@ env:
   metricsTopic:
   publishNumGoroutines: 200
   publishTimeout: 1m
+  pubSubType: google
+  pubSubRedisAddr: 
+  pubSubRedisPoolSize: 
+  pubSubRedisMinIdle: 
   redis:
     serverName:
     poolMaxIdle: 25

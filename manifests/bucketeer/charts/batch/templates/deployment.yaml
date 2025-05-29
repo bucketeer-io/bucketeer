@@ -58,13 +58,23 @@ spec:
             - name: BIGQUERY_WRITER_EMULATOR_HOST
               value: "{{.Values.env.bigqueryWriterEmulatorHost}}"
             - name: BUCKETEER_BATCH_PROJECT
-              value: "{{ .Values.env.project }}"
+              value: "{{ .Values.global.pubsub.project }}"
             - name: BUCKETEER_BATCH_PROFILE
               value: "{{.Values.env.profile}}"
             - name: BUCKETEER_BATCH_GCP_TRACE_ENABLED
               value: "{{.Values.env.gcpEnabled}}"
             - name: PUBSUB_EMULATOR_HOST
-              value: "{{.Values.env.pubsubEmulatorHost}}"
+              value: "{{ .Values.global.pubsub.emulatorHost }}"
+            - name: BUCKETEER_BATCH_PUBSUB_TYPE
+              value: "{{ .Values.global.pubsub.type }}"
+            - name: BUCKETEER_BATCH_PUBSUB_REDIS_SERVER_NAME
+              value: "{{ .Values.global.pubsub.redis.serverName }}"
+            - name: BUCKETEER_BATCH_PUBSUB_REDIS_ADDR
+              value: "{{ .Values.global.pubsub.redis.addr }}"
+            - name: BUCKETEER_BATCH_PUBSUB_REDIS_POOL_SIZE
+              value: "{{ .Values.global.pubsub.redis.poolSize }}"
+            - name: BUCKETEER_BATCH_PUBSUB_REDIS_MIN_IDLE
+              value: "{{ .Values.global.pubsub.redis.minIdle }}"
             - name: BUCKETEER_BATCH_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_BATCH_NOTIFICATION_SERVICE
