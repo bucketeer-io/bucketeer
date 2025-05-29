@@ -75,7 +75,7 @@ type server struct {
 	*kingpin.CmdClause
 	// Common
 	port               *int
-	restPort           *int
+	grpcGatewayPort    *int
 	project            *string
 	certPath           *string
 	keyPath            *string
@@ -126,7 +126,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	server := &server{
 		CmdClause:        cmd,
 		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		restPort:         cmd.Flag("rest-port", "Port to bind to for REST gateway.").Default("9089").Int(),
+		grpcGatewayPort:  cmd.Flag("grpc-gateway-port", "Port to bind to for gRPC-gateway.").Default("9089").Int(),
 		project:          cmd.Flag("project", "Google Cloud project name.").String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
@@ -594,8 +594,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go server.Run()
 
-	// Setup REST gateway for batch service
-	restAddr := fmt.Sprintf(":%d", *s.restPort)
+	// Setup gRPC Gateway for batch service
+	grpcGatewayAddr := fmt.Sprintf(":%d", *s.grpcGatewayPort)
 	grpcAddr := fmt.Sprintf("localhost:%d", *s.port)
 
 	// Create a HandlerRegistrar adapter function that matches gateway.HandlerRegistrar signature
@@ -604,7 +604,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 
 	batchGateway, err := gateway.NewGateway(
-		restAddr,
+		grpcGatewayAddr,
 		gateway.WithLogger(logger.Named("batch-grpc-gateway")),
 		gateway.WithMetrics(registerer),
 		gateway.WithCertPath(*s.certPath),

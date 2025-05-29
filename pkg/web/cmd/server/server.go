@@ -91,7 +91,6 @@ const (
 type server struct {
 	*kingpin.CmdClause
 	port                            *int
-	restPort                        *int
 	project                         *string
 	timezone                        *string
 	certPath                        *string
@@ -159,7 +158,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	server := &server{
 		CmdClause:   cmd,
 		port:        cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		restPort:    cmd.Flag("rest-port", "Port to bind to for REST gateway.").Default("9089").Int(),
 		project:     cmd.Flag("project", "Google Cloud project name.").Required().String(),
 		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
 		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),

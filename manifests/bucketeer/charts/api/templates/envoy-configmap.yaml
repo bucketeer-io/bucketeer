@@ -40,7 +40,7 @@ data:
                     address:
                       socket_address:
                         address: localhost
-                        port_value: 9090
+                        port_value: {{ .Values.env.port }}
           dns_lookup_family: V4_ONLY
           lb_policy: {{ .Values.envoy.lbPolicy }}
           typed_extension_protocol_options:
@@ -116,7 +116,7 @@ data:
                     address:
                       socket_address:
                         address: localhost
-                        port_value: 9089
+                        port_value: {{ .Values.env.grpcGatewayPort }}
           dns_lookup_family: V4_ONLY
           lb_policy: {{ .Values.envoy.lbPolicy }}
           typed_extension_protocol_options:

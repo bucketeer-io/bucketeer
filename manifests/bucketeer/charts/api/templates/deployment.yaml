@@ -89,6 +89,8 @@ spec:
               value: "{{ .Values.env.pushService }}"
             - name: BUCKETEER_API_CODE_REF_SERVICE
               value: "{{ .Values.env.codeRefService }}"
+            - name: BUCKETEER_API_GRPC_GATEWAY_PORT
+              value: "{{ .Values.env.grpcGatewayPort }}"
             - name: BUCKETEER_API_PORT
               value: "{{ .Values.env.port }}"
             - name: BUCKETEER_API_METRICS_PORT

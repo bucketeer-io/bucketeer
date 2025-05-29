@@ -26,6 +26,7 @@ env:
   oldestEventTimestamp:
   furthestEventTimestamp:
   logLevel: info
+  grpcGatewayPort: 9089
   port: 9090
   metricsPort: 9002
   featureService: localhost:9001

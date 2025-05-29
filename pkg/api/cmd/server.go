@@ -49,7 +49,7 @@ const command = "server"
 type server struct {
 	*kingpin.CmdClause
 	port                   *int
-	restPort               *int
+	grpcGatewayPort        *int
 	project                *string
 	goalTopic              *string
 	goalTopicProject       *string
@@ -84,11 +84,11 @@ type server struct {
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start the gRPC server")
 	server := &server{
-		CmdClause: cmd,
-		port:      cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		restPort:  cmd.Flag("rest-port", "Port to bind to for REST gateway.").Default("9089").Int(),
-		project:   cmd.Flag("project", "GCP Project id to use for PubSub.").Required().String(),
-		goalTopic: cmd.Flag("goal-topic", "Topic to use for publishing GoalEvent.").Required().String(),
+		CmdClause:       cmd,
+		port:            cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		grpcGatewayPort: cmd.Flag("grpc-gateway-port", "Port to bind to for gRPC-gateway.").Default("9089").Int(),
+		project:         cmd.Flag("project", "GCP Project id to use for PubSub.").Required().String(),
+		goalTopic:       cmd.Flag("goal-topic", "Topic to use for publishing GoalEvent.").Required().String(),
 		goalTopicProject: cmd.Flag(
 			"goal-topic-project",
 			"GCP Project id to use for PubSub to publish GoalEvent.",
@@ -359,8 +359,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	defer server.Stop(10 * time.Second)
 	go server.Run()
 
-	// Set up REST gateway for API service
-	restAddr := fmt.Sprintf(":%d", *s.restPort)
+	// Set up gRPC Gateway for API service
+	grpcGatewayAddr := fmt.Sprintf(":%d", *s.grpcGatewayPort)
 	grpcAddr := fmt.Sprintf("localhost:%d", *s.port)
 
 	// Create a HandlerRegistrar adapter function that matches gateway.HandlerRegistrar signature
@@ -372,8 +372,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 
 	apiGateway, err := gateway.NewGateway(
-		restAddr,
-		gateway.WithLogger(logger.Named("api-grpc-ateway")),
+		grpcGatewayAddr,
+		gateway.WithLogger(logger.Named("api-grpc-gateway")),
 		gateway.WithMetrics(registerer),
 		gateway.WithCertPath(*s.certPath),
 		gateway.WithKeyPath(*s.keyPath),

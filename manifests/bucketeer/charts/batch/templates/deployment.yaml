@@ -121,6 +121,8 @@ spec:
               value: "{{ .Values.env.logLevel }}"
             - name: BUCKETEER_BATCH_REFRESH_INTERVAL
               value: "{{ .Values.env.refreshInterval }}"
+            - name: BUCKETEER_BATCH_GRPC_GATEWAY_PORT
+              value: "{{ .Values.env.grpcGatewayPort }}"
             - name: BUCKETEER_BATCH_PORT
               value: "{{ .Values.env.port }}"
             - name: BUCKETEER_BATCH_METRICS_PORT
