@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'i18n';
-import { OpsEventRateClause } from '@types';
+import { AutoOpsCount, OpsEventRateClause } from '@types';
 import { cn } from 'utils/style';
 import { IconQuestion } from '@icons';
 import { OperationCombinedType } from 'pages/feature-flag-details/operations/types';
@@ -34,31 +34,57 @@ const PercentItem = ({
 };
 
 const EventRateProgress = ({
-  operation
+  operation,
+  opsCounts
 }: {
   operation: OperationCombinedType;
+  opsCounts: AutoOpsCount[];
 }) => {
-  const { t } = useTranslation(['form']);
+  const { t } = useTranslation(['form', 'table']);
   const clause: OpsEventRateClause = useMemo(
     () => (operation.clauses[0]?.clause || {}) as OpsEventRateClause,
     [operation]
   );
   const { goalId, minCount, threadsholdRate } = clause;
-  // Need to update when the api completed
-  const currentEventRate: number = 32;
-  const numberOfSteps =
-    Math.round(threadsholdRate * 100) > 10
-      ? 10
-      : Math.round(threadsholdRate * 100);
-  const step = (threadsholdRate * 100) / numberOfSteps;
 
-  const stepArray = Array.from({ length: numberOfSteps }, (_, index) =>
-    Math.round(step + index * step)
+  const opsCount = opsCounts.find(
+    opsCount => opsCount.autoOpsRuleId === operation.id
   );
 
-  const barWidth = Math.min(
-    (currentEventRate / (threadsholdRate * 100)) * 100,
-    100
+  const currentEventRate = useMemo(() => {
+    if (opsCount && (+opsCount?.opsEventCount || 0) >= (+minCount || 0)) {
+      const { opsEventCount, evaluationCount } = opsCount || {};
+      const eventCount =
+        +opsEventCount > +evaluationCount ? +evaluationCount : +opsEventCount;
+      return Math.round((+eventCount / +evaluationCount) * 100 * 100) / 100;
+    }
+    return 0;
+  }, [opsCount, minCount]);
+
+  const numberOfSteps = useMemo(
+    () =>
+      Math.round(threadsholdRate * 100) > 10
+        ? 10
+        : Math.round(threadsholdRate * 100),
+    [threadsholdRate]
+  );
+
+  const step = useMemo(
+    () => (threadsholdRate * 100) / numberOfSteps,
+    [threadsholdRate, numberOfSteps]
+  );
+
+  const stepArray = useMemo(
+    () =>
+      Array.from({ length: numberOfSteps }, (_, index) =>
+        Math.round(step + index * step)
+      ),
+    [numberOfSteps, step]
+  );
+
+  const barWidth = useMemo(
+    () => Math.min((currentEventRate / (threadsholdRate * 100)) * 100, 100),
+    [currentEventRate, threadsholdRate]
   );
 
   return (
@@ -74,11 +100,15 @@ const EventRateProgress = ({
         />
         <OperationDescription
           titleKey={'form:feature-flags.progress-current-goal'}
+          value={opsCount?.opsEventCount || 0}
+        />
+        <OperationDescription
+          titleKey={'form:feature-flags.progress-current-event-rate'}
           value={`${currentEventRate}/100 (${currentEventRate}%)`}
           isLastItem
         />
         <Tooltip
-          content={t('ops-count-tooltip')}
+          content={t('table:current-event-rate-tooltip')}
           trigger={
             <div className="flex-center size-4">
               <Icon icon={IconQuestion} size={'xxs'} />
@@ -87,7 +117,10 @@ const EventRateProgress = ({
         />
       </div>
 
-      <div className="bg-gray-100 rounded px-12 pt-14 pb-8 relative">
+      <div className="bg-gray-100 rounded px-12 pt-16 pb-10 relative">
+        <p className="absolute right-10 top-1.5 typo-para-medium text-accent-pink-500">
+          {t('form:threshold')}
+        </p>
         <div className="flex h-[4px] bg-gray-200 relative">
           <div
             className="bg-accent-pink-500 absolute h-1 "

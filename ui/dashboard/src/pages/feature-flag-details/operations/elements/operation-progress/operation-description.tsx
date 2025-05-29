@@ -27,7 +27,7 @@ export const OperationDescription = ({
           }}
         />
       </p>
-      {!isLastItem && <p className="typo-para-medium text-gray-300 slash">/</p>}
+      {!isLastItem && <p className="typo-para-medium text-gray-300 slash">|</p>}
     </div>
   );
 };
