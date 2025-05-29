@@ -21,8 +21,11 @@ import (
 	"google.golang.org/protobuf/runtime/protoiface"
 )
 
+const (
+	errorDomain = "account.bucketeer.io"
+)
+
 var (
-	errorDomain                 = "account.bucketeer.io"
 	statusInternal              = gstatus.New(codes.Internal, "account: internal")
 	statusInvalidCursor         = gstatus.New(codes.InvalidArgument, "account: cursor is invalid")
 	statusNoCommand             = gstatus.New(codes.InvalidArgument, "account: command must not be empty")
