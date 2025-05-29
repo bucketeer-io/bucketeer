@@ -41,6 +41,7 @@ local-deps:
 	go install go.uber.org/mock/mockgen@v0.4.0; \
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.20.0; \
+	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.20.0; \
 	go install github.com/nilslice/protolock/...@v0.15.0; \
 	go install github.com/mikefarah/yq/v4@v4.28.2
 
@@ -81,7 +82,7 @@ proto-lock-commit-force:
 	make -C proto lock-commit-force
 
 .PHONY: proto-all
-proto-all: proto-fmt proto-lock-commit proto-go proto-web proto-go-descriptor proto-openapi-gen
+proto-all: proto-fmt proto-lock-commit proto-go proto-web proto-openapi-gen
 
 .PHONY: proto-go
 proto-go:
@@ -94,14 +95,6 @@ proto-web:
 .PHONY: proto-go-check
 proto-go-check:
 	make -C proto go-check
-
-.PHONY: proto-go-descriptor
-proto-go-descriptor:
-	make -C proto go-descriptor
-
-.PHONY: proto-go-descriptor-check
-proto-go-descriptor-check:
-	make -C proto go-descriptor-check
 
 .PHONY: proto-openapi-gen
 proto-openapi-gen:

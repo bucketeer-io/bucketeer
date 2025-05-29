@@ -16,10 +16,14 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/api/api"
@@ -36,6 +40,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
+	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
 )
 
 const command = "server"
@@ -43,6 +49,7 @@ const command = "server"
 type server struct {
 	*kingpin.CmdClause
 	port                   *int
+	grpcGatewayPort        *int
 	project                *string
 	goalTopic              *string
 	goalTopicProject       *string
@@ -77,10 +84,11 @@ type server struct {
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start the gRPC server")
 	server := &server{
-		CmdClause: cmd,
-		port:      cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		project:   cmd.Flag("project", "GCP Project id to use for PubSub.").Required().String(),
-		goalTopic: cmd.Flag("goal-topic", "Topic to use for publishing GoalEvent.").Required().String(),
+		CmdClause:       cmd,
+		port:            cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		grpcGatewayPort: cmd.Flag("grpc-gateway-port", "Port to bind to for gRPC-gateway.").Default("9089").Int(),
+		project:         cmd.Flag("project", "GCP Project id to use for PubSub.").Required().String(),
+		goalTopic:       cmd.Flag("goal-topic", "Topic to use for publishing GoalEvent.").Required().String(),
 		goalTopicProject: cmd.Flag(
 			"goal-topic-project",
 			"GCP Project id to use for PubSub to publish GoalEvent.",
@@ -350,6 +358,34 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	defer server.Stop(10 * time.Second)
 	go server.Run()
+
+	// Set up gRPC Gateway for API service
+	grpcGatewayAddr := fmt.Sprintf(":%d", *s.grpcGatewayPort)
+	grpcAddr := fmt.Sprintf("localhost:%d", *s.port)
+
+	// Create a HandlerRegistrar adapter function that matches gateway.HandlerRegistrar signature
+	gatewayHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		return gwproto.RegisterGatewayHandlerFromEndpoint(ctx, mux, grpcAddr, opts)
+	}
+
+	apiGateway, err := gateway.NewGateway(
+		grpcGatewayAddr,
+		gateway.WithLogger(logger.Named("api-grpc-gateway")),
+		gateway.WithMetrics(registerer),
+		gateway.WithCertPath(*s.certPath),
+		gateway.WithKeyPath(*s.keyPath),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create API gateway: %v", err)
+	}
+
+	if err := apiGateway.Start(ctx, gatewayHandler); err != nil {
+		return fmt.Errorf("failed to start API gateway: %v", err)
+	}
+	defer apiGateway.Stop(10 * time.Second)
 
 	restHealthChecker := health.NewRestChecker(
 		api.Version, api.Service,
