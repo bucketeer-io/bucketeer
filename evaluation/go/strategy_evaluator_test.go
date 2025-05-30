@@ -15,63 +15,109 @@
 package evaluation
 
 import (
+	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 func TestStrategyEvaluator_Evaluate_Fixed(t *testing.T) {
-	evaluator := &strategyEvaluator{}
-	variations := []*feature.Variation{
-		{Id: "variation-a", Value: "a"},
-		{Id: "variation-b", Value: "b"},
-	}
-	strategy := &feature.Strategy{
-		Type: feature.Strategy_FIXED,
-		FixedStrategy: &feature.FixedStrategy{
-			Variation: "variation-a",
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		strategy    *feature.Strategy
+		userID      string
+		variations  []*feature.Variation
+		featureID   string
+		seed        string
+		expected    string
+		expectedErr error
+	}{
+		{
+			desc: "success: fixed strategy",
+			strategy: &feature.Strategy{
+				Type: feature.Strategy_FIXED,
+				FixedStrategy: &feature.FixedStrategy{
+					Variation: "variation-a",
+				},
+			},
+			userID: "user-1",
+			variations: []*feature.Variation{
+				{Id: "variation-a", Value: "a"},
+				{Id: "variation-b", Value: "b"},
+			},
+			featureID:   "feature-1",
+			seed:        "seed",
+			expected:    "variation-a",
+			expectedErr: nil,
 		},
 	}
 
-	result, err := evaluator.Evaluate(strategy, "user-1", variations, "feature-1", "seed")
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
-	if result.Id != "variation-a" {
-		t.Fatalf("Expected variation-a, got %s", result.Id)
+	evaluator := &strategyEvaluator{}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			result, err := evaluator.Evaluate(p.strategy, p.userID, p.variations, p.featureID, p.seed)
+			assert.Equal(t, p.expectedErr, err)
+			if err == nil {
+				assert.Equal(t, p.expected, result.Id)
+			}
+		})
 	}
 }
 
 func TestStrategyEvaluator_Evaluate_Rollout_NoAudience(t *testing.T) {
-	evaluator := &strategyEvaluator{}
-	variations := []*feature.Variation{
-		{Id: "variation-a", Value: "a"},
-		{Id: "variation-b", Value: "b"},
-	}
-	strategy := &feature.Strategy{
-		Type: feature.Strategy_ROLLOUT,
-		RolloutStrategy: &feature.RolloutStrategy{
-			Variations: []*feature.RolloutStrategy_Variation{
-				{Variation: "variation-a", Weight: 50000},
-				{Variation: "variation-b", Weight: 50000},
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		strategy    *feature.Strategy
+		userID      string
+		variations  []*feature.Variation
+		featureID   string
+		seed        string
+		expectedIDs []string
+		expectedErr error
+	}{
+		{
+			desc: "success: rollout strategy without audience",
+			strategy: &feature.Strategy{
+				Type: feature.Strategy_ROLLOUT,
+				RolloutStrategy: &feature.RolloutStrategy{
+					Variations: []*feature.RolloutStrategy_Variation{
+						{Variation: "variation-a", Weight: 50000},
+						{Variation: "variation-b", Weight: 50000},
+					},
+					// No audience configuration (nil means no traffic control)
+					Audience: nil,
+				},
 			},
-			// No audience configuration (nil means no traffic control)
-			Audience: nil,
+			userID: "user-1",
+			variations: []*feature.Variation{
+				{Id: "variation-a", Value: "a"},
+				{Id: "variation-b", Value: "b"},
+			},
+			featureID:   "feature-1",
+			seed:        "seed",
+			expectedIDs: []string{"variation-a", "variation-b"},
+			expectedErr: nil,
 		},
 	}
 
-	// Test with a user that would normally get variation-a
-	result, err := evaluator.Evaluate(strategy, "user-1", variations, "feature-1", "seed")
-	if err != nil {
-		t.Fatalf("Expected no error, got %v", err)
-	}
-	// This should follow normal A/B split logic
-	if result.Id != "variation-a" && result.Id != "variation-b" {
-		t.Fatalf("Expected variation-a or variation-b, got %s", result.Id)
+	evaluator := &strategyEvaluator{}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			result, err := evaluator.Evaluate(p.strategy, p.userID, p.variations, p.featureID, p.seed)
+			assert.Equal(t, p.expectedErr, err)
+			if err == nil {
+				assert.Contains(t, p.expectedIDs, result.Id)
+			}
+		})
 	}
 }
 
 func TestStrategyEvaluator_Evaluate_Rollout_WithAudience(t *testing.T) {
+	t.Parallel()
 	evaluator := &strategyEvaluator{}
 	variations := []*feature.Variation{
 		{Id: "variation-a", Value: "a"},
@@ -98,12 +144,10 @@ func TestStrategyEvaluator_Evaluate_Rollout_WithAudience(t *testing.T) {
 	outOfExperimentCount := 0
 	totalUsers := 1000
 
-	for i := 0; i < totalUsers; i++ {
-		userID := "user-" + string(rune(i))
+	for i := range totalUsers {
+		userID := fmt.Sprintf("user-%d", i)
 		result, err := evaluator.Evaluate(strategy, userID, variations, "feature-1", "seed")
-		if err != nil {
-			t.Fatalf("Expected no error for user %s, got %v", userID, err)
-		}
+		assert.NoError(t, err)
 
 		if result.Id == "variation-default" {
 			outOfExperimentCount++
@@ -118,18 +162,17 @@ func TestStrategyEvaluator_Evaluate_Rollout_WithAudience(t *testing.T) {
 	expectedInExperiment := totalUsers * 10 / 100
 	tolerance := totalUsers * 5 / 100 // 5% tolerance
 
-	if inExperimentCount < expectedInExperiment-tolerance || inExperimentCount > expectedInExperiment+tolerance {
-		t.Fatalf("Expected approximately %d users in experiment, got %d (out of %d total)",
-			expectedInExperiment, inExperimentCount, totalUsers)
-	}
+	assert.True(t, inExperimentCount >= expectedInExperiment-tolerance && inExperimentCount <= expectedInExperiment+tolerance,
+		"Expected approximately %d users in experiment, got %d (out of %d total)",
+		expectedInExperiment, inExperimentCount, totalUsers)
 
-	if outOfExperimentCount < totalUsers-expectedInExperiment-tolerance || outOfExperimentCount > totalUsers-expectedInExperiment+tolerance {
-		t.Fatalf("Expected approximately %d users out of experiment, got %d (out of %d total)",
-			totalUsers-expectedInExperiment, outOfExperimentCount, totalUsers)
-	}
+	assert.True(t, outOfExperimentCount >= totalUsers-expectedInExperiment-tolerance && outOfExperimentCount <= totalUsers-expectedInExperiment+tolerance,
+		"Expected approximately %d users out of experiment, got %d (out of %d total)",
+		totalUsers-expectedInExperiment, outOfExperimentCount, totalUsers)
 }
 
 func TestStrategyEvaluator_Evaluate_Rollout_Audience_NoDefaultVariation(t *testing.T) {
+	t.Parallel()
 	evaluator := &strategyEvaluator{}
 	variations := []*feature.Variation{
 		{Id: "variation-a", Value: "a"},
@@ -150,57 +193,85 @@ func TestStrategyEvaluator_Evaluate_Rollout_Audience_NoDefaultVariation(t *testi
 	}
 
 	// Find a user that would be outside the experiment traffic
-	for i := 0; i < 100; i++ {
-		userID := "user-" + string(rune(i))
+	foundExpectedError := false
+	for i := range 100 {
+		userID := fmt.Sprintf("user-%d", i)
 		_, err := evaluator.Evaluate(strategy, userID, variations, "feature-1", "seed")
 
 		// We expect some users to get ErrVariationNotFound when they're outside traffic
 		// and no default variation is specified
 		if err == ErrVariationNotFound {
 			// This is expected behavior
-			return
+			foundExpectedError = true
+			break
 		} else if err != nil {
 			t.Fatalf("Unexpected error for user %s: %v", userID, err)
 		}
 	}
+
+	assert.True(t, foundExpectedError, "Expected at least one user to get ErrVariationNotFound, but none did")
 }
 
 func TestStrategyEvaluator_Evaluate_Rollout_FullAudience(t *testing.T) {
-	evaluator := &strategyEvaluator{}
-	variations := []*feature.Variation{
-		{Id: "variation-a", Value: "a"},
-		{Id: "variation-b", Value: "b"},
-		{Id: "variation-default", Value: "default"},
-	}
-	strategy := &feature.Strategy{
-		Type: feature.Strategy_ROLLOUT,
-		RolloutStrategy: &feature.RolloutStrategy{
-			Variations: []*feature.RolloutStrategy_Variation{
-				{Variation: "variation-a", Weight: 50000},
-				{Variation: "variation-b", Weight: 50000},
+	t.Parallel()
+	patterns := []struct {
+		desc         string
+		strategy     *feature.Strategy
+		variations   []*feature.Variation
+		userID       string
+		featureID    string
+		seed         string
+		expectedIDs  []string
+		unexpectedID string
+		expectedErr  error
+	}{
+		{
+			desc: "success: 100% audience should behave like no audience control",
+			strategy: &feature.Strategy{
+				Type: feature.Strategy_ROLLOUT,
+				RolloutStrategy: &feature.RolloutStrategy{
+					Variations: []*feature.RolloutStrategy_Variation{
+						{Variation: "variation-a", Weight: 50000},
+						{Variation: "variation-b", Weight: 50000},
+					},
+					// 100% audience should behave like no audience control
+					Audience: &feature.Audience{
+						Percentage:       100,
+						DefaultVariation: "variation-default",
+					},
+				},
 			},
-			// 100% audience should behave like no audience control
-			Audience: &feature.Audience{
-				Percentage:       100,
-				DefaultVariation: "variation-default",
+			variations: []*feature.Variation{
+				{Id: "variation-a", Value: "a"},
+				{Id: "variation-b", Value: "b"},
+				{Id: "variation-default", Value: "default"},
 			},
+			userID:       "user-1",
+			featureID:    "feature-1",
+			seed:         "seed",
+			expectedIDs:  []string{"variation-a", "variation-b"},
+			unexpectedID: "variation-default",
+			expectedErr:  nil,
 		},
 	}
 
-	// With 100% audience, all users should be in experiment
-	for i := 0; i < 10; i++ {
-		userID := "user-" + string(rune(i))
-		result, err := evaluator.Evaluate(strategy, userID, variations, "feature-1", "seed")
-		if err != nil {
-			t.Fatalf("Expected no error for user %s, got %v", userID, err)
-		}
+	evaluator := &strategyEvaluator{}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			// With 100% audience, all users should be in experiment
+			for i := range 10 {
+				userID := fmt.Sprintf("user-%d", i)
+				result, err := evaluator.Evaluate(p.strategy, userID, p.variations, p.featureID, p.seed)
+				assert.Equal(t, p.expectedErr, err)
 
-		// Should never get default variation with 100% audience
-		if result.Id == "variation-default" {
-			t.Fatalf("Unexpected default variation for user %s with 100%% audience", userID)
-		}
-		if result.Id != "variation-a" && result.Id != "variation-b" {
-			t.Fatalf("Expected variation-a or variation-b for user %s, got %s", userID, result.Id)
-		}
+				if err == nil {
+					// Should never get default variation with 100% audience
+					assert.NotEqual(t, p.unexpectedID, result.Id,
+						"Unexpected default variation for user %s with 100%% audience", userID)
+					assert.Contains(t, p.expectedIDs, result.Id,
+						"Expected variation-a or variation-b for user %s, got %s", userID, result.Id)
+				}
+			}
+		})
 	}
 }
