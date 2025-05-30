@@ -132,8 +132,10 @@ type Audience struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Percentage       int32  `protobuf:"varint,1,opt,name=percentage,proto3" json:"percentage"`                                    // Percentage of traffic to include in experiment (0-100)
-	DefaultVariation string `protobuf:"bytes,2,opt,name=default_variation,json=defaultVariation,proto3" json:"default_variation"` // Variation to serve to users not in experiment
+	// Percentage of traffic to include in experiment (0-100)
+	Percentage int32 `protobuf:"varint,1,opt,name=percentage,proto3" json:"percentage"`
+	// Variation to serve to users not in experiment
+	DefaultVariation string `protobuf:"bytes,2,opt,name=default_variation,json=defaultVariation,proto3" json:"default_variation"`
 }
 
 func (x *Audience) Reset() {
