@@ -14,7 +14,9 @@ import { isEqual } from 'lodash';
 import { Feature, FeatureVariation, VariationChange } from '@types';
 import Form from 'components/form';
 import InfoMessage from 'components/info-message';
-import ConfirmationRequiredModal from '../elements/confirm-required-modal';
+import ConfirmationRequiredModal, {
+  ConfirmRequiredValues
+} from '../elements/confirm-required-modal';
 import { variationsFormSchema } from './form-schema';
 import SubmitBar from './submit-bar';
 import VariationsSection from './variations-section';
@@ -53,10 +55,7 @@ const Variation = ({ feature }: VariationProps) => {
       variations: feature.variations,
       variationType: feature.variationType,
       offVariation: feature.offVariation,
-      onVariation: '',
-      requireComment: false,
-      comment: '',
-      resetSampling: false
+      onVariation: ''
     },
     mode: 'onChange'
   });
@@ -101,69 +100,50 @@ const Variation = ({ feature }: VariationProps) => {
     [feature]
   );
 
-  const onCloseConfirmRequiredModal = () => {
-    form.setValue('requireComment', false, {
-      shouldValidate: true
-    });
-    onCloseConfirmDialog();
-  };
+  const onSubmit = useCallback(
+    async (additionalValues?: ConfirmRequiredValues) => {
+      try {
+        const { variations, offVariation } = form.getValues();
+        const { comment, resetSampling } = additionalValues || {};
 
-  const resetForm = (feature: Feature) =>
-    form.reset({
-      ...getValues(),
-      variations: feature.variations,
-      comment: '',
-      resetSampling: false,
-      requireComment: false
-    });
-
-  const onSubmit = useCallback(async () => {
-    try {
-      const { variations, offVariation, comment, resetSampling } =
-        form.getValues();
-      const resp = await featureUpdater({
-        id: feature.id,
-        environmentId: currentEnvironment.id,
-        comment,
-        resetSamplingSeed: resetSampling,
-        offVariation,
-        ...handleCheckVariations(variations)
-      });
-      if (resp) {
-        notify({
-          message: t('message:flag-updated')
+        const resp = await featureUpdater({
+          id: feature.id,
+          environmentId: currentEnvironment.id,
+          comment,
+          resetSamplingSeed: resetSampling,
+          offVariation,
+          ...handleCheckVariations(variations)
         });
+        if (resp) {
+          notify({
+            message: t('message:flag-updated')
+          });
 
-        invalidateFeature(queryClient);
-        resetForm(resp.feature);
-        onCloseConfirmRequiredModal();
+          invalidateFeature(queryClient);
+          onCloseConfirmDialog();
+        }
+      } catch (error) {
+        errorNotify(error);
       }
-    } catch (error) {
-      errorNotify(error);
-    }
-  }, [feature]);
+    },
+    [feature]
+  );
 
   useEffect(() => {
-    resetForm(feature);
+    form.reset({
+      ...getValues(),
+      variations: feature.variations
+    });
   }, [feature]);
 
   return (
     <div className="p-6 pt-0 w-full min-w-[900px]">
       <FormProvider {...form}>
-        <Form onSubmit={form.handleSubmit(onSubmit)}>
+        <Form onSubmit={form.handleSubmit(() => onSubmit())}>
           <div className="flex flex-col w-full gap-y-6">
             <SubmitBar
               feature={feature}
-              onShowConfirmDialog={() => {
-                form.setValue(
-                  'requireComment',
-                  currentEnvironment?.requireComment,
-                  {
-                    shouldValidate: true
-                  }
-                );
-                onOpenConfirmDialog();
-              }}
+              onShowConfirmDialog={onOpenConfirmDialog}
             />
             {isRunningExperiment && (
               <InfoMessage
@@ -192,15 +172,18 @@ const Variation = ({ feature }: VariationProps) => {
               isRunningExperiment={isRunningExperiment}
             />
           </div>
-          {openConfirmDialog && (
-            <ConfirmationRequiredModal
-              isOpen={openConfirmDialog}
-              onClose={onCloseConfirmRequiredModal}
-              onSubmit={form.handleSubmit(onSubmit)}
-            />
-          )}
         </Form>
       </FormProvider>
+      {openConfirmDialog && (
+        <ConfirmationRequiredModal
+          feature={feature}
+          isOpen={openConfirmDialog}
+          onClose={onCloseConfirmDialog}
+          onSubmit={additionalValues =>
+            form.handleSubmit(() => onSubmit(additionalValues))()
+          }
+        />
+      )}
     </div>
   );
 };

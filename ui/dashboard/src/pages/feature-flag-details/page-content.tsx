@@ -21,6 +21,7 @@ import EvaluationPage from './evaluation';
 import HistoryPage from './history';
 import Operations from './operations';
 import SettingsPage from './settings';
+import TargetingPage from './targeting';
 import TriggerPage from './trigger';
 import { TabItem } from './types';
 import Variation from './variation';
@@ -116,6 +117,11 @@ const PageContent = ({ feature }: { feature: Feature }) => {
               path={`${PAGE_PATH_FEATURE_AUTOOPS}/*`}
               element={<Operations feature={feature} />}
             />
+            <Route
+              path={PAGE_PATH_FEATURE_TARGETING}
+              element={<TargetingPage feature={feature} />}
+            />
+
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </TabsContent>

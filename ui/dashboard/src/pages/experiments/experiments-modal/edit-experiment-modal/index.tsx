@@ -40,6 +40,7 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
 import FormLoading from 'elements/form-loading';
+import VariationLabel from 'elements/variation-label';
 import { StartType } from '../add-experiment-modal';
 
 interface EditExperimentModalProps {
@@ -170,8 +171,12 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
   const featureId = watch('featureId');
 
   const variationOptions =
-    featureFlagOptions?.find(item => item.value === featureId)?.variations ||
-    [];
+    featureFlagOptions
+      ?.find(item => item.value === featureId)
+      ?.variations?.map((item, index) => ({
+        label: <VariationLabel label={item.name || item.value} index={index} />,
+        value: item.id
+      })) || [];
 
   // const startOptions = [
   //   {
@@ -515,8 +520,8 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                             placeholder={t(`experiments.select-variation`)}
                             label={
                               variationOptions.find(
-                                item => item.id === field.value
-                              )?.name || ''
+                                item => item.value === field.value
+                              )?.label || ''
                             }
                             variant="secondary"
                             className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
@@ -530,8 +535,8 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                               <DropdownMenuItem
                                 {...field}
                                 key={index}
-                                value={item.id}
-                                label={item.name}
+                                value={item.value}
+                                label={item.label}
                                 onSelectOption={value => {
                                   field.onChange(value);
                                 }}
