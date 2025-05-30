@@ -38,7 +38,7 @@ const DropdownMenuWithSearch = ({
 }: {
   align?: 'start' | 'center' | 'end';
   hidden?: boolean;
-  label: string;
+  label: ReactNode;
   placeholder?: string;
   isLoading?: boolean;
   isMultiselect?: boolean;
@@ -146,6 +146,7 @@ const DropdownMenuWithSearch = ({
               isMultiselect={isMultiselect}
               value={item.value}
               label={item.label}
+              icon={item?.icon}
               additionalElement={additionalElement && additionalElement(item)}
               onSelectOption={onSelectOption}
               className="justify-between gap-x-4"

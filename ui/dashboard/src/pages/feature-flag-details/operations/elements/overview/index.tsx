@@ -57,34 +57,26 @@ const Overview = ({
   const { t } = useTranslation(['form', 'table']);
 
   return (
-    <div className="flex flex-col w-full gap-6">
-      <p className="typo-head-bold-big text-gray-800">
-        {t('table:feature-flags:operations-desc')}
-      </p>
-      <div className="flex flex-wrap items-center w-full gap-6 pb-8">
-        {overviewOptions.map(
-          (
-            { titleKey, color, icon, iconSize, opsType, description },
-            index
-          ) => (
-            <OverviewCard
-              key={index}
-              title={
-                <p className="typo-head-bold-medium text-gray-900">
-                  {t(titleKey)}
-                </p>
-              }
-              description={<p>{t(description)}</p>}
-              color={color}
-              icon={icon}
-              iconSize={iconSize}
-              className="items-start border border-transparent min-h-full self-stretch min-w-[300px]"
-              iconClassName={'p-4'}
-              onClick={() => onOperationActions(opsType)}
-            />
-          )
-        )}
-      </div>
+    <div className="flex flex-wrap items-center w-full gap-6 pb-4 px-6">
+      {overviewOptions.map(
+        ({ titleKey, color, icon, iconSize, opsType, description }, index) => (
+          <OverviewCard
+            key={index}
+            title={
+              <p className="typo-head-bold-medium text-gray-900">
+                {t(titleKey)}
+              </p>
+            }
+            description={<p>{t(description)}</p>}
+            color={color}
+            icon={icon}
+            iconSize={iconSize}
+            className="items-start border border-transparent min-h-full self-stretch min-w-[300px]"
+            iconClassName={'p-4'}
+            onClick={() => onOperationActions(opsType)}
+          />
+        )
+      )}
     </div>
   );
 };

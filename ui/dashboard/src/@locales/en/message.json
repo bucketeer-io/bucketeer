@@ -27,7 +27,9 @@
   "operation": {
     "the-weight": "The weight",
     "must-be-greater-value": "{{name}} must be greater than or equal to {{value}}",
-    "must-be-less-value": "{{name}} must be less than or equal to {{value}}"
+    "must-be-less-value": "{{name}} must be less than or equal to {{value}}",
+    "event-rate-created": "Event rate operation created successfully.",
+    "event-rate-updated": "Event rate operation updated successfully."
   },
   "same-data-exists": "The same data already exists",
   "empty": {

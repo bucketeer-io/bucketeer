@@ -230,5 +230,46 @@
     "threshold": "The event rate percentage that must be met to trigger the kill switch. Calculated as: <br /> (Goal Event Count) / (Evaluation Count for the Variation)",
     "min-count": "The minimum number of events required before the condition is evaluated. Helps avoid false triggers from small sample sizes."
   },
-  "flag-variation": "Flag Variation"
+  "flag-variation": "Flag Variation",
+  "template": "Template",
+  "manual": "Manual",
+  "increments": "Increments",
+  "increment": "Increment",
+  "weight": "Weight",
+  "execute-at": "Execute at",
+  "frequency": "Frequency",
+  "hourly": "Hourly",
+  "daily": "Daily",
+  "weekly": "Weekly",
+  "ordinal-increment": "{{ordinal}} Increment",
+  "add-increment": "Add Increment",
+  "ops-count-tooltip": "Goal Count / Evaluation Count * 100",
+  "increments-value": "Increments <b>{{value}}</b>",
+  "frequency-value": "Frequency <b>{{value}}</b>",
+  "start-date-value": "Start Date <b>{{value}}</b>",
+  "rollout-warning-title": "The progressive rollout cannot be created. Please check the following conditions.",
+  "rollout-warning-desc": "Cannot execute more than one progressive rollout at the same time.",
+  "more-info-see-document": "For more information, please see the <comp>Documentation.</comp>",
+  "clone-operation": "Clone Operation",
+  "set": "Set",
+  "current-progress": "Current Progress",
+  "rollout-experiment-warning": "To create a Progressive Rollout, you must stop the current <comp>Experiment.</comp>",
+  "rollout-variations-warning": "The flag must have only 2 variations.",
+  "rollout-enable-flag": "Progressive Rollout will enable the flag when it starts.",
+  "rollout-manual-desc": "Configure each rollout step manually. You define the variation, the percentage of users to receive it, and the exact time for each step to execute.",
+  "rollout-template-desc": "Automate a multi-step rollout by setting a starting time, percentage increment, and rollout frequency. The system will schedule and apply each phase based on your inputs.",
+  "rollout-tooltips": {
+    "template": {
+      "variation": "Select the variation to roll out over time. Avoid using the same variation configured as the OFF variation to prevent evaluation issues.",
+      "start-date": "The date and time when the first rollout phase begins.",
+      "increment": "The percentage increase applied to each rollout phase. For example, using 10% will divide the rollout into 10 equal stages.",
+      "frequency": "The time interval between each rollout phase. Based on the Start Date, Bucketeer will automatically release each stage hourly, daily, or weekly."
+    },
+    "manual": {
+      "variation": "Select the variation to gradually roll out. This must be different from the OFF variation to prevent conflicts during evaluation.",
+      "weight": "The percentage of users who will receive this variation when this phase is executed.",
+      "execute-at": "The exact date and time when this rollout phase will take effect, updating the user distribution."
+    }
+  },
+  "has-rollout-running": "There is a <comp>Progressive Rollout</comp> in progress. It will stop it."
 }

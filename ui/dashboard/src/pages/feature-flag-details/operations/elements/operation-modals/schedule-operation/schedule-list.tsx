@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
+import dayjs from 'dayjs';
 import { useTranslation } from 'i18n';
 import { AutoOpsRule, Rollout } from '@types';
 import { cn } from 'utils/style';
@@ -99,10 +100,21 @@ const ScheduleList = ({
 
         const conflictIndexes: number[] = [];
         scheduleData.forEach((item, index) => {
-          const timeString = Math.trunc(item.time.getTime() / 1000).toString();
+          const timeString = Math.trunc(
+            dayjs(item.time)?.set('second', 0)?.valueOf() / 1000
+          )?.toString();
+
           if (
             flatMapRolloutItems.find(item => {
-              return item?.executeAt === timeString;
+              const executeAtTime = dayjs(+item?.executeAt * 1000)?.set(
+                'second',
+                0
+              );
+              const executeAtString = (
+                executeAtTime.valueOf() / 1000
+              )?.toString();
+
+              return executeAtString === timeString;
             })
           ) {
             conflictIndexes.push(index);

@@ -101,6 +101,22 @@ const Variation = ({ feature }: VariationProps) => {
     [feature]
   );
 
+  const onCloseConfirmRequiredModal = () => {
+    form.setValue('requireComment', false, {
+      shouldValidate: true
+    });
+    onCloseConfirmDialog();
+  };
+
+  const resetForm = (feature: Feature) =>
+    form.reset({
+      ...getValues(),
+      variations: feature.variations,
+      comment: '',
+      resetSampling: false,
+      requireComment: false
+    });
+
   const onSubmit = useCallback(async () => {
     try {
       const { variations, offVariation, comment, resetSampling } =
@@ -122,7 +138,8 @@ const Variation = ({ feature }: VariationProps) => {
         });
 
         invalidateFeature(queryClient);
-        onCloseConfirmDialog();
+        resetForm(resp.feature);
+        onCloseConfirmRequiredModal();
       }
     } catch (error) {
       errorNotify(error);
@@ -130,13 +147,7 @@ const Variation = ({ feature }: VariationProps) => {
   }, [feature]);
 
   useEffect(() => {
-    form.reset({
-      ...getValues(),
-      variations: feature.variations,
-      comment: '',
-      resetSampling: false,
-      requireComment: false
-    });
+    resetForm(feature);
   }, [feature]);
 
   return (
@@ -149,7 +160,10 @@ const Variation = ({ feature }: VariationProps) => {
               onShowConfirmDialog={() => {
                 form.setValue(
                   'requireComment',
-                  currentEnvironment?.requireComment
+                  currentEnvironment?.requireComment,
+                  {
+                    shouldValidate: true
+                  }
                 );
                 onOpenConfirmDialog();
               }}
@@ -184,7 +198,7 @@ const Variation = ({ feature }: VariationProps) => {
           {openConfirmDialog && (
             <ConfirmationRequiredModal
               isOpen={openConfirmDialog}
-              onClose={onCloseConfirmDialog}
+              onClose={onCloseConfirmRequiredModal}
               onSubmit={form.handleSubmit(onSubmit)}
             />
           )}
