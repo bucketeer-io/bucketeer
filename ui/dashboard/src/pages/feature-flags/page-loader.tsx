@@ -151,6 +151,7 @@ const PageLoader = () => {
           isEnabling={isEnabling}
           selectedFlag={selectedFlag}
           isOpen={openConfirmRequiredModal}
+          isOnFlagList={true}
           onClose={onCloseConfirmRequiredModal}
         />
       )}

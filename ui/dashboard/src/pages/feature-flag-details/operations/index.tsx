@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { autoOpsDelete, autoOpsStop } from '@api/auto-ops';
+import { rolloutDelete, rolloutStopped } from '@api/rollouts';
 import { useQueryAutoOpsCount } from '@queries/auto-ops-count';
 import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
@@ -25,8 +26,11 @@ import FormLoading from 'elements/form-loading';
 import CollectionLayout from './elements/collection-layout';
 import OperationActions from './elements/operation-actions';
 import EventRateOperationModal from './elements/operation-modals/event-rate';
+import ProgressiveRolloutModal from './elements/operation-modals/rollout';
+import RolloutCloneModal from './elements/operation-modals/rollout-clone';
 import ScheduleOperationModal from './elements/operation-modals/schedule-operation';
 import StopOperationModal from './elements/operation-modals/stop-operation';
+import Overview from './elements/overview';
 import { OperationActionType, OperationTab, OpsTypeMap } from './types';
 
 export interface OperationModalState {
@@ -70,6 +74,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
   const isScheduleAction = useMemo(() => action === 'schedule', [action]);
   const isEventRateAction = useMemo(() => action === 'event-rate', [action]);
+  const isRolloutAction = useMemo(() => action === 'rollout', [action]);
 
   const isScheduleType = useMemo(
     () => operationModalState.operationType === 'SCHEDULE',
@@ -152,6 +157,11 @@ const Operations = ({ feature }: { feature: Feature }) => {
     refetchAutoOpsRules();
   }, [searchParams]);
 
+  const onSubmitRolloutSuccess = useCallback(() => {
+    onCloseActionModal();
+    refetchRollouts();
+  }, [searchParams]);
+
   const onOperationActions = useCallback(
     ({
       operationType,
@@ -184,7 +194,13 @@ const Operations = ({ feature }: { feature: Feature }) => {
         let resp = null;
         const isStopRollout =
           operationModalState.operationType === OpsTypeMap.ROLLOUT;
-        if (!isStopRollout) {
+        if (isStopRollout) {
+          resp = await rolloutStopped({
+            environmentId: currentEnvironment.id,
+            id: operationModalState?.selectedData?.id,
+            stoppedBy: 'USER'
+          });
+        } else {
           resp = await autoOpsStop({
             environmentId: currentEnvironment.id,
             id: operationModalState?.selectedData?.id
@@ -215,7 +231,10 @@ const Operations = ({ feature }: { feature: Feature }) => {
     try {
       if (operationModalState?.selectedData) {
         setIsLoading(true);
-        const resp = await autoOpsDelete({
+        const isStopRollout =
+          operationModalState.operationType === OpsTypeMap.ROLLOUT;
+        const deleteFn = isStopRollout ? rolloutDelete : autoOpsDelete;
+        const resp = await deleteFn({
           environmentId: currentEnvironment.id,
           id: operationModalState?.selectedData?.id
         });
@@ -225,6 +244,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
             message: t('message:operation.deleted')
           });
           refetchAutoOpsRules();
+          refetchRollouts();
           onResetModalState();
         }
       }
@@ -255,10 +275,23 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
   return (
     <div className="flex flex-col w-full gap-y-4 min-w-[900px]">
-      <Filter
-        action={<OperationActions onOperationActions={onOperationActions} />}
-        className="justify-end"
-        link={DOCUMENTATION_LINKS.FLAG_OPERATION}
+      <div className="flex flex-wrap items-center justify-between w-full gap-6 px-6">
+        <p className="flex flex-1 typo-head-bold-big text-gray-800 xl:whitespace-nowrap">
+          {t('table:feature-flags:operations-desc')}
+        </p>
+        <Filter
+          action={<OperationActions onOperationActions={onOperationActions} />}
+          className="justify-end w-fit px-0"
+          link={DOCUMENTATION_LINKS.FLAG_OPERATION}
+        />
+      </div>
+      <Overview
+        onOperationActions={operationType =>
+          onOperationActions({
+            operationType,
+            actionType: 'NEW'
+          })
+        }
       />
       {isRolloutLoading || isOperationLoading ? (
         <FormLoading />
@@ -284,6 +317,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
               currentTab={currentTab}
               operations={operations}
               opsCounts={opsCounts}
+              rollouts={rollouts}
               onOperationActions={onOperationActions}
             />
           </TabsContent>
@@ -315,6 +349,34 @@ const Operations = ({ feature }: { feature: Feature }) => {
           onSubmitOperationSuccess={onSubmitOperationSuccess}
         />
       )}
+      {isRolloutAction &&
+        operationModalState.actionType === 'NEW' &&
+        feature && (
+          <ProgressiveRolloutModal
+            isOpen={isRolloutAction}
+            feature={feature}
+            urlCode={currentEnvironment.urlCode}
+            environmentId={currentEnvironment.id}
+            actionType={operationModalState.actionType}
+            selectedData={operationModalState?.selectedData as Rollout}
+            rollouts={rollouts}
+            onClose={onCloseActionModal}
+            onSubmitRolloutSuccess={onSubmitRolloutSuccess}
+          />
+        )}
+      {isRolloutAction &&
+        operationModalState?.selectedData &&
+        operationModalState.actionType === 'DETAILS' &&
+        feature && (
+          <RolloutCloneModal
+            isOpen={
+              isRolloutAction && operationModalState.actionType === 'DETAILS'
+            }
+            selectedData={operationModalState?.selectedData as Rollout}
+            onClose={onCloseActionModal}
+          />
+        )}
+
       {isStop && !!operationModalState?.selectedData && (
         <StopOperationModal
           loading={isLoading}

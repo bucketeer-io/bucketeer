@@ -62,7 +62,7 @@ const OperationActions = ({
             <Icon icon={IconArrowDown} size={'sm'} color="gray-100" />
           </div>
         }
-        className="!shadow-none !border-none [&_p]:!text-white"
+        className="!shadow-none !border-none [&_p]:!text-white p-0"
         showArrow={false}
       />
       <DropdownMenuContent sideOffset={0} className="w-[215px]">
