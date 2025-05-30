@@ -157,7 +157,7 @@ func (m *BooleanConversionMarshaler) convertStringBooleansRecursive(data interfa
 
 // stringToBool converts string boolean values to actual booleans
 func stringToBool(s string) (bool, bool) {
-	if val, ok := stringBoolMap[strings.ToLower(s)]; ok {
+	if val, ok := stringBoolMap[strings.ToLower(strings.TrimSpace(s))]; ok {
 		return val, true
 	}
 	return false, false
