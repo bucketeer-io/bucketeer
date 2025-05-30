@@ -9,6 +9,7 @@ import (
 )
 
 func TestBooleanConversionMarshaler_PreprocessJSON(t *testing.T) {
+	t.Parallel()
 	marshaler := &BooleanConversionMarshaler{}
 
 	tests := []struct {
@@ -203,6 +204,7 @@ func TestBooleanConversionMarshaler_PreprocessJSON(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			// Test the preprocessJSON method
 			processedData := marshaler.preprocessJSON([]byte(tt.input))
 
@@ -215,6 +217,7 @@ func TestBooleanConversionMarshaler_PreprocessJSON(t *testing.T) {
 }
 
 func TestStringToBool(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		input    string
@@ -236,6 +239,7 @@ func TestStringToBool(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			gotBool, gotOk := stringToBool(tt.input)
 			if gotBool != tt.wantBool {
 				t.Errorf("stringToBool() gotBool = %v, want %v", gotBool, tt.wantBool)
@@ -248,6 +252,7 @@ func TestStringToBool(t *testing.T) {
 }
 
 func TestBooleanConversionMarshaler_Integration(t *testing.T) {
+	t.Parallel()
 	marshaler := &BooleanConversionMarshaler{
 		JSONPb: runtime.JSONPb{
 			UnmarshalOptions: protojson.UnmarshalOptions{
@@ -283,6 +288,7 @@ func TestBooleanConversionMarshaler_Integration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			if tt.check != nil {
 				tt.check(t, marshaler)
 			}
