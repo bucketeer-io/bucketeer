@@ -41,7 +41,9 @@ type customJSONPb struct {
 }
 
 // Unmarshal implements the custom unmarshaling logic
-// TODO: This is a temporary solution until the Android SDK is updated to use the correct boolean type
+// TODO: This is a temporary custom JSON unmarshaler to handle boolean fields sent as strings from the Android SDK.
+// This addresses a compatibility issue that arose after switching from Envoy JSON transcoder to gRPC-Gateway.
+// Reference: https://github.com/bucketeer-io/android-client-sdk/pull/230
 func (c *customJSONPb) Unmarshal(data []byte, v interface{}) error {
 	// First try to unmarshal with the default protojson unmarshaler
 	err := c.JSONPb.Unmarshal(data, v)
