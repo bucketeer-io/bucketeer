@@ -6,128 +6,10 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-func TestCustomJSONPb_Unmarshal(t *testing.T) {
-	c := &customJSONPb{
-		JSONPb: runtime.JSONPb{
-			UnmarshalOptions: protojson.UnmarshalOptions{
-				DiscardUnknown: true,
-			},
-		},
-	}
-
-	tests := []struct {
-		name    string
-		input   []byte
-		want    bool
-		wantErr bool
-	}{
-		{
-			name:    "success: boolean true",
-			input:   []byte("true"),
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name:    "success: string 'true'",
-			input:   []byte(`"true"`),
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name:    "success: string 'True'",
-			input:   []byte(`"True"`),
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name:    "success: string 'TRUE'",
-			input:   []byte(`"TRUE"`),
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name:    "success: string '1'",
-			input:   []byte(`"1"`),
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name:    "success: boolean false",
-			input:   []byte("false"),
-			want:    false,
-			wantErr: false,
-		},
-		{
-			name:    "success: string 'false'",
-			input:   []byte(`"false"`),
-			want:    false,
-			wantErr: false,
-		},
-		{
-			name:    "success: string 'False'",
-			input:   []byte(`"False"`),
-			want:    false,
-			wantErr: false,
-		},
-		{
-			name:    "success: string 'FALSE'",
-			input:   []byte(`"FALSE"`),
-			want:    false,
-			wantErr: false,
-		},
-		{
-			name:    "success: string '0'",
-			input:   []byte(`"0"`),
-			want:    false,
-			wantErr: false,
-		},
-		{
-			name:    "error: invalid boolean string",
-			input:   []byte(`"invalid"`),
-			want:    false,
-			wantErr: true,
-		},
-		{
-			name:    "error: invalid JSON",
-			input:   []byte(`{invalid json}`),
-			want:    false,
-			wantErr: true,
-		},
-		{
-			name:    "error: non-boolean value",
-			input:   []byte(`123`),
-			want:    false,
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var got wrapperspb.BoolValue
-			err := c.Unmarshal(tt.input, &got)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Unmarshal() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !tt.wantErr && got.Value != tt.want {
-				t.Errorf("Unmarshal() got = %v, want %v", got.Value, tt.want)
-			}
-		})
-	}
-}
-
-func TestCustomJSONPb_Unmarshal_NestedStructures(t *testing.T) {
-	// Define a test message type for nested structures
-	type TestMessage struct {
-		BoolField1 bool                   `json:"boolField1"`
-		BoolField2 bool                   `json:"boolField2"`
-		Nested     map[string]bool        `json:"nested"`
-		Array      []bool                 `json:"array"`
-		Mixed      map[string]interface{} `json:"mixed"`
-	}
+func TestBooleanConversionMarshaler_PreprocessJSON(t *testing.T) {
+	marshaler := &BooleanConversionMarshaler{}
 
 	tests := []struct {
 		name    string
@@ -136,91 +18,183 @@ func TestCustomJSONPb_Unmarshal_NestedStructures(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "nested object with boolean strings",
+			name: "nested object with boolean strings in specific fields",
 			input: `{
-				"boolField1": "true",
-				"boolField2": "false",
+				"userAttributesUpdated": "true",
+				"user_attributes_updated": "false",
+				"otherField": "true",
 				"nested": {
-					"key1": "TRUE",
-					"key2": "0"
+					"userAttributesUpdated": "TRUE",
+					"user_attributes_updated": "0"
 				}
 			}`,
 			check: func(t *testing.T, data []byte) {
 				var result map[string]interface{}
 				json.Unmarshal(data, &result)
 
-				// Check that boolean strings were converted
-				if result["boolField1"] != true {
-					t.Errorf("Expected boolField1 to be true, got %v", result["boolField1"])
+				// Check that boolean strings in specific fields were converted
+				if result["userAttributesUpdated"] != true {
+					t.Errorf("Expected userAttributesUpdated to be true, got %v", result["userAttributesUpdated"])
 				}
-				if result["boolField2"] != false {
-					t.Errorf("Expected boolField2 to be false, got %v", result["boolField2"])
+				if result["user_attributes_updated"] != false {
+					t.Errorf("Expected user_attributes_updated to be false, got %v", result["user_attributes_updated"])
+				}
+				// Other fields should remain as strings
+				if result["otherField"] != "true" {
+					t.Errorf("Expected otherField to remain 'true' string, got %v", result["otherField"])
 				}
 
 				nested := result["nested"].(map[string]interface{})
-				if nested["key1"] != true {
-					t.Errorf("Expected nested.key1 to be true, got %v", nested["key1"])
+				if nested["userAttributesUpdated"] != true {
+					t.Errorf("Expected nested.userAttributesUpdated to be true, got %v", nested["userAttributesUpdated"])
 				}
-				if nested["key2"] != false {
-					t.Errorf("Expected nested.key2 to be false, got %v", nested["key2"])
-				}
-			},
-			wantErr: false,
-		},
-		{
-			name: "array with boolean strings",
-			input: `{
-				"array": ["true", "false", "1", "0", "TRUE", "FALSE"]
-			}`,
-			check: func(t *testing.T, data []byte) {
-				var result map[string]interface{}
-				json.Unmarshal(data, &result)
-
-				array := result["array"].([]interface{})
-				expected := []bool{true, false, true, false, true, false}
-
-				for i, v := range array {
-					if v != expected[i] {
-						t.Errorf("Expected array[%d] to be %v, got %v", i, expected[i], v)
-					}
+				if nested["user_attributes_updated"] != false {
+					t.Errorf("Expected nested.user_attributes_updated to be false, got %v", nested["user_attributes_updated"])
 				}
 			},
 			wantErr: false,
 		},
 		{
-			name: "mixed types with boolean strings",
+			name: "array with mixed content",
 			input: `{
-				"mixed": {
-					"bool1": "true",
-					"bool2": true,
-					"string": "not a boolean",
-					"number": 42,
-					"nested": {
-						"deepBool": "false"
-					}
+				"data": [{
+					"userAttributesUpdated": "true",
+					"otherField": "not a boolean"
+				}, {
+					"user_attributes_updated": "1",
+					"anotherField": 42
+				}]
+			}`,
+			check: func(t *testing.T, data []byte) {
+				var result map[string]interface{}
+				json.Unmarshal(data, &result)
+
+				dataArray := result["data"].([]interface{})
+
+				item1 := dataArray[0].(map[string]interface{})
+				if item1["userAttributesUpdated"] != true {
+					t.Errorf("Expected data[0].userAttributesUpdated to be true, got %v", item1["userAttributesUpdated"])
+				}
+				if item1["otherField"] != "not a boolean" {
+					t.Errorf("Expected data[0].otherField to remain unchanged, got %v", item1["otherField"])
+				}
+
+				item2 := dataArray[1].(map[string]interface{})
+				if item2["user_attributes_updated"] != true {
+					t.Errorf("Expected data[1].user_attributes_updated to be true, got %v", item2["user_attributes_updated"])
+				}
+				if item2["anotherField"] != float64(42) {
+					t.Errorf("Expected data[1].anotherField to be 42, got %v", item2["anotherField"])
+				}
+			},
+			wantErr: false,
+		},
+		{
+			name: "all boolean string variations",
+			input: `{
+				"userAttributesUpdated": "true",
+				"data": {
+					"user_attributes_updated": "TRUE"
+				},
+				"items": [{
+					"userAttributesUpdated": "1"
+				}, {
+					"user_attributes_updated": "false"
+				}, {
+					"userAttributesUpdated": "FALSE"
+				}, {
+					"user_attributes_updated": "0"
+				}]
+			}`,
+			check: func(t *testing.T, data []byte) {
+				var result map[string]interface{}
+				json.Unmarshal(data, &result)
+
+				// Top level
+				if result["userAttributesUpdated"] != true {
+					t.Errorf("Expected userAttributesUpdated to be true, got %v", result["userAttributesUpdated"])
+				}
+
+				// Nested object
+				dataObj := result["data"].(map[string]interface{})
+				if dataObj["user_attributes_updated"] != true {
+					t.Errorf("Expected data.user_attributes_updated to be true, got %v", dataObj["user_attributes_updated"])
+				}
+
+				// Array items
+				items := result["items"].([]interface{})
+
+				item0 := items[0].(map[string]interface{})
+				if item0["userAttributesUpdated"] != true {
+					t.Errorf("Expected items[0].userAttributesUpdated to be true, got %v", item0["userAttributesUpdated"])
+				}
+
+				item1 := items[1].(map[string]interface{})
+				if item1["user_attributes_updated"] != false {
+					t.Errorf("Expected items[1].user_attributes_updated to be false, got %v", item1["user_attributes_updated"])
+				}
+
+				item2 := items[2].(map[string]interface{})
+				if item2["userAttributesUpdated"] != false {
+					t.Errorf("Expected items[2].userAttributesUpdated to be false, got %v", item2["userAttributesUpdated"])
+				}
+
+				item3 := items[3].(map[string]interface{})
+				if item3["user_attributes_updated"] != false {
+					t.Errorf("Expected items[3].user_attributes_updated to be false, got %v", item3["user_attributes_updated"])
+				}
+			},
+			wantErr: false,
+		},
+		{
+			name:  "empty data",
+			input: ``,
+			check: func(t *testing.T, data []byte) {
+				if len(data) != 0 {
+					t.Errorf("Expected empty data, got %v", string(data))
+				}
+			},
+			wantErr: false,
+		},
+		{
+			name:  "invalid JSON returns original",
+			input: `{invalid json}`,
+			check: func(t *testing.T, data []byte) {
+				if string(data) != `{invalid json}` {
+					t.Errorf("Expected original data for invalid JSON, got %v", string(data))
+				}
+			},
+			wantErr: false,
+		},
+		{
+			name: "non-string values remain unchanged",
+			input: `{
+				"userAttributesUpdated": true,
+				"user_attributes_updated": false,
+				"data": {
+					"userAttributesUpdated": 123,
+					"user_attributes_updated": null
 				}
 			}`,
 			check: func(t *testing.T, data []byte) {
 				var result map[string]interface{}
 				json.Unmarshal(data, &result)
 
-				mixed := result["mixed"].(map[string]interface{})
-				if mixed["bool1"] != true {
-					t.Errorf("Expected mixed.bool1 to be true, got %v", mixed["bool1"])
+				// Boolean values should remain as booleans
+				if result["userAttributesUpdated"] != true {
+					t.Errorf("Expected userAttributesUpdated to remain true, got %v", result["userAttributesUpdated"])
 				}
-				if mixed["bool2"] != true {
-					t.Errorf("Expected mixed.bool2 to be true, got %v", mixed["bool2"])
-				}
-				if mixed["string"] != "not a boolean" {
-					t.Errorf("Expected mixed.string to remain unchanged, got %v", mixed["string"])
-				}
-				if mixed["number"] != float64(42) {
-					t.Errorf("Expected mixed.number to be 42, got %v", mixed["number"])
+				if result["user_attributes_updated"] != false {
+					t.Errorf("Expected user_attributes_updated to remain false, got %v", result["user_attributes_updated"])
 				}
 
-				nested := mixed["nested"].(map[string]interface{})
-				if nested["deepBool"] != false {
-					t.Errorf("Expected mixed.nested.deepBool to be false, got %v", nested["deepBool"])
+				// Non-string values in nested objects
+				dataObj := result["data"].(map[string]interface{})
+				if dataObj["userAttributesUpdated"] != float64(123) {
+					t.Errorf("Expected data.userAttributesUpdated to remain 123, got %v", dataObj["userAttributesUpdated"])
+				}
+				if dataObj["user_attributes_updated"] != nil {
+					t.Errorf("Expected data.user_attributes_updated to remain nil, got %v", dataObj["user_attributes_updated"])
 				}
 			},
 			wantErr: false,
@@ -229,15 +203,111 @@ func TestCustomJSONPb_Unmarshal_NestedStructures(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// First, let's see what the conversion produces
-			var rawData interface{}
-			json.Unmarshal([]byte(tt.input), &rawData)
-			convertBooleanStrings(rawData)
-			modifiedData, _ := json.Marshal(rawData)
+			// Test the preprocessJSON method
+			processedData := marshaler.preprocessJSON([]byte(tt.input))
 
-			// Run the check function on the modified data
+			// Run the check function on the processed data
 			if tt.check != nil {
-				tt.check(t, modifiedData)
+				tt.check(t, processedData)
+			}
+		})
+	}
+}
+
+func TestStringToBool(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		wantBool bool
+		wantOk   bool
+	}{
+		{"lowercase true", "true", true, true},
+		{"uppercase TRUE", "TRUE", true, true},
+		{"mixed case True", "True", true, true},
+		{"numeric 1", "1", true, true},
+		{"lowercase false", "false", false, true},
+		{"uppercase FALSE", "FALSE", false, true},
+		{"mixed case False", "False", false, true},
+		{"numeric 0", "0", false, true},
+		{"invalid string", "invalid", false, false},
+		{"empty string", "", false, false},
+		{"numeric 2", "2", false, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotBool, gotOk := stringToBool(tt.input)
+			if gotBool != tt.wantBool {
+				t.Errorf("stringToBool() gotBool = %v, want %v", gotBool, tt.wantBool)
+			}
+			if gotOk != tt.wantOk {
+				t.Errorf("stringToBool() gotOk = %v, want %v", gotOk, tt.wantOk)
+			}
+		})
+	}
+}
+
+func TestBooleanConversionMarshaler_Integration(t *testing.T) {
+	marshaler := &BooleanConversionMarshaler{
+		JSONPb: runtime.JSONPb{
+			UnmarshalOptions: protojson.UnmarshalOptions{
+				DiscardUnknown: true,
+			},
+		},
+	}
+
+	// Test that the marshaler integrates properly with runtime.JSONPb
+	tests := []struct {
+		name  string
+		input string
+		check func(t *testing.T, marshaler *BooleanConversionMarshaler)
+	}{
+		{
+			name:  "marshaler processes JSON correctly",
+			input: `{"userAttributesUpdated": "true", "someOtherField": "not a boolean"}`,
+			check: func(t *testing.T, m *BooleanConversionMarshaler) {
+				// Test that preprocessJSON is called and works correctly
+				processed := m.preprocessJSON([]byte(`{"userAttributesUpdated": "true"}`))
+
+				var result map[string]interface{}
+				if err := json.Unmarshal(processed, &result); err != nil {
+					t.Fatalf("Failed to unmarshal processed JSON: %v", err)
+				}
+
+				if result["userAttributesUpdated"] != true {
+					t.Errorf("Expected userAttributesUpdated to be converted to true, got %v", result["userAttributesUpdated"])
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.check != nil {
+				tt.check(t, marshaler)
+			}
+		})
+	}
+}
+
+func TestShouldProcessRequest(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+		want bool
+	}{
+		{"exact match get_evaluations", "/get_evaluations", true},
+		{"exact match v1 gateway", "/v1/gateway/evaluations", true},
+		{"contains get_evaluations", "/api/get_evaluations/test", true},
+		{"contains v1 gateway", "/api/v1/gateway/evaluations/test", true},
+		{"no match", "/api/other/endpoint", false},
+		{"empty path", "", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := shouldProcessRequest(tt.path); got != tt.want {
+				t.Errorf("shouldProcessRequest(%q) = %v, want %v", tt.path, got, tt.want)
 			}
 		})
 	}

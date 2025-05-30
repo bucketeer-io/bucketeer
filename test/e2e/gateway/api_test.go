@@ -27,6 +27,7 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 	"github.com/bucketeer-io/bucketeer/test/e2e/util"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetEvaluationsFeatureFlagEnabled(t *testing.T) {
@@ -188,5 +189,188 @@ func TestRegisterEvents(t *testing.T) {
 	)
 	if len(response.Errors) > 0 {
 		t.Fatalf("Failed to register events. Error: %v", response.Errors)
+	}
+}
+
+// TODO: This is a temporary custom JSON unmarshaler to handle boolean fields sent as strings from the Android SDK.
+// This addresses a compatibility issue that arose after switching from Envoy JSON transcoder to gRPC-Gateway.
+// Reference: https://github.com/bucketeer-io/android-client-sdk/pull/230
+func TestHTTPBooleanStringHandling(t *testing.T) {
+	t.Parallel()
+	// This test verifies that the custom JSON unmarshaler correctly handles
+	// boolean strings sent from the Android SDK via HTTP requests,
+	// specifically the userAttributesUpdated field in get_evaluations API
+
+	testCases := []struct {
+		name        string
+		description string
+		requestBody map[string]interface{}
+	}{
+		{
+			name:        "boolean_string_true_lowercase",
+			description: "userAttributesUpdated as 'true' string",
+			requestBody: map[string]interface{}{
+				"tag": "test-tag",
+				"user": map[string]interface{}{
+					"id": "test-user-id",
+				},
+				"userEvaluationsId": "test-evaluations-id",
+				"userEvaluationCondition": map[string]interface{}{
+					"evaluatedAt":           time.Now().Unix() - 60,
+					"userAttributesUpdated": "true",
+				},
+			},
+		},
+		{
+			name:        "boolean_string_false_lowercase",
+			description: "userAttributesUpdated as 'false' string",
+			requestBody: map[string]interface{}{
+				"tag": "test-tag",
+				"user": map[string]interface{}{
+					"id": "test-user-id",
+				},
+				"userEvaluationCondition": map[string]interface{}{
+					"evaluatedAt":           time.Now().Unix() - 60,
+					"userAttributesUpdated": "false",
+				},
+			},
+		},
+		{
+			name:        "boolean_string_true_titlecase",
+			description: "userAttributesUpdated as 'True' string",
+			requestBody: map[string]interface{}{
+				"tag": "test-tag",
+				"user": map[string]interface{}{
+					"id": "test-user-id",
+				},
+				"userEvaluationCondition": map[string]interface{}{
+					"evaluatedAt":           time.Now().Unix() - 60,
+					"userAttributesUpdated": "True",
+				},
+			},
+		},
+		{
+			name:        "boolean_string_false_titlecase",
+			description: "userAttributesUpdated as 'False' string",
+			requestBody: map[string]interface{}{
+				"tag": "test-tag",
+				"user": map[string]interface{}{
+					"id": "test-user-id",
+				},
+				"userEvaluationCondition": map[string]interface{}{
+					"evaluatedAt":           time.Now().Unix() - 60,
+					"userAttributesUpdated": "False",
+				},
+			},
+		},
+		{
+			name:        "boolean_string_true_uppercase",
+			description: "userAttributesUpdated as 'TRUE' string",
+			requestBody: map[string]interface{}{
+				"tag": "test-tag",
+				"user": map[string]interface{}{
+					"id": "test-user-id",
+				},
+				"userEvaluationCondition": map[string]interface{}{
+					"evaluatedAt":           time.Now().Unix() - 60,
+					"userAttributesUpdated": "TRUE",
+				},
+			},
+		},
+		{
+			name:        "boolean_string_false_uppercase",
+			description: "userAttributesUpdated as 'FALSE' string",
+			requestBody: map[string]interface{}{
+				"tag": "test-tag",
+				"user": map[string]interface{}{
+					"id": "test-user-id",
+				},
+				"userEvaluationCondition": map[string]interface{}{
+					"evaluatedAt":           time.Now().Unix() - 60,
+					"userAttributesUpdated": "FALSE",
+				},
+			},
+		},
+		{
+			name:        "boolean_string_numeric_1",
+			description: "userAttributesUpdated as '1' string (true)",
+			requestBody: map[string]interface{}{
+				"tag": "test-tag",
+				"user": map[string]interface{}{
+					"id": "test-user-id",
+				},
+				"userEvaluationCondition": map[string]interface{}{
+					"evaluatedAt":           time.Now().Unix() - 60,
+					"userAttributesUpdated": "1",
+				},
+			},
+		},
+		{
+			name:        "boolean_string_numeric_0",
+			description: "userAttributesUpdated as '0' string (false)",
+			requestBody: map[string]interface{}{
+				"tag": "test-tag",
+				"user": map[string]interface{}{
+					"id": "test-user-id",
+				},
+				"userEvaluationCondition": map[string]interface{}{
+					"evaluatedAt":           time.Now().Unix() - 60,
+					"userAttributesUpdated": "0",
+				},
+			},
+		},
+		{
+			name:        "empty_user_evaluation_condition",
+			description: "Empty user evaluation condition object",
+			requestBody: map[string]interface{}{
+				"tag": "test-tag",
+				"user": map[string]interface{}{
+					"id": "test-user-id",
+				},
+				"userEvaluationCondition": map[string]interface{}{},
+			},
+		},
+		{
+			name:        "null_user_data",
+			description: "User data is null with boolean string",
+			requestBody: map[string]interface{}{
+				"tag": "test-tag",
+				"user": map[string]interface{}{
+					"id":   "test-user-id",
+					"data": nil,
+				},
+				"userEvaluationCondition": map[string]interface{}{
+					"evaluatedAt":           time.Now().Unix() - 60,
+					"userAttributesUpdated": "false",
+				},
+			},
+		},
+		{
+			name:        "actual_boolean_value",
+			description: "userAttributesUpdated as actual boolean (not string)",
+			requestBody: map[string]interface{}{
+				"tag": "test-tag",
+				"user": map[string]interface{}{
+					"id": "test-user-id",
+				},
+				"userEvaluationCondition": map[string]interface{}{
+					"evaluatedAt":           time.Now().Unix() - 60,
+					"userAttributesUpdated": true, // actual boolean
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc // capture range variable
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Make the HTTP request - should succeed for all cases
+			response := util.GetEvaluationsRaw(t, tc.requestBody, *gatewayAddr, *apiKeyPath)
+
+			// Verify we got a valid response (no error occurred)
+			assert.NotNil(t, response, "Response should not be nil for test case: %s", tc.description)
+		})
 	}
 }
