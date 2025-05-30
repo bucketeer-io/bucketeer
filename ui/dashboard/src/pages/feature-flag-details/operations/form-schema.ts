@@ -100,28 +100,27 @@ export const schedulesListSchema = yup
           }
           return true;
         })
-        .test('timeIntervals', (_, context) => {
-          if (
-            context.from &&
-            context.from[3].value.progressiveRolloutType ===
-              RolloutTypeMap.MANUAL_SCHEDULE
-          ) {
-            const isValidIntervals = areIntervalsApart(
-              context.from[3].value.progressiveRollout.manual.schedulesList.map(
-                (d: yup.AnyObject) => d.executeAt.getTime()
-              ),
-              5
-            );
-            if (!isValidIntervals)
-              return context.createError({
-                message: translation(
-                  'message:validation.operation.schedule-interval'
+        .test(
+          'timeIntervals',
+          translation('message:validation.operation.schedule-interval'),
+          (_, context) => {
+            if (
+              context.from &&
+              context.from[3].value.progressiveRolloutType ===
+                RolloutTypeMap.MANUAL_SCHEDULE
+            ) {
+              const isValidIntervals = areIntervalsApart(
+                context.from[3].value.progressiveRollout.manual.schedulesList.map(
+                  (d: yup.AnyObject) => d.executeAt.getTime()
                 ),
-                path: context.path
-              });
+                5
+              );
+              if (!isValidIntervals) return false;
+            }
+
+            return true;
           }
-          return true;
-        }),
+        ),
       triggeredAt: yup.string()
     })
   )

@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { getLanguage, useTranslation } from 'i18n';
+import { areIntervalsApart } from 'utils/function';
 import { cn } from 'utils/style';
 import { IconInfo, IconPlus, IconTrash } from '@icons';
 import { RolloutSchemaType } from 'pages/feature-flag-details/operations/form-schema';
@@ -31,11 +32,7 @@ const ManualSchedule = ({
   const { t } = useTranslation(['form']);
   const isLanguageJapanese = getLanguage() === 'ja';
 
-  const {
-    control,
-    formState: { errors },
-    watch
-  } = useFormContext<RolloutSchemaType>();
+  const { control, watch, clearErrors } = useFormContext<RolloutSchemaType>();
   const watchScheduleList = [
     ...watch('progressiveRollout.manual.schedulesList')
   ];
@@ -53,12 +50,6 @@ const ManualSchedule = ({
     () => Number(watchScheduleList.at(-1)?.weight) === 100,
     [watchScheduleList]
   );
-  const isDisableAddIncrement = useMemo(
-    () =>
-      isLastScheduleWeight100 ||
-      !!errors?.progressiveRollout?.manual?.schedulesList?.length,
-    [isLastScheduleWeight100, { ...errors }]
-  );
 
   const handleAddIncrement = useCallback(() => {
     const newIncrement = handleCreateIncrement({
@@ -68,6 +59,19 @@ const ManualSchedule = ({
     });
     append(newIncrement);
   }, [watchScheduleList]);
+
+  const handleRemoveSchedule = (index: number) => {
+    remove(index);
+    const filterScheduleList = watchScheduleList.filter(
+      (_, scheduleIndex) => scheduleIndex !== index
+    );
+    const isValidIntervals = areIntervalsApart(
+      filterScheduleList.map(item => item.executeAt.getTime()),
+      5
+    );
+    if (isValidIntervals)
+      clearErrors('progressiveRollout.manual.schedulesList');
+  };
 
   return (
     <div className="flex flex-col w-full gap-y-4">
@@ -205,7 +209,7 @@ const ManualSchedule = ({
             variant={'grey'}
             className="flex-center self-start h-full mt-9 min-w-5"
             disabled={schedulesList.length <= 1 || isDisableCreateRollout}
-            onClick={() => remove(index)}
+            onClick={() => handleRemoveSchedule(index)}
           >
             <Icon icon={IconTrash} size={'sm'} />
           </Button>
@@ -215,7 +219,7 @@ const ManualSchedule = ({
         type="button"
         variant={'text'}
         className="w-fit px-0 h-6"
-        disabled={isDisableAddIncrement || isDisableCreateRollout}
+        disabled={isLastScheduleWeight100 || isDisableCreateRollout}
         onClick={handleAddIncrement}
       >
         <Icon icon={IconPlus} size={'md'} />
