@@ -110,10 +110,13 @@ func (g *Gateway) Start(ctx context.Context,
 		}
 	}
 
+	// Wrap the mux with the boolean conversion middleware
+	handler := BooleanConversionMiddleware(mux)
+
 	// Create and start the HTTP server
 	g.httpServer = &http.Server{
 		Addr:    g.restAddr,
-		Handler: mux,
+		Handler: handler,
 	}
 
 	// Start the server in a goroutine
