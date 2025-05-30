@@ -289,26 +289,3 @@ func TestBooleanConversionMarshaler_Integration(t *testing.T) {
 		})
 	}
 }
-
-func TestShouldProcessRequest(t *testing.T) {
-	tests := []struct {
-		name string
-		path string
-		want bool
-	}{
-		{"exact match get_evaluations", "/get_evaluations", true},
-		{"exact match v1 gateway", "/v1/gateway/evaluations", true},
-		{"contains get_evaluations", "/api/get_evaluations/test", true},
-		{"contains v1 gateway", "/api/v1/gateway/evaluations/test", true},
-		{"no match", "/api/other/endpoint", false},
-		{"empty path", "", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := shouldProcessRequest(tt.path); got != tt.want {
-				t.Errorf("shouldProcessRequest(%q) = %v, want %v", tt.path, got, tt.want)
-			}
-		})
-	}
-}

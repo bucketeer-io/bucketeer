@@ -40,11 +40,6 @@ type HandlerRegistrar func(context.Context, *runtime.ServeMux, []grpc.DialOption
 
 var (
 	// Pre-compiled maps for O(1) lookups instead of O(n) iterations
-	conversionPathsMap = map[string]bool{
-		"/get_evaluations":        true,
-		"/v1/gateway/evaluations": true,
-	}
-
 	booleanFieldsMap = map[string]bool{
 		"userAttributesUpdated":   true,
 		"user_attributes_updated": true,
@@ -191,39 +186,6 @@ func (d *booleanConversionDecoder) Decode(v interface{}) error {
 	return d.marshaler.Unmarshal(data, v)
 }
 
-// BooleanConversionInterceptor is a custom HTTP handler that checks if the request
-// needs boolean conversion and sets appropriate context
-func BooleanConversionInterceptor(logger *zap.Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Check if this path needs boolean conversion
-			if shouldProcessRequest(r.URL.Path) {
-				// Add a custom header to indicate boolean conversion is needed
-				// This is used by our custom marshaler
-				r.Header.Set("X-Boolean-Conversion", "true")
-				logger.Debug("Marked request for boolean conversion",
-					zap.String("path", r.URL.Path))
-			}
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
-// shouldProcessRequest determines if the request should be processed for boolean conversion
-func shouldProcessRequest(path string) bool {
-	if conversionPathsMap[path] {
-		return true
-	}
-
-	// Fallback to contains check for partial matches
-	for conversionPath := range conversionPathsMap {
-		if strings.Contains(path, conversionPath) {
-			return true
-		}
-	}
-	return false
-}
-
 type Gateway struct {
 	httpServer *http.Server
 	restAddr   string
@@ -305,13 +267,10 @@ func (g *Gateway) Start(ctx context.Context,
 		}
 	}
 
-	// Wrap the mux with our interceptor
-	handler := BooleanConversionInterceptor(g.logger)(mux)
-
 	// Create and start the HTTP server
 	g.httpServer = &http.Server{
 		Addr:    g.restAddr,
-		Handler: handler,
+		Handler: mux,
 	}
 
 	// Start the server in a goroutine
