@@ -21,12 +21,20 @@ message FixedStrategy {
   string variation = 1;
 }
 
+message Audience {
+  // Percentage of traffic to include in experiment (0-100)
+  int32 percentage = 1;
+  // Variation to serve to users not in experiment
+  string default_variation = 2;
+}
+
 message RolloutStrategy {
   message Variation {
     string variation = 1;
     int32 weight = 2;
   }
   repeated Variation variations = 1;
+  Audience audience = 2;  // Optional audience configuration for traffic control
 }
 
 message Strategy {
