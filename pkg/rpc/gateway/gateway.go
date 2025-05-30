@@ -16,8 +16,11 @@ package gateway
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -27,12 +30,161 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 )
 
 // HandlerRegistrar is a function that registers a gRPC-Gateway handler
 type HandlerRegistrar func(context.Context, *runtime.ServeMux, []grpc.DialOption) error
+
+var (
+	// Pre-compiled maps for O(1) lookups instead of O(n) iterations
+	booleanFieldsMap = map[string]bool{
+		"userAttributesUpdated":   true,
+		"user_attributes_updated": true,
+	}
+
+	// Pre-compiled boolean string values for faster lookups
+	stringBoolMap = map[string]bool{
+		"true":  true,
+		"false": false,
+		"1":     true,
+		"0":     false,
+	}
+)
+
+// BooleanConversionMarshaler is a custom marshaler that handles boolean string conversion
+// during the unmarshaling phase. This is a temporary solution to handle boolean fields
+// sent as strings from the Android SDK.
+// TODO: Remove this once the Android SDK is fixed to send proper boolean values.
+// Reference: https://github.com/bucketeer-io/android-client-sdk/pull/230
+type BooleanConversionMarshaler struct {
+	runtime.JSONPb
+}
+
+// Unmarshal implements the Marshaler interface with boolean string conversion
+func (m *BooleanConversionMarshaler) Unmarshal(data []byte, v interface{}) error {
+	// First, try to unmarshal as a proto message
+	if msg, ok := v.(proto.Message); ok {
+		// Check if we need to convert boolean strings based on the message type
+		// For now, we'll do a pre-processing step on the JSON data
+		convertedData := m.preprocessJSON(data)
+
+		// Use the standard protojson unmarshaler
+		return protojson.UnmarshalOptions{
+			DiscardUnknown: m.UnmarshalOptions.DiscardUnknown,
+			AllowPartial:   m.UnmarshalOptions.AllowPartial,
+		}.Unmarshal(convertedData, msg)
+	}
+
+	// Fall back to standard JSON unmarshaling for non-proto messages
+	return json.Unmarshal(data, v)
+}
+
+// preprocessJSON converts string boolean values to actual booleans in the JSON data
+func (m *BooleanConversionMarshaler) preprocessJSON(data []byte) []byte {
+	// Fast path: empty data
+	if len(data) == 0 {
+		return data
+	}
+
+	var jsonData interface{}
+	if err := json.Unmarshal(data, &jsonData); err != nil {
+		// If we can't unmarshal, return the original data
+		return data
+	}
+
+	// Convert string booleans recursively
+	converted, modified := m.convertStringBooleansRecursive(jsonData)
+	if !modified {
+		return data
+	}
+
+	// Re-marshal the converted data
+	convertedData, err := json.Marshal(converted)
+	if err != nil {
+		return data
+	}
+
+	return convertedData
+}
+
+// convertStringBooleansRecursive recursively converts string boolean values
+func (m *BooleanConversionMarshaler) convertStringBooleansRecursive(data interface{}) (interface{}, bool) {
+	modified := false
+
+	switch v := data.(type) {
+	case map[string]interface{}:
+		result := make(map[string]interface{}, len(v))
+
+		for key, value := range v {
+			// Check if this field should be converted
+			if booleanFieldsMap[key] {
+				if strVal, ok := value.(string); ok {
+					if boolVal, converted := stringToBool(strVal); converted {
+						result[key] = boolVal
+						modified = true
+					} else {
+						result[key] = value
+					}
+				} else {
+					convertedValue, childModified := m.convertStringBooleansRecursive(value)
+					result[key] = convertedValue
+					modified = modified || childModified
+				}
+			} else {
+				convertedValue, childModified := m.convertStringBooleansRecursive(value)
+				result[key] = convertedValue
+				modified = modified || childModified
+			}
+		}
+		return result, modified
+
+	case []interface{}:
+		result := make([]interface{}, len(v))
+		for i, item := range v {
+			convertedItem, childModified := m.convertStringBooleansRecursive(item)
+			result[i] = convertedItem
+			modified = modified || childModified
+		}
+		return result, modified
+
+	default:
+		return data, false
+	}
+}
+
+// stringToBool converts string boolean values to actual booleans
+func stringToBool(s string) (bool, bool) {
+	if val, ok := stringBoolMap[strings.ToLower(strings.TrimSpace(s))]; ok {
+		return val, true
+	}
+	return false, false
+}
+
+// NewDecoder returns a decoder that handles boolean string conversion
+func (m *BooleanConversionMarshaler) NewDecoder(r io.Reader) runtime.Decoder {
+	return &booleanConversionDecoder{
+		reader:    r,
+		marshaler: m,
+	}
+}
+
+// booleanConversionDecoder is a custom decoder that handles boolean string conversion
+type booleanConversionDecoder struct {
+	reader    io.Reader
+	marshaler *BooleanConversionMarshaler
+}
+
+// Decode implements the Decoder interface
+func (d *booleanConversionDecoder) Decode(v interface{}) error {
+	data, err := io.ReadAll(d.reader)
+	if err != nil {
+		return err
+	}
+	return d.marshaler.Unmarshal(data, v)
+}
 
 type Gateway struct {
 	httpServer *http.Server
@@ -64,17 +216,22 @@ func NewGateway(restAddr string, opts ...Option) (*Gateway, error) {
 func (g *Gateway) Start(ctx context.Context,
 	registerFuncs ...HandlerRegistrar,
 ) error {
-	// Create a new ServeMux for the REST gateway
-	mux := runtime.NewServeMux(
-		runtime.WithErrorHandler(runtime.DefaultHTTPErrorHandler),
-		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+	// Create our custom marshaler that handles boolean conversion
+	customMarshaler := &BooleanConversionMarshaler{
+		JSONPb: runtime.JSONPb{
 			MarshalOptions: protojson.MarshalOptions{
 				EmitUnpopulated: true,
 			},
 			UnmarshalOptions: protojson.UnmarshalOptions{
 				DiscardUnknown: true,
 			},
-		}),
+		},
+	}
+
+	// Create a new ServeMux with our custom marshaler
+	mux := runtime.NewServeMux(
+		runtime.WithErrorHandler(runtime.DefaultHTTPErrorHandler),
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, customMarshaler),
 	)
 
 	// Create gRPC dial options with proper credentials and settings
@@ -123,7 +280,6 @@ func (g *Gateway) Start(ctx context.Context,
 		if g.opts.keyPath != "" && g.opts.certPath != "" {
 			err = g.httpServer.ListenAndServeTLS(g.opts.certPath, g.opts.keyPath)
 		} else {
-			g.logger.Info("starting gateway with HTTP (no TLS)")
 			err = g.httpServer.ListenAndServe()
 		}
 		if err != nil && err != http.ErrServerClosed {
