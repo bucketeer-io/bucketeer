@@ -16,6 +16,7 @@ package gateway
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -33,6 +34,112 @@ import (
 
 // HandlerRegistrar is a function that registers a gRPC-Gateway handler
 type HandlerRegistrar func(context.Context, *runtime.ServeMux, []grpc.DialOption) error
+
+// customJSONPb is a custom JSONPb that handles both boolean and string representations of boolean fields
+type customJSONPb struct {
+	runtime.JSONPb
+}
+
+// Unmarshal implements the custom unmarshaling logic
+// TODO: This is a temporary solution until the Android SDK is updated to use the correct boolean type
+func (c *customJSONPb) Unmarshal(data []byte, v interface{}) error {
+	// First try to unmarshal with the default protojson unmarshaler
+	err := c.JSONPb.Unmarshal(data, v)
+	if err == nil {
+		return nil
+	}
+
+	// Save the original error for later use
+	originalErr := err
+
+	// Try to handle boolean strings at the top level
+	var strVal string
+	if err := json.Unmarshal(data, &strVal); err == nil {
+		// Check if it's a boolean string
+		switch strVal {
+		case "true", "True", "TRUE", "1":
+			return c.JSONPb.Unmarshal([]byte("true"), v)
+		case "false", "False", "FALSE", "0":
+			return c.JSONPb.Unmarshal([]byte("false"), v)
+		default:
+			// Not a boolean string, return the original error
+			return originalErr
+		}
+	}
+
+	// Try to handle nested structures with boolean strings
+	var rawData interface{}
+	if err := json.Unmarshal(data, &rawData); err != nil {
+		// Can't parse as JSON at all, return the original protobuf error
+		return originalErr
+	}
+
+	// Convert boolean strings in the data structure
+	if modified := convertBooleanStrings(rawData); modified {
+		// Re-marshal the modified data
+		modifiedData, err := json.Marshal(rawData)
+		if err != nil {
+			return originalErr
+		}
+
+		// Try to unmarshal again with the modified data
+		if err := c.JSONPb.Unmarshal(modifiedData, v); err == nil {
+			return nil
+		}
+	}
+
+	// Return the original error if nothing worked
+	return originalErr
+}
+
+// convertBooleanStrings recursively converts string representations of booleans to actual booleans
+// Returns true if any modifications were made
+func convertBooleanStrings(data interface{}) bool {
+	modified := false
+
+	switch v := data.(type) {
+	case map[string]interface{}:
+		// Handle JSON objects
+		for key, value := range v {
+			if strVal, ok := value.(string); ok {
+				switch strVal {
+				case "true", "True", "TRUE", "1":
+					v[key] = true
+					modified = true
+				case "false", "False", "FALSE", "0":
+					v[key] = false
+					modified = true
+				}
+			} else {
+				// Recursively process nested structures
+				if convertBooleanStrings(value) {
+					modified = true
+				}
+			}
+		}
+	case []interface{}:
+		// Handle JSON arrays
+		for i, value := range v {
+			if strVal, ok := value.(string); ok {
+				switch strVal {
+				case "true", "True", "TRUE", "1":
+					v[i] = true
+					modified = true
+				case "false", "False", "FALSE", "0":
+					v[i] = false
+					modified = true
+				}
+			} else {
+				// Recursively process nested structures
+				if convertBooleanStrings(value) {
+					modified = true
+				}
+			}
+		}
+	}
+
+	return modified
+}
 
 type Gateway struct {
 	httpServer *http.Server
@@ -67,12 +174,14 @@ func (g *Gateway) Start(ctx context.Context,
 	// Create a new ServeMux for the REST gateway
 	mux := runtime.NewServeMux(
 		runtime.WithErrorHandler(runtime.DefaultHTTPErrorHandler),
-		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
-			MarshalOptions: protojson.MarshalOptions{
-				EmitUnpopulated: true,
-			},
-			UnmarshalOptions: protojson.UnmarshalOptions{
-				DiscardUnknown: true,
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &customJSONPb{
+			JSONPb: runtime.JSONPb{
+				MarshalOptions: protojson.MarshalOptions{
+					EmitUnpopulated: true,
+				},
+				UnmarshalOptions: protojson.UnmarshalOptions{
+					DiscardUnknown: true,
+				},
 			},
 		}),
 	)
