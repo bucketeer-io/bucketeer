@@ -69,6 +69,25 @@ var (
 	errUnknownTimeRange = errors.New("eventcounter: a time range is unknown")
 )
 
+type options struct {
+	logger   *zap.Logger
+	useMySQL bool
+}
+
+type Option func(*options)
+
+func WithLogger(l *zap.Logger) Option {
+	return func(opts *options) {
+		opts.logger = l
+	}
+}
+
+func WithMySQL(useMySQL bool) Option {
+	return func(opts *options) {
+		opts.useMySQL = useMySQL
+	}
+}
+
 type eventCounterService struct {
 	experimentClient             experimentclient.Client
 	featureClient                featureclient.Client
@@ -94,20 +113,37 @@ func NewEventCounterService(
 	redis cache.MultiGetDeleteCountCache,
 	loc *time.Location,
 	l *zap.Logger,
+	opts ...Option,
 ) rpc.Service {
+	dopts := &options{
+		logger:   l,
+		useMySQL: false,
+	}
+	for _, opt := range opts {
+		opt(dopts)
+	}
+
 	registerMetrics(r)
+
+	var eventStorage v2ecstorage.EventStorage
+	if dopts.useMySQL {
+		eventStorage = v2ecstorage.NewMySQLEventStorage(mc, dopts.logger)
+	} else {
+		eventStorage = v2ecstorage.NewEventStorage(b, bigQueryDataSet, dopts.logger)
+	}
+
 	return &eventCounterService{
 		experimentClient:             e,
 		featureClient:                f,
 		accountClient:                a,
-		eventStorage:                 v2ecstorage.NewEventStorage(b, bigQueryDataSet, l),
+		eventStorage:                 eventStorage,
 		mysqlExperimentResultStorage: v2ecstorage.NewExperimentResultStorage(mc),
 		mysqlMAUSummaryStorage:       v2ecstorage.NewMAUSummaryStorage(mc),
 		userCountStorage:             v2ecstorage.NewUserCountStorage(mc),
 		metrics:                      r,
 		evaluationCountCacher:        cachev3.NewEventCountCache(redis),
 		location:                     loc,
-		logger:                       l.Named("api"),
+		logger:                       dopts.logger.Named("api"),
 	}
 }
 
