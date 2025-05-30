@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { AutoOpsCount, AutoOpsRule, Rollout } from '@types';
 import { OperationModalState } from '../..';
 import { OperationCombinedType } from '../../types';
+import { EmptyCollection } from '../collection-layout/empty-collection';
 import Operation from '../operation';
 
 const CompletedContent = ({
@@ -53,8 +54,10 @@ const CompletedContent = ({
         ...scheduleCompletedData,
         ...rolloutCompletedData
       ] as OperationCombinedType[],
-    [scheduleCompletedData, eventRateCompletedData]
+    [scheduleCompletedData, eventRateCompletedData, rolloutCompletedData]
   );
+
+  if (!operationData.length) return <EmptyCollection />;
 
   return (
     <div className="flex flex-col w-full gap-y-6 pb-6">

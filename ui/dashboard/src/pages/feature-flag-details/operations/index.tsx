@@ -30,6 +30,7 @@ import ProgressiveRolloutModal from './elements/operation-modals/rollout';
 import RolloutCloneModal from './elements/operation-modals/rollout-clone';
 import ScheduleOperationModal from './elements/operation-modals/schedule-operation';
 import StopOperationModal from './elements/operation-modals/stop-operation';
+import Overview from './elements/overview';
 import { OperationActionType, OperationTab, OpsTypeMap } from './types';
 
 export interface OperationModalState {
@@ -274,10 +275,23 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
   return (
     <div className="flex flex-col w-full gap-y-4 min-w-[900px]">
-      <Filter
-        action={<OperationActions onOperationActions={onOperationActions} />}
-        className="justify-end"
-        link={DOCUMENTATION_LINKS.FLAG_OPERATION}
+      <div className="flex flex-wrap items-center justify-between w-full gap-6 px-6">
+        <p className="flex flex-1 typo-head-bold-big text-gray-800 xl:whitespace-nowrap">
+          {t('table:feature-flags:operations-desc')}
+        </p>
+        <Filter
+          action={<OperationActions onOperationActions={onOperationActions} />}
+          className="justify-end w-fit px-0"
+          link={DOCUMENTATION_LINKS.FLAG_OPERATION}
+        />
+      </div>
+      <Overview
+        onOperationActions={operationType =>
+          onOperationActions({
+            operationType,
+            actionType: 'NEW'
+          })
+        }
       />
       {isRolloutLoading || isOperationLoading ? (
         <FormLoading />
@@ -333,19 +347,6 @@ const Operations = ({ feature }: { feature: Feature }) => {
           selectedData={operationModalState?.selectedData as AutoOpsRule}
           onClose={onCloseActionModal}
           onSubmitOperationSuccess={onSubmitOperationSuccess}
-        />
-      )}
-      {isRolloutAction && isOpenModalAction && feature && (
-        <ProgressiveRolloutModal
-          isOpen={isRolloutAction}
-          feature={feature}
-          urlCode={currentEnvironment.urlCode}
-          environmentId={currentEnvironment.id}
-          actionType={operationModalState.actionType}
-          selectedData={operationModalState?.selectedData as Rollout}
-          rollouts={rollouts}
-          onClose={onCloseActionModal}
-          onSubmitRolloutSuccess={onSubmitRolloutSuccess}
         />
       )}
       {isRolloutAction &&

@@ -31,6 +31,7 @@ import {
   OperationActionType,
   ScheduleItem
 } from 'pages/feature-flag-details/types';
+import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Form from 'components/form';
@@ -121,8 +122,13 @@ const ProgressiveRolloutModal = ({
 
   const variationOptions = useMemo(
     () =>
-      feature.variations.map(item => ({
-        label: item.name || item.value,
+      feature.variations.map((item, index) => ({
+        label: (
+          <div className="flex items-center gap-x-2 pl-0.5">
+            <FlagVariationPolygon index={index} />
+            <p className="-mt-0.5">{item.name || item.value}</p>
+          </div>
+        ),
         value: item.id
       })),
     [feature]
@@ -200,7 +206,6 @@ const ProgressiveRolloutModal = ({
         }
 
         const resp = await rolloutCreator(payload);
-
         if (resp) {
           notify({
             message: t('message:operation.created')

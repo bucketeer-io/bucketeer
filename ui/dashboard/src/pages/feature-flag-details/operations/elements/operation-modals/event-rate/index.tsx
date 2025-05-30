@@ -17,6 +17,7 @@ import {
 } from 'pages/feature-flag-details/operations/form-schema';
 import { OperationActionType } from 'pages/feature-flag-details/operations/types';
 import { createEventRate } from 'pages/feature-flag-details/operations/utils';
+import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import {
@@ -120,8 +121,13 @@ const EventRateOperationModal = ({
 
   const variationOptions = useMemo(
     () =>
-      feature.variations.map(item => ({
-        label: item.name || item.value,
+      feature.variations.map((item, index) => ({
+        label: (
+          <div className="flex items-center gap-x-2 pl-0.5">
+            <FlagVariationPolygon index={index} />
+            <p className="-mt-0.5">{item.name || item.value}</p>
+          </div>
+        ),
         value: item.id
       })),
     [feature]

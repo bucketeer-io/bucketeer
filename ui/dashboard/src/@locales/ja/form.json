@@ -234,6 +234,9 @@
   "template": "Template",
   "manual": "Manual",
   "increments": "Increments",
+  "increment": "Increment",
+  "weight": "Weight",
+  "execute-at": "Execute at",
   "frequency": "Frequency",
   "hourly": "Hourly",
   "daily": "Daily",
@@ -268,6 +271,5 @@
       "execute-at": "The exact date and time when this rollout phase will take effect, updating the user distribution."
     }
   },
-  "has-rollout-running": "There is a <comp>Progressive Rollout</comp> in progress. It will stop it.",
-  "flag-variation": "Flag Variation"
+  "has-rollout-running": "There is a <comp>Progressive Rollout</comp> in progress. It will stop it."
 }

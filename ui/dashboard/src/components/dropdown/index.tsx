@@ -20,12 +20,17 @@ import Input, { InputProps } from 'components/input';
 export type DropdownValue = number | string;
 
 export type DropdownOption = {
-  label: string;
+  label: ReactNode;
   value: DropdownValue;
   icon?: FunctionComponent;
   description?: boolean;
   haveCheckbox?: boolean;
-  [key: string]: DropdownValue | boolean | FunctionComponent | undefined;
+  [key: string]:
+    | DropdownValue
+    | boolean
+    | FunctionComponent
+    | undefined
+    | ReactNode;
 };
 
 const DropdownMenu = DropdownMenuPrimitive.Root;

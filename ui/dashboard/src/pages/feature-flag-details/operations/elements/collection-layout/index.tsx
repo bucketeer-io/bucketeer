@@ -3,7 +3,6 @@ import { OperationModalState } from '../..';
 import { OperationTab } from '../../types';
 import ActiveContent from '../active';
 import CompletedContent from '../completed';
-import Overview from '../overview';
 
 const CollectionLayout = ({
   currentTab,
@@ -20,14 +19,6 @@ const CollectionLayout = ({
 }) => {
   return (
     <div>
-      <Overview
-        onOperationActions={operationType =>
-          onOperationActions({
-            operationType,
-            actionType: 'NEW'
-          })
-        }
-      />
       {currentTab === OperationTab.ACTIVE && (
         <ActiveContent
           opsCounts={opsCounts}

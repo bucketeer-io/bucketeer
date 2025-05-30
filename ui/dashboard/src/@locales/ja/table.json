@@ -70,7 +70,9 @@
     "feature-flags-desc": "There are no registered feature flags. Add a new one to start managing.",
     "notifications": "No notifications to show just yet, but don't worry, we're here to keep you in the loop.",
     "audit-logs-title": "No registered audit logs",
-    "audit-logs-desc": "There are no audit logs for this environment."
+    "audit-logs-desc": "There are no audit logs for this environment.",
+    "flag-operations-title": "No registered operations",
+    "flag-operations-desc": "There are no operations for this feature flag."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",

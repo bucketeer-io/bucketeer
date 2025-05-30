@@ -5,6 +5,8 @@ import { ActionTypeMap, ScheduleItem } from './types';
 
 export const createInitialDatetimeClause = (lastTime?: number) => ({
   time: dayjs(lastTime ? new Date(lastTime) : new Date())
+    .set('second', 0)
+    .set('millisecond', 0)
     .add(1, 'hour')
     .toDate()
 });

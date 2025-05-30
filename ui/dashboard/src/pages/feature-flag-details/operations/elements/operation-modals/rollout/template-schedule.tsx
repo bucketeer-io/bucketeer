@@ -187,7 +187,7 @@ const TemplateSchedule = ({
           render={({ field }) => (
             <Form.Item className="py-0 flex-1 h-full">
               <Form.Label required className="relative w-fit">
-                {t('increments')}
+                {t('increment')}
                 <Tooltip
                   align="start"
                   alignOffset={-73}
@@ -283,27 +283,33 @@ const TemplateSchedule = ({
           )}
         />
       </div>
-      <div className="flex flex-col w-full gap-y-3">
-        {scheduleList?.map((item, index) => (
-          <div key={index} className="flex items-center w-full gap-x-4">
-            <div className="flex flex-1">
-              <InputGroup
-                className="w-full"
-                addonSlot="right"
-                addonSize="md"
-                addon={'%'}
-              >
-                <Input value={item.weight} className="pr-8" disabled />
-              </InputGroup>
+      <div className="flex flex-col w-full">
+        <div className="flex items-center w-full gap-x-4">
+          <Form.Label className="flex flex-1">{t('weight')}</Form.Label>
+          <Form.Label className="flex flex-1">{t('execute-at')}</Form.Label>
+        </div>
+        <div className="flex flex-col w-full gap-y-3">
+          {scheduleList?.map((item, index) => (
+            <div key={index} className="flex items-center w-full gap-x-4">
+              <div className="flex flex-1">
+                <InputGroup
+                  className="w-full"
+                  addonSlot="right"
+                  addonSize="md"
+                  addon={'%'}
+                >
+                  <Input value={item.weight} className="pr-8" disabled />
+                </InputGroup>
+              </div>
+              <div className="flex flex-1">
+                <ReactDatePicker
+                  selected={item.executeAt ?? null}
+                  disabled={true}
+                />
+              </div>
             </div>
-            <div className="flex flex-1">
-              <ReactDatePicker
-                selected={item.executeAt ?? null}
-                disabled={true}
-              />
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
