@@ -40,7 +40,7 @@ data:
                     address:
                       socket_address:
                         address: localhost
-                        port_value: 9090
+                        port_value: {{ .Values.env.port }}
           dns_lookup_family: V4_ONLY
           lb_policy: {{ .Values.envoy.lbPolicy }}
           typed_extension_protocol_options:
@@ -97,6 +97,44 @@ data:
                       filename: /usr/local/certs/service/tls.crt
                     private_key:
                       filename: /usr/local/certs/service/tls.key
+          type: strict_dns
+        - name: api-grpc-gateway
+          connect_timeout: 5s
+          ignore_health_on_host_removal: true
+          circuit_breakers:
+            thresholds:
+              - priority: DEFAULT
+                max_retries: 3
+                max_pending_requests: {{ .Values.envoy.circuitBreaker.maxPendingRequests }}
+                max_requests: {{ .Values.envoy.circuitBreaker.maxRequests }}
+                max_connections: {{ .Values.envoy.circuitBreaker.maxConnections }}
+          load_assignment:
+            cluster_name: api-grpc-gateway
+            endpoints:
+              - lb_endpoints:
+                - endpoint:
+                    address:
+                      socket_address:
+                        address: localhost
+                        port_value: {{ .Values.env.grpcGatewayPort }}
+          dns_lookup_family: V4_ONLY
+          lb_policy: {{ .Values.envoy.lbPolicy }}
+          typed_extension_protocol_options:
+            envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+              '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+              explicit_http_config:
+                http2_protocol_options: {}
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+              common_tls_context:
+                alpn_protocols: ["h2"]
+                tls_certificates:
+                - certificate_chain:
+                    filename: /usr/local/certs/service/tls.crt
+                  private_key:
+                    filename: /usr/local/certs/service/tls.key
           type: strict_dns
         - name: web
           connect_timeout: 5s
@@ -164,20 +202,12 @@ data:
                     - name: envoy.filters.http.grpc_web
                       typed_config:
                         "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_web.v3.GrpcWeb
-                    - name: envoy.filters.http.grpc_json_transcoder
-                      typed_config:
-                        "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                        proto_descriptor: /usr/local/secret/gateway_proto_descriptor.pb
-                        services:
-                          - bucketeer.gateway.Gateway
-                        print_options:
-                          always_print_primitive_fields: true
                     - name: envoy.filters.http.router
                       typed_config:
                         "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
                   route_config:
                     virtual_hosts:
-                      - name: ingress_services
+                      - name: gateway_services
                         domains:
                           - "*"
                         typed_per_filter_config:
@@ -186,30 +216,50 @@ data:
                             allow_origin_string_match:
                               - prefix: "*"
                             allow_headers: "content-type, x-grpc-web, authorization"
-                            allow_methods: "GET,POST,PATCH,DELETE"
+                            allow_methods: "GET,POST,PATCH,DELETE,OPTIONS"
                             allow_credentials: true
                             max_age: "86400"
                         routes:
+                          # Health check endpoint
                           - match:
-                              prefix: /v1/gateway
-                              headers:
-                                - name: content-type
-                                  string_match:
-                                    exact: application/json
-                            route:
-                              cluster: api-rest-v1
-                              timeout: 15s
-                              retry_policy:
-                                retry_on: 5xx
-                                num_retries: 3
-                          - match:
-                              prefix: /
+                              prefix: /health
                             route:
                               cluster: api
                               timeout: 15s
+                          # API REST v1 Gateway routes (Deprecated)
+                          - match:
+                              prefix: /v1/gateway
+                            route:
+                              cluster: api-rest-v1
+                              timeout: 60s
                               retry_policy:
-                                retry_on: 5xx
+                                retry_on: 5xx,connect-failure,reset,gateway-error
                                 num_retries: 3
+                                per_try_timeout: 5s
+                          # All gRPC requests
+                          - match:
+                              headers:
+                                - name: content-type
+                                  string_match:
+                                    prefix: application/grpc
+                              prefix: /bucketeer.gateway.Gateway
+                            route:
+                              cluster: api
+                              timeout: 60s
+                              retry_policy:
+                                retry_on: 5xx,connect-failure,reset,gateway-error
+                                num_retries: 3
+                                per_try_timeout: 5s
+                          # All other requests for API REST v1
+                          - match:
+                              prefix: /
+                            route:
+                              cluster: api-grpc-gateway
+                              timeout: 60s
+                              retry_policy:
+                                retry_on: 5xx,connect-failure,reset,gateway-error
+                                num_retries: 3
+                                per_try_timeout: 5s
               transport_socket:
                 name: envoy.transport_sockets.tls
                 typed_config:

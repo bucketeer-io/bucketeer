@@ -104,11 +104,14 @@ message UpdateAutoOpsRuleRequest {
                         .openapiv2_field) = {
       description: "The clause ID, if not set, a new event rate clause will be created."
     }];
-    google.protobuf.BoolValue deleted = 2
-        [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-          description: "If true, the clause will be deleted."
-        }];
-    OpsEventRateClause clause = 3;
+    google.protobuf.BoolValue deleted = 2 [(grpc.gateway.protoc_gen_openapiv2
+                                                .options.openapiv2_field) = {
+      description: "If true and the number of clause is greater than 1, the clause will be deleted"
+    }];
+    OpsEventRateClause clause = 3 [(grpc.gateway.protoc_gen_openapiv2.options
+                                        .openapiv2_field) = {
+      description: "The clause value, must be fully filled if update or create clause action is requested."
+    }];
   }
 
   message UpdateDatetimeClause {
@@ -116,11 +119,14 @@ message UpdateAutoOpsRuleRequest {
                         .openapiv2_field) = {
       description: "The clause ID, if not set, a new date time clause will be created."
     }];
-    google.protobuf.BoolValue deleted = 2
-        [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-          description: "If true, the clause will be deleted."
-        }];
-    DatetimeClause clause = 3;
+    google.protobuf.BoolValue deleted = 2 [(grpc.gateway.protoc_gen_openapiv2
+                                                .options.openapiv2_field) = {
+      description: "If true and the number of clause is greater than 1, the clause will be deleted"
+    }];
+    DatetimeClause clause = 3 [(grpc.gateway.protoc_gen_openapiv2.options
+                                    .openapiv2_field) = {
+      description: "The clause value, must be fully filled if update or create clause action is requested."
+    }];
   }
 
   reserved 1;
@@ -583,7 +589,39 @@ service AutoOpsService {
       }
     };
   }
-  rpc ListOpsCounts(ListOpsCountsRequest) returns (ListOpsCountsResponse) {}
+  rpc ListOpsCounts(ListOpsCountsRequest) returns (ListOpsCountsResponse) {
+    option (google.api.http) = {
+      get: "/v1/auto_ops_rule/ops_counts"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Ops Counts"
+      description: "List ops counts."
+      tags: "ops_count"
+      operation_id: "web.v1.auto_ops_rule.list_ops_counts"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc CreateProgressiveRollout(CreateProgressiveRolloutRequest)
       returns (CreateProgressiveRolloutResponse) {
     option (google.api.http) = {

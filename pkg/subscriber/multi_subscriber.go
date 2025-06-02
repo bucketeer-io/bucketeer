@@ -27,14 +27,16 @@ type MultiSubscriber struct {
 }
 
 func NewMultiSubscriber(opts ...Option) *MultiSubscriber {
-	options := defaultOptions
-	for _, o := range opts {
-		o(&options)
+	dopts := options{
+		logger: zap.NewNop(),
+	}
+	for _, opt := range opts {
+		opt(&dopts)
 	}
 	return &MultiSubscriber{
 		subscribers: make([]Subscriber, 0, 10),
-		opts:        options,
-		logger:      options.logger.Named("multi_subscriber"),
+		opts:        dopts,
+		logger:      dopts.logger.Named("multi_subscriber"),
 	}
 }
 

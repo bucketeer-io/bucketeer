@@ -119,7 +119,6 @@ func (s *tagStorage) ListTags(
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectTagsSQL, whereSQL, orderBySQL, limitOffsetSQL)
-
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
