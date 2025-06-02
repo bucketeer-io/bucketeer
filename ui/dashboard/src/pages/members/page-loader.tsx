@@ -18,7 +18,7 @@ import { MemberActionsType } from './types';
 
 const PageLoader = () => {
   const { notify } = useToast();
-  const { t } = useTranslation(['table']);
+  const { t } = useTranslation(['table', 'message', 'common']);
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -52,14 +52,10 @@ const PageLoader = () => {
       onCloseDeleteModal();
       invalidateAccounts(queryClient);
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{selectedMember?.email}</b>
-            {` has been deleted successfully!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('common:member'),
+          action: t('common:deleted')
+        })
       });
       mutation.reset();
     }

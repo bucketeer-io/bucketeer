@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react';
+import { useTranslation } from 'i18n';
 import { ButtonProps } from 'components/button';
 import EmptyState from 'elements/empty-state';
 
@@ -24,19 +25,21 @@ export const NoResultsCollection = ({
   buttonText?: string;
   onClear?: () => void;
 }) => {
+  const { t } = useTranslation(['message']);
+
   return (
     <EmptyState.Root variant="no-search" size="lg">
       <EmptyState.Illustration />
       <EmptyState.Body>
-        <EmptyState.Title>{`No results found`}</EmptyState.Title>
+        <EmptyState.Title>{t('no-results-found')}</EmptyState.Title>
         <EmptyState.Description>
-          {description || `We couldn't find what you're looking for`}
+          {description || t('could-not-find-filter')}
         </EmptyState.Description>
       </EmptyState.Body>
       {onClear && (
         <EmptyState.Actions>
           <EmptyState.ActionButton variant={buttonVariant} onClick={onClear}>
-            {buttonText || `Clear search & filters`}
+            {buttonText || t('clear-search-filters')}
           </EmptyState.ActionButton>
         </EmptyState.Actions>
       )}

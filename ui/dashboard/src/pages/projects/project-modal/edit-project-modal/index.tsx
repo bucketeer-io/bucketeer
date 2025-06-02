@@ -3,6 +3,7 @@ import { projectUpdater } from '@api/project';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -26,7 +27,7 @@ export interface EditProjectForm {
 }
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
+  name: yup.string().required(requiredMessage),
   description: yup.string()
 });
 
@@ -36,8 +37,8 @@ const EditProjectModal = ({
   project
 }: EditProjectModalProps) => {
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['common', 'form', 'message']);
+  const { notify, errorNotify } = useToast();
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -57,22 +58,15 @@ const EditProjectModal = ({
       if (resp) {
         invalidateProjects(queryClient);
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {`has been successfully updated!`}
-            </span>
-          )
+          message: t('message:collection-action-success', {
+            collection: t('project'),
+            action: t('updated')
+          })
         });
         onClose();
       }
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message
-      });
+      errorNotify(error);
     }
   };
 

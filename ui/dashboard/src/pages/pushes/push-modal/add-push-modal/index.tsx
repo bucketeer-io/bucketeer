@@ -5,6 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidatePushes } from '@queries/pushes';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
@@ -41,18 +42,18 @@ export interface AddPushForm {
 }
 
 export const formSchema = yup.object().shape({
-  name: yup.string().required(),
-  fcmServiceAccount: yup.string().required(),
-  tags: yup.array().required(),
-  environmentId: yup.string().required()
+  name: yup.string().required(requiredMessage),
+  fcmServiceAccount: yup.string().required(requiredMessage),
+  tags: yup.array().required(requiredMessage),
+  environmentId: yup.string().required(requiredMessage)
 });
 
 const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['common', 'form', 'message']);
+  const { notify, errorNotify } = useToast();
 
   const [files, setFiles] = useState<File[]>([]);
 
@@ -95,25 +96,17 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
       covertFileToByteString(files[0], data => {
         pushCreator({ ...values, fcmServiceAccount: data }).then(() => {
           notify({
-            toastType: 'toast',
-            messageType: 'success',
-            message: (
-              <span>
-                <b>{values.name}</b> {` has been successfully created!`}
-              </span>
-            )
+            message: t('message:collection-action-success', {
+              collection: t('push-notification'),
+              action: t('created')
+            })
           });
           invalidatePushes(queryClient);
           onClose();
         });
       });
     } catch (error) {
-      const errorMessage = (error as Error)?.message;
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: errorMessage || 'Something went wrong.'
-      });
+      errorNotify(error);
     }
   };
 

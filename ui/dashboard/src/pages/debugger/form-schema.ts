@@ -1,6 +1,5 @@
+import { requiredMessage } from 'constants/message';
 import * as yup from 'yup';
-
-const requiredMessage = 'This field is required.';
 
 export const addDebuggerFormSchema = yup.object().shape({
   flags: yup

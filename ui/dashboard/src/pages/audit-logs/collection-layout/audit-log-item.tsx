@@ -50,7 +50,7 @@ const AuditLogItem = memo(
       entityType
     } = auditLog;
     const isLanguageJapanese = getLanguage() === 'ja';
-    const { t } = useTranslation(['common', 'table']);
+    const { t } = useTranslation(['common', 'table', 'message']);
     const { notify } = useToast();
 
     const { consoleAccount } = useAuth();
@@ -131,9 +131,7 @@ const AuditLogItem = memo(
         );
 
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: <span>{`Copied!`}</span>
+          message: t('message:copied')
         });
       },
       [currentEnvironment, params]

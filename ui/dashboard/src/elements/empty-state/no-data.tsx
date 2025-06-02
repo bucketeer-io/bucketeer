@@ -1,3 +1,4 @@
+import { translation } from 'constants/message';
 import EmptyState, { type EmptyStateProps } from 'elements/empty-state';
 
 interface NoDataStateProps {
@@ -9,8 +10,8 @@ interface NoDataStateProps {
 
 export const NoDataState = ({
   size = 'md',
-  title = `No Data`,
-  description = `Your data will appear here!`,
+  title = translation('message:no-data'),
+  description = translation('data-appear'),
   onAdd
 }: NoDataStateProps) => {
   return (
@@ -24,7 +25,7 @@ export const NoDataState = ({
         {onAdd && (
           <EmptyState.Actions>
             <EmptyState.ActionButton onClick={onAdd}>
-              {`Add`}
+              {translation(`common:add`)}
             </EmptyState.ActionButton>
           </EmptyState.Actions>
         )}

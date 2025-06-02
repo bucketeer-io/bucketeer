@@ -56,7 +56,9 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
             <Trans
               i18nKey="goal-connected-desc"
               values={{
-                type: isExprimentType ? 'Experiment' : 'Operation'
+                type: t(
+                  isExprimentType ? 'source-type.experiment' : 'operation'
+                )
               }}
             />
           </div>

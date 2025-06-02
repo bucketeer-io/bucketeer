@@ -144,7 +144,7 @@ const AuditLogDetailsModal = ({
             <Trans
               i18nKey={'form:not-found-entity'}
               values={{
-                entity: 'Audit Log'
+                entity: t('audit-log')
               }}
             />
           </div>

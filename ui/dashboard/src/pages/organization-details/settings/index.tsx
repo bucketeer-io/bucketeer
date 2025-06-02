@@ -40,9 +40,9 @@ const OrganizationSettings = ({
 }: {
   organization: Organization;
 }) => {
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const params = useParams();
   const orgDetailsId = params.organizationId!;
   const { data: accounts } = useQueryAccounts({
@@ -75,21 +75,14 @@ const OrganizationSettings = ({
         invalidateOrganizationDetails(queryClient, { id: orgDetailsId });
         invalidateAccounts(queryClient);
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {`has been successfully updated!`}
-            </span>
-          )
+          message: t('message:collection-action-success', {
+            collection: t('organization'),
+            action: t('updated')
+          })
         });
       }
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message || 'Something went wrong.'
-      });
+      errorNotify(error);
     }
   };
 

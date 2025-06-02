@@ -19,7 +19,7 @@ interface Props {
 
 const EntityTypeDropdown = memo(
   ({ entityType, isSystemAdmin, onChangeFilters }: Props) => {
-    const { t } = useTranslation(['common', 'form']);
+    const { t } = useTranslation(['common', 'form', 'table']);
 
     const options = useMemo(() => {
       const {
@@ -109,7 +109,7 @@ const EntityTypeDropdown = memo(
             <Trans
               i18nKey={'form:kind-filter-value'}
               values={{
-                value: 'All'
+                value: t('table:code-refs.all')
               }}
             />
           }

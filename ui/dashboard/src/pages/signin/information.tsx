@@ -1,5 +1,6 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { requiredMessage, translation } from 'constants/message';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { UserInfoForm } from '@types';
@@ -11,13 +12,25 @@ import AuthWrapper from './elements/auth-wrapper';
 const formSchema = yup.object().shape({
   firstName: yup
     .string()
-    .required()
-    .min(2, 'The first name you have provided must have at least 2 characters'),
+    .required(requiredMessage)
+    .min(
+      2,
+      translation('message:validation.name-at-least-characters', {
+        count: 2,
+        name: translation('common:first-name').toLowerCase()
+      })
+    ),
   lastName: yup
     .string()
-    .required()
-    .min(2, 'The last name you have provided must have at least 2 characters'),
-  language: yup.string().required()
+    .required(requiredMessage)
+    .min(
+      2,
+      translation('message:validation.name-at-least-characters', {
+        count: 2,
+        name: translation('common:first-name').toLowerCase()
+      })
+    ),
+  language: yup.string().required(requiredMessage)
 });
 
 const UserInformation = () => {

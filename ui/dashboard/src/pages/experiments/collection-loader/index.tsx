@@ -1,6 +1,7 @@
 import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
+import { useTranslation } from 'i18n';
 import { Experiment } from '@types';
 import { useSearchParams } from 'utils/search-params';
 import Pagination from 'components/pagination';
@@ -27,6 +28,7 @@ const CollectionLoader = ({
   onAdd: () => void;
   onActions: (item: Experiment, type: ExperimentActionsType) => void;
 }) => {
+  const { t } = useTranslation(['message']);
   const columns = useColumns({ onActions });
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -64,7 +66,7 @@ const CollectionLoader = ({
         filters.isFilter ||
         (!!searchOptions?.statuses?.length && !filters?.filterByTab)
       }
-      description="No experiments match your search filters. Try changing your filters."
+      description={t('message:empty:experiment-match')}
       onClear={() => {
         setFilters(
           {

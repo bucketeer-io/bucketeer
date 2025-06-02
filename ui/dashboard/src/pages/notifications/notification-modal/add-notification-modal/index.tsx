@@ -10,6 +10,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateNotifications } from '@queries/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { requiredMessage, translation } from 'constants/message';
 import { languageList } from 'constants/notification';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -59,12 +60,19 @@ export interface AddNotificationForm {
 }
 
 export const formSchema = yup.object().shape({
-  name: yup.string().required(),
-  url: yup.string().required().url('Must be a valid URL'),
-  environment: yup.string().required(),
+  name: yup.string().required(requiredMessage),
+  url: yup
+    .string()
+    .required(requiredMessage)
+    .url(
+      translation('message:validation.id-rule', {
+        name: translation('common:url')
+      })
+    ),
+  environment: yup.string().required(requiredMessage),
   tags: yup.array(),
-  language: yup.mixed<NotificationLanguage>().required(),
-  types: yup.array().min(1, 'Required').required()
+  language: yup.mixed<NotificationLanguage>().required(requiredMessage),
+  types: yup.array().min(1, requiredMessage).required(requiredMessage)
 });
 
 const AddNotificationModal = ({
@@ -73,7 +81,7 @@ const AddNotificationModal = ({
 }: AddNotificationModalProps) => {
   const { notify } = useToast();
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -208,13 +216,10 @@ const AddNotificationModal = ({
       featureFlagTags: values.tags
     }).then(() => {
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {` has been successfully created!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('notification'),
+          action: t('created')
+        })
       });
       invalidateNotifications(queryClient);
       onClose();

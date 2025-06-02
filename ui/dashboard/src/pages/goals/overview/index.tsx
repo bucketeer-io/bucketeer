@@ -3,14 +3,14 @@ import { IconExperiment, IconNotInUse, IconOperation } from '@icons';
 import OverviewCard from 'elements/overview-card';
 
 const Overview = () => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'table']);
   return (
     <div className="flex flex-wrap items-center w-full gap-6 pb-8">
       <OverviewCard
         title={t('experiments-connected')}
         count={10}
         highlightText="+12%"
-        description="from last month"
+        description={t('table:from-last-month')}
         color="brand"
         icon={IconExperiment}
       />
@@ -18,7 +18,7 @@ const Overview = () => {
         title={t('operations-connected')}
         count={10}
         highlightText="+12%"
-        description="from last month"
+        description={t('table:from-last-month')}
         color="pink"
         icon={IconOperation}
       />
@@ -26,7 +26,7 @@ const Overview = () => {
         title={t('not-in-use')}
         count={5}
         highlightText="+12%"
-        description="from last month"
+        description={t('table:from-last-month')}
         color="brand"
         icon={IconNotInUse}
       />

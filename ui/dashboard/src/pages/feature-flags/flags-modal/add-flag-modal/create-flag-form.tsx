@@ -7,7 +7,7 @@ import { invalidateFeatures } from '@queries/features';
 import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { AxiosError } from 'axios';
+import { translation } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
@@ -69,17 +69,17 @@ const defaultVariations: FeatureVariation[] = [
 
 export const flagTypeOptions = [
   {
-    label: 'Boolean',
+    label: translation('form:boolean'),
     value: 'BOOLEAN',
     icon: IconFlagSwitch
   },
   {
-    label: 'String',
+    label: translation('form:string'),
     value: 'STRING',
     icon: IconFlagString
   },
   {
-    label: 'Number',
+    label: translation('form:number'),
     value: 'NUMBER',
     icon: IconFlagNumber
   },
@@ -103,8 +103,8 @@ const CreateFlagForm = ({
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['common', 'form', 'message']);
+  const { notify, errorNotify } = useToast();
 
   const { data: collection, isLoading: isLoadingTags } = useQueryTags({
     params: {
@@ -193,22 +193,17 @@ const CreateFlagForm = ({
       });
       if (resp) {
         notify({
-          message: 'Feature flag created successfully.'
+          message: t('message:collection-action-success', {
+            collection: t('source-type.feature-flag'),
+            action: t('updated')
+          })
         });
         invalidateFeatures(queryClient);
         onCompleted?.(resp.feature);
         onClose();
       }
     } catch (error) {
-      const _error = error as AxiosError;
-      const { status, message } = _error || {};
-      notify({
-        messageType: 'error',
-        message:
-          status === 409
-            ? 'The same data already exists'
-            : message || 'Something went wrong.'
-      });
+      errorNotify(error);
     }
   };
   return (

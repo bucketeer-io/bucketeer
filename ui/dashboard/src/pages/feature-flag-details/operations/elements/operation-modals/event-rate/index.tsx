@@ -194,7 +194,10 @@ const EventRateOperationModal = ({
         if (resp) {
           onSubmitOperationSuccess();
           notify({
-            message: t(`message:operation.${isCreate ? 'created' : 'updated'}`)
+            message: t(`message:collection-action-success`, {
+              collection: t('common:operation'),
+              action: t(`common:${isCreate ? 'created' : 'updated'}`)
+            })
           });
         }
       } catch (error) {

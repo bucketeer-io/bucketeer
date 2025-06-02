@@ -271,5 +271,8 @@
       "execute-at": "The exact date and time when this rollout phase will take effect, updating the user distribution."
     }
   },
-  "has-rollout-running": "There is a <comp>Progressive Rollout</comp> in progress. It will stop it."
+  "has-rollout-running": "There is a <comp>Progressive Rollout</comp> in progress. It will stop it.",
+  "boolean": "Boolean",
+  "string": "String",
+  "number": "Number"
 }

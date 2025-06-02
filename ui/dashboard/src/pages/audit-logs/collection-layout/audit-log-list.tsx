@@ -1,4 +1,5 @@
 import { memo, useCallback, useMemo } from 'react';
+import { useTranslation } from 'i18n';
 import { formatLongDateTime } from 'utils/date-time';
 import { ExpandOrCollapse } from '../types';
 import AuditLogItem from './audit-log-item';
@@ -16,6 +17,8 @@ const AuditLogList = memo(
     expandedItems: string[];
     onToggleExpandItem: (id: string) => void;
   }) => {
+    const { t } = useTranslation(['common']);
+
     const auditLogDates = useMemo(
       () => [...formattedAuditLogs.keys()],
       [formattedAuditLogs]
@@ -24,8 +27,8 @@ const AuditLogList = memo(
     const getDateLabel = useCallback((auditLogKey: string) => {
       const date = new Date(auditLogKey);
       const currentDate = new Date();
-      if (date.getDate() === currentDate.getDate()) return 'Today';
-      if (date.getDate() === currentDate.getDate() - 1) return 'Yesterday';
+      if (date.getDate() === currentDate.getDate()) return t('today');
+      if (date.getDate() === currentDate.getDate() - 1) return t('yesterday');
 
       return formatLongDateTime({
         value: Math.trunc(date.getTime() / 1000).toString(),
