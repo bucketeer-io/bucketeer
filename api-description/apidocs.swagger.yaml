@@ -1485,6 +1485,332 @@ paths:
           type: string
       tags:
         - Pushes
+  /v1/segment:
+    get:
+      summary: Get
+      description: Get a Segment. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.segments.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetSegmentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+      tags:
+        - Segments
+    delete:
+      summary: Delete
+      description: Delete a Segment. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.segments.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayDeleteSegmentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: false
+          type: string
+      tags:
+        - Segments
+    post:
+      summary: Create
+      description: Create a new Segment. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.segments.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateSegmentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateSegmentRequest'
+      tags:
+        - Segments
+    patch:
+      summary: Update
+      description: Update a Segment. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.segments.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateSegmentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateSegmentRequest'
+      tags:
+        - Segments
+  /v1/segment/bulk_upload_users:
+    post:
+      summary: Bulk Upload Segment Users
+      description: Bulk upload users to a Segment. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.segments.bulk_upload_users
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayBulkUploadSegmentUsersResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayBulkUploadSegmentUsersRequest'
+      tags:
+        - Segments
+  /v1/segments:
+    get:
+      summary: List
+      description: List Segments. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.segments.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListSegmentsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+            - CONNECTIONS
+            - USERS
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: status
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: isInUseStatus
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Segments
 definitions:
   AccountV2RoleOrganization:
     type: string
@@ -1776,6 +2102,19 @@ definitions:
         title: number or even json object
       description:
         type: string
+  bucketeergatewayBulkUploadSegmentUsersRequest:
+    type: object
+    properties:
+      segmentId:
+        type: string
+      data:
+        type: string
+        format: byte
+        description: segment user ids separated by comma or new line
+      state:
+        $ref: '#/definitions/featureSegmentUserState'
+  bucketeergatewayBulkUploadSegmentUsersResponse:
+    type: object
   bucketeergatewayCreateAccountV2Request:
     type: object
     properties:
@@ -1890,6 +2229,20 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
+  bucketeergatewayCreateSegmentRequest:
+    type: object
+    properties:
+      name:
+        type: string
+      description:
+        type: string
+    required:
+      - name
+  bucketeergatewayCreateSegmentResponse:
+    type: object
+    properties:
+      segment:
+        $ref: '#/definitions/featureSegment'
   bucketeergatewayDebugEvaluateFeaturesRequest:
     type: object
     properties:
@@ -1918,6 +2271,8 @@ definitions:
         items:
           type: string
   bucketeergatewayDeleteCodeReferenceResponse:
+    type: object
+  bucketeergatewayDeleteSegmentResponse:
     type: object
   bucketeergatewayGetAccountV2ByEnvironmentIDResponse:
     type: object
@@ -1949,6 +2304,11 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
+  bucketeergatewayGetSegmentResponse:
+    type: object
+    properties:
+      segment:
+        $ref: '#/definitions/featureSegment'
   bucketeergatewayListAccountsV2Response:
     type: object
     properties:
@@ -1991,6 +2351,19 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/pushPush'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  bucketeergatewayListSegmentsResponse:
+    type: object
+    properties:
+      segments:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureSegment'
       cursor:
         type: string
       totalCount:
@@ -2142,6 +2515,20 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
+  bucketeergatewayUpdateSegmentRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+  bucketeergatewayUpdateSegmentResponse:
+    type: object
+    properties:
+      segment:
+        $ref: '#/definitions/featureSegment'
   clientEvent:
     type: object
     properties:
@@ -2452,6 +2839,22 @@ definitions:
       - ASC
       - DESC
     default: ASC
+  featureListSegmentsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+      - CONNECTIONS
+      - USERS
+    default: DEFAULT
+  featureListSegmentsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
   featurePrerequisite:
     type: object
     properties:
@@ -2531,6 +2934,55 @@ definitions:
     required:
       - changeType
       - rule
+  featureSegment:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      rules:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureRule'
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      version:
+        type: string
+        format: int64
+      deleted:
+        type: boolean
+      includedUserCount:
+        type: string
+        format: int64
+      excludedUserCount:
+        type: string
+        format: int64
+      status:
+        $ref: '#/definitions/featureSegmentStatus'
+      isInUseStatus:
+        type: boolean
+        description: This field is set only when APIs return.
+      features:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureFeature'
+  featureSegmentStatus:
+    type: string
+    enum:
+      - INITIAL
+      - UPLOADING
+      - SUCEEDED
+      - FAILED
+    default: INITIAL
   featureSegmentUser:
     type: object
     properties:
