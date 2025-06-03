@@ -286,18 +286,21 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
           <AudienceTraffic />
           <TargetingDivider />
           <FlagSwitch feature={feature} setIsShowRules={setIsShowRules} />
-          <TargetingDivider />
           {(!feature.enabled || !enabledWatch) && (
-            <FlagOffDescription
-              isShowRules={isShowRules}
-              setIsShowRules={setIsShowRules}
-            />
+            <>
+              <TargetingDivider />
+              <FlagOffDescription
+                isShowRules={isShowRules}
+                setIsShowRules={setIsShowRules}
+              />
+            </>
           )}
           {isShowRules && (
             <>
               {(prerequisites?.length > 0 ||
                 hasPrerequisiteFlags?.length > 0) && (
                 <>
+                  <TargetingDivider />
                   <PrerequisiteRule
                     isDisableAddPrerequisite={isDisableAddPrerequisite}
                     features={activeFeatures}
@@ -309,21 +312,21 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
                       onAddRule(RuleCategory.PREREQUISITE)
                     }
                   />
-                  <TargetingDivider />
                 </>
               )}
               {(!prerequisitesWatch?.length || !individualRules?.length) && (
                 <>
+                  <TargetingDivider />
                   <AddRule
                     isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
                     isDisableAddIndividualRules={individualRules?.length > 0}
                     onAddRule={onAddRule}
                   />
-                  <TargetingDivider />
                 </>
               )}
               {individualRules?.length > 0 && (
                 <>
+                  <TargetingDivider />
                   <IndividualRule individualRules={individualRules} />
                   <TargetingDivider />
                   <AddRule
@@ -335,6 +338,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
               )}
               {segmentRules.length > 0 && (
                 <>
+                  <TargetingDivider />
                   <TargetSegmentRule
                     feature={feature}
                     features={features}
@@ -352,9 +356,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
               )}
             </>
           )}
-          {(segmentRules.length > 0 || individualRules.length > 0) && (
-            <TargetingDivider />
-          )}
+          <TargetingDivider />
           <DefaultRule
             urlCode={currentEnvironment.urlCode}
             feature={feature}

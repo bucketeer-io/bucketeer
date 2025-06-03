@@ -233,7 +233,6 @@ export const handleCheckSegmentRules = (
   segmentRules?: RuleSchema[]
 ) => {
   const ruleChanges: RuleChange[] = [];
-
   const getRuleItem = (rule: RuleSchema, type: FeatureChangeType) => {
     return {
       changeType: type,
@@ -288,25 +287,33 @@ export const handleCheckIndividualRules = (
   individualRules?: TargetingSchema['individualRules']
 ) => {
   const targetChanges: TargetChange[] = [];
+
   featureTargets.forEach(item => {
+    const { variation, users } = item;
+    const lengthUsers = users.length;
+
     const currentTarget = individualRules?.find(
-      rule => rule.variationId === item.variation
+      rule => rule.variationId === variation
     );
-    if (!currentTarget) {
+
+    const lengthTargetUsers = currentTarget?.users?.length || 0;
+
+    if (
+      (!currentTarget && lengthUsers) ||
+      (currentTarget &&
+        (lengthUsers > lengthTargetUsers ||
+          (lengthUsers === lengthTargetUsers &&
+            !isEqual(users, currentTarget.users))))
+    ) {
       targetChanges.push({
         changeType: 'DELETE',
         target: item
       });
     }
 
-    const targetObj = {
-      users: currentTarget?.users,
-      variation: currentTarget?.variationId
-    };
-
-    if (currentTarget && !isEqual(targetObj, item)) {
+    if (currentTarget && currentTarget.users.length > lengthUsers) {
       targetChanges.push({
-        changeType: currentTarget.users.length ? 'UPDATE' : 'DELETE',
+        changeType: 'UPDATE',
         target: {
           users: currentTarget.users.length ? currentTarget.users : item.users,
           variation: currentTarget.variationId
@@ -316,10 +323,23 @@ export const handleCheckIndividualRules = (
   });
 
   individualRules?.forEach(item => {
+    const { users, variationId } = item;
+    const lengthUsers = users.length;
+
     const currentTarget = featureTargets?.find(
-      target => target.variation === item.variationId
+      target => target.variation === variationId
     );
-    if (!currentTarget) {
+
+    const lengthTargetUsers = currentTarget?.users?.length || 0;
+
+    if (
+      (!currentTarget && lengthUsers) ||
+      (currentTarget &&
+        lengthUsers &&
+        (lengthUsers < lengthTargetUsers ||
+          (lengthUsers === lengthTargetUsers &&
+            !isEqual(users, currentTarget.users))))
+    ) {
       targetChanges.push({
         changeType: 'CREATE',
         target: {

@@ -12,12 +12,13 @@ const AudienceTraffic = () => {
         {t('targeting.all-audience-traffic')}
       </p>
       <Tooltip
-        content={t('targeting.all-audience-traffic')}
+        content={t('targeting.tooltip.audience')}
         trigger={
           <div className="flex-center size-fit">
             <Icon icon={IconInfo} size="xxs" color="gray-500" />
           </div>
         }
+        className="max-w-[450px]"
       />
     </div>
   );
