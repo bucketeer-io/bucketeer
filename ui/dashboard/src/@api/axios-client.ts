@@ -1,6 +1,12 @@
 import axios from 'axios';
 import type { AxiosInstance } from 'axios';
-import { getTokenStorage, setTokenStorage } from 'storage/token';
+import { PAGE_PATH_ROOT } from 'constants/routing';
+import { clearOrgIdStorage } from 'storage/organization';
+import {
+  clearTokenStorage,
+  getTokenStorage,
+  setTokenStorage
+} from 'storage/token';
 import { refreshTokenFetcher } from './auth';
 
 const axiosClient: AxiosInstance = axios.create({
@@ -19,18 +25,12 @@ axiosClient.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
 axiosClient.interceptors.response.use(
   response => response,
   async error => {
     const authToken = getTokenStorage();
     const originalRequest = error.config;
-    if (!authToken && error.response?.status === 401) {
-      return document.dispatchEvent(
-        new CustomEvent('unauthenticated', {
-          bubbles: true
-        })
-      );
-    }
     if (
       authToken?.refreshToken &&
       error.response?.status === 401 &&
@@ -42,19 +42,12 @@ axiosClient.interceptors.response.use(
           const newAccessToken = response.token.accessToken;
           setTokenStorage(response.token);
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          document.dispatchEvent(
-            new CustomEvent('tokenRefreshed', {
-              bubbles: true
-            })
-          );
           return axiosClient(originalRequest);
         })
         .catch(err => {
-          document.dispatchEvent(
-            new CustomEvent('unauthenticated', {
-              bubbles: true
-            })
-          );
+          clearOrgIdStorage();
+          clearTokenStorage();
+          window.location.href = `${PAGE_PATH_ROOT}/v3`; // TODO: Remove the `/v3` when the new console is released
           return Promise.reject(err);
         });
     }
