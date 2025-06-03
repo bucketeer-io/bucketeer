@@ -30,7 +30,7 @@ const SegmentVariation = ({
   const { t } = useTranslation(['table', 'common', 'form']);
 
   const methods = useFormContext();
-  const { watch, setFocus } = methods;
+  const { watch, setFocus, setValue } = methods;
   const commonName = `segmentRules.${segmentIndex}.strategy`;
   const rolloutStrategy: RuleStrategyVariation[] = watch(
     `${commonName}.rolloutStrategy`
@@ -69,9 +69,11 @@ const SegmentVariation = ({
           type: type as StrategyType,
           currentOption: value,
           fixedStrategy: {
-            variation: isFixed ? value : ''
+            variation: isFixed
+              ? value
+              : segmentRules[segmentIndex]?.strategy?.fixedStrategy?.variation
           },
-          rolloutStrategy: isFixed ? [] : defaultRolloutStrategy
+          rolloutStrategy: defaultRolloutStrategy
         }
       };
 
@@ -79,6 +81,9 @@ const SegmentVariation = ({
       if (!isFixed) {
         let timerId: NodeJS.Timeout | null = null;
         if (timerId) clearTimeout(timerId);
+        defaultRolloutStrategy?.forEach((_, index) =>
+          setValue(`${commonName}.rolloutStrategy.${index}.weight`, 0)
+        );
         timerId = setTimeout(
           () => setFocus(`${commonName}.rolloutStrategy.0.weight`),
           100

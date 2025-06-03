@@ -69,6 +69,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
   const [debuggerForm, setDebuggerForm] = useState<AddDebuggerFormType | null>(
     null
   );
+  const [isShowRules, setIsShowRules] = useState<boolean>(feature.enabled);
 
   const { data: rolloutCollection } = useQueryRollouts({
     params: {
@@ -107,7 +108,6 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
     reset
   } = form;
 
-  const isShowRules = watch('isShowRules');
   const enabledWatch = watch('enabled');
   const prerequisitesWatch = [...(watch('prerequisites') || [])];
   const segmentRulesWatch = [...(watch('segmentRules') || [])];
@@ -282,9 +282,14 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
         >
           <AudienceTraffic />
           <TargetingDivider />
-          <FlagSwitch />
+          <FlagSwitch setIsShowRules={setIsShowRules} />
           <TargetingDivider />
-          {(!feature.enabled || !enabledWatch) && <FlagOffDescription />}
+          {(!feature.enabled || !enabledWatch) && (
+            <FlagOffDescription
+              isShowRules={isShowRules}
+              setIsShowRules={setIsShowRules}
+            />
+          )}
           {isShowRules && (
             <>
               {(prerequisites?.length > 0 ||
@@ -380,7 +385,6 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
           feature={feature}
           isOpen={isOpenConfirmModal}
           isShowScheduleSelect={isShowUpdateSchedule}
-          isShowRolloutWarning={feature.enabled}
           onClose={onCloseConfirmModal}
           onSubmit={additionalValues =>
             form.handleSubmit(values => onSubmit(values, additionalValues))()

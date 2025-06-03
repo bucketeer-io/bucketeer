@@ -22,6 +22,7 @@ interface Props {
   percentageValueCount: number;
   label?: string;
   isRequired?: boolean;
+  isDisabled?: boolean;
   handleSelectStrategy: (item: VariationOption) => void;
 }
 
@@ -32,6 +33,7 @@ const Strategy = ({
   percentageValueCount,
   label,
   isRequired = true,
+  isDisabled,
   handleSelectStrategy
 }: Props) => {
   const { t } = useTranslation(['table', 'common', 'form', 'message']);
@@ -96,6 +98,7 @@ const Strategy = ({
                             </div>
                           }
                           isExpand
+                          disabled={isDisabled}
                           className="w-full"
                         />
                       </div>
@@ -147,6 +150,7 @@ const Strategy = ({
                             (rollout: RuleStrategyVariation, index: number) => (
                               <PercentageInput
                                 key={index}
+                                isDisabled={isDisabled}
                                 variationOptions={variationOptions}
                                 name={`${rootName}.${strategyName}.${index}.weight`}
                                 variationId={rollout.variation}

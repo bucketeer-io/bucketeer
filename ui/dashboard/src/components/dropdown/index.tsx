@@ -25,6 +25,7 @@ export type DropdownOption = {
   icon?: FunctionComponent;
   description?: boolean;
   haveCheckbox?: boolean;
+  disabled?: boolean;
   [key: string]:
     | DropdownValue
     | boolean
@@ -182,6 +183,7 @@ const DropdownMenuItem = forwardRef<
     description?: string;
     closeWhenSelected?: boolean;
     additionalElement?: ReactNode;
+    disabled?: boolean;
     onSelectOption?: (value: DropdownValue, event: Event) => void;
   }
 >(
@@ -197,6 +199,7 @@ const DropdownMenuItem = forwardRef<
       isSelected,
       closeWhenSelected = true,
       additionalElement,
+      disabled,
       onSelectOption,
       ...props
     },
@@ -204,6 +207,7 @@ const DropdownMenuItem = forwardRef<
   ) => (
     <DropdownMenuPrimitive.Item
       ref={ref}
+      disabled={disabled}
       className={cn(
         'relative flex items-center w-full cursor-pointer select-none rounded-[5px] p-2 gap-x-2 outline-none transition-colors hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
         className

@@ -16,9 +16,13 @@ import Switch from 'components/switch';
 import { Tooltip } from 'components/tooltip';
 import { TargetingSchema } from '../form-schema';
 
-const FlagSwitch = () => {
+const FlagSwitch = ({
+  setIsShowRules
+}: {
+  setIsShowRules: (value: boolean) => void;
+}) => {
   const { t } = useTranslation(['form', 'common']);
-  const { control, watch, setValue } = useFormContext<TargetingSchema>();
+  const { control, watch } = useFormContext<TargetingSchema>();
 
   const enabledWatch = watch('enabled');
 
@@ -55,8 +59,10 @@ const FlagSwitch = () => {
                           className="-mb-1"
                           checked={!!field.value}
                           onCheckedChange={checked => {
-                            field.onChange(checked);
-                            setValue('isShowRules', checked);
+                            field.onChange(checked, {
+                              shouldDirty: false
+                            });
+                            setIsShowRules(checked);
                           }}
                         />
                       )

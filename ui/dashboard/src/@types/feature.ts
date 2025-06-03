@@ -78,9 +78,9 @@ export interface Feature {
   id: string;
   name: string;
   description: string;
-  enabled: true;
-  deleted: true;
-  evaluationUndelayable: true;
+  enabled: boolean;
+  deleted: boolean;
+  evaluationUndelayable: boolean;
   ttl: number;
   version: number;
   createdAt: string;
@@ -101,7 +101,7 @@ export interface Feature {
   };
   maintainer: string;
   variationType: FeatureVariationType;
-  archived: true;
+  archived: boolean;
   prerequisites: FeaturePrerequisite[];
   samplingSeed: string;
   autoOpsSummary: AutoOpsSummary;

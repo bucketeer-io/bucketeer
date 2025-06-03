@@ -40,16 +40,15 @@ const DebuggerFlags = ({
       flags.map(item => ({
         label: item.name,
         value: item.id,
-        enabled: item.enabled
+        enabled: item.enabled,
+        disabled: flagsSelected.includes(item.id)
       })),
-    [flags]
+    [flags, flagsSelected]
   );
 
   const flagsRemaining = useMemo(() => {
-    return flagOptions.filter(
-      item => ![...flagsSelected, feature?.id].includes(item.value)
-    );
-  }, [flagsSelected, flagOptions, flags, feature]);
+    return flagOptions.filter(item => item.value !== feature?.id);
+  }, [flagOptions, flags, feature]);
 
   const isDisabledAddBtn = useMemo(
     () => !flagsRemaining.length || flagsSelected?.length === flags.length,

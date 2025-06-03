@@ -9,6 +9,7 @@ interface Props {
   variationOptions?: VariationOption[];
   variationId?: string;
   showVariationName?: boolean;
+  isDisabled?: boolean;
   handleChangeRolloutWeight: (value: number) => void;
 }
 
@@ -17,6 +18,7 @@ const PercentageInput = ({
   variationOptions,
   variationId,
   showVariationName = true,
+  isDisabled,
   handleChangeRolloutWeight
 }: Props) => {
   const { control } = useFormContext();
@@ -46,6 +48,7 @@ const PercentageInput = ({
                 >
                   <Input
                     {...field}
+                    disabled={isDisabled}
                     value={value}
                     onChange={value => {
                       field.onChange(+value);

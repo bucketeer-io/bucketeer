@@ -152,7 +152,6 @@ export const handleCreateDefaultValues = (feature: Feature) => {
       manualStrategy: _defaultStrategy?.rolloutStrategy
     },
     enabled,
-    isShowRules: enabled,
     comment: '',
     requireComment: false,
     resetSampling: false,

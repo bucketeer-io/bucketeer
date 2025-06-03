@@ -188,7 +188,6 @@ export const formSchema = yup.object().shape({
   segmentRules: yup.array().of(rulesSchema),
   defaultRule: defaultRuleSchema,
   enabled: yup.boolean().required(requiredMessage),
-  isShowRules: yup.boolean().required(requiredMessage),
   requireComment: yup.boolean(),
   resetSampling: yup.boolean(),
   comment: yup.string().when('requireComment', {

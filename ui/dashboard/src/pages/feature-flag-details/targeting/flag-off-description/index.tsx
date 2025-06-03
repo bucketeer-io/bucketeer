@@ -5,15 +5,21 @@ import { cn } from 'utils/style';
 import Button from 'components/button';
 import { TargetingSchema } from '../form-schema';
 
-const FlagOffDescription = () => {
+const FlagOffDescription = ({
+  isShowRules,
+  setIsShowRules
+}: {
+  isShowRules: boolean;
+  setIsShowRules: (value: boolean) => void;
+}) => {
   const { t } = useTranslation(['form']);
-  const { watch, setValue } = useFormContext();
+  const { watch } = useFormContext();
 
-  const isShowRules = watch('isShowRules');
   const prerequisiteCount = watch('prerequisites')?.length;
-  const individualRulesWatch: TargetingSchema['individualRules'] =
-    watch('individualRules');
-  const segmentRuleCount = watch('segmentRules')?.length;
+  const individualRulesWatch: TargetingSchema['individualRules'] = [
+    ...watch('individualRules')
+  ];
+  const segmentRuleCount: number = watch('segmentRules')?.length || 0;
 
   const individualRuleCount = useMemo(() => {
     const count = individualRulesWatch?.reduce((acc, curr) => {
@@ -30,11 +36,13 @@ const FlagOffDescription = () => {
 
     text +=
       prerequisiteCount > 0
-        ? `${getText(prerequisiteCount, 'feature-flags.prerequisites')}, `
+        ? `${getText(prerequisiteCount, 'feature-flags.prerequisites')}${
+            individualRuleCount > 0 || segmentRuleCount > 0 ? ', ' : ''
+          }`
         : '';
     text +=
       individualRuleCount > 0
-        ? `${getText(individualRuleCount, 'targeting.targets')}, `
+        ? `${getText(individualRuleCount, 'targeting.targets')}${segmentRuleCount > 0 ? ', ' : ''}`
         : '';
     text +=
       segmentRuleCount > 0 ? getText(segmentRuleCount, 'targeting.rules') : '';
@@ -57,13 +65,15 @@ const FlagOffDescription = () => {
           variant="text"
           type="button"
           className="w-fit h-4 p-0 underline"
-          onClick={() => setValue('isShowRules', !isShowRules)}
+          onClick={() => setIsShowRules(!isShowRules)}
         >
           {t(
             `targeting.${isShowRules ? 'hide-rules' : 'view-targeting-rules'}`
           )}
         </Button>
-        {!isShowRules && <p className="typo-para-small">({hiddenRuleDesc})</p>}
+        {!isShowRules && !!hiddenRuleDesc && (
+          <p className="typo-para-small">({hiddenRuleDesc})</p>
+        )}
       </div>
     </div>
   );

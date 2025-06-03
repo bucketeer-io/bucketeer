@@ -147,6 +147,7 @@ const DropdownMenuWithSearch = ({
               value={item.value}
               label={item.label}
               icon={item?.icon}
+              disabled={item?.disabled}
               additionalElement={additionalElement && additionalElement(item)}
               onSelectOption={onSelectOption}
               className="justify-between gap-x-4"
