@@ -19,7 +19,6 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -386,10 +385,8 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 	}
 	nextOffset := offset + len(features)
 	var totalCount int64
-	whereParts := options.CreateWhereParts()
-	whereQuery, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	countQuery := fmt.Sprintf(countFeaturesByExperimentSQLQuery, whereQuery)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	countQuery, countWhereArgs := mysql.ConstructCountQuery(countFeaturesByExperimentSQLQuery, options)
+	err = s.qe.QueryRowContext(ctx, countQuery, countWhereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
