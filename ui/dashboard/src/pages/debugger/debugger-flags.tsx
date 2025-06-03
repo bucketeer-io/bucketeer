@@ -3,6 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { useQueryFeatures } from '@queries/features';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
+import { Feature } from '@types';
 import { IconPlus, IconTrash } from '@icons';
 import Button from 'components/button';
 import Form from 'components/form';
@@ -11,7 +12,13 @@ import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import FeatureFlagStatus from 'elements/feature-flag-status';
 import { AddDebuggerFormType } from './form-schema';
 
-const DebuggerFlags = () => {
+const DebuggerFlags = ({
+  feature,
+  isOnTargeting
+}: {
+  feature?: Feature;
+  isOnTargeting?: boolean;
+}) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { t } = useTranslation(['common', 'form']);
@@ -38,8 +45,10 @@ const DebuggerFlags = () => {
   );
 
   const flagsRemaining = useMemo(() => {
-    return flagOptions.filter(item => !flagsSelected.includes(item.value));
-  }, [flagsSelected, flagOptions, flags]);
+    return flagOptions.filter(
+      item => ![...flagsSelected, feature?.id].includes(item.value)
+    );
+  }, [flagsSelected, flagOptions, flags, feature]);
 
   const isDisabledAddBtn = useMemo(
     () => !flagsRemaining.length || flagsSelected?.length === flags.length,
@@ -106,16 +115,18 @@ const DebuggerFlags = () => {
             )}
           />
         ))}
-        <Button
-          type="button"
-          variant="text"
-          className="w-fit px-0 h-6"
-          disabled={isDisabledAddBtn}
-          onClick={() => setValue('flags', [...flagsSelected, ''])}
-        >
-          <Icon icon={IconPlus} size="md" />
-          {t('form:add-flag')}
-        </Button>
+        {!isOnTargeting && (
+          <Button
+            type="button"
+            variant="text"
+            className="w-fit px-0 h-6"
+            disabled={isDisabledAddBtn}
+            onClick={() => setValue('flags', [...flagsSelected, ''])}
+          >
+            <Icon icon={IconPlus} size="md" />
+            {t('form:add-flag')}
+          </Button>
+        )}
       </div>
     </>
   );

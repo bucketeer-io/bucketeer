@@ -332,7 +332,9 @@ const FilterFlagModal = ({
                     value={item.value}
                     label={item.label}
                     className="flex items-center max-w-full truncate"
-                    onSelectOption={value => handleChangeFilterValue(value)}
+                    onSelectOption={value =>
+                      handleChangeFilterValue(value as string)
+                    }
                   />
                 ))
               ) : (

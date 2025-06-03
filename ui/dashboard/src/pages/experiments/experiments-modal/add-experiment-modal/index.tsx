@@ -36,6 +36,7 @@ import TextArea from 'components/textarea';
 import CreateGoalModal from 'elements/create-goal-modal';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import FeatureFlagStatus from 'elements/feature-flag-status';
+import VariationLabel from 'elements/variation-label';
 
 interface AddExperimentModalProps {
   isOpen: boolean;
@@ -171,8 +172,12 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
   const featureId = watch('featureId');
 
   const variationOptions =
-    featureFlagOptions?.find(item => item.value === featureId)?.variations ||
-    [];
+    featureFlagOptions
+      ?.find(item => item.value === featureId)
+      ?.variations?.map((item, index) => ({
+        label: <VariationLabel label={item.name || item.value} index={index} />,
+        value: item.id
+      })) || [];
 
   // const startOptions = [
   //   {
@@ -481,8 +486,8 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                           placeholder={t(`experiments.select-variation`)}
                           label={
                             variationOptions?.find(
-                              item => item.id === field.value
-                            )?.name || ''
+                              item => item.value === field.value
+                            )?.label || ''
                           }
                           variant="secondary"
                           className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
@@ -496,8 +501,8 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                             <DropdownMenuItem
                               {...field}
                               key={index}
-                              value={item.id}
-                              label={item.name}
+                              value={item.value}
+                              label={item.label}
                               onSelectOption={value => {
                                 field.onChange(value);
                               }}
