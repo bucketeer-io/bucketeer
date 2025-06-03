@@ -16,10 +16,14 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/api/api"
@@ -29,13 +33,15 @@ import (
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub/factory"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/pkg/rpc/gateway"
+	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
 )
 
 const command = "server"
@@ -43,6 +49,7 @@ const command = "server"
 type server struct {
 	*kingpin.CmdClause
 	port                   *int
+	grpcGatewayPort        *int
 	project                *string
 	goalTopic              *string
 	goalTopicProject       *string
@@ -65,15 +72,23 @@ type server struct {
 	redisPoolMaxActive     *int
 	oldestEventTimestamp   *time.Duration
 	furthestEventTimestamp *time.Duration
+	// PubSub configurations
+	pubSubType                *string
+	pubSubRedisServerName     *string
+	pubSubRedisAddr           *string
+	pubSubRedisPoolSize       *int
+	pubSubRedisMinIdle        *int
+	pubSubRedisPartitionCount *int
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start the gRPC server")
 	server := &server{
-		CmdClause: cmd,
-		port:      cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		project:   cmd.Flag("project", "GCP Project id to use for PubSub.").Required().String(),
-		goalTopic: cmd.Flag("goal-topic", "Topic to use for publishing GoalEvent.").Required().String(),
+		CmdClause:       cmd,
+		port:            cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		grpcGatewayPort: cmd.Flag("grpc-gateway-port", "Port to bind to for gRPC-gateway.").Default("9089").Int(),
+		project:         cmd.Flag("project", "GCP Project id to use for PubSub.").Required().String(),
+		goalTopic:       cmd.Flag("goal-topic", "Topic to use for publishing GoalEvent.").Required().String(),
 		goalTopicProject: cmd.Flag(
 			"goal-topic-project",
 			"GCP Project id to use for PubSub to publish GoalEvent.",
@@ -134,6 +149,25 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"furthest-event-timestamp",
 			"The duration of furthest event timestamp from processing time to allow.",
 		).Default("24h").Duration(),
+		// PubSub configurations
+		pubSubType: cmd.Flag("pubsub-type",
+			"Type of PubSub to use (google or redis-stream).",
+		).Default("google").String(),
+		pubSubRedisServerName: cmd.Flag("pubsub-redis-server-name",
+			"Name of the Redis server for PubSub.",
+		).Default("non-persistent-redis").String(),
+		pubSubRedisAddr: cmd.Flag("pubsub-redis-addr",
+			"Address of the Redis server for PubSub.",
+		).Default("localhost:6379").String(),
+		pubSubRedisPoolSize: cmd.Flag("pubsub-redis-pool-size",
+			"Maximum number of connections for Redis PubSub.",
+		).Default("10").Int(),
+		pubSubRedisMinIdle: cmd.Flag("pubsub-redis-min-idle",
+			"Minimum number of idle connections for Redis PubSub.",
+		).Default("5").Int(),
+		pubSubRedisPartitionCount: cmd.Flag("pubsub-redis-partition-count",
+			"Number of partitions for Redis Streams PubSub.",
+		).Default("16").Int(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -144,19 +178,37 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	pubsubCtx, pubsubCancel := context.WithTimeout(ctx, 5*time.Second)
 	defer pubsubCancel()
-	pubsubClient, err := pubsub.NewClient(
-		pubsubCtx,
-		*s.project,
-		pubsub.WithMetrics(registerer),
-		pubsub.WithLogger(logger),
-	)
-	if err != nil {
-		return err
+
+	// Create PubSub client using the factory
+	pubSubType := factory.PubSubType(*s.pubSubType)
+	factoryOpts := []factory.Option{
+		factory.WithPubSubType(pubSubType),
+		factory.WithMetrics(registerer),
+		factory.WithLogger(logger),
 	}
 
-	publishOptions := []pubsub.PublishOption{pubsub.WithPublishTimeout(*s.publishTimeout)}
-	if *s.publishNumGoroutines > 0 {
-		publishOptions = append(publishOptions, pubsub.WithPublishNumGoroutines(*s.publishNumGoroutines))
+	// Add provider-specific options
+	if pubSubType == factory.Google {
+		factoryOpts = append(factoryOpts, factory.WithProjectID(*s.project))
+	} else if pubSubType == factory.RedisStream {
+		redisClient, err := redisv3.NewClient(
+			*s.pubSubRedisAddr,
+			redisv3.WithPoolSize(*s.pubSubRedisPoolSize),
+			redisv3.WithMinIdleConns(*s.pubSubRedisMinIdle),
+			redisv3.WithServerName(*s.pubSubRedisServerName),
+			redisv3.WithMetrics(registerer),
+			redisv3.WithLogger(logger),
+		)
+		if err != nil {
+			return err
+		}
+		factoryOpts = append(factoryOpts, factory.WithRedisClient(redisClient))
+		factoryOpts = append(factoryOpts, factory.WithPartitionCount(*s.pubSubRedisPartitionCount))
+	}
+
+	pubsubClient, err := factory.NewClient(pubsubCtx, factoryOpts...)
+	if err != nil {
+		return err
 	}
 
 	var goalTopicProject string
@@ -165,7 +217,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	} else {
 		goalTopicProject = *s.goalTopicProject
 	}
-	goalPublisher, err := pubsubClient.CreatePublisherInProject(*s.goalTopic, goalTopicProject, publishOptions...)
+	goalPublisher, err := pubsubClient.CreatePublisherInProject(*s.goalTopic, goalTopicProject)
 	if err != nil {
 		return err
 	}
@@ -180,7 +232,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	evaluationPublisher, err := pubsubClient.CreatePublisherInProject(
 		*s.evaluationTopic,
 		evaluationTopicProject,
-		publishOptions...,
 	)
 	if err != nil {
 		return nil
@@ -190,7 +241,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// FIXME: This condition won't be necessary once user feature is fully released.
 	var userPublisher publisher.Publisher
 	if *s.userTopic != "" {
-		userPublisher, err = pubsubClient.CreatePublisherInProject(*s.userTopic, *s.project, publishOptions...)
+		userPublisher, err = pubsubClient.CreatePublisherInProject(*s.userTopic, *s.project)
 		if err != nil {
 			return err
 		}
@@ -200,7 +251,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// FIXME: This condition won't be necessary once user feature is fully released.
 	var metricsPublisher publisher.Publisher
 	if *s.metricsTopic != "" {
-		metricsPublisher, err = pubsubClient.CreatePublisherInProject(*s.metricsTopic, *s.project, publishOptions...)
+		metricsPublisher, err = pubsubClient.CreatePublisherInProject(*s.metricsTopic, *s.project)
 		if err != nil {
 			return err
 		}
@@ -307,6 +358,34 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	defer server.Stop(10 * time.Second)
 	go server.Run()
+
+	// Set up gRPC Gateway for API service
+	grpcGatewayAddr := fmt.Sprintf(":%d", *s.grpcGatewayPort)
+	grpcAddr := fmt.Sprintf("localhost:%d", *s.port)
+
+	// Create a HandlerRegistrar adapter function that matches gateway.HandlerRegistrar signature
+	gatewayHandler := func(ctx context.Context,
+		mux *runtime.ServeMux,
+		opts []grpc.DialOption,
+	) error {
+		return gwproto.RegisterGatewayHandlerFromEndpoint(ctx, mux, grpcAddr, opts)
+	}
+
+	apiGateway, err := gateway.NewGateway(
+		grpcGatewayAddr,
+		gateway.WithLogger(logger.Named("api-grpc-gateway")),
+		gateway.WithMetrics(registerer),
+		gateway.WithCertPath(*s.certPath),
+		gateway.WithKeyPath(*s.keyPath),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create API gateway: %v", err)
+	}
+
+	if err := apiGateway.Start(ctx, gatewayHandler); err != nil {
+		return fmt.Errorf("failed to start API gateway: %v", err)
+	}
+	defer apiGateway.Stop(10 * time.Second)
 
 	restHealthChecker := health.NewRestChecker(
 		api.Version, api.Service,

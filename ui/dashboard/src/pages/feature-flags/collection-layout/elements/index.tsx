@@ -16,7 +16,7 @@ import {
 } from '@types';
 import { truncateBySide } from 'utils/converts';
 import { copyToClipBoard } from 'utils/function';
-import { cn, getVariationColor } from 'utils/style';
+import { cn, getVariationColor, getVariationSpecificColor } from 'utils/style';
 import {
   IconCalendar,
   IconCopy,
@@ -117,16 +117,18 @@ export const FlagStatus = ({ status }: { status: FeatureActivityStatus }) => {
 
 export const FlagVariationPolygon = ({
   index,
-  className
+  className,
+  specificColor
 }: {
   index: number;
   className?: string;
+  specificColor?: string;
 }) => {
   const color = getVariationColor(index);
   return (
     <div
       style={{
-        background: color,
+        background: specificColor || color,
         zIndex: index
       }}
       className={cn(
@@ -282,32 +284,38 @@ export const FlagNameElement = ({
 };
 
 export const FlagVariationsElement = ({
-  variations
+  variations,
+  variationType
 }: {
   variations: FeatureVariation[];
+  variationType: FeatureVariationType;
 }) => {
   const { t } = useTranslation(['common', 'table']);
 
   const variationsWrapperWidth =
     document.getElementById('variations-wrapper')?.offsetWidth;
 
-  const variationCount = variations?.length;
+  const variationCount = variations.length;
 
   if (!variationCount)
     return (
       <p className="typo-para-small text-gray-700">{t('no-variations')}</p>
     );
-  if (variationCount === 1)
+  if (variationCount === 1) {
+    const currentVariation = variations[variationCount - 1];
+    const specificColor = getVariationSpecificColor(currentVariation.value);
     return (
       <div className="flex items-center gap-x-2 w-full overflow-hidden">
         <div className="flex-center size-4">
-          <FlagVariationPolygon index={0} />
+          <FlagVariationPolygon index={0} specificColor={specificColor} />
         </div>
         <p className="typo-para-small text-gray-700 truncate flex-1">
-          {variations[variationCount].name}
+          {currentVariation.name || currentVariation.value}
         </p>
       </div>
     );
+  }
+
   return (
     <div className="flex w-fit max-w-full">
       <Tooltip
@@ -316,8 +324,16 @@ export const FlagVariationsElement = ({
         trigger={
           <div className="flex items-center w-full gap-2">
             <div className="flex items-center w-full flex-wrap gap-y-1">
-              {variations.map((_, index) => (
-                <FlagVariationPolygon key={index} index={index} />
+              {variations.map((variation, index) => (
+                <FlagVariationPolygon
+                  key={index}
+                  index={index}
+                  specificColor={
+                    variationType === 'BOOLEAN'
+                      ? getVariationSpecificColor(variation.value)
+                      : ''
+                  }
+                />
               ))}
             </div>
             <p className="typo-para-small whitespace-nowrap text-gray-700">
@@ -343,6 +359,11 @@ export const FlagVariationsElement = ({
                 <div className="flex-center size-4">
                   <FlagVariationPolygon
                     index={index}
+                    specificColor={
+                      variationType === 'BOOLEAN'
+                        ? getVariationSpecificColor(item.value)
+                        : ''
+                    }
                     className="border-white/10"
                   />
                 </div>

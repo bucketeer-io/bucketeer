@@ -30,6 +30,7 @@ env:
   batchService: localhost:9001
   webURL:
   logLevel: info
+  grpcGatewayPort: 9089
   port: 9090
   metricsPort: 9002
   timezone: UTC

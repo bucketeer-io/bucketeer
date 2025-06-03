@@ -213,6 +213,8 @@
   "see-more": "See more",
   "default": "Default",
   "sort-by": "Sort by: {{sortBy}}",
+  "sort-asc": "Oldest to Newest",
+  "sort-desc": "Newest to Oldest",
   "no-options-found": "No options found",
   "create-goal": "Create Goal",
   "create-a-new-goal": "Create a new Goal",
@@ -239,6 +241,8 @@
   "edit-fields": "Edit Fields",
   "clear-all-fields": "Clear All Fields",
   "update-flag": "Update Feature Flag",
-  "sort-asc": "Oldest to Newest",
-  "sort-desc": "Newest to Oldest"
+  "new-operation": "New Operation",
+  "update-operation": "Update Operation",
+  "completed": "Completed",
+  "stop": "Stop"
 }

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'i18n';
-import { Experiment, GoalResult } from '@types';
+import { Experiment, FeatureVariationType, GoalResult } from '@types';
 import { ResultCell, ResultHeaderCell } from './goal-results-table-element';
 import { DatasetReduceType } from './timeseries-area-line-chart';
 
@@ -41,12 +41,14 @@ const EvaluationTable = ({
   experiment,
   goalResult,
   evaluationDataSets,
+  variationType,
   onToggleShowData
 }: {
   experiment: Experiment;
   goalResult: GoalResult;
   evaluationDataSets: DatasetReduceType[];
-  onToggleShowData: (label: string) => void;
+  variationType?: FeatureVariationType;
+  onToggleShowData: (variationId: string) => void;
 }) => {
   const { t } = useTranslation(['common', 'table']);
 
@@ -102,6 +104,7 @@ const EvaluationTable = ({
                 value={item?.variationName || ''}
                 minSize={270}
                 isChecked={!isHidden}
+                variationType={variationType}
                 onToggleShowData={onToggleShowData}
               />
               <ResultCell

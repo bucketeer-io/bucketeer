@@ -2062,6 +2062,77 @@ paths:
             $ref: '#/definitions/autoopsExecuteAutoOpsRequest'
       tags:
         - auto_ops_rule
+  /v1/auto_ops_rule/ops_counts:
+    get:
+      summary: List Ops Counts
+      description: List ops counts.
+      operationId: web.v1.auto_ops_rule.list_ops_counts
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/autoopsListOpsCountsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: autoOpsRuleIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: featureIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - ops_count
   /v1/auto_ops_rule/stop:
     post:
       summary: Stop
@@ -8113,9 +8184,10 @@ definitions:
         description: The clause ID, if not set, a new date time clause will be created.
       deleted:
         type: boolean
-        description: If true, the clause will be deleted.
+        description: If true and the number of clause is greater than 1, the clause will be deleted
       clause:
         $ref: '#/definitions/autoopsDatetimeClause'
+        description: The clause value, must be fully filled if update or create clause action is requested.
   UpdateAutoOpsRuleRequestUpdateOpsEventRateClause:
     type: object
     properties:
@@ -8124,9 +8196,10 @@ definitions:
         description: The clause ID, if not set, a new event rate clause will be created.
       deleted:
         type: boolean
-        description: If true, the clause will be deleted.
+        description: If true and the number of clause is greater than 1, the clause will be deleted
       clause:
         $ref: '#/definitions/autoopsOpsEventRateClause'
+        description: The clause value, must be fully filled if update or create clause action is requested.
   UpdateExperimentRequestUpdatedStatus:
     type: object
     properties:

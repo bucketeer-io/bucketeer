@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useQueryAutoOps } from '@queries/auto-ops';
+import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
@@ -35,7 +35,7 @@ const VariationList = ({ feature, isRunningExperiment }: VariationProps) => {
 
   const rollouts = rolloutCollection?.progressiveRollouts || [];
 
-  const { data: operationCollection } = useQueryAutoOps({
+  const { data: operationCollection } = useQueryAutoOpsRules({
     params: {
       cursor: String(0),
       environmentId: currentEnvironment?.id,

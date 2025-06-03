@@ -20,6 +20,7 @@ import {
 } from 'components/dropdown';
 
 const DropdownMenuWithSearch = ({
+  align,
   hidden,
   label,
   placeholder,
@@ -31,11 +32,13 @@ const DropdownMenuWithSearch = ({
   triggerClassName,
   contentClassName,
   isExpand,
+  disabled,
   additionalElement,
   onSelectOption
 }: {
+  align?: 'start' | 'center' | 'end';
   hidden?: boolean;
-  label: string;
+  label: ReactNode;
   placeholder?: string;
   isLoading?: boolean;
   isMultiselect?: boolean;
@@ -45,6 +48,7 @@ const DropdownMenuWithSearch = ({
   triggerClassName?: string;
   contentClassName?: string;
   isExpand?: boolean;
+  disabled?: boolean;
   additionalElement?: (item: DropdownOption) => ReactNode;
   onSelectOption: (value: DropdownValue) => void;
 }) => {
@@ -106,7 +110,7 @@ const DropdownMenuWithSearch = ({
     >
       <DropdownMenuTrigger
         ref={triggerRef}
-        disabled={isLoading}
+        disabled={isLoading || disabled}
         placeholder={placeholder}
         label={label}
         variant="secondary"
@@ -114,7 +118,7 @@ const DropdownMenuWithSearch = ({
       />
       <DropdownMenuContent
         ref={contentRef}
-        align="start"
+        align={align}
         className={cn('w-[500px] py-0', contentClassName)}
         style={
           isExpand
@@ -142,6 +146,7 @@ const DropdownMenuWithSearch = ({
               isMultiselect={isMultiselect}
               value={item.value}
               label={item.label}
+              icon={item?.icon}
               additionalElement={additionalElement && additionalElement(item)}
               onSelectOption={onSelectOption}
               className="justify-between gap-x-4"
