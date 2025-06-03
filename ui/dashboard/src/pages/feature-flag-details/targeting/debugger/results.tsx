@@ -15,13 +15,13 @@ const TargetingDebuggerResults = ({
   features,
   evaluations,
   onClose,
-  onClearFields
+  onEditFields
 }: {
   isOpen: boolean;
   features: Feature[];
   evaluations: Evaluation[];
   onClose: () => void;
-  onClearFields: () => void;
+  onEditFields: () => void;
 }) => {
   const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
@@ -80,8 +80,8 @@ const TargetingDebuggerResults = ({
           </Button>
         }
         secondaryButton={
-          <Button className="w-fit" onClick={onClearFields}>
-            {t('clear-all-fields')}
+          <Button className="w-fit" onClick={onEditFields}>
+            {t('edit-fields')}
           </Button>
         }
       />

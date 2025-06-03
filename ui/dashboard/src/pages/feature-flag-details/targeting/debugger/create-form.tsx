@@ -20,8 +20,10 @@ interface Props {
   isOpen: boolean;
   feature: Feature;
   evaluations: Evaluation[];
+  debuggerForm: AddDebuggerFormType | null;
   onShowResults: () => void;
   setEvaluations: (value: Evaluation[]) => void;
+  setDebuggerForm: (values: AddDebuggerFormType | null) => void;
   onClose: () => void;
 }
 
@@ -29,8 +31,10 @@ const CreateDebuggerForm = ({
   isOpen,
   evaluations,
   feature,
+  debuggerForm,
   onShowResults,
   setEvaluations,
+  setDebuggerForm,
   onClose
 }: Props) => {
   const { t } = useTranslation(['common']);
@@ -55,13 +59,14 @@ const CreateDebuggerForm = ({
   const form = useForm({
     resolver: yupResolver(addDebuggerFormSchema),
     defaultValues: {
-      ...defaultValues
+      ...(debuggerForm ? debuggerForm : defaultValues)
     },
     mode: 'onChange'
   });
 
   const {
-    formState: { isDirty, isValid, isSubmitting }
+    formState: { isDirty, isValid, isSubmitting },
+    reset
   } = form;
 
   const onSubmit = useCallback(
@@ -82,6 +87,7 @@ const CreateDebuggerForm = ({
           }))
         });
         setEvaluations(resp.evaluations);
+        setDebuggerForm(values);
         onShowResults();
         onClose();
       } catch (error) {
@@ -112,7 +118,11 @@ const CreateDebuggerForm = ({
                 <Button
                   variant={'secondary'}
                   className="w-fit"
-                  onClick={onClose}
+                  onClick={() => {
+                    onClose();
+                    setDebuggerForm(null);
+                    reset(defaultValues);
+                  }}
                 >
                   {t('cancel')}
                 </Button>
@@ -121,7 +131,7 @@ const CreateDebuggerForm = ({
                 <Button
                   className="w-fit"
                   loading={isSubmitting}
-                  disabled={!isDirty || !isValid}
+                  disabled={(debuggerForm ? false : !isDirty) || !isValid}
                 >
                   {t('evaluate')}
                 </Button>

@@ -14,6 +14,7 @@ import { cloneDeep } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { Evaluation, Feature } from '@types';
 import { IconDebugger } from '@icons';
+import { AddDebuggerFormType } from 'pages/debugger/form-schema';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
@@ -46,7 +47,7 @@ import {
 } from './utils';
 
 const TargetingDivider = () => (
-  <Divider vertical className="!h-6 w-px self-center my-4" />
+  <Divider vertical className="!h-6 w-px self-center my-4 !border-gray-400" />
 );
 
 const TargetingPage = ({ feature }: { feature: Feature }) => {
@@ -65,6 +66,9 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [isOpenResults, onOpenResultsModal, onCloseResultsModal] =
     useToggleOpen(false);
+  const [debuggerForm, setDebuggerForm] = useState<AddDebuggerFormType | null>(
+    null
+  );
 
   const { data: rolloutCollection } = useQueryRollouts({
     params: {
@@ -388,21 +392,24 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
           isOpen={isOpenDebuggerModal}
           feature={feature}
           evaluations={evaluations}
+          debuggerForm={debuggerForm}
           onClose={onCloseDebuggerModal}
           setEvaluations={setEvaluations}
+          setDebuggerForm={setDebuggerForm}
           onShowResults={onOpenResultsModal}
         />
       )}
       {isOpenResults && (
         <TargetingDebuggerResults
           isOpen={isOpenResults}
-          features={features}
+          features={activeFeatures}
           evaluations={evaluations}
           onClose={() => {
             setEvaluations([]);
             onCloseResultsModal();
+            setDebuggerForm(null);
           }}
-          onClearFields={() => {
+          onEditFields={() => {
             onCloseResultsModal();
             setEvaluations([]);
             onOpenDebuggerModal();

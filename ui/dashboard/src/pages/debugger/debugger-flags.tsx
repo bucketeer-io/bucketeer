@@ -27,7 +27,8 @@ const DebuggerFlags = ({
   const { data: flagCollection } = useQueryFeatures({
     params: {
       cursor: String(0),
-      environmentId: currentEnvironment.id
+      environmentId: currentEnvironment.id,
+      archived: false
     }
   });
 
