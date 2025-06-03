@@ -1,7 +1,8 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import { switchOrganization } from '@api/auth';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from 'auth';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useTranslation } from 'i18n';
@@ -47,7 +48,9 @@ const SelectOrganization = () => {
 
         const fetchUserData = () => {
           return onMeFetcher({ organizationId }).then(() => {
-            navigate(PAGE_PATH_ROOT);
+            navigate({
+              to: PAGE_PATH_ROOT
+            });
           });
         };
 

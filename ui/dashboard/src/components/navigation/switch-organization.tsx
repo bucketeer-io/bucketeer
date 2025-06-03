@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import { switchOrganization } from '@api/auth';
+import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from 'auth';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
@@ -101,7 +102,9 @@ const SwitchOrganization = ({
             await onMeFetcher({ organizationId });
             onCloseSwitchOrg();
             onCloseSetting();
-            navigate(PAGE_PATH_ROOT);
+            navigate({
+              to: PAGE_PATH_ROOT
+            });
           }
         }
       } catch (error) {

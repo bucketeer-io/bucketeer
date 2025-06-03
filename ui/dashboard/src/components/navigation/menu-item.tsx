@@ -1,5 +1,5 @@
 import type { FunctionComponent } from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import { cn } from 'utils/style';
 import Icon from 'components/icon';
 
@@ -28,10 +28,10 @@ const MenuItemComponent = ({
   );
 
   const actionEl = href ? (
-    <NavLink onClick={onClick} className={textClsx} to={href}>
+    <Link onClick={onClick} className={textClsx} to={href}>
       {iconEl}
       {label}
-    </NavLink>
+    </Link>
   ) : (
     <button
       id={id}

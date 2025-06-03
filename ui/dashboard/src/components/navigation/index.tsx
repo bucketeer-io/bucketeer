@@ -1,4 +1,5 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+// import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import logo from 'assets/logos/logo-white.svg';
 import { useAuth, getCurrentEnvironment } from 'auth';
 import * as ROUTING from 'constants/routing';
@@ -22,7 +23,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
   const { consoleAccount } = useAuth();
 
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const envUrlCode = currentEnvironment.urlCode;
+  const envUrlCode = currentEnvironment?.urlCode;
 
   const settingMenuSections = [
     {
@@ -153,7 +154,9 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
             <button
               onClick={() => {
                 onCloseSetting();
-                navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`);
+                navigate({
+                  to: `/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`
+                });
               }}
               className="flex items-center gap-x-2 text-primary-50"
             >
@@ -208,7 +211,9 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
               const path = consoleAccount?.isSystemAdmin
                 ? ROUTING.PAGE_PATH_ORGANIZATIONS
                 : `/${envUrlCode}${ROUTING.PAGE_PATH_SETTINGS}`;
-              navigate(path);
+              navigate({
+                to: path
+              });
             }}
           >
             <Icon icon={IconSystem.IconSetting} color="primary-50" />

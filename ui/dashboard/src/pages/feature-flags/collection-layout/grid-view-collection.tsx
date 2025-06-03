@@ -91,7 +91,7 @@ const GridViewCollection = ({
             <GridViewRow key={index}>
               <FlagNameElement
                 id={id}
-                link={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${id}/targeting`}
+                link={`/${currentEnvironment?.urlCode}${PAGE_PATH_FEATURES}/${id}/targeting`}
                 name={name}
                 maintainer={handleGetMaintainerInfo(maintainer)}
                 variationType={variationType}

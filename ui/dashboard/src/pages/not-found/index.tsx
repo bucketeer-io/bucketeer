@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import Button from 'components/button';
 
@@ -15,7 +15,12 @@ const NotFoundPage = () => {
           {`Sorry, we couldn't find the page you're looking for.`}
         </p>
         <Button
-          onClick={() => navigate(PAGE_PATH_ROOT, { replace: true })}
+          onClick={() =>
+            navigate({
+              to: PAGE_PATH_ROOT,
+              replace: true
+            })
+          }
           className="mt-8"
         >
           {`Go back home`}
