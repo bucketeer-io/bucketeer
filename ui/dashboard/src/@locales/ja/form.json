@@ -300,7 +300,7 @@
     "rollout-to": "Rollout to",
     "for": "For",
     "total-duration": "Total duration: <b>{{value}}</b>",
-    "rollout-running-message": "To update the Default Strategy, you must stop or delete the current <comp>Progressive Rollout</comp>",
+    "rollout-running-message": "To update the Default Strategy, you must stop or delete the current <comp>Progressive Rollout</comp>.",
     "tooltip": {
       "flag-on": "Flag is ON. Users are evaluated in order: Prerequisites → Individual Targets → Rules → Default Rule.",
       "flag-off": "Flag is OFF.  All users will receive the selected \"Off variation\" regardless of prerequisites, individual targets, or rules.",
@@ -309,9 +309,9 @@
       "custom-rules": "Define conditions based on user attributes (e.g., app version, genre) to assign variations. Rules are evaluated in order, and the first matching rule determines the variation.",
       "default-rule": "If no prerequisites, targets, or custom rules match, users will receive the variation defined here. This acts as the fallback behavior for all other users.",
       "attribute": "The user attribute used for targeting. This must match the attribute passed when initializing the client SDK (e.g., appVersion, genre, os).",
-      "value": "One or more expected values for the selected attribute. If the user’s attribute matches any of these values, the condition will evaluate as true."
+      "value": "One or more expected values for the selected attribute. If the user’s attribute matches any of these values, the condition will evaluate as true.",
+      "debugger": "The debugger can verify what variation will be assigned to a specific end-user under different conditions in real-time."
     },
     "individual-target": "Individual Target"
-  },
-  "has-rollout-running": "There is a <comp>Progressive Rollout</comp> in progress. It will stop it."
+  }
 }

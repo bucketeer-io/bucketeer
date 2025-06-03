@@ -20,6 +20,7 @@ import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
 import Form from 'components/form';
 import Icon from 'components/icon';
+import { Tooltip } from 'components/tooltip';
 import PageLayout from 'elements/page-layout';
 import ConfirmationRequiredModal, {
   ConfirmRequiredValues
@@ -209,7 +210,8 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
           individualRules,
           segmentRules,
           prerequisites,
-          defaultRule
+          defaultRule,
+          offVariation
         } = values;
 
         const { comment, resetSampling, scheduleType, scheduleAt } =
@@ -250,7 +252,8 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
               prerequisites
             ),
             comment,
-            resetSamplingSeed: resetSampling
+            resetSamplingSeed: resetSampling,
+            offVariation
           });
         }
         if (resp) {
@@ -282,7 +285,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
         >
           <AudienceTraffic />
           <TargetingDivider />
-          <FlagSwitch setIsShowRules={setIsShowRules} />
+          <FlagSwitch feature={feature} setIsShowRules={setIsShowRules} />
           <TargetingDivider />
           {(!feature.enabled || !enabledWatch) && (
             <FlagOffDescription
@@ -359,14 +362,21 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
           />
           <ButtonBar
             primaryButton={
-              <Button
-                type="button"
-                variant={'secondary-2'}
-                className="size-12"
-                onClick={onOpenDebuggerModal}
-              >
-                <Icon icon={IconDebugger} color="gray-500" />
-              </Button>
+              <Tooltip
+                side="top"
+                className="max-w-[320px]"
+                content={t('form:targeting.tooltip.debugger')}
+                trigger={
+                  <Button
+                    type="button"
+                    variant={'secondary-2'}
+                    className="size-12"
+                    onClick={onOpenDebuggerModal}
+                  >
+                    <Icon icon={IconDebugger} color="gray-500" />
+                  </Button>
+                }
+              />
             }
             secondaryButton={
               <Button

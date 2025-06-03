@@ -74,6 +74,7 @@ const DebuggerFlags = ({
                           ?.label || ''
                       }
                       isExpand
+                      disabled={isOnTargeting}
                       placeholder={t('form:experiments.select-flag')}
                       options={flagsRemaining}
                       triggerClassName={

@@ -44,7 +44,7 @@ const CreateDebuggerForm = ({
 
   const defaultValues = useMemo(
     () => ({
-      flags: [''],
+      flags: [feature.id],
       userIds: [],
       attributes: [
         {
@@ -53,7 +53,7 @@ const CreateDebuggerForm = ({
         }
       ]
     }),
-    []
+    [feature.id]
   );
 
   const form = useForm({

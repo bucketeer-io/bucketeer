@@ -213,7 +213,8 @@ export const formSchema = yup.object().shape({
         });
     }
     return true;
-  })
+  }),
+  offVariation: yup.string()
 });
 
 export type TargetingSchema = yup.InferType<typeof formSchema>;

@@ -132,8 +132,14 @@ const handleCreateSegmentRules = (feature: Feature) => {
 };
 
 export const handleCreateDefaultValues = (feature: Feature) => {
-  const { prerequisites, targets, variations, defaultStrategy, enabled } =
-    feature || {};
+  const {
+    prerequisites,
+    targets,
+    variations,
+    defaultStrategy,
+    enabled,
+    offVariation
+  } = feature || {};
   const _prerequisites = handleCreatePrerequisites(prerequisites);
   const individualRules = handleCreateIndividualRules(targets, variations);
   const _defaultStrategy = getDefaultStrategy(feature, defaultStrategy);
@@ -156,7 +162,8 @@ export const handleCreateDefaultValues = (feature: Feature) => {
     requireComment: false,
     resetSampling: false,
     scheduleType: enabled ? 'DISABLE' : 'ENABLE',
-    scheduleAt: String(Math.floor((new Date().getTime() + 3600000) / 1000))
+    scheduleAt: String(Math.floor((new Date().getTime() + 3600000) / 1000)),
+    offVariation
   } as TargetingSchema;
 };
 
