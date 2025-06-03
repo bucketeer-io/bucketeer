@@ -204,6 +204,149 @@ func TestHandle(t *testing.T) {
 			},
 			expected: nil,
 		},
+		{
+			desc: "success: multiple subscriptions with feature domain event filtering",
+			setup: func(t *testing.T, s *sender) {
+				// Create 3 subscriptions all for DOMAIN_EVENT_FEATURE:
+				// 1. Feature domain subscription with matching tags (should receive notification)
+				// 2. Feature domain subscription with non-matching tags (should NOT receive notification)
+				// 3. Feature domain subscription with empty tags (should receive notification)
+				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), gomock.Any()).Return(
+					&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
+						{
+							Id:              "sid0-feature-matching",
+							EnvironmentId:   "ns0",
+							FeatureFlagTags: []string{"ios", "production"},
+							Recipient:       &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH},
+						},
+						{
+							Id:              "sid1-feature-not-matching",
+							EnvironmentId:   "ns0",
+							FeatureFlagTags: []string{"android", "staging"},
+							Recipient:       &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH},
+						},
+						{
+							Id:              "sid2-feature-empty-tags",
+							EnvironmentId:   "ns0",
+							FeatureFlagTags: []string{}, // Empty tags means all feature events
+							Recipient:       &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH},
+						},
+					}}, nil)
+				// Two subscriptions should be notified:
+				// 1. The one with matching tags
+				// 2. The one with empty tags (receives all feature events)
+				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(2)
+			},
+			input: &senderproto.NotificationEvent{
+				Id:            "id",
+				EnvironmentId: "ns0",
+				SourceType:    notificationproto.Subscription_DOMAIN_EVENT_FEATURE,
+				Notification: &senderproto.Notification{
+					Type: senderproto.Notification_DomainEvent,
+					DomainEventNotification: &senderproto.DomainEventNotification{
+						EntityData: `{
+							"id": "feature-123",
+							"name": "test-feature",
+							"tags": ["ios", "production", "v2"]
+						}`,
+					},
+				},
+				IsAdminEvent: false,
+			},
+			expected: nil,
+		},
+		{
+			desc: "success: multiple subscriptions with mixed domain types",
+			setup: func(t *testing.T, s *sender) {
+				// Test with 3 subscriptions where we're sending an ACCOUNT domain event
+				// Only subscriptions for DOMAIN_EVENT_ACCOUNT will be returned by listEnabledSubscriptions
+				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), gomock.Any()).Return(
+					&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
+						{
+							Id:              "sid0-for-account",
+							EnvironmentId:   "ns0",
+							FeatureFlagTags: []string{"ios"}, // Tags are ignored for non-feature events
+							Recipient:       &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH},
+						},
+						{
+							Id:              "sid1-for-account",
+							EnvironmentId:   "ns0",
+							FeatureFlagTags: []string{"android"},
+							Recipient:       &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH},
+						},
+						{
+							Id:              "sid2-for-account",
+							EnvironmentId:   "ns0",
+							FeatureFlagTags: []string{},
+							Recipient:       &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH},
+						},
+					}}, nil)
+				// All 3 subscriptions should be notified for account domain events
+				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(3)
+			},
+			input: &senderproto.NotificationEvent{
+				Id:            "id",
+				EnvironmentId: "ns0",
+				SourceType:    notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,
+				Notification: &senderproto.Notification{
+					Type:                    senderproto.Notification_DomainEvent,
+					DomainEventNotification: &senderproto.DomainEventNotification{},
+				},
+				IsAdminEvent: false,
+			},
+			expected: nil,
+		},
+		{
+			desc: "success: feature event with mixed subscription types in system",
+			setup: func(t *testing.T, s *sender) {
+				// Simulates a realistic scenario where the system has subscriptions for different source types
+				// but only feature subscriptions are returned when querying for DOMAIN_EVENT_FEATURE
+				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(
+					gomock.Any(),
+					&notificationproto.ListEnabledSubscriptionsRequest{
+						EnvironmentId: "ns0",
+						SourceTypes:   []notificationproto.Subscription_SourceType{notificationproto.Subscription_DOMAIN_EVENT_FEATURE},
+						PageSize:      listRequestSize,
+						Cursor:        "",
+					},
+				).Return(
+					&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
+						{
+							Id:              "sid0-feature-web",
+							EnvironmentId:   "ns0",
+							FeatureFlagTags: []string{"web"},
+							Recipient:       &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH},
+						},
+						{
+							Id:              "sid1-feature-mobile",
+							EnvironmentId:   "ns0",
+							FeatureFlagTags: []string{"mobile", "ios"},
+							Recipient:       &notificationproto.Recipient{Language: notificationproto.Recipient_ENGLISH},
+						},
+						// Note: Account/Project subscriptions won't be included here because
+						// listEnabledSubscriptions filters by sourceType
+					}}, nil)
+				// Only the mobile subscription should be notified (has "ios" tag)
+				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(1)
+			},
+			input: &senderproto.NotificationEvent{
+				Id:            "id",
+				EnvironmentId: "ns0",
+				SourceType:    notificationproto.Subscription_DOMAIN_EVENT_FEATURE,
+				Notification: &senderproto.Notification{
+					Type: senderproto.Notification_DomainEvent,
+					DomainEventNotification: &senderproto.DomainEventNotification{
+						EntityData: `{
+							"id": "feature-456",
+							"name": "mobile-feature",
+							"tags": ["ios", "swift"]
+						}`,
+					},
+				},
+				IsAdminEvent: false,
+			},
+			expected: nil,
+		},
 	}
 
 	for _, p := range patterns {
