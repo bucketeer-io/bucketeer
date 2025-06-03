@@ -413,10 +413,9 @@ func TestCheckForFeatureDomainEvent(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		input       inputTest
-		expected    bool
-		expectedErr error
+		desc     string
+		input    inputTest
+		expected bool
 	}{
 		{
 			desc: "err: failed to unmarshal",
@@ -430,8 +429,7 @@ func TestCheckForFeatureDomainEvent(t *testing.T) {
 				sourceType: notificationproto.Subscription_DOMAIN_EVENT_FEATURE,
 				entityData: "random-string",
 			},
-			expected:    false,
-			expectedErr: errFailedToUnmarshal,
+			expected: false,
 		},
 		{
 			desc: "err: feature flag tag not found",
@@ -448,8 +446,7 @@ func TestCheckForFeatureDomainEvent(t *testing.T) {
 					"tags": ["android", "ios"]
 				}`,
 			},
-			expected:    false,
-			expectedErr: errFeatureFlagTagNotFound,
+			expected: false,
 		},
 		{
 			desc: "success: feature flag tag found",
@@ -466,8 +463,24 @@ func TestCheckForFeatureDomainEvent(t *testing.T) {
 					"tags": ["android", "ios"]
 				}`,
 			},
-			expected:    true,
-			expectedErr: nil,
+			expected: true,
+		},
+		{
+			desc: "success: both subscription and flag have android and ios",
+			input: inputTest{
+				subscription: &notificationproto.Subscription{
+					Id:              "sub-id",
+					Name:            "sub-name",
+					EnvironmentId:   "env-id",
+					FeatureFlagTags: []string{"android", "ios"},
+				},
+				sourceType: notificationproto.Subscription_DOMAIN_EVENT_FEATURE,
+				entityData: `{
+					"id": "feature-id-1",
+					"tags": ["android", "ios"]
+				}`,
+			},
+			expected: true,
 		},
 		{
 			desc: "success: not a feature domain event",
@@ -480,8 +493,7 @@ func TestCheckForFeatureDomainEvent(t *testing.T) {
 				},
 				sourceType: notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,
 			},
-			expected:    true,
-			expectedErr: nil,
+			expected: true,
 		},
 		{
 			desc: "success: no feature flag tags configured",
@@ -494,21 +506,100 @@ func TestCheckForFeatureDomainEvent(t *testing.T) {
 				},
 				sourceType: notificationproto.Subscription_DOMAIN_EVENT_FEATURE,
 			},
-			expected:    true,
-			expectedErr: nil,
+			expected: true,
 		},
 	}
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			sender := createSender(t, mockController)
-			send, err := sender.checkForFeatureDomainEvent(
+			send := sender.checkForFeatureDomainEvent(
 				p.input.subscription,
 				p.input.sourceType,
 				p.input.entityData,
 			)
 			assert.Equal(t, p.expected, send)
-			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestContainsTags(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc     string
+		subTags  []string
+		ftTags   []string
+		expected bool
+	}{
+		{
+			desc:     "no tags in either",
+			subTags:  []string{},
+			ftTags:   []string{},
+			expected: false,
+		},
+		{
+			desc:     "subscription has tags, feature has none",
+			subTags:  []string{"android", "ios"},
+			ftTags:   []string{},
+			expected: false,
+		},
+		{
+			desc:     "feature has tags, subscription has none",
+			subTags:  []string{},
+			ftTags:   []string{"android", "ios"},
+			expected: false,
+		},
+		{
+			desc:     "exact match - single tag",
+			subTags:  []string{"android"},
+			ftTags:   []string{"android"},
+			expected: true,
+		},
+		{
+			desc:     "exact match - multiple tags",
+			subTags:  []string{"android", "ios"},
+			ftTags:   []string{"android", "ios"},
+			expected: true,
+		},
+		{
+			desc:     "partial match - subscription has subset",
+			subTags:  []string{"android"},
+			ftTags:   []string{"android", "ios"},
+			expected: true,
+		},
+		{
+			desc:     "partial match - feature has subset",
+			subTags:  []string{"android", "ios"},
+			ftTags:   []string{"android"},
+			expected: true,
+		},
+		{
+			desc:     "no match",
+			subTags:  []string{"web"},
+			ftTags:   []string{"android", "ios"},
+			expected: false,
+		},
+		{
+			desc:     "case sensitive - no match",
+			subTags:  []string{"Android"},
+			ftTags:   []string{"android"},
+			expected: false,
+		},
+		{
+			desc:     "whitespace in tags - no match",
+			subTags:  []string{" android ", " ios "},
+			ftTags:   []string{"android", "ios"},
+			expected: false, // Won't match because whitespace is not trimmed
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			result := containsTags(p.subTags, p.ftTags)
+			assert.Equal(t, p.expected, result)
 		})
 	}
 }
