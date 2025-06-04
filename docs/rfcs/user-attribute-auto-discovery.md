@@ -4,14 +4,6 @@ Currently, when users configure rules on the Targeting tab in the console, they 
 
 Since these attributes are sent from the SDK to the server, we can automate this process by generating a list to display on the console. This will improve user experience and reduce configuration errors.
 
-# Background
-
-The current manual attribute key input process has several issues:
-- Prone to typos and human error
-- Time-consuming for users to type attribute keys
-- No validation of attribute key existence
-- Potential for misconfiguration leading to incorrect feature flag evaluations
-
 # Solution
 
 We will implement an automated system to discover and manage user attributes:
@@ -19,7 +11,7 @@ We will implement an automated system to discover and manage user attributes:
 1. Extract user attribute information from SDK requests
 2. Compare with cached data in Redis
 3. Publish only new attribute information using PubSub
-4. Saving attributes to a database via PubSub
+4. Saving attributes to a Redis via PubSub
 5. Provide an API for the console to retrieve the attribute list
 
 ## System Architecture
@@ -80,8 +72,25 @@ sequenceDiagram
 ## API Server
 
 - Implement attribute discovery in `getEvaluations` and `getEvaluation` requests
-- Compare with UserAttributeCache
-- Publish new attributes to `user-attribute-event` topic
+    - Extract UserAttribute from the User information contained in the following `getEvaluationsRequest` and `getEvaluationRequest`
+```
+type getEvaluationsRequest struct {
+	Tag               string
+	User              *userproto.User
+	UserEvaluationsID string
+	SourceID          eventproto.SourceId
+}
+
+type User struct {
+	Id         string
+	Data       map[string]string        // ← The key will be UserAttribute
+	TaggedData map[string]*User_Data
+	LastSeen   int64
+	CreatedAt  int64
+}
+
+```
+- It compares it with the list obtained from the `UserAttributeCache` and publishes only the new attributes to the user-attribute-event topic.
 
 ## API
 
@@ -101,7 +110,7 @@ Note: Pagination is not implemented for this API.
 
 # Important Considerations
 
-1. I intentionally do not implement attribute deletion functionality
+-  Intentionally not implementing user attribute delete API
    - The deleted attribute may be needed again in the future, but there is currently no way to undo the deletion using the console.
    - However, the console takes into account the large number of user attributes by providing incremental search to improve usability.
 
@@ -110,25 +119,24 @@ Note: Pagination is not implemented for this API.
 
 - The e2e test is performed in the following steps:
 - Test flow:
-  1. Send request via `GetEvaluation`
+  1. Send request via `GetEvaluation` or `GetEvaluations`
   2. Wait for processing
   3. Verify attributes via `ListUserAttributes` API
 
 # Release Steps
 
 1. Cache Implementation
-   - Implement UserAttributesCache
-   - Implement UserAttributesCacher
+   - Implement `UserAttributesCache`
+   - Implement `UserAttributesCacher`
 
 2.  PubSub Implementation
-   - Implement Processor (without Subscriber connection)
+   - Implement `UserAttributePersister` (without Subscriber connection)
 
-3. API Server Implementation and Set up topic and subscription
+3. Implementing an API server and setting up topics and subscriptions in a Google Cloud project in the Dev environment
    - Add publishing logic
    - Configure PubSub in Dev environment
    - Connect UserAttributePersister
    - I run e2e tests and, if there are no problems, we release them to the production environment.
 
 4. API Implementation
-   - Implement ListUserAttributes endpoint
-   - Add API documentation
+   - Implement `ListUserAttributes` endpoint
