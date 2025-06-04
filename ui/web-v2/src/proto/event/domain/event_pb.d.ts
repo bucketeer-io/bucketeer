@@ -5027,25 +5027,55 @@ export class AutoOpsRuleUpdatedEvent extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  clearUpdateOpsEventRateClausesList(): void;
-  getUpdateOpsEventRateClausesList(): Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause>;
-  setUpdateOpsEventRateClausesList(
-    value: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause>
+  clearAddOpsEventRateClausesList(): void;
+  getAddOpsEventRateClausesList(): Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.AddOpsEventRateClause>;
+  setAddOpsEventRateClausesList(
+    value: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.AddOpsEventRateClause>
   ): void;
-  addUpdateOpsEventRateClauses(
-    value?: proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause,
+  addAddOpsEventRateClauses(
+    value?: proto_autoops_service_pb.UpdateAutoOpsRuleRequest.AddOpsEventRateClause,
     index?: number
-  ): proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause;
+  ): proto_autoops_service_pb.UpdateAutoOpsRuleRequest.AddOpsEventRateClause;
 
-  clearUpdateDatetimeClausesList(): void;
-  getUpdateDatetimeClausesList(): Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause>;
-  setUpdateDatetimeClausesList(
-    value: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause>
+  clearChangeOpsEventRateClausesList(): void;
+  getChangeOpsEventRateClausesList(): Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.ChangeOpsEventRateClause>;
+  setChangeOpsEventRateClausesList(
+    value: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.ChangeOpsEventRateClause>
   ): void;
-  addUpdateDatetimeClauses(
-    value?: proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause,
+  addChangeOpsEventRateClauses(
+    value?: proto_autoops_service_pb.UpdateAutoOpsRuleRequest.ChangeOpsEventRateClause,
     index?: number
-  ): proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause;
+  ): proto_autoops_service_pb.UpdateAutoOpsRuleRequest.ChangeOpsEventRateClause;
+
+  clearAddDatetimeClausesList(): void;
+  getAddDatetimeClausesList(): Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.AddDatetimeClause>;
+  setAddDatetimeClausesList(
+    value: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.AddDatetimeClause>
+  ): void;
+  addAddDatetimeClauses(
+    value?: proto_autoops_service_pb.UpdateAutoOpsRuleRequest.AddDatetimeClause,
+    index?: number
+  ): proto_autoops_service_pb.UpdateAutoOpsRuleRequest.AddDatetimeClause;
+
+  clearChangeDatetimeClausesList(): void;
+  getChangeDatetimeClausesList(): Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.ChangeDatetimeClause>;
+  setChangeDatetimeClausesList(
+    value: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.ChangeDatetimeClause>
+  ): void;
+  addChangeDatetimeClauses(
+    value?: proto_autoops_service_pb.UpdateAutoOpsRuleRequest.ChangeDatetimeClause,
+    index?: number
+  ): proto_autoops_service_pb.UpdateAutoOpsRuleRequest.ChangeDatetimeClause;
+
+  clearDeleteClausesList(): void;
+  getDeleteClausesList(): Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.DeleteClause>;
+  setDeleteClausesList(
+    value: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.DeleteClause>
+  ): void;
+  addDeleteClauses(
+    value?: proto_autoops_service_pb.UpdateAutoOpsRuleRequest.DeleteClause,
+    index?: number
+  ): proto_autoops_service_pb.UpdateAutoOpsRuleRequest.DeleteClause;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AutoOpsRuleUpdatedEvent.AsObject;
@@ -5071,8 +5101,11 @@ export class AutoOpsRuleUpdatedEvent extends jspb.Message {
 export namespace AutoOpsRuleUpdatedEvent {
   export type AsObject = {
     id: string;
-    updateOpsEventRateClausesList: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.AsObject>;
-    updateDatetimeClausesList: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.AsObject>;
+    addOpsEventRateClausesList: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.AddOpsEventRateClause.AsObject>;
+    changeOpsEventRateClausesList: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.ChangeOpsEventRateClause.AsObject>;
+    addDatetimeClausesList: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.AddDatetimeClause.AsObject>;
+    changeDatetimeClausesList: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.ChangeDatetimeClause.AsObject>;
+    deleteClausesList: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.DeleteClause.AsObject>;
   };
 }
 
