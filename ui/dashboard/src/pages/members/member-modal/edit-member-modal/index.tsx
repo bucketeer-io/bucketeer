@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   FormProvider,
   Resolver,
@@ -93,6 +93,8 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
     organizationId: currentEnvironment.organizationId
   });
   const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
+
+  const [hasChangeEnvRole, setHasChangeEnvRole] = useState(false);
 
   const form = useForm<EditMemberForm>({
     resolver: yupResolver(formSchema) as Resolver<EditMemberForm>,
@@ -339,6 +341,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                       onChangeEnvironments={values => {
                         field.onChange(values);
                       }}
+                      setHasChangeEnvRole={setHasChangeEnvRole}
                     />
                   </Form.Control>
                 </Form.Item>
@@ -354,7 +357,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isDirty}
+                    disabled={!isDirty && !hasChangeEnvRole}
                     loading={isSubmitting}
                   >
                     {t(`save`)}

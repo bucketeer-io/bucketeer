@@ -34,11 +34,13 @@ const environmentRoleOptions: environmentRoleOption[] = [
 const EnvironmentRoles = ({
   environments,
   memberEnvironments,
-  onChangeEnvironments
+  onChangeEnvironments,
+  setHasChangeEnvRole
 }: {
   environments: Environment[];
   memberEnvironments: EnvironmentRoleItem[];
   onChangeEnvironments: (v: EnvironmentRoleItem[]) => void;
+  setHasChangeEnvRole?: (value: boolean) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
 
@@ -125,6 +127,7 @@ const EnvironmentRoles = ({
                             label={item.name}
                             onSelectOption={value => {
                               field.onChange(value);
+                              setHasChangeEnvRole?.(true);
                             }}
                           />
                         ))}
@@ -169,6 +172,7 @@ const EnvironmentRoles = ({
                             label={item.label}
                             onSelectOption={value => {
                               field.onChange(value);
+                              setHasChangeEnvRole?.(true);
                             }}
                           />
                         ))}
