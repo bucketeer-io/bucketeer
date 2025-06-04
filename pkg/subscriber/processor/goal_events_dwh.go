@@ -92,15 +92,27 @@ func NewGoalEventWriter(
 		goalStorage := storagev2.NewMysqlGoalEventStorage(option.MySQLClient)
 		mysqlEventStorage := ecstorage.NewMySQLEventStorage(option.MySQLClient, logger)
 
-		return &goalEvtWriter{
-			writer:           storage.NewMysqlGoalEventWriter(goalStorage),
-			eventStorage:     mysqlEventStorage,
-			experimentClient: exClient,
-			featureClient:    ftClient,
-			cache:            cache,
-			location:         location,
-			logger:           logger,
-		}, nil
+		// Calculate lock TTL as 80% of retry interval
+		if retryGoalEventInterval == 0 {
+			retryGoalEventInterval = defaultRetryGoalEventInterval
+		}
+		lockTTL := time.Duration(float64(retryGoalEventInterval) * 0.8)
+
+		w := &goalEvtWriter{
+			writer:                  storage.NewMysqlGoalEventWriter(goalStorage),
+			eventStorage:            mysqlEventStorage,
+			experimentClient:        exClient,
+			featureClient:           ftClient,
+			redisClient:             redisClient,
+			locker:                  NewGoalEventLocker(redisClient, lockTTL),
+			cache:                   cache,
+			location:                location,
+			logger:                  logger,
+			maxRetryGoalEventPeriod: maxRetryGoalEventPeriod,
+			retryGoalEventInterval:  retryGoalEventInterval,
+		}
+		w.StartRetryProcessor(ctx)
+		return w, nil
 	}
 
 	// Default BigQuery implementation
