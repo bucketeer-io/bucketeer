@@ -61,6 +61,7 @@ var (
 // Reference: https://github.com/bucketeer-io/android-client-sdk/pull/230
 type BooleanConversionMarshaler struct {
 	runtime.JSONPb
+	logger *zap.Logger
 }
 
 // Unmarshal implements the Marshaler interface with boolean string conversion
@@ -72,14 +73,32 @@ func (m *BooleanConversionMarshaler) Unmarshal(data []byte, v interface{}) error
 		convertedData := m.preprocessJSON(data)
 
 		// Use the standard protojson unmarshaler
-		return protojson.UnmarshalOptions{
+		err := protojson.UnmarshalOptions{
 			DiscardUnknown: m.UnmarshalOptions.DiscardUnknown,
 			AllowPartial:   m.UnmarshalOptions.AllowPartial,
 		}.Unmarshal(convertedData, msg)
+
+		if err != nil {
+			m.logger.Error("Failed to unmarshal proto message",
+				zap.Error(err),
+				zap.String("message_type", string(msg.ProtoReflect().Descriptor().FullName())),
+				zap.String("data", string(data)),
+			)
+			return err
+		}
+
+		return nil
 	}
 
 	// Fall back to standard JSON unmarshaling for non-proto messages
-	return json.Unmarshal(data, v)
+	err := json.Unmarshal(data, v)
+	if err != nil {
+		m.logger.Error("Failed to unmarshal non-proto message",
+			zap.Error(err),
+			zap.String("data", string(data)),
+		)
+	}
+	return err
 }
 
 // preprocessJSON converts string boolean values to actual booleans in the JSON data
@@ -91,6 +110,11 @@ func (m *BooleanConversionMarshaler) preprocessJSON(data []byte) []byte {
 
 	var jsonData interface{}
 	if err := json.Unmarshal(data, &jsonData); err != nil {
+		// Log the error before returning original data
+		m.logger.Error("Failed to unmarshal JSON data in preprocessJSON",
+			zap.Error(err),
+			zap.String("data", string(data)),
+		)
 		// If we can't unmarshal, return the original data
 		return data
 	}
@@ -104,6 +128,10 @@ func (m *BooleanConversionMarshaler) preprocessJSON(data []byte) []byte {
 	// Re-marshal the converted data
 	convertedData, err := json.Marshal(converted)
 	if err != nil {
+		m.logger.Error("Failed to re-marshal converted data",
+			zap.Error(err),
+			zap.Any("converted", converted),
+		)
 		return data
 	}
 
@@ -127,6 +155,11 @@ func (m *BooleanConversionMarshaler) convertStringBooleansRecursive(data interfa
 						modified = true
 					} else {
 						result[key] = value
+						// Log failed conversion attempt
+						m.logger.Warn("Failed to convert boolean field",
+							zap.String("field", key),
+							zap.String("value", strVal),
+						)
 					}
 				} else {
 					convertedValue, childModified := m.convertStringBooleansRecursive(value)
@@ -181,6 +214,9 @@ type booleanConversionDecoder struct {
 func (d *booleanConversionDecoder) Decode(v interface{}) error {
 	data, err := io.ReadAll(d.reader)
 	if err != nil {
+		d.marshaler.logger.Error("Failed to read request body",
+			zap.Error(err),
+		)
 		return err
 	}
 	return d.marshaler.Unmarshal(data, v)
@@ -209,7 +245,7 @@ func NewGateway(restAddr string, opts ...Option) (*Gateway, error) {
 	return &Gateway{
 		restAddr: restAddr,
 		opts:     &options,
-		logger:   options.logger.Named("gateway"),
+		logger:   options.logger.Named("grpc-gateway"),
 	}, nil
 }
 
@@ -226,11 +262,32 @@ func (g *Gateway) Start(ctx context.Context,
 				DiscardUnknown: true,
 			},
 		},
+		logger: g.logger,
+	}
+
+	// Custom error handler that logs errors
+	errorHandler := func(
+		ctx context.Context,
+		mux *runtime.ServeMux,
+		marshaler runtime.Marshaler,
+		w http.ResponseWriter,
+		r *http.Request,
+		err error,
+	) {
+		g.logger.Error("gRPC-Gateway error",
+			zap.Error(err),
+			zap.String("method", r.Method),
+			zap.String("path", r.URL.Path),
+			zap.String("remote_addr", r.RemoteAddr),
+		)
+
+		// Call the default error handler
+		runtime.DefaultHTTPErrorHandler(ctx, mux, marshaler, w, r, err)
 	}
 
 	// Create a new ServeMux with our custom marshaler
 	mux := runtime.NewServeMux(
-		runtime.WithErrorHandler(runtime.DefaultHTTPErrorHandler),
+		runtime.WithErrorHandler(errorHandler),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, customMarshaler),
 	)
 
