@@ -9,7 +9,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
-import { covertFileToByteString } from 'utils/converts';
+import { covertFileToUint8ToBase64 } from 'utils/converts';
 import { IconInfo } from '@icons';
 import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
@@ -43,7 +43,7 @@ export interface AddPushForm {
 export const formSchema = yup.object().shape({
   name: yup.string().required(),
   fcmServiceAccount: yup.string().required(),
-  tags: yup.array().required(),
+  tags: yup.array().required().min(1),
   environmentId: yup.string().required()
 });
 
@@ -52,7 +52,7 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
 
   const [files, setFiles] = useState<File[]>([]);
 
@@ -92,28 +92,29 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
 
   const onSubmit: SubmitHandler<AddPushForm> = async values => {
     try {
-      covertFileToByteString(files[0], data => {
-        pushCreator({ ...values, fcmServiceAccount: data }).then(() => {
-          notify({
-            toastType: 'toast',
-            messageType: 'success',
-            message: (
-              <span>
-                <b>{values.name}</b> {` has been successfully created!`}
-              </span>
-            )
-          });
-          invalidatePushes(queryClient);
-          onClose();
+      const base64String: string = await new Promise(rs =>
+        covertFileToUint8ToBase64(files[0], data => rs(data))
+      );
+
+      const resp = await pushCreator({
+        ...values,
+        fcmServiceAccount: base64String
+      });
+      if (resp) {
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: (
+            <span>
+              <b>{values.name}</b> {` has been successfully created!`}
+            </span>
+          )
         });
-      });
+        invalidatePushes(queryClient);
+        onClose();
+      }
     } catch (error) {
-      const errorMessage = (error as Error)?.message;
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: errorMessage || 'Something went wrong.'
-      });
+      errorNotify(error);
     }
   };
 
@@ -232,9 +233,7 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                   </Form.Label>
                   <Form.Control>
                     <CreatableSelect
-                      disabled={
-                        isLoadingTags || !isEnabledTags || !tagOptions.length
-                      }
+                      disabled={isLoadingTags || !isEnabledTags}
                       loading={isLoadingTags}
                       placeholder={t(
                         isEnabledTags && !tagOptions.length && !isLoadingTags
