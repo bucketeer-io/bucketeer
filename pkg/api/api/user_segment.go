@@ -36,7 +36,7 @@ func (s *grpcGatewayService) CreateSegment(
 		accountproto.APIKey_PUBLIC_API_ADMIN,
 	})
 	if err != nil {
-		s.logger.Error("Failed to check CreatePush request",
+		s.logger.Error("Failed to check CreateSegment request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("name", req.Name),
