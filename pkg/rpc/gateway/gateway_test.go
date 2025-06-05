@@ -5,12 +5,15 @@ import (
 	"testing"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func TestBooleanConversionMarshaler_PreprocessJSON(t *testing.T) {
 	t.Parallel()
-	marshaler := &BooleanConversionMarshaler{}
+	marshaler := &BooleanConversionMarshaler{
+		logger: zap.NewNop().Named("test-boolean-conversion-marshaler"),
+	}
 
 	tests := []struct {
 		name    string
@@ -259,6 +262,7 @@ func TestBooleanConversionMarshaler_Integration(t *testing.T) {
 				DiscardUnknown: true,
 			},
 		},
+		logger: zap.NewNop().Named("test-boolean-conversion-marshaler"),
 	}
 
 	// Test that the marshaler integrates properly with runtime.JSONPb
