@@ -23,7 +23,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 )
@@ -534,8 +533,11 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 	patterns := []struct {
 		desc                      string
 		setup                     func() *AutoOpsRule
-		updateOpsEventRateClauses []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateOpsEventRateClause
-		updateDatetimeClauses     []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause
+		addOpsEventRateClauses    []*autoopsproto.UpdateAutoOpsRuleRequest_AddOpsEventRateClause
+		changeOpsEventRateClauses []*autoopsproto.UpdateAutoOpsRuleRequest_ChangeOpsEventRateClause
+		addDatetimeClauses        []*autoopsproto.UpdateAutoOpsRuleRequest_AddDatetimeClause
+		changeDatetimeClauses     []*autoopsproto.UpdateAutoOpsRuleRequest_ChangeDatetimeClause
+		deleteClauses             []*autoopsproto.UpdateAutoOpsRuleRequest_DeleteClause
 		expected                  func() *AutoOpsRule
 		expectedErr               error
 	}{
@@ -559,14 +561,12 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 				aor.Clauses[0].Id = "id-0"
 				return aor
 			},
-			updateOpsEventRateClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateOpsEventRateClause{
+			deleteClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_DeleteClause{
 				{
-					Id:      "id-0",
-					Deleted: wrapperspb.Bool(true),
+					Id: "id-0",
 				},
 			},
-			updateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{},
-			expectedErr:           errClauseEmpty,
+			expectedErr: errClauseEmpty,
 		},
 		{
 			desc: "Update OpsEventRateClause",
@@ -588,10 +588,20 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 				aor.Clauses[0].Id = "id-0"
 				return aor
 			},
-			updateOpsEventRateClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateOpsEventRateClause{
+			addOpsEventRateClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_AddOpsEventRateClause{
+				{
+					OpsEventRateClause: &autoopsproto.OpsEventRateClause{
+						GoalId:          "goal-01",
+						MinCount:        10,
+						ThreadsholdRate: 0.5,
+						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+					},
+				},
+			},
+			changeOpsEventRateClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_ChangeOpsEventRateClause{
 				{
 					Id: "id-0",
-					Clause: &autoopsproto.OpsEventRateClause{
+					OpsEventRateClause: &autoopsproto.OpsEventRateClause{
 						GoalId:          "goal-02",
 						MinCount:        20,
 						ThreadsholdRate: 0.6,
@@ -599,7 +609,6 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 					},
 				},
 			},
-			updateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{},
 			expected: func() *AutoOpsRule {
 				aor, err := NewAutoOpsRule(
 					"feature-id",
@@ -609,6 +618,12 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 							GoalId:          "goal-02",
 							MinCount:        20,
 							ThreadsholdRate: 0.6,
+							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+						},
+						{
+							GoalId:          "goal-01",
+							MinCount:        10,
+							ThreadsholdRate: 0.5,
 							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
 						},
 					},
@@ -638,11 +653,18 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 				aor.Clauses[0].Id = "id-0"
 				return aor
 			},
-			updateOpsEventRateClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateOpsEventRateClause{},
-			updateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{
+			addDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_AddDatetimeClause{
+				{
+					DatetimeClause: &autoopsproto.DatetimeClause{
+						Time:       1000020000,
+						ActionType: autoopsproto.ActionType_DISABLE,
+					},
+				},
+			},
+			changeDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_ChangeDatetimeClause{
 				{
 					Id: "id-0",
-					Clause: &autoopsproto.DatetimeClause{
+					DatetimeClause: &autoopsproto.DatetimeClause{
 						Time:       1000000002,
 						ActionType: autoopsproto.ActionType_ENABLE,
 					},
@@ -658,6 +680,10 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 							Time:       1000000002,
 							ActionType: autoopsproto.ActionType_ENABLE,
 						},
+						{
+							Time:       1000020000,
+							ActionType: autoopsproto.ActionType_DISABLE,
+						},
 					},
 				)
 				require.NoError(t, err)
@@ -669,7 +695,14 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			aor := p.setup()
-			_, err := aor.Update(nil, p.updateOpsEventRateClauses, p.updateDatetimeClauses)
+			_, err := aor.Update(
+				nil,
+				p.addOpsEventRateClauses,
+				p.changeOpsEventRateClauses,
+				p.addDatetimeClauses,
+				p.changeDatetimeClauses,
+				p.deleteClauses,
+			)
 			if p.expectedErr != nil {
 				require.Equal(t, p.expectedErr, err)
 				return
@@ -677,7 +710,10 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 			expected := p.expected()
 
 			assert.Equal(t, expected.FeatureId, aor.FeatureId)
-			assert.Equal(t, expected.Clauses, aor.Clauses)
+			for i, c := range aor.Clauses {
+				assert.Equal(t, expected.Clauses[i].ActionType, c.ActionType)
+				assert.Equal(t, expected.Clauses[i].Clause, c.Clause)
+			}
 			assert.Equal(t, expected.OpsType, aor.OpsType)
 		})
 	}

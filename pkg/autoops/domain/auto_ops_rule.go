@@ -19,12 +19,10 @@ import (
 	"sort"
 	"time"
 
-	"github.com/jinzhu/copier"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
+	"github.com/jinzhu/copier"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/autoops"
@@ -83,8 +81,11 @@ func NewAutoOpsRule(
 
 func (a *AutoOpsRule) Update(
 	autoOpsStatus *proto.AutoOpsStatus,
-	updateOpsEventRateClauses []*proto.UpdateAutoOpsRuleRequest_UpdateOpsEventRateClause,
-	updateDatetimeClauses []*proto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause,
+	addOpsEventRateClauses []*proto.UpdateAutoOpsRuleRequest_AddOpsEventRateClause,
+	changeOpsEventRateClauses []*proto.UpdateAutoOpsRuleRequest_ChangeOpsEventRateClause,
+	addDatetimeClauses []*proto.UpdateAutoOpsRuleRequest_AddDatetimeClause,
+	changeDatetimeClauses []*proto.UpdateAutoOpsRuleRequest_ChangeDatetimeClause,
+	deleteClauses []*proto.UpdateAutoOpsRuleRequest_DeleteClause,
 ) (*AutoOpsRule, error) {
 	updated := &AutoOpsRule{}
 	if err := copier.Copy(updated, a); err != nil {
@@ -95,50 +96,39 @@ func (a *AutoOpsRule) Update(
 		updated.AutoOpsRule.AutoOpsStatus = *autoOpsStatus
 	}
 
-	for _, c := range updateOpsEventRateClauses {
-		if c.Deleted != nil && c.Deleted.Value {
-			if err := updated.DeleteClause(c.Id); err != nil {
-				return nil, err
-			}
-		}
-		if c.Id == "" {
-			ac, err := anypb.New(c.Clause)
-			if err != nil {
-				return nil, err
-			}
-			_, err = updated.addClause(ac, c.Clause.ActionType)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			err := updated.changeClause(c.Id, c.Clause, c.Clause.ActionType)
-			if err != nil {
-				return nil, err
-			}
+	for _, c := range addOpsEventRateClauses {
+		if _, err := updated.AddOpsEventRateClause(c.OpsEventRateClause); err != nil {
+			return nil, err
 		}
 	}
 
-	for _, c := range updateDatetimeClauses {
-		if c.Deleted != nil && c.Deleted.Value {
-			if err := updated.DeleteClause(c.Id); err != nil {
-				return nil, err
-			}
-			continue
+	for _, c := range changeOpsEventRateClauses {
+		if err := updated.ChangeOpsEventRateClause(
+			c.Id,
+			c.OpsEventRateClause,
+		); err != nil {
+			return nil, err
 		}
-		if c.Id == "" {
-			ac, err := anypb.New(c.Clause)
-			if err != nil {
-				return nil, err
-			}
-			_, err = updated.addClause(ac, c.Clause.ActionType)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			err := updated.changeClause(c.Id, c.Clause, c.Clause.ActionType)
-			if err != nil {
-				return nil, err
-			}
+	}
+
+	for _, c := range addDatetimeClauses {
+		if _, err := updated.AddDatetimeClause(c.DatetimeClause); err != nil {
+			return nil, err
+		}
+	}
+
+	for _, c := range changeDatetimeClauses {
+		if err := updated.ChangeDatetimeClause(
+			c.Id,
+			c.DatetimeClause,
+		); err != nil {
+			return nil, err
+		}
+	}
+
+	for _, c := range deleteClauses {
+		if err := updated.DeleteClause(c.Id); err != nil {
+			return nil, err
 		}
 	}
 

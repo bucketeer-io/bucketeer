@@ -956,10 +956,15 @@ message DatetimeClauseAddedEvent {
 
 message AutoOpsRuleUpdatedEvent {
   string id = 1;
-  repeated autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause
-      update_ops_event_rate_clauses = 10;
-  repeated autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause
-      update_datetime_clauses = 11;
+  repeated autoops.UpdateAutoOpsRuleRequest.AddOpsEventRateClause
+      add_ops_event_rate_clauses = 12;
+  repeated autoops.UpdateAutoOpsRuleRequest.ChangeOpsEventRateClause
+      change_ops_event_rate_clauses = 13;
+  repeated autoops.UpdateAutoOpsRuleRequest.AddDatetimeClause
+      add_datetime_clauses = 14;
+  repeated autoops.UpdateAutoOpsRuleRequest.ChangeDatetimeClause
+      change_datetime_clauses = 15;
+  repeated autoops.UpdateAutoOpsRuleRequest.DeleteClause delete_clauses = 16;
 }
 
 message DatetimeClauseChangedEvent {
