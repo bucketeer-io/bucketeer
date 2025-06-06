@@ -249,6 +249,41 @@ func NewGateway(restAddr string, opts ...Option) (*Gateway, error) {
 	}, nil
 }
 
+// customRoutingErrorHandler handles routing errors and strips trailing slashes
+func (g *Gateway) customRoutingErrorHandler(
+	ctx context.Context,
+	mux *runtime.ServeMux,
+	marshaler runtime.Marshaler,
+	w http.ResponseWriter,
+	r *http.Request,
+	httpStatus int,
+) {
+	// If we get a 404 and the path ends with a slash, try without the slash
+	if httpStatus == http.StatusNotFound && strings.HasSuffix(r.URL.Path, "/") {
+		// Create a new request with the trailing slash removed
+		newPath := strings.TrimSuffix(r.URL.Path, "/")
+		g.logger.Debug("retrying request without trailing slash",
+			zap.String("original_path", r.URL.Path),
+			zap.String("new_path", newPath),
+		)
+
+		// Clone the request with the new path
+		newReq := r.Clone(ctx)
+		newReq.URL.Path = newPath
+		newReq.RequestURI = newPath
+		if r.URL.RawQuery != "" {
+			newReq.RequestURI += "?" + r.URL.RawQuery
+		}
+
+		// Try to serve the request again
+		mux.ServeHTTP(w, newReq)
+		return
+	}
+
+	// For other cases, use the default routing error handler
+	runtime.DefaultRoutingErrorHandler(ctx, mux, marshaler, w, r, httpStatus)
+}
+
 func (g *Gateway) Start(ctx context.Context,
 	registerFuncs ...HandlerRegistrar,
 ) error {
@@ -289,6 +324,7 @@ func (g *Gateway) Start(ctx context.Context,
 	mux := runtime.NewServeMux(
 		runtime.WithErrorHandler(errorHandler),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, customMarshaler),
+		runtime.WithRoutingErrorHandler(g.customRoutingErrorHandler),
 	)
 
 	// Create gRPC dial options with proper credentials and settings
