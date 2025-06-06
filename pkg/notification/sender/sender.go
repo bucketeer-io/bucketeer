@@ -17,7 +17,6 @@ package sender
 
 import (
 	"context"
-	"errors"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -40,9 +39,6 @@ const (
 )
 
 var (
-	errFailedToUnmarshal      = errors.New("sender: failed to unmarshal")
-	errFeatureFlagTagNotFound = errors.New("sender: feature flag tag not found")
-
 	defaultOptions = options{
 		logger: zap.NewNop(),
 	}
@@ -118,14 +114,11 @@ func (s *sender) Send(ctx context.Context, notificationEvent *senderproto.Notifi
 	var lastErr error
 	for _, subscription := range subscriptions {
 		// When a flag changes it must be checked before sending notifications
-		send, err := s.checkForFeatureDomainEvent(
+		send := s.checkForFeatureDomainEvent(
 			subscription,
 			notificationEvent.SourceType,
 			notificationEvent.Notification.DomainEventNotification.EntityData,
 		)
-		if err != nil {
-			return err
-		}
 		// Check if the subcription tag is configured in the feature flag
 		// If not, we skip the notification
 		if !send {
@@ -227,7 +220,7 @@ func (s *sender) checkForFeatureDomainEvent(
 	sub *notificationproto.Subscription,
 	sourceType notificationproto.Subscription_SourceType,
 	entityData string,
-) (bool, error) {
+) bool {
 	// Different domain event
 	if sourceType != notificationproto.Subscription_DOMAIN_EVENT_FEATURE ||
 		len(sub.FeatureFlagTags) == 0 {
@@ -239,7 +232,7 @@ func (s *sender) checkForFeatureDomainEvent(
 			zap.Strings("subscriptionTags", sub.FeatureFlagTags),
 			zap.String("entityData", entityData),
 		)
-		return true, nil
+		return true
 	}
 	// Unmarshal the JSON string into the Feature message
 	var feature ftproto.Feature
@@ -250,7 +243,7 @@ func (s *sender) checkForFeatureDomainEvent(
 			zap.String("subscriptionName", sub.Name),
 			zap.String("entityData", entityData),
 		)
-		return false, errFailedToUnmarshal
+		return false
 	}
 	// Check if the subcription tag is configured in the feature flag
 	// If not, we skip the notification
@@ -263,7 +256,7 @@ func (s *sender) checkForFeatureDomainEvent(
 			zap.Strings("subscriptionTags", sub.FeatureFlagTags),
 			zap.String("entityData", entityData),
 		)
-		return true, nil
+		return true
 	}
 	s.logger.Debug(
 		"Skipping notification. Subscription's tags weren't found in the Flag's tags",
@@ -271,9 +264,10 @@ func (s *sender) checkForFeatureDomainEvent(
 		zap.String("subscriptionId", sub.Id),
 		zap.String("subscriptionName", sub.Name),
 		zap.Strings("subscriptionTags", sub.FeatureFlagTags),
+		zap.Strings("featureFlagTags", feature.Tags),
 		zap.String("entityData", entityData),
 	)
-	return false, errFeatureFlagTagNotFound
+	return false
 }
 
 func containsTags(subTags []string, ftTags []string) bool {
