@@ -216,9 +216,7 @@ type booleanConversionDecoder struct {
 func (d *booleanConversionDecoder) Decode(v interface{}) error {
 	data, err := io.ReadAll(d.reader)
 	if err != nil {
-		d.marshaler.logger.Error("Failed to read request body",
-			zap.Error(err),
-		)
+		// TODO: Send metrics for read errors instead of logging to avoid log volume
 		return err
 	}
 	return d.marshaler.Unmarshal(data, v)
