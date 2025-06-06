@@ -424,6 +424,8 @@ type ListAuditLogsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Page size for pagination. If not set, 0, or exceeds 200, defaults to 200.
+	// Maximum allowed value is 200.
 	PageSize       int64                               `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
 	Cursor         string                              `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
 	OrderBy        ListAuditLogsRequest_OrderBy        `protobuf:"varint,4,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.auditlog.ListAuditLogsRequest_OrderBy" json:"order_by"`
@@ -598,6 +600,8 @@ type ListAdminAuditLogsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Page size for pagination. If not set, 0, or exceeds 200, defaults to 200.
+	// Maximum allowed value is 200.
 	PageSize       int64                                    `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
 	Cursor         string                                   `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor"`
 	OrderBy        ListAdminAuditLogsRequest_OrderBy        `protobuf:"varint,3,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.auditlog.ListAdminAuditLogsRequest_OrderBy" json:"order_by"`
@@ -764,7 +768,9 @@ type ListFeatureHistoryRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FeatureId      string                                   `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	FeatureId string `protobuf:"bytes,1,opt,name=feature_id,json=featureId,proto3" json:"feature_id"`
+	// Page size for pagination. If not set, 0, or exceeds 200, defaults to 200.
+	// Maximum allowed value is 200.
 	PageSize       int64                                    `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size"`
 	Cursor         string                                   `protobuf:"bytes,3,opt,name=cursor,proto3" json:"cursor"`
 	OrderBy        ListFeatureHistoryRequest_OrderBy        `protobuf:"varint,5,opt,name=order_by,json=orderBy,proto3,enum=bucketeer.auditlog.ListFeatureHistoryRequest_OrderBy" json:"order_by"`
