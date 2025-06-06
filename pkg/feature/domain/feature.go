@@ -80,7 +80,10 @@ var (
 	ErrFeatureNotFound                            = errors.New("feature: feature not found")
 	ErrDefaultStrategyCannotBeBothFixedAndRollout = errors.New(
 		"feature: default strategy cannot be both fixed and rollout")
-	ErrRuleStrategyCannotBeEmpty = errors.New("feature: rule strategy cannot be empty")
+	ErrRuleStrategyCannotBeEmpty       = errors.New("feature: rule strategy cannot be empty")
+	ErrInvalidAudiencePercentage       = errors.New("feature: audience percentage must be between 0 and 100")
+	ErrDefaultVariationNotFound        = errors.New("feature: default variation not found")
+	ErrInvalidAudienceDefaultVariation = errors.New("feature: default variation required when audience percentage is between 1 and 99")
 )
 
 // TODO: think about splitting out ruleset / variation
@@ -429,6 +432,25 @@ func validateRolloutStrategy(strategy *feature.RolloutStrategy, variations []*fe
 			return errVariationNotFound
 		}
 	}
+
+	// Validate audience if present
+	if strategy.Audience != nil {
+		// Validate percentage range
+		if strategy.Audience.Percentage < 0 || strategy.Audience.Percentage > 100 {
+			return ErrInvalidAudiencePercentage
+		}
+
+		// If percentage is between 1-99, default variation must be specified and exist
+		if strategy.Audience.Percentage > 0 && strategy.Audience.Percentage < 100 {
+			if strategy.Audience.DefaultVariation == "" {
+				return ErrInvalidAudienceDefaultVariation
+			}
+			if _, err := findVariation(strategy.Audience.DefaultVariation, variations); err != nil {
+				return ErrDefaultVariationNotFound
+			}
+		}
+	}
+
 	return nil
 }
 
