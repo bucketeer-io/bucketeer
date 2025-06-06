@@ -223,7 +223,7 @@ const EditNotificationModal = ({
 
   return (
     <SlideModal
-      title={t('update-push-notification')}
+      title={t('update-notification')}
       isOpen={isOpen}
       onClose={onClose}
     >

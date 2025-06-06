@@ -222,11 +222,7 @@ const AddNotificationModal = ({
   };
 
   return (
-    <SlideModal
-      title={t('new-push-notification')}
-      isOpen={isOpen}
-      onClose={onClose}
-    >
+    <SlideModal title={t('new-notification')} isOpen={isOpen} onClose={onClose}>
       <div className="w-full p-5 pb-28">
         <div className="typo-para-small text-gray-600 mb-3">
           {t('new-notification-subtitle')}
