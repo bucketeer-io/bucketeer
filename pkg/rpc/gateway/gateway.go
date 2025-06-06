@@ -26,9 +26,11 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
@@ -262,11 +264,6 @@ func (g *Gateway) customRoutingErrorHandler(
 	if httpStatus == http.StatusNotFound && strings.HasSuffix(r.URL.Path, "/") {
 		// Create a new request with the trailing slash removed
 		newPath := strings.TrimSuffix(r.URL.Path, "/")
-		g.logger.Debug("retrying request without trailing slash",
-			zap.String("original_path", r.URL.Path),
-			zap.String("new_path", newPath),
-		)
-
 		// Clone the request with the new path
 		newReq := r.Clone(ctx)
 		newReq.URL.Path = newPath
@@ -274,6 +271,11 @@ func (g *Gateway) customRoutingErrorHandler(
 		if r.URL.RawQuery != "" {
 			newReq.RequestURI += "?" + r.URL.RawQuery
 		}
+
+		g.logger.Debug("retrying request without trailing slash",
+			zap.String("original_full_url", r.URL.String()),
+			zap.String("new_full_url", newReq.URL.String()),
+		)
 
 		// Try to serve the request again
 		mux.ServeHTTP(w, newReq)
@@ -309,14 +311,26 @@ func (g *Gateway) Start(ctx context.Context,
 		r *http.Request,
 		err error,
 	) {
-		g.logger.Error("gRPC-Gateway error",
-			zap.Error(err),
-			zap.String("method", r.Method),
-			zap.String("path", r.URL.Path),
-			zap.String("remote_addr", r.RemoteAddr),
-		)
+		// Only log 404 errors (routing/method not found issues)
+		if st, ok := status.FromError(err); ok {
+			switch st.Code() {
+			case codes.NotFound, codes.Unimplemented:
+				// 404 - Resource not found or method not implemented
+				fields := []zap.Field{
+					zap.Error(err),
+					zap.String("method", r.Method),
+					zap.String("path", r.URL.Path),
+					zap.String("remote_addr", r.RemoteAddr),
+				}
+				// Include query parameters if present
+				if r.URL.RawQuery != "" {
+					fields = append(fields, zap.String("query", r.URL.RawQuery))
+				}
+				g.logger.Warn("Gateway 404 error", fields...)
+			}
+		}
 
-		// Call the default error handler
+		// Call the default error handler to send the response
 		runtime.DefaultHTTPErrorHandler(ctx, mux, marshaler, w, r, err)
 	}
 
