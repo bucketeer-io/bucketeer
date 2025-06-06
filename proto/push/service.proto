@@ -70,8 +70,8 @@ message ListPushesResponse {
 
 message DeletePushRequest {
   reserved 1;
-  string id = 2;
-  DeletePushCommand command = 3;
+  string id = 2 [(google.api.field_behavior) = REQUIRED];
+  DeletePushCommand command = 3 [deprecated = true];
   string environment_id = 4;
 }
 
@@ -237,5 +237,48 @@ service PushService {
       }
     };
   }
-  rpc DeletePush(DeletePushRequest) returns (DeletePushResponse) {}
+  rpc DeletePush(DeletePushRequest) returns (DeletePushResponse) {
+    option (google.api.http) = {
+      delete: "/v1/push"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete",
+      description: "Delete a push."
+      tags: "push"
+      operation_id: "web.v1.push.delete"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the push is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 }

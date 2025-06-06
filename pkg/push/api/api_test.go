@@ -799,14 +799,6 @@ func TestDeletePushMySQL(t *testing.T) {
 			req:         &pushproto.DeletePushRequest{},
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
-		// command is deprecating
-		//{
-		//	desc: "err: ErrNoCommand",
-		//	req: &pushproto.DeletePushRequest{
-		//		Id: "key-0",
-		//	},
-		//	expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		//},
 		{
 			desc: "err: ErrNotFound",
 			setup: func(s *PushService) {
@@ -842,13 +834,8 @@ func TestDeletePushMySQL(t *testing.T) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().UpdatePush(
-					gomock.Any(), &domain.Push{
-						Push: &proto.Push{
-							Id:      "key-0",
-							Deleted: true,
-						},
-					}, gomock.Any(),
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().DeletePush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &pushproto.DeletePushRequest{

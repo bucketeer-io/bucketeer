@@ -90,7 +90,7 @@ func TestCreatePush(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newpushStorageWithMock(t, mockController)
+			storage := newPushStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
 			}
@@ -158,7 +158,7 @@ func TestUpdatePush(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newpushStorageWithMock(t, mockController)
+			storage := newPushStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
 			}
@@ -222,7 +222,7 @@ func TestGetPush(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newpushStorageWithMock(t, mockController)
+			storage := newPushStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
 			}
@@ -232,7 +232,7 @@ func TestGetPush(t *testing.T) {
 	}
 }
 
-func TestListPushs(t *testing.T) {
+func TestListPushes(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -300,7 +300,7 @@ func TestListPushs(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newpushStorageWithMock(t, mockController)
+			storage := newPushStorageWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(storage)
 			}
@@ -315,7 +315,69 @@ func TestListPushs(t *testing.T) {
 	}
 }
 
-func newpushStorageWithMock(t *testing.T, mockController *gomock.Controller) *pushStorage {
+func TestDeletePush(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	patterns := []struct {
+		desc          string
+		setup         func(*pushStorage)
+		id            string
+		environmentId string
+		expectedErr   error
+	}{
+		{
+			desc: "Err push unexpected affected rows",
+			setup: func(s *pushStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(0), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(result, nil)
+			},
+			id:            "id-0",
+			environmentId: "ns",
+			expectedErr:   ErrPushUnexpectedAffectedRows,
+		},
+		{
+			desc: "Error",
+			setup: func(s *pushStorage) {
+				result := mock.NewMockResult(mockController)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(result, errors.New("error"))
+			},
+			id:            "id-0",
+			environmentId: "ns",
+			expectedErr:   errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *pushStorage) {
+				result := mock.NewMockResult(mockController)
+				result.EXPECT().RowsAffected().Return(int64(1), nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(result, nil)
+			},
+			id:            "id-0",
+			environmentId: "ns",
+			expectedErr:   nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := newPushStorageWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			err := storage.DeletePush(context.Background(), p.id, p.environmentId)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func newPushStorageWithMock(t *testing.T, mockController *gomock.Controller) *pushStorage {
 	t.Helper()
 	return &pushStorage{mock.NewMockQueryExecer(mockController)}
 }
