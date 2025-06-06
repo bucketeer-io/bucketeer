@@ -79,11 +79,14 @@ var (
 	errFeatureIDRequired                          = errors.New("feature: feature id required")
 	ErrFeatureNotFound                            = errors.New("feature: feature not found")
 	ErrDefaultStrategyCannotBeBothFixedAndRollout = errors.New(
-		"feature: default strategy cannot be both fixed and rollout")
+		"feature: default strategy cannot be both fixed and rollout",
+	)
 	ErrRuleStrategyCannotBeEmpty       = errors.New("feature: rule strategy cannot be empty")
 	ErrInvalidAudiencePercentage       = errors.New("feature: audience percentage must be between 0 and 100")
 	ErrDefaultVariationNotFound        = errors.New("feature: default variation not found")
-	ErrInvalidAudienceDefaultVariation = errors.New("feature: default variation required when audience percentage is between 1 and 99")
+	ErrInvalidAudienceDefaultVariation = errors.New(
+		"feature: default variation required when audience percentage is between 1 and 99",
+	)
 )
 
 // TODO: think about splitting out ruleset / variation
