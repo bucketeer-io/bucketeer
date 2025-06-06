@@ -21,7 +21,7 @@ message Push {
   string id = 1;
   reserved 2;  // string fcm_api_key = 2
   repeated string tags = 3;
-  bool deleted = 4;
+  bool deleted = 4 [deprecated = true];
   string name = 5;
   int64 created_at = 6;
   int64 updated_at = 7;

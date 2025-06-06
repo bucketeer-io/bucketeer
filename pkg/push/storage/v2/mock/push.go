@@ -57,6 +57,20 @@ func (mr *MockPushStorageMockRecorder) CreatePush(ctx, e, environmentId any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePush", reflect.TypeOf((*MockPushStorage)(nil).CreatePush), ctx, e, environmentId)
 }
 
+// DeletePush mocks base method.
+func (m *MockPushStorage) DeletePush(ctx context.Context, id, environmentId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeletePush", ctx, id, environmentId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeletePush indicates an expected call of DeletePush.
+func (mr *MockPushStorageMockRecorder) DeletePush(ctx, id, environmentId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePush", reflect.TypeOf((*MockPushStorage)(nil).DeletePush), ctx, id, environmentId)
+}
+
 // GetPush mocks base method.
 func (m *MockPushStorage) GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error) {
 	m.ctrl.T.Helper()
