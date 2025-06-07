@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { IconCloseRound } from 'react-icons-material-design';
-import { useNavigate } from 'react-router-dom';
 import * as Popover from '@radix-ui/react-popover';
+import { useNavigate } from '@tanstack/react-router';
 import {
   getCurrentEnvironment,
   getEnvironmentsByProjectId,
@@ -106,7 +106,9 @@ const MyProjects = () => {
     (value: Environment) => {
       setSelectedEnvironment(value);
       setCurrentEnvIdStorage(value.id || value.urlCode);
-      navigate(`/${value.urlCode}${PAGE_PATH_FEATURES}`);
+      navigate({
+        to: `/${value.urlCode}${PAGE_PATH_FEATURES}`
+      });
       setIsShowProjectsList(false);
       onClearSearch();
     },

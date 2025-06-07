@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useParams } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
+import { useLocation } from '@tanstack/react-router';
+// import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ID_NEW } from 'constants/routing';
 import { AnyObject } from 'yup';
 import { useToast } from './use-toast';
@@ -11,7 +14,13 @@ interface Props {
 }
 
 const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
-  const { [idKey]: id, ['*']: path, ...params } = useParams();
+  const {
+    [idKey]: id,
+    ['*']: path,
+    ...params
+  } = useParams({
+    strict: false
+  });
   const navigate = useNavigate();
   const { notify } = useToast();
   const location = useLocation();
@@ -25,15 +34,19 @@ const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
   );
 
   const onOpenAddModal = () =>
-    navigate(addPath || `${location.pathname}/${ID_NEW}`);
+    navigate({
+      to: addPath || `${location.pathname}/${ID_NEW}`
+    });
 
   const onOpenEditModal = (path: string, state?: AnyObject) =>
-    navigate(path, {
+    navigate({
+      to: path,
       state
     });
 
   const onCloseActionModal = (path?: string) => {
-    if (closeModalPath || path) navigate(String(closeModalPath || path));
+    if (closeModalPath || path)
+      navigate({ to: String(closeModalPath || path) });
   };
 
   const errorToast = (error: AnyObject) => {

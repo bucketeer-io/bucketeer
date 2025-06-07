@@ -11,27 +11,31 @@ export const getTimeSeries = (
   type: ChartDataType,
   tab: GoalResultTab
 ) => {
+  const {
+    goalEventCountTimeseries,
+    goalUserCountTimeseries,
+    cvrTimeseries,
+    goalValueSumTimeseries,
+    goalValueSumPerUserTimeseries,
+    evaluationUserCountTimeseries
+  } = variationResults[0] || {};
   if (tab === 'CONVERSION') {
-    return variationResults[0]?.goalEventCountTimeseries?.timestamps || [];
+    return goalEventCountTimeseries?.timestamps || [];
   }
   switch (type) {
     case 'goal-total':
-      return variationResults[0]?.goalEventCountTimeseries?.timestamps || [];
+      return goalEventCountTimeseries?.timestamps || [];
     case 'goal-user':
-      return variationResults[0]?.goalUserCountTimeseries?.timestamps || [];
+      return goalUserCountTimeseries?.timestamps || [];
     case 'conversion-rate':
-      return variationResults[0]?.cvrTimeseries?.timestamps || [];
+      return cvrTimeseries?.timestamps || [];
     case 'value-total':
-      return variationResults[0]?.goalValueSumTimeseries?.timestamps || [];
+      return goalValueSumTimeseries?.timestamps || [];
     case 'value-user':
-      return (
-        variationResults[0]?.goalValueSumPerUserTimeseries?.timestamps || []
-      );
+      return goalValueSumPerUserTimeseries?.timestamps || [];
     case 'evaluation-user':
     default:
-      return (
-        variationResults[0]?.evaluationUserCountTimeseries?.timestamps || []
-      );
+      return evaluationUserCountTimeseries?.timestamps || [];
   }
 };
 

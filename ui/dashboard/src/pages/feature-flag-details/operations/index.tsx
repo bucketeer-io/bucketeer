@@ -72,30 +72,26 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  const { actionType, operationType, selectedData } = operationModalState || {};
+
   const isScheduleAction = useMemo(() => action === 'schedule', [action]);
   const isEventRateAction = useMemo(() => action === 'event-rate', [action]);
   const isRolloutAction = useMemo(() => action === 'rollout', [action]);
 
   const isScheduleType = useMemo(
-    () => operationModalState.operationType === 'SCHEDULE',
-    [operationModalState]
+    () => operationType === 'SCHEDULE',
+    [operationType]
   );
   const isRolloutType = useMemo(
-    () => operationModalState.operationType === 'ROLLOUT',
-    [operationModalState]
+    () => operationType === 'ROLLOUT',
+    [operationType]
   );
   const isOpenModalAction = useMemo(
-    () => ['NEW', 'UPDATE', 'DETAILS'].includes(operationModalState.actionType),
-    [operationModalState]
+    () => ['NEW', 'UPDATE', 'DETAILS'].includes(actionType),
+    [actionType]
   );
-  const isStop = useMemo(
-    () => operationModalState.actionType === 'STOP',
-    [operationModalState]
-  );
-  const isDelete = useMemo(
-    () => operationModalState.actionType === 'DELETE',
-    [operationModalState]
-  );
+  const isStop = useMemo(() => actionType === 'STOP', [actionType]);
+  const isDelete = useMemo(() => actionType === 'DELETE', [actionType]);
 
   const queryParams = useMemo(
     () => ({
@@ -189,21 +185,20 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
   const onStopOperation = useCallback(async () => {
     try {
-      if (operationModalState?.selectedData) {
+      if (selectedData) {
         setIsLoading(true);
         let resp = null;
-        const isStopRollout =
-          operationModalState.operationType === OpsTypeMap.ROLLOUT;
+        const isStopRollout = operationType === OpsTypeMap.ROLLOUT;
         if (isStopRollout) {
           resp = await rolloutStopped({
             environmentId: currentEnvironment.id,
-            id: operationModalState?.selectedData?.id,
+            id: selectedData?.id,
             stoppedBy: 'USER'
           });
         } else {
           resp = await autoOpsStop({
             environmentId: currentEnvironment.id,
-            id: operationModalState?.selectedData?.id
+            id: selectedData?.id
           });
         }
 
@@ -225,18 +220,17 @@ const Operations = ({ feature }: { feature: Feature }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [operationModalState]);
+  }, [selectedData, operationType, currentEnvironment]);
 
   const onDeleteOperation = useCallback(async () => {
     try {
-      if (operationModalState?.selectedData) {
+      if (selectedData) {
         setIsLoading(true);
-        const isStopRollout =
-          operationModalState.operationType === OpsTypeMap.ROLLOUT;
+        const isStopRollout = operationType === OpsTypeMap.ROLLOUT;
         const deleteFn = isStopRollout ? rolloutDelete : autoOpsDelete;
         const resp = await deleteFn({
           environmentId: currentEnvironment.id,
-          id: operationModalState?.selectedData?.id
+          id: selectedData?.id
         });
 
         if (resp) {
@@ -253,7 +247,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [operationModalState]);
+  }, [selectedData, operationType, currentEnvironment]);
 
   const onResetModalState = useCallback(
     () =>
@@ -331,8 +325,8 @@ const Operations = ({ feature }: { feature: Feature }) => {
           environmentId={currentEnvironment.id}
           isEnabledFlag={feature.enabled}
           rollouts={rollouts}
-          actionType={operationModalState.actionType}
-          selectedData={operationModalState?.selectedData as AutoOpsRule}
+          actionType={actionType}
+          selectedData={selectedData as AutoOpsRule}
           onClose={onCloseActionModal}
           onSubmitOperationSuccess={onSubmitOperationSuccess}
         />
@@ -342,54 +336,50 @@ const Operations = ({ feature }: { feature: Feature }) => {
           isOpen={isEventRateAction}
           feature={feature}
           environmentId={currentEnvironment.id}
-          actionType={operationModalState.actionType}
+          actionType={actionType}
           isFinishedTab={currentTab === OperationTab.FINISHED}
-          selectedData={operationModalState?.selectedData as AutoOpsRule}
+          selectedData={selectedData as AutoOpsRule}
           onClose={onCloseActionModal}
           onSubmitOperationSuccess={onSubmitOperationSuccess}
         />
       )}
+      {isRolloutAction && actionType === 'NEW' && feature && (
+        <ProgressiveRolloutModal
+          isOpen={isRolloutAction}
+          feature={feature}
+          urlCode={currentEnvironment.urlCode}
+          environmentId={currentEnvironment.id}
+          actionType={actionType}
+          selectedData={selectedData as Rollout}
+          rollouts={rollouts}
+          onClose={onCloseActionModal}
+          onSubmitRolloutSuccess={onSubmitRolloutSuccess}
+        />
+      )}
       {isRolloutAction &&
-        operationModalState.actionType === 'NEW' &&
-        feature && (
-          <ProgressiveRolloutModal
-            isOpen={isRolloutAction}
-            feature={feature}
-            urlCode={currentEnvironment.urlCode}
-            environmentId={currentEnvironment.id}
-            actionType={operationModalState.actionType}
-            selectedData={operationModalState?.selectedData as Rollout}
-            rollouts={rollouts}
-            onClose={onCloseActionModal}
-            onSubmitRolloutSuccess={onSubmitRolloutSuccess}
-          />
-        )}
-      {isRolloutAction &&
-        operationModalState?.selectedData &&
-        operationModalState.actionType === 'DETAILS' &&
+        selectedData &&
+        actionType === 'DETAILS' &&
         feature && (
           <RolloutCloneModal
-            isOpen={
-              isRolloutAction && operationModalState.actionType === 'DETAILS'
-            }
-            selectedData={operationModalState?.selectedData as Rollout}
+            isOpen={isRolloutAction && actionType === 'DETAILS'}
+            selectedData={selectedData as Rollout}
             onClose={onCloseActionModal}
           />
         )}
 
-      {isStop && !!operationModalState?.selectedData && (
+      {isStop && !!selectedData && (
         <StopOperationModal
           loading={isLoading}
-          operationType={operationModalState.operationType!}
-          isOpen={isStop && !!operationModalState?.selectedData}
+          operationType={operationType!}
+          isOpen={isStop && !!selectedData}
           onClose={onResetModalState}
           onSubmit={onStopOperation}
         />
       )}
-      {isDelete && !!operationModalState?.selectedData && (
+      {isDelete && !!selectedData && (
         <ConfirmModal
           loading={isLoading}
-          isOpen={isDelete && !!operationModalState?.selectedData}
+          isOpen={isDelete && !!selectedData}
           title={t(
             `table:popover.delete-${isRolloutType ? 'rollout' : isScheduleType ? 'operation' : 'kill-switch'}`
           )}

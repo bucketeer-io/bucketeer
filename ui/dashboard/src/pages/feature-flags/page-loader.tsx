@@ -1,10 +1,11 @@
 import { useCallback, useState } from 'react';
 import { Trans } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { featureUpdater } from '@api/features';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures } from '@queries/features';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMatchRoute, useNavigate } from '@tanstack/react-router';
+import { useLocation } from '@tanstack/react-router';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_FEATURE_CLONE, PAGE_PATH_FEATURES } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
@@ -22,20 +23,23 @@ import { FeatureActivityStatus, FlagActionType } from './types';
 const PageLoader = () => {
   const { t } = useTranslation(['common', 'table']);
   const queryClient = useQueryClient();
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const {
     id: flagId,
     isAdd,
-    isClone,
     onCloseActionModal,
     onOpenAddModal,
     errorToast
   } = useActionWithURL({
-    idKey: 'flagId',
-    closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`
+    idKey: 'featureId',
+    closeModalPath: `/${currentEnvironment?.urlCode}${PAGE_PATH_FEATURES}`
+  });
+
+  const isClone = useMatchRoute()({
+    to: '/$envUrlCode/features/clone/$featureId'
   });
 
   const navigate = useNavigate();
@@ -55,9 +59,9 @@ const PageLoader = () => {
 
   const onHandleActions = (flag: Feature, type: FlagActionType) => {
     if (type === 'CLONE') {
-      return navigate(
-        `${location.pathname}${PAGE_PATH_FEATURE_CLONE}/${flag.id}`
-      );
+      return navigate({
+        to: `${location.pathname}${PAGE_PATH_FEATURE_CLONE}/${flag.id}`
+      });
     }
     setSelectedFlag(flag);
     if (['ARCHIVE', 'UNARCHIVE'].includes(type)) {
@@ -83,7 +87,7 @@ const PageLoader = () => {
       invalidateFeature(queryClient);
       mutation.reset();
     },
-    onError: error => errorToast(error)
+    onError: error => errorNotify(error)
   });
 
   const handleUpdateFeature = useCallback(
@@ -91,7 +95,7 @@ const PageLoader = () => {
       if (selectedFlag?.id) {
         mutation.mutate({
           id: selectedFlag.id,
-          environmentId: currentEnvironment.id,
+          environmentId: currentEnvironment?.id,
           ...params
         });
       }

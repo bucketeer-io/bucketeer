@@ -9,15 +9,15 @@ export const currentEnvironmentRole = (
   const currentEnvId = getCurrentEnvIdStorage();
   const curEnvId = isNotEmpty(currentEnvId)
     ? currentEnvId
-    : account.environmentRoles[0].environment.id;
+    : account?.environmentRoles[0]?.environment?.id;
 
-  let curEnvRole = account.environmentRoles.find(environmentRole => {
+  let curEnvRole = account?.environmentRoles?.find(environmentRole => {
     const { environment } = environmentRole || {};
     const environmentId = environment?.id || environment?.urlCode;
     return environmentId === curEnvId;
   });
   if (!curEnvRole) {
-    curEnvRole = account.environmentRoles[0];
+    curEnvRole = account?.environmentRoles[0];
   }
   return curEnvRole;
 };
@@ -25,7 +25,7 @@ export const currentEnvironmentRole = (
 export const getCurrentEnvironment = (account: ConsoleAccount): Environment => {
   const envRole = currentEnvironmentRole(account);
 
-  return envRole.environment;
+  return envRole?.environment;
 };
 
 export const getCurrentProject = (

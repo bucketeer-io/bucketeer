@@ -4,9 +4,10 @@ import {
   IconRemoveRedEyeOutlined,
   IconVisibilityOffOutlined
 } from 'react-icons-material-design';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import { signIn } from '@api/auth';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from 'auth';
 import {
   DEMO_SIGN_IN_EMAIL,
@@ -55,7 +56,9 @@ const SignInWithEmail = () => {
       const response = await signIn(values);
       await syncSignIn(response?.token);
       setIsInitialLoading(true);
-      navigate(PAGE_PATH_ROOT);
+      navigate({
+        to: PAGE_PATH_ROOT
+      });
     } catch (error) {
       if (error) {
         setShowAuthError(true);
@@ -65,7 +68,9 @@ const SignInWithEmail = () => {
 
   useEffect(() => {
     if (!DEMO_SIGN_IN_ENABLED) {
-      navigate(PAGE_PATH_ROOT);
+      navigate({
+        to: PAGE_PATH_ROOT
+      });
     }
   }, []);
 
@@ -89,7 +94,11 @@ const SignInWithEmail = () => {
     <AuthWrapper>
       <Button
         variant="secondary-2"
-        onClick={() => navigate(PAGE_PATH_ROOT)}
+        onClick={() =>
+          navigate({
+            to: PAGE_PATH_ROOT
+          })
+        }
         className="p-2 h-auto"
       >
         <Icon icon={IconBackspace} size="sm" />

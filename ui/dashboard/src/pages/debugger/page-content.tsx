@@ -6,6 +6,7 @@ import { useQueryFeatures } from '@queries/features';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { Evaluation } from '@types';
+import { cn } from 'utils/style';
 import { ExpandOrCollapse } from 'pages/audit-logs/types';
 import Form from 'components/form';
 import PageLayout from 'elements/page-layout';
@@ -182,7 +183,11 @@ const PageContent = () => {
   );
 
   return (
-    <PageLayout.Content className={!isShowResults ? 'pt-0' : ''}>
+    <PageLayout.Content
+      className={cn('min-w-[900px]', {
+        'pt-0': !isShowResults
+      })}
+    >
       {!isShowResults ? (
         <FormProvider {...form}>
           <Form onSubmit={form.handleSubmit(onSubmit)}>

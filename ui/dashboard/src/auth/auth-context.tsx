@@ -5,7 +5,6 @@ import React, {
   ReactNode,
   useState
 } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { accountOrganizationFetcher, MeFetcherParams } from '@api/account';
 import { accountMeFetcher } from '@api/account';
 import { PAGE_PATH_ROOT } from 'constants/routing';
@@ -28,7 +27,7 @@ import {
 } from 'storage/token';
 import { AuthToken, ConsoleAccount, Organization } from '@types';
 
-interface AuthContextType {
+export interface AuthContextType {
   logout: () => void;
   isLogin: boolean;
 
@@ -50,7 +49,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children
 }) => {
-  const navigate = useNavigate();
   const authToken: AuthToken | null = getTokenStorage();
   const organizationId = getOrgIdStorage();
   const environmentId = getCurrentEnvIdStorage();
@@ -122,7 +120,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     setMyOrganizations([]);
     setIsLogin(false);
     clearTokenStorage();
-    navigate(PAGE_PATH_ROOT);
+    window.location.replace(PAGE_PATH_ROOT);
   };
 
   useEffect(() => {

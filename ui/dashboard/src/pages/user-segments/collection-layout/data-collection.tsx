@@ -27,10 +27,8 @@ export const useColumns = ({
   const formatDateTime = useFormatDateTime();
 
   const getUploadingStatus = useCallback(
-    (segment: UserSegment) => {
-      if (segment.status === 'UPLOADING') return true;
-      if (segmentUploading?.id === segment.id) return true;
-    },
+    (segment: UserSegment) =>
+      segment.status === 'UPLOADING' || segmentUploading?.id === segment.id,
     [segmentUploading]
   );
 
@@ -38,7 +36,7 @@ export const useColumns = ({
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 350,
+      size: 460,
       cell: ({ row }) => {
         const segment = row.original;
         const { id, name } = segment;
@@ -46,7 +44,7 @@ export const useColumns = ({
         return (
           <div
             onClick={() => onActionHandler(segment, 'EDIT')}
-            className="flex items-center gap-x-2 cursor-pointer min-w-[300px]"
+            className="flex items-center gap-x-2 cursor-pointer"
           >
             <NameWithTooltip
               id={id}
@@ -61,7 +59,7 @@ export const useColumns = ({
     {
       accessorKey: 'users',
       header: `${t('users')}`,
-      size: 200,
+      size: 88,
       cell: ({ row }) => {
         const segment = row.original;
         return (
@@ -74,7 +72,7 @@ export const useColumns = ({
     {
       accessorKey: 'connections',
       header: `${t('connections')}`,
-      size: 200,
+      size: 128,
       cell: ({ row }) => {
         const segment = row.original;
         return (
@@ -98,9 +96,8 @@ export const useColumns = ({
     {
       accessorKey: 'status',
       header: `${t('status')}`,
-      size: 150,
-      minSize: 150,
-      maxSize: 150,
+      size: 128,
+      enableSorting: false,
       cell: ({ row }) => {
         const segment = row.original;
         const isUploading = getUploadingStatus(segment);
@@ -126,7 +123,7 @@ export const useColumns = ({
     {
       accessorKey: 'updatedAt',
       header: t('table:updated-at'),
-      size: 200,
+      size: 128,
       cell: ({ row }) => {
         const segment = row.original;
         const isNever = Number(segment.updatedAt) === 0;
@@ -146,7 +143,7 @@ export const useColumns = ({
     },
     {
       accessorKey: 'action',
-      size: 60,
+      size: 20,
       header: '',
       meta: {
         align: 'center',

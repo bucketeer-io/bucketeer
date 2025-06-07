@@ -1,5 +1,5 @@
 import type { FunctionComponent } from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import { cn } from 'utils/style';
 import Icon from 'components/icon';
 
@@ -8,6 +8,7 @@ export type MenuItem = {
   label: string;
   actIcon?: FunctionComponent;
   href?: string;
+  id?: string;
   onClick?: () => void;
 };
 
@@ -16,6 +17,7 @@ const MenuItemComponent = ({
   label,
   href,
   actIcon,
+  id,
   onClick
 }: MenuItem) => {
   const iconEl = <Icon color="primary-50" size="sm" icon={icon} />;
@@ -26,20 +28,28 @@ const MenuItemComponent = ({
   );
 
   const actionEl = href ? (
-    <NavLink onClick={onClick} className={textClsx} to={href}>
+    <Link onClick={onClick} className={textClsx} to={href}>
       {iconEl}
       {label}
-    </NavLink>
+    </Link>
   ) : (
     <button
+      id={id}
       className={cn(textClsx, { 'justify-between': actIcon })}
       onClick={onClick}
     >
-      <div className="flex items-center gap-x-2 truncate">
+      <div className="flex items-center gap-x-2 truncate pointer-events-none">
         {iconEl}
         <div className="w-fit truncate">{label}</div>
       </div>
-      {actIcon && <Icon color="primary-50" size="sm" icon={actIcon} />}
+      {actIcon && (
+        <Icon
+          color="primary-50"
+          size="sm"
+          icon={actIcon}
+          className="pointer-events-none"
+        />
+      )}
     </button>
   );
 

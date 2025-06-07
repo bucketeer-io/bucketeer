@@ -1,4 +1,5 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+// import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import logo from 'assets/logos/logo-white.svg';
 import { useAuth, getCurrentEnvironment } from 'auth';
 import * as ROUTING from 'constants/routing';
@@ -22,7 +23,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
   const { consoleAccount } = useAuth();
 
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const envUrlCode = currentEnvironment.urlCode;
+  const envUrlCode = currentEnvironment?.urlCode;
 
   const settingMenuSections = [
     {
@@ -139,7 +140,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
   return (
     <div className="fixed h-screen w-[248px] bg-primary-500 z-50 py-8 px-6">
       <div className="flex flex-col size-full relative overflow-hidden">
-        <Link to={ROUTING.PAGE_PATH_ROOT}>
+        <Link to={mainMenuSections[0].menus[0].href}>
           <img src={logo} alt="Bucketer" />
         </Link>
 
@@ -153,7 +154,9 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
             <button
               onClick={() => {
                 onCloseSetting();
-                navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`);
+                navigate({
+                  to: `/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`
+                });
               }}
               className="flex items-center gap-x-2 text-primary-50"
             >
@@ -196,16 +199,21 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
         <Divider className="mb-3 bg-primary-50 opacity-10" />
 
         <div className="flex items-center justify-between">
-          <UserMenu onOpenSwitchOrg={onOpenSwitchOrg} />
+          <UserMenu
+            onToggleSwitchOrg={
+              isOpenSwitchOrg ? onCloseSwitchOrg : onOpenSwitchOrg
+            }
+          />
           <button
             type="button"
             onClick={() => {
               onOpenSetting();
-              if (consoleAccount?.isSystemAdmin) {
-                navigate(ROUTING.PAGE_PATH_ORGANIZATIONS);
-              } else {
-                navigate(`/${envUrlCode}${ROUTING.PAGE_PATH_SETTINGS}`);
-              }
+              const path = consoleAccount?.isSystemAdmin
+                ? ROUTING.PAGE_PATH_ORGANIZATIONS
+                : `/${envUrlCode}${ROUTING.PAGE_PATH_SETTINGS}`;
+              navigate({
+                to: path
+              });
             }}
           >
             <Icon icon={IconSystem.IconSetting} color="primary-50" />

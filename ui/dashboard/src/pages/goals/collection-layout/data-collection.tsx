@@ -68,7 +68,7 @@ export const useColumns = ({
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 500,
+      size: 610,
       cell: ({ row }) => {
         const goal = row.original;
         const { id, name } = goal;
@@ -103,7 +103,7 @@ export const useColumns = ({
     {
       accessorKey: 'connectionType',
       header: `${t('table:goals.connections')}`,
-      size: 150,
+      size: 188,
       cell: ({ row }) => {
         const goal = row.original;
 
@@ -136,7 +136,7 @@ export const useColumns = ({
     {
       accessorKey: 'updatedAt',
       header: `${t('table:updated-at')}`,
-      size: 150,
+      size: 168,
       cell: ({ row }) => {
         const goal = row.original;
         return (
@@ -155,7 +155,7 @@ export const useColumns = ({
     },
     {
       accessorKey: 'action',
-      size: 60,
+      size: 20,
       header: '',
       meta: {
         align: 'center',

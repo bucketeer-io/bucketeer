@@ -80,7 +80,7 @@ const CollectionLoader = ({
         onSortingChange={onSortingChangeHandler}
         emptyCollection={emptyState}
       />
-      {!isLoading && (
+      {!isLoading && !isLoadingTags && (
         <Pagination
           page={filters.page}
           totalCount={totalCount}

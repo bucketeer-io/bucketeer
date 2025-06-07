@@ -58,7 +58,7 @@ export const useColumns = ({
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 500,
+      size: 328,
       cell: ({ row }) => {
         const apiKey = row.original;
         const { id, name } = apiKey;
@@ -72,7 +72,6 @@ export const useColumns = ({
                   id={id}
                   name={name}
                   maxLines={1}
-                  className="min-w-[300px]"
                   onClick={() => onActions(apiKey, 'EDIT')}
                 />
               }
@@ -96,7 +95,7 @@ export const useColumns = ({
     {
       accessorKey: 'role',
       header: `${t('role')}`,
-      size: 150,
+      size: 140,
       cell: ({ row }) => {
         const apiKey = row.original;
         return (
@@ -109,14 +108,14 @@ export const useColumns = ({
     {
       accessorKey: 'environment',
       header: `${t('environment')}`,
-      size: 250,
-      maxSize: 250,
+      size: 228,
+      maxSize: 228,
       cell: ({ row }) => {
         const apiKey = row.original;
         return (
           <TruncationWithTooltip
             elementId={`env-${apiKey.id}`}
-            maxSize={250}
+            maxSize={228}
             content={apiKey.environmentName}
           >
             <div
@@ -132,7 +131,7 @@ export const useColumns = ({
     {
       accessorKey: 'createdAt',
       header: `${t('table:created-at')}`,
-      size: 150,
+      size: 140,
       cell: ({ row }) => {
         const apiKey = row.original;
         return (
@@ -151,7 +150,7 @@ export const useColumns = ({
     {
       accessorKey: 'state',
       header: `${t('state')}`,
-      size: 120,
+      size: 76,
       cell: ({ row }) => {
         const apiKey = row.original;
 
@@ -167,7 +166,7 @@ export const useColumns = ({
     },
     {
       accessorKey: 'action',
-      size: 60,
+      size: 20,
       header: '',
       meta: {
         align: 'center',

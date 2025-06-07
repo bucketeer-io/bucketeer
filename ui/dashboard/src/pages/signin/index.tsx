@@ -1,5 +1,6 @@
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import { authenticationUrl } from '@api/auth';
+import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from 'auth';
 import { urls } from 'configs';
 import { DEMO_SIGN_IN_ENABLED } from 'configs';
@@ -50,7 +51,9 @@ const SignIn = () => {
           <Button
             variant="secondary-2"
             onClick={() => {
-              navigate(PAGE_PATH_AUTH_SIGNIN);
+              navigate({
+                to: PAGE_PATH_AUTH_SIGNIN
+              });
               setIsGoogleAuthError(false);
             }}
           >
