@@ -103,14 +103,13 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
       role: member.organizationRole,
       environmentRoles: member.environmentRoles,
       tags: member.tags
-    }
+    },
+    mode: 'onChange'
   });
 
   const {
-    watch,
-    formState: { isDirty, isSubmitting }
+    formState: { isValid, isSubmitting }
   } = form;
-  const memberEnvironments = watch('environmentRoles');
 
   const { data: collection } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
@@ -327,23 +326,8 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
               )}
             />
             <Divider className="mt-1 mb-3" />
-            <Form.Field
-              control={form.control}
-              name="environmentRoles"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Control>
-                    <EnvironmentRoles
-                      environments={environments}
-                      memberEnvironments={memberEnvironments}
-                      onChangeEnvironments={values => {
-                        field.onChange(values);
-                      }}
-                    />
-                  </Form.Control>
-                </Form.Item>
-              )}
-            />
+
+            <EnvironmentRoles environments={environments} />
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={
@@ -354,7 +338,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isDirty}
+                    disabled={!isValid}
                     loading={isSubmitting}
                   >
                     {t(`save`)}

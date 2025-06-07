@@ -59,10 +59,10 @@ const AvatarIcon = ({
 const AvatarImageVariants = cva(['rounded-full object-cover'], {
   variants: {
     size: {
-      xl: 'w-[120px] h-[120px]',
-      lg: 'size-15',
-      md: 'size-8',
-      sm: 'size-6'
+      xl: 'w-[120px] h-[120px] min-w-[120px]',
+      lg: 'size-[60px] min-w-[60px]',
+      md: 'size-8 min-w-8',
+      sm: 'size-6 min-w-6'
     }
   },
   defaultVariants: {
