@@ -68,7 +68,7 @@ func TestListTagsMySQL(t *testing.T) {
 			desc: "errInternal",
 			setup: func(fs *FeatureService) {
 				fs.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().ListTags(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
 			input:       &featureproto.ListTagsRequest{EnvironmentId: environmentId},
@@ -79,7 +79,7 @@ func TestListTagsMySQL(t *testing.T) {
 			desc: "success",
 			setup: func(fs *FeatureService) {
 				fs.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().ListTags(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*tagproto.Tag{}, 0, int64(0), nil)
 			},
 			input: &featureproto.ListTagsRequest{
