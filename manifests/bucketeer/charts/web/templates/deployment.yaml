@@ -186,6 +186,8 @@ spec:
               value: /usr/local/service-token/token
             - name: BUCKETEER_WEB_EMAIL_FILTER
               value: "{{ .Values.env.emailFilter }}"
+            - name: BUCKETEER_WEB_USE_MYSQL
+              value: "{{ .Values.global.useMySQL }}"
             - name: BUCKETEER_WEB_WEBHOOK_BASE_URL
               value: "{{ .Values.webhook.baseURL }}"
             - name: BUCKETEER_WEB_WEBHOOK_KMS_RESOURCE_NAME
