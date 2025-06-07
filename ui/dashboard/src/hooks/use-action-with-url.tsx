@@ -8,24 +8,18 @@ import { AnyObject } from 'yup';
 import { useToast } from './use-toast';
 
 interface Props {
-  from: string;
   idKey?: string;
   addPath?: string;
   closeModalPath?: string;
 }
 
-const useActionWithURL = ({
-  from,
-  idKey = '*',
-  addPath,
-  closeModalPath
-}: Props) => {
+const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
   const {
     [idKey]: id,
     ['*']: path,
     ...params
   } = useParams({
-    from
+    strict: false
   });
   const navigate = useNavigate();
   const { notify } = useToast();

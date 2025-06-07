@@ -9,7 +9,7 @@ export type SearchParams = ParsedQuery<string>;
 export function useSearchParams() {
   const navigate = useNavigate();
   const location = useLocation();
-  console.log(location)
+
   const searchOptions = useMemo<SearchParams>((): SearchParams => {
     return queryString.parse(location.search);
   }, [location.search]);

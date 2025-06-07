@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
 import { featureCreator } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateFeatures } from '@queries/features';
 import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { AxiosError } from 'axios';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
@@ -76,7 +76,10 @@ const FlagForm = () => {
   } = form;
 
   const onBack = useCallback(
-    () => navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`),
+    () =>
+      navigate({
+        to: `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`
+      }),
     [currentEnvironment]
   );
 

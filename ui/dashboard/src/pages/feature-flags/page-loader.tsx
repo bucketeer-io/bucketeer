@@ -4,7 +4,7 @@ import { featureUpdater } from '@api/features';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures } from '@queries/features';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
+import { useMatchRoute, useNavigate } from '@tanstack/react-router';
 import { useLocation } from '@tanstack/react-router';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_FEATURE_CLONE, PAGE_PATH_FEATURES } from 'constants/routing';
@@ -30,14 +30,16 @@ const PageLoader = () => {
   const {
     id: flagId,
     isAdd,
-    isClone,
     onCloseActionModal,
     onOpenAddModal,
     errorToast
   } = useActionWithURL({
-    from: '/$envUrlCode/features/',
-    idKey: 'flagId',
+    idKey: 'featureId',
     closeModalPath: `/${currentEnvironment?.urlCode}${PAGE_PATH_FEATURES}`
+  });
+
+  const isClone = useMatchRoute()({
+    to: '/$envUrlCode/features/clone/$featureId'
   });
 
   const navigate = useNavigate();
