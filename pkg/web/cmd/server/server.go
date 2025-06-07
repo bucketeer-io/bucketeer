@@ -92,6 +92,7 @@ type server struct {
 	*kingpin.CmdClause
 	port                            *int
 	project                         *string
+	demoEnabled                     *bool
 	timezone                        *string
 	certPath                        *string
 	keyPath                         *string
@@ -158,6 +159,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	server := &server{
 		CmdClause:   cmd,
 		port:        cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		demoEnabled: cmd.Flag("demo-enabled", "Enable demo mode").Default("false").Bool(),
 		project:     cmd.Flag("project", "Google Cloud project name.").Required().String(),
 		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
 		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
@@ -525,7 +527,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer autoOpsClient.Close()
 	// authService
-	authService, err := s.createAuthService(mysqlClient, accountClient, verifier, oAuthConfig, logger)
+	authService, err := s.createAuthService(mysqlClient, accountClient, environmentClient, verifier, oAuthConfig, logger)
 	if err != nil {
 		return err
 	}
@@ -913,6 +915,7 @@ func (s *server) readOAuthConfig(
 func (s *server) createAuthService(
 	mysqlClient mysql.Client,
 	accountClient accountclient.Client,
+	environmentClient environmentclient.Client,
 	verifier token.Verifier,
 	config *auth.OAuthConfig,
 	logger *zap.Logger,
@@ -935,10 +938,12 @@ func (s *server) createAuthService(
 	return authapi.NewAuthService(
 		config.Issuer,
 		config.Audience,
+		*s.demoEnabled,
 		signer,
 		verifier,
 		mysqlClient,
 		accountClient,
+		environmentClient,
 		config,
 		serviceOptions...,
 	), nil
