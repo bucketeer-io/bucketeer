@@ -31,8 +31,27 @@ class StrategyEvaluator {
     featureID: string,
     samplingSeed: string,
   ): string {
-    const input = `${featureID}-${userID}-${samplingSeed}`;
     const bucketeer = new Bucketeer();
+    
+    const audience = strategy.getAudience();
+    if (audience !== undefined) {
+      if (audience.getPercentage() > 0 && audience.getPercentage() < 100) {
+        // Use different hash input for audience control to ensure independence from A/B split
+        const trafficInput = `traffic-${featureID}-${userID}-${samplingSeed}`;
+        const trafficBucket = bucketeer.bucket(trafficInput);
+        const trafficThreshold = audience.getPercentage() / 100.0;
+        
+        // If user is not in experiment traffic, return default variation
+        if (trafficBucket >= trafficThreshold) {
+          if (audience.getDefaultVariation() === '') {
+            throw new Error('Variation not found');
+          }
+          return audience.getDefaultVariation();
+        }
+      }
+    }
+    
+    const input = `${featureID}-${userID}-${samplingSeed}`;
     const bucket = bucketeer.bucket(input);
 
     let rangeEnd = 0.0;
