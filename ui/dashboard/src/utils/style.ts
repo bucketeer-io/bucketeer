@@ -1,6 +1,6 @@
 import type { FunctionComponent } from 'react';
 import { clsx, type ClassValue } from 'clsx';
-import { COLORS, SPECIFIC_COLORS } from 'constants/styles';
+import { COLORS } from 'constants/styles';
 import compact from 'lodash/compact';
 import { twMerge } from 'tailwind-merge';
 import type { Color } from '@types';
@@ -21,10 +21,3 @@ export const iconsx = (
 
 export const getVariationColor = (index: number) =>
   COLORS[index % COLORS.length];
-
-export const getVariationSpecificColor = (value: string) => {
-  if (value === 'true') return SPECIFIC_COLORS.TRUE;
-  if (value === 'false') return SPECIFIC_COLORS.FALSE;
-  if (value === 'json') return SPECIFIC_COLORS.JSON;
-  return '';
-};

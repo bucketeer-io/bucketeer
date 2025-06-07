@@ -102,10 +102,7 @@ const GridViewCollection = ({
                 id="variations-wrapper"
                 className="flex flex-col gap-y-3 col-span-4 flex-1"
               >
-                <FlagVariationsElement
-                  variations={variations}
-                  variationType={variationType}
-                />
+                <FlagVariationsElement variations={variations} />
                 <div className="flex items-center flex-wrap w-full gap-2">
                   <ExpandableTag
                     tags={tags}

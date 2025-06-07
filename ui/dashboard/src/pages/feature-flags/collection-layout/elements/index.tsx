@@ -16,7 +16,7 @@ import {
 } from '@types';
 import { truncateBySide } from 'utils/converts';
 import { copyToClipBoard } from 'utils/function';
-import { cn, getVariationColor, getVariationSpecificColor } from 'utils/style';
+import { cn, getVariationColor } from 'utils/style';
 import {
   IconCalendar,
   IconCopy,
@@ -284,11 +284,9 @@ export const FlagNameElement = ({
 };
 
 export const FlagVariationsElement = ({
-  variations,
-  variationType
+  variations
 }: {
   variations: FeatureVariation[];
-  variationType: FeatureVariationType;
 }) => {
   const { t } = useTranslation(['common', 'table']);
 
@@ -303,11 +301,10 @@ export const FlagVariationsElement = ({
     );
   if (variationCount === 1) {
     const currentVariation = variations[variationCount - 1];
-    const specificColor = getVariationSpecificColor(currentVariation.value);
     return (
       <div className="flex items-center gap-x-2 w-full overflow-hidden">
         <div className="flex-center size-4">
-          <FlagVariationPolygon index={0} specificColor={specificColor} />
+          <FlagVariationPolygon index={0} />
         </div>
         <p className="typo-para-small text-gray-700 truncate flex-1">
           {currentVariation.name || currentVariation.value}
@@ -324,16 +321,8 @@ export const FlagVariationsElement = ({
         trigger={
           <div className="flex items-center w-full gap-2">
             <div className="flex items-center w-full flex-wrap gap-y-1">
-              {variations.map((variation, index) => (
-                <FlagVariationPolygon
-                  key={index}
-                  index={index}
-                  specificColor={
-                    variationType === 'BOOLEAN'
-                      ? getVariationSpecificColor(variation.value)
-                      : ''
-                  }
-                />
+              {variations.map((_, index) => (
+                <FlagVariationPolygon key={index} index={index} />
               ))}
             </div>
             <p className="typo-para-small whitespace-nowrap text-gray-700">
@@ -359,11 +348,6 @@ export const FlagVariationsElement = ({
                 <div className="flex-center size-4">
                   <FlagVariationPolygon
                     index={index}
-                    specificColor={
-                      variationType === 'BOOLEAN'
-                        ? getVariationSpecificColor(item.value)
-                        : ''
-                    }
                     className="border-white/10"
                   />
                 </div>

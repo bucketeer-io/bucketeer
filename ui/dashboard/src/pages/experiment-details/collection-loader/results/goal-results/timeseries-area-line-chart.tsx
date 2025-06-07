@@ -26,7 +26,7 @@ import {
 import 'chartjs-adapter-luxon';
 import { formatTooltipLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
-import { getVariationColor, getVariationSpecificColor } from 'utils/style';
+import { getVariationColor } from 'utils/style';
 import { DataLabel } from './timeseries-line-chart';
 
 ChartJS.register(
@@ -85,11 +85,7 @@ export const TimeseriesAreaLineChart = memo(
 
       dataLabels.forEach((l, i) => {
         const color = getVariationColor(i);
-        const specificColor =
-          l?.variationType === 'BOOLEAN'
-            ? getVariationSpecificColor(l.label)
-            : '';
-        const hexColor = hexToRgba(specificColor || color, 0.2);
+        const hexColor = hexToRgba(color, 0.2);
 
         datasets.push({
           label: undefined,
@@ -120,7 +116,7 @@ export const TimeseriesAreaLineChart = memo(
         datasets.push({
           label: l.label,
           data: representatives[i],
-          borderColor: specificColor || color,
+          borderColor: color,
           fill: false,
           value: l.value,
           tension: 0.2

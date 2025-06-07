@@ -4,7 +4,7 @@ import { Trans } from 'react-i18next';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
-import { cn, getVariationSpecificColor } from 'utils/style';
+import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
 import { AddFlagForm } from 'pages/create-flag/form-schema';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
@@ -52,12 +52,7 @@ const Variations = () => {
       {variations.map((item, variationIndex) => (
         <div key={item.flagVariation} className="flex flex-col w-full">
           <div className="flex items-center gap-x-2 mb-3 typo-para-small text-gray-600">
-            <FlagVariationPolygon
-              index={variationIndex}
-              specificColor={
-                isBoolean ? getVariationSpecificColor(item.value) : ''
-              }
-            />
+            <FlagVariationPolygon index={variationIndex} />
             <Trans
               i18nKey={'form:feature-flags.variation'}
               values={{

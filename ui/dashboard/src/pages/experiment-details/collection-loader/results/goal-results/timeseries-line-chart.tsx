@@ -26,7 +26,7 @@ import 'chartjs-adapter-luxon';
 import { FeatureVariationType } from '@types';
 import { formatTooltipLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
-import { getVariationColor, getVariationSpecificColor } from 'utils/style';
+import { getVariationColor } from 'utils/style';
 import {
   ChartToggleLegendRef,
   DatasetReduceType
@@ -117,16 +117,12 @@ const TimeseriesLineChart = memo(
       const chartData: ChartData<'line', (string | number)[], Date> = {
         labels,
         datasets: dataLabels.map((e, i) => {
-          const specificColor =
-            e?.variationType === 'BOOLEAN'
-              ? getVariationSpecificColor(e.label)
-              : '';
           const color = getVariationColor(i);
           return {
             label: e.label,
             data: [...data[i]],
-            borderColor: specificColor || color,
-            backgroundColor: specificColor || color,
+            borderColor: color,
+            backgroundColor: color,
             fill: false,
             value: e.value,
             tension: 0.2

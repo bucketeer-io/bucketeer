@@ -1,5 +1,5 @@
 import { FeatureVariationType } from '@types';
-import { cn, getVariationColor, getVariationSpecificColor } from 'utils/style';
+import { cn, getVariationColor } from 'utils/style';
 import { IconInfo } from '@icons';
 import { Polygon } from 'pages/experiment-details/elements/header-details';
 import Checkbox from 'components/checkbox';
@@ -89,9 +89,7 @@ export const ResultCell = ({
             <Polygon
               className="border-none size-3"
               style={{
-                background: isBooleanValue
-                  ? getVariationSpecificColor(value as string)
-                  : getVariationColor(currentIndex),
+                background: getVariationColor(currentIndex),
                 zIndex: currentIndex
               }}
             />

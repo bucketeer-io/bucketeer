@@ -1,9 +1,7 @@
-import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { FeatureVariation } from '@types';
-import { getVariationSpecificColor } from 'utils/style';
 import { AddFlagForm } from 'pages/create-flag/form-schema';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import {
@@ -18,9 +16,6 @@ const DefaultVariations = () => {
   const { t } = useTranslation(['form', 'common', 'table']);
   const { control, watch } = useFormContext<AddFlagForm>();
 
-  const variationType = watch('variationType');
-  const isBoolean = useMemo(() => variationType === 'BOOLEAN', [variationType]);
-
   const currentVariations = watch('variations') as FeatureVariation[];
 
   return (
@@ -29,9 +24,6 @@ const DefaultVariations = () => {
         control={control}
         name={`defaultOnVariation`}
         render={({ field }) => {
-          const variation = currentVariations?.find(
-            item => item.id === field.value
-          );
           const variationIndex = currentVariations?.findIndex(
             item => item.id === field.value
           );
@@ -52,16 +44,7 @@ const DefaultVariations = () => {
                     placeholder={t(`form:placeholder-tags`)}
                     trigger={
                       <div className="flex items-center gap-x-2 text-gray-700 typo-para-medium">
-                        <FlagVariationPolygon
-                          index={variationIndex}
-                          specificColor={
-                            isBoolean
-                              ? getVariationSpecificColor(
-                                  variation?.value || ''
-                                )
-                              : ''
-                          }
-                        />
+                        <FlagVariationPolygon index={variationIndex} />
                         <Trans
                           i18nKey={'form:feature-flags.variation'}
                           values={{
@@ -82,7 +65,17 @@ const DefaultVariations = () => {
                         {...field}
                         key={index}
                         value={item.id}
-                        label={`Variation ${index + 1}`}
+                        label={
+                          <div className="flex items-center gap-x-2 text-gray-700 typo-para-medium">
+                            <FlagVariationPolygon index={index} />
+                            <Trans
+                              i18nKey={'form:feature-flags.variation'}
+                              values={{
+                                index: index + 1
+                              }}
+                            />
+                          </div>
+                        }
                         onSelectOption={() => {
                           field.onChange(item.id);
                         }}
@@ -100,9 +93,6 @@ const DefaultVariations = () => {
         control={control}
         name={`defaultOffVariation`}
         render={({ field }) => {
-          const variation = currentVariations?.find(
-            item => item.id === field.value
-          );
           const variationIndex = currentVariations?.findIndex(
             item => item.id === field.value
           );
@@ -123,16 +113,7 @@ const DefaultVariations = () => {
                     placeholder={t(`form:placeholder-tags`)}
                     trigger={
                       <div className="flex items-center gap-x-2 text-gray-700 typo-para-medium">
-                        <FlagVariationPolygon
-                          index={variationIndex}
-                          specificColor={
-                            isBoolean
-                              ? getVariationSpecificColor(
-                                  variation?.value || ''
-                                )
-                              : ''
-                          }
-                        />
+                        <FlagVariationPolygon index={variationIndex} />
                         <Trans
                           i18nKey={'form:feature-flags.variation'}
                           values={{
@@ -153,7 +134,17 @@ const DefaultVariations = () => {
                         {...field}
                         key={index}
                         value={item.id}
-                        label={`Variation ${index + 1}`}
+                        label={
+                          <div className="flex items-center gap-x-2 text-gray-700 typo-para-medium">
+                            <FlagVariationPolygon index={index} />
+                            <Trans
+                              i18nKey={'form:feature-flags.variation'}
+                              values={{
+                                index: index + 1
+                              }}
+                            />
+                          </div>
+                        }
                         onSelectOption={() => {
                           field.onChange(item.id);
                         }}
