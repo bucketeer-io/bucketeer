@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { NavLink, NavLinkProps } from 'react-router-dom';
+import { Link, LinkComponentProps } from '@tanstack/react-router';
 import { cn } from 'utils/style';
 
 const Tabs = React.forwardRef<
@@ -27,9 +27,9 @@ const TabsList = React.forwardRef<
   />
 ));
 
-const TabsLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(
+const TabsLink = React.forwardRef<HTMLAnchorElement, LinkComponentProps>(
   ({ className, to, ...props }, ref) => (
-    <NavLink
+    <Link
       to={to}
       className={cn(
         'flex-center whitespace-nowrap typo-para-medium text-gray-500',

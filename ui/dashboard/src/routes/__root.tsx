@@ -2,16 +2,14 @@ import { QueryClient } from '@tanstack/react-query';
 import { createRootRouteWithContext, redirect } from '@tanstack/react-router';
 import { AuthContextType } from 'auth';
 import { getTokenStorage } from 'storage/token';
-import NotFoundPage from 'pages/not-found';
 import RootLayout from './-root-layout';
 
 export interface RouterContext {
   queryClient: QueryClient;
-  auth: AuthContextType;
+  auth?: AuthContextType;
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
-  notFoundComponent: NotFoundPage,
   component: RootLayout,
   beforeLoad: async context => {
     const { pathname } = context.location;

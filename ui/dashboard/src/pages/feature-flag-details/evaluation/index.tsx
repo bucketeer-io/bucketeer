@@ -1,10 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryEvaluation } from '@queries/evaluation';
+import { useLoaderData, useSearch } from '@tanstack/react-router';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
-import { EvaluationTimeRange, Feature } from '@types';
+import {
+  Route as featureDetailsLayoutRoute,
+  FeatureDetailsLoaderData
+} from 'routes/_default-layout/$env/features/$featureId/_feature-details-layout';
+import {
+  EvaluationSearch,
+  Route as EvaluationsRoute
+} from 'routes/_default-layout/$env/features/$featureId/_feature-details-layout/evaluations/';
+import { EvaluationTimeRange } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import {
@@ -18,32 +27,41 @@ import PageLayout from 'elements/page-layout';
 import { EvaluationChart } from './evaluation-chart';
 import EvaluationTable from './evaluation-table';
 import FilterBar from './filter-bar';
-import { EvaluationFilters, EvaluationTab, TimeRangeOption } from './types';
+import { EvaluationTab, TimeRangeOption } from './types';
 
-const EvaluationPage = ({ feature }: { feature: Feature }) => {
+const EvaluationPage = () => {
   const { t } = useTranslation(['common', 'table']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const evaluationChartRef = useRef<ChartToggleLegendRef>(null);
   const { searchOptions, onChangSearchParams } = useSearchParams();
-  const searchFilters: Partial<EvaluationFilters> = searchOptions;
 
   const [dataSets, setDataSets] = useState<DatasetReduceType[]>([]);
+
+  const loaderData: FeatureDetailsLoaderData = useLoaderData({
+    from: featureDetailsLayoutRoute.id
+  });
+
+  const feature = loaderData?.feature;
+
+  const searchFilters: EvaluationSearch = useSearch({
+    from: EvaluationsRoute.id
+  });
 
   const defaultFilters = {
     tab: EvaluationTab.EVENT_COUNT,
     period: EvaluationTimeRange.THIRTY_DAYS,
     ...searchFilters
-  } as EvaluationFilters;
+  } as EvaluationSearch;
 
   const [filters, setFilters] =
-    usePartialState<EvaluationFilters>(defaultFilters);
+    usePartialState<EvaluationSearch>(defaultFilters);
 
   const { data: evaluationCollection, isLoading } = useQueryEvaluation({
     params: {
       environmentId: currentEnvironment.id,
-      featureId: feature.id,
-      timeRange: filters.period
+      featureId: feature?.id,
+      timeRange: filters.period!
     },
     gcTime: 0
   });
@@ -89,7 +107,7 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
       countData?.map(item => ({
         value: item.variationId,
         label:
-          feature.variations.find(v => v.id === item.variationId)?.value ||
+          feature.variations?.find(v => v.id === item.variationId)?.value ||
           (item.variationId === 'default' ? 'default value' : ''),
         variationType: feature.variationType
       })) || [],
@@ -109,7 +127,7 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
     [countData]
   );
 
-  const onChangeFilters = (values: Partial<EvaluationFilters>) => {
+  const onChangeFilters = (values: Partial<EvaluationSearch>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });
@@ -152,7 +170,7 @@ const EvaluationPage = ({ feature }: { feature: Feature }) => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value={filters.tab}>
+          <TabsContent value={filters.tab || ''}>
             {isLoading ? (
               <PageLayout.LoadingState />
             ) : (

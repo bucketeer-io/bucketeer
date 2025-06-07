@@ -16,8 +16,6 @@ const routeApi = getRouteApi('/auth/callback');
 export const AuthCallbackPage: FC = memo(() => {
   const { syncSignIn, setIsGoogleAuthError, setIsInitialLoading } = useAuth();
   const navigate = useNavigate();
-  // const location = useLocation();
-  // const query = location.search;
 
   const search = routeApi.useSearch();
 
@@ -44,9 +42,7 @@ export const AuthCallbackPage: FC = memo(() => {
 
   useEffect(() => {
     const { code, state } = search;
-    console.log({ code, state });
     const cookieState = getCookieState();
-    console.log({ cookieState });
     setIsInitialLoading(true);
     if (!!code && state === Number(cookieState)) {
       if (typeof code === 'string') {

@@ -1,26 +1,22 @@
 import { memo, useCallback, useEffect } from 'react';
-import { createRoute, Outlet } from '@tanstack/react-router';
+import { createRoute, Outlet, useLocation } from '@tanstack/react-router';
 import { useNavigate } from '@tanstack/react-router';
 import { useParams } from '@tanstack/react-router';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { PAGE_PATH_FEATURES, PAGE_PATH_ROOT } from 'constants/routing';
-import { pickBy } from 'lodash';
 import {
   getCurrentEnvIdStorage,
   setCurrentEnvIdStorage
 } from 'storage/environment';
-import { isNotEmpty } from 'utils/data-type';
-import { stringifyParams, useSearchParams } from 'utils/search-params';
-import Navigation from 'components/navigation';
+import DefaultEnvLayout from 'elements/default-env-layout';
 import { Route as RootRoute } from './__root';
 
 export const PathlessLayout = memo(() => {
   const { consoleAccount } = useAuth();
   const navigate = useNavigate();
-  const { envUrlCode, ...params } = useParams({
+  const { pathname, searchStr } = useLocation();
+  const { env: envUrlCode, ...params } = useParams({
     strict: false
   });
-  const { searchOptions } = useSearchParams();
 
   // const editable = hasEditable(account);
   const currentEnv = getCurrentEnvironment(consoleAccount!);
@@ -29,44 +25,26 @@ export const PathlessLayout = memo(() => {
     const isExistEnv = consoleAccount?.environmentRoles?.find(
       item => item.environment.urlCode === envUrlCode
     );
-    if (!envUrlCode || !isExistEnv) {
-      return navigate({
-        to: `${PAGE_PATH_ROOT}${currentEnv?.urlCode}${PAGE_PATH_FEATURES}`
-      });
-    }
+    if (!envUrlCode || !isExistEnv) return;
 
     const envIdStorage = getCurrentEnvIdStorage();
     if (envIdStorage === envUrlCode) return;
     const { environment } = isExistEnv;
 
-    const stringifyQueryParams = stringifyParams(
-      pickBy(searchOptions, v => isNotEmpty(v as string))
-    );
-    const queryParams = isNotEmpty(stringifyQueryParams)
-      ? `?${stringifyQueryParams}`
-      : '';
-
-    console.log({ stringifyQueryParams });
-
-    const path = params['*'] ? `/${params['*']}` : '';
-
     setCurrentEnvIdStorage(environment.id || environment.urlCode);
     return navigate({
-      to: `${PAGE_PATH_ROOT}${environment.urlCode}${path}${queryParams}`
+      to: `${pathname}${searchStr}`
     });
-  }, [envUrlCode, currentEnv, params, searchOptions, consoleAccount]);
+  }, [envUrlCode, currentEnv, params, consoleAccount]);
 
   useEffect(() => {
     if (consoleAccount && envUrlCode) handleCheckEnvCodeOnInit();
   }, [consoleAccount, envUrlCode]);
 
   return (
-    <div className="flex size-full">
-      <Navigation onClickNavLink={() => {}} />
-      <div className="w-full ml-[248px] shadow-lg overflow-y-auto">
-        <Outlet />
-      </div>
-    </div>
+    <DefaultEnvLayout>
+      <Outlet />
+    </DefaultEnvLayout>
   );
 });
 

@@ -1,4 +1,6 @@
+import { accountMeFetcher } from '@api/account';
 import { unwrapUndefinable } from 'option-t/undefinable';
+import { queryClient } from 'router';
 import { getCurrentEnvIdStorage } from 'storage/environment';
 import { ConsoleAccount, Environment, EnvironmentRole, Project } from '@types';
 import { isNotEmpty } from 'utils/data-type';
@@ -71,4 +73,15 @@ export const getEnvironmentsByProjectId = (
   return roles
     .filter(role => role.environment.projectId === projectId)
     .map(role => role.environment);
+};
+
+export const meFetcher = async (organizationId: string) => {
+  const response = await queryClient.ensureQueryData({
+    queryKey: ['account', organizationId],
+    queryFn: () =>
+      accountMeFetcher({
+        organizationId: organizationId
+      })
+  });
+  return response;
 };

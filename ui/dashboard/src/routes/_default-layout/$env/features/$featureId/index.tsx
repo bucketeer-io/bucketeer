@@ -1,13 +1,13 @@
 import { createRoute, redirect } from '@tanstack/react-router';
-import { Route as EnvRoute } from './__env';
+import { Route as FeaturesRoute } from '../index';
 
 export const Route = createRoute({
-  id: 'envIndex',
+  path: '$featureId',
   beforeLoad: ({ params }) => {
     throw redirect({
-      to: '/$env/features',
+      to: '/$env/features/$featureId/targeting',
       params
     });
   },
-  getParentRoute: () => EnvRoute
+  getParentRoute: () => FeaturesRoute
 });

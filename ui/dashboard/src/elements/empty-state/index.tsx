@@ -30,7 +30,7 @@ const EmptyStateRoot = ({
 }: EmptyStateProps) => {
   return (
     <EmptyStateProvider value={{ variant, size }}>
-      <div className={cn('flex flex-col items-center gap-4', className)}>
+      <div className={cn('flex flex-col items-center gap-4 mt-60', className)}>
         {children}
       </div>
     </EmptyStateProvider>
@@ -42,16 +42,40 @@ const EmptyStateIllustration = () => {
 
   switch (variant) {
     case 'error':
-      return <img alt="Error" className="w-fit" src={emptyStateError} />;
+      return (
+        <img
+          alt="Error"
+          className="w-fit min-w-16 min-h-16"
+          src={emptyStateError}
+        />
+      );
 
     case 'no-data':
-      return <img alt="No Data" className="w-fit" src={emptyStateNoData} />;
+      return (
+        <img
+          alt="No Data"
+          className="w-fit min-w-16 min-h-16"
+          src={emptyStateNoData}
+        />
+      );
 
     case 'no-search':
-      return <img alt="No Search" className="w-fit" src={emptyStateNoSearch} />;
+      return (
+        <img
+          alt="No Search"
+          className="w-fit min-w-16 min-h-16"
+          src={emptyStateNoSearch}
+        />
+      );
 
     case 'invalid':
-      return <img alt="Invalid" className="w-fit" src={emptyStateCode} />;
+      return (
+        <img
+          alt="Invalid"
+          className="w-fit min-w-16 min-h-16"
+          src={emptyStateCode}
+        />
+      );
   }
 };
 

@@ -10,6 +10,7 @@ import { accountMeFetcher } from '@api/account';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
 import { Undefinable } from 'option-t/undefinable';
+import { queryClient } from 'router';
 import {
   clearCurrentEnvIdStorage,
   getCurrentEnvIdStorage,
@@ -71,7 +72,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const onMeFetcher = async (params: MeFetcherParams) => {
     try {
-      const response = await accountMeFetcher(params);
+      // const response = await accountMeFetcher(params);
+
+      const response = await queryClient.ensureQueryData({
+        queryKey: ['account', params.organizationId],
+        queryFn: () =>
+          accountMeFetcher({
+            organizationId: params.organizationId
+          })
+      });
+
       const environmentRoles = response.account.environmentRoles;
       if (!environmentRoles.length) {
         clearOrgAndEnvStorage();

@@ -6,27 +6,37 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 import { createFileRoute } from '@tanstack/react-router';
 // Import Routes
-import { Route as rootRoute } from './routes/__root';
-import { Route as DefaultLayoutImport } from './routes/_default-layout';
-import { Route as DefaultLayoutEnvenvImport } from './routes/_default-layout/$env/__env';
-import { Route as DefaultLayoutEnvFeaturesCloneFeatureIdImport } from './routes/_default-layout/$env/features/clone.$featureId';
-import { Route as DefaultLayoutEnvFeaturesIndexImport } from './routes/_default-layout/$env/features/index';
-import { Route as DefaultLayoutEnvFeaturesNewImport } from './routes/_default-layout/$env/features/new';
-import { Route as DefaultLayoutEnvIndexImport } from './routes/_default-layout/$env/index';
-import { Route as DefaultLayoutEnvSettingsImport } from './routes/_default-layout/$env/settings';
-import { Route as AuthCallbackImport } from './routes/auth.callback';
-import { Route as IndexImport } from './routes/index';
+
+import { Route as rootRoute } from './routes/__root'
+import { Route as DefaultLayoutImport } from './routes/_default-layout'
+import { Route as IndexImport } from './routes/index'
+import { Route as AuthCallbackImport } from './routes/auth.callback'
+import { Route as DefaultLayoutEnvIndexImport } from './routes/_default-layout/$env/index'
+import { Route as DefaultLayoutEnvSettingsImport } from './routes/_default-layout/$env/settings'
+import { Route as DefaultLayoutEnvenvImport } from './routes/_default-layout/$env/__env'
+import { Route as DefaultLayoutEnvFeaturesIndexImport } from './routes/_default-layout/$env/features/index'
+import { Route as DefaultLayoutEnvFeaturesNewImport } from './routes/_default-layout/$env/features/new'
+import { Route as DefaultLayoutEnvFeaturesFeatureIdIndexImport } from './routes/_default-layout/$env/features/$featureId/index'
+import { Route as DefaultLayoutEnvFeaturesCloneFeatureIdImport } from './routes/_default-layout/$env/features/clone.$featureId'
+import { Route as DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutImport } from './routes/_default-layout/$env/features/$featureId/_feature-details-layout'
+import { Route as DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutVariationsIndexImport } from './routes/_default-layout/$env/features/$featureId/_feature-details-layout/variations/index'
+import { Route as DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutTargetingIndexImport } from './routes/_default-layout/$env/features/$featureId/_feature-details-layout/targeting/index'
+import { Route as DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutOperationsIndexImport } from './routes/_default-layout/$env/features/$featureId/_feature-details-layout/operations/index'
+import { Route as DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutEvaluationsIndexImport } from './routes/_default-layout/$env/features/$featureId/_feature-details-layout/evaluations/index'
 
 // Create Virtual Routes
 
-const DefaultLayoutEnvImport = createFileRoute('/_default-layout/$env')();
+const DefaultLayoutEnvImport = createFileRoute('/_default-layout/$env')()
+const DefaultLayoutEnvFeaturesFeatureIdImport = createFileRoute(
+  '/_default-layout/$env/features/$featureId',
+)()
 
 // Create/Update Routes
 
 const DefaultLayoutRoute = DefaultLayoutImport.update({
   id: '/_default-layout',
-  getParentRoute: () => rootRoute
-} as any);
+  getParentRoute: () => rootRoute,
+} as any)
 
 const IndexRoute = IndexImport.update({
   id: '/',
@@ -40,6 +50,12 @@ const DefaultLayoutEnvRoute = DefaultLayoutEnvImport.update({
   getParentRoute: () => DefaultLayoutRoute
 } as any);
 
+const DefaultLayoutEnvRoute = DefaultLayoutEnvImport.update({
+  id: '/$env',
+  path: '/$env',
+  getParentRoute: () => DefaultLayoutRoute,
+} as any)
+
 const AuthCallbackRoute = AuthCallbackImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
@@ -49,127 +65,279 @@ const AuthCallbackRoute = AuthCallbackImport.update({
 const DefaultLayoutEnvIndexRoute = DefaultLayoutEnvIndexImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => DefaultLayoutEnvRoute
-} as any);
+  getParentRoute: () => DefaultLayoutEnvRoute,
+} as any)
 
 const DefaultLayoutEnvSettingsRoute = DefaultLayoutEnvSettingsImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => DefaultLayoutEnvRoute
-} as any);
+  getParentRoute: () => DefaultLayoutEnvRoute,
+} as any)
 
 const DefaultLayoutEnvenvRoute = DefaultLayoutEnvenvImport.update({
   id: '/__env',
-  getParentRoute: () => DefaultLayoutEnvRoute
-} as any);
+  getParentRoute: () => DefaultLayoutEnvRoute,
+} as any)
+
+const DefaultLayoutEnvFeaturesFeatureIdRoute =
+  DefaultLayoutEnvFeaturesFeatureIdImport.update({
+    id: '/features/$featureId',
+    path: '/features/$featureId',
+    getParentRoute: () => DefaultLayoutEnvRoute,
+  } as any)
 
 const DefaultLayoutEnvFeaturesIndexRoute =
   DefaultLayoutEnvFeaturesIndexImport.update({
     id: '/features/',
     path: '/features/',
-    getParentRoute: () => DefaultLayoutEnvRoute
-  } as any);
+    getParentRoute: () => DefaultLayoutEnvRoute,
+  } as any)
 
 const DefaultLayoutEnvFeaturesNewRoute =
   DefaultLayoutEnvFeaturesNewImport.update({
     id: '/features/new',
     path: '/features/new',
-    getParentRoute: () => DefaultLayoutEnvRoute
-  } as any);
+    getParentRoute: () => DefaultLayoutEnvRoute,
+  } as any)
+
+const DefaultLayoutEnvFeaturesFeatureIdIndexRoute =
+  DefaultLayoutEnvFeaturesFeatureIdIndexImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DefaultLayoutEnvFeaturesFeatureIdRoute,
+  } as any)
 
 const DefaultLayoutEnvFeaturesCloneFeatureIdRoute =
   DefaultLayoutEnvFeaturesCloneFeatureIdImport.update({
     id: '/features/clone/$featureId',
     path: '/features/clone/$featureId',
-    getParentRoute: () => DefaultLayoutEnvRoute
-  } as any);
+    getParentRoute: () => DefaultLayoutEnvRoute,
+  } as any)
+
+const DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRoute =
+  DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutImport.update({
+    id: '/_feature-details-layout',
+    getParentRoute: () => DefaultLayoutEnvFeaturesFeatureIdRoute,
+  } as any)
+
+const DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutVariationsIndexRoute =
+  DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutVariationsIndexImport.update(
+    {
+      id: '/variations/',
+      path: '/variations/',
+      getParentRoute: () =>
+        DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRoute,
+    } as any,
+  )
+
+const DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutTargetingIndexRoute =
+  DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutTargetingIndexImport.update(
+    {
+      id: '/targeting/',
+      path: '/targeting/',
+      getParentRoute: () =>
+        DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRoute,
+    } as any,
+  )
+
+const DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutOperationsIndexRoute =
+  DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutOperationsIndexImport.update(
+    {
+      id: '/operations/',
+      path: '/operations/',
+      getParentRoute: () =>
+        DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRoute,
+    } as any,
+  )
+
+const DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutEvaluationsIndexRoute =
+  DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutEvaluationsIndexImport.update(
+    {
+      id: '/evaluations/',
+      path: '/evaluations/',
+      getParentRoute: () =>
+        DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRoute,
+    } as any,
+  )
 
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/': {
-      id: '/';
-      path: '/';
-      fullPath: '/';
-      preLoaderRoute: typeof IndexImport;
-      parentRoute: typeof rootRoute;
-    };
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
     '/_default-layout': {
-      id: '/_default-layout';
-      path: '';
-      fullPath: '';
-      preLoaderRoute: typeof DefaultLayoutImport;
-      parentRoute: typeof rootRoute;
-    };
+      id: '/_default-layout'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof DefaultLayoutImport
+      parentRoute: typeof rootRoute
+    }
     '/auth/callback': {
-      id: '/auth/callback';
-      path: '/auth/callback';
-      fullPath: '/auth/callback';
-      preLoaderRoute: typeof AuthCallbackImport;
-      parentRoute: typeof rootRoute;
-    };
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackImport
+      parentRoute: typeof rootRoute
+    }
     '/_default-layout/$env': {
-      id: '/_default-layout/$env';
-      path: '/$env';
-      fullPath: '/$env';
-      preLoaderRoute: typeof DefaultLayoutEnvImport;
-      parentRoute: typeof DefaultLayoutImport;
-    };
+      id: '/_default-layout/$env'
+      path: '/$env'
+      fullPath: '/$env'
+      preLoaderRoute: typeof DefaultLayoutEnvImport
+      parentRoute: typeof DefaultLayoutImport
+    }
     '/_default-layout/$env/__env': {
-      id: '/_default-layout/$env/__env';
-      path: '/$env';
-      fullPath: '/$env';
-      preLoaderRoute: typeof DefaultLayoutEnvenvImport;
-      parentRoute: typeof DefaultLayoutEnvRoute;
-    };
+      id: '/_default-layout/$env/__env'
+      path: '/$env'
+      fullPath: '/$env'
+      preLoaderRoute: typeof DefaultLayoutEnvenvImport
+      parentRoute: typeof DefaultLayoutEnvRoute
+    }
     '/_default-layout/$env/settings': {
-      id: '/_default-layout/$env/settings';
-      path: '/settings';
-      fullPath: '/$env/settings';
-      preLoaderRoute: typeof DefaultLayoutEnvSettingsImport;
-      parentRoute: typeof DefaultLayoutEnvImport;
-    };
+      id: '/_default-layout/$env/settings'
+      path: '/settings'
+      fullPath: '/$env/settings'
+      preLoaderRoute: typeof DefaultLayoutEnvSettingsImport
+      parentRoute: typeof DefaultLayoutEnvImport
+    }
     '/_default-layout/$env/': {
-      id: '/_default-layout/$env/';
-      path: '/';
-      fullPath: '/$env/';
-      preLoaderRoute: typeof DefaultLayoutEnvIndexImport;
-      parentRoute: typeof DefaultLayoutEnvImport;
-    };
+      id: '/_default-layout/$env/'
+      path: '/'
+      fullPath: '/$env/'
+      preLoaderRoute: typeof DefaultLayoutEnvIndexImport
+      parentRoute: typeof DefaultLayoutEnvImport
+    }
     '/_default-layout/$env/features/new': {
-      id: '/_default-layout/$env/features/new';
-      path: '/features/new';
-      fullPath: '/$env/features/new';
-      preLoaderRoute: typeof DefaultLayoutEnvFeaturesNewImport;
-      parentRoute: typeof DefaultLayoutEnvImport;
-    };
+      id: '/_default-layout/$env/features/new'
+      path: '/features/new'
+      fullPath: '/$env/features/new'
+      preLoaderRoute: typeof DefaultLayoutEnvFeaturesNewImport
+      parentRoute: typeof DefaultLayoutEnvImport
+    }
     '/_default-layout/$env/features/': {
-      id: '/_default-layout/$env/features/';
-      path: '/features';
-      fullPath: '/$env/features';
-      preLoaderRoute: typeof DefaultLayoutEnvFeaturesIndexImport;
-      parentRoute: typeof DefaultLayoutEnvImport;
-    };
+      id: '/_default-layout/$env/features/'
+      path: '/features'
+      fullPath: '/$env/features'
+      preLoaderRoute: typeof DefaultLayoutEnvFeaturesIndexImport
+      parentRoute: typeof DefaultLayoutEnvImport
+    }
+    '/_default-layout/$env/features/$featureId': {
+      id: '/_default-layout/$env/features/$featureId'
+      path: '/features/$featureId'
+      fullPath: '/$env/features/$featureId'
+      preLoaderRoute: typeof DefaultLayoutEnvFeaturesFeatureIdImport
+      parentRoute: typeof DefaultLayoutEnvImport
+    }
+    '/_default-layout/$env/features/$featureId/_feature-details-layout': {
+      id: '/_default-layout/$env/features/$featureId/_feature-details-layout'
+      path: '/features/$featureId'
+      fullPath: '/$env/features/$featureId'
+      preLoaderRoute: typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutImport
+      parentRoute: typeof DefaultLayoutEnvFeaturesFeatureIdRoute
+    }
     '/_default-layout/$env/features/clone/$featureId': {
-      id: '/_default-layout/$env/features/clone/$featureId';
-      path: '/features/clone/$featureId';
-      fullPath: '/$env/features/clone/$featureId';
-      preLoaderRoute: typeof DefaultLayoutEnvFeaturesCloneFeatureIdImport;
-      parentRoute: typeof DefaultLayoutEnvImport;
-    };
+      id: '/_default-layout/$env/features/clone/$featureId'
+      path: '/features/clone/$featureId'
+      fullPath: '/$env/features/clone/$featureId'
+      preLoaderRoute: typeof DefaultLayoutEnvFeaturesCloneFeatureIdImport
+      parentRoute: typeof DefaultLayoutEnvImport
+    }
+    '/_default-layout/$env/features/$featureId/': {
+      id: '/_default-layout/$env/features/$featureId/'
+      path: '/'
+      fullPath: '/$env/features/$featureId/'
+      preLoaderRoute: typeof DefaultLayoutEnvFeaturesFeatureIdIndexImport
+      parentRoute: typeof DefaultLayoutEnvFeaturesFeatureIdImport
+    }
+    '/_default-layout/$env/features/$featureId/_feature-details-layout/evaluations/': {
+      id: '/_default-layout/$env/features/$featureId/_feature-details-layout/evaluations/'
+      path: '/evaluations'
+      fullPath: '/$env/features/$featureId/evaluations'
+      preLoaderRoute: typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutEvaluationsIndexImport
+      parentRoute: typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutImport
+    }
+    '/_default-layout/$env/features/$featureId/_feature-details-layout/operations/': {
+      id: '/_default-layout/$env/features/$featureId/_feature-details-layout/operations/'
+      path: '/operations'
+      fullPath: '/$env/features/$featureId/operations'
+      preLoaderRoute: typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutOperationsIndexImport
+      parentRoute: typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutImport
+    }
+    '/_default-layout/$env/features/$featureId/_feature-details-layout/targeting/': {
+      id: '/_default-layout/$env/features/$featureId/_feature-details-layout/targeting/'
+      path: '/targeting'
+      fullPath: '/$env/features/$featureId/targeting'
+      preLoaderRoute: typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutTargetingIndexImport
+      parentRoute: typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutImport
+    }
+    '/_default-layout/$env/features/$featureId/_feature-details-layout/variations/': {
+      id: '/_default-layout/$env/features/$featureId/_feature-details-layout/variations/'
+      path: '/variations'
+      fullPath: '/$env/features/$featureId/variations'
+      preLoaderRoute: typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutVariationsIndexImport
+      parentRoute: typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutImport
+    }
   }
 }
 
 // Create and export the route tree
 
+interface DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRouteChildren {
+  DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutEvaluationsIndexRoute: typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutEvaluationsIndexRoute
+  DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutOperationsIndexRoute: typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutOperationsIndexRoute
+  DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutTargetingIndexRoute: typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutTargetingIndexRoute
+  DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutVariationsIndexRoute: typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutVariationsIndexRoute
+}
+
+const DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRouteChildren: DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRouteChildren =
+  {
+    DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutEvaluationsIndexRoute:
+      DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutEvaluationsIndexRoute,
+    DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutOperationsIndexRoute:
+      DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutOperationsIndexRoute,
+    DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutTargetingIndexRoute:
+      DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutTargetingIndexRoute,
+    DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutVariationsIndexRoute:
+      DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutVariationsIndexRoute,
+  }
+
+const DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRouteWithChildren =
+  DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRoute._addFileChildren(
+    DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRouteChildren,
+  )
+
+interface DefaultLayoutEnvFeaturesFeatureIdRouteChildren {
+  DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRoute: typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRouteWithChildren
+  DefaultLayoutEnvFeaturesFeatureIdIndexRoute: typeof DefaultLayoutEnvFeaturesFeatureIdIndexRoute
+}
+
+const DefaultLayoutEnvFeaturesFeatureIdRouteChildren: DefaultLayoutEnvFeaturesFeatureIdRouteChildren =
+  {
+    DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRoute:
+      DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRouteWithChildren,
+    DefaultLayoutEnvFeaturesFeatureIdIndexRoute:
+      DefaultLayoutEnvFeaturesFeatureIdIndexRoute,
+  }
+
+const DefaultLayoutEnvFeaturesFeatureIdRouteWithChildren =
+  DefaultLayoutEnvFeaturesFeatureIdRoute._addFileChildren(
+    DefaultLayoutEnvFeaturesFeatureIdRouteChildren,
+  )
+
 interface DefaultLayoutEnvRouteChildren {
-  DefaultLayoutEnvenvRoute: typeof DefaultLayoutEnvenvRoute;
-  DefaultLayoutEnvSettingsRoute: typeof DefaultLayoutEnvSettingsRoute;
-  DefaultLayoutEnvIndexRoute: typeof DefaultLayoutEnvIndexRoute;
-  DefaultLayoutEnvFeaturesNewRoute: typeof DefaultLayoutEnvFeaturesNewRoute;
-  DefaultLayoutEnvFeaturesIndexRoute: typeof DefaultLayoutEnvFeaturesIndexRoute;
-  DefaultLayoutEnvFeaturesCloneFeatureIdRoute: typeof DefaultLayoutEnvFeaturesCloneFeatureIdRoute;
+  DefaultLayoutEnvenvRoute: typeof DefaultLayoutEnvenvRoute
+  DefaultLayoutEnvSettingsRoute: typeof DefaultLayoutEnvSettingsRoute
+  DefaultLayoutEnvIndexRoute: typeof DefaultLayoutEnvIndexRoute
+  DefaultLayoutEnvFeaturesNewRoute: typeof DefaultLayoutEnvFeaturesNewRoute
+  DefaultLayoutEnvFeaturesIndexRoute: typeof DefaultLayoutEnvFeaturesIndexRoute
+  DefaultLayoutEnvFeaturesFeatureIdRoute: typeof DefaultLayoutEnvFeaturesFeatureIdRouteWithChildren
+  DefaultLayoutEnvFeaturesCloneFeatureIdRoute: typeof DefaultLayoutEnvFeaturesCloneFeatureIdRoute
 }
 
 const DefaultLayoutEnvRouteChildren: DefaultLayoutEnvRouteChildren = {
@@ -178,60 +346,80 @@ const DefaultLayoutEnvRouteChildren: DefaultLayoutEnvRouteChildren = {
   DefaultLayoutEnvIndexRoute: DefaultLayoutEnvIndexRoute,
   DefaultLayoutEnvFeaturesNewRoute: DefaultLayoutEnvFeaturesNewRoute,
   DefaultLayoutEnvFeaturesIndexRoute: DefaultLayoutEnvFeaturesIndexRoute,
+  DefaultLayoutEnvFeaturesFeatureIdRoute:
+    DefaultLayoutEnvFeaturesFeatureIdRouteWithChildren,
   DefaultLayoutEnvFeaturesCloneFeatureIdRoute:
-    DefaultLayoutEnvFeaturesCloneFeatureIdRoute
-};
+    DefaultLayoutEnvFeaturesCloneFeatureIdRoute,
+}
 
 const DefaultLayoutEnvRouteWithChildren =
-  DefaultLayoutEnvRoute._addFileChildren(DefaultLayoutEnvRouteChildren);
+  DefaultLayoutEnvRoute._addFileChildren(DefaultLayoutEnvRouteChildren)
 
 interface DefaultLayoutRouteChildren {
-  DefaultLayoutEnvRoute: typeof DefaultLayoutEnvRouteWithChildren;
+  DefaultLayoutEnvRoute: typeof DefaultLayoutEnvRouteWithChildren
 }
 
 const DefaultLayoutRouteChildren: DefaultLayoutRouteChildren = {
-  DefaultLayoutEnvRoute: DefaultLayoutEnvRouteWithChildren
-};
+  DefaultLayoutEnvRoute: DefaultLayoutEnvRouteWithChildren,
+}
 
 const DefaultLayoutRouteWithChildren = DefaultLayoutRoute._addFileChildren(
-  DefaultLayoutRouteChildren
-);
+  DefaultLayoutRouteChildren,
+)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute;
-  '': typeof DefaultLayoutRouteWithChildren;
-  '/auth/callback': typeof AuthCallbackRoute;
-  '/$env': typeof DefaultLayoutEnvenvRoute;
-  '/$env/settings': typeof DefaultLayoutEnvSettingsRoute;
-  '/$env/': typeof DefaultLayoutEnvIndexRoute;
-  '/$env/features/new': typeof DefaultLayoutEnvFeaturesNewRoute;
-  '/$env/features': typeof DefaultLayoutEnvFeaturesIndexRoute;
-  '/$env/features/clone/$featureId': typeof DefaultLayoutEnvFeaturesCloneFeatureIdRoute;
+  '/': typeof IndexRoute
+  '': typeof DefaultLayoutRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
+  '/$env': typeof DefaultLayoutEnvenvRoute
+  '/$env/settings': typeof DefaultLayoutEnvSettingsRoute
+  '/$env/': typeof DefaultLayoutEnvIndexRoute
+  '/$env/features/new': typeof DefaultLayoutEnvFeaturesNewRoute
+  '/$env/features': typeof DefaultLayoutEnvFeaturesIndexRoute
+  '/$env/features/$featureId': typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRouteWithChildren
+  '/$env/features/clone/$featureId': typeof DefaultLayoutEnvFeaturesCloneFeatureIdRoute
+  '/$env/features/$featureId/': typeof DefaultLayoutEnvFeaturesFeatureIdIndexRoute
+  '/$env/features/$featureId/evaluations': typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutEvaluationsIndexRoute
+  '/$env/features/$featureId/operations': typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutOperationsIndexRoute
+  '/$env/features/$featureId/targeting': typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutTargetingIndexRoute
+  '/$env/features/$featureId/variations': typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutVariationsIndexRoute
 }
 
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute;
-  '': typeof DefaultLayoutRouteWithChildren;
-  '/auth/callback': typeof AuthCallbackRoute;
-  '/$env': typeof DefaultLayoutEnvIndexRoute;
-  '/$env/settings': typeof DefaultLayoutEnvSettingsRoute;
-  '/$env/features/new': typeof DefaultLayoutEnvFeaturesNewRoute;
-  '/$env/features': typeof DefaultLayoutEnvFeaturesIndexRoute;
-  '/$env/features/clone/$featureId': typeof DefaultLayoutEnvFeaturesCloneFeatureIdRoute;
+  '/': typeof IndexRoute
+  '': typeof DefaultLayoutRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
+  '/$env': typeof DefaultLayoutEnvIndexRoute
+  '/$env/settings': typeof DefaultLayoutEnvSettingsRoute
+  '/$env/features/new': typeof DefaultLayoutEnvFeaturesNewRoute
+  '/$env/features': typeof DefaultLayoutEnvFeaturesIndexRoute
+  '/$env/features/$featureId': typeof DefaultLayoutEnvFeaturesFeatureIdIndexRoute
+  '/$env/features/clone/$featureId': typeof DefaultLayoutEnvFeaturesCloneFeatureIdRoute
+  '/$env/features/$featureId/evaluations': typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutEvaluationsIndexRoute
+  '/$env/features/$featureId/operations': typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutOperationsIndexRoute
+  '/$env/features/$featureId/targeting': typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutTargetingIndexRoute
+  '/$env/features/$featureId/variations': typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutVariationsIndexRoute
 }
 
 export interface FileRoutesById {
-  __root__: typeof rootRoute;
-  '/': typeof IndexRoute;
-  '/_default-layout': typeof DefaultLayoutRouteWithChildren;
-  '/auth/callback': typeof AuthCallbackRoute;
-  '/_default-layout/$env': typeof DefaultLayoutEnvRouteWithChildren;
-  '/_default-layout/$env/__env': typeof DefaultLayoutEnvenvRoute;
-  '/_default-layout/$env/settings': typeof DefaultLayoutEnvSettingsRoute;
-  '/_default-layout/$env/': typeof DefaultLayoutEnvIndexRoute;
-  '/_default-layout/$env/features/new': typeof DefaultLayoutEnvFeaturesNewRoute;
-  '/_default-layout/$env/features/': typeof DefaultLayoutEnvFeaturesIndexRoute;
-  '/_default-layout/$env/features/clone/$featureId': typeof DefaultLayoutEnvFeaturesCloneFeatureIdRoute;
+  __root__: typeof rootRoute
+  '/': typeof IndexRoute
+  '/_default-layout': typeof DefaultLayoutRouteWithChildren
+  '/auth/callback': typeof AuthCallbackRoute
+  '/_default-layout/$env': typeof DefaultLayoutEnvRouteWithChildren
+  '/_default-layout/$env/__env': typeof DefaultLayoutEnvenvRoute
+  '/_default-layout/$env/settings': typeof DefaultLayoutEnvSettingsRoute
+  '/_default-layout/$env/': typeof DefaultLayoutEnvIndexRoute
+  '/_default-layout/$env/features/new': typeof DefaultLayoutEnvFeaturesNewRoute
+  '/_default-layout/$env/features/': typeof DefaultLayoutEnvFeaturesIndexRoute
+  '/_default-layout/$env/features/$featureId': typeof DefaultLayoutEnvFeaturesFeatureIdRouteWithChildren
+  '/_default-layout/$env/features/$featureId/_feature-details-layout': typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutRouteWithChildren
+  '/_default-layout/$env/features/clone/$featureId': typeof DefaultLayoutEnvFeaturesCloneFeatureIdRoute
+  '/_default-layout/$env/features/$featureId/': typeof DefaultLayoutEnvFeaturesFeatureIdIndexRoute
+  '/_default-layout/$env/features/$featureId/_feature-details-layout/evaluations/': typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutEvaluationsIndexRoute
+  '/_default-layout/$env/features/$featureId/_feature-details-layout/operations/': typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutOperationsIndexRoute
+  '/_default-layout/$env/features/$featureId/_feature-details-layout/targeting/': typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutTargetingIndexRoute
+  '/_default-layout/$env/features/$featureId/_feature-details-layout/variations/': typeof DefaultLayoutEnvFeaturesFeatureIdFeatureDetailsLayoutVariationsIndexRoute
 }
 
 export interface FileRouteTypes {
@@ -245,8 +433,14 @@ export interface FileRouteTypes {
     | '/$env/'
     | '/$env/features/new'
     | '/$env/features'
-    | '/$env/features/clone/$featureId';
-  fileRoutesByTo: FileRoutesByTo;
+    | '/$env/features/$featureId'
+    | '/$env/features/clone/$featureId'
+    | '/$env/features/$featureId/'
+    | '/$env/features/$featureId/evaluations'
+    | '/$env/features/$featureId/operations'
+    | '/$env/features/$featureId/targeting'
+    | '/$env/features/$featureId/variations'
+  fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | ''
@@ -255,7 +449,12 @@ export interface FileRouteTypes {
     | '/$env/settings'
     | '/$env/features/new'
     | '/$env/features'
-    | '/$env/features/clone/$featureId';
+    | '/$env/features/$featureId'
+    | '/$env/features/clone/$featureId'
+    | '/$env/features/$featureId/evaluations'
+    | '/$env/features/$featureId/operations'
+    | '/$env/features/$featureId/targeting'
+    | '/$env/features/$featureId/variations'
   id:
     | '__root__'
     | '/'
@@ -267,21 +466,28 @@ export interface FileRouteTypes {
     | '/_default-layout/$env/'
     | '/_default-layout/$env/features/new'
     | '/_default-layout/$env/features/'
-    | '/_default-layout/$env/features/clone/$featureId';
-  fileRoutesById: FileRoutesById;
+    | '/_default-layout/$env/features/$featureId'
+    | '/_default-layout/$env/features/$featureId/_feature-details-layout'
+    | '/_default-layout/$env/features/clone/$featureId'
+    | '/_default-layout/$env/features/$featureId/'
+    | '/_default-layout/$env/features/$featureId/_feature-details-layout/evaluations/'
+    | '/_default-layout/$env/features/$featureId/_feature-details-layout/operations/'
+    | '/_default-layout/$env/features/$featureId/_feature-details-layout/targeting/'
+    | '/_default-layout/$env/features/$featureId/_feature-details-layout/variations/'
+  fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  DefaultLayoutRoute: typeof DefaultLayoutRouteWithChildren;
-  AuthCallbackRoute: typeof AuthCallbackRoute;
+  IndexRoute: typeof IndexRoute
+  DefaultLayoutRoute: typeof DefaultLayoutRouteWithChildren
+  AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DefaultLayoutRoute: DefaultLayoutRouteWithChildren,
-  AuthCallbackRoute: AuthCallbackRoute
-};
+  AuthCallbackRoute: AuthCallbackRoute,
+}
 
 export const routeTree = rootRoute
   ._addFileChildren(rootRouteChildren)
@@ -319,6 +525,7 @@ export const routeTree = rootRoute
         "/_default-layout/$env/",
         "/_default-layout/$env/features/new",
         "/_default-layout/$env/features/",
+        "/_default-layout/$env/features/$featureId",
         "/_default-layout/$env/features/clone/$featureId"
       ]
     },
@@ -342,9 +549,47 @@ export const routeTree = rootRoute
       "filePath": "_default-layout/$env/features/index.tsx",
       "parent": "/_default-layout/$env"
     },
+    "/_default-layout/$env/features/$featureId": {
+      "filePath": "_default-layout/$env/features/$featureId",
+      "parent": "/_default-layout/$env",
+      "children": [
+        "/_default-layout/$env/features/$featureId/_feature-details-layout",
+        "/_default-layout/$env/features/$featureId/"
+      ]
+    },
+    "/_default-layout/$env/features/$featureId/_feature-details-layout": {
+      "filePath": "_default-layout/$env/features/$featureId/_feature-details-layout.tsx",
+      "parent": "/_default-layout/$env/features/$featureId",
+      "children": [
+        "/_default-layout/$env/features/$featureId/_feature-details-layout/evaluations/",
+        "/_default-layout/$env/features/$featureId/_feature-details-layout/operations/",
+        "/_default-layout/$env/features/$featureId/_feature-details-layout/targeting/",
+        "/_default-layout/$env/features/$featureId/_feature-details-layout/variations/"
+      ]
+    },
     "/_default-layout/$env/features/clone/$featureId": {
       "filePath": "_default-layout/$env/features/clone.$featureId.tsx",
       "parent": "/_default-layout/$env"
+    },
+    "/_default-layout/$env/features/$featureId/": {
+      "filePath": "_default-layout/$env/features/$featureId/index.tsx",
+      "parent": "/_default-layout/$env/features/$featureId"
+    },
+    "/_default-layout/$env/features/$featureId/_feature-details-layout/evaluations/": {
+      "filePath": "_default-layout/$env/features/$featureId/_feature-details-layout/evaluations/index.tsx",
+      "parent": "/_default-layout/$env/features/$featureId/_feature-details-layout"
+    },
+    "/_default-layout/$env/features/$featureId/_feature-details-layout/operations/": {
+      "filePath": "_default-layout/$env/features/$featureId/_feature-details-layout/operations/index.tsx",
+      "parent": "/_default-layout/$env/features/$featureId/_feature-details-layout"
+    },
+    "/_default-layout/$env/features/$featureId/_feature-details-layout/targeting/": {
+      "filePath": "_default-layout/$env/features/$featureId/_feature-details-layout/targeting/index.tsx",
+      "parent": "/_default-layout/$env/features/$featureId/_feature-details-layout"
+    },
+    "/_default-layout/$env/features/$featureId/_feature-details-layout/variations/": {
+      "filePath": "_default-layout/$env/features/$featureId/_feature-details-layout/variations/index.tsx",
+      "parent": "/_default-layout/$env/features/$featureId/_feature-details-layout"
     }
   }
 }

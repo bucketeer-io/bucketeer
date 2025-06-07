@@ -245,7 +245,7 @@ export const FlagNameElement = ({
               id={id}
               content={<NameWithTooltip.Content content={name} id={id} />}
               trigger={
-                <Link to={link}>
+                <Link to={link} replace>
                   <NameWithTooltip.Trigger
                     id={id}
                     name={name}

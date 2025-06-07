@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useLocation } from '@tanstack/react-router';
-// import { useLocation, useNavigate } from 'react-router-dom';
 import queryString, { ParsedQuery } from 'query-string';
 
 export type SearchParams = ParsedQuery<string>;
@@ -11,7 +10,7 @@ export function useSearchParams() {
   const location = useLocation();
 
   const searchOptions = useMemo<SearchParams>((): SearchParams => {
-    return queryString.parse(location.search);
+    return location.search;
   }, [location.search]);
 
   const onChangSearchParams = useCallback(

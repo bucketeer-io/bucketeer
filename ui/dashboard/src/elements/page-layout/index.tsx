@@ -50,12 +50,8 @@ const PageLayoutLoadingState = ({ className }: { className?: string }) => {
   );
 };
 
-const PageLayoutErrorState = ({ onRetry, className }: PageLayoutErrorState) => {
-  return (
-    <div className={cn('h-full flex-grow flex-center', className)}>
-      <ErrorState onRetry={onRetry} />
-    </div>
-  );
+const PageLayoutErrorState = ({ onRetry }: PageLayoutErrorState) => {
+  return <ErrorState onRetry={onRetry} />;
 };
 
 const PageLayoutEmptyState = ({ children }: PropsWithChildren) => {

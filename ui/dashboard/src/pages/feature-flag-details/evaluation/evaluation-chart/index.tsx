@@ -17,6 +17,7 @@ import {
   Legend,
   TimeUnit
 } from 'chart.js';
+import 'chartjs-adapter-luxon';
 import { COLORS } from 'constants/styles';
 import { formatTooltipLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';

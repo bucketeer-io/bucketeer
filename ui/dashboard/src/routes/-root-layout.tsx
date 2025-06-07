@@ -1,9 +1,10 @@
+import { memo } from 'react';
 import { Outlet, useLocation } from '@tanstack/react-router';
 import { useAuth } from 'auth';
 import { getTokenStorage } from 'storage/token';
 import { AppLoading } from 'app';
 
-const RootLayout = () => {
+const RootLayout = memo(() => {
   const authToken = getTokenStorage();
   const { consoleAccount } = useAuth();
 
@@ -17,6 +18,6 @@ const RootLayout = () => {
       <Outlet />
     </div>
   );
-};
+});
 
 export default RootLayout;

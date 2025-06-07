@@ -6,6 +6,7 @@ import { rolloutDelete, rolloutStopped } from '@api/rollouts';
 import { useQueryAutoOpsCount } from '@queries/auto-ops-count';
 import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
 import { useQueryRollouts } from '@queries/rollouts';
+import { useLoaderData } from '@tanstack/react-router';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import {
@@ -16,7 +17,11 @@ import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
-import { AutoOpsRule, Feature, Rollout } from '@types';
+import {
+  Route as featureDetailsLayoutRoute,
+  FeatureDetailsLoaderData
+} from 'routes/_default-layout/$env/features/$featureId/_feature-details-layout';
+import { AutoOpsRule, Rollout } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams, useSearchParams } from 'utils/search-params';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
@@ -39,7 +44,7 @@ export interface OperationModalState {
   selectedData?: AutoOpsRule | Rollout;
 }
 
-const Operations = ({ feature }: { feature: Feature }) => {
+const Operations = () => {
   const { t } = useTranslation(['common', 'table', 'form', 'message']);
   const navigate = useNavigate();
   const { notify, errorNotify } = useToast();
@@ -47,6 +52,12 @@ const Operations = ({ feature }: { feature: Feature }) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { searchOptions, onChangSearchParams } = useSearchParams();
+
+  const loaderData: FeatureDetailsLoaderData = useLoaderData({
+    from: featureDetailsLayoutRoute.id
+  });
+
+  const feature = loaderData?.feature;
 
   const searchParams = stringifyParams(
     pickBy(searchOptions, v => isNotEmpty(v as string))

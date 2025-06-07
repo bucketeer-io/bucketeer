@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { IconCloseRound } from 'react-icons-material-design';
 import * as Popover from '@radix-ui/react-popover';
 import { useNavigate } from '@tanstack/react-router';
@@ -27,7 +27,7 @@ import List from 'components/list';
 import { ScrollArea } from 'components/scroll-area';
 import SearchInput from 'components/search-input';
 
-const MyProjects = () => {
+const MyProjects = memo(() => {
   const { t } = useTranslation(['common']);
   const navigate = useNavigate();
   const { consoleAccount, logout } = useAuth();
@@ -227,6 +227,6 @@ const MyProjects = () => {
       </Popover.Trigger>
     </Popover.Root>
   );
-};
+});
 
 export default MyProjects;

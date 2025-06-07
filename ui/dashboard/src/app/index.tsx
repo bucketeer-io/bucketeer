@@ -1,12 +1,12 @@
 import { memo } from 'react';
 import { I18nextProvider } from 'react-i18next';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { Navigate } from '@tanstack/react-router';
 import { AuthProvider, useAuth, getCurrentEnvironment } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { i18n } from 'i18n';
-import { router } from 'router';
+import { queryClient, router } from 'router';
 import { getTokenStorage } from 'storage/token';
 import SignInPage from 'pages/signin';
 import SelectOrganizationPage from 'pages/signin/organization';
@@ -17,14 +17,6 @@ export const AppLoading = () => (
     <Spinner size="md" />
   </div>
 );
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30 * 60 * 1000 // Set the global stale time to 30 minutes
-    }
-  }
-});
 
 function InnerApp() {
   const auth = useAuth();
@@ -55,7 +47,10 @@ export const Root = memo(() => {
   if (isLogin && consoleAccount) {
     const currentEnvironment = getCurrentEnvironment(consoleAccount!);
     return (
-      <Navigate to={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`} />
+      <Navigate
+        to={`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`}
+        replace
+      />
     );
   }
 
