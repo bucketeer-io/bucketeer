@@ -1340,6 +1340,9 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: pageSize
+          description: |-
+            Page size for pagination. If not set, 0, or exceeds 200, defaults to 200.
+            Maximum allowed value is 200.
           in: query
           required: false
           type: string
@@ -1489,6 +1492,9 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: pageSize
+          description: |-
+            Page size for pagination. If not set, 0, or exceeds 200, defaults to 200.
+            Maximum allowed value is 200.
           in: query
           required: false
           type: string
@@ -5144,6 +5150,9 @@ paths:
           required: true
           type: string
         - name: pageSize
+          description: |-
+            Page size for pagination. If not set, 0, or exceeds 200, defaults to 200.
+            Maximum allowed value is 200.
           in: query
           required: false
           type: string

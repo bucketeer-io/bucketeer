@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	stdlog "log"
 	"net/http"
 	"strings"
 	"time"
@@ -79,11 +80,8 @@ func (m *BooleanConversionMarshaler) Unmarshal(data []byte, v interface{}) error
 		}.Unmarshal(convertedData, msg)
 
 		if err != nil {
-			m.logger.Error("Failed to unmarshal proto message",
-				zap.Error(err),
-				zap.String("message_type", string(msg.ProtoReflect().Descriptor().FullName())),
-				zap.String("data", string(data)),
-			)
+			// TODO: Send metrics for 404 errors instead of logging
+			// Removed logging to reduce log volume from automated scanners
 			return err
 		}
 
@@ -214,12 +212,18 @@ type booleanConversionDecoder struct {
 func (d *booleanConversionDecoder) Decode(v interface{}) error {
 	data, err := io.ReadAll(d.reader)
 	if err != nil {
-		d.marshaler.logger.Error("Failed to read request body",
-			zap.Error(err),
-		)
+		// TODO: Send metrics for read errors instead of logging to avoid log volume
 		return err
 	}
 	return d.marshaler.Unmarshal(data, v)
+}
+
+// noOpWriter discards all logs from the HTTP server
+type noOpWriter struct{}
+
+func (noOpWriter) Write(p []byte) (n int, err error) {
+	// Discard all logs
+	return len(p), nil
 }
 
 type Gateway struct {
@@ -249,6 +253,41 @@ func NewGateway(restAddr string, opts ...Option) (*Gateway, error) {
 	}, nil
 }
 
+// customRoutingErrorHandler handles routing errors and strips trailing slashes
+func (g *Gateway) customRoutingErrorHandler(
+	ctx context.Context,
+	mux *runtime.ServeMux,
+	marshaler runtime.Marshaler,
+	w http.ResponseWriter,
+	r *http.Request,
+	httpStatus int,
+) {
+	// If we get a 404 and the path ends with a slash, try without the slash
+	if httpStatus == http.StatusNotFound && strings.HasSuffix(r.URL.Path, "/") {
+		// Create a new request with the trailing slash removed
+		newPath := strings.TrimSuffix(r.URL.Path, "/")
+		// Clone the request with the new path
+		newReq := r.Clone(ctx)
+		newReq.URL.Path = newPath
+		newReq.RequestURI = newPath
+		if r.URL.RawQuery != "" {
+			newReq.RequestURI += "?" + r.URL.RawQuery
+		}
+
+		g.logger.Debug("retrying request without trailing slash",
+			zap.String("original_full_url", r.URL.String()),
+			zap.String("new_full_url", newReq.URL.String()),
+		)
+
+		// Try to serve the request again
+		mux.ServeHTTP(w, newReq)
+		return
+	}
+
+	// For other cases, use the default routing error handler
+	runtime.DefaultRoutingErrorHandler(ctx, mux, marshaler, w, r, httpStatus)
+}
+
 func (g *Gateway) Start(ctx context.Context,
 	registerFuncs ...HandlerRegistrar,
 ) error {
@@ -274,14 +313,10 @@ func (g *Gateway) Start(ctx context.Context,
 		r *http.Request,
 		err error,
 	) {
-		g.logger.Error("gRPC-Gateway error",
-			zap.Error(err),
-			zap.String("method", r.Method),
-			zap.String("path", r.URL.Path),
-			zap.String("remote_addr", r.RemoteAddr),
-		)
+		// TODO: Send metrics for 404 errors instead of logging
+		// Removed logging to reduce log volume from automated scanners
 
-		// Call the default error handler
+		// Call the default error handler to send the response
 		runtime.DefaultHTTPErrorHandler(ctx, mux, marshaler, w, r, err)
 	}
 
@@ -289,6 +324,7 @@ func (g *Gateway) Start(ctx context.Context,
 	mux := runtime.NewServeMux(
 		runtime.WithErrorHandler(errorHandler),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, customMarshaler),
+		runtime.WithRoutingErrorHandler(g.customRoutingErrorHandler),
 	)
 
 	// Create gRPC dial options with proper credentials and settings
@@ -326,8 +362,9 @@ func (g *Gateway) Start(ctx context.Context,
 
 	// Create and start the HTTP server
 	g.httpServer = &http.Server{
-		Addr:    g.restAddr,
-		Handler: mux,
+		Addr:     g.restAddr,
+		Handler:  mux,
+		ErrorLog: stdlog.New(noOpWriter{}, "", 0),
 	}
 
 	// Start the server in a goroutine

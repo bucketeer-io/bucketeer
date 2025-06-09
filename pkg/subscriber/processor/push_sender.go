@@ -203,6 +203,17 @@ func (p pushSender) send(featureID, environmentId string) error {
 }
 
 // pushFCM sends a silent notification to all the devices subscrribed to the target topic
+//
+// IMPORTANT iOS Silent Notification Limitations:
+// - Silent notifications are heavily throttled by iOS and not guaranteed to be delivered
+// - They won't work when the device is in Low Power Mode
+// - They won't work if the app has been force-quit by the user
+// - They require Background App Refresh to be enabled for the app
+// - Apple recommends sending them no more than once every 20 minutes
+// - The system may delay or drop them based on battery level, memory usage, and other factors
+//
+// For critical updates that must reach iOS devices, consider using visible notifications
+// with the "mutable-content" flag and a Notification Service Extension instead.
 func (p pushSender) pushFCM(ctx context.Context, topic, fcmServiceAccount string) error {
 	creds, err := p.getFCMCredentials(ctx, fcmServiceAccount)
 	if err != nil {
@@ -220,7 +231,8 @@ func (p pushSender) pushFCM(ctx context.Context, topic, fcmServiceAccount string
 			},
 			"apns": map[string]interface{}{
 				"headers": map[string]string{
-					"apns-priority": "5", // Normal priority for iOS
+					"apns-priority":  "5",          // Normal priority for iOS
+					"apns-push-type": "background", // Required for silent notifications
 				},
 				"payload": map[string]interface{}{
 					"aps": map[string]interface{}{
