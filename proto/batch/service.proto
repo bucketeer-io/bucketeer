@@ -37,6 +37,7 @@ enum BatchJob {
   AutoOpsRulesCacher = 16;
   ExperimentCacher = 17;
   TagDeleter = 18;
+  DemoDataDeleter = 19;
 }
 
 message BatchJobRequest {

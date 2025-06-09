@@ -15,6 +15,7 @@ env:
   pubSubRedisAddr:
   pubSubRedisPoolSize:
   pubSubRedisMinIdle:
+  demoEnabled:
   mysqlUser:
   mysqlPass:
   mysqlHost:
