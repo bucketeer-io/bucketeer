@@ -1,0 +1,22 @@
+{
+  "auditLogPersister": {
+    "flushSize": 100,
+    "flushInterval": 10,
+    "flushTimeout": 10
+  },
+  "evaluationCountEventPersister": {
+    "flushSize": 100,
+    "flushInterval": 10,
+    "writeCacheInterval": 10
+  },
+  "segmentUserPersister": {
+    "domainEventProject": "bucketeer",
+    "domainEventTopic": "domain-event",
+    "flushSize": 100,
+    "flushInterval": 10
+  },
+  "userEventPersister": {
+    "flushSize": 200,
+    "flushInterval": 5
+  }
+} 
