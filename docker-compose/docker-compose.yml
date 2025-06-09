@@ -1,0 +1,215 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: bucketeer-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: bucketeer
+      MYSQL_USER: bucketeer
+      MYSQL_PASSWORD: bucketeer
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "bucketeer", "-pbucketeer"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - bucketeer
+
+  redis:
+    image: redis:${REDIS_VERSION:-7-alpine}
+    container_name: bucketeer-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 3s
+      retries: 5
+    networks:
+      - bucketeer
+
+  # Database migration service
+  migration:
+    image: ghcr.io/bucketeer-io/bucketeer-migration:${BUCKETEER_MIGRATION_VERSION:-v0.4.5}
+    container_name: bucketeer-migration
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - ATLAS_DB_URL=mysql://bucketeer:bucketeer@bucketeer-mysql:3306/bucketeer
+    networks:
+      - bucketeer
+    restart: "no"
+
+  # Web backend service (serves frontend + backend API)
+  web:
+    image: ghcr.io/bucketeer-io/bucketeer-web:${BUCKETEER_WEB_VERSION:-${BUCKETEER_VERSION:-v1.3.0}}
+    container_name: bucketeer-web
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+    environment:
+      - BUCKETEER_WEB_MYSQL_USER=bucketeer
+      - BUCKETEER_WEB_MYSQL_PASS=bucketeer
+      - BUCKETEER_WEB_MYSQL_HOST=bucketeer-mysql
+      - BUCKETEER_WEB_MYSQL_PORT=3306
+      - BUCKETEER_WEB_MYSQL_DB_NAME=bucketeer
+      - BUCKETEER_WEB_PERSISTENT_REDIS_ADDR=bucketeer-redis:6379
+      - BUCKETEER_WEB_NON_PERSISTENT_REDIS_ADDR=bucketeer-redis:6379
+      - BUCKETEER_WEB_PUBSUB_TYPE=redis-stream
+      - BUCKETEER_WEB_PUBSUB_REDIS_ADDR=bucketeer-redis:6379
+      - BUCKETEER_WEB_PROJECT=bucketeer-test
+      - BUCKETEER_WEB_LOG_LEVEL=info
+      - BUCKETEER_WEB_PROFILE=false
+      - BUCKETEER_WEB_GCP_TRACE_ENABLED=false
+      - BUCKETEER_WEB_USE_MYSQL=true
+    volumes:
+      - ../tools/dev/cert:/usr/local/certs/service:ro
+      - ../tools/dev/cert:/usr/local/service-token:ro
+      - ../tools/dev/cert:/usr/local/oauth-key:ro
+      - ../tools/dev/cert:/usr/local/oauth-config:ro
+    networks:
+      - bucketeer
+    restart: unless-stopped
+
+  # API Gateway service (for SDK)
+  api:
+    image: ghcr.io/bucketeer-io/bucketeer-api:${BUCKETEER_API_VERSION:-${BUCKETEER_VERSION:-v1.3.0}}
+    container_name: bucketeer-api
+    depends_on:
+      web:
+        condition: service_started
+    environment:
+      - BUCKETEER_API_REDIS_ADDR=bucketeer-redis:6379
+      - BUCKETEER_API_PUBSUB_TYPE=redis-stream
+      - BUCKETEER_API_PUBSUB_REDIS_ADDR=bucketeer-redis:6379
+      - BUCKETEER_API_PROJECT=bucketeer-test
+      - BUCKETEER_API_FEATURE_SERVICE=bucketeer-web:9000
+      - BUCKETEER_API_ACCOUNT_SERVICE=bucketeer-web:9000
+      - BUCKETEER_API_PUSH_SERVICE=bucketeer-web:9000
+      - BUCKETEER_API_CODE_REF_SERVICE=bucketeer-web:9000
+      - BUCKETEER_API_LOG_LEVEL=info
+      - BUCKETEER_API_PROFILE=false
+      - BUCKETEER_API_GCP_TRACE_ENABLED=false
+    volumes:
+      - ../tools/dev/cert:/usr/local/certs/service:ro
+      - ../tools/dev/cert:/usr/local/service-token:ro
+    networks:
+      - bucketeer
+    restart: unless-stopped
+
+  # Batch processing service
+  batch:
+    image: ghcr.io/bucketeer-io/bucketeer-batch:${BUCKETEER_BATCH_VERSION:-${BUCKETEER_VERSION:-v1.3.0}}
+    container_name: bucketeer-batch
+    depends_on:
+      web:
+        condition: service_started
+    environment:
+      - BUCKETEER_BATCH_MYSQL_USER=bucketeer
+      - BUCKETEER_BATCH_MYSQL_PASS=bucketeer
+      - BUCKETEER_BATCH_MYSQL_HOST=bucketeer-mysql
+      - BUCKETEER_BATCH_MYSQL_PORT=3306
+      - BUCKETEER_BATCH_MYSQL_DB_NAME=bucketeer
+      - BUCKETEER_BATCH_PERSISTENT_REDIS_ADDR=bucketeer-redis:6379
+      - BUCKETEER_BATCH_NON_PERSISTENT_REDIS_ADDR=bucketeer-redis:6379
+      - BUCKETEER_BATCH_PUBSUB_TYPE=redis-stream
+      - BUCKETEER_BATCH_PUBSUB_REDIS_ADDR=bucketeer-redis:6379
+      - BUCKETEER_BATCH_PROJECT=bucketeer-test
+      - BUCKETEER_BATCH_ACCOUNT_SERVICE=bucketeer-web:9000
+      - BUCKETEER_BATCH_NOTIFICATION_SERVICE=bucketeer-web:9000
+      - BUCKETEER_BATCH_ENVIRONMENT_SERVICE=bucketeer-web:9000
+      - BUCKETEER_BATCH_PUSH_SERVICE=bucketeer-web:9000
+      - BUCKETEER_BATCH_AUTO_OPS_SERVICE=bucketeer-web:9000
+      - BUCKETEER_BATCH_EXPERIMENT_SERVICE=bucketeer-web:9000
+      - BUCKETEER_BATCH_EVENT_COUNTER_SERVICE=bucketeer-web:9000
+      - BUCKETEER_BATCH_FEATURE_SERVICE=bucketeer-web:9000
+      - BUCKETEER_BATCH_LOG_LEVEL=info
+      - BUCKETEER_BATCH_PROFILE=false
+      - BUCKETEER_BATCH_GCP_TRACE_ENABLED=false
+    volumes:
+      - ../tools/dev/cert:/usr/local/certs/service:ro
+      - ../tools/dev/cert:/usr/local/service-token:ro
+      - ../tools/dev/cert:/usr/local/oauth-key:ro
+    networks:
+      - bucketeer
+    restart: unless-stopped
+
+  # Event subscriber service
+  subscriber:
+    image: ghcr.io/bucketeer-io/bucketeer-subscriber:${BUCKETEER_SUBSCRIBER_VERSION:-${BUCKETEER_VERSION:-v1.3.0}}
+    container_name: bucketeer-subscriber
+    depends_on:
+      web:
+        condition: service_started
+    environment:
+      - BUCKETEER_SUBSCRIBER_MYSQL_USER=bucketeer
+      - BUCKETEER_SUBSCRIBER_MYSQL_PASS=bucketeer
+      - BUCKETEER_SUBSCRIBER_MYSQL_HOST=bucketeer-mysql
+      - BUCKETEER_SUBSCRIBER_MYSQL_PORT=3306
+      - BUCKETEER_SUBSCRIBER_MYSQL_DB_NAME=bucketeer
+      - BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_ADDR=bucketeer-redis:6379
+      - BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_ADDR=bucketeer-redis:6379
+      - BUCKETEER_SUBSCRIBER_PUBSUB_TYPE=redis-stream
+      - BUCKETEER_SUBSCRIBER_PUBSUB_REDIS_ADDR=bucketeer-redis:6379
+      - BUCKETEER_SUBSCRIBER_PROJECT=bucketeer-test
+      - BUCKETEER_SUBSCRIBER_NOTIFICATION_SERVICE=bucketeer-web:9000
+      - BUCKETEER_SUBSCRIBER_ENVIRONMENT_SERVICE=bucketeer-web:9000
+      - BUCKETEER_SUBSCRIBER_PUSH_SERVICE=bucketeer-web:9000
+      - BUCKETEER_SUBSCRIBER_AUTO_OPS_SERVICE=bucketeer-web:9000
+      - BUCKETEER_SUBSCRIBER_EXPERIMENT_SERVICE=bucketeer-web:9000
+      - BUCKETEER_SUBSCRIBER_FEATURE_SERVICE=bucketeer-web:9000
+      - BUCKETEER_SUBSCRIBER_BATCH_SERVICE=bucketeer-batch:9000
+      - BUCKETEER_SUBSCRIBER_LOG_LEVEL=info
+      - BUCKETEER_SUBSCRIBER_PROFILE=false
+      - BUCKETEER_SUBSCRIBER_GCP_TRACE_ENABLED=false
+      - BUCKETEER_SUBSCRIBER_SUBSCRIBER_CONFIG=/usr/local/conf/subscribers.json
+      - BUCKETEER_SUBSCRIBER_ON_DEMAND_SUBSCRIBER_CONFIG=/usr/local/conf/onDemandSubscribers.json
+      - BUCKETEER_SUBSCRIBER_PROCESSORS_CONFIG=/usr/local/conf/processors.json
+      - BUCKETEER_SUBSCRIBER_ON_DEMAND_PROCESSORS_CONFIG=/usr/local/conf/onDemandProcessors.json
+    volumes:
+      - ../tools/dev/cert:/usr/local/certs/service:ro
+      - ../tools/dev/cert:/usr/local/service-token:ro
+      - ./config/subscriber-config:/usr/local/conf:ro
+    networks:
+      - bucketeer
+    restart: unless-stopped
+
+  # Nginx reverse proxy for routing
+  nginx:
+    image: nginx:${NGINX_VERSION:-1.25-alpine}
+    container_name: bucketeer-nginx
+    ports:
+      - "80:80"     # HTTP port
+      - "443:443"   # HTTPS port
+    depends_on:
+      - web
+      - api
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/nginx/bucketeer.conf:/etc/nginx/conf.d/bucketeer.conf:ro
+      - ../tools/dev/cert:/etc/nginx/certs:ro
+    networks:
+      - bucketeer
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  bucketeer:
+    driver: bridge 

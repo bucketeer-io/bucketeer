@@ -9,6 +9,86 @@ There are two ways to set up the development environment by using a dev containe
 1. Use the dev container directly from GitHub Codespaces
 2. Build the dev container locally using the VSCode `Dev Containers` extension
 
+## Docker Compose Deployment (Alternative)
+
+As an alternative to the Minikube setup, you can use Docker Compose to run Bucketeer locally. This approach is simpler and doesn't require Kubernetes knowledge.
+
+All Docker Compose related files are organized in the `docker-compose/` directory. See `docker-compose/README.md` for detailed documentation including how to customize Docker image versions.
+
+### Prerequisites
+
+- Docker and Docker Compose installed
+- Git repository cloned
+
+### Quick Start with Docker Compose
+
+1. Start all services with default versions:
+```shell
+make start-docker-compose
+```
+
+2. Or start with specific versions:
+```shell
+# Use a different Bucketeer version for all services
+export BUCKETEER_VERSION=v1.4.0
+make start-docker-compose
+
+# Or customize individual service versions
+export BUCKETEER_WEB_VERSION=v1.4.0
+export BUCKETEER_API_VERSION=v1.3.0
+make start-docker-compose
+```
+
+The start command will:
+- Set up the required directories and configuration files
+- Generate development certificates if they don't exist
+- Start all Bucketeer services using Docker Compose
+
+2. Check service status:
+```shell
+make docker-compose-status
+```
+
+3. View logs:
+```shell
+make docker-compose-logs
+```
+
+4. Stop services:
+```shell
+make docker-compose-down
+```
+
+### Services and Ports
+
+The Docker Compose setup includes:
+
+- **MySQL**: Port 3306 (Database)
+- **Redis**: Port 6379 (Cache and pub/sub)
+- **Web Service**: Port 9000 (Core backend)
+- **API Gateway**: Port 9001 (Client SDK endpoint)
+- **Batch Service**: Port 9004 (Background processing)
+- **Subscriber Service**: Port 9006 (Event processing)
+
+The subscriber service uses JSON configuration files located in the `docker-compose/config/subscriber-config/` directory:
+- `subscribers.json`: Main subscriber configurations
+- `onDemandSubscribers.json`: On-demand subscriber configurations
+- `processors.json`: Processor configurations
+- `onDemandProcessors.json`: On-demand processor configurations
+
+### Additional Commands
+
+```shell
+# Clean up all containers, networks, and volumes
+make docker-compose-clean
+
+# View logs for specific service
+docker-compose -f docker-compose/docker-compose.yml logs -f web
+
+# Restart a specific service
+docker-compose -f docker-compose/docker-compose.yml restart api
+```
+
 ## Use the dev container directly from GitHub
 
 Using the dev container directly from GitHub is the easiest way to set up the development environment. There are
@@ -115,3 +195,47 @@ make e2e
 ```shell
 make delete-dev-container-mysql-data
 ```
+
+## Running E2E Tests with Docker Compose
+
+When using Docker Compose instead of Minikube, you can run E2E tests with modified endpoints:
+
+### Create API Keys for Docker Compose
+
+```shell
+WEB_GATEWAY_URL=localhost \
+WEB_GATEWAY_CERT_PATH=/dev/null \
+SERVICE_TOKEN_PATH=./tools/dev/cert/service-token \
+API_KEY_NAME="e2e-test-$(date +%s)-client" \
+API_KEY_PATH=./tools/dev/cert/api_key_client \
+API_KEY_ROLE=SDK_CLIENT \
+ENVIRONMENT_ID=e2e \
+make create-api-key
+```
+
+```shell
+WEB_GATEWAY_URL=localhost \
+WEB_GATEWAY_CERT_PATH=/dev/null \
+SERVICE_TOKEN_PATH=./tools/dev/cert/service-token \
+API_KEY_NAME="e2e-test-$(date +%s)-server" \
+API_KEY_PATH=./tools/dev/cert/api_key_server \
+API_KEY_ROLE=SDK_SERVER \
+ENVIRONMENT_ID=e2e \
+make create-api-key
+```
+
+### Run E2E Tests Against Docker Compose
+
+```shell
+WEB_GATEWAY_URL=localhost \
+GATEWAY_URL=localhost \
+WEB_GATEWAY_CERT_PATH=/dev/null \
+GATEWAY_CERT_PATH=/dev/null \
+SERVICE_TOKEN_PATH=./tools/dev/cert/service-token \
+API_KEY_PATH=./tools/dev/cert/api_key_client \
+API_KEY_SERVER_PATH=./tools/dev/cert/api_key_server \
+ENVIRONMENT_ID=e2e \
+ORGANIZATION_ID=default \
+make e2e
+```
+
