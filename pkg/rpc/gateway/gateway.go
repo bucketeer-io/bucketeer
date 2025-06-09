@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	stdlog "log"
 	"net/http"
 	"strings"
 	"time"
@@ -26,11 +27,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
@@ -81,11 +80,8 @@ func (m *BooleanConversionMarshaler) Unmarshal(data []byte, v interface{}) error
 		}.Unmarshal(convertedData, msg)
 
 		if err != nil {
-			m.logger.Error("Failed to unmarshal proto message",
-				zap.Error(err),
-				zap.String("message_type", string(msg.ProtoReflect().Descriptor().FullName())),
-				zap.String("data", string(data)),
-			)
+			// TODO: Send metrics for 404 errors instead of logging
+			// Removed logging to reduce log volume from automated scanners
 			return err
 		}
 
@@ -216,12 +212,18 @@ type booleanConversionDecoder struct {
 func (d *booleanConversionDecoder) Decode(v interface{}) error {
 	data, err := io.ReadAll(d.reader)
 	if err != nil {
-		d.marshaler.logger.Error("Failed to read request body",
-			zap.Error(err),
-		)
+		// TODO: Send metrics for read errors instead of logging to avoid log volume
 		return err
 	}
 	return d.marshaler.Unmarshal(data, v)
+}
+
+// noOpWriter discards all logs from the HTTP server
+type noOpWriter struct{}
+
+func (noOpWriter) Write(p []byte) (n int, err error) {
+	// Discard all logs
+	return len(p), nil
 }
 
 type Gateway struct {
@@ -311,24 +313,8 @@ func (g *Gateway) Start(ctx context.Context,
 		r *http.Request,
 		err error,
 	) {
-		// Only log 404 errors (routing/method not found issues)
-		if st, ok := status.FromError(err); ok {
-			switch st.Code() {
-			case codes.NotFound, codes.Unimplemented:
-				// 404 - Resource not found or method not implemented
-				fields := []zap.Field{
-					zap.Error(err),
-					zap.String("method", r.Method),
-					zap.String("path", r.URL.Path),
-					zap.String("remote_addr", r.RemoteAddr),
-				}
-				// Include query parameters if present
-				if r.URL.RawQuery != "" {
-					fields = append(fields, zap.String("query", r.URL.RawQuery))
-				}
-				g.logger.Warn("Gateway 404 error", fields...)
-			}
-		}
+		// TODO: Send metrics for 404 errors instead of logging
+		// Removed logging to reduce log volume from automated scanners
 
 		// Call the default error handler to send the response
 		runtime.DefaultHTTPErrorHandler(ctx, mux, marshaler, w, r, err)
@@ -376,8 +362,9 @@ func (g *Gateway) Start(ctx context.Context,
 
 	// Create and start the HTTP server
 	g.httpServer = &http.Server{
-		Addr:    g.restAddr,
-		Handler: mux,
+		Addr:     g.restAddr,
+		Handler:  mux,
+		ErrorLog: stdlog.New(noOpWriter{}, "", 0),
 	}
 
 	// Start the server in a goroutine
