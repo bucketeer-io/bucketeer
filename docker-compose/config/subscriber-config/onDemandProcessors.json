@@ -1,0 +1,33 @@
+{
+  "evaluationCountEventDWHPersister": {
+    "flushSize": 20,
+    "flushInterval": 5,
+    "flushTimeout": 30,
+    "project": "bucketeer",
+    "bigQueryDataSet": "bucketeer",
+    "bigQueryBatchSize": 1000,
+    "timezone": "UTC"
+  },
+  "evaluationCountEventOPSPersister": {
+    "flushSize": 20,
+    "flushInterval": 5,
+    "flushTimeout": 30
+  },
+  "goalCountEventDWHPersister": {
+    "flushSize": 20,
+    "flushInterval": 5,
+    "flushTimeout": 30,
+    "project": "bucketeer",
+    "bigQueryDataSet": "bucketeer",
+    "bigQueryDataLocation": "US",
+    "bigQueryBatchSize": 1000,
+    "timezone": "UTC",
+    "MaxRetryGoalEventPeriod": 86400,
+    "RetryGoalEventInterval": 300
+  },
+  "goalCountEventOPSPersister": {
+    "flushSize": 20,
+    "flushInterval": 5,
+    "flushTimeout": 30
+  }
+} 
