@@ -5,7 +5,6 @@ import { IconAddOutlined } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
 import { FeatureVariationType } from '@types';
-import { getVariationSpecificColor } from 'utils/style';
 import { IconTrash } from '@icons';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
@@ -64,12 +63,7 @@ const Variations = ({
             render={({ field }) => (
               <Form.Item className="py-2">
                 <div className="flex items-center gap-x-2 mb-1">
-                  <FlagVariationPolygon
-                    index={variationIndex}
-                    specificColor={
-                      isBoolean ? getVariationSpecificColor(item.value) : ''
-                    }
-                  />
+                  <FlagVariationPolygon index={variationIndex} />
                   <Form.Label required>
                     <Trans
                       i18nKey={'form:feature-flags.variation'}

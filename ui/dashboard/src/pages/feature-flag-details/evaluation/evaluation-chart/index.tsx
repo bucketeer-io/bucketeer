@@ -20,7 +20,7 @@ import {
 import { COLORS } from 'constants/styles';
 import { formatTooltipLabel } from 'utils/chart';
 import { formatLongDateTime } from 'utils/date-time';
-import { getVariationColor, getVariationSpecificColor } from 'utils/style';
+import { getVariationColor } from 'utils/style';
 import {
   ChartToggleLegendRef,
   DatasetReduceType
@@ -67,17 +67,13 @@ export const EvaluationChart = forwardRef(
     const chartData: ChartData<'line', (number | Point | null)[], Date> = {
       labels: timeseries.map(t => new Date(Number(t) * 1000)),
       datasets: variationValues.map((e, i) => {
-        const specificColor =
-          e?.variationType === 'BOOLEAN'
-            ? getVariationSpecificColor(e.label)
-            : '';
         const color = getVariationColor(i % COLORS.length);
         return {
           label:
             e.label.length > 40 ? `${e.label.substring(0, 40)}...` : e.label,
           data: data[i],
-          backgroundColor: specificColor || color,
-          borderColor: specificColor || color,
+          backgroundColor: color,
+          borderColor: color,
           fill: false,
           tension: 0.2,
           value: e.value
