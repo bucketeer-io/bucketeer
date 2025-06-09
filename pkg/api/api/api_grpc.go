@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"time"
 
+	auditlogclient "github.com/bucketeer-io/bucketeer/pkg/auditlog/client"
+
 	"github.com/golang/protobuf/ptypes"
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
@@ -145,6 +147,7 @@ type grpcGatewayService struct {
 	accountClient          accountclient.Client
 	pushClient             pushclient.Client
 	codeRefClient          coderefclient.Client
+	auditLogClient         auditlogclient.Client
 	goalPublisher          publisher.Publisher
 	evaluationPublisher    publisher.Publisher
 	userPublisher          publisher.Publisher
@@ -161,6 +164,7 @@ func NewGrpcGatewayService(
 	accountClient accountclient.Client,
 	pushClient pushclient.Client,
 	codeRefClient coderefclient.Client,
+	auditLogClient auditlogclient.Client,
 	gp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
@@ -179,6 +183,7 @@ func NewGrpcGatewayService(
 		accountClient:          accountClient,
 		pushClient:             pushClient,
 		codeRefClient:          codeRefClient,
+		auditLogClient:         auditLogClient,
 		goalPublisher:          gp,
 		evaluationPublisher:    ep,
 		userPublisher:          up,
