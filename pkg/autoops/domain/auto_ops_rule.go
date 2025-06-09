@@ -23,6 +23,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/jinzhu/copier"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/autoops"
@@ -81,11 +82,8 @@ func NewAutoOpsRule(
 
 func (a *AutoOpsRule) Update(
 	autoOpsStatus *proto.AutoOpsStatus,
-	addOpsEventRateClauses []*proto.UpdateAutoOpsRuleRequest_AddOpsEventRateClause,
-	changeOpsEventRateClauses []*proto.UpdateAutoOpsRuleRequest_ChangeOpsEventRateClause,
-	addDatetimeClauses []*proto.UpdateAutoOpsRuleRequest_AddDatetimeClause,
-	changeDatetimeClauses []*proto.UpdateAutoOpsRuleRequest_ChangeDatetimeClause,
-	deleteClauses []*proto.UpdateAutoOpsRuleRequest_DeleteClause,
+	updateOpsEventRateClauses []*proto.OpsEventRateClauseChange,
+	updateDatetimeClauses []*proto.DatetimeClauseChange,
 ) (*AutoOpsRule, error) {
 	updated := &AutoOpsRule{}
 	if err := copier.Copy(updated, a); err != nil {
@@ -96,39 +94,49 @@ func (a *AutoOpsRule) Update(
 		updated.AutoOpsRule.AutoOpsStatus = *autoOpsStatus
 	}
 
-	for _, c := range addOpsEventRateClauses {
-		if _, err := updated.AddOpsEventRateClause(c.OpsEventRateClause); err != nil {
-			return nil, err
+	for _, c := range updateOpsEventRateClauses {
+		switch c.ChangeType {
+		case proto.AutoOpsChangeType_CREATE:
+			ac, err := anypb.New(c.Clause)
+			if err != nil {
+				return nil, err
+			}
+			_, err = updated.addClause(ac, c.Clause.ActionType)
+			if err != nil {
+				return nil, err
+			}
+		case proto.AutoOpsChangeType_UPDATE:
+			err := updated.changeClause(c.Id, c.Clause, c.Clause.ActionType)
+			if err != nil {
+				return nil, err
+			}
+		case proto.AutoOpsChangeType_DELETE:
+			if err := updated.DeleteClause(c.Id); err != nil {
+				return nil, err
+			}
 		}
 	}
 
-	for _, c := range changeOpsEventRateClauses {
-		if err := updated.ChangeOpsEventRateClause(
-			c.Id,
-			c.OpsEventRateClause,
-		); err != nil {
-			return nil, err
-		}
-	}
-
-	for _, c := range addDatetimeClauses {
-		if _, err := updated.AddDatetimeClause(c.DatetimeClause); err != nil {
-			return nil, err
-		}
-	}
-
-	for _, c := range changeDatetimeClauses {
-		if err := updated.ChangeDatetimeClause(
-			c.Id,
-			c.DatetimeClause,
-		); err != nil {
-			return nil, err
-		}
-	}
-
-	for _, c := range deleteClauses {
-		if err := updated.DeleteClause(c.Id); err != nil {
-			return nil, err
+	for _, c := range updateDatetimeClauses {
+		switch c.ChangeType {
+		case proto.AutoOpsChangeType_CREATE:
+			ac, err := anypb.New(c.Clause)
+			if err != nil {
+				return nil, err
+			}
+			_, err = updated.addClause(ac, c.Clause.ActionType)
+			if err != nil {
+				return nil, err
+			}
+		case proto.AutoOpsChangeType_UPDATE:
+			err := updated.changeClause(c.Id, c.Clause, c.Clause.ActionType)
+			if err != nil {
+				return nil, err
+			}
+		case proto.AutoOpsChangeType_DELETE:
+			if err := updated.DeleteClause(c.Id); err != nil {
+				return nil, err
+			}
 		}
 	}
 

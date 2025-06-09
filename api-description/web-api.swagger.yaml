@@ -8176,35 +8176,6 @@ definitions:
     properties:
       role:
         $ref: '#/definitions/AccountV2RoleOrganization'
-  UpdateAutoOpsRuleRequestAddDatetimeClause:
-    type: object
-    properties:
-      datetimeClause:
-        $ref: '#/definitions/autoopsDatetimeClause'
-  UpdateAutoOpsRuleRequestAddOpsEventRateClause:
-    type: object
-    properties:
-      opsEventRateClause:
-        $ref: '#/definitions/autoopsOpsEventRateClause'
-  UpdateAutoOpsRuleRequestChangeDatetimeClause:
-    type: object
-    properties:
-      id:
-        type: string
-      datetimeClause:
-        $ref: '#/definitions/autoopsDatetimeClause'
-  UpdateAutoOpsRuleRequestChangeOpsEventRateClause:
-    type: object
-    properties:
-      id:
-        type: string
-      opsEventRateClause:
-        $ref: '#/definitions/autoopsOpsEventRateClause'
-  UpdateAutoOpsRuleRequestDeleteClause:
-    type: object
-    properties:
-      id:
-        type: string
   UpdateExperimentRequestUpdatedStatus:
     type: object
     properties:
@@ -9098,6 +9069,14 @@ definitions:
     properties:
       opsEventRateClause:
         $ref: '#/definitions/autoopsOpsEventRateClause'
+  autoopsAutoOpsChangeType:
+    type: string
+    enum:
+      - UNSPECIFIED
+      - CREATE
+      - UPDATE
+      - DELETE
+    default: UNSPECIFIED
   autoopsAutoOpsRule:
     type: object
     properties:
@@ -9238,6 +9217,19 @@ definitions:
         format: int64
       actionType:
         $ref: '#/definitions/autoopsActionType'
+  autoopsDatetimeClauseChange:
+    type: object
+    properties:
+      id:
+        type: string
+        description: The clause ID, if not set, a new date time clause will be created.
+      clause:
+        $ref: '#/definitions/autoopsDatetimeClause'
+        description: The clause value, must be fully filled if update or create clause action is requested.
+      changeType:
+        $ref: '#/definitions/autoopsAutoOpsChangeType'
+    required:
+      - changeType
   autoopsDeleteAutoOpsRuleCommand:
     type: object
   autoopsDeleteAutoOpsRuleResponse:
@@ -9378,6 +9370,19 @@ definitions:
         $ref: '#/definitions/autoopsOpsEventRateClauseOperator'
       actionType:
         $ref: '#/definitions/autoopsActionType'
+  autoopsOpsEventRateClauseChange:
+    type: object
+    properties:
+      id:
+        type: string
+        description: The clause ID, if not set, a new event rate clause will be created.
+      clause:
+        $ref: '#/definitions/autoopsOpsEventRateClause'
+        description: The clause value, must be fully filled if update or create clause action is requested.
+      changeType:
+        $ref: '#/definitions/autoopsAutoOpsChangeType'
+    required:
+      - changeType
   autoopsOpsEventRateClauseOperator:
     type: string
     enum:
@@ -9544,31 +9549,16 @@ definitions:
         description: deprecated
       environmentId:
         type: string
-      addOpsEventRateClauses:
+      opsEventRateClauseChanges:
         type: array
         items:
           type: object
-          $ref: '#/definitions/UpdateAutoOpsRuleRequestAddOpsEventRateClause'
-      changeOpsEventRateClauses:
+          $ref: '#/definitions/autoopsOpsEventRateClauseChange'
+      datetimeClauseChanges:
         type: array
         items:
           type: object
-          $ref: '#/definitions/UpdateAutoOpsRuleRequestChangeOpsEventRateClause'
-      addDatetimeClauses:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/UpdateAutoOpsRuleRequestAddDatetimeClause'
-      changeDatetimeClauses:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/UpdateAutoOpsRuleRequestChangeDatetimeClause'
-      deleteClauses:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/UpdateAutoOpsRuleRequestDeleteClause'
+          $ref: '#/definitions/autoopsDatetimeClauseChange'
     required:
       - environmentId
   autoopsUpdateAutoOpsRuleResponse:

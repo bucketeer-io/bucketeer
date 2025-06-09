@@ -403,6 +403,88 @@ export namespace DeleteAutoOpsRuleResponse {
   export type AsObject = {};
 }
 
+export class OpsEventRateClauseChange extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasClause(): boolean;
+  clearClause(): void;
+  getClause(): proto_autoops_clause_pb.OpsEventRateClause | undefined;
+  setClause(value?: proto_autoops_clause_pb.OpsEventRateClause): void;
+
+  getChangeType(): AutoOpsChangeTypeMap[keyof AutoOpsChangeTypeMap];
+  setChangeType(value: AutoOpsChangeTypeMap[keyof AutoOpsChangeTypeMap]): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): OpsEventRateClauseChange.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: OpsEventRateClauseChange
+  ): OpsEventRateClauseChange.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: OpsEventRateClauseChange,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): OpsEventRateClauseChange;
+  static deserializeBinaryFromReader(
+    message: OpsEventRateClauseChange,
+    reader: jspb.BinaryReader
+  ): OpsEventRateClauseChange;
+}
+
+export namespace OpsEventRateClauseChange {
+  export type AsObject = {
+    id: string;
+    clause?: proto_autoops_clause_pb.OpsEventRateClause.AsObject;
+    changeType: AutoOpsChangeTypeMap[keyof AutoOpsChangeTypeMap];
+  };
+}
+
+export class DatetimeClauseChange extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasClause(): boolean;
+  clearClause(): void;
+  getClause(): proto_autoops_clause_pb.DatetimeClause | undefined;
+  setClause(value?: proto_autoops_clause_pb.DatetimeClause): void;
+
+  getChangeType(): AutoOpsChangeTypeMap[keyof AutoOpsChangeTypeMap];
+  setChangeType(value: AutoOpsChangeTypeMap[keyof AutoOpsChangeTypeMap]): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DatetimeClauseChange.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: DatetimeClauseChange
+  ): DatetimeClauseChange.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: DatetimeClauseChange,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): DatetimeClauseChange;
+  static deserializeBinaryFromReader(
+    message: DatetimeClauseChange,
+    reader: jspb.BinaryReader
+  ): DatetimeClauseChange;
+}
+
+export namespace DatetimeClauseChange {
+  export type AsObject = {
+    id: string;
+    clause?: proto_autoops_clause_pb.DatetimeClause.AsObject;
+    changeType: AutoOpsChangeTypeMap[keyof AutoOpsChangeTypeMap];
+  };
+}
+
 export class UpdateAutoOpsRuleRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
@@ -460,55 +542,23 @@ export class UpdateAutoOpsRuleRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
-  clearAddOpsEventRateClausesList(): void;
-  getAddOpsEventRateClausesList(): Array<UpdateAutoOpsRuleRequest.AddOpsEventRateClause>;
-  setAddOpsEventRateClausesList(
-    value: Array<UpdateAutoOpsRuleRequest.AddOpsEventRateClause>
+  clearOpsEventRateClauseChangesList(): void;
+  getOpsEventRateClauseChangesList(): Array<OpsEventRateClauseChange>;
+  setOpsEventRateClauseChangesList(
+    value: Array<OpsEventRateClauseChange>
   ): void;
-  addAddOpsEventRateClauses(
-    value?: UpdateAutoOpsRuleRequest.AddOpsEventRateClause,
+  addOpsEventRateClauseChanges(
+    value?: OpsEventRateClauseChange,
     index?: number
-  ): UpdateAutoOpsRuleRequest.AddOpsEventRateClause;
+  ): OpsEventRateClauseChange;
 
-  clearChangeOpsEventRateClausesList(): void;
-  getChangeOpsEventRateClausesList(): Array<UpdateAutoOpsRuleRequest.ChangeOpsEventRateClause>;
-  setChangeOpsEventRateClausesList(
-    value: Array<UpdateAutoOpsRuleRequest.ChangeOpsEventRateClause>
-  ): void;
-  addChangeOpsEventRateClauses(
-    value?: UpdateAutoOpsRuleRequest.ChangeOpsEventRateClause,
+  clearDatetimeClauseChangesList(): void;
+  getDatetimeClauseChangesList(): Array<DatetimeClauseChange>;
+  setDatetimeClauseChangesList(value: Array<DatetimeClauseChange>): void;
+  addDatetimeClauseChanges(
+    value?: DatetimeClauseChange,
     index?: number
-  ): UpdateAutoOpsRuleRequest.ChangeOpsEventRateClause;
-
-  clearAddDatetimeClausesList(): void;
-  getAddDatetimeClausesList(): Array<UpdateAutoOpsRuleRequest.AddDatetimeClause>;
-  setAddDatetimeClausesList(
-    value: Array<UpdateAutoOpsRuleRequest.AddDatetimeClause>
-  ): void;
-  addAddDatetimeClauses(
-    value?: UpdateAutoOpsRuleRequest.AddDatetimeClause,
-    index?: number
-  ): UpdateAutoOpsRuleRequest.AddDatetimeClause;
-
-  clearChangeDatetimeClausesList(): void;
-  getChangeDatetimeClausesList(): Array<UpdateAutoOpsRuleRequest.ChangeDatetimeClause>;
-  setChangeDatetimeClausesList(
-    value: Array<UpdateAutoOpsRuleRequest.ChangeDatetimeClause>
-  ): void;
-  addChangeDatetimeClauses(
-    value?: UpdateAutoOpsRuleRequest.ChangeDatetimeClause,
-    index?: number
-  ): UpdateAutoOpsRuleRequest.ChangeDatetimeClause;
-
-  clearDeleteClausesList(): void;
-  getDeleteClausesList(): Array<UpdateAutoOpsRuleRequest.DeleteClause>;
-  setDeleteClausesList(
-    value: Array<UpdateAutoOpsRuleRequest.DeleteClause>
-  ): void;
-  addDeleteClauses(
-    value?: UpdateAutoOpsRuleRequest.DeleteClause,
-    index?: number
-  ): UpdateAutoOpsRuleRequest.DeleteClause;
+  ): DatetimeClauseChange;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateAutoOpsRuleRequest.AsObject;
@@ -540,191 +590,9 @@ export namespace UpdateAutoOpsRuleRequest {
     addDatetimeClauseCommandsList: Array<proto_autoops_command_pb.AddDatetimeClauseCommand.AsObject>;
     changeDatetimeClauseCommandsList: Array<proto_autoops_command_pb.ChangeDatetimeClauseCommand.AsObject>;
     environmentId: string;
-    addOpsEventRateClausesList: Array<UpdateAutoOpsRuleRequest.AddOpsEventRateClause.AsObject>;
-    changeOpsEventRateClausesList: Array<UpdateAutoOpsRuleRequest.ChangeOpsEventRateClause.AsObject>;
-    addDatetimeClausesList: Array<UpdateAutoOpsRuleRequest.AddDatetimeClause.AsObject>;
-    changeDatetimeClausesList: Array<UpdateAutoOpsRuleRequest.ChangeDatetimeClause.AsObject>;
-    deleteClausesList: Array<UpdateAutoOpsRuleRequest.DeleteClause.AsObject>;
+    opsEventRateClauseChangesList: Array<OpsEventRateClauseChange.AsObject>;
+    datetimeClauseChangesList: Array<DatetimeClauseChange.AsObject>;
   };
-
-  export class AddOpsEventRateClause extends jspb.Message {
-    hasOpsEventRateClause(): boolean;
-    clearOpsEventRateClause(): void;
-    getOpsEventRateClause():
-      | proto_autoops_clause_pb.OpsEventRateClause
-      | undefined;
-    setOpsEventRateClause(
-      value?: proto_autoops_clause_pb.OpsEventRateClause
-    ): void;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): AddOpsEventRateClause.AsObject;
-    static toObject(
-      includeInstance: boolean,
-      msg: AddOpsEventRateClause
-    ): AddOpsEventRateClause.AsObject;
-    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-    static extensionsBinary: {
-      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
-    };
-    static serializeBinaryToWriter(
-      message: AddOpsEventRateClause,
-      writer: jspb.BinaryWriter
-    ): void;
-    static deserializeBinary(bytes: Uint8Array): AddOpsEventRateClause;
-    static deserializeBinaryFromReader(
-      message: AddOpsEventRateClause,
-      reader: jspb.BinaryReader
-    ): AddOpsEventRateClause;
-  }
-
-  export namespace AddOpsEventRateClause {
-    export type AsObject = {
-      opsEventRateClause?: proto_autoops_clause_pb.OpsEventRateClause.AsObject;
-    };
-  }
-
-  export class ChangeOpsEventRateClause extends jspb.Message {
-    getId(): string;
-    setId(value: string): void;
-
-    hasOpsEventRateClause(): boolean;
-    clearOpsEventRateClause(): void;
-    getOpsEventRateClause():
-      | proto_autoops_clause_pb.OpsEventRateClause
-      | undefined;
-    setOpsEventRateClause(
-      value?: proto_autoops_clause_pb.OpsEventRateClause
-    ): void;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): ChangeOpsEventRateClause.AsObject;
-    static toObject(
-      includeInstance: boolean,
-      msg: ChangeOpsEventRateClause
-    ): ChangeOpsEventRateClause.AsObject;
-    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-    static extensionsBinary: {
-      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
-    };
-    static serializeBinaryToWriter(
-      message: ChangeOpsEventRateClause,
-      writer: jspb.BinaryWriter
-    ): void;
-    static deserializeBinary(bytes: Uint8Array): ChangeOpsEventRateClause;
-    static deserializeBinaryFromReader(
-      message: ChangeOpsEventRateClause,
-      reader: jspb.BinaryReader
-    ): ChangeOpsEventRateClause;
-  }
-
-  export namespace ChangeOpsEventRateClause {
-    export type AsObject = {
-      id: string;
-      opsEventRateClause?: proto_autoops_clause_pb.OpsEventRateClause.AsObject;
-    };
-  }
-
-  export class AddDatetimeClause extends jspb.Message {
-    hasDatetimeClause(): boolean;
-    clearDatetimeClause(): void;
-    getDatetimeClause(): proto_autoops_clause_pb.DatetimeClause | undefined;
-    setDatetimeClause(value?: proto_autoops_clause_pb.DatetimeClause): void;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): AddDatetimeClause.AsObject;
-    static toObject(
-      includeInstance: boolean,
-      msg: AddDatetimeClause
-    ): AddDatetimeClause.AsObject;
-    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-    static extensionsBinary: {
-      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
-    };
-    static serializeBinaryToWriter(
-      message: AddDatetimeClause,
-      writer: jspb.BinaryWriter
-    ): void;
-    static deserializeBinary(bytes: Uint8Array): AddDatetimeClause;
-    static deserializeBinaryFromReader(
-      message: AddDatetimeClause,
-      reader: jspb.BinaryReader
-    ): AddDatetimeClause;
-  }
-
-  export namespace AddDatetimeClause {
-    export type AsObject = {
-      datetimeClause?: proto_autoops_clause_pb.DatetimeClause.AsObject;
-    };
-  }
-
-  export class ChangeDatetimeClause extends jspb.Message {
-    getId(): string;
-    setId(value: string): void;
-
-    hasDatetimeClause(): boolean;
-    clearDatetimeClause(): void;
-    getDatetimeClause(): proto_autoops_clause_pb.DatetimeClause | undefined;
-    setDatetimeClause(value?: proto_autoops_clause_pb.DatetimeClause): void;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): ChangeDatetimeClause.AsObject;
-    static toObject(
-      includeInstance: boolean,
-      msg: ChangeDatetimeClause
-    ): ChangeDatetimeClause.AsObject;
-    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-    static extensionsBinary: {
-      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
-    };
-    static serializeBinaryToWriter(
-      message: ChangeDatetimeClause,
-      writer: jspb.BinaryWriter
-    ): void;
-    static deserializeBinary(bytes: Uint8Array): ChangeDatetimeClause;
-    static deserializeBinaryFromReader(
-      message: ChangeDatetimeClause,
-      reader: jspb.BinaryReader
-    ): ChangeDatetimeClause;
-  }
-
-  export namespace ChangeDatetimeClause {
-    export type AsObject = {
-      id: string;
-      datetimeClause?: proto_autoops_clause_pb.DatetimeClause.AsObject;
-    };
-  }
-
-  export class DeleteClause extends jspb.Message {
-    getId(): string;
-    setId(value: string): void;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): DeleteClause.AsObject;
-    static toObject(
-      includeInstance: boolean,
-      msg: DeleteClause
-    ): DeleteClause.AsObject;
-    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-    static extensionsBinary: {
-      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
-    };
-    static serializeBinaryToWriter(
-      message: DeleteClause,
-      writer: jspb.BinaryWriter
-    ): void;
-    static deserializeBinary(bytes: Uint8Array): DeleteClause;
-    static deserializeBinaryFromReader(
-      message: DeleteClause,
-      reader: jspb.BinaryReader
-    ): DeleteClause;
-  }
-
-  export namespace DeleteClause {
-    export type AsObject = {
-      id: string;
-    };
-  }
 }
 
 export class UpdateAutoOpsRuleResponse extends jspb.Message {
@@ -1464,3 +1332,12 @@ export class ExecuteProgressiveRolloutResponse extends jspb.Message {
 export namespace ExecuteProgressiveRolloutResponse {
   export type AsObject = {};
 }
+
+export interface AutoOpsChangeTypeMap {
+  UNSPECIFIED: 0;
+  CREATE: 1;
+  UPDATE: 2;
+  DELETE: 3;
+}
+
+export const AutoOpsChangeType: AutoOpsChangeTypeMap;

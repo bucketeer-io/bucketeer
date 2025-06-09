@@ -1021,12 +1021,21 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
+			desc: "err: ErrOpsEventRateClauseRequired",
+			req: &autoopsproto.UpdateAutoOpsRuleRequest{
+				Id:                        "aid1",
+				OpsEventRateClauseChanges: []*autoopsproto.OpsEventRateClauseChange{{}},
+			},
+			expected:    nil,
+			expectedErr: createError(statusOpsEventRateClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_event_rate_clause")),
+		},
+		{
 			desc: "err: DeleteClause ErrClauseIdRequired",
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
 				Id: "aid1",
-				DeleteClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_DeleteClause{
-					{},
-				},
+				OpsEventRateClauseChanges: []*autoopsproto.OpsEventRateClauseChange{{
+					ChangeType: autoopsproto.AutoOpsChangeType_DELETE,
+				}},
 			},
 			expected:    nil,
 			expectedErr: createError(statusClauseIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
@@ -1035,7 +1044,7 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 			desc: "err: ChangeOpsEventRateClauseCommand: ErrOpsEventRateClauseRequired",
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
 				Id: "aid1",
-				ChangeOpsEventRateClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_ChangeOpsEventRateClause{{
+				OpsEventRateClauseChanges: []*autoopsproto.OpsEventRateClauseChange{{
 					Id: "aid",
 				}},
 			},
@@ -1043,21 +1052,24 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 			expectedErr: createError(statusOpsEventRateClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_event_rate_clause")),
 		},
 		{
-			desc: "err: ErrClauseIDRequired",
+			desc: "err: ErrDatetimeClauseRequired",
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
-				Id:                    "aid1",
-				ChangeDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_ChangeDatetimeClause{{}},
+				Id: "aid1",
+				DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{{
+					ChangeType: autoopsproto.AutoOpsChangeType_UPDATE,
+				}},
 			},
 			expected:    nil,
-			expectedErr: createError(statusClauseIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
+			expectedErr: createError(statusDatetimeClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "datetime_clause")),
 		},
 		{
 			desc: "err: ChangeDatetimeClause: ErrDatetimeClauseInvalidTime",
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
 				Id: "aid1",
-				ChangeDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_ChangeDatetimeClause{{
-					Id:             "aid",
-					DatetimeClause: &autoopsproto.DatetimeClause{Time: 0},
+				DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{{
+					Id:         "aid",
+					Clause:     &autoopsproto.DatetimeClause{Time: 0},
+					ChangeType: autoopsproto.AutoOpsChangeType_UPDATE,
 				}},
 			},
 			expected:    nil,
@@ -1067,20 +1079,22 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 			desc: "err: ChangeDatetimeClause: ErrDatetimeClauseDuplicateTime",
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
 				Id: "aid1",
-				ChangeDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_ChangeDatetimeClause{
+				DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{
 					{
 						Id: "aid",
-						DatetimeClause: &autoopsproto.DatetimeClause{
+						Clause: &autoopsproto.DatetimeClause{
 							Time:       time.Now().AddDate(0, 0, 1).Unix(),
 							ActionType: autoopsproto.ActionType_ENABLE,
 						},
+						ChangeType: autoopsproto.AutoOpsChangeType_UPDATE,
 					},
 					{
 						Id: "aid2",
-						DatetimeClause: &autoopsproto.DatetimeClause{
+						Clause: &autoopsproto.DatetimeClause{
 							Time:       time.Now().AddDate(0, 0, 1).Unix(),
 							ActionType: autoopsproto.ActionType_ENABLE,
 						},
+						ChangeType: autoopsproto.AutoOpsChangeType_UPDATE,
 					},
 				},
 			},
@@ -1091,12 +1105,10 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 			desc: "err: AddDatetimeClause: ErrDatetimeClauseInvalidTime",
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
 				Id: "aid1",
-				AddDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_AddDatetimeClause{
+				DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{
 					{
-						DatetimeClause: &autoopsproto.DatetimeClause{
-							Time:       0,
-							ActionType: autoopsproto.ActionType_DISABLE,
-						},
+						Clause:     &autoopsproto.DatetimeClause{Time: 0, ActionType: autoopsproto.ActionType_DISABLE},
+						ChangeType: autoopsproto.AutoOpsChangeType_CREATE,
 					},
 				},
 			},
@@ -1104,21 +1116,23 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 			expectedErr: createError(statusDatetimeClauseInvalidTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
 		},
 		{
-			desc: "err: AddDatetimeClause: ErrDatetimeClauseDuplicateTime",
+			desc: "err: AddDatetimeClauses: ErrDatetimeClauseDuplicateTime",
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
 				Id: "aid1",
-				AddDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_AddDatetimeClause{
+				DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{
 					{
-						DatetimeClause: &autoopsproto.DatetimeClause{
+						Clause: &autoopsproto.DatetimeClause{
 							Time:       time.Now().AddDate(0, 0, 1).Unix(),
 							ActionType: autoopsproto.ActionType_DISABLE,
 						},
+						ChangeType: autoopsproto.AutoOpsChangeType_CREATE,
 					},
 					{
-						DatetimeClause: &autoopsproto.DatetimeClause{
+						Clause: &autoopsproto.DatetimeClause{
 							Time:       time.Now().AddDate(0, 0, 1).Unix(),
 							ActionType: autoopsproto.ActionType_DISABLE,
 						},
+						ChangeType: autoopsproto.AutoOpsChangeType_CREATE,
 					},
 				},
 			},
@@ -1126,24 +1140,24 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 			expectedErr: createError(statusDatetimeClauseDuplicateTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
 		},
 		{
-			desc: "err: AddDatetimeClauses: ErrDatetimeClauseDuplicateTime",
+			desc: "err: AddAndUpdateDatetimeClause: ErrDatetimeClauseDuplicateTime",
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
 				Id: "aid1",
-				AddDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_AddDatetimeClause{
+				DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{
 					{
-						DatetimeClause: &autoopsproto.DatetimeClause{
+						Clause: &autoopsproto.DatetimeClause{
 							Time:       time.Now().AddDate(0, 0, 1).Unix(),
 							ActionType: autoopsproto.ActionType_DISABLE,
 						},
+						ChangeType: autoopsproto.AutoOpsChangeType_CREATE,
 					},
-				},
-				ChangeDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_ChangeDatetimeClause{
 					{
 						Id: "aid",
-						DatetimeClause: &autoopsproto.DatetimeClause{
+						Clause: &autoopsproto.DatetimeClause{
 							Time:       time.Now().AddDate(0, 0, 1).Unix(),
 							ActionType: autoopsproto.ActionType_DISABLE,
 						},
+						ChangeType: autoopsproto.AutoOpsChangeType_UPDATE,
 					},
 				},
 			},
@@ -1157,7 +1171,11 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.All(),
 				).Return(&domain.AutoOpsRule{
 					AutoOpsRule: &autoopsproto.AutoOpsRule{
-						Id: "aid1", OpsType: autoopsproto.OpsType_SCHEDULE, AutoOpsStatus: autoopsproto.AutoOpsStatus_RUNNING, Deleted: false, Clauses: []*autoopsproto.Clause{
+						Id:            "aid1",
+						OpsType:       autoopsproto.OpsType_SCHEDULE,
+						AutoOpsStatus: autoopsproto.AutoOpsStatus_RUNNING,
+						Deleted:       false,
+						Clauses: []*autoopsproto.Clause{
 							{Id: "cid", ActionType: autoopsproto.ActionType_ENABLE, Clause: &anypb.Any{}},
 							{Id: "cid2", ActionType: autoopsproto.ActionType_ENABLE, Clause: &anypb.Any{}},
 						}},
@@ -1177,26 +1195,25 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
 				Id:            "aid1",
 				EnvironmentId: "ns0",
-				AddDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_AddDatetimeClause{
+				DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{
 					{
-						DatetimeClause: &autoopsproto.DatetimeClause{
+						Clause: &autoopsproto.DatetimeClause{
 							ActionType: autoopsproto.ActionType_ENABLE,
 							Time:       time.Now().AddDate(0, 0, 1).Unix(),
 						},
+						ChangeType: autoopsproto.AutoOpsChangeType_CREATE,
 					},
-				},
-				ChangeDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_ChangeDatetimeClause{
 					{
 						Id: "cid2",
-						DatetimeClause: &autoopsproto.DatetimeClause{
+						Clause: &autoopsproto.DatetimeClause{
 							ActionType: autoopsproto.ActionType_DISABLE,
 							Time:       time.Now().AddDate(0, 0, 2).Unix(),
 						},
+						ChangeType: autoopsproto.AutoOpsChangeType_UPDATE,
 					},
-				},
-				DeleteClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_DeleteClause{
 					{
-						Id: "cid",
+						Id:         "cid",
+						ChangeType: autoopsproto.AutoOpsChangeType_DELETE,
 					},
 				},
 			},
