@@ -18,12 +18,13 @@ import (
 	"testing"
 	"time"
 
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/anypb"
+
+	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 )
 
 func TestNewAutoOpsRule(t *testing.T) {
