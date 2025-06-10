@@ -376,10 +376,20 @@ export const FlagOperationsElement = ({
 
   const operationTypes: FlagOperationType[] = useMemo(() => {
     const results: FlagOperationType[] = [];
-    if (rollouts?.find(item => item.featureId === featureId))
+    const waitingRunningStatus = ['WAITING', 'RUNNING'];
+    if (
+      rollouts?.find(
+        item =>
+          item.featureId === featureId &&
+          waitingRunningStatus.includes(item.status)
+      )
+    )
       results.push(FlagOperationType.ROLLOUT);
     const operations = autoOpsRules?.filter(
-      item => item.featureId === featureId
+      ({ featureId: id, opsType, autoOpsStatus }) =>
+        id === featureId &&
+        opsType !== 'TYPE_UNKNOWN' &&
+        waitingRunningStatus.includes(autoOpsStatus)
     );
     operations.forEach(
       o =>
