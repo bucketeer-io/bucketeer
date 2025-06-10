@@ -84,6 +84,8 @@
   "state": "State",
   "slack": "Slack",
   "slack-subtitle": "Manage all notifications within the platform",
+  "new-notification": "New Notification",
+  "update-notification": "Update Notification",
   "new-push-notification": "New Push Notification",
   "update-push-notification": "Update Push Notification",
   "new-notification-subtitle": "A notification lets you know when someone adds or updates something on the admin console and operational tasks status.",

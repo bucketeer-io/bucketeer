@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { EvaluationCounter, Feature } from '@types';
-import { getVariationColor, getVariationSpecificColor } from 'utils/style';
+import { getVariationColor } from 'utils/style';
 import { DatasetReduceType } from 'pages/experiment-details/collection-loader/results/goal-results/timeseries-area-line-chart';
 import { Polygon } from 'pages/experiment-details/elements/header-details';
 import Checkbox from 'components/checkbox';
@@ -34,6 +34,7 @@ const EvaluationTable = ({
     },
     [feature]
   );
+
   return (
     <div className="flex flex-col gap-y-6 w-full min-w-[650px]">
       <div className="flex items-center w-full">
@@ -56,7 +57,6 @@ const EvaluationTable = ({
         const isHidden = dataSets?.find(
           dataset => dataset.label === item?.variationId
         )?.hidden;
-        const variation = getVariation(item);
         return (
           <div
             key={index}
@@ -72,10 +72,7 @@ const EvaluationTable = ({
               <Polygon
                 className="border-none size-3"
                 style={{
-                  background:
-                    feature.variationType === 'BOOLEAN'
-                      ? getVariationSpecificColor(variation?.value || '')
-                      : getVariationColor(index),
+                  background: getVariationColor(index),
                   zIndex: index
                 }}
               />

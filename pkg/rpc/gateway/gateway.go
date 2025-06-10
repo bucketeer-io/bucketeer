@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	stdlog "log"
 	"net/http"
 	"strings"
 	"time"
@@ -61,6 +62,7 @@ var (
 // Reference: https://github.com/bucketeer-io/android-client-sdk/pull/230
 type BooleanConversionMarshaler struct {
 	runtime.JSONPb
+	logger *zap.Logger
 }
 
 // Unmarshal implements the Marshaler interface with boolean string conversion
@@ -72,14 +74,29 @@ func (m *BooleanConversionMarshaler) Unmarshal(data []byte, v interface{}) error
 		convertedData := m.preprocessJSON(data)
 
 		// Use the standard protojson unmarshaler
-		return protojson.UnmarshalOptions{
+		err := protojson.UnmarshalOptions{
 			DiscardUnknown: m.UnmarshalOptions.DiscardUnknown,
 			AllowPartial:   m.UnmarshalOptions.AllowPartial,
 		}.Unmarshal(convertedData, msg)
+
+		if err != nil {
+			// TODO: Send metrics for 404 errors instead of logging
+			// Removed logging to reduce log volume from automated scanners
+			return err
+		}
+
+		return nil
 	}
 
 	// Fall back to standard JSON unmarshaling for non-proto messages
-	return json.Unmarshal(data, v)
+	err := json.Unmarshal(data, v)
+	if err != nil {
+		m.logger.Error("Failed to unmarshal non-proto message",
+			zap.Error(err),
+			zap.String("data", string(data)),
+		)
+	}
+	return err
 }
 
 // preprocessJSON converts string boolean values to actual booleans in the JSON data
@@ -91,6 +108,11 @@ func (m *BooleanConversionMarshaler) preprocessJSON(data []byte) []byte {
 
 	var jsonData interface{}
 	if err := json.Unmarshal(data, &jsonData); err != nil {
+		// Log the error before returning original data
+		m.logger.Error("Failed to unmarshal JSON data in preprocessJSON",
+			zap.Error(err),
+			zap.String("data", string(data)),
+		)
 		// If we can't unmarshal, return the original data
 		return data
 	}
@@ -104,6 +126,10 @@ func (m *BooleanConversionMarshaler) preprocessJSON(data []byte) []byte {
 	// Re-marshal the converted data
 	convertedData, err := json.Marshal(converted)
 	if err != nil {
+		m.logger.Error("Failed to re-marshal converted data",
+			zap.Error(err),
+			zap.Any("converted", converted),
+		)
 		return data
 	}
 
@@ -127,6 +153,11 @@ func (m *BooleanConversionMarshaler) convertStringBooleansRecursive(data interfa
 						modified = true
 					} else {
 						result[key] = value
+						// Log failed conversion attempt
+						m.logger.Warn("Failed to convert boolean field",
+							zap.String("field", key),
+							zap.String("value", strVal),
+						)
 					}
 				} else {
 					convertedValue, childModified := m.convertStringBooleansRecursive(value)
@@ -181,9 +212,18 @@ type booleanConversionDecoder struct {
 func (d *booleanConversionDecoder) Decode(v interface{}) error {
 	data, err := io.ReadAll(d.reader)
 	if err != nil {
+		// TODO: Send metrics for read errors instead of logging to avoid log volume
 		return err
 	}
 	return d.marshaler.Unmarshal(data, v)
+}
+
+// noOpWriter discards all logs from the HTTP server
+type noOpWriter struct{}
+
+func (noOpWriter) Write(p []byte) (n int, err error) {
+	// Discard all logs
+	return len(p), nil
 }
 
 type Gateway struct {
@@ -209,8 +249,43 @@ func NewGateway(restAddr string, opts ...Option) (*Gateway, error) {
 	return &Gateway{
 		restAddr: restAddr,
 		opts:     &options,
-		logger:   options.logger.Named("gateway"),
+		logger:   options.logger.Named("grpc-gateway"),
 	}, nil
+}
+
+// customRoutingErrorHandler handles routing errors and strips trailing slashes
+func (g *Gateway) customRoutingErrorHandler(
+	ctx context.Context,
+	mux *runtime.ServeMux,
+	marshaler runtime.Marshaler,
+	w http.ResponseWriter,
+	r *http.Request,
+	httpStatus int,
+) {
+	// If we get a 404 and the path ends with a slash, try without the slash
+	if httpStatus == http.StatusNotFound && strings.HasSuffix(r.URL.Path, "/") {
+		// Create a new request with the trailing slash removed
+		newPath := strings.TrimSuffix(r.URL.Path, "/")
+		// Clone the request with the new path
+		newReq := r.Clone(ctx)
+		newReq.URL.Path = newPath
+		newReq.RequestURI = newPath
+		if r.URL.RawQuery != "" {
+			newReq.RequestURI += "?" + r.URL.RawQuery
+		}
+
+		g.logger.Debug("retrying request without trailing slash",
+			zap.String("original_full_url", r.URL.String()),
+			zap.String("new_full_url", newReq.URL.String()),
+		)
+
+		// Try to serve the request again
+		mux.ServeHTTP(w, newReq)
+		return
+	}
+
+	// For other cases, use the default routing error handler
+	runtime.DefaultRoutingErrorHandler(ctx, mux, marshaler, w, r, httpStatus)
 }
 
 func (g *Gateway) Start(ctx context.Context,
@@ -226,12 +301,30 @@ func (g *Gateway) Start(ctx context.Context,
 				DiscardUnknown: true,
 			},
 		},
+		logger: g.logger,
+	}
+
+	// Custom error handler that logs errors
+	errorHandler := func(
+		ctx context.Context,
+		mux *runtime.ServeMux,
+		marshaler runtime.Marshaler,
+		w http.ResponseWriter,
+		r *http.Request,
+		err error,
+	) {
+		// TODO: Send metrics for 404 errors instead of logging
+		// Removed logging to reduce log volume from automated scanners
+
+		// Call the default error handler to send the response
+		runtime.DefaultHTTPErrorHandler(ctx, mux, marshaler, w, r, err)
 	}
 
 	// Create a new ServeMux with our custom marshaler
 	mux := runtime.NewServeMux(
-		runtime.WithErrorHandler(runtime.DefaultHTTPErrorHandler),
+		runtime.WithErrorHandler(errorHandler),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, customMarshaler),
+		runtime.WithRoutingErrorHandler(g.customRoutingErrorHandler),
 	)
 
 	// Create gRPC dial options with proper credentials and settings
@@ -269,8 +362,9 @@ func (g *Gateway) Start(ctx context.Context,
 
 	// Create and start the HTTP server
 	g.httpServer = &http.Server{
-		Addr:    g.restAddr,
-		Handler: mux,
+		Addr:     g.restAddr,
+		Handler:  mux,
+		ErrorLog: stdlog.New(noOpWriter{}, "", 0),
 	}
 
 	// Start the server in a goroutine

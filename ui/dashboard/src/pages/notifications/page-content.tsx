@@ -59,7 +59,7 @@ const PageContent = ({
         action={
           <Button className="flex-1 lg:flex-none" onClick={onAdd}>
             <Icon icon={IconAddOutlined} size="sm" />
-            {t(`new-push-notification`)}
+            {t(`new-notification`)}
           </Button>
         }
         searchValue={filters.searchQuery}

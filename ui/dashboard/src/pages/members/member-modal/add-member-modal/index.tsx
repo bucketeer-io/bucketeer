@@ -269,24 +269,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
             />
 
             <Divider className="mt-1 mb-3" />
-            <Form.Field
-              control={form.control}
-              name="environmentRoles"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Control>
-                    <EnvironmentRoles
-                      environments={environments}
-                      memberEnvironments={memberEnvironments}
-                      onChangeEnvironments={values => {
-                        field.onChange(values);
-                      }}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
+            <EnvironmentRoles environments={environments} />
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={
