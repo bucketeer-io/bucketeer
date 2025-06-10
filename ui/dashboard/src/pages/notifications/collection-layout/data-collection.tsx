@@ -39,7 +39,6 @@ export const useColumns = ({
                 name={name}
                 onClick={() => onActions(notification, 'EDIT')}
                 maxLines={1}
-                className="min-w-[200px]"
               />
             }
             maxLines={1}
@@ -50,7 +49,7 @@ export const useColumns = ({
     {
       accessorKey: 'environment',
       header: `${t('environment')}`,
-      size: 250,
+      size: 228,
       cell: ({ row }) => {
         const notification = row.original;
         return (
@@ -63,7 +62,7 @@ export const useColumns = ({
     {
       accessorKey: 'createdAt',
       header: `${t('table:created-at')}`,
-      size: 150,
+      size: 140,
       cell: ({ row }) => {
         const notification = row.original;
         const isNever = Number(notification.createdAt) === 0;
@@ -83,7 +82,7 @@ export const useColumns = ({
     {
       accessorKey: 'state',
       header: `${t('state')}`,
-      size: 120,
+      size: 76,
       cell: ({ row }) => {
         const notification = row.original;
 
@@ -99,7 +98,7 @@ export const useColumns = ({
     },
     {
       accessorKey: 'action',
-      size: 60,
+      size: 20,
       header: '',
       meta: {
         align: 'center',

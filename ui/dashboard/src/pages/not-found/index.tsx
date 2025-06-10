@@ -1,9 +1,7 @@
-import { useNavigate } from 'react-router-dom';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import Button from 'components/button';
 
 const NotFoundPage = () => {
-  const navigate = useNavigate();
   return (
     <main className="grid min-h-full place-items-center py-24 px-6 sm:py-32 lg:px-8">
       <div className="text-center">
@@ -15,7 +13,7 @@ const NotFoundPage = () => {
           {`Sorry, we couldn't find the page you're looking for.`}
         </p>
         <Button
-          onClick={() => navigate(PAGE_PATH_ROOT, { replace: true })}
+          onClick={() => window.location.replace(PAGE_PATH_ROOT)}
           className="mt-8"
         >
           {`Go back home`}

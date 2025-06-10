@@ -1,3 +1,4 @@
+import { TanStackRouterVite } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import Unfonts from 'unplugin-fonts/vite';
 import { defineConfig } from 'vite';
@@ -19,6 +20,7 @@ export default defineConfig({
     outDir: 'build'
   },
   plugins: [
+    TanStackRouterVite({ target: 'react', autoCodeSplitting: true }),
     react(),
     svgr(),
     viteTsconfigPaths(),

@@ -5,12 +5,12 @@ import React, {
   ReactNode,
   useState
 } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { accountOrganizationFetcher, MeFetcherParams } from '@api/account';
 import { accountMeFetcher } from '@api/account';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
 import { Undefinable } from 'option-t/undefinable';
+import { queryClient } from 'router';
 import {
   clearCurrentEnvIdStorage,
   getCurrentEnvIdStorage,
@@ -28,7 +28,7 @@ import {
 } from 'storage/token';
 import { AuthToken, ConsoleAccount, Organization } from '@types';
 
-interface AuthContextType {
+export interface AuthContextType {
   logout: () => void;
   isLogin: boolean;
 
@@ -50,7 +50,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children
 }) => {
-  const navigate = useNavigate();
   const authToken: AuthToken | null = getTokenStorage();
   const organizationId = getOrgIdStorage();
   const environmentId = getCurrentEnvIdStorage();
@@ -73,7 +72,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const onMeFetcher = async (params: MeFetcherParams) => {
     try {
-      const response = await accountMeFetcher(params);
+      // const response = await accountMeFetcher(params);
+
+      const response = await queryClient.ensureQueryData({
+        queryKey: ['account', params.organizationId],
+        queryFn: () =>
+          accountMeFetcher({
+            organizationId: params.organizationId
+          })
+      });
+
       const environmentRoles = response.account.environmentRoles;
       if (!environmentRoles.length) {
         clearOrgAndEnvStorage();
@@ -122,7 +130,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     setMyOrganizations([]);
     setIsLogin(false);
     clearTokenStorage();
-    navigate(PAGE_PATH_ROOT);
+    window.location.replace(PAGE_PATH_ROOT);
   };
 
   useEffect(() => {

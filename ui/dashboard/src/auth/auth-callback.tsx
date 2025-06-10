@@ -1,20 +1,23 @@
 import { FC, useEffect, memo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+// import { useLocation, useNavigate } from 'react-router-dom';
 import { exchangeToken, ExchangeTokenPayload } from '@api/auth';
+import { getRouteApi, useNavigate } from '@tanstack/react-router';
+// import { useLocation } from '@tanstack/react-router';
 import { urls } from 'configs';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { getCookieState } from 'cookie';
 import { useSubmit } from 'hooks';
-import queryString from 'query-string';
 import { setTokenStorage } from 'storage/token';
 import { AppLoading } from 'app';
 import { useAuth } from './auth-context';
 
+const routeApi = getRouteApi('/auth/callback');
+
 export const AuthCallbackPage: FC = memo(() => {
   const { syncSignIn, setIsGoogleAuthError, setIsInitialLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const query = location.search;
+
+  const search = routeApi.useSearch();
 
   const { onSubmit: onGoogleLoginHandler } = useSubmit(
     async (payload: ExchangeTokenPayload) => {
@@ -23,21 +26,25 @@ export const AuthCallbackPage: FC = memo(() => {
         if (response.token) {
           setTokenStorage(response.token);
           await syncSignIn(response.token);
-          navigate(PAGE_PATH_ROOT);
+          navigate({
+            to: PAGE_PATH_ROOT
+          });
         }
       } catch {
         setIsGoogleAuthError(true);
         setIsInitialLoading(false);
-        navigate(PAGE_PATH_ROOT);
+        navigate({
+          to: PAGE_PATH_ROOT
+        });
       }
     }
   );
 
   useEffect(() => {
-    const { code, state } = queryString.parse(query);
+    const { code, state } = search;
     const cookieState = getCookieState();
     setIsInitialLoading(true);
-    if (!!code && state === cookieState) {
+    if (!!code && state === Number(cookieState)) {
       if (typeof code === 'string') {
         onGoogleLoginHandler({
           code,
@@ -48,7 +55,7 @@ export const AuthCallbackPage: FC = memo(() => {
     } else {
       throw new Error('exchange token failed.');
     }
-  }, [query]);
+  }, [search]);
 
   return <AppLoading />;
 });

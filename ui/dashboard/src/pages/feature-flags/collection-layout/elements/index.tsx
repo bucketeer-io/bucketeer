@@ -5,7 +5,7 @@ import {
   useMemo
 } from 'react';
 import { Trans } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import {
@@ -245,7 +245,7 @@ export const FlagNameElement = ({
               id={id}
               content={<NameWithTooltip.Content content={name} id={id} />}
               trigger={
-                <Link to={link}>
+                <Link to={link} replace>
                   <NameWithTooltip.Trigger
                     id={id}
                     name={name}

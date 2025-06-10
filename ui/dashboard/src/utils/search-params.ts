@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
+import { useLocation } from '@tanstack/react-router';
 import queryString, { ParsedQuery } from 'query-string';
 
 export type SearchParams = ParsedQuery<string>;
@@ -9,17 +10,15 @@ export function useSearchParams() {
   const location = useLocation();
 
   const searchOptions = useMemo<SearchParams>((): SearchParams => {
-    return queryString.parse(location.search);
+    return location.search;
   }, [location.search]);
 
   const onChangSearchParams = useCallback(
     (options: Record<string, string | number | boolean | string[]>) => {
-      navigate(
-        `${location.pathname}?${decodeURIComponent(stringifyParams(options))}`,
-        {
-          replace: true
-        }
-      );
+      navigate({
+        to: `${location.pathname}?${decodeURIComponent(stringifyParams(options))}`,
+        replace: true
+      });
     },
     [navigate, location]
   );

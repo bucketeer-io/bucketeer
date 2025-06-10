@@ -1,4 +1,7 @@
+import { ErrorComponentProps } from '@tanstack/react-router';
 import dayjs from 'dayjs';
+import { ErrorComponentExpandProps } from '@types';
+import { isJsonString } from './converts';
 
 export const copyToClipBoard = (text: string) => {
   if (navigator.clipboard) {
@@ -92,4 +95,19 @@ export const isSameOrBeforeDate = (date: Date, conditionDate = new Date()) => {
   return (
     dayjs(date).isSame(conditionDate) || dayjs(date).isBefore(conditionDate)
   );
+};
+
+export const handleGetErrorMessage = (error?: ErrorComponentProps) => {
+  if (!error) return null;
+  const _error = error as ErrorComponentExpandProps;
+
+  const message =
+    _error?.error.cause?.issues[0]?.message ||
+    (isJsonString(error.error?.message) &&
+      JSON.parse(error.error?.message)?.message) ||
+    '';
+  return {
+    message,
+    reset: error?.reset
+  };
 };

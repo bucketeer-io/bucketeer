@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useTranslation } from 'i18n';
@@ -14,7 +14,9 @@ const PageLoader = () => {
     <div className="w-full min-h-screen !max-w-[1192px]">
       <PageDetailsHeader
         onBack={() =>
-          navigate(`/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`)
+          navigate({
+            to: `/${currentEnvironment?.urlCode}${PAGE_PATH_FEATURES}`
+          })
         }
         title={t('new-flag')}
       />

@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes, useParams } from 'react-router-dom';
+// import { Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { useParams, Outlet, useLocation } from '@tanstack/react-router';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import {
   PAGE_PATH_FEATURES,
@@ -12,27 +13,20 @@ import {
   PAGE_PATH_FEATURE_CODE_REFS
 } from 'constants/routing';
 import { useTranslation } from 'i18n';
-import { Feature } from '@types';
-import NotFoundPage from 'pages/not-found';
 import { Tabs, TabsList, TabsContent, TabsLink } from 'components/tabs-link';
 import PageLayout from 'elements/page-layout';
-import CodeReferencesPage from './code-refs';
-import EvaluationPage from './evaluation';
-import HistoryPage from './history';
-import Operations from './operations';
-import SettingsPage from './settings';
-import TriggerPage from './trigger';
 import { TabItem } from './types';
-import Variation from './variation';
 
-const PageContent = ({ feature }: { feature: Feature }) => {
+const PageContent = () => {
   const { t } = useTranslation(['table', 'common']);
-  const { flagId } = useParams();
-
+  const { featureId } = useParams({
+    strict: false
+  });
+  const { pathname } = useLocation();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const url = `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${flagId}`;
+  const url = `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}`;
 
   const featureFlagTabs: Array<TabItem> = [
     {
@@ -74,50 +68,19 @@ const PageContent = ({ feature }: { feature: Feature }) => {
       <Tabs>
         <TabsList className="px-6 w-fit min-w-full">
           {featureFlagTabs.map((item, index) => (
-            <TabsLink key={index} to={`${url}${item.to}`}>
+            <TabsLink
+              key={index}
+              to={`${url}${item.to}`}
+              replace={true}
+              className={pathname.includes(item.to) ? 'border-primary-500' : ''}
+            >
               {item.title}
             </TabsLink>
           ))}
         </TabsList>
 
         <TabsContent className="pt-2">
-          <Routes>
-            <Route
-              index
-              element={
-                <Navigate to={`${url}${PAGE_PATH_FEATURE_TARGETING}`} replace />
-              }
-            />
-            <Route
-              path={`${PAGE_PATH_FEATURE_HISTORY}/*`}
-              element={<HistoryPage feature={feature} />}
-            />
-            <Route
-              path={PAGE_PATH_FEATURE_SETTING}
-              element={<SettingsPage feature={feature} />}
-            />
-            <Route
-              path={PAGE_PATH_FEATURE_VARIATION}
-              element={<Variation feature={feature} />}
-            />
-            <Route
-              path={`${PAGE_PATH_FEATURE_EVALUATION}/*`}
-              element={<EvaluationPage feature={feature} />}
-            />
-            <Route
-              path={`${PAGE_PATH_FEATURE_CODE_REFS}/*`}
-              element={<CodeReferencesPage feature={feature} />}
-            />
-            <Route
-              path={`${PAGE_PATH_FEATURE_TRIGGER}/*`}
-              element={<TriggerPage feature={feature} />}
-            />
-            <Route
-              path={`${PAGE_PATH_FEATURE_AUTOOPS}/*`}
-              element={<Operations feature={feature} />}
-            />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+          <Outlet />
         </TabsContent>
       </Tabs>
     </PageLayout.Content>

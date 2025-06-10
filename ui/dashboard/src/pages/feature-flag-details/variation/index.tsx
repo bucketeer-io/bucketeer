@@ -6,11 +6,16 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryExperiments } from '@queries/experiments';
 import { invalidateFeature } from '@queries/feature-details';
 import { useQueryClient } from '@tanstack/react-query';
+import { useLoaderData } from '@tanstack/react-router';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { isEqual } from 'lodash';
+import {
+  Route as featureDetailsLayoutRoute,
+  FeatureDetailsLoaderData
+} from 'routes/_default-layout/$env/features/$featureId/_feature-details-layout';
 import { Feature, FeatureVariation, VariationChange } from '@types';
 import Form from 'components/form';
 import InfoMessage from 'components/info-message';
@@ -24,7 +29,7 @@ export interface VariationProps {
   isRunningExperiment?: boolean;
 }
 
-const Variation = ({ feature }: VariationProps) => {
+const Variations = () => {
   const { t } = useTranslation(['common', 'message']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -34,6 +39,12 @@ const Variation = ({ feature }: VariationProps) => {
     useToggleOpen(false);
 
   const { notify, errorNotify } = useToast();
+
+  const loaderData: FeatureDetailsLoaderData = useLoaderData({
+    from: featureDetailsLayoutRoute.id
+  });
+
+  const { feature } = loaderData || {};
 
   const { data: experimentCollection } = useQueryExperiments({
     params: {
@@ -205,4 +216,4 @@ const Variation = ({ feature }: VariationProps) => {
   );
 };
 
-export default Variation;
+export default Variations;
