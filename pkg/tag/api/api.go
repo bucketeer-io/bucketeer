@@ -222,6 +222,7 @@ func (s *TagService) ListTags(
 		filters = append(filters, &mysql.FilterV2{
 			Column:   "tag.entity_type",
 			Operator: mysql.OperatorEqual,
+			Value:    req.EntityType,
 		})
 	}
 	orders, err := s.newListTagsOrdersMySQL(req.OrderBy, req.OrderDirection, localizer)
