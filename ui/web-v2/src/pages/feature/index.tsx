@@ -12,7 +12,10 @@ import { v4 as uuid } from 'uuid';
 
 import { FeatureAddForm } from '../../components/FeatureAddForm';
 import { FeatureCloneForm } from '../../components/FeatureCloneForm';
-import { FeatureConfirmDialog } from '../../components/FeatureConfirmDialog';
+import {
+  FeatureConfirmDialog,
+  SaveFeatureType
+} from '../../components/FeatureConfirmDialog';
 import { FeatureList } from '../../components/FeatureList';
 import { Header } from '../../components/Header';
 import { Overlay } from '../../components/Overlay';
@@ -39,7 +42,8 @@ import {
   getFeature,
   listFeatures,
   OrderBy,
-  OrderDirection
+  OrderDirection,
+  updateFeature
 } from '../../modules/features';
 import { useCurrentEnvironment, useEnvironments } from '../../modules/me';
 import { Feature } from '../../proto/feature/feature_pb';
@@ -394,47 +398,52 @@ export const FeatureIndexPage: FC = memo(() => {
   );
 
   const handleSwitchEnabled = useCallback(
-    async (data) => {
-      dispatch(
-        (() => {
-          if (data.enabled) {
-            return enableFeature({
+    async (data, saveFeatureType) => {
+      const handleToast = (enabled) => {
+        const message = enabled
+          ? f(messages.feature.successMessages.flagEnabled)
+          : f(messages.feature.successMessages.flagDisabled);
+        dispatch(addToast({ message, severity: 'success' }));
+      };
+
+      const prepareUpdate = async (action) => {
+        dispatch(action).then(() => {
+          handleToast(data.enabled);
+          switchEnabledReset();
+          setIsSwitchEnableConfirmDialogOpen(false);
+          dispatch(
+            getFeature({
+              environmentId: currentEnvironment.id,
+              id: data.featureId
+            })
+          );
+        });
+      };
+
+      if (saveFeatureType === SaveFeatureType.SCHEDULE) {
+        await prepareUpdate(
+          updateFeature({
+            environmentId: currentEnvironment.id,
+            id: data.featureId,
+            comment: data.comment,
+            enabled: data.enabled
+          })
+        );
+      } else {
+        const action = data.enabled
+          ? enableFeature({
+              environmentId: currentEnvironment.id,
+              id: data.featureId,
+              comment: data.comment
+            })
+          : disableFeature({
               environmentId: currentEnvironment.id,
               id: data.featureId,
               comment: data.comment
             });
-          }
-          return disableFeature({
-            environmentId: currentEnvironment.id,
-            id: data.featureId,
-            comment: data.comment
-          });
-        })()
-      ).then(() => {
-        if (data.enabled) {
-          dispatch(
-            addToast({
-              message: f(messages.feature.successMessages.flagEnabled),
-              severity: 'success'
-            })
-          );
-        } else {
-          dispatch(
-            addToast({
-              message: f(messages.feature.successMessages.flagDisabled),
-              severity: 'success'
-            })
-          );
-        }
-        switchEnabledReset();
-        setIsSwitchEnableConfirmDialogOpen(false);
-        dispatch(
-          getFeature({
-            environmentId: currentEnvironment.id,
-            id: data.featureId
-          })
-        );
-      });
+
+        await prepareUpdate(action);
+      }
     },
     [dispatch, switchEnabledReset, setIsSwitchEnableConfirmDialogOpen]
   );
@@ -461,9 +470,28 @@ export const FeatureIndexPage: FC = memo(() => {
   );
 
   const handleArchive = useCallback(
-    async (data) => {
-      dispatch(
-        data.feature.archived
+    async (data, saveFeatureType) => {
+      const handleDispatch = async (action) => {
+        await dispatch(action);
+        archiveReset();
+        setIsArchiveConfirmDialogOpen(false);
+        history.replace(
+          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`
+        );
+        updateFeatureList(null, 1);
+      };
+
+      if (saveFeatureType === SaveFeatureType.SCHEDULE) {
+        handleDispatch(
+          updateFeature({
+            environmentId: currentEnvironment.id,
+            id: data.feature.id,
+            comment: data.comment,
+            archived: !data.feature.archived
+          })
+        );
+      } else {
+        const action = data.feature.archived
           ? unarchiveFeature({
               environmentId: currentEnvironment.id,
               id: data.feature.id,
@@ -473,15 +501,10 @@ export const FeatureIndexPage: FC = memo(() => {
               environmentId: currentEnvironment.id,
               id: data.feature.id,
               comment: data.comment
-            })
-      ).then(() => {
-        archiveReset();
-        setIsArchiveConfirmDialogOpen(false);
-        history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`
-        );
-        updateFeatureList(null, 1);
-      });
+            });
+
+        handleDispatch(action);
+      }
     },
     [dispatch, archiveReset, setIsArchiveConfirmDialogOpen]
   );
@@ -573,14 +596,31 @@ export const FeatureIndexPage: FC = memo(() => {
           </FormProvider>
         )}
       </Overlay>
+      {/* <FormProvider {...switchEnabledMethod}>
+        <FeatureConfirmDialog
+          featureId={switchEnabledGetValues('featureId')}
+          isSwitchEnabledConfirm={true}
+          isEnabled={!switchEnabledGetValues('enabled')}
+          open={true}
+          handleSubmit={switchEnableHandleSubmit(handleSwitchEnabled)}
+          onClose={() => setIsSwitchEnableConfirmDialogOpen(false)}
+          title={f(messages.feature.confirm.title)}
+          description={f(messages.feature.confirm.description)}
+        />
+      </FormProvider> */}
       {isSwitchEnableConfirmDialogOpen && (
         <FormProvider {...switchEnabledMethod}>
           <FeatureConfirmDialog
             featureId={switchEnabledGetValues('featureId')}
-            isSwitchEnabledConfirm={true}
+            // isSwitchEnabledConfirm={true}
             isEnabled={!switchEnabledGetValues('enabled')}
             open={isSwitchEnableConfirmDialogOpen}
-            handleSubmit={switchEnableHandleSubmit(handleSwitchEnabled)}
+            // handleSubmit={() => switchEnableHandleSubmit(handleSwitchEnabled)}
+            handleSubmit={(arg) => {
+              switchEnableHandleSubmit((data) =>
+                handleSwitchEnabled(data, arg)
+              )();
+            }}
             onClose={() => setIsSwitchEnableConfirmDialogOpen(false)}
             title={f(messages.feature.confirm.title)}
             description={f(messages.feature.confirm.description)}
@@ -594,7 +634,9 @@ export const FeatureIndexPage: FC = memo(() => {
             featureId={archiveMethod.getValues().feature?.id}
             feature={archiveMethod.getValues().feature}
             open={isArchiveConfirmDialogOpen}
-            handleSubmit={archiveHandleSubmit(handleArchive)}
+            handleSubmit={(arg) => {
+              archiveHandleSubmit((data) => handleArchive(data, arg))();
+            }}
             onClose={() => setIsArchiveConfirmDialogOpen(false)}
             title={
               archiveMethod.getValues().feature &&
