@@ -40,6 +40,8 @@ var (
 	listPushesSQL string
 	//go:embed sql/push/count_pushes.sql
 	countPushesSQL string
+	//go:embed sql/push/delete_push.sql
+	deletePushSQL string
 )
 
 type PushStorage interface {
@@ -50,6 +52,7 @@ type PushStorage interface {
 		ctx context.Context,
 		option *mysql.ListOptions,
 	) ([]*proto.Push, int, int64, error)
+	DeletePush(ctx context.Context, id, environmentId string) error
 }
 
 type pushStorage struct {
@@ -186,4 +189,24 @@ func (s *pushStorage) ListPushes(
 		return nil, 0, 0, err
 	}
 	return pushes, nextOffset, totalCount, nil
+}
+
+func (s *pushStorage) DeletePush(ctx context.Context, id, environmentId string) error {
+	result, err := s.qe.ExecContext(
+		ctx,
+		deletePushSQL,
+		id,
+		environmentId,
+	)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected != 1 {
+		return ErrPushUnexpectedAffectedRows
+	}
+	return nil
 }

@@ -1,6 +1,5 @@
 PROTO_FOLDERS := $(filter-out ./external%, $(shell find . -name '*.proto' -not -path "./openapi/web_default_settings.proto" -print0 | xargs -0 -n1 dirname | sort --unique))
-PROTO_WITH_DESCRIPTOR_FOLDERS := ./account ./auditlog ./auth ./autoops ./environment ./eventcounter ./experiment ./feature ./gateway ./notification ./push ./batch ./tag ./coderef
-PROTO_WITHOUT_DESCRIPTOR_FOLDERS := $(filter-out $(PROTO_WITH_DESCRIPTOR_FOLDERS), $(PROTO_FOLDERS))
+PROTO_WITH_GRPC_GATEWAY := ./account ./auditlog ./auth ./autoops ./environment ./eventcounter ./experiment ./feature ./gateway ./notification ./push ./batch ./tag ./coderef
 
 GIT_TOP_DIR := $(shell cd .. ; pwd)
 PROTOBUF_INCLUDE_DIR := ./external/protocolbuffers/protobuf/v23.4
@@ -9,7 +8,7 @@ OPENAPI := ./external/openapiv2
 
 .PHONY: go
 go: remove-go
-	for f in ${PROTO_WITHOUT_DESCRIPTOR_FOLDERS}; do \
+	for f in ${PROTO_FOLDERS}; do \
 		protoc \
 			--proto_path=${GIT_TOP_DIR} \
 			--proto_path=${PROTOBUF_INCLUDE_DIR} \
@@ -19,17 +18,7 @@ go: remove-go
 			--go_opt=paths=source_relative \
 			${GIT_TOP_DIR}/proto/$$f/*.proto; \
 	done; \
-	for f in ${PROTO_WITH_DESCRIPTOR_FOLDERS}; do \
-		protoc \
-			--proto_path=${GIT_TOP_DIR} \
-			--proto_path=${PROTOBUF_INCLUDE_DIR} \
-			--proto_path=${GOOGLEAPIS} \
-			--proto_path=${OPENAPI} \
-			--go_out=plugins=grpc:${GIT_TOP_DIR} \
-			--go_opt=paths=source_relative \
-			--include_imports \
-			--descriptor_set_out=${GIT_TOP_DIR}/proto/$$f/proto_descriptor.pb \
-			${GIT_TOP_DIR}/proto/$$f/*.proto; \
+	for f in ${PROTO_WITH_GRPC_GATEWAY}; do \
 		protoc \
 			--proto_path=${GIT_TOP_DIR} \
 			--proto_path=${PROTOBUF_INCLUDE_DIR} \
@@ -92,8 +81,7 @@ go-check: go
 .PHONY: remove-go
 remove-go:
 	find . -name "*.pb.go" -type f -delete; \
-	find . -name "*.pb.gw.go" -type f -delete; \
-	find . -name "proto_descriptor.pb" -type f -delete
+	find . -name "*.pb.gw.go" -type f -delete
 
 .PHONY: check
 check: fmt-check lock-check

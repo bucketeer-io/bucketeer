@@ -782,7 +782,6 @@ func (s *PushService) DeletePush(
 		if err = copier.Copy(prev, push); err != nil {
 			return err
 		}
-		push.Deleted = true
 		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_PUSH,
@@ -803,7 +802,7 @@ func (s *PushService) DeletePush(
 		if err = s.publisher.Publish(ctx, event); err != nil {
 			return err
 		}
-		return s.pushStorage.UpdatePush(contextWithTx, push, req.EnvironmentId)
+		return s.pushStorage.DeletePush(contextWithTx, push.Id, req.EnvironmentId)
 	})
 	if err != nil {
 		switch {

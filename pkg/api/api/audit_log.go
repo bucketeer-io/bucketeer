@@ -21,7 +21,7 @@ func (s *grpcGatewayService) GetAuditLog(
 		accountproto.APIKey_PUBLIC_API_ADMIN,
 	})
 	if err != nil {
-		s.logger.Error("Failed to check ListPushes request",
+		s.logger.Error("Failed to check get auditlog request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,

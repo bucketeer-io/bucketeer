@@ -12,7 +12,7 @@ import {
   Rollout,
   StrategyType
 } from '@types';
-import { cn, getVariationSpecificColor } from 'utils/style';
+import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
@@ -221,12 +221,7 @@ const Variations = ({
       {fields.map((variation, variationIndex) => (
         <div key={variation.variationField} className="flex w-full gap-x-2">
           <div className="flex flex-col w-full gap-y-3">
-            <VariationLabel
-              index={variationIndex}
-              specificColor={
-                isBoolean ? getVariationSpecificColor(variation.value) : ''
-              }
-            />
+            <VariationLabel index={variationIndex} />
             <div className="flex flex-col w-full gap-y-5">
               <div className="flex items-end w-full gap-x-2">
                 {!isJSON && (
