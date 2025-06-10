@@ -33,6 +33,6 @@ export enum FeatureActivityStatus {
 
 export enum FlagOperationType {
   ROLLOUT = 'ROLLOUT',
-  SCHEDULED = 'SCHEDULED',
-  KILL_SWITCH = 'KILL_SWITCH'
+  SCHEDULE = 'SCHEDULE',
+  EVENT_RATE = 'EVENT_RATE'
 }
