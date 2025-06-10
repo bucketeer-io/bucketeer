@@ -9291,7 +9291,6 @@ definitions:
     properties:
       id:
         type: string
-        description: The clause ID, if not set, a new date time clause will be created.
       clause:
         $ref: '#/definitions/autoopsDatetimeClause'
         description: The clause value, must be fully filled if update or create clause action is requested.
@@ -9444,7 +9443,6 @@ definitions:
     properties:
       id:
         type: string
-        description: The clause ID, if not set, a new event rate clause will be created.
       clause:
         $ref: '#/definitions/autoopsOpsEventRateClause'
         description: The clause value, must be fully filled if update or create clause action is requested.

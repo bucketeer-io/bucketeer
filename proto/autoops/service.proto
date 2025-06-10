@@ -106,9 +106,7 @@ enum AutoOpsChangeType {
 }
 
 message OpsEventRateClauseChange {
-  string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "The clause ID, if not set, a new event rate clause will be created."
-  }];
+  string id = 1;
   OpsEventRateClause clause = 2 [(grpc.gateway.protoc_gen_openapiv2.options
                                       .openapiv2_field) = {
     description: "The clause value, must be fully filled if update or create clause action is requested."
@@ -117,9 +115,7 @@ message OpsEventRateClauseChange {
 }
 
 message DatetimeClauseChange {
-  string id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "The clause ID, if not set, a new date time clause will be created."
-  }];
+  string id = 1;
   DatetimeClause clause = 2 [(grpc.gateway.protoc_gen_openapiv2.options
                                   .openapiv2_field) = {
     description: "The clause value, must be fully filled if update or create clause action is requested."

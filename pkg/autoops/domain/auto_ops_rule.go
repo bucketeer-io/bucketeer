@@ -30,8 +30,9 @@ import (
 )
 
 var (
-	errClauseNotFound = errors.New("autoOpsRule: clause not found")
-	errClauseEmpty    = errors.New("autoOpsRule: clause cannot be empty")
+	errClauseNotFound   = errors.New("autoOpsRule: clause not found")
+	errClauseEmpty      = errors.New("autoOpsRule: clause cannot be empty")
+	errClauseIDRequired = errors.New("autoOpsRule: clause id is required")
 
 	OpsEventRateClause = &proto.OpsEventRateClause{}
 	DatetimeClause     = &proto.DatetimeClause{}
@@ -82,8 +83,8 @@ func NewAutoOpsRule(
 
 func (a *AutoOpsRule) Update(
 	autoOpsStatus *proto.AutoOpsStatus,
-	updateOpsEventRateClauses []*proto.OpsEventRateClauseChange,
-	updateDatetimeClauses []*proto.DatetimeClauseChange,
+	opsEventRateClauses []*proto.OpsEventRateClauseChange,
+	datetimeClauses []*proto.DatetimeClauseChange,
 ) (*AutoOpsRule, error) {
 	updated := &AutoOpsRule{}
 	if err := copier.Copy(updated, a); err != nil {
@@ -94,59 +95,165 @@ func (a *AutoOpsRule) Update(
 		updated.AutoOpsRule.AutoOpsStatus = *autoOpsStatus
 	}
 
-	for _, c := range updateOpsEventRateClauses {
-		switch c.ChangeType {
-		case proto.AutoOpsChangeType_CREATE:
-			ac, err := anypb.New(c.Clause)
-			if err != nil {
-				return nil, err
-			}
-			_, err = updated.addClause(ac, c.Clause.ActionType)
-			if err != nil {
-				return nil, err
-			}
-		case proto.AutoOpsChangeType_UPDATE:
-			err := updated.changeClause(c.Id, c.Clause, c.Clause.ActionType)
-			if err != nil {
-				return nil, err
-			}
-		case proto.AutoOpsChangeType_DELETE:
-			if err := updated.DeleteClause(c.Id); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	for _, c := range updateDatetimeClauses {
-		switch c.ChangeType {
-		case proto.AutoOpsChangeType_CREATE:
-			ac, err := anypb.New(c.Clause)
-			if err != nil {
-				return nil, err
-			}
-			_, err = updated.addClause(ac, c.Clause.ActionType)
-			if err != nil {
-				return nil, err
-			}
-		case proto.AutoOpsChangeType_UPDATE:
-			err := updated.changeClause(c.Id, c.Clause, c.Clause.ActionType)
-			if err != nil {
-				return nil, err
-			}
-		case proto.AutoOpsChangeType_DELETE:
-			if err := updated.DeleteClause(c.Id); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	if len(updated.Clauses) == 0 {
-		return nil, errClauseEmpty
+	if err := updated.changeOpsEventRateClauses(
+		opsEventRateClauses,
+		datetimeClauses,
+	); err != nil {
+		return nil, err
 	}
 
 	now := time.Now().Unix()
 	updated.AutoOpsRule.UpdatedAt = now
 	return updated, nil
+}
+
+func (a *AutoOpsRule) changeOpsEventRateClauses(
+	opsEventRateClauses []*proto.OpsEventRateClauseChange,
+	datetimeClauses []*proto.DatetimeClauseChange,
+) error {
+	var (
+		opsEventRateCreateAndUpdate, opsEventRateDelete []*proto.OpsEventRateClauseChange
+		datetimeCreateAndUpdate, datetimeDelete         []*proto.DatetimeClauseChange
+	)
+	for _, c := range opsEventRateClauses {
+		if c.ChangeType == proto.AutoOpsChangeType_CREATE {
+			opsEventRateDelete = append(opsEventRateDelete, c)
+		} else {
+			opsEventRateCreateAndUpdate = append(opsEventRateCreateAndUpdate, c)
+		}
+	}
+	for _, c := range datetimeClauses {
+		if c.ChangeType == proto.AutoOpsChangeType_CREATE {
+			datetimeDelete = append(datetimeDelete, c)
+		} else {
+			datetimeCreateAndUpdate = append(datetimeCreateAndUpdate, c)
+		}
+	}
+	if err := a.validateGranularChanges(
+		opsEventRateCreateAndUpdate,
+		datetimeCreateAndUpdate,
+	); err != nil {
+		return err
+	}
+	if err := a.applyGranularChanges(
+		opsEventRateCreateAndUpdate,
+		datetimeCreateAndUpdate,
+	); err != nil {
+		return err
+	}
+	if err := a.validateGranularChanges(
+		opsEventRateDelete,
+		datetimeDelete,
+	); err != nil {
+		return err
+	}
+	if err := a.applyGranularChanges(
+		opsEventRateDelete,
+		datetimeDelete,
+	); err != nil {
+		return err
+	}
+	if len(a.Clauses) == 0 {
+		return errClauseEmpty
+	}
+	return nil
+}
+
+func (a *AutoOpsRule) applyGranularChanges(
+	opsEventRateClauses []*proto.OpsEventRateClauseChange,
+	datetimeClauses []*proto.DatetimeClauseChange,
+) error {
+	for _, c := range opsEventRateClauses {
+		switch c.ChangeType {
+		case proto.AutoOpsChangeType_CREATE:
+			ac, err := anypb.New(c.Clause)
+			if err != nil {
+				return err
+			}
+			_, err = a.addClause(ac, c.Clause.ActionType)
+			if err != nil {
+				return err
+			}
+		case proto.AutoOpsChangeType_UPDATE:
+			err := a.changeClause(c.Id, c.Clause, c.Clause.ActionType)
+			if err != nil {
+				return err
+			}
+		case proto.AutoOpsChangeType_DELETE:
+			if err := a.DeleteClause(c.Id); err != nil {
+				return err
+			}
+		}
+	}
+
+	for _, c := range datetimeClauses {
+		switch c.ChangeType {
+		case proto.AutoOpsChangeType_CREATE:
+			ac, err := anypb.New(c.Clause)
+			if err != nil {
+				return err
+			}
+			_, err = a.addClause(ac, c.Clause.ActionType)
+			if err != nil {
+				return err
+			}
+		case proto.AutoOpsChangeType_UPDATE:
+			err := a.changeClause(c.Id, c.Clause, c.Clause.ActionType)
+			if err != nil {
+				return err
+			}
+		case proto.AutoOpsChangeType_DELETE:
+			if err := a.DeleteClause(c.Id); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (a *AutoOpsRule) validateGranularChanges(
+	opsEventRateClauseChanges []*proto.OpsEventRateClauseChange,
+	datetimeClauseChanges []*proto.DatetimeClauseChange,
+) error {
+	for _, c := range opsEventRateClauseChanges {
+		switch c.ChangeType {
+		case proto.AutoOpsChangeType_CREATE:
+			if c.Clause == nil {
+				return errClauseEmpty
+			}
+		case proto.AutoOpsChangeType_UPDATE:
+			if c.Id == "" {
+				return errClauseIDRequired
+			}
+			if c.Clause == nil {
+				return errClauseEmpty
+			}
+		case proto.AutoOpsChangeType_DELETE:
+			if c.Id == "" {
+				return errClauseIDRequired
+			}
+		}
+	}
+	for _, c := range datetimeClauseChanges {
+		switch c.ChangeType {
+		case proto.AutoOpsChangeType_CREATE:
+			if c.Clause == nil {
+				return errClauseEmpty
+			}
+		case proto.AutoOpsChangeType_UPDATE:
+			if c.Id == "" {
+				return errClauseIDRequired
+			}
+			if c.Clause == nil {
+				return errClauseEmpty
+			}
+		case proto.AutoOpsChangeType_DELETE:
+			if c.Id == "" {
+				return errClauseIDRequired
+			}
+		}
+	}
+	return nil
 }
 
 func (a *AutoOpsRule) SetStopped() {

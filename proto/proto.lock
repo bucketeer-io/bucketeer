@@ -8334,18 +8334,7 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "The clause ID, if not set, a new event rate clause will be created."
-                      }
-                    ]
-                  }
-                ]
+                "type": "string"
               },
               {
                 "id": 2,
@@ -8382,18 +8371,7 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "The clause ID, if not set, a new date time clause will be created."
-                      }
-                    ]
-                  }
-                ]
+                "type": "string"
               },
               {
                 "id": 2,
