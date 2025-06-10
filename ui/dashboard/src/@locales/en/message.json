@@ -35,5 +35,6 @@
     "must-be-less-value": "{{name}} must be less than or equal to {{value}}",
     "event-rate-created": "Event rate operation created successfully.",
     "event-rate-updated": "Event rate operation updated successfully."
-  }
+  },
+  "collection-action-success": "{{collection}} has been {{action}} successfully."
 }
