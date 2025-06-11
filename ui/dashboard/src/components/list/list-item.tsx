@@ -1,3 +1,4 @@
+import { FunctionComponent } from 'react';
 import { cn } from 'utils/style';
 import { IconChevronRight } from '@icons';
 import Icon from 'components/icon';
@@ -8,6 +9,7 @@ export type ListItemProps = {
   className?: string;
   value: string;
   selected?: boolean;
+  icon?: FunctionComponent;
   onSelect?: (value: string) => void;
 };
 
@@ -16,6 +18,7 @@ const ListItem = ({
   expanded,
   value,
   selected,
+  icon,
   className,
   onSelect
 }: ListItemProps) => {
@@ -30,7 +33,9 @@ const ListItem = ({
       onClick={() => onSelect?.(value)}
     >
       <p className="typo-para-medium">{label}</p>
-      {expanded && <Icon icon={IconChevronRight} size="sm" />}
+      {(expanded || (selected && icon)) && (
+        <Icon icon={icon || IconChevronRight} size="sm" />
+      )}
     </li>
   );
 };

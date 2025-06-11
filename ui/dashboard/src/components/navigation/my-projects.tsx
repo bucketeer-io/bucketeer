@@ -20,7 +20,7 @@ import {
 import { clearOrgIdStorage } from 'storage/organization';
 import { Environment, Project } from '@types';
 import { cn } from 'utils/style';
-import { IconChevronRight, IconFolder, IconNoData } from '@icons';
+import { IconChecked, IconChevronRight, IconFolder, IconNoData } from '@icons';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
 import List from 'components/list';
@@ -181,14 +181,13 @@ const MyProjects = () => {
                     <ScrollArea className="h-[120px] pr-2">
                       <List
                         items={
-                          environments
-                            ?.filter(i => i.id !== selectedEnvironment?.id)
-                            .map(item => ({
-                              label: item.name,
-                              value: item.id,
-                              selected: item.id === selectedEnvironment?.id,
-                              onSelect: () => onHandleChange(item)
-                            })) || []
+                          environments?.map(item => ({
+                            label: item.name,
+                            value: item.id,
+                            selected: item.id === selectedEnvironment?.id,
+                            icon: IconChecked,
+                            onSelect: () => onHandleChange(item)
+                          })) || []
                         }
                       />
                     </ScrollArea>
