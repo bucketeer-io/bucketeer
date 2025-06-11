@@ -118,9 +118,9 @@ func (mr *MockFeatureStorageMockRecorder) ListAllEnvironmentFeatures(ctx any) *g
 }
 
 // ListFeatures mocks base method.
-func (m *MockFeatureStorage) ListFeatures(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*feature.Feature, int, int64, error) {
+func (m *MockFeatureStorage) ListFeatures(ctx context.Context, options *mysql.ListOptions) ([]*feature.Feature, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListFeatures", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListFeatures", ctx, options)
 	ret0, _ := ret[0].([]*feature.Feature)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -129,30 +129,15 @@ func (m *MockFeatureStorage) ListFeatures(ctx context.Context, whereParts []mysq
 }
 
 // ListFeatures indicates an expected call of ListFeatures.
-func (mr *MockFeatureStorageMockRecorder) ListFeatures(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockFeatureStorageMockRecorder) ListFeatures(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeatures", reflect.TypeOf((*MockFeatureStorage)(nil).ListFeatures), ctx, whereParts, orders, limit, offset)
-}
-
-// ListFeaturesByVersion mocks base method.
-func (m *MockFeatureStorage) ListFeaturesByVersion(ctx context.Context, whereParts []mysql.WherePart) ([]*feature.Feature, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListFeaturesByVersion", ctx, whereParts)
-	ret0, _ := ret[0].([]*feature.Feature)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListFeaturesByVersion indicates an expected call of ListFeaturesByVersion.
-func (mr *MockFeatureStorageMockRecorder) ListFeaturesByVersion(ctx, whereParts any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeaturesByVersion", reflect.TypeOf((*MockFeatureStorage)(nil).ListFeaturesByVersion), ctx, whereParts)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeatures", reflect.TypeOf((*MockFeatureStorage)(nil).ListFeatures), ctx, options)
 }
 
 // ListFeaturesFilteredByExperiment mocks base method.
-func (m *MockFeatureStorage) ListFeaturesFilteredByExperiment(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*feature.Feature, int, int64, error) {
+func (m *MockFeatureStorage) ListFeaturesFilteredByExperiment(ctx context.Context, options *mysql.ListOptions) ([]*feature.Feature, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListFeaturesFilteredByExperiment", ctx, whereParts, orders, limit, offset)
+	ret := m.ctrl.Call(m, "ListFeaturesFilteredByExperiment", ctx, options)
 	ret0, _ := ret[0].([]*feature.Feature)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -161,9 +146,9 @@ func (m *MockFeatureStorage) ListFeaturesFilteredByExperiment(ctx context.Contex
 }
 
 // ListFeaturesFilteredByExperiment indicates an expected call of ListFeaturesFilteredByExperiment.
-func (mr *MockFeatureStorageMockRecorder) ListFeaturesFilteredByExperiment(ctx, whereParts, orders, limit, offset any) *gomock.Call {
+func (mr *MockFeatureStorageMockRecorder) ListFeaturesFilteredByExperiment(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeaturesFilteredByExperiment", reflect.TypeOf((*MockFeatureStorage)(nil).ListFeaturesFilteredByExperiment), ctx, whereParts, orders, limit, offset)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeaturesFilteredByExperiment", reflect.TypeOf((*MockFeatureStorage)(nil).ListFeaturesFilteredByExperiment), ctx, options)
 }
 
 // UpdateFeature mocks base method.
