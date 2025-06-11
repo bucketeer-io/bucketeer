@@ -40026,6 +40026,205 @@
           },
           {
             "name": "BulkUploadSegmentUsersResponse"
+          },
+          {
+            "name": "GetAuditLogRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "GetAuditLogResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "audit_log",
+                "type": "auditlog.AuditLog"
+              }
+            ]
+          },
+          {
+            "name": "ListAuditLogsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "page_size"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Page size for pagination, maximum allowed value is 200"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "order_by",
+                "type": "auditlog.ListAuditLogsRequest.OrderBy"
+              },
+              {
+                "id": 4,
+                "name": "order_direction",
+                "type": "auditlog.ListAuditLogsRequest.OrderDirection"
+              },
+              {
+                "id": 5,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "from",
+                "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "to",
+                "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "entity_type",
+                "type": "google.protobuf.Int32Value"
+              }
+            ]
+          },
+          {
+            "name": "ListAuditLogsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "audit_logs",
+                "type": "auditlog.AuditLog",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "ListFeatureHistoryRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "page_size",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "page_size"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Page size for pagination, maximum allowed value is 200"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "order_by",
+                "type": "auditlog.ListFeatureHistoryRequest.OrderBy"
+              },
+              {
+                "id": 5,
+                "name": "order_direction",
+                "type": "auditlog.ListFeatureHistoryRequest.OrderDirection"
+              },
+              {
+                "id": 6,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "from",
+                "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "to",
+                "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListFeatureHistoryResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "audit_logs",
+                "type": "auditlog.AuditLog",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
           }
         ],
         "services": [
@@ -41323,6 +41522,117 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "GetAuditLog",
+                "in_type": "GetAuditLogRequest",
+                "out_type": "GetAuditLogResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/audit_log"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Audit Log"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get an Audit Log by ID. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Audit Logs"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.audit_logs.get"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListAuditLogs",
+                "in_type": "ListAuditLogsRequest",
+                "out_type": "ListAuditLogsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/audit_logs"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List Audit Logs"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List Audit Logs. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Audit Logs"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.audit_logs.list"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListFeatureHistory",
+                "in_type": "ListFeatureHistoryRequest",
+                "out_type": "ListFeatureHistoryResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/feature_history"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List Feature History"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List Feature History. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Audit Logs"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.feature_history.list"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -41384,6 +41694,12 @@
           },
           {
             "path": "proto/coderef/service.proto"
+          },
+          {
+            "path": "proto/auditlog/auditlog.proto"
+          },
+          {
+            "path": "proto/auditlog/service.proto"
           }
         ],
         "package": {
