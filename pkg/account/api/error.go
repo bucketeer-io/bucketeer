@@ -50,6 +50,7 @@ var (
 	statusAlreadyExists                    = gstatus.New(codes.AlreadyExists, "account: already exists")
 	statusUnauthenticated                  = gstatus.New(codes.Unauthenticated, "account: unauthenticated")
 	statusPermissionDenied                 = gstatus.New(codes.PermissionDenied, "account: permission denied")
+	statusMemberRequireEnvironmentID       = gstatus.New(codes.InvalidArgument, "account: member must specify environment id")
 	statusSearchFilterNameIsEmpty          = gstatus.New(codes.InvalidArgument, "account: search filter name is empty")
 	statusSearchFilterQueryIsEmpty         = gstatus.New(codes.InvalidArgument, "account: search filter query is empty")
 	statusSearchFilterTargetTypeIsRequired = gstatus.New(

@@ -24,6 +24,8 @@ import (
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
@@ -1122,13 +1124,34 @@ func (s *AccountService) ListAccountsV2(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkOrganizationRole(
 		ctx,
-		accountproto.AccountV2_Role_Organization_MEMBER,
+		accountproto.AccountV2_Role_Organization_ADMIN,
 		req.OrganizationId,
 		localizer,
 	)
+	// If not organization admin, user can only view accounts in their environments
 	if err != nil {
-		return nil, err
+		if status.Code(err) == codes.PermissionDenied {
+			if req.EnvironmentId == nil {
+				dt, err := statusMemberRequireEnvironmentID.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "env_id"),
+				})
+				if err != nil {
+					return nil, statusInternal.Err()
+				}
+				return nil, dt.Err()
+			}
+			_, err = s.checkEnvironmentRole(
+				ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+				req.EnvironmentId.Value, localizer)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
+
 	var filters = []*mysql.FilterV2{
 		{
 			Column:   "organization_id",
@@ -1181,9 +1204,9 @@ func (s *AccountService) ListAccountsV2(
 				Values: values,
 			})
 	}
-	var seachQuery *mysql.SearchQuery
+	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		seachQuery = &mysql.SearchQuery{
+		searchQuery = &mysql.SearchQuery{
 			Columns: []string{"email", "first_name", "last_name"},
 			Keyword: req.SearchKeyword,
 		}
@@ -1217,7 +1240,7 @@ func (s *AccountService) ListAccountsV2(
 		Filters:     filters,
 		Offset:      offset,
 		JSONFilters: jsonFilters,
-		SearchQuery: seachQuery,
+		SearchQuery: searchQuery,
 		Orders:      orders,
 		NullFilters: nil,
 		InFilters:   nil,
