@@ -11444,6 +11444,16 @@ definitions:
     type: object
   featureArchiveFeatureResponse:
     type: object
+  featureAudience:
+    type: object
+    properties:
+      percentage:
+        type: integer
+        format: int32
+        title: Percentage of traffic to include in experiment (0-100)
+      defaultVariation:
+        type: string
+        title: Variation to serve to users not in experiment
   featureAutoOpsSummary:
     type: object
     properties:
@@ -12137,6 +12147,9 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureRolloutStrategyVariation'
+      audience:
+        $ref: '#/definitions/featureAudience'
+        title: Optional audience configuration for traffic control
   featureRolloutStrategyVariation:
     type: object
     properties:

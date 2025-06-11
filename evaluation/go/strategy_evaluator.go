@@ -48,6 +48,25 @@ func (e *strategyEvaluator) rollout(
 	featureID, userID, samplingSeed string,
 ) (string, error) {
 	b := bucketeer{}
+
+	if strategy.GetAudience() != nil {
+		audience := strategy.GetAudience()
+		if audience.GetPercentage() > 0 && audience.GetPercentage() < 100 {
+			// Use different hash input for traffic control to ensure independence from A/B split
+			trafficInput := fmt.Sprintf("traffic-%s-%s-%s", featureID, userID, samplingSeed)
+			trafficBucket := b.bucket(trafficInput)
+			trafficThreshold := float64(audience.GetPercentage()) / 100.0
+
+			// If user is not in experiment traffic, return default variation
+			if trafficBucket >= trafficThreshold {
+				if audience.GetDefaultVariation() == "" {
+					return "", ErrVariationNotFound
+				}
+				return audience.GetDefaultVariation(), nil
+			}
+		}
+	}
+
 	bucket := b.bucket(fmt.Sprintf("%s-%s-%s", featureID, userID, samplingSeed))
 	// Iterate through the variant and increment the threshold by the percentage of each variant.
 	// return the first variant where the bucket is smaller than the threshold.

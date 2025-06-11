@@ -38366,6 +38366,21 @@
             ]
           },
           {
+            "name": "Audience",
+            "fields": [
+              {
+                "id": 1,
+                "name": "percentage",
+                "type": "int32"
+              },
+              {
+                "id": 2,
+                "name": "default_variation",
+                "type": "string"
+              }
+            ]
+          },
+          {
             "name": "RolloutStrategy",
             "fields": [
               {
@@ -38373,6 +38388,11 @@
                 "name": "variations",
                 "type": "Variation",
                 "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "audience",
+                "type": "Audience"
               }
             ],
             "messages": [
