@@ -483,6 +483,8 @@ subscriber:
       bigQueryDataSet: bucketeer
       bigQueryBatchSize: 10
       timezone: UTC
+      useMySQLStorage: true
+      mysqlBatchSize: 10
     evaluationCountEventOPSPersister:
       flushSize: 10
       flushInterval: 5
@@ -498,6 +500,8 @@ subscriber:
       timezone: UTC
       MaxRetryGoalEventPeriod: 86400 # 1 day
       RetryGoalEventInterval: 30 # 30 seconds
+      useMySQLStorage: true
+      mysqlBatchSize: 10
     goalCountEventOPSPersister:
       flushSize: 10
       flushInterval: 5
