@@ -25,6 +25,7 @@ export type DropdownOption = {
   icon?: FunctionComponent;
   description?: boolean;
   haveCheckbox?: boolean;
+  disabled?: boolean;
   [key: string]:
     | DropdownValue
     | boolean
@@ -174,6 +175,7 @@ const DropdownMenuItem = forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     icon?: FunctionComponent;
+    iconElement?: ReactNode;
     isMultiselect?: boolean;
     isSelected?: boolean;
     label?: ReactNode;
@@ -181,6 +183,7 @@ const DropdownMenuItem = forwardRef<
     description?: string;
     closeWhenSelected?: boolean;
     additionalElement?: ReactNode;
+    disabled?: boolean;
     onSelectOption?: (value: DropdownValue, event: Event) => void;
   }
 >(
@@ -188,6 +191,7 @@ const DropdownMenuItem = forwardRef<
     {
       className,
       icon,
+      iconElement,
       label,
       value,
       description,
@@ -195,6 +199,7 @@ const DropdownMenuItem = forwardRef<
       isSelected,
       closeWhenSelected = true,
       additionalElement,
+      disabled,
       onSelectOption,
       ...props
     },
@@ -202,6 +207,7 @@ const DropdownMenuItem = forwardRef<
   ) => (
     <DropdownMenuPrimitive.Item
       ref={ref}
+      disabled={disabled}
       className={cn(
         'relative flex items-center w-full cursor-pointer select-none rounded-[5px] p-2 gap-x-2 outline-none transition-colors hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
         className
@@ -217,11 +223,18 @@ const DropdownMenuItem = forwardRef<
       {...props}
     >
       {isMultiselect && <Checkbox checked={isSelected} />}
-      {icon && (
-        <div className="flex-center size-5">
-          <Icon icon={icon} size={'xs'} color="gray-600" />
-        </div>
-      )}
+      {(iconElement || icon) &&
+        (iconElement ? (
+          iconElement
+        ) : (
+          <div className="flex-center size-5">
+            <Icon
+              icon={icon as FunctionComponent}
+              size={'xs'}
+              color="gray-600"
+            />
+          </div>
+        ))}
 
       <div className="flex flex-col gap-y-1.5 w-full overflow-hidden">
         <div className="typo-para-medium leading-5 text-gray-700 truncate">

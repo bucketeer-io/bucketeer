@@ -42,6 +42,12 @@ export interface RuleStrategyVariation {
 
 export enum StrategyType {
   FIXED = 'FIXED',
+  ROLLOUT = 'ROLLOUT',
+  MANUAL = 'MANUAL'
+}
+export enum DefaultRuleStrategyType {
+  FIXED = 'FIXED',
+  MANUAL = 'MANUAL',
   ROLLOUT = 'ROLLOUT'
 }
 
@@ -72,9 +78,9 @@ export interface Feature {
   id: string;
   name: string;
   description: string;
-  enabled: true;
-  deleted: true;
-  evaluationUndelayable: true;
+  enabled: boolean;
+  deleted: boolean;
+  evaluationUndelayable: boolean;
   ttl: number;
   version: number;
   createdAt: string;
@@ -95,7 +101,7 @@ export interface Feature {
   };
   maintainer: string;
   variationType: FeatureVariationType;
-  archived: true;
+  archived: boolean;
   prerequisites: FeaturePrerequisite[];
   samplingSeed: string;
   autoOpsSummary: AutoOpsSummary;
@@ -126,8 +132,14 @@ export interface VariationChange extends ChangeType {
   variation: FeatureVariation;
 }
 
-interface RuleChange extends ChangeType {
-  rule: FeatureRule;
+export interface FeatureRuleChange {
+  id: string;
+  strategy: Partial<FeatureRuleStrategy>;
+  clauses: FeatureRuleClause[];
+}
+
+export interface RuleChange extends ChangeType {
+  rule: FeatureRuleChange;
 }
 
 export interface PrerequisiteChange extends ChangeType {
@@ -150,7 +162,7 @@ export interface FeatureUpdaterParams {
   description: string;
   enabled: boolean;
   archived: boolean;
-  defaultStrategy: FeatureRuleStrategy;
+  defaultStrategy: Partial<FeatureRuleStrategy>;
   offVariation: string;
   resetSamplingSeed: boolean;
   applyScheduleUpdate: boolean;

@@ -100,4 +100,7 @@
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
   }
+  html body[data-scroll-locked] {
+    margin-right: 0 !important;
+  }
 }

@@ -9,6 +9,7 @@ interface InputGroupProps {
   className?: string;
   addonSlot?: 'left' | 'right';
   addonSize?: 'sm' | 'md' | 'lg';
+  addonClassName?: string;
 }
 
 const inputGroupVariants = cva(['relative'], {
@@ -30,7 +31,8 @@ const InputGroup = ({
   addonSlot = 'left',
   addonSize = 'md',
   children,
-  className
+  className,
+  addonClassName
 }: InputGroupProps) => {
   return (
     <InputGroupContext.Provider value={{ addonSlot, addonSize }}>
@@ -40,7 +42,8 @@ const InputGroup = ({
           className={cn(
             inputGroupVariants({ addonSlot }),
             'typo-para-medium absolute top-1/2 -translate-y-1/2',
-            'flex items-center text-center text-gray-500'
+            'flex items-center text-center text-gray-500',
+            addonClassName
           )}
         >
           {addon}

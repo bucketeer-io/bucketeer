@@ -13,13 +13,14 @@ import { useTranslation } from 'i18n';
 import { uniqBy } from 'lodash';
 import { Feature, TagChange } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
-import { IconWatch } from '@icons';
+import { IconInfo, IconWatch } from '@icons';
 import Button from 'components/button';
 import { CreatableSelect } from 'components/creatable-select';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
+import { Tooltip } from 'components/tooltip';
 import Card from 'elements/card';
 import DateTooltip from 'elements/date-tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
@@ -259,7 +260,20 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
             name="tags"
             render={({ field }) => (
               <Form.Item className="w-full py-0">
-                <Form.Label required>{t('common:tags')}</Form.Label>
+                <Form.Label required className="relative w-fit">
+                  {t('common:tags')}
+                  <Tooltip
+                    align="start"
+                    alignOffset={-46}
+                    content={t('tags-tooltip')}
+                    trigger={
+                      <div className="flex-center size-fit absolute top-0 -right-6">
+                        <Icon icon={IconInfo} size="xs" color="gray-500" />
+                      </div>
+                    }
+                    className="max-w-[400px]"
+                  />
+                </Form.Label>
                 <Form.Control>
                   <CreatableSelect
                     disabled={isLoadingTags || !tagOptions.length}
