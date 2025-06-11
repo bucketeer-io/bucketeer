@@ -4,18 +4,17 @@ Currently, when users configure rules on the Targeting tab in the console, they 
 
 Since these attributes are sent from the SDK to the server, we can automate this process by generating a list to display on the console. This will improve user experience and reduce configuration errors.
 
-# Solution
+# Solution１ - Using the new PubSub topic for UserAttribute -
 
-We will implement an automated system to discover and manage user attributes:
+The UserData sent in the 'GetEvaluationsRequest' is compared with the UserAttributes stored in Redis, and only if new attributes are found, a PubSub topic for the newly created UserAttribute is published. The Subscriber stores the new UserAttribute in Redis.
 
-1. Extract user attribute information from SDK requests
-2. Compare with cached data in Redis
+1. Extract UserAttribute information from the GetEvaluationsRequest from the SDK
+2. Compare with Redis UserAttribute cached data
 3. Publish only new attribute information using PubSub
-4. Saving attributes to a Redis via PubSub
+4. Save attributes to Redis with UserAttributeSubscriber.
 5. Provide an API for the console to retrieve the attribute list
 
-## System Architecture
-
+## Sequence
 ```mermaid
 sequenceDiagram
     participant SDK as SDK/App Client
@@ -53,48 +52,69 @@ sequenceDiagram
     end
     deactivate Subscriber
 ```
+### Topic
+- Since 'GetEvaluationsRequest' is always sent by SDK users, it is possible to accurately detect UserAttributes. However, since the request requires low latency, storage operations and the like must be processed in a separate thread as much as possible, which increases costs.
+- Creating a topic for UserAttribute will increase your PubSub costs.
 
-# Implementation Details
+# Solution２ - Using existing PubSub topics that contain UserAttributes -
+
+This solution leverages an existing PubSub topic by leveraging the UserAttribute included in the 'EvaluationEvent' sent by the 'RegisterEventsRequest'.
+
+1. Add a new subscription for UserAttribute to the existing Evaluation Event topic.
+2. Save attributes to Redis with UserAttributeSubscriber.
+3. Provide an API for the console to retrieve the attribute list.
+
+
+## Sequence
+```mermaid
+sequenceDiagram
+    participant SDK as SDK/App Client
+    participant BackendService as Backend Service
+    participant PubSub as Google Cloud Pub/Sub
+    participant Subscriber as UserAttributeSubscriber (Cloud Functions/Cloud Run)
+    participant UserAttributeStore as Redis (Cache & Persistent Store)
+
+    rect rgb(220, 220, 220)
+        note over SDK,PubSub: This Sequence that already exists
+    SDK->>BackendService: User Action / Send RegisterEventsRequest
+    activate BackendService
+        BackendService->>PubSub: Publish Evaluation Event Message
+    deactivate BackendService
+    end
+    PubSub-->>Subscriber: Message Delivered (Push/Pull)
+    activate Subscriber
+    Subscriber->>Subscriber: Parse the Pub/Sub message and extract the UserAttribute.
+    Subscriber->>UserAttributeStore: SET new UserAttribute
+
+    note over Subscriber,PubSub: Acking regardless of success or failure
+        Subscriber-->>PubSub: Acknowledge Message
+    deactivate Subscriber
+```
+### Topic
+- It leverages the already existing PubSub topic for EvaluetionEvent, so there is no increase in PubSub costs.
+- Development costs are low by utilizing existing sequences.
+
+# Conclustion
+I adopt Solution 2 because it will not increase development costs or PubSub costs.
+
+# Solution 2 Implementation Details
 
 ## Cache
 
 - Create `UserAttributesCache` in the cache package
-  - Key: environment_id
+  - Key: string (environment_id:user-attributes)
   - Value: []string (user_attribute_keys)
 
 ## PubSub
+Create a new subscription to the `evaluation-events` topic.
 
-- Create new topic: `user-attribute-event`
-- Create new subscription: `user-attribute-event-persister`
+- Create new subscription: `persister-user-attribute`
 - Add topic and subscription definitions to YAML configuration
 - Implement `UserAttributePersister` in the Processor
 
-## API Server
-
-- Implement attribute discovery in `getEvaluations` and `getEvaluation` requests
-    - Extract UserAttribute from the User information contained in the following `getEvaluationsRequest` and `getEvaluationRequest`
-```
-type getEvaluationsRequest struct {
-	Tag               string
-	User              *userproto.User
-	UserEvaluationsID string
-	SourceID          eventproto.SourceId
-}
-
-type User struct {
-	Id         string
-	Data       map[string]string        // ← The key will be UserAttribute
-	TaggedData map[string]*User_Data
-	LastSeen   int64
-	CreatedAt  int64
-}
-
-```
-- It compares it with the list obtained from the `UserAttributeCache` and publishes only the new attributes to the user-attribute-event topic.
-
 ## API
 
-Add new API to the Environment Package:
+Add a new API to get UserAttributes in the environment:
 
 ```protobuf
 message ListUserAttributesRequest {
@@ -119,14 +139,13 @@ Note: Pagination is not implemented for this API.
 
 - The e2e test is performed in the following steps:
 - Test flow:
-  1. Send request via `GetEvaluation` or `GetEvaluations`
+  1. Send request via `RegisterEventsRequest`
   2. Wait for processing
   3. Verify attributes via `ListUserAttributes` API
 
 # Release Steps
 
 1. Cache Implementation
-   - Implement `UserAttributesCache`
    - Implement `UserAttributesCacher`
 
 2.  PubSub Implementation
