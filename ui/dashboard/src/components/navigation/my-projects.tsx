@@ -113,6 +113,26 @@ const MyProjects = () => {
     [setSelectedEnvironment, consoleAccount]
   );
 
+  const handleOpenSelectMenu = useCallback(
+    (value: boolean) => {
+      if (value && selectedEnvironment) {
+        setTimeout(() => {
+          const selectedElement = document.getElementById(
+            selectedEnvironment.id
+          );
+          if (selectedElement) {
+            selectedElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
+        }, 100);
+      }
+      onOpenChange(value);
+    },
+    [selectedEnvironment]
+  );
+
   const onChangeProject = useCallback(
     (project: Project) => {
       const { environmentRoles } = consoleAccount!;
@@ -139,7 +159,7 @@ const MyProjects = () => {
   }, [consoleAccount]);
 
   return (
-    <Popover.Root onOpenChange={onOpenChange} open={isShowProjectsList}>
+    <Popover.Root onOpenChange={handleOpenSelectMenu} open={isShowProjectsList}>
       <Popover.Portal>
         <Popover.Content align="start" className="border-none mt-2 z-20">
           <div className="w-[600px] bg-white rounded-lg shadow-menu">

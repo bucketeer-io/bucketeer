@@ -24,6 +24,7 @@ const ListItem = ({
 }: ListItemProps) => {
   return (
     <li
+      id={value}
       className={cn(
         'flex items-center justify-between cursor-default',
         'rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100',
