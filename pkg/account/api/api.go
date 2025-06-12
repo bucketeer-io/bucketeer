@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -365,6 +366,39 @@ func (s *AccountService) checkOrganizationRole(
 		}
 	}
 	return editor, nil
+}
+
+func (s *AccountService) getAllowedEnvironmentRolesInOrganization(
+	ctx context.Context,
+	organizationID string,
+	requiredRole proto.AccountV2_Role_Environment,
+	localizer locale.Localizer,
+) ([]*proto.AccountV2_EnvironmentRole, error) {
+	token, ok := rpc.GetAccessToken(ctx)
+	if !ok {
+		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.UnauthenticatedError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	account, err := s.getAccount(ctx, token.Email, organizationID, localizer)
+	if err != nil {
+		return nil, err
+	}
+	var allowedEnvironments []*proto.AccountV2_EnvironmentRole
+	for _, r := range account.EnvironmentRoles {
+		if r.Role >= requiredRole {
+			allowedEnvironments = append(allowedEnvironments, &proto.AccountV2_EnvironmentRole{
+				EnvironmentId: r.EnvironmentId,
+				Role:          r.Role,
+			})
+		}
+	}
+	return allowedEnvironments, nil
 }
 
 func (s *AccountService) checkOrganizationRoleByEnvironmentID(

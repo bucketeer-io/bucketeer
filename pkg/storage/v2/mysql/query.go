@@ -276,6 +276,25 @@ func (q *SearchQuery) SQLString() (sql string, args []interface{}) {
 	return
 }
 
+type RawQuery struct {
+	Query string
+}
+
+func NewRawQuery(query string) WherePart {
+	return &RawQuery{
+		Query: query,
+	}
+}
+
+func (q *RawQuery) SQLString() (sql string, args []interface{}) {
+	if q.Query == "" {
+		return "", nil
+	}
+	// Assuming the query is already a valid SQL fragment.
+	sql = fmt.Sprintf("(%s)", q.Query)
+	return
+}
+
 func ConstructWhereSQLString(wps []WherePart) (sql string, args []interface{}) {
 	var sb strings.Builder
 	if len(wps) == 0 {
@@ -426,6 +445,7 @@ type ListOptions struct {
 	NullFilters []*NullFilter
 	JSONFilters []*JSONFilter
 	SearchQuery *SearchQuery
+	RawFilters  []*RawQuery
 	Orders      []*Order
 	Offset      int
 }
@@ -454,6 +474,11 @@ func (lo *ListOptions) CreateWhereParts() []WherePart {
 	}
 	if lo.SearchQuery != nil {
 		whereParts = append(whereParts, lo.SearchQuery)
+	}
+	if lo.RawFilters != nil {
+		for _, f := range lo.RawFilters {
+			whereParts = append(whereParts, f)
+		}
 	}
 	return whereParts
 }

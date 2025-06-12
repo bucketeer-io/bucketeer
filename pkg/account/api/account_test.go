@@ -1773,27 +1773,6 @@ func TestListAccountsV2MySQL(t *testing.T) {
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
-			desc: "errRequireEnvironmentIDForMember",
-			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.AccountV2{
-					AccountV2: &accountproto.AccountV2{
-						Email:            "bucketeer@example.com",
-						FirstName:        "Test",
-						LastName:         "User",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-					},
-				}, nil)
-			},
-			input:    &accountproto.ListAccountsV2Request{PageSize: 2, Cursor: "", OrganizationId: "org0"},
-			expected: nil,
-			expectedErr: createError(
-				statusMemberRequireEnvironmentID,
-				localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "env_id"),
-			),
-		},
-		{
 			desc: "success with member role",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
@@ -1807,7 +1786,7 @@ func TestListAccountsV2MySQL(t *testing.T) {
 					},
 				}, nil)
 
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
@@ -1815,10 +1794,16 @@ func TestListAccountsV2MySQL(t *testing.T) {
 						FirstName:        "Test",
 						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{{
-							EnvironmentId: "env0",
-							Role:          accountproto.AccountV2_Role_Environment_EDITOR,
-						}},
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "env0",
+								Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+							},
+							{
+								EnvironmentId: "env1",
+								Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+							},
+						},
 					},
 				}, nil)
 
@@ -1830,7 +1815,6 @@ func TestListAccountsV2MySQL(t *testing.T) {
 				PageSize:       2,
 				Cursor:         "",
 				OrganizationId: "org0",
-				EnvironmentId:  wrapperspb.String("env0"),
 			},
 			expected: &accountproto.ListAccountsV2Response{Accounts: []*accountproto.AccountV2{}, Cursor: "0"},
 		},

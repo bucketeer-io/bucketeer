@@ -18,6 +18,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -310,6 +311,7 @@ func (s *accountStorage) ListAccountsV2(
 	options *mysql.ListOptions,
 ) ([]*proto.AccountV2, int, int64, error) {
 	query, whereArgs := mysql.ConstructQueryAndWhereArgs(selectAccountsV2SQL, options)
+	fmt.Printf("Query: %s, Args: %v\n", query, whereArgs) // Debugging line
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
