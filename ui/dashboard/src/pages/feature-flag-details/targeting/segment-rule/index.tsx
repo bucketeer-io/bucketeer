@@ -16,7 +16,9 @@ import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 import { TargetingDivider } from '..';
 import Card from '../../elements/card';
+import AddRule from '../add-rule';
 import { RuleSchema, TargetingSchema } from '../form-schema';
+import { RuleCategory } from '../types';
 import { getDefaultRolloutStrategy } from '../utils';
 import RuleForm from './rule';
 import SegmentVariation from './variation';
@@ -29,6 +31,9 @@ interface Props {
   feature: Feature;
   features: Feature[];
   segmentRules: RuleSchemaFields[];
+  isDisableAddIndividualRules: boolean;
+  isDisableAddPrerequisite: boolean;
+  onAddRule: (rule: RuleCategory) => void;
   segmentRulesRemove: (index: number) => void;
   segmentRulesSwap: (indexA: number, indexB: number) => void;
 }
@@ -37,6 +42,9 @@ const TargetSegmentRule = ({
   feature,
   features,
   segmentRules,
+  isDisableAddIndividualRules,
+  isDisableAddPrerequisite,
+  onAddRule,
   segmentRulesRemove,
   segmentRulesSwap
 }: Props) => {
@@ -76,7 +84,17 @@ const TargetSegmentRule = ({
       <div className="flex flex-col w-full">
         {segmentRules.map((segment, segmentIndex) => (
           <div key={segment?.segmentId} className="flex flex-col w-full">
-            {segmentIndex !== 0 && <TargetingDivider />}
+            {segmentIndex !== 0 && (
+              <>
+                <TargetingDivider />
+                <AddRule
+                  isDisableAddIndividualRules={isDisableAddIndividualRules}
+                  isDisableAddPrerequisite={isDisableAddPrerequisite}
+                  onAddRule={onAddRule}
+                />
+                <TargetingDivider />
+              </>
+            )}
             <Card>
               <div className="flex items-center gap-x-2">
                 <p className="typo-para-medium leading-4 text-gray-700">

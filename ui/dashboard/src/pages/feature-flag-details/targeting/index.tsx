@@ -341,8 +341,11 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
                   <TargetingDivider />
                   <TargetSegmentRule
                     feature={feature}
-                    features={features}
+                    features={activeFeatures}
                     segmentRules={segmentRules}
+                    isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
+                    isDisableAddIndividualRules={individualRules?.length > 0}
+                    onAddRule={onAddRule}
                     segmentRulesRemove={segmentRulesRemove}
                     segmentRulesSwap={handleSwapSegmentRule}
                   />
