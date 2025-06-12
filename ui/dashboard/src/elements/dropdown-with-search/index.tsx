@@ -33,6 +33,7 @@ const DropdownMenuWithSearch = ({
   contentClassName,
   isExpand,
   disabled,
+  notFoundOption,
   additionalElement,
   onSelectOption
 }: {
@@ -49,6 +50,10 @@ const DropdownMenuWithSearch = ({
   contentClassName?: string;
   isExpand?: boolean;
   disabled?: boolean;
+  notFoundOption?: (
+    value: string,
+    onChangeValue: (value: string) => void
+  ) => ReactNode;
   additionalElement?: (item: DropdownOption) => ReactNode;
   onSelectOption: (value: DropdownValue) => void;
 }) => {
@@ -65,13 +70,13 @@ const DropdownMenuWithSearch = ({
   const dropdownOptions = useMemo(
     () =>
       options?.filter(item =>
-        searchValue
-          ? (item.label as string)
+        !debounceValue
+          ? item
+          : (item.label as string)
               .toLowerCase()
               .includes(searchValue.toLowerCase())
-          : item
       ),
-    [options, searchValue]
+    [options, searchValue, debounceValue]
   );
 
   let timerId: NodeJS.Timeout | null = null;
@@ -153,6 +158,12 @@ const DropdownMenuWithSearch = ({
               className="justify-between gap-x-4"
             />
           ))
+        ) : notFoundOption ? (
+          notFoundOption(debounceValue, value => {
+            setSearchValue(value);
+            setDebounceValue(value);
+            handleFocusSearchInput();
+          })
         ) : (
           <div className="flex-center py-2.5 typo-para-medium text-gray-600">
             {t('no-options-found')}

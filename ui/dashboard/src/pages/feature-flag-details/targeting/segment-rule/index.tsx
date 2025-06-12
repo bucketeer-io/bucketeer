@@ -14,6 +14,7 @@ import { Feature } from '@types';
 import { IconClose, IconInfo } from '@icons';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
+import { TargetingDivider } from '..';
 import Card from '../../elements/card';
 import { RuleSchema, TargetingSchema } from '../form-schema';
 import { getDefaultRolloutStrategy } from '../utils';
@@ -72,12 +73,10 @@ const TargetSegmentRule = ({
 
   return (
     segmentRules.length > 0 && (
-      <div className="flex flex-col w-full gap-y-6">
+      <div className="flex flex-col w-full">
         {segmentRules.map((segment, segmentIndex) => (
-          <div
-            key={segment?.segmentId}
-            className="flex flex-col w-full gap-y-6"
-          >
+          <div key={segment?.segmentId} className="flex flex-col w-full">
+            {segmentIndex !== 0 && <TargetingDivider />}
             <Card>
               <div className="flex items-center gap-x-2">
                 <p className="typo-para-medium leading-4 text-gray-700">

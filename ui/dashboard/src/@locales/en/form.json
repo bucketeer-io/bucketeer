@@ -314,5 +314,6 @@
       "audience": "All end-users will be evaluated against the targeting rules. If no rules match, the default rule will determine which variation they receive."
     },
     "individual-target": "Individual Target"
-  }
+  },
+  "create-tag-name": "Create \"{{name}}\""
 }

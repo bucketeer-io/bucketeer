@@ -3,6 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
 import { Tag } from '@types';
 import { onGenerateSlug } from 'utils/converts';
+import { cn } from 'utils/style';
 import { IconInfo } from '@icons';
 import Form from 'components/form';
 import Icon from 'components/icon';
@@ -136,7 +137,7 @@ const GeneralInfo = ({
                     }
                     isExpand
                     isMultiselect
-                    placeholder={t('experiments.select-flag')}
+                    placeholder={t('placeholder-tags')}
                     options={tagOptions}
                     selectedOptions={field.value}
                     onSelectOption={value => {
@@ -149,6 +150,38 @@ const GeneralInfo = ({
                               (item: string) => item !== value
                             )
                           : [...field.value, value]
+                      );
+                    }}
+                    notFoundOption={(searchValue, onChangeValue) => {
+                      const isExisted = field.value?.find(
+                        (item: string) => item === searchValue
+                      );
+                      return (
+                        searchValue && (
+                          <div
+                            className={cn(
+                              'flex items-center py-2 px-4 my-1 rounded-3xl pointer-events-none',
+                              {
+                                'hover:bg-gray-100 cursor-pointer pointer-events-auto':
+                                  !isExisted
+                              }
+                            )}
+                            onClick={() => {
+                              field.onChange([...field.value, searchValue]);
+                              tagOptions.push({
+                                label: searchValue,
+                                value: searchValue
+                              });
+                              onChangeValue('');
+                            }}
+                          >
+                            <p className="text-gray-700">
+                              {t('create-tag-name', {
+                                name: searchValue
+                              })}
+                            </p>
+                          </div>
+                        )
                       );
                     }}
                   />

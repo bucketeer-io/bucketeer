@@ -47,7 +47,7 @@ import {
   handleGetDefaultRuleStrategy
 } from './utils';
 
-const TargetingDivider = () => (
+export const TargetingDivider = () => (
   <Divider vertical className="!h-6 w-px self-center my-4 !border-gray-400" />
 );
 
