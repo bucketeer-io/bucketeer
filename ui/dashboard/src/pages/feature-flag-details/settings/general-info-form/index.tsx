@@ -1,21 +1,22 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryAccounts } from '@queries/accounts';
 import { invalidateFeature } from '@queries/feature-details';
+import { invalidateFeatures } from '@queries/features';
 import { invalidateTags, useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
-import { uniqBy } from 'lodash';
 import { Feature, TagChange } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
+import { cn } from 'utils/style';
 import { IconInfo, IconWatch } from '@icons';
 import Button from 'components/button';
-import { CreatableSelect } from 'components/creatable-select';
+import { DropdownOption } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -37,6 +38,7 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
 
   const [isOpenSaveModal, onOpenSaveModal, onCloseSaveModal] =
     useToggleOpen(false);
+  const [tagOptions, setTagOptions] = useState<DropdownOption[]>([]);
 
   const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
     params: {
@@ -80,13 +82,6 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
   const tags = tagCollection?.tags || [];
   const accounts = accountCollection?.accounts || [];
 
-  const tagOptions = uniqBy(
-    tags.map(item => ({
-      label: item.name,
-      value: item.name
-    })),
-    'label'
-  );
   const accountOptions = accounts.map(item => ({
     label: item.email,
     value: item.email
@@ -154,6 +149,7 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
           comment: ''
         });
         invalidateFeature(queryClient);
+        invalidateFeatures(queryClient);
         invalidateTags(queryClient);
         onCloseSaveModal();
       }
@@ -161,6 +157,17 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
       errorNotify(error);
     }
   }, [currentEnvironment, feature]);
+
+  useEffect(() => {
+    if (tags.length) {
+      setTagOptions(
+        tags.map(item => ({
+          label: item.name,
+          value: item.name
+        }))
+      );
+    }
+  }, [tags]);
 
   return (
     <FormProvider {...form}>
@@ -276,22 +283,83 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
                   />
                 </Form.Label>
                 <Form.Control>
-                  <CreatableSelect
-                    disabled={isLoadingTags || !tagOptions.length}
-                    value={field.value.map((item: string) => ({
-                      label: item,
-                      value: item
-                    }))}
-                    loading={isLoadingTags}
-                    placeholder={t(
-                      !tagOptions.length && !isLoadingTags
-                        ? `form:no-tags-found`
-                        : `form:placeholder-tags`
-                    )}
+                  <DropdownMenuWithSearch
+                    label={field.value?.join(', ') || ''}
+                    isExpand
+                    isMultiselect
+                    disabled={isLoadingTags}
+                    placeholder={t('select-or-create-tags')}
                     options={tagOptions}
-                    onChange={value =>
-                      field.onChange(value.map(tag => tag.value))
-                    }
+                    selectedOptions={field.value}
+                    onKeyDown={({
+                      event,
+                      searchValue,
+                      matchOptions,
+                      onClearSearchValue
+                    }) => {
+                      const value: string = matchOptions?.length
+                        ? (matchOptions[0].value as string)
+                        : searchValue;
+                      if (
+                        event.key === 'Enter' &&
+                        !field.value?.includes(value)
+                      ) {
+                        if (!matchOptions?.length)
+                          setTagOptions([
+                            ...tagOptions,
+                            {
+                              label: value,
+                              value
+                            }
+                          ]);
+                        field.onChange([...field.value, value]);
+                        onClearSearchValue();
+                      }
+                    }}
+                    onSelectOption={value => {
+                      const isExisted = field.value?.find(
+                        (item: string) => item === value
+                      );
+                      field.onChange(
+                        isExisted
+                          ? field.value?.filter(
+                              (item: string) => item !== value
+                            )
+                          : [...field.value, value]
+                      );
+                    }}
+                    notFoundOption={(searchValue, onChangeValue) => {
+                      const isExisted = field.value?.find(
+                        (item: string) => item === searchValue
+                      );
+                      return (
+                        searchValue && (
+                          <div
+                            className={cn(
+                              'flex items-center py-2 px-4 my-1 rounded pointer-events-none',
+                              {
+                                'hover:bg-gray-100 cursor-pointer pointer-events-auto':
+                                  !isExisted
+                              }
+                            )}
+                            onClick={() => {
+                              field.onChange([...field.value, searchValue]);
+                              tagOptions.push({
+                                label: searchValue,
+                                value: searchValue
+                              });
+                              onChangeValue('');
+                            }}
+                          >
+                            <p className="text-gray-700">
+                              {t('create-tag-name', {
+                                name: searchValue
+                              })}
+                            </p>
+                          </div>
+                        )
+                      );
+                    }}
                   />
                 </Form.Control>
                 <Form.Message />

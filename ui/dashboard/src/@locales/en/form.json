@@ -315,5 +315,6 @@
     },
     "individual-target": "Individual Target"
   },
-  "create-tag-name": "Create \"{{name}}\""
+  "create-tag-name": "Create \"{{name}}\"",
+  "select-or-create-tags": "Select or create new tags"
 }

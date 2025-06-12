@@ -137,9 +137,31 @@ const GeneralInfo = ({
                     }
                     isExpand
                     isMultiselect
-                    placeholder={t('placeholder-tags')}
+                    placeholder={t('select-or-create-tags')}
                     options={tagOptions}
                     selectedOptions={field.value}
+                    onKeyDown={({
+                      event,
+                      searchValue,
+                      matchOptions,
+                      onClearSearchValue
+                    }) => {
+                      const value: string = matchOptions?.length
+                        ? (matchOptions[0].value as string)
+                        : searchValue;
+                      if (
+                        event.key === 'Enter' &&
+                        !field.value?.includes(value)
+                      ) {
+                        if (!matchOptions?.length)
+                          tagOptions.push({
+                            label: value,
+                            value
+                          });
+                        field.onChange([...field.value, value]);
+                        onClearSearchValue();
+                      }
+                    }}
                     onSelectOption={value => {
                       const isExisted = field.value?.find(
                         (item: string) => item === value
@@ -160,7 +182,7 @@ const GeneralInfo = ({
                         searchValue && (
                           <div
                             className={cn(
-                              'flex items-center py-2 px-4 my-1 rounded-3xl pointer-events-none',
+                              'flex items-center py-2 px-4 my-1 rounded pointer-events-none',
                               {
                                 'hover:bg-gray-100 cursor-pointer pointer-events-auto':
                                   !isExisted
