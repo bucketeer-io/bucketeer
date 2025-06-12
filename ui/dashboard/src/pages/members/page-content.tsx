@@ -96,7 +96,6 @@ const PageContent = ({
           filters={filters}
           onClose={onCloseFilterModal}
           onSubmit={value => {
-            console.log({ value });
             onChangeFilters(value);
             onCloseFilterModal();
           }}

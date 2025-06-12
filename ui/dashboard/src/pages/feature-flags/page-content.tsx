@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
+import { useLocation } from 'react-router-dom';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
@@ -26,6 +27,8 @@ const PageContent = ({
   onHandleActions: (item: Feature, type: FlagActionType) => void;
 }) => {
   const { t } = useTranslation(['common']);
+  const location = useLocation();
+
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const [summary, setSummary] = useState<FeatureCountByStatus>();
 
@@ -90,6 +93,22 @@ const PageContent = ({
       setFilters({ ...defaultFilters });
     }
   }, [searchOptions]);
+
+  useEffect(() => {
+    if (location?.state?.clearFilters) {
+      setFilters({
+        ...filters,
+        searchQuery: '',
+        hasExperiment: undefined,
+        hasPrerequisites: undefined,
+        maintainer: undefined,
+        enabled: undefined,
+        archived: undefined,
+        tags: undefined,
+        status: 'ACTIVE'
+      });
+    }
+  }, [location]);
 
   return (
     <PageLayout.Content>

@@ -361,7 +361,15 @@ const FilterFlagModal = ({
                 }}
               >
                 <DropdownMenuTrigger
-                  disabled={isLoading || isLoadingTags || !filterType}
+                  disabled={
+                    (isTagFilter && isLoadingTags) ||
+                    (isMaintainerFilter && isLoading) ||
+                    !filterType
+                  }
+                  loading={
+                    (isTagFilter && isLoadingTags) ||
+                    (isMaintainerFilter && isLoading)
+                  }
                   placeholder={t(`select-value`)}
                   label={handleGetLabelFilterValue(filterOption)}
                   variant="secondary"

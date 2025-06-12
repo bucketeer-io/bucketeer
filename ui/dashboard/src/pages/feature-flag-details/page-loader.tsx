@@ -44,7 +44,9 @@ const PageLoader = () => {
   return (
     <>
       <PageDetailsHeader
-        onBack={() => navigate(`${PAGE_PATH_FEATURES}`)}
+        onBack={() =>
+          navigate(`/${currentEnvironment?.urlCode}${PAGE_PATH_FEATURES}`)
+        }
         title={feature.name}
         additionElement={
           <>
