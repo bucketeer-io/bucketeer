@@ -3,13 +3,12 @@ import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
 import { Tag } from '@types';
 import { onGenerateSlug } from 'utils/converts';
-import { cn } from 'utils/style';
 import { IconInfo } from '@icons';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import { Tooltip } from 'components/tooltip';
-import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+import TagsSelectMenu from './tags-select-menu';
 
 const GeneralInfo = ({
   tags,
@@ -126,86 +125,10 @@ const GeneralInfo = ({
                   />
                 </Form.Label>
                 <Form.Control>
-                  <DropdownMenuWithSearch
-                    label={
-                      field.value
-                        ?.map(
-                          (item: string) =>
-                            tagOptions.find(tag => tag.value === item)?.label
-                        )
-                        ?.join(', ') || ''
-                    }
-                    isExpand
-                    isMultiselect
-                    placeholder={t('select-or-create-tags')}
-                    options={tagOptions}
-                    selectedOptions={field.value}
-                    onKeyDown={({
-                      event,
-                      searchValue,
-                      matchOptions,
-                      onClearSearchValue
-                    }) => {
-                      const value: string = matchOptions?.length
-                        ? (matchOptions[0].value as string)
-                        : searchValue;
-                      if (
-                        event.key === 'Enter' &&
-                        !field.value?.includes(value)
-                      ) {
-                        if (!matchOptions?.length)
-                          tagOptions.push({
-                            label: value,
-                            value
-                          });
-                        field.onChange([...field.value, value]);
-                        onClearSearchValue();
-                      }
-                    }}
-                    onSelectOption={value => {
-                      const isExisted = field.value?.find(
-                        (item: string) => item === value
-                      );
-                      field.onChange(
-                        isExisted
-                          ? field.value?.filter(
-                              (item: string) => item !== value
-                            )
-                          : [...field.value, value]
-                      );
-                    }}
-                    notFoundOption={(searchValue, onChangeValue) => {
-                      const isExisted = field.value?.find(
-                        (item: string) => item === searchValue
-                      );
-                      return (
-                        searchValue && (
-                          <div
-                            className={cn(
-                              'flex items-center py-2 px-4 my-1 rounded pointer-events-none',
-                              {
-                                'hover:bg-gray-100 cursor-pointer pointer-events-auto':
-                                  !isExisted
-                              }
-                            )}
-                            onClick={() => {
-                              field.onChange([...field.value, searchValue]);
-                              tagOptions.push({
-                                label: searchValue,
-                                value: searchValue
-                              });
-                              onChangeValue('');
-                            }}
-                          >
-                            <p className="text-gray-700">
-                              {t('create-tag-name', {
-                                name: searchValue
-                              })}
-                            </p>
-                          </div>
-                        )
-                      );
-                    }}
+                  <TagsSelectMenu
+                    fieldValues={field.value || []}
+                    onChange={field.onChange}
+                    tagOptions={tagOptions}
                   />
                 </Form.Control>
                 <Form.Message />

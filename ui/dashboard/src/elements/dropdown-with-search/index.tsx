@@ -33,14 +33,19 @@ const DropdownMenuWithSearch = ({
   contentClassName,
   isExpand,
   disabled,
+  trigger,
+  showArrow,
+  showClear,
+  ariaLabel,
   notFoundOption,
   additionalElement,
   onSelectOption,
-  onKeyDown
+  onKeyDown,
+  onClear
 }: {
   align?: 'start' | 'center' | 'end';
   hidden?: boolean;
-  label: ReactNode;
+  label?: ReactNode;
   placeholder?: string;
   isLoading?: boolean;
   isMultiselect?: boolean;
@@ -51,6 +56,10 @@ const DropdownMenuWithSearch = ({
   contentClassName?: string;
   isExpand?: boolean;
   disabled?: boolean;
+  trigger?: ReactNode;
+  showArrow?: boolean;
+  showClear?: boolean;
+  ariaLabel?: string;
   notFoundOption?: (
     value: string,
     onChangeValue: (value: string) => void
@@ -68,6 +77,7 @@ const DropdownMenuWithSearch = ({
     matchOptions: DropdownOption[];
     onClearSearchValue: () => void;
   }) => void;
+  onClear?: () => void;
 }) => {
   const { t } = useTranslation(['common']);
 
@@ -117,11 +127,16 @@ const DropdownMenuWithSearch = ({
     >
       <DropdownMenuTrigger
         ref={triggerRef}
+        showClear={showClear}
         disabled={isLoading || disabled}
         placeholder={placeholder}
         label={label}
+        trigger={trigger}
+        showArrow={showArrow}
+        ariaLabel={ariaLabel}
         variant="secondary"
         className={cn('w-full', triggerClassName)}
+        onClear={onClear}
       />
       <DropdownMenuContent
         ref={contentRef}
