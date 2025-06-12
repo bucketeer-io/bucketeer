@@ -2,6 +2,7 @@ import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
 import { UserSegment } from '@types';
+import { isNotEmpty } from 'utils/data-type';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
@@ -17,7 +18,8 @@ const CollectionLoader = ({
   onAdd,
   filters,
   setFilters,
-  onActionHandler
+  onActionHandler,
+  onClearFilters
 }: {
   segmentUploading: UserSegment | null;
   onAdd?: () => void;
@@ -25,6 +27,7 @@ const CollectionLoader = ({
   setFilters: (values: Partial<UserSegmentsFilters>) => void;
   organizationIds?: string[];
   onActionHandler: (value: UserSegment, type: UserSegmentsActionsType) => void;
+  onClearFilters: () => void;
 }) => {
   const columns = useColumns({ segmentUploading, onActionHandler });
   const { consoleAccount } = useAuth();
@@ -58,8 +61,9 @@ const CollectionLoader = ({
   const emptyState = (
     <CollectionEmpty
       data={userSegments}
+      isFilter={isNotEmpty(filters?.isInUseStatus)}
       searchQuery={filters.searchQuery as string}
-      onClear={() => setFilters({ searchQuery: '' })}
+      onClear={onClearFilters}
       empty={<EmptyCollection onAdd={onAdd} />}
     />
   );

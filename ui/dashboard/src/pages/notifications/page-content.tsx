@@ -87,6 +87,9 @@ const PageContent = ({
           filters={filters}
           setFilters={onChangeFilters}
           onActions={onHandleActions}
+          onClearFilters={() =>
+            setFilters({ searchQuery: '', disabled: undefined })
+          }
         />
       </TableListContainer>
     </PageLayout.Content>
