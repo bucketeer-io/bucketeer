@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -32,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/pkg/role"
+	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	tagstorage "github.com/bucketeer-io/bucketeer/pkg/tag/storage"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
