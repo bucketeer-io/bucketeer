@@ -9,12 +9,14 @@ const TagsSelectMenu = ({
   fieldValues,
   tagOptions,
   disabled,
+  selectedFieldValue = 'value',
   onChange,
   onChangeTagOptions
 }: {
   fieldValues: string[];
   tagOptions: DropdownOption[];
   disabled?: boolean;
+  selectedFieldValue?: string;
   onChange: (values: string[]) => void;
   onChangeTagOptions?: (options: DropdownOption[]) => void;
 }) => {
@@ -26,9 +28,8 @@ const TagsSelectMenu = ({
       showArrow={!fieldValues?.length}
       ariaLabel={'tag-delete-btn'}
       disabled={disabled}
-      inputPlaceholder={t(
-        tagOptions?.length ? 'type-to-create' : 'no-opts-type-to-create'
-      )}
+      inputPlaceholder={t('search-or-create-tags')}
+      selectedFieldValue={selectedFieldValue}
       trigger={
         fieldValues?.length ? (
           <div className="flex items-center justify-between w-full ">
@@ -39,7 +40,9 @@ const TagsSelectMenu = ({
                   className="flex items-center gap-x-2 px-1.5 rounded bg-primary-100"
                 >
                   <p className="typo-para-small py-1 whitespace-nowrap text-primary-500">
-                    {item}
+                    {tagOptions.find(
+                      ({ label, value }) => item === value || item === label
+                    )?.label || item}
                   </p>
                   <div
                     aria-label="tag-delete-btn"
@@ -63,7 +66,7 @@ const TagsSelectMenu = ({
       }
       isExpand
       isMultiselect
-      placeholder={t('select-or-create-tags')}
+      placeholder={t('placeholder-tags')}
       options={tagOptions}
       selectedOptions={fieldValues}
       onClear={() => onChange([])}
@@ -116,11 +119,21 @@ const TagsSelectMenu = ({
               )}
               onClick={() => {
                 onChange([...fieldValues, searchValue]);
-                tagOptions.push({
-                  label: searchValue,
-                  value: searchValue
-                });
                 onChangeValue('');
+                if (onChangeTagOptions) {
+                  onChangeTagOptions([
+                    ...tagOptions,
+                    {
+                      label: searchValue,
+                      value: searchValue
+                    }
+                  ]);
+                } else {
+                  tagOptions.push({
+                    label: searchValue,
+                    value: searchValue
+                  });
+                }
               }}
             >
               <p className="text-gray-700">

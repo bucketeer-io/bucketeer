@@ -38,6 +38,7 @@ const DropdownMenuWithSearch = ({
   showClear,
   ariaLabel,
   inputPlaceholder,
+  selectedFieldValue = 'value',
   notFoundOption,
   additionalElement,
   onSelectOption,
@@ -62,6 +63,7 @@ const DropdownMenuWithSearch = ({
   showClear?: boolean;
   ariaLabel?: string;
   inputPlaceholder?: string;
+  selectedFieldValue?: string;
   notFoundOption?: (
     value: string,
     onChangeValue: (value: string) => void
@@ -178,14 +180,18 @@ const DropdownMenuWithSearch = ({
           dropdownOptions.map((item, index) => (
             <DropdownMenuItem
               key={index}
-              isSelected={selectedOptions?.includes(item.value as string)}
+              isSelected={selectedOptions?.includes(
+                item[selectedFieldValue] as string
+              )}
               isMultiselect={isMultiselect}
               value={item.value}
               label={item.label}
               icon={item?.icon}
               disabled={item?.disabled}
               additionalElement={additionalElement && additionalElement(item)}
-              onSelectOption={onSelectOption}
+              onSelectOption={() =>
+                onSelectOption(item[selectedFieldValue] as string)
+              }
               className="justify-between gap-x-4 [&>div:last-child]:mb-[2px]"
             />
           ))

@@ -14,7 +14,6 @@ import { useTranslation } from 'i18n';
 import { Feature, TagChange } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { IconInfo, IconWatch } from '@icons';
-import TagsSelectMenu from 'pages/create-flag/flag-form/tags-select-menu';
 import Button from 'components/button';
 import { DropdownOption } from 'components/dropdown';
 import Form from 'components/form';
@@ -25,6 +24,7 @@ import { Tooltip } from 'components/tooltip';
 import Card from 'elements/card';
 import DateTooltip from 'elements/date-tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+import TagsSelectMenu from 'elements/tags-select-menu';
 import { generalInfoFormSchema, GeneralInfoFormType } from './form-schema';
 import SaveWithCommentModal from './modals/save-with-comment';
 

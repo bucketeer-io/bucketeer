@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { featureCreator } from '@api/features/feature-creator';
@@ -22,23 +22,23 @@ import {
   IconFlagSwitch,
   IconInfo
 } from '@icons';
-import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import { CreatableSelect } from 'components/creatable-select';
 import Divider from 'components/divider';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownOption
 } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
+import TagsSelectMenu from 'elements/tags-select-menu';
 import { formSchema } from './formSchema';
 import Variations from './variations';
 
@@ -106,6 +106,8 @@ const CreateFlagForm = ({
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
+
+  const [tagOptions, setTagOptions] = useState<DropdownOption[]>([]);
 
   const { data: collection, isLoading: isLoadingTags } = useQueryTags({
     params: {
@@ -210,6 +212,18 @@ const CreateFlagForm = ({
       });
     }
   };
+
+  useEffect(() => {
+    if (tags.length) {
+      setTagOptions(
+        tags.map(item => ({
+          label: item.name,
+          value: item.name
+        }))
+      );
+    }
+  }, [tags]);
+
   return (
     <div className={cn('w-full p-5 pb-28', className)}>
       <p className="text-gray-700 typo-head-bold-small mb-2">
@@ -297,20 +311,12 @@ const CreateFlagForm = ({
                   {t('tags')}
                 </Form.Label>
                 <Form.Control>
-                  <CreatableSelect
+                  <TagsSelectMenu
+                    tagOptions={tagOptions}
+                    fieldValues={field.value}
+                    onChange={field.onChange}
                     disabled={isLoadingTags}
-                    loading={isLoadingTags}
-                    placeholder={t(`form:placeholder-tags`)}
-                    options={tags?.map(tag => ({
-                      label: tag.name,
-                      value: tag.id
-                    }))}
-                    onChange={value =>
-                      field.onChange(value.map(tag => tag.label))
-                    }
-                    noOptionsMessage={() => (
-                      <UserMessage message={t('form:no-opts-type-to-create')} />
-                    )}
+                    // onChangeTagOptions={setTagOptions}
                   />
                 </Form.Control>
                 <Form.Message />

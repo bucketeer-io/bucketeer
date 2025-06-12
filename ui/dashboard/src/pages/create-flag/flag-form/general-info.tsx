@@ -8,7 +8,7 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import { Tooltip } from 'components/tooltip';
-import TagsSelectMenu from './tags-select-menu';
+import TagsSelectMenu from 'elements/tags-select-menu';
 
 const GeneralInfo = ({
   tags,
