@@ -33,7 +33,8 @@ const CollectionLoader = ({
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
-    organizationId: currentEnvironment.organizationId
+    organizationId: currentEnvironment.organizationId,
+    entityType: 'ACCOUNT'
   });
   const tagList = tagCollection?.tags || [];
   const columns = useColumns({ onActions, tags: tagList });
