@@ -42519,7 +42519,13 @@
               {
                 "id": 9,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 10,
@@ -42531,6 +42537,12 @@
                     "value": "REQUIRED"
                   }
                 ]
+              },
+              {
+                "id": 11,
+                "name": "environment_ids",
+                "type": "string",
+                "is_repeated": true
               }
             ],
             "reserved_ids": [

@@ -7738,6 +7738,13 @@ paths:
           in: query
           required: true
           type: string
+        - name: environmentIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
       tags:
         - subscription
   /v1/summarize_mau_counts:
