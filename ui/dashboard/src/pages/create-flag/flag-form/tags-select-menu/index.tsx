@@ -26,6 +26,9 @@ const TagsSelectMenu = ({
       showArrow={!fieldValues?.length}
       ariaLabel={'tag-delete-btn'}
       disabled={disabled}
+      inputPlaceholder={t(
+        tagOptions?.length ? 'type-to-create' : 'no-opts-type-to-create'
+      )}
       trigger={
         fieldValues?.length ? (
           <div className="flex items-center justify-between w-full ">

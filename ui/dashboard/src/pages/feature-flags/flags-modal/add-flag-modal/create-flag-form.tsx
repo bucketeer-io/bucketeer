@@ -22,6 +22,7 @@ import {
   IconFlagSwitch,
   IconInfo
 } from '@icons';
+import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -307,6 +308,9 @@ const CreateFlagForm = ({
                     onChange={value =>
                       field.onChange(value.map(tag => tag.label))
                     }
+                    noOptionsMessage={() => (
+                      <UserMessage message={t('form:no-opts-type-to-create')} />
+                    )}
                   />
                 </Form.Control>
                 <Form.Message />

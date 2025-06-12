@@ -37,6 +37,7 @@ const DropdownMenuWithSearch = ({
   showArrow,
   showClear,
   ariaLabel,
+  inputPlaceholder,
   notFoundOption,
   additionalElement,
   onSelectOption,
@@ -60,6 +61,7 @@ const DropdownMenuWithSearch = ({
   showArrow?: boolean;
   showClear?: boolean;
   ariaLabel?: string;
+  inputPlaceholder?: string;
   notFoundOption?: (
     value: string,
     onChangeValue: (value: string) => void
@@ -154,6 +156,7 @@ const DropdownMenuWithSearch = ({
         <DropdownMenuSearch
           ref={inputSearchRef}
           value={searchValue}
+          placeholder={inputPlaceholder}
           onChange={value => {
             contentRef.current?.scrollTo({
               top: 0,
