@@ -91,26 +91,61 @@ sequenceDiagram
     deactivate Subscriber
 ```
 ### Topic
-- It leverages the already existing PubSub topic for EvaluetionEvent, so there is no increase in PubSub costs.
+- It leverages the existing PubSub topic for EvaluetionEvent, but will increase PubSub costs by 40-50%.
+- Development costs are low by utilizing existing sequences.
+
+# Solution3 - Using the existing EvaluationEventsDWHPersister -
+
+This solution simply leverages the UserAttribute contained in the `EvaluationEvent` sent by the `RegisterEventsRequest` and adds a UserAttribute save operation to the existing data save sequence by leveraging the existing PubSub subscription.
+
+1. Create `UserAttributesCache` for Redis.
+2. In the `EvalEvtWriter` used by `EventsDWHPersister` (which updates data related to `EvaluationEvent`), add a process to determine whether the attribute is new and save it using `UserAttributesCache`.
+3. Provide an API for the console to retrieve the attribute list.
+
+
+## Sequence
+```mermaid
+sequenceDiagram
+    participant SDK as SDK/App Client
+    participant BackendService as Backend Service
+    participant PubSub as Google Cloud Pub/Sub
+    participant Subscriber as EvaluationCountEventPersister
+    participant UserAttributeStore as Redis
+
+    rect rgb(220, 220, 220)
+        note over SDK,Subscriber: This Sequence that already exists
+    SDK->>BackendService: User Action / Send RegisterEventsRequest
+    activate BackendService
+        BackendService->>PubSub: Publish Evaluation Event Message
+    deactivate BackendService
+    PubSub-->>Subscriber: Message Delivered (Push/Pull)
+    activate Subscriber
+    end
+    Subscriber->>Subscriber: Parse the Pub/Sub message and extract the UserAttribute.
+    Subscriber->>UserAttributeStore: SET new UserAttribute
+
+    note over Subscriber,PubSub: Acking regardless of success or failure
+        Subscriber-->>PubSub: Acknowledge Message
+    deactivate Subscriber
+```
+### Topic
+- Existing PubSub subscriptions will be leveraged, so your PubSub costs will not increase.
 - Development costs are low by utilizing existing sequences.
 
 # Conclustion
-I adopt Solution 2 because it will not increase development costs or PubSub costs.
+I adopt **Solution3** because it will not increase development costs or PubSub costs.
 
-# Solution 2 Implementation Details
+# Solution3 Implementation Details
 
 ## Cache
 
 - Create `UserAttributesCache` in the cache package
   - Key: string (environment_id:user-attributes)
   - Value: []string (user_attribute_keys)
+  - Interface: Put and Get
 
-## PubSub
-Create a new subscription to the `evaluation-events` topic.
-
-- Create new subscription: `persister-user-attribute`
-- Add topic and subscription definitions to YAML configuration
-- Implement `UserAttributePersister` in the Processor
+## Processor
+- Add a process to the `EvalEvtWriter` to extract new attributes from the `EvaluationEvent`'s `UserData` and save them in the `UserAttributesCache`.
 
 ## API
 
@@ -145,17 +180,10 @@ Note: Pagination is not implemented for this API.
 
 # Release Steps
 
-1. Cache Implementation
-   - Implement `UserAttributesCacher`
+1. Implement Cache
+   - Implement `UserAttributesCacher`.
 
-2.  PubSub Implementation
-   - Implement `UserAttributePersister` (without Subscriber connection)
-
-3. Implementing an API server and setting up topics and subscriptions in a Google Cloud project in the Dev environment
-   - Add publishing logic
-   - Configure PubSub in Dev environment
-   - Connect UserAttributePersister
-   - I run e2e tests and, if there are no problems, we release them to the production environment.
-
-4. API Implementation
-   - Implement `ListUserAttributes` endpoint
+2.  Implement Processor and API. and verify its operation through e2e test
+   - Implement `UserAttributeCache` saving process in Processor
+   - Implement `ListUserAttributes` API
+   - Test e2e for Dev Env
