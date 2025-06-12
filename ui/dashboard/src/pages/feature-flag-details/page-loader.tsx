@@ -27,7 +27,9 @@ const PageLoader = () => {
       environmentId: currentEnvironment?.id,
       id: params?.flagId || ''
     },
-    enabled: !!params?.flagId && !!currentEnvironment?.id,
+    enabled:
+      !!params?.flagId &&
+      (!!currentEnvironment?.id || !!currentEnvironment?.urlCode),
     gcTime: 0
   });
 

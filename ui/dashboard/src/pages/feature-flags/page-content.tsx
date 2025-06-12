@@ -45,13 +45,18 @@ const PageContent = ({
   const [filters, setFilters] = usePartialState<FlagFilters>(defaultFilters);
 
   const filterCount = useMemo(() => {
-    const { hasExperiment, hasPrerequisites, maintainer, enabled, tags } =
-      filters || {};
-    return isNotEmpty(
-      enabled ?? hasExperiment ?? hasPrerequisites ?? maintainer ?? tags
-    )
-      ? 1
-      : undefined;
+    const filterKeys = [
+      'hasExperiment',
+      'hasPrerequisites',
+      'maintainer',
+      'enabled',
+      'tags'
+    ];
+    const count = filterKeys.reduce((acc, curr) => {
+      if (isNotEmpty(filters[curr as keyof FlagFilters])) ++acc;
+      return acc;
+    }, 0);
+    return count || undefined;
   }, [filters]);
 
   const isHiddenTab = useMemo(
