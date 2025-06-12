@@ -23,7 +23,7 @@ const GeneralInfo = ({
     () =>
       tags?.map(tag => ({
         label: tag.name,
-        value: tag.id
+        value: tag.name
       })),
     [tags]
   );
