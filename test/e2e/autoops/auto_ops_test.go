@@ -440,9 +440,14 @@ func TestUpdateAutoOpsRuleNoCommand(t *testing.T) {
 	_, err := autoOpsClient.UpdateAutoOpsRule(ctx, &autoopsproto.UpdateAutoOpsRuleRequest{
 		EnvironmentId: *environmentID,
 		Id:            autoOpsRules[0].Id,
-		UpdateDatetimeClauses: []*autoopsproto.UpdateAutoOpsRuleRequest_UpdateDatetimeClause{
+		DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{
 			{
-				Clause: &addClause,
+				Clause:     &addClause,
+				ChangeType: autoopsproto.AutoOpsChangeType_CREATE,
+			},
+			{
+				Id:         autoOpsRules[0].Clauses[0].Id,
+				ChangeType: autoopsproto.AutoOpsChangeType_DELETE,
 			},
 		},
 	})
@@ -457,7 +462,7 @@ func TestUpdateAutoOpsRuleNoCommand(t *testing.T) {
 		t.Fatalf("failed to get AutoOpsRule, err %d", err)
 	}
 
-	odc := unmarshalDatetimeClause(t, resp.AutoOpsRule.Clauses[1])
+	odc := unmarshalDatetimeClause(t, resp.AutoOpsRule.Clauses[0])
 	if odc.Time != addClause.Time {
 		t.Fatalf("added DateTime is different, expected: %v, actual: %v", addClause.Time, odc.Time)
 	}
