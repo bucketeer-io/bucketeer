@@ -142,16 +142,28 @@ func TestCheckRole(t *testing.T) {
 				}
 				return resp.Account, nil
 			},
-			expected:    &eventproto.Editor{Email: "test@example.com", IsAdmin: false},
+			expected: &eventproto.Editor{
+				Email:   "test@example.com",
+				IsAdmin: false,
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						EnvironmentId: "ns0",
+						Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+					},
+				},
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			},
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
-		editor, err := CheckEnvironmentRole(
-			p.inputCtx, p.inputRequiredRole,
-			env, p.inputGetAccountFunc)
-		assert.Equal(t, p.expectedErr, err)
-		assert.Equal(t, p.expected, editor)
+		t.Run(p.desc, func(t *testing.T) {
+			editor, err := CheckEnvironmentRole(
+				p.inputCtx, p.inputRequiredRole,
+				env, p.inputGetAccountFunc)
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expected, editor)
+		})
 	}
 }
 
@@ -236,7 +248,11 @@ func TestCheckOrganizationRole(t *testing.T) {
 					},
 				}, nil
 			},
-			expected:    &eventproto.Editor{Email: "test@example.com", IsAdmin: false, Name: "test"},
+			expected: &eventproto.Editor{
+				Email:   "test@example.com",
+				IsAdmin: false, Name: "test",
+				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			},
 			expectedErr: nil,
 		},
 	}
@@ -325,7 +341,13 @@ func TestCheckEnvironmentRole(t *testing.T) {
 					Disabled: false,
 				}, nil
 			},
-			expected:    &eventproto.Editor{Email: "test@example.com", Name: "test"},
+			expected: &eventproto.Editor{
+				Email: "test@example.com",
+				Name:  "test",
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+				},
+			},
 			expectedErr: nil,
 		},
 		{
@@ -357,6 +379,9 @@ func TestCheckEnvironmentRole(t *testing.T) {
 					Token:      "apikey_token",
 					Maintainer: "apikey_maintainer@example.com",
 					Name:       "apikey_name",
+				},
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
 				},
 			},
 			expectedErr: nil,
