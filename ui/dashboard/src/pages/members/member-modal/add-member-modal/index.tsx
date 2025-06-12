@@ -127,7 +127,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const tagOptions = uniqBy(tagCollection?.tags || [], 'name')?.filter(tag =>
     memberEnvironments.find(env => env.environmentId === tag.environmentId)
   );
-  console.log(tagCollection?.tags)
+
   const { data: collection } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
