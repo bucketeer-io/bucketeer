@@ -289,6 +289,10 @@ message Editor {
   PublicAPIEditor public_api_editor = 5;
   bytes avatar_image = 6;       // this is not save in auditlog table
   string avatar_file_type = 7;  // this is not save in auditlog table
+  repeated bucketeer.account.AccountV2.EnvironmentRole environment_roles =
+      8;  // this is not saved in auditlog table
+  bucketeer.account.AccountV2.Role.Organization organization_role =
+      9;  // this is not saved in auditlog table
 }
 
 message Options {

@@ -1786,27 +1786,6 @@ func TestListAccountsV2MySQL(t *testing.T) {
 					},
 				}, nil)
 
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.AccountV2{
-					AccountV2: &accountproto.AccountV2{
-						Email:            "bucketeer@example.com",
-						FirstName:        "Test",
-						LastName:         "User",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-							{
-								EnvironmentId: "env0",
-								Role:          accountproto.AccountV2_Role_Environment_EDITOR,
-							},
-							{
-								EnvironmentId: "env1",
-								Role:          accountproto.AccountV2_Role_Environment_EDITOR,
-							},
-						},
-					},
-				}, nil)
-
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAccountsV2(
 					gomock.Any(), gomock.Any(),
 				).Return([]*accountproto.AccountV2{}, 0, int64(0), nil)

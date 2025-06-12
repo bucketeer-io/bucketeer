@@ -6830,6 +6830,13 @@ paths:
           in: query
           required: false
           type: boolean
+        - name: environmentIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
       tags:
         - push
   /v1/schedule_flag:
@@ -9967,6 +9974,15 @@ definitions:
       avatarFileType:
         type: string
         title: this is not save in auditlog table
+      environmentRoles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2EnvironmentRole'
+        title: this is not saved in auditlog table
+      organizationRole:
+        $ref: '#/definitions/AccountV2RoleOrganization'
+        title: this is not saved in auditlog table
   domainEventEntityType:
     type: string
     enum:

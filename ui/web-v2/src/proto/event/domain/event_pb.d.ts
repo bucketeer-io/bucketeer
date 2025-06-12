@@ -341,6 +341,21 @@ export class Editor extends jspb.Message {
   getAvatarFileType(): string;
   setAvatarFileType(value: string): void;
 
+  clearEnvironmentRolesList(): void;
+  getEnvironmentRolesList(): Array<proto_account_account_pb.AccountV2.EnvironmentRole>;
+  setEnvironmentRolesList(
+    value: Array<proto_account_account_pb.AccountV2.EnvironmentRole>
+  ): void;
+  addEnvironmentRoles(
+    value?: proto_account_account_pb.AccountV2.EnvironmentRole,
+    index?: number
+  ): proto_account_account_pb.AccountV2.EnvironmentRole;
+
+  getOrganizationRole(): proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+  setOrganizationRole(
+    value: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap]
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Editor.AsObject;
   static toObject(includeInstance: boolean, msg: Editor): Editor.AsObject;
@@ -367,6 +382,8 @@ export namespace Editor {
     publicApiEditor?: Editor.PublicAPIEditor.AsObject;
     avatarImage: Uint8Array | string;
     avatarFileType: string;
+    environmentRolesList: Array<proto_account_account_pb.AccountV2.EnvironmentRole.AsObject>;
+    organizationRole: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
   };
 
   export class PublicAPIEditor extends jspb.Message {

@@ -24,8 +24,6 @@ import (
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
@@ -1122,20 +1120,20 @@ func (s *AccountService) ListAccountsV2(
 	req *accountproto.ListAccountsV2Request,
 ) (*accountproto.ListAccountsV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkOrganizationRole(
+	editor, err := s.checkOrganizationRole(
 		ctx,
-		accountproto.AccountV2_Role_Organization_ADMIN,
+		accountproto.AccountV2_Role_Organization_MEMBER,
 		req.OrganizationId,
 		localizer,
 	)
-	if err != nil && status.Code(err) != codes.PermissionDenied {
+	if err != nil {
 		return nil, err
 	}
 
 	// If not organization admin, user can only view accounts in their environments
 	requestEnvironmentRoles := make([]*accountproto.AccountV2_EnvironmentRole, 0)
-	if err != nil && status.Code(err) == codes.PermissionDenied {
-		requestEnvironmentRoles, err = s.constructEnvironmentRoles(ctx, req, localizer)
+	if editor.OrganizationRole != accountproto.AccountV2_Role_Organization_ADMIN {
+		requestEnvironmentRoles, err = s.constructEnvironmentRoles(req, editor)
 		if err != nil {
 			return nil, err
 		}
@@ -1289,35 +1287,17 @@ func (s *AccountService) ListAccountsV2(
 }
 
 func (s *AccountService) constructEnvironmentRoles(
-	ctx context.Context,
 	req *accountproto.ListAccountsV2Request,
-	localizer locale.Localizer,
+	editor *eventproto.Editor,
 ) ([]*accountproto.AccountV2_EnvironmentRole, error) {
 	requestEnvironmentRoles := make([]*accountproto.AccountV2_EnvironmentRole, 0)
-	allowedRoles, err := s.getAllowedEnvironmentRolesInOrganization(
-		ctx,
-		req.OrganizationId,
-		accountproto.AccountV2_Role_Environment_VIEWER,
-		localizer,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to get allowed environment roles in organization",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("organizationID", req.OrganizationId),
-			)...,
-		)
-		return nil, err
-	}
-
 	// no allowed roles means user has no access to any environment in the organization
-	if len(allowedRoles) == 0 {
+	if len(editor.EnvironmentRoles) == 0 {
 		return nil, nil
 	}
 
 	if req.EnvironmentId != nil && req.EnvironmentRole != nil {
-		for _, role := range allowedRoles {
+		for _, role := range editor.EnvironmentRoles {
 			if role.EnvironmentId == req.EnvironmentId.Value &&
 				role.Role == accountproto.AccountV2_Role_Environment(req.EnvironmentRole.Value) {
 				requestEnvironmentRoles = append(requestEnvironmentRoles, role)
@@ -1325,14 +1305,14 @@ func (s *AccountService) constructEnvironmentRoles(
 			}
 		}
 	} else if req.EnvironmentId != nil && req.EnvironmentRole == nil {
-		for _, role := range allowedRoles {
+		for _, role := range editor.EnvironmentRoles {
 			if role.EnvironmentId == req.EnvironmentId.Value {
 				requestEnvironmentRoles = append(requestEnvironmentRoles, role)
 				break
 			}
 		}
 	} else {
-		requestEnvironmentRoles = append(requestEnvironmentRoles, allowedRoles...)
+		requestEnvironmentRoles = append(requestEnvironmentRoles, editor.EnvironmentRoles...)
 	}
 	return requestEnvironmentRoles, nil
 }
