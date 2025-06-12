@@ -142,7 +142,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
       memberEnvironments.find(env => env.environmentId === tag.environmentId) ||
       !tag?.environmentId
   );
-
+  console.log(tagCollection?.tags)
   const { data: collection } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
