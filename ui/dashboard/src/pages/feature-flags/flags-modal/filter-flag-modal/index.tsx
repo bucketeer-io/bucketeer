@@ -86,6 +86,7 @@ const FilterFlagModal = ({
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const inputSearchRef = useRef<HTMLInputElement>(null);
+  const menuContentRef = useRef<HTMLDivElement>(null);
 
   const [selectedFilter, setSelectedFilter] = useState<Option>(
     filterOptions[0]
@@ -244,6 +245,7 @@ const FilterFlagModal = ({
 
   const debouncedSearch = useCallback(
     debounce(value => {
+      menuContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
       setSearchValue(value);
     }, 500),
     []
@@ -303,6 +305,7 @@ const FilterFlagModal = ({
               className="w-full max-w-[235px] truncate"
             />
             <DropdownMenuContent
+              ref={menuContentRef}
               className={cn('w-[235px]', {
                 'pt-0 w-[300px]': isHaveSearchingDropdown
               })}
