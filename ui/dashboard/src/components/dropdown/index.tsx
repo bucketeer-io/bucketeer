@@ -71,6 +71,7 @@ const DropdownMenuTrigger = forwardRef<
     showArrow?: boolean;
     showClear?: boolean;
     trigger?: ReactNode;
+    ariaLabel?: string;
     onClear?: () => void;
   }
 >(
@@ -85,17 +86,25 @@ const DropdownMenuTrigger = forwardRef<
       showArrow = true,
       showClear = false,
       trigger,
+      ariaLabel,
       onClear,
       ...props
     },
     ref
   ) => {
     const clearRef = useRef<HTMLDivElement>(null);
-    const handleTriggerMouseDown = useCallback((e: React.MouseEvent) => {
-      if (clearRef.current && clearRef.current.contains(e.target as Node)) {
-        e.preventDefault();
-      }
-    }, []);
+    const handleTriggerMouseDown = useCallback(
+      (e: React.MouseEvent) => {
+        const currentTarget = e.target as HTMLElement;
+        if (
+          (clearRef.current && clearRef.current.contains(e.target as Node)) ||
+          (ariaLabel && currentTarget?.ariaLabel === ariaLabel)
+        ) {
+          e.preventDefault();
+        }
+      },
+      [ariaLabel]
+    );
 
     return (
       <DropdownMenuPrimitive.Trigger
@@ -136,7 +145,11 @@ const DropdownMenuTrigger = forwardRef<
                 if (onClear) onClear();
               }}
             >
-              <Icon icon={IconClose} size={'md'} color="gray-500" />
+              <Icon
+                icon={IconClose}
+                size={'md'}
+                className="text-gray-500 hover:text-gray-900"
+              />
             </div>
           )}
           {showArrow && (
