@@ -5,7 +5,7 @@ import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryAccounts } from '@queries/accounts';
 import { invalidateFeature } from '@queries/feature-details';
-import { useQueryTags } from '@queries/tags';
+import { invalidateTags, useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
@@ -80,13 +80,16 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
   const tags = tagCollection?.tags || [];
   const accounts = accountCollection?.accounts || [];
 
-  const tagOptions = uniqBy(
-    tags.map(item => ({
-      label: item.name,
-      value: item.name
-    })),
-    'label'
-  );
+  const tagOptions = useMemo(() => {
+    return uniqBy(
+      tags.map(item => ({
+        label: item.name,
+        value: item.name
+      })),
+      'label'
+    );
+  }, [tags]);
+
   const accountOptions = accounts.map(item => ({
     label: item.email,
     value: item.email
@@ -154,6 +157,7 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
           comment: ''
         });
         invalidateFeature(queryClient);
+        invalidateTags(queryClient);
         onCloseSaveModal();
       }
     } catch (error) {
@@ -277,9 +281,10 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
                 <Form.Control>
                   <CreatableSelect
                     disabled={isLoadingTags || !tagOptions.length}
-                    value={tagOptions.filter(tag =>
-                      field.value?.includes(tag.value)
-                    )}
+                    value={field.value?.map((item: string) => ({
+                      label: item,
+                      value: item
+                    }))}
                     loading={isLoadingTags}
                     placeholder={t(
                       !tagOptions.length && !isLoadingTags
@@ -287,6 +292,13 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
                         : `form:placeholder-tags`
                     )}
                     options={tagOptions}
+                    onCreateOption={value => {
+                      tagOptions.push({
+                        label: value,
+                        value
+                      });
+                      field.onChange([...field.value, value]);
+                    }}
                     onChange={value =>
                       field.onChange(value.map(tag => tag.value))
                     }
