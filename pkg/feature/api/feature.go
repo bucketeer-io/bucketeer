@@ -853,9 +853,6 @@ func (s *FeatureService) createFeatureNoCommand(
 	}
 	var event *eventproto.Event
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		if err := s.upsertTags(ctxWithTx, req.Tags, req.EnvironmentId); err != nil {
-			return err
-		}
 		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_FEATURE,
@@ -880,6 +877,9 @@ func (s *FeatureService) createFeatureNoCommand(
 			featureproto.Feature{},
 		)
 		if err != nil {
+			return err
+		}
+		if err := s.upsertTags(ctxWithTx, req.Tags, req.EnvironmentId); err != nil {
 			return err
 		}
 		return s.featureStorage.CreateFeature(ctxWithTx, feature, req.EnvironmentId)
@@ -1037,6 +1037,9 @@ func (s *FeatureService) UpdateFeature(
 			req.TagChanges,
 		)
 		if err != nil {
+			return err
+		}
+		if err := s.upsertTags(ctxWithTx, updated.Tags, req.EnvironmentId); err != nil {
 			return err
 		}
 		// To check if the flag to be updated is a dependency of other flags, we must validate it before updating.
