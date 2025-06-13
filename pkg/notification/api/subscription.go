@@ -724,22 +724,7 @@ func (s *NotificationService) ListSubscriptions(
 		if err != nil {
 			return nil, err
 		}
-		if editor.OrganizationRole != accountproto.AccountV2_Role_Organization_ADMIN {
-			if len(req.EnvironmentIds) == 0 {
-				for _, e := range editor.EnvironmentRoles {
-					filterEnvironmentIDs = append(filterEnvironmentIDs, e.EnvironmentId)
-				}
-			} else {
-				for _, envID := range req.EnvironmentIds {
-					for _, e := range editor.EnvironmentRoles {
-						if e.EnvironmentId == envID {
-							filterEnvironmentIDs = append(filterEnvironmentIDs, envID)
-							break
-						}
-					}
-				}
-			}
-		}
+		filterEnvironmentIDs = s.getAllowedEnvironments(req.EnvironmentIds, editor)
 	} else {
 		// console v2
 		_, err := s.checkEnvironmentRole(
@@ -785,6 +770,34 @@ func (s *NotificationService) ListSubscriptions(
 		Cursor:        cursor,
 		TotalCount:    totalCount,
 	}, nil
+}
+
+func (s *NotificationService) getAllowedEnvironments(
+	reqEnvironmentIDs []string,
+	editor *eventproto.Editor,
+) []string {
+	filterEnvironmentIDs := make([]string, 0)
+	if editor.OrganizationRole == accountproto.AccountV2_Role_Organization_ADMIN || editor.IsAdmin {
+		// if the user is an admin, no need to filter environments.
+		filterEnvironmentIDs = append(filterEnvironmentIDs, reqEnvironmentIDs...)
+	} else {
+		// only show API keys in allowed environments for member.
+		if len(reqEnvironmentIDs) > 0 {
+			for _, id := range reqEnvironmentIDs {
+				for _, e := range editor.EnvironmentRoles {
+					if e.EnvironmentId == id {
+						filterEnvironmentIDs = append(filterEnvironmentIDs, id)
+						break
+					}
+				}
+			}
+		} else {
+			for _, e := range editor.EnvironmentRoles {
+				filterEnvironmentIDs = append(filterEnvironmentIDs, e.EnvironmentId)
+			}
+		}
+	}
+	return filterEnvironmentIDs
 }
 
 func (s *NotificationService) newSubscriptionListOrders(

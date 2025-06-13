@@ -16,8 +16,8 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -1130,9 +1130,9 @@ func (s *AccountService) ListAccountsV2(
 		return nil, err
 	}
 
-	// If not organization admin, user can only view accounts in their environments
+	// If not an organization admin or system admin, a user can only view accounts in their environments
 	requestEnvironmentRoles := make([]*accountproto.AccountV2_EnvironmentRole, 0)
-	if editor.OrganizationRole != accountproto.AccountV2_Role_Organization_ADMIN {
+	if editor.OrganizationRole != accountproto.AccountV2_Role_Organization_ADMIN && !editor.IsAdmin {
 		requestEnvironmentRoles, err = s.constructEnvironmentRoles(req, editor)
 		if err != nil {
 			return nil, err
@@ -1175,16 +1175,38 @@ func (s *AccountService) ListAccountsV2(
 		})
 	}
 
-	var rawEnvQuery string
+	type EnvironmentRole struct {
+		EnvironmentID *string `json:"environment_id"`
+		Role          *int32  `json:"role"`
+	}
+
+	orFilters := make([]*mysql.OrFilter, 0)
 	if len(requestEnvironmentRoles) == 0 {
 		values := make([]interface{}, 1)
-		if req.EnvironmentId != nil && req.EnvironmentRole != nil {
-			values[0] = fmt.Sprintf("{\"environment_id\": \"%s\", \"role\": %d}", req.EnvironmentId.Value, req.EnvironmentRole.Value) // nolint:lll
-		} else if req.EnvironmentId != nil {
-			values[0] = fmt.Sprintf("{\"environment_id\": \"%s\"}", req.EnvironmentId.Value)
-		} else if req.EnvironmentRole != nil {
-			values[0] = fmt.Sprintf("{\"role\": %d}", req.EnvironmentRole.Value)
+		envRole := &EnvironmentRole{}
+		if req.EnvironmentId != nil {
+			envRole.EnvironmentID = &req.EnvironmentId.Value
 		}
+		if req.EnvironmentRole != nil {
+			envRole.Role = &req.EnvironmentRole.Value
+		}
+		jsonValues, err := json.Marshal(envRole)
+		if err != nil {
+			s.logger.Error(
+				"Failed to marshal environment role",
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		values = append(values, string(jsonValues))
+
 		if values[0] != nil && values[0] != "" {
 			jsonFilters = append(
 				jsonFilters,
@@ -1195,30 +1217,38 @@ func (s *AccountService) ListAccountsV2(
 				})
 		}
 	} else {
-		for i, r := range requestEnvironmentRoles {
-			values := make([]interface{}, 1)
-			if r.EnvironmentId != "" && r.Role != accountproto.AccountV2_Role_Environment_UNASSIGNED {
-				values[0] = fmt.Sprintf("{\"environment_id\": \"%s\", \"role\": %d}", r.EnvironmentId, r.Role) // nolint:lll
-			} else if r.EnvironmentId != "" {
-				values[0] = fmt.Sprintf("{\"environment_id\": \"%s\"}", r.EnvironmentId)
-			} else if r.Role != accountproto.AccountV2_Role_Environment_UNASSIGNED {
-				values[0] = fmt.Sprintf("{\"role\": %d}", r.Role)
+		jsonOrFilters := make([]mysql.WherePart, 0)
+		for _, r := range requestEnvironmentRoles {
+			envRole := &EnvironmentRole{
+				EnvironmentID: &r.EnvironmentId,
+				Role:          (*int32)(&r.Role),
 			}
-			if values[0] != nil && values[0] != "" {
-				rawEnvQuery += fmt.Sprintf("JSON_CONTAINS(environment_roles, '%s')", values[0])
+			jsonValues, err := json.Marshal(envRole)
+			if err != nil {
+				s.logger.Error(
+					"Failed to marshal environment role",
+					log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+				)
+				dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalize(locale.InternalServerError),
+				})
+				if err != nil {
+					return nil, statusInternal.Err()
+				}
+				return nil, dt.Err()
 			}
-			if i < len(requestEnvironmentRoles)-1 {
-				rawEnvQuery += " OR "
-			}
+			jsonOrFilters = append(jsonOrFilters, &mysql.JSONFilter{
+				Column: "environment_roles",
+				Func:   mysql.JSONContainsJSON,
+				Values: []interface{}{string(jsonValues)},
+			})
 		}
-	}
-
-	rawFilters := make([]*mysql.RawQuery, 0)
-	if rawEnvQuery != "" {
-		rawFilters = append(rawFilters, &mysql.RawQuery{
-			Query: rawEnvQuery,
+		orFilters = append(orFilters, &mysql.OrFilter{
+			Queries: jsonOrFilters,
 		})
 	}
+
 	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
 		searchQuery = &mysql.SearchQuery{
@@ -1256,7 +1286,7 @@ func (s *AccountService) ListAccountsV2(
 		Offset:      offset,
 		JSONFilters: jsonFilters,
 		SearchQuery: searchQuery,
-		RawFilters:  rawFilters,
+		OrFilters:   orFilters,
 		Orders:      orders,
 		NullFilters: nil,
 		InFilters:   nil,
@@ -1291,7 +1321,7 @@ func (s *AccountService) constructEnvironmentRoles(
 	editor *eventproto.Editor,
 ) ([]*accountproto.AccountV2_EnvironmentRole, error) {
 	requestEnvironmentRoles := make([]*accountproto.AccountV2_EnvironmentRole, 0)
-	// no allowed roles means user has no access to any environment in the organization
+	// No allowed roles means the user has no access to any environment in the organization
 	if len(editor.EnvironmentRoles) == 0 {
 		return nil, nil
 	}

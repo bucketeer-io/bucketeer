@@ -276,22 +276,32 @@ func (q *SearchQuery) SQLString() (sql string, args []interface{}) {
 	return
 }
 
-type RawQuery struct {
-	Query string
+type OrFilter struct {
+	Queries []WherePart
 }
 
-func NewRawQuery(query string) WherePart {
-	return &RawQuery{
-		Query: query,
+func NewOrFilter(queries []WherePart) WherePart {
+	return &OrFilter{
+		Queries: queries,
 	}
 }
 
-func (q *RawQuery) SQLString() (sql string, args []interface{}) {
-	if q.Query == "" {
+func (f *OrFilter) SQLString() (sql string, args []interface{}) {
+	if len(f.Queries) == 0 {
 		return "", nil
 	}
-	// Assuming the query is already a valid SQL fragment.
-	sql = fmt.Sprintf("(%s)", q.Query)
+	var sb strings.Builder
+	sb.WriteString("(")
+	for i, q := range f.Queries {
+		if i != 0 {
+			sb.WriteString(" OR ")
+		}
+		qSQL, qArgs := q.SQLString()
+		sb.WriteString(qSQL)
+		args = append(args, qArgs...)
+	}
+	sb.WriteString(")")
+	sql = sb.String()
 	return
 }
 
@@ -445,7 +455,7 @@ type ListOptions struct {
 	NullFilters []*NullFilter
 	JSONFilters []*JSONFilter
 	SearchQuery *SearchQuery
-	RawFilters  []*RawQuery
+	OrFilters   []*OrFilter
 	Orders      []*Order
 	Offset      int
 }
@@ -475,8 +485,8 @@ func (lo *ListOptions) CreateWhereParts() []WherePart {
 	if lo.SearchQuery != nil {
 		whereParts = append(whereParts, lo.SearchQuery)
 	}
-	if lo.RawFilters != nil {
-		for _, f := range lo.RawFilters {
+	if lo.OrFilters != nil {
+		for _, f := range lo.OrFilters {
 			whereParts = append(whereParts, f)
 		}
 	}

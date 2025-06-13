@@ -279,20 +279,20 @@ message Editor {
     string token = 1;
     string maintainer = 2;
     string name = 3;
-    bytes avatar_image = 4;       // this is not save in auditlog table
-    string avatar_file_type = 5;  // this is not save in auditlog table
+    bytes avatar_image = 4;       // this is not saved in the auditlog table
+    string avatar_file_type = 5;  // this is not saved in the auditlog table
   }
   string email = 1;
   reserved 2;  // bucketeer.account.Account.Role role = 2 [deprecated = true];
   bool is_admin = 3;
   string name = 4;
   PublicAPIEditor public_api_editor = 5;
-  bytes avatar_image = 6;       // this is not save in auditlog table
-  string avatar_file_type = 7;  // this is not save in auditlog table
+  bytes avatar_image = 6;       // this is not saved in the auditlog table
+  string avatar_file_type = 7;  // this is not saved in the auditlog table
   repeated bucketeer.account.AccountV2.EnvironmentRole environment_roles =
-      8;  // this is not saved in auditlog table
+      8;  // this is not saved in the auditlog table
   bucketeer.account.AccountV2.Role.Organization organization_role =
-      9;  // this is not saved in auditlog table
+      9;  // this is not saved in the auditlog table
 }
 
 message Options {

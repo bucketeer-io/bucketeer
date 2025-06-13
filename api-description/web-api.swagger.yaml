@@ -8101,10 +8101,10 @@ definitions:
       avatarImage:
         type: string
         format: byte
-        title: this is not save in auditlog table
+        title: this is not saved in the auditlog table
       avatarFileType:
         type: string
-        title: this is not save in auditlog table
+        title: this is not saved in the auditlog table
   ExperimentGoalReference:
     type: object
     properties:
@@ -9977,19 +9977,19 @@ definitions:
       avatarImage:
         type: string
         format: byte
-        title: this is not save in auditlog table
+        title: this is not saved in the auditlog table
       avatarFileType:
         type: string
-        title: this is not save in auditlog table
+        title: this is not saved in the auditlog table
       environmentRoles:
         type: array
         items:
           type: object
           $ref: '#/definitions/accountAccountV2EnvironmentRole'
-        title: this is not saved in auditlog table
+        title: this is not saved in the auditlog table
       organizationRole:
         $ref: '#/definitions/AccountV2RoleOrganization'
-        title: this is not saved in auditlog table
+        title: this is not saved in the auditlog table
   domainEventEntityType:
     type: string
     enum:
