@@ -277,7 +277,7 @@ func (s *TagService) ListTags(
 		Limit:       limit,
 		Offset:      offset,
 		JSONFilters: nil,
-		InFilters:   nil,
+		InFilters:   inFilters,
 		NullFilters: nil,
 	}
 	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(ctx, options)
