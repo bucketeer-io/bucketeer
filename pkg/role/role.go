@@ -65,21 +65,28 @@ func CheckEnvironmentRole(
 	}
 	publicAPIEditor := getAPIKeyEditor(ctx)
 	if publicAPIEditor != nil && publicAPIEditor.Token != "" && token.IsSystemAdmin {
-		var accountName string
 		resp, err := getAccountFunc(publicAPIEditor.Maintainer)
-		if err == nil && resp != nil {
-			account := accdomain.AccountV2{AccountV2: resp}
-			accountName = account.GetAccountFullName()
+		if err != nil {
+			return nil, err
 		}
+		account := accdomain.AccountV2{AccountV2: resp}
 		return &eventproto.Editor{
-			Email:           publicAPIEditor.Maintainer,
-			Name:            accountName,
-			PublicApiEditor: publicAPIEditor,
+			Email:            publicAPIEditor.Maintainer,
+			Name:             account.GetAccountFullName(),
+			PublicApiEditor:  publicAPIEditor,
+			EnvironmentRoles: account.EnvironmentRoles,
+			OrganizationRole: account.OrganizationRole,
 		}, nil
 	}
 
 	if token.IsSystemAdmin {
-		return checkRole(token.Email, token.Name, accountproto.AccountV2_Role_Environment_EDITOR, requiredRole, true)
+		return checkRole(
+			token.Email,
+			token.Name,
+			accountproto.AccountV2_Role_Environment_EDITOR, requiredRole,
+			nil,
+			0,
+			true)
 	}
 	// get account for the environment id
 	account, err := getAccountFunc(token.Email)
@@ -89,11 +96,19 @@ func CheckEnvironmentRole(
 		}
 		return nil, ErrInternal
 	}
+
 	if account.Disabled {
 		return nil, ErrUnauthenticated
 	}
 	accountEnvRole := getRole(account.EnvironmentRoles, environmentID)
-	return checkRole(account.Email, token.Name, accountEnvRole, requiredRole, false)
+	return checkRole(
+		account.Email,
+		token.Name,
+		accountEnvRole,
+		requiredRole,
+		account.EnvironmentRoles,
+		account.OrganizationRole,
+		false)
 }
 
 func getRole(roles []*accountproto.AccountV2_EnvironmentRole, envID string) accountproto.AccountV2_Role_Environment {
@@ -109,15 +124,19 @@ func checkRole(
 	email string,
 	name string,
 	role, requiredRole accountproto.AccountV2_Role_Environment,
+	environmentRoles []*accountproto.AccountV2_EnvironmentRole,
+	organizationRole accountproto.AccountV2_Role_Organization,
 	isAdmin bool,
 ) (*eventproto.Editor, error) {
 	if role < requiredRole {
 		return nil, ErrPermissionDenied
 	}
 	return &eventproto.Editor{
-		Email:   email,
-		Name:    name,
-		IsAdmin: isAdmin,
+		Email:            email,
+		Name:             name,
+		IsAdmin:          isAdmin,
+		EnvironmentRoles: environmentRoles,
+		OrganizationRole: organizationRole,
 	}, nil
 }
 
@@ -138,9 +157,11 @@ func CheckOrganizationRole(
 		}
 		account := accdomain.AccountV2{AccountV2: resp.Account}
 		return &eventproto.Editor{
-			Email:           publicAPIEditor.Maintainer,
-			Name:            account.GetAccountFullName(),
-			PublicApiEditor: publicAPIEditor,
+			Email:            publicAPIEditor.Maintainer,
+			Name:             account.GetAccountFullName(),
+			PublicApiEditor:  publicAPIEditor,
+			EnvironmentRoles: account.EnvironmentRoles,
+			OrganizationRole: account.OrganizationRole,
 		}, nil
 	}
 
@@ -165,9 +186,11 @@ func CheckOrganizationRole(
 		return nil, ErrPermissionDenied
 	}
 	return &eventproto.Editor{
-		Email:   token.Email,
-		Name:    token.Name,
-		IsAdmin: token.IsSystemAdmin,
+		Email:            token.Email,
+		Name:             token.Name,
+		IsAdmin:          token.IsSystemAdmin,
+		EnvironmentRoles: resp.Account.EnvironmentRoles,
+		OrganizationRole: resp.Account.OrganizationRole,
 	}, nil
 }
 

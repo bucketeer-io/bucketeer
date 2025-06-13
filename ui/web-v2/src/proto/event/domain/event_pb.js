@@ -1005,7 +1005,14 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.bucketeer.event.domain.Editor = function (opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.event.domain.Editor.repeatedFields_,
+    null
+  );
 };
 goog.inherits(proto.bucketeer.event.domain.Editor, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -6444,6 +6451,13 @@ proto.bucketeer.event.domain.Event.prototype.setEnvironmentId = function (
   return jspb.Message.setProto3StringField(this, 13, value);
 };
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.event.domain.Editor.repeatedFields_ = [8];
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -6491,7 +6505,13 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             f
           ),
         avatarImage: msg.getAvatarImage_asB64(),
-        avatarFileType: jspb.Message.getFieldWithDefault(msg, 7, '')
+        avatarFileType: jspb.Message.getFieldWithDefault(msg, 7, ''),
+        environmentRolesList: jspb.Message.toObjectList(
+          msg.getEnvironmentRolesList(),
+          proto_account_account_pb.AccountV2.EnvironmentRole.toObject,
+          includeInstance
+        ),
+        organizationRole: jspb.Message.getFieldWithDefault(msg, 9, 0)
       };
 
     if (includeInstance) {
@@ -6561,6 +6581,22 @@ proto.bucketeer.event.domain.Editor.deserializeBinaryFromReader = function (
         var value = /** @type {string} */ (reader.readString());
         msg.setAvatarFileType(value);
         break;
+      case 8:
+        var value = new proto_account_account_pb.AccountV2.EnvironmentRole();
+        reader.readMessage(
+          value,
+          proto_account_account_pb.AccountV2.EnvironmentRole
+            .deserializeBinaryFromReader
+        );
+        msg.addEnvironmentRoles(value);
+        break;
+      case 9:
+        var value =
+          /** @type {!proto.bucketeer.account.AccountV2.Role.Organization} */ (
+            reader.readEnum()
+          );
+        msg.setOrganizationRole(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -6619,6 +6655,18 @@ proto.bucketeer.event.domain.Editor.serializeBinaryToWriter = function (
   f = message.getAvatarFileType();
   if (f.length > 0) {
     writer.writeString(7, f);
+  }
+  f = message.getEnvironmentRolesList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      8,
+      f,
+      proto_account_account_pb.AccountV2.EnvironmentRole.serializeBinaryToWriter
+    );
+  }
+  f = message.getOrganizationRole();
+  if (f !== 0.0) {
+    writer.writeEnum(9, f);
   }
 };
 
@@ -7055,6 +7103,78 @@ proto.bucketeer.event.domain.Editor.prototype.setAvatarFileType = function (
   value
 ) {
   return jspb.Message.setProto3StringField(this, 7, value);
+};
+
+/**
+ * repeated bucketeer.account.AccountV2.EnvironmentRole environment_roles = 8;
+ * @return {!Array<!proto.bucketeer.account.AccountV2.EnvironmentRole>}
+ */
+proto.bucketeer.event.domain.Editor.prototype.getEnvironmentRolesList =
+  function () {
+    return /** @type{!Array<!proto.bucketeer.account.AccountV2.EnvironmentRole>} */ (
+      jspb.Message.getRepeatedWrapperField(
+        this,
+        proto_account_account_pb.AccountV2.EnvironmentRole,
+        8
+      )
+    );
+  };
+
+/**
+ * @param {!Array<!proto.bucketeer.account.AccountV2.EnvironmentRole>} value
+ * @return {!proto.bucketeer.event.domain.Editor} returns this
+ */
+proto.bucketeer.event.domain.Editor.prototype.setEnvironmentRolesList =
+  function (value) {
+    return jspb.Message.setRepeatedWrapperField(this, 8, value);
+  };
+
+/**
+ * @param {!proto.bucketeer.account.AccountV2.EnvironmentRole=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.account.AccountV2.EnvironmentRole}
+ */
+proto.bucketeer.event.domain.Editor.prototype.addEnvironmentRoles = function (
+  opt_value,
+  opt_index
+) {
+  return jspb.Message.addToRepeatedWrapperField(
+    this,
+    8,
+    opt_value,
+    proto.bucketeer.account.AccountV2.EnvironmentRole,
+    opt_index
+  );
+};
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.event.domain.Editor} returns this
+ */
+proto.bucketeer.event.domain.Editor.prototype.clearEnvironmentRolesList =
+  function () {
+    return this.setEnvironmentRolesList([]);
+  };
+
+/**
+ * optional bucketeer.account.AccountV2.Role.Organization organization_role = 9;
+ * @return {!proto.bucketeer.account.AccountV2.Role.Organization}
+ */
+proto.bucketeer.event.domain.Editor.prototype.getOrganizationRole =
+  function () {
+    return /** @type {!proto.bucketeer.account.AccountV2.Role.Organization} */ (
+      jspb.Message.getFieldWithDefault(this, 9, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.account.AccountV2.Role.Organization} value
+ * @return {!proto.bucketeer.event.domain.Editor} returns this
+ */
+proto.bucketeer.event.domain.Editor.prototype.setOrganizationRole = function (
+  value
+) {
+  return jspb.Message.setProto3EnumField(this, 9, value);
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

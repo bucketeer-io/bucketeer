@@ -31,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/role"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	proto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
 )
@@ -195,6 +196,77 @@ func (s *NotificationService) checkEnvironmentRole(
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+	}
+	return editor, nil
+}
+
+func (s *NotificationService) checkOrganizationRole(
+	ctx context.Context,
+	requiredRole proto.AccountV2_Role_Organization,
+	organizationID string,
+	localizer locale.Localizer,
+) (*eventproto.Editor, error) {
+	editor, err := role.CheckOrganizationRole(ctx, requiredRole, func(email string) (*proto.GetAccountV2Response, error) {
+		resp, err := s.accountClient.GetAccountV2(ctx, &proto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: organizationID,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return resp, nil
+	})
+	if err != nil {
+		switch status.Code(err) {
+		case codes.Unauthenticated:
+			s.logger.Error(
+				"Unauthenticated",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationID", organizationID),
+				)...,
+			)
+			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.UnauthenticatedError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		case codes.PermissionDenied:
+			s.logger.Error(
+				"Permission denied",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationID", organizationID),
+				)...,
+			)
+			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.PermissionDenied),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		default:
+			s.logger.Error(
+				"Failed to check role",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationID", organizationID),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

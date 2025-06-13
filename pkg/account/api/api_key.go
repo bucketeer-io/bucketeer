@@ -519,12 +519,13 @@ func (s *AccountService) ListAPIKeys(
 	req *proto.ListAPIKeysRequest,
 ) (*proto.ListAPIKeysResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkOrganizationRole(
+	editor, err := s.checkOrganizationRole(
 		ctx, proto.AccountV2_Role_Organization_MEMBER,
 		req.OrganizationId, localizer)
 	if err != nil {
 		return nil, err
 	}
+	filterEnvironmentIDs := s.getAllowedEnvironments(req.EnvironmentIds, editor)
 	if req.OrganizationId == "" {
 		dt, err := statusInvalidListAPIKeyRequest.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -543,9 +544,9 @@ func (s *AccountService) ListAPIKeys(
 		},
 	}
 	var inFilters []*mysql.InFilter
-	if len(req.EnvironmentIds) > 0 {
-		environmentIds := make([]interface{}, 0, len(req.EnvironmentIds))
-		for _, id := range req.EnvironmentIds {
+	if len(filterEnvironmentIDs) > 0 {
+		environmentIds := make([]interface{}, 0, len(filterEnvironmentIDs))
+		for _, id := range filterEnvironmentIDs {
 			environmentIds = append(environmentIds, id)
 		}
 		inFilters = append(inFilters, &mysql.InFilter{
@@ -631,6 +632,34 @@ func (s *AccountService) ListAPIKeys(
 		Cursor:     strconv.Itoa(nextCursor),
 		TotalCount: totalCount,
 	}, nil
+}
+
+func (s *AccountService) getAllowedEnvironments(
+	reqEnvironmentIDs []string,
+	editor *eventproto.Editor,
+) []string {
+	filterEnvironmentIDs := make([]string, 0)
+	if editor.OrganizationRole == proto.AccountV2_Role_Organization_ADMIN || editor.IsAdmin {
+		// if the user is an admin, no need to filter environments.
+		filterEnvironmentIDs = append(filterEnvironmentIDs, reqEnvironmentIDs...)
+	} else {
+		// only show API keys in allowed environments for member.
+		if len(reqEnvironmentIDs) > 0 {
+			for _, id := range reqEnvironmentIDs {
+				for _, e := range editor.EnvironmentRoles {
+					if e.EnvironmentId == id {
+						filterEnvironmentIDs = append(filterEnvironmentIDs, id)
+						break
+					}
+				}
+			}
+		} else {
+			for _, e := range editor.EnvironmentRoles {
+				filterEnvironmentIDs = append(filterEnvironmentIDs, e.EnvironmentId)
+			}
+		}
+	}
+	return filterEnvironmentIDs
 }
 
 func (s *AccountService) newAPIKeyListOrders(
