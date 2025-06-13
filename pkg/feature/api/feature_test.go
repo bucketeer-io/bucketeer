@@ -5433,6 +5433,10 @@ func TestUpdateFeature(t *testing.T) {
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().UpdateFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
+				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
+					gomock.Any(),
+					gomock.Any(),
+				).Return(nil)
 				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
