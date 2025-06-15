@@ -2,6 +2,30 @@ global:
   image:
     tag: localenv
     imagePullSecrets:
+  
+  # Global data warehouse configuration for development
+  dataWarehouse:
+    type: mysql  # Use MySQL for development environment
+    
+    # Common settings across all types
+    common:
+      batchSize: 10  # Smaller batch size for development
+      timezone: UTC
+    
+    # BigQuery configuration (for when type: bigquery)
+    bigquery:
+      project: "bucketeer-test"
+      dataset: "bucketeer"
+      location: "bucketeer"
+      
+    # MySQL configuration (active when type: mysql)
+    mysql:
+      useMainConnection: true  # Use the main MySQL connection for development
+      
+    # PostgreSQL configuration (for future use)
+    postgresql:
+      useMainConnection: true
+  
   pubsub:
     type: redis-stream
     redis:
@@ -479,10 +503,30 @@ subscriber:
       flushSize: 10
       flushInterval: 5
       flushTimeout: 30
-      project: bucketeer-test
-      bigQueryDataSet: bucketeer
-      bigQueryBatchSize: 10
-      timezone: UTC
+      # Data warehouse configuration will be injected from global settings by Helm template
+      dataWarehouse:
+        type: ""  # Will be set by template
+        common:
+          batchSize: 0  # Will be set by template
+          timezone: ""  # Will be set by template
+        mysql:
+          useMainConnection: false  # Will be set by template
+          host: ""  # Will be set by template
+          port: 0  # Will be set by template
+          user: ""  # Will be set by template
+          password: ""  # Will be set by template
+          database: ""  # Will be set by template
+        bigquery:
+          project: ""  # Will be set by template
+          dataset: ""  # Will be set by template
+          location: ""  # Will be set by template
+        postgresql:
+          useMainConnection: false  # Will be set by template
+          host: ""  # Will be set by template
+          port: 0  # Will be set by template
+          user: ""  # Will be set by template
+          password: ""  # Will be set by template
+          database: ""  # Will be set by template
     evaluationCountEventOPSPersister:
       flushSize: 10
       flushInterval: 5
@@ -491,13 +535,32 @@ subscriber:
       flushSize: 10
       flushInterval: 5
       flushTimeout: 30
-      project: bucketeer-test
-      bigQueryDataSet: bucketeer
-      bigQueryDataLocation: bucketeer
-      bigQueryBatchSize: 10
-      timezone: UTC
-      MaxRetryGoalEventPeriod: 86400 # 1 day
-      RetryGoalEventInterval: 30 # 30 seconds
+      maxRetryGoalEventPeriod: 86400 # 1 day
+      retryGoalEventInterval: 30 # 30 seconds
+      # Data warehouse configuration will be injected from global settings by Helm template
+      dataWarehouse:
+        type: ""  # Will be set by template
+        common:
+          batchSize: 0  # Will be set by template
+          timezone: ""  # Will be set by template
+        mysql:
+          useMainConnection: false  # Will be set by template
+          host: ""  # Will be set by template
+          port: 0  # Will be set by template
+          user: ""  # Will be set by template
+          password: ""  # Will be set by template
+          database: ""  # Will be set by template
+        bigquery:
+          project: ""  # Will be set by template
+          dataset: ""  # Will be set by template
+          location: ""  # Will be set by template
+        postgresql:
+          useMainConnection: false  # Will be set by template
+          host: ""  # Will be set by template
+          port: 0  # Will be set by template
+          user: ""  # Will be set by template
+          password: ""  # Will be set by template
+          database: ""  # Will be set by template
     goalCountEventOPSPersister:
       flushSize: 10
       flushInterval: 5
