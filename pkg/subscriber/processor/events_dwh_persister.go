@@ -190,7 +190,10 @@ func NewEventsDWHPersister(
 		case "bigquery":
 			// BigQuery is handled in the NewEvalEventWriter call below
 		default:
-			return nil, fmt.Errorf("unsupported data warehouse type for evaluation events: %s", persisterConfig.DataWarehouseType)
+			return nil, fmt.Errorf(
+				"unsupported data warehouse type for evaluation events: %s",
+				persisterConfig.DataWarehouseType,
+			)
 		}
 
 		// Get BigQuery configuration for fallback (even when using other databases)
