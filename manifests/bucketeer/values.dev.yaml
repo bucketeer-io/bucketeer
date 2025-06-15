@@ -2,6 +2,30 @@ global:
   image:
     tag: localenv
     imagePullSecrets:
+  
+  # Global data warehouse configuration for development
+  dataWarehouse:
+    type: mysql  # Use MySQL for development environment
+    
+    # Common settings across all types
+    common:
+      batchSize: 10  # Smaller batch size for development
+      timezone: UTC
+    
+    # BigQuery configuration (for when type: bigquery)
+    bigquery:
+      project: "bucketeer-test"
+      dataset: "bucketeer"
+      location: "bucketeer"
+      
+    # MySQL configuration (active when type: mysql)
+    mysql:
+      useMainConnection: true  # Use the main MySQL connection for development
+      
+    # PostgreSQL configuration (for future use)
+    postgresql:
+      useMainConnection: true
+  
   pubsub:
     type: redis-stream
     redis:
@@ -479,12 +503,35 @@ subscriber:
       flushSize: 10
       flushInterval: 5
       flushTimeout: 30
-      project: bucketeer-test
-      bigQueryDataSet: bucketeer
-      bigQueryBatchSize: 10
-      timezone: UTC
-      useMySQLStorage: true
-      mysqlBatchSize: 10
+      
+      # Data warehouse configuration - use global settings
+      dataWarehouseType: ${global.dataWarehouse.type}
+      dataWarehouseBatchSize: ${global.dataWarehouse.common.batchSize}
+      dataWarehouseTimezone: ${global.dataWarehouse.common.timezone}
+      
+      # MySQL configuration (active when dataWarehouseType: mysql)
+      mysql:
+        useMainConnection: ${global.dataWarehouse.mysql.useMainConnection}
+        host: ${global.dataWarehouse.mysql.host}
+        port: ${global.dataWarehouse.mysql.port}
+        user: ${global.dataWarehouse.mysql.user}
+        password: ${global.dataWarehouse.mysql.password}
+        database: ${global.dataWarehouse.mysql.database}
+      
+      # BigQuery configuration (for switching to BigQuery)
+      bigquery:
+        project: ${global.dataWarehouse.bigquery.project}
+        dataset: ${global.dataWarehouse.bigquery.dataset}
+        location: ${global.dataWarehouse.bigquery.location}
+      
+      # PostgreSQL configuration (for future use)
+      postgresql:
+        useMainConnection: ${global.dataWarehouse.postgresql.useMainConnection}
+        host: ${global.dataWarehouse.postgresql.host}
+        port: ${global.dataWarehouse.postgresql.port}
+        user: ${global.dataWarehouse.postgresql.user}
+        password: ${global.dataWarehouse.postgresql.password}
+        database: ${global.dataWarehouse.postgresql.database}
     evaluationCountEventOPSPersister:
       flushSize: 10
       flushInterval: 5
@@ -493,15 +540,37 @@ subscriber:
       flushSize: 10
       flushInterval: 5
       flushTimeout: 30
-      project: bucketeer-test
-      bigQueryDataSet: bucketeer
-      bigQueryDataLocation: bucketeer
-      bigQueryBatchSize: 10
-      timezone: UTC
-      MaxRetryGoalEventPeriod: 86400 # 1 day
-      RetryGoalEventInterval: 30 # 30 seconds
-      useMySQLStorage: true
-      mysqlBatchSize: 10
+      maxRetryGoalEventPeriod: 86400 # 1 day
+      retryGoalEventInterval: 30 # 30 seconds
+      
+      # Data warehouse configuration - use global settings
+      dataWarehouseType: ${global.dataWarehouse.type}
+      dataWarehouseBatchSize: ${global.dataWarehouse.common.batchSize}
+      dataWarehouseTimezone: ${global.dataWarehouse.common.timezone}
+      
+      # MySQL configuration (active when dataWarehouseType: mysql)
+      mysql:
+        useMainConnection: ${global.dataWarehouse.mysql.useMainConnection}
+        host: ${global.dataWarehouse.mysql.host}
+        port: ${global.dataWarehouse.mysql.port}
+        user: ${global.dataWarehouse.mysql.user}
+        password: ${global.dataWarehouse.mysql.password}
+        database: ${global.dataWarehouse.mysql.database}
+      
+      # BigQuery configuration (for switching to BigQuery)
+      bigquery:
+        project: ${global.dataWarehouse.bigquery.project}
+        dataset: ${global.dataWarehouse.bigquery.dataset}
+        location: ${global.dataWarehouse.bigquery.location}
+      
+      # PostgreSQL configuration (for future use)
+      postgresql:
+        useMainConnection: ${global.dataWarehouse.postgresql.useMainConnection}
+        host: ${global.dataWarehouse.postgresql.host}
+        port: ${global.dataWarehouse.postgresql.port}
+        user: ${global.dataWarehouse.postgresql.user}
+        password: ${global.dataWarehouse.postgresql.password}
+        database: ${global.dataWarehouse.postgresql.database}
     goalCountEventOPSPersister:
       flushSize: 10
       flushInterval: 5

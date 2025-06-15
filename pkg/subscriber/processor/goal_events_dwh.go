@@ -60,9 +60,10 @@ type goalEvtWriter struct {
 }
 
 type GoalEventWriterOption struct {
-	UseMySQLStorage bool
-	MySQLClient     mysql.Client
-	BatchSize       int
+	DataWarehouseType string
+	MySQLClient       mysql.Client
+	PostgreSQLClient  interface{} // TODO: Add proper PostgreSQL client when implemented
+	BatchSize         int
 }
 
 func NewGoalEventWriter(
@@ -84,7 +85,8 @@ func NewGoalEventWriter(
 		option = options[0]
 	}
 
-	if option.UseMySQLStorage {
+	switch option.DataWarehouseType {
+	case "mysql":
 		if option.MySQLClient == nil {
 			return nil, errors.New("mysql client is required when using MySQL storage")
 		}
@@ -113,9 +115,16 @@ func NewGoalEventWriter(
 		}
 		w.StartRetryProcessor(ctx)
 		return w, nil
+	case "postgresql":
+		// TODO: Implement PostgreSQL support
+		return nil, errors.New("postgresql support for goal events not yet implemented")
+	case "bigquery":
+		// Fall through to BigQuery implementation below
+	default:
+		// Default to BigQuery for backward compatibility
 	}
 
-	// Default BigQuery implementation
+	// BigQuery implementation
 	evt := epproto.GoalEvent{}
 	goalWriter, err := writer.NewWriter(
 		ctx,

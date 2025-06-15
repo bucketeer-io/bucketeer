@@ -50,9 +50,10 @@ type evalEvtWriter struct {
 }
 
 type EvalEventWriterOption struct {
-	UseMySQLStorage bool
-	MySQLClient     mysql.Client
-	BatchSize       int
+	DataWarehouseType string
+	MySQLClient       mysql.Client
+	PostgreSQLClient  interface{} // TODO: Add proper PostgreSQL client when implemented
+	BatchSize         int
 }
 
 func NewEvalEventWriter(
@@ -70,7 +71,8 @@ func NewEvalEventWriter(
 		option = options[0]
 	}
 
-	if option.UseMySQLStorage {
+	switch option.DataWarehouseType {
+	case "mysql":
 		if option.MySQLClient == nil {
 			return nil, errors.New("mysql client is required when using MySQL storage")
 		}
@@ -84,9 +86,16 @@ func NewEvalEventWriter(
 			location:         location,
 			logger:           l,
 		}, nil
+	case "postgresql":
+		// TODO: Implement PostgreSQL support
+		return nil, errors.New("postgresql support for evaluation events not yet implemented")
+	case "bigquery":
+		// Fall through to BigQuery implementation below
+	default:
+		// Default to BigQuery for backward compatibility
 	}
 
-	// Default BigQuery implementation
+	// BigQuery implementation
 	evt := epproto.EvaluationEvent{}
 	evalQuery, err := writer.NewWriter(
 		ctx,

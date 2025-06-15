@@ -24,6 +24,7 @@ import (
 
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
@@ -151,7 +152,45 @@ type server struct {
 	pubSubRedisPoolSize             *int
 	pubSubRedisMinIdle              *int
 	pubSubRedisPartitionCount       *int
-	useMySQL                        *bool
+	dataWarehouseType               *string
+	dataWarehouseConfigPath         *string
+}
+
+type DataWarehouseConfig struct {
+	Type       string                        `yaml:"type"`
+	Common     DataWarehouseCommon           `yaml:"common"`
+	MySQL      DataWarehouseMySQLConfig      `yaml:"mysql"`
+	PostgreSQL DataWarehousePostgreSQLConfig `yaml:"postgresql"`
+	BigQuery   DataWarehouseBigQueryConfig   `yaml:"bigquery"`
+}
+
+type DataWarehouseCommon struct {
+	BatchSize int    `yaml:"batchSize"`
+	Timezone  string `yaml:"timezone"`
+}
+
+type DataWarehouseMySQLConfig struct {
+	UseMainConnection bool   `yaml:"useMainConnection"`
+	Host              string `yaml:"host"`
+	Port              int    `yaml:"port"`
+	User              string `yaml:"user"`
+	Password          string `yaml:"password"`
+	Database          string `yaml:"database"`
+}
+
+type DataWarehousePostgreSQLConfig struct {
+	UseMainConnection bool   `yaml:"useMainConnection"`
+	Host              string `yaml:"host"`
+	Port              int    `yaml:"port"`
+	User              string `yaml:"user"`
+	Password          string `yaml:"password"`
+	Database          string `yaml:"database"`
+}
+
+type DataWarehouseBigQueryConfig struct {
+	Project  string `yaml:"project"`
+	Dataset  string `yaml:"dataset"`
+	Location string `yaml:"location"`
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -299,10 +338,14 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"code-reference-service",
 			"bucketeer-code-reference-service address.",
 		).Default("localhost:9001").String(),
-		useMySQL: cmd.Flag(
-			"use-mysql",
-			"Use MySQL instead of BigQuery for event storage.",
-		).Default("false").Bool(),
+		dataWarehouseType: cmd.Flag(
+			"data-warehouse-type",
+			"Data warehouse type (bigquery, mysql, postgresql).",
+		).Default("bigquery").String(),
+		dataWarehouseConfigPath: cmd.Flag(
+			"data-warehouse-config-path",
+			"Path to data warehouse configuration file.",
+		).String(),
 		timezone:         cmd.Flag("timezone", "Time zone").Required().String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
@@ -354,6 +397,13 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 
 func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Logger) error {
 	registerer := metrics.DefaultRegisterer()
+
+	// dataWarehouse config
+	dataWarehouseConfig, err := s.readDataWarehouseConfig(ctx, logger)
+	if err != nil {
+		logger.Error("Failed to read dataWarehouse config", zap.Error(err))
+		return err
+	}
 
 	// oauth config
 	oAuthConfig, err := s.readOAuthConfig(ctx, logger)
@@ -420,20 +470,20 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	nonPersistentRedisV3Cache := cachev3.NewRedisCache(nonPersistentRedisClient)
 	// bigQueryQuerier
 	var bigQueryQuerier bqquerier.Client
-	if !*s.useMySQL {
-		bigQueryQuerier, err = s.createBigQueryQuerier(ctx, *s.project, *s.bigQueryDataLocation, registerer, logger)
+	if dataWarehouseConfig.Type == "bigquery" {
+		bigQueryQuerier, err = s.createBigQueryQuerier(ctx, *s.project, dataWarehouseConfig.BigQuery.Location, registerer, logger)
 		if err != nil {
 			logger.Error("Failed to create BigQuery client",
 				zap.Error(err),
 				zap.String("project", *s.project),
-				zap.String("location", *s.bigQueryDataLocation),
-				zap.String("data-set", *s.bigQueryDataSet),
+				zap.String("location", dataWarehouseConfig.BigQuery.Location),
+				zap.String("data-set", dataWarehouseConfig.BigQuery.Dataset),
 			)
 			return err
 		}
 	}
 	// bigQueryDataSet
-	bigQueryDataSet := *s.bigQueryDataSet
+	bigQueryDataSet := dataWarehouseConfig.BigQuery.Dataset
 	// location
 	location, err := locale.GetLocation(*s.timezone)
 	if err != nil {
@@ -622,7 +672,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		persistentRedisV3Cache,
 		location,
 		logger,
-		eventcounterapi.WithMySQL(*s.useMySQL),
+		eventcounterapi.WithDataWarehouseConfig(s.convertToAPIDataWarehouseConfig(dataWarehouseConfig)),
 	)
 	eventCounterServer := rpc.NewServer(eventCounterService, *s.certPath, *s.keyPath,
 		"event-counter-server",
@@ -804,7 +854,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()
-		if !*s.useMySQL {
+		if dataWarehouseConfig.Type == "bigquery" {
 			go bigQueryQuerier.Close()
 		}
 		go domainTopicPublisher.Stop()
@@ -1034,6 +1084,90 @@ func (s *server) createGatewayHandlers() []gatewayapi.HandlerRegistrar {
 		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
 			codeRefGrpcAddr := fmt.Sprintf("localhost:%d", *s.codeReferenceServicePort)
 			return coderefproto.RegisterCodeReferenceServiceHandlerFromEndpoint(ctx, mux, codeRefGrpcAddr, opts)
+		},
+	}
+}
+
+func (s *server) readDataWarehouseConfig(
+	ctx context.Context,
+	logger *zap.Logger,
+) (*DataWarehouseConfig, error) {
+	// If config path is provided, read from file
+	if *s.dataWarehouseConfigPath != "" {
+		bytes, err := os.ReadFile(*s.dataWarehouseConfigPath)
+		if err != nil {
+			logger.Error("Failed to read dataWarehouse config file",
+				zap.Error(err),
+				zap.String("path", *s.dataWarehouseConfigPath),
+			)
+			return nil, err
+		}
+		config := DataWarehouseConfig{}
+		if err = yaml.Unmarshal(bytes, &config); err != nil {
+			logger.Error("Failed to unmarshal dataWarehouse config",
+				zap.Error(err),
+			)
+			return nil, err
+		}
+		return &config, nil
+	}
+
+	// Fallback to environment variables / command line flags
+	config := &DataWarehouseConfig{
+		Type: *s.dataWarehouseType,
+		Common: DataWarehouseCommon{
+			BatchSize: 1000,
+			Timezone:  *s.timezone,
+		},
+	}
+
+	// Set default configurations based on type
+	switch config.Type {
+	case "mysql":
+		config.MySQL = DataWarehouseMySQLConfig{
+			UseMainConnection: true, // Default to using main connection
+		}
+	case "postgresql":
+		config.PostgreSQL = DataWarehousePostgreSQLConfig{
+			UseMainConnection: true, // Default to using main connection
+		}
+	case "bigquery":
+		config.BigQuery = DataWarehouseBigQueryConfig{
+			Dataset:  *s.bigQueryDataSet,
+			Location: *s.bigQueryDataLocation,
+		}
+	}
+
+	return config, nil
+}
+
+func (s *server) convertToAPIDataWarehouseConfig(config *DataWarehouseConfig) *eventcounterapi.DataWarehouseConfig {
+	return &eventcounterapi.DataWarehouseConfig{
+		Type: config.Type,
+		Common: eventcounterapi.DataWarehouseCommon{
+			BatchSize: config.Common.BatchSize,
+			Timezone:  config.Common.Timezone,
+		},
+		MySQL: eventcounterapi.DataWarehouseMySQLConfig{
+			UseMainConnection: config.MySQL.UseMainConnection,
+			Host:              config.MySQL.Host,
+			Port:              config.MySQL.Port,
+			User:              config.MySQL.User,
+			Password:          config.MySQL.Password,
+			Database:          config.MySQL.Database,
+		},
+		PostgreSQL: eventcounterapi.DataWarehousePostgreSQLConfig{
+			UseMainConnection: config.PostgreSQL.UseMainConnection,
+			Host:              config.PostgreSQL.Host,
+			Port:              config.PostgreSQL.Port,
+			User:              config.PostgreSQL.User,
+			Password:          config.PostgreSQL.Password,
+			Database:          config.PostgreSQL.Database,
+		},
+		BigQuery: eventcounterapi.DataWarehouseBigQueryConfig{
+			Project:  config.BigQuery.Project,
+			Dataset:  config.BigQuery.Dataset,
+			Location: config.BigQuery.Location,
 		},
 	}
 }

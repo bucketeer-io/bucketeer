@@ -2,7 +2,44 @@ global:
   image:
     tag: v1.3.0 # x-release-please-version
     imagePullSecrets:
-  useMySQL: true
+  
+  # Global data warehouse configuration
+  dataWarehouse:
+    type: bigquery  # Options: bigquery, mysql, postgresql
+    
+    # Common settings across all types
+    common:
+      batchSize: 1000
+      timezone: UTC
+    
+    # BigQuery configuration (used when type: bigquery)
+    bigquery:
+      project: ""
+      dataset: ""
+      location: ""
+      
+    # MySQL configuration (used when type: mysql)
+    mysql:
+      useMainConnection: true  # Use the main MySQL connection
+      # Or specify custom connection:
+      # host: ""
+      # port: 3306
+      # database: ""
+      # user: ""
+      # password: ""
+      
+    # PostgreSQL configuration (used when type: postgresql)
+    postgresql:
+      useMainConnection: true
+      # Or specify custom connection:
+      # host: ""
+      # port: 5432
+      # database: ""
+      # user: ""
+      # password: ""
+      # sslMode: require
+      # schema: public
+  
   pubsub:
     # Type of pubsub to use: redis-stream or google
     type: ""
