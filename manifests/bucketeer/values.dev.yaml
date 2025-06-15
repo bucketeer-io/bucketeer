@@ -503,35 +503,30 @@ subscriber:
       flushSize: 10
       flushInterval: 5
       flushTimeout: 30
-      
-      # Data warehouse configuration - use global settings
-      dataWarehouseType: ${global.dataWarehouse.type}
-      dataWarehouseBatchSize: ${global.dataWarehouse.common.batchSize}
-      dataWarehouseTimezone: ${global.dataWarehouse.common.timezone}
-      
-      # MySQL configuration (active when dataWarehouseType: mysql)
-      mysql:
-        useMainConnection: ${global.dataWarehouse.mysql.useMainConnection}
-        host: ${global.dataWarehouse.mysql.host}
-        port: ${global.dataWarehouse.mysql.port}
-        user: ${global.dataWarehouse.mysql.user}
-        password: ${global.dataWarehouse.mysql.password}
-        database: ${global.dataWarehouse.mysql.database}
-      
-      # BigQuery configuration (for switching to BigQuery)
-      bigquery:
-        project: ${global.dataWarehouse.bigquery.project}
-        dataset: ${global.dataWarehouse.bigquery.dataset}
-        location: ${global.dataWarehouse.bigquery.location}
-      
-      # PostgreSQL configuration (for future use)
-      postgresql:
-        useMainConnection: ${global.dataWarehouse.postgresql.useMainConnection}
-        host: ${global.dataWarehouse.postgresql.host}
-        port: ${global.dataWarehouse.postgresql.port}
-        user: ${global.dataWarehouse.postgresql.user}
-        password: ${global.dataWarehouse.postgresql.password}
-        database: ${global.dataWarehouse.postgresql.database}
+      # Data warehouse configuration will be injected from global settings by Helm template
+      dataWarehouse:
+        type: ""  # Will be set by template
+        common:
+          batchSize: 0  # Will be set by template
+          timezone: ""  # Will be set by template
+        mysql:
+          useMainConnection: false  # Will be set by template
+          host: ""  # Will be set by template
+          port: 0  # Will be set by template
+          user: ""  # Will be set by template
+          password: ""  # Will be set by template
+          database: ""  # Will be set by template
+        bigquery:
+          project: ""  # Will be set by template
+          dataset: ""  # Will be set by template
+          location: ""  # Will be set by template
+        postgresql:
+          useMainConnection: false  # Will be set by template
+          host: ""  # Will be set by template
+          port: 0  # Will be set by template
+          user: ""  # Will be set by template
+          password: ""  # Will be set by template
+          database: ""  # Will be set by template
     evaluationCountEventOPSPersister:
       flushSize: 10
       flushInterval: 5
@@ -542,35 +537,30 @@ subscriber:
       flushTimeout: 30
       maxRetryGoalEventPeriod: 86400 # 1 day
       retryGoalEventInterval: 30 # 30 seconds
-      
-      # Data warehouse configuration - use global settings
-      dataWarehouseType: ${global.dataWarehouse.type}
-      dataWarehouseBatchSize: ${global.dataWarehouse.common.batchSize}
-      dataWarehouseTimezone: ${global.dataWarehouse.common.timezone}
-      
-      # MySQL configuration (active when dataWarehouseType: mysql)
-      mysql:
-        useMainConnection: ${global.dataWarehouse.mysql.useMainConnection}
-        host: ${global.dataWarehouse.mysql.host}
-        port: ${global.dataWarehouse.mysql.port}
-        user: ${global.dataWarehouse.mysql.user}
-        password: ${global.dataWarehouse.mysql.password}
-        database: ${global.dataWarehouse.mysql.database}
-      
-      # BigQuery configuration (for switching to BigQuery)
-      bigquery:
-        project: ${global.dataWarehouse.bigquery.project}
-        dataset: ${global.dataWarehouse.bigquery.dataset}
-        location: ${global.dataWarehouse.bigquery.location}
-      
-      # PostgreSQL configuration (for future use)
-      postgresql:
-        useMainConnection: ${global.dataWarehouse.postgresql.useMainConnection}
-        host: ${global.dataWarehouse.postgresql.host}
-        port: ${global.dataWarehouse.postgresql.port}
-        user: ${global.dataWarehouse.postgresql.user}
-        password: ${global.dataWarehouse.postgresql.password}
-        database: ${global.dataWarehouse.postgresql.database}
+      # Data warehouse configuration will be injected from global settings by Helm template
+      dataWarehouse:
+        type: ""  # Will be set by template
+        common:
+          batchSize: 0  # Will be set by template
+          timezone: ""  # Will be set by template
+        mysql:
+          useMainConnection: false  # Will be set by template
+          host: ""  # Will be set by template
+          port: 0  # Will be set by template
+          user: ""  # Will be set by template
+          password: ""  # Will be set by template
+          database: ""  # Will be set by template
+        bigquery:
+          project: ""  # Will be set by template
+          dataset: ""  # Will be set by template
+          location: ""  # Will be set by template
+        postgresql:
+          useMainConnection: false  # Will be set by template
+          host: ""  # Will be set by template
+          port: 0  # Will be set by template
+          user: ""  # Will be set by template
+          password: ""  # Will be set by template
+          database: ""  # Will be set by template
     goalCountEventOPSPersister:
       flushSize: 10
       flushInterval: 5
