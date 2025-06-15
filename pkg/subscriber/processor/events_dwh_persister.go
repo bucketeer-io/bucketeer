@@ -82,14 +82,15 @@ type eventsDWHPersisterConfig struct {
 	RetryGoalEventInterval  int `json:"retryGoalEventInterval,omitempty"`
 
 	// Data warehouse configuration
-	DataWarehouseType      string `json:"dataWarehouseType"`
-	DataWarehouseBatchSize int    `json:"dataWarehouseBatchSize"`
-	DataWarehouseTimezone  string `json:"dataWarehouseTimezone"`
+	DataWarehouse DataWarehouseConfig `json:"dataWarehouse"`
+}
 
-	// Database-specific configs (only one will be populated based on type)
-	BigQuery   *BigQueryConfig   `json:"bigquery,omitempty"`
-	MySQL      *MySQLConfig      `json:"mysql,omitempty"`
-	PostgreSQL *PostgreSQLConfig `json:"postgresql,omitempty"`
+type DataWarehouseConfig struct {
+	Type       string                    `json:"type"`
+	Common     DataWarehouseCommonConfig `json:"common"`
+	BigQuery   BigQueryConfig            `json:"bigquery"`
+	MySQL      MySQLConfig               `json:"mysql"`
+	PostgreSQL PostgreSQLConfig          `json:"postgresql"`
 }
 
 type eventsDWHPersister struct {
@@ -136,24 +137,24 @@ func NewEventsDWHPersister(
 
 	// Determine the MySQL client to use for data warehouse operations
 	var dwhMySQLClient mysql.Client
-	if persisterConfig.DataWarehouseType == "mysql" && persisterConfig.MySQL != nil {
-		if persisterConfig.MySQL.UseMainConnection {
+	if persisterConfig.DataWarehouse.Type == "mysql" {
+		if persisterConfig.DataWarehouse.MySQL.UseMainConnection {
 			// Use the existing MySQL client from main application
 			dwhMySQLClient = mysqlClient
 			logger.Info("Using main MySQL connection for data warehouse")
 		} else {
 			// Create a new MySQL client with separate connection
-			dwhMySQLClient, err = createDedicatedMySQLClient(ctx, persisterConfig.MySQL, logger)
+			dwhMySQLClient, err = createDedicatedMySQLClient(ctx, &persisterConfig.DataWarehouse.MySQL, logger)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create dedicated MySQL client: %w", err)
 			}
 			logger.Info("Using dedicated MySQL connection for data warehouse",
-				zap.String("host", persisterConfig.MySQL.Host),
-				zap.String("database", persisterConfig.MySQL.Database),
+				zap.String("host", persisterConfig.DataWarehouse.MySQL.Host),
+				zap.String("database", persisterConfig.DataWarehouse.MySQL.Database),
 			)
 		}
 	} else {
-		// Default to main connection for non-MySQL types or when MySQL config is not specified
+		// Default to main connection for non-MySQL types
 		dwhMySQLClient = mysqlClient
 	}
 
@@ -163,7 +164,7 @@ func NewEventsDWHPersister(
 		logger:                   logger,
 	}
 	experimentsCache := cachev3.NewExperimentsCache(cachev3.NewRedisCache(redisClient))
-	location, err := locale.GetLocation(e.eventsDWHPersisterConfig.DataWarehouseTimezone)
+	location, err := locale.GetLocation(e.eventsDWHPersisterConfig.DataWarehouse.Common.Timezone)
 	if err != nil {
 		return nil, err
 	}
@@ -175,15 +176,13 @@ func NewEventsDWHPersister(
 		// Create evaluation event writer based on data warehouse type
 		var evalOptions []EvalEventWriterOption
 
-		switch persisterConfig.DataWarehouseType {
+		switch persisterConfig.DataWarehouse.Type {
 		case "mysql":
-			if persisterConfig.MySQL != nil {
-				evalOptions = append(evalOptions, EvalEventWriterOption{
-					DataWarehouseType: "mysql",
-					MySQLClient:       dwhMySQLClient,
-					BatchSize:         persisterConfig.DataWarehouseBatchSize,
-				})
-			}
+			evalOptions = append(evalOptions, EvalEventWriterOption{
+				DataWarehouseType: "mysql",
+				MySQLClient:       dwhMySQLClient,
+				BatchSize:         persisterConfig.DataWarehouse.Common.BatchSize,
+			})
 		case "postgresql":
 			// TODO: Add PostgreSQL support when implemented
 			logger.Warn("PostgreSQL support for evaluation events not yet implemented, falling back to BigQuery")
@@ -192,24 +191,14 @@ func NewEventsDWHPersister(
 		default:
 			return nil, fmt.Errorf(
 				"unsupported data warehouse type for evaluation events: %s",
-				persisterConfig.DataWarehouseType,
+				persisterConfig.DataWarehouse.Type,
 			)
 		}
 
-		// Get BigQuery configuration for fallback (even when using other databases)
-		var project, dataset string
-		var bigQueryBatchSize int
-
-		if persisterConfig.BigQuery != nil {
-			project = persisterConfig.BigQuery.Project
-			dataset = persisterConfig.BigQuery.Dataset
-			bigQueryBatchSize = persisterConfig.DataWarehouseBatchSize
-		} else {
-			// Use empty values when BigQuery is not configured
-			project = ""
-			dataset = ""
-			bigQueryBatchSize = persisterConfig.DataWarehouseBatchSize
-		}
+		// Get BigQuery configuration
+		project := persisterConfig.DataWarehouse.BigQuery.Project
+		dataset := persisterConfig.DataWarehouse.BigQuery.Dataset
+		bigQueryBatchSize := persisterConfig.DataWarehouse.Common.BatchSize
 
 		evalEventWriter, err := NewEvalEventWriter(
 			ctx,
@@ -233,40 +222,27 @@ func NewEventsDWHPersister(
 		// Create goal event writer based on data warehouse type
 		var goalOptions []GoalEventWriterOption
 
-		switch persisterConfig.DataWarehouseType {
+		switch persisterConfig.DataWarehouse.Type {
 		case "mysql":
-			if persisterConfig.MySQL != nil {
-				goalOptions = append(goalOptions, GoalEventWriterOption{
-					DataWarehouseType: "mysql",
-					MySQLClient:       dwhMySQLClient,
-					BatchSize:         persisterConfig.DataWarehouseBatchSize,
-				})
-			}
+			goalOptions = append(goalOptions, GoalEventWriterOption{
+				DataWarehouseType: "mysql",
+				MySQLClient:       dwhMySQLClient,
+				BatchSize:         persisterConfig.DataWarehouse.Common.BatchSize,
+			})
 		case "postgresql":
 			// TODO: Add PostgreSQL support when implemented
 			logger.Warn("PostgreSQL support for goal events not yet implemented, falling back to BigQuery")
 		case "bigquery":
 			// BigQuery is handled in the NewGoalEventWriter call below
 		default:
-			return nil, fmt.Errorf("unsupported data warehouse type for goal events: %s", persisterConfig.DataWarehouseType)
+			return nil, fmt.Errorf("unsupported data warehouse type for goal events: %s", persisterConfig.DataWarehouse.Type)
 		}
 
-		// Get BigQuery configuration for fallback (even when using other databases)
-		var project, dataset, location_str string
-		var bigQueryBatchSize int
-
-		if persisterConfig.BigQuery != nil {
-			project = persisterConfig.BigQuery.Project
-			dataset = persisterConfig.BigQuery.Dataset
-			location_str = persisterConfig.BigQuery.Location
-			bigQueryBatchSize = persisterConfig.DataWarehouseBatchSize
-		} else {
-			// Use empty values when BigQuery is not configured
-			project = ""
-			dataset = ""
-			location_str = ""
-			bigQueryBatchSize = persisterConfig.DataWarehouseBatchSize
-		}
+		// Get BigQuery configuration
+		project := persisterConfig.DataWarehouse.BigQuery.Project
+		dataset := persisterConfig.DataWarehouse.BigQuery.Dataset
+		location_str := persisterConfig.DataWarehouse.BigQuery.Location
+		bigQueryBatchSize := persisterConfig.DataWarehouse.Common.BatchSize
 
 		goalEventWriter, err := NewGoalEventWriter(
 			ctx,
@@ -470,39 +446,32 @@ func createDedicatedMySQLClient(ctx context.Context, config *MySQLConfig, logger
 // validateAndSetDefaults validates configuration and sets default values
 func (config *eventsDWHPersisterConfig) validateAndSetDefaults() error {
 	// Validate data warehouse type
-	if config.DataWarehouseType == "" {
-		return fmt.Errorf("dataWarehouseType is required")
+	if config.DataWarehouse.Type == "" {
+		return fmt.Errorf("dataWarehouse.type is required")
 	}
 
 	// Set default batch size if not specified
-	if config.DataWarehouseBatchSize == 0 {
-		config.DataWarehouseBatchSize = 1000 // default
+	if config.DataWarehouse.Common.BatchSize == 0 {
+		config.DataWarehouse.Common.BatchSize = 1000 // default
 	}
 
 	// Set default timezone if not specified
-	if config.DataWarehouseTimezone == "" {
-		config.DataWarehouseTimezone = "UTC" // default
+	if config.DataWarehouse.Common.Timezone == "" {
+		config.DataWarehouse.Common.Timezone = "UTC" // default
 	}
 
 	// Validate type-specific configuration
-	switch config.DataWarehouseType {
+	switch config.DataWarehouse.Type {
 	case "bigquery":
-		if config.BigQuery == nil {
-			return fmt.Errorf("bigquery configuration is required when dataWarehouseType is 'bigquery'")
-		}
-		if config.BigQuery.Project == "" || config.BigQuery.Dataset == "" {
+		if config.DataWarehouse.BigQuery.Project == "" || config.DataWarehouse.BigQuery.Dataset == "" {
 			return fmt.Errorf("bigquery project and dataset are required")
 		}
 	case "mysql":
-		if config.MySQL == nil {
-			return fmt.Errorf("mysql configuration is required when dataWarehouseType is 'mysql'")
-		}
+		// MySQL configuration is always present in the struct, no need to check for nil
 	case "postgresql":
-		if config.PostgreSQL == nil {
-			return fmt.Errorf("postgresql configuration is required when dataWarehouseType is 'postgresql'")
-		}
+		// PostgreSQL configuration is always present in the struct, no need to check for nil
 	default:
-		return fmt.Errorf("unsupported data warehouse type: %s", config.DataWarehouseType)
+		return fmt.Errorf("unsupported data warehouse type: %s", config.DataWarehouse.Type)
 	}
 
 	return nil
