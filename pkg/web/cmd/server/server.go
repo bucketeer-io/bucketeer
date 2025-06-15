@@ -471,7 +471,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// bigQueryQuerier
 	var bigQueryQuerier bqquerier.Client
 	if dataWarehouseConfig.Type == "bigquery" {
-		bigQueryQuerier, err = s.createBigQueryQuerier(ctx, *s.project, dataWarehouseConfig.BigQuery.Location, registerer, logger)
+		bigQueryQuerier, err = s.createBigQueryQuerier(
+			ctx, *s.project, dataWarehouseConfig.BigQuery.Location, registerer, logger,
+		)
 		if err != nil {
 			logger.Error("Failed to create BigQuery client",
 				zap.Error(err),
