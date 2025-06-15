@@ -47,6 +47,9 @@ spec:
         - name: env-js
           configMap:
             name: {{ template "web.name" . }}-env-js
+        - name: datawarehouse-config
+          configMap:
+            name: {{ template "web.fullname" . }}-datawarehouse-config
       {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "web.fullname" . }}
       {{- end }}
@@ -186,8 +189,10 @@ spec:
               value: /usr/local/service-token/token
             - name: BUCKETEER_WEB_EMAIL_FILTER
               value: "{{ .Values.env.emailFilter }}"
-            - name: BUCKETEER_WEB_USE_MYSQL
-              value: "{{ .Values.global.useMySQL }}"
+            - name: BUCKETEER_WEB_DATA_WAREHOUSE_TYPE
+              value: "{{ .Values.global.dataWarehouse.type }}"
+            - name: BUCKETEER_WEB_DATA_WAREHOUSE_CONFIG_PATH
+              value: "/usr/local/datawarehouse-config/datawarehouse.yaml"
             - name: BUCKETEER_WEB_WEBHOOK_BASE_URL
               value: "{{ .Values.webhook.baseURL }}"
             - name: BUCKETEER_WEB_WEBHOOK_KMS_RESOURCE_NAME
@@ -209,6 +214,9 @@ spec:
               readOnly: true
             - name: env-js
               mountPath: /usr/local/static/js
+              readOnly: true
+            - name: datawarehouse-config
+              mountPath: /usr/local/datawarehouse-config
               readOnly: true
           ports:
             - name: health-check

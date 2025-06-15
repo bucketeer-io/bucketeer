@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "web.fullname" . }}-datawarehouse-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "web.name" . }}
+    chart: {{ template "web.chart" . }}
+    release: {{ template "web.fullname" . }}
+    heritage: {{ .Release.Service }}
+data:
+  datawarehouse.yaml: |-
+    type: {{ .Values.global.dataWarehouse.type }}
+    common:
+      batchSize: {{ .Values.global.dataWarehouse.common.batchSize }}
+      timezone: {{ .Values.global.dataWarehouse.common.timezone }}
+    {{- if eq .Values.global.dataWarehouse.type "bigquery" }}
+    bigquery:
+      project: {{ .Values.global.dataWarehouse.bigquery.project | quote }}
+      dataset: {{ .Values.global.dataWarehouse.bigquery.dataset | quote }}
+      location: {{ .Values.global.dataWarehouse.bigquery.location | quote }}
+    {{- end }}
+    {{- if eq .Values.global.dataWarehouse.type "mysql" }}
+    mysql:
+      useMainConnection: {{ .Values.global.dataWarehouse.mysql.useMainConnection }}
+      {{- if not .Values.global.dataWarehouse.mysql.useMainConnection }}
+      {{- if .Values.global.dataWarehouse.mysql.host }}
+      host: {{ .Values.global.dataWarehouse.mysql.host | quote }}
+      {{- end }}
+      {{- if .Values.global.dataWarehouse.mysql.port }}
+      port: {{ .Values.global.dataWarehouse.mysql.port }}
+      {{- end }}
+      {{- if .Values.global.dataWarehouse.mysql.database }}
+      database: {{ .Values.global.dataWarehouse.mysql.database | quote }}
+      {{- end }}
+      {{- if .Values.global.dataWarehouse.mysql.user }}
+      user: {{ .Values.global.dataWarehouse.mysql.user | quote }}
+      {{- end }}
+      {{- if .Values.global.dataWarehouse.mysql.password }}
+      password: {{ .Values.global.dataWarehouse.mysql.password | quote }}
+      {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- if eq .Values.global.dataWarehouse.type "postgresql" }}
+    postgresql:
+      useMainConnection: {{ .Values.global.dataWarehouse.postgresql.useMainConnection }}
+      {{- if not .Values.global.dataWarehouse.postgresql.useMainConnection }}
+      {{- if .Values.global.dataWarehouse.postgresql.host }}
+      host: {{ .Values.global.dataWarehouse.postgresql.host | quote }}
+      {{- end }}
+      {{- if .Values.global.dataWarehouse.postgresql.port }}
+      port: {{ .Values.global.dataWarehouse.postgresql.port }}
+      {{- end }}
+      {{- if .Values.global.dataWarehouse.postgresql.database }}
+      database: {{ .Values.global.dataWarehouse.postgresql.database | quote }}
+      {{- end }}
+      {{- if .Values.global.dataWarehouse.postgresql.user }}
+      user: {{ .Values.global.dataWarehouse.postgresql.user | quote }}
+      {{- end }}
+      {{- if .Values.global.dataWarehouse.postgresql.password }}
+      password: {{ .Values.global.dataWarehouse.postgresql.password | quote }}
+      {{- end }}
+      {{- end }}
+    {{- end }} 
