@@ -11,6 +11,7 @@ import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { covertFileToUint8ToBase64 } from 'utils/converts';
 import { IconInfo } from '@icons';
+import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
@@ -247,6 +248,11 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                       onChange={value =>
                         field.onChange(value.map(tag => tag.value))
                       }
+                      noOptionsMessage={() => (
+                        <UserMessage
+                          message={t('form:no-opts-type-to-create')}
+                        />
+                      )}
                     />
                   </Form.Control>
                   <Form.Message />

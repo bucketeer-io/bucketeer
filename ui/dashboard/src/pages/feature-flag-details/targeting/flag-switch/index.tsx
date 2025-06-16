@@ -42,7 +42,7 @@ const FlagSwitch = ({
   return (
     <div
       className={cn(
-        'flex items-center justify-between w-full p-5 rounded-lg shadow-card',
+        'flex items-center justify-between w-full p-5 rounded-lg shadow-card-secondary',
         {
           'p-4': !enabledWatch
         }

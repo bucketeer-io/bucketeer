@@ -37,7 +37,7 @@ const Checkbox = forwardRef(
         <div className="flex-center size-5">
           <CheckboxPrimitive.Root
             className={cn(
-              'flex-center size-[18px] rounded border border-gray-500 transition-colors duration-200',
+              'flex-center size-5 rounded border border-gray-500 transition-colors duration-200',
               {
                 'border-primary-500 bg-primary-500': checked
               }

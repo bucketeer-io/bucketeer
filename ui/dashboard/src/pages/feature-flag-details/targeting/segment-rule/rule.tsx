@@ -29,6 +29,7 @@ import {
   situationOptions
 } from '../constants';
 import { TargetingSchema } from '../form-schema';
+import { UserMessage } from '../individual-rule';
 import { RuleClauseType } from '../types';
 
 interface Props {
@@ -398,6 +399,11 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                                   );
                                   field.onChange(values);
                                 }}
+                                noOptionsMessage={() => (
+                                  <UserMessage
+                                    message={t('no-opts-type-to-create')}
+                                  />
+                                )}
                               />
                             )}
                           </Form.Control>

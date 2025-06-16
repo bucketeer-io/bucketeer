@@ -22,7 +22,7 @@ interface Props {
   individualRules: IndividualRuleItem[];
 }
 
-const UserMessage = ({ message }: { message: ReactNode }) => {
+export const UserMessage = ({ message }: { message: ReactNode }) => {
   return <div className={'text-center text-gray-500'}>{message}</div>;
 };
 
@@ -111,7 +111,9 @@ const IndividualRule = ({ individualRules }: Props) => {
                               <UserMessage
                                 message={
                                   <Trans
-                                    i18nKey={'form:feature-flags.add-user-id'}
+                                    i18nKey={
+                                      'form:feature-flags.value-already-targeted'
+                                    }
                                     values={{
                                       value: v,
                                       targetedIn: variationName
@@ -131,7 +133,9 @@ const IndividualRule = ({ individualRules }: Props) => {
                           return (
                             <UserMessage
                               message={t(
-                                `form:feature-flags.${inputValue ? 'already-targeted' : 'add-user-id'}`
+                                inputValue
+                                  ? `form:feature-flags.already-targeted`
+                                  : 'form:no-opts-type-to-create'
                               )}
                             />
                           );

@@ -314,5 +314,10 @@
       "audience": "All end-users will be evaluated against the targeting rules. If no rules match, the default rule will determine which variation they receive."
     },
     "individual-target": "Individual Target"
-  }
+  },
+  "create-tag-name": "Create \"{{name}}\"",
+  "select-or-create-tags": "Select or create new tags",
+  "no-opts-type-to-create": "No options. Type to create a new one.",
+  "type-to-create": "Type to create a new one.",
+  "search-or-create-tags": "Search or create new tags"
 }

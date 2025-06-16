@@ -47,7 +47,7 @@ import {
   handleGetDefaultRuleStrategy
 } from './utils';
 
-const TargetingDivider = () => (
+export const TargetingDivider = () => (
   <Divider vertical className="!h-6 w-px self-center my-4 !border-gray-400" />
 );
 
@@ -341,8 +341,11 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
                   <TargetingDivider />
                   <TargetSegmentRule
                     feature={feature}
-                    features={features}
+                    features={activeFeatures}
                     segmentRules={segmentRules}
+                    isDisableAddPrerequisite={prerequisitesWatch?.length > 0}
+                    isDisableAddIndividualRules={individualRules?.length > 0}
+                    onAddRule={onAddRule}
                     segmentRulesRemove={segmentRulesRemove}
                     segmentRulesSwap={handleSwapSegmentRule}
                   />
