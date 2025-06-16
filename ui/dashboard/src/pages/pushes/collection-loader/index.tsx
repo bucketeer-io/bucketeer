@@ -2,6 +2,7 @@ import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
 import { Push } from '@types';
+import { isNotEmpty } from 'utils/data-type';
 import { useFetchTags } from 'pages/members/collection-loader';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
@@ -17,12 +18,14 @@ const CollectionLoader = ({
   filters,
   setFilters,
   onAdd,
-  onActions
+  onActions,
+  onClearFilters
 }: {
   filters: PushFilters;
   setFilters: (values: Partial<PushFilters>) => void;
   onAdd: () => void;
   onActions: (item: Push, type: PushActionsType) => void;
+  onClearFilters: () => void;
 }) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -63,8 +66,9 @@ const CollectionLoader = ({
   const emptyState = (
     <CollectionEmpty
       data={pushes}
+      isFilter={isNotEmpty(filters?.disabled)}
       searchQuery={filters.searchQuery}
-      onClear={() => setFilters({ searchQuery: '' })}
+      onClear={onClearFilters}
       empty={<EmptyCollection onAdd={onAdd} />}
     />
   );

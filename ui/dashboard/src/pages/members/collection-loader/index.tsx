@@ -2,6 +2,7 @@ import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
 import { Account } from '@types';
+import { isNotEmpty } from 'utils/data-type';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
@@ -19,18 +20,21 @@ const CollectionLoader = ({
   filters,
   setFilters,
   onAdd,
-  onActions
+  onActions,
+  onClearFilters
 }: {
   filters: MembersFilters;
   setFilters: (values: Partial<MembersFilters>) => void;
   onAdd?: () => void;
   onActions: (item: Account, type: MemberActionsType) => void;
+  onClearFilters: () => void;
 }) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
-    organizationId: currentEnvironment.organizationId
+    organizationId: currentEnvironment.organizationId,
+    entityType: 'ACCOUNT'
   });
   const tagList = tagCollection?.tags || [];
   const columns = useColumns({ onActions, tags: tagList });
@@ -63,8 +67,9 @@ const CollectionLoader = ({
   const emptyState = (
     <CollectionEmpty
       data={accounts}
+      isFilter={isNotEmpty(filters?.disabled ?? filters?.organizationRole)}
       searchQuery={filters.searchQuery}
-      onClear={() => setFilters({ searchQuery: '' })}
+      onClear={onClearFilters}
       empty={<EmptyCollection onAdd={onAdd} />}
     />
   );

@@ -104,7 +104,8 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
-    organizationId: currentEnvironment.organizationId
+    organizationId: currentEnvironment.organizationId,
+    entityType: 'ACCOUNT'
   });
 
   const form = useForm<AddMemberForm>({

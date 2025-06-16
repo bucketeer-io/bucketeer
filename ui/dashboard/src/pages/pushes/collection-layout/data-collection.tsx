@@ -14,7 +14,6 @@ import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
 import ExpandableTag from 'elements/expandable-tag';
 import NameWithTooltip from 'elements/name-with-tooltip';
-import TruncationWithTooltip from '../../../elements/truncation-with-tooltip';
 import { PushActionsType } from '../types';
 
 export const useColumns = ({
@@ -84,19 +83,24 @@ export const useColumns = ({
       maxSize: 250,
       cell: ({ row }) => {
         const push = row.original;
+        const id = `env-${push.id}`;
         return (
-          <TruncationWithTooltip
-            elementId={`env-${push.id}`}
-            maxSize={250}
-            content={push.environmentName}
-          >
-            <div
-              id={`env-${push.id}`}
-              className={'text-gray-700 typo-para-medium w-fit'}
-            >
-              {push.environmentName}
-            </div>
-          </TruncationWithTooltip>
+          <NameWithTooltip
+            id={id}
+            align="center"
+            content={
+              <NameWithTooltip.Content content={push.environmentName} id={id} />
+            }
+            trigger={
+              <NameWithTooltip.Trigger
+                id={id}
+                name={push.environmentName}
+                maxLines={1}
+                haveAction={false}
+              />
+            }
+            maxLines={1}
+          />
         );
       }
     },

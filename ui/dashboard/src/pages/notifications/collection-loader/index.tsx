@@ -2,6 +2,7 @@ import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
 import { Notification } from '@types';
+import { isNotEmpty } from 'utils/data-type';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
@@ -16,12 +17,14 @@ const CollectionLoader = ({
   filters,
   setFilters,
   onAdd,
-  onActions
+  onActions,
+  onClearFilters
 }: {
   filters: NotificationFilters;
   setFilters: (values: Partial<NotificationFilters>) => void;
   onAdd: () => void;
   onActions: (item: Notification, type: NotificationActionsType) => void;
+  onClearFilters: () => void;
 }) => {
   const columns = useColumns({ onActions });
   const { consoleAccount } = useAuth();
@@ -55,8 +58,9 @@ const CollectionLoader = ({
   const emptyState = (
     <CollectionEmpty
       data={apiKeys}
+      isFilter={isNotEmpty(filters?.disabled)}
       searchQuery={filters.searchQuery}
-      onClear={() => setFilters({ searchQuery: '' })}
+      onClear={onClearFilters}
       empty={<EmptyCollection onAdd={onAdd} />}
     />
   );
