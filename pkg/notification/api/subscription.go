@@ -715,13 +715,28 @@ func (s *NotificationService) ListSubscriptions(
 	req *notificationproto.ListSubscriptionsRequest,
 ) (*notificationproto.ListSubscriptionsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId,
-		localizer)
-	if err != nil {
-		return nil, err
+	var filterEnvironmentIDs []string
+	if req.OrganizationId != "" {
+		// console v3
+		editor, err := s.checkOrganizationRole(
+			ctx, accountproto.AccountV2_Role_Organization_MEMBER,
+			req.OrganizationId, localizer)
+		if err != nil {
+			return nil, err
+		}
+		filterEnvironmentIDs = s.getAllowedEnvironments(req.EnvironmentIds, editor)
+	} else {
+		// console v2
+		_, err := s.checkEnvironmentRole(
+			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+			req.EnvironmentId,
+			localizer)
+		if err != nil {
+			return nil, err
+		}
+		filterEnvironmentIDs = append(filterEnvironmentIDs, req.EnvironmentId)
 	}
+
 	orders, err := s.newSubscriptionListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
 		s.logger.Error(
@@ -738,7 +753,7 @@ func (s *NotificationService) ListSubscriptions(
 	subscriptions, cursor, totalCount, err := s.listSubscriptionsMySQL(
 		ctx,
 		req.OrganizationId,
-		req.EnvironmentId,
+		filterEnvironmentIDs,
 		req.SourceTypes,
 		disabled,
 		req.SearchKeyword,
@@ -755,6 +770,34 @@ func (s *NotificationService) ListSubscriptions(
 		Cursor:        cursor,
 		TotalCount:    totalCount,
 	}, nil
+}
+
+func (s *NotificationService) getAllowedEnvironments(
+	reqEnvironmentIDs []string,
+	editor *eventproto.Editor,
+) []string {
+	filterEnvironmentIDs := make([]string, 0)
+	if editor.OrganizationRole == accountproto.AccountV2_Role_Organization_ADMIN || editor.IsAdmin {
+		// if the user is an admin, no need to filter environments.
+		filterEnvironmentIDs = append(filterEnvironmentIDs, reqEnvironmentIDs...)
+	} else {
+		// only show API keys in allowed environments for member.
+		if len(reqEnvironmentIDs) > 0 {
+			for _, id := range reqEnvironmentIDs {
+				for _, e := range editor.EnvironmentRoles {
+					if e.EnvironmentId == id {
+						filterEnvironmentIDs = append(filterEnvironmentIDs, id)
+						break
+					}
+				}
+			}
+		} else {
+			for _, e := range editor.EnvironmentRoles {
+				filterEnvironmentIDs = append(filterEnvironmentIDs, e.EnvironmentId)
+			}
+		}
+	}
+	return filterEnvironmentIDs
 }
 
 func (s *NotificationService) newSubscriptionListOrders(
@@ -808,7 +851,7 @@ func (s *NotificationService) ListEnabledSubscriptions(
 	subscriptions, cursor, _, err := s.listSubscriptionsMySQL(
 		ctx,
 		"",
-		req.EnvironmentId,
+		[]string{req.EnvironmentId},
 		req.SourceTypes,
 		&disabled,
 		"",
@@ -829,7 +872,7 @@ func (s *NotificationService) ListEnabledSubscriptions(
 func (s *NotificationService) listSubscriptionsMySQL(
 	ctx context.Context,
 	organizationId string,
-	environmentId string,
+	environmentIDs []string,
 	sourceTypes []notificationproto.Subscription_SourceType,
 	disabled *bool,
 	searchKeyword string,
@@ -839,6 +882,7 @@ func (s *NotificationService) listSubscriptionsMySQL(
 	localizer locale.Localizer,
 ) ([]*notificationproto.Subscription, string, int64, error) {
 	var filters []*mysql.FilterV2
+	var inFilters []*mysql.InFilter
 	if organizationId != "" {
 		// console v3
 		filters = append(filters, &mysql.FilterV2{
@@ -846,13 +890,25 @@ func (s *NotificationService) listSubscriptionsMySQL(
 			Operator: mysql.OperatorEqual,
 			Value:    organizationId,
 		})
+		if len(environmentIDs) > 0 {
+			envIDs := make([]interface{}, 0, len(environmentIDs))
+			for _, id := range environmentIDs {
+				envIDs = append(envIDs, id)
+			}
+			inFilters = append(inFilters, &mysql.InFilter{
+				Column: "sub.environment_id",
+				Values: envIDs,
+			})
+		}
 	} else {
 		// console v2
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "sub.environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    environmentId,
-		})
+		if len(environmentIDs) > 0 {
+			filters = append(filters, &mysql.FilterV2{
+				Column:   "sub.environment_id",
+				Operator: mysql.OperatorEqual,
+				Value:    environmentIDs[0],
+			})
+		}
 	}
 	if disabled != nil {
 		filters = append(filters, &mysql.FilterV2{
@@ -899,7 +955,7 @@ func (s *NotificationService) listSubscriptionsMySQL(
 		Limit:       limit,
 		Offset:      offset,
 		Filters:     filters,
-		InFilters:   nil,
+		InFilters:   inFilters,
 		NullFilters: nil,
 		JSONFilters: jsonFilters,
 		SearchQuery: seachQuery,

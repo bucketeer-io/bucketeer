@@ -786,6 +786,11 @@ export class ListSubscriptionsRequest extends jspb.Message {
   getOrganizationId(): string;
   setOrganizationId(value: string): void;
 
+  clearEnvironmentIdsList(): void;
+  getEnvironmentIdsList(): Array<string>;
+  setEnvironmentIdsList(value: Array<string>): void;
+  addEnvironmentIds(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListSubscriptionsRequest.AsObject;
   static toObject(
@@ -820,6 +825,7 @@ export namespace ListSubscriptionsRequest {
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     environmentId: string;
     organizationId: string;
+    environmentIdsList: Array<string>;
   };
 
   export interface OrderByMap {

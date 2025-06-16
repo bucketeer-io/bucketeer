@@ -276,6 +276,35 @@ func (q *SearchQuery) SQLString() (sql string, args []interface{}) {
 	return
 }
 
+type OrFilter struct {
+	Queries []WherePart
+}
+
+func NewOrFilter(queries []WherePart) WherePart {
+	return &OrFilter{
+		Queries: queries,
+	}
+}
+
+func (f *OrFilter) SQLString() (sql string, args []interface{}) {
+	if len(f.Queries) == 0 {
+		return "", nil
+	}
+	var sb strings.Builder
+	sb.WriteString("(")
+	for i, q := range f.Queries {
+		if i != 0 {
+			sb.WriteString(" OR ")
+		}
+		qSQL, qArgs := q.SQLString()
+		sb.WriteString(qSQL)
+		args = append(args, qArgs...)
+	}
+	sb.WriteString(")")
+	sql = sb.String()
+	return
+}
+
 func ConstructWhereSQLString(wps []WherePart) (sql string, args []interface{}) {
 	var sb strings.Builder
 	if len(wps) == 0 {
@@ -426,6 +455,7 @@ type ListOptions struct {
 	NullFilters []*NullFilter
 	JSONFilters []*JSONFilter
 	SearchQuery *SearchQuery
+	OrFilters   []*OrFilter
 	Orders      []*Order
 	Offset      int
 }
@@ -454,6 +484,11 @@ func (lo *ListOptions) CreateWhereParts() []WherePart {
 	}
 	if lo.SearchQuery != nil {
 		whereParts = append(whereParts, lo.SearchQuery)
+	}
+	if lo.OrFilters != nil {
+		for _, f := range lo.OrFilters {
+			whereParts = append(whereParts, f)
+		}
 	}
 	return whereParts
 }

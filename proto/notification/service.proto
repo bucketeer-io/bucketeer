@@ -138,8 +138,9 @@ message ListSubscriptionsRequest {
   OrderDirection order_direction = 6;
   string search_keyword = 7;
   google.protobuf.BoolValue disabled = 8;
-  string environment_id = 9;
+  string environment_id = 9 [deprecated = true];
   string organization_id = 10 [(google.api.field_behavior) = REQUIRED];
+  repeated string environment_ids = 11;
 }
 
 message ListSubscriptionsResponse {

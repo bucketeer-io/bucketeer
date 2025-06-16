@@ -6830,6 +6830,13 @@ paths:
           in: query
           required: false
           type: boolean
+        - name: environmentIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
       tags:
         - push
   /v1/schedule_flag:
@@ -7731,6 +7738,13 @@ paths:
           in: query
           required: true
           type: string
+        - name: environmentIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
       tags:
         - subscription
   /v1/summarize_mau_counts:
@@ -8087,10 +8101,10 @@ definitions:
       avatarImage:
         type: string
         format: byte
-        title: this is not save in auditlog table
+        title: this is not saved in the auditlog table
       avatarFileType:
         type: string
-        title: this is not save in auditlog table
+        title: this is not saved in the auditlog table
   ExperimentGoalReference:
     type: object
     properties:
@@ -9963,10 +9977,19 @@ definitions:
       avatarImage:
         type: string
         format: byte
-        title: this is not save in auditlog table
+        title: this is not saved in the auditlog table
       avatarFileType:
         type: string
-        title: this is not save in auditlog table
+        title: this is not saved in the auditlog table
+      environmentRoles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2EnvironmentRole'
+        title: this is not saved in the auditlog table
+      organizationRole:
+        $ref: '#/definitions/AccountV2RoleOrganization'
+        title: this is not saved in the auditlog table
   domainEventEntityType:
     type: string
     enum:
