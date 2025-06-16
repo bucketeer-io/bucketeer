@@ -243,15 +243,14 @@ processors:
 
 onDemandProcessors:
   evaluationCountEventDWHPersister:
-    flushSize: 20
-    flushInterval: 5
-    flushTimeout: 30
+    flushSize: 100
+    flushInterval: 10
+    flushTimeout: 10
     # Data warehouse configuration will be injected from global settings by Helm template
     dataWarehouse:
       type: ""  # Will be set by template
-      common:
-        batchSize: 0  # Will be set by template
-        timezone: ""  # Will be set by template
+      batchSize: 0  # Will be set by template
+      timezone: ""  # Will be set by template
       mysql:
         useMainConnection: false  # Will be set by template
         host: ""  # Will be set by template
@@ -263,48 +262,31 @@ onDemandProcessors:
         project: ""  # Will be set by template
         dataset: ""  # Will be set by template
         location: ""  # Will be set by template
-      postgresql:
-        useMainConnection: false  # Will be set by template
-        host: ""  # Will be set by template
-        port: 0  # Will be set by template
-        user: ""  # Will be set by template
-        password: ""  # Will be set by template
-        database: ""  # Will be set by template
-  evaluationCountEventOPSPersister:
-    flushSize: 20
-    flushInterval: 5
-    flushTimeout: 30
-  goalCountEventDWHPersister:
-    flushSize: 20
-    flushInterval: 5
-    flushTimeout: 30
-    MaxRetryGoalEventPeriod: 86400 # 1 day
-    RetryGoalEventInterval: 300 # 5 minutes
-    # Data warehouse configuration will be injected from global settings by Helm template
-    dataWarehouse:
-      type: ""  # Will be set by template
-      common:
-        batchSize: 0  # Will be set by template
-        timezone: ""  # Will be set by template
-      mysql:
-        useMainConnection: false  # Will be set by template
-        host: ""  # Will be set by template
-        port: 0  # Will be set by template
-        user: ""  # Will be set by template
-        password: ""  # Will be set by template
-        database: ""  # Will be set by template
-      bigquery:
-        project: ""  # Will be set by template
-        dataset: ""  # Will be set by template
-        location: ""  # Will be set by template
-      postgresql:
-        useMainConnection: false  # Will be set by template
-        host: ""  # Will be set by template
-        port: 0  # Will be set by template
-        user: ""  # Will be set by template
-        password: ""  # Will be set by template
-        database: ""  # Will be set by template
   goalCountEventOPSPersister:
-    flushSize: 20
-    flushInterval: 5
-    flushTimeout: 30
+    flushSize: 100
+    flushInterval: 10
+    flushTimeout: 10
+  evaluationCountEventOPSPersister:
+    flushSize: 100
+    flushInterval: 10
+    flushTimeout: 10
+  goalCountEventDWHPersister:
+    flushSize: 100
+    flushInterval: 10
+    flushTimeout: 10
+    # Data warehouse configuration will be injected from global settings by Helm template
+    dataWarehouse:
+      type: ""  # Will be set by template
+      batchSize: 0  # Will be set by template
+      timezone: ""  # Will be set by template
+      mysql:
+        useMainConnection: false  # Will be set by template
+        host: ""  # Will be set by template
+        port: 0  # Will be set by template
+        user: ""  # Will be set by template
+        password: ""  # Will be set by template
+        database: ""  # Will be set by template
+      bigquery:
+        project: ""  # Will be set by template
+        dataset: ""  # Will be set by template
+        location: ""  # Will be set by template

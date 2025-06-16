@@ -41,8 +41,8 @@ data:
     {{- range $name, $config := .Values.onDemandProcessors }}
     {{- if $config.dataWarehouse }}
     {{- $_ := set $config.dataWarehouse "type" $.Values.global.dataWarehouse.type }}
-    {{- $_ := set $config.dataWarehouse.common "batchSize" $.Values.global.dataWarehouse.common.batchSize }}
-    {{- $_ := set $config.dataWarehouse.common "timezone" $.Values.global.dataWarehouse.common.timezone }}
+    {{- $_ := set $config.dataWarehouse "batchSize" $.Values.global.dataWarehouse.batchSize }}
+    {{- $_ := set $config.dataWarehouse "timezone" $.Values.global.dataWarehouse.timezone }}
     {{- $_ := set $config.dataWarehouse.mysql "useMainConnection" $.Values.global.dataWarehouse.mysql.useMainConnection }}
     {{- $_ := set $config.dataWarehouse.mysql "host" $.Values.global.dataWarehouse.mysql.host }}
     {{- $_ := set $config.dataWarehouse.mysql "port" $.Values.global.dataWarehouse.mysql.port }}
@@ -52,12 +52,6 @@ data:
     {{- $_ := set $config.dataWarehouse.bigquery "project" $.Values.global.dataWarehouse.bigquery.project }}
     {{- $_ := set $config.dataWarehouse.bigquery "dataset" $.Values.global.dataWarehouse.bigquery.dataset }}
     {{- $_ := set $config.dataWarehouse.bigquery "location" $.Values.global.dataWarehouse.bigquery.location }}
-    {{- $_ := set $config.dataWarehouse.postgresql "useMainConnection" $.Values.global.dataWarehouse.postgresql.useMainConnection }}
-    {{- $_ := set $config.dataWarehouse.postgresql "host" $.Values.global.dataWarehouse.postgresql.host }}
-    {{- $_ := set $config.dataWarehouse.postgresql "port" $.Values.global.dataWarehouse.postgresql.port }}
-    {{- $_ := set $config.dataWarehouse.postgresql "user" $.Values.global.dataWarehouse.postgresql.user }}
-    {{- $_ := set $config.dataWarehouse.postgresql "password" $.Values.global.dataWarehouse.postgresql.password }}
-    {{- $_ := set $config.dataWarehouse.postgresql "database" $.Values.global.dataWarehouse.postgresql.database }}
     {{- end }}
     {{- end }}
     {{ toJson .Values.onDemandProcessors }}

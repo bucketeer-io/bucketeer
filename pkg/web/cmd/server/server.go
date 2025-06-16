@@ -157,16 +157,17 @@ type server struct {
 }
 
 type DataWarehouseConfig struct {
-	Type       string                        `yaml:"type"`
-	Common     DataWarehouseCommon           `yaml:"common"`
-	MySQL      DataWarehouseMySQLConfig      `yaml:"mysql"`
-	PostgreSQL DataWarehousePostgreSQLConfig `yaml:"postgresql"`
-	BigQuery   DataWarehouseBigQueryConfig   `yaml:"bigquery"`
+	Type      string                      `yaml:"type"`
+	BatchSize int                         `yaml:"batchSize"`
+	Timezone  string                      `yaml:"timezone"`
+	BigQuery  DataWarehouseBigQueryConfig `yaml:"bigquery"`
+	MySQL     DataWarehouseMySQLConfig    `yaml:"mysql"`
 }
 
-type DataWarehouseCommon struct {
-	BatchSize int    `yaml:"batchSize"`
-	Timezone  string `yaml:"timezone"`
+type DataWarehouseBigQueryConfig struct {
+	Project  string `yaml:"project"`
+	Dataset  string `yaml:"dataset"`
+	Location string `yaml:"location"`
 }
 
 type DataWarehouseMySQLConfig struct {
@@ -176,21 +177,6 @@ type DataWarehouseMySQLConfig struct {
 	User              string `yaml:"user"`
 	Password          string `yaml:"password"`
 	Database          string `yaml:"database"`
-}
-
-type DataWarehousePostgreSQLConfig struct {
-	UseMainConnection bool   `yaml:"useMainConnection"`
-	Host              string `yaml:"host"`
-	Port              int    `yaml:"port"`
-	User              string `yaml:"user"`
-	Password          string `yaml:"password"`
-	Database          string `yaml:"database"`
-}
-
-type DataWarehouseBigQueryConfig struct {
-	Project  string `yaml:"project"`
-	Dataset  string `yaml:"dataset"`
-	Location string `yaml:"location"`
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -340,7 +326,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		).Default("localhost:9001").String(),
 		dataWarehouseType: cmd.Flag(
 			"data-warehouse-type",
-			"Data warehouse type (bigquery, mysql, postgresql).",
+			"Data warehouse type (bigquery, mysql).",
 		).Default("bigquery").String(),
 		dataWarehouseConfigPath: cmd.Flag(
 			"data-warehouse-config-path",
@@ -1116,21 +1102,15 @@ func (s *server) readDataWarehouseConfig(
 
 	// Fallback to environment variables / command line flags
 	config := &DataWarehouseConfig{
-		Type: *s.dataWarehouseType,
-		Common: DataWarehouseCommon{
-			BatchSize: 1000,
-			Timezone:  *s.timezone,
-		},
+		Type:      *s.dataWarehouseType,
+		BatchSize: 1000,
+		Timezone:  *s.timezone,
 	}
 
 	// Set default configurations based on type
 	switch config.Type {
 	case "mysql":
 		config.MySQL = DataWarehouseMySQLConfig{
-			UseMainConnection: true, // Default to using main connection
-		}
-	case "postgresql":
-		config.PostgreSQL = DataWarehousePostgreSQLConfig{
 			UseMainConnection: true, // Default to using main connection
 		}
 	case "bigquery":
@@ -1145,11 +1125,9 @@ func (s *server) readDataWarehouseConfig(
 
 func (s *server) convertToAPIDataWarehouseConfig(config *DataWarehouseConfig) *eventcounterapi.DataWarehouseConfig {
 	return &eventcounterapi.DataWarehouseConfig{
-		Type: config.Type,
-		Common: eventcounterapi.DataWarehouseCommon{
-			BatchSize: config.Common.BatchSize,
-			Timezone:  config.Common.Timezone,
-		},
+		Type:      config.Type,
+		BatchSize: config.BatchSize,
+		Timezone:  config.Timezone,
 		MySQL: eventcounterapi.DataWarehouseMySQLConfig{
 			UseMainConnection: config.MySQL.UseMainConnection,
 			Host:              config.MySQL.Host,
@@ -1157,14 +1135,6 @@ func (s *server) convertToAPIDataWarehouseConfig(config *DataWarehouseConfig) *e
 			User:              config.MySQL.User,
 			Password:          config.MySQL.Password,
 			Database:          config.MySQL.Database,
-		},
-		PostgreSQL: eventcounterapi.DataWarehousePostgreSQLConfig{
-			UseMainConnection: config.PostgreSQL.UseMainConnection,
-			Host:              config.PostgreSQL.Host,
-			Port:              config.PostgreSQL.Port,
-			User:              config.PostgreSQL.User,
-			Password:          config.PostgreSQL.Password,
-			Database:          config.PostgreSQL.Database,
 		},
 		BigQuery: eventcounterapi.DataWarehouseBigQueryConfig{
 			Project:  config.BigQuery.Project,

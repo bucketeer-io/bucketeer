@@ -62,7 +62,6 @@ type goalEvtWriter struct {
 type GoalEventWriterOption struct {
 	DataWarehouseType string
 	MySQLClient       mysql.Client
-	PostgreSQLClient  interface{} // TODO: Add proper PostgreSQL client when implemented
 	BatchSize         int
 }
 
@@ -115,9 +114,7 @@ func NewGoalEventWriter(
 		}
 		w.StartRetryProcessor(ctx)
 		return w, nil
-	case "postgresql":
-		// TODO: Implement PostgreSQL support
-		return nil, errors.New("postgresql support for goal events not yet implemented")
+
 	case "bigquery":
 		// Fall through to BigQuery implementation below
 	default:

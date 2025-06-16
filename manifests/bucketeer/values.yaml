@@ -5,40 +5,26 @@ global:
   
   # Global data warehouse configuration
   dataWarehouse:
-    type: bigquery  # Options: bigquery, mysql, postgresql
-    
-    # Common settings across all types
-    common:
-      batchSize: 1000
-      timezone: UTC
+    # Data warehouse type configuration
+    # Supported types: bigquery, mysql
+    type: bigquery  # Options: bigquery, mysql
+    batchSize: 1000
+    timezone: "UTC"
     
     # BigQuery configuration (used when type: bigquery)
     bigquery:
       project: ""
       dataset: ""
-      location: ""
-      
+      location: "US"
+    
     # MySQL configuration (used when type: mysql)
     mysql:
-      useMainConnection: true  # Use the main MySQL connection
-      # Or specify custom connection:
-      # host: ""
-      # port: 3306
-      # database: ""
-      # user: ""
-      # password: ""
-      
-    # PostgreSQL configuration (used when type: postgresql)
-    postgresql:
       useMainConnection: true
-      # Or specify custom connection:
-      # host: ""
-      # port: 5432
-      # database: ""
-      # user: ""
-      # password: ""
-      # sslMode: require
-      # schema: public
+      host: ""
+      port: 3306
+      user: ""
+      password: ""
+      database: ""
   
   pubsub:
     # Type of pubsub to use: redis-stream or google

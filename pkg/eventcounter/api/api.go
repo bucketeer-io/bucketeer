@@ -66,16 +66,17 @@ const (
 )
 
 type DataWarehouseConfig struct {
-	Type       string                        `yaml:"type"`
-	Common     DataWarehouseCommon           `yaml:"common"`
-	MySQL      DataWarehouseMySQLConfig      `yaml:"mysql"`
-	PostgreSQL DataWarehousePostgreSQLConfig `yaml:"postgresql"`
-	BigQuery   DataWarehouseBigQueryConfig   `yaml:"bigquery"`
+	Type      string                      `yaml:"type"`
+	BatchSize int                         `yaml:"batchSize"`
+	Timezone  string                      `yaml:"timezone"`
+	BigQuery  DataWarehouseBigQueryConfig `yaml:"bigquery"`
+	MySQL     DataWarehouseMySQLConfig    `yaml:"mysql"`
 }
 
-type DataWarehouseCommon struct {
-	BatchSize int    `yaml:"batchSize"`
-	Timezone  string `yaml:"timezone"`
+type DataWarehouseBigQueryConfig struct {
+	Project  string `yaml:"project"`
+	Dataset  string `yaml:"dataset"`
+	Location string `yaml:"location"`
 }
 
 type DataWarehouseMySQLConfig struct {
@@ -85,21 +86,6 @@ type DataWarehouseMySQLConfig struct {
 	User              string `yaml:"user"`
 	Password          string `yaml:"password"`
 	Database          string `yaml:"database"`
-}
-
-type DataWarehousePostgreSQLConfig struct {
-	UseMainConnection bool   `yaml:"useMainConnection"`
-	Host              string `yaml:"host"`
-	Port              int    `yaml:"port"`
-	User              string `yaml:"user"`
-	Password          string `yaml:"password"`
-	Database          string `yaml:"database"`
-}
-
-type DataWarehouseBigQueryConfig struct {
-	Project  string `yaml:"project"`
-	Dataset  string `yaml:"dataset"`
-	Location string `yaml:"location"`
 }
 
 var (
@@ -205,17 +191,6 @@ func NewEventCounterService(
 				zap.String("database", dopts.dataWarehouseConfig.MySQL.Database),
 			)
 			eventStorage = v2ecstorage.NewMySQLEventStorage(customMySQLClient, dopts.logger)
-		}
-	case "postgresql":
-		// Use the main MySQL client if useMainConnection is true
-		// Note: PostgreSQL support would need a separate client implementation
-		if dopts.dataWarehouseConfig.PostgreSQL.UseMainConnection || dopts.dataWarehouseConfig.PostgreSQL.Host == "" {
-			dopts.logger.Info("PostgreSQL data warehouse using main MySQL connection (PostgreSQL client not implemented)")
-			eventStorage = v2ecstorage.NewMySQLEventStorage(mc, dopts.logger)
-		} else {
-			// TODO: Create custom PostgreSQL client with the specified connection details
-			dopts.logger.Info("Custom PostgreSQL connection for data warehouse not yet implemented, using main MySQL connection")
-			eventStorage = v2ecstorage.NewMySQLEventStorage(mc, dopts.logger)
 		}
 	case "bigquery":
 		eventStorage = v2ecstorage.NewEventStorage(b, bigQueryDataSet, dopts.logger)

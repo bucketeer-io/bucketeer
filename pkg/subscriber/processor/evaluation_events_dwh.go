@@ -52,7 +52,6 @@ type evalEvtWriter struct {
 type EvalEventWriterOption struct {
 	DataWarehouseType string
 	MySQLClient       mysql.Client
-	PostgreSQLClient  interface{} // TODO: Add proper PostgreSQL client when implemented
 	BatchSize         int
 }
 
@@ -86,9 +85,7 @@ func NewEvalEventWriter(
 			location:         location,
 			logger:           l,
 		}, nil
-	case "postgresql":
-		// TODO: Implement PostgreSQL support
-		return nil, errors.New("postgresql support for evaluation events not yet implemented")
+
 	case "bigquery":
 		// Fall through to BigQuery implementation below
 	default:

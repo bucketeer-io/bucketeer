@@ -11,9 +11,8 @@ metadata:
 data:
   datawarehouse.yaml: |-
     type: {{ .Values.global.dataWarehouse.type }}
-    common:
-      batchSize: {{ .Values.global.dataWarehouse.common.batchSize }}
-      timezone: {{ .Values.global.dataWarehouse.common.timezone }}
+    batchSize: {{ .Values.global.dataWarehouse.batchSize }}
+    timezone: {{ .Values.global.dataWarehouse.timezone }}
     {{- if eq .Values.global.dataWarehouse.type "bigquery" }}
     bigquery:
       project: {{ .Values.global.dataWarehouse.bigquery.project | quote }}
@@ -41,24 +40,4 @@ data:
       {{- end }}
       {{- end }}
     {{- end }}
-    {{- if eq .Values.global.dataWarehouse.type "postgresql" }}
-    postgresql:
-      useMainConnection: {{ .Values.global.dataWarehouse.postgresql.useMainConnection }}
-      {{- if not .Values.global.dataWarehouse.postgresql.useMainConnection }}
-      {{- if .Values.global.dataWarehouse.postgresql.host }}
-      host: {{ .Values.global.dataWarehouse.postgresql.host | quote }}
-      {{- end }}
-      {{- if .Values.global.dataWarehouse.postgresql.port }}
-      port: {{ .Values.global.dataWarehouse.postgresql.port }}
-      {{- end }}
-      {{- if .Values.global.dataWarehouse.postgresql.database }}
-      database: {{ .Values.global.dataWarehouse.postgresql.database | quote }}
-      {{- end }}
-      {{- if .Values.global.dataWarehouse.postgresql.user }}
-      user: {{ .Values.global.dataWarehouse.postgresql.user | quote }}
-      {{- end }}
-      {{- if .Values.global.dataWarehouse.postgresql.password }}
-      password: {{ .Values.global.dataWarehouse.postgresql.password | quote }}
-      {{- end }}
-      {{- end }}
-    {{- end }} 
+ 

@@ -37,13 +37,6 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
-// Common configuration for all data warehouse types
-type DataWarehouseCommonConfig struct {
-	Type      string `json:"type"` // bigquery, mysql, postgresql
-	BatchSize int    `json:"batchSize"`
-	Timezone  string `json:"timezone"`
-}
-
 // BigQuery specific configuration
 type BigQueryConfig struct {
 	Project  string `json:"project"`
@@ -54,23 +47,11 @@ type BigQueryConfig struct {
 // MySQL specific configuration
 type MySQLConfig struct {
 	UseMainConnection bool   `json:"useMainConnection"`
-	Host              string `json:"host,omitempty"`
-	Port              int    `json:"port,omitempty"`
-	Database          string `json:"database,omitempty"`
-	User              string `json:"user,omitempty"`
-	Password          string `json:"password,omitempty"`
-}
-
-// PostgreSQL specific configuration
-type PostgreSQLConfig struct {
-	UseMainConnection bool   `json:"useMainConnection"`
-	Host              string `json:"host,omitempty"`
-	Port              int    `json:"port,omitempty"`
-	Database          string `json:"database,omitempty"`
-	User              string `json:"user,omitempty"`
-	Password          string `json:"password,omitempty"`
-	SSLMode           string `json:"sslMode,omitempty"`
-	Schema            string `json:"schema,omitempty"`
+	Host              string `json:"host"`
+	Port              int    `json:"port"`
+	User              string `json:"user"`
+	Password          string `json:"password"`
+	Database          string `json:"database"`
 }
 
 type eventsDWHPersisterConfig struct {
@@ -86,11 +67,14 @@ type eventsDWHPersisterConfig struct {
 }
 
 type DataWarehouseConfig struct {
-	Type       string                    `json:"type"`
-	Common     DataWarehouseCommonConfig `json:"common"`
-	BigQuery   BigQueryConfig            `json:"bigquery"`
-	MySQL      MySQLConfig               `json:"mysql"`
-	PostgreSQL PostgreSQLConfig          `json:"postgresql"`
+	Type      string `json:"type"` // bigquery, mysql
+	BatchSize int    `json:"batchSize"`
+	Timezone  string `json:"timezone"`
+
+	// BigQuery specific configuration
+	BigQuery BigQueryConfig `json:"bigquery"`
+	// MySQL specific configuration
+	MySQL MySQLConfig `json:"mysql"`
 }
 
 type eventsDWHPersister struct {
@@ -164,7 +148,7 @@ func NewEventsDWHPersister(
 		logger:                   logger,
 	}
 	experimentsCache := cachev3.NewExperimentsCache(cachev3.NewRedisCache(redisClient))
-	location, err := locale.GetLocation(e.eventsDWHPersisterConfig.DataWarehouse.Common.Timezone)
+	location, err := locale.GetLocation(e.eventsDWHPersisterConfig.DataWarehouse.Timezone)
 	if err != nil {
 		return nil, err
 	}
@@ -181,11 +165,8 @@ func NewEventsDWHPersister(
 			evalOptions = append(evalOptions, EvalEventWriterOption{
 				DataWarehouseType: "mysql",
 				MySQLClient:       dwhMySQLClient,
-				BatchSize:         persisterConfig.DataWarehouse.Common.BatchSize,
+				BatchSize:         persisterConfig.DataWarehouse.BatchSize,
 			})
-		case "postgresql":
-			// TODO: Add PostgreSQL support when implemented
-			logger.Warn("PostgreSQL support for evaluation events not yet implemented, falling back to BigQuery")
 		case "bigquery":
 			// BigQuery is handled in the NewEvalEventWriter call below
 		default:
@@ -198,7 +179,7 @@ func NewEventsDWHPersister(
 		// Get BigQuery configuration
 		project := persisterConfig.DataWarehouse.BigQuery.Project
 		dataset := persisterConfig.DataWarehouse.BigQuery.Dataset
-		bigQueryBatchSize := persisterConfig.DataWarehouse.Common.BatchSize
+		bigQueryBatchSize := persisterConfig.DataWarehouse.BatchSize
 
 		evalEventWriter, err := NewEvalEventWriter(
 			ctx,
@@ -227,11 +208,8 @@ func NewEventsDWHPersister(
 			goalOptions = append(goalOptions, GoalEventWriterOption{
 				DataWarehouseType: "mysql",
 				MySQLClient:       dwhMySQLClient,
-				BatchSize:         persisterConfig.DataWarehouse.Common.BatchSize,
+				BatchSize:         persisterConfig.DataWarehouse.BatchSize,
 			})
-		case "postgresql":
-			// TODO: Add PostgreSQL support when implemented
-			logger.Warn("PostgreSQL support for goal events not yet implemented, falling back to BigQuery")
 		case "bigquery":
 			// BigQuery is handled in the NewGoalEventWriter call below
 		default:
@@ -242,7 +220,7 @@ func NewEventsDWHPersister(
 		project := persisterConfig.DataWarehouse.BigQuery.Project
 		dataset := persisterConfig.DataWarehouse.BigQuery.Dataset
 		location_str := persisterConfig.DataWarehouse.BigQuery.Location
-		bigQueryBatchSize := persisterConfig.DataWarehouse.Common.BatchSize
+		bigQueryBatchSize := persisterConfig.DataWarehouse.BatchSize
 
 		goalEventWriter, err := NewGoalEventWriter(
 			ctx,
@@ -451,13 +429,13 @@ func (config *eventsDWHPersisterConfig) validateAndSetDefaults() error {
 	}
 
 	// Set default batch size if not specified
-	if config.DataWarehouse.Common.BatchSize == 0 {
-		config.DataWarehouse.Common.BatchSize = 1000 // default
+	if config.DataWarehouse.BatchSize == 0 {
+		config.DataWarehouse.BatchSize = 1000 // default
 	}
 
 	// Set default timezone if not specified
-	if config.DataWarehouse.Common.Timezone == "" {
-		config.DataWarehouse.Common.Timezone = "UTC" // default
+	if config.DataWarehouse.Timezone == "" {
+		config.DataWarehouse.Timezone = "UTC" // default
 	}
 
 	// Validate type-specific configuration
@@ -468,8 +446,6 @@ func (config *eventsDWHPersisterConfig) validateAndSetDefaults() error {
 		}
 	case "mysql":
 		// MySQL configuration is always present in the struct, no need to check for nil
-	case "postgresql":
-		// PostgreSQL configuration is always present in the struct, no need to check for nil
 	default:
 		return fmt.Errorf("unsupported data warehouse type: %s", config.DataWarehouse.Type)
 	}
