@@ -26,6 +26,7 @@ import (
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
 	v2ss "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2"
@@ -1034,10 +1035,72 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
 					proto.Subscription_DOMAIN_EVENT_SUBSCRIPTION,
 				},
+				EnvironmentId: "ns0",
+			},
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc:          "success: filter by environmentIDs",
+			isSystemAdmin: false,
+			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
+			setup: func(s *NotificationService) {
+				s.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						Email:            "email",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "ns0",
+								Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+							},
+							{
+								EnvironmentId: "ns1",
+								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+							},
+						},
+					},
+				}, nil)
+				s.subscriptionStorage.(*storagemock.MockSubscriptionStorage).EXPECT().ListSubscriptions(
+					gomock.Any(), gomock.Any(),
+				).Return([]*proto.Subscription{
+					{
+						Id:            "key-0",
+						Name:          "sname",
+						EnvironmentId: "ns0",
+					},
+					{
+						Id:            "key-1",
+						Name:          "sname1",
+						EnvironmentId: "ns1",
+					},
+				}, 2, int64(2), nil)
+			},
+			input: &proto.ListSubscriptionsRequest{
+				PageSize: 2,
+				Cursor:   "",
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					proto.Subscription_DOMAIN_EVENT_SUBSCRIPTION,
+				},
 				EnvironmentId:  "ns0",
 				OrganizationId: "org-0",
 			},
-			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			expected: &proto.ListSubscriptionsResponse{Subscriptions: []*proto.Subscription{
+				{
+					Id:            "key-0",
+					Name:          "sname",
+					EnvironmentId: "ns0",
+				},
+				{
+					Id:            "key-1",
+					Name:          "sname1",
+					EnvironmentId: "ns1",
+				},
+			}, Cursor: "2", TotalCount: 2},
+			expectedErr: nil,
 		},
 		{
 			desc:          "success",
@@ -1056,8 +1119,7 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
 					proto.Subscription_DOMAIN_EVENT_SUBSCRIPTION,
 				},
-				EnvironmentId:  "ns0",
-				OrganizationId: "org-0",
+				EnvironmentId: "ns0",
 			},
 			expected:    &proto.ListSubscriptionsResponse{Subscriptions: []*proto.Subscription{}, Cursor: "0"},
 			expectedErr: nil,

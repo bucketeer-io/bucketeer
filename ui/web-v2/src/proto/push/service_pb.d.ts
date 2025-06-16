@@ -126,6 +126,11 @@ export class ListPushesRequest extends jspb.Message {
   getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
+  clearEnvironmentIdsList(): void;
+  getEnvironmentIdsList(): Array<string>;
+  setEnvironmentIdsList(value: Array<string>): void;
+  addEnvironmentIds(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListPushesRequest.AsObject;
   static toObject(
@@ -157,6 +162,7 @@ export namespace ListPushesRequest {
     environmentId: string;
     organizationId: string;
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    environmentIdsList: Array<string>;
   };
 
   export interface OrderByMap {
