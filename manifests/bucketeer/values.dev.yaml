@@ -505,20 +505,20 @@ subscriber:
       flushTimeout: 30
       # Data warehouse configuration will be injected from global settings by Helm template
       dataWarehouse:
-        type: ""  # Will be set by template
-        batchSize: 0  # Will be set by template
-        timezone: ""  # Will be set by template
+        type: ""  
+        batchSize: 0  
+        timezone: ""  
         mysql:
-          useMainConnection: false  # Will be set by template
-          host: ""  # Will be set by template
-          port: 0  # Will be set by template
-          user: ""  # Will be set by template
-          password: ""  # Will be set by template
-          database: ""  # Will be set by template
+          useMainConnection: false  
+          host: ""  
+          port: 0  
+          user: ""  
+          password: ""  
+          database: ""  
         bigquery:
-          project: ""  # Will be set by template
-          dataset: ""  # Will be set by template
-          location: ""  # Will be set by template
+          project: ""  
+          dataset: ""  
+          location: ""  
     evaluationCountEventOPSPersister:
       flushSize: 10
       flushInterval: 5
@@ -531,20 +531,20 @@ subscriber:
       retryGoalEventInterval: 30 # 30 seconds
       # Data warehouse configuration will be injected from global settings by Helm template
       dataWarehouse:
-        type: ""  # Will be set by template
-        batchSize: 0  # Will be set by template
-        timezone: ""  # Will be set by template
+        type: ""  
+        batchSize: 0  
+        timezone: ""  
         mysql:
-          useMainConnection: false  # Will be set by template
-          host: ""  # Will be set by template
-          port: 0  # Will be set by template
-          user: ""  # Will be set by template
-          password: ""  # Will be set by template
-          database: ""  # Will be set by template
+          useMainConnection: false  
+          host: ""  
+          port: 0  
+          user: ""  
+          password: ""  
+          database: ""  
         bigquery:
-          project: ""  # Will be set by template
-          dataset: ""  # Will be set by template
-          location: ""  # Will be set by template
+          project: ""  
+          dataset: ""  
+          location: ""  
     goalCountEventOPSPersister:
       flushSize: 10
       flushInterval: 5
