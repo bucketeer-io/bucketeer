@@ -19,16 +19,14 @@ import (
 	"fmt"
 	"time"
 
-	auditlogclient "github.com/bucketeer-io/bucketeer/pkg/auditlog/client"
-
-	"go.uber.org/zap"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	auditlogclient "github.com/bucketeer-io/bucketeer/pkg/auditlog/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	coderefclient "github.com/bucketeer-io/bucketeer/pkg/coderef/client"

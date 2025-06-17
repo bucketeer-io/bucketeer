@@ -20,8 +20,6 @@ import (
 	"fmt"
 	"time"
 
-	auditlogclient "github.com/bucketeer-io/bucketeer/pkg/auditlog/client"
-
 	"github.com/golang/protobuf/ptypes"
 	"go.opencensus.io/trace"
 	"go.uber.org/zap"
@@ -33,6 +31,7 @@ import (
 
 	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	auditlogclient "github.com/bucketeer-io/bucketeer/pkg/auditlog/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	coderefclient "github.com/bucketeer-io/bucketeer/pkg/coderef/client"
