@@ -2,7 +2,7 @@ import axiosClient from '@api/axios-client';
 import { Push } from '@types';
 
 export interface PushCreatorPayload {
-  tags: string[];
+  tags?: string[];
   name: string;
   fcmServiceAccount: Uint8Array | string;
   environmentId: string;
