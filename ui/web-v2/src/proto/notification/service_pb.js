@@ -4527,7 +4527,7 @@ proto.bucketeer.notification.GetSubscriptionResponse.prototype.hasSubscription =
  * @private {!Array<number>}
  * @const
  */
-proto.bucketeer.notification.ListSubscriptionsRequest.repeatedFields_ = [4];
+proto.bucketeer.notification.ListSubscriptionsRequest.repeatedFields_ = [4, 11];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -4576,7 +4576,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           (f = msg.getDisabled()) &&
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
         environmentId: jspb.Message.getFieldWithDefault(msg, 9, ''),
-        organizationId: jspb.Message.getFieldWithDefault(msg, 10, '')
+        organizationId: jspb.Message.getFieldWithDefault(msg, 10, ''),
+        environmentIdsList:
+          (f = jspb.Message.getRepeatedField(msg, 11)) == null ? undefined : f
       };
 
     if (includeInstance) {
@@ -4669,6 +4671,10 @@ proto.bucketeer.notification.ListSubscriptionsRequest.deserializeBinaryFromReade
           var value = /** @type {string} */ (reader.readString());
           msg.setOrganizationId(value);
           break;
+        case 11:
+          var value = /** @type {string} */ (reader.readString());
+          msg.addEnvironmentIds(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -4740,6 +4746,10 @@ proto.bucketeer.notification.ListSubscriptionsRequest.serializeBinaryToWriter =
     f = message.getOrganizationId();
     if (f.length > 0) {
       writer.writeString(10, f);
+    }
+    f = message.getEnvironmentIdsList();
+    if (f.length > 0) {
+      writer.writeRepeatedString(11, f);
     }
   };
 
@@ -4980,6 +4990,45 @@ proto.bucketeer.notification.ListSubscriptionsRequest.prototype.getOrganizationI
 proto.bucketeer.notification.ListSubscriptionsRequest.prototype.setOrganizationId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 10, value);
+  };
+
+/**
+ * repeated string environment_ids = 11;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.notification.ListSubscriptionsRequest.prototype.getEnvironmentIdsList =
+  function () {
+    return /** @type {!Array<string>} */ (
+      jspb.Message.getRepeatedField(this, 11)
+    );
+  };
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.notification.ListSubscriptionsRequest} returns this
+ */
+proto.bucketeer.notification.ListSubscriptionsRequest.prototype.setEnvironmentIdsList =
+  function (value) {
+    return jspb.Message.setField(this, 11, value || []);
+  };
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.notification.ListSubscriptionsRequest} returns this
+ */
+proto.bucketeer.notification.ListSubscriptionsRequest.prototype.addEnvironmentIds =
+  function (value, opt_index) {
+    return jspb.Message.addToRepeatedField(this, 11, value, opt_index);
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.notification.ListSubscriptionsRequest} returns this
+ */
+proto.bucketeer.notification.ListSubscriptionsRequest.prototype.clearEnvironmentIdsList =
+  function () {
+    return this.setEnvironmentIdsList([]);
   };
 
 /**

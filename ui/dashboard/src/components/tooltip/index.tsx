@@ -13,6 +13,8 @@ export type TooltipProps = {
   asChild?: boolean;
   sideOffset?: number;
   triggerCls?: string;
+  side?: 'top' | 'right' | 'bottom' | 'left';
+  showArrow?: boolean;
 };
 
 const TooltipProvider = TooltipPrimitive.Provider;
@@ -32,7 +34,7 @@ const TooltipContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        'data-[state=delayed-open]:data-[side=top]:animate-slideDownAndFade data-[state=delayed-open]:data-[side=right]:animate-slideLeftAndFade data-[state=delayed-open]:data-[side=left]:animate-slideRightAndFade data-[state=delayed-open]:data-[side=bottom]:animate-slideUpAndFade select-none rounded px-3 py-1.5 text-para-medium will-change-[transform,opacity] bg-gray-700 text-white z-50',
+        'data-[state=delayed-open]:data-[side=top]:animate-slideDownAndFade data-[state=delayed-open]:data-[side=right]:animate-slideLeftAndFade data-[state=delayed-open]:data-[side=left]:animate-slideRightAndFade data-[state=delayed-open]:data-[side=bottom]:animate-slideUpAndFade rounded px-3 py-1.5 text-para-medium will-change-[transform,opacity] bg-gray-700 text-white z-50',
         className
       )}
       {...props}
@@ -53,7 +55,9 @@ const Tooltip = forwardRef(
       alignOffset = 0,
       asChild = true,
       sideOffset = 5,
-      triggerCls
+      triggerCls,
+      side = 'top',
+      showArrow = true
     }: TooltipProps,
     ref: Ref<HTMLDivElement>
   ) => {
@@ -75,9 +79,10 @@ const Tooltip = forwardRef(
               sideOffset={sideOffset}
               alignOffset={alignOffset}
               align={align}
+              side={side}
             >
               {content}
-              <TooltipArrow className="fill-gray-700" />
+              {showArrow && <TooltipArrow className="fill-gray-700" />}
             </TooltipContent>
           )}
         </TooltipRoot>

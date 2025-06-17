@@ -8,6 +8,7 @@ import compact from 'lodash/compact';
 import { Push, Tag } from '@types';
 import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
+import { IconTrash } from '@icons';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
@@ -153,6 +154,11 @@ export const useColumns = ({
                 label: `${t('table:popover.edit-push')}`,
                 icon: IconEditOutlined,
                 value: 'EDIT'
+              },
+              {
+                label: `${t('table:popover.delete-push')}`,
+                icon: IconTrash,
+                value: 'DELETE'
               }
             ])}
             icon={IconMoreHorizOutlined}

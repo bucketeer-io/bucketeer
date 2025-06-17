@@ -374,59 +374,74 @@ export const FlagOperationsElement = ({
 }) => {
   const { t } = useTranslation(['table']);
 
-  const operationType: FlagOperationType | null = useMemo(() => {
-    if (rollouts?.find(item => item.featureId === featureId))
-      return FlagOperationType.ROLLOUT;
-    const operation = autoOpsRules?.find(item => item.featureId === featureId);
-    if (operation?.opsType === 'SCHEDULE') return FlagOperationType.SCHEDULED;
-    if (operation?.opsType === 'EVENT_RATE')
-      return FlagOperationType.KILL_SWITCH;
-    return null;
+  const operationTypes: FlagOperationType[] = useMemo(() => {
+    const results: FlagOperationType[] = [];
+    const waitingRunningStatus = ['WAITING', 'RUNNING'];
+    if (
+      rollouts?.find(
+        item =>
+          item.featureId === featureId &&
+          waitingRunningStatus.includes(item.status)
+      )
+    )
+      results.push(FlagOperationType.ROLLOUT);
+    const operations = autoOpsRules?.filter(
+      ({ featureId: id, opsType, autoOpsStatus }) =>
+        id === featureId &&
+        opsType !== 'TYPE_UNKNOWN' &&
+        waitingRunningStatus.includes(autoOpsStatus)
+    );
+    operations.forEach(
+      o =>
+        !results.includes(o.opsType as FlagOperationType) &&
+        results.push(o.opsType as FlagOperationType)
+    );
+    return results;
   }, [autoOpsRules, rollouts, featureId]);
 
-  if (!operationType) return <></>;
+  if (operationTypes.length === 0) return <></>;
 
   return (
     <div className="flex items-center gap-x-2">
-      {operationType === FlagOperationType.ROLLOUT && (
-        <Tooltip
-          asChild={false}
-          trigger={
-            <FlagIconWrapper
-              icon={IconFlagOperation}
-              color="accent-pink-500"
-              className="bg-accent-pink-50"
-            />
-          }
-          content={t('feature-flags.progressive-description')}
-        />
-      )}
-      {operationType === FlagOperationType.SCHEDULED && (
-        <Tooltip
-          asChild={false}
-          trigger={
-            <FlagIconWrapper
-              icon={IconCalendar}
-              color="primary-500"
-              className="bg-primary-50"
-            />
-          }
-          content={t('feature-flags.scheduled-description')}
-        />
-      )}
-      {operationType === FlagOperationType.KILL_SWITCH && (
-        <Tooltip
-          asChild={false}
-          trigger={
-            <FlagIconWrapper
-              icon={IconOperationArrow}
-              color="accent-blue-500"
-              className="bg-accent-blue-50"
-            />
-          }
-          content={t('feature-flags.kill-description')}
-        />
-      )}
+      {operationTypes.map((item, index) => {
+        const isRollout = item === FlagOperationType.ROLLOUT;
+        const isSchedule = item === FlagOperationType.SCHEDULE;
+
+        return (
+          <Tooltip
+            key={index}
+            asChild={false}
+            trigger={
+              <FlagIconWrapper
+                icon={
+                  isSchedule
+                    ? IconCalendar
+                    : isRollout
+                      ? IconOperationArrow
+                      : IconFlagOperation
+                }
+                color={
+                  isSchedule
+                    ? 'primary-500'
+                    : isRollout
+                      ? 'accent-blue-500'
+                      : 'accent-pink-500'
+                }
+                className={
+                  isSchedule
+                    ? 'bg-primary-50'
+                    : isRollout
+                      ? 'bg-accent-blue-50'
+                      : 'bg-accent-pink-50'
+                }
+              />
+            }
+            content={t(
+              `feature-flags.${isSchedule ? 'scheduled-description' : isRollout ? 'progressive-description' : 'kill-description'}`
+            )}
+          />
+        );
+      })}
     </div>
   );
 };

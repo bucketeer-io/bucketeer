@@ -922,7 +922,7 @@ func TestEvaluateFeatures(t *testing.T) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, errors.New("error"))
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("error"))
 			},
 			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
@@ -1188,7 +1188,7 @@ func TestEvaluateFeatures(t *testing.T) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, errors.New("error"))
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.Feature{}, 0, int64(0), nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
@@ -1342,7 +1342,7 @@ func TestEvaluateFeatures(t *testing.T) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, errors.New("error"))
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.Feature{}, 0, int64(0), nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
@@ -1447,7 +1447,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, errors.New("error"))
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("error"))
 			},
 			input: &featureproto.DebugEvaluateFeaturesRequest{
@@ -1753,7 +1753,7 @@ func TestDebugEvaluateFeatures(t *testing.T) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, errors.New("error"))
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.Feature{
 					{
 						Id: "feature-id-1",
@@ -5384,7 +5384,7 @@ func TestUpdateFeature(t *testing.T) {
 					require.NoError(t, err)
 				}).Return(nil)
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().ListFeatures(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.Feature{
 					{
 						Id: "fid",
@@ -5432,6 +5432,10 @@ func TestUpdateFeature(t *testing.T) {
 				}, 0, int64(0), nil)
 				s.featureStorage.(*mock.MockFeatureStorage).EXPECT().UpdateFeature(
 					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.tagStorage.(*tagstoragemock.MockTagStorage).EXPECT().UpsertTag(
+					gomock.Any(),
+					gomock.Any(),
 				).Return(nil)
 				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
 					gomock.Any(), gomock.Any(),

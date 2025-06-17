@@ -57,9 +57,10 @@ message ListPushesRequest {
   OrderBy order_by = 4;
   OrderDirection order_direction = 5;
   string search_keyword = 6;
-  string environment_id = 7;
+  string environment_id = 7 [deprecated = true];
   string organization_id = 8;
   google.protobuf.BoolValue disabled = 9;
+  repeated string environment_ids = 10;
 }
 
 message ListPushesResponse {

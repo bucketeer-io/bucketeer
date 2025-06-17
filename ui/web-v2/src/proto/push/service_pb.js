@@ -117,7 +117,14 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.bucketeer.push.ListPushesRequest = function (opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.push.ListPushesRequest.repeatedFields_,
+    null
+  );
 };
 goog.inherits(proto.bucketeer.push.ListPushesRequest, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -790,6 +797,13 @@ proto.bucketeer.push.CreatePushResponse.prototype.hasPush = function () {
   return jspb.Message.getField(this, 1) != null;
 };
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.push.ListPushesRequest.repeatedFields_ = [10];
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -836,7 +850,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         organizationId: jspb.Message.getFieldWithDefault(msg, 8, ''),
         disabled:
           (f = msg.getDisabled()) &&
-          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
+        environmentIdsList:
+          (f = jspb.Message.getRepeatedField(msg, 10)) == null ? undefined : f
       };
 
     if (includeInstance) {
@@ -919,6 +935,10 @@ proto.bucketeer.push.ListPushesRequest.deserializeBinaryFromReader = function (
         );
         msg.setDisabled(value);
         break;
+      case 10:
+        var value = /** @type {string} */ (reader.readString());
+        msg.addEnvironmentIds(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -984,6 +1004,10 @@ proto.bucketeer.push.ListPushesRequest.serializeBinaryToWriter = function (
       f,
       google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
     );
+  }
+  f = message.getEnvironmentIdsList();
+  if (f.length > 0) {
+    writer.writeRepeatedString(10, f);
   }
 };
 
@@ -1178,6 +1202,47 @@ proto.bucketeer.push.ListPushesRequest.prototype.clearDisabled = function () {
 proto.bucketeer.push.ListPushesRequest.prototype.hasDisabled = function () {
   return jspb.Message.getField(this, 9) != null;
 };
+
+/**
+ * repeated string environment_ids = 10;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.push.ListPushesRequest.prototype.getEnvironmentIdsList =
+  function () {
+    return /** @type {!Array<string>} */ (
+      jspb.Message.getRepeatedField(this, 10)
+    );
+  };
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.push.ListPushesRequest} returns this
+ */
+proto.bucketeer.push.ListPushesRequest.prototype.setEnvironmentIdsList =
+  function (value) {
+    return jspb.Message.setField(this, 10, value || []);
+  };
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.push.ListPushesRequest} returns this
+ */
+proto.bucketeer.push.ListPushesRequest.prototype.addEnvironmentIds = function (
+  value,
+  opt_index
+) {
+  return jspb.Message.addToRepeatedField(this, 10, value, opt_index);
+};
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.push.ListPushesRequest} returns this
+ */
+proto.bucketeer.push.ListPushesRequest.prototype.clearEnvironmentIdsList =
+  function () {
+    return this.setEnvironmentIdsList([]);
+  };
 
 /**
  * List of repeated fields within this message type.

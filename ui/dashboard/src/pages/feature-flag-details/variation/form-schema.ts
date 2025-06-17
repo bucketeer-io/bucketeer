@@ -6,12 +6,6 @@ export const variationsFormSchema = yup.object().shape({
   variationType: yup.mixed<FeatureVariationType>().required(),
   onVariation: yup.string(),
   offVariation: yup.string(),
-  variations: variationsSchema,
-  resetSampling: yup.bool(),
-  requireComment: yup.bool(),
-  comment: yup.string().when('requireComment', {
-    is: (requireComment: boolean) => requireComment,
-    then: schema => schema.required()
-  })
+  variations: variationsSchema
 });
 export type VariationForm = yup.InferType<typeof variationsFormSchema>;

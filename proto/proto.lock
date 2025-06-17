@@ -20521,6 +20521,17 @@
                 "id": 7,
                 "name": "avatar_file_type",
                 "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "environment_roles",
+                "type": "bucketeer.account.AccountV2.EnvironmentRole",
+                "is_repeated": true
+              },
+              {
+                "id": 9,
+                "name": "organization_role",
+                "type": "bucketeer.account.AccountV2.Role.Organization"
               }
             ],
             "reserved_ids": [
@@ -38352,6 +38363,21 @@
             ]
           },
           {
+            "name": "Audience",
+            "fields": [
+              {
+                "id": 1,
+                "name": "percentage",
+                "type": "int32"
+              },
+              {
+                "id": 2,
+                "name": "default_variation",
+                "type": "string"
+              }
+            ]
+          },
+          {
             "name": "RolloutStrategy",
             "fields": [
               {
@@ -38359,6 +38385,11 @@
                 "name": "variations",
                 "type": "Variation",
                 "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "audience",
+                "type": "Audience"
               }
             ],
             "messages": [
@@ -42474,7 +42505,13 @@
               {
                 "id": 9,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 10,
@@ -42486,6 +42523,12 @@
                     "value": "REQUIRED"
                   }
                 ]
+              },
+              {
+                "id": 11,
+                "name": "environment_ids",
+                "type": "string",
+                "is_repeated": true
               }
             ],
             "reserved_ids": [
@@ -44063,7 +44106,13 @@
               {
                 "id": 7,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 8,
@@ -44074,6 +44123,12 @@
                 "id": 9,
                 "name": "disabled",
                 "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 10,
+                "name": "environment_ids",
+                "type": "string",
+                "is_repeated": true
               }
             ],
             "reserved_ids": [

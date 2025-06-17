@@ -11,7 +11,7 @@ const Card = ({
   return (
     <div
       className={cn(
-        'flex flex-col w-full p-5 gap-y-6 bg-white rounded-lg shadow-card min-w-fit',
+        'flex flex-col w-full p-5 gap-y-6 bg-white rounded-lg shadow-card-secondary min-w-fit',
         className
       )}
     >

@@ -131,24 +131,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, []);
 
-  useEffect(() => {
-    const handleTokenRefreshed = () => {
-      setIsInitialLoading(false);
-    };
-    window.addEventListener('tokenRefreshed', handleTokenRefreshed);
-    window.addEventListener('unauthenticated', () => {
-      logout();
-      clearOrgIdStorage();
-    });
-    return () => {
-      window.removeEventListener('tokenRefreshed', handleTokenRefreshed);
-      window.removeEventListener('unauthenticated', () => {
-        logout();
-        clearOrgIdStorage();
-      });
-    };
-  }, []);
-
   return (
     <AuthContext.Provider
       value={{
