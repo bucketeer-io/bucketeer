@@ -10,6 +10,7 @@ import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { covertFileToUint8ToBase64 } from 'utils/converts';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { IconInfo } from '@icons';
 import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { useFetchTags } from 'pages/members/collection-loader';
@@ -60,8 +61,8 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
   const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
-
-  const environments = (collection?.environments || []).filter(item => item.id);
+  const environments = collection?.environments || [];
+  const { formattedEnvironments } = onFormatEnvironments(environments);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -89,16 +90,17 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
     }
   });
 
-  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
+  const tagOptions = uniqBy(tagCollection?.tags || [], 'name') || [];
 
   const onSubmit: SubmitHandler<AddPushForm> = async values => {
     try {
       const base64String: string = await new Promise(rs =>
         covertFileToUint8ToBase64(files[0], data => rs(data))
       );
-
+      const { environmentId } = values;
       const resp = await pushCreator({
         ...values,
+        environmentId: checkEnvironmentEmptyId(environmentId),
         fcmServiceAccount: base64String
       });
       if (resp) {
@@ -191,9 +193,9 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                       <DropdownMenuTrigger
                         placeholder={t(`form:select-environment`)}
                         label={
-                          environments.find(
+                          formattedEnvironments.find(
                             item => item.id === getValues('environmentId')
-                          )?.name
+                          )?.name || ''
                         }
                         disabled={isLoadingEnvs}
                         variant="secondary"
@@ -204,7 +206,7 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                         align="start"
                         {...field}
                       >
-                        {environments.map((item, index) => (
+                        {formattedEnvironments.map((item, index) => (
                           <DropdownMenuItem
                             {...field}
                             key={index}

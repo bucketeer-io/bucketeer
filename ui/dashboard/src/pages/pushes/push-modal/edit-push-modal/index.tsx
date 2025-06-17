@@ -9,6 +9,7 @@ import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { Push } from '@types';
+import { onFormatEnvironments } from 'utils/function';
 import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
@@ -40,7 +41,6 @@ export interface EditPushForm {
 
 const formSchema = yup.object().shape({
   name: yup.string().required(),
-  fcmServiceAccount: yup.string(),
   tags: yup.array().required(),
   environmentId: yup.string().required()
 });
@@ -61,15 +61,16 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
     entityType: 'FEATURE_FLAG'
   });
   const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
-  const environments = (collection?.environments || []).filter(item => item.id);
+  const environments = collection?.environments || [];
+  const { emptyEnvironmentId, formattedEnvironments } =
+    onFormatEnvironments(environments);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
-    defaultValues: {
+    values: {
       name: push.name,
-      fcmServiceAccount: push.fcmServiceAccount,
       tags: push.tags,
-      environmentId: push.environmentId
+      environmentId: push.environmentId || emptyEnvironmentId
     }
   });
 
@@ -79,8 +80,10 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
   } = form;
 
   const onSubmit: SubmitHandler<EditPushForm> = async values => {
+    const { name, tags } = values;
     await pushUpdater({
-      ...values,
+      name,
+      tags,
       id: push.id
     }).then(() => {
       notify({
@@ -140,7 +143,7 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                         <DropdownMenuTrigger
                           placeholder={t(`form:select-environment`)}
                           label={
-                            environments.find(
+                            formattedEnvironments.find(
                               item => item.id === getValues('environmentId')
                             )?.name
                           }
@@ -153,7 +156,7 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                           align="start"
                           {...field}
                         >
-                          {environments.map((item, index) => (
+                          {formattedEnvironments.map((item, index) => (
                             <DropdownMenuItem
                               {...field}
                               key={index}

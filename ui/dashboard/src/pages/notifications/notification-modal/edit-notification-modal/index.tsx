@@ -16,6 +16,7 @@ import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { Notification, NotificationLanguage, SourceType } from '@types';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { cn } from 'utils/style';
 import { IconInfo, IconNoData } from '@icons';
 import { useFetchTags } from 'pages/members/collection-loader';
@@ -150,14 +151,16 @@ const EditNotificationModal = ({
   const { data: collection } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
-  const environments = (collection?.environments || []).filter(item => item.id);
+  const environments = collection?.environments || [];
+  const { emptyEnvironmentId, formattedEnvironments } =
+    onFormatEnvironments(environments);
 
   const form = useForm<EditNotificationForm>({
     resolver: yupResolver(formSchema) as Resolver<EditNotificationForm>,
-    defaultValues: {
+    values: {
       name: notification.name,
       url: notification.recipient.slackChannelRecipient.webhookUrl,
-      environment: notification.environmentId,
+      environment: notification.environmentId || emptyEnvironmentId,
       language: notification.recipient.language,
       types: notification.sourceTypes.sort(),
       tags: notification.featureFlagTags
@@ -199,7 +202,7 @@ const EditNotificationModal = ({
   const onSubmit: SubmitHandler<EditNotificationForm> = values => {
     return notificationUpdater({
       id: notification.id,
-      environmentId: values.environment,
+      environmentId: checkEnvironmentEmptyId(values.environment as string),
       name: values.name,
       sourceTypes: values.types,
       language: values.language,
@@ -282,7 +285,7 @@ const EditNotificationModal = ({
                       <DropdownMenuTrigger
                         placeholder={t(`form:select-environment`)}
                         label={
-                          environments.find(
+                          formattedEnvironments.find(
                             item => item.id === getValues('environment')
                           )?.name
                         }
@@ -295,7 +298,7 @@ const EditNotificationModal = ({
                         align="start"
                         {...field}
                       >
-                        {environments.map((item, index) => (
+                        {formattedEnvironments.map((item, index) => (
                           <DropdownMenuItem
                             {...field}
                             key={index}
