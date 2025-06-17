@@ -21,10 +21,6 @@ import (
 	"testing"
 	"time"
 
-	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
-	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
-	"github.com/bucketeer-io/bucketeer/proto/feature"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +30,9 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
+	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
+	auditlogclientmock "github.com/bucketeer-io/bucketeer/pkg/auditlog/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
 	coderefclientmock "github.com/bucketeer-io/bucketeer/pkg/coderef/client/mock"
@@ -45,7 +43,9 @@ import (
 	pushclientmock "github.com/bucketeer-io/bucketeer/pkg/push/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
+	"github.com/bucketeer-io/bucketeer/proto/feature"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
@@ -94,7 +94,7 @@ func TestWithLogger(t *testing.T) {
 
 func TestNewGrpcGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGrpcGatewayService(nil, nil, nil, nil, nil, nil, nil, nil)
+	g := NewGrpcGatewayService(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &grpcGatewayService{}, g)
 }
 
@@ -3978,6 +3978,7 @@ func newGrpcGatewayServiceWithMock(t *testing.T, mockController *gomock.Controll
 		accountClient:          accountclientmock.NewMockClient(mockController),
 		pushClient:             pushclientmock.NewMockClient(mockController),
 		codeRefClient:          coderefclientmock.NewMockClient(mockController),
+		auditLogClient:         auditlogclientmock.NewMockClient(mockController),
 		goalPublisher:          publishermock.NewMockPublisher(mockController),
 		userPublisher:          publishermock.NewMockPublisher(mockController),
 		evaluationPublisher:    publishermock.NewMockPublisher(mockController),

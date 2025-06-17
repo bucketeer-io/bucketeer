@@ -347,6 +347,18 @@ data:
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 3
+                          - match:
+                              headers:
+                                - name: content-type
+                                  string_match:
+                                    exact: application/grpc
+                              prefix: /bucketeer.auditlog.AuditLogService
+                            route:
+                              cluster: web
+                              timeout: 15s
+                              retry_policy:
+                                retry_on: 5xx
+                                num_retries: 3
               transport_socket:
                 name: envoy.transport_sockets.tls
                 typed_config:
