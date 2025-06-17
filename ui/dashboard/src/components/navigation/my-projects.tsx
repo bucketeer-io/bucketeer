@@ -105,8 +105,14 @@ const MyProjects = () => {
   const onHandleChange = useCallback(
     (value: Environment) => {
       setSelectedEnvironment(value);
+      clearCurrentEnvIdStorage();
       setCurrentEnvIdStorage(value.id || value.urlCode);
-      navigate(`/${value.urlCode}${PAGE_PATH_FEATURES}`);
+      navigate(`/${value.urlCode}${PAGE_PATH_FEATURES}`, {
+        replace: false,
+        state: {
+          clearFilters: true
+        }
+      });
       setIsShowProjectsList(false);
       onClearSearch();
     },

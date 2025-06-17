@@ -16,7 +16,6 @@ import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
-import TruncationWithTooltip from 'elements/truncation-with-tooltip';
 import { APIKeyActionsType } from '../types';
 
 export const useColumns = ({
@@ -113,19 +112,27 @@ export const useColumns = ({
       maxSize: 250,
       cell: ({ row }) => {
         const apiKey = row.original;
+        const id = `env-${apiKey.id}`;
         return (
-          <TruncationWithTooltip
-            elementId={`env-${apiKey.id}`}
-            maxSize={250}
-            content={apiKey.environmentName}
-          >
-            <div
-              id={`env-${apiKey.id}`}
-              className="text-gray-700 typo-para-medium w-fit"
-            >
-              {apiKey.environmentName}
-            </div>
-          </TruncationWithTooltip>
+          <NameWithTooltip
+            id={id}
+            align="center"
+            content={
+              <NameWithTooltip.Content
+                content={apiKey.environmentName}
+                id={id}
+              />
+            }
+            trigger={
+              <NameWithTooltip.Trigger
+                id={id}
+                name={apiKey.environmentName}
+                maxLines={1}
+                haveAction={false}
+              />
+            }
+            maxLines={1}
+          />
         );
       }
     },

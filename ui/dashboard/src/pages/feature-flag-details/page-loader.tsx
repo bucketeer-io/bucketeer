@@ -27,7 +27,9 @@ const PageLoader = () => {
       environmentId: currentEnvironment?.id,
       id: params?.flagId || ''
     },
-    enabled: !!params?.flagId && !!currentEnvironment?.id,
+    enabled:
+      !!params?.flagId &&
+      (!!currentEnvironment?.id || !!currentEnvironment?.urlCode),
     gcTime: 0
   });
 
@@ -42,7 +44,9 @@ const PageLoader = () => {
   return (
     <>
       <PageDetailsHeader
-        onBack={() => navigate(`${PAGE_PATH_FEATURES}`)}
+        onBack={() =>
+          navigate(`/${currentEnvironment?.urlCode}${PAGE_PATH_FEATURES}`)
+        }
         title={feature.name}
         additionElement={
           <>

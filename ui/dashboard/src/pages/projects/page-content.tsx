@@ -94,6 +94,9 @@ const PageContent = ({
           setFilters={onChangeFilters}
           onActionHandler={onActionHandler}
           organizationId={currentEnvironment.organizationId}
+          onClearFilters={() =>
+            setFilters({ searchQuery: '', disabled: undefined })
+          }
         />
       </TableListContainer>
     </PageLayout.Content>

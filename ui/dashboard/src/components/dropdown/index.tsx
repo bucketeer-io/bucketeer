@@ -16,6 +16,7 @@ import { IconClose, IconSearch } from '@icons';
 import Checkbox from 'components/checkbox';
 import Icon from 'components/icon';
 import Input, { InputProps } from 'components/input';
+import Spinner from 'components/spinner';
 
 export type DropdownValue = number | string;
 
@@ -72,6 +73,7 @@ const DropdownMenuTrigger = forwardRef<
     showClear?: boolean;
     trigger?: ReactNode;
     ariaLabel?: string;
+    loading?: boolean;
     onClear?: () => void;
   }
 >(
@@ -87,6 +89,7 @@ const DropdownMenuTrigger = forwardRef<
       showClear = false,
       trigger,
       ariaLabel,
+      loading,
       onClear,
       ...props
     },
@@ -135,7 +138,7 @@ const DropdownMenuTrigger = forwardRef<
               <p className={'!text-gray-500'}>{placeholder}</p>
             )}
           </div>
-          {showClear && label && (
+          {showClear && label && !loading && (
             <div
               ref={clearRef}
               className="size-6 min-w-6 pointer-events-auto"
@@ -152,9 +155,14 @@ const DropdownMenuTrigger = forwardRef<
               />
             </div>
           )}
-          {showArrow && (
+          {showArrow && !loading && (
             <div className="size-6 min-w-6 transition-all duration-200 group-data-[state=closed]:rotate-0 group-data-[state=open]:rotate-180">
               <Icon icon={IconExpandMoreRound} size={'md'} color="gray-500" />
+            </div>
+          )}
+          {loading && (
+            <div className="flex-center size-fit">
+              <Spinner className="size-4 border-2" />
             </div>
           )}
         </>

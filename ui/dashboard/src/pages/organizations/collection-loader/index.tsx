@@ -1,6 +1,7 @@
 import { SortingState } from '@tanstack/react-table';
 import { sortingListFields } from 'constants/collection';
 import { Organization } from '@types';
+import { isNotEmpty } from 'utils/data-type';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
@@ -15,12 +16,14 @@ const CollectionLoader = ({
   onAdd,
   filters,
   setFilters,
-  onActions
+  onActions,
+  onClearFilters
 }: {
   onAdd: () => void;
   filters: OrganizationFilters;
   setFilters: (values: Partial<OrganizationFilters>) => void;
   onActions: (item: Organization, type: OrganizationActionsType) => void;
+  onClearFilters: () => void;
 }) => {
   const columns = useColumns({ onActions });
   const {
@@ -48,8 +51,9 @@ const CollectionLoader = ({
   const emptyState = (
     <CollectionEmpty
       data={organizations}
+      isFilter={isNotEmpty(filters.disabled)}
       searchQuery={filters.searchQuery}
-      onClear={() => setFilters({ searchQuery: '' })}
+      onClear={onClearFilters}
       empty={<EmptyCollection onAdd={onAdd} />}
     />
   );

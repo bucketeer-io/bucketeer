@@ -79,6 +79,12 @@ const OrganizationProjects = () => {
             setSelectedProject(value);
             onOpenEditModal();
           }}
+          onClearFilters={() =>
+            setFilters({
+              searchQuery: '',
+              disabled: undefined
+            })
+          }
         />
       </TableListContainer>
     </div>
