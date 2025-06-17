@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useAuth } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
@@ -43,11 +43,27 @@ const PageContent = ({
   const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
     useToggleOpen(false);
 
+  const filterCount = useMemo(() => {
+    const { disabled, organizationRole, tags } = filters;
+    return isNotEmpty(disabled || organizationRole || tags) ? 1 : undefined;
+  }, [filters]);
+
   const onChangeFilters = (values: Partial<MembersFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });
   };
+
+  const onClearFilters = useCallback(() => {
+    onChangeFilters({
+      ...filters,
+      searchQuery: '',
+      disabled: undefined,
+      organizationRole: undefined,
+      tags: undefined
+    });
+    onCloseFilterModal();
+  }, [filters]);
 
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
@@ -68,11 +84,7 @@ const PageContent = ({
           )
         }
         searchValue={filters.searchQuery}
-        filterCount={
-          isNotEmpty(filters.disabled || filters.organizationRole)
-            ? 1
-            : undefined
-        }
+        filterCount={filterCount}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
       {openFilterModal && (
@@ -84,13 +96,7 @@ const PageContent = ({
             onChangeFilters(value);
             onCloseFilterModal();
           }}
-          onClearFilters={() => {
-            onChangeFilters({
-              disabled: undefined,
-              organizationRole: undefined
-            });
-            onCloseFilterModal();
-          }}
+          onClearFilters={onClearFilters}
         />
       )}
       <TableListContainer>
@@ -101,6 +107,7 @@ const PageContent = ({
           filters={filters}
           setFilters={onChangeFilters}
           onActions={onHandleActions}
+          onClearFilters={onClearFilters}
         />
       </TableListContainer>
     </PageLayout.Content>
