@@ -4,8 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { autoOpsDelete, autoOpsStop } from '@api/auto-ops';
 import { rolloutDelete, rolloutStopped } from '@api/rollouts';
 import { useQueryAutoOpsCount } from '@queries/auto-ops-count';
-import { useQueryAutoOpsRules } from '@queries/auto-ops-rules';
-import { useQueryRollouts } from '@queries/rollouts';
+import {
+  invalidateAutoOpsRules,
+  useQueryAutoOpsRules
+} from '@queries/auto-ops-rules';
+import { invalidateRollouts, useQueryRollouts } from '@queries/rollouts';
+import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { DOCUMENTATION_LINKS } from 'constants/documentation-links';
 import {
@@ -43,6 +47,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
   const { t } = useTranslation(['common', 'table', 'form', 'message']);
   const navigate = useNavigate();
   const { notify, errorNotify } = useToast();
+  const queryClient = useQueryClient();
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -106,21 +111,15 @@ const Operations = ({ feature }: { feature: Feature }) => {
     [feature, currentEnvironment]
   );
 
-  const {
-    data: rolloutCollection,
-    isLoading: isRolloutLoading,
-    refetch: refetchRollouts
-  } = useQueryRollouts({
-    params: queryParams
-  });
+  const { data: rolloutCollection, isLoading: isRolloutLoading } =
+    useQueryRollouts({
+      params: queryParams
+    });
 
-  const {
-    data: operationCollection,
-    isLoading: isOperationLoading,
-    refetch: refetchAutoOpsRules
-  } = useQueryAutoOpsRules({
-    params: queryParams
-  });
+  const { data: operationCollection, isLoading: isOperationLoading } =
+    useQueryAutoOpsRules({
+      params: queryParams
+    });
 
   const rollouts = rolloutCollection?.progressiveRollouts || [];
   const operations = operationCollection?.autoOpsRules || [];
@@ -154,12 +153,8 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
   const onSubmitOperationSuccess = useCallback(() => {
     onCloseActionModal();
-    refetchAutoOpsRules();
-  }, [searchParams]);
-
-  const onSubmitRolloutSuccess = useCallback(() => {
-    onCloseActionModal();
-    refetchRollouts();
+    invalidateAutoOpsRules(queryClient);
+    invalidateRollouts(queryClient);
   }, [searchParams]);
 
   const onOperationActions = useCallback(
@@ -211,8 +206,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
           notify({
             message: t('message:operation.stopped')
           });
-          refetchRollouts();
-          refetchAutoOpsRules();
+          onSubmitOperationSuccess();
           setOperationModalState({
             operationType: undefined,
             actionType: 'NEW',
@@ -243,8 +237,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
           notify({
             message: t('message:operation.deleted')
           });
-          refetchAutoOpsRules();
-          refetchRollouts();
+          onSubmitOperationSuccess();
           onResetModalState();
         }
       }
@@ -361,7 +354,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
             selectedData={operationModalState?.selectedData as Rollout}
             rollouts={rollouts}
             onClose={onCloseActionModal}
-            onSubmitRolloutSuccess={onSubmitRolloutSuccess}
+            onSubmitRolloutSuccess={onSubmitOperationSuccess}
           />
         )}
       {isRolloutAction &&

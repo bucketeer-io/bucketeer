@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import {
   FormProvider,
   Resolver,
@@ -22,19 +22,20 @@ import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import { CreatableSelect } from 'components/creatable-select';
 import Divider from 'components/divider';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownOption
 } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { Tooltip } from 'components/tooltip';
+import TagsSelectMenu from 'elements/tags-select-menu';
 import { languageList, organizationRoles } from '../add-member-modal';
 import EnvironmentRoles from '../add-member-modal/environment-roles';
 
@@ -88,12 +89,14 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const [tagOptions, setTagOptions] = useState<DropdownOption[]>([]);
 
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
-    organizationId: currentEnvironment.organizationId
+    organizationId: currentEnvironment.organizationId,
+    entityType: 'ACCOUNT'
   });
-  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
 
+  const tags = tagCollection?.tags || [];
   const form = useForm<EditMemberForm>({
     resolver: yupResolver(formSchema) as Resolver<EditMemberForm>,
     defaultValues: {
@@ -127,7 +130,9 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
       firstName: values.firstName,
       lastName: values.lastName,
       language: values.language,
-      tags: { values: values.tags }
+      tags: {
+        values: values.tags
+      }
     }).then(() => {
       notify({
         toastType: 'toast',
@@ -144,16 +149,17 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
     });
   };
 
-  const defaultTagsValue = useMemo(() => {
-    const tags = member.tags?.map(tag => {
-      const tagItem = tagOptions.find(item => item.id === tag);
-      return {
-        label: tagItem?.name || tag,
-        value: tagItem?.id || tag
-      };
-    });
-    return tags;
-  }, [tagOptions, member]);
+  useEffect(() => {
+    if (tags.length > 0) {
+      const uniqueTags = uniqBy(tagCollection?.tags || [], 'name')?.map(
+        item => ({
+          label: item.name,
+          value: item.id
+        })
+      );
+      setTagOptions(uniqueTags);
+    }
+  }, [tags]);
 
   return (
     <SlideModal title={t('update-member')} isOpen={isOpen} onClose={onClose}>
@@ -307,18 +313,12 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                     />
                   </Form.Label>
                   <Form.Control>
-                    <CreatableSelect
-                      defaultValues={defaultTagsValue}
+                    <TagsSelectMenu
+                      tagOptions={tagOptions}
+                      fieldValues={field.value}
+                      onChange={field.onChange}
                       disabled={isLoadingTags}
-                      loading={isLoadingTags}
-                      placeholder={t(`form:placeholder-member-tags`)}
-                      options={tagOptions?.map(tag => ({
-                        label: tag.name,
-                        value: tag.id
-                      }))}
-                      onChange={tags =>
-                        field.onChange(tags.map(tag => tag?.value))
-                      }
+                      onChangeTagOptions={setTagOptions}
                     />
                   </Form.Control>
                   <Form.Message />

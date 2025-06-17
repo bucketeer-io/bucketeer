@@ -138,24 +138,36 @@ func (s *FeatureService) GetFeatures(
 	if err := validateGetFeaturesRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("feature.environment_id", "=", req.EnvironmentId),
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "feature.environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.EnvironmentId,
+		},
 	}
 	ids := make([]interface{}, 0, len(req.Ids))
 	for _, id := range req.Ids {
 		ids = append(ids, id)
 	}
+	var inFilters []*mysql.InFilter
 	if len(ids) > 0 {
-		whereParts = append(whereParts, mysql.NewInFilter("feature.id", ids))
+		inFilters = append(inFilters, &mysql.InFilter{
+			Column: "feature.id",
+			Values: ids,
+		})
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	features, _, _, err := featureStorage.ListFeatures(
-		ctx,
-		whereParts,
-		nil,
-		mysql.QueryNoLimit,
-		mysql.QueryNoOffset,
-	)
+	options := &mysql.ListOptions{
+		Filters:     filters,
+		Orders:      nil,
+		JSONFilters: nil,
+		NullFilters: nil,
+		InFilters:   inFilters,
+		SearchQuery: nil,
+		Limit:       mysql.QueryNoLimit,
+		Offset:      mysql.QueryNoOffset,
+	}
+	features, _, _, err := featureStorage.ListFeatures(ctx, options)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get feature",
@@ -262,64 +274,93 @@ func (s *FeatureService) listFeatures(
 	environmentId string,
 ) ([]*featureproto.Feature, string, int64, error) {
 	localizer := locale.NewLocalizer(ctx)
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("feature.deleted", "=", false),
-		mysql.NewFilter("feature.environment_id", "=", environmentId),
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "feature.deleted",
+			Operator: mysql.OperatorEqual,
+			Value:    false,
+		},
+		{
+			Column:   "feature.environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    environmentId,
+		},
 	}
 	tagValues := make([]interface{}, 0, len(tags))
 	for _, tag := range tags {
 		tagValues = append(tagValues, tag)
 	}
+	var jsonFilters []*mysql.JSONFilter
 	if len(tagValues) > 0 {
-		whereParts = append(
-			whereParts,
-			mysql.NewJSONFilter("feature.tags", mysql.JSONContainsString, tagValues),
-		)
+		jsonFilters = append(jsonFilters, &mysql.JSONFilter{
+			Column: "feature.tags",
+			Func:   mysql.JSONContainsString,
+			Values: tagValues,
+		})
 	}
 	if maintainer != "" {
-		whereParts = append(whereParts, mysql.NewFilter("feature.maintainer", "=", maintainer))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "feature.maintainer",
+			Operator: mysql.OperatorEqual,
+			Value:    maintainer,
+		})
 	}
 	if enabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("feature.enabled", "=", enabled.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "feature.enabled",
+			Operator: mysql.OperatorEqual,
+			Value:    enabled.Value,
+		})
 	}
 	if archived != nil {
-		whereParts = append(whereParts, mysql.NewFilter("feature.archived", "=", archived.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "feature.archived",
+			Operator: mysql.OperatorEqual,
+			Value:    archived.Value,
+		})
 	}
 	if hasPrerequisites != nil {
 		if hasPrerequisites.Value {
-			whereParts = append(
-				whereParts,
-				mysql.NewJSONFilter("feature.prerequisites", mysql.JSONLengthGreaterThan, []interface{}{"0"}),
-			)
+			jsonFilters = append(jsonFilters, &mysql.JSONFilter{
+				Column: "feature.prerequisites",
+				Func:   mysql.JSONLengthGreaterThan,
+				Values: []interface{}{"0"},
+			})
 		} else {
-			whereParts = append(
-				whereParts,
-				mysql.NewJSONFilter("feature.prerequisites", mysql.JSONLengthSmallerThan, []interface{}{"1"}),
-			)
+			jsonFilters = append(jsonFilters, &mysql.JSONFilter{
+				Column: "feature.prerequisites",
+				Func:   mysql.JSONLengthSmallerThan,
+				Values: []interface{}{"1"},
+			})
 		}
 	}
+	var searchQuery *mysql.SearchQuery
 	if searchKeyword != "" {
-		whereParts = append(
-			whereParts,
-			mysql.NewSearchQuery([]string{"feature.id", "feature.name", "feature.description"}, searchKeyword),
-		)
+		searchQuery = &mysql.SearchQuery{
+			Columns: []string{"feature.id", "feature.name", "feature.description"},
+			Keyword: searchKeyword,
+		}
 	}
+	var nullFilters []*mysql.NullFilter
 	switch status {
 	case featureproto.FeatureLastUsedInfo_UNKNOWN:
 	case featureproto.FeatureLastUsedInfo_NEW:
-		whereParts = append(whereParts, mysql.NewNullFilter("feature_last_used_info.id", true))
+		nullFilters = append(nullFilters, &mysql.NullFilter{
+			Column: "feature_last_used_info.id",
+			IsNull: true,
+		})
 	case featureproto.FeatureLastUsedInfo_ACTIVE:
-		whereParts = append(whereParts, mysql.NewFilter(
-			"feature_last_used_info.last_used_at",
-			">=",
-			time.Now().Add(-activeDays).Unix()),
-		)
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "feature_last_used_info.last_used_at",
+			Operator: mysql.OperatorGreaterThanOrEqual,
+			Value:    time.Now().Add(-activeDays).Unix(),
+		})
 	case featureproto.FeatureLastUsedInfo_NO_ACTIVITY:
-		whereParts = append(whereParts, mysql.NewFilter(
-			"feature_last_used_info.last_used_at",
-			"<",
-			time.Now().Add(-activeDays).Unix()),
-		)
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "feature_last_used_info.last_used_at",
+			Operator: mysql.OperatorLessThan,
+			Value:    time.Now().Add(-activeDays).Unix(),
+		})
 	}
 	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection, localizer)
 	if err != nil {
@@ -347,13 +388,17 @@ func (s *FeatureService) listFeatures(
 		}
 		return nil, "", 0, dt.Err()
 	}
-	features, nextCursor, totalCount, err := s.featureStorage.ListFeatures(
-		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
-	)
+	options := &mysql.ListOptions{
+		Filters:     filters,
+		Orders:      orders,
+		JSONFilters: jsonFilters,
+		NullFilters: nullFilters,
+		InFilters:   nil,
+		SearchQuery: searchQuery,
+		Limit:       limit,
+		Offset:      offset,
+	}
+	features, nextCursor, totalCount, err := s.featureStorage.ListFeatures(ctx, options)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list features",
@@ -384,66 +429,103 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	environmentId string,
 ) ([]*featureproto.Feature, string, int64, error) {
 	localizer := locale.NewLocalizer(ctx)
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("feature.deleted", "=", false),
-		mysql.NewFilter("experiment.deleted", "=", false),
-		mysql.NewFilter("feature.environment_id", "=", environmentId),
-		mysql.NewNullFilter("experiment.id", !hasExperiment),
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "feature.deleted",
+			Operator: mysql.OperatorEqual,
+			Value:    false,
+		},
+		{
+			Column:   "experiment.deleted",
+			Operator: mysql.OperatorEqual,
+			Value:    false,
+		},
+		{
+			Column:   "feature.environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    environmentId,
+		},
+	}
+	nullFilters := []*mysql.NullFilter{
+		{
+			Column: "experiment.id",
+			IsNull: !hasExperiment,
+		},
 	}
 	tagValues := make([]interface{}, 0, len(tags))
 	for _, tag := range tags {
 		tagValues = append(tagValues, tag)
 	}
+	var jsonFilters []*mysql.JSONFilter
 	if len(tagValues) > 0 {
-		whereParts = append(
-			whereParts,
-			mysql.NewJSONFilter("feature.tags", mysql.JSONContainsString, tagValues),
-		)
+		jsonFilters = append(jsonFilters, &mysql.JSONFilter{
+			Column: "feature.tags",
+			Func:   mysql.JSONContainsString,
+			Values: tagValues,
+		})
 	}
 	if maintainer != "" {
-		whereParts = append(whereParts, mysql.NewFilter("feature.maintainer", "=", maintainer))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "feature.maintainer",
+			Operator: mysql.OperatorEqual,
+			Value:    maintainer,
+		})
 	}
 	if enabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("feature.enabled", "=", enabled.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "feature.enabled",
+			Operator: mysql.OperatorEqual,
+			Value:    enabled.Value,
+		})
 	}
 	if archived != nil {
-		whereParts = append(whereParts, mysql.NewFilter("feature.archived", "=", archived.Value))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "feature.archived",
+			Operator: mysql.OperatorEqual,
+			Value:    archived.Value,
+		})
 	}
 	if hasPrerequisites != nil {
 		if hasPrerequisites.Value {
-			whereParts = append(
-				whereParts,
-				mysql.NewJSONFilter("feature.prerequisites", mysql.JSONLengthGreaterThan, []interface{}{"0"}),
-			)
+			jsonFilters = append(jsonFilters, &mysql.JSONFilter{
+				Column: "feature.prerequisites",
+				Func:   mysql.JSONLengthGreaterThan,
+				Values: []interface{}{"0"},
+			})
 		} else {
-			whereParts = append(
-				whereParts,
-				mysql.NewJSONFilter("feature.prerequisites", mysql.JSONLengthSmallerThan, []interface{}{"1"}),
-			)
+			jsonFilters = append(jsonFilters, &mysql.JSONFilter{
+				Column: "feature.prerequisites",
+				Func:   mysql.JSONLengthSmallerThan,
+				Values: []interface{}{"1"},
+			})
 		}
 	}
+	var searchQuery *mysql.SearchQuery
 	if searchKeyword != "" {
-		whereParts = append(
-			whereParts,
-			mysql.NewSearchQuery([]string{"feature.id", "feature.name", "feature.description"}, searchKeyword),
-		)
+		searchQuery = &mysql.SearchQuery{
+			Columns: []string{"feature.id", "feature.name", "feature.description"},
+			Keyword: searchKeyword,
+		}
 	}
 	switch status {
 	case featureproto.FeatureLastUsedInfo_UNKNOWN:
 	case featureproto.FeatureLastUsedInfo_NEW:
-		whereParts = append(whereParts, mysql.NewNullFilter("feature_last_used_info.id", true))
+		nullFilters = append(nullFilters, &mysql.NullFilter{
+			Column: "feature_last_used_info.id",
+			IsNull: true,
+		})
 	case featureproto.FeatureLastUsedInfo_ACTIVE:
-		whereParts = append(whereParts, mysql.NewFilter(
-			"feature_last_used_info.last_used_at",
-			">=",
-			time.Now().Add(-activeDays).Unix()),
-		)
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "feature_last_used_info.last_used_at",
+			Operator: mysql.OperatorGreaterThanOrEqual,
+			Value:    time.Now().Add(-activeDays).Unix(),
+		})
 	case featureproto.FeatureLastUsedInfo_NO_ACTIVITY:
-		whereParts = append(whereParts, mysql.NewFilter(
-			"feature_last_used_info.last_used_at",
-			"<",
-			time.Now().Add(-activeDays).Unix()),
-		)
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "feature_last_used_info.last_used_at",
+			Operator: mysql.OperatorLessThan,
+			Value:    time.Now().Add(-activeDays).Unix(),
+		})
 	}
 	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection, localizer)
 	if err != nil {
@@ -472,13 +554,17 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 		return nil, "", 0, dt.Err()
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	features, nextCursor, totalCount, err := featureStorage.ListFeaturesFilteredByExperiment(
-		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
-	)
+	options := &mysql.ListOptions{
+		Filters:     filters,
+		Orders:      orders,
+		JSONFilters: jsonFilters,
+		NullFilters: nullFilters,
+		InFilters:   nil,
+		SearchQuery: searchQuery,
+		Limit:       limit,
+		Offset:      offset,
+	}
+	features, nextCursor, totalCount, err := featureStorage.ListFeaturesFilteredByExperiment(ctx, options)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list features filtered by experiment",
@@ -540,21 +626,41 @@ func (s *FeatureService) ListEnabledFeatures(
 	if err != nil {
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("archived", "=", false),
-		mysql.NewFilter("enabled", "=", true),
-		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("feature.environment_id", "=", req.EnvironmentId),
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "archived",
+			Operator: mysql.OperatorEqual,
+			Value:    false,
+		},
+		{
+			Column:   "enabled",
+			Operator: mysql.OperatorEqual,
+			Value:    true,
+		},
+		{
+			Column:   "deleted",
+			Operator: mysql.OperatorEqual,
+			Value:    false,
+		},
+		{
+			Column:   "feature.environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.EnvironmentId,
+		},
 	}
 	tagValues := make([]interface{}, 0, len(req.Tags))
 	for _, tag := range req.Tags {
 		tagValues = append(tagValues, tag)
 	}
+	var jsonFilters []*mysql.JSONFilter
 	if len(tagValues) > 0 {
-		whereParts = append(
-			whereParts,
-			mysql.NewJSONFilter("tags", mysql.JSONContainsString, tagValues),
-		)
+		jsonFilters = append(
+			jsonFilters,
+			&mysql.JSONFilter{
+				Column: "tags",
+				Func:   mysql.JSONContainsString,
+				Values: tagValues,
+			})
 	}
 	limit := int(req.PageSize)
 	cursor := req.Cursor
@@ -573,13 +679,17 @@ func (s *FeatureService) ListEnabledFeatures(
 		return nil, dt.Err()
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	features, nextCursor, _, err := featureStorage.ListFeatures(
-		ctx,
-		whereParts,
-		nil,
-		limit,
-		offset,
-	)
+	options := &mysql.ListOptions{
+		Filters:     filters,
+		JSONFilters: jsonFilters,
+		Orders:      nil,
+		NullFilters: nil,
+		InFilters:   nil,
+		SearchQuery: nil,
+		Limit:       limit,
+		Offset:      offset,
+	}
+	features, nextCursor, _, err := featureStorage.ListFeatures(ctx, options)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list enabled features",
@@ -743,9 +853,6 @@ func (s *FeatureService) createFeatureNoCommand(
 	}
 	var event *eventproto.Event
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		if err := s.upsertTags(ctxWithTx, req.Tags, req.EnvironmentId); err != nil {
-			return err
-		}
 		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_FEATURE,
@@ -770,6 +877,9 @@ func (s *FeatureService) createFeatureNoCommand(
 			featureproto.Feature{},
 		)
 		if err != nil {
+			return err
+		}
+		if err := s.upsertTags(ctxWithTx, req.Tags, req.EnvironmentId); err != nil {
 			return err
 		}
 		return s.featureStorage.CreateFeature(ctxWithTx, feature, req.EnvironmentId)
@@ -853,17 +963,29 @@ func (s *FeatureService) UpdateFeature(
 	var event *eventproto.Event
 	var updatedpb *featureproto.Feature
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		whereParts := []mysql.WherePart{
-			mysql.NewFilter("feature.deleted", "=", false),
-			mysql.NewFilter("feature.environment_id", "=", req.EnvironmentId),
+		filters := []*mysql.FilterV2{
+			{
+				Column:   "feature.deleted",
+				Operator: mysql.OperatorEqual,
+				Value:    false,
+			},
+			{
+				Column:   "feature.environment_id",
+				Operator: mysql.OperatorEqual,
+				Value:    req.EnvironmentId,
+			},
 		}
-		features, _, _, err := s.featureStorage.ListFeatures(
-			ctxWithTx,
-			whereParts,
-			nil,
-			mysql.QueryNoLimit,
-			mysql.QueryNoOffset,
-		)
+		options := &mysql.ListOptions{
+			Filters:     filters,
+			JSONFilters: nil,
+			Orders:      nil,
+			NullFilters: nil,
+			InFilters:   nil,
+			SearchQuery: nil,
+			Limit:       mysql.QueryNoLimit,
+			Offset:      mysql.QueryNoOffset,
+		}
+		features, _, _, err := s.featureStorage.ListFeatures(ctxWithTx, options)
 		if err != nil {
 			s.logger.Error(
 				"Failed to list features",
@@ -915,6 +1037,9 @@ func (s *FeatureService) UpdateFeature(
 			req.TagChanges,
 		)
 		if err != nil {
+			return err
+		}
+		if err := s.upsertTags(ctxWithTx, updated.Tags, req.EnvironmentId); err != nil {
 			return err
 		}
 		// To check if the flag to be updated is a dependency of other flags, we must validate it before updating.
@@ -1324,19 +1449,34 @@ func (s *FeatureService) ArchiveFeature(
 	if err := validateArchiveFeatureRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("archived", "=", false),
-		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("feature.environment_id", "=", req.EnvironmentId),
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "archived",
+			Operator: mysql.OperatorEqual,
+			Value:    false,
+		},
+		{
+			Column:   "deleted",
+			Operator: mysql.OperatorEqual,
+			Value:    false,
+		},
+		{
+			Column:   "feature.environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.EnvironmentId,
+		},
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	features, _, _, err := featureStorage.ListFeatures(
-		ctx,
-		whereParts,
-		nil,
-		mysql.QueryNoLimit,
-		mysql.QueryNoOffset,
-	)
+	options := &mysql.ListOptions{
+		Filters:     filters,
+		JSONFilters: nil,
+		Orders:      nil,
+		NullFilters: nil,
+		InFilters:   nil,
+		Limit:       mysql.QueryNoLimit,
+		Offset:      mysql.QueryNoOffset,
+	}
+	features, _, _, err := featureStorage.ListFeatures(ctx, options)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list feature",
@@ -1671,18 +1811,29 @@ func (s *FeatureService) UpdateFeatureVariations(
 		commands = append(commands, cmd)
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("feature.environment_id", "=", req.EnvironmentId),
-	}
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		features, _, _, err := s.featureStorage.ListFeatures(
-			ctxWithTx,
-			whereParts,
-			nil,
-			mysql.QueryNoLimit,
-			mysql.QueryNoOffset,
-		)
+		filters := []*mysql.FilterV2{
+			{
+				Column:   "deleted",
+				Operator: mysql.OperatorEqual,
+				Value:    false,
+			},
+			{
+				Column:   "feature.environment_id",
+				Operator: mysql.OperatorEqual,
+				Value:    req.EnvironmentId,
+			},
+		}
+		options := &mysql.ListOptions{
+			Filters:     filters,
+			JSONFilters: nil,
+			Orders:      nil,
+			NullFilters: nil,
+			InFilters:   nil,
+			Limit:       mysql.QueryNoLimit,
+			Offset:      mysql.QueryNoOffset,
+		}
+		features, _, _, err := s.featureStorage.ListFeatures(ctxWithTx, options)
 		if err != nil {
 			s.logger.Error(
 				"Failed to list feature",
@@ -1841,17 +1992,28 @@ func (s *FeatureService) UpdateFeatureTargeting(
 	// Also here because many commands are run sequentially they all expect the same version of the feature.
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(ctxWithTx context.Context, _ mysql.Transaction) error {
-		whereParts := []mysql.WherePart{
-			mysql.NewFilter("feature.deleted", "=", false),
-			mysql.NewFilter("feature.environment_id", "=", req.EnvironmentId),
+		filters := []*mysql.FilterV2{
+			{
+				Column:   "feature.deleted",
+				Operator: mysql.OperatorEqual,
+				Value:    false,
+			},
+			{
+				Column:   "feature.environment_id",
+				Operator: mysql.OperatorEqual,
+				Value:    req.EnvironmentId,
+			},
 		}
-		features, _, _, err := s.featureStorage.ListFeatures(
-			ctxWithTx,
-			whereParts,
-			nil,
-			mysql.QueryNoLimit,
-			mysql.QueryNoOffset,
-		)
+		options := &mysql.ListOptions{
+			Filters:     filters,
+			JSONFilters: nil,
+			Orders:      nil,
+			NullFilters: nil,
+			InFilters:   nil,
+			Limit:       mysql.QueryNoLimit,
+			Offset:      mysql.QueryNoOffset,
+		}
+		features, _, _, err := s.featureStorage.ListFeatures(ctxWithTx, options)
 		if err != nil {
 			s.logger.Error(
 				"Failed to list feature",

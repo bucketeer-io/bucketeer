@@ -17,7 +17,8 @@
       "schedules-same-time": "You cannot have multiple schedules at the same date and time.",
       "increments-greater-than": "Increments must be greater than or equal to 1",
       "increments-less-than": "Increments must be less than or equal to 100"
-    }
+    },
+    "should-be-percent": "Total should be 100%."
   },
   "copied": "Copied",
   "copy-trigger-url": "Copy and store this URL. Once you leave this page, the URL will be hidden.",
@@ -32,8 +33,8 @@
     "updated": "Operation updated successfully.",
     "the-weight": "The weight",
     "must-be-greater-value": "{{name}} must be greater than or equal to {{value}}",
-    "must-be-less-value": "{{name}} must be less than or equal to {{value}}",
-    "event-rate-created": "Event rate operation created successfully.",
-    "event-rate-updated": "Event rate operation updated successfully."
-  }
+    "must-be-less-value": "{{name}} must be less than or equal to {{value}}"
+  },
+  "collection-action-success": "{{collection}} has been {{action}} successfully.",
+  "should-be-percent": "Total should be 100%."
 }

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Trans } from 'react-i18next';
 import { pushUpdater } from '@api/push';
+import { pushDelete } from '@api/push/push-delete';
 import { invalidatePushes } from '@queries/pushes';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from 'hooks';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Push } from '@types';
@@ -13,11 +15,13 @@ import EditPushModal from './push-modal/edit-push-modal';
 import { PushActionsType } from './types';
 
 const PageLoader = () => {
-  const { t } = useTranslation(['table']);
+  const { t } = useTranslation(['table', 'message', 'common']);
   const queryClient = useQueryClient();
+  const { notify, errorNotify } = useToast();
 
   const [selectedPush, setSelectedPush] = useState<Push>();
   const [isDisabling, setIsDisabling] = useState<boolean>(false);
+  const [isDeletePush, setIsDeletePush] = useState<boolean>(false);
 
   const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
     useToggleOpen(false);
@@ -31,29 +35,42 @@ const PageLoader = () => {
   const onHandleActions = (push: Push, type: PushActionsType) => {
     setSelectedPush(push);
     if (type === 'EDIT') {
-      onOpenEditModal();
-    } else {
-      setIsDisabling(type !== 'ENABLE');
-      onOpenConfirmModal();
+      return onOpenEditModal();
     }
+    onOpenConfirmModal();
+    if (type === 'DELETE') return setIsDeletePush(true);
+    setIsDisabling(type !== 'ENABLE');
   };
 
   const mutationState = useMutation({
     mutationFn: async (id: string) => {
-      return pushUpdater({
-        id,
-        environmentId: selectedPush?.environmentId,
-        disabled: isDisabling
-      });
+      return isDeletePush
+        ? await pushDelete({
+            id,
+            environmentId: selectedPush?.environmentId
+          })
+        : await pushUpdater({
+            id,
+            environmentId: selectedPush?.environmentId,
+            disabled: isDisabling
+          });
     },
     onSuccess: () => {
+      notify({
+        message: t(`message:collection-action-success`, {
+          collection: t('common:source-type.push'),
+          action: t(isDeletePush ? 'common:deleted' : 'common:updated')
+        })
+      });
       onCloseConfirmModal();
+      setIsDeletePush(false);
       invalidatePushes(queryClient);
       mutationState.reset();
-    }
+    },
+    onError: errorNotify
   });
 
-  const onHandleDisable = () => {
+  const onHandleConfirmSubmit = () => {
     if (selectedPush?.id) {
       mutationState.mutate(selectedPush?.id);
     }
@@ -77,19 +94,13 @@ const PageLoader = () => {
         <ConfirmModal
           isOpen={openConfirmModal}
           onClose={onCloseConfirmModal}
-          onSubmit={onHandleDisable}
-          title={
-            isDisabling
-              ? t(`table:popover.disable-push`)
-              : t(`table:popover.enable-push`)
-          }
+          onSubmit={onHandleConfirmSubmit}
+          title={t(
+            `popover.${isDeletePush ? 'delete' : isDisabling ? 'disable' : 'enable'}-push`
+          )}
           description={
             <Trans
-              i18nKey={
-                isDisabling
-                  ? 'table:push.confirm-disable-desc'
-                  : 'table:push.confirm-enable-desc'
-              }
+              i18nKey={`table:push.confirm-${isDeletePush ? 'delete' : isDisabling ? 'disable' : 'enable'}-desc`}
               values={{ name: selectedPush?.name }}
               components={{ bold: <strong /> }}
             />

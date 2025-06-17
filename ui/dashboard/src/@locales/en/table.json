@@ -25,6 +25,7 @@
     "edit-push": "Edit Push",
     "disable-push": "Disable Push",
     "enable-push": "Enable Push",
+    "delete-push": "Delete Push",
     "delete-goal": "Delete Goal",
     "archive-goal": "Archive Goal",
     "unarchive-goal": "Unarchive Goal",
@@ -97,7 +98,8 @@
   },
   "push": {
     "confirm-enable-desc": "The Push \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
-    "confirm-disable-desc": "The Push \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
+    "confirm-disable-desc": "The Push \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?",
+    "confirm-delete-desc": "The Push \"<bold>{{name}}</bold>\" will be deleted permanently. Are you sure you want to proceed?"
   },
   "operations": {
     "confirm-delete-operation": "The <bold>{{type}}</bold> will be deleted permanently. Are you sure you want to proceed?"
@@ -188,8 +190,6 @@
     "target-segments": "Target Segments",
     "target-individuals": "Target Individuals",
     "set-prerequisites": "Set Prerequisites",
-    "default-rule": "Default Rule",
-    "default-rule-desc": "When targeting is ON and contexts don't match any targeting rules",
     "rules": "Rules",
     "rule-index": "Rule {{index}}",
     "total-flags": "Total Flags",

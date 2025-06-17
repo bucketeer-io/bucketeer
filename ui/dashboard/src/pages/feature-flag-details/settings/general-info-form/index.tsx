@@ -1,28 +1,30 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryAccounts } from '@queries/accounts';
 import { invalidateFeature } from '@queries/feature-details';
-import { useQueryTags } from '@queries/tags';
+import { invalidateFeatures } from '@queries/features';
+import { invalidateTags, useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
-import { uniqBy } from 'lodash';
 import { Feature, TagChange } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
-import { IconWatch } from '@icons';
+import { IconInfo, IconWatch } from '@icons';
 import Button from 'components/button';
-import { CreatableSelect } from 'components/creatable-select';
+import { DropdownOption } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
+import { Tooltip } from 'components/tooltip';
 import Card from 'elements/card';
 import DateTooltip from 'elements/date-tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+import TagsSelectMenu from 'elements/tags-select-menu';
 import { generalInfoFormSchema, GeneralInfoFormType } from './form-schema';
 import SaveWithCommentModal from './modals/save-with-comment';
 
@@ -36,6 +38,7 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
 
   const [isOpenSaveModal, onOpenSaveModal, onCloseSaveModal] =
     useToggleOpen(false);
+  const [tagOptions, setTagOptions] = useState<DropdownOption[]>([]);
 
   const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
     params: {
@@ -79,13 +82,6 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
   const tags = tagCollection?.tags || [];
   const accounts = accountCollection?.accounts || [];
 
-  const tagOptions = uniqBy(
-    tags.map(item => ({
-      label: item.name,
-      value: item.name
-    })),
-    'label'
-  );
   const accountOptions = accounts.map(item => ({
     label: item.email,
     value: item.email
@@ -153,12 +149,25 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
           comment: ''
         });
         invalidateFeature(queryClient);
+        invalidateFeatures(queryClient);
+        invalidateTags(queryClient);
         onCloseSaveModal();
       }
     } catch (error) {
       errorNotify(error);
     }
   }, [currentEnvironment, feature]);
+
+  useEffect(() => {
+    if (tags.length) {
+      setTagOptions(
+        tags.map(item => ({
+          label: item.name,
+          value: item.name
+        }))
+      );
+    }
+  }, [tags]);
 
   return (
     <FormProvider {...form}>
@@ -259,23 +268,27 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
             name="tags"
             render={({ field }) => (
               <Form.Item className="w-full py-0">
-                <Form.Label required>{t('common:tags')}</Form.Label>
-                <Form.Control>
-                  <CreatableSelect
-                    disabled={isLoadingTags || !tagOptions.length}
-                    value={tagOptions.filter(tag =>
-                      field.value?.includes(tag.value)
-                    )}
-                    loading={isLoadingTags}
-                    placeholder={t(
-                      !tagOptions.length && !isLoadingTags
-                        ? `form:no-tags-found`
-                        : `form:placeholder-tags`
-                    )}
-                    options={tagOptions}
-                    onChange={value =>
-                      field.onChange(value.map(tag => tag.value))
+                <Form.Label required className="relative w-fit">
+                  {t('common:tags')}
+                  <Tooltip
+                    align="start"
+                    alignOffset={-46}
+                    content={t('tags-tooltip')}
+                    trigger={
+                      <div className="flex-center size-fit absolute top-0 -right-6">
+                        <Icon icon={IconInfo} size="xs" color="gray-500" />
+                      </div>
                     }
+                    className="max-w-[400px]"
+                  />
+                </Form.Label>
+                <Form.Control>
+                  <TagsSelectMenu
+                    disabled={isLoadingTags}
+                    fieldValues={field.value || []}
+                    tagOptions={tagOptions}
+                    onChange={field.onChange}
+                    onChangeTagOptions={setTagOptions}
                   />
                 </Form.Control>
                 <Form.Message />

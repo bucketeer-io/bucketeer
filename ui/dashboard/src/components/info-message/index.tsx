@@ -10,8 +10,8 @@ const InfoMessage = ({
   linkElements,
   className
 }: {
-  title: string;
-  description?: string;
+  title: ReactNode;
+  description?: ReactNode;
   linkElements?: ReactNode;
   className?: string;
 }) => {

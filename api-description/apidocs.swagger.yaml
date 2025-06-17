@@ -2076,10 +2076,10 @@ definitions:
       avatarImage:
         type: string
         format: byte
-        title: this is not save in auditlog table
+        title: this is not saved in the auditlog table
       avatarFileType:
         type: string
-        title: this is not save in auditlog table
+        title: this is not saved in the auditlog table
   FeatureVariationType:
     type: string
     enum:
@@ -2957,10 +2957,19 @@ definitions:
       avatarImage:
         type: string
         format: byte
-        title: this is not save in auditlog table
+        title: this is not saved in the auditlog table
       avatarFileType:
         type: string
-        title: this is not save in auditlog table
+        title: this is not saved in the auditlog table
+      environmentRoles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2EnvironmentRole'
+        title: this is not saved in the auditlog table
+      organizationRole:
+        $ref: '#/definitions/AccountV2RoleOrganization'
+        title: this is not saved in the auditlog table
   domainEventEntityType:
     type: string
     enum:
@@ -3262,6 +3271,16 @@ definitions:
       environmentId:
         type: string
         description: service.
+  featureAudience:
+    type: object
+    properties:
+      percentage:
+        type: integer
+        format: int32
+        title: Percentage of traffic to include in experiment (0-100)
+      defaultVariation:
+        type: string
+        title: Variation to serve to users not in experiment
   featureAutoOpsSummary:
     type: object
     properties:
@@ -3486,6 +3505,9 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureRolloutStrategyVariation'
+      audience:
+        $ref: '#/definitions/featureAudience'
+        title: Optional audience configuration for traffic control
   featureRolloutStrategyVariation:
     type: object
     properties:

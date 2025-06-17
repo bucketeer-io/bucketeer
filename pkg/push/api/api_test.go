@@ -927,6 +927,51 @@ func TestListPushesMySQL(t *testing.T) {
 			expected:    &pushproto.ListPushesResponse{Pushes: []*pushproto.Push{}, Cursor: "0"},
 			expectedErr: nil,
 		},
+		{
+			desc:    "success: filter by environmentIDs",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_EDITOR),
+			setup: func(s *PushService) {
+				s.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						Email:            "email",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "ns0",
+								Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+							},
+							{
+								EnvironmentId: "ns1",
+								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+							},
+						},
+					},
+				}, nil)
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
+					gomock.Any(), gomock.Any(),
+				).Return([]*proto.Push{
+					{Id: "push-1", EnvironmentId: "ns0"},
+					{Id: "push-2", EnvironmentId: "ns1"},
+				}, 2, int64(2), nil)
+			},
+			input: &pushproto.ListPushesRequest{
+				PageSize:       2,
+				Cursor:         "",
+				EnvironmentIds: []string{"ns0"},
+				OrganizationId: "org-1",
+			},
+			expected: &pushproto.ListPushesResponse{
+				Pushes: []*pushproto.Push{
+					{Id: "push-1", EnvironmentId: "ns0"},
+					{Id: "push-2", EnvironmentId: "ns1"},
+				},
+				Cursor:     "2",
+				TotalCount: 2,
+			},
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {

@@ -1,4 +1,5 @@
 import {
+  KeyboardEvent,
   ReactNode,
   useCallback,
   useEffect,
@@ -7,7 +8,6 @@ import {
   useState
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { debounce } from 'lodash';
 import { cn } from 'utils/style';
 import {
   DropdownMenu,
@@ -33,12 +33,21 @@ const DropdownMenuWithSearch = ({
   contentClassName,
   isExpand,
   disabled,
+  trigger,
+  showArrow,
+  showClear,
+  ariaLabel,
+  inputPlaceholder,
+  selectedFieldValue = 'value',
+  notFoundOption,
   additionalElement,
-  onSelectOption
+  onSelectOption,
+  onKeyDown,
+  onClear
 }: {
   align?: 'start' | 'center' | 'end';
   hidden?: boolean;
-  label: ReactNode;
+  label?: ReactNode;
   placeholder?: string;
   isLoading?: boolean;
   isMultiselect?: boolean;
@@ -49,8 +58,30 @@ const DropdownMenuWithSearch = ({
   contentClassName?: string;
   isExpand?: boolean;
   disabled?: boolean;
+  trigger?: ReactNode;
+  showArrow?: boolean;
+  showClear?: boolean;
+  ariaLabel?: string;
+  inputPlaceholder?: string;
+  selectedFieldValue?: string;
+  notFoundOption?: (
+    value: string,
+    onChangeValue: (value: string) => void
+  ) => ReactNode;
   additionalElement?: (item: DropdownOption) => ReactNode;
   onSelectOption: (value: DropdownValue) => void;
+  onKeyDown?: ({
+    event,
+    searchValue,
+    matchOptions,
+    onClearSearchValue
+  }: {
+    event: KeyboardEvent<HTMLInputElement>;
+    searchValue: string;
+    matchOptions: DropdownOption[];
+    onClearSearchValue: () => void;
+  }) => void;
+  onClear?: () => void;
 }) => {
   const { t } = useTranslation(['common']);
 
@@ -60,16 +91,15 @@ const DropdownMenuWithSearch = ({
 
   const [isOpen, setIsOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
-  const [debounceValue, setDebounceValue] = useState('');
 
   const dropdownOptions = useMemo(
     () =>
       options?.filter(item =>
-        searchValue
-          ? (item.label as string)
+        !searchValue
+          ? item
+          : (item.label as string)
               .toLowerCase()
               .includes(searchValue.toLowerCase())
-          : item
       ),
     [options, searchValue]
   );
@@ -79,22 +109,14 @@ const DropdownMenuWithSearch = ({
   timerId = setTimeout(() => inputSearchRef?.current?.focus(), 50);
   const handleFocusSearchInput = useCallback(() => {}, []);
 
-  const debouncedSearch = useCallback(
-    debounce(value => {
-      contentRef.current?.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-      setSearchValue(value);
-    }, 500),
-    []
-  );
+  const onClearSearchValue = useCallback(() => {
+    setSearchValue('');
+  }, []);
 
   useEffect(() => {
     if (hidden) {
       setIsOpen(false);
-      setDebounceValue('');
-      setSearchValue('');
+      onClearSearchValue();
     }
   }, [hidden]);
 
@@ -104,17 +126,21 @@ const DropdownMenuWithSearch = ({
       onOpenChange={open => {
         setIsOpen(open);
         if (open) return handleFocusSearchInput();
-        setDebounceValue('');
-        setSearchValue('');
+        onClearSearchValue();
       }}
     >
       <DropdownMenuTrigger
         ref={triggerRef}
+        showClear={showClear}
         disabled={isLoading || disabled}
         placeholder={placeholder}
         label={label}
+        trigger={trigger}
+        showArrow={showArrow}
+        ariaLabel={ariaLabel}
         variant="secondary"
         className={cn('w-full', triggerClassName)}
+        onClear={onClear}
       />
       <DropdownMenuContent
         ref={contentRef}
@@ -131,27 +157,49 @@ const DropdownMenuWithSearch = ({
       >
         <DropdownMenuSearch
           ref={inputSearchRef}
-          value={debounceValue}
+          value={searchValue}
+          placeholder={inputPlaceholder}
           onChange={value => {
-            setDebounceValue(value);
-            debouncedSearch(value);
+            contentRef.current?.scrollTo({
+              top: 0,
+              behavior: 'smooth'
+            });
+            setSearchValue(value);
             handleFocusSearchInput();
           }}
+          onKeyDown={event =>
+            onKeyDown?.({
+              event,
+              searchValue,
+              matchOptions: dropdownOptions,
+              onClearSearchValue
+            })
+          }
         />
         {dropdownOptions?.length > 0 ? (
           dropdownOptions.map((item, index) => (
             <DropdownMenuItem
               key={index}
-              isSelected={selectedOptions?.includes(item.value as string)}
+              isSelected={selectedOptions?.includes(
+                item[selectedFieldValue] as string
+              )}
               isMultiselect={isMultiselect}
               value={item.value}
               label={item.label}
               icon={item?.icon}
+              disabled={item?.disabled}
               additionalElement={additionalElement && additionalElement(item)}
-              onSelectOption={onSelectOption}
-              className="justify-between gap-x-4"
+              onSelectOption={() =>
+                onSelectOption(item[selectedFieldValue] as string)
+              }
+              className="justify-between gap-x-4 [&>div:last-child]:mb-[2px]"
             />
           ))
+        ) : notFoundOption ? (
+          notFoundOption(searchValue, value => {
+            setSearchValue(value);
+            handleFocusSearchInput();
+          })
         ) : (
           <div className="flex-center py-2.5 typo-para-medium text-gray-600">
             {t('no-options-found')}
