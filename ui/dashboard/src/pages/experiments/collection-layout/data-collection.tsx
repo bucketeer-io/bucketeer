@@ -5,7 +5,7 @@ import {
 } from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -75,6 +75,7 @@ export const useColumns = ({
 
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
   const { notify } = useToast();
 
   const handleCopyId = (id: string) => {
@@ -233,49 +234,51 @@ export const useColumns = ({
         const experiment = row.original;
         const { status } = experiment;
         return (
-          <Popover
-            options={[
-              {
-                label: `${t('table:popover.edit-experiment')}`,
-                icon: IconEditOutlined,
-                value: 'EDIT'
-              },
-              ...(['WAITING', 'RUNNING'].includes(status)
-                ? [
-                    status === 'WAITING'
-                      ? {
-                          label: `${t('table:popover.start-experiment')}`,
-                          icon: IconStartExperiment,
-                          value: 'START'
-                        }
-                      : {
-                          label: `${t('table:popover.stop-experiment')}`,
-                          icon: IconStopExperiment,
-                          value: 'STOP'
-                        }
-                  ]
-                : []),
-              searchOptions.status === 'ARCHIVED'
-                ? {
-                    label: `${t('table:popover.unarchive-experiment')}`,
-                    icon: IconArchiveOutlined,
-                    value: 'UNARCHIVE'
-                  }
-                : {
-                    label: `${t('table:popover.archive-experiment')}`,
-                    icon: IconArchiveOutlined,
-                    value: 'ARCHIVE',
-                    disabled: ['RUNNING', 'WAITING'].includes(
-                      row.original.status
-                    )
-                  }
-            ]}
-            icon={IconMoreHorizOutlined}
-            onClick={value =>
-              onActions(experiment, value as ExperimentActionsType)
-            }
-            align="end"
-          />
+          editable && (
+            <Popover
+              options={[
+                {
+                  label: `${t('table:popover.edit-experiment')}`,
+                  icon: IconEditOutlined,
+                  value: 'EDIT'
+                },
+                ...(['WAITING', 'RUNNING'].includes(status)
+                  ? [
+                      status === 'WAITING'
+                        ? {
+                            label: `${t('table:popover.start-experiment')}`,
+                            icon: IconStartExperiment,
+                            value: 'START'
+                          }
+                        : {
+                            label: `${t('table:popover.stop-experiment')}`,
+                            icon: IconStopExperiment,
+                            value: 'STOP'
+                          }
+                    ]
+                  : []),
+                searchOptions.status === 'ARCHIVED'
+                  ? {
+                      label: `${t('table:popover.unarchive-experiment')}`,
+                      icon: IconArchiveOutlined,
+                      value: 'UNARCHIVE'
+                    }
+                  : {
+                      label: `${t('table:popover.archive-experiment')}`,
+                      icon: IconArchiveOutlined,
+                      value: 'ARCHIVE',
+                      disabled: ['RUNNING', 'WAITING'].includes(
+                        row.original.status
+                      )
+                    }
+              ]}
+              icon={IconMoreHorizOutlined}
+              onClick={value =>
+                onActions(experiment, value as ExperimentActionsType)
+              }
+              align="end"
+            />
+          )
         );
       }
     }

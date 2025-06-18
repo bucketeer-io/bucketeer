@@ -23,6 +23,7 @@ import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
 import Card from 'elements/card';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import TagsSelectMenu from 'elements/tags-select-menu';
 import { generalInfoFormSchema, GeneralInfoFormType } from './form-schema';
@@ -309,15 +310,21 @@ const GeneralInfoForm = ({
               </Form.Item>
             )}
           />
-          <Button
-            type="button"
-            variant={'secondary'}
-            disabled={!isValid || !isDirty || disabled}
-            className="w-fit"
-            onClick={onOpenSaveModal}
-          >
-            {t('common:save-with-comment')}
-          </Button>
+          <DisabledButtonTooltip
+            align="start"
+            hidden={!disabled}
+            trigger={
+              <Button
+                type="button"
+                variant={'secondary'}
+                disabled={!isValid || !isDirty || disabled}
+                className="w-fit"
+                onClick={onOpenSaveModal}
+              >
+                {t('common:save-with-comment')}
+              </Button>
+            }
+          />
         </Card>
         {isOpenSaveModal && (
           <SaveWithCommentModal

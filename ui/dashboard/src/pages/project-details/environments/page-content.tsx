@@ -9,6 +9,7 @@ import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import CollectionLoader from './collection-loader';
 import { EnvironmentActionsType, EnvironmentFilters } from './types';
@@ -53,14 +54,19 @@ const PageContent = ({
     <>
       <Filter
         action={
-          <Button
-            className="flex-1 lg:flex-none"
-            onClick={onAdd}
-            disabled={disabled}
-          >
-            <Icon icon={IconAddOutlined} size="sm" />
-            {t(`new-env`)}
-          </Button>
+          <DisabledButtonTooltip
+            hidden={!disabled}
+            trigger={
+              <Button
+                className="flex-1 lg:flex-none"
+                onClick={onAdd}
+                disabled={disabled}
+              >
+                <Icon icon={IconAddOutlined} size="sm" />
+                {t(`new-env`)}
+              </Button>
+            }
+          />
         }
         searchValue={filters.searchQuery}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}

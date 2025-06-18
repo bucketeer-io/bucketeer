@@ -23,7 +23,7 @@ export const NoDataState = ({
         )}
         {onAdd && (
           <EmptyState.Actions>
-            <EmptyState.ActionButton onClick={onAdd}>
+            <EmptyState.ActionButton type={'new'} onClick={onAdd}>
               {`Add`}
             </EmptyState.ActionButton>
           </EmptyState.Actions>

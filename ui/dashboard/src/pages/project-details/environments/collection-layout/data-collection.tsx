@@ -4,6 +4,7 @@ import {
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
+import { hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { Environment } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
@@ -21,6 +22,8 @@ export const useColumns = ({
   const { searchOptions } = useSearchParams();
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
+  const { consoleAccount } = useAuth();
+  const editable = hasEditable(consoleAccount!);
 
   return [
     {
@@ -93,31 +96,33 @@ export const useColumns = ({
         const environment = row.original;
 
         return (
-          <Popover
-            options={[
-              {
-                label: `${t('table:popover.edit-env')}`,
-                icon: IconEditOutlined,
-                value: 'EDIT'
-              },
-              searchOptions.status === 'ARCHIVED'
-                ? {
-                    label: `${t('table:popover.unarchive-env')}`,
-                    icon: IconArchiveOutlined,
-                    value: 'UNARCHIVE'
-                  }
-                : {
-                    label: `${t('table:popover.archive-env')}`,
-                    icon: IconArchiveOutlined,
-                    value: 'ARCHIVE'
-                  }
-            ]}
-            icon={IconMoreHorizOutlined}
-            onClick={value =>
-              onActions(environment, value as EnvironmentActionsType)
-            }
-            align="end"
-          />
+          editable && (
+            <Popover
+              options={[
+                {
+                  label: `${t('table:popover.edit-env')}`,
+                  icon: IconEditOutlined,
+                  value: 'EDIT'
+                },
+                searchOptions.status === 'ARCHIVED'
+                  ? {
+                      label: `${t('table:popover.unarchive-env')}`,
+                      icon: IconArchiveOutlined,
+                      value: 'UNARCHIVE'
+                    }
+                  : {
+                      label: `${t('table:popover.archive-env')}`,
+                      icon: IconArchiveOutlined,
+                      value: 'ARCHIVE'
+                    }
+              ]}
+              icon={IconMoreHorizOutlined}
+              onClick={value =>
+                onActions(environment, value as EnvironmentActionsType)
+              }
+              align="end"
+            />
+          )
         );
       }
     }

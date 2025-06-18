@@ -25,6 +25,7 @@ import {
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
 
 interface EditPushModalProps {
@@ -282,13 +283,19 @@ const EditPushModal = ({
                     </Button>
                   }
                   secondaryButton={
-                    <Button
-                      type="submit"
-                      disabled={!isValid || !isDirty || disabled}
-                      loading={isSubmitting}
-                    >
-                      {t(`submit`)}
-                    </Button>
+                    <DisabledButtonTooltip
+                      align="center"
+                      hidden={!disabled}
+                      trigger={
+                        <Button
+                          type="submit"
+                          disabled={!isValid || !isDirty || disabled}
+                          loading={isSubmitting}
+                        >
+                          {t(`submit`)}
+                        </Button>
+                      }
+                    />
                   }
                 />
               </div>

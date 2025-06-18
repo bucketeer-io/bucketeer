@@ -4,7 +4,7 @@ import {
 } from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_PROJECTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { Project } from '@types';
@@ -23,6 +23,7 @@ export const useColumns = ({
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   return [
     {
@@ -141,18 +142,20 @@ export const useColumns = ({
         const project = row.original;
 
         return (
-          <Popover
-            options={[
-              {
-                label: `${t('table:popover.edit-project')}`,
-                icon: IconEditOutlined,
-                value: 'EDIT_PROJECT'
-              }
-            ]}
-            icon={IconMoreHorizOutlined}
-            onClick={() => onActionHandler(project)}
-            align="end"
-          />
+          editable && (
+            <Popover
+              options={[
+                {
+                  label: `${t('table:popover.edit-project')}`,
+                  icon: IconEditOutlined,
+                  value: 'EDIT_PROJECT'
+                }
+              ]}
+              icon={IconMoreHorizOutlined}
+              onClick={() => onActionHandler(project)}
+              align="end"
+            />
+          )
         );
       }
     }

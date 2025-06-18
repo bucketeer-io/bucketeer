@@ -18,6 +18,7 @@ import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface EditEnvironmentModalProps {
   disabled: boolean;
@@ -200,13 +201,18 @@ const EditEnvironmentModal = ({
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!form.formState.isDirty || disabled}
-                    loading={form.formState.isSubmitting}
-                  >
-                    {t(`update-env`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    hidden={!disabled}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={!form.formState.isDirty || disabled}
+                        loading={form.formState.isSubmitting}
+                      >
+                        {t(`update-env`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>

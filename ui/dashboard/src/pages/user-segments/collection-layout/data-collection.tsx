@@ -6,6 +6,7 @@ import {
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
+import { hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
@@ -23,8 +24,10 @@ export const useColumns = ({
   segmentUploading: UserSegment | null;
   onActionHandler: (value: UserSegment, type: UserSegmentsActionsType) => void;
 }): ColumnDef<UserSegment>[] => {
+  const { consoleAccount } = useAuth();
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
+  const editable = hasEditable(consoleAccount!);
 
   const getUploadingStatus = useCallback(
     (segment: UserSegment) => {
@@ -157,31 +160,33 @@ export const useColumns = ({
         const segment = row.original;
 
         return (
-          <Popover
-            options={[
-              {
-                label: `${t('table:popover.download-segment')}`,
-                icon: IconCloudDownloadOutlined,
-                value: 'DOWNLOAD',
-                disabled: !Number(segment.includedUserCount)
-              },
-              {
-                label: `${t('table:popover.edit-segment')}`,
-                icon: IconEditOutlined,
-                value: 'EDIT'
-              },
-              {
-                label: `${t('table:popover.delete-segment')}`,
-                icon: IconDeleteOutlined,
-                value: 'DELETE'
+          editable && (
+            <Popover
+              options={[
+                {
+                  label: `${t('table:popover.download-segment')}`,
+                  icon: IconCloudDownloadOutlined,
+                  value: 'DOWNLOAD',
+                  disabled: !Number(segment.includedUserCount)
+                },
+                {
+                  label: `${t('table:popover.edit-segment')}`,
+                  icon: IconEditOutlined,
+                  value: 'EDIT'
+                },
+                {
+                  label: `${t('table:popover.delete-segment')}`,
+                  icon: IconDeleteOutlined,
+                  value: 'DELETE'
+                }
+              ]}
+              icon={IconMoreHorizOutlined}
+              onClick={value =>
+                onActionHandler(segment, value as UserSegmentsActionsType)
               }
-            ]}
-            icon={IconMoreHorizOutlined}
-            onClick={value =>
-              onActionHandler(segment, value as UserSegmentsActionsType)
-            }
-            align="end"
-          />
+              align="end"
+            />
+          )
         );
       }
     }

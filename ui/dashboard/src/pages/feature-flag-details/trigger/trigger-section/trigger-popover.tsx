@@ -23,40 +23,46 @@ const TriggerPopover = ({
   const { t } = useTranslation(['table']);
 
   return (
-    <Popover
-      disabled={disabled}
-      options={compact([
-        {
-          label: `${t('trigger.edit-desc')}`,
-          icon: IconEditOutlined,
-          value: TriggerAction.EDIT,
-          color: 'gray-600'
-        },
-        {
-          label: `${t(`trigger.${trigger.disabled ? 'enable-trigger' : 'disable-trigger'}`)}`,
-          icon: trigger.disabled ? IconCheckCircleOutlineOutlined : IconDisable,
-          value: trigger.disabled ? TriggerAction.ENABLE : TriggerAction.DISABLE
-        },
-        {
-          label: `${t('trigger.reset-url')}`,
-          icon: IconRefreshOutlined,
-          value: TriggerAction.RESET
-        },
-        {
-          label: (
-            <span className="text-accent-red-500">
-              {t('trigger.delete-trigger')}
-            </span>
-          ),
-          icon: IconTrash,
-          value: TriggerAction.DELETE,
-          color: 'accent-red-500'
-        }
-      ])}
-      icon={IconMoreHorizOutlined}
-      onClick={value => onActions(value as TriggerAction)}
-      align="end"
-    />
+    !disabled && (
+      <Popover
+        disabled={disabled}
+        options={compact([
+          {
+            label: `${t('trigger.edit-desc')}`,
+            icon: IconEditOutlined,
+            value: TriggerAction.EDIT,
+            color: 'gray-600'
+          },
+          {
+            label: `${t(`trigger.${trigger.disabled ? 'enable-trigger' : 'disable-trigger'}`)}`,
+            icon: trigger.disabled
+              ? IconCheckCircleOutlineOutlined
+              : IconDisable,
+            value: trigger.disabled
+              ? TriggerAction.ENABLE
+              : TriggerAction.DISABLE
+          },
+          {
+            label: `${t('trigger.reset-url')}`,
+            icon: IconRefreshOutlined,
+            value: TriggerAction.RESET
+          },
+          {
+            label: (
+              <span className="text-accent-red-500">
+                {t('trigger.delete-trigger')}
+              </span>
+            ),
+            icon: IconTrash,
+            value: TriggerAction.DELETE,
+            color: 'accent-red-500'
+          }
+        ])}
+        icon={IconMoreHorizOutlined}
+        onClick={value => onActions(value as TriggerAction)}
+        align="end"
+      />
+    )
   );
 };
 

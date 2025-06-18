@@ -11,6 +11,7 @@ import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import TableListContainer from 'elements/table-list-container';
@@ -133,14 +134,19 @@ const PageContent = ({
         action={
           <>
             <SortBy filters={filters} setFilters={setFilters} />
-            <Button
-              className="flex-1 lg:flex-none"
-              onClick={onAdd}
-              disabled={!editable}
-            >
-              <Icon icon={IconAddOutlined} size="sm" />
-              {t(`create-flag`)}
-            </Button>
+            <DisabledButtonTooltip
+              hidden={editable}
+              trigger={
+                <Button
+                  className="flex-1 lg:flex-none"
+                  onClick={onAdd}
+                  disabled={!editable}
+                >
+                  <Icon icon={IconAddOutlined} size="sm" />
+                  {t(`create-flag`)}
+                </Button>
+              }
+            />
           </>
         }
         filterCount={filterCount}

@@ -3,6 +3,7 @@ import {
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
+import { hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { Push, Tag } from '@types';
@@ -12,6 +13,7 @@ import { IconTrash } from '@icons';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import ExpandableTag from 'elements/expandable-tag';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { PushActionsType } from '../types';
@@ -25,6 +27,8 @@ export const useColumns = ({
 }): ColumnDef<Push>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
+  const { consoleAccount } = useAuth();
+  const editable = hasEditable(consoleAccount!);
 
   return [
     {
@@ -59,6 +63,7 @@ export const useColumns = ({
     },
     {
       accessorKey: 'tags',
+      enableSorting: false,
       header: `${t('tags')}`,
       enableSorting: false,
       size: 350,
@@ -131,10 +136,19 @@ export const useColumns = ({
         const push = row.original;
 
         return (
-          <Switch
-            checked={!push.disabled}
-            onCheckedChange={value =>
-              onActions(push, value ? 'ENABLE' : 'DISABLE')
+          <DisabledButtonTooltip
+            align="center"
+            hidden={editable}
+            trigger={
+              <div className="w-fit">
+                <Switch
+                  disabled={!editable}
+                  checked={!push.disabled}
+                  onCheckedChange={value =>
+                    onActions(push, value ? 'ENABLE' : 'DISABLE')
+                  }
+                />
+              </div>
             }
           />
         );
@@ -153,23 +167,25 @@ export const useColumns = ({
         const push = row.original;
 
         return (
-          <Popover
-            options={compact([
-              {
-                label: `${t('table:popover.edit-push')}`,
-                icon: IconEditOutlined,
-                value: 'EDIT'
-              },
-              {
-                label: `${t('table:popover.delete-push')}`,
-                icon: IconTrash,
-                value: 'DELETE'
-              }
-            ])}
-            icon={IconMoreHorizOutlined}
-            onClick={value => onActions(push, value as PushActionsType)}
-            align="end"
-          />
+          editable && (
+            <Popover
+              options={compact([
+                {
+                  label: `${t('table:popover.edit-push')}`,
+                  icon: IconEditOutlined,
+                  value: 'EDIT'
+                },
+                {
+                  label: `${t('table:popover.delete-push')}`,
+                  icon: IconTrash,
+                  value: 'DELETE'
+                }
+              ])}
+              icon={IconMoreHorizOutlined}
+              onClick={value => onActions(push, value as PushActionsType)}
+              align="end"
+            />
+          )
         );
       }
     }

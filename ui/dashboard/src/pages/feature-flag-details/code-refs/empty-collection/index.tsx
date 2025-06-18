@@ -26,7 +26,11 @@ const EmptyCollection = ({
       </EmptyState.Body>
       {!isEmpty && onAdd && (
         <EmptyState.Actions>
-          <EmptyState.ActionButton variant="primary" onClick={onAdd}>
+          <EmptyState.ActionButton
+            type={'new'}
+            variant="primary"
+            onClick={onAdd}
+          >
             <IconAddOutlined />
             {t(`common:create-api-key`)}
           </EmptyState.ActionButton>

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import {
   IconPlus,
@@ -14,6 +15,7 @@ import {
 } from 'components/dropdown';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import { RuleCategory } from '../types';
 
 const AddRule = ({
@@ -26,6 +28,8 @@ const AddRule = ({
   onAddRule: (rule: RuleCategory) => void;
 }) => {
   const { t } = useTranslation(['form', 'table']);
+  const { consoleAccount } = useAuth();
+  const editable = hasEditable(consoleAccount!);
 
   const options = useMemo(
     () => [
@@ -57,11 +61,18 @@ const AddRule = ({
     <DropdownMenu>
       <DropdownMenuTrigger
         trigger={
-          <div className="flex items-center gap-x-2 h-6 p-0 typo-para-medium !text-primary-500">
-            <Icon icon={IconPlus} size={'md'} />
-            {t('table:feature-flags.add-rule')}
-          </div>
+          <DisabledButtonTooltip
+            align="center"
+            hidden={editable}
+            trigger={
+              <div className="flex items-center gap-x-2 h-6 p-0 typo-para-medium !text-primary-500">
+                <Icon icon={IconPlus} size={'md'} />
+                {t('table:feature-flags.add-rule')}
+              </div>
+            }
+          />
         }
+        disabled={!editable}
         showArrow={false}
         className="w-full [&>div]:flex-center border-dashed !shadow-none"
       />

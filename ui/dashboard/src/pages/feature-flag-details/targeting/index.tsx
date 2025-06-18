@@ -21,6 +21,7 @@ import Divider from 'components/divider';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import PageLayout from 'elements/page-layout';
 import ConfirmationRequiredModal, {
   ConfirmRequiredValues
@@ -400,13 +401,18 @@ const TargetingPage = ({
               />
             }
             secondaryButton={
-              <Button
-                type="button"
-                disabled={!isDirty || !isValid || !editable}
-                onClick={onOpenConfirmModal}
-              >
-                {t('save-with-comment')}
-              </Button>
+              <DisabledButtonTooltip
+                hidden={editable}
+                trigger={
+                  <Button
+                    type="button"
+                    disabled={!isDirty || !isValid || !editable}
+                    onClick={onOpenConfirmModal}
+                  >
+                    {t('save-with-comment')}
+                  </Button>
+                }
+              />
             }
           />
         </Form>

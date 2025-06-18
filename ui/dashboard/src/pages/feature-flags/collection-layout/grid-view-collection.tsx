@@ -19,6 +19,7 @@ import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import ExpandableTag from 'elements/expandable-tag';
 import TableListContent from 'elements/table-list-content';
 import { FlagActionType } from '../types';
@@ -144,38 +145,45 @@ const GridViewCollection = ({
                   }
                   date={Number(updatedAt) === 0 ? null : updatedAt}
                 />
-                <div className="flex-center">
-                  <Switch
-                    disabled={!editable}
-                    checked={enabled}
-                    onCheckedChange={() =>
-                      onActions(item, enabled ? 'INACTIVE' : 'ACTIVE')
-                    }
-                  />
-                </div>
-                <Popover
-                  options={compact([
-                    searchOptions.tab === 'ARCHIVED'
-                      ? {
-                          label: `${t('unarchive-flag')}`,
-                          icon: IconArchiveOutlined,
-                          value: 'UNARCHIVE'
+                <DisabledButtonTooltip
+                  hidden={editable}
+                  trigger={
+                    <div className="flex-center">
+                      <Switch
+                        disabled={!editable}
+                        checked={enabled}
+                        onCheckedChange={() =>
+                          onActions(item, enabled ? 'INACTIVE' : 'ACTIVE')
                         }
-                      : {
-                          label: `${t('archive-flag')}`,
-                          icon: IconArchiveOutlined,
-                          value: 'ARCHIVE'
-                        },
-                    {
-                      label: `${t('clone-flag')}`,
-                      icon: IconSaveAsFilled,
-                      value: 'CLONE'
-                    }
-                  ])}
-                  icon={IconMoreVertOutlined}
-                  onClick={value => onActions(item, value as FlagActionType)}
-                  align="end"
+                      />
+                    </div>
+                  }
                 />
+                {editable && (
+                  <Popover
+                    options={compact([
+                      searchOptions.status === 'ARCHIVED'
+                        ? {
+                            label: `${t('unarchive-flag')}`,
+                            icon: IconArchiveOutlined,
+                            value: 'UNARCHIVE'
+                          }
+                        : {
+                            label: `${t('archive-flag')}`,
+                            icon: IconArchiveOutlined,
+                            value: 'ARCHIVE'
+                          },
+                      {
+                        label: `${t('clone-flag')}`,
+                        icon: IconSaveAsFilled,
+                        value: 'CLONE'
+                      }
+                    ])}
+                    icon={IconMoreVertOutlined}
+                    onClick={value => onActions(item, value as FlagActionType)}
+                    align="end"
+                  />
+                )}
               </div>
             </GridViewRow>
           );

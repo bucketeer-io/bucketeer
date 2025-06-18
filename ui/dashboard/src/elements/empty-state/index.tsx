@@ -7,12 +7,18 @@ import { hasEditable, useAuth } from 'auth';
 import { createContext } from 'utils/create-context';
 import { cn } from 'utils/style';
 import Button, { type ButtonProps } from 'components/button';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 export interface EmptyStateProps {
   variant: 'error' | 'no-data' | 'no-search' | 'invalid';
   size: 'sm' | 'md' | 'lg';
   children: ReactNode;
   className?: string;
+}
+
+export interface EmptyStateActionButtonProps
+  extends Omit<ButtonProps, 'size' | 'type'> {
+  type?: 'retry' | 'new';
 }
 
 type EmptyStateContextValue = Omit<EmptyStateProps, 'children'>;
@@ -76,16 +82,27 @@ const EmptyStateActions = ({ children }: PropsWithChildren) => {
   return <div className="flex justify-center mt-3 gap-3">{children}</div>;
 };
 
-const EmptyStateActionButton = (props: Omit<ButtonProps, 'size'>) => {
+const EmptyStateActionButton = ({
+  type = 'retry',
+  ...props
+}: EmptyStateActionButtonProps) => {
   const { size } = useEmptyState();
   const { consoleAccount } = useAuth();
   const editable = hasEditable(consoleAccount!);
+  const isRetry = type === 'retry';
+
   return (
-    <Button
-      variant="primary"
-      size={size === 'lg' ? 'md' : 'sm'}
-      disabled={!editable}
-      {...props}
+    <DisabledButtonTooltip
+      align="center"
+      hidden={editable || isRetry}
+      trigger={
+        <Button
+          variant="primary"
+          size={size === 'lg' ? 'md' : 'sm'}
+          disabled={!editable && !isRetry}
+          {...props}
+        />
+      }
     />
   );
 };

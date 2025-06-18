@@ -39,6 +39,7 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import SearchInput from 'components/search-input';
 import { Tooltip } from 'components/tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
 
 interface EditNotificationModalProps {
@@ -497,13 +498,18 @@ const EditNotificationModal = ({
                     </Button>
                   }
                   secondaryButton={
-                    <Button
-                      type="submit"
-                      disabled={!isValid || !isDirty || disabled}
-                      loading={isSubmitting}
-                    >
-                      {t(`submit`)}
-                    </Button>
+                    <DisabledButtonTooltip
+                      hidden={!disabled}
+                      trigger={
+                        <Button
+                          type="submit"
+                          disabled={!isValid || !isDirty || disabled}
+                          loading={isSubmitting}
+                        >
+                          {t(`submit`)}
+                        </Button>
+                      }
+                    />
                   }
                 />
               </div>

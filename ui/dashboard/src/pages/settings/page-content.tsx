@@ -18,6 +18,7 @@ import {
 import Form from 'components/form';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import PageLayout from 'elements/page-layout';
 
 const formSchema = yup.object().shape({
@@ -189,14 +190,20 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                 </Form.Item>
               )}
             />
-            <Button
-              loading={form.formState.isSubmitting}
-              disabled={!form.formState.isDirty || !editable}
-              type="submit"
-              className="w-fit mt-6"
-            >
-              {t(`save`)}
-            </Button>
+            <DisabledButtonTooltip
+              align="start"
+              hidden={editable}
+              trigger={
+                <Button
+                  loading={form.formState.isSubmitting}
+                  disabled={!form.formState.isDirty || !editable}
+                  type="submit"
+                  className="w-fit mt-6"
+                >
+                  {t(`save`)}
+                </Button>
+              }
+            />
           </Form>
         </FormProvider>
       </div>
