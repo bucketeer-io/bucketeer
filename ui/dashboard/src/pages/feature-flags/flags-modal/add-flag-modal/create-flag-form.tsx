@@ -6,7 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateFeatures } from '@queries/features';
 import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { AxiosError } from 'axios';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -38,6 +38,7 @@ import Icon from 'components/icon';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import TagsSelectMenu from 'elements/tags-select-menu';
 import { formSchema } from './formSchema';
 import Variations from './variations';
@@ -102,6 +103,7 @@ const CreateFlagForm = ({
 }) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
@@ -542,13 +544,18 @@ const CreateFlagForm = ({
                 </Button>
               }
               secondaryButton={
-                <Button
-                  type="submit"
-                  disabled={!form.formState.isDirty}
-                  loading={form.formState.isSubmitting}
-                >
-                  {t(`create-flag`)}
-                </Button>
+                <DisabledButtonTooltip
+                  hidden={editable}
+                  trigger={
+                    <Button
+                      type="submit"
+                      disabled={!form.formState.isDirty || !editable}
+                      loading={form.formState.isSubmitting}
+                    >
+                      {t(`create-flag`)}
+                    </Button>
+                  }
+                />
               }
             />
           </div>
