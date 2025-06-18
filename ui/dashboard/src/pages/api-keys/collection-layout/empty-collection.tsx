@@ -15,7 +15,12 @@ export const EmptyCollection = ({ onAdd }: { onAdd: () => void }) => {
         </EmptyState.Description>
       </EmptyState.Body>
       <EmptyState.Actions>
-        <EmptyState.ActionButton type={'new'} variant="primary" onClick={onAdd}>
+        <EmptyState.ActionButton
+          isNeedAdminAccess
+          type={'new'}
+          variant="primary"
+          onClick={onAdd}
+        >
           <IconAddOutlined />
           {t(`new-api-key`)}
         </EmptyState.ActionButton>

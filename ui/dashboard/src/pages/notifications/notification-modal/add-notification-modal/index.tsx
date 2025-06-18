@@ -40,6 +40,7 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import SearchInput from 'components/search-input';
 import { Tooltip } from 'components/tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface AddNotificationModalProps {
   disabled?: boolean;
@@ -473,13 +474,18 @@ const AddNotificationModal = ({
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!isValid || disabled}
-                    loading={isSubmitting}
-                  >
-                    {t(`submit`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    hidden={!disabled}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={!isValid || disabled}
+                        loading={isSubmitting}
+                      >
+                        {t(`submit`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>

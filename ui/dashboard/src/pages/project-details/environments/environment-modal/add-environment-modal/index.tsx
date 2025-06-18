@@ -5,7 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateEnvironments } from '@queries/environments';
 import { useQueryProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -24,9 +24,9 @@ import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface AddEnvironmentModalProps {
-  disabled?: boolean;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -53,11 +53,7 @@ const formSchema = yup.object().shape({
   requireComment: yup.boolean().required()
 });
 
-const AddEnvironmentModal = ({
-  disabled,
-  isOpen,
-  onClose
-}: AddEnvironmentModalProps) => {
+const AddEnvironmentModal = ({ isOpen, onClose }: AddEnvironmentModalProps) => {
   const queryClient = useQueryClient();
   const { projectId } = useParams();
   const { t } = useTranslation(['common', 'form']);
@@ -65,6 +61,10 @@ const AddEnvironmentModal = ({
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const { envEditable, isOrganizationAdmin } = getAccountAccess(
+    consoleAccount!
+  );
 
   const { data: projectList } = useQueryProjects({
     params: {
@@ -249,13 +249,23 @@ const AddEnvironmentModal = ({
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!form.formState.isDirty || disabled}
-                    loading={form.formState.isSubmitting}
-                  >
-                    {t(`create-env`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    type={!envEditable ? 'editor' : 'admin'}
+                    hidden={envEditable && isOrganizationAdmin}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={
+                          !form.formState.isDirty ||
+                          !envEditable ||
+                          !isOrganizationAdmin
+                        }
+                        loading={form.formState.isSubmitting}
+                      >
+                        {t(`create-env`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>

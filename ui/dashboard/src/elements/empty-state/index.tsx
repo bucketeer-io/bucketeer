@@ -19,6 +19,7 @@ export interface EmptyStateProps {
 export interface EmptyStateActionButtonProps
   extends Omit<ButtonProps, 'size' | 'type'> {
   type?: 'retry' | 'new';
+  isNeedAdminAccess?: boolean;
 }
 
 type EmptyStateContextValue = Omit<EmptyStateProps, 'children'>;
@@ -84,22 +85,32 @@ const EmptyStateActions = ({ children }: PropsWithChildren) => {
 
 const EmptyStateActionButton = ({
   type = 'retry',
+  isNeedAdminAccess = false,
   ...props
 }: EmptyStateActionButtonProps) => {
   const { size } = useEmptyState();
   const { consoleAccount } = useAuth();
   const editable = hasEditable(consoleAccount!);
+  const isOrganizationAdmin =
+    consoleAccount?.organizationRole === 'Organization_ADMIN';
   const isRetry = type === 'retry';
 
   return (
     <DisabledButtonTooltip
       align="center"
-      hidden={editable || isRetry}
+      type={!editable ? 'editor' : 'admin'}
+      hidden={
+        (editable && (isNeedAdminAccess ? isOrganizationAdmin : false)) ||
+        isRetry
+      }
       trigger={
         <Button
           variant="primary"
           size={size === 'lg' ? 'md' : 'sm'}
-          disabled={!editable && !isRetry}
+          disabled={
+            (!editable || (isNeedAdminAccess ? !isOrganizationAdmin : false)) &&
+            !isRetry
+          }
           {...props}
         />
       }

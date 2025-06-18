@@ -1,9 +1,10 @@
+import { useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { projectUpdater } from '@api/project';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
-import { hasEditable, useAuth } from 'auth';
+import { getAccountAccess, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -14,6 +15,7 @@ import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface EditProjectModalProps {
   isOpen: boolean;
@@ -40,7 +42,14 @@ const EditProjectModal = ({
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
   const { consoleAccount } = useAuth();
-  const editable = hasEditable(consoleAccount!);
+  const { envEditable, isOrganizationAdmin } = getAccountAccess(
+    consoleAccount!
+  );
+
+  const disabled = useMemo(
+    () => !envEditable || !isOrganizationAdmin,
+    [envEditable, isOrganizationAdmin]
+  );
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -95,7 +104,7 @@ const EditProjectModal = ({
                   <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
                     <Input
-                      disabled={!editable}
+                      disabled={disabled}
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                     />
@@ -125,7 +134,7 @@ const EditProjectModal = ({
                   <Form.Label optional>{t('form:description')}</Form.Label>
                   <Form.Control>
                     <TextArea
-                      disabled={!editable}
+                      disabled={disabled}
                       placeholder={t('form:placeholder-desc')}
                       rows={4}
                       {...field}
@@ -144,13 +153,19 @@ const EditProjectModal = ({
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!form.formState.isDirty || !editable}
-                    loading={form.formState.isSubmitting}
-                  >
-                    {t(`update-project`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    type={!envEditable ? 'editor' : 'admin'}
+                    hidden={!disabled}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={!form.formState.isDirty || disabled}
+                        loading={form.formState.isSubmitting}
+                      >
+                        {t(`update-project`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>

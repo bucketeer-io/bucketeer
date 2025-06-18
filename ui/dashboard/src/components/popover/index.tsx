@@ -154,6 +154,7 @@ const Popover = forwardRef(
               ? children
               : options?.map((item, index) => (
                   <Tooltip
+                    align="end"
                     key={index}
                     trigger={
                       <div>
@@ -171,7 +172,7 @@ const Popover = forwardRef(
                       </div>
                     }
                     content={item.tooltip}
-                    className="bg-gray-800"
+                    className="max-w-[300px]"
                   />
                 ))}
           </PopoverContent>

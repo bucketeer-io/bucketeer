@@ -1,9 +1,6 @@
-import {
-  IconEditOutlined,
-  IconMoreHorizOutlined
-} from 'react-icons-material-design';
+import { IconEditOutlined } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
-import { hasEditable, useAuth } from 'auth';
+import { useAuthAccess } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
@@ -13,10 +10,10 @@ import { useFormatDateTime } from 'utils/date-time';
 import { copyToClipBoard } from 'utils/function';
 import { IconCopy } from '@icons';
 import Icon from 'components/icon';
-import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { APIKeyActionsType } from '../types';
 
@@ -29,8 +26,7 @@ export const useColumns = ({
   const formatDateTime = useFormatDateTime();
   const { notify } = useToast();
 
-  const { consoleAccount } = useAuth();
-  const editable = hasEditable(consoleAccount!);
+  const { envEditable, isOrganizationAdmin } = useAuthAccess();
 
   const getAPIkeyRole = (role: APIKeyRole) => {
     switch (role) {
@@ -170,11 +166,12 @@ export const useColumns = ({
         return (
           <DisabledButtonTooltip
             align="center"
-            hidden={editable}
+            type={!envEditable ? 'editor' : 'admin'}
+            hidden={envEditable && isOrganizationAdmin}
             trigger={
               <div className="w-fit">
                 <Switch
-                  disabled={!editable}
+                  disabled={!envEditable || !isOrganizationAdmin}
                   checked={!apiKey.disabled}
                   onCheckedChange={value =>
                     onActions(apiKey, value ? 'ENABLE' : 'DISABLE')
@@ -199,20 +196,17 @@ export const useColumns = ({
         const apiKey = row.original;
 
         return (
-          editable && (
-            <Popover
-              options={compact([
-                {
-                  label: `${t('table:popover.edit-api-key')}`,
-                  icon: IconEditOutlined,
-                  value: 'EDIT'
-                }
-              ])}
-              icon={IconMoreHorizOutlined}
-              onClick={value => onActions(apiKey, value as APIKeyActionsType)}
-              align="end"
-            />
-          )
+          <DisabledPopoverTooltip
+            isNeedAdminAccess
+            options={compact([
+              {
+                label: `${t('table:popover.edit-api-key')}`,
+                icon: IconEditOutlined,
+                value: 'EDIT'
+              }
+            ])}
+            onClick={value => onActions(apiKey, value as APIKeyActionsType)}
+          />
         );
       }
     }

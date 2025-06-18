@@ -1,10 +1,7 @@
-import {
-  IconEditOutlined,
-  IconMoreHorizOutlined
-} from 'react-icons-material-design';
+import { IconEditOutlined } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import primaryAvatar from 'assets/avatars/primary.svg';
-import { useAuth } from 'auth';
+import { hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { Account, Tag } from '@types';
@@ -12,9 +9,10 @@ import { useFormatDateTime } from 'utils/date-time';
 import { joinName } from 'utils/name';
 import { IconTrash } from '@icons';
 import { AvatarImage } from 'components/avatar';
-import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import ExpandableTag from 'elements/expandable-tag';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { MemberActionsType } from '../types';
@@ -29,6 +27,7 @@ export const useColumns = ({
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
   const { consoleAccount } = useAuth();
+  const editable = hasEditable(consoleAccount!);
   const isOrganizationAdmin =
     consoleAccount?.organizationRole === 'Organization_ADMIN';
 
@@ -164,7 +163,7 @@ export const useColumns = ({
         );
       }
     },
-    isOrganizationAdmin && {
+    {
       accessorKey: 'state',
       header: `${t('state')}`,
       size: 120,
@@ -173,17 +172,27 @@ export const useColumns = ({
         const isPendingInvite = Number(account.lastSeen) < 1;
 
         return (
-          <Switch
-            checked={isPendingInvite ? false : !account.disabled}
-            disabled={isPendingInvite}
-            onCheckedChange={value =>
-              onActions(account, value ? 'ENABLE' : 'DISABLE')
+          <DisabledButtonTooltip
+            type={!editable ? 'editor' : 'admin'}
+            hidden={editable && isOrganizationAdmin}
+            trigger={
+              <div className="w-fit">
+                <Switch
+                  checked={isPendingInvite ? false : !account.disabled}
+                  disabled={
+                    isPendingInvite || !editable || !isOrganizationAdmin
+                  }
+                  onCheckedChange={value =>
+                    onActions(account, value ? 'ENABLE' : 'DISABLE')
+                  }
+                />
+              </div>
             }
           />
         );
       }
     },
-    isOrganizationAdmin && {
+    {
       accessorKey: 'action',
       size: 60,
       header: '',
@@ -196,7 +205,8 @@ export const useColumns = ({
         const account = row.original;
 
         return (
-          <Popover
+          <DisabledPopoverTooltip
+            isNeedAdminAccess
             options={compact([
               Number(account.lastSeen) > 0 && {
                 label: `${t('table:popover.edit-member')}`,
@@ -209,9 +219,7 @@ export const useColumns = ({
                 value: 'DELETE'
               }
             ])}
-            icon={IconMoreHorizOutlined}
             onClick={value => onActions(account, value as MemberActionsType)}
-            align="end"
           />
         );
       }

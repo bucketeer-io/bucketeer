@@ -253,7 +253,8 @@
   "stopped": "stopped",
   "cloned": "cloned",
   "access-denied": "Access Denied",
-  "access-denied-desc": "You don't have permission to view this page. Please contact your administrator or check your access roles.",
+  "access-denied-desc": "You don't have permission to view this page. <br /> Please contact your administrator or check your access roles.",
   "go-back-home": "Go back home",
-  "disabled-button-tooltip": "You need Editor access to create or update entries."
+  "disabled-button-tooltip": "You need Editor access to create or update entries.",
+  "need-admin-access-tooltip": "You need Admin access to create or update entries."
 }

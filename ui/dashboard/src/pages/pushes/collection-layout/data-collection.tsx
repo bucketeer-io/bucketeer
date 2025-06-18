@@ -1,7 +1,4 @@
-import {
-  IconEditOutlined,
-  IconMoreHorizOutlined
-} from 'react-icons-material-design';
+import { IconEditOutlined } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import { hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
@@ -10,10 +7,10 @@ import { Push, Tag } from '@types';
 import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import { IconTrash } from '@icons';
-import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import ExpandableTag from 'elements/expandable-tag';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { PushActionsType } from '../types';
@@ -167,25 +164,21 @@ export const useColumns = ({
         const push = row.original;
 
         return (
-          editable && (
-            <Popover
-              options={compact([
-                {
-                  label: `${t('table:popover.edit-push')}`,
-                  icon: IconEditOutlined,
-                  value: 'EDIT'
-                },
-                {
-                  label: `${t('table:popover.delete-push')}`,
-                  icon: IconTrash,
-                  value: 'DELETE'
-                }
-              ])}
-              icon={IconMoreHorizOutlined}
-              onClick={value => onActions(push, value as PushActionsType)}
-              align="end"
-            />
-          )
+          <DisabledPopoverTooltip
+            options={compact([
+              {
+                label: `${t('table:popover.edit-push')}`,
+                icon: IconEditOutlined,
+                value: 'EDIT'
+              },
+              {
+                label: `${t('table:popover.delete-push')}`,
+                icon: IconTrash,
+                value: 'DELETE'
+              }
+            ])}
+            onClick={value => onActions(push, value as PushActionsType)}
+          />
         );
       }
     }

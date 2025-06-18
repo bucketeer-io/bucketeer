@@ -1,9 +1,6 @@
 import { FunctionComponent, useCallback, useMemo } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import {
-  IconEditOutlined,
-  IconMoreHorizOutlined
-} from 'react-icons-material-design';
+import { IconEditOutlined } from 'react-icons-material-design';
 import { hasEditable, useAuth } from 'auth';
 import { cva } from 'class-variance-authority';
 import { Color, RolloutStoppedBy } from '@types';
@@ -19,8 +16,9 @@ import {
 } from '@icons';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
-import { Popover, PopoverOption, PopoverValue } from 'components/popover';
+import { PopoverOption, PopoverValue } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import { OperationModalState } from '../..';
 import {
   OperationActionType,
@@ -155,12 +153,11 @@ const OperationStatus = ({
       {
         label: t('feature-flags.operation-details'),
         icon: IconOperationDetails,
-        value: 'DETAILS',
-        disabled: !editable
+        value: 'DETAILS'
       },
       {
         label: (
-          <p className="text-accent-red-500">
+          <p className={editable ? 'text-accent-red-500' : ''}>
             {t(
               `feature-flags.delete-${isKillSwitch ? 'kill-switch' : isRollout ? 'rollout' : 'schedule'}`
             )}
@@ -168,8 +165,7 @@ const OperationStatus = ({
         ),
         icon: IconTrash,
         value: 'DELETE',
-        color: 'accent-red-500',
-        disabled: !editable
+        color: editable ? 'accent-red-500' : undefined
       }
     ];
   }, [isRollout, isKillSwitch, editable]);
@@ -194,8 +190,7 @@ const OperationStatus = ({
       {
         label: t(`feature-flags.stop-${translationKey}`),
         icon: IconDisable,
-        value: 'STOP',
-        disabled: !editable
+        value: 'STOP'
       },
       {
         label: (
@@ -205,15 +200,14 @@ const OperationStatus = ({
         ),
         icon: IconTrash,
         value: 'DELETE',
-        color: editable ? 'accent-red-500' : undefined,
-        disabled: !editable
+        color: editable ? 'accent-red-500' : undefined
       }
     ];
   }, [isKillSwitch, isRollout, editable]);
 
   const popoverOptions = useMemo(
     () => (isFinished ? completedOptions : operationOptions),
-    [isFinished, isKillSwitch, operationOptions, completedOptions]
+    [isFinished, isKillSwitch, operationOptions, completedOptions, editable]
   );
 
   const titleKey = useMemo(() => {
@@ -230,20 +224,16 @@ const OperationStatus = ({
         </p>
         <div className="flex items-center gap-x-4">
           <Status status={operationType} />
-          {editable && (
-            <Popover
-              options={popoverOptions}
-              icon={IconMoreHorizOutlined}
-              onClick={value =>
-                onActions({
-                  actionType: value as OperationActionType,
-                  operationType,
-                  selectedData: operation
-                })
-              }
-              align="end"
-            />
-          )}
+          <DisabledPopoverTooltip
+            options={popoverOptions}
+            onClick={value =>
+              onActions({
+                actionType: value as OperationActionType,
+                operationType,
+                selectedData: operation
+              })
+            }
+          />
         </div>
       </div>
       <Divider />

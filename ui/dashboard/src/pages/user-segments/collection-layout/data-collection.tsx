@@ -2,18 +2,16 @@ import { useCallback } from 'react';
 import {
   IconCloudDownloadOutlined,
   IconDeleteOutlined,
-  IconEditOutlined,
-  IconMoreHorizOutlined
+  IconEditOutlined
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
-import { hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
-import { Popover } from 'components/popover';
 import Spinner from 'components/spinner';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { UserSegmentsActionsType } from '../types';
 
@@ -24,10 +22,8 @@ export const useColumns = ({
   segmentUploading: UserSegment | null;
   onActionHandler: (value: UserSegment, type: UserSegmentsActionsType) => void;
 }): ColumnDef<UserSegment>[] => {
-  const { consoleAccount } = useAuth();
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
-  const editable = hasEditable(consoleAccount!);
 
   const getUploadingStatus = useCallback(
     (segment: UserSegment) => {
@@ -160,33 +156,30 @@ export const useColumns = ({
         const segment = row.original;
 
         return (
-          editable && (
-            <Popover
-              options={[
-                {
-                  label: `${t('table:popover.download-segment')}`,
-                  icon: IconCloudDownloadOutlined,
-                  value: 'DOWNLOAD',
-                  disabled: !Number(segment.includedUserCount)
-                },
-                {
-                  label: `${t('table:popover.edit-segment')}`,
-                  icon: IconEditOutlined,
-                  value: 'EDIT'
-                },
-                {
-                  label: `${t('table:popover.delete-segment')}`,
-                  icon: IconDeleteOutlined,
-                  value: 'DELETE'
-                }
-              ]}
-              icon={IconMoreHorizOutlined}
-              onClick={value =>
-                onActionHandler(segment, value as UserSegmentsActionsType)
+          <DisabledPopoverTooltip
+            options={[
+              {
+                label: `${t('table:popover.download-segment')}`,
+                icon: IconCloudDownloadOutlined,
+                value: 'DOWNLOAD',
+                disabled: !Number(segment.includedUserCount)
+              },
+              {
+                label: `${t('table:popover.edit-segment')}`,
+                icon: IconEditOutlined,
+                value: 'EDIT'
+              },
+              {
+                label: `${t('table:popover.delete-segment')}`,
+                icon: IconDeleteOutlined,
+                value: 'DELETE'
               }
-              align="end"
-            />
-          )
+            ]}
+            onClick={value =>
+              onActionHandler(segment, value as UserSegmentsActionsType)
+            }
+            align="end"
+          />
         );
       }
     }

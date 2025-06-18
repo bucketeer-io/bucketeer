@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
-import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
+import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -27,7 +27,9 @@ const PageContent = ({
   const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const editable = hasEditable(consoleAccount!);
+  const { envEditable, isOrganizationAdmin } = getAccountAccess(
+    consoleAccount!
+  );
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<ProjectFilters> = searchOptions;
@@ -66,12 +68,13 @@ const PageContent = ({
         onOpenFilter={onOpenFilterModal}
         action={
           <DisabledButtonTooltip
-            hidden={editable}
+            hidden={envEditable && isOrganizationAdmin}
+            type={!envEditable ? 'editor' : 'admin'}
             trigger={
               <Button
                 className="flex-1 lg:flex-none"
                 onClick={onAdd}
-                disabled={!editable}
+                disabled={!envEditable || !isOrganizationAdmin}
               >
                 <Icon icon={IconAddOutlined} size="sm" />
                 {t(`new-project`)}

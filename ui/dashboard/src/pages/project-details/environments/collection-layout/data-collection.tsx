@@ -1,16 +1,14 @@
 import {
   IconArchiveOutlined,
-  IconEditOutlined,
-  IconMoreHorizOutlined
+  IconEditOutlined
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
-import { hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { Environment } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
-import { Popover } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { EnvironmentActionsType } from '../types';
 
@@ -22,8 +20,6 @@ export const useColumns = ({
   const { searchOptions } = useSearchParams();
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
-  const { consoleAccount } = useAuth();
-  const editable = hasEditable(consoleAccount!);
 
   return [
     {
@@ -96,33 +92,30 @@ export const useColumns = ({
         const environment = row.original;
 
         return (
-          editable && (
-            <Popover
-              options={[
-                {
-                  label: `${t('table:popover.edit-env')}`,
-                  icon: IconEditOutlined,
-                  value: 'EDIT'
-                },
-                searchOptions.status === 'ARCHIVED'
-                  ? {
-                      label: `${t('table:popover.unarchive-env')}`,
-                      icon: IconArchiveOutlined,
-                      value: 'UNARCHIVE'
-                    }
-                  : {
-                      label: `${t('table:popover.archive-env')}`,
-                      icon: IconArchiveOutlined,
-                      value: 'ARCHIVE'
-                    }
-              ]}
-              icon={IconMoreHorizOutlined}
-              onClick={value =>
-                onActions(environment, value as EnvironmentActionsType)
-              }
-              align="end"
-            />
-          )
+          <DisabledPopoverTooltip
+            isNeedAdminAccess
+            options={[
+              {
+                label: `${t('table:popover.edit-env')}`,
+                icon: IconEditOutlined,
+                value: 'EDIT'
+              },
+              searchOptions.status === 'ARCHIVED'
+                ? {
+                    label: `${t('table:popover.unarchive-env')}`,
+                    icon: IconArchiveOutlined,
+                    value: 'UNARCHIVE'
+                  }
+                : {
+                    label: `${t('table:popover.archive-env')}`,
+                    icon: IconArchiveOutlined,
+                    value: 'ARCHIVE'
+                  }
+            ]}
+            onClick={value =>
+              onActions(environment, value as EnvironmentActionsType)
+            }
+          />
         );
       }
     }

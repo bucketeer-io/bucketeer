@@ -1,8 +1,7 @@
-import { ReactNode, useCallback } from 'react';
+import { ReactNode, useCallback, useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import {
   IconArchiveOutlined,
-  IconMoreVertOutlined,
   IconSaveAsFilled
 } from 'react-icons-material-design';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
@@ -16,10 +15,10 @@ import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
 import { IconWatch } from '@icons';
 import Icon from 'components/icon';
-import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import ExpandableTag from 'elements/expandable-tag';
 import TableListContent from 'elements/table-list-content';
 import { FlagActionType } from '../types';
@@ -58,6 +57,29 @@ const GridViewCollection = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const editable = hasEditable(consoleAccount!);
+
+  const popoverOptions = useMemo(
+    () =>
+      compact([
+        searchOptions.status === 'ARCHIVED'
+          ? {
+              label: `${t('unarchive-flag')}`,
+              icon: IconArchiveOutlined,
+              value: 'UNARCHIVE'
+            }
+          : {
+              label: `${t('archive-flag')}`,
+              icon: IconArchiveOutlined,
+              value: 'ARCHIVE'
+            },
+        {
+          label: `${t('clone-flag')}`,
+          icon: IconSaveAsFilled,
+          value: 'CLONE'
+        }
+      ]),
+    [searchOptions]
+  );
 
   const handleGetMaintainerInfo = useCallback(
     (email: string) => {
@@ -159,31 +181,10 @@ const GridViewCollection = ({
                     </div>
                   }
                 />
-                {editable && (
-                  <Popover
-                    options={compact([
-                      searchOptions.status === 'ARCHIVED'
-                        ? {
-                            label: `${t('unarchive-flag')}`,
-                            icon: IconArchiveOutlined,
-                            value: 'UNARCHIVE'
-                          }
-                        : {
-                            label: `${t('archive-flag')}`,
-                            icon: IconArchiveOutlined,
-                            value: 'ARCHIVE'
-                          },
-                      {
-                        label: `${t('clone-flag')}`,
-                        icon: IconSaveAsFilled,
-                        value: 'CLONE'
-                      }
-                    ])}
-                    icon={IconMoreVertOutlined}
-                    onClick={value => onActions(item, value as FlagActionType)}
-                    align="end"
-                  />
-                )}
+                <DisabledPopoverTooltip
+                  onClick={value => onActions(item, value as FlagActionType)}
+                  options={popoverOptions}
+                />
               </div>
             </GridViewRow>
           );

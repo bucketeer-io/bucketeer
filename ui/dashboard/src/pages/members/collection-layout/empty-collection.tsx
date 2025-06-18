@@ -17,6 +17,7 @@ export const EmptyCollection = ({ onAdd }: { onAdd?: () => void }) => {
       <EmptyState.Actions>
         {onAdd && (
           <EmptyState.ActionButton
+            isNeedAdminAccess
             type={'new'}
             variant="primary"
             onClick={onAdd}

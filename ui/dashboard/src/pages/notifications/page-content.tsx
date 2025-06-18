@@ -26,7 +26,6 @@ const PageContent = ({
   onHandleActions: (item: Notification, type: NotificationActionsType) => void;
 }) => {
   const { t } = useTranslation(['common']);
-
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<NotificationFilters> = searchOptions;
 
