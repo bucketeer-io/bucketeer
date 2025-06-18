@@ -204,7 +204,7 @@ func (s *TagService) ListTags(
 			Operator: mysql.OperatorEqual,
 			Value:    req.OrganizationId,
 		})
-		filterEnvironmentIDs := s.getAllowedEnvironments(req.EnvironmentIds, editor)
+		filterEnvironmentIDs := s.getAllowedEnvironments([]string{req.EnvironmentId}, editor)
 		values := make([]interface{}, 0)
 		for _, id := range filterEnvironmentIDs {
 			values = append(values, id)

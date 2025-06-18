@@ -59,10 +59,9 @@ message ListTagsRequest {
   OrderBy order_by = 4;
   OrderDirection order_direction = 5;
   string search_keyword = 6;
-  string environment_id = 7 [deprecated = true];
+  string environment_id = 7;
   string organization_id = 8;
   Tag.EntityType entity_type = 9;
-  repeated string environment_ids = 10;
 }
 
 message ListTagsResponse {

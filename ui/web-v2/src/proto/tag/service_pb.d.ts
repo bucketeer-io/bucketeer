@@ -173,11 +173,6 @@ export class ListTagsRequest extends jspb.Message {
     value: proto_tag_tag_pb.Tag.EntityTypeMap[keyof proto_tag_tag_pb.Tag.EntityTypeMap]
   ): void;
 
-  clearEnvironmentIdsList(): void;
-  getEnvironmentIdsList(): Array<string>;
-  setEnvironmentIdsList(value: Array<string>): void;
-  addEnvironmentIds(value: string, index?: number): string;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListTagsRequest.AsObject;
   static toObject(
@@ -209,7 +204,6 @@ export namespace ListTagsRequest {
     environmentId: string;
     organizationId: string;
     entityType: proto_tag_tag_pb.Tag.EntityTypeMap[keyof proto_tag_tag_pb.Tag.EntityTypeMap];
-    environmentIdsList: Array<string>;
   };
 
   export interface OrderByMap {
