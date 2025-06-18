@@ -32534,6 +32534,11 @@
                 "id": 14,
                 "name": "status",
                 "type": "FeatureLastUsedInfo.Status"
+              },
+              {
+                "id": 15,
+                "name": "has_feature_flag_as_rule",
+                "type": "google.protobuf.BoolValue"
               }
             ],
             "reserved_ids": [

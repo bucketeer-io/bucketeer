@@ -727,6 +727,79 @@ func TestListFeaturesOrderByAutoOps(t *testing.T) {
 	}
 }
 
+func TestListFeaturesFilterHasFeatureRule(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	featureIDs := make([]string, 0)
+	for i := 0; i < 3; i++ {
+		featureIDs = append(featureIDs, newFeatureID(t))
+		createFeatureNoCmd(t, client, newCreateFeatureReq(featureIDs[i]))
+	}
+
+	listReq := &feature.ListFeaturesRequest{
+		EnvironmentId:  *environmentID,
+		HasFeatureRule: &wrappers.BoolValue{Value: true},
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	ruleID, _ := uuid.NewUUID()
+	clauseID, _ := uuid.NewUUID()
+	f := getFeature(t, featureIDs[0], client)
+	_, err := client.UpdateFeature(ctx, &feature.UpdateFeatureRequest{
+		Id:            f.Id,
+		EnvironmentId: *environmentID,
+		RuleChanges: []*feature.RuleChange{
+			{
+				ChangeType: feature.ChangeType_CREATE,
+				Rule: &feature.Rule{
+					Id: ruleID.String(),
+					Clauses: []*feature.Clause{
+						{
+							Id:        clauseID.String(),
+							Operator:  feature.Clause_FEATURE_FLAG,
+							Attribute: featureIDs[1],
+							Values:    []string{"value-1", "value-2"},
+						},
+					},
+					Strategy: &feature.Strategy{
+						Type:          feature.Strategy_FIXED,
+						FixedStrategy: &feature.FixedStrategy{Variation: f.Variations[0].Id},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	response, err := client.ListFeatures(ctx, listReq)
+	if err != nil {
+		t.Fatal(err)
+	}
+	count := 0
+	for _, f := range response.Features {
+		if len(f.Rules) == 0 {
+			t.Errorf("Feature %s has no rules", f.Id)
+		}
+		for _, r := range f.Rules {
+			if r.Clauses == nil || len(r.Clauses) == 0 {
+				t.Errorf("Feature %s rule %s has no clauses", f.Id, r.Id)
+			}
+			for _, c := range r.Clauses {
+				if c.Operator == feature.Clause_FEATURE_FLAG {
+					count++
+					break
+				}
+			}
+		}
+	}
+	if count < 1 {
+		t.Errorf("Expected at least one feature with feature flag clause, got %d", count)
+	}
+}
+
 func TestListFeaturesFilterStatus(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)

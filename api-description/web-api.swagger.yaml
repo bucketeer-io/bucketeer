@@ -5323,6 +5323,10 @@ paths:
             - ACTIVE
             - NO_ACTIVITY
           default: UNKNOWN
+        - name: hasFeatureFlagAsRule
+          in: query
+          required: false
+          type: boolean
       tags:
         - Feature
   /v1/flag_trigger:

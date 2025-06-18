@@ -212,6 +212,7 @@ func (s *FeatureService) ListFeatures(
 			req.Enabled,
 			req.Archived,
 			req.HasPrerequisites,
+			req.HasFeatureFlagAsRule,
 			req.SearchKeyword,
 			req.Status,
 			req.OrderBy,
@@ -228,6 +229,7 @@ func (s *FeatureService) ListFeatures(
 			req.Enabled,
 			req.Archived,
 			req.HasPrerequisites,
+			req.HasFeatureFlagAsRule,
 			req.SearchKeyword,
 			req.Status,
 			req.OrderBy,
@@ -267,6 +269,7 @@ func (s *FeatureService) listFeatures(
 	enabled *wrappers.BoolValue,
 	archived *wrappers.BoolValue,
 	hasPrerequisites *wrappers.BoolValue,
+	hasFeatureFlagAsRule *wrappers.BoolValue,
 	searchKeyword string,
 	status featureproto.FeatureLastUsedInfo_Status,
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
@@ -331,6 +334,22 @@ func (s *FeatureService) listFeatures(
 				Column: "feature.prerequisites",
 				Func:   mysql.JSONLengthSmallerThan,
 				Values: []interface{}{"1"},
+			})
+		}
+	}
+	if hasFeatureFlagAsRule != nil {
+		// 11 is feature flag rule operator
+		if hasFeatureFlagAsRule.Value {
+			filters = append(filters, &mysql.FilterV2{
+				Column:   "JSON_CONTAINS(JSON_EXTRACT(rules, '$[*].clauses[*].operator'), '11')",
+				Operator: mysql.OperatorEqual,
+				Value:    true,
+			})
+		} else {
+			filters = append(filters, &mysql.FilterV2{
+				Column:   "JSON_CONTAINS(JSON_EXTRACT(rules, '$[*].clauses[*].operator'), '11')",
+				Operator: mysql.OperatorEqual,
+				Value:    false,
 			})
 		}
 	}
@@ -421,6 +440,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	enabled *wrappers.BoolValue,
 	archived *wrappers.BoolValue,
 	hasPrerequisites *wrappers.BoolValue,
+	hasFeatureFlagAsRule *wrappers.BoolValue,
 	searchKeyword string,
 	status featureproto.FeatureLastUsedInfo_Status,
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
@@ -497,6 +517,22 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 				Column: "feature.prerequisites",
 				Func:   mysql.JSONLengthSmallerThan,
 				Values: []interface{}{"1"},
+			})
+		}
+	}
+	if hasFeatureFlagAsRule != nil {
+		// 11 is feature flag rule operator
+		if hasFeatureFlagAsRule.Value {
+			filters = append(filters, &mysql.FilterV2{
+				Column:   "JSON_CONTAINS(JSON_EXTRACT(rules, '$[*].clauses[*].operator'), '11')",
+				Operator: mysql.OperatorEqual,
+				Value:    true,
+			})
+		} else {
+			filters = append(filters, &mysql.FilterV2{
+				Column:   "JSON_CONTAINS(JSON_EXTRACT(rules, '$[*].clauses[*].operator'), '11')",
+				Operator: mysql.OperatorEqual,
+				Value:    false,
 			})
 		}
 	}
@@ -2279,6 +2315,7 @@ func (s *FeatureService) getFeatures(
 		"",
 		nil,
 		"",
+		nil,
 		nil,
 		nil,
 		nil,
