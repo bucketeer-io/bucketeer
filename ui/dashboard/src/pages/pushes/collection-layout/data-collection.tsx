@@ -62,7 +62,6 @@ export const useColumns = ({
       accessorKey: 'tags',
       enableSorting: false,
       header: `${t('tags')}`,
-      enableSorting: false,
       size: 350,
       cell: ({ row }) => {
         const push = row.original;
