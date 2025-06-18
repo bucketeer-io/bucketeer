@@ -73,6 +73,7 @@ const EditPushModal = ({
       enabled: !!push
     }
   });
+
   const tagOptions = (uniqBy(tagCollection?.tags || [], 'name') || [])?.map(
     tag => ({
       label: tag.name,

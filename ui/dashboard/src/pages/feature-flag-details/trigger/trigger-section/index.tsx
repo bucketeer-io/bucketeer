@@ -235,8 +235,8 @@ const TriggerList = ({
       {!isEdit && !!actionState?.action && !!actionState?.trigger && (
         <ConfirmModal
           isOpen={!isEdit && !!actionState?.action && !!actionState?.trigger}
-          title={t(confirmModalTitle)}
-          description={t(confirmModalDesc)}
+          title={confirmModalTitle}
+          description={confirmModalDesc}
           loading={mutationState.isPending}
           onClose={onReset}
           onSubmit={() =>

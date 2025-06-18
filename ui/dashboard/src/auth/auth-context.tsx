@@ -27,6 +27,7 @@ import {
   setTokenStorage
 } from 'storage/token';
 import { AuthToken, ConsoleAccount, Organization } from '@types';
+import { getAccountAccess } from './utils';
 
 interface AuthContextType {
   logout: () => void;
@@ -179,4 +180,9 @@ export const useAuth = (): AuthContextType => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+};
+
+export const useAuthAccess = () => {
+  const { consoleAccount } = useAuth();
+  return getAccountAccess(consoleAccount!);
 };

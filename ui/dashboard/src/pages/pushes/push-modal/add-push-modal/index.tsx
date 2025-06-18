@@ -29,6 +29,7 @@ import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import UploadFiles from 'components/upload-files';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface AddPushModalProps {
   disabled?: boolean;
@@ -288,13 +289,18 @@ const AddPushModal = ({ disabled, isOpen, onClose }: AddPushModalProps) => {
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!isValid || disabled}
-                    loading={isSubmitting}
-                  >
-                    {t(`submit`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    hidden={!disabled}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={!isValid || disabled}
+                        loading={isSubmitting}
+                      >
+                        {t(`submit`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>

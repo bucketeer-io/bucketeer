@@ -1,16 +1,13 @@
-import {
-  IconEditOutlined,
-  IconMoreHorizOutlined
-} from 'react-icons-material-design';
+import { IconEditOutlined } from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
-import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_PROJECTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { Project } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
-import { Popover } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 
 export const useColumns = ({
@@ -23,7 +20,6 @@ export const useColumns = ({
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const editable = hasEditable(consoleAccount!);
 
   return [
     {
@@ -142,20 +138,17 @@ export const useColumns = ({
         const project = row.original;
 
         return (
-          editable && (
-            <Popover
-              options={[
-                {
-                  label: `${t('table:popover.edit-project')}`,
-                  icon: IconEditOutlined,
-                  value: 'EDIT_PROJECT'
-                }
-              ]}
-              icon={IconMoreHorizOutlined}
-              onClick={() => onActionHandler(project)}
-              align="end"
-            />
-          )
+          <DisabledPopoverTooltip
+            isNeedAdminAccess
+            options={[
+              {
+                label: `${t('table:popover.edit-project')}`,
+                icon: IconEditOutlined,
+                value: 'EDIT_PROJECT'
+              }
+            ]}
+            onClick={() => onActionHandler(project)}
+          />
         );
       }
     }

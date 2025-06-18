@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import { environmentUpdater } from '@api/environment';
@@ -5,7 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateEnvironments } from '@queries/environments';
 import { useQueryProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -21,7 +22,6 @@ import TextArea from 'components/textarea';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface EditEnvironmentModalProps {
-  disabled: boolean;
   isOpen: boolean;
   onClose: () => void;
   environment: Environment;
@@ -40,7 +40,6 @@ const formSchema = yup.object().shape({
 });
 
 const EditEnvironmentModal = ({
-  disabled,
   isOpen,
   onClose,
   environment
@@ -52,6 +51,15 @@ const EditEnvironmentModal = ({
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const { envEditable, isOrganizationAdmin } = getAccountAccess(
+    consoleAccount!
+  );
+
+  const disabled = useMemo(
+    () => !envEditable || !isOrganizationAdmin,
+    [envEditable, isOrganizationAdmin]
+  );
 
   const { data: collection } = useQueryProjects({
     params: {
@@ -202,6 +210,7 @@ const EditEnvironmentModal = ({
                 }
                 secondaryButton={
                   <DisabledButtonTooltip
+                    type={!envEditable ? 'editor' : 'admin'}
                     hidden={!disabled}
                     trigger={
                       <Button

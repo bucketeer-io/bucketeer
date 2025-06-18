@@ -3,6 +3,7 @@ import { apiKeyCreator } from '@api/api-key';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAPIKeys } from '@queries/api-keys';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuthAccess } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -24,9 +25,9 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface AddAPIKeyModalProps {
-  disabled: boolean;
   isOpen: boolean;
   environments: Environment[];
   isLoadingEnvs: boolean;
@@ -48,7 +49,6 @@ export const formSchema = yup.object().shape({
 });
 
 const AddAPIKeyModal = ({
-  disabled,
   isOpen,
   isLoadingEnvs,
   environments,
@@ -57,6 +57,8 @@ const AddAPIKeyModal = ({
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
+
+  const { envEditable, isOrganizationAdmin } = useAuthAccess();
 
   const { formattedEnvironments } = onFormatEnvironments(environments);
 
@@ -240,13 +242,21 @@ const AddAPIKeyModal = ({
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!isValid || disabled}
-                    loading={isSubmitting}
-                  >
-                    {t(`create-api-key`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    hidden={envEditable && isOrganizationAdmin}
+                    type={!envEditable ? 'editor' : 'admin'}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={
+                          !isValid || !envEditable || !isOrganizationAdmin
+                        }
+                        loading={isSubmitting}
+                      >
+                        {t(`create-api-key`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>

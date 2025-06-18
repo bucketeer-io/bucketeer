@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
+import { useAuthAccess } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -17,16 +18,14 @@ import CollectionLoader from './collection-loader';
 import { APIKeyActionsType, APIKeysFilters } from './types';
 
 const PageContent = ({
-  disabled,
   onAdd,
   onHandleActions
 }: {
-  disabled?: boolean;
   onAdd: () => void;
   onHandleActions: (item: APIKey, type: APIKeyActionsType) => void;
 }) => {
   const { t } = useTranslation(['common']);
-
+  const { envEditable, isOrganizationAdmin } = useAuthAccess();
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<APIKeysFilters> = searchOptions;
 
@@ -60,12 +59,13 @@ const PageContent = ({
         onOpenFilter={onOpenFilterModal}
         action={
           <DisabledButtonTooltip
-            hidden={!disabled}
+            type={!envEditable ? 'editor' : 'admin'}
+            hidden={envEditable && isOrganizationAdmin}
             trigger={
               <Button
                 className="flex-1 lg:flex-none"
                 onClick={onAdd}
-                disabled={disabled}
+                disabled={!envEditable || !isOrganizationAdmin}
               >
                 <Icon icon={IconAddOutlined} size="sm" />
                 {t(`new-api-key`)}

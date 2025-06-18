@@ -4,6 +4,7 @@ import { apiKeyUpdater } from '@api/api-key';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAPIKeys } from '@queries/api-keys';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuthAccess } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -29,7 +30,6 @@ import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
 
 interface EditAPIKeyModalProps {
-  disabled: boolean;
   isOpen: boolean;
   isLoadingApiKey: boolean;
   environments: Environment[];
@@ -50,7 +50,6 @@ export const formSchema = yup.object().shape({
 });
 
 const EditAPIKeyModal = ({
-  disabled,
   isOpen,
   isLoadingApiKey,
   apiKey,
@@ -61,6 +60,8 @@ const EditAPIKeyModal = ({
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
 
+  const { envEditable, isOrganizationAdmin } = useAuthAccess();
+
   const { emptyEnvironmentId, formattedEnvironments } =
     onFormatEnvironments(environments);
 
@@ -69,6 +70,11 @@ const EditAPIKeyModal = ({
       formattedEnvironments.find(item => item.name === apiKey?.environmentName)
         ?.id,
     [formattedEnvironments, apiKey]
+  );
+
+  const disabled = useMemo(
+    () => !envEditable || !isOrganizationAdmin,
+    [envEditable, isOrganizationAdmin]
   );
 
   const form = useForm({
@@ -240,7 +246,8 @@ const EditAPIKeyModal = ({
                   }
                   secondaryButton={
                     <DisabledButtonTooltip
-                      hidden={!disabled}
+                      type={!envEditable ? 'editor' : 'admin'}
+                      hidden={envEditable && isOrganizationAdmin}
                       trigger={
                         <Button
                           type="submit"

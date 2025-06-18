@@ -1,17 +1,14 @@
-import {
-  IconEditOutlined,
-  IconMoreHorizOutlined
-} from 'react-icons-material-design';
+import { IconEditOutlined } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import { hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { Notification } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
-import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { NotificationActionsType } from '../types';
 
@@ -125,22 +122,18 @@ export const useColumns = ({
         const notification = row.original;
 
         return (
-          editable && (
-            <Popover
-              options={compact([
-                {
-                  label: `${t('table:popover.edit-notification')}`,
-                  icon: IconEditOutlined,
-                  value: 'EDIT'
-                }
-              ])}
-              icon={IconMoreHorizOutlined}
-              onClick={value =>
-                onActions(notification, value as NotificationActionsType)
+          <DisabledPopoverTooltip
+            options={compact([
+              {
+                label: `${t('table:popover.edit-notification')}`,
+                icon: IconEditOutlined,
+                value: 'EDIT'
               }
-              align="end"
-            />
-          )
+            ])}
+            onClick={value =>
+              onActions(notification, value as NotificationActionsType)
+            }
+          />
         );
       }
     }

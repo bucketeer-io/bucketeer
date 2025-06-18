@@ -62,7 +62,7 @@ const OperationActions = ({
                   'bg-primary-500 hover:bg-primary-700 text-gray-50',
                   'rounded-lg px-6 py-2',
                   {
-                    'pointer-events-none bg-primary-200 text-primary-50':
+                    'cursor-not-allowed bg-primary-200 hover:bg-primary-200 text-primary-50':
                       disabled
                   }
                 )}

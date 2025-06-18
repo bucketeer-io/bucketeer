@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
+import { useAuthAccess } from 'auth';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -15,15 +16,14 @@ import CollectionLoader from './collection-loader';
 import { EnvironmentActionsType, EnvironmentFilters } from './types';
 
 const PageContent = ({
-  disabled,
   onAdd,
   onActionHandler
 }: {
-  disabled?: boolean;
   onAdd: () => void;
   onActionHandler: (item: Environment, type: EnvironmentActionsType) => void;
 }) => {
   const { t } = useTranslation(['common']);
+  const { envEditable, isOrganizationAdmin } = useAuthAccess();
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<EnvironmentFilters> = searchOptions;
 
@@ -55,12 +55,13 @@ const PageContent = ({
       <Filter
         action={
           <DisabledButtonTooltip
-            hidden={!disabled}
+            type={!envEditable ? 'editor' : 'admin'}
+            hidden={envEditable && isOrganizationAdmin}
             trigger={
               <Button
                 className="flex-1 lg:flex-none"
                 onClick={onAdd}
-                disabled={disabled}
+                disabled={!envEditable || !isOrganizationAdmin}
               >
                 <Icon icon={IconAddOutlined} size="sm" />
                 {t(`new-env`)}
