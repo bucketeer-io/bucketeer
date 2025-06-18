@@ -13,6 +13,7 @@ import {
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 const SubmitBar = ({
   editable,
@@ -68,13 +69,18 @@ const SubmitBar = ({
           {feature?.variationType?.toLowerCase()}
         </p>
       </div>
-      <Button
-        type="button"
-        disabled={!isDirty || !isValid || !editable}
-        onClick={onShowConfirmDialog}
-      >
-        {t('save-with-comment')}
-      </Button>
+      <DisabledButtonTooltip
+        hidden={editable}
+        trigger={
+          <Button
+            type="button"
+            disabled={!isDirty || !isValid || !editable}
+            onClick={onShowConfirmDialog}
+          >
+            {t('save-with-comment')}
+          </Button>
+        }
+      />
     </div>
   );
 };

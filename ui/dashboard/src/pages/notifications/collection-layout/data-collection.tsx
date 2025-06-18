@@ -11,6 +11,7 @@ import { useFormatDateTime } from 'utils/date-time';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { NotificationActionsType } from '../types';
 
@@ -93,11 +94,19 @@ export const useColumns = ({
         const notification = row.original;
 
         return (
-          <Switch
-            disabled={!editable}
-            checked={!notification.disabled}
-            onCheckedChange={value =>
-              onActions(notification, value ? 'ENABLE' : 'DISABLE')
+          <DisabledButtonTooltip
+            align="center"
+            hidden={editable}
+            trigger={
+              <div className="w-fit">
+                <Switch
+                  disabled={!editable}
+                  checked={!notification.disabled}
+                  onCheckedChange={value =>
+                    onActions(notification, value ? 'ENABLE' : 'DISABLE')
+                  }
+                />
+              </div>
             }
           />
         );
@@ -116,20 +125,22 @@ export const useColumns = ({
         const notification = row.original;
 
         return (
-          <Popover
-            options={compact([
-              {
-                label: `${t('table:popover.edit-notification')}`,
-                icon: IconEditOutlined,
-                value: 'EDIT'
+          editable && (
+            <Popover
+              options={compact([
+                {
+                  label: `${t('table:popover.edit-notification')}`,
+                  icon: IconEditOutlined,
+                  value: 'EDIT'
+                }
+              ])}
+              icon={IconMoreHorizOutlined}
+              onClick={value =>
+                onActions(notification, value as NotificationActionsType)
               }
-            ])}
-            icon={IconMoreHorizOutlined}
-            onClick={value =>
-              onActions(notification, value as NotificationActionsType)
-            }
-            align="end"
-          />
+              align="end"
+            />
+          )
         );
       }
     }

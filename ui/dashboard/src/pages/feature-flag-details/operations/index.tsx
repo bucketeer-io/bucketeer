@@ -279,12 +279,18 @@ const Operations = ({
           {t('table:feature-flags:operations-desc')}
         </p>
         <Filter
-          action={<OperationActions onOperationActions={onOperationActions} />}
+          action={
+            <OperationActions
+              disabled={!editable}
+              onOperationActions={onOperationActions}
+            />
+          }
           className="justify-end w-fit px-0"
           link={DOCUMENTATION_LINKS.FLAG_OPERATION}
         />
       </div>
       <Overview
+        disabled={!editable}
         onOperationActions={operationType =>
           onOperationActions({
             operationType,

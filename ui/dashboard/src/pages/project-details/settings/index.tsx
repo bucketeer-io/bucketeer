@@ -16,6 +16,7 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 const formSchema = yup.object().shape({
   name: yup.string().required(),
@@ -95,14 +96,19 @@ const ProjectSettings = ({ project }: { project: Project }) => {
                 <Icon icon={IconLaunchOutlined} size="sm" />
                 {t('documentation')}
               </Button>
-              <Button
-                loading={form.formState.isSubmitting}
-                disabled={!form.formState.isDirty || !editable}
-                type="submit"
-                className="w-[120px]"
-              >
-                {t(`save`)}
-              </Button>
+              <DisabledButtonTooltip
+                hidden={editable}
+                trigger={
+                  <Button
+                    loading={form.formState.isSubmitting}
+                    disabled={!form.formState.isDirty || !editable}
+                    type="submit"
+                    className="w-[120px]"
+                  >
+                    {t(`save`)}
+                  </Button>
+                }
+              />
             </div>
           </div>
           <div className="p-5 shadow-card rounded-lg bg-white mt-6">

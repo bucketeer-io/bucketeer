@@ -9,6 +9,7 @@ import Button from 'components/button';
 import Form from 'components/form';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 export interface GoalDetailsForm {
   name: string;
@@ -120,16 +121,21 @@ const GoalUpdateForm = ({
               </Form.Item>
             )}
           />
-
-          <Button
-            loading={isSubmitting}
-            disabled={!isValid || !isDirty || disabled}
-            type="submit"
-            className="w-fit"
-            variant={'secondary'}
-          >
-            {t(`save`)}
-          </Button>
+          <DisabledButtonTooltip
+            align="start"
+            hidden={!disabled}
+            trigger={
+              <Button
+                loading={isSubmitting}
+                disabled={!isValid || !isDirty || disabled}
+                type="submit"
+                className="w-fit"
+                variant={'secondary'}
+              >
+                {t(`save`)}
+              </Button>
+            }
+          />
         </Form>
       </FormProvider>
     </div>

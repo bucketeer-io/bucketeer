@@ -21,6 +21,7 @@ import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
 import Upload from 'components/upload-files';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
 import { formSchema } from '../../form-schema';
 import SegmentWarning from './segment-warning';
@@ -327,15 +328,20 @@ const EditUserSegmentModal = ({
                     </Button>
                   }
                   secondaryButton={
-                    <Button
-                      type="submit"
-                      disabled={
-                        !isDirty || !isValid || isSubmitting || isDisabled
+                    <DisabledButtonTooltip
+                      hidden={!isDisabled}
+                      trigger={
+                        <Button
+                          type="submit"
+                          disabled={
+                            !isDirty || !isValid || isSubmitting || isDisabled
+                          }
+                          loading={isSubmitting}
+                        >
+                          {t(`submit`)}
+                        </Button>
                       }
-                      loading={isSubmitting}
-                    >
-                      {t(`submit`)}
-                    </Button>
+                    />
                   }
                 />
               </div>

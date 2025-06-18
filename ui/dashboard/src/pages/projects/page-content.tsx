@@ -9,6 +9,7 @@ import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
 import Icon from 'components/icon';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import TableListContainer from 'elements/table-list-container';
@@ -64,14 +65,19 @@ const PageContent = ({
       <Filter
         onOpenFilter={onOpenFilterModal}
         action={
-          <Button
-            className="flex-1 lg:flex-none"
-            onClick={onAdd}
-            disabled={!editable}
-          >
-            <Icon icon={IconAddOutlined} size="sm" />
-            {t(`new-project`)}
-          </Button>
+          <DisabledButtonTooltip
+            hidden={editable}
+            trigger={
+              <Button
+                className="flex-1 lg:flex-none"
+                onClick={onAdd}
+                disabled={!editable}
+              >
+                <Icon icon={IconAddOutlined} size="sm" />
+                {t(`new-project`)}
+              </Button>
+            }
+          />
         }
         searchValue={filters.searchQuery}
         filterCount={isNotEmpty(filters.disabled) ? 1 : undefined}

@@ -13,6 +13,7 @@ import ArchiveModal from 'pages/feature-flags/flags-modal/archive-modal';
 import { FeatureActivityStatus } from 'pages/feature-flags/types';
 import Button from 'components/button';
 import Card from 'elements/card';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 const ArchiveFlag = ({
   feature,
@@ -73,14 +74,20 @@ const ArchiveFlag = ({
             : 'form:archive-flag-desc'
         )}
       </p>
-      <Button
-        disabled={disabled}
-        className="w-fit"
-        variant="secondary"
-        onClick={onOpenArchiveFlagModal}
-      >
-        {t(feature.archived ? 'unarchive-flag' : 'archive-flag')}
-      </Button>
+      <DisabledButtonTooltip
+        align="start"
+        hidden={!disabled}
+        trigger={
+          <Button
+            disabled={disabled}
+            className="w-fit"
+            variant="secondary"
+            onClick={onOpenArchiveFlagModal}
+          >
+            {t(feature.archived ? 'unarchive-flag' : 'archive-flag')}
+          </Button>
+        }
+      />
       {isOpenArchiveFlagModal && (
         <ArchiveModal
           isOpen={isOpenArchiveFlagModal}

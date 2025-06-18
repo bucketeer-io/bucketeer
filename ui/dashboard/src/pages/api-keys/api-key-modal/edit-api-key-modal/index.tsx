@@ -25,6 +25,7 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
 
 interface EditAPIKeyModalProps {
@@ -238,13 +239,18 @@ const EditAPIKeyModal = ({
                     </Button>
                   }
                   secondaryButton={
-                    <Button
-                      type="submit"
-                      disabled={!isValid || !isDirty || disabled}
-                      loading={isSubmitting}
-                    >
-                      {t(`submit`)}
-                    </Button>
+                    <DisabledButtonTooltip
+                      hidden={!disabled}
+                      trigger={
+                        <Button
+                          type="submit"
+                          disabled={!isValid || !isDirty || disabled}
+                          loading={isSubmitting}
+                        >
+                          {t(`submit`)}
+                        </Button>
+                      }
+                    />
                   }
                 />
               </div>

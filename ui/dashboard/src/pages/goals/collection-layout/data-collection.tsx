@@ -4,7 +4,7 @@ import {
 } from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -50,6 +50,7 @@ export const useColumns = ({
   const { searchOptions } = useSearchParams();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   const handleCopyId = (id: string) => {
     copyToClipBoard(id);
@@ -166,37 +167,39 @@ export const useColumns = ({
         const goal = row.original;
 
         return (
-          <Popover
-            options={compact([
-              searchOptions.status === 'ARCHIVED'
-                ? {
-                    label: `${t('table:popover.unarchive-goal')}`,
-                    icon: IconArchiveOutlined,
-                    value: 'UNARCHIVE'
-                  }
-                : {
-                    label: `${t('table:popover.archive-goal')}`,
-                    icon: IconArchiveOutlined,
-                    value: 'ARCHIVE',
-                    disabled: goal.isInUseStatus,
-                    tooltip: goal.isInUseStatus
-                      ? t('form:goal-details.archive-warning-desc')
-                      : ''
-                  },
-              {
-                label: `${t('table:popover.delete-goal')}`,
-                icon: IconTrash,
-                value: 'DELETE',
-                disabled: goal.isInUseStatus,
-                tooltip: goal.isInUseStatus
-                  ? t('form:goal-details.delete-warning-desc')
-                  : ''
-              }
-            ])}
-            icon={IconMoreHorizOutlined}
-            onClick={value => onActions(goal, value as GoalActions)}
-            align="end"
-          />
+          editable && (
+            <Popover
+              options={compact([
+                searchOptions.status === 'ARCHIVED'
+                  ? {
+                      label: `${t('table:popover.unarchive-goal')}`,
+                      icon: IconArchiveOutlined,
+                      value: 'UNARCHIVE'
+                    }
+                  : {
+                      label: `${t('table:popover.archive-goal')}`,
+                      icon: IconArchiveOutlined,
+                      value: 'ARCHIVE',
+                      disabled: goal.isInUseStatus,
+                      tooltip: goal.isInUseStatus
+                        ? t('form:goal-details.archive-warning-desc')
+                        : ''
+                    },
+                {
+                  label: `${t('table:popover.delete-goal')}`,
+                  icon: IconTrash,
+                  value: 'DELETE',
+                  disabled: goal.isInUseStatus,
+                  tooltip: goal.isInUseStatus
+                    ? t('form:goal-details.delete-warning-desc')
+                    : ''
+                }
+              ])}
+              icon={IconMoreHorizOutlined}
+              onClick={value => onActions(goal, value as GoalActions)}
+              align="end"
+            />
+          )
         );
       }
     }

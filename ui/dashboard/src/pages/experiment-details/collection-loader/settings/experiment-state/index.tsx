@@ -23,6 +23,7 @@ import {
 import Button from 'components/button';
 import Icon from 'components/icon';
 import ConfirmModal from 'elements/confirm-modal';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 const ExperimentState = ({
   experimentResult,
@@ -169,20 +170,27 @@ const ExperimentState = ({
           </p>
         </div>
       </div>
-      <Button
-        disabled={isStopped || !editable}
-        variant={'text'}
-        className={cn('!typo-para-small h-10 whitespace-nowrap', {
-          'text-accent-red-500 hover:text-accent-red-600': isRunning
-        })}
-        onClick={onOpenToggleExperimentModal}
-      >
-        <Icon
-          icon={isRunning ? IconStopExperiment : IconStartExperiment}
-          size={'sm'}
-        />
-        {t(isRunning ? `popover.stop-experiment` : `popover.start-experiment`)}
-      </Button>
+      <DisabledButtonTooltip
+        hidden={editable}
+        trigger={
+          <Button
+            disabled={isStopped || !editable}
+            variant={'text'}
+            className={cn('!typo-para-small h-10 whitespace-nowrap', {
+              'text-accent-red-500 hover:text-accent-red-600': isRunning
+            })}
+            onClick={onOpenToggleExperimentModal}
+          >
+            <Icon
+              icon={isRunning ? IconStopExperiment : IconStartExperiment}
+              size={'sm'}
+            />
+            {t(
+              isRunning ? `popover.stop-experiment` : `popover.start-experiment`
+            )}
+          </Button>
+        }
+      />
       {openToggleExperimentModal && (
         <ConfirmModal
           isOpen={openToggleExperimentModal}

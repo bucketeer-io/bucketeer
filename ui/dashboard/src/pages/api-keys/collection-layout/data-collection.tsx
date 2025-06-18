@@ -16,6 +16,7 @@ import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { APIKeyActionsType } from '../types';
 
@@ -167,11 +168,19 @@ export const useColumns = ({
         const apiKey = row.original;
 
         return (
-          <Switch
-            disabled={!editable}
-            checked={!apiKey.disabled}
-            onCheckedChange={value =>
-              onActions(apiKey, value ? 'ENABLE' : 'DISABLE')
+          <DisabledButtonTooltip
+            align="center"
+            hidden={editable}
+            trigger={
+              <div className="w-fit">
+                <Switch
+                  disabled={!editable}
+                  checked={!apiKey.disabled}
+                  onCheckedChange={value =>
+                    onActions(apiKey, value ? 'ENABLE' : 'DISABLE')
+                  }
+                />
+              </div>
             }
           />
         );
@@ -190,18 +199,20 @@ export const useColumns = ({
         const apiKey = row.original;
 
         return (
-          <Popover
-            options={compact([
-              {
-                label: `${t('table:popover.edit-api-key')}`,
-                icon: IconEditOutlined,
-                value: 'EDIT'
-              }
-            ])}
-            icon={IconMoreHorizOutlined}
-            onClick={value => onActions(apiKey, value as APIKeyActionsType)}
-            align="end"
-          />
+          editable && (
+            <Popover
+              options={compact([
+                {
+                  label: `${t('table:popover.edit-api-key')}`,
+                  icon: IconEditOutlined,
+                  value: 'EDIT'
+                }
+              ])}
+              icon={IconMoreHorizOutlined}
+              onClick={value => onActions(apiKey, value as APIKeyActionsType)}
+              align="end"
+            />
+          )
         );
       }
     }

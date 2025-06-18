@@ -19,7 +19,11 @@ export const EmptyCollection = ({ onAdd }: { onAdd?: () => void }) => {
       </EmptyState.Body>
       {isProjectManagement && (
         <EmptyState.Actions>
-          <EmptyState.ActionButton variant="primary" onClick={onAdd}>
+          <EmptyState.ActionButton
+            type={'new'}
+            variant="primary"
+            onClick={onAdd}
+          >
             <IconAddOutlined />
             {t(`new-project`)}
           </EmptyState.ActionButton>

@@ -32,6 +32,7 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 export interface ExperimentSettingsForm {
   id?: string;
@@ -197,13 +198,18 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
               <p className="text-gray-800 typo-head-bold-small">
                 {t('common:settings')}
               </p>
-              <Button
-                type="submit"
-                disabled={!isDirty || !editable}
-                loading={isSubmitting}
-              >
-                {t('common:save')}
-              </Button>
+              <DisabledButtonTooltip
+                hidden={editable}
+                trigger={
+                  <Button
+                    type="submit"
+                    disabled={!isDirty || !editable}
+                    loading={isSubmitting}
+                  >
+                    {t('common:save')}
+                  </Button>
+                }
+              />
             </div>
 
             <div className="flex flex-col w-full gap-y-5 p-5 shadow-card rounded-lg bg-white">

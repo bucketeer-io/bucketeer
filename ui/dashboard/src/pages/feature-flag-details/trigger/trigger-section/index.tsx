@@ -19,6 +19,7 @@ import Button from 'components/button';
 import Icon from 'components/icon';
 import Card from 'elements/card';
 import ConfirmModal from 'elements/confirm-modal';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
 import CreateTriggerForm from '../create-trigger-form';
 import { TriggerAction } from '../types';
@@ -60,7 +61,7 @@ const TriggerList = ({
     }
   });
 
-  const isDisabledCreate = useMemo(() => !editable, []);
+  const isDisabledCreate = useMemo(() => !editable, [editable]);
 
   const triggers = triggerCollection?.flagTriggers || [];
   const { EDIT, RESET, DISABLE, ENABLE, DELETE } = TriggerAction;
@@ -206,21 +207,27 @@ const TriggerList = ({
               setTriggerNewlyCreated={setTriggerNewlyCreated}
             />
           ) : (
-            <Button
-              variant="text"
-              className="h-8 w-fit p-0"
-              disabled={isDisabledCreate}
-              onClick={() => {
-                setActionState({
-                  action: undefined,
-                  trigger: undefined
-                });
-                setIsShowCreateForm(true);
-              }}
-            >
-              <Icon icon={IconPlus} size="md" />
-              {t('trigger.add-trigger')}
-            </Button>
+            <DisabledButtonTooltip
+              align="start"
+              hidden={!isDisabledCreate}
+              trigger={
+                <Button
+                  variant="text"
+                  className="h-8 w-fit p-0"
+                  disabled={isDisabledCreate}
+                  onClick={() => {
+                    setActionState({
+                      action: undefined,
+                      trigger: undefined
+                    });
+                    setIsShowCreateForm(true);
+                  }}
+                >
+                  <Icon icon={IconPlus} size="md" />
+                  {t('trigger.add-trigger')}
+                </Button>
+              }
+            />
           )}
         </>
       )}

@@ -10,6 +10,7 @@ import { cn } from 'utils/style';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import TableListContainer from 'elements/table-list-container';
@@ -148,14 +149,19 @@ const PageContent = ({
       <Filter
         onOpenFilter={onOpenFilterModal}
         action={
-          <Button
-            className="flex-1 lg:flex-none"
-            onClick={onAdd}
-            disabled={disabled}
-          >
-            <Icon icon={IconAddOutlined} size="sm" />
-            {t(`new-experiment`)}
-          </Button>
+          <DisabledButtonTooltip
+            hidden={!disabled}
+            trigger={
+              <Button
+                className="flex-1 lg:flex-none"
+                onClick={onAdd}
+                disabled={disabled}
+              >
+                <Icon icon={IconAddOutlined} size="sm" />
+                {t(`new-experiment`)}
+              </Button>
+            }
+          />
         }
         searchValue={filters.searchQuery}
         filterCount={filterCount}

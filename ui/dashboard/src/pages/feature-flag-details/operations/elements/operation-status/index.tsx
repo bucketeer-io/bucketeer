@@ -230,18 +230,20 @@ const OperationStatus = ({
         </p>
         <div className="flex items-center gap-x-4">
           <Status status={operationType} />
-          <Popover
-            options={popoverOptions}
-            icon={IconMoreHorizOutlined}
-            onClick={value =>
-              onActions({
-                actionType: value as OperationActionType,
-                operationType,
-                selectedData: operation
-              })
-            }
-            align="end"
-          />
+          {editable && (
+            <Popover
+              options={popoverOptions}
+              icon={IconMoreHorizOutlined}
+              onClick={value =>
+                onActions({
+                  actionType: value as OperationActionType,
+                  operationType,
+                  selectedData: operation
+                })
+              }
+              align="end"
+            />
+          )}
         </div>
       </div>
       <Divider />
