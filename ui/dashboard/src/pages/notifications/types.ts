@@ -1,4 +1,4 @@
-import { OrderBy, OrderDirection } from '@types';
+import { OrderBy, OrderDirection, SourceType } from '@types';
 
 export interface NotificationFilters {
   page: number;
@@ -9,3 +9,9 @@ export interface NotificationFilters {
 }
 
 export type NotificationActionsType = 'EDIT' | 'ENABLE' | 'DISABLE';
+
+export interface NotificationOption {
+  value: SourceType;
+  label: string;
+  description: string;
+}

@@ -37,7 +37,9 @@ export const useColumns = ({
               <NameWithTooltip.Trigger
                 id={id}
                 name={name}
-                onClick={() => onActions(notification, 'EDIT')}
+                onClick={() => {
+                  onActions(notification, 'EDIT');
+                }}
                 maxLines={1}
                 className="min-w-[200px]"
               />

@@ -3,14 +3,13 @@ import { apiKeyCreator } from '@api/api-key';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAPIKeys } from '@queries/api-keys';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
-import { APIKeyRole } from '@types';
-import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
+import { APIKeyRole, Environment } from '@types';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { IconInfo } from '@icons';
-import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
+import { apiKeyOptions } from 'pages/api-keys/constants';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import {
@@ -28,15 +27,10 @@ import TextArea from 'components/textarea';
 
 interface AddAPIKeyModalProps {
   isOpen: boolean;
+  environments: Environment[];
+  isLoadingEnvs: boolean;
   onClose: () => void;
 }
-
-type APIKeyOption = {
-  id: string;
-  label: string;
-  description: string;
-  value: APIKeyRole;
-};
 
 export interface AddAPIKeyForm {
   name: string;
@@ -52,18 +46,15 @@ export const formSchema = yup.object().shape({
   role: yup.mixed<APIKeyRole>().required()
 });
 
-const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
-  const { consoleAccount } = useAuth();
+const AddAPIKeyModal = ({
+  isOpen,
+  isLoadingEnvs,
+  environments,
+  onClose
+}: AddAPIKeyModalProps) => {
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-
-  const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId
-  });
-  const environments = collection?.environments || [];
-  const { formattedEnvironments } = onFormatEnvironments(environments);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -74,39 +65,6 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
       role: 'SDK_CLIENT'
     }
   });
-
-  const options: APIKeyOption[] = [
-    {
-      id: 'client-sdk',
-      label: t('form:api-key.client-sdk'),
-      description: t('form:api-key.client-sdk-desc'),
-      value: 'SDK_CLIENT'
-    },
-    {
-      id: 'server-sdk',
-      label: t('form:api-key.server-sdk'),
-      description: t('form:api-key.server-sdk-desc'),
-      value: 'SDK_SERVER'
-    },
-    {
-      id: 'public-api-read-only',
-      label: t('form:api-key.public-api-read-only'),
-      description: t('form:api-key.public-api-read-only-desc'),
-      value: 'PUBLIC_API_READ_ONLY'
-    },
-    {
-      id: 'public-api-write',
-      label: t('form:api-key.public-api-write'),
-      description: t('form:api-key.public-api-write-desc'),
-      value: 'PUBLIC_API_WRITE'
-    },
-    {
-      id: 'public-api-admin',
-      label: t('form:api-key.public-api-admin'),
-      description: t('form:api-key.public-api-admin-desc'),
-      value: 'PUBLIC_API_ADMIN'
-    }
-  ];
 
   const {
     getValues,
@@ -190,7 +148,7 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
                       <DropdownMenuTrigger
                         placeholder={t(`form:select-environment`)}
                         label={
-                          formattedEnvironments.find(
+                          environments.find(
                             item => item.id === getValues('environmentId')
                           )?.name || ''
                         }
@@ -203,7 +161,7 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
                         align="start"
                         {...field}
                       >
-                        {formattedEnvironments.map((item, index) => (
+                        {environments.map((item, index) => (
                           <DropdownMenuItem
                             {...field}
                             key={index}
@@ -243,23 +201,28 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
                       defaultValue={field.value}
                       onValueChange={field.onChange}
                     >
-                      {options.map(({ id, label, description, value }) => (
-                        <div
-                          key={id}
-                          className="flex items-center last:border-b-0 border-b py-4 gap-x-5"
-                        >
-                          <label htmlFor={id} className="flex-1 cursor-pointer">
-                            <p className="typo-para-medium text-gray-700">
-                              {label}
-                            </p>
-                            <p className="typo-para-small text-gray-600">
-                              {description}
-                            </p>
-                          </label>
+                      {apiKeyOptions.map(
+                        ({ id, label, description, value }) => (
+                          <div
+                            key={id}
+                            className="flex items-center last:border-b-0 border-b py-4 gap-x-5"
+                          >
+                            <label
+                              htmlFor={id}
+                              className="flex-1 cursor-pointer"
+                            >
+                              <p className="typo-para-medium text-gray-700">
+                                {label}
+                              </p>
+                              <p className="typo-para-small text-gray-600">
+                                {description}
+                              </p>
+                            </label>
 
-                          <RadioGroupItem value={value} id={id} />
-                        </div>
-                      ))}
+                            <RadioGroupItem value={value} id={id} />
+                          </div>
+                        )
+                      )}
                     </RadioGroup>
                   </Form.Control>
                 </Form.Item>

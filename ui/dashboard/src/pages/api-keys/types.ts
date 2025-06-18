@@ -1,4 +1,4 @@
-import { OrderBy, OrderDirection } from '@types';
+import { APIKeyRole, OrderBy, OrderDirection } from '@types';
 
 export interface APIKeysFilters {
   page: number;
@@ -6,6 +6,13 @@ export interface APIKeysFilters {
   orderDirection: OrderDirection;
   disabled?: boolean;
   searchQuery: string;
+}
+
+export interface APIKeyOption {
+  id: string;
+  label: string;
+  description: string;
+  value: APIKeyRole;
 }
 
 export type APIKeyActionsType = 'EDIT' | 'ENABLE' | 'DISABLE';
