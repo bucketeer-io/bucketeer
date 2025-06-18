@@ -26,7 +26,7 @@ import (
 
 func TestNewPush(t *testing.T) {
 	t.Parallel()
-	
+
 	patterns := []struct {
 		name           string
 		pushName       string
@@ -77,7 +77,7 @@ func TestNewPush(t *testing.T) {
 			},
 		},
 	}
-	
+
 	for _, p := range patterns {
 		t.Run(p.name, func(t *testing.T) {
 			actual, err := NewPush(p.pushName, p.serviceAccount, p.tags)

@@ -178,7 +178,7 @@ func (p pushSender) send(featureID, environmentId string) error {
 		if len(topics) == 0 {
 			continue
 		}
-		
+
 		// Send notifications to all matching topics
 		for _, topicInfo := range topics {
 			if err := p.sendPushNotification(ctx, topicInfo, push, featureID, environmentId); err != nil {
@@ -359,9 +359,13 @@ type topicInfo struct {
 
 // getTopicsForPush determines which topics should receive push notifications
 // based on the feature tags and push configuration
-func (p pushSender) getTopicsForPush(feature *featureproto.Feature, push *pushproto.Push, featureID string) []topicInfo {
+func (p pushSender) getTopicsForPush(
+	feature *featureproto.Feature,
+	push *pushproto.Push,
+	featureID string,
+) []topicInfo {
 	topics := []topicInfo{}
-	
+
 	// Handle case where both feature and push have no tags
 	if len(feature.Tags) == 0 && len(push.Tags) == 0 {
 		topics = append(topics, topicInfo{
@@ -370,7 +374,7 @@ func (p pushSender) getTopicsForPush(feature *featureproto.Feature, push *pushpr
 		})
 		return topics
 	}
-	
+
 	// Handle normal case with tags
 	d := pushdomain.Push{Push: push}
 	for _, tag := range feature.Tags {
@@ -381,7 +385,7 @@ func (p pushSender) getTopicsForPush(feature *featureproto.Feature, push *pushpr
 			})
 		}
 	}
-	
+
 	return topics
 }
 
@@ -401,7 +405,7 @@ func (p pushSender) sendPushNotification(
 			zap.String("pushId", push.Id),
 			zap.String("environmentId", environmentID),
 		}
-		
+
 		// Add tag field only if it exists
 		if topicInfo.tag != "" {
 			logFields = append(logFields, zap.String("tag", topicInfo.tag))
@@ -411,14 +415,14 @@ func (p pushSender) sendPushNotification(
 		}
 		return err
 	}
-	
+
 	logFields := []zap.Field{
 		zap.String("featureId", featureID),
 		zap.String("topic", topicInfo.topic),
 		zap.String("pushId", push.Id),
 		zap.String("environmentId", environmentID),
 	}
-	
+
 	// Add tag field only if it exists
 	if topicInfo.tag != "" {
 		logFields = append(logFields, zap.String("tag", topicInfo.tag))
@@ -426,6 +430,6 @@ func (p pushSender) sendPushNotification(
 	} else {
 		p.logger.Info("Succeeded to push notification for feature without tags", logFields...)
 	}
-	
+
 	return nil
 }

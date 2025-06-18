@@ -135,7 +135,7 @@ func TestCreatePushMySQL(t *testing.T) {
 			req: &pushproto.CreatePushRequest{
 				Command: &pushproto.CreatePushCommand{
 					FcmServiceAccount: fcmServiceAccountDummy,
-					Tags:              []string{},  // Tags are now optional
+					Tags:              []string{}, // Tags are now optional
 				},
 			},
 			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
@@ -211,7 +211,7 @@ func TestCreatePushMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				Command: &pushproto.CreatePushCommand{
 					FcmServiceAccount: fcmServiceAccountDummy,
-					Tags:              []string{},  // Empty tags should be allowed
+					Tags:              []string{}, // Empty tags should be allowed
 					Name:              "name-1",
 				},
 			},
@@ -269,7 +269,7 @@ func TestCreatePushNoCommandMySQL(t *testing.T) {
 			setup: nil,
 			req: &pushproto.CreatePushRequest{
 				FcmServiceAccount: fcmServiceAccountDummy,
-				Tags:              []string{},  // Tags are now optional
+				Tags:              []string{}, // Tags are now optional
 			},
 			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
@@ -339,7 +339,7 @@ func TestCreatePushNoCommandMySQL(t *testing.T) {
 			req: &pushproto.CreatePushRequest{
 				EnvironmentId:     "ns0",
 				FcmServiceAccount: fcmServiceAccountDummy,
-				Tags:              []string{},  // Empty tags should be allowed
+				Tags:              []string{}, // Empty tags should be allowed
 				Name:              "name-1",
 			},
 			expectedErr: nil,
