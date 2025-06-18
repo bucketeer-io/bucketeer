@@ -143,7 +143,7 @@ const EditNotificationModal = ({
   const onSubmit: SubmitHandler<EditNotificationForm> = values => {
     return notificationUpdater({
       id: notification!.id,
-      environmentId: values.environment,
+      environmentId: checkEnvironmentEmptyId(values.environment as string),
       name: values.name,
       sourceTypes: values.types,
       language: values.language,

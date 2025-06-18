@@ -11,7 +11,6 @@ import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { APIKey } from '@types';
-import { onFormatEnvironments } from 'utils/function';
 import { useSearchParams } from 'utils/search-params';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import ConfirmModal from 'elements/confirm-modal';
@@ -54,7 +53,6 @@ const PageLoader = () => {
     organizationId: currentEnvironment.organizationId
   });
   const environments = collection?.environments || [];
-  const { formattedEnvironments } = onFormatEnvironments(environments);
 
   const apiKeyEnvironmentId = searchOptions?.environmentId;
 
@@ -74,7 +72,7 @@ const PageLoader = () => {
   const onHandleActions = useCallback(
     (apiKey: APIKey, type: APIKeyActionsType) => {
       setSelectedAPIKey(apiKey);
-      const environment = formattedEnvironments.find(
+      const environment = environments.find(
         item => item.name === apiKey.environmentName
       );
       switch (type) {
@@ -90,7 +88,7 @@ const PageLoader = () => {
           break;
       }
     },
-    [formattedEnvironments, commonPath]
+    [environments, commonPath]
   );
 
   const mutationState = useMutation({
@@ -141,7 +139,7 @@ const PageLoader = () => {
         <AddAPIKeyModal
           isOpen={isAdd}
           isLoadingEnvs={isLoadingEnvs}
-          environments={formattedEnvironments}
+          environments={environments}
           onClose={onCloseActionModal}
         />
       )}
@@ -150,7 +148,7 @@ const PageLoader = () => {
           isOpen={isEdit}
           isLoadingApiKey={isLoadingApiKey}
           apiKey={selectedAPIKey}
-          environments={formattedEnvironments}
+          environments={environments}
           onClose={onCloseActionModal}
         />
       )}

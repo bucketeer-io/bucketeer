@@ -8,7 +8,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { APIKey, Environment } from '@types';
-import { checkEnvironmentEmptyId } from 'utils/function';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { IconInfo } from '@icons';
 import { apiKeyOptions } from 'pages/api-keys/constants';
 import Button from 'components/button';
@@ -58,16 +58,21 @@ const EditAPIKeyModal = ({
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
 
+  const { emptyEnvironmentId, formattedEnvironments } =
+    onFormatEnvironments(environments);
+
   const apiEnvironmentId = useMemo(
-    () => environments.find(item => item.name === apiKey?.environmentName)?.id,
-    [environments, apiKey]
+    () =>
+      formattedEnvironments.find(item => item.name === apiKey?.environmentName)
+        ?.id,
+    [formattedEnvironments, apiKey]
   );
 
   const form = useForm({
     resolver: yupResolver(formSchema),
     values: {
       name: apiKey?.name || '',
-      environmentId: apiEnvironmentId || '',
+      environmentId: apiEnvironmentId || emptyEnvironmentId,
       description: apiKey?.description
     }
   });
@@ -80,8 +85,8 @@ const EditAPIKeyModal = ({
   const environmentId = watch('environmentId');
 
   const currentEnv = useMemo(
-    () => environments.find(item => item.id === environmentId),
-    [environments, environmentId]
+    () => formattedEnvironments.find(item => item.id === environmentId),
+    [formattedEnvironments, environmentId]
   );
 
   const onSubmit: SubmitHandler<EditAPIKeyForm> = values => {
@@ -173,7 +178,7 @@ const EditAPIKeyModal = ({
                           align="start"
                           {...field}
                         >
-                          {environments.map((item, index) => (
+                          {formattedEnvironments.map((item, index) => (
                             <DropdownMenuItem
                               {...field}
                               key={index}

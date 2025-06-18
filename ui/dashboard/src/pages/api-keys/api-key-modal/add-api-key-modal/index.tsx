@@ -7,7 +7,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { APIKeyRole, Environment } from '@types';
-import { checkEnvironmentEmptyId } from 'utils/function';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { IconInfo } from '@icons';
 import { apiKeyOptions } from 'pages/api-keys/constants';
 import Button from 'components/button';
@@ -55,6 +55,8 @@ const AddAPIKeyModal = ({
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
+
+  const { formattedEnvironments } = onFormatEnvironments(environments);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -148,7 +150,7 @@ const AddAPIKeyModal = ({
                       <DropdownMenuTrigger
                         placeholder={t(`form:select-environment`)}
                         label={
-                          environments.find(
+                          formattedEnvironments.find(
                             item => item.id === getValues('environmentId')
                           )?.name || ''
                         }
@@ -161,7 +163,7 @@ const AddAPIKeyModal = ({
                         align="start"
                         {...field}
                       >
-                        {environments.map((item, index) => (
+                        {formattedEnvironments.map((item, index) => (
                           <DropdownMenuItem
                             {...field}
                             key={index}
