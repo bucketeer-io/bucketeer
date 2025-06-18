@@ -9763,6 +9763,16 @@ definitions:
         format: int64
       name:
         type: string
+  bucketeerfeatureTagChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/bucketeerfeatureChangeType'
+      tag:
+        type: string
+    required:
+      - changeType
+      - tag
   bucketeerfeatureVariation:
     type: object
     properties:
@@ -9776,6 +9786,24 @@ definitions:
         title: number or even json object
       description:
         type: string
+  bucketeerpushChangeType:
+    type: string
+    enum:
+      - UNSPECIFIED
+      - CREATE
+      - UPDATE
+      - DELETE
+    default: UNSPECIFIED
+  bucketeerpushTagChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/bucketeerpushChangeType'
+      tag:
+        type: string
+    required:
+      - changeType
+      - tag
   bucketeertagListTagsRequestOrderBy:
     type: string
     enum:
@@ -12350,16 +12378,6 @@ definitions:
       - FIXED
       - ROLLOUT
     default: FIXED
-  featureTagChange:
-    type: object
-    properties:
-      changeType:
-        $ref: '#/definitions/bucketeerfeatureChangeType'
-      tag:
-        type: string
-    required:
-      - changeType
-      - tag
   featureTarget:
     type: object
     properties:
@@ -12436,7 +12454,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/featureTagChange'
+          $ref: '#/definitions/bucketeerfeatureTagChange'
     required:
       - environmentId
       - id
@@ -13125,6 +13143,11 @@ definitions:
         type: string
       disabled:
         type: boolean
+      tagChanges:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerpushTagChange'
     required:
       - id
       - environmentId

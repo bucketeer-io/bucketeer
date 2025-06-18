@@ -16,6 +16,7 @@ package domain
 
 import (
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/jinzhu/copier"
@@ -61,7 +62,7 @@ func NewPush(name, fcmServiceAccount string, tags []string) (*Push, error) {
 
 func (p *Push) Update(
 	name *wrapperspb.StringValue,
-	tags []string,
+	tagChanges []*proto.TagChange,
 	disabled *wrapperspb.BoolValue,
 ) (*Push, error) {
 	updated := &Push{}
@@ -71,10 +72,18 @@ func (p *Push) Update(
 	if name != nil {
 		updated.Name = name.Value
 	}
-	if len(tags) > 0 {
-		updated.Tags = tags
+	for _, change := range tagChanges {
+		switch change.ChangeType {
+		case proto.ChangeType_CREATE, proto.ChangeType_UPDATE:
+			if err := updated.AddTag(change.Tag); err != nil {
+				return nil, err
+			}
+		case proto.ChangeType_DELETE:
+			if err := updated.RemoveTag(change.Tag); err != nil {
+				return nil, err
+			}
+		}
 	}
-
 	if disabled != nil {
 		updated.Disabled = disabled.Value
 	}
@@ -155,6 +164,23 @@ func (p *Push) ExistTag(findTag string) bool {
 		}
 	}
 	return false
+}
+
+func (p *Push) AddTag(tag string) error {
+	if slices.Contains(p.Tags, tag) {
+		return nil
+	}
+	p.Tags = append(p.Tags, tag)
+	return nil
+}
+
+func (p *Push) RemoveTag(tag string) error {
+	index := slices.Index(p.Tags, tag)
+	if index == -1 {
+		return ErrTagNotFound
+	}
+	p.Tags = slices.Delete(p.Tags, index, index+1)
+	return nil
 }
 
 func validate(p *proto.Push) error {

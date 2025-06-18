@@ -571,25 +571,16 @@ func TestUpdatePushNoCommandMySQL(t *testing.T) {
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.Push{
-					Push: &proto.Push{
-						Id: "key-0",
-					},
-				}, nil)
+				).Return(nil, v2ps.ErrPushNotFound)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(v2ps.ErrPushNotFound)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().UpdatePush(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(v2ps.ErrPushNotFound)
 			},
 			req: &pushproto.UpdatePushRequest{
 				Id:   "key-1",
 				Name: wrapperspb.String("push-0"),
-				Tags: []string{"tag-0"},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -644,8 +635,13 @@ func TestUpdatePushNoCommandMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &pushproto.UpdatePushRequest{
-				Id:   "key-0",
-				Tags: []string{"tag-0"},
+				Id: "key-0",
+				TagChanges: []*pushproto.TagChange{
+					{
+						ChangeType: pushproto.ChangeType_CREATE,
+						Tag:        "tag-1",
+					},
+				},
 			},
 			expectedErr: nil,
 		},
@@ -675,7 +671,12 @@ func TestUpdatePushNoCommandMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				Id:            "key-0",
 				Name:          wrapperspb.String("name-1"),
-				Tags:          []string{"tag-0"},
+				TagChanges: []*pushproto.TagChange{
+					{
+						ChangeType: pushproto.ChangeType_CREATE,
+						Tag:        "tag-0",
+					},
+				},
 			},
 			expectedErr: nil,
 		},

@@ -203,19 +203,26 @@ func TestUpdatePush(t *testing.T) {
 		desc        string
 		origin      *Push
 		inputName   *wrapperspb.StringValue
-		inputTags   []string
+		tagChanges  []*pushproto.TagChange
+		disabled    *wrapperspb.BoolValue
 		expectedErr error
 		expected    *Push
 	}{
 		{
-			desc: "success",
+			desc: "success: update name and add tag",
 			origin: &Push{&pushproto.Push{
 				Name:     "a",
 				Tags:     []string{"tag-0"},
 				Disabled: false,
 			}},
-			inputName:   &wrapperspb.StringValue{Value: "b"},
-			inputTags:   []string{"tag-0", "tag-1"},
+			inputName: &wrapperspb.StringValue{Value: "b"},
+			tagChanges: []*pushproto.TagChange{
+				{
+					ChangeType: pushproto.ChangeType_CREATE,
+					Tag:        "tag-1",
+				},
+			},
+			disabled:    wrapperspb.Bool(true),
 			expectedErr: nil,
 			expected: &Push{&pushproto.Push{
 				Name:     "b",
@@ -223,14 +230,166 @@ func TestUpdatePush(t *testing.T) {
 				Disabled: true,
 			}},
 		},
+		{
+			desc: "success: remove tag",
+			origin: &Push{&pushproto.Push{
+				Name:     "a",
+				Tags:     []string{"tag-0", "tag-1", "tag-2"},
+				Disabled: false,
+			}},
+			inputName: nil,
+			tagChanges: []*pushproto.TagChange{
+				{
+					ChangeType: pushproto.ChangeType_DELETE,
+					Tag:        "tag-1",
+				},
+			},
+			disabled:    nil,
+			expectedErr: nil,
+			expected: &Push{&pushproto.Push{
+				Name:     "a",
+				Tags:     []string{"tag-0", "tag-2"},
+				Disabled: false,
+			}},
+		},
+		{
+			desc: "success: multiple tag changes",
+			origin: &Push{&pushproto.Push{
+				Name:     "a",
+				Tags:     []string{"tag-0", "tag-1"},
+				Disabled: false,
+			}},
+			inputName: nil,
+			tagChanges: []*pushproto.TagChange{
+				{
+					ChangeType: pushproto.ChangeType_CREATE,
+					Tag:        "tag-2",
+				},
+				{
+					ChangeType: pushproto.ChangeType_DELETE,
+					Tag:        "tag-0",
+				},
+				{
+					ChangeType: pushproto.ChangeType_UPDATE,
+					Tag:        "tag-3",
+				},
+			},
+			disabled:    nil,
+			expectedErr: nil,
+			expected: &Push{&pushproto.Push{
+				Name:     "a",
+				Tags:     []string{"tag-1", "tag-2", "tag-3"},
+				Disabled: false,
+			}},
+		},
+		{
+			desc: "fail: remove non-existent tag",
+			origin: &Push{&pushproto.Push{
+				Name:     "a",
+				Tags:     []string{"tag-0"},
+				Disabled: false,
+			}},
+			inputName: nil,
+			tagChanges: []*pushproto.TagChange{
+				{
+					ChangeType: pushproto.ChangeType_DELETE,
+					Tag:        "tag-1",
+				},
+			},
+			disabled:    nil,
+			expectedErr: ErrTagNotFound,
+			expected:    nil,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			updatedPush, err := p.origin.Update(p.inputName, p.inputTags, wrapperspb.Bool(true))
+			updatedPush, err := p.origin.Update(p.inputName, p.tagChanges, p.disabled)
 			assert.Equal(t, p.expectedErr, err)
-			assert.Equal(t, p.expected.Name, updatedPush.Name)
-			assert.Equal(t, p.expected.Tags, updatedPush.Tags)
-			assert.Equal(t, p.expected.Disabled, updatedPush.Disabled)
+			if p.expectedErr == nil {
+				assert.Equal(t, p.expected.Name, updatedPush.Name)
+				assert.ElementsMatch(t, p.expected.Tags, updatedPush.Tags)
+				assert.Equal(t, p.expected.Disabled, updatedPush.Disabled)
+			}
+		})
+	}
+}
+
+func TestAddTag(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		origin      *Push
+		input       string
+		expectedErr error
+		expected    []string
+	}{
+		{
+			desc:        "success: add new tag",
+			origin:      &Push{&pushproto.Push{Tags: []string{"tag-0", "tag-1"}}},
+			input:       "tag-2",
+			expectedErr: nil,
+			expected:    []string{"tag-0", "tag-1", "tag-2"},
+		},
+		{
+			desc:        "success: add to empty tags",
+			origin:      &Push{&pushproto.Push{Tags: []string{}}},
+			input:       "tag-0",
+			expectedErr: nil,
+			expected:    []string{"tag-0"},
+		},
+		{
+			desc:        "success: add existing tag (no-op)",
+			origin:      &Push{&pushproto.Push{Tags: []string{"tag-0", "tag-1"}}},
+			input:       "tag-1",
+			expectedErr: nil,
+			expected:    []string{"tag-0", "tag-1"},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			err := p.origin.AddTag(p.input)
+			assert.Equal(t, p.expectedErr, err)
+			assert.ElementsMatch(t, p.expected, p.origin.Tags)
+		})
+	}
+}
+
+func TestRemoveTag(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		origin      *Push
+		input       string
+		expectedErr error
+		expected    []string
+	}{
+		{
+			desc:        "success: remove existing tag",
+			origin:      &Push{&pushproto.Push{Tags: []string{"tag-0", "tag-1", "tag-2"}}},
+			input:       "tag-1",
+			expectedErr: nil,
+			expected:    []string{"tag-0", "tag-2"},
+		},
+		{
+			desc:        "success: remove last tag",
+			origin:      &Push{&pushproto.Push{Tags: []string{"tag-0"}}},
+			input:       "tag-0",
+			expectedErr: nil,
+			expected:    []string{},
+		},
+		{
+			desc:        "fail: remove non-existent tag",
+			origin:      &Push{&pushproto.Push{Tags: []string{"tag-0", "tag-1"}}},
+			input:       "tag-2",
+			expectedErr: ErrTagNotFound,
+			expected:    []string{"tag-0", "tag-1"},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			err := p.origin.RemoveTag(p.input)
+			assert.Equal(t, p.expectedErr, err)
+			assert.ElementsMatch(t, p.expected, p.origin.Tags)
 		})
 	}
 }
