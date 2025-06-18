@@ -84,7 +84,7 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
 
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
     entityType: 'FEATURE_FLAG',
-    environmentId: watch('environmentId'),
+    environmentId: checkEnvironmentEmptyId(watch('environmentId')),
     options: {
       enabled: isEnabledTags
     }
@@ -102,9 +102,9 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
       const base64String: string = await new Promise(rs =>
         covertFileToUint8ToBase64(files[0], data => rs(data))
       );
-      const { environmentId } = values;
+      const { environmentId, ...rest } = values || {};
       const resp = await pushCreator({
-        ...values,
+        ...rest,
         environmentId: checkEnvironmentEmptyId(environmentId),
         fcmServiceAccount: base64String
       });

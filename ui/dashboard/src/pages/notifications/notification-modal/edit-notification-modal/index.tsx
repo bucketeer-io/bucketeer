@@ -20,6 +20,7 @@ import {
   NotificationLanguage,
   SourceType
 } from '@types';
+import { checkEnvironmentEmptyId } from 'utils/function';
 import { cn } from 'utils/style';
 import { IconInfo, IconNoData } from '@icons';
 import { useFetchTags } from 'pages/members/collection-loader';
@@ -132,7 +133,7 @@ const EditNotificationModal = ({
   const onSubmit: SubmitHandler<EditNotificationForm> = values => {
     return notificationUpdater({
       id: notification!.id,
-      environmentId: values.environment,
+      environmentId: checkEnvironmentEmptyId(values.environment as string),
       name: values.name,
       sourceTypes: values.types,
       language: values.language,

@@ -67,7 +67,7 @@ const EditPushModal = ({
     environmentId: push?.environmentId || '',
     entityType: 'FEATURE_FLAG',
     options: {
-      enabled: !push?.environmentId
+      enabled: !!push
     }
   });
   const tagOptions = (uniqBy(tagCollection?.tags || [], 'name') || [])?.map(
@@ -148,7 +148,7 @@ const EditPushModal = ({
 
   return (
     <SlideModal title={t('edit-push')} isOpen={isOpen} onClose={onClose}>
-      {isLoadingTags || isLoadingPush ? (
+      {isLoadingPush ? (
         <FormLoading />
       ) : (
         <div className="w-full p-5 pb-28">
