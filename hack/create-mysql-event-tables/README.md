@@ -26,8 +26,7 @@ go run ./hack/create-mysql-event-tables create \
   --mysql-port=3306 \
   --mysql-user=your-mysql-user \
   --mysql-pass=your-mysql-password \
-  --mysql-db-name=your-datawarehouse-database \
-  --sql-file-path=../../migration/mysql/20250502025508_add_events_table.sql
+  --mysql-db-name=your-datawarehouse-database
 ```
 
 ## Parameters
@@ -39,7 +38,6 @@ go run ./hack/create-mysql-event-tables create \
 | `--mysql-user` | Yes | - | MySQL username |
 | `--mysql-pass` | Yes | - | MySQL password |
 | `--mysql-db-name` | Yes | - | MySQL database name for the data warehouse |
-| `--sql-file-path` | No | `../../migration/mysql/20250502025508_add_events_table.sql` | Path to the SQL migration file |
 
 ## Tables Created
 

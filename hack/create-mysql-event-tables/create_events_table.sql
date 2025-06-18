@@ -43,4 +43,4 @@ CREATE TABLE `goal_event` (
     INDEX `idx_goal_user_id` (`user_id`),
     INDEX `idx_goal_feature_id` (`feature_id`),
     INDEX `idx_goal_variation_id` (`variation_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci; 

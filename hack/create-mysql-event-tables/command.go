@@ -16,9 +16,8 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -30,9 +29,9 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )
 
-const (
-	migrationFileName = "20250502025508_add_events_table.sql"
-	migrationFilePath = "../../migration/mysql/" + migrationFileName
+var (
+	//go:embed create_events_table.sql
+	eventTablesMigrationSQL string
 )
 
 type command struct {
@@ -42,7 +41,6 @@ type command struct {
 	mysqlHost   *string
 	mysqlPort   *int
 	mysqlDBName *string
-	sqlFilePath *string
 }
 
 func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
@@ -54,7 +52,6 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
 		mysqlPort:   cmd.Flag("mysql-port", "MySQL port.").Default("3306").Int(),
 		mysqlDBName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
-		sqlFilePath: cmd.Flag("sql-file-path", "Path to SQL migration file.").Default(migrationFilePath).String(),
 	}
 	r.RegisterCommand(command)
 	return command
@@ -64,8 +61,7 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	logger.Info("Starting MySQL event tables creation",
 		zap.String("host", *c.mysqlHost),
 		zap.Int("port", *c.mysqlPort),
-		zap.String("database", *c.mysqlDBName),
-		zap.String("sql_file", *c.sqlFilePath))
+		zap.String("database", *c.mysqlDBName))
 
 	// Create MySQL client
 	client, err := c.createMySQLClient(ctx, logger)
@@ -96,15 +92,8 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		}
 	}
 
-	// Read the SQL migration file
-	sqlContent, err := c.readSQLFile()
-	if err != nil {
-		logger.Error("Failed to read SQL file", zap.Error(err), zap.String("file", *c.sqlFilePath))
-		return err
-	}
-
 	// Execute the SQL statements (will skip existing ones)
-	err = c.executeSQLStatements(ctx, client, sqlContent, existingTables, logger)
+	err = c.executeSQLStatements(ctx, client, eventTablesMigrationSQL, existingTables, logger)
 	if err != nil {
 		logger.Error("Failed to execute SQL statements", zap.Error(err))
 		return err
@@ -134,26 +123,6 @@ func (c *command) checkTablesExist(ctx context.Context, client mysql.Client, log
 	}
 
 	return existingTables, nil
-}
-
-func (c *command) readSQLFile() (string, error) {
-	// Try to read from the provided path first
-	if content, err := os.ReadFile(*c.sqlFilePath); err == nil {
-		return string(content), nil
-	}
-
-	// If that fails, try to read from the absolute path relative to the current directory
-	absPath, err := filepath.Abs(*c.sqlFilePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to get absolute path: %w", err)
-	}
-
-	content, err := os.ReadFile(absPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to read SQL file from %s: %w", absPath, err)
-	}
-
-	return string(content), nil
 }
 
 func (c *command) createMySQLClient(ctx context.Context, logger *zap.Logger) (mysql.Client, error) {
