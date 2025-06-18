@@ -55,7 +55,7 @@ const PageContent = ({
       <Filter
         action={
           <DisabledButtonTooltip
-            type={!envEditable ? 'editor' : 'admin'}
+            type={!isOrganizationAdmin ? 'admin' : 'editor'}
             hidden={envEditable && isOrganizationAdmin}
             trigger={
               <Button

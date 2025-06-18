@@ -1,7 +1,7 @@
 import { IconEditOutlined } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import primaryAvatar from 'assets/avatars/primary.svg';
-import { hasEditable, useAuth } from 'auth';
+import { useAuthAccess } from 'auth';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { Account, Tag } from '@types';
@@ -26,10 +26,7 @@ export const useColumns = ({
 }): ColumnDef<Account>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
-  const { consoleAccount } = useAuth();
-  const editable = hasEditable(consoleAccount!);
-  const isOrganizationAdmin =
-    consoleAccount?.organizationRole === 'Organization_ADMIN';
+  const { envEditable, isOrganizationAdmin } = useAuthAccess();
 
   return compact([
     {
@@ -173,14 +170,14 @@ export const useColumns = ({
 
         return (
           <DisabledButtonTooltip
-            type={!editable ? 'editor' : 'admin'}
-            hidden={editable && isOrganizationAdmin}
+            type={!isOrganizationAdmin ? 'admin' : 'editor'}
+            hidden={envEditable && isOrganizationAdmin}
             trigger={
               <div className="w-fit">
                 <Switch
                   checked={isPendingInvite ? false : !account.disabled}
                   disabled={
-                    isPendingInvite || !editable || !isOrganizationAdmin
+                    isPendingInvite || !envEditable || !isOrganizationAdmin
                   }
                   onCheckedChange={value =>
                     onActions(account, value ? 'ENABLE' : 'DISABLE')

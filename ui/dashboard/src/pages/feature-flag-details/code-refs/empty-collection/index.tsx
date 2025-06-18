@@ -27,6 +27,7 @@ const EmptyCollection = ({
       {!isEmpty && onAdd && (
         <EmptyState.Actions>
           <EmptyState.ActionButton
+            isNeedAdminAccess
             type={'new'}
             variant="primary"
             onClick={onAdd}

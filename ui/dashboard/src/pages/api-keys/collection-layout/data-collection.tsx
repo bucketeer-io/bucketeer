@@ -100,7 +100,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const apiKey = row.original;
         return (
-          <div className="typo-para-small text-accent-blue-500 bg-accent-blue-50 px-2 py-[3px] w-fit rounded">
+          <div className="typo-para-small text-accent-blue-500 bg-accent-blue-50 px-2 py-[3px] w-fit rounded whitespace-nowrap">
             {getAPIkeyRole(apiKey.role)}
           </div>
         );
@@ -166,7 +166,7 @@ export const useColumns = ({
         return (
           <DisabledButtonTooltip
             align="center"
-            type={!envEditable ? 'editor' : 'admin'}
+            type={!isOrganizationAdmin ? 'admin' : 'editor'}
             hidden={envEditable && isOrganizationAdmin}
             trigger={
               <div className="w-fit">

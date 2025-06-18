@@ -244,7 +244,7 @@ const AddAPIKeyModal = ({
                 secondaryButton={
                   <DisabledButtonTooltip
                     hidden={envEditable && isOrganizationAdmin}
-                    type={!envEditable ? 'editor' : 'admin'}
+                    type={!isOrganizationAdmin ? 'admin' : 'editor'}
                     trigger={
                       <Button
                         type="submit"

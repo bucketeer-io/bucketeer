@@ -98,7 +98,7 @@ const EmptyStateActionButton = ({
   return (
     <DisabledButtonTooltip
       align="center"
-      type={!editable ? 'editor' : 'admin'}
+      type={isNeedAdminAccess && !isOrganizationAdmin ? 'admin' : 'editor'}
       hidden={
         (editable && (isNeedAdminAccess ? isOrganizationAdmin : false)) ||
         isRetry

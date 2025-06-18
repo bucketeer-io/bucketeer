@@ -20,10 +20,10 @@ const DisabledPopoverTooltip = ({
 
   const tooltipContent = useMemo(() => {
     if (envEditable && isOrganizationAdmin) return '';
+    if (isNeedAdminAccess && !isOrganizationAdmin)
+      return t('need-admin-access-tooltip');
     if (!envEditable) return t('disabled-button-tooltip');
-    return isNeedAdminAccess && !isOrganizationAdmin
-      ? t('need-admin-access-tooltip')
-      : '';
+    return '';
   }, [envEditable, isOrganizationAdmin, isNeedAdminAccess]);
 
   const formattedOptions = useMemo(() => {
