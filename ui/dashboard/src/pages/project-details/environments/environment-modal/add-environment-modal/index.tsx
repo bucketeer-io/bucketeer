@@ -26,6 +26,7 @@ import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
 
 interface AddEnvironmentModalProps {
+  disabled?: boolean;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -52,7 +53,11 @@ const formSchema = yup.object().shape({
   requireComment: yup.boolean().required()
 });
 
-const AddEnvironmentModal = ({ isOpen, onClose }: AddEnvironmentModalProps) => {
+const AddEnvironmentModal = ({
+  disabled,
+  isOpen,
+  onClose
+}: AddEnvironmentModalProps) => {
   const queryClient = useQueryClient();
   const { projectId } = useParams();
   const { t } = useTranslation(['common', 'form']);
@@ -246,7 +251,7 @@ const AddEnvironmentModal = ({ isOpen, onClose }: AddEnvironmentModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!form.formState.isDirty}
+                    disabled={!form.formState.isDirty || disabled}
                     loading={form.formState.isSubmitting}
                   >
                     {t(`create-env`)}

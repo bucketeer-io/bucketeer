@@ -3,6 +3,7 @@ import {
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
+import { hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { Notification } from '@types';
@@ -20,6 +21,8 @@ export const useColumns = ({
 }): ColumnDef<Notification>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
+  const { consoleAccount } = useAuth();
+  const editable = hasEditable(consoleAccount!);
 
   return [
     {
@@ -91,6 +94,7 @@ export const useColumns = ({
 
         return (
           <Switch
+            disabled={!editable}
             checked={!notification.disabled}
             onCheckedChange={value =>
               onActions(notification, value ? 'ENABLE' : 'DISABLE')

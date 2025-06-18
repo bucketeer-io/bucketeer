@@ -4,7 +4,7 @@ import { apiKeyUpdater } from '@api/api-key';
 import { useQueryAPIKey } from '@queries/api-key-details';
 import { invalidateAPIKeys } from '@queries/api-keys';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_APIKEYS } from 'constants/routing';
 import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
@@ -24,6 +24,7 @@ const PageLoader = () => {
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   const commonPath = useMemo(
     () => `/${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}`,
@@ -134,9 +135,14 @@ const PageLoader = () => {
 
   return (
     <>
-      <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
+      <PageContent
+        disabled={!editable}
+        onAdd={onOpenAddModal}
+        onHandleActions={onHandleActions}
+      />
       {isAdd && (
         <AddAPIKeyModal
+          disabled={!editable}
           isOpen={isAdd}
           isLoadingEnvs={isLoadingEnvs}
           environments={environments}
@@ -145,6 +151,7 @@ const PageLoader = () => {
       )}
       {isEdit && (
         <EditAPIKeyModal
+          disabled={!editable}
           isOpen={isEdit}
           isLoadingApiKey={isLoadingApiKey}
           apiKey={selectedAPIKey}

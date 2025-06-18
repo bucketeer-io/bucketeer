@@ -5,7 +5,7 @@ import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
 import { invalidateExperimentDetails } from '@queries/experiment-details';
 import { invalidateExperiments } from '@queries/experiments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Experiment, ExperimentResult } from '@types';
@@ -35,6 +35,8 @@ const ExperimentState = ({
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
+
   const params = useParams();
   const { notify } = useToast();
   const isRunning = experiment.status === 'RUNNING',
@@ -168,7 +170,7 @@ const ExperimentState = ({
         </div>
       </div>
       <Button
-        disabled={isStopped}
+        disabled={isStopped || !editable}
         variant={'text'}
         className={cn('!typo-para-small h-10 whitespace-nowrap', {
           'text-accent-red-500 hover:text-accent-red-600': isRunning

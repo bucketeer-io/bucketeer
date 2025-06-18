@@ -28,7 +28,13 @@ import TagsSelectMenu from 'elements/tags-select-menu';
 import { generalInfoFormSchema, GeneralInfoFormType } from './form-schema';
 import SaveWithCommentModal from './modals/save-with-comment';
 
-const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
+const GeneralInfoForm = ({
+  feature,
+  disabled
+}: {
+  feature: Feature;
+  disabled: boolean;
+}) => {
   const { t } = useTranslation(['form', 'common', 'table', 'message']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -124,39 +130,41 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
   );
 
   const onSubmit = useCallback(async () => {
-    try {
-      const values = getValues();
-      const { flagId, comment, tags, ...rest } = values;
-      if (currentEnvironment.requireComment && !comment)
-        return setError('comment', {
-          message: t('message:required-field')
+    if (!disabled) {
+      try {
+        const values = getValues();
+        const { flagId, comment, tags, ...rest } = values;
+        if (currentEnvironment.requireComment && !comment)
+          return setError('comment', {
+            message: t('message:required-field')
+          });
+
+        const resp = await featureUpdater({
+          id: flagId,
+          environmentId: currentEnvironment.id,
+          comment,
+          ...handleCheckTags(tags),
+          ...rest
         });
 
-      const resp = await featureUpdater({
-        id: flagId,
-        environmentId: currentEnvironment.id,
-        comment,
-        ...handleCheckTags(tags),
-        ...rest
-      });
-
-      if (resp) {
-        notify({
-          message: t('message:flag-updated')
-        });
-        form.reset({
-          ...values,
-          comment: ''
-        });
-        invalidateFeature(queryClient);
-        invalidateFeatures(queryClient);
-        invalidateTags(queryClient);
-        onCloseSaveModal();
+        if (resp) {
+          notify({
+            message: t('message:flag-updated')
+          });
+          form.reset({
+            ...values,
+            comment: ''
+          });
+          invalidateFeature(queryClient);
+          invalidateFeatures(queryClient);
+          invalidateTags(queryClient);
+          onCloseSaveModal();
+        }
+      } catch (error) {
+        errorNotify(error);
       }
-    } catch (error) {
-      errorNotify(error);
     }
-  }, [currentEnvironment, feature]);
+  }, [currentEnvironment, feature, disabled]);
 
   useEffect(() => {
     if (tags.length) {
@@ -204,6 +212,7 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
                 <Form.Label required>{t('common:maintainer')}</Form.Label>
                 <Form.Control>
                   <DropdownMenuWithSearch
+                    disabled={disabled}
                     isLoading={isLoadingAccounts}
                     placeholder={t('placeholder-maintainer')}
                     label={maintainerLabel}
@@ -222,7 +231,11 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
               <Form.Item className="w-full py-0">
                 <Form.Label required>{t('common:name')}</Form.Label>
                 <Form.Control>
-                  <Input {...field} placeholder={t('placeholder-name')} />
+                  <Input
+                    {...field}
+                    placeholder={t('placeholder-name')}
+                    disabled={disabled}
+                  />
                 </Form.Control>
                 <Form.Message />
               </Form.Item>
@@ -258,6 +271,7 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
                       resize: 'vertical',
                       maxHeight: 98
                     }}
+                    disabled={disabled}
                   />
                 </Form.Control>
                 <Form.Message />
@@ -284,7 +298,7 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
                 </Form.Label>
                 <Form.Control>
                   <TagsSelectMenu
-                    disabled={isLoadingTags}
+                    disabled={isLoadingTags || disabled}
                     fieldValues={field.value || []}
                     tagOptions={tagOptions}
                     onChange={field.onChange}
@@ -298,7 +312,7 @@ const GeneralInfoForm = ({ feature }: { feature: Feature }) => {
           <Button
             type="button"
             variant={'secondary'}
-            disabled={!isValid || !isDirty}
+            disabled={!isValid || !isDirty || disabled}
             className="w-fit"
             onClick={onOpenSaveModal}
           >

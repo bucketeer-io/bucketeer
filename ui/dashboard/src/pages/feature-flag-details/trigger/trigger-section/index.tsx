@@ -29,7 +29,13 @@ interface ActionState {
   trigger?: TriggerItemType;
 }
 
-const TriggerList = ({ feature }: { feature: Feature }) => {
+const TriggerList = ({
+  feature,
+  editable
+}: {
+  feature: Feature;
+  editable: boolean;
+}) => {
   const { t } = useTranslation(['table', 'message', 'common']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -53,6 +59,8 @@ const TriggerList = ({ feature }: { feature: Feature }) => {
       cursor: String(0)
     }
   });
+
+  const isDisabledCreate = useMemo(() => !editable, []);
 
   const triggers = triggerCollection?.flagTriggers || [];
   const { EDIT, RESET, DISABLE, ENABLE, DELETE } = TriggerAction;
@@ -171,6 +179,7 @@ const TriggerList = ({ feature }: { feature: Feature }) => {
               actionState?.trigger?.flagTrigger?.id ===
                 trigger?.flagTrigger?.id ? (
                 <CreateTriggerForm
+                  disabled={isDisabledCreate}
                   ref={formRef}
                   selectedTrigger={actionState?.trigger}
                   featureId={feature.id}
@@ -180,6 +189,7 @@ const TriggerList = ({ feature }: { feature: Feature }) => {
                 />
               ) : (
                 <TriggerItem
+                  disabledAction={isDisabledCreate}
                   trigger={trigger}
                   triggerNewlyCreated={triggerNewlyCreated}
                   onActions={action => onActions(trigger, action)}
@@ -189,6 +199,7 @@ const TriggerList = ({ feature }: { feature: Feature }) => {
           ))}
           {isShowCreateForm && !isEdit ? (
             <CreateTriggerForm
+              disabled={isDisabledCreate}
               featureId={feature.id}
               environmentId={currentEnvironment.id}
               onCancel={onReset}
@@ -198,6 +209,7 @@ const TriggerList = ({ feature }: { feature: Feature }) => {
             <Button
               variant="text"
               className="h-8 w-fit p-0"
+              disabled={isDisabledCreate}
               onClick={() => {
                 setActionState({
                   action: undefined,

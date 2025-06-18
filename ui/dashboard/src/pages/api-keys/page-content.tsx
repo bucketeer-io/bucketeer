@@ -16,9 +16,11 @@ import CollectionLoader from './collection-loader';
 import { APIKeyActionsType, APIKeysFilters } from './types';
 
 const PageContent = ({
+  disabled,
   onAdd,
   onHandleActions
 }: {
+  disabled?: boolean;
   onAdd: () => void;
   onHandleActions: (item: APIKey, type: APIKeyActionsType) => void;
 }) => {
@@ -56,7 +58,11 @@ const PageContent = ({
       <Filter
         onOpenFilter={onOpenFilterModal}
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
+          <Button
+            className="flex-1 lg:flex-none"
+            onClick={onAdd}
+            disabled={disabled}
+          >
             <Icon icon={IconAddOutlined} size="sm" />
             {t(`new-api-key`)}
           </Button>

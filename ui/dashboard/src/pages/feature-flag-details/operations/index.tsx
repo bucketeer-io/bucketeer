@@ -43,7 +43,13 @@ export interface OperationModalState {
   selectedData?: AutoOpsRule | Rollout;
 }
 
-const Operations = ({ feature }: { feature: Feature }) => {
+const Operations = ({
+  feature,
+  editable
+}: {
+  feature: Feature;
+  editable: boolean;
+}) => {
   const { t } = useTranslation(['common', 'table', 'form', 'message']);
   const navigate = useNavigate();
   const { notify, errorNotify } = useToast();
@@ -318,6 +324,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
       )}
       {isScheduleAction && isOpenModalAction && feature && (
         <ScheduleOperationModal
+          editable={editable}
           isFinishedTab={currentTab === OperationTab.FINISHED}
           isOpen={isScheduleAction}
           featureId={feature.id}
@@ -332,6 +339,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
       )}
       {isEventRateAction && isOpenModalAction && feature && (
         <EventRateOperationModal
+          editable={editable}
           isOpen={isEventRateAction}
           feature={feature}
           environmentId={currentEnvironment.id}
@@ -346,6 +354,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
         operationModalState.actionType === 'NEW' &&
         feature && (
           <ProgressiveRolloutModal
+            editable={editable}
             isOpen={isRolloutAction}
             feature={feature}
             urlCode={currentEnvironment.urlCode}
@@ -372,6 +381,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
       {isStop && !!operationModalState?.selectedData && (
         <StopOperationModal
+          editable={editable}
           loading={isLoading}
           operationType={operationModalState.operationType!}
           isOpen={isStop && !!operationModalState?.selectedData}

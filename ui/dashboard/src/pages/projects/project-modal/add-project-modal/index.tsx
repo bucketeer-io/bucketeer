@@ -3,7 +3,7 @@ import { projectCreator } from '@api/project';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -45,6 +45,7 @@ const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -102,6 +103,7 @@ const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
                     <Input
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
+                      disabled={!editable}
                       onChange={value => {
                         const isUrlCodeDirty =
                           form.getFieldState('urlCode').isDirty;
@@ -126,6 +128,7 @@ const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
                   <Form.Label required>{t('form:url-code')}</Form.Label>
                   <Form.Control>
                     <Input
+                      disabled={!editable}
                       placeholder={`${t('form:placeholder-code')}`}
                       {...field}
                     />
@@ -144,6 +147,7 @@ const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
                     <TextArea
                       placeholder={t('form:placeholder-desc')}
                       rows={4}
+                      disabled={!editable}
                       {...field}
                     />
                   </Form.Control>
@@ -162,7 +166,7 @@ const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!form.formState.isDirty}
+                    disabled={!form.formState.isDirty || !editable}
                     loading={form.formState.isSubmitting}
                   >
                     {t(`create-project`)}

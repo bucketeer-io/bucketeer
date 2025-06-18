@@ -28,6 +28,7 @@ import TextArea from 'components/textarea';
 import FormLoading from 'elements/form-loading';
 
 interface EditAPIKeyModalProps {
+  disabled: boolean;
   isOpen: boolean;
   isLoadingApiKey: boolean;
   environments: Environment[];
@@ -48,6 +49,7 @@ export const formSchema = yup.object().shape({
 });
 
 const EditAPIKeyModal = ({
+  disabled,
   isOpen,
   isLoadingApiKey,
   apiKey,
@@ -130,6 +132,7 @@ const EditAPIKeyModal = ({
                     <Form.Control>
                       <Input
                         placeholder={`${t('form:placeholder-name')}`}
+                        disabled={disabled}
                         {...field}
                       />
                     </Form.Control>
@@ -147,6 +150,7 @@ const EditAPIKeyModal = ({
                       <TextArea
                         placeholder={t('form:placeholder-desc')}
                         rows={4}
+                        disabled={disabled}
                         {...field}
                       />
                     </Form.Control>
@@ -209,7 +213,7 @@ const EditAPIKeyModal = ({
                 />
               </div>
 
-              <RadioGroup defaultValue={apiKey?.role}>
+              <RadioGroup defaultValue={apiKey?.role} disabled={disabled}>
                 {apiKeyOptions.map(({ id, label, description, value }) => (
                   <div
                     key={id}
@@ -236,7 +240,7 @@ const EditAPIKeyModal = ({
                   secondaryButton={
                     <Button
                       type="submit"
-                      disabled={!isValid || !isDirty}
+                      disabled={!isValid || !isDirty || disabled}
                       loading={isSubmitting}
                     >
                       {t(`submit`)}

@@ -1,6 +1,6 @@
 import { FormProvider, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { cn } from 'utils/style';
@@ -37,6 +37,7 @@ const ArchiveModal = ({
   const { t } = useTranslation(['common', 'form']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   const formSchema = yup.object().shape({
     comment: currentEnvironment?.requireComment
@@ -86,6 +87,7 @@ const ArchiveModal = ({
                     <TextArea
                       placeholder={`${t('form:placeholder-comment')}`}
                       rows={3}
+                      disabled={!editable}
                       {...field}
                     />
                   </Form.Control>
@@ -101,7 +103,7 @@ const ArchiveModal = ({
         secondaryButton={
           <Button
             loading={isSubmitting || isLoading}
-            disabled={!isValid}
+            disabled={!isValid || !editable}
             onClick={form.handleSubmit(onSubmit)}
           >
             {t(isArchiving ? `archive-flag` : 'unarchive-flag')}

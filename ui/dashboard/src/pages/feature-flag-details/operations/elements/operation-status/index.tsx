@@ -4,6 +4,7 @@ import {
   IconEditOutlined,
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
+import { hasEditable, useAuth } from 'auth';
 import { cva } from 'class-variance-authority';
 import { Color, RolloutStoppedBy } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
@@ -125,6 +126,8 @@ const OperationStatus = ({
 }) => {
   const { t } = useTranslation(['form']);
   const formatDateTime = useFormatDateTime();
+  const { consoleAccount } = useAuth();
+  const editable = hasEditable(consoleAccount!);
 
   const isRollout = useMemo(
     () => ['MANUAL_SCHEDULE', 'TEMPLATE_SCHEDULE'].includes(operation.type),
@@ -152,7 +155,8 @@ const OperationStatus = ({
       {
         label: t('feature-flags.operation-details'),
         icon: IconOperationDetails,
-        value: 'DETAILS'
+        value: 'DETAILS',
+        disabled: !editable
       },
       {
         label: (
@@ -164,10 +168,11 @@ const OperationStatus = ({
         ),
         icon: IconTrash,
         value: 'DELETE',
-        color: 'accent-red-500'
+        color: 'accent-red-500',
+        disabled: !editable
       }
     ];
-  }, [isRollout, isKillSwitch]);
+  }, [isRollout, isKillSwitch, editable]);
 
   const operationOptions: PopoverOption<PopoverValue>[] = useMemo(() => {
     const translationKey = isRollout
@@ -189,20 +194,22 @@ const OperationStatus = ({
       {
         label: t(`feature-flags.stop-${translationKey}`),
         icon: IconDisable,
-        value: 'STOP'
+        value: 'STOP',
+        disabled: !editable
       },
       {
         label: (
-          <p className="text-accent-red-500">
+          <p className={editable ? 'text-accent-red-500' : ''}>
             {t(`feature-flags.delete-${translationKey}`)}
           </p>
         ),
         icon: IconTrash,
         value: 'DELETE',
-        color: 'accent-red-500'
+        color: editable ? 'accent-red-500' : undefined,
+        disabled: !editable
       }
     ];
-  }, [isKillSwitch, isRollout]);
+  }, [isKillSwitch, isRollout, editable]);
 
   const popoverOptions = useMemo(
     () => (isFinished ? completedOptions : operationOptions),

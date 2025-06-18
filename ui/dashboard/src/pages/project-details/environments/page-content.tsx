@@ -14,9 +14,11 @@ import CollectionLoader from './collection-loader';
 import { EnvironmentActionsType, EnvironmentFilters } from './types';
 
 const PageContent = ({
+  disabled,
   onAdd,
   onActionHandler
 }: {
+  disabled?: boolean;
   onAdd: () => void;
   onActionHandler: (item: Environment, type: EnvironmentActionsType) => void;
 }) => {
@@ -51,7 +53,11 @@ const PageContent = ({
     <>
       <Filter
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
+          <Button
+            className="flex-1 lg:flex-none"
+            onClick={onAdd}
+            disabled={disabled}
+          >
             <Icon icon={IconAddOutlined} size="sm" />
             {t(`new-env`)}
           </Button>

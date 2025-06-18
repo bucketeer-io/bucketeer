@@ -19,9 +19,11 @@ import { TargetingSchema } from '../form-schema';
 
 const FlagSwitch = ({
   feature,
+  editable,
   setIsShowRules
 }: {
   feature: Feature;
+  editable: boolean;
   setIsShowRules: (value: boolean) => void;
 }) => {
   const { t } = useTranslation(['form', 'common']);
@@ -61,6 +63,7 @@ const FlagSwitch = ({
                     switch: (
                       <Switch
                         className="-mb-1"
+                        disabled={!editable}
                         checked={!!field.value}
                         onCheckedChange={checked => {
                           field.onChange(checked, {
@@ -101,6 +104,7 @@ const FlagSwitch = ({
                       options.find(item => item.value === field.value)?.label ||
                       ''
                     }
+                    disabled={!editable}
                   />
                   <DropdownMenuContent align="end">
                     {options.map((item, index) => (

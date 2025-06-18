@@ -12,9 +12,11 @@ import { Popover } from 'components/popover';
 import { TriggerAction } from '../types';
 
 const TriggerPopover = ({
+  disabled,
   trigger,
   onActions
 }: {
+  disabled: boolean;
   trigger: Trigger;
   onActions: (action: TriggerAction) => void;
 }) => {
@@ -22,6 +24,7 @@ const TriggerPopover = ({
 
   return (
     <Popover
+      disabled={disabled}
       options={compact([
         {
           label: `${t('trigger.edit-desc')}`,

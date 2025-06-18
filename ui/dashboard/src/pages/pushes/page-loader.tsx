@@ -5,7 +5,7 @@ import { pushDelete } from '@api/push/push-delete';
 import { useQueryPush } from '@queries/push-details';
 import { invalidatePushes } from '@queries/pushes';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_PUSHES } from 'constants/routing';
 import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
@@ -24,6 +24,7 @@ const PageLoader = () => {
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   const { notify, errorNotify } = useToast();
   const { searchOptions } = useSearchParams();
@@ -129,11 +130,22 @@ const PageLoader = () => {
 
   return (
     <>
-      <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
+      <PageContent
+        disabled={!editable}
+        onAdd={onOpenAddModal}
+        onHandleActions={onHandleActions}
+      />
 
-      {isAdd && <AddPushModal isOpen={isAdd} onClose={onCloseActionModal} />}
+      {isAdd && (
+        <AddPushModal
+          disabled={!editable}
+          isOpen={isAdd}
+          onClose={onCloseActionModal}
+        />
+      )}
       {isEdit && (
         <EditPushModal
+          disabled={!editable}
           isOpen={isEdit}
           isLoadingPush={isLoadingPush}
           push={selectedPush}
@@ -156,6 +168,7 @@ const PageLoader = () => {
             />
           }
           loading={mutationState.isPending}
+          disabled={!editable}
         />
       )}
     </>

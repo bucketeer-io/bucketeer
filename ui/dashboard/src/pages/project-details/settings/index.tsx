@@ -6,6 +6,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
 import { invalidateProjectDetails } from '@queries/project-details';
 import { useQueryClient } from '@tanstack/react-query';
+import { hasEditable, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -33,6 +34,9 @@ const ProjectSettings = ({ project }: { project: Project }) => {
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const params = useParams();
+  const { consoleAccount } = useAuth();
+  const editable = hasEditable(consoleAccount!);
+
   const projectDetailsId = params.projectId!;
 
   const form = useForm({
@@ -93,7 +97,7 @@ const ProjectSettings = ({ project }: { project: Project }) => {
               </Button>
               <Button
                 loading={form.formState.isSubmitting}
-                disabled={!form.formState.isDirty}
+                disabled={!form.formState.isDirty || !editable}
                 type="submit"
                 className="w-[120px]"
               >
@@ -110,6 +114,7 @@ const ProjectSettings = ({ project }: { project: Project }) => {
                   <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
                     <Input
+                      disabled={!editable}
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                     />
@@ -143,6 +148,7 @@ const ProjectSettings = ({ project }: { project: Project }) => {
                   <Form.Label optional>{t('form:description')}</Form.Label>
                   <Form.Control>
                     <TextArea
+                      disabled={!editable}
                       placeholder={t('form:placeholder-desc')}
                       rows={4}
                       {...field}

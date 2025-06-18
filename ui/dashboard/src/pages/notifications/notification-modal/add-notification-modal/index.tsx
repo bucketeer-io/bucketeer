@@ -39,6 +39,7 @@ import SearchInput from 'components/search-input';
 import { Tooltip } from 'components/tooltip';
 
 interface AddNotificationModalProps {
+  disabled?: boolean;
   isOpen: boolean;
   environments: Environment[];
   isLoadingEnvs: boolean;
@@ -64,6 +65,7 @@ export const formSchema = yup.object().shape({
 });
 
 const AddNotificationModal = ({
+  disabled,
   isOpen,
   environments,
   isLoadingEnvs,
@@ -437,7 +439,7 @@ const AddNotificationModal = ({
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isValid}
+                    disabled={!isValid || disabled}
                     loading={isSubmitting}
                   >
                     {t(`submit`)}

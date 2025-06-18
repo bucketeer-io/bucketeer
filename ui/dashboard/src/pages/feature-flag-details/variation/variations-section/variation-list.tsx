@@ -19,7 +19,11 @@ import { VariationProps } from '..';
 import { VariationForm } from '../form-schema';
 import Variations from './variations';
 
-const VariationList = ({ feature, isRunningExperiment }: VariationProps) => {
+const VariationList = ({
+  feature,
+  isRunningExperiment,
+  editable
+}: VariationProps) => {
   const { t } = useTranslation(['common', 'form', 'table']);
 
   const { consoleAccount } = useAuth();
@@ -79,6 +83,7 @@ const VariationList = ({ feature, isRunningExperiment }: VariationProps) => {
                 rollouts={rollouts}
                 isRunningExperiment={isRunningExperiment}
                 eventRateOperations={eventRateOperations}
+                editable={editable}
               />
             </Form.Control>
           </Form.Item>
@@ -110,7 +115,7 @@ const VariationList = ({ feature, isRunningExperiment }: VariationProps) => {
                       ?.label || ''
                   }
                   isExpand
-                  disabled={isRunningExperiment}
+                  disabled={isRunningExperiment || !editable}
                 />
                 <DropdownMenuContent align="start">
                   {variationOptions?.map((item, index) => (

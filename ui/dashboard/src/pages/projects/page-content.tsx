@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -26,6 +26,7 @@ const PageContent = ({
   const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<ProjectFilters> = searchOptions;
@@ -63,7 +64,11 @@ const PageContent = ({
       <Filter
         onOpenFilter={onOpenFilterModal}
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
+          <Button
+            className="flex-1 lg:flex-none"
+            onClick={onAdd}
+            disabled={!editable}
+          >
             <Icon icon={IconAddOutlined} size="sm" />
             {t(`new-project`)}
           </Button>

@@ -17,10 +17,12 @@ import { UserSegmentsActionsType, UserSegmentsFilters } from './types';
 import FilterUserSegmentModal from './user-segment-modal/filter-segment-modal';
 
 const PageContent = ({
+  editable,
   segmentUploading,
   onAdd,
   onActionHandler
 }: {
+  editable: boolean;
   segmentUploading: UserSegment | null;
   onAdd: () => void;
   onActionHandler: (
@@ -65,7 +67,11 @@ const PageContent = ({
       <Filter
         onOpenFilter={onOpenFilterModal}
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
+          <Button
+            className="flex-1 lg:flex-none"
+            onClick={onAdd}
+            disabled={!editable}
+          >
             <Icon icon={IconAddOutlined} size="sm" />
             {t(`new-user-segment`)}
           </Button>

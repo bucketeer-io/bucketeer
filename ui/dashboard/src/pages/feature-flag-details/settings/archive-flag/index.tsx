@@ -14,7 +14,13 @@ import { FeatureActivityStatus } from 'pages/feature-flags/types';
 import Button from 'components/button';
 import Card from 'elements/card';
 
-const ArchiveFlag = ({ feature }: { feature: Feature }) => {
+const ArchiveFlag = ({
+  feature,
+  disabled
+}: {
+  feature: Feature;
+  disabled: boolean;
+}) => {
   const { t } = useTranslation(['common', 'form', 'table']);
   const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
@@ -68,6 +74,7 @@ const ArchiveFlag = ({ feature }: { feature: Feature }) => {
         )}
       </p>
       <Button
+        disabled={disabled}
         className="w-fit"
         variant="secondary"
         onClick={onOpenArchiveFlagModal}

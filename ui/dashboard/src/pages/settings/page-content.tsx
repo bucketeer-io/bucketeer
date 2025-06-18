@@ -2,7 +2,7 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { organizationUpdater } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryAccounts } from '@queries/accounts';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -38,6 +38,8 @@ const PageContent = ({ organization }: { organization: Organization }) => {
   const { notify } = useToast();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
+
   const { t } = useTranslation(['common', 'form']);
   const { data: accounts, isLoading: isLoadingAccounts } = useQueryAccounts({
     params: {
@@ -101,6 +103,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                   <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
                     <Input
+                      disabled={!editable}
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                     />
@@ -134,6 +137,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                   <Form.Label optional>{t('form:description')}</Form.Label>
                   <Form.Control>
                     <TextArea
+                      disabled={!editable}
                       placeholder={t('form:placeholder-desc')}
                       rows={4}
                       {...field}
@@ -160,7 +164,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                         }
                         variant="secondary"
                         className="w-full"
-                        disabled={isLoadingAccounts}
+                        disabled={isLoadingAccounts || !editable}
                       />
                       <DropdownMenuContent
                         className="w-[400px]"
@@ -187,7 +191,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
             />
             <Button
               loading={form.formState.isSubmitting}
-              disabled={!form.formState.isDirty}
+              disabled={!form.formState.isDirty || !editable}
               type="submit"
               className="w-fit mt-6"
             >

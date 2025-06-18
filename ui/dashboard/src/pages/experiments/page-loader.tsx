@@ -3,7 +3,7 @@ import { Trans } from 'react-i18next';
 import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
 import { invalidateExperiments } from '@queries/experiments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
@@ -23,6 +23,7 @@ const PageLoader = () => {
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
   const { notify } = useToast();
 
   const [selectedExperiment, setSelectedExperiment] = useState<Experiment>();
@@ -133,16 +134,25 @@ const PageLoader = () => {
         <PageLayout.ErrorState onRetry={refetch} />
       ) : (
         <PageContent
+          disabled={!editable}
           summary={summary}
           onAdd={onOpenAddModal}
           onHandleActions={onHandleActions}
         />
       )}
       {isAdd && (
-        <AddExperimentModal isOpen={isAdd} onClose={onCloseActionModal} />
+        <AddExperimentModal
+          disabled={!editable}
+          isOpen={isAdd}
+          onClose={onCloseActionModal}
+        />
       )}
       {isEdit && (
-        <EditExperimentModal isOpen={isEdit} onClose={onCloseActionModal} />
+        <EditExperimentModal
+          disabled={!editable}
+          isOpen={isEdit}
+          onClose={onCloseActionModal}
+        />
       )}
 
       {openConfirmModal && (
@@ -191,6 +201,7 @@ const PageLoader = () => {
             />
           }
           loading={mutation.isPending}
+          disabled={!editable}
         />
       )}
       {openGoalsModal && selectedExperiment && (

@@ -7,6 +7,7 @@ import { ButtonBar } from 'components/button-bar';
 import DialogModal from 'components/modal/dialog';
 
 export type StopOperationModalProps = {
+  editable: boolean;
   operationType: OpsTypeMap;
   isOpen: boolean;
   loading?: boolean;
@@ -15,6 +16,7 @@ export type StopOperationModalProps = {
 };
 
 const StopOperationModal = ({
+  editable,
   operationType,
   isOpen,
   loading,
@@ -52,7 +54,7 @@ const StopOperationModal = ({
 
       <ButtonBar
         secondaryButton={
-          <Button loading={loading} onClick={onSubmit}>
+          <Button loading={loading} onClick={onSubmit} disabled={!editable}>
             {t(`stop`)}
           </Button>
         }

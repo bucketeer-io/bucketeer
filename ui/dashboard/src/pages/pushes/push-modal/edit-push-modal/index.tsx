@@ -29,6 +29,7 @@ import SlideModal from 'components/modal/slide';
 import FormLoading from 'elements/form-loading';
 
 interface EditPushModalProps {
+  disabled?: boolean;
   isOpen: boolean;
   isLoadingPush: boolean;
   push?: Push;
@@ -48,6 +49,7 @@ const formSchema = yup.object().shape({
 });
 
 const EditPushModal = ({
+  disabled,
   isOpen,
   isLoadingPush,
   push,
@@ -169,6 +171,7 @@ const EditPushModal = ({
                     <Form.Control>
                       <Input
                         placeholder={`${t('form:placeholder-name')}`}
+                        disabled={disabled}
                         {...field}
                       />
                     </Form.Control>
@@ -235,7 +238,9 @@ const EditPushModal = ({
                             value: tagItem?.value || tag
                           };
                         })}
-                        disabled={isLoadingTags || !tagOptions.length}
+                        disabled={
+                          isLoadingTags || !tagOptions.length || disabled
+                        }
                         loading={isLoadingTags}
                         allowCreateWhileLoading={false}
                         isValidNewOption={() => false}
@@ -278,7 +283,7 @@ const EditPushModal = ({
                   secondaryButton={
                     <Button
                       type="submit"
-                      disabled={!isValid || !isDirty}
+                      disabled={!isValid || !isDirty || disabled}
                       loading={isSubmitting}
                     >
                       {t(`submit`)}

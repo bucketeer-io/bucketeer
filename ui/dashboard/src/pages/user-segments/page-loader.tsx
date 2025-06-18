@@ -4,7 +4,7 @@ import { userSegmentDelete } from '@api/user-segment/user-segment-delete';
 import { useQueryUserSegment } from '@queries/user-segment-details';
 import { invalidateUserSegments } from '@queries/user-segments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
 import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
@@ -20,6 +20,7 @@ import FlagsConnectedModal from './user-segment-modal/flags-connected-modal';
 const PageLoader = () => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   const {
     id,
@@ -59,10 +60,11 @@ const PageLoader = () => {
 
   const mutation = useMutation({
     mutationFn: async (selectedSegment: UserSegment) => {
-      return userSegmentDelete({
-        id: selectedSegment.id,
-        environmentId: currentEnvironment.id
-      });
+      if (editable)
+        return userSegmentDelete({
+          id: selectedSegment.id,
+          environmentId: currentEnvironment.id
+        });
     },
     onSuccess: () => {
       onCloseDeleteModal();
@@ -82,7 +84,7 @@ const PageLoader = () => {
   });
 
   const onDeleteSegment = () => {
-    if (selectedSegment) {
+    if (selectedSegment && editable) {
       mutation.mutate(selectedSegment);
     }
   };
@@ -145,6 +147,7 @@ const PageLoader = () => {
   return (
     <>
       <PageContent
+        editable={editable}
         segmentUploading={segmentUploading}
         onAdd={onOpenAddModal}
         onActionHandler={onActionHandler}
@@ -154,6 +157,7 @@ const PageLoader = () => {
       )}
       {isEdit && (
         <EditUserSegmentModal
+          isDisabled={!editable}
           isOpen={isEdit}
           isLoadingSegment={isLoadingSegment}
           userSegment={selectedSegment!}
@@ -170,6 +174,7 @@ const PageLoader = () => {
       )}
       {isOpenDeleteModal && selectedSegment && (
         <DeleteUserSegmentModal
+          isDisabled={!editable}
           isOpen={isOpenDeleteModal}
           loading={false}
           userSegment={selectedSegment}

@@ -18,9 +18,11 @@ import { GoalActions, GoalFilters } from './types';
 // import Overview from './overview';
 
 const PageContent = ({
+  editable,
   onAdd,
   onHandleActions
 }: {
+  editable: boolean;
   onAdd: () => void;
   onHandleActions: (item: Goal, type: GoalActions) => void;
 }) => {
@@ -56,7 +58,11 @@ const PageContent = ({
       {/* <Overview /> */}
       <Filter
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
+          <Button
+            className="flex-1 lg:flex-none"
+            onClick={onAdd}
+            disabled={!editable}
+          >
             <Icon icon={IconAddOutlined} size="sm" />
             {t(`new-goal`)}
           </Button>
