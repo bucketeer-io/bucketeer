@@ -25,17 +25,17 @@ import {
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
-import Spinner from 'components/spinner';
+import FormLoading from 'elements/form-loading';
 
 interface EditPushModalProps {
   isOpen: boolean;
-  push: Push;
+  isLoadingPush: boolean;
+  push?: Push;
   onClose: () => void;
 }
 
 export interface EditPushForm {
   name: string;
-  fcmServiceAccount?: string;
   tags?: string[];
   environmentId: string;
 }
@@ -46,15 +46,23 @@ const formSchema = yup.object().shape({
   environmentId: yup.string().required()
 });
 
-const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
+const EditPushModal = ({
+  isOpen,
+  isLoadingPush,
+  push,
+  onClose
+}: EditPushModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
 
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
-    environmentId: push.environmentId,
-    entityType: 'FEATURE_FLAG'
+    environmentId: push?.environmentId || '',
+    entityType: 'FEATURE_FLAG',
+    options: {
+      enabled: !push?.environmentId
+    }
   });
   const tagOptions = (uniqBy(tagCollection?.tags || [], 'name') || [])?.map(
     tag => ({
@@ -76,9 +84,9 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
   const form = useForm({
     resolver: yupResolver(formSchema),
     values: {
-      name: push.name,
-      tags: push.tags || undefined,
-      environmentId: push.environmentId || emptyEnvironmentId
+      name: push?.name || '',
+      tags: push?.tags || [],
+      environmentId: push?.environmentId || emptyEnvironmentId
     }
   });
 
@@ -89,27 +97,30 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
 
   const handleCheckTags = useCallback(
     (tagValues: string[]) => {
-      const tagChanges: TagChange[] = [];
-      const { tags } = push;
-      tags?.forEach(item => {
-        if (!tagValues.find(tag => tag === item)) {
-          tagChanges.push({
-            changeType: 'DELETE',
-            tag: item
-          });
-        }
-      });
-      tagValues.forEach(item => {
-        const currentTag = tags.find(tag => tag === item);
-        if (!currentTag) {
-          tagChanges.push({
-            changeType: 'CREATE',
-            tag: item
-          });
-        }
-      });
+      if (push?.tags) {
+        const tagChanges: TagChange[] = [];
+        const { tags } = push;
+        tags?.forEach(item => {
+          if (!tagValues.find(tag => tag === item)) {
+            tagChanges.push({
+              changeType: 'DELETE',
+              tag: item
+            });
+          }
+        });
+        tagValues.forEach(item => {
+          const currentTag = tags.find(tag => tag === item);
+          if (!currentTag) {
+            tagChanges.push({
+              changeType: 'CREATE',
+              tag: item
+            });
+          }
+        });
 
-      return tagChanges;
+        return tagChanges;
+      }
+      return [];
     },
     [push]
   );
@@ -119,7 +130,7 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
     await pushUpdater({
       name,
       tagChanges: handleCheckTags(tags || []),
-      id: push.id,
+      id: push?.id || '',
       environmentId: checkEnvironmentEmptyId(environmentId)
     }).then(() => {
       notify({
@@ -138,10 +149,8 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
 
   return (
     <SlideModal title={t('edit-push')} isOpen={isOpen} onClose={onClose}>
-      {isLoadingTags ? (
-        <div className="flex items-center justify-center pt-12">
-          <Spinner />
-        </div>
+      {isLoadingTags || isLoadingPush ? (
+        <FormLoading />
       ) : (
         <div className="w-full p-5 pb-28">
           <div className="typo-para-small text-gray-600 mb-3">

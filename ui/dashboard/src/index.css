@@ -103,4 +103,8 @@
   html body[data-scroll-locked] {
     margin-right: 0 !important;
   }
+
+  html:has(body[data-scroll-locked]) {
+    scrollbar-gutter: auto !important;
+  }
 }

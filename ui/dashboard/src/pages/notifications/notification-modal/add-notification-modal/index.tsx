@@ -21,6 +21,8 @@ import { cn } from 'utils/style';
 import { IconInfo, IconNoData } from '@icons';
 import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { useFetchTags } from 'pages/members/collection-loader';
+import { SOURCE_TYPE_ITEMS } from 'pages/notifications/constants';
+import { NotificationOption } from 'pages/notifications/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
@@ -43,12 +45,6 @@ interface AddNotificationModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-type NotificationOption = {
-  value: SourceType;
-  label: string;
-  description: string;
-};
 
 export interface AddNotificationForm {
   name: string;
@@ -77,70 +73,6 @@ const AddNotificationModal = ({
   const { t } = useTranslation(['common', 'form']);
 
   const { consoleAccount } = useAuth();
-
-  const SOURCE_TYPE_ITEMS: NotificationOption[] = [
-    {
-      label: t(`source-type.account`),
-      description: t(`source-type.account-description`),
-      value: 'DOMAIN_EVENT_ACCOUNT'
-    },
-    {
-      label: t(`source-type.api-key`),
-      description: t(`source-type.api-key-description`),
-      value: 'DOMAIN_EVENT_APIKEY'
-    },
-    {
-      label: t(`source-type.auto-ops`),
-      description: t(`source-type.auto-ops-description`),
-      value: 'DOMAIN_EVENT_AUTOOPS_RULE'
-    },
-    {
-      label: t(`source-type.experiment`),
-      description: t(`source-type.experiment-description`),
-      value: 'DOMAIN_EVENT_EXPERIMENT'
-    },
-    {
-      label: t(`source-type.feature-flag`),
-      description: t(`source-type.feature-flag-description`),
-      value: 'DOMAIN_EVENT_FEATURE'
-    },
-    {
-      label: t(`source-type.goal`),
-      description: t(`source-type.goal-description`),
-      value: 'DOMAIN_EVENT_GOAL'
-    },
-    {
-      label: t(`source-type.mau-count`),
-      description: t(`source-type.mau-count-description`),
-      value: 'MAU_COUNT'
-    },
-    {
-      label: t(`source-type.notification`),
-      description: t(`source-type.notification-description`),
-      value: 'DOMAIN_EVENT_SUBSCRIPTION'
-    },
-    {
-      label: t(`source-type.push`),
-      description: t(`source-type.push-description`),
-      value: 'DOMAIN_EVENT_PUSH'
-    },
-    {
-      label: t(`source-type.running-experiments`),
-      description: t(`source-type.running-experiments-description`),
-      value: 'EXPERIMENT_RUNNING'
-    },
-    {
-      label: t(`source-type.segment`),
-      description: t(`source-type.segment-description`),
-      value: 'DOMAIN_EVENT_SEGMENT'
-    },
-    {
-      label: t(`source-type.stale-feature-flag`),
-      description: t(`source-type.stale-feature-flag-description`),
-      value: 'FEATURE_STALE'
-    }
-  ];
-
   const [searchValue, setSearchValue] = useState('');
   const [filteredTypes, setSearchTypes] =
     useState<NotificationOption[]>(SOURCE_TYPE_ITEMS);

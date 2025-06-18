@@ -19,17 +19,14 @@ import FilterUserSegmentModal from './user-segment-modal/filter-segment-modal';
 const PageContent = ({
   segmentUploading,
   onAdd,
-  onEdit,
-  onOpenFlagModal,
-  onDelete,
-  onDownload
+  onActionHandler
 }: {
   segmentUploading: UserSegment | null;
   onAdd: () => void;
-  onEdit: (v: UserSegment) => void;
-  onOpenFlagModal: (v: UserSegment) => void;
-  onDelete: (v: UserSegment) => void;
-  onDownload: (v: UserSegment) => void;
+  onActionHandler: (
+    segment: UserSegment,
+    type: UserSegmentsActionsType
+  ) => void;
 }) => {
   const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
@@ -55,22 +52,6 @@ const PageContent = ({
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });
-  };
-
-  const onActionHandler = (
-    segment: UserSegment,
-    type: UserSegmentsActionsType
-  ) => {
-    switch (type) {
-      case 'EDIT':
-        return onEdit(segment);
-      case 'FLAG':
-        return onOpenFlagModal(segment);
-      case 'DELETE':
-        return onDelete(segment);
-      default:
-        return onDownload(segment);
-    }
   };
 
   useEffect(() => {
