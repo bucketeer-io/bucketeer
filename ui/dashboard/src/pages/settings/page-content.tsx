@@ -197,7 +197,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
             />
             <DisabledButtonTooltip
               align="start"
-              type={!envEditable ? 'editor' : 'admin'}
+              type={!isOrganizationAdmin ? 'admin' : 'editor'}
               hidden={!disabled}
               trigger={
                 <Button

@@ -250,7 +250,7 @@ const AddEnvironmentModal = ({ isOpen, onClose }: AddEnvironmentModalProps) => {
                 }
                 secondaryButton={
                   <DisabledButtonTooltip
-                    type={!envEditable ? 'editor' : 'admin'}
+                    type={!isOrganizationAdmin ? 'admin' : 'editor'}
                     hidden={envEditable && isOrganizationAdmin}
                     trigger={
                       <Button

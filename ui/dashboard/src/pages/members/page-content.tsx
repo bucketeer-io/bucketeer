@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
-import { hasEditable, useAuth } from 'auth';
+import { useAuthAccess } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -25,10 +25,7 @@ const PageContent = ({
   onHandleActions: (item: Account, type: MemberActionsType) => void;
 }) => {
   const { t } = useTranslation(['common']);
-  const { consoleAccount } = useAuth();
-  const isOrganizationAdmin =
-    consoleAccount?.organizationRole === 'Organization_ADMIN';
-  const editable = hasEditable(consoleAccount!);
+  const { envEditable, isOrganizationAdmin } = useAuthAccess();
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<MembersFilters> = searchOptions;
 
@@ -81,13 +78,13 @@ const PageContent = ({
         onOpenFilter={onOpenFilterModal}
         action={
           <DisabledButtonTooltip
-            type={!editable ? 'editor' : 'admin'}
-            hidden={editable && isOrganizationAdmin}
+            type={!isOrganizationAdmin ? 'admin' : 'editor'}
+            hidden={envEditable && isOrganizationAdmin}
             trigger={
               <Button
                 className="flex-1 lg:flex-none"
                 onClick={onAdd}
-                disabled={!editable || !isOrganizationAdmin}
+                disabled={!envEditable || !isOrganizationAdmin}
               >
                 <Icon icon={IconAddOutlined} size="sm" />
                 {t(`invite-member`)}

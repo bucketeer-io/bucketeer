@@ -69,7 +69,7 @@ const PageContent = ({
         action={
           <DisabledButtonTooltip
             hidden={envEditable && isOrganizationAdmin}
-            type={!envEditable ? 'editor' : 'admin'}
+            type={!isOrganizationAdmin ? 'admin' : 'editor'}
             trigger={
               <Button
                 className="flex-1 lg:flex-none"

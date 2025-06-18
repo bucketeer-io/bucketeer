@@ -102,7 +102,7 @@ const ProjectSettings = ({ project }: { project: Project }) => {
                 {t('documentation')}
               </Button>
               <DisabledButtonTooltip
-                type={!envEditable ? 'editor' : 'admin'}
+                type={!isOrganizationAdmin ? 'admin' : 'editor'}
                 hidden={!disabled}
                 trigger={
                   <Button
