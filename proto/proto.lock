@@ -45532,7 +45532,13 @@
               {
                 "id": 7,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 8,
@@ -45543,6 +45549,12 @@
                 "id": 9,
                 "name": "entity_type",
                 "type": "Tag.EntityType"
+              },
+              {
+                "id": 10,
+                "name": "environment_ids",
+                "type": "string",
+                "is_repeated": true
               }
             ],
             "reserved_ids": [

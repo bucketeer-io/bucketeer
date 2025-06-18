@@ -8000,6 +8000,13 @@ paths:
             - FEATURE_FLAG
             - ACCOUNT
           default: UNSPECIFIED
+        - name: environmentIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
       tags:
         - tag
   /webhook/triggers/{token}:

@@ -142,7 +142,14 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.bucketeer.tag.ListTagsRequest = function (opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.tag.ListTagsRequest.repeatedFields_,
+    null
+  );
 };
 goog.inherits(proto.bucketeer.tag.ListTagsRequest, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -802,6 +809,13 @@ proto.bucketeer.tag.DeleteTagResponse.serializeBinaryToWriter = function (
   var f = undefined;
 };
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.tag.ListTagsRequest.repeatedFields_ = [10];
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -846,7 +860,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         searchKeyword: jspb.Message.getFieldWithDefault(msg, 6, ''),
         environmentId: jspb.Message.getFieldWithDefault(msg, 7, ''),
         organizationId: jspb.Message.getFieldWithDefault(msg, 8, ''),
-        entityType: jspb.Message.getFieldWithDefault(msg, 9, 0)
+        entityType: jspb.Message.getFieldWithDefault(msg, 9, 0),
+        environmentIdsList:
+          (f = jspb.Message.getRepeatedField(msg, 10)) == null ? undefined : f
       };
 
     if (includeInstance) {
@@ -927,6 +943,10 @@ proto.bucketeer.tag.ListTagsRequest.deserializeBinaryFromReader = function (
         );
         msg.setEntityType(value);
         break;
+      case 10:
+        var value = /** @type {string} */ (reader.readString());
+        msg.addEnvironmentIds(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -988,6 +1008,10 @@ proto.bucketeer.tag.ListTagsRequest.serializeBinaryToWriter = function (
   f = message.getEntityType();
   if (f !== 0.0) {
     writer.writeEnum(9, f);
+  }
+  f = message.getEnvironmentIdsList();
+  if (f.length > 0) {
+    writer.writeRepeatedString(10, f);
   }
 };
 
@@ -1152,6 +1176,48 @@ proto.bucketeer.tag.ListTagsRequest.prototype.getEntityType = function () {
 proto.bucketeer.tag.ListTagsRequest.prototype.setEntityType = function (value) {
   return jspb.Message.setProto3EnumField(this, 9, value);
 };
+
+/**
+ * repeated string environment_ids = 10;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.tag.ListTagsRequest.prototype.getEnvironmentIdsList =
+  function () {
+    return /** @type {!Array<string>} */ (
+      jspb.Message.getRepeatedField(this, 10)
+    );
+  };
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.tag.ListTagsRequest} returns this
+ */
+proto.bucketeer.tag.ListTagsRequest.prototype.setEnvironmentIdsList = function (
+  value
+) {
+  return jspb.Message.setField(this, 10, value || []);
+};
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.tag.ListTagsRequest} returns this
+ */
+proto.bucketeer.tag.ListTagsRequest.prototype.addEnvironmentIds = function (
+  value,
+  opt_index
+) {
+  return jspb.Message.addToRepeatedField(this, 10, value, opt_index);
+};
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.tag.ListTagsRequest} returns this
+ */
+proto.bucketeer.tag.ListTagsRequest.prototype.clearEnvironmentIdsList =
+  function () {
+    return this.setEnvironmentIdsList([]);
+  };
 
 /**
  * List of repeated fields within this message type.
