@@ -3519,8 +3519,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
         environmentId: jspb.Message.getFieldWithDefault(msg, 13, ''),
         status: jspb.Message.getFieldWithDefault(msg, 14, 0),
-        hasFeatureRule:
-          (f = msg.getHasFeatureRule()) &&
+        hasFeatureFlagAsRule:
+          (f = msg.getHasFeatureFlagAsRule()) &&
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
       };
 
@@ -3645,7 +3645,7 @@ proto.bucketeer.feature.ListFeaturesRequest.deserializeBinaryFromReader =
             value,
             google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
           );
-          msg.setHasFeatureRule(value);
+          msg.setHasFeatureFlagAsRule(value);
           break;
         default:
           reader.skipField();
@@ -3749,7 +3749,7 @@ proto.bucketeer.feature.ListFeaturesRequest.serializeBinaryToWriter = function (
   if (f !== 0.0) {
     writer.writeEnum(14, f);
   }
-  f = message.getHasFeatureRule();
+  f = message.getHasFeatureFlagAsRule();
   if (f != null) {
     writer.writeMessage(
       15,
@@ -4145,10 +4145,10 @@ proto.bucketeer.feature.ListFeaturesRequest.prototype.setStatus = function (
 };
 
 /**
- * optional google.protobuf.BoolValue has_feature_rule = 15;
+ * optional google.protobuf.BoolValue has_feature_flag_as_rule = 15;
  * @return {?proto.google.protobuf.BoolValue}
  */
-proto.bucketeer.feature.ListFeaturesRequest.prototype.getHasFeatureRule =
+proto.bucketeer.feature.ListFeaturesRequest.prototype.getHasFeatureFlagAsRule =
   function () {
     return /** @type{?proto.google.protobuf.BoolValue} */ (
       jspb.Message.getWrapperField(
@@ -4163,7 +4163,7 @@ proto.bucketeer.feature.ListFeaturesRequest.prototype.getHasFeatureRule =
  * @param {?proto.google.protobuf.BoolValue|undefined} value
  * @return {!proto.bucketeer.feature.ListFeaturesRequest} returns this
  */
-proto.bucketeer.feature.ListFeaturesRequest.prototype.setHasFeatureRule =
+proto.bucketeer.feature.ListFeaturesRequest.prototype.setHasFeatureFlagAsRule =
   function (value) {
     return jspb.Message.setWrapperField(this, 15, value);
   };
@@ -4172,16 +4172,16 @@ proto.bucketeer.feature.ListFeaturesRequest.prototype.setHasFeatureRule =
  * Clears the message field making it undefined.
  * @return {!proto.bucketeer.feature.ListFeaturesRequest} returns this
  */
-proto.bucketeer.feature.ListFeaturesRequest.prototype.clearHasFeatureRule =
+proto.bucketeer.feature.ListFeaturesRequest.prototype.clearHasFeatureFlagAsRule =
   function () {
-    return this.setHasFeatureRule(undefined);
+    return this.setHasFeatureFlagAsRule(undefined);
   };
 
 /**
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.bucketeer.feature.ListFeaturesRequest.prototype.hasHasFeatureRule =
+proto.bucketeer.feature.ListFeaturesRequest.prototype.hasHasFeatureFlagAsRule =
   function () {
     return jspb.Message.getField(this, 15) != null;
   };

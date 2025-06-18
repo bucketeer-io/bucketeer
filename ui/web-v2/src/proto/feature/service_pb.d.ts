@@ -224,10 +224,10 @@ export class ListFeaturesRequest extends jspb.Message {
     value: proto_feature_feature_last_used_info_pb.FeatureLastUsedInfo.StatusMap[keyof proto_feature_feature_last_used_info_pb.FeatureLastUsedInfo.StatusMap]
   ): void;
 
-  hasHasFeatureRule(): boolean;
-  clearHasFeatureRule(): void;
-  getHasFeatureRule(): google_protobuf_wrappers_pb.BoolValue | undefined;
-  setHasFeatureRule(value?: google_protobuf_wrappers_pb.BoolValue): void;
+  hasHasFeatureFlagAsRule(): boolean;
+  clearHasFeatureFlagAsRule(): void;
+  getHasFeatureFlagAsRule(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setHasFeatureFlagAsRule(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListFeaturesRequest.AsObject;
@@ -265,7 +265,7 @@ export namespace ListFeaturesRequest {
     hasPrerequisites?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     environmentId: string;
     status: proto_feature_feature_last_used_info_pb.FeatureLastUsedInfo.StatusMap[keyof proto_feature_feature_last_used_info_pb.FeatureLastUsedInfo.StatusMap];
-    hasFeatureRule?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    hasFeatureFlagAsRule?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 
   export interface OrderByMap {

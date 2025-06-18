@@ -212,7 +212,7 @@ func (s *FeatureService) ListFeatures(
 			req.Enabled,
 			req.Archived,
 			req.HasPrerequisites,
-			req.HasFeatureRule,
+			req.HasFeatureFlagAsRule,
 			req.SearchKeyword,
 			req.Status,
 			req.OrderBy,
@@ -229,7 +229,7 @@ func (s *FeatureService) ListFeatures(
 			req.Enabled,
 			req.Archived,
 			req.HasPrerequisites,
-			req.HasFeatureRule,
+			req.HasFeatureFlagAsRule,
 			req.SearchKeyword,
 			req.Status,
 			req.OrderBy,
@@ -269,7 +269,7 @@ func (s *FeatureService) listFeatures(
 	enabled *wrappers.BoolValue,
 	archived *wrappers.BoolValue,
 	hasPrerequisites *wrappers.BoolValue,
-	hasFeatureRule *wrappers.BoolValue,
+	hasFeatureFlagAsRule *wrappers.BoolValue,
 	searchKeyword string,
 	status featureproto.FeatureLastUsedInfo_Status,
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
@@ -337,9 +337,9 @@ func (s *FeatureService) listFeatures(
 			})
 		}
 	}
-	if hasFeatureRule != nil {
+	if hasFeatureFlagAsRule != nil {
 		// 11 is feature flag rule operator
-		if hasFeatureRule.Value {
+		if hasFeatureFlagAsRule.Value {
 			filters = append(filters, &mysql.FilterV2{
 				Column:   "JSON_CONTAINS(JSON_EXTRACT(rules, '$[*].clauses[*].operator'), '11')",
 				Operator: mysql.OperatorEqual,
@@ -440,7 +440,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	enabled *wrappers.BoolValue,
 	archived *wrappers.BoolValue,
 	hasPrerequisites *wrappers.BoolValue,
-	hasFeatureRule *wrappers.BoolValue,
+	hasFeatureFlagAsRule *wrappers.BoolValue,
 	searchKeyword string,
 	status featureproto.FeatureLastUsedInfo_Status,
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
@@ -520,9 +520,9 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 			})
 		}
 	}
-	if hasFeatureRule != nil {
+	if hasFeatureFlagAsRule != nil {
 		// 11 is feature flag rule operator
-		if hasFeatureRule.Value {
+		if hasFeatureFlagAsRule.Value {
 			filters = append(filters, &mysql.FilterV2{
 				Column:   "JSON_CONTAINS(JSON_EXTRACT(rules, '$[*].clauses[*].operator'), '11')",
 				Operator: mysql.OperatorEqual,

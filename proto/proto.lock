@@ -32537,7 +32537,7 @@
               },
               {
                 "id": 15,
-                "name": "has_feature_rule",
+                "name": "has_feature_flag_as_rule",
                 "type": "google.protobuf.BoolValue"
               }
             ],
