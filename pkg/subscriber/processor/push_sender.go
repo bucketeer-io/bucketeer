@@ -173,30 +173,17 @@ func (p pushSender) send(featureID, environmentId string) error {
 	}
 	var lastErr error
 	for _, push := range pushes {
-		d := pushdomain.Push{Push: push}
-		for _, tag := range resp.Feature.Tags {
-			if !d.ExistTag(tag) {
-				continue
-			}
-			topic := fmt.Sprintf("%s%s", topicPrefix, tag)
-			if err = p.pushFCM(ctx, topic, push.FcmServiceAccount); err != nil {
-				p.logger.Error("Failed to push notification", zap.Error(err),
-					zap.String("featureId", featureID),
-					zap.String("tag", tag),
-					zap.String("topic", topic),
-					zap.String("pushId", d.Push.Id),
-					zap.String("environmentId", environmentId),
-				)
+		// Determine which topics to send notifications to
+		topics := p.getTopicsForPush(resp.Feature, push, featureID)
+		if len(topics) == 0 {
+			continue
+		}
+		
+		// Send notifications to all matching topics
+		for _, topicInfo := range topics {
+			if err := p.sendPushNotification(ctx, topicInfo, push, featureID, environmentId); err != nil {
 				lastErr = err
-				continue
 			}
-			p.logger.Info("Succeeded to push notification",
-				zap.String("featureId", featureID),
-				zap.String("tag", tag),
-				zap.String("topic", topic),
-				zap.String("pushId", d.Push.Id),
-				zap.String("environmentId", environmentId),
-			)
 		}
 	}
 	return lastErr
@@ -361,5 +348,84 @@ func (p pushSender) updateSegmentUserCache(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+// topicInfo contains information about a topic to send push notification to
+type topicInfo struct {
+	topic string
+	tag   string // empty for no-tags case
+}
+
+// getTopicsForPush determines which topics should receive push notifications
+// based on the feature tags and push configuration
+func (p pushSender) getTopicsForPush(feature *featureproto.Feature, push *pushproto.Push, featureID string) []topicInfo {
+	topics := []topicInfo{}
+	
+	// Handle case where both feature and push have no tags
+	if len(feature.Tags) == 0 && len(push.Tags) == 0 {
+		topics = append(topics, topicInfo{
+			topic: fmt.Sprintf("%sno-tags-%s", topicPrefix, featureID),
+			tag:   "",
+		})
+		return topics
+	}
+	
+	// Handle normal case with tags
+	d := pushdomain.Push{Push: push}
+	for _, tag := range feature.Tags {
+		if d.ExistTag(tag) {
+			topics = append(topics, topicInfo{
+				topic: fmt.Sprintf("%s%s", topicPrefix, tag),
+				tag:   tag,
+			})
+		}
+	}
+	
+	return topics
+}
+
+// sendPushNotification sends a push notification to a specific topic
+func (p pushSender) sendPushNotification(
+	ctx context.Context,
+	topicInfo topicInfo,
+	push *pushproto.Push,
+	featureID string,
+	environmentID string,
+) error {
+	if err := p.pushFCM(ctx, topicInfo.topic, push.FcmServiceAccount); err != nil {
+		logFields := []zap.Field{
+			zap.Error(err),
+			zap.String("featureId", featureID),
+			zap.String("topic", topicInfo.topic),
+			zap.String("pushId", push.Id),
+			zap.String("environmentId", environmentID),
+		}
+		
+		// Add tag field only if it exists
+		if topicInfo.tag != "" {
+			logFields = append(logFields, zap.String("tag", topicInfo.tag))
+			p.logger.Error("Failed to push notification", logFields...)
+		} else {
+			p.logger.Error("Failed to push notification for feature without tags", logFields...)
+		}
+		return err
+	}
+	
+	logFields := []zap.Field{
+		zap.String("featureId", featureID),
+		zap.String("topic", topicInfo.topic),
+		zap.String("pushId", push.Id),
+		zap.String("environmentId", environmentID),
+	}
+	
+	// Add tag field only if it exists
+	if topicInfo.tag != "" {
+		logFields = append(logFields, zap.String("tag", topicInfo.tag))
+		p.logger.Info("Succeeded to push notification", logFields...)
+	} else {
+		p.logger.Info("Succeeded to push notification for feature without tags", logFields...)
+	}
+	
 	return nil
 }
