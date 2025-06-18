@@ -93,7 +93,13 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	}
 
 	// Execute the SQL statements (will skip existing ones)
-	err = c.executeSQLStatements(ctx, client, eventTablesMigrationSQL, existingTables, logger)
+	err = c.executeSQLStatements(
+		ctx,
+		client,
+		eventTablesMigrationSQL,
+		existingTables,
+		logger,
+	)
 	if err != nil {
 		logger.Error("Failed to execute SQL statements", zap.Error(err))
 		return err
@@ -137,7 +143,13 @@ func (c *command) createMySQLClient(ctx context.Context, logger *zap.Logger) (my
 	)
 }
 
-func (c *command) executeSQLStatements(ctx context.Context, client mysql.Client, sqlContent string, existingTables []string, logger *zap.Logger) error {
+func (c *command) executeSQLStatements(
+	ctx context.Context,
+	client mysql.Client,
+	sqlContent string,
+	existingTables []string,
+	logger *zap.Logger,
+) error {
 	// Split the SQL content into individual statements
 	statements := c.splitSQLStatements(sqlContent)
 
