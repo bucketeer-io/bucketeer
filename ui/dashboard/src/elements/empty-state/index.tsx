@@ -3,6 +3,7 @@ import emptyStateCode from 'assets/empty-state/code.svg';
 import emptyStateError from 'assets/empty-state/error.svg';
 import emptyStateNoData from 'assets/empty-state/no-data.svg';
 import emptyStateNoSearch from 'assets/empty-state/no-search.svg';
+import { hasEditable, useAuth } from 'auth';
 import { createContext } from 'utils/create-context';
 import { cn } from 'utils/style';
 import Button, { type ButtonProps } from 'components/button';
@@ -77,8 +78,15 @@ const EmptyStateActions = ({ children }: PropsWithChildren) => {
 
 const EmptyStateActionButton = (props: Omit<ButtonProps, 'size'>) => {
   const { size } = useEmptyState();
+  const { consoleAccount } = useAuth();
+  const editable = hasEditable(consoleAccount!);
   return (
-    <Button variant="primary" size={size === 'lg' ? 'md' : 'sm'} {...props} />
+    <Button
+      variant="primary"
+      size={size === 'lg' ? 'md' : 'sm'}
+      disabled={!editable}
+      {...props}
+    />
   );
 };
 

@@ -26,6 +26,7 @@ import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
 
 interface AddAPIKeyModalProps {
+  disabled: boolean;
   isOpen: boolean;
   environments: Environment[];
   isLoadingEnvs: boolean;
@@ -47,6 +48,7 @@ export const formSchema = yup.object().shape({
 });
 
 const AddAPIKeyModal = ({
+  disabled,
   isOpen,
   isLoadingEnvs,
   environments,
@@ -240,7 +242,7 @@ const AddAPIKeyModal = ({
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isValid}
+                    disabled={!isValid || disabled}
                     loading={isSubmitting}
                   >
                     {t(`create-api-key`)}

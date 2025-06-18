@@ -24,10 +24,12 @@ import {
 } from './types';
 
 const PageContent = ({
+  disabled,
   summary,
   onAdd,
   onHandleActions
 }: {
+  disabled: boolean;
   summary?: ExperimentCollection['summary'];
   onAdd: () => void;
   onHandleActions: (item: Experiment, type: ExperimentActionsType) => void;
@@ -146,7 +148,11 @@ const PageContent = ({
       <Filter
         onOpenFilter={onOpenFilterModal}
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
+          <Button
+            className="flex-1 lg:flex-none"
+            onClick={onAdd}
+            disabled={disabled}
+          >
             <Icon icon={IconAddOutlined} size="sm" />
             {t(`new-experiment`)}
           </Button>

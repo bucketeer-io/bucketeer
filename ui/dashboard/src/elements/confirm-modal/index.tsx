@@ -4,21 +4,23 @@ import { ButtonBar } from 'components/button-bar';
 import DialogModal from 'components/modal/dialog';
 
 export type ConfirmModalProps = {
-  onSubmit: () => void;
+  disabled?: boolean;
   isOpen: boolean;
   title: string;
   description: React.ReactElement | string;
   loading?: boolean;
   onClose: () => void;
+  onSubmit: () => void;
 };
 
 const ConfirmModal = ({
-  onSubmit,
+  disabled,
   isOpen,
   title,
   description,
   loading,
-  onClose
+  onClose,
+  onSubmit
 }: ConfirmModalProps) => {
   const { t } = useTranslation(['common']);
 
@@ -37,7 +39,7 @@ const ConfirmModal = ({
 
       <ButtonBar
         secondaryButton={
-          <Button loading={loading} onClick={onSubmit}>
+          <Button loading={loading} onClick={onSubmit} disabled={disabled}>
             {t(`submit`)}
           </Button>
         }

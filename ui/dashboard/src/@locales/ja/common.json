@@ -251,5 +251,8 @@
   "created": "created",
   "deleted": "deleted",
   "stopped": "stopped",
-  "cloned": "cloned"
+  "cloned": "cloned",
+  "access-denied": "Access Denied",
+  "access-denied-desc": "Sorry, but you don't have permission to access this page.",
+  "go-back-home": "Go back home"
 }

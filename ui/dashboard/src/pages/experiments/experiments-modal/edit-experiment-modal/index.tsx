@@ -44,6 +44,7 @@ import VariationLabel from 'elements/variation-label';
 import { StartType } from '../add-experiment-modal';
 
 interface EditExperimentModalProps {
+  disabled: boolean;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -72,7 +73,11 @@ export type DefineAudienceField = ControllerRenderProps<
   'audience'
 >;
 
-const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
+const EditExperimentModal = ({
+  disabled,
+  isOpen,
+  onClose
+}: EditExperimentModalProps) => {
   const { t } = useTranslation(['form', 'common']);
   const { notify } = useToast();
 
@@ -280,6 +285,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                     <Form.Label required>{t('common:name')}</Form.Label>
                     <Form.Control>
                       <Input
+                        disabled={disabled}
                         placeholder={`${t('placeholder-name')}`}
                         {...field}
                       />
@@ -296,6 +302,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                     <Form.Label optional>{t('description')}</Form.Label>
                     <Form.Control>
                       <TextArea
+                        disabled={disabled}
                         placeholder={t('placeholder-desc')}
                         rows={4}
                         {...field}
@@ -345,7 +352,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                       <Form.Label required>{t('start-at')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!isEnabledEdit}
+                          disabled={!isEnabledEdit || disabled}
                           dateFormat={'yyyy/MM/dd'}
                           showTimeSelect={false}
                           selected={
@@ -372,7 +379,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                       <Form.Label required>{t('experiments.time')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!isEnabledEdit}
+                          disabled={!isEnabledEdit || disabled}
                           dateFormat={'HH:mm'}
                           showTimeSelect
                           showTimeSelectOnly={true}
@@ -402,7 +409,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                       <Form.Label required>{t('end-at')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!isEnabledEdit}
+                          disabled={!isEnabledEdit || disabled}
                           dateFormat={'yyyy/MM/dd'}
                           showTimeSelect={false}
                           selected={
@@ -429,7 +436,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                       <Form.Label required>{t('experiments.time')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!isEnabledEdit}
+                          disabled={!isEnabledEdit || disabled}
                           dateFormat={'HH:mm'}
                           showTimeSelect
                           showTimeSelectOnly={true}

@@ -29,6 +29,7 @@ interface EditUserSegmentModalProps {
   isOpen: boolean;
   isLoadingSegment: boolean;
   userSegment?: UserSegment;
+  isDisabled: boolean;
   onClose: () => void;
   setSegmentUploading: (userSegment: UserSegment | null) => void;
 }
@@ -37,6 +38,7 @@ const EditUserSegmentModal = ({
   isOpen,
   isLoadingSegment,
   userSegment,
+  isDisabled,
   onClose,
   setSegmentUploading
 }: EditUserSegmentModalProps) => {
@@ -173,6 +175,7 @@ const EditUserSegmentModal = ({
                     <Form.Control>
                       <Input
                         placeholder={`${t('form:placeholder-name')}`}
+                        disabled={isDisabled}
                         {...field}
                       />
                     </Form.Control>
@@ -189,6 +192,7 @@ const EditUserSegmentModal = ({
                     <Form.Control>
                       <TextArea
                         placeholder={t('form:placeholder-desc')}
+                        disabled={isDisabled}
                         rows={4}
                         {...field}
                       />
@@ -202,7 +206,7 @@ const EditUserSegmentModal = ({
               <RadioGroup
                 defaultValue={userIdsType}
                 onValueChange={setUserIdsType}
-                disabled={isDisabledUserIds}
+                disabled={isDisabledUserIds || isDisabled}
                 className="flex flex-col w-full gap-y-4"
               >
                 <Form.Field
@@ -211,7 +215,7 @@ const EditUserSegmentModal = ({
                   render={({ field }) => (
                     <Form.Item
                       className={cn('py-0', {
-                        'opacity-50': isDisabledUserIds
+                        'opacity-50': isDisabledUserIds || isDisabled
                       })}
                     >
                       <Form.Control>
@@ -226,7 +230,10 @@ const EditUserSegmentModal = ({
                               htmlFor={'upload'}
                               className={cn(
                                 'cursor-pointer typo-para-small text-gray-700',
-                                { 'cursor-not-allowed': isDisabledUserIds }
+                                {
+                                  'cursor-not-allowed':
+                                    isDisabledUserIds || isDisabled
+                                }
                               )}
                             >
                               {t('form:browse-files')}
@@ -260,7 +267,7 @@ const EditUserSegmentModal = ({
                   render={({ field }) => (
                     <Form.Item
                       className={cn('py-0', {
-                        'opacity-50': isDisabledUserIds
+                        'opacity-50': isDisabledUserIds || isDisabled
                       })}
                     >
                       <Form.Control>
@@ -275,7 +282,10 @@ const EditUserSegmentModal = ({
                               htmlFor={'typing'}
                               className={cn(
                                 'cursor-pointer typo-para-small text-gray-700',
-                                { 'cursor-not-allowed': isDisabledUserIds }
+                                {
+                                  'cursor-not-allowed':
+                                    isDisabledUserIds || isDisabled
+                                }
                               )}
                             >
                               {t('form:enter-user-ids')}
@@ -319,7 +329,9 @@ const EditUserSegmentModal = ({
                   secondaryButton={
                     <Button
                       type="submit"
-                      disabled={!isDirty || !isValid || isSubmitting}
+                      disabled={
+                        !isDirty || !isValid || isSubmitting || isDisabled
+                      }
                       loading={isSubmitting}
                     >
                       {t(`submit`)}

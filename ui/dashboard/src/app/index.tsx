@@ -46,6 +46,7 @@ import { v4 as uuid } from 'uuid';
 import { ConsoleAccount } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams, useSearchParams } from 'utils/search-params';
+import AccessDeniedPage from 'pages/access-denied';
 import APIKeysPage from 'pages/api-keys';
 import AuditLogsPage from 'pages/audit-logs';
 import DebuggerPage from 'pages/debugger';
@@ -202,7 +203,7 @@ export const EnvironmentRoot = memo(
         {!editable && (
           <Route
             path={`/:any${PAGE_PATH_NEW}`}
-            element={<h3>{`403 Access denied`}</h3>}
+            element={<AccessDeniedPage />}
           />
         )}
         <Route

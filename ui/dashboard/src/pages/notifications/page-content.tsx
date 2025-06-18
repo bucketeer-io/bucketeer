@@ -16,9 +16,11 @@ import FilterAPIKeyModal from './notification-modal/filter-notification-modal';
 import { NotificationActionsType, NotificationFilters } from './types';
 
 const PageContent = ({
+  disabled,
   onAdd,
   onHandleActions
 }: {
+  disabled?: boolean;
   onAdd: () => void;
   onHandleActions: (item: Notification, type: NotificationActionsType) => void;
 }) => {
@@ -57,7 +59,11 @@ const PageContent = ({
       <Filter
         onOpenFilter={onOpenFilterModal}
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
+          <Button
+            className="flex-1 lg:flex-none"
+            onClick={onAdd}
+            disabled={disabled}
+          >
             <Icon icon={IconAddOutlined} size="sm" />
             {t(`new-notification`)}
           </Button>

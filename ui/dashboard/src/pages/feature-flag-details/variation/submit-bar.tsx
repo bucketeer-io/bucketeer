@@ -15,9 +15,11 @@ import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
 
 const SubmitBar = ({
+  editable,
   feature,
   onShowConfirmDialog
 }: {
+  editable: boolean;
   feature: Feature;
   onShowConfirmDialog: () => void;
 }) => {
@@ -68,7 +70,7 @@ const SubmitBar = ({
       </div>
       <Button
         type="button"
-        disabled={!isDirty || !isValid}
+        disabled={!isDirty || !isValid || !editable}
         onClick={onShowConfirmDialog}
       >
         {t('save-with-comment')}

@@ -4,7 +4,7 @@ import { notificationUpdater } from '@api/notification';
 import { useQueryNotification } from '@queries/notification-details';
 import { invalidateNotifications } from '@queries/notifications';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_NOTIFICATIONS } from 'constants/routing';
 import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
@@ -24,6 +24,7 @@ const PageLoader = () => {
   const { notify, errorNotify } = useToast();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   const commonPath = useMemo(
     () => `/${currentEnvironment.urlCode}${PAGE_PATH_NOTIFICATIONS}`,
@@ -125,13 +126,22 @@ const PageLoader = () => {
 
   return (
     <>
-      <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
+      <PageContent
+        disabled={!editable}
+        onAdd={onOpenAddModal}
+        onHandleActions={onHandleActions}
+      />
 
       {isAdd && (
-        <AddNotificationModal isOpen={isAdd} onClose={onCloseActionModal} />
+        <AddNotificationModal
+          disabled={!editable}
+          isOpen={isAdd}
+          onClose={onCloseActionModal}
+        />
       )}
       {isEdit && (
         <EditNotificationModal
+          disabled={!editable}
           isOpen={isEdit}
           isLoadingNotification={isLoadingNotification}
           notification={selectedNotification}
@@ -160,6 +170,7 @@ const PageLoader = () => {
             />
           }
           loading={mutationState.isPending}
+          disabled={!editable}
         />
       )}
     </>

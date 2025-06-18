@@ -12,7 +12,7 @@ import { invalidateExperiments } from '@queries/experiments';
 import { useQueryFeatures } from '@queries/features';
 import { useQueryGoals } from '@queries/goals';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -62,6 +62,8 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
+
   const queryClient = useQueryClient();
 
   const isEnabledEdit = useMemo(
@@ -195,7 +197,11 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
               <p className="text-gray-800 typo-head-bold-small">
                 {t('common:settings')}
               </p>
-              <Button type="submit" disabled={!isDirty} loading={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={!isDirty || !editable}
+                loading={isSubmitting}
+              >
                 {t('common:save')}
               </Button>
             </div>
@@ -213,6 +219,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                     <Form.Control>
                       <Input
                         placeholder={`${t('placeholder-name')}`}
+                        disabled={!editable}
                         {...field}
                       />
                     </Form.Control>
@@ -230,6 +237,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                       <TextArea
                         placeholder={t('placeholder-desc')}
                         rows={4}
+                        disabled={!editable}
                         {...field}
                       />
                     </Form.Control>
@@ -246,7 +254,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                       <Form.Label required>{t('start-at')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!isEnabledEdit}
+                          disabled={!isEnabledEdit || !editable}
                           dateFormat={'yyyy/MM/dd'}
                           showTimeSelect={false}
                           selected={
@@ -273,7 +281,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                       <Form.Label required>{t('experiments.time')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!isEnabledEdit}
+                          disabled={!isEnabledEdit || !editable}
                           dateFormat={'HH:mm'}
                           showTimeSelect
                           showTimeSelectOnly={true}
@@ -303,7 +311,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                       <Form.Label required>{t('end-at')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!isEnabledEdit}
+                          disabled={!isEnabledEdit || !editable}
                           dateFormat={'yyyy/MM/dd'}
                           showTimeSelect={false}
                           selected={
@@ -330,7 +338,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                       <Form.Label required>{t('experiments.time')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!isEnabledEdit}
+                          disabled={!isEnabledEdit || !editable}
                           dateFormat={'HH:mm'}
                           showTimeSelect
                           showTimeSelectOnly={true}

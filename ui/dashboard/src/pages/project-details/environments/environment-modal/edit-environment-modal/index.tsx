@@ -20,6 +20,7 @@ import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
 
 interface EditEnvironmentModalProps {
+  disabled: boolean;
   isOpen: boolean;
   onClose: () => void;
   environment: Environment;
@@ -38,6 +39,7 @@ const formSchema = yup.object().shape({
 });
 
 const EditEnvironmentModal = ({
+  disabled,
   isOpen,
   onClose,
   environment
@@ -115,6 +117,7 @@ const EditEnvironmentModal = ({
                   <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
                     <Input
+                      disabled={disabled}
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                     />
@@ -158,6 +161,7 @@ const EditEnvironmentModal = ({
                     <TextArea
                       placeholder={t('form:placeholder-desc')}
                       rows={4}
+                      disabled={disabled}
                       {...field}
                     />
                   </Form.Control>
@@ -177,6 +181,7 @@ const EditEnvironmentModal = ({
                 <Form.Item>
                   <Form.Control>
                     <Checkbox
+                      disabled={disabled}
                       onCheckedChange={checked => field.onChange(checked)}
                       checked={field.value}
                       title={`${t(`form:require-comments-flag`)}`}
@@ -197,7 +202,7 @@ const EditEnvironmentModal = ({
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!form.formState.isDirty}
+                    disabled={!form.formState.isDirty || disabled}
                     loading={form.formState.isSubmitting}
                   >
                     {t(`update-env`)}

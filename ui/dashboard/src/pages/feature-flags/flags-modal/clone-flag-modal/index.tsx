@@ -6,7 +6,7 @@ import { useQueryEnvironments } from '@queries/environments';
 import { useQueryFeature } from '@queries/feature-details';
 import { invalidateFeatures } from '@queries/features';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -57,6 +57,7 @@ const CloneFlagModal = ({
   const { notify } = useToast();
 
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   const {
     data: featureCollection,
@@ -213,7 +214,9 @@ const CloneFlagModal = ({
                               item => !!field.value && item.id === field.value
                             )?.name
                           }
-                          disabled={isLoadingEnvs || isLoadingFeature}
+                          disabled={
+                            isLoadingEnvs || isLoadingFeature || !editable
+                          }
                           variant="secondary"
                           className="w-full"
                         />
@@ -251,7 +254,7 @@ const CloneFlagModal = ({
                   secondaryButton={
                     <Button
                       type="submit"
-                      disabled={!form.formState.isDirty}
+                      disabled={!form.formState.isDirty || !editable}
                       loading={form.formState.isSubmitting}
                     >
                       {t(`clone-flag`)}

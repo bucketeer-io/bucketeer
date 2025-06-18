@@ -5,7 +5,13 @@ import CloneFlagModal from 'pages/feature-flags/flags-modal/clone-flag-modal';
 import Button from 'components/button';
 import Card from 'elements/card';
 
-const CloneFlag = ({ feature }: { feature: Feature }) => {
+const CloneFlag = ({
+  feature,
+  disabled
+}: {
+  feature: Feature;
+  disabled: boolean;
+}) => {
   const { t } = useTranslation(['common', 'form']);
   const { errorNotify } = useToast();
 
@@ -20,6 +26,7 @@ const CloneFlag = ({ feature }: { feature: Feature }) => {
       <Button
         className="w-fit"
         variant="secondary"
+        disabled={disabled}
         onClick={onOpenCloneFlagModal}
       >
         {t('clone-flag')}

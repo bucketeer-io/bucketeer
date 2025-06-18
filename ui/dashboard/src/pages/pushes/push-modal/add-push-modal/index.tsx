@@ -30,6 +30,7 @@ import SlideModal from 'components/modal/slide';
 import UploadFiles from 'components/upload-files';
 
 interface AddPushModalProps {
+  disabled?: boolean;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -48,7 +49,7 @@ export const formSchema = yup.object().shape({
   environmentId: yup.string().required()
 });
 
-const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
+const AddPushModal = ({ disabled, isOpen, onClose }: AddPushModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
@@ -290,7 +291,7 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isValid}
+                    disabled={!isValid || disabled}
                     loading={isSubmitting}
                   >
                     {t(`submit`)}

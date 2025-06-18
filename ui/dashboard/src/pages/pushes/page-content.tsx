@@ -16,9 +16,11 @@ import FilterPushKeyModal from './push-modal/filter-push-modal';
 import { PushActionsType, PushFilters } from './types';
 
 const PageContent = ({
+  disabled,
   onAdd,
   onHandleActions
 }: {
+  disabled?: boolean;
   onAdd: () => void;
   onHandleActions: (item: Push, type: PushActionsType) => void;
 }) => {
@@ -56,7 +58,11 @@ const PageContent = ({
       <Filter
         onOpenFilter={onOpenFilterModal}
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
+          <Button
+            className="flex-1 lg:flex-none"
+            onClick={onAdd}
+            disabled={disabled}
+          >
             <Icon icon={IconAddOutlined} size="sm" />
             {t(`new-push`)}
           </Button>

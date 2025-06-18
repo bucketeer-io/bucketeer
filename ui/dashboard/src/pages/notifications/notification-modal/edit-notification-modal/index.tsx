@@ -42,6 +42,7 @@ import { Tooltip } from 'components/tooltip';
 import FormLoading from 'elements/form-loading';
 
 interface EditNotificationModalProps {
+  disabled?: boolean;
   isOpen: boolean;
   isLoadingNotification: boolean;
   notification?: Notification;
@@ -67,6 +68,7 @@ export const formSchema = yup.object().shape({
 });
 
 const EditNotificationModal = ({
+  disabled,
   isOpen,
   isLoadingNotification,
   notification,
@@ -192,6 +194,7 @@ const EditNotificationModal = ({
                     <Form.Control>
                       <Input
                         placeholder={`${t('form:placeholder-name')}`}
+                        disabled={disabled}
                         {...field}
                       />
                     </Form.Control>
@@ -330,6 +333,7 @@ const EditNotificationModal = ({
                           checked={
                             checkedTypes.length === SOURCE_TYPE_ITEMS.length
                           }
+                          disabled={disabled}
                           onCheckedChange={checked => {
                             if (checked) {
                               field.onChange(
@@ -367,8 +371,9 @@ const EditNotificationModal = ({
                               id={item.value}
                               checked={checkedTypes.includes(item.value)}
                               disabled={
-                                item.value === 'DOMAIN_EVENT_FEATURE' &&
-                                !isSelectedEnv
+                                (item.value === 'DOMAIN_EVENT_FEATURE' &&
+                                  !isSelectedEnv) ||
+                                disabled
                               }
                               onCheckedChange={checked => {
                                 if (checked) {
@@ -414,7 +419,9 @@ const EditNotificationModal = ({
                                     <Form.Control>
                                       <CreatableSelect
                                         disabled={
-                                          isLoadingTags || !tagOptions.length
+                                          isLoadingTags ||
+                                          !tagOptions.length ||
+                                          disabled
                                         }
                                         value={field.value?.map(tag => {
                                           const tagItem = tagOptions.find(
@@ -492,7 +499,7 @@ const EditNotificationModal = ({
                   secondaryButton={
                     <Button
                       type="submit"
-                      disabled={!isValid || !isDirty}
+                      disabled={!isValid || !isDirty || disabled}
                       loading={isSubmitting}
                     >
                       {t(`submit`)}

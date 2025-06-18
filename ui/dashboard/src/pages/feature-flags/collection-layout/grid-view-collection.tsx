@@ -5,7 +5,7 @@ import {
   IconMoreVertOutlined,
   IconSaveAsFilled
 } from 'react-icons-material-design';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useScreen } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -56,6 +56,7 @@ const GridViewCollection = ({
   const { fromXLScreen } = useScreen();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   const handleGetMaintainerInfo = useCallback(
     (email: string) => {
@@ -145,6 +146,7 @@ const GridViewCollection = ({
                 />
                 <div className="flex-center">
                   <Switch
+                    disabled={!editable}
                     checked={enabled}
                     onCheckedChange={() =>
                       onActions(item, enabled ? 'INACTIVE' : 'ACTIVE')

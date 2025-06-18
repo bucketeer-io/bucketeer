@@ -36,6 +36,7 @@ import CreateGoalModal from 'elements/create-goal-modal';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 
 export interface OperationModalProps {
+  editable: boolean;
   feature: Feature;
   environmentId: string;
   isOpen: boolean;
@@ -76,6 +77,7 @@ const conditionOptions = [
 ];
 
 const EventRateOperationModal = ({
+  editable,
   feature,
   environmentId,
   isOpen,
@@ -91,8 +93,8 @@ const EventRateOperationModal = ({
   const isCreate = useMemo(() => actionType === 'NEW', [actionType]);
 
   const isDisabled = useMemo(
-    () => !isCreate && isFinishedTab,
-    [isCreate, isFinishedTab]
+    () => (!isCreate && isFinishedTab) || !editable,
+    [isCreate, isFinishedTab, editable]
   );
 
   const [
@@ -158,51 +160,55 @@ const EventRateOperationModal = ({
 
   const onSubmit = useCallback(
     async (values: EventRateSchemaType) => {
-      try {
-        let resp: AutoOpsCreatorResponse | null = null;
-        if (!isCreate && selectedData) {
-          resp = await autoOpsUpdate({
-            environmentId,
-            id: selectedData.id,
-            opsEventRateClauseChanges: [
-              {
-                id: selectedData.clauses[0].id,
-                changeType: 'UPDATE',
-                clause: {
+      if (editable) {
+        try {
+          let resp: AutoOpsCreatorResponse | null = null;
+          if (!isCreate && selectedData) {
+            resp = await autoOpsUpdate({
+              environmentId,
+              id: selectedData.id,
+              opsEventRateClauseChanges: [
+                {
+                  id: selectedData.clauses[0].id,
+                  changeType: 'UPDATE',
+                  clause: {
+                    ...values,
+                    minCount: values.minCount.toString(),
+                    threadsholdRate: values.threadsholdRate / 100
+                  }
+                }
+              ]
+            });
+          } else {
+            resp = await autoOpsCreator({
+              featureId: feature.id,
+              environmentId,
+              opsType: 'EVENT_RATE',
+              opsEventRateClauses: [
+                {
                   ...values,
+                  actionType: 'DISABLE',
                   minCount: values.minCount.toString(),
                   threadsholdRate: values.threadsholdRate / 100
                 }
-              }
-            ]
-          });
-        } else {
-          resp = await autoOpsCreator({
-            featureId: feature.id,
-            environmentId,
-            opsType: 'EVENT_RATE',
-            opsEventRateClauses: [
-              {
-                ...values,
-                actionType: 'DISABLE',
-                minCount: values.minCount.toString(),
-                threadsholdRate: values.threadsholdRate / 100
-              }
-            ]
-          });
-        }
+              ]
+            });
+          }
 
-        if (resp) {
-          onSubmitOperationSuccess();
-          notify({
-            message: t(`message:operation.${isCreate ? 'created' : 'updated'}`)
-          });
+          if (resp) {
+            onSubmitOperationSuccess();
+            notify({
+              message: t(
+                `message:operation.${isCreate ? 'created' : 'updated'}`
+              )
+            });
+          }
+        } catch (error) {
+          errorNotify(error);
         }
-      } catch (error) {
-        errorNotify(error);
       }
     },
-    [isCreate, actionType, selectedData]
+    [isCreate, actionType, selectedData, editable]
   );
 
   return (

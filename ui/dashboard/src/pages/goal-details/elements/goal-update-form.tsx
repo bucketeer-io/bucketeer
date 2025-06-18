@@ -23,9 +23,11 @@ const formSchema = yup.object().shape({
 });
 
 const GoalUpdateForm = ({
+  disabled,
   goal,
   onSubmit
 }: {
+  disabled: boolean;
   goal: Goal;
   onSubmit: (payload: GoalUpdaterPayload) => Promise<void>;
 }) => {
@@ -74,6 +76,7 @@ const GoalUpdateForm = ({
                 <Form.Label required>{t('name')}</Form.Label>
                 <Form.Control>
                   <Input
+                    disabled={disabled}
                     placeholder={`${t('form:placeholder-name')}`}
                     {...field}
                   />
@@ -107,6 +110,7 @@ const GoalUpdateForm = ({
                 <Form.Label optional>{t('form:description')}</Form.Label>
                 <Form.Control>
                   <TextArea
+                    disabled={disabled}
                     placeholder={t('form:placeholder-desc')}
                     rows={4}
                     {...field}
@@ -119,7 +123,7 @@ const GoalUpdateForm = ({
 
           <Button
             loading={isSubmitting}
-            disabled={!isValid || !isDirty}
+            disabled={!isValid || !isDirty || disabled}
             type="submit"
             className="w-fit"
             variant={'secondary'}

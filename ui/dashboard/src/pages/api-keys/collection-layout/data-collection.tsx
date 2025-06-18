@@ -3,6 +3,7 @@ import {
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
+import { hasEditable, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
@@ -26,6 +27,9 @@ export const useColumns = ({
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
   const { notify } = useToast();
+
+  const { consoleAccount } = useAuth();
+  const editable = hasEditable(consoleAccount!);
 
   const getAPIkeyRole = (role: APIKeyRole) => {
     switch (role) {
@@ -164,6 +168,7 @@ export const useColumns = ({
 
         return (
           <Switch
+            disabled={!editable}
             checked={!apiKey.disabled}
             onCheckedChange={value =>
               onActions(apiKey, value ? 'ENABLE' : 'DISABLE')

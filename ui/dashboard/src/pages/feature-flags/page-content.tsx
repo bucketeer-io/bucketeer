@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useLocation } from 'react-router-dom';
+import { hasEditable, useAuth } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
@@ -28,6 +29,9 @@ const PageContent = ({
 }) => {
   const { t } = useTranslation(['common']);
   const location = useLocation();
+  const { consoleAccount } = useAuth();
+
+  const editable = hasEditable(consoleAccount!);
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const [summary, setSummary] = useState<FeatureCountByStatus>();
@@ -129,7 +133,11 @@ const PageContent = ({
         action={
           <>
             <SortBy filters={filters} setFilters={setFilters} />
-            <Button className="flex-1 lg:flex-none" onClick={onAdd}>
+            <Button
+              className="flex-1 lg:flex-none"
+              onClick={onAdd}
+              disabled={!editable}
+            >
               <Icon icon={IconAddOutlined} size="sm" />
               {t(`create-flag`)}
             </Button>

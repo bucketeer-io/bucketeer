@@ -3,6 +3,7 @@ import { projectUpdater } from '@api/project';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
+import { hasEditable, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -38,6 +39,8 @@ const EditProjectModal = ({
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
+  const { consoleAccount } = useAuth();
+  const editable = hasEditable(consoleAccount!);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -92,6 +95,7 @@ const EditProjectModal = ({
                   <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
                     <Input
+                      disabled={!editable}
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                     />
@@ -121,6 +125,7 @@ const EditProjectModal = ({
                   <Form.Label optional>{t('form:description')}</Form.Label>
                   <Form.Control>
                     <TextArea
+                      disabled={!editable}
                       placeholder={t('form:placeholder-desc')}
                       rows={4}
                       {...field}
@@ -141,7 +146,7 @@ const EditProjectModal = ({
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!form.formState.isDirty}
+                    disabled={!form.formState.isDirty || !editable}
                     loading={form.formState.isSubmitting}
                   >
                     {t(`update-project`)}
