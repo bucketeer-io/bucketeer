@@ -9,6 +9,7 @@ import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { Push } from '@types';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
@@ -28,20 +29,20 @@ import Spinner from 'components/spinner';
 
 interface EditPushModalProps {
   isOpen: boolean;
-  onClose: () => void;
   push: Push;
+  onClose: () => void;
 }
 
 export interface EditPushForm {
   name: string;
   fcmServiceAccount?: string;
-  tags: string[];
+  tags?: string[];
+  environmentId: string;
 }
 
 const formSchema = yup.object().shape({
   name: yup.string().required(),
-  fcmServiceAccount: yup.string(),
-  tags: yup.array().required(),
+  tags: yup.array(),
   environmentId: yup.string().required()
 });
 
@@ -60,16 +61,22 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
     environmentId: push.environmentId,
     entityType: 'FEATURE_FLAG'
   });
-  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
-  const environments = (collection?.environments || []).filter(item => item.id);
+  const tagOptions = (uniqBy(tagCollection?.tags || [], 'name') || [])?.map(
+    tag => ({
+      label: tag.name,
+      value: tag.name
+    })
+  );
+  const environments = collection?.environments || [];
+  const { emptyEnvironmentId, formattedEnvironments } =
+    onFormatEnvironments(environments);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
-    defaultValues: {
+    values: {
       name: push.name,
-      fcmServiceAccount: push.fcmServiceAccount,
-      tags: push.tags,
-      environmentId: push.environmentId
+      tags: push.tags || undefined,
+      environmentId: push.environmentId || emptyEnvironmentId
     }
   });
 
@@ -79,9 +86,12 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
   } = form;
 
   const onSubmit: SubmitHandler<EditPushForm> = async values => {
+    const { name, tags, environmentId } = values;
     await pushUpdater({
-      ...values,
-      id: push.id
+      name,
+      tags,
+      id: push.id,
+      environmentId: checkEnvironmentEmptyId(environmentId)
     }).then(() => {
       notify({
         toastType: 'toast',
@@ -140,7 +150,7 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                         <DropdownMenuTrigger
                           placeholder={t(`form:select-environment`)}
                           label={
-                            environments.find(
+                            formattedEnvironments.find(
                               item => item.id === getValues('environmentId')
                             )?.name
                           }
@@ -153,7 +163,7 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                           align="start"
                           {...field}
                         >
-                          {environments.map((item, index) => (
+                          {formattedEnvironments.map((item, index) => (
                             <DropdownMenuItem
                               {...field}
                               key={index}
@@ -176,34 +186,43 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                 name={`tags`}
                 render={({ field }) => (
                   <Form.Item className="py-2">
-                    <Form.Label required>
-                      {t('form:feature-flag-tags')}
-                    </Form.Label>
+                    <Form.Label>{t('form:feature-flag-tags')}</Form.Label>
                     <Form.Control>
                       <CreatableSelect
                         value={field.value?.map(tag => {
                           const tagItem = tagOptions.find(
-                            item => item.id === tag
+                            item => item.value === tag
                           );
                           return {
-                            label: tagItem?.name || tag,
-                            value: tagItem?.id || tag
+                            label: tagItem?.label || tag,
+                            value: tagItem?.value || tag
                           };
                         })}
-                        disabled={isLoadingTags}
+                        disabled={isLoadingTags || !tagOptions.length}
                         loading={isLoadingTags}
+                        allowCreateWhileLoading={false}
+                        isValidNewOption={() => false}
+                        isClearable
+                        onKeyDown={e => {
+                          const { value } = e.target as HTMLInputElement;
+                          const isExists = tagOptions.find(
+                            item =>
+                              item.label
+                                .toLowerCase()
+                                .includes(value.toLowerCase()) &&
+                              !field.value?.includes(item.label)
+                          );
+                          if (e.key === 'Enter' && (!isExists || !value)) {
+                            e.preventDefault();
+                          }
+                        }}
                         placeholder={t(`form:placeholder-tags`)}
-                        options={tagOptions?.map(tag => ({
-                          label: tag.name,
-                          value: tag.id
-                        }))}
+                        options={tagOptions}
                         onChange={value =>
                           field.onChange(value.map(tag => tag.value))
                         }
                         noOptionsMessage={() => (
-                          <UserMessage
-                            message={t('form:no-opts-type-to-create')}
-                          />
+                          <UserMessage message={t('no-options-found')} />
                         )}
                       />
                     </Form.Control>

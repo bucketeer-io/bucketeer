@@ -10,6 +10,7 @@ import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { covertFileToUint8ToBase64 } from 'utils/converts';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { IconInfo } from '@icons';
 import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { useFetchTags } from 'pages/members/collection-loader';
@@ -37,14 +38,14 @@ interface AddPushModalProps {
 export interface AddPushForm {
   name: string;
   fcmServiceAccount: Uint8Array | string;
-  tags: string[];
+  tags?: string[];
   environmentId: string;
 }
 
 export const formSchema = yup.object().shape({
   name: yup.string().required(),
   fcmServiceAccount: yup.string().required(),
-  tags: yup.array().required().min(1),
+  tags: yup.array(),
   environmentId: yup.string().required()
 });
 
@@ -60,15 +61,15 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
   const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
-
-  const environments = (collection?.environments || []).filter(item => item.id);
+  const environments = collection?.environments || [];
+  const { formattedEnvironments } = onFormatEnvironments(environments);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
       name: '',
       fcmServiceAccount: '',
-      tags: [],
+      tags: undefined,
       environmentId: ''
     }
   });
@@ -89,16 +90,22 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
     }
   });
 
-  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
+  const tagOptions = (uniqBy(tagCollection?.tags || [], 'name') || [])?.map(
+    tag => ({
+      label: tag.name,
+      value: tag.name
+    })
+  );
 
   const onSubmit: SubmitHandler<AddPushForm> = async values => {
     try {
       const base64String: string = await new Promise(rs =>
         covertFileToUint8ToBase64(files[0], data => rs(data))
       );
-
+      const { environmentId } = values;
       const resp = await pushCreator({
         ...values,
+        environmentId: checkEnvironmentEmptyId(environmentId),
         fcmServiceAccount: base64String
       });
       if (resp) {
@@ -191,9 +198,9 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                       <DropdownMenuTrigger
                         placeholder={t(`form:select-environment`)}
                         label={
-                          environments.find(
+                          formattedEnvironments.find(
                             item => item.id === getValues('environmentId')
-                          )?.name
+                          )?.name || ''
                         }
                         disabled={isLoadingEnvs}
                         variant="secondary"
@@ -204,7 +211,7 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                         align="start"
                         {...field}
                       >
-                        {environments.map((item, index) => (
+                        {formattedEnvironments.map((item, index) => (
                           <DropdownMenuItem
                             {...field}
                             key={index}
@@ -229,30 +236,42 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
               name={`tags`}
               render={({ field }) => (
                 <Form.Item className="py-2">
-                  <Form.Label required>
-                    {t('form:feature-flag-tags')}
-                  </Form.Label>
+                  <Form.Label>{t('form:feature-flag-tags')}</Form.Label>
                   <Form.Control>
                     <CreatableSelect
-                      disabled={isLoadingTags || !isEnabledTags}
+                      disabled={
+                        isLoadingTags || !isEnabledTags || !tagOptions.length
+                      }
                       loading={isLoadingTags}
+                      allowCreateWhileLoading={false}
+                      isValidNewOption={() => false}
+                      isClearable
+                      onKeyDown={e => {
+                        const { value } = e.target as HTMLInputElement;
+                        const isExists = tagOptions.find(
+                          item =>
+                            item.label
+                              .toLowerCase()
+                              .includes(value.toLowerCase()) &&
+                            !field.value?.includes(item.label)
+                        );
+                        if (e.key === 'Enter' && (!isExists || !value)) {
+                          e.preventDefault();
+                        }
+                      }}
                       placeholder={t(
                         isEnabledTags && !tagOptions.length && !isLoadingTags
                           ? `form:no-tags-found`
                           : `form:placeholder-tags`
                       )}
-                      options={tagOptions?.map(tag => ({
-                        label: tag.name,
-                        value: tag.id
-                      }))}
+                      options={tagOptions}
                       onChange={value =>
                         field.onChange(value.map(tag => tag.value))
                       }
                       noOptionsMessage={() => (
-                        <UserMessage
-                          message={t('form:no-opts-type-to-create')}
-                        />
+                        <UserMessage message={t('no-options-found')} />
                       )}
+                      onCreateOption={() => {}}
                     />
                   </Form.Control>
                   <Form.Message />

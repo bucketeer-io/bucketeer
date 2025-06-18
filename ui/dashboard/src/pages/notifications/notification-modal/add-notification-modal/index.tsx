@@ -16,6 +16,7 @@ import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { NotificationLanguage, SourceType } from '@types';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { cn } from 'utils/style';
 import { IconInfo, IconNoData } from '@icons';
 import { useFetchTags } from 'pages/members/collection-loader';
@@ -148,7 +149,8 @@ const AddNotificationModal = ({
   const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
-  const environments = (collection?.environments || []).filter(item => item.id);
+  const environments = collection?.environments || [];
+  const { formattedEnvironments } = onFormatEnvironments(environments);
 
   const form = useForm<AddNotificationForm>({
     resolver: yupResolver(formSchema) as Resolver<AddNotificationForm>,
@@ -197,7 +199,7 @@ const AddNotificationModal = ({
 
   const onSubmit: SubmitHandler<AddNotificationForm> = values => {
     return notificationCreator({
-      environmentId: values.environment,
+      environmentId: checkEnvironmentEmptyId(values.environment),
       name: values.name,
       sourceTypes: values.types,
       recipient: {
@@ -281,9 +283,9 @@ const AddNotificationModal = ({
                       <DropdownMenuTrigger
                         placeholder={t(`form:select-environment`)}
                         label={
-                          environments.find(
+                          formattedEnvironments.find(
                             item => item.id === getValues('environment')
-                          )?.name
+                          )?.name || ''
                         }
                         disabled={isLoadingEnvs}
                         variant="secondary"
@@ -294,7 +296,7 @@ const AddNotificationModal = ({
                         align="start"
                         {...field}
                       >
-                        {environments.map((item, index) => (
+                        {formattedEnvironments.map((item, index) => (
                           <DropdownMenuItem
                             {...field}
                             key={index}

@@ -105,7 +105,6 @@ const EnvironmentRoles = ({
                       <DropdownMenuTrigger
                         placeholder={t(`form:select-environment`)}
                         label={
-                          // TODO: remove empty id when the backend is fixed
                           environments.find(
                             item =>
                               item.id && item.id === environment.environmentId
