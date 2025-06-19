@@ -727,7 +727,7 @@ func TestListFeaturesOrderByAutoOps(t *testing.T) {
 	}
 }
 
-func TestListFeaturesFilterHasFeatureRule(t *testing.T) {
+func TestListFeaturesFilterHasFeatureFlagAsRule(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
 	featureIDs := make([]string, 0)
@@ -737,8 +737,8 @@ func TestListFeaturesFilterHasFeatureRule(t *testing.T) {
 	}
 
 	listReq := &feature.ListFeaturesRequest{
-		EnvironmentId:  *environmentID,
-		HasFeatureRule: &wrappers.BoolValue{Value: true},
+		EnvironmentId:        *environmentID,
+		HasFeatureFlagAsRule: &wrappers.BoolValue{Value: true},
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
