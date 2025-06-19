@@ -15,7 +15,7 @@ global:
     bigquery:
       project: ""
       dataset: ""
-      location: "US"
+      location: ""
     
     # MySQL configuration (used when type: mysql)
     mysql:
