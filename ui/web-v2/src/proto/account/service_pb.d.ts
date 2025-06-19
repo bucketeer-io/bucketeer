@@ -220,6 +220,11 @@ export class CreateAccountV2Request extends jspb.Message {
   setTagsList(value: Array<string>): void;
   addTags(value: string, index?: number): string;
 
+  clearTeamsList(): void;
+  getTeamsList(): Array<string>;
+  setTeamsList(value: Array<string>): void;
+  addTeams(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAccountV2Request.AsObject;
   static toObject(
@@ -254,6 +259,7 @@ export namespace CreateAccountV2Request {
     lastName: string;
     language: string;
     tagsList: Array<string>;
+    teamsList: Array<string>;
   };
 }
 
@@ -666,6 +672,11 @@ export class UpdateAccountV2Request extends jspb.Message {
     value?: proto_account_command_pb.ChangeAccountV2TagsCommand
   ): void;
 
+  hasTeams(): boolean;
+  clearTeams(): void;
+  getTeams(): proto_common_string_pb.StringListValue | undefined;
+  setTeams(value?: proto_common_string_pb.StringListValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateAccountV2Request.AsObject;
   static toObject(
@@ -712,6 +723,7 @@ export namespace UpdateAccountV2Request {
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     tags?: proto_common_string_pb.StringListValue.AsObject;
     changeTagsCommand?: proto_account_command_pb.ChangeAccountV2TagsCommand.AsObject;
+    teams?: proto_common_string_pb.StringListValue.AsObject;
   };
 
   export class AccountV2Avatar extends jspb.Message {
