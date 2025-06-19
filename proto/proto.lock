@@ -917,6 +917,26 @@
       "def": {
         "enums": [
           {
+            "name": "ChangeType",
+            "enum_fields": [
+              {
+                "name": "UNSPECIFIED"
+              },
+              {
+                "name": "CREATE",
+                "integer": 1
+              },
+              {
+                "name": "UPDATE",
+                "integer": 2
+              },
+              {
+                "name": "DELETE",
+                "integer": 3
+              }
+            ]
+          },
+          {
             "name": "ListAccountsV2Request.OrderBy",
             "enum_fields": [
               {
@@ -1250,6 +1270,33 @@
             "name": "DeleteAccountV2Response"
           },
           {
+            "name": "TeamChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "change_type",
+                "type": "ChangeType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "team",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "name": "UpdateAccountV2Request",
             "fields": [
               {
@@ -1415,7 +1462,13 @@
               {
                 "id": 22,
                 "name": "tags",
-                "type": "common.StringListValue"
+                "type": "common.StringListValue",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 23,
@@ -1430,8 +1483,8 @@
               },
               {
                 "id": 24,
-                "name": "teams",
-                "type": "common.StringListValue"
+                "name": "team_changes",
+                "type": "TeamChange"
               }
             ],
             "messages": [

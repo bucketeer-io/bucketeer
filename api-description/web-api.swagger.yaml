@@ -9076,6 +9076,16 @@ definitions:
         type: string
       defaultFilter:
         type: boolean
+  accountTeamChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/bucketeeraccountChangeType'
+      team:
+        type: string
+    required:
+      - changeType
+      - team
   accountUpdateAPIKeyRequest:
     type: object
     properties:
@@ -9148,8 +9158,8 @@ definitions:
         $ref: '#/definitions/commonStringListValue'
       changeTagsCommand:
         $ref: '#/definitions/accountChangeAccountV2TagsCommand'
-      teams:
-        $ref: '#/definitions/commonStringListValue'
+      teamChanges:
+        $ref: '#/definitions/accountTeamChange'
   accountUpdateAccountV2Response:
     type: object
     properties:
@@ -9839,6 +9849,14 @@ definitions:
       - environmentId
   autoopsUpdateAutoOpsRuleResponse:
     type: object
+  bucketeeraccountChangeType:
+    type: string
+    enum:
+      - UNSPECIFIED
+      - CREATE
+      - UPDATE
+      - DELETE
+    default: UNSPECIFIED
   bucketeerautoopsClause:
     type: object
     properties:
