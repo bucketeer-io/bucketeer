@@ -31,7 +31,9 @@ import (
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber/storage"
+	storagev2 "github.com/bucketeer-io/bucketeer/pkg/subscriber/storage/v2"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
@@ -57,6 +59,12 @@ type goalEvtWriter struct {
 	retryGoalEventInterval  time.Duration
 }
 
+type GoalEventWriterOption struct {
+	DataWarehouseType string
+	MySQLClient       mysql.Client
+	BatchSize         int
+}
+
 func NewGoalEventWriter(
 	ctx context.Context,
 	logger *zap.Logger,
@@ -69,7 +77,51 @@ func NewGoalEventWriter(
 	redisClient redisv3.Client,
 	maxRetryGoalEventPeriod time.Duration,
 	retryGoalEventInterval time.Duration,
+	options ...GoalEventWriterOption,
 ) (Writer, error) {
+	var option GoalEventWriterOption
+	if len(options) > 0 {
+		option = options[0]
+	}
+
+	switch option.DataWarehouseType {
+	case "mysql":
+		if option.MySQLClient == nil {
+			return nil, errors.New("mysql client is required when using MySQL storage")
+		}
+
+		goalStorage := storagev2.NewMysqlGoalEventStorage(option.MySQLClient)
+		mysqlEventStorage := ecstorage.NewMySQLEventStorage(option.MySQLClient, logger)
+
+		// Calculate lock TTL as 80% of retry interval
+		if retryGoalEventInterval == 0 {
+			retryGoalEventInterval = defaultRetryGoalEventInterval
+		}
+		lockTTL := time.Duration(float64(retryGoalEventInterval) * 0.8)
+
+		w := &goalEvtWriter{
+			writer:                  storage.NewMysqlGoalEventWriter(goalStorage),
+			eventStorage:            mysqlEventStorage,
+			experimentClient:        exClient,
+			featureClient:           ftClient,
+			redisClient:             redisClient,
+			locker:                  NewGoalEventLocker(redisClient, lockTTL),
+			cache:                   cache,
+			location:                location,
+			logger:                  logger,
+			maxRetryGoalEventPeriod: maxRetryGoalEventPeriod,
+			retryGoalEventInterval:  retryGoalEventInterval,
+		}
+		w.StartRetryProcessor(ctx)
+		return w, nil
+
+	case "bigquery":
+		// Fall through to BigQuery implementation below
+	default:
+		// Default to BigQuery for backward compatibility
+	}
+
+	// BigQuery implementation
 	evt := epproto.GoalEvent{}
 	goalWriter, err := writer.NewWriter(
 		ctx,

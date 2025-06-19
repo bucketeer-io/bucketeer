@@ -38,5 +38,21 @@ data:
     {{ toJson .Values.processors }}
 
   onDemandProcessors.json: |-
+    {{- range $name, $config := .Values.onDemandProcessors }}
+    {{- if $config.dataWarehouse }}
+    {{- $_ := set $config.dataWarehouse "type" $.Values.global.dataWarehouse.type }}
+    {{- $_ := set $config.dataWarehouse "batchSize" $.Values.global.dataWarehouse.batchSize }}
+    {{- $_ := set $config.dataWarehouse "timezone" $.Values.global.dataWarehouse.timezone }}
+    {{- $_ := set $config.dataWarehouse.mysql "useMainConnection" $.Values.global.dataWarehouse.mysql.useMainConnection }}
+    {{- $_ := set $config.dataWarehouse.mysql "host" $.Values.global.dataWarehouse.mysql.host }}
+    {{- $_ := set $config.dataWarehouse.mysql "port" $.Values.global.dataWarehouse.mysql.port }}
+    {{- $_ := set $config.dataWarehouse.mysql "user" $.Values.global.dataWarehouse.mysql.user }}
+    {{- $_ := set $config.dataWarehouse.mysql "password" $.Values.global.dataWarehouse.mysql.password }}
+    {{- $_ := set $config.dataWarehouse.mysql "database" $.Values.global.dataWarehouse.mysql.database }}
+    {{- $_ := set $config.dataWarehouse.bigquery "project" $.Values.global.dataWarehouse.bigquery.project }}
+    {{- $_ := set $config.dataWarehouse.bigquery "dataset" $.Values.global.dataWarehouse.bigquery.dataset }}
+    {{- $_ := set $config.dataWarehouse.bigquery "location" $.Values.global.dataWarehouse.bigquery.location }}
+    {{- end }}
+    {{- end }}
     {{ toJson .Values.onDemandProcessors }}
 {{- end }}
