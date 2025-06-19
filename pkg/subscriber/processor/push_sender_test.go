@@ -89,8 +89,7 @@ func TestGetTopicsForPush(t *testing.T) {
 		desc           string
 		feature        *featureproto.Feature
 		push           *pushproto.Push
-		featureID      string
-		expectedTopics []topicInfo
+		expectedTopics []string
 	}{
 		{
 			desc: "both feature and push have no tags",
@@ -100,12 +99,8 @@ func TestGetTopicsForPush(t *testing.T) {
 			push: &pushproto.Push{
 				Tags: []string{},
 			},
-			featureID: "feature-123",
-			expectedTopics: []topicInfo{
-				{
-					topic: "bucketeer-no-tags-feature-123",
-					tag:   "",
-				},
+			expectedTopics: []string{
+				"bucketeer-default",
 			},
 		},
 		{
@@ -116,8 +111,7 @@ func TestGetTopicsForPush(t *testing.T) {
 			push: &pushproto.Push{
 				Tags: []string{},
 			},
-			featureID:      "feature-123",
-			expectedTopics: []topicInfo{},
+			expectedTopics: []string{},
 		},
 		{
 			desc: "feature has no tags but push has tags",
@@ -127,8 +121,7 @@ func TestGetTopicsForPush(t *testing.T) {
 			push: &pushproto.Push{
 				Tags: []string{"tag1", "tag2"},
 			},
-			featureID:      "feature-123",
-			expectedTopics: []topicInfo{},
+			expectedTopics: []string{},
 		},
 		{
 			desc: "feature and push have matching tags",
@@ -138,12 +131,8 @@ func TestGetTopicsForPush(t *testing.T) {
 			push: &pushproto.Push{
 				Tags: []string{"tag2", "tag4"},
 			},
-			featureID: "feature-123",
-			expectedTopics: []topicInfo{
-				{
-					topic: "bucketeer-tag2",
-					tag:   "tag2",
-				},
+			expectedTopics: []string{
+				"bucketeer-tag2",
 			},
 		},
 		{
@@ -154,16 +143,9 @@ func TestGetTopicsForPush(t *testing.T) {
 			push: &pushproto.Push{
 				Tags: []string{"tag1", "tag2", "tag4"},
 			},
-			featureID: "feature-123",
-			expectedTopics: []topicInfo{
-				{
-					topic: "bucketeer-tag1",
-					tag:   "tag1",
-				},
-				{
-					topic: "bucketeer-tag2",
-					tag:   "tag2",
-				},
+			expectedTopics: []string{
+				"bucketeer-tag1",
+				"bucketeer-tag2",
 			},
 		},
 		{
@@ -174,14 +156,13 @@ func TestGetTopicsForPush(t *testing.T) {
 			push: &pushproto.Push{
 				Tags: []string{"tag3", "tag4"},
 			},
-			featureID:      "feature-123",
-			expectedTopics: []topicInfo{},
+			expectedTopics: []string{},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			s := &pushSender{}
-			actualTopics := s.getTopicsForPush(p.feature, p.push, p.featureID)
+			actualTopics := s.getTopicsForPush(p.feature, p.push)
 			assert.Equal(t, p.expectedTopics, actualTopics)
 		})
 	}
@@ -193,18 +174,15 @@ func TestSendPushNotification(t *testing.T) {
 	// you would mock the pushFCM method and logger to test the behavior properly.
 	patterns := []struct {
 		desc          string
-		topicInfo     topicInfo
+		topic         string
 		push          *pushproto.Push
 		featureID     string
 		environmentId string
 		expectError   bool
 	}{
 		{
-			desc: "send notification with tag",
-			topicInfo: topicInfo{
-				topic: "bucketeer-tag1",
-				tag:   "tag1",
-			},
+			desc:  "send notification with tag",
+			topic: "bucketeer-tag1",
 			push: &pushproto.Push{
 				Id:                "push-123",
 				FcmServiceAccount: `{"type": "service_account"}`,
@@ -214,11 +192,8 @@ func TestSendPushNotification(t *testing.T) {
 			expectError:   false,
 		},
 		{
-			desc: "send notification without tag",
-			topicInfo: topicInfo{
-				topic: "bucketeer-no-tags-feature-123",
-				tag:   "",
-			},
+			desc:  "send notification without tag",
+			topic: "bucketeer-default",
 			push: &pushproto.Push{
 				Id:                "push-123",
 				FcmServiceAccount: `{"type": "service_account"}`,
@@ -232,7 +207,7 @@ func TestSendPushNotification(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			// This test would need proper mocking of dependencies
 			// For now, we're just ensuring the function structure is correct
-			assert.NotNil(t, p.topicInfo)
+			assert.NotEmpty(t, p.topic)
 			assert.NotNil(t, p.push)
 			assert.NotEmpty(t, p.featureID)
 			assert.NotEmpty(t, p.environmentId)
