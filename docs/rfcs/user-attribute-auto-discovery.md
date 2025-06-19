@@ -94,12 +94,12 @@ sequenceDiagram
 - It leverages the existing PubSub topic for EvaluetionEvent, but will increase PubSub costs by 40-50%.
 - Development costs are low by utilizing existing sequences.
 
-# Solution3 - Using the existing EvaluationEventsDWHPersister -
+# Solution3 - Using the existing EvaluationCountEventPersister -
 
 This solution simply leverages the UserAttribute contained in the `EvaluationEvent` sent by the `RegisterEventsRequest` and adds a UserAttribute save operation to the existing data save sequence by leveraging the existing PubSub subscription.
 
 1. Create `UserAttributesCache` for Redis.
-2. In the `EvalEvtWriter` used by `EventsDWHPersister` (which updates data related to `EvaluationEvent`), add a process to determine whether the attribute is new and save it using `UserAttributesCache`.
+2. In the `EvalEvtWriter` used by `EventsPersister` (which updates data related to `EvaluationEvent`), add a process to determine whether the attribute is new and save it using `UserAttributesCache`.
 3. Provide an API for the console to retrieve the attribute list.
 
 
