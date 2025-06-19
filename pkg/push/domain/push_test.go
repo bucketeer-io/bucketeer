@@ -26,17 +26,64 @@ import (
 
 func TestNewPush(t *testing.T) {
 	t.Parallel()
-	name := "name-1"
-	key := "key-1"
-	serviceAccount := "sa"
-	tags := []string{"tag-1", "tag-2"}
-	actual, err := NewPush(name, serviceAccount, tags)
-	assert.NoError(t, err)
-	assert.IsType(t, &Push{}, actual)
-	assert.NotEqual(t, "", actual.Id)
-	assert.NotEqual(t, key, actual.Id)
-	assert.Equal(t, serviceAccount, actual.FcmServiceAccount)
-	assert.Equal(t, tags, actual.Tags)
+
+	patterns := []struct {
+		name           string
+		pushName       string
+		serviceAccount string
+		tags           []string
+		expected       func(*testing.T, *Push, error)
+	}{
+		{
+			name:           "with tags",
+			pushName:       "name-1",
+			serviceAccount: "sa",
+			tags:           []string{"tag-1", "tag-2"},
+			expected: func(t *testing.T, push *Push, err error) {
+				assert.NoError(t, err)
+				assert.IsType(t, &Push{}, push)
+				assert.NotEqual(t, "", push.Id)
+				assert.Equal(t, "sa", push.FcmServiceAccount)
+				assert.Equal(t, []string{"tag-1", "tag-2"}, push.Tags)
+				assert.Equal(t, 2, len(push.Tags))
+			},
+		},
+		{
+			name:           "without tags",
+			pushName:       "name-1",
+			serviceAccount: "sa",
+			tags:           []string{},
+			expected: func(t *testing.T, push *Push, err error) {
+				assert.NoError(t, err)
+				assert.IsType(t, &Push{}, push)
+				assert.NotEqual(t, "", push.Id)
+				assert.Equal(t, "sa", push.FcmServiceAccount)
+				assert.Equal(t, []string{}, push.Tags)
+				assert.Equal(t, 0, len(push.Tags))
+			},
+		},
+		{
+			name:           "with nil tags",
+			pushName:       "name-1",
+			serviceAccount: "sa",
+			tags:           nil,
+			expected: func(t *testing.T, push *Push, err error) {
+				assert.NoError(t, err)
+				assert.IsType(t, &Push{}, push)
+				assert.NotEqual(t, "", push.Id)
+				assert.Equal(t, "sa", push.FcmServiceAccount)
+				assert.Nil(t, push.Tags)
+				assert.Equal(t, 0, len(push.Tags))
+			},
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.name, func(t *testing.T) {
+			actual, err := NewPush(p.pushName, p.serviceAccount, p.tags)
+			p.expected(t, actual, err)
+		})
+	}
 }
 
 func TestSetDeleted(t *testing.T) {

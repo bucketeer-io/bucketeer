@@ -152,6 +152,60 @@ func TestCreateAndListPush(t *testing.T) {
 	}
 }
 
+func TestCreateAndListPush_NoCommand_WithoutTags(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	pushClient := newPushClient(t)
+	defer pushClient.Close()
+
+	fcmServiceAccount := fmt.Sprintf(fcmServiceAccountDummy, prefixTestName, newUUID(t))
+	pushName := newPushName(t)
+
+	// Create push without tags using no-command API
+	req := &pushproto.CreatePushRequest{
+		EnvironmentId:     *environmentID,
+		Name:              pushName,
+		FcmServiceAccount: []byte(fcmServiceAccount),
+		Tags:              []string{}, // Empty tags
+	}
+	resp, err := pushClient.CreatePush(ctx, req)
+	if err != nil {
+		t.Fatal("Failed to create push without tags:", err)
+	}
+
+	// Verify the push was created correctly
+	push := resp.Push
+	if push == nil {
+		t.Fatal("Push response is nil")
+	}
+	if push.Name != pushName {
+		t.Fatalf("Incorrect push name. Expected: %s actual: %s", pushName, push.Name)
+	}
+	if push.FcmServiceAccount != "" {
+		t.Fatalf("The FCM service account must be empty. Actual: %s", push.FcmServiceAccount)
+	}
+	if len(push.Tags) != 0 {
+		t.Fatalf("The number of tags is incorrect. Expected: %d actual: %d", 0, len(push.Tags))
+	}
+	if push.Deleted != false {
+		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, push.Deleted)
+	}
+
+	// Verify the push appears in the list
+	pushes := listPushes(t, pushClient)
+	var foundPush *pushproto.Push
+	for _, p := range pushes {
+		if p.Id == push.Id {
+			foundPush = p
+			break
+		}
+	}
+	if foundPush == nil {
+		t.Fatalf("Push not found in list")
+	}
+}
+
 func TestUpdatePush(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
