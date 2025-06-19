@@ -61,7 +61,8 @@ message CreateAccountV2Request {
   string first_name = 8;
   string last_name = 9;
   string language = 10;
-  repeated string tags = 11;
+  repeated string tags = 11 [deprecated = true];
+  repeated string teams = 12;
 }
 
 message CreateAccountV2Response {
@@ -95,6 +96,18 @@ message DeleteAccountV2Request {
 }
 
 message DeleteAccountV2Response {}
+
+enum ChangeType {
+  UNSPECIFIED = 0;
+  CREATE = 1;
+  UPDATE = 2;
+  DELETE = 3;
+}
+
+message TeamChange {
+  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
+  string team = 2 [(google.api.field_behavior) = REQUIRED];
+}
 
 message UpdateAccountV2Request {
   message AccountV2Avatar {
@@ -132,8 +145,9 @@ message UpdateAccountV2Request {
   google.protobuf.Int64Value last_seen = 19;
   AccountV2Avatar avatar = 20;
   google.protobuf.BoolValue disabled = 21;
-  common.StringListValue tags = 22;
+  common.StringListValue tags = 22 [deprecated = true];
   ChangeAccountV2TagsCommand change_tags_command = 23 [deprecated = true];
+  TeamChange team_changes = 24;
 }
 
 message UpdateAccountV2Response {

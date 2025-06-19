@@ -2182,6 +2182,10 @@ definitions:
         type: array
         items:
           type: string
+      teams:
+        type: array
+        items:
+          type: string
   accountAccountV2EnvironmentRole:
     type: object
     properties:

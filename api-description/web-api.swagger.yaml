@@ -8006,6 +8006,195 @@ paths:
           default: UNSPECIFIED
       tags:
         - tag
+  /v1/team:
+    delete:
+      summary: Delete
+      description: Delete a team.
+      operationId: web.v1.team.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/teamDeleteTeamResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "404":
+          description: Returned when the team is not found.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 5
+              details: []
+              message: not found
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+        - name: organizationId
+          in: query
+          required: true
+          type: string
+      tags:
+        - team
+    post:
+      summary: Create
+      description: Create a team.
+      operationId: web.v1.team.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/teamCreateTeamResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/teamCreateTeamRequest'
+      tags:
+        - team
+  /v1/teams:
+    get:
+      summary: List
+      description: List teams.
+      operationId: web.v1.team.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/teamListTeamsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+            - ORGANIZATION
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: organizationId
+          in: query
+          required: true
+          type: string
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+      tags:
+        - team
   /webhook/triggers/{token}:
     post:
       operationId: FeatureService_FlagTriggerWebhook
@@ -8394,6 +8583,10 @@ definitions:
         type: array
         items:
           type: string
+      teams:
+        type: array
+        items:
+          type: string
   accountAccountV2EnvironmentRole:
     type: object
     properties:
@@ -8627,6 +8820,10 @@ definitions:
       language:
         type: string
       tags:
+        type: array
+        items:
+          type: string
+      teams:
         type: array
         items:
           type: string
@@ -8879,6 +9076,16 @@ definitions:
         type: string
       defaultFilter:
         type: boolean
+  accountTeamChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/bucketeeraccountChangeType'
+      team:
+        type: string
+    required:
+      - changeType
+      - team
   accountUpdateAPIKeyRequest:
     type: object
     properties:
@@ -8951,6 +9158,8 @@ definitions:
         $ref: '#/definitions/commonStringListValue'
       changeTagsCommand:
         $ref: '#/definitions/accountChangeAccountV2TagsCommand'
+      teamChanges:
+        $ref: '#/definitions/accountTeamChange'
   accountUpdateAccountV2Response:
     type: object
     properties:
@@ -9640,6 +9849,14 @@ definitions:
       - environmentId
   autoopsUpdateAutoOpsRuleResponse:
     type: object
+  bucketeeraccountChangeType:
+    type: string
+    enum:
+      - UNSPECIFIED
+      - CREATE
+      - UPDATE
+      - DELETE
+    default: UNSPECIFIED
   bucketeerautoopsClause:
     type: object
     properties:
@@ -13187,6 +13404,72 @@ definitions:
       - FEATURE_FLAG
       - ACCOUNT
     default: UNSPECIFIED
+  teamCreateTeamRequest:
+    type: object
+    properties:
+      name:
+        type: string
+      description:
+        type: string
+      organizationId:
+        type: string
+    required:
+      - name
+      - organizationId
+  teamCreateTeamResponse:
+    type: object
+    properties:
+      team:
+        $ref: '#/definitions/teamTeam'
+  teamDeleteTeamResponse:
+    type: object
+  teamListTeamsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+      - ORGANIZATION
+    default: DEFAULT
+  teamListTeamsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  teamListTeamsResponse:
+    type: object
+    properties:
+      teams:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/teamTeam'
+      nextCursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  teamTeam:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      organizationId:
+        type: string
+      organizationName:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
   userUser:
     type: object
     properties:
