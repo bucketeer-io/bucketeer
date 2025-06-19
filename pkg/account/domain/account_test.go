@@ -34,6 +34,7 @@ func TestNewAccountV2(t *testing.T) {
 		"en",
 		"avatarImageURL",
 		[]string{"tag"},
+		[]string{"team"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -59,6 +60,7 @@ func TestChangeFirstName(t *testing.T) {
 		"en",
 		"avatarImageURL",
 		[]string{"tag"},
+		[]string{"team"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -76,6 +78,7 @@ func TestChangeLastName(t *testing.T) {
 		"en",
 		"avatarImageURL",
 		[]string{"tag"},
+		[]string{"team"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -93,6 +96,7 @@ func TestChangeAvatarImageURL(t *testing.T) {
 		"en",
 		"avatarImageURL",
 		[]string{"tag-1"},
+		[]string{"team"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -110,6 +114,7 @@ func TestChangeTags(t *testing.T) {
 		"en",
 		"avatarImageURL",
 		[]string{"tag-1"},
+		[]string{"team"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -127,6 +132,7 @@ func TestChangeOrganizationRole(t *testing.T) {
 		"en",
 		"avatarImageURL",
 		[]string{"tag"},
+		[]string{"team"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -144,6 +150,7 @@ func TestChangeEnvironmentRole(t *testing.T) {
 		"en",
 		"avatarImageURL",
 		[]string{"tag"},
+		[]string{"team"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -268,6 +275,7 @@ func TestPatchEnvironmentRole(t *testing.T) {
 				"en",
 				"avatarImageURL",
 				[]string{"tag"},
+				[]string{"team"},
 				"organizationID",
 				proto.AccountV2_Role_Organization_MEMBER,
 				[]*proto.AccountV2_EnvironmentRole{
@@ -295,6 +303,7 @@ func TestEnableV2(t *testing.T) {
 		"en",
 		"avatarImageURL",
 		[]string{"tag"},
+		[]string{"team"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -313,6 +322,7 @@ func TestDisableV2(t *testing.T) {
 		"en",
 		"avatarImageURL",
 		[]string{"tag"},
+		[]string{"team"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
@@ -404,6 +414,7 @@ func TestAddSearchFilter(t *testing.T) {
 				account.Language,
 				account.AvatarImageUrl,
 				account.Tags,
+				[]string{"team"},
 				account.OrganizationId,
 				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.expectedFilters {
@@ -563,6 +574,7 @@ func TestChangeSearchFilterName(t *testing.T) {
 				account.Language,
 				account.AvatarImageUrl,
 				account.Tags,
+				[]string{"team"},
 				account.OrganizationId,
 				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
@@ -717,6 +729,7 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 				account.Language,
 				account.AvatarImageUrl,
 				account.Tags,
+				[]string{"team"},
 				account.OrganizationId,
 				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
@@ -871,6 +884,7 @@ func TestChangeDefaultSearchFilter(t *testing.T) {
 				account.Language,
 				account.AvatarImageUrl,
 				account.Tags,
+				[]string{"team"},
 				account.OrganizationId,
 				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
@@ -1012,6 +1026,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 				account.Language,
 				account.AvatarImageUrl,
 				account.Tags,
+				[]string{"team"},
 				account.OrganizationId,
 				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
@@ -1063,6 +1078,7 @@ func TestAccountV2_Update(t *testing.T) {
 		"en",
 		"avatarImageURL",
 		[]string{"tag"},
+		[]string{"team"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{
@@ -1079,6 +1095,7 @@ func TestAccountV2_Update(t *testing.T) {
 		wrapperspb.String("newAvatarImageURL"),
 		nil,
 		&common.StringListValue{Values: []string{"tag-1"}},
+		&common.StringListValue{Values: []string{"team-1"}},
 		&proto.UpdateAccountV2Request_OrganizationRoleValue{
 			Role: proto.AccountV2_Role_Organization_ADMIN,
 		},
@@ -1153,6 +1170,7 @@ func TestAccountV2_GetAccountFullName(t *testing.T) {
 				p.account.Language,
 				p.account.AvatarImageUrl,
 				p.account.Tags,
+				p.account.Teams,
 				p.account.OrganizationId,
 				p.account.OrganizationRole,
 				p.account.EnvironmentRoles,

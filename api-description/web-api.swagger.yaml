@@ -7698,6 +7698,7 @@ paths:
               - DOMAIN_EVENT_FLAG_TRIGGER
               - DOMAIN_EVENT_TAG
               - DOMAIN_EVENT_CODEREF
+              - DOMAIN_EVENT_TEAM
               - FEATURE_STALE
               - EXPERIMENT_RUNNING
               - MAU_COUNT
@@ -8236,6 +8237,7 @@ definitions:
       - DOMAIN_EVENT_FLAG_TRIGGER
       - DOMAIN_EVENT_TAG
       - DOMAIN_EVENT_CODEREF
+      - DOMAIN_EVENT_TEAM
       - FEATURE_STALE
       - EXPERIMENT_RUNNING
       - MAU_COUNT
@@ -8387,6 +8389,10 @@ definitions:
         type: integer
         format: int32
       tags:
+        type: array
+        items:
+          type: string
+      teams:
         type: array
         items:
           type: string
@@ -8623,6 +8629,10 @@ definitions:
       language:
         type: string
       tags:
+        type: array
+        items:
+          type: string
+      teams:
         type: array
         items:
           type: string
@@ -8947,6 +8957,8 @@ definitions:
         $ref: '#/definitions/commonStringListValue'
       changeTagsCommand:
         $ref: '#/definitions/accountChangeAccountV2TagsCommand'
+      teams:
+        $ref: '#/definitions/commonStringListValue'
   accountUpdateAccountV2Response:
     type: object
     properties:

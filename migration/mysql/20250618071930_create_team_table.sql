@@ -9,3 +9,5 @@ CREATE TABLE `team` (
     UNIQUE KEY `unique_name_org` (`name`, `organization_id`),
     KEY `idx_organization_id` (`organization_id`)
 );
+
+ALTER TABLE `account_v2` ADD COLUMN teams JSON DEFAULT NULL;

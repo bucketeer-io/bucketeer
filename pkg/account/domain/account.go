@@ -61,6 +61,7 @@ type AccountWithOrganization struct {
 func NewAccountV2(
 	email, name, firstName, lastName, language, avatarImageURL string,
 	tags []string,
+	teams []string,
 	organizationID string,
 	organizationRole proto.AccountV2_Role_Organization,
 	environmentRoles []*proto.AccountV2_EnvironmentRole,
@@ -71,6 +72,7 @@ func NewAccountV2(
 		Name:             name,
 		AvatarImageUrl:   avatarImageURL,
 		Tags:             tags,
+		Teams:            teams,
 		OrganizationId:   organizationID,
 		OrganizationRole: organizationRole,
 		EnvironmentRoles: environmentRoles,
@@ -88,6 +90,7 @@ func (a *AccountV2) Update(
 	name, firstName, lastName, language, avatarImageURL *wrapperspb.StringValue,
 	avatar *proto.UpdateAccountV2Request_AccountV2Avatar,
 	tags *common.StringListValue,
+	teams *common.StringListValue,
 	organizationRole *proto.UpdateAccountV2Request_OrganizationRoleValue,
 	environmentRoles []*proto.AccountV2_EnvironmentRole,
 	isDisabled *wrapperspb.BoolValue,
@@ -118,6 +121,9 @@ func (a *AccountV2) Update(
 	}
 	if tags != nil {
 		updated.Tags = tags.Values
+	}
+	if teams != nil {
+		updated.Teams = teams.Values
 	}
 	if organizationRole != nil {
 		updated.OrganizationRole = organizationRole.Role

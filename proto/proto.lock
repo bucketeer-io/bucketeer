@@ -207,6 +207,18 @@
                 "id": 18,
                 "name": "tags",
                 "type": "string",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 19,
+                "name": "teams",
+                "type": "string",
                 "is_repeated": true
               }
             ],
@@ -1110,6 +1122,18 @@
                 "id": 11,
                 "name": "tags",
                 "type": "string",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 12,
+                "name": "teams",
+                "type": "string",
                 "is_repeated": true
               }
             ]
@@ -1403,6 +1427,11 @@
                     "value": "true"
                   }
                 ]
+              },
+              {
+                "id": 24,
+                "name": "teams",
+                "type": "common.StringListValue"
               }
             ],
             "messages": [
@@ -44013,6 +44042,10 @@
               {
                 "name": "DOMAIN_EVENT_CODEREF",
                 "integer": 18
+              },
+              {
+                "name": "DOMAIN_EVENT_TEAM",
+                "integer": 19
               },
               {
                 "name": "FEATURE_STALE",

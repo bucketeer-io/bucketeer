@@ -61,7 +61,8 @@ message CreateAccountV2Request {
   string first_name = 8;
   string last_name = 9;
   string language = 10;
-  repeated string tags = 11;
+  repeated string tags = 11 [deprecated = true];
+  repeated string teams = 12;
 }
 
 message CreateAccountV2Response {
@@ -134,6 +135,7 @@ message UpdateAccountV2Request {
   google.protobuf.BoolValue disabled = 21;
   common.StringListValue tags = 22;
   ChangeAccountV2TagsCommand change_tags_command = 23 [deprecated = true];
+  common.StringListValue teams = 24;
 }
 
 message UpdateAccountV2Response {
