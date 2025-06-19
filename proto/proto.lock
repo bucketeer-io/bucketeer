@@ -44319,6 +44319,26 @@
       "def": {
         "enums": [
           {
+            "name": "ChangeType",
+            "enum_fields": [
+              {
+                "name": "UNSPECIFIED"
+              },
+              {
+                "name": "CREATE",
+                "integer": 1
+              },
+              {
+                "name": "UPDATE",
+                "integer": 2
+              },
+              {
+                "name": "DELETE",
+                "integer": 3
+              }
+            ]
+          },
+          {
             "name": "ListPushesRequest.OrderBy",
             "enum_fields": [
               {
@@ -44360,6 +44380,33 @@
           }
         ],
         "messages": [
+          {
+            "name": "TagChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "change_type",
+                "type": "ChangeType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "tag",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
           {
             "name": "CreatePushRequest",
             "fields": [
@@ -44580,7 +44627,13 @@
                 "id": 6,
                 "name": "tags",
                 "type": "string",
-                "is_repeated": true
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 7,
@@ -44602,6 +44655,12 @@
                 "id": 11,
                 "name": "disabled",
                 "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 12,
+                "name": "tag_changes",
+                "type": "TagChange",
+                "is_repeated": true
               }
             ],
             "reserved_ids": [

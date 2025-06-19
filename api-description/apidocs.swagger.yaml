@@ -2387,6 +2387,16 @@ definitions:
         type: array
         items:
           type: string
+  bucketeerfeatureTagChange:
+    type: object
+    properties:
+      changeType:
+        $ref: '#/definitions/bucketeerfeatureChangeType'
+      tag:
+        type: string
+    required:
+      - changeType
+      - tag
   bucketeerfeatureVariation:
     type: object
     properties:
@@ -2818,7 +2828,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/featureTagChange'
+          $ref: '#/definitions/bucketeerfeatureTagChange'
   bucketeergatewayUpdateFeatureResponse:
     type: object
     properties:
@@ -3634,16 +3644,6 @@ definitions:
       - FIXED
       - ROLLOUT
     default: FIXED
-  featureTagChange:
-    type: object
-    properties:
-      changeType:
-        $ref: '#/definitions/bucketeerfeatureChangeType'
-      tag:
-        type: string
-    required:
-      - changeType
-      - tag
   featureTarget:
     type: object
     properties:
