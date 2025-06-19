@@ -97,7 +97,7 @@ func (s *TagService) CreateTag(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateCreateTagRquest(req, localizer); err != nil {
+	if err := s.validateCreateTagRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to create a tag",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -160,7 +160,7 @@ func (s *TagService) CreateTag(
 	return &proto.CreateTagResponse{Tag: tag.Tag}, nil
 }
 
-func (s *TagService) validateCreateTagRquest(req *proto.CreateTagRequest, localizer locale.Localizer) error {
+func (s *TagService) validateCreateTagRequest(req *proto.CreateTagRequest, localizer locale.Localizer) error {
 	if len(strings.TrimSpace(req.Name)) == 0 {
 		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

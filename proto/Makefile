@@ -1,5 +1,5 @@
 PROTO_FOLDERS := $(filter-out ./external%, $(shell find . -name '*.proto' -not -path "./openapi/web_default_settings.proto" -print0 | xargs -0 -n1 dirname | sort --unique))
-PROTO_WITH_GRPC_GATEWAY := ./account ./auditlog ./auth ./autoops ./environment ./eventcounter ./experiment ./feature ./gateway ./notification ./push ./batch ./tag ./coderef
+PROTO_WITH_GRPC_GATEWAY := ./account ./auditlog ./auth ./autoops ./environment ./eventcounter ./experiment ./feature ./gateway ./notification ./push ./batch ./tag ./coderef ./team
 
 GIT_TOP_DIR := $(shell cd .. ; pwd)
 PROTOBUF_INCLUDE_DIR := ./external/protocolbuffers/protobuf/v23.4

@@ -64,6 +64,7 @@ message Event {
     FLAG_TRIGGER = 16;
     TAG = 17;
     CODEREF = 18;
+    TEAM = 19;
   }
   enum Type {
     UNKNOWN = 0;
@@ -257,6 +258,8 @@ message Event {
     CODE_REFERENCE_CREATED = 1800;
     CODE_REFERENCE_UPDATED = 1801;
     CODE_REFERENCE_DELETED = 1802;
+    TEAM_CREATED = 1900;
+    TEAM_DELETED = 1901;
   }
   string id = 1;
   int64 timestamp = 2;
@@ -1336,4 +1339,18 @@ message CodeReferenceUpdatedEvent {
 message CodeReferenceDeletedEvent {
   string id = 1;
   string environment_id = 2;
+}
+
+message TeamCreatedEvent {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string organization_id = 4;
+  int64 created_at = 5;
+  int64 updated_at = 6;
+}
+
+message TeamDeletedEvent {
+  string id = 1;
+  string organization_id = 2;
 }
