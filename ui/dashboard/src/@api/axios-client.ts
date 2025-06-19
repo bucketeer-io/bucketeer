@@ -3,6 +3,8 @@ import type { AxiosInstance } from 'axios';
 import { getTokenStorage, setTokenStorage } from 'storage/token';
 import { refreshTokenFetcher } from './auth';
 
+let isRefreshing = false;
+
 const axiosClient: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_WEB_API_ENDPOINT
 });
@@ -35,9 +37,9 @@ axiosClient.interceptors.response.use(
     if (
       authToken?.refreshToken &&
       error.response?.status === 401 &&
-      !originalRequest._retry
+      !isRefreshing
     ) {
-      originalRequest._retry = true;
+      isRefreshing = true;
       refreshTokenFetcher(authToken?.refreshToken)
         .then(response => {
           const newAccessToken = response.token.accessToken;
@@ -51,6 +53,7 @@ axiosClient.interceptors.response.use(
           return axiosClient(originalRequest);
         })
         .catch(err => {
+          isRefreshing = false;
           document.dispatchEvent(
             new CustomEvent('unauthenticated', {
               bubbles: true
