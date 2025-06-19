@@ -1,5 +1,5 @@
 -- Create Evaluation Event Table
-CREATE TABLE `evaluation_event` (
+CREATE TABLE IF NOT EXISTS `evaluation_event` (
     `id` VARCHAR(255) NOT NULL,
     `environment_id` VARCHAR(255) NOT NULL,
     `timestamp` DATETIME(6) NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE `evaluation_event` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Create Goal Event Table
-CREATE TABLE `goal_event` (
+CREATE TABLE IF NOT EXISTS `goal_event` (
     `id` VARCHAR(255) NOT NULL,
     `environment_id` VARCHAR(255) NOT NULL,
     `timestamp` DATETIME(6) NOT NULL,
