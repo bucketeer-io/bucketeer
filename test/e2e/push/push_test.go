@@ -18,6 +18,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -239,8 +240,17 @@ func TestUpdatePush(t *testing.T) {
 		Id:            push.Id,
 		EnvironmentId: *environmentID,
 		Name:          &wrappers.StringValue{Value: newName},
-		Tags:          []string{newTag},
-		Disabled:      wrapperspb.Bool(true),
+		TagChanges: []*pushproto.TagChange{
+			{
+				Tag:        tag,
+				ChangeType: pushproto.ChangeType_CREATE, // This will be ignored
+			},
+			{
+				Tag:        newTag,
+				ChangeType: pushproto.ChangeType_CREATE,
+			},
+		},
+		Disabled: wrapperspb.Bool(true),
 	}
 	if _, err := pushClient.UpdatePush(ctx, updateReq); err != nil {
 		t.Fatal("Failed to update push:", err)
@@ -261,11 +271,11 @@ func TestUpdatePush(t *testing.T) {
 	if updatedPush.Name != newName {
 		t.Errorf("Push name not updated. Expected: %s, got: %s", newName, updatedPush.Name)
 	}
-	if len(updatedPush.Tags) != 1 {
-		t.Errorf("Expected 1 tag, got %d", len(updatedPush.Tags))
+	if len(updatedPush.Tags) != 2 {
+		t.Errorf("Expected 2 tags, got %d", len(updatedPush.Tags))
 	}
-	if updatedPush.Tags[0] != newTag {
-		t.Errorf("Push tag not updated. Expected: %s, got: %s", newTag, updatedPush.Tags[0])
+	if !slices.Contains(updatedPush.Tags, newTag) {
+		t.Errorf("Push tag not updated. Expected: %s, got: %s", newTag, updatedPush.Tags)
 	}
 	if !updatedPush.Disabled {
 		t.Errorf("Push disabled status not updated. Expected: true, got: %v", updatedPush.Disabled)
