@@ -95,7 +95,7 @@ func (a *AutoOpsRule) Update(
 		updated.AutoOpsRule.AutoOpsStatus = *autoOpsStatus
 	}
 
-	if err := updated.changeOpsEventRateClauses(
+	if err := updated.changeClauses(
 		opsEventRateClauses,
 		datetimeClauses,
 	); err != nil {
@@ -107,7 +107,7 @@ func (a *AutoOpsRule) Update(
 	return updated, nil
 }
 
-func (a *AutoOpsRule) changeOpsEventRateClauses(
+func (a *AutoOpsRule) changeClauses(
 	opsEventRateClauses []*proto.OpsEventRateClauseChange,
 	datetimeClauses []*proto.DatetimeClauseChange,
 ) error {
@@ -127,14 +127,14 @@ func (a *AutoOpsRule) changeOpsEventRateClauses(
 		datetimeCreateAndUpdate, datetimeDelete         []*proto.DatetimeClauseChange
 	)
 	for _, c := range opsEventRateClauses {
-		if c.ChangeType == proto.ChangeType_CREATE {
+		if c.ChangeType == proto.ChangeType_DELETE {
 			opsEventRateDelete = append(opsEventRateDelete, c)
 		} else {
 			opsEventRateCreateAndUpdate = append(opsEventRateCreateAndUpdate, c)
 		}
 	}
 	for _, c := range datetimeClauses {
-		if c.ChangeType == proto.ChangeType_CREATE {
+		if c.ChangeType == proto.ChangeType_DELETE {
 			datetimeDelete = append(datetimeDelete, c)
 		} else {
 			datetimeCreateAndUpdate = append(datetimeCreateAndUpdate, c)
