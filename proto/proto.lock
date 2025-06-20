@@ -8081,6 +8081,26 @@
       "def": {
         "enums": [
           {
+            "name": "ChangeType",
+            "enum_fields": [
+              {
+                "name": "UNSPECIFIED"
+              },
+              {
+                "name": "CREATE",
+                "integer": 1
+              },
+              {
+                "name": "UPDATE",
+                "integer": 2
+              },
+              {
+                "name": "DELETE",
+                "integer": 3
+              }
+            ]
+          },
+          {
             "name": "ListProgressiveRolloutsRequest.OrderBy",
             "enum_fields": [
               {
@@ -8391,6 +8411,80 @@
             "name": "DeleteAutoOpsRuleResponse"
           },
           {
+            "name": "OpsEventRateClauseChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "clause",
+                "type": "OpsEventRateClause",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "The clause value must be fully filled if the create or update clause action is requested."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "change_type",
+                "type": "ChangeType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "DatetimeClauseChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "clause",
+                "type": "DatetimeClause",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "The clause value must be fully filled if the create or update clause action is requested."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "change_type",
+                "type": "ChangeType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "name": "UpdateAutoOpsRuleRequest",
             "fields": [
               {
@@ -8516,128 +8610,20 @@
               },
               {
                 "id": 10,
-                "name": "update_ops_event_rate_clauses",
-                "type": "UpdateOpsEventRateClause",
+                "name": "ops_event_rate_clause_changes",
+                "type": "OpsEventRateClauseChange",
                 "is_repeated": true
               },
               {
                 "id": 11,
-                "name": "update_datetime_clauses",
-                "type": "UpdateDatetimeClause",
+                "name": "datetime_clause_changes",
+                "type": "DatetimeClauseChange",
                 "is_repeated": true
               }
             ],
             "reserved_ids": [
               1,
               3
-            ],
-            "messages": [
-              {
-                "name": "UpdateOpsEventRateClause",
-                "fields": [
-                  {
-                    "id": 1,
-                    "name": "id",
-                    "type": "string",
-                    "options": [
-                      {
-                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                        "aggregated": [
-                          {
-                            "name": "description",
-                            "value": "The clause ID, if not set, a new event rate clause will be created."
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "id": 2,
-                    "name": "deleted",
-                    "type": "google.protobuf.BoolValue",
-                    "options": [
-                      {
-                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                        "aggregated": [
-                          {
-                            "name": "description",
-                            "value": "If true and the number of clause is greater than 1, the clause will be deleted"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "id": 3,
-                    "name": "clause",
-                    "type": "OpsEventRateClause",
-                    "options": [
-                      {
-                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                        "aggregated": [
-                          {
-                            "name": "description",
-                            "value": "The clause value, must be fully filled if update or create clause action is requested."
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "UpdateDatetimeClause",
-                "fields": [
-                  {
-                    "id": 1,
-                    "name": "id",
-                    "type": "string",
-                    "options": [
-                      {
-                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                        "aggregated": [
-                          {
-                            "name": "description",
-                            "value": "The clause ID, if not set, a new date time clause will be created."
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "id": 2,
-                    "name": "deleted",
-                    "type": "google.protobuf.BoolValue",
-                    "options": [
-                      {
-                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                        "aggregated": [
-                          {
-                            "name": "description",
-                            "value": "If true and the number of clause is greater than 1, the clause will be deleted"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "id": 3,
-                    "name": "clause",
-                    "type": "DatetimeClause",
-                    "options": [
-                      {
-                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                        "aggregated": [
-                          {
-                            "name": "description",
-                            "value": "The clause value, must be fully filled if update or create clause action is requested."
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
             ]
           },
           {
@@ -22904,14 +22890,14 @@
               },
               {
                 "id": 10,
-                "name": "update_ops_event_rate_clauses",
-                "type": "autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause",
+                "name": "ops_event_rate_clause_changes",
+                "type": "autoops.OpsEventRateClauseChange",
                 "is_repeated": true
               },
               {
                 "id": 11,
-                "name": "update_datetime_clauses",
-                "type": "autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause",
+                "name": "datetime_clause_changes",
+                "type": "autoops.DatetimeClauseChange",
                 "is_repeated": true
               }
             ]

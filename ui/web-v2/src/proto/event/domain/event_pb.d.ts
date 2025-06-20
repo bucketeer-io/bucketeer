@@ -5047,25 +5047,25 @@ export class AutoOpsRuleUpdatedEvent extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  clearUpdateOpsEventRateClausesList(): void;
-  getUpdateOpsEventRateClausesList(): Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause>;
-  setUpdateOpsEventRateClausesList(
-    value: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause>
+  clearOpsEventRateClauseChangesList(): void;
+  getOpsEventRateClauseChangesList(): Array<proto_autoops_service_pb.OpsEventRateClauseChange>;
+  setOpsEventRateClauseChangesList(
+    value: Array<proto_autoops_service_pb.OpsEventRateClauseChange>
   ): void;
-  addUpdateOpsEventRateClauses(
-    value?: proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause,
+  addOpsEventRateClauseChanges(
+    value?: proto_autoops_service_pb.OpsEventRateClauseChange,
     index?: number
-  ): proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause;
+  ): proto_autoops_service_pb.OpsEventRateClauseChange;
 
-  clearUpdateDatetimeClausesList(): void;
-  getUpdateDatetimeClausesList(): Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause>;
-  setUpdateDatetimeClausesList(
-    value: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause>
+  clearDatetimeClauseChangesList(): void;
+  getDatetimeClauseChangesList(): Array<proto_autoops_service_pb.DatetimeClauseChange>;
+  setDatetimeClauseChangesList(
+    value: Array<proto_autoops_service_pb.DatetimeClauseChange>
   ): void;
-  addUpdateDatetimeClauses(
-    value?: proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause,
+  addDatetimeClauseChanges(
+    value?: proto_autoops_service_pb.DatetimeClauseChange,
     index?: number
-  ): proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause;
+  ): proto_autoops_service_pb.DatetimeClauseChange;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AutoOpsRuleUpdatedEvent.AsObject;
@@ -5091,8 +5091,8 @@ export class AutoOpsRuleUpdatedEvent extends jspb.Message {
 export namespace AutoOpsRuleUpdatedEvent {
   export type AsObject = {
     id: string;
-    updateOpsEventRateClausesList: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause.AsObject>;
-    updateDatetimeClausesList: Array<proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause.AsObject>;
+    opsEventRateClauseChangesList: Array<proto_autoops_service_pb.OpsEventRateClauseChange.AsObject>;
+    datetimeClauseChangesList: Array<proto_autoops_service_pb.DatetimeClauseChange.AsObject>;
   };
 }
 

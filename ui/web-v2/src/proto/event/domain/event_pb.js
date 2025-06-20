@@ -30435,16 +30435,14 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        updateOpsEventRateClausesList: jspb.Message.toObjectList(
-          msg.getUpdateOpsEventRateClausesList(),
-          proto_autoops_service_pb.UpdateAutoOpsRuleRequest
-            .UpdateOpsEventRateClause.toObject,
+        opsEventRateClauseChangesList: jspb.Message.toObjectList(
+          msg.getOpsEventRateClauseChangesList(),
+          proto_autoops_service_pb.OpsEventRateClauseChange.toObject,
           includeInstance
         ),
-        updateDatetimeClausesList: jspb.Message.toObjectList(
-          msg.getUpdateDatetimeClausesList(),
-          proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause
-            .toObject,
+        datetimeClauseChangesList: jspb.Message.toObjectList(
+          msg.getDatetimeClauseChangesList(),
+          proto_autoops_service_pb.DatetimeClauseChange.toObject,
           includeInstance
         )
       };
@@ -30491,24 +30489,22 @@ proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.deserializeBinaryFromReader
           msg.setId(value);
           break;
         case 10:
-          var value =
-            new proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause();
+          var value = new proto_autoops_service_pb.OpsEventRateClauseChange();
           reader.readMessage(
             value,
-            proto_autoops_service_pb.UpdateAutoOpsRuleRequest
-              .UpdateOpsEventRateClause.deserializeBinaryFromReader
+            proto_autoops_service_pb.OpsEventRateClauseChange
+              .deserializeBinaryFromReader
           );
-          msg.addUpdateOpsEventRateClauses(value);
+          msg.addOpsEventRateClauseChanges(value);
           break;
         case 11:
-          var value =
-            new proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause();
+          var value = new proto_autoops_service_pb.DatetimeClauseChange();
           reader.readMessage(
             value,
-            proto_autoops_service_pb.UpdateAutoOpsRuleRequest
-              .UpdateDatetimeClause.deserializeBinaryFromReader
+            proto_autoops_service_pb.DatetimeClauseChange
+              .deserializeBinaryFromReader
           );
-          msg.addUpdateDatetimeClauses(value);
+          msg.addDatetimeClauseChanges(value);
           break;
         default:
           reader.skipField();
@@ -30546,22 +30542,21 @@ proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(1, f);
     }
-    f = message.getUpdateOpsEventRateClausesList();
+    f = message.getOpsEventRateClauseChangesList();
     if (f.length > 0) {
       writer.writeRepeatedMessage(
         10,
         f,
-        proto_autoops_service_pb.UpdateAutoOpsRuleRequest
-          .UpdateOpsEventRateClause.serializeBinaryToWriter
+        proto_autoops_service_pb.OpsEventRateClauseChange
+          .serializeBinaryToWriter
       );
     }
-    f = message.getUpdateDatetimeClausesList();
+    f = message.getDatetimeClauseChangesList();
     if (f.length > 0) {
       writer.writeRepeatedMessage(
         11,
         f,
-        proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause
-          .serializeBinaryToWriter
+        proto_autoops_service_pb.DatetimeClauseChange.serializeBinaryToWriter
       );
     }
   };
@@ -30587,42 +30582,41 @@ proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.setId =
   };
 
 /**
- * repeated bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause update_ops_event_rate_clauses = 10;
- * @return {!Array<!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause>}
+ * repeated bucketeer.autoops.OpsEventRateClauseChange ops_event_rate_clause_changes = 10;
+ * @return {!Array<!proto.bucketeer.autoops.OpsEventRateClauseChange>}
  */
-proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.getUpdateOpsEventRateClausesList =
+proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.getOpsEventRateClauseChangesList =
   function () {
-    return /** @type{!Array<!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause>} */ (
+    return /** @type{!Array<!proto.bucketeer.autoops.OpsEventRateClauseChange>} */ (
       jspb.Message.getRepeatedWrapperField(
         this,
-        proto_autoops_service_pb.UpdateAutoOpsRuleRequest
-          .UpdateOpsEventRateClause,
+        proto_autoops_service_pb.OpsEventRateClauseChange,
         10
       )
     );
   };
 
 /**
- * @param {!Array<!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause>} value
+ * @param {!Array<!proto.bucketeer.autoops.OpsEventRateClauseChange>} value
  * @return {!proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent} returns this
  */
-proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.setUpdateOpsEventRateClausesList =
+proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.setOpsEventRateClauseChangesList =
   function (value) {
     return jspb.Message.setRepeatedWrapperField(this, 10, value);
   };
 
 /**
- * @param {!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause=} opt_value
+ * @param {!proto.bucketeer.autoops.OpsEventRateClauseChange=} opt_value
  * @param {number=} opt_index
- * @return {!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause}
+ * @return {!proto.bucketeer.autoops.OpsEventRateClauseChange}
  */
-proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.addUpdateOpsEventRateClauses =
+proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.addOpsEventRateClauseChanges =
   function (opt_value, opt_index) {
     return jspb.Message.addToRepeatedWrapperField(
       this,
       10,
       opt_value,
-      proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause,
+      proto.bucketeer.autoops.OpsEventRateClauseChange,
       opt_index
     );
   };
@@ -30631,47 +30625,47 @@ proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.addUpdateOpsEvent
  * Clears the list making it empty but non-null.
  * @return {!proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent} returns this
  */
-proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.clearUpdateOpsEventRateClausesList =
+proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.clearOpsEventRateClauseChangesList =
   function () {
-    return this.setUpdateOpsEventRateClausesList([]);
+    return this.setOpsEventRateClauseChangesList([]);
   };
 
 /**
- * repeated bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause update_datetime_clauses = 11;
- * @return {!Array<!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause>}
+ * repeated bucketeer.autoops.DatetimeClauseChange datetime_clause_changes = 11;
+ * @return {!Array<!proto.bucketeer.autoops.DatetimeClauseChange>}
  */
-proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.getUpdateDatetimeClausesList =
+proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.getDatetimeClauseChangesList =
   function () {
-    return /** @type{!Array<!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause>} */ (
+    return /** @type{!Array<!proto.bucketeer.autoops.DatetimeClauseChange>} */ (
       jspb.Message.getRepeatedWrapperField(
         this,
-        proto_autoops_service_pb.UpdateAutoOpsRuleRequest.UpdateDatetimeClause,
+        proto_autoops_service_pb.DatetimeClauseChange,
         11
       )
     );
   };
 
 /**
- * @param {!Array<!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause>} value
+ * @param {!Array<!proto.bucketeer.autoops.DatetimeClauseChange>} value
  * @return {!proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent} returns this
  */
-proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.setUpdateDatetimeClausesList =
+proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.setDatetimeClauseChangesList =
   function (value) {
     return jspb.Message.setRepeatedWrapperField(this, 11, value);
   };
 
 /**
- * @param {!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause=} opt_value
+ * @param {!proto.bucketeer.autoops.DatetimeClauseChange=} opt_value
  * @param {number=} opt_index
- * @return {!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause}
+ * @return {!proto.bucketeer.autoops.DatetimeClauseChange}
  */
-proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.addUpdateDatetimeClauses =
+proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.addDatetimeClauseChanges =
   function (opt_value, opt_index) {
     return jspb.Message.addToRepeatedWrapperField(
       this,
       11,
       opt_value,
-      proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause,
+      proto.bucketeer.autoops.DatetimeClauseChange,
       opt_index
     );
   };
@@ -30680,9 +30674,9 @@ proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.addUpdateDatetime
  * Clears the list making it empty but non-null.
  * @return {!proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent} returns this
  */
-proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.clearUpdateDatetimeClausesList =
+proto.bucketeer.event.domain.AutoOpsRuleUpdatedEvent.prototype.clearDatetimeClauseChangesList =
   function () {
-    return this.setUpdateDatetimeClausesList([]);
+    return this.setDatetimeClauseChangesList([]);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
