@@ -1,5 +1,6 @@
+import { useCallback } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { pushUpdater } from '@api/push';
+import { pushUpdater, TagChange } from '@api/push';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidatePushes } from '@queries/pushes';
 import { useQueryClient } from '@tanstack/react-query';
@@ -85,11 +86,38 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
     formState: { isValid, isSubmitting, isDirty }
   } = form;
 
+  const handleCheckTags = useCallback(
+    (tagValues: string[]) => {
+      const tagChanges: TagChange[] = [];
+      const { tags } = push;
+      tags?.forEach(item => {
+        if (!tagValues.find(tag => tag === item)) {
+          tagChanges.push({
+            changeType: 'DELETE',
+            tag: item
+          });
+        }
+      });
+      tagValues.forEach(item => {
+        const currentTag = tags.find(tag => tag === item);
+        if (!currentTag) {
+          tagChanges.push({
+            changeType: 'CREATE',
+            tag: item
+          });
+        }
+      });
+
+      return tagChanges;
+    },
+    [push]
+  );
+
   const onSubmit: SubmitHandler<EditPushForm> = async values => {
     const { name, tags, environmentId } = values;
     await pushUpdater({
       name,
-      tags,
+      tagChanges: handleCheckTags(tags || []),
       id: push.id,
       environmentId: checkEnvironmentEmptyId(environmentId)
     }).then(() => {
