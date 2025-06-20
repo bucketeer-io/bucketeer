@@ -27,5 +27,7 @@ func TestNewTeam(t *testing.T) {
 	assert.Equal(t, "Test Team", team.Name)
 	assert.Equal(t, "This is a test team", team.Description)
 	assert.Equal(t, "org-123", team.OrganizationId)
+	assert.True(t, team.CreatedAt > 0)
+	assert.True(t, team.UpdatedAt > 0)
 	assert.NotEmpty(t, team.Id)
 }
