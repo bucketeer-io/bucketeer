@@ -116,7 +116,7 @@ export const AccountList: FC<AccountListProps> = memo(
                     (r) => r.environmentId === currentEnvironment.id
                   );
                   const accountDisabled =
-                    envRole.role ===
+                    !envRole || envRole.role ===
                     AccountV2.Role.Environment.ENVIRONMENT_UNASSIGNED;
                   const orgRole = account.organizationRole;
                   return (

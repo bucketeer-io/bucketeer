@@ -334,12 +334,14 @@ export const AccountIndexPage: FC = memo(() => {
       const envRole = a.environmentRolesList.find(
         (e) => e.environmentId === currentEnvironment.id
       );
-      resetUpdate({
-        name: a.name,
-        email: a.email,
-        role: getRoleV1(a.organizationRole, envRole.role).value,
-        tags: a.tagsList
-      });
+      if (envRole) {
+        resetUpdate({
+          name: a.name,
+          email: a.email,
+          role: getRoleV1(a.organizationRole, envRole.role).value,
+          tags: a.tagsList
+        });
+      }
       history.push({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}/${a.email}`,
         search: location.search
@@ -486,12 +488,14 @@ export const AccountIndexPage: FC = memo(() => {
         const envRole = payload.environmentRolesList.find(
           (e) => e.environmentId === currentEnvironment.id
         );
-        resetUpdate({
-          name: payload.name,
-          email: payload.email,
-          role: getRoleV1(payload.organizationRole, envRole.role).value,
-          tags: payload.tagsList
-        });
+        if (envRole) {
+          resetUpdate({
+            name: payload.name,
+            email: payload.email,
+            role: getRoleV1(payload.organizationRole, envRole.role).value,
+            tags: payload.tagsList
+          });
+        }
       });
     }
   }, []);
