@@ -1012,7 +1012,7 @@ func (s *AutoOpsService) updateAutoOpsRuleNoCommand(
 		return nil, err
 	}
 	for _, c := range req.OpsEventRateClauseChanges {
-		if c.ChangeType == autoopsproto.AutoOpsChangeType_DELETE {
+		if c.ChangeType == autoopsproto.ChangeType_DELETE {
 			continue
 		}
 		goal, err := s.getGoal(ctx, req.EnvironmentId, c.Clause.GoalId)
@@ -1065,7 +1065,7 @@ func (s *AutoOpsService) updateAutoOpsRuleNoCommand(
 			// Delete a deletion schedule from the currently held schedules
 			extractDateTimeClauses, _ := autoOpsRule.ExtractDatetimeClauses()
 			for _, deleteClause := range req.DatetimeClauseChanges {
-				if deleteClause.ChangeType == autoopsproto.AutoOpsChangeType_DELETE {
+				if deleteClause.ChangeType == autoopsproto.ChangeType_DELETE {
 					delete(extractDateTimeClauses, deleteClause.Id)
 				}
 			}
@@ -1076,7 +1076,7 @@ func (s *AutoOpsService) updateAutoOpsRuleNoCommand(
 
 			// Check if there is a schedule with the same date and time.
 			for _, c := range req.DatetimeClauseChanges {
-				if c.Clause != nil && c.ChangeType != autoopsproto.AutoOpsChangeType_DELETE {
+				if c.Clause != nil && c.ChangeType != autoopsproto.ChangeType_DELETE {
 					actionType, hasSameTime := checkTimes[c.Clause.Time]
 					if hasSameTime && actionType == c.Clause.ActionType {
 						dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
@@ -1322,7 +1322,7 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequestNoCommand(
 		return dt.Err()
 	}
 	for _, c := range req.OpsEventRateClauseChanges {
-		if c.Id == "" && c.ChangeType == autoopsproto.AutoOpsChangeType_DELETE {
+		if c.Id == "" && c.ChangeType == autoopsproto.ChangeType_DELETE {
 			dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id"),
@@ -1332,7 +1332,7 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequestNoCommand(
 			}
 			return dt.Err()
 		}
-		if c.ChangeType != autoopsproto.AutoOpsChangeType_DELETE && c.Clause == nil {
+		if c.ChangeType != autoopsproto.ChangeType_DELETE && c.Clause == nil {
 			dt, err := statusOpsEventRateClauseRequired.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_event_rate_clause"),
@@ -1349,7 +1349,7 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequestNoCommand(
 
 	var checkDatetimeClauses []*autoopsproto.DatetimeClause
 	for _, c := range req.DatetimeClauseChanges {
-		if c.Id == "" && c.ChangeType == autoopsproto.AutoOpsChangeType_DELETE {
+		if c.Id == "" && c.ChangeType == autoopsproto.ChangeType_DELETE {
 			dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id"),
@@ -1359,7 +1359,7 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequestNoCommand(
 			}
 			return dt.Err()
 		}
-		if c.ChangeType != autoopsproto.AutoOpsChangeType_DELETE && c.Clause == nil {
+		if c.ChangeType != autoopsproto.ChangeType_DELETE && c.Clause == nil {
 			dt, err := statusDatetimeClauseRequired.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "datetime_clause"),
@@ -1369,7 +1369,7 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequestNoCommand(
 			}
 			return dt.Err()
 		}
-		if c.ChangeType != autoopsproto.AutoOpsChangeType_DELETE {
+		if c.ChangeType != autoopsproto.ChangeType_DELETE {
 			checkDatetimeClauses = append(checkDatetimeClauses, c.Clause)
 		}
 	}

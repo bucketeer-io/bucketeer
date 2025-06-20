@@ -443,11 +443,11 @@ func TestUpdateAutoOpsRuleNoCommand(t *testing.T) {
 		DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{
 			{
 				Clause:     &addClause,
-				ChangeType: autoopsproto.AutoOpsChangeType_CREATE,
+				ChangeType: autoopsproto.ChangeType_CREATE,
 			},
 			{
 				Id:         autoOpsRules[0].Clauses[0].Id,
-				ChangeType: autoopsproto.AutoOpsChangeType_DELETE,
+				ChangeType: autoopsproto.ChangeType_DELETE,
 			},
 		},
 	})

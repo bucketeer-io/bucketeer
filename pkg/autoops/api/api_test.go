@@ -1034,7 +1034,7 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
 				Id: "aid1",
 				OpsEventRateClauseChanges: []*autoopsproto.OpsEventRateClauseChange{{
-					ChangeType: autoopsproto.AutoOpsChangeType_DELETE,
+					ChangeType: autoopsproto.ChangeType_DELETE,
 				}},
 			},
 			expected:    nil,
@@ -1056,7 +1056,7 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
 				Id: "aid1",
 				DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{{
-					ChangeType: autoopsproto.AutoOpsChangeType_UPDATE,
+					ChangeType: autoopsproto.ChangeType_UPDATE,
 				}},
 			},
 			expected:    nil,
@@ -1069,7 +1069,7 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 				DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{{
 					Id:         "aid",
 					Clause:     &autoopsproto.DatetimeClause{Time: 0},
-					ChangeType: autoopsproto.AutoOpsChangeType_UPDATE,
+					ChangeType: autoopsproto.ChangeType_UPDATE,
 				}},
 			},
 			expected:    nil,
@@ -1086,7 +1086,7 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 							Time:       time.Now().AddDate(0, 0, 1).Unix(),
 							ActionType: autoopsproto.ActionType_ENABLE,
 						},
-						ChangeType: autoopsproto.AutoOpsChangeType_UPDATE,
+						ChangeType: autoopsproto.ChangeType_UPDATE,
 					},
 					{
 						Id: "aid2",
@@ -1094,7 +1094,7 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 							Time:       time.Now().AddDate(0, 0, 1).Unix(),
 							ActionType: autoopsproto.ActionType_ENABLE,
 						},
-						ChangeType: autoopsproto.AutoOpsChangeType_UPDATE,
+						ChangeType: autoopsproto.ChangeType_UPDATE,
 					},
 				},
 			},
@@ -1108,7 +1108,7 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 				DatetimeClauseChanges: []*autoopsproto.DatetimeClauseChange{
 					{
 						Clause:     &autoopsproto.DatetimeClause{Time: 0, ActionType: autoopsproto.ActionType_DISABLE},
-						ChangeType: autoopsproto.AutoOpsChangeType_CREATE,
+						ChangeType: autoopsproto.ChangeType_CREATE,
 					},
 				},
 			},
@@ -1125,14 +1125,14 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 							Time:       time.Now().AddDate(0, 0, 1).Unix(),
 							ActionType: autoopsproto.ActionType_DISABLE,
 						},
-						ChangeType: autoopsproto.AutoOpsChangeType_CREATE,
+						ChangeType: autoopsproto.ChangeType_CREATE,
 					},
 					{
 						Clause: &autoopsproto.DatetimeClause{
 							Time:       time.Now().AddDate(0, 0, 1).Unix(),
 							ActionType: autoopsproto.ActionType_DISABLE,
 						},
-						ChangeType: autoopsproto.AutoOpsChangeType_CREATE,
+						ChangeType: autoopsproto.ChangeType_CREATE,
 					},
 				},
 			},
@@ -1149,7 +1149,7 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 							Time:       time.Now().AddDate(0, 0, 1).Unix(),
 							ActionType: autoopsproto.ActionType_DISABLE,
 						},
-						ChangeType: autoopsproto.AutoOpsChangeType_CREATE,
+						ChangeType: autoopsproto.ChangeType_CREATE,
 					},
 					{
 						Id: "aid",
@@ -1157,7 +1157,7 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 							Time:       time.Now().AddDate(0, 0, 1).Unix(),
 							ActionType: autoopsproto.ActionType_DISABLE,
 						},
-						ChangeType: autoopsproto.AutoOpsChangeType_UPDATE,
+						ChangeType: autoopsproto.ChangeType_UPDATE,
 					},
 				},
 			},
@@ -1201,7 +1201,7 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 							ActionType: autoopsproto.ActionType_ENABLE,
 							Time:       time.Now().AddDate(0, 0, 1).Unix(),
 						},
-						ChangeType: autoopsproto.AutoOpsChangeType_CREATE,
+						ChangeType: autoopsproto.ChangeType_CREATE,
 					},
 					{
 						Id: "cid2",
@@ -1209,11 +1209,11 @@ func TestUpdateAutoOpsRuleMySQLNoCommand(t *testing.T) {
 							ActionType: autoopsproto.ActionType_DISABLE,
 							Time:       time.Now().AddDate(0, 0, 2).Unix(),
 						},
-						ChangeType: autoopsproto.AutoOpsChangeType_UPDATE,
+						ChangeType: autoopsproto.ChangeType_UPDATE,
 					},
 					{
 						Id:         "cid",
-						ChangeType: autoopsproto.AutoOpsChangeType_DELETE,
+						ChangeType: autoopsproto.ChangeType_DELETE,
 					},
 				},
 			},

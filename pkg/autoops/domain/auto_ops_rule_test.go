@@ -561,7 +561,7 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 			updateOpsEventRateClauses: []*autoopsproto.OpsEventRateClauseChange{
 				{
 					Id:         "id-0",
-					ChangeType: autoopsproto.AutoOpsChangeType_DELETE,
+					ChangeType: autoopsproto.ChangeType_DELETE,
 				},
 			},
 			updateDatetimeClauses: []*autoopsproto.DatetimeClauseChange{},
@@ -596,7 +596,7 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 						ThreadsholdRate: 0.6,
 						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
 					},
-					ChangeType: autoopsproto.AutoOpsChangeType_UPDATE,
+					ChangeType: autoopsproto.ChangeType_UPDATE,
 				},
 			},
 			updateDatetimeClauses: []*autoopsproto.DatetimeClauseChange{},
@@ -646,7 +646,7 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 						Time:       1000000002,
 						ActionType: autoopsproto.ActionType_ENABLE,
 					},
-					ChangeType: autoopsproto.AutoOpsChangeType_UPDATE,
+					ChangeType: autoopsproto.ChangeType_UPDATE,
 				},
 			},
 			expected: func() *AutoOpsRule {
