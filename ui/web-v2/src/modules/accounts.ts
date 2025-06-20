@@ -6,8 +6,7 @@ import {
 } from '@reduxjs/toolkit';
 import {
   BoolValue,
-  StringValue,
-  Int32Value
+  StringValue
 } from 'google-protobuf/google/protobuf/wrappers_pb';
 
 import * as accountGrpc from '../grpc/account';
@@ -89,8 +88,6 @@ export const listAccounts = createAsyncThunk<
   request.setSearchKeyword(params.searchKeyword);
   params.disabled != null &&
     request.setDisabled(new BoolValue().setValue(params.disabled));
-  params.role != null &&
-    request.setOrganizationRole(new Int32Value().setValue(params.role));
   params.tags != null && request.setTagsList(params.tags);
   const result = await accountGrpc.listAccounts(request);
   return result.response.toObject();
