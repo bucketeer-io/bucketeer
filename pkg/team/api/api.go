@@ -106,7 +106,7 @@ func (s *TeamService) CreateTeam(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkOrganizationRole(
 		ctx, req.OrganizationId,
-		accproto.AccountV2_Role_Organization_MEMBER, localizer)
+		accproto.AccountV2_Role_Organization_ADMIN, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +207,7 @@ func (s *TeamService) DeleteTeam(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkOrganizationRole(
 		ctx, req.OrganizationId,
-		accproto.AccountV2_Role_Organization_MEMBER, localizer)
+		accproto.AccountV2_Role_Organization_ADMIN, localizer)
 	if err != nil {
 		return nil, err
 	}
