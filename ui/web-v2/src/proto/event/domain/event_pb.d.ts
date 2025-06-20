@@ -123,6 +123,7 @@ export namespace Event {
     FLAG_TRIGGER: 16;
     TAG: 17;
     CODEREF: 18;
+    TEAM: 19;
   }
 
   export const EntityType: EntityTypeMap;
@@ -313,6 +314,8 @@ export namespace Event {
     CODE_REFERENCE_CREATED: 1800;
     CODE_REFERENCE_UPDATED: 1801;
     CODE_REFERENCE_DELETED: 1802;
+    TEAM_CREATED: 1900;
+    TEAM_DELETED: 1901;
   }
 
   export const Type: TypeMap;
@@ -7735,5 +7738,91 @@ export namespace CodeReferenceDeletedEvent {
   export type AsObject = {
     id: string;
     environmentId: string;
+  };
+}
+
+export class TeamCreatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  getCreatedAt(): number;
+  setCreatedAt(value: number): void;
+
+  getUpdatedAt(): number;
+  setUpdatedAt(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TeamCreatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: TeamCreatedEvent
+  ): TeamCreatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: TeamCreatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): TeamCreatedEvent;
+  static deserializeBinaryFromReader(
+    message: TeamCreatedEvent,
+    reader: jspb.BinaryReader
+  ): TeamCreatedEvent;
+}
+
+export namespace TeamCreatedEvent {
+  export type AsObject = {
+    id: string;
+    name: string;
+    description: string;
+    organizationId: string;
+    createdAt: number;
+    updatedAt: number;
+  };
+}
+
+export class TeamDeletedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TeamDeletedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: TeamDeletedEvent
+  ): TeamDeletedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: TeamDeletedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): TeamDeletedEvent;
+  static deserializeBinaryFromReader(
+    message: TeamDeletedEvent,
+    reader: jspb.BinaryReader
+  ): TeamDeletedEvent;
+}
+
+export namespace TeamDeletedEvent {
+  export type AsObject = {
+    id: string;
+    organizationId: string;
   };
 }

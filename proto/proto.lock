@@ -19703,6 +19703,10 @@
               {
                 "name": "CODEREF",
                 "integer": 18
+              },
+              {
+                "name": "TEAM",
+                "integer": 19
               }
             ],
             "reserved_ids": [
@@ -20504,6 +20508,14 @@
               {
                 "name": "CODE_REFERENCE_DELETED",
                 "integer": 1802
+              },
+              {
+                "name": "TEAM_CREATED",
+                "integer": 1900
+              },
+              {
+                "name": "TEAM_DELETED",
+                "integer": 1901
               }
             ],
             "reserved_ids": [
@@ -24132,6 +24144,56 @@
               {
                 "id": 2,
                 "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "TeamCreatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "TeamDeletedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
                 "type": "string"
               }
             ]
@@ -44038,6 +44100,10 @@
               {
                 "name": "DOMAIN_EVENT_CODEREF",
                 "integer": 18
+              },
+              {
+                "name": "DOMAIN_EVENT_TEAM",
+                "integer": 19
               },
               {
                 "name": "FEATURE_STALE",
