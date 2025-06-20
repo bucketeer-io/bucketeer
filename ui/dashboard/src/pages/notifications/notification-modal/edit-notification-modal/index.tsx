@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   FormProvider,
   Resolver,
@@ -9,7 +9,7 @@ import { notificationUpdater } from '@api/notification';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateNotifications } from '@queries/notifications';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { useAuth } from 'auth';
 import { languageList } from 'constants/notification';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -20,7 +20,6 @@ import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { cn } from 'utils/style';
 import { IconInfo, IconNoData } from '@icons';
 import { useFetchTags } from 'pages/members/collection-loader';
-import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
@@ -79,7 +78,6 @@ const EditNotificationModal = ({
   const { t } = useTranslation(['common', 'form']);
 
   const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const SOURCE_TYPE_ITEMS: NotificationOption[] = [
     {
@@ -148,12 +146,16 @@ const EditNotificationModal = ({
   const [filteredTypes, setSearchTypes] =
     useState<NotificationOption[]>(SOURCE_TYPE_ITEMS);
 
-  const { data: collection } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId
-  });
-  const environments = collection?.environments || [];
+  const editorEnvironments = useMemo(
+    () =>
+      consoleAccount?.environmentRoles
+        .filter(item => item.role === 'Environment_EDITOR')
+        ?.map(item => item.environment) || [],
+    [consoleAccount]
+  );
+
   const { emptyEnvironmentId, formattedEnvironments } =
-    onFormatEnvironments(environments);
+    onFormatEnvironments(editorEnvironments);
 
   const form = useForm<EditNotificationForm>({
     resolver: yupResolver(formSchema) as Resolver<EditNotificationForm>,
@@ -178,12 +180,15 @@ const EditNotificationModal = ({
 
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
     entityType: 'FEATURE_FLAG',
-    environmentId: watch('environment'),
+    environmentId: checkEnvironmentEmptyId(watch('environment') || ''),
     options: {
       enabled: isSelectedEnv
     }
   });
-  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
+  const tagOptions = uniqBy(tagCollection?.tags || [], 'name')?.map(tag => ({
+    label: tag.name,
+    value: tag.name
+  }));
 
   const onSearchTypes = (value: string) => {
     if (!value) {
@@ -473,11 +478,11 @@ const EditNotificationModal = ({
                                       }
                                       value={field.value?.map(tag => {
                                         const tagItem = tagOptions.find(
-                                          item => item.id === tag
+                                          item => item.value === tag
                                         );
                                         return {
-                                          label: tagItem?.name || tag,
-                                          value: tagItem?.id || tag
+                                          label: tagItem?.label || tag,
+                                          value: tagItem?.value || tag
                                         };
                                       })}
                                       loading={isLoadingTags}
@@ -488,10 +493,27 @@ const EditNotificationModal = ({
                                           ? `form:no-tags-found`
                                           : `form:placeholder-tags`
                                       )}
-                                      options={tagOptions?.map(tag => ({
-                                        label: tag.name,
-                                        value: tag.id
-                                      }))}
+                                      allowCreateWhileLoading={false}
+                                      isValidNewOption={() => false}
+                                      isClearable
+                                      onKeyDown={e => {
+                                        const { value } =
+                                          e.target as HTMLInputElement;
+                                        const isExists = tagOptions.find(
+                                          item =>
+                                            item.label
+                                              .toLowerCase()
+                                              .includes(value.toLowerCase()) &&
+                                            !field.value?.includes(item.label)
+                                        );
+                                        if (
+                                          e.key === 'Enter' &&
+                                          (!isExists || !value)
+                                        ) {
+                                          e.preventDefault();
+                                        }
+                                      }}
+                                      options={tagOptions}
                                       onChange={value =>
                                         field.onChange(
                                           value.map(tag => tag.value)
