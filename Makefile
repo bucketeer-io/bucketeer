@@ -407,3 +407,46 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 	TAG=localenv make -C ./ build-docker-images
 	TAG=localenv make -C ./ minikube-load-images
 	helm install bucketeer manifests/bucketeer/ --values manifests/bucketeer/values.dev.yaml
+
+#############################
+# Docker Compose
+#############################
+
+.PHONY: docker-compose-setup
+docker-compose-setup:
+	@echo "Setting up Docker Compose environment..."
+	@mkdir -p docker-compose/init-db
+	@if [ ! -d tools/dev/cert ]; then \
+		echo "Generating development certificates..."; \
+		make -C tools/dev service-cert-secret; \
+		make -C tools/dev service-token-secret; \
+		make -C tools/dev oauth-key-secret; \
+	fi
+	@echo "✅ Docker Compose setup complete"
+
+.PHONY: docker-compose-up
+docker-compose-up: docker-compose-setup
+	@echo "Starting Bucketeer services with Docker Compose..."
+	docker-compose -f docker-compose/docker-compose.yml up -d
+
+.PHONY: docker-compose-down
+docker-compose-down:
+	@echo "Stopping Bucketeer services..."
+	docker-compose -f docker-compose/docker-compose.yml down
+
+.PHONY: docker-compose-logs
+docker-compose-logs:
+	docker-compose -f docker-compose/docker-compose.yml logs -f
+
+.PHONY: docker-compose-status
+docker-compose-status:
+	docker-compose -f docker-compose/docker-compose.yml ps
+
+.PHONY: docker-compose-clean
+docker-compose-clean:
+	@echo "Stopping and removing all containers, networks, and volumes..."
+	docker-compose -f docker-compose/docker-compose.yml down -v
+	docker system prune -f
+
+.PHONY: start-docker-compose
+start-docker-compose: docker-compose-up
