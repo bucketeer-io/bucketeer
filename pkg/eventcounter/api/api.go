@@ -65,9 +65,60 @@ const (
 	pfMergeExpiration            = 10 * time.Minute
 )
 
+type DataWarehouseConfig struct {
+	Type      string                      `yaml:"type"`
+	BatchSize int                         `yaml:"batchSize"`
+	Timezone  string                      `yaml:"timezone"`
+	BigQuery  DataWarehouseBigQueryConfig `yaml:"bigquery"`
+	MySQL     DataWarehouseMySQLConfig    `yaml:"mysql"`
+}
+
+type DataWarehouseBigQueryConfig struct {
+	Project  string `yaml:"project"`
+	Dataset  string `yaml:"dataset"`
+	Location string `yaml:"location"`
+}
+
+type DataWarehouseMySQLConfig struct {
+	UseMainConnection bool   `yaml:"useMainConnection"`
+	Host              string `yaml:"host"`
+	Port              int    `yaml:"port"`
+	User              string `yaml:"user"`
+	Password          string `yaml:"password"`
+	Database          string `yaml:"database"`
+}
+
 var (
 	errUnknownTimeRange = errors.New("eventcounter: a time range is unknown")
 )
+
+type options struct {
+	logger              *zap.Logger
+	dataWarehouseConfig *DataWarehouseConfig
+}
+
+type Option func(*options)
+
+func WithLogger(l *zap.Logger) Option {
+	return func(opts *options) {
+		opts.logger = l
+	}
+}
+
+func WithDataWarehouse(dataWarehouseType string) Option {
+	return func(opts *options) {
+		// Maintain backward compatibility by setting a basic config
+		opts.dataWarehouseConfig = &DataWarehouseConfig{
+			Type: dataWarehouseType,
+		}
+	}
+}
+
+func WithDataWarehouseConfig(config *DataWarehouseConfig) Option {
+	return func(opts *options) {
+		opts.dataWarehouseConfig = config
+	}
+}
 
 type eventCounterService struct {
 	experimentClient             experimentclient.Client
@@ -94,20 +145,72 @@ func NewEventCounterService(
 	redis cache.MultiGetDeleteCountCache,
 	loc *time.Location,
 	l *zap.Logger,
+	opts ...Option,
 ) rpc.Service {
+	dopts := &options{
+		logger: l,
+		dataWarehouseConfig: &DataWarehouseConfig{
+			Type: "bigquery", // default
+		},
+	}
+	for _, opt := range opts {
+		opt(dopts)
+	}
+
 	registerMetrics(r)
+
+	var eventStorage v2ecstorage.EventStorage
+	switch dopts.dataWarehouseConfig.Type {
+	case "mysql":
+		// Use the main MySQL client if useMainConnection is true or no custom connection specified
+		if dopts.dataWarehouseConfig.MySQL.UseMainConnection || dopts.dataWarehouseConfig.MySQL.Host == "" {
+			eventStorage = v2ecstorage.NewMySQLEventStorage(mc, dopts.logger)
+		} else {
+			// Create custom MySQL client with the specified connection details
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+
+			customMySQLClient, err := createCustomMySQLClient(
+				ctx,
+				dopts.dataWarehouseConfig.MySQL,
+				dopts.logger,
+			)
+			if err != nil {
+				dopts.logger.Error("Failed to create custom MySQL client for data warehouse",
+					zap.Error(err),
+					zap.String("host", dopts.dataWarehouseConfig.MySQL.Host),
+					zap.String("database", dopts.dataWarehouseConfig.MySQL.Database),
+				)
+				// Return nil to cause service initialization to fail
+				// This prevents data inconsistency by ensuring we don't silently fall back
+				return nil
+			}
+
+			dopts.logger.Info("Using custom MySQL connection for data warehouse",
+				zap.String("host", dopts.dataWarehouseConfig.MySQL.Host),
+				zap.String("database", dopts.dataWarehouseConfig.MySQL.Database),
+			)
+			eventStorage = v2ecstorage.NewMySQLEventStorage(customMySQLClient, dopts.logger)
+		}
+	case "bigquery":
+		eventStorage = v2ecstorage.NewEventStorage(b, bigQueryDataSet, dopts.logger)
+	default:
+		// Default to BigQuery for backward compatibility
+		eventStorage = v2ecstorage.NewEventStorage(b, bigQueryDataSet, dopts.logger)
+	}
+
 	return &eventCounterService{
 		experimentClient:             e,
 		featureClient:                f,
 		accountClient:                a,
-		eventStorage:                 v2ecstorage.NewEventStorage(b, bigQueryDataSet, l),
+		eventStorage:                 eventStorage,
 		mysqlExperimentResultStorage: v2ecstorage.NewExperimentResultStorage(mc),
 		mysqlMAUSummaryStorage:       v2ecstorage.NewMAUSummaryStorage(mc),
 		userCountStorage:             v2ecstorage.NewUserCountStorage(mc),
 		metrics:                      r,
 		evaluationCountCacher:        cachev3.NewEventCountCache(redis),
 		location:                     loc,
-		logger:                       l.Named("api"),
+		logger:                       dopts.logger.Named("api"),
 	}
 }
 
@@ -1563,4 +1666,45 @@ func (s *eventCounterService) checkSystemAdminRole(
 		}
 	}
 	return editor, nil
+}
+
+// createCustomMySQLClient creates a dedicated MySQL client with the specified connection details
+func createCustomMySQLClient(
+	ctx context.Context,
+	config DataWarehouseMySQLConfig,
+	logger *zap.Logger,
+) (mysql.Client, error) {
+	// Validate required fields
+	if config.Host == "" || config.Database == "" || config.User == "" {
+		return nil, fmt.Errorf("mysql host, database, and user are required for custom connection")
+	}
+
+	// Set default port if not specified
+	port := config.Port
+	if port == 0 {
+		port = 3306 // Default MySQL port
+	}
+
+	// Create MySQL client with custom connection
+	client, err := mysql.NewClient(
+		ctx,
+		config.User,
+		config.Password,
+		config.Host,
+		port,
+		config.Database,
+		mysql.WithLogger(logger),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create MySQL client: %w", err)
+	}
+
+	logger.Info("Created custom MySQL client for data warehouse",
+		zap.String("host", config.Host),
+		zap.Int("port", port),
+		zap.String("database", config.Database),
+		zap.String("user", config.User),
+	)
+
+	return client, nil
 }

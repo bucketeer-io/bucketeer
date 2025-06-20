@@ -18,6 +18,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -152,6 +153,60 @@ func TestCreateAndListPush(t *testing.T) {
 	}
 }
 
+func TestCreateAndListPush_NoCommand_WithoutTags(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	pushClient := newPushClient(t)
+	defer pushClient.Close()
+
+	fcmServiceAccount := fmt.Sprintf(fcmServiceAccountDummy, prefixTestName, newUUID(t))
+	pushName := newPushName(t)
+
+	// Create push without tags using no-command API
+	req := &pushproto.CreatePushRequest{
+		EnvironmentId:     *environmentID,
+		Name:              pushName,
+		FcmServiceAccount: []byte(fcmServiceAccount),
+		Tags:              []string{}, // Empty tags
+	}
+	resp, err := pushClient.CreatePush(ctx, req)
+	if err != nil {
+		t.Fatal("Failed to create push without tags:", err)
+	}
+
+	// Verify the push was created correctly
+	push := resp.Push
+	if push == nil {
+		t.Fatal("Push response is nil")
+	}
+	if push.Name != pushName {
+		t.Fatalf("Incorrect push name. Expected: %s actual: %s", pushName, push.Name)
+	}
+	if push.FcmServiceAccount != "" {
+		t.Fatalf("The FCM service account must be empty. Actual: %s", push.FcmServiceAccount)
+	}
+	if len(push.Tags) != 0 {
+		t.Fatalf("The number of tags is incorrect. Expected: %d actual: %d", 0, len(push.Tags))
+	}
+	if push.Deleted != false {
+		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, push.Deleted)
+	}
+
+	// Verify the push appears in the list
+	pushes := listPushes(t, pushClient)
+	var foundPush *pushproto.Push
+	for _, p := range pushes {
+		if p.Id == push.Id {
+			foundPush = p
+			break
+		}
+	}
+	if foundPush == nil {
+		t.Fatalf("Push not found in list")
+	}
+}
+
 func TestUpdatePush(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -185,8 +240,17 @@ func TestUpdatePush(t *testing.T) {
 		Id:            push.Id,
 		EnvironmentId: *environmentID,
 		Name:          &wrappers.StringValue{Value: newName},
-		Tags:          []string{newTag},
-		Disabled:      wrapperspb.Bool(true),
+		TagChanges: []*pushproto.TagChange{
+			{
+				Tag:        tag,
+				ChangeType: pushproto.ChangeType_CREATE, // This will be ignored
+			},
+			{
+				Tag:        newTag,
+				ChangeType: pushproto.ChangeType_CREATE,
+			},
+		},
+		Disabled: wrapperspb.Bool(true),
 	}
 	if _, err := pushClient.UpdatePush(ctx, updateReq); err != nil {
 		t.Fatal("Failed to update push:", err)
@@ -207,11 +271,11 @@ func TestUpdatePush(t *testing.T) {
 	if updatedPush.Name != newName {
 		t.Errorf("Push name not updated. Expected: %s, got: %s", newName, updatedPush.Name)
 	}
-	if len(updatedPush.Tags) != 1 {
-		t.Errorf("Expected 1 tag, got %d", len(updatedPush.Tags))
+	if len(updatedPush.Tags) != 2 {
+		t.Errorf("Expected 2 tags, got %d", len(updatedPush.Tags))
 	}
-	if updatedPush.Tags[0] != newTag {
-		t.Errorf("Push tag not updated. Expected: %s, got: %s", newTag, updatedPush.Tags[0])
+	if !slices.Contains(updatedPush.Tags, newTag) {
+		t.Errorf("Push tag not updated. Expected: %s, got: %s", newTag, updatedPush.Tags)
 	}
 	if !updatedPush.Disabled {
 		t.Errorf("Push disabled status not updated. Expected: true, got: %v", updatedPush.Disabled)

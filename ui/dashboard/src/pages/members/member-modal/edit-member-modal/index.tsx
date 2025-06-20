@@ -16,6 +16,7 @@ import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { Account, EnvironmentRoleType, OrganizationRole } from '@types';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { joinName } from 'utils/name';
 import { IconInfo } from '@icons';
 import { useFetchTags } from 'pages/members/collection-loader';
@@ -96,15 +97,25 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
     entityType: 'ACCOUNT'
   });
 
+  const { data: collection } = useFetchEnvironments({
+    organizationId: currentEnvironment.organizationId
+  });
+  const environments = collection?.environments || [];
+  const { emptyEnvironmentId, formattedEnvironments } =
+    onFormatEnvironments(environments);
+
   const tags = tagCollection?.tags || [];
   const form = useForm<EditMemberForm>({
     resolver: yupResolver(formSchema) as Resolver<EditMemberForm>,
-    defaultValues: {
+    values: {
       firstName: member.firstName,
       lastName: member.lastName,
       language: member.language,
       role: member.organizationRole,
-      environmentRoles: member.environmentRoles,
+      environmentRoles: member.environmentRoles.map(item => ({
+        ...item,
+        environmentId: item.environmentId || emptyEnvironmentId
+      })),
       tags: member.tags
     },
     mode: 'onChange'
@@ -114,11 +125,6 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
     formState: { isValid, isSubmitting }
   } = form;
 
-  const { data: collection } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId
-  });
-  const environments = collection?.environments || [];
-
   const onSubmit: SubmitHandler<EditMemberForm> = values => {
     return accountUpdater({
       organizationId: currentEnvironment.organizationId,
@@ -126,7 +132,10 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
       organizationRole: {
         role: values.role as OrganizationRole
       },
-      environmentRoles: values.environmentRoles,
+      environmentRoles: values.environmentRoles.map(item => ({
+        ...item,
+        environmentId: checkEnvironmentEmptyId(item.environmentId)
+      })),
       firstName: values.firstName,
       lastName: values.lastName,
       language: values.language,
@@ -327,7 +336,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
             />
             <Divider className="mt-1 mb-3" />
 
-            <EnvironmentRoles environments={environments} />
+            <EnvironmentRoles environments={formattedEnvironments} />
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={

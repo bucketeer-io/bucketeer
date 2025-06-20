@@ -412,8 +412,8 @@ export class OpsEventRateClauseChange extends jspb.Message {
   getClause(): proto_autoops_clause_pb.OpsEventRateClause | undefined;
   setClause(value?: proto_autoops_clause_pb.OpsEventRateClause): void;
 
-  getChangeType(): AutoOpsChangeTypeMap[keyof AutoOpsChangeTypeMap];
-  setChangeType(value: AutoOpsChangeTypeMap[keyof AutoOpsChangeTypeMap]): void;
+  getChangeType(): ChangeTypeMap[keyof ChangeTypeMap];
+  setChangeType(value: ChangeTypeMap[keyof ChangeTypeMap]): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): OpsEventRateClauseChange.AsObject;
@@ -440,7 +440,7 @@ export namespace OpsEventRateClauseChange {
   export type AsObject = {
     id: string;
     clause?: proto_autoops_clause_pb.OpsEventRateClause.AsObject;
-    changeType: AutoOpsChangeTypeMap[keyof AutoOpsChangeTypeMap];
+    changeType: ChangeTypeMap[keyof ChangeTypeMap];
   };
 }
 
@@ -453,8 +453,8 @@ export class DatetimeClauseChange extends jspb.Message {
   getClause(): proto_autoops_clause_pb.DatetimeClause | undefined;
   setClause(value?: proto_autoops_clause_pb.DatetimeClause): void;
 
-  getChangeType(): AutoOpsChangeTypeMap[keyof AutoOpsChangeTypeMap];
-  setChangeType(value: AutoOpsChangeTypeMap[keyof AutoOpsChangeTypeMap]): void;
+  getChangeType(): ChangeTypeMap[keyof ChangeTypeMap];
+  setChangeType(value: ChangeTypeMap[keyof ChangeTypeMap]): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DatetimeClauseChange.AsObject;
@@ -481,7 +481,7 @@ export namespace DatetimeClauseChange {
   export type AsObject = {
     id: string;
     clause?: proto_autoops_clause_pb.DatetimeClause.AsObject;
-    changeType: AutoOpsChangeTypeMap[keyof AutoOpsChangeTypeMap];
+    changeType: ChangeTypeMap[keyof ChangeTypeMap];
   };
 }
 
@@ -1333,11 +1333,11 @@ export namespace ExecuteProgressiveRolloutResponse {
   export type AsObject = {};
 }
 
-export interface AutoOpsChangeTypeMap {
+export interface ChangeTypeMap {
   UNSPECIFIED: 0;
   CREATE: 1;
   UPDATE: 2;
   DELETE: 3;
 }
 
-export const AutoOpsChangeType: AutoOpsChangeTypeMap;
+export const ChangeType: ChangeTypeMap;

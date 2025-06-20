@@ -7,6 +7,7 @@ interface Props {
   maxLines?: number;
   content: ReactNode;
   trigger: ReactNode;
+  align?: 'start' | 'center' | 'end';
 }
 
 interface DefaultTriggerProps {
@@ -77,7 +78,13 @@ const DefaultContent = forwardRef<HTMLDivElement, DefaultContentProps>(
   }
 );
 
-const NameWithTooltip = ({ id, maxLines = 2, content, trigger }: Props) => {
+const NameWithTooltip = ({
+  id,
+  maxLines = 2,
+  content,
+  trigger,
+  align
+}: Props) => {
   const [isTruncate, setIsTruncate] = useState(false);
   const childrenId = `children-${id}`;
 
@@ -105,7 +112,7 @@ const NameWithTooltip = ({ id, maxLines = 2, content, trigger }: Props) => {
   return (
     <Tooltip
       asChild={false}
-      align="start"
+      align={align}
       content={content}
       hidden={!isTruncate}
       trigger={trigger}

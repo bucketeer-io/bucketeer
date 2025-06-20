@@ -41,7 +41,7 @@ var proto_autoops_ops_count_pb = require('../../proto/autoops/ops_count_pb.js');
 goog.object.extend(proto, proto_autoops_ops_count_pb);
 var proto_autoops_progressive_rollout_pb = require('../../proto/autoops/progressive_rollout_pb.js');
 goog.object.extend(proto, proto_autoops_progressive_rollout_pb);
-goog.exportSymbol('proto.bucketeer.autoops.AutoOpsChangeType', null, global);
+goog.exportSymbol('proto.bucketeer.autoops.ChangeType', null, global);
 goog.exportSymbol(
   'proto.bucketeer.autoops.CreateAutoOpsRuleRequest',
   null,
@@ -3130,10 +3130,9 @@ proto.bucketeer.autoops.OpsEventRateClauseChange.deserializeBinaryFromReader =
           msg.setClause(value);
           break;
         case 3:
-          var value =
-            /** @type {!proto.bucketeer.autoops.AutoOpsChangeType} */ (
-              reader.readEnum()
-            );
+          var value = /** @type {!proto.bucketeer.autoops.ChangeType} */ (
+            reader.readEnum()
+          );
           msg.setChangeType(value);
           break;
         default:
@@ -3247,18 +3246,18 @@ proto.bucketeer.autoops.OpsEventRateClauseChange.prototype.hasClause =
   };
 
 /**
- * optional AutoOpsChangeType change_type = 3;
- * @return {!proto.bucketeer.autoops.AutoOpsChangeType}
+ * optional ChangeType change_type = 3;
+ * @return {!proto.bucketeer.autoops.ChangeType}
  */
 proto.bucketeer.autoops.OpsEventRateClauseChange.prototype.getChangeType =
   function () {
-    return /** @type {!proto.bucketeer.autoops.AutoOpsChangeType} */ (
+    return /** @type {!proto.bucketeer.autoops.ChangeType} */ (
       jspb.Message.getFieldWithDefault(this, 3, 0)
     );
   };
 
 /**
- * @param {!proto.bucketeer.autoops.AutoOpsChangeType} value
+ * @param {!proto.bucketeer.autoops.ChangeType} value
  * @return {!proto.bucketeer.autoops.OpsEventRateClauseChange} returns this
  */
 proto.bucketeer.autoops.OpsEventRateClauseChange.prototype.setChangeType =
@@ -3361,10 +3360,9 @@ proto.bucketeer.autoops.DatetimeClauseChange.deserializeBinaryFromReader =
           msg.setClause(value);
           break;
         case 3:
-          var value =
-            /** @type {!proto.bucketeer.autoops.AutoOpsChangeType} */ (
-              reader.readEnum()
-            );
+          var value = /** @type {!proto.bucketeer.autoops.ChangeType} */ (
+            reader.readEnum()
+          );
           msg.setChangeType(value);
           break;
         default:
@@ -3477,18 +3475,18 @@ proto.bucketeer.autoops.DatetimeClauseChange.prototype.hasClause = function () {
 };
 
 /**
- * optional AutoOpsChangeType change_type = 3;
- * @return {!proto.bucketeer.autoops.AutoOpsChangeType}
+ * optional ChangeType change_type = 3;
+ * @return {!proto.bucketeer.autoops.ChangeType}
  */
 proto.bucketeer.autoops.DatetimeClauseChange.prototype.getChangeType =
   function () {
-    return /** @type {!proto.bucketeer.autoops.AutoOpsChangeType} */ (
+    return /** @type {!proto.bucketeer.autoops.ChangeType} */ (
       jspb.Message.getFieldWithDefault(this, 3, 0)
     );
   };
 
 /**
- * @param {!proto.bucketeer.autoops.AutoOpsChangeType} value
+ * @param {!proto.bucketeer.autoops.ChangeType} value
  * @return {!proto.bucketeer.autoops.DatetimeClauseChange} returns this
  */
 proto.bucketeer.autoops.DatetimeClauseChange.prototype.setChangeType =
@@ -7862,7 +7860,7 @@ proto.bucketeer.autoops.ExecuteProgressiveRolloutResponse.serializeBinaryToWrite
 /**
  * @enum {number}
  */
-proto.bucketeer.autoops.AutoOpsChangeType = {
+proto.bucketeer.autoops.ChangeType = {
   UNSPECIFIED: 0,
   CREATE: 1,
   UPDATE: 2,

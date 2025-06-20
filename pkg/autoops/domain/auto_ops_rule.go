@@ -111,19 +111,30 @@ func (a *AutoOpsRule) changeOpsEventRateClauses(
 	opsEventRateClauses []*proto.OpsEventRateClauseChange,
 	datetimeClauses []*proto.DatetimeClauseChange,
 ) error {
+	// We split variation changes into two separate steps to handle dependencies correctly:
+	//
+	// Step 1: apply clauses creation and update
+	// - This ensures newly created or updated clauses exist when validating and applying other changes
+	// - Without this step, validations referencing newly created clauses would fail.
+	//
+	// Step 2: apply clauses deletion
+	// - This ensures that we can validate and apply deletions without affecting the existing clauses.
+	// - If deletions were processed earlier, we could end up with invalid references to non-existent clauses.
+
+	// Step 1: apply clauses creation and update
 	var (
 		opsEventRateCreateAndUpdate, opsEventRateDelete []*proto.OpsEventRateClauseChange
 		datetimeCreateAndUpdate, datetimeDelete         []*proto.DatetimeClauseChange
 	)
 	for _, c := range opsEventRateClauses {
-		if c.ChangeType == proto.AutoOpsChangeType_CREATE {
+		if c.ChangeType == proto.ChangeType_CREATE {
 			opsEventRateDelete = append(opsEventRateDelete, c)
 		} else {
 			opsEventRateCreateAndUpdate = append(opsEventRateCreateAndUpdate, c)
 		}
 	}
 	for _, c := range datetimeClauses {
-		if c.ChangeType == proto.AutoOpsChangeType_CREATE {
+		if c.ChangeType == proto.ChangeType_CREATE {
 			datetimeDelete = append(datetimeDelete, c)
 		} else {
 			datetimeCreateAndUpdate = append(datetimeCreateAndUpdate, c)
@@ -141,6 +152,8 @@ func (a *AutoOpsRule) changeOpsEventRateClauses(
 	); err != nil {
 		return err
 	}
+
+	// Step 2: apply clauses deletion
 	if err := a.validateGranularChanges(
 		opsEventRateDelete,
 		datetimeDelete,
@@ -165,7 +178,7 @@ func (a *AutoOpsRule) applyGranularChanges(
 ) error {
 	for _, c := range opsEventRateClauses {
 		switch c.ChangeType {
-		case proto.AutoOpsChangeType_CREATE:
+		case proto.ChangeType_CREATE:
 			ac, err := anypb.New(c.Clause)
 			if err != nil {
 				return err
@@ -174,12 +187,12 @@ func (a *AutoOpsRule) applyGranularChanges(
 			if err != nil {
 				return err
 			}
-		case proto.AutoOpsChangeType_UPDATE:
+		case proto.ChangeType_UPDATE:
 			err := a.changeClause(c.Id, c.Clause, c.Clause.ActionType)
 			if err != nil {
 				return err
 			}
-		case proto.AutoOpsChangeType_DELETE:
+		case proto.ChangeType_DELETE:
 			if err := a.DeleteClause(c.Id); err != nil {
 				return err
 			}
@@ -188,7 +201,7 @@ func (a *AutoOpsRule) applyGranularChanges(
 
 	for _, c := range datetimeClauses {
 		switch c.ChangeType {
-		case proto.AutoOpsChangeType_CREATE:
+		case proto.ChangeType_CREATE:
 			ac, err := anypb.New(c.Clause)
 			if err != nil {
 				return err
@@ -197,12 +210,12 @@ func (a *AutoOpsRule) applyGranularChanges(
 			if err != nil {
 				return err
 			}
-		case proto.AutoOpsChangeType_UPDATE:
+		case proto.ChangeType_UPDATE:
 			err := a.changeClause(c.Id, c.Clause, c.Clause.ActionType)
 			if err != nil {
 				return err
 			}
-		case proto.AutoOpsChangeType_DELETE:
+		case proto.ChangeType_DELETE:
 			if err := a.DeleteClause(c.Id); err != nil {
 				return err
 			}
@@ -217,18 +230,18 @@ func (a *AutoOpsRule) validateGranularChanges(
 ) error {
 	for _, c := range opsEventRateClauseChanges {
 		switch c.ChangeType {
-		case proto.AutoOpsChangeType_CREATE:
+		case proto.ChangeType_CREATE:
 			if c.Clause == nil {
 				return errClauseEmpty
 			}
-		case proto.AutoOpsChangeType_UPDATE:
+		case proto.ChangeType_UPDATE:
 			if c.Id == "" {
 				return errClauseIDRequired
 			}
 			if c.Clause == nil {
 				return errClauseEmpty
 			}
-		case proto.AutoOpsChangeType_DELETE:
+		case proto.ChangeType_DELETE:
 			if c.Id == "" {
 				return errClauseIDRequired
 			}
@@ -236,18 +249,18 @@ func (a *AutoOpsRule) validateGranularChanges(
 	}
 	for _, c := range datetimeClauseChanges {
 		switch c.ChangeType {
-		case proto.AutoOpsChangeType_CREATE:
+		case proto.ChangeType_CREATE:
 			if c.Clause == nil {
 				return errClauseEmpty
 			}
-		case proto.AutoOpsChangeType_UPDATE:
+		case proto.ChangeType_UPDATE:
 			if c.Id == "" {
 				return errClauseIDRequired
 			}
 			if c.Clause == nil {
 				return errClauseEmpty
 			}
-		case proto.AutoOpsChangeType_DELETE:
+		case proto.ChangeType_DELETE:
 			if c.Id == "" {
 				return errClauseIDRequired
 			}

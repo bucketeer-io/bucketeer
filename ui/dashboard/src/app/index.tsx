@@ -5,7 +5,8 @@ import {
   Route,
   Routes,
   useParams,
-  useNavigate
+  useNavigate,
+  useLocation
 } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
@@ -156,6 +157,7 @@ export const Root = memo(() => {
 export const EnvironmentRoot = memo(
   ({ account }: { account: ConsoleAccount }) => {
     const navigate = useNavigate();
+    const { pathname } = useLocation();
     const { envUrlCode, ...params } = useParams();
     const { searchOptions } = useSearchParams();
 
@@ -192,6 +194,8 @@ export const EnvironmentRoot = memo(
     }, [envUrlCode, currentEnv, params, searchOptions, account]);
 
     useEffect(() => handleCheckEnvCodeOnInit(), [account, envUrlCode]);
+
+    if (pathname === '/') return <AppLoading />;
 
     return (
       <Routes>

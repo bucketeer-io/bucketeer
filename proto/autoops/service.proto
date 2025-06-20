@@ -98,7 +98,7 @@ message DeleteAutoOpsRuleRequest {
 
 message DeleteAutoOpsRuleResponse {}
 
-enum AutoOpsChangeType {
+enum ChangeType {
   UNSPECIFIED = 0;
   CREATE = 1;
   UPDATE = 2;
@@ -109,18 +109,18 @@ message OpsEventRateClauseChange {
   string id = 1;
   OpsEventRateClause clause = 2 [(grpc.gateway.protoc_gen_openapiv2.options
                                       .openapiv2_field) = {
-    description: "The clause value, must be fully filled if update or create clause action is requested."
+    description: "The clause value must be fully filled if the create or update clause action is requested."
   }];
-  AutoOpsChangeType change_type = 3 [(google.api.field_behavior) = REQUIRED];
+  ChangeType change_type = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
 message DatetimeClauseChange {
   string id = 1;
   DatetimeClause clause = 2 [(grpc.gateway.protoc_gen_openapiv2.options
                                   .openapiv2_field) = {
-    description: "The clause value, must be fully filled if update or create clause action is requested."
+    description: "The clause value must be fully filled if the create or update clause action is requested."
   }];
-  AutoOpsChangeType change_type = 3 [(google.api.field_behavior) = REQUIRED];
+  ChangeType change_type = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
 message UpdateAutoOpsRuleRequest {

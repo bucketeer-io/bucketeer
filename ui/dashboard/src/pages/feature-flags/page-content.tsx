@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
+import { useLocation } from 'react-router-dom';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
@@ -26,6 +27,8 @@ const PageContent = ({
   onHandleActions: (item: Feature, type: FlagActionType) => void;
 }) => {
   const { t } = useTranslation(['common']);
+  const location = useLocation();
+
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const [summary, setSummary] = useState<FeatureCountByStatus>();
 
@@ -45,13 +48,18 @@ const PageContent = ({
   const [filters, setFilters] = usePartialState<FlagFilters>(defaultFilters);
 
   const filterCount = useMemo(() => {
-    const { hasExperiment, hasPrerequisites, maintainer, enabled, tags } =
-      filters || {};
-    return isNotEmpty(
-      enabled ?? hasExperiment ?? hasPrerequisites ?? maintainer ?? tags
-    )
-      ? 1
-      : undefined;
+    const filterKeys = [
+      'hasExperiment',
+      'hasPrerequisites',
+      'maintainer',
+      'enabled',
+      'tags'
+    ];
+    const count = filterKeys.reduce((acc, curr) => {
+      if (isNotEmpty(filters[curr as keyof FlagFilters])) ++acc;
+      return acc;
+    }, 0);
+    return count || undefined;
   }, [filters]);
 
   const isHiddenTab = useMemo(
@@ -85,6 +93,22 @@ const PageContent = ({
       setFilters({ ...defaultFilters });
     }
   }, [searchOptions]);
+
+  useEffect(() => {
+    if (location?.state?.clearFilters) {
+      setFilters({
+        ...filters,
+        searchQuery: '',
+        hasExperiment: undefined,
+        hasPrerequisites: undefined,
+        maintainer: undefined,
+        enabled: undefined,
+        archived: undefined,
+        tags: undefined,
+        status: 'ACTIVE'
+      });
+    }
+  }, [location]);
 
   return (
     <PageLayout.Content>

@@ -20,9 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
-	tagstoragemock "github.com/bucketeer-io/bucketeer/pkg/tag/storage/mock"
-
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,11 +37,13 @@ import (
 	exprclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
+	"github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
+	tagstoragemock "github.com/bucketeer-io/bucketeer/pkg/tag/storage/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	aoproto "github.com/bucketeer-io/bucketeer/proto/autoops"

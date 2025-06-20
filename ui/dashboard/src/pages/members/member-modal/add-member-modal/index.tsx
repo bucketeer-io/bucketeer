@@ -18,6 +18,7 @@ import { Language, useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { EnvironmentRoleType, OrganizationRole } from '@types';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { IconInfo } from '@icons';
 import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
@@ -147,6 +148,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
     organizationId: currentEnvironment.organizationId
   });
   const environments = collection?.environments || [];
+  const { formattedEnvironments } = onFormatEnvironments(environments);
 
   const checkSubmitBtnDisabled = useCallback(() => {
     const checkEnvironments = memberEnvironments.every(
@@ -163,7 +165,10 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
       organizationId: currentEnvironment.organizationId,
       email: values.email,
       organizationRole: values.role,
-      environmentRoles: values.environmentRoles,
+      environmentRoles: values.environmentRoles.map(item => ({
+        ...item,
+        environmentId: checkEnvironmentEmptyId(item.environmentId)
+      })),
       tags: values.tags ?? []
     }).then(() => {
       notify({
@@ -280,7 +285,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
             />
 
             <Divider className="mt-1 mb-3" />
-            <EnvironmentRoles environments={environments} />
+            <EnvironmentRoles environments={formattedEnvironments} />
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={

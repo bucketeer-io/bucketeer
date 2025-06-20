@@ -80,8 +80,11 @@ func (m *BooleanConversionMarshaler) Unmarshal(data []byte, v interface{}) error
 		}.Unmarshal(convertedData, msg)
 
 		if err != nil {
-			// TODO: Send metrics for 404 errors instead of logging
-			// Removed logging to reduce log volume from automated scanners
+			// NOTE: No additional metrics needed here.
+			// Error metrics are already collected at multiple layers:
+			// 1. Envoy sidecar: Records HTTP 4xx errors as envoy_http_ingress_http_downstream_rq_4xx
+			// 2. gRPC server: Records as bucketeer_grpc_server_handled_total{code="InvalidArgument"}
+			// Adding metrics here would create duplicate entries for the same error.
 			return err
 		}
 
@@ -212,7 +215,11 @@ type booleanConversionDecoder struct {
 func (d *booleanConversionDecoder) Decode(v interface{}) error {
 	data, err := io.ReadAll(d.reader)
 	if err != nil {
-		// TODO: Send metrics for read errors instead of logging to avoid log volume
+		// NOTE: No additional metrics needed for IO read errors.
+		// These errors are typically network-level issues that are already captured by:
+		// 1. Envoy sidecar: Connection/timeout metrics
+		// 2. gRPC server: Will record the resulting error status
+		// Adding metrics here would create duplicate entries for the same error.
 		return err
 	}
 	return d.marshaler.Unmarshal(data, v)
@@ -304,7 +311,7 @@ func (g *Gateway) Start(ctx context.Context,
 		logger: g.logger,
 	}
 
-	// Custom error handler that logs errors
+	// Custom error handler for gRPC-Gateway HTTP errors
 	errorHandler := func(
 		ctx context.Context,
 		mux *runtime.ServeMux,
@@ -313,8 +320,11 @@ func (g *Gateway) Start(ctx context.Context,
 		r *http.Request,
 		err error,
 	) {
-		// TODO: Send metrics for 404 errors instead of logging
-		// Removed logging to reduce log volume from automated scanners
+		// NOTE: No additional metrics or logging needed here.
+		// HTTP-level errors (404, 400, etc.) are already captured by:
+		// 1. Envoy sidecar: HTTP status code metrics (envoy_http_ingress_http_downstream_rq_4xx)
+		// 2. gRPC server: Application errors as gRPC status codes (bucketeer_grpc_server_handled_total)
+		// Adding metrics here would create duplicate entries for the same error.
 
 		// Call the default error handler to send the response
 		runtime.DefaultHTTPErrorHandler(ctx, mux, marshaler, w, r, err)

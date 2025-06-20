@@ -10,6 +10,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { APIKey, APIKeyRole } from '@types';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { IconInfo } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -65,17 +66,21 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
     }
   });
   const environments = collection?.environments || [];
+  const { emptyEnvironmentId, formattedEnvironments } =
+    onFormatEnvironments(environments);
 
   const apiEnvironmentId = useMemo(
-    () => environments.find(item => item.name === apiKey?.environmentName)?.id,
-    [environments, apiKey]
+    () =>
+      formattedEnvironments.find(item => item.name === apiKey?.environmentName)
+        ?.id,
+    [formattedEnvironments, apiKey]
   );
 
   const form = useForm({
     resolver: yupResolver(formSchema),
     values: {
       name: apiKey.name,
-      environmentId: apiEnvironmentId || '',
+      environmentId: apiEnvironmentId || emptyEnvironmentId,
       description: apiKey.description
     }
   });
@@ -88,8 +93,8 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
   const environmentId = watch('environmentId');
 
   const currentEnv = useMemo(
-    () => environments.find(item => item.id === environmentId),
-    [environments, environmentId]
+    () => formattedEnvironments.find(item => item.id === environmentId),
+    [formattedEnvironments, environmentId]
   );
 
   const options: APIKeyOption[] = [
@@ -128,7 +133,7 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
   const onSubmit: SubmitHandler<EditAPIKeyForm> = values => {
     return apiKeyUpdater({
       id: apiKey.id,
-      environmentId: values.environmentId,
+      environmentId: checkEnvironmentEmptyId(values.environmentId),
       description: values.description,
       name: values.name
     }).then(() => {
@@ -211,7 +216,7 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
                         align="start"
                         {...field}
                       >
-                        {environments.map((item, index) => (
+                        {formattedEnvironments.map((item, index) => (
                           <DropdownMenuItem
                             {...field}
                             key={index}

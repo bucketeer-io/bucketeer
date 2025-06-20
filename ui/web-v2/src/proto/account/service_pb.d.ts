@@ -220,6 +220,11 @@ export class CreateAccountV2Request extends jspb.Message {
   setTagsList(value: Array<string>): void;
   addTags(value: string, index?: number): string;
 
+  clearTeamsList(): void;
+  getTeamsList(): Array<string>;
+  setTeamsList(value: Array<string>): void;
+  addTeams(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAccountV2Request.AsObject;
   static toObject(
@@ -254,6 +259,7 @@ export namespace CreateAccountV2Request {
     lastName: string;
     language: string;
     tagsList: Array<string>;
+    teamsList: Array<string>;
   };
 }
 
@@ -505,6 +511,41 @@ export namespace DeleteAccountV2Response {
   export type AsObject = {};
 }
 
+export class TeamChange extends jspb.Message {
+  getChangeType(): ChangeTypeMap[keyof ChangeTypeMap];
+  setChangeType(value: ChangeTypeMap[keyof ChangeTypeMap]): void;
+
+  getTeam(): string;
+  setTeam(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TeamChange.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: TeamChange
+  ): TeamChange.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: TeamChange,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): TeamChange;
+  static deserializeBinaryFromReader(
+    message: TeamChange,
+    reader: jspb.BinaryReader
+  ): TeamChange;
+}
+
+export namespace TeamChange {
+  export type AsObject = {
+    changeType: ChangeTypeMap[keyof ChangeTypeMap];
+    team: string;
+  };
+}
+
 export class UpdateAccountV2Request extends jspb.Message {
   getEmail(): string;
   setEmail(value: string): void;
@@ -666,6 +707,11 @@ export class UpdateAccountV2Request extends jspb.Message {
     value?: proto_account_command_pb.ChangeAccountV2TagsCommand
   ): void;
 
+  hasTeamChanges(): boolean;
+  clearTeamChanges(): void;
+  getTeamChanges(): TeamChange | undefined;
+  setTeamChanges(value?: TeamChange): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateAccountV2Request.AsObject;
   static toObject(
@@ -712,6 +758,7 @@ export namespace UpdateAccountV2Request {
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     tags?: proto_common_string_pb.StringListValue.AsObject;
     changeTagsCommand?: proto_account_command_pb.ChangeAccountV2TagsCommand.AsObject;
+    teamChanges?: TeamChange.AsObject;
   };
 
   export class AccountV2Avatar extends jspb.Message {
@@ -1998,3 +2045,12 @@ export class UpdateAPIKeyResponse extends jspb.Message {
 export namespace UpdateAPIKeyResponse {
   export type AsObject = {};
 }
+
+export interface ChangeTypeMap {
+  UNSPECIFIED: 0;
+  CREATE: 1;
+  UPDATE: 2;
+  DELETE: 3;
+}
+
+export const ChangeType: ChangeTypeMap;

@@ -395,16 +395,6 @@ func (s *PushService) validateCreatePushRequest(req *pushproto.CreatePushRequest
 		}
 		return dt.Err()
 	}
-	if len(req.Command.Tags) == 0 {
-		dt, err := statusTagsRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	if req.Command.Name == "" {
 		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -423,16 +413,6 @@ func (s *PushService) validateCreatePushNoCommand(req *pushproto.CreatePushReque
 		dt, err := statusFCMServiceAccountRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fcm_service_account"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if len(req.Tags) == 0 {
-		dt, err := statusTagsRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -555,7 +535,7 @@ func (s *PushService) updatePushNoCommand(
 			return err
 		}
 
-		updated, err := push.Update(req.Name, req.Tags, req.Disabled)
+		updated, err := push.Update(req.Name, req.TagChanges, req.Disabled)
 		if err != nil {
 			return err
 		}

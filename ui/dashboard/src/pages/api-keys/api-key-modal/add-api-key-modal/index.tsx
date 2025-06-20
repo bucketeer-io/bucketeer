@@ -8,6 +8,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { APIKeyRole } from '@types';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { IconInfo } from '@icons';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
@@ -61,7 +62,8 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
   const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
-  const environments = (collection?.environments || []).filter(item => item.id);
+  const environments = collection?.environments || [];
+  const { formattedEnvironments } = onFormatEnvironments(environments);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -113,7 +115,7 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
 
   const onSubmit: SubmitHandler<AddAPIKeyForm> = values => {
     return apiKeyCreator({
-      environmentId: values.environmentId,
+      environmentId: checkEnvironmentEmptyId(values.environmentId),
       name: values.name,
       role: values.role,
       description: values.description
@@ -188,9 +190,9 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
                       <DropdownMenuTrigger
                         placeholder={t(`form:select-environment`)}
                         label={
-                          environments.find(
+                          formattedEnvironments.find(
                             item => item.id === getValues('environmentId')
-                          )?.name
+                          )?.name || ''
                         }
                         disabled={isLoadingEnvs}
                         variant="secondary"
@@ -201,7 +203,7 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
                         align="start"
                         {...field}
                       >
-                        {environments.map((item, index) => (
+                        {formattedEnvironments.map((item, index) => (
                           <DropdownMenuItem
                             {...field}
                             key={index}

@@ -26,7 +26,7 @@ const PageDetailsHeader = ({
       <div className="flex items-center gap-4">
         <button
           className={cn(
-            'size-6 flex-center rounded hover:shadow-border-gray-500',
+            'size-6 min-w-6 flex-center rounded hover:shadow-border-gray-500',
             'shadow-border-gray-400 text-gray-600'
           )}
           onClick={onBack}

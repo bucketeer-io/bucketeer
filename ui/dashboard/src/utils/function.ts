@@ -1,4 +1,6 @@
+import { ENVIRONMENT_WITH_EMPTY_ID } from 'constants/app';
 import dayjs from 'dayjs';
+import { Environment } from '@types';
 
 export const copyToClipBoard = (text: string) => {
   if (navigator.clipboard) {
@@ -93,3 +95,18 @@ export const isSameOrBeforeDate = (date: Date, conditionDate = new Date()) => {
     dayjs(date).isSame(conditionDate) || dayjs(date).isBefore(conditionDate)
   );
 };
+
+export const onFormatEnvironments = (environments: Environment[]) => {
+  let emptyEnvironmentId = '';
+  const formattedEnvironments = environments.map((item, index) => {
+    if (!item.id) emptyEnvironmentId = `${ENVIRONMENT_WITH_EMPTY_ID}${index}`;
+    return {
+      ...item,
+      id: item.id ? item.id : emptyEnvironmentId
+    };
+  });
+  return { emptyEnvironmentId, formattedEnvironments };
+};
+
+export const checkEnvironmentEmptyId = (environmentId: string) =>
+  environmentId.includes(ENVIRONMENT_WITH_EMPTY_ID) ? '' : environmentId;

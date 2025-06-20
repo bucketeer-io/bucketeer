@@ -123,8 +123,6 @@ const theme = {
   boxShadow: {
     DEFAULT: '0px 2px 2px rgba(136, 135, 135, 0.25)',
     menu: '0px 8px 12px rgba(0, 0, 0, 0.08)',
-    // card: '0px 8px 13px -3px rgba(0, 0, 0, 0.07)',
-    // card: '0px 8px 13px 2px rgba(0, 0, 0, 0.1)',
     card: '0px 4px 8px 1px rgba(0, 0, 0, 0.1)',
     'card-secondary': '0px 4px 13px 2px rgba(0, 0, 0, 0.1)',
     dropdown: '0px 4px 8px rgba(35, 35, 35, 0.1)',

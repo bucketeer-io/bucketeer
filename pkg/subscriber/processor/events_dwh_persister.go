@@ -37,17 +37,44 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
+// BigQuery specific configuration
+type BigQueryConfig struct {
+	Project  string `json:"project"`
+	Dataset  string `json:"dataset"`
+	Location string `json:"location"`
+}
+
+// MySQL specific configuration
+type MySQLConfig struct {
+	UseMainConnection bool   `json:"useMainConnection"`
+	Host              string `json:"host"`
+	Port              int    `json:"port"`
+	User              string `json:"user"`
+	Password          string `json:"password"`
+	Database          string `json:"database"`
+}
+
 type eventsDWHPersisterConfig struct {
-	FlushInterval           int    `json:"flushInterval"`
-	FlushTimeout            int    `json:"flushTimeout"`
-	FlushSize               int    `json:"flushSize"`
-	Project                 string `json:"project"`
-	BigQueryDataSet         string `json:"bigQueryDataSet"`
-	BigQueryDataLocation    string `json:"bigQueryDataLocation"`
-	BigQueryBatchSize       int    `json:"bigQueryBatchSize"`
-	Timezone                string `json:"timezone"`
-	MaxRetryGoalEventPeriod int    `json:"maxRetryGoalEventPeriod"`
-	RetryGoalEventInterval  int    `json:"retryGoalEventInterval"`
+	// Persister-specific settings
+	FlushInterval           int `json:"flushInterval"`
+	FlushTimeout            int `json:"flushTimeout"`
+	FlushSize               int `json:"flushSize"`
+	MaxRetryGoalEventPeriod int `json:"maxRetryGoalEventPeriod,omitempty"`
+	RetryGoalEventInterval  int `json:"retryGoalEventInterval,omitempty"`
+
+	// Data warehouse configuration
+	DataWarehouse DataWarehouseConfig `json:"dataWarehouse"`
+}
+
+type DataWarehouseConfig struct {
+	Type      string `json:"type"` // bigquery, mysql
+	BatchSize int    `json:"batchSize"`
+	Timezone  string `json:"timezone"`
+
+	// BigQuery specific configuration
+	BigQuery BigQueryConfig `json:"bigquery"`
+	// MySQL specific configuration
+	MySQL MySQLConfig `json:"mysql"`
 }
 
 type eventsDWHPersister struct {
@@ -85,49 +112,131 @@ func NewEventsDWHPersister(
 		logger.Error("eventsDWHPersister: failed to unmarshal config", zap.Error(err))
 		return nil, err
 	}
+
+	// Validate configuration and set defaults
+	if err := persisterConfig.validateAndSetDefaults(); err != nil {
+		logger.Error("eventsDWHPersister: invalid configuration", zap.Error(err))
+		return nil, err
+	}
+
+	// Determine the MySQL client to use for data warehouse operations
+	var dwhMySQLClient mysql.Client
+	if persisterConfig.DataWarehouse.Type == "mysql" {
+		if persisterConfig.DataWarehouse.MySQL.UseMainConnection {
+			// Use the existing MySQL client from main application
+			dwhMySQLClient = mysqlClient
+			logger.Info("Using main MySQL connection for data warehouse")
+		} else {
+			// Create a new MySQL client with separate connection
+			dwhMySQLClient, err = createDedicatedMySQLClient(ctx, &persisterConfig.DataWarehouse.MySQL, logger)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create dedicated MySQL client: %w", err)
+			}
+			logger.Info("Using dedicated MySQL connection for data warehouse",
+				zap.String("host", persisterConfig.DataWarehouse.MySQL.Host),
+				zap.String("database", persisterConfig.DataWarehouse.MySQL.Database),
+			)
+		}
+	} else {
+		// Default to main connection for non-MySQL types
+		dwhMySQLClient = mysqlClient
+	}
+
 	e := &eventsDWHPersister{
 		eventsDWHPersisterConfig: persisterConfig,
-		mysqlClient:              mysqlClient,
+		mysqlClient:              dwhMySQLClient,
 		logger:                   logger,
 	}
 	experimentsCache := cachev3.NewExperimentsCache(cachev3.NewRedisCache(redisClient))
-	location, err := locale.GetLocation(e.eventsDWHPersisterConfig.Timezone)
+	location, err := locale.GetLocation(e.eventsDWHPersisterConfig.DataWarehouse.Timezone)
 	if err != nil {
 		return nil, err
 	}
+
 	switch persisterName {
 	case EvaluationCountEventDWHPersisterName:
 		e.subscriberType = subscriberEvaluationEventDWH
+
+		// Create evaluation event writer based on data warehouse type
+		var evalOptions []EvalEventWriterOption
+
+		switch persisterConfig.DataWarehouse.Type {
+		case "mysql":
+			evalOptions = append(evalOptions, EvalEventWriterOption{
+				DataWarehouseType: "mysql",
+				MySQLClient:       dwhMySQLClient,
+				BatchSize:         persisterConfig.DataWarehouse.BatchSize,
+			})
+		case "bigquery":
+			// BigQuery is handled in the NewEvalEventWriter call below
+		default:
+			return nil, fmt.Errorf(
+				"unsupported data warehouse type for evaluation events: %s",
+				persisterConfig.DataWarehouse.Type,
+			)
+		}
+
+		// Get BigQuery configuration
+		project := persisterConfig.DataWarehouse.BigQuery.Project
+		dataset := persisterConfig.DataWarehouse.BigQuery.Dataset
+		bigQueryBatchSize := persisterConfig.DataWarehouse.BatchSize
+
 		evalEventWriter, err := NewEvalEventWriter(
 			ctx,
 			logger,
 			exClient,
 			experimentsCache,
-			e.eventsDWHPersisterConfig.Project,
-			e.eventsDWHPersisterConfig.BigQueryDataSet,
-			e.eventsDWHPersisterConfig.BigQueryBatchSize,
+			project,
+			dataset,
+			bigQueryBatchSize,
 			location,
+			evalOptions...,
 		)
 		if err != nil {
 			return nil, err
 		}
 		e.writer = evalEventWriter
+
 	case GoalCountEventDWHPersisterName:
 		e.subscriberType = subscriberGoalEventDWH
+
+		// Create goal event writer based on data warehouse type
+		var goalOptions []GoalEventWriterOption
+
+		switch persisterConfig.DataWarehouse.Type {
+		case "mysql":
+			goalOptions = append(goalOptions, GoalEventWriterOption{
+				DataWarehouseType: "mysql",
+				MySQLClient:       dwhMySQLClient,
+				BatchSize:         persisterConfig.DataWarehouse.BatchSize,
+			})
+		case "bigquery":
+			// BigQuery is handled in the NewGoalEventWriter call below
+		default:
+			return nil, fmt.Errorf("unsupported data warehouse type for goal events: %s", persisterConfig.DataWarehouse.Type)
+		}
+
+		// Get BigQuery configuration
+		project := persisterConfig.DataWarehouse.BigQuery.Project
+		dataset := persisterConfig.DataWarehouse.BigQuery.Dataset
+		location_str := persisterConfig.DataWarehouse.BigQuery.Location
+		bigQueryBatchSize := persisterConfig.DataWarehouse.BatchSize
+
 		goalEventWriter, err := NewGoalEventWriter(
 			ctx,
 			logger,
 			exClient,
 			ftClient,
 			experimentsCache,
-			e.eventsDWHPersisterConfig.Project,
-			e.eventsDWHPersisterConfig.BigQueryDataSet,
-			e.eventsDWHPersisterConfig.BigQueryDataLocation,
-			e.eventsDWHPersisterConfig.BigQueryBatchSize,
+			project,
+			dataset,
+			location_str,
+			bigQueryBatchSize,
 			location,
 			persistentRedisClient,
 			time.Duration(e.eventsDWHPersisterConfig.MaxRetryGoalEventPeriod)*time.Second,
 			time.Duration(e.eventsDWHPersisterConfig.RetryGoalEventInterval)*time.Second,
+			goalOptions...,
 		)
 		if err != nil {
 			return nil, err
@@ -265,4 +374,81 @@ func (e *eventsDWHPersister) extractEvents(messages map[string]*puller.Message) 
 		envEvents[event.EnvironmentId] = eventDWHMap{event.Id: innerEvent.Message}
 	}
 	return envEvents
+}
+
+// createDedicatedMySQLClient creates a new MySQL client with dedicated connection for data warehouse operations
+func createDedicatedMySQLClient(ctx context.Context, config *MySQLConfig, logger *zap.Logger) (mysql.Client, error) {
+	if config == nil {
+		return nil, fmt.Errorf("mysql config is nil")
+	}
+
+	// Validate required fields
+	if config.Host == "" || config.Database == "" || config.User == "" {
+		return nil, fmt.Errorf("mysql host, database, and user are required for dedicated connection")
+	}
+
+	// Set default port if not specified
+	port := config.Port
+	if port == 0 {
+		port = 3306 // Default MySQL port
+	}
+
+	// Create context with timeout for connection
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	// Create MySQL client with dedicated connection
+	client, err := mysql.NewClient(
+		ctx,
+		config.User,
+		config.Password,
+		config.Host,
+		port,
+		config.Database,
+		mysql.WithLogger(logger),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create MySQL client: %w", err)
+	}
+
+	logger.Info("Created dedicated MySQL client for data warehouse",
+		zap.String("host", config.Host),
+		zap.Int("port", port),
+		zap.String("database", config.Database),
+		zap.String("user", config.User),
+	)
+
+	return client, nil
+}
+
+// validateAndSetDefaults validates configuration and sets default values
+func (config *eventsDWHPersisterConfig) validateAndSetDefaults() error {
+	// Validate data warehouse type
+	if config.DataWarehouse.Type == "" {
+		return fmt.Errorf("dataWarehouse.type is required")
+	}
+
+	// Set default batch size if not specified
+	if config.DataWarehouse.BatchSize == 0 {
+		config.DataWarehouse.BatchSize = 1000 // default
+	}
+
+	// Set default timezone if not specified
+	if config.DataWarehouse.Timezone == "" {
+		config.DataWarehouse.Timezone = "UTC" // default
+	}
+
+	// Validate type-specific configuration
+	switch config.DataWarehouse.Type {
+	case "bigquery":
+		if config.DataWarehouse.BigQuery.Project == "" || config.DataWarehouse.BigQuery.Dataset == "" {
+			return fmt.Errorf("bigquery project and dataset are required")
+		}
+	case "mysql":
+		// MySQL configuration is always present in the struct, no need to check for nil
+	default:
+		return fmt.Errorf("unsupported data warehouse type: %s", config.DataWarehouse.Type)
+	}
+
+	return nil
 }
