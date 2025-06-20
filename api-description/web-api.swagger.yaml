@@ -7702,6 +7702,7 @@ paths:
               - DOMAIN_EVENT_FLAG_TRIGGER
               - DOMAIN_EVENT_TAG
               - DOMAIN_EVENT_CODEREF
+              - DOMAIN_EVENT_TEAM
               - FEATURE_STALE
               - EXPERIMENT_RUNNING
               - MAU_COUNT
@@ -8429,6 +8430,7 @@ definitions:
       - DOMAIN_EVENT_FLAG_TRIGGER
       - DOMAIN_EVENT_TAG
       - DOMAIN_EVENT_CODEREF
+      - DOMAIN_EVENT_TEAM
       - FEATURE_STALE
       - EXPERIMENT_RUNNING
       - MAU_COUNT
@@ -10260,6 +10262,7 @@ definitions:
       - FLAG_TRIGGER
       - TAG
       - CODEREF
+      - TEAM
     default: FEATURE
   domainEventType:
     type: string
@@ -10449,6 +10452,8 @@ definitions:
       - CODE_REFERENCE_CREATED
       - CODE_REFERENCE_UPDATED
       - CODE_REFERENCE_DELETED
+      - TEAM_CREATED
+      - TEAM_DELETED
     default: UNKNOWN
   domainLocalizedMessage:
     type: object

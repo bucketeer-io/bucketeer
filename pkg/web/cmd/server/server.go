@@ -65,6 +65,7 @@ import (
 	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	tagapi "github.com/bucketeer-io/bucketeer/pkg/tag/api"
+	teamapi "github.com/bucketeer-io/bucketeer/pkg/team/api"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	auditlogproto "github.com/bucketeer-io/bucketeer/proto/auditlog"
@@ -78,6 +79,7 @@ import (
 	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
 	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
 	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
+	teamproto "github.com/bucketeer-io/bucketeer/proto/team"
 )
 
 const (
@@ -128,6 +130,7 @@ type server struct {
 	dashboardServicePort            *int
 	tagServicePort                  *int
 	codeReferenceServicePort        *int
+	teamServicePort                 *int
 	webGrpcGatewayPort              *int
 	accountService                  *string
 	authService                     *string
@@ -288,6 +291,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"code-reference-service-port",
 			"Port to bind to code reference service.",
 		).Default("9105").Int(),
+		teamServicePort: cmd.Flag(
+			"team-service-port",
+			"Port to bind to team service.",
+		).Default("9107").Int(),
 		webGrpcGatewayPort: cmd.Flag(
 			"web-grpc-gateway-port",
 			"Port to bind to web gRPC gateway.",
@@ -781,6 +788,22 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go codeReferenceServer.Run()
 
+	// teamService
+	teamService := teamapi.NewTeamService(
+		mysqlClient,
+		accountClient,
+		domainTopicPublisher,
+		teamapi.WithLogger(logger),
+	)
+	teamServer := rpc.NewServer(teamService, *s.certPath, *s.keyPath,
+		"team-server",
+		rpc.WithPort(*s.teamServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	go teamServer.Run()
+
 	// Start the web console and dashboard servers
 	webConsoleServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
@@ -837,6 +860,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go tagServer.Stop(serverShutDownTimeout)
 		go webConsoleServer.Stop(serverShutDownTimeout)
 		go codeReferenceServer.Stop(serverShutDownTimeout)
+		go teamServer.Stop(serverShutDownTimeout)
 		go webGrpcGateway.Stop(serverShutDownTimeout)
 		// Close clients
 		go mysqlClient.Close()
@@ -1068,6 +1092,10 @@ func (s *server) createGatewayHandlers() []gatewayapi.HandlerRegistrar {
 		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
 			tagGrpcAddr := fmt.Sprintf("localhost:%d", *s.tagServicePort)
 			return tagproto.RegisterTagServiceHandlerFromEndpoint(ctx, mux, tagGrpcAddr, opts)
+		},
+		func(ctx context.Context, mux *runtime.ServeMux, options []grpc.DialOption) error {
+			teamGrpcAddr := fmt.Sprintf("localhost:%d", *s.teamServicePort)
+			return teamproto.RegisterTeamServiceHandlerFromEndpoint(ctx, mux, teamGrpcAddr, options)
 		},
 		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
 			codeRefGrpcAddr := fmt.Sprintf("localhost:%d", *s.codeReferenceServicePort)
