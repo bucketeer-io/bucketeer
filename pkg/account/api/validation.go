@@ -38,110 +38,78 @@ func verifyEmailFormat(email string) bool {
 
 func validateCreateAPIKeyRequest(req *accountproto.CreateAPIKeyRequest, localizer locale.Localizer) error {
 	if req.Command.Name == "" {
-		dt, err := statusMissingAPIKeyName.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(statusMissingAPIKeyName, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_name"),
 		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
 	}
 	return nil
 }
 
 func validateCreateAPIKeyRequestNoCommand(req *accountproto.CreateAPIKeyRequest, localizer locale.Localizer) error {
 	if req.Name == "" {
-		dt, err := statusMissingAPIKeyName.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(statusMissingAPIKeyName, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_name"),
 		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
 	}
 	if req.Maintainer != "" && !verifyEmailFormat(req.Maintainer) {
-		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(statusInvalidEmail, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "maintainer"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+		},
+			map[string]string{
+				"field": "maintainer",
+			},
+		)
 	}
 	return nil
 }
 
 func validateChangeAPIKeyNameRequest(req *accountproto.ChangeAPIKeyNameRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
-		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(statusMissingAPIKeyID, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
 		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
 	}
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(statusNoCommand, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
 		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
 	}
 	return nil
 }
 
 func validateEnableAPIKeyRequest(req *accountproto.EnableAPIKeyRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
-		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(statusMissingAPIKeyID, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
 		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
 	}
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(statusNoCommand, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
 		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
 	}
 	return nil
 }
 
 func validateDisableAPIKeyRequest(req *accountproto.DisableAPIKeyRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
-		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(statusMissingAPIKeyID, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
 		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
 	}
 	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(statusNoCommand, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
 		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
 	}
 	return nil
 }
@@ -886,14 +854,10 @@ func validateDeleteSearchFilterRequest(
 
 func validateUpdateAPIKeyRequestNoCommand(req *accountproto.UpdateAPIKeyRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
-		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
+		return NewError(statusMissingAPIKeyID, &errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
 		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
 	}
 	return nil
 }
