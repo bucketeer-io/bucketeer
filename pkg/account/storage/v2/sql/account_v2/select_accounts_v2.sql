@@ -8,6 +8,7 @@ SELECT
     avatar_file_type,
     avatar_image,
     tags,
+    teams,
     organization_id,
     organization_role,
     environment_roles,

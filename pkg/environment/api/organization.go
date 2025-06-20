@@ -692,6 +692,7 @@ func (s *EnvironmentService) createOwnerAccount(
 		"",
 		"",
 		[]string{},
+		[]string{},
 		organizationID,
 		accountproto.AccountV2_Role_Organization_OWNER,
 		envRoles,
