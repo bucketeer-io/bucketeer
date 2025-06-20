@@ -1,6 +1,15 @@
 import axiosClient from '@api/axios-client';
 import { Push } from '@types';
 
+export type TagChangeActionType =
+  | 'UNSPECIFIED'
+  | 'CREATE'
+  | 'UPDATE'
+  | 'DELETE';
+export interface TagChange {
+  changeType: TagChangeActionType;
+  tag: string;
+}
 export interface PushUpdaterPayload {
   id: string;
   environmentId?: string;
@@ -8,6 +17,7 @@ export interface PushUpdaterPayload {
   disabled?: boolean;
   name?: string;
   tags?: string[];
+  tagChanges?: TagChange[];
 }
 
 export interface PushUpdaterResponse {
