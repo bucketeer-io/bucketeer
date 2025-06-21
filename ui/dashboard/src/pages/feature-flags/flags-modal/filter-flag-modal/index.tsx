@@ -7,7 +7,7 @@ import { debounce } from 'lodash';
 import { isEmpty } from 'utils/data-type';
 import { cn } from 'utils/style';
 import { IconPlus, IconTrash } from '@icons';
-import { FlagFilters } from 'pages/feature-flags/types';
+import { FlagFilters, StatusFilterType } from 'pages/feature-flags/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
@@ -40,7 +40,9 @@ export enum FilterTypes {
   HAS_PREREQUISITES = 'hasPrerequisites',
   MAINTAINER = 'maintainer',
   ENABLED = 'enabled',
-  TAGS = 'tags'
+  TAGS = 'tags',
+  STATUS = 'status',
+  HAS_RULE = 'hasFeatureFlagAsRule'
 }
 
 export const filterOptions: Option[] = [
@@ -68,6 +70,16 @@ export const filterOptions: Option[] = [
     value: FilterTypes.TAGS,
     label: 'Tags',
     filterValue: ''
+  },
+  {
+    value: FilterTypes.STATUS,
+    label: 'Status',
+    filterValue: ''
+  },
+  {
+    value: FilterTypes.HAS_RULE,
+    label: 'Has Feature Flag As Rule',
+    filterValue: ''
   }
 ];
 
@@ -79,6 +91,21 @@ export const booleanOptions = [
   {
     value: 0,
     label: 'No'
+  }
+];
+
+export const flagStatusOptions = [
+  {
+    value: StatusFilterType.NEW,
+    label: 'New'
+  },
+  {
+    value: StatusFilterType.ACTIVE,
+    label: 'Active'
+  },
+  {
+    value: StatusFilterType.NO_ACTIVITY,
+    label: 'No Activity'
   }
 ];
 
@@ -157,17 +184,23 @@ const FilterFlagModal = ({
       if (!filterOption.value) return [];
       const isMaintainerFilter = filterOption.value === FilterTypes.MAINTAINER;
       const isTagFilter = filterOption.value === FilterTypes.TAGS;
-      const isHaveSearchingDropdown = isMaintainerFilter || isTagFilter;
+      const isStatusFilter = filterOption.value === FilterTypes.STATUS;
+
+      const isHaveSearchingDropdown =
+        isMaintainerFilter || isTagFilter || isStatusFilter;
       if (isHaveSearchingDropdown) {
         const options = isMaintainerFilter
           ? accounts.map(item => ({
               label: item.email,
               value: item.email
             }))
-          : tags.map(item => ({
-              label: item.name,
-              value: item.name
-            }));
+          : isTagFilter
+            ? tags.map(item => ({
+                label: item.name,
+                value: item.name
+              }))
+            : flagStatusOptions;
+
         return options?.filter(item =>
           searchValue
             ? item.value.toLowerCase().includes(searchValue.toLowerCase())
@@ -188,8 +221,15 @@ const FilterFlagModal = ({
 
   const handleSetFilterOnInit = useCallback(() => {
     if (filters) {
-      const { maintainer, hasExperiment, hasPrerequisites, enabled, tags } =
-        filters || {};
+      const {
+        maintainer,
+        hasExperiment,
+        hasPrerequisites,
+        enabled,
+        tags,
+        status,
+        hasFeatureFlagAsRule
+      } = filters || {};
       const filterTypeArr: Option[] = [];
       const addFilterOption = (index: number, value: Option['filterValue']) => {
         if (!isEmpty(value)) {
@@ -197,9 +237,11 @@ const FilterFlagModal = ({
 
           filterTypeArr.push({
             ...option,
-            filterValue: [FilterTypes.TAGS, FilterTypes.MAINTAINER].includes(
-              option.value!
-            )
+            filterValue: [
+              FilterTypes.TAGS,
+              FilterTypes.MAINTAINER,
+              FilterTypes.STATUS
+            ].includes(option.value!)
               ? value
               : value
                 ? 1
@@ -212,6 +254,9 @@ const FilterFlagModal = ({
       addFilterOption(2, maintainer);
       addFilterOption(3, enabled);
       addFilterOption(4, tags);
+      addFilterOption(5, status);
+      addFilterOption(6, hasFeatureFlagAsRule);
+
       setSelectedFilters(
         filterTypeArr.length ? filterTypeArr : [filterOptions[0]]
       );
@@ -224,6 +269,8 @@ const FilterFlagModal = ({
         const { value: filterType, filterValue } = filterOption;
         const isMaintainerFilter = filterType === FilterTypes.MAINTAINER;
         const isTagFilter = filterType === FilterTypes.TAGS;
+        const isStatusFilter = filterType === FilterTypes.STATUS;
+
         return isMaintainerFilter
           ? filterValue || ''
           : isTagFilter
@@ -233,8 +280,9 @@ const FilterFlagModal = ({
                   .map(item => tags.find(tag => tag.name === item)?.name)
                   ?.join(', ')) ||
               ''
-            : booleanOptions.find(item => item.value === filterValue)?.label ||
-              '';
+            : (isStatusFilter ? flagStatusOptions : booleanOptions).find(
+                item => item.value === filterValue
+              )?.label || '';
       }
       return '';
     },
@@ -273,15 +321,19 @@ const FilterFlagModal = ({
       hasPrerequisites: undefined,
       maintainer: undefined,
       enabled: undefined,
-      tags: undefined
+      tags: undefined,
+      status: undefined,
+      hasFeatureFlagAsRule: undefined
     };
 
     const newFilters = {};
 
     selectedFilters.forEach(filter => {
-      const filterByText = [FilterTypes.MAINTAINER, FilterTypes.TAGS].includes(
-        filter.value!
-      );
+      const filterByText = [
+        FilterTypes.MAINTAINER,
+        FilterTypes.TAGS,
+        FilterTypes.STATUS
+      ].includes(filter.value!);
       Object.assign(newFilters, {
         [filter.value!]: filterByText
           ? filter.filterValue
@@ -334,9 +386,9 @@ const FilterFlagModal = ({
                   placeholder={t(`select-filter`)}
                   label={label}
                   variant="secondary"
-                  className="w-full"
+                  className="w-full max-w-[250px] truncate"
                 />
-                <DropdownMenuContent className="w-[235px]" align="start">
+                <DropdownMenuContent className="w-[250px]" align="start">
                   {remainingFilterOptions.map((item, index) => (
                     <DropdownMenuItem
                       key={index}
