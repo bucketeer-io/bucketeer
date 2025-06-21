@@ -100,7 +100,9 @@ const CollectionLoader = ({
           filters?.hasExperiment ??
           filters?.hasPrerequisites ??
           filters?.maintainer ??
-          filters?.tags
+          filters?.tags ??
+          filters?.status ??
+          filters?.hasFeatureFlagAsRule
       )}
       searchQuery={filters?.searchQuery}
       onClear={onClearFilters}

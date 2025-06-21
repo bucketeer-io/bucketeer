@@ -1,6 +1,7 @@
 import { useQueryFeatures } from '@queries/features';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { CollectionStatusType, OrderBy, OrderDirection } from '@types';
+import { StatusFilterType } from '../types';
 
 export const useFetchFlags = ({
   page = 1,
@@ -14,7 +15,9 @@ export const useFetchFlags = ({
   enabled,
   hasPrerequisites,
   tags,
-  status
+  tab,
+  status,
+  hasFeatureFlagAsRule
 }: {
   environmentId: string;
   pageSize?: number;
@@ -27,7 +30,9 @@ export const useFetchFlags = ({
   enabled?: boolean;
   hasPrerequisites?: boolean;
   tags?: string[];
-  status: CollectionStatusType;
+  tab: CollectionStatusType;
+  status?: StatusFilterType;
+  hasFeatureFlagAsRule?: boolean;
 }) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
 
@@ -41,10 +46,12 @@ export const useFetchFlags = ({
       environmentId,
       maintainer,
       enabled,
-      archived: status === 'ARCHIVED',
+      archived: tab === 'ARCHIVED',
       hasExperiment,
       hasPrerequisites,
-      tags
+      tags,
+      status,
+      hasFeatureFlagAsRule
     }
   });
 };
