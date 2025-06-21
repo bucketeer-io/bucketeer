@@ -1,8 +1,6 @@
-import {
-  IconEditOutlined,
-  IconMoreHorizOutlined
-} from 'react-icons-material-design';
+import { IconEditOutlined } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
+import { useAuthAccess } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
@@ -12,9 +10,10 @@ import { useFormatDateTime } from 'utils/date-time';
 import { copyToClipBoard } from 'utils/function';
 import { IconCopy } from '@icons';
 import Icon from 'components/icon';
-import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { APIKeyActionsType } from '../types';
 
@@ -26,6 +25,8 @@ export const useColumns = ({
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
   const { notify } = useToast();
+
+  const { envEditable, isOrganizationAdmin } = useAuthAccess();
 
   const getAPIkeyRole = (role: APIKeyRole) => {
     switch (role) {
@@ -99,7 +100,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const apiKey = row.original;
         return (
-          <div className="typo-para-small text-accent-blue-500 bg-accent-blue-50 px-2 py-[3px] w-fit rounded">
+          <div className="typo-para-small text-accent-blue-500 bg-accent-blue-50 px-2 py-[3px] w-fit rounded whitespace-nowrap">
             {getAPIkeyRole(apiKey.role)}
           </div>
         );
@@ -163,10 +164,20 @@ export const useColumns = ({
         const apiKey = row.original;
 
         return (
-          <Switch
-            checked={!apiKey.disabled}
-            onCheckedChange={value =>
-              onActions(apiKey, value ? 'ENABLE' : 'DISABLE')
+          <DisabledButtonTooltip
+            align="center"
+            type={!isOrganizationAdmin ? 'admin' : 'editor'}
+            hidden={envEditable && isOrganizationAdmin}
+            trigger={
+              <div className="w-fit">
+                <Switch
+                  disabled={!envEditable || !isOrganizationAdmin}
+                  checked={!apiKey.disabled}
+                  onCheckedChange={value =>
+                    onActions(apiKey, value ? 'ENABLE' : 'DISABLE')
+                  }
+                />
+              </div>
             }
           />
         );
@@ -185,7 +196,8 @@ export const useColumns = ({
         const apiKey = row.original;
 
         return (
-          <Popover
+          <DisabledPopoverTooltip
+            isNeedAdminAccess
             options={compact([
               {
                 label: `${t('table:popover.edit-api-key')}`,
@@ -193,9 +205,7 @@ export const useColumns = ({
                 value: 'EDIT'
               }
             ])}
-            icon={IconMoreHorizOutlined}
             onClick={value => onActions(apiKey, value as APIKeyActionsType)}
-            align="end"
           />
         );
       }

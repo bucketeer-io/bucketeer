@@ -21,6 +21,7 @@ import Divider from 'components/divider';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import PageLayout from 'elements/page-layout';
 import ConfirmationRequiredModal, {
   ConfirmRequiredValues
@@ -51,7 +52,13 @@ export const TargetingDivider = () => (
   <Divider vertical className="!h-6 w-px self-center my-4 !border-gray-400" />
 );
 
-const TargetingPage = ({ feature }: { feature: Feature }) => {
+const TargetingPage = ({
+  feature,
+  editable
+}: {
+  feature: Feature;
+  editable: boolean;
+}) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { t } = useTranslation(['common', 'form']);
@@ -204,76 +211,81 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
       values: TargetingSchema,
       additionalValues?: ConfirmRequiredValues
     ) => {
-      try {
-        const {
-          enabled,
-          individualRules,
-          segmentRules,
-          prerequisites,
-          defaultRule,
-          offVariation
-        } = values;
-
-        const { comment, resetSampling, scheduleType, scheduleAt } =
-          additionalValues || {};
-
-        const {
-          id,
-          rules,
-          targets,
-          prerequisites: featurePrerequisites
-        } = feature;
-        let resp;
-        const isScheduleUpdate =
-          isShowUpdateSchedule &&
-          !['ENABLE', 'DISABLE'].includes(scheduleType as string);
-        if (isScheduleUpdate) {
-          resp = await autoOpsCreator({
-            environmentId: currentEnvironment.id,
-            featureId: feature.id,
-            opsType: 'SCHEDULE',
-            datetimeClauses: [
-              {
-                actionType: enabled ? 'ENABLE' : 'DISABLE',
-                time: scheduleAt as string
-              }
-            ]
-          });
-        } else {
-          resp = await featureUpdater({
-            id,
-            environmentId: currentEnvironment.id,
-            enabled: isScheduleUpdate ? false : enabled,
-            defaultStrategy: handleGetDefaultRuleStrategy(defaultRule),
-            ruleChanges: handleCheckSegmentRules(rules, segmentRules),
-            targetChanges: handleCheckIndividualRules(targets, individualRules),
-            prerequisiteChanges: handleCheckPrerequisites(
-              featurePrerequisites,
-              prerequisites
-            ),
-            comment,
-            resetSamplingSeed: resetSampling,
+      if (editable) {
+        try {
+          const {
+            enabled,
+            individualRules,
+            segmentRules,
+            prerequisites,
+            defaultRule,
             offVariation
-          });
+          } = values;
+
+          const { comment, resetSampling, scheduleType, scheduleAt } =
+            additionalValues || {};
+
+          const {
+            id,
+            rules,
+            targets,
+            prerequisites: featurePrerequisites
+          } = feature;
+          let resp;
+          const isScheduleUpdate =
+            isShowUpdateSchedule &&
+            !['ENABLE', 'DISABLE'].includes(scheduleType as string);
+          if (isScheduleUpdate) {
+            resp = await autoOpsCreator({
+              environmentId: currentEnvironment.id,
+              featureId: feature.id,
+              opsType: 'SCHEDULE',
+              datetimeClauses: [
+                {
+                  actionType: enabled ? 'ENABLE' : 'DISABLE',
+                  time: scheduleAt as string
+                }
+              ]
+            });
+          } else {
+            resp = await featureUpdater({
+              id,
+              environmentId: currentEnvironment.id,
+              enabled: isScheduleUpdate ? false : enabled,
+              defaultStrategy: handleGetDefaultRuleStrategy(defaultRule),
+              ruleChanges: handleCheckSegmentRules(rules, segmentRules),
+              targetChanges: handleCheckIndividualRules(
+                targets,
+                individualRules
+              ),
+              prerequisiteChanges: handleCheckPrerequisites(
+                featurePrerequisites,
+                prerequisites
+              ),
+              comment,
+              resetSamplingSeed: resetSampling,
+              offVariation
+            });
+          }
+          if (resp) {
+            notify({
+              message: t('message:flag-updated')
+            });
+            invalidateFeature(queryClient);
+            invalidateFeatures(queryClient);
+            reset(
+              handleCreateDefaultValues(
+                isScheduleUpdate ? feature : (resp as FeatureResponse)?.feature
+              )
+            );
+            onCloseConfirmModal();
+          }
+        } catch (error) {
+          errorNotify(error);
         }
-        if (resp) {
-          notify({
-            message: t('message:flag-updated')
-          });
-          invalidateFeature(queryClient);
-          invalidateFeatures(queryClient);
-          reset(
-            handleCreateDefaultValues(
-              isScheduleUpdate ? feature : (resp as FeatureResponse)?.feature
-            )
-          );
-          onCloseConfirmModal();
-        }
-      } catch (error) {
-        errorNotify(error);
       }
     },
-    [feature, currentEnvironment, isShowUpdateSchedule]
+    [feature, currentEnvironment, isShowUpdateSchedule, editable]
   );
 
   return (
@@ -285,7 +297,11 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
         >
           <AudienceTraffic />
           <TargetingDivider />
-          <FlagSwitch feature={feature} setIsShowRules={setIsShowRules} />
+          <FlagSwitch
+            feature={feature}
+            setIsShowRules={setIsShowRules}
+            editable={editable}
+          />
           {(!feature.enabled || !enabledWatch) && (
             <>
               <TargetingDivider />
@@ -361,6 +377,7 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
           )}
           <TargetingDivider />
           <DefaultRule
+            editable={editable}
             urlCode={currentEnvironment.urlCode}
             feature={feature}
             waitingRunningRollouts={waitingRunningRollouts}
@@ -384,13 +401,18 @@ const TargetingPage = ({ feature }: { feature: Feature }) => {
               />
             }
             secondaryButton={
-              <Button
-                type="button"
-                disabled={!isDirty || !isValid}
-                onClick={onOpenConfirmModal}
-              >
-                {t('save-with-comment')}
-              </Button>
+              <DisabledButtonTooltip
+                hidden={editable}
+                trigger={
+                  <Button
+                    type="button"
+                    disabled={!isDirty || !isValid || !editable}
+                    onClick={onOpenConfirmModal}
+                  >
+                    {t('save-with-comment')}
+                  </Button>
+                }
+              />
             }
           />
         </Form>

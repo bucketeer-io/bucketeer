@@ -4,8 +4,15 @@ import { Feature } from '@types';
 import CloneFlagModal from 'pages/feature-flags/flags-modal/clone-flag-modal';
 import Button from 'components/button';
 import Card from 'elements/card';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
-const CloneFlag = ({ feature }: { feature: Feature }) => {
+const CloneFlag = ({
+  feature,
+  disabled
+}: {
+  feature: Feature;
+  disabled: boolean;
+}) => {
   const { t } = useTranslation(['common', 'form']);
   const { errorNotify } = useToast();
 
@@ -17,14 +24,21 @@ const CloneFlag = ({ feature }: { feature: Feature }) => {
       <p className="typo-para-small text-gray-500">
         {t('form:clone-flag-desc')}
       </p>
-      <Button
-        className="w-fit"
-        variant="secondary"
-        onClick={onOpenCloneFlagModal}
-      >
-        {t('clone-flag')}
-      </Button>
-      {isOpenCloneFlagModal && (
+      <DisabledButtonTooltip
+        align="start"
+        hidden={!disabled}
+        trigger={
+          <Button
+            className="w-fit"
+            variant="secondary"
+            disabled={disabled}
+            onClick={onOpenCloneFlagModal}
+          >
+            {t('clone-flag')}
+          </Button>
+        }
+      />
+      {isOpenCloneFlagModal && !disabled && (
         <CloneFlagModal
           isOpen={isOpenCloneFlagModal}
           flagId={feature.id}

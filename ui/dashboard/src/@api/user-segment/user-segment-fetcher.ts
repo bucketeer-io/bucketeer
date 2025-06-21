@@ -9,7 +9,7 @@ export interface UserSegmentFetcherParams {
 }
 
 export interface UserSegmentResponse {
-  segment: Array<UserSegment>;
+  segment: UserSegment;
 }
 
 export const userSegmentFetcher = async (

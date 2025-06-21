@@ -8,6 +8,7 @@ import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
 import Icon from 'components/icon';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import TableListContainer from 'elements/table-list-container';
@@ -16,14 +17,15 @@ import FilterAPIKeyModal from './notification-modal/filter-notification-modal';
 import { NotificationActionsType, NotificationFilters } from './types';
 
 const PageContent = ({
+  disabled,
   onAdd,
   onHandleActions
 }: {
+  disabled?: boolean;
   onAdd: () => void;
   onHandleActions: (item: Notification, type: NotificationActionsType) => void;
 }) => {
   const { t } = useTranslation(['common']);
-
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<NotificationFilters> = searchOptions;
 
@@ -57,10 +59,19 @@ const PageContent = ({
       <Filter
         onOpenFilter={onOpenFilterModal}
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
-            <Icon icon={IconAddOutlined} size="sm" />
-            {t(`new-notification`)}
-          </Button>
+          <DisabledButtonTooltip
+            hidden={!disabled}
+            trigger={
+              <Button
+                className="flex-1 lg:flex-none"
+                onClick={onAdd}
+                disabled={disabled}
+              >
+                <Icon icon={IconAddOutlined} size="sm" />
+                {t(`new-notification`)}
+              </Button>
+            }
+          />
         }
         searchValue={filters.searchQuery}
         filterCount={isNotEmpty(filters.disabled) ? 1 : undefined}

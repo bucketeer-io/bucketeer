@@ -5,11 +5,11 @@ import { isNotEmpty } from 'utils/data-type';
 
 export interface APIKeyFetcherParams {
   id: string;
-  environmentId: string;
+  environmentId?: string;
 }
 
 export interface APIKeyResponse {
-  apiKey: Array<APIKey>;
+  apiKey: APIKey;
 }
 
 export const apiKeyFetcher = async (

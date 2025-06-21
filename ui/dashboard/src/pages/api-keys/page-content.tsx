@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
+import { useAuthAccess } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -8,6 +9,7 @@ import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
 import Icon from 'components/icon';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import TableListContainer from 'elements/table-list-container';
@@ -23,7 +25,7 @@ const PageContent = ({
   onHandleActions: (item: APIKey, type: APIKeyActionsType) => void;
 }) => {
   const { t } = useTranslation(['common']);
-
+  const { envEditable, isOrganizationAdmin } = useAuthAccess();
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<APIKeysFilters> = searchOptions;
 
@@ -56,10 +58,20 @@ const PageContent = ({
       <Filter
         onOpenFilter={onOpenFilterModal}
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
-            <Icon icon={IconAddOutlined} size="sm" />
-            {t(`new-api-key`)}
-          </Button>
+          <DisabledButtonTooltip
+            type={!isOrganizationAdmin ? 'admin' : 'editor'}
+            hidden={envEditable && isOrganizationAdmin}
+            trigger={
+              <Button
+                className="flex-1 lg:flex-none"
+                onClick={onAdd}
+                disabled={!envEditable || !isOrganizationAdmin}
+              >
+                <Icon icon={IconAddOutlined} size="sm" />
+                {t(`new-api-key`)}
+              </Button>
+            }
+          />
         }
         searchValue={filters.searchQuery}
         filterCount={isNotEmpty(filters.disabled) ? 1 : undefined}

@@ -72,3 +72,10 @@ export const getEnvironmentsByProjectId = (
     .filter(role => role.environment.projectId === projectId)
     .map(role => role.environment);
 };
+
+export const getAccountAccess = (account: ConsoleAccount) => {
+  const envEditable = hasEditable(account);
+  const isOrganizationAdmin =
+    account?.organizationRole === 'Organization_ADMIN';
+  return { envEditable, isOrganizationAdmin };
+};

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
+import { useAuthAccess } from 'auth';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -9,6 +10,7 @@ import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import CollectionLoader from './collection-loader';
 import { EnvironmentActionsType, EnvironmentFilters } from './types';
@@ -21,6 +23,7 @@ const PageContent = ({
   onActionHandler: (item: Environment, type: EnvironmentActionsType) => void;
 }) => {
   const { t } = useTranslation(['common']);
+  const { envEditable, isOrganizationAdmin } = useAuthAccess();
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<EnvironmentFilters> = searchOptions;
 
@@ -51,10 +54,20 @@ const PageContent = ({
     <>
       <Filter
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
-            <Icon icon={IconAddOutlined} size="sm" />
-            {t(`new-env`)}
-          </Button>
+          <DisabledButtonTooltip
+            type={!isOrganizationAdmin ? 'admin' : 'editor'}
+            hidden={envEditable && isOrganizationAdmin}
+            trigger={
+              <Button
+                className="flex-1 lg:flex-none"
+                onClick={onAdd}
+                disabled={!envEditable || !isOrganizationAdmin}
+              >
+                <Icon icon={IconAddOutlined} size="sm" />
+                {t(`new-env`)}
+              </Button>
+            }
+          />
         }
         searchValue={filters.searchQuery}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}

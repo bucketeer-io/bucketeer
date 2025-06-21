@@ -21,10 +21,12 @@ import { getDefaultRolloutStrategy } from '../utils';
 import DefaultRuleRollout from './rollout';
 
 const DefaultRule = ({
+  editable,
   urlCode,
   feature,
   waitingRunningRollouts
 }: {
+  editable: boolean;
   urlCode: string;
   feature: Feature;
   waitingRunningRollouts: Rollout[];
@@ -158,7 +160,7 @@ const DefaultRule = ({
                 handleSelectStrategy={item =>
                   handleSelectStrategy(item, field.onChange)
                 }
-                isDisabled={waitingRunningRollouts.length > 0}
+                isDisabled={waitingRunningRollouts.length > 0 || !editable}
               />
               {defaultRule.type === StrategyType.ROLLOUT &&
                 defaultRule.currentOption === StrategyType.ROLLOUT && (

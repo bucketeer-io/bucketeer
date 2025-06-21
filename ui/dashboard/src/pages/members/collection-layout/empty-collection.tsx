@@ -16,7 +16,12 @@ export const EmptyCollection = ({ onAdd }: { onAdd?: () => void }) => {
       </EmptyState.Body>
       <EmptyState.Actions>
         {onAdd && (
-          <EmptyState.ActionButton variant="primary" onClick={onAdd}>
+          <EmptyState.ActionButton
+            isNeedAdminAccess
+            type={'new'}
+            variant="primary"
+            onClick={onAdd}
+          >
             <IconAddOutlined />
             {t(`invite-member`)}
           </EmptyState.ActionButton>

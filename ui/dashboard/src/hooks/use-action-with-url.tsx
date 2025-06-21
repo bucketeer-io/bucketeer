@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ID_NEW } from 'constants/routing';
 import { AnyObject } from 'yup';
@@ -24,17 +24,25 @@ const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
     [path, isAdd, isClone]
   );
 
-  const onOpenAddModal = () =>
-    navigate(addPath || `${location.pathname}/${ID_NEW}`);
+  const onOpenAddModal = useCallback(
+    () => navigate(addPath || `${location.pathname}/${ID_NEW}`),
+    [addPath, location]
+  );
 
-  const onOpenEditModal = (path: string, state?: AnyObject) =>
-    navigate(path, {
-      state
-    });
+  const onOpenEditModal = useCallback(
+    (path: string, state?: AnyObject) =>
+      navigate(path, {
+        state
+      }),
+    []
+  );
 
-  const onCloseActionModal = (path?: string) => {
-    if (closeModalPath || path) navigate(String(closeModalPath || path));
-  };
+  const onCloseActionModal = useCallback(
+    (path?: string) => {
+      if (closeModalPath || path) navigate(String(closeModalPath || path));
+    },
+    [closeModalPath]
+  );
 
   const errorToast = (error: AnyObject) => {
     const { message, status } = error || {};

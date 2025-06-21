@@ -47,12 +47,14 @@ const Variations = ({
   feature,
   rollouts,
   isRunningExperiment,
-  eventRateOperations
+  eventRateOperations,
+  editable
 }: {
   feature: Feature;
   rollouts: Rollout[];
   isRunningExperiment?: boolean;
   eventRateOperations: AutoOpsRule[];
+  editable: boolean;
 }) => {
   const { t } = useTranslation(['common', 'form', 'table']);
 
@@ -141,6 +143,7 @@ const Variations = ({
   const isDisableRemoveBtn = useCallback(
     (variationId: string) => {
       return (
+        !editable ||
         isBoolean ||
         isRunningExperiment ||
         fields.length <= 2 ||
@@ -167,7 +170,8 @@ const Variations = ({
       prerequisiteVariationIds,
       isRunningExperiment,
       rolloutVariationIds,
-      eventRateVariationIds
+      eventRateVariationIds,
+      editable
     ]
   );
   const isProgressiveRolloutsRunningWaiting = (status: OperationStatus) =>
@@ -175,11 +179,12 @@ const Variations = ({
 
   const isDisableAddBtn = useCallback(
     () =>
+      !editable ||
       isBoolean ||
       isRunningExperiment ||
       rollouts.filter(item => isProgressiveRolloutsRunningWaiting(item.status))
         ?.length > 0,
-    [isBoolean, rollouts, isRunningExperiment]
+    [isBoolean, rollouts, isRunningExperiment, editable]
   );
 
   const onAddVariation = () => {
@@ -237,7 +242,9 @@ const Variations = ({
                           <Form.Control>
                             <Input
                               {...field}
-                              disabled={isBoolean || isRunningExperiment}
+                              disabled={
+                                isBoolean || isRunningExperiment || !editable
+                              }
                               placeholder={t('form:feature-flags.value')}
                               className="px-3"
                             />
@@ -259,7 +266,7 @@ const Variations = ({
                         <Input
                           {...field}
                           placeholder={t('name')}
-                          disabled={isRunningExperiment}
+                          disabled={isRunningExperiment || !editable}
                         />
                       </Form.Control>
                       <Form.Message />
@@ -276,7 +283,7 @@ const Variations = ({
                         <Input
                           {...field}
                           placeholder={t('form:description')}
-                          disabled={isRunningExperiment}
+                          disabled={isRunningExperiment || !editable}
                         />
                       </Form.Control>
                       <Form.Message />
@@ -296,7 +303,7 @@ const Variations = ({
                         </Form.Label>
                         <Form.Control>
                           <ReactCodeEditor
-                            readOnly={isRunningExperiment}
+                            readOnly={isRunningExperiment || !editable}
                             value={field.value}
                             onChange={field.onChange}
                           />

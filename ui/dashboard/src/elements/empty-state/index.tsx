@@ -3,15 +3,23 @@ import emptyStateCode from 'assets/empty-state/code.svg';
 import emptyStateError from 'assets/empty-state/error.svg';
 import emptyStateNoData from 'assets/empty-state/no-data.svg';
 import emptyStateNoSearch from 'assets/empty-state/no-search.svg';
+import { hasEditable, useAuth } from 'auth';
 import { createContext } from 'utils/create-context';
 import { cn } from 'utils/style';
 import Button, { type ButtonProps } from 'components/button';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 export interface EmptyStateProps {
   variant: 'error' | 'no-data' | 'no-search' | 'invalid';
   size: 'sm' | 'md' | 'lg';
   children: ReactNode;
   className?: string;
+}
+
+export interface EmptyStateActionButtonProps
+  extends Omit<ButtonProps, 'size' | 'type'> {
+  type?: 'retry' | 'new';
+  isNeedAdminAccess?: boolean;
 }
 
 type EmptyStateContextValue = Omit<EmptyStateProps, 'children'>;
@@ -75,10 +83,38 @@ const EmptyStateActions = ({ children }: PropsWithChildren) => {
   return <div className="flex justify-center mt-3 gap-3">{children}</div>;
 };
 
-const EmptyStateActionButton = (props: Omit<ButtonProps, 'size'>) => {
+const EmptyStateActionButton = ({
+  type = 'retry',
+  isNeedAdminAccess = false,
+  ...props
+}: EmptyStateActionButtonProps) => {
   const { size } = useEmptyState();
+  const { consoleAccount } = useAuth();
+  const editable = hasEditable(consoleAccount!);
+  const isOrganizationAdmin =
+    consoleAccount?.organizationRole === 'Organization_ADMIN';
+  const isRetry = type === 'retry';
+
   return (
-    <Button variant="primary" size={size === 'lg' ? 'md' : 'sm'} {...props} />
+    <DisabledButtonTooltip
+      align="center"
+      type={isNeedAdminAccess && !isOrganizationAdmin ? 'admin' : 'editor'}
+      hidden={
+        (editable && (isNeedAdminAccess ? isOrganizationAdmin : false)) ||
+        isRetry
+      }
+      trigger={
+        <Button
+          variant="primary"
+          size={size === 'lg' ? 'md' : 'sm'}
+          disabled={
+            (!editable || (isNeedAdminAccess ? !isOrganizationAdmin : false)) &&
+            !isRetry
+          }
+          {...props}
+        />
+      }
+    />
   );
 };
 

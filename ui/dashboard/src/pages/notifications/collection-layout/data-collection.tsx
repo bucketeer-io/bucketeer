@@ -1,15 +1,14 @@
-import {
-  IconEditOutlined,
-  IconMoreHorizOutlined
-} from 'react-icons-material-design';
+import { IconEditOutlined } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
+import { hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { Notification } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
-import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { NotificationActionsType } from '../types';
 
@@ -20,6 +19,8 @@ export const useColumns = ({
 }): ColumnDef<Notification>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
+  const { consoleAccount } = useAuth();
+  const editable = hasEditable(consoleAccount!);
 
   return [
     {
@@ -37,7 +38,9 @@ export const useColumns = ({
               <NameWithTooltip.Trigger
                 id={id}
                 name={name}
-                onClick={() => onActions(notification, 'EDIT')}
+                onClick={() => {
+                  onActions(notification, 'EDIT');
+                }}
                 maxLines={1}
                 className="min-w-[200px]"
               />
@@ -88,10 +91,19 @@ export const useColumns = ({
         const notification = row.original;
 
         return (
-          <Switch
-            checked={!notification.disabled}
-            onCheckedChange={value =>
-              onActions(notification, value ? 'ENABLE' : 'DISABLE')
+          <DisabledButtonTooltip
+            align="center"
+            hidden={editable}
+            trigger={
+              <div className="w-fit">
+                <Switch
+                  disabled={!editable}
+                  checked={!notification.disabled}
+                  onCheckedChange={value =>
+                    onActions(notification, value ? 'ENABLE' : 'DISABLE')
+                  }
+                />
+              </div>
             }
           />
         );
@@ -110,7 +122,7 @@ export const useColumns = ({
         const notification = row.original;
 
         return (
-          <Popover
+          <DisabledPopoverTooltip
             options={compact([
               {
                 label: `${t('table:popover.edit-notification')}`,
@@ -118,11 +130,9 @@ export const useColumns = ({
                 value: 'EDIT'
               }
             ])}
-            icon={IconMoreHorizOutlined}
             onClick={value =>
               onActions(notification, value as NotificationActionsType)
             }
-            align="end"
           />
         );
       }

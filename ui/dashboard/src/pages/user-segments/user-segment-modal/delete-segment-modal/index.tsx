@@ -9,6 +9,7 @@ import DialogModal from 'components/modal/dialog';
 import SegmentWarning from '../edit-segment-modal/segment-warning';
 
 export type DeleteUserSegmentProps = {
+  isDisabled: boolean;
   onSubmit: () => void;
   isOpen: boolean;
   onClose: () => void;
@@ -17,6 +18,7 @@ export type DeleteUserSegmentProps = {
 };
 
 const DeleteUserSegmentModal = ({
+  isDisabled,
   onSubmit,
   isOpen,
   onClose,
@@ -59,7 +61,7 @@ const DeleteUserSegmentModal = ({
           <Button
             variant="negative"
             loading={loading}
-            disabled={isInUseSegment || loading}
+            disabled={isInUseSegment || loading || isDisabled}
             className="w-24"
             onClick={onSubmit}
           >

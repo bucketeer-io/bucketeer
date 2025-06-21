@@ -1,8 +1,10 @@
 export const ID_NEW = 'new';
 export const ID_CLONE = 'clone';
+export const ID_EDIT = 'edit';
 
 export const PAGE_PATH_ROOT = '/';
 export const PAGE_PATH_NEW = '/' + ID_NEW;
+export const PAGE_PATH_EDIT = '/' + ID_EDIT;
 export const PAGE_PATH_FEATURES = '/features';
 export const PAGE_PATH_ADMIN = '/admin';
 export const PAGE_PATH_EXPERIMENTS = '/experiments';

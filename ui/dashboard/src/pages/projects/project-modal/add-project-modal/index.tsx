@@ -1,9 +1,10 @@
+import { useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { projectCreator } from '@api/project';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -14,6 +15,7 @@ import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface AddProjectModalProps {
   isOpen: boolean;
@@ -45,6 +47,14 @@ const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const { envEditable, isOrganizationAdmin } = getAccountAccess(
+    consoleAccount!
+  );
+
+  const disabled = useMemo(
+    () => !envEditable || !isOrganizationAdmin,
+    [envEditable, isOrganizationAdmin]
+  );
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -102,6 +112,7 @@ const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
                     <Input
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
+                      disabled={disabled}
                       onChange={value => {
                         const isUrlCodeDirty =
                           form.getFieldState('urlCode').isDirty;
@@ -126,6 +137,7 @@ const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
                   <Form.Label required>{t('form:url-code')}</Form.Label>
                   <Form.Control>
                     <Input
+                      disabled={disabled}
                       placeholder={`${t('form:placeholder-code')}`}
                       {...field}
                     />
@@ -144,6 +156,7 @@ const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
                     <TextArea
                       placeholder={t('form:placeholder-desc')}
                       rows={4}
+                      disabled={disabled}
                       {...field}
                     />
                   </Form.Control>
@@ -160,13 +173,19 @@ const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!form.formState.isDirty}
-                    loading={form.formState.isSubmitting}
-                  >
-                    {t(`create-project`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    type={!envEditable ? 'editor' : 'admin'}
+                    hidden={!disabled}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={!form.formState.isDirty || disabled}
+                        loading={form.formState.isSubmitting}
+                      >
+                        {t(`create-project`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>
