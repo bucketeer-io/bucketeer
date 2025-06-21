@@ -90,7 +90,7 @@ const ScheduleOperationModal = ({
   const handleCheckDateTimeClauses = useCallback(
     (datetimeClausesList: DateTimeClauseListType['datetimeClausesList']) => {
       if (selectedData) {
-        const updateDatetimeClauses: ClauseUpdateType<DatetimeClause>[] = [];
+        const datetimeClauseChanges: ClauseUpdateType<DatetimeClause>[] = [];
         const { clauses } = selectedData;
         const clausesFormatted = clauses.map(clause => {
           const time = new Date(
@@ -108,9 +108,9 @@ const ScheduleOperationModal = ({
             clause => clause?.id === item.id
           );
           if (!currentClause) {
-            updateDatetimeClauses.push({
+            datetimeClauseChanges.push({
               id: item.id,
-              deleted: true
+              changeType: 'DELETE'
             });
           }
         });
@@ -120,7 +120,8 @@ const ScheduleOperationModal = ({
             clause => clause.id === item?.id
           );
           if (!currentClause) {
-            updateDatetimeClauses.push({
+            datetimeClauseChanges.push({
+              changeType: 'CREATE',
               clause: {
                 actionType: item.actionType,
                 time: Math.trunc(item.time.getTime() / 1000)?.toString()
@@ -129,9 +130,9 @@ const ScheduleOperationModal = ({
           }
 
           if (currentClause && !isEqual(currentClause, item)) {
-            updateDatetimeClauses.push({
+            datetimeClauseChanges.push({
               id: item.id || '',
-              deleted: false,
+              changeType: 'UPDATE',
               clause: {
                 actionType: item.actionType,
                 time: Math.trunc(item.time.getTime() / 1000)?.toString()
@@ -139,7 +140,7 @@ const ScheduleOperationModal = ({
             });
           }
         });
-        return updateDatetimeClauses;
+        return datetimeClauseChanges;
       }
       return [];
     },
@@ -154,13 +155,13 @@ const ScheduleOperationModal = ({
         let resp: AutoOpsCreatorResponse | null = null;
 
         if (!isCreate && selectedData) {
-          const updateDatetimeClauses =
+          const datetimeClauseChanges =
             handleCheckDateTimeClauses(datetimeClausesList);
 
           resp = await autoOpsUpdate({
             id: selectedData.id,
             environmentId,
-            updateDatetimeClauses
+            datetimeClauseChanges
           });
         } else {
           const datetimeClauses = datetimeClausesList.map(item => {
