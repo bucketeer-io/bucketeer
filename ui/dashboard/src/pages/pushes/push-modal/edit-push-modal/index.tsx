@@ -1,10 +1,10 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { pushUpdater, TagChange } from '@api/push';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidatePushes } from '@queries/pushes';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
@@ -13,7 +13,6 @@ import { Push } from '@types';
 import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { useFetchTags } from 'pages/members/collection-loader';
-import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import { CreatableSelect } from 'components/creatable-select';
@@ -49,14 +48,9 @@ const formSchema = yup.object().shape({
 
 const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
   const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
-
-  const { data: collection } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId
-  });
 
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
     environmentId: push.environmentId,
@@ -68,9 +62,16 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
       value: tag.name
     })
   );
-  const environments = collection?.environments || [];
+  const editorEnvironments = useMemo(
+    () =>
+      consoleAccount?.environmentRoles
+        .filter(item => item.role === 'Environment_EDITOR')
+        ?.map(item => item.environment) || [],
+    [consoleAccount]
+  );
+
   const { emptyEnvironmentId, formattedEnvironments } =
-    onFormatEnvironments(environments);
+    onFormatEnvironments(editorEnvironments);
 
   const form = useForm({
     resolver: yupResolver(formSchema),

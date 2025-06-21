@@ -9,7 +9,8 @@ export const useFetchPushes = ({
   searchQuery,
   orderDirection,
   disabled,
-  organizationId
+  organizationId,
+  environmentIds
 }: {
   pageSize?: number;
   page?: number;
@@ -18,6 +19,7 @@ export const useFetchPushes = ({
   orderDirection?: OrderDirection;
   disabled?: boolean;
   organizationId?: string;
+  environmentIds?: string[];
 } = {}) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
 
@@ -29,7 +31,8 @@ export const useFetchPushes = ({
       orderDirection,
       searchKeyword: searchQuery,
       disabled,
-      organizationId
+      organizationId,
+      environmentIds
     }
   });
 };

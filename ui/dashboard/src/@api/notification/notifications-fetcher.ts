@@ -6,6 +6,7 @@ import { stringifyParams } from 'utils/search-params';
 
 export interface NotificationsFetcherParams extends CollectionParams {
   environmentId?: string;
+  environmentIds?: string[];
   organizationId: string;
 }
 
