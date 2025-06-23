@@ -25,26 +25,6 @@ export const getActionText = (
   }
 };
 
-export const getEntityTypeText = (entityType: DomainEventEntityType) => {
-  switch (entityType) {
-    case 'APIKEY':
-      return 'api key';
-    case 'AUTOOPS_RULE':
-      return 'operation rule';
-    case 'CODEREF':
-      return 'code ref';
-    case 'FEATURE':
-      return 'feature flag';
-    case 'ADMIN_ACCOUNT':
-    case 'ADMIN_SUBSCRIPTION':
-    case 'FLAG_TRIGGER':
-    case 'PROGRESSIVE_ROLLOUT':
-      return entityType.replace('_', ' ').toLowerCase();
-    default:
-      return entityType.toLowerCase();
-  }
-};
-
 export const convertJSONToRender = (json: string | null) => {
   if (!json) return null;
   if (typeof json != 'string') {

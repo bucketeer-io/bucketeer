@@ -158,7 +158,6 @@ const PageContent = () => {
             <Button
               variant={'secondary'}
               onClick={() => expandOfCollapseRef.current?.toggle()}
-              className="max-w-[154px]"
             >
               <Icon
                 icon={isExpandAll ? IconCollapse : IconExpand}

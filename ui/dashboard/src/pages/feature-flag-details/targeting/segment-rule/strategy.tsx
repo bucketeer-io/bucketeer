@@ -71,7 +71,7 @@ const Strategy = ({
         </Form.Label>
       )}
       <div className="flex w-full gap-x-4">
-        <p className="typo-para-small text-gray-600 mt-3 uppercase">
+        <p className="typo-para-small text-gray-600 mt-3 uppercase min-w-fit">
           {t('feature-flags.serve')}
         </p>
         <div className="flex flex-col w-full gap-x-2">

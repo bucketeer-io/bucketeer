@@ -3,8 +3,9 @@ import { useFormContext } from 'react-hook-form';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { EnvironmentRoleItem } from '@api/account/account-creator';
 import useOptions from 'hooks/use-options';
-import { useTranslation } from 'i18n';
+import { getLanguage, Language, useTranslation } from 'i18n';
 import { Environment, EnvironmentRoleType } from '@types';
+import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
 import Button from 'components/button';
 import {
@@ -25,6 +26,8 @@ const EnvironmentRoles = ({
 }) => {
   const { t } = useTranslation(['common', 'form']);
   const { environmentRoleOptions } = useOptions();
+  const isJapaneseLanguage = getLanguage() === Language.JAPANESE;
+
   const methods = useFormContext<AddMemberForm | EditMemberForm>();
   const { control, watch, setValue } = methods;
 
@@ -130,7 +133,11 @@ const EnvironmentRoles = ({
             />
           </div>
 
-          <div className="w-[140px] h-full">
+          <div
+            className={cn('w-[140px] h-full', {
+              'w-[170px]': isJapaneseLanguage
+            })}
+          >
             <Form.Field
               control={control}
               name={`environmentRoles.${envIndex}.role`}
@@ -150,7 +157,9 @@ const EnvironmentRoles = ({
                         className="w-full"
                       />
                       <DropdownMenuContent
-                        className="min-w-[140px]"
+                        className={
+                          isJapaneseLanguage ? 'min-w-[170px]' : 'min-w-[140px]'
+                        }
                         align="start"
                         {...field}
                       >

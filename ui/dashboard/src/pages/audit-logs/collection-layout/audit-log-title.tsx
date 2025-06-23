@@ -2,7 +2,8 @@ import { Trans } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'i18n';
 import { DomainEventEntityType } from '@types';
-import { getEntityTypeText, getPathName } from '../utils';
+import { getPathName } from '../utils';
+import useEntityLocalized from './use-entity-localized';
 
 interface Props {
   isHaveEntityData: boolean;
@@ -26,6 +27,7 @@ const AuditLogTitle = ({
   additionalText
 }: Props) => {
   useTranslation('table');
+  const { getEntityLocalized } = useEntityLocalized();
   const navigate = useNavigate();
 
   return (
@@ -38,7 +40,7 @@ const AuditLogTitle = ({
       values={{
         username,
         action,
-        entityType: getEntityTypeText(entityType),
+        entityType: getEntityLocalized(entityType),
         entityName,
         additionalText
       }}

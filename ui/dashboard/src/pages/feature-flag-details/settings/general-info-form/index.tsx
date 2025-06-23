@@ -62,8 +62,7 @@ const GeneralInfoForm = ({
         cursor: String(0),
         environmentId: currentEnvironment.id,
         organizationId: currentEnvironment.organizationId,
-        environmentRole: 2,
-        organizationRole: 2
+        environmentRole: 2
       }
     });
 

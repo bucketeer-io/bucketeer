@@ -98,7 +98,9 @@ const MemberDetailsModal = ({
               <div className="flex-1">
                 <p className="typo-para-small text-gray-600">{t('role')}</p>
                 <p className="text-gray-700 mt-1 capitalize typo-para-medium">
-                  {env?.role.split('_')[1]}
+                  {env?.role === 'Environment_EDITOR'
+                    ? t('editor')
+                    : t('viewer')}
                 </p>
               </div>
             </div>

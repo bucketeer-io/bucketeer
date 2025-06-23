@@ -85,7 +85,7 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
   return (
     <Popover.Root>
       <Popover.Content align="start" className="border-none p-0">
-        <div className="bg-primary-600 rounded-lg w-[200px] mb-2">
+        <div className="bg-primary-600 rounded-lg min-w-[200px] mb-2">
           {menuItems.map((item, index) => (
             <MenuItemComponent {...item} key={index} />
           ))}

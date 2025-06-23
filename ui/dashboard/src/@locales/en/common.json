@@ -278,5 +278,12 @@
   "started": "started",
   "has-flag-as-rule": "Has Feature Flag as Rule",
   "editor": "Editor",
-  "viewer": "Viewer"
+  "viewer": "Viewer",
+  "admin-account": "Admin Account",
+  "admin-subscription": "Admin Subscription",
+  "flag-trigger": "Flag Trigger",
+  "autoops-rule": "Operation Rule",
+  "tag": "Tag",
+  "segment": "Segment",
+  "pagination-count": "Showing {{count}} of {{total}} results"
 }

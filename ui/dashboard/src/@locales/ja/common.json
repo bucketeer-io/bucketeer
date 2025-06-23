@@ -277,5 +277,12 @@
   "started": "開始済み",
   "has-flag-as-rule": "ルールにフィーチャーフラグあり",
   "editor": "編集者",
-  "viewer": "閲覧者"
+  "viewer": "閲覧者",
+  "admin-account": "管理者アカウント",
+  "admin-subscription": "管理者サブスクリプション",
+  "flag-trigger": "フラグトリガー",
+  "autoops-rule": "操作ルール",
+  "tag": "タグ",
+  "segment": "セグメント",
+  "pagination-count": "{{total}}件中{{count}}件を表示"
 }

@@ -6,6 +6,7 @@ import {
   ReactNode,
   Ref,
   useCallback,
+  useMemo,
   useRef
 } from 'react';
 import { IconExpandMoreRound } from 'react-icons-material-design';
@@ -17,6 +18,7 @@ import Checkbox from 'components/checkbox';
 import Icon from 'components/icon';
 import Input, { InputProps } from 'components/input';
 import Spinner from 'components/spinner';
+import NameWithTooltip from 'elements/name-with-tooltip';
 
 export type DropdownValue = number | string;
 
@@ -225,51 +227,72 @@ const DropdownMenuItem = forwardRef<
       ...props
     },
     ref
-  ) => (
-    <DropdownMenuPrimitive.Item
-      ref={ref}
-      disabled={disabled}
-      className={cn(
-        'relative flex items-center w-full cursor-pointer select-none rounded-[5px] p-2 gap-x-2 outline-none transition-colors hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
-        className
-      )}
-      onSelect={
-        onSelectOption
-          ? event => {
-              if (!closeWhenSelected || isMultiselect) event.preventDefault();
-              return onSelectOption(value, event);
-            }
-          : undefined
-      }
-      {...props}
-    >
-      {isMultiselect && <Checkbox checked={isSelected} />}
-      {(iconElement || icon) &&
-        (iconElement ? (
-          iconElement
-        ) : (
-          <div className="flex-center size-5">
-            <Icon
-              icon={icon as FunctionComponent}
-              size={'xs'}
-              color="gray-600"
-            />
-          </div>
-        ))}
-
-      <div className="flex flex-col gap-y-1.5 w-full overflow-hidden">
-        <div className="typo-para-medium leading-5 text-gray-700 truncate">
-          {label}
-        </div>
-        {description && (
-          <p className="typo-para-small leading-[14px] text-gray-500">
-            {description}
-          </p>
+  ) => {
+    const dropdownMenuItemId = useMemo(
+      () => `dropdown-menu-item-${label}-${value}`,
+      [label, value]
+    );
+    return (
+      <DropdownMenuPrimitive.Item
+        ref={ref}
+        disabled={disabled}
+        className={cn(
+          'relative flex items-center w-full cursor-pointer select-none rounded-[5px] p-2 gap-x-2 outline-none transition-colors hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+          className
         )}
-      </div>
-      {additionalElement}
-    </DropdownMenuPrimitive.Item>
-  )
+        onSelect={
+          onSelectOption
+            ? event => {
+                if (!closeWhenSelected || isMultiselect) event.preventDefault();
+                return onSelectOption(value, event);
+              }
+            : undefined
+        }
+        {...props}
+      >
+        {isMultiselect && <Checkbox checked={isSelected} />}
+        {(iconElement || icon) &&
+          (iconElement ? (
+            iconElement
+          ) : (
+            <div className="flex-center size-5">
+              <Icon
+                icon={icon as FunctionComponent}
+                size={'xs'}
+                color="gray-600"
+              />
+            </div>
+          ))}
+
+        <div className="flex flex-col gap-y-1.5 w-full overflow-hidden">
+          <NameWithTooltip
+            id={dropdownMenuItemId}
+            content={
+              <NameWithTooltip.Content
+                content={label}
+                id={dropdownMenuItemId}
+              />
+            }
+            trigger={
+              <NameWithTooltip.Trigger
+                id={dropdownMenuItemId}
+                name={label as string}
+                haveAction={false}
+                maxLines={1}
+              />
+            }
+            maxLines={1}
+          />
+          {description && (
+            <p className="typo-para-small leading-[14px] text-gray-500">
+              {description}
+            </p>
+          )}
+        </div>
+        {additionalElement}
+      </DropdownMenuPrimitive.Item>
+    );
+  }
 );
 
 type DropdownSearchProps = InputProps;

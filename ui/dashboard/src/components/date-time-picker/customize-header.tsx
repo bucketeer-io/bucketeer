@@ -5,7 +5,7 @@ import { IconChevronRight } from '@icons';
 import Button from 'components/button';
 import Icon from 'components/icon';
 
-const years = range(2020, getYear(new Date()) + 10, 1);
+const years = range(getYear(new Date()) - 5, getYear(new Date()) + 10, 1);
 const months = [
   'January',
   'February',

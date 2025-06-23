@@ -43,7 +43,7 @@
   "empty": {
     "experiment-match": "検索フィルターに一致するエクスペリメントがありません。フィルターを変更してみてください。"
   },
-  "collection-action-success": "{{collection}}が正常に{{action}}されました。",
+  "collection-action-success": "{{collection}}が正常に{{action}}。",
   "max-size-file": "ファイルの最大サイズは{{size}}MBです。",
   "format-file-not-supported": "このファイル形式はサポートされていません。",
   "page-not-found": "ページが見つかりません",
