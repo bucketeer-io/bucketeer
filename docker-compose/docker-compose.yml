@@ -54,12 +54,14 @@ services:
 
   # Web backend service (serves frontend + backend API)
   web:
-    image: ghcr.io/bucketeer-io/bucketeer-web:${BUCKETEER_WEB_VERSION:-${BUCKETEER_VERSION:-v1.3.0}}
+    image: ghcr.io/bucketeer-io/bucketeer-web:${BUCKETEER_WEB_VERSION:-${BUCKETEER_VERSION:-localenv}}
     container_name: bucketeer-web
     depends_on:
       migration:
         condition: service_completed_successfully
+    command: ["server"]
     environment:
+      - BUCKETEER_TEST_ENABLED=true
       - BUCKETEER_WEB_MYSQL_USER=bucketeer
       - BUCKETEER_WEB_MYSQL_PASS=bucketeer
       - BUCKETEER_WEB_MYSQL_HOST=bucketeer-mysql
@@ -84,6 +86,25 @@ services:
       - BUCKETEER_WEB_BIGQUERY_DATA_LOCATION=bucketeer
       - BUCKETEER_WEB_DOMAIN_TOPIC=domain
       - BUCKETEER_WEB_BULK_SEGMENT_USERS_RECEIVED_TOPIC=bulk-segment-users-received
+      - BUCKETEER_WEB_GRPC_GATEWAY_PORT=9089
+      - BUCKETEER_WEB_HEALTH_CHECK_SERVICE_PORT=8000
+      - BUCKETEER_WEB_ACCOUNT_SERVICE_PORT=9091
+      - BUCKETEER_WEB_AUTH_SERVICE_PORT=9092
+      - BUCKETEER_WEB_AUDIT_LOG_SERVICE_PORT=9093
+      - BUCKETEER_WEB_AUTO_OPS_SERVICE_PORT=9094
+      - BUCKETEER_WEB_ENVIRONMENT_SERVICE_PORT=9095
+      - BUCKETEER_WEB_EVENT_COUNTER_SERVICE_PORT=9096
+      - BUCKETEER_WEB_EXPERIMENT_SERVICE_PORT=9097
+      - BUCKETEER_WEB_FEATURE_SERVICE_PORT=9098
+      - BUCKETEER_WEB_NOTIFICATION_SERVICE_PORT=9100
+      - BUCKETEER_WEB_PUSH_SERVICE_PORT=9101
+      - BUCKETEER_WEB_TAG_SERVICE_PORT=9104
+      - BUCKETEER_WEB_TEAM_SERVICE_PORT=9107
+      - BUCKETEER_WEB_WEB_CONSOLE_SERVICE_PORT=9102
+      - BUCKETEER_WEB_DASHBOARD_SERVICE_PORT=9103
+      - BUCKETEER_WEB_CODE_REFERENCE_SERVICE_PORT=9105
+      - BUCKETEER_WEB_UNIFIED_GATEWAY_PORT=9106
+      - BUCKETEER_WEB_METRICS_PORT=9002
       - BUCKETEER_WEB_TIMEZONE=UTC
       - BUCKETEER_WEB_LOG_LEVEL=info
       - BUCKETEER_WEB_PROFILE=false
@@ -98,14 +119,24 @@ services:
       - BUCKETEER_WEB_CERT=/usr/local/certs/service/tls.crt
       - BUCKETEER_WEB_KEY=/usr/local/certs/service/tls.key
       - BUCKETEER_WEB_SERVICE_TOKEN=/usr/local/service-token/token
+      - BUCKETEER_WEB_EMAIL_FILTER=
       - BUCKETEER_WEB_WEB_CONSOLE_ENV_JS_PATH=/usr/local/static/js
       # External service connections (from web service to other services)
+      - BUCKETEER_WEB_ACCOUNT_SERVICE=web:9091
+      - BUCKETEER_WEB_AUTH_SERVICE=web:9092
       - BUCKETEER_WEB_BATCH_SERVICE=batch:9000
+      - BUCKETEER_WEB_ENVIRONMENT_SERVICE=web:9095
+      - BUCKETEER_WEB_EXPERIMENT_SERVICE=web:9097
+      - BUCKETEER_WEB_FEATURE_SERVICE=web:9098
+      - BUCKETEER_WEB_AUTO_OPS_SERVICE=web:9094
+      - BUCKETEER_WEB_CODE_REFERENCE_SERVICE=web:9105
     volumes:
-      - ../tools/dev/cert:/usr/local/certs/service:ro
-      - ../tools/dev/cert:/usr/local/service-token:ro
-      - ../tools/dev/cert:/usr/local/oauth-key:ro
-      - ../tools/dev/cert:/usr/local/oauth-config:ro
+      - ../tools/dev/cert/tls.crt:/usr/local/certs/service/tls.crt:ro
+      - ../tools/dev/cert/tls.key:/usr/local/certs/service/tls.key:ro
+      - ../tools/dev/cert/service-token:/usr/local/service-token/token:ro
+      - ../tools/dev/cert/oauth-public.pem:/usr/local/oauth-key/public.pem:ro
+      - ../tools/dev/cert/oauth-private.pem:/usr/local/oauth-key/private.pem:ro
+      - ./config/oauth-config.json:/usr/local/oauth-config/oauth-config.json:ro
       - ./static-files:/usr/local/static:ro
     networks:
       - bucketeer
@@ -113,11 +144,12 @@ services:
 
   # API Gateway service (for SDK)
   api:
-    image: ghcr.io/bucketeer-io/bucketeer-api:${BUCKETEER_API_VERSION:-${BUCKETEER_VERSION:-v1.3.0}}
+    image: ghcr.io/bucketeer-io/bucketeer-api:${BUCKETEER_API_VERSION:-${BUCKETEER_VERSION:-localenv}}
     container_name: bucketeer-api
     depends_on:
       web:
         condition: service_started
+    command: ["server"]
     environment:
       - BUCKETEER_API_PROJECT=bucketeer-test
       - BUCKETEER_API_GOAL_TOPIC=goal
@@ -148,23 +180,27 @@ services:
       - BUCKETEER_API_ACCOUNT_SERVICE=web:9091
       - BUCKETEER_API_PUSH_SERVICE=web:9101
       - BUCKETEER_API_CODE_REF_SERVICE=web:9105
+      - BUCKETEER_API_AUDIT_LOG_SERVICE=web:9093
       - BUCKETEER_API_LOG_LEVEL=info
       - BUCKETEER_API_PROFILE=false
       - BUCKETEER_API_GCP_TRACE_ENABLED=false
+      - BUCKETEER_API_TRACE_SAMPLING_PROBABILITY=0.0
     volumes:
-      - ../tools/dev/cert:/usr/local/certs/service:ro
-      - ../tools/dev/cert:/usr/local/service-token:ro
+      - ../tools/dev/cert/tls.crt:/usr/local/certs/service/tls.crt:ro
+      - ../tools/dev/cert/tls.key:/usr/local/certs/service/tls.key:ro
+      - ../tools/dev/cert/service-token:/usr/local/service-token/token:ro
     networks:
       - bucketeer
     restart: unless-stopped
 
   # Batch processing service
   batch:
-    image: ghcr.io/bucketeer-io/bucketeer-batch:${BUCKETEER_BATCH_VERSION:-${BUCKETEER_VERSION:-v1.3.0}}
+    image: ghcr.io/bucketeer-io/bucketeer-batch:${BUCKETEER_BATCH_VERSION:-${BUCKETEER_VERSION:-localenv}}
     container_name: bucketeer-batch
     depends_on:
       web:
         condition: service_started
+    command: ["server"]
     environment:
       - BUCKETEER_BATCH_PROJECT=bucketeer-test
       - BUCKETEER_BATCH_MYSQL_USER=bucketeer
@@ -172,6 +208,7 @@ services:
       - BUCKETEER_BATCH_MYSQL_HOST=bucketeer-mysql
       - BUCKETEER_BATCH_MYSQL_PORT=3306
       - BUCKETEER_BATCH_MYSQL_DB_NAME=bucketeer
+      - BUCKETEER_BATCH_MYSQL_DB_OPEN_CONNS=50
       - BUCKETEER_BATCH_PERSISTENT_REDIS_SERVER_NAME=batch-persistent-redis
       - BUCKETEER_BATCH_PERSISTENT_REDIS_ADDR=bucketeer-redis:6379
       - BUCKETEER_BATCH_PERSISTENT_REDIS_POOL_MAX_IDLE=25
@@ -187,6 +224,7 @@ services:
       - BUCKETEER_BATCH_PUBSUB_REDIS_MIN_IDLE=25
       - BUCKETEER_BATCH_PUBSUB_REDIS_PARTITION_COUNT=16
       - BUCKETEER_BATCH_PORT=9000
+      - BUCKETEER_BATCH_GRPC_GATEWAY_PORT=9089
       - BUCKETEER_BATCH_METRICS_PORT=9002
       - BUCKETEER_BATCH_TIMEZONE=UTC
       - BUCKETEER_BATCH_REFRESH_INTERVAL=10m
@@ -198,6 +236,7 @@ services:
       - BUCKETEER_BATCH_OAUTH_PUBLIC_KEY=/usr/local/oauth-key/public.pem
       - BUCKETEER_BATCH_OAUTH_ISSUER=https://localhost
       - BUCKETEER_BATCH_OAUTH_AUDIENCE=bucketeer
+      - BUCKETEER_BATCH_OAUTH_CLIENT_ID=
       - BUCKETEER_BATCH_ACCOUNT_SERVICE=web:9091
       - BUCKETEER_BATCH_NOTIFICATION_SERVICE=web:9100
       - BUCKETEER_BATCH_ENVIRONMENT_SERVICE=web:9095
@@ -211,21 +250,24 @@ services:
       - BUCKETEER_BATCH_LOG_LEVEL=info
       - BUCKETEER_BATCH_PROFILE=false
       - BUCKETEER_BATCH_GCP_TRACE_ENABLED=false
+      - BUCKETEER_BATCH_STAN_MODEL_ID=y3qsnd7m
     volumes:
-      - ../tools/dev/cert:/usr/local/certs/service:ro
-      - ../tools/dev/cert:/usr/local/service-token:ro
-      - ../tools/dev/cert:/usr/local/oauth-key:ro
+      - ../tools/dev/cert/tls.crt:/usr/local/certs/service/tls.crt:ro
+      - ../tools/dev/cert/tls.key:/usr/local/certs/service/tls.key:ro
+      - ../tools/dev/cert/service-token:/usr/local/service-token/token:ro
+      - ../tools/dev/cert/oauth-public.pem:/usr/local/oauth-key/public.pem:ro
     networks:
       - bucketeer
     restart: unless-stopped
 
   # Event subscriber service
   subscriber:
-    image: ghcr.io/bucketeer-io/bucketeer-subscriber:${BUCKETEER_SUBSCRIBER_VERSION:-${BUCKETEER_VERSION:-v1.3.0}}
+    image: ghcr.io/bucketeer-io/bucketeer-subscriber:${BUCKETEER_SUBSCRIBER_VERSION:-${BUCKETEER_VERSION:-localenv}}
     container_name: bucketeer-subscriber
     depends_on:
       web:
         condition: service_started
+    command: ["server"]
     environment:
       - BUCKETEER_SUBSCRIBER_PROJECT=bucketeer-test
       - BUCKETEER_SUBSCRIBER_MYSQL_USER=bucketeer
@@ -233,6 +275,7 @@ services:
       - BUCKETEER_SUBSCRIBER_MYSQL_HOST=bucketeer-mysql
       - BUCKETEER_SUBSCRIBER_MYSQL_PORT=3306
       - BUCKETEER_SUBSCRIBER_MYSQL_DB_NAME=bucketeer
+      - BUCKETEER_SUBSCRIBER_MYSQL_DB_OPEN_CONNS=50
       - BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_SERVER_NAME=batch-persistent-redis
       - BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_ADDR=bucketeer-redis:6379
       - BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_POOL_MAX_IDLE=25
@@ -254,6 +297,7 @@ services:
       - BUCKETEER_SUBSCRIBER_CERT=/usr/local/certs/service/tls.crt
       - BUCKETEER_SUBSCRIBER_KEY=/usr/local/certs/service/tls.key
       - BUCKETEER_SUBSCRIBER_SERVICE_TOKEN=/usr/local/service-token/token
+      - BUCKETEER_SUBSCRIBER_OAUTH_PUBLIC_KEY=/usr/local/oauth-key/public.pem
       - BUCKETEER_SUBSCRIBER_NOTIFICATION_SERVICE=web:9100
       - BUCKETEER_SUBSCRIBER_ENVIRONMENT_SERVICE=web:9095
       - BUCKETEER_SUBSCRIBER_PUSH_SERVICE=web:9101
@@ -269,8 +313,10 @@ services:
       - BUCKETEER_SUBSCRIBER_PROCESSORS_CONFIG=/usr/local/conf/processors.json
       - BUCKETEER_SUBSCRIBER_ON_DEMAND_PROCESSORS_CONFIG=/usr/local/conf/onDemandProcessors.json
     volumes:
-      - ../tools/dev/cert:/usr/local/certs/service:ro
-      - ../tools/dev/cert:/usr/local/service-token:ro
+      - ../tools/dev/cert/tls.crt:/usr/local/certs/service/tls.crt:ro
+      - ../tools/dev/cert/tls.key:/usr/local/certs/service/tls.key:ro
+      - ../tools/dev/cert/service-token:/usr/local/service-token/token:ro
+      - ../tools/dev/cert/oauth-public.pem:/usr/local/oauth-key/public.pem:ro
       - ./config/subscriber-config:/usr/local/conf:ro
     networks:
       - bucketeer
