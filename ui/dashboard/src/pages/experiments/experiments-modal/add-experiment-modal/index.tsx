@@ -92,8 +92,8 @@ const AddExperimentModal = ({
   isOpen,
   onClose
 }: AddExperimentModalProps) => {
-  const { t } = useTranslation(['form', 'common']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['form', 'common', 'message']);
+  const { notify, errorNotify } = useToast();
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -166,7 +166,8 @@ const AddExperimentModal = ({
       },
       featureId: '',
       goalIds: []
-    }
+    },
+    mode: 'onChange'
   });
 
   const {
@@ -218,20 +219,16 @@ const AddExperimentModal = ({
       });
       if (resp) {
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: 'Experiment created successfully.'
+          message: t('message:collection-action-success', {
+            collection: t('common:source-type.experiment'),
+            action: t('common:created')
+          })
         });
         invalidateExperiments(queryClient);
         onClose();
       }
     } catch (error) {
-      const errorMessage = (error as Error)?.message;
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: errorMessage || 'Something went wrong.'
-      });
+      errorNotify(error);
     }
   };
 

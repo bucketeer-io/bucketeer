@@ -58,8 +58,8 @@ export type DefineAudienceField = ControllerRenderProps<
 >;
 
 const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
-  const { t } = useTranslation(['form', 'common', 'table']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['form', 'common', 'table', 'message']);
+  const { notify, errorNotify } = useToast();
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -128,12 +128,13 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
       },
       featureId: experiment.featureId,
       goalIds: experiment.goalIds
-    }
+    },
+    mode: 'onChange'
   });
 
   const {
     watch,
-    formState: { isDirty, isSubmitting }
+    formState: { isDirty, isValid }
   } = form;
 
   const featureId = watch('featureId');
@@ -165,11 +166,10 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
       });
       invalidateExperiments(queryClient);
       notify({
-        message: (
-          <span>
-            <b>{data?.experiment?.name}</b> {`has been successfully updated!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('common:source-type.experiment'),
+          action: t('common:updated')
+        })
       });
       mutationState.reset();
 
@@ -179,11 +179,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
         description: data?.experiment?.description
       });
     },
-    onError: error =>
-      notify({
-        messageType: 'error',
-        message: error?.message || 'Something went wrong.'
-      })
+    onError: error => errorNotify(error)
   });
 
   const onUpdateExperiment = async (payload: ExperimentUpdaterParams) =>
@@ -203,8 +199,8 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                 trigger={
                   <Button
                     type="submit"
-                    disabled={!isDirty || !editable}
-                    loading={isSubmitting}
+                    disabled={!isDirty || !isValid || !editable}
+                    loading={mutationState.isPending}
                   >
                     {t('common:save')}
                   </Button>

@@ -69,7 +69,7 @@ export const useColumns = ({
 }: {
   onActions: (item: Experiment, type: ExperimentActionsType) => void;
 }): ColumnDef<Experiment>[] => {
-  const { t } = useTranslation(['common', 'table', 'form']);
+  const { t } = useTranslation(['common', 'table', 'form', 'message']);
   const { searchOptions } = useSearchParams();
 
   const { consoleAccount } = useAuth();
@@ -79,12 +79,7 @@ export const useColumns = ({
   const handleCopyId = (id: string) => {
     copyToClipBoard(id);
     notify({
-      toastType: 'toast',
-      message: (
-        <span>
-          <b>ID</b> {` has been successfully copied!`}
-        </span>
-      )
+      message: t('message:copied')
     });
   };
 

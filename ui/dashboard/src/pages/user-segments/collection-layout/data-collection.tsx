@@ -116,8 +116,8 @@ export const useColumns = ({
             {isUploading
               ? 'Uploading'
               : segment.isInUseStatus
-                ? 'In Use'
-                : 'Not In Use'}
+                ? t('in-use')
+                : t('not-in-use')}
           </div>
         );
       }

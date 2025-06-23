@@ -185,9 +185,10 @@ const ScheduleOperationModal = ({
           if (resp) {
             onSubmitOperationSuccess();
             notify({
-              message: t(
-                `message:operation.${isCreate ? 'created' : 'updated'}`
-              )
+              message: t('message:collection-action-success', {
+                collection: t('common:operation'),
+                action: t(isCreate ? 'common:created' : 'common:updated')
+              })
             });
           }
         }

@@ -80,14 +80,14 @@ const EditExperimentModal = ({
   onClose
 }: EditExperimentModalProps) => {
   const { t } = useTranslation(['form', 'common']);
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const editable = hasEditable(consoleAccount!);
   const queryClient = useQueryClient();
 
-  const { id: experimentId, errorToast } = useActionWithURL({
+  const { id: experimentId } = useActionWithURL({
     closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}`
   });
 
@@ -168,7 +168,8 @@ const EditExperimentModal = ({
       },
       featureId: '',
       goalIds: []
-    }
+    },
+    mode: 'onChange'
   });
 
   const {
@@ -209,9 +210,10 @@ const EditExperimentModal = ({
       });
       if (resp) {
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: 'Experiment updated successfully.'
+          message: t('message:collection-action-success', {
+            collection: t('common:source-type.experiment'),
+            action: t('common:updated')
+          })
         });
         invalidateExperiments(queryClient);
         invalidateExperimentDetails(queryClient, {
@@ -221,7 +223,7 @@ const EditExperimentModal = ({
         onClose();
       }
     } catch (error) {
-      errorToast(error as Error);
+      errorNotify(error);
     }
   };
 
@@ -260,7 +262,7 @@ const EditExperimentModal = ({
 
   useEffect(() => {
     if (experimentError) {
-      errorToast(experimentError);
+      errorNotify(experimentError);
     }
   }, [experimentError]);
 

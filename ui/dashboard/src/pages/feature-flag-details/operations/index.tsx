@@ -210,7 +210,10 @@ const Operations = ({
 
         if (resp) {
           notify({
-            message: t('message:operation.stopped')
+            message: t('message:collection-action-success', {
+              collection: t('operation'),
+              action: t('stopped')
+            })
           });
           onSubmitOperationSuccess();
           setOperationModalState({
@@ -241,7 +244,10 @@ const Operations = ({
 
         if (resp) {
           notify({
-            message: t('message:operation.deleted')
+            message: t('message:collection-action-success', {
+              collection: t('operation'),
+              action: t('deleted')
+            })
           });
           onSubmitOperationSuccess();
           onResetModalState();

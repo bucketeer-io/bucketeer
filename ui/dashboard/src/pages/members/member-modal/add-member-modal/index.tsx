@@ -13,6 +13,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { translation } from 'constants/message';
 import { useToast } from 'hooks';
 import { Language, useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
@@ -58,11 +59,11 @@ export const defaultEnvironmentRole: EnvironmentRoleItem = {
 export const organizationRoles: OrganizationRoleOption[] = [
   {
     value: 'Organization_MEMBER',
-    label: 'Member'
+    label: translation('member')
   },
   {
     value: 'Organization_ADMIN',
-    label: 'Admin'
+    label: translation('admin')
   }
 ];
 
@@ -102,7 +103,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const [tagOptions, setTagOptions] = useState<DropdownOption[]>([]);
@@ -160,7 +161,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
     return false;
   }, [dirtyFields, isValid, memberEnvironments]);
 
-  const onSubmit: SubmitHandler<AddMemberForm> = values => {
+  const onSubmit: SubmitHandler<AddMemberForm> = async values => {
     return accountCreator({
       organizationId: currentEnvironment.organizationId,
       email: values.email,
@@ -170,19 +171,18 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
         environmentId: checkEnvironmentEmptyId(item.environmentId)
       })),
       tags: values.tags ?? []
-    }).then(() => {
-      notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.email}</b> {` has been successfully created!`}
-          </span>
-        )
-      });
-      invalidateAccounts(queryClient);
-      onClose();
-    });
+    })
+      .then(() => {
+        notify({
+          message: t('message:collection-action-success', {
+            collection: t('member'),
+            action: t('created')
+          })
+        });
+        invalidateAccounts(queryClient);
+        onClose();
+      })
+      .catch(error => errorNotify(error));
   };
 
   return (

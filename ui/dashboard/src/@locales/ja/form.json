@@ -319,5 +319,8 @@
   "select-or-create-tags": "Select or create new tags",
   "no-opts-type-to-create": "No options. Type to create a new one.",
   "type-to-create": "Type to create a new one.",
-  "search-or-create-tags": "Search or create new tags"
+  "search-or-create-tags": "Search or create new tags",
+  "boolean": "Boolean",
+  "string": "String",
+  "number": "Number"
 }

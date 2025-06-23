@@ -22,7 +22,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
   const navigate = useNavigate();
   const { t } = useTranslation(['common', 'form', 'table']);
 
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
 
   const { consoleAccount } = useAuth();
@@ -45,14 +45,10 @@ const PageContent = ({ goal }: { goal: Goal }) => {
       onCloseDeleteModal();
       invalidateGoals(queryClient);
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{goal?.name}</b>
-            {` has been deleted successfully!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.goal'),
+          action: t('deleted')
+        })
       });
       navigate(`/${currentEnvironment.urlCode}/${PAGE_PATH_GOALS}`);
     }
@@ -62,7 +58,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
     mutationFn: async (payload: GoalUpdaterPayload) => {
       return goalUpdater(payload);
     },
-    onSuccess: data => {
+    onSuccess: () => {
       onCloseConfirmModal();
       invalidateGoalDetails(queryClient, {
         id: goal.id,
@@ -70,19 +66,14 @@ const PageContent = ({ goal }: { goal: Goal }) => {
       });
       invalidateGoals(queryClient);
       notify({
-        message: (
-          <span>
-            <b>{data?.goal?.name}</b> {`has been successfully updated!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.goal'),
+          action: t('updated')
+        })
       });
       mutationState.reset();
     },
-    onError: error =>
-      notify({
-        messageType: 'error',
-        message: error?.message || 'Something went wrong.'
-      })
+    onError: error => errorNotify(error)
   });
 
   const onUpdateGoal = async (payload: GoalUpdaterPayload) =>
@@ -98,6 +89,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
       />
       {connections > 0 && <GoalConnections goal={goal} />}
       <GoalActions
+        editable={editable}
         title={
           goal.archived
             ? t(`table:popover.unarchive-goal`)
@@ -117,6 +109,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
         )}
       </GoalActions>
       <GoalActions
+        editable={editable}
         title={t('delete-goal')}
         description={t('form:goal-details.delete-desc')}
         btnText={t('delete-goal')}

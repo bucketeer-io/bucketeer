@@ -5,6 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryAccounts } from '@queries/accounts';
 import { getCurrentEnvironment, useAuth, useAuthAccess } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -23,10 +24,10 @@ import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import PageLayout from 'elements/page-layout';
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
-  urlCode: yup.string().required(),
+  name: yup.string().required(requiredMessage),
+  urlCode: yup.string().required(requiredMessage),
   description: yup.string(),
-  ownerEmail: yup.string().required()
+  ownerEmail: yup.string().required(requiredMessage)
 });
 
 export interface PageContentForm {
@@ -37,12 +38,12 @@ export interface PageContentForm {
 }
 
 const PageContent = ({ organization }: { organization: Organization }) => {
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
 
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { data: accounts, isLoading: isLoadingAccounts } = useQueryAccounts({
     params: {
       cursor: String(0),
@@ -75,21 +76,14 @@ const PageContent = ({ organization }: { organization: Organization }) => {
       });
       if (resp) {
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {`has been successfully updated!`}
-            </span>
-          )
+          message: t('message:collection-action-success', {
+            collection: t('organization'),
+            action: t('updated')
+          })
         });
       }
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message || 'Something went wrong.'
-      });
+      errorNotify(error);
     }
   };
 

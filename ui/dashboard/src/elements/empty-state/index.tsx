@@ -100,7 +100,7 @@ const EmptyStateActionButton = ({
       align="center"
       type={isNeedAdminAccess && !isOrganizationAdmin ? 'admin' : 'editor'}
       hidden={
-        (editable && (isNeedAdminAccess ? isOrganizationAdmin : false)) ||
+        (editable && (isNeedAdminAccess ? isOrganizationAdmin : true)) ||
         isRetry
       }
       trigger={

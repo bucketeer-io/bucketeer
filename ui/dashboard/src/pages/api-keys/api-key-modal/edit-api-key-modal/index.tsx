@@ -5,6 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAPIKeys } from '@queries/api-keys';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthAccess } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -44,8 +45,8 @@ export interface EditAPIKeyForm {
 }
 
 export const formSchema = yup.object().shape({
-  name: yup.string().required(),
-  environmentId: yup.string().required(),
+  name: yup.string().required(requiredMessage),
+  environmentId: yup.string().required(requiredMessage),
   description: yup.string()
 });
 
@@ -57,7 +58,7 @@ const EditAPIKeyModal = ({
   onClose
 }: EditAPIKeyModalProps) => {
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { notify } = useToast();
 
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
@@ -106,13 +107,10 @@ const EditAPIKeyModal = ({
       name: values.name
     }).then(() => {
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {` has been successfully updated!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.api-key'),
+          action: t('updated')
+        })
       });
       invalidateAPIKeys(queryClient);
       onClose();

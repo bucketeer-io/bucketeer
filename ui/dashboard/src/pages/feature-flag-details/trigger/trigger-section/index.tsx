@@ -123,9 +123,10 @@ const TriggerList = ({
           });
       }
       notify({
-        message: t(
-          isDelete ? 'message:trigger-deleted' : 'message:trigger-updated'
-        )
+        message: t('message:collection-action-success', {
+          collection: t('feature-flags.trigger'),
+          action: t(isDelete ? 'common:delete' : 'common:updated')
+        })
       });
       onReset();
       invalidateTriggers(queryClient);

@@ -8,6 +8,7 @@ import { invalidateAccounts } from '@queries/accounts';
 import { invalidateProjectDetails } from '@queries/project-details';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthAccess } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -20,8 +21,8 @@ import TextArea from 'components/textarea';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
-  urlCode: yup.string().required(),
+  name: yup.string().required(requiredMessage),
+  urlCode: yup.string().required(requiredMessage),
   description: yup.string()
 });
 
@@ -32,9 +33,9 @@ export interface ProjectSettingsForm {
 }
 
 const ProjectSettings = ({ project }: { project: Project }) => {
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const params = useParams();
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
 
@@ -68,21 +69,14 @@ const ProjectSettings = ({ project }: { project: Project }) => {
         });
         invalidateAccounts(queryClient);
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {`has been successfully updated!`}
-            </span>
-          )
+          message: t('message:collection-action-success', {
+            collection: t('project'),
+            action: t('updated')
+          })
         });
       }
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message
-      });
+      errorNotify(error);
     }
   };
 

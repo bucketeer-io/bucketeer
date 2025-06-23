@@ -5,6 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
 import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
+import { requiredMessage, translation } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -29,13 +30,15 @@ export interface AddProjectForm {
 }
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
+  name: yup.string().required(requiredMessage),
   urlCode: yup
     .string()
-    .required()
+    .required(requiredMessage)
     .matches(
       /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
-      "urlCode must start with a letter or number and only contain letters, numbers, or '-'"
+      translation('message:validation.id-rule', {
+        name: translation('common:url-code')
+      })
     ),
   description: yup.string(),
   id: yup.string()
@@ -44,8 +47,8 @@ const formSchema = yup.object().shape({
 const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['common', 'form', 'message']);
+  const { notify, errorNotify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { envEditable, isOrganizationAdmin } = getAccountAccess(
     consoleAccount!
@@ -74,23 +77,16 @@ const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
 
       if (resp) {
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {`has been successfully created!`}
-            </span>
-          )
+          message: t('message:collection-action-success', {
+            collection: t('project'),
+            action: t('created')
+          })
         });
         invalidateProjects(queryClient);
         onClose();
       }
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message
-      });
+      errorNotify(error);
     }
   };
 

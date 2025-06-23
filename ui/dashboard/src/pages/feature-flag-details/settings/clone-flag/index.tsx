@@ -1,4 +1,4 @@
-import { useToast, useToggleOpen } from 'hooks';
+import { useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
 import CloneFlagModal from 'pages/feature-flags/flags-modal/clone-flag-modal';
@@ -14,7 +14,6 @@ const CloneFlag = ({
   disabled: boolean;
 }) => {
   const { t } = useTranslation(['common', 'form']);
-  const { errorNotify } = useToast();
 
   const [isOpenCloneFlagModal, onOpenCloneFlagModal, onCloseCloneFlagModal] =
     useToggleOpen(false);
@@ -43,7 +42,6 @@ const CloneFlag = ({
           isOpen={isOpenCloneFlagModal}
           flagId={feature.id}
           onClose={onCloseCloneFlagModal}
-          errorToast={errorNotify}
         />
       )}
     </Card>

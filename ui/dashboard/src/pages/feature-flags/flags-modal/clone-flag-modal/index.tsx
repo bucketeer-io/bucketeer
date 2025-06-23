@@ -8,6 +8,7 @@ import { invalidateFeatures } from '@queries/features';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -28,7 +29,6 @@ interface CloneFlagModalProps {
   flagId: string;
   isOpen: boolean;
   onClose: () => void;
-  errorToast: (error: Error) => void;
 }
 
 export interface CloneFlagForm {
@@ -39,22 +39,17 @@ export interface CloneFlagForm {
 }
 
 const formSchema = yup.object().shape({
-  id: yup.string().required(),
-  name: yup.string().required(),
-  originEnvironmentId: yup.string().required(),
-  destinationEnvironmentId: yup.string().required()
+  id: yup.string().required(requiredMessage),
+  name: yup.string().required(requiredMessage),
+  originEnvironmentId: yup.string().required(requiredMessage),
+  destinationEnvironmentId: yup.string().required(requiredMessage)
 });
 
-const CloneFlagModal = ({
-  flagId,
-  isOpen,
-  onClose,
-  errorToast
-}: CloneFlagModalProps) => {
+const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['common', 'form', 'message']);
+  const { notify, errorNotify } = useToast();
 
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const editable = hasEditable(consoleAccount!);
@@ -107,19 +102,22 @@ const CloneFlagModal = ({
 
       if (resp) {
         notify({
-          message: 'Clone feature flag successfully.'
+          message: t('message:collection-action-success', {
+            collection: t('common:source-type.feature-flag'),
+            action: t('cloned')
+          })
         });
         invalidateFeatures(queryClient);
         onClose();
       }
     } catch (error) {
-      errorToast(error as Error);
+      errorNotify(error);
     }
   };
 
   useEffect(() => {
     if (featureError) {
-      errorToast(featureError);
+      errorNotify(featureError);
     }
   }, [featureError]);
 

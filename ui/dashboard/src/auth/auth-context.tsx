@@ -10,6 +10,7 @@ import { accountOrganizationFetcher, MeFetcherParams } from '@api/account';
 import { accountMeFetcher } from '@api/account';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
+import { useTranslation } from 'i18n';
 import { Undefinable } from 'option-t/undefinable';
 import {
   clearCurrentEnvIdStorage,
@@ -51,6 +52,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children
 }) => {
+  const { t } = useTranslation(['message']);
   const navigate = useNavigate();
   const authToken: AuthToken | null = getTokenStorage();
   const organizationId = getOrgIdStorage();
@@ -78,7 +80,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const environmentRoles = response.account.environmentRoles;
       if (!environmentRoles.length) {
         clearOrgAndEnvStorage();
-        errorNotify(null, 'The environments are empty.');
+        errorNotify(null, t('message:env-are-empty'));
         return logout();
       }
 
@@ -89,7 +91,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       }
     } catch (error) {
       clearOrgAndEnvStorage();
-      errorNotify(error, 'The organization is not found.');
+      errorNotify(error, t('message:org-not-found'));
     } finally {
       setIsInitialLoading(false);
     }
@@ -176,8 +178,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
+  const { t } = useTranslation(['message']);
+
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error(t('auth-context-error'));
   }
   return context;
 };

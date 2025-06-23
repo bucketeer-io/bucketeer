@@ -6,6 +6,7 @@ import { invalidateAccounts, useQueryAccounts } from '@queries/accounts';
 import { invalidateOrganizationDetails } from '@queries/organization-details';
 import { useQueryClient } from '@tanstack/react-query';
 import { LIST_PAGE_SIZE } from 'constants/app';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -22,10 +23,10 @@ import Input from 'components/input';
 import TextArea from 'components/textarea';
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
-  urlCode: yup.string().required(),
+  name: yup.string().required(requiredMessage),
+  urlCode: yup.string().required(requiredMessage),
   description: yup.string(),
-  ownerEmail: yup.string().required()
+  ownerEmail: yup.string().required(requiredMessage)
 });
 
 export interface OrganizationSettingsForm {
@@ -40,9 +41,9 @@ const OrganizationSettings = ({
 }: {
   organization: Organization;
 }) => {
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const params = useParams();
   const orgDetailsId = params.organizationId!;
   const { data: accounts } = useQueryAccounts({
@@ -75,21 +76,14 @@ const OrganizationSettings = ({
         invalidateOrganizationDetails(queryClient, { id: orgDetailsId });
         invalidateAccounts(queryClient);
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {`has been successfully updated!`}
-            </span>
-          )
+          message: t('message:collection-action-success', {
+            collection: t('organization'),
+            action: t('updated')
+          })
         });
       }
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message || 'Something went wrong.'
-      });
+      errorNotify(error);
     }
   };
 

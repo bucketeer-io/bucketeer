@@ -1,7 +1,8 @@
 import { Locale } from 'date-fns';
 import { enUS as enCH, ja as jaCH } from 'date-fns/locale';
 import { Language, getLanguage } from 'i18n';
-import { format } from 'timeago.js';
+import { format, register } from 'timeago.js';
+import ja from 'timeago.js/lib/lang/ja';
 
 export type FormatDateTimeOptions = { pattern: DTPattern };
 
@@ -34,9 +35,11 @@ export type FormatDateTime = (
 export const useFormatDateTime = () => {
   const formatDateTime = (value: string) => {
     try {
+      const isJapaneseLanguage = getLanguage() === 'ja';
+      if (isJapaneseLanguage) register('ja', ja);
       const date = new Date(Number(value) * 1000);
 
-      return format(date);
+      return format(date, getLanguage());
     } catch (e) {
       console.error(e);
       return value;
@@ -66,6 +69,7 @@ export const formatLongDateTime = ({
   locale?: Intl.LocalesArgument;
 }) => {
   try {
+    const isJapaneseLanguage = getLanguage() === 'ja';
     const date = new Date(Number(value) * 1000);
 
     const options: Intl.DateTimeFormatOptions = {
@@ -73,7 +77,10 @@ export const formatLongDateTime = ({
       year: 'numeric',
       ...overrideOptions
     };
-    return new Intl.DateTimeFormat(locale, options).format(date);
+    return new Intl.DateTimeFormat(
+      isJapaneseLanguage ? 'ja-JP' : locale,
+      options
+    ).format(date);
   } catch (error) {
     console.error(error);
     return value;
