@@ -139,7 +139,7 @@ func (a *AccountV2) Update(
 	if organizationRole != nil {
 		updated.OrganizationRole = organizationRole.Role
 	}
-	if len(updated.EnvironmentRoles) > 0 {
+	if len(environmentRoles) > 0 {
 		updated.EnvironmentRoles = environmentRoles
 	}
 	if isDisabled != nil {
