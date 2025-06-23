@@ -50,6 +50,7 @@ func (s *accountStorage) GetSystemAdminAccountV2(ctx context.Context, email stri
 		&account.AvatarFileType,
 		&account.AvatarImage,
 		&mysql.JSONObject{Val: &account.Tags},
+		&mysql.JSONObject{Val: &account.Teams},
 		&account.OrganizationId,
 		&organizationRole,
 		&mysql.JSONObject{Val: &account.EnvironmentRoles},

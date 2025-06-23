@@ -707,10 +707,10 @@ export class UpdateAccountV2Request extends jspb.Message {
     value?: proto_account_command_pb.ChangeAccountV2TagsCommand
   ): void;
 
-  hasTeamChanges(): boolean;
-  clearTeamChanges(): void;
-  getTeamChanges(): TeamChange | undefined;
-  setTeamChanges(value?: TeamChange): void;
+  clearTeamChangesList(): void;
+  getTeamChangesList(): Array<TeamChange>;
+  setTeamChangesList(value: Array<TeamChange>): void;
+  addTeamChanges(value?: TeamChange, index?: number): TeamChange;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateAccountV2Request.AsObject;
@@ -758,7 +758,7 @@ export namespace UpdateAccountV2Request {
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     tags?: proto_common_string_pb.StringListValue.AsObject;
     changeTagsCommand?: proto_account_command_pb.ChangeAccountV2TagsCommand.AsObject;
-    teamChanges?: TeamChange.AsObject;
+    teamChangesList: Array<TeamChange.AsObject>;
   };
 
   export class AccountV2Avatar extends jspb.Message {

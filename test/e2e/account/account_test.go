@@ -435,6 +435,81 @@ func TestUpdateAccountThenDeleteAccountNoCommand(t *testing.T) {
 	}
 }
 
+func TestCreateUpdateAccountTeams(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	c := newAccountClient(t)
+	defer c.Close()
+	// create account
+	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+		OrganizationId:   defaultOrganizationID,
+		Name:             name,
+		Email:            email,
+		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+		Language:         language,
+		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		Teams:            []string{"team-id-1", "team-id-2"},
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+			{
+				EnvironmentId: "test",
+				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// update account team
+	_, err = c.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+		TeamChanges: []*accountproto.TeamChange{
+			{
+				ChangeType: accountproto.ChangeType_CREATE,
+				Team:       "team-id-3",
+			},
+			{
+				ChangeType: accountproto.ChangeType_DELETE,
+				Team:       "team-id-2",
+			},
+		},
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+			{
+				EnvironmentId: "test",
+				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	getResp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectedTeams := []string{"team-id-1", "team-id-3"}
+	if !reflect.DeepEqual(getResp.Account.Teams, expectedTeams) {
+		t.Fatalf("different teams, expected: %v, actual: %v", expectedTeams, getResp.Account.Teams)
+	}
+
+	// delete account
+	_, err = c.DeleteAccountV2(ctx, &accountproto.DeleteAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestEnableAndDisableAccount(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)

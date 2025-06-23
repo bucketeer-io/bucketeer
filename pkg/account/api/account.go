@@ -36,6 +36,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	tagdomain "github.com/bucketeer-io/bucketeer/pkg/tag/domain"
+	teamdomain "github.com/bucketeer-io/bucketeer/pkg/team/domain"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/bucketeer-io/bucketeer/proto/common"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
@@ -77,6 +78,7 @@ func (s *AccountService) CreateAccountV2(
 		req.Command.Language,
 		req.Command.AvatarImageUrl,
 		req.Command.Tags,
+		nil,
 		req.OrganizationId,
 		req.Command.OrganizationRole,
 		req.Command.EnvironmentRoles,
@@ -185,6 +187,7 @@ func (s *AccountService) createAccountV2NoCommand(
 		req.Language,
 		req.AvatarImageUrl,
 		req.Tags,
+		req.Teams,
 		req.OrganizationId,
 		req.OrganizationRole,
 		req.EnvironmentRoles,
@@ -274,7 +277,7 @@ func (s *AccountService) createAccountV2NoCommand(
 		)
 		return nil, err
 	}
-	// Upsert tags
+	// Upsert tags -- deprecated
 	for _, envRole := range req.EnvironmentRoles {
 		if err := s.upsertTags(ctx, req.Tags, envRole.EnvironmentId); err != nil {
 			s.logger.Error(
@@ -289,6 +292,19 @@ func (s *AccountService) createAccountV2NoCommand(
 			)
 			return nil, statusInternal.Err()
 		}
+	}
+
+	if err := s.upsertTeams(ctx, req.Teams, req.OrganizationId); err != nil {
+		s.logger.Error(
+			"Failed to upsert account teams",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationId", req.OrganizationId),
+				zap.String("email", req.Email),
+				zap.Any("teams", req.Teams),
+			)...,
+		)
+		return nil, statusInternal.Err()
 	}
 	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
 }
@@ -373,6 +389,35 @@ func (s *AccountService) upsertTags(
 	return nil
 }
 
+func (s *AccountService) upsertTeams(
+	ctx context.Context,
+	teams []string,
+	organizationID string,
+) error {
+	for _, team := range teams {
+		trimed := strings.TrimSpace(team)
+		if trimed == "" {
+			continue
+		}
+		t, err := teamdomain.NewTeam(trimed, trimed, organizationID)
+		if err != nil {
+			s.logger.Error(
+				"Failed to create domain team",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationId", organizationID),
+					zap.String("teamId", team),
+				)...,
+			)
+			return err
+		}
+		if err := s.teamStorage.UpsertTeam(ctx, t); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *AccountService) UpdateAccountV2(
 	ctx context.Context,
 	req *accountproto.UpdateAccountV2Request,
@@ -387,6 +432,15 @@ func (s *AccountService) UpdateAccountV2(
 	)
 	if err != nil {
 		// If not admin, check if user is updating their own account
+		editor, err = s.checkOrganizationRole(
+			ctx,
+			accountproto.AccountV2_Role_Organization_MEMBER,
+			req.OrganizationId,
+			localizer,
+		)
+		if err != nil {
+			return nil, err
+		}
 		if editor.Email != req.Email {
 			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -396,15 +450,6 @@ func (s *AccountService) UpdateAccountV2(
 				return nil, statusInternal.Err()
 			}
 			return nil, dt.Err()
-		}
-		editor, err = s.checkOrganizationRole(
-			ctx,
-			accountproto.AccountV2_Role_Organization_MEMBER,
-			req.OrganizationId,
-			localizer,
-		)
-		if err != nil {
-			return nil, err
 		}
 	} else {
 		isAdmin = true
@@ -498,9 +543,7 @@ func (s *AccountService) checkRestrictedCommands(
 	localizer locale.Localizer,
 ) error {
 	if req.ChangeOrganizationRoleCommand != nil ||
-		req.ChangeEnvironmentRolesCommand != nil ||
-		req.OrganizationRole != nil ||
-		req.EnvironmentRoles != nil {
+		req.OrganizationRole != nil {
 		dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.PermissionDenied),
@@ -535,6 +578,7 @@ func (s *AccountService) updateAccountV2NoCommand(
 		req.AvatarImageUrl,
 		req.Avatar,
 		req.Tags,
+		req.TeamChanges,
 		req.OrganizationRole,
 		req.EnvironmentRoles,
 		req.Disabled,
@@ -586,6 +630,20 @@ func (s *AccountService) updateAccountV2NoCommand(
 				)
 				return nil, statusInternal.Err()
 			}
+		}
+	}
+	if updatedAccountPb.Teams != nil {
+		if err := s.upsertTeams(ctx, updatedAccountPb.Teams, req.OrganizationId); err != nil {
+			s.logger.Error(
+				"Failed to upsert account teams",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationId", req.OrganizationId),
+					zap.String("email", req.Email),
+					zap.Any("teams", updatedAccountPb.Teams),
+				)...,
+			)
+			return nil, statusInternal.Err()
 		}
 	}
 	return &accountproto.UpdateAccountV2Response{
@@ -680,6 +738,7 @@ func (s *AccountService) EnableAccountV2(
 		nil,
 		nil,
 		nil,
+		nil,
 		wrapperspb.Bool(false),
 	)
 	if err != nil {
@@ -745,6 +804,7 @@ func (s *AccountService) DisableAccountV2(
 		editor,
 		req.Email,
 		req.OrganizationId,
+		nil,
 		nil,
 		nil,
 		nil,
@@ -824,6 +884,7 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 	name, firstName, lastName, language, avatarImageURL *wrapperspb.StringValue,
 	avatar *accountproto.UpdateAccountV2Request_AccountV2Avatar,
 	tags *common.StringListValue,
+	teamChanges []*accountproto.TeamChange,
 	organizationRole *accountproto.UpdateAccountV2Request_OrganizationRoleValue,
 	environmentRoles []*accountproto.AccountV2_EnvironmentRole,
 	isDisabled *wrapperspb.BoolValue,
@@ -843,6 +904,7 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 			avatarImageURL,
 			avatar,
 			tags,
+			teamChanges,
 			organizationRole,
 			environmentRoles,
 			isDisabled,

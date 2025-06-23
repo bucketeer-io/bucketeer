@@ -4130,7 +4130,7 @@ proto.bucketeer.account.TeamChange.prototype.setTeam = function (value) {
  * @private {!Array<number>}
  * @const
  */
-proto.bucketeer.account.UpdateAccountV2Request.repeatedFields_ = [15];
+proto.bucketeer.account.UpdateAccountV2Request.repeatedFields_ = [15, 24];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -4272,9 +4272,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        teamChanges:
-          (f = msg.getTeamChanges()) &&
-          proto.bucketeer.account.TeamChange.toObject(includeInstance, f)
+        teamChangesList: jspb.Message.toObjectList(
+          msg.getTeamChangesList(),
+          proto.bucketeer.account.TeamChange.toObject,
+          includeInstance
+        )
       };
 
     if (includeInstance) {
@@ -4520,7 +4522,7 @@ proto.bucketeer.account.UpdateAccountV2Request.deserializeBinaryFromReader =
             value,
             proto.bucketeer.account.TeamChange.deserializeBinaryFromReader
           );
-          msg.setTeamChanges(value);
+          msg.addTeamChanges(value);
           break;
         default:
           reader.skipField();
@@ -4743,9 +4745,9 @@ proto.bucketeer.account.UpdateAccountV2Request.serializeBinaryToWriter =
           .serializeBinaryToWriter
       );
     }
-    f = message.getTeamChanges();
-    if (f != null) {
-      writer.writeMessage(
+    f = message.getTeamChangesList();
+    if (f.length > 0) {
+      writer.writeRepeatedMessage(
         24,
         f,
         proto.bucketeer.account.TeamChange.serializeBinaryToWriter
@@ -6015,41 +6017,52 @@ proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeTagsCommand =
   };
 
 /**
- * optional TeamChange team_changes = 24;
- * @return {?proto.bucketeer.account.TeamChange}
+ * repeated TeamChange team_changes = 24;
+ * @return {!Array<!proto.bucketeer.account.TeamChange>}
  */
-proto.bucketeer.account.UpdateAccountV2Request.prototype.getTeamChanges =
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getTeamChangesList =
   function () {
-    return /** @type{?proto.bucketeer.account.TeamChange} */ (
-      jspb.Message.getWrapperField(this, proto.bucketeer.account.TeamChange, 24)
+    return /** @type{!Array<!proto.bucketeer.account.TeamChange>} */ (
+      jspb.Message.getRepeatedWrapperField(
+        this,
+        proto.bucketeer.account.TeamChange,
+        24
+      )
     );
   };
 
 /**
- * @param {?proto.bucketeer.account.TeamChange|undefined} value
+ * @param {!Array<!proto.bucketeer.account.TeamChange>} value
  * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
  */
-proto.bucketeer.account.UpdateAccountV2Request.prototype.setTeamChanges =
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setTeamChangesList =
   function (value) {
-    return jspb.Message.setWrapperField(this, 24, value);
+    return jspb.Message.setRepeatedWrapperField(this, 24, value);
   };
 
 /**
- * Clears the message field making it undefined.
+ * @param {!proto.bucketeer.account.TeamChange=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.account.TeamChange}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.addTeamChanges =
+  function (opt_value, opt_index) {
+    return jspb.Message.addToRepeatedWrapperField(
+      this,
+      24,
+      opt_value,
+      proto.bucketeer.account.TeamChange,
+      opt_index
+    );
+  };
+
+/**
+ * Clears the list making it empty but non-null.
  * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
  */
-proto.bucketeer.account.UpdateAccountV2Request.prototype.clearTeamChanges =
+proto.bucketeer.account.UpdateAccountV2Request.prototype.clearTeamChangesList =
   function () {
-    return this.setTeamChanges(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.account.UpdateAccountV2Request.prototype.hasTeamChanges =
-  function () {
-    return jspb.Message.getField(this, 24) != null;
+    return this.setTeamChangesList([]);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
