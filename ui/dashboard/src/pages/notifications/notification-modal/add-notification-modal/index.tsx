@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   FormProvider,
   Resolver,
@@ -9,7 +9,7 @@ import { notificationCreator } from '@api/notification';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateNotifications } from '@queries/notifications';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { useAuth } from 'auth';
 import { languageList } from 'constants/notification';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -19,8 +19,8 @@ import { NotificationLanguage, SourceType } from '@types';
 import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { cn } from 'utils/style';
 import { IconInfo, IconNoData } from '@icons';
+import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { useFetchTags } from 'pages/members/collection-loader';
-import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
@@ -77,7 +77,6 @@ const AddNotificationModal = ({
   const { t } = useTranslation(['common', 'form']);
 
   const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const SOURCE_TYPE_ITEMS: NotificationOption[] = [
     {
@@ -146,11 +145,15 @@ const AddNotificationModal = ({
   const [filteredTypes, setSearchTypes] =
     useState<NotificationOption[]>(SOURCE_TYPE_ITEMS);
 
-  const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId
-  });
-  const environments = collection?.environments || [];
-  const { formattedEnvironments } = onFormatEnvironments(environments);
+  const editorEnvironments = useMemo(
+    () =>
+      consoleAccount?.environmentRoles
+        .filter(item => item.role === 'Environment_EDITOR')
+        ?.map(item => item.environment) || [],
+    [consoleAccount]
+  );
+
+  const { formattedEnvironments } = onFormatEnvironments(editorEnvironments);
 
   const form = useForm<AddNotificationForm>({
     resolver: yupResolver(formSchema) as Resolver<AddNotificationForm>,
@@ -176,12 +179,15 @@ const AddNotificationModal = ({
 
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
     entityType: 'FEATURE_FLAG',
-    environmentId: watch('environment'),
+    environmentId: checkEnvironmentEmptyId(watch('environment')),
     options: {
       enabled: isSelectedEnv
     }
   });
-  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
+  const tagOptions = uniqBy(tagCollection?.tags || [], 'name')?.map(tag => ({
+    label: tag.name,
+    value: tag.name
+  }));
 
   const onSearchTypes = (value: string) => {
     if (!value) {
@@ -287,7 +293,6 @@ const AddNotificationModal = ({
                             item => item.id === getValues('environment')
                           )?.name || ''
                         }
-                        disabled={isLoadingEnvs}
                         variant="secondary"
                         className="w-full"
                       />
@@ -473,15 +478,38 @@ const AddNotificationModal = ({
                                           ? `form:no-tags-found`
                                           : `form:placeholder-tags`
                                       )}
-                                      options={tagOptions?.map(tag => ({
-                                        label: tag.name,
-                                        value: tag.id
-                                      }))}
+                                      allowCreateWhileLoading={false}
+                                      isValidNewOption={() => false}
+                                      isClearable
+                                      onKeyDown={e => {
+                                        const { value } =
+                                          e.target as HTMLInputElement;
+                                        const isExists = tagOptions.find(
+                                          item =>
+                                            item.label
+                                              .toLowerCase()
+                                              .includes(value.toLowerCase()) &&
+                                            !field.value?.includes(item.label)
+                                        );
+                                        if (
+                                          e.key === 'Enter' &&
+                                          (!isExists || !value)
+                                        ) {
+                                          e.preventDefault();
+                                        }
+                                      }}
+                                      options={tagOptions}
                                       onChange={value =>
                                         field.onChange(
                                           value.map(tag => tag.value)
                                         )
                                       }
+                                      noOptionsMessage={() => (
+                                        <UserMessage
+                                          message={t('no-options-found')}
+                                        />
+                                      )}
+                                      onCreateOption={() => {}}
                                     />
                                   </Form.Control>
                                   <Form.Message />

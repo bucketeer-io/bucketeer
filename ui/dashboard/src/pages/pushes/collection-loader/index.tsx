@@ -1,5 +1,5 @@
 import { SortingState } from '@tanstack/react-table';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, getEditorEnvironmentIds, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
 import { Push } from '@types';
 import { isNotEmpty } from 'utils/data-type';
@@ -29,6 +29,7 @@ const CollectionLoader = ({
 }) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editorEnvironmentIds = getEditorEnvironmentIds(consoleAccount!);
 
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
     organizationId: currentEnvironment.organizationId,
@@ -45,6 +46,7 @@ const CollectionLoader = ({
     isError
   } = useFetchPushes({
     ...filters,
+    environmentIds: editorEnvironmentIds,
     organizationId: currentEnvironment.organizationId
   });
 
