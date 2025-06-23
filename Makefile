@@ -452,8 +452,15 @@ docker-compose-build:
 	TAG=localenv make -C ./ build-docker-images
 	@echo "✅ Docker images built successfully"
 
+# To skip the build step when starting services, run:
+# make docker-compose-up SKIP_BUILD=true
 .PHONY: docker-compose-up
-docker-compose-up: docker-compose-setup docker-compose-build
+docker-compose-up: docker-compose-setup
+	@if [ "$(SKIP_BUILD)" = "true" ]; then \
+		echo "⏭️  Skipping build step as requested (SKIP_BUILD=true)."; \
+	else \
+		make docker-compose-build; \
+	fi
 	@echo "🚀 Starting Bucketeer services with Docker Compose..."
 	@if [ -f docker-compose/.env ]; then \
 		echo "✅ Using environment variables from docker-compose/.env"; \
