@@ -115,7 +115,7 @@ const Popover = forwardRef(
       <PopoverRoot modal={modal} onOpenChange={onOpenChange}>
         <PopoverTrigger
           className={cn(
-            'typo-para-small flex items-center justify-center gap-x-2 text-gray-700 hover:text-gray-600 hover:drop-shadow',
+            'typo-para-small flex items-center justify-center gap-x-2 text-gray-700 hover:text-gray-600 hover:drop-shadow disabled:cursor-not-allowed',
             {
               'flex-row-reverse': addonSlot === 'right',
               'w-full justify-between': expand === 'full'
@@ -154,6 +154,7 @@ const Popover = forwardRef(
               ? children
               : options?.map((item, index) => (
                   <Tooltip
+                    align="end"
                     key={index}
                     trigger={
                       <div>
@@ -171,7 +172,7 @@ const Popover = forwardRef(
                       </div>
                     }
                     content={item.tooltip}
-                    className="bg-gray-800"
+                    className="max-w-[300px]"
                   />
                 ))}
           </PopoverContent>

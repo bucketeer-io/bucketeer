@@ -28,8 +28,10 @@ import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import UploadFiles from 'components/upload-files';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface AddPushModalProps {
+  disabled?: boolean;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -48,7 +50,7 @@ export const formSchema = yup.object().shape({
   environmentId: yup.string().required()
 });
 
-const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
+const AddPushModal = ({ disabled, isOpen, onClose }: AddPushModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
@@ -104,9 +106,9 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
       const base64String: string = await new Promise(rs =>
         covertFileToUint8ToBase64(files[0], data => rs(data))
       );
-      const { environmentId } = values;
+      const { environmentId, ...rest } = values || {};
       const resp = await pushCreator({
-        ...values,
+        ...rest,
         environmentId: checkEnvironmentEmptyId(environmentId),
         fcmServiceAccount: base64String
       });
@@ -288,13 +290,18 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!isValid}
-                    loading={isSubmitting}
-                  >
-                    {t(`submit`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    hidden={!disabled}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={!isValid || disabled}
+                        loading={isSubmitting}
+                      >
+                        {t(`submit`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>

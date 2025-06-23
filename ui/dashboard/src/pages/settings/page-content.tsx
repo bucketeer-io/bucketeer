@@ -1,8 +1,9 @@
+import { useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { organizationUpdater } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryAccounts } from '@queries/accounts';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, useAuth, useAuthAccess } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -18,6 +19,7 @@ import {
 import Form from 'components/form';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import PageLayout from 'elements/page-layout';
 
 const formSchema = yup.object().shape({
@@ -38,6 +40,8 @@ const PageContent = ({ organization }: { organization: Organization }) => {
   const { notify } = useToast();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const { envEditable, isOrganizationAdmin } = useAuthAccess();
+
   const { t } = useTranslation(['common', 'form']);
   const { data: accounts, isLoading: isLoadingAccounts } = useQueryAccounts({
     params: {
@@ -46,6 +50,10 @@ const PageContent = ({ organization }: { organization: Organization }) => {
       organizationId: currentEnvironment.organizationId
     }
   });
+  const disabled = useMemo(
+    () => !envEditable || !isOrganizationAdmin,
+    [envEditable, isOrganizationAdmin]
+  );
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -101,6 +109,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                   <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
                     <Input
+                      disabled={disabled}
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                     />
@@ -134,6 +143,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                   <Form.Label optional>{t('form:description')}</Form.Label>
                   <Form.Control>
                     <TextArea
+                      disabled={disabled}
                       placeholder={t('form:placeholder-desc')}
                       rows={4}
                       {...field}
@@ -160,7 +170,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                         }
                         variant="secondary"
                         className="w-full"
-                        disabled={isLoadingAccounts}
+                        disabled={isLoadingAccounts || disabled}
                       />
                       <DropdownMenuContent
                         className="w-[400px]"
@@ -185,14 +195,21 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                 </Form.Item>
               )}
             />
-            <Button
-              loading={form.formState.isSubmitting}
-              disabled={!form.formState.isDirty}
-              type="submit"
-              className="w-fit mt-6"
-            >
-              {t(`save`)}
-            </Button>
+            <DisabledButtonTooltip
+              align="start"
+              type={!isOrganizationAdmin ? 'admin' : 'editor'}
+              hidden={!disabled}
+              trigger={
+                <Button
+                  loading={form.formState.isSubmitting}
+                  disabled={!form.formState.isDirty || disabled}
+                  type="submit"
+                  className="w-fit mt-6"
+                >
+                  {t(`save`)}
+                </Button>
+              }
+            />
           </Form>
         </FormProvider>
       </div>

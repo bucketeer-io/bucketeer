@@ -22,9 +22,11 @@ import { Tooltip } from 'components/tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 
 const TemplateSchedule = ({
+  disabled,
   variationOptions,
   isDisableCreateRollout
 }: {
+  disabled: boolean;
   variationOptions: DropdownOption[];
   isDisableCreateRollout: boolean;
 }) => {
@@ -32,6 +34,11 @@ const TemplateSchedule = ({
   const { control, watch, setValue } = useFormContext<RolloutSchemaType>();
 
   const scheduleList = watch('progressiveRollout.template.schedulesList');
+
+  const isDisabled = useMemo(
+    () => isDisableCreateRollout || disabled,
+    [isDisableCreateRollout, disabled]
+  );
 
   const intervalOptions = useMemo(
     () => [
@@ -134,7 +141,7 @@ const TemplateSchedule = ({
                 }
                 contentClassName="[&>div.wrapper-menu-items>div]:px-4"
                 options={variationOptions}
-                disabled={isDisableCreateRollout}
+                disabled={isDisabled}
                 onSelectOption={field.onChange}
               />
             </Form.Control>
@@ -165,7 +172,7 @@ const TemplateSchedule = ({
             <Form.Control>
               <ReactDatePicker
                 selected={field.value ?? null}
-                disabled={isDisableCreateRollout}
+                disabled={isDisabled}
                 onChange={date => {
                   if (date) {
                     field.onChange(date);
@@ -212,7 +219,7 @@ const TemplateSchedule = ({
                     value={field.value || ''}
                     type="number"
                     className="pr-8"
-                    disabled={isDisableCreateRollout}
+                    disabled={isDisabled}
                     onWheel={e => {
                       e.currentTarget.blur();
                     }}
@@ -259,7 +266,7 @@ const TemplateSchedule = ({
                         ?.label || ''
                     }
                     isExpand
-                    disabled={isDisableCreateRollout}
+                    disabled={isDisabled}
                   />
                   <DropdownMenuContent align="end" className="min-w-[243px]">
                     {intervalOptions.map((item, index) => (

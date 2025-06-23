@@ -15,7 +15,7 @@ import { invalidateExperiments } from '@queries/experiments';
 import { useQueryFeatures } from '@queries/features';
 import { useQueryGoals } from '@queries/goals';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast } from 'hooks';
@@ -39,11 +39,13 @@ import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
 import VariationLabel from 'elements/variation-label';
 import { StartType } from '../add-experiment-modal';
 
 interface EditExperimentModalProps {
+  disabled: boolean;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -72,12 +74,17 @@ export type DefineAudienceField = ControllerRenderProps<
   'audience'
 >;
 
-const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
+const EditExperimentModal = ({
+  disabled,
+  isOpen,
+  onClose
+}: EditExperimentModalProps) => {
   const { t } = useTranslation(['form', 'common']);
   const { notify } = useToast();
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
   const queryClient = useQueryClient();
 
   const { id: experimentId, errorToast } = useActionWithURL({
@@ -280,6 +287,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                     <Form.Label required>{t('common:name')}</Form.Label>
                     <Form.Control>
                       <Input
+                        disabled={disabled}
                         placeholder={`${t('placeholder-name')}`}
                         {...field}
                       />
@@ -296,6 +304,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                     <Form.Label optional>{t('description')}</Form.Label>
                     <Form.Control>
                       <TextArea
+                        disabled={disabled}
                         placeholder={t('placeholder-desc')}
                         rows={4}
                         {...field}
@@ -345,7 +354,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                       <Form.Label required>{t('start-at')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!isEnabledEdit}
+                          disabled={!isEnabledEdit || disabled}
                           dateFormat={'yyyy/MM/dd'}
                           showTimeSelect={false}
                           selected={
@@ -372,7 +381,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                       <Form.Label required>{t('experiments.time')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!isEnabledEdit}
+                          disabled={!isEnabledEdit || disabled}
                           dateFormat={'HH:mm'}
                           showTimeSelect
                           showTimeSelectOnly={true}
@@ -402,7 +411,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                       <Form.Label required>{t('end-at')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!isEnabledEdit}
+                          disabled={!isEnabledEdit || disabled}
                           dateFormat={'yyyy/MM/dd'}
                           showTimeSelect={false}
                           selected={
@@ -429,7 +438,7 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                       <Form.Label required>{t('experiments.time')}</Form.Label>
                       <Form.Control>
                         <ReactDatePicker
-                          disabled={!isEnabledEdit}
+                          disabled={!isEnabledEdit || disabled}
                           dateFormat={'HH:mm'}
                           showTimeSelect
                           showTimeSelectOnly={true}
@@ -615,13 +624,18 @@ const EditExperimentModal = ({ isOpen, onClose }: EditExperimentModalProps) => {
                     </Button>
                   }
                   secondaryButton={
-                    <Button
-                      type="submit"
-                      disabled={!isDirty}
-                      loading={isSubmitting}
-                    >
-                      {t(`common:submit`)}
-                    </Button>
+                    <DisabledButtonTooltip
+                      hidden={editable}
+                      trigger={
+                        <Button
+                          type="submit"
+                          disabled={!isDirty || !editable}
+                          loading={isSubmitting}
+                        >
+                          {t(`common:submit`)}
+                        </Button>
+                      }
+                    />
                   }
                 />
               </div>

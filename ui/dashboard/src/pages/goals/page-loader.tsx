@@ -4,7 +4,7 @@ import { goalDeleter } from '@api/goal';
 import { goalUpdater, GoalUpdaterPayload } from '@api/goal/goal-updater';
 import { invalidateGoals } from '@queries/goals';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
@@ -23,6 +23,7 @@ const PageLoader = () => {
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   const { isAdd, onOpenAddModal, onCloseActionModal } = useActionWithURL({
     closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_GOALS}`
@@ -111,7 +112,11 @@ const PageLoader = () => {
 
   return (
     <>
-      <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
+      <PageContent
+        editable={editable}
+        onAdd={onOpenAddModal}
+        onHandleActions={onHandleActions}
+      />
       {isAdd && <AddGoalModal isOpen={isAdd} onClose={onCloseActionModal} />}
       {isOpenConnectionModal && selectedGoal && (
         <ConnectionsModal
@@ -122,6 +127,7 @@ const PageLoader = () => {
       )}
       {isOpenDeleteModal && (
         <DeleteGoalModal
+          disabled={!editable}
           goal={selectedGoal!}
           isOpen={isOpenDeleteModal}
           loading={mutation.isPending}
@@ -132,6 +138,7 @@ const PageLoader = () => {
       {openConfirmModal && selectedGoal && (
         <ConfirmModal
           isOpen={openConfirmModal}
+          disabled={!editable}
           loading={mutationState.isPending}
           title={
             selectedGoal.archived

@@ -1,11 +1,10 @@
-import { ReactNode, useCallback } from 'react';
+import { ReactNode, useCallback, useMemo } from 'react';
 import { Trans } from 'react-i18next';
 import {
   IconArchiveOutlined,
-  IconMoreVertOutlined,
   IconSaveAsFilled
 } from 'react-icons-material-design';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useScreen } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -16,9 +15,10 @@ import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
 import { IconWatch } from '@icons';
 import Icon from 'components/icon';
-import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import ExpandableTag from 'elements/expandable-tag';
 import TableListContent from 'elements/table-list-content';
 import { FlagActionType } from '../types';
@@ -56,6 +56,30 @@ const GridViewCollection = ({
   const { fromXLScreen } = useScreen();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
+
+  const popoverOptions = useMemo(
+    () =>
+      compact([
+        searchOptions.status === 'ARCHIVED'
+          ? {
+              label: `${t('unarchive-flag')}`,
+              icon: IconArchiveOutlined,
+              value: 'UNARCHIVE'
+            }
+          : {
+              label: `${t('archive-flag')}`,
+              icon: IconArchiveOutlined,
+              value: 'ARCHIVE'
+            },
+        {
+          label: `${t('clone-flag')}`,
+          icon: IconSaveAsFilled,
+          value: 'CLONE'
+        }
+      ]),
+    [searchOptions]
+  );
 
   const handleGetMaintainerInfo = useCallback(
     (email: string) => {
@@ -143,36 +167,23 @@ const GridViewCollection = ({
                   }
                   date={Number(updatedAt) === 0 ? null : updatedAt}
                 />
-                <div className="flex-center">
-                  <Switch
-                    checked={enabled}
-                    onCheckedChange={() =>
-                      onActions(item, enabled ? 'INACTIVE' : 'ACTIVE')
-                    }
-                  />
-                </div>
-                <Popover
-                  options={compact([
-                    searchOptions.tab === 'ARCHIVED'
-                      ? {
-                          label: `${t('unarchive-flag')}`,
-                          icon: IconArchiveOutlined,
-                          value: 'UNARCHIVE'
+                <DisabledButtonTooltip
+                  hidden={editable}
+                  trigger={
+                    <div className="flex-center">
+                      <Switch
+                        disabled={!editable}
+                        checked={enabled}
+                        onCheckedChange={() =>
+                          onActions(item, enabled ? 'INACTIVE' : 'ACTIVE')
                         }
-                      : {
-                          label: `${t('archive-flag')}`,
-                          icon: IconArchiveOutlined,
-                          value: 'ARCHIVE'
-                        },
-                    {
-                      label: `${t('clone-flag')}`,
-                      icon: IconSaveAsFilled,
-                      value: 'CLONE'
-                    }
-                  ])}
-                  icon={IconMoreVertOutlined}
+                      />
+                    </div>
+                  }
+                />
+                <DisabledPopoverTooltip
                   onClick={value => onActions(item, value as FlagActionType)}
-                  align="end"
+                  options={popoverOptions}
                 />
               </div>
             </GridViewRow>

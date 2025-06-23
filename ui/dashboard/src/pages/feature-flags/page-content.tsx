@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { useLocation } from 'react-router-dom';
+import { hasEditable, useAuth } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
@@ -10,6 +11,7 @@ import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import TableListContainer from 'elements/table-list-container';
@@ -28,6 +30,9 @@ const PageContent = ({
 }) => {
   const { t } = useTranslation(['common']);
   const location = useLocation();
+  const { consoleAccount } = useAuth();
+
+  const editable = hasEditable(consoleAccount!);
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const [summary, setSummary] = useState<FeatureCountByStatus>();
@@ -129,10 +134,19 @@ const PageContent = ({
         action={
           <>
             <SortBy filters={filters} setFilters={setFilters} />
-            <Button className="flex-1 lg:flex-none" onClick={onAdd}>
-              <Icon icon={IconAddOutlined} size="sm" />
-              {t(`create-flag`)}
-            </Button>
+            <DisabledButtonTooltip
+              hidden={editable}
+              trigger={
+                <Button
+                  className="flex-1 lg:flex-none"
+                  onClick={onAdd}
+                  disabled={!editable}
+                >
+                  <Icon icon={IconAddOutlined} size="sm" />
+                  {t(`create-flag`)}
+                </Button>
+              }
+            />
           </>
         }
         filterCount={filterCount}

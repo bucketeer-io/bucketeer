@@ -1,17 +1,16 @@
-import {
-  IconEditOutlined,
-  IconMoreHorizOutlined
-} from 'react-icons-material-design';
+import { IconEditOutlined } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
+import { hasEditable, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { Push, Tag } from '@types';
 import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import { IconTrash } from '@icons';
-import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import ExpandableTag from 'elements/expandable-tag';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { PushActionsType } from '../types';
@@ -25,6 +24,8 @@ export const useColumns = ({
 }): ColumnDef<Push>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
+  const { consoleAccount } = useAuth();
+  const editable = hasEditable(consoleAccount!);
 
   return [
     {
@@ -59,8 +60,8 @@ export const useColumns = ({
     },
     {
       accessorKey: 'tags',
-      header: `${t('tags')}`,
       enableSorting: false,
+      header: `${t('tags')}`,
       size: 350,
       cell: ({ row }) => {
         const push = row.original;
@@ -131,10 +132,19 @@ export const useColumns = ({
         const push = row.original;
 
         return (
-          <Switch
-            checked={!push.disabled}
-            onCheckedChange={value =>
-              onActions(push, value ? 'ENABLE' : 'DISABLE')
+          <DisabledButtonTooltip
+            align="center"
+            hidden={editable}
+            trigger={
+              <div className="w-fit">
+                <Switch
+                  disabled={!editable}
+                  checked={!push.disabled}
+                  onCheckedChange={value =>
+                    onActions(push, value ? 'ENABLE' : 'DISABLE')
+                  }
+                />
+              </div>
             }
           />
         );
@@ -153,7 +163,7 @@ export const useColumns = ({
         const push = row.original;
 
         return (
-          <Popover
+          <DisabledPopoverTooltip
             options={compact([
               {
                 label: `${t('table:popover.edit-push')}`,
@@ -166,9 +176,7 @@ export const useColumns = ({
                 value: 'DELETE'
               }
             ])}
-            icon={IconMoreHorizOutlined}
             onClick={value => onActions(push, value as PushActionsType)}
-            align="end"
           />
         );
       }

@@ -23,9 +23,11 @@ import { Tooltip } from 'components/tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 
 const ManualSchedule = ({
+  disabled,
   variationOptions,
   isDisableCreateRollout
 }: {
+  disabled: boolean;
   variationOptions: DropdownOption[];
   isDisableCreateRollout: boolean;
 }) => {
@@ -49,6 +51,11 @@ const ManualSchedule = ({
   const isLastScheduleWeight100 = useMemo(
     () => Number(watchScheduleList.at(-1)?.weight) === 100,
     [watchScheduleList]
+  );
+
+  const isDisabled = useMemo(
+    () => isDisableCreateRollout || disabled,
+    [isDisableCreateRollout, disabled]
   );
 
   const handleAddIncrement = useCallback(() => {
@@ -103,7 +110,7 @@ const ManualSchedule = ({
                 }
                 contentClassName="[&>div.wrapper-menu-items>div]:px-4"
                 options={variationOptions}
-                disabled={isDisableCreateRollout}
+                disabled={isDisabled}
                 onSelectOption={field.onChange}
               />
             </Form.Control>
@@ -156,7 +163,7 @@ const ManualSchedule = ({
                       value={field.value || ''}
                       type="number"
                       className="pr-8"
-                      disabled={isDisableCreateRollout}
+                      disabled={isDisabled}
                       onWheel={e => {
                         e.currentTarget.blur();
                       }}
@@ -192,7 +199,7 @@ const ManualSchedule = ({
                 <Form.Control>
                   <ReactDatePicker
                     selected={field.value ?? null}
-                    disabled={isDisableCreateRollout}
+                    disabled={isDisabled}
                     onChange={date => {
                       if (date) {
                         field.onChange(date);
@@ -208,7 +215,7 @@ const ManualSchedule = ({
             type="button"
             variant={'grey'}
             className="flex-center self-start h-full mt-9 min-w-5"
-            disabled={schedulesList.length <= 1 || isDisableCreateRollout}
+            disabled={schedulesList.length <= 1 || isDisabled}
             onClick={() => handleRemoveSchedule(index)}
           >
             <Icon icon={IconTrash} size={'sm'} />
@@ -219,7 +226,7 @@ const ManualSchedule = ({
         type="button"
         variant={'text'}
         className="w-fit px-0 h-6"
-        disabled={isLastScheduleWeight100 || isDisableCreateRollout}
+        disabled={isLastScheduleWeight100 || isDisabled}
         onClick={handleAddIncrement}
       >
         <Icon icon={IconPlus} size={'md'} />

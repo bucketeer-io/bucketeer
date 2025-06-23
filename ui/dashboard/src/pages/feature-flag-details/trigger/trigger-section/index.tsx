@@ -19,6 +19,7 @@ import Button from 'components/button';
 import Icon from 'components/icon';
 import Card from 'elements/card';
 import ConfirmModal from 'elements/confirm-modal';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
 import CreateTriggerForm from '../create-trigger-form';
 import { TriggerAction } from '../types';
@@ -29,7 +30,13 @@ interface ActionState {
   trigger?: TriggerItemType;
 }
 
-const TriggerList = ({ feature }: { feature: Feature }) => {
+const TriggerList = ({
+  feature,
+  editable
+}: {
+  feature: Feature;
+  editable: boolean;
+}) => {
   const { t } = useTranslation(['table', 'message', 'common']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -53,6 +60,8 @@ const TriggerList = ({ feature }: { feature: Feature }) => {
       cursor: String(0)
     }
   });
+
+  const isDisabledCreate = useMemo(() => !editable, [editable]);
 
   const triggers = triggerCollection?.flagTriggers || [];
   const { EDIT, RESET, DISABLE, ENABLE, DELETE } = TriggerAction;
@@ -171,6 +180,7 @@ const TriggerList = ({ feature }: { feature: Feature }) => {
               actionState?.trigger?.flagTrigger?.id ===
                 trigger?.flagTrigger?.id ? (
                 <CreateTriggerForm
+                  disabled={isDisabledCreate}
                   ref={formRef}
                   selectedTrigger={actionState?.trigger}
                   featureId={feature.id}
@@ -180,6 +190,7 @@ const TriggerList = ({ feature }: { feature: Feature }) => {
                 />
               ) : (
                 <TriggerItem
+                  disabledAction={isDisabledCreate}
                   trigger={trigger}
                   triggerNewlyCreated={triggerNewlyCreated}
                   onActions={action => onActions(trigger, action)}
@@ -189,26 +200,34 @@ const TriggerList = ({ feature }: { feature: Feature }) => {
           ))}
           {isShowCreateForm && !isEdit ? (
             <CreateTriggerForm
+              disabled={isDisabledCreate}
               featureId={feature.id}
               environmentId={currentEnvironment.id}
               onCancel={onReset}
               setTriggerNewlyCreated={setTriggerNewlyCreated}
             />
           ) : (
-            <Button
-              variant="text"
-              className="h-8 w-fit p-0"
-              onClick={() => {
-                setActionState({
-                  action: undefined,
-                  trigger: undefined
-                });
-                setIsShowCreateForm(true);
-              }}
-            >
-              <Icon icon={IconPlus} size="md" />
-              {t('trigger.add-trigger')}
-            </Button>
+            <DisabledButtonTooltip
+              align="start"
+              hidden={!isDisabledCreate}
+              trigger={
+                <Button
+                  variant="text"
+                  className="h-8 w-fit p-0"
+                  disabled={isDisabledCreate}
+                  onClick={() => {
+                    setActionState({
+                      action: undefined,
+                      trigger: undefined
+                    });
+                    setIsShowCreateForm(true);
+                  }}
+                >
+                  <Icon icon={IconPlus} size="md" />
+                  {t('trigger.add-trigger')}
+                </Button>
+              }
+            />
           )}
         </>
       )}
@@ -216,8 +235,8 @@ const TriggerList = ({ feature }: { feature: Feature }) => {
       {!isEdit && !!actionState?.action && !!actionState?.trigger && (
         <ConfirmModal
           isOpen={!isEdit && !!actionState?.action && !!actionState?.trigger}
-          title={t(confirmModalTitle)}
-          description={t(confirmModalDesc)}
+          title={confirmModalTitle}
+          description={confirmModalDesc}
           loading={mutationState.isPending}
           onClose={onReset}
           onSubmit={() =>
