@@ -164,9 +164,10 @@ const EventRateOperationModal = ({
           resp = await autoOpsUpdate({
             environmentId,
             id: selectedData.id,
-            updateOpsEventRateClauses: [
+            opsEventRateClauseChanges: [
               {
                 id: selectedData.clauses[0].id,
+                changeType: 'UPDATE',
                 clause: {
                   ...values,
                   minCount: values.minCount.toString(),
