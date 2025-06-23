@@ -457,7 +457,7 @@ docker-compose-up: docker-compose-setup docker-compose-build
 	@echo "🚀 Starting Bucketeer services with Docker Compose..."
 	@if [ -f docker-compose/.env ]; then \
 		echo "✅ Using environment variables from docker-compose/.env"; \
-		set -a && source docker-compose/.env && set +a && \
+		set -a && . docker-compose/.env && set +a && \
 		docker-compose -f docker-compose/docker-compose.yml up -d; \
 	else \
 		echo "❌ Error: docker-compose/.env file not found!"; \
