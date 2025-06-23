@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import toast, { Toast } from 'react-hot-toast';
+import { AxiosError } from 'axios';
 import { useTranslation } from 'i18n';
 import ToastMessage from 'components/toast';
 
@@ -42,12 +43,16 @@ export const useToast = () => {
       }
     );
 
-  const errorNotify = (error?: unknown, message?: string) =>
-    notify({
+  const errorNotify = (error?: unknown, message?: string) => {
+    const { message: _message, status } = (error as AxiosError) || {};
+    return notify({
       messageType: 'error',
-      message: message || (error as Error)?.message || t('something-went-wrong')
+      message:
+        status === 409
+          ? t('same-data-exists')
+          : message || _message || t('something-went-wrong')
     });
-
+  };
   return {
     notify,
     errorNotify

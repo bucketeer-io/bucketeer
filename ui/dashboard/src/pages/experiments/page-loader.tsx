@@ -19,12 +19,12 @@ import PageContent from './page-content';
 import { ExperimentActionsType } from './types';
 
 const PageLoader = () => {
-  const { t } = useTranslation(['common', 'table']);
+  const { t } = useTranslation(['common', 'table', 'message']);
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const editable = hasEditable(consoleAccount!);
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
 
   const [selectedExperiment, setSelectedExperiment] = useState<Experiment>();
   const [isArchiving, setIsArchiving] = useState<boolean>();
@@ -63,14 +63,14 @@ const PageLoader = () => {
       onCloseToggleExperimentModal();
       invalidateExperiments(queryClient);
       mutation.reset();
-    },
-    onError: error => {
       notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: error?.message || 'Something went wrong.'
+        message: t('message:collection-action-success', {
+          collection: t('source-type.experiment'),
+          action: t('updated')
+        })
       });
-    }
+    },
+    onError: error => errorNotify(error)
   });
 
   const onHandleArchive = () => {

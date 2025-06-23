@@ -10,6 +10,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateNotifications } from '@queries/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { languageList } from 'constants/notification';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -60,11 +61,11 @@ export interface EditNotificationForm {
 }
 
 export const formSchema = yup.object().shape({
-  name: yup.string().required(),
+  name: yup.string().required(requiredMessage),
   url: yup.string(),
   environment: yup.string(),
-  language: yup.mixed<NotificationLanguage>().required(),
-  types: yup.array().min(1).required(),
+  language: yup.mixed<NotificationLanguage>().required(requiredMessage),
+  types: yup.array().min(1).required(requiredMessage),
   tags: yup.array()
 });
 
@@ -77,7 +78,7 @@ const EditNotificationModal = ({
 }: EditNotificationModalProps) => {
   const { notify } = useToast();
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
 
   const { consoleAccount } = useAuth();
 
@@ -155,13 +156,10 @@ const EditNotificationModal = ({
         : []
     }).then(() => {
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {` has been successfully updated!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('notification'),
+          action: t('updated')
+        })
       });
       invalidateNotifications(queryClient);
       onClose();

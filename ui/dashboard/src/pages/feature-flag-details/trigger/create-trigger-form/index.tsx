@@ -144,7 +144,10 @@ const CreateTriggerForm = forwardRef(
             if (resp) {
               invalidateTriggers(queryClient);
               notify({
-                message: t(`message:trigger-${isEdit ? 'updated' : 'created'}`)
+                message: t('message:collection-action-success', {
+                  collection: t('feature-flags.trigger'),
+                  action: t(isEdit ? 'common:updated' : 'common:created')
+                })
               });
               setTriggerNewlyCreated(isEdit ? undefined : resp);
               onCancel();

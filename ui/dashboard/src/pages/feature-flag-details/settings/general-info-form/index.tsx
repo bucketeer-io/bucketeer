@@ -9,6 +9,7 @@ import { invalidateFeatures } from '@queries/features';
 import { invalidateTags, useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Feature, TagChange } from '@types';
@@ -137,7 +138,7 @@ const GeneralInfoForm = ({
         const { flagId, comment, tags, ...rest } = values;
         if (currentEnvironment.requireComment && !comment)
           return setError('comment', {
-            message: t('message:required-field')
+            message: requiredMessage
           });
 
         const resp = await featureUpdater({
@@ -150,7 +151,10 @@ const GeneralInfoForm = ({
 
         if (resp) {
           notify({
-            message: t('message:flag-updated')
+            message: t('message:collection-action-success', {
+              collection: t('common:source-type.feature-flag'),
+              action: t('common:updated')
+            })
           });
           form.reset({
             ...values,

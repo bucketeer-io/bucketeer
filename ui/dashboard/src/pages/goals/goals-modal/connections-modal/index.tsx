@@ -27,14 +27,16 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const connectionType = useMemo(() => goal?.connectionType, [goal]);
-  const isExprimentType = connectionType === 'EXPERIMENT';
-  const connections = isExprimentType ? goal.experiments : goal.autoOpsRules;
+  const isExperimentType = connectionType === 'EXPERIMENT';
+  const connections = isExperimentType ? goal.experiments : goal.autoOpsRules;
 
   return (
     <DialogModal
       className="w-[500px]"
       title={
-        isExprimentType ? t(`experiments-connected`) : t(`operations-connected`)
+        isExperimentType
+          ? t(`experiments-connected`)
+          : t(`operations-connected`)
       }
       isOpen={isOpen}
       onClose={onClose}
@@ -43,7 +45,7 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
         <div className="flex-center w-full">
           <Icon
             icon={
-              isExprimentType
+              isExperimentType
                 ? IconExperimentsConnected
                 : IconOperationsConnected
             }
@@ -56,7 +58,9 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
             <Trans
               i18nKey="goal-connected-desc"
               values={{
-                type: isExprimentType ? 'Experiment' : 'Operation'
+                type: t(
+                  isExperimentType ? 'source-type.experiment' : 'operation'
+                )
               }}
             />
           </div>
@@ -70,7 +74,7 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
                 <Link
                   className="underline line-clamp-1 break-all"
                   to={
-                    isExprimentType
+                    isExperimentType
                       ? `/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${item.id}`
                       : `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${item.featureId}${PAGE_PATH_FEATURE_AUTOOPS}`
                   }

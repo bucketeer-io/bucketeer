@@ -34,8 +34,7 @@ const PageLoader = () => {
     isAdd,
     isClone,
     onCloseActionModal,
-    onOpenAddModal,
-    errorToast
+    onOpenAddModal
   } = useActionWithURL({
     idKey: 'flagId',
     closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`
@@ -80,13 +79,16 @@ const PageLoader = () => {
     onSuccess: () => {
       onCloseConfirmModal();
       notify({
-        message: t('message:flag-updated')
+        message: t('message:collection-action-success', {
+          collection: t('source-type.feature-flag'),
+          action: t('updated')
+        })
       });
       invalidateFeatures(queryClient);
       invalidateFeature(queryClient);
       mutation.reset();
     },
-    onError: error => errorToast(error)
+    onError: error => errorNotify(error)
   });
 
   const handleUpdateFeature = useCallback(
@@ -130,7 +132,10 @@ const PageLoader = () => {
           }
           if (resp) {
             notify({
-              message: t('message:flag-updated')
+              message: t('message:collection-action-success', {
+                collection: t('source-type.feature-flag'),
+                action: t('updated')
+              })
             });
             invalidateFeatures(queryClient);
             onCloseConfirmRequiredModal();
@@ -187,7 +192,6 @@ const PageLoader = () => {
           flagId={flagId}
           isOpen={isClone}
           onClose={onCloseActionModal}
-          errorToast={errorToast}
         />
       )}
       {openConfirmRequiredModal && selectedFlag && (

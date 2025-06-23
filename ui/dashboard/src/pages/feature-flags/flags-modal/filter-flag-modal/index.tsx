@@ -2,12 +2,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryAccounts } from '@queries/accounts';
 import { useQueryTags } from '@queries/tags';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import {
+  booleanOptions,
+  FilterOption,
+  FilterTypes,
+  flagFilterOptions,
+  flagStatusOptions
+} from 'constants/filters';
 import { useTranslation } from 'i18n';
 import { debounce } from 'lodash';
 import { isEmpty } from 'utils/data-type';
 import { cn } from 'utils/style';
 import { IconPlus, IconTrash } from '@icons';
-import { FlagFilters, StatusFilterType } from 'pages/feature-flags/types';
+import { FlagFilters } from 'pages/feature-flags/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
@@ -29,86 +36,6 @@ export type FilterProps = {
   onClearFilters: () => void;
 };
 
-export interface Option {
-  value: FilterTypes | undefined;
-  label: string;
-  filterValue?: string | boolean | number | string[];
-}
-
-export enum FilterTypes {
-  HAS_EXPERIMENT = 'hasExperiment',
-  HAS_PREREQUISITES = 'hasPrerequisites',
-  MAINTAINER = 'maintainer',
-  ENABLED = 'enabled',
-  TAGS = 'tags',
-  STATUS = 'status',
-  HAS_RULE = 'hasFeatureFlagAsRule'
-}
-
-export const filterOptions: Option[] = [
-  {
-    value: FilterTypes.HAS_EXPERIMENT,
-    label: 'Has Experiment',
-    filterValue: ''
-  },
-  {
-    value: FilterTypes.HAS_PREREQUISITES,
-    label: 'Has Prerequisites',
-    filterValue: ''
-  },
-  {
-    value: FilterTypes.MAINTAINER,
-    label: 'Maintainer',
-    filterValue: ''
-  },
-  {
-    value: FilterTypes.ENABLED,
-    label: 'Enabled',
-    filterValue: ''
-  },
-  {
-    value: FilterTypes.TAGS,
-    label: 'Tags',
-    filterValue: ''
-  },
-  {
-    value: FilterTypes.STATUS,
-    label: 'Status',
-    filterValue: ''
-  },
-  {
-    value: FilterTypes.HAS_RULE,
-    label: 'Has Feature Flag As Rule',
-    filterValue: ''
-  }
-];
-
-export const booleanOptions = [
-  {
-    value: 1,
-    label: 'Yes'
-  },
-  {
-    value: 0,
-    label: 'No'
-  }
-];
-
-export const flagStatusOptions = [
-  {
-    value: StatusFilterType.NEW,
-    label: 'New'
-  },
-  {
-    value: StatusFilterType.ACTIVE,
-    label: 'Active'
-  },
-  {
-    value: StatusFilterType.NO_ACTIVITY,
-    label: 'No Activity'
-  }
-];
-
 const FilterFlagModal = ({
   isOpen,
   filters,
@@ -122,8 +49,8 @@ const FilterFlagModal = ({
 
   const inputSearchRef = useRef<HTMLInputElement>(null);
 
-  const [selectedFilters, setSelectedFilters] = useState<Option[]>([
-    filterOptions[0]
+  const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([
+    flagFilterOptions[0]
   ]);
   const [searchValue, setSearchValue] = useState('');
   const [debounceValue, setDebounceValue] = useState('');
@@ -153,18 +80,18 @@ const FilterFlagModal = ({
 
   const remainingFilterOptions = useMemo(
     () =>
-      filterOptions.filter(
+      flagFilterOptions.filter(
         option => !selectedFilters.find(item => item.value === option.value)
       ),
-    [selectedFilters, filterOptions]
+    [selectedFilters, flagFilterOptions]
   );
 
   const isDisabledAddButton = useMemo(
     () =>
       !remainingFilterOptions.length ||
-      selectedFilters.length >= filterOptions.length,
+      selectedFilters.length >= flagFilterOptions.length,
 
-    [filterOptions, selectedFilters, remainingFilterOptions]
+    [flagFilterOptions, selectedFilters, remainingFilterOptions]
   );
 
   const isDisabledSubmitButton = useMemo(
@@ -180,7 +107,7 @@ const FilterFlagModal = ({
   );
 
   const getValueOptions = useCallback(
-    (filterOption: Option) => {
+    (filterOption: FilterOption) => {
       if (!filterOption.value) return [];
       const isMaintainerFilter = filterOption.value === FilterTypes.MAINTAINER;
       const isTagFilter = filterOption.value === FilterTypes.TAGS;
@@ -230,10 +157,13 @@ const FilterFlagModal = ({
         status,
         hasFeatureFlagAsRule
       } = filters || {};
-      const filterTypeArr: Option[] = [];
-      const addFilterOption = (index: number, value: Option['filterValue']) => {
+      const filterTypeArr: FilterOption[] = [];
+      const addFilterOption = (
+        index: number,
+        value: FilterOption['filterValue']
+      ) => {
         if (!isEmpty(value)) {
-          const option = filterOptions[index];
+          const option = flagFilterOptions[index];
 
           filterTypeArr.push({
             ...option,
@@ -241,7 +171,7 @@ const FilterFlagModal = ({
               FilterTypes.TAGS,
               FilterTypes.MAINTAINER,
               FilterTypes.STATUS
-            ].includes(option.value!)
+            ].includes(option.value as FilterTypes)
               ? value
               : value
                 ? 1
@@ -258,13 +188,13 @@ const FilterFlagModal = ({
       addFilterOption(6, hasFeatureFlagAsRule);
 
       setSelectedFilters(
-        filterTypeArr.length ? filterTypeArr : [filterOptions[0]]
+        filterTypeArr.length ? filterTypeArr : [flagFilterOptions[0]]
       );
     }
   }, [filters]);
 
   const handleGetLabelFilterValue = useCallback(
-    (filterOption?: Option) => {
+    (filterOption?: FilterOption) => {
       if (filterOption) {
         const { value: filterType, filterValue } = filterOption;
         const isMaintainerFilter = filterType === FilterTypes.MAINTAINER;
@@ -333,7 +263,7 @@ const FilterFlagModal = ({
         FilterTypes.MAINTAINER,
         FilterTypes.TAGS,
         FilterTypes.STATUS
-      ].includes(filter.value!);
+      ].includes(filter.value as FilterTypes);
       Object.assign(newFilters, {
         [filter.value!]: filterByText
           ? filter.filterValue
@@ -404,7 +334,7 @@ const FilterFlagModal = ({
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <p className="typo-para-medium text-gray-600">{`is`}</p>
+              <p className="typo-para-medium text-gray-600">{t(`is`)}</p>
               <DropdownMenu
                 onOpenChange={open => {
                   if (open) return handleFocusSearchInput();
@@ -456,7 +386,7 @@ const FilterFlagModal = ({
                           )
                         }
                         isMultiselect={isTagFilter}
-                        value={item.value}
+                        value={item.value as string}
                         label={item.label}
                         className="flex items-center max-w-full truncate"
                         onSelectOption={value =>

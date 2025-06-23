@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryAccounts } from '@queries/accounts';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import {
+  experimentFilterOptions,
+  experimentStatusOptions,
+  FilterOption,
+  FilterTypes
+} from 'constants/filters';
 import { useTranslation } from 'i18n';
 import { debounce } from 'lodash';
 import { isEmpty } from 'utils/data-type';
@@ -28,50 +34,6 @@ export type FilterProps = {
   filters?: Partial<ExperimentFilters>;
 };
 
-export interface Option {
-  value: FilterTypes | undefined;
-  label: string;
-  filterValue?: string | boolean | number | string[];
-}
-
-export enum FilterTypes {
-  STATUSES = 'statuses',
-  MAINTAINER = 'maintainer',
-  ARCHIVED = 'archived'
-}
-
-export const filterOptions: Option[] = [
-  {
-    value: FilterTypes.STATUSES,
-    label: 'Status',
-    filterValue: []
-  },
-  {
-    value: FilterTypes.MAINTAINER,
-    label: 'Maintainer',
-    filterValue: ''
-  }
-];
-
-export const statusOptions = [
-  {
-    value: 'WAITING',
-    label: 'Waiting'
-  },
-  {
-    value: 'RUNNING',
-    label: 'Running'
-  },
-  {
-    value: 'STOPPED',
-    label: 'Stopped'
-  },
-  {
-    value: 'FORCE_STOPPED',
-    label: 'Force Stopped'
-  }
-];
-
 const FilterExperimentModal = ({
   onSubmit,
   isOpen,
@@ -85,8 +47,8 @@ const FilterExperimentModal = ({
 
   const inputSearchRef = useRef<HTMLInputElement>(null);
 
-  const [selectedFilters, setSelectedFilters] = useState<Option[]>([
-    filterOptions[0]
+  const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([
+    experimentFilterOptions[0]
   ]);
   const [searchValue, setSearchValue] = useState('');
   const [debounceValue, setDebounceValue] = useState('');
@@ -106,18 +68,18 @@ const FilterExperimentModal = ({
 
   const remainingFilterOptions = useMemo(
     () =>
-      filterOptions.filter(
+      experimentFilterOptions.filter(
         option => !selectedFilters.find(item => item.value === option.value)
       ),
-    [selectedFilters, filterOptions]
+    [selectedFilters, experimentFilterOptions]
   );
 
   const isDisabledAddButton = useMemo(
     () =>
       !remainingFilterOptions.length ||
-      selectedFilters.length >= filterOptions.length,
+      selectedFilters.length >= experimentFilterOptions.length,
 
-    [filterOptions, selectedFilters, remainingFilterOptions]
+    [experimentFilterOptions, selectedFilters, remainingFilterOptions]
   );
 
   const isDisabledSubmitButton = useMemo(
@@ -133,7 +95,7 @@ const FilterExperimentModal = ({
   );
 
   const getValueOptions = useCallback(
-    (filterOption: Option) => {
+    (filterOption: FilterOption) => {
       if (!filterOption.value) return [];
       const isMaintainerFilter = filterOption.value === FilterTypes.MAINTAINER;
       if (isMaintainerFilter) {
@@ -148,7 +110,7 @@ const FilterExperimentModal = ({
             : item
         );
       }
-      return statusOptions;
+      return experimentStatusOptions;
     },
     [accounts, searchValue]
   );
@@ -162,11 +124,14 @@ const FilterExperimentModal = ({
   const handleSetFilterOnInit = useCallback(() => {
     if (filters) {
       const { maintainer, statuses } = filters || {};
-      const filterTypeArr: Option[] = [];
+      const filterTypeArr: FilterOption[] = [];
 
-      const addFilterOption = (index: number, value: Option['filterValue']) => {
+      const addFilterOption = (
+        index: number,
+        value: FilterOption['filterValue']
+      ) => {
         if (!isEmpty(value)) {
-          const option = filterOptions[index];
+          const option = experimentFilterOptions[index];
           filterTypeArr.push({
             ...option,
             filterValue: value
@@ -176,23 +141,26 @@ const FilterExperimentModal = ({
       addFilterOption(0, statuses);
       addFilterOption(1, maintainer);
       setSelectedFilters(
-        filterTypeArr.length ? filterTypeArr : [filterOptions[0]]
+        filterTypeArr.length ? filterTypeArr : [experimentFilterOptions[0]]
       );
     }
   }, [filters]);
 
-  const handleGetLabelFilterValue = useCallback((filterOption?: Option) => {
-    if (filterOption) {
-      const { value: filterType, filterValue } = filterOption;
-      const isMaintainerFilter = filterType === FilterTypes.MAINTAINER;
-      return isMaintainerFilter
-        ? filterValue || ''
-        : Array.isArray(filterValue)
-          ? filterValue?.join(', ')?.replace('_', ' ')?.toLowerCase()
-          : filterValue;
-    }
-    return '';
-  }, []);
+  const handleGetLabelFilterValue = useCallback(
+    (filterOption?: FilterOption) => {
+      if (filterOption) {
+        const { value: filterType, filterValue } = filterOption;
+        const isMaintainerFilter = filterType === FilterTypes.MAINTAINER;
+        return isMaintainerFilter
+          ? filterValue || ''
+          : Array.isArray(filterValue)
+            ? filterValue?.join(', ')?.replace('_', ' ')?.toLowerCase()
+            : filterValue;
+      }
+      return '';
+    },
+    []
+  );
 
   const handleChangeFilterValue = useCallback(
     (value: string | number, filterIndex: number) => {
@@ -229,14 +197,8 @@ const FilterExperimentModal = ({
     const newFilters = {};
 
     selectedFilters.forEach(filter => {
-      const filterByText = [
-        FilterTypes.MAINTAINER,
-        FilterTypes.STATUSES
-      ].includes(filter.value!);
       Object.assign(newFilters, {
-        [filter.value!]: filterByText
-          ? filter.filterValue
-          : !!filter.filterValue
+        [filter.value!]: filter.filterValue
       });
     });
     onSubmit({
@@ -305,7 +267,7 @@ const FilterExperimentModal = ({
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <p className="typo-para-medium text-gray-600">{`is`}</p>
+              <p className="typo-para-medium text-gray-600">{t(`is`)}</p>
               <DropdownMenu
                 onOpenChange={open => {
                   if (open) return handleFocusSearchInput();
@@ -351,7 +313,7 @@ const FilterExperimentModal = ({
                         }
                         isMultiselect={isStatusFilter}
                         key={index}
-                        value={item.value}
+                        value={item.value as string}
                         label={item.label}
                         className="flex items-center max-w-full truncate"
                         onSelectOption={value => {

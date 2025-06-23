@@ -17,8 +17,8 @@ import PageContent from './page-content';
 import { GoalActions } from './types';
 
 const PageLoader = () => {
-  const { t } = useTranslation(['common', 'table']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['common', 'table', 'message']);
+  const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
 
   const { consoleAccount } = useAuth();
@@ -66,14 +66,10 @@ const PageLoader = () => {
       onCloseDeleteModal();
       invalidateGoals(queryClient);
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{selectedGoal?.name}</b>
-            {` has been deleted successfully!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.goal'),
+          action: t('deleted')
+        })
       });
     }
   });
@@ -88,23 +84,18 @@ const PageLoader = () => {
     mutationFn: async (payload: GoalUpdaterPayload) => {
       return goalUpdater(payload);
     },
-    onSuccess: data => {
+    onSuccess: () => {
       onCloseConfirmModal();
       invalidateGoals(queryClient);
       notify({
-        message: (
-          <span>
-            <b>{data?.goal?.name}</b> {`has been successfully updated!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.goal'),
+          action: t('updated')
+        })
       });
       mutationState.reset();
     },
-    onError: error =>
-      notify({
-        messageType: 'error',
-        message: error?.message || 'Something went wrong.'
-      })
+    onError: error => errorNotify(error)
   });
 
   const onUpdateGoal = async (payload: GoalUpdaterPayload) =>

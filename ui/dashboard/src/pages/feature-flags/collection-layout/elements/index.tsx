@@ -175,17 +175,13 @@ export const VariationTypeTooltip = ({
 );
 
 const FlagIdElement = ({ id }: { id: string }) => {
+  const { t } = useTranslation(['message']);
   const { notify } = useToast();
 
   const handleCopyId = (id: string) => {
     copyToClipBoard(id);
     notify({
-      toastType: 'toast',
-      message: (
-        <span>
-          <b>ID</b> {` has been successfully copied!`}
-        </span>
-      )
+      message: t('copied')
     });
   };
   return (

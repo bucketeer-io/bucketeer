@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ID_NEW } from 'constants/routing';
 import { AnyObject } from 'yup';
-import { useToast } from './use-toast';
 
 interface Props {
   idKey?: string;
@@ -13,7 +12,6 @@ interface Props {
 const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
   const { [idKey]: id, ['*']: path, ...params } = useParams();
   const navigate = useNavigate();
-  const { notify } = useToast();
   const location = useLocation();
   const { state } = location;
 
@@ -44,16 +42,6 @@ const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
     [closeModalPath]
   );
 
-  const errorToast = (error: AnyObject) => {
-    const { message, status } = error || {};
-    notify({
-      messageType: 'error',
-      message:
-        message || status === 409
-          ? 'The same data already exists'
-          : 'Something went wrong.'
-    });
-  };
   return {
     id,
     isAdd,
@@ -63,7 +51,6 @@ const useActionWithURL = ({ idKey = '*', addPath, closeModalPath }: Props) => {
     onOpenAddModal,
     onOpenEditModal,
     onCloseActionModal,
-    errorToast,
     params
   };
 };

@@ -7,6 +7,7 @@ import { invalidateEnvironments } from '@queries/environments';
 import { useQueryProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
 import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -34,9 +35,9 @@ export interface EditEnvironmentForm {
 }
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
+  name: yup.string().required(requiredMessage),
   description: yup.string(),
-  requireComment: yup.boolean().required()
+  requireComment: yup.boolean().required(requiredMessage)
 });
 
 const EditEnvironmentModal = ({
@@ -46,8 +47,8 @@ const EditEnvironmentModal = ({
 }: EditEnvironmentModalProps) => {
   const queryClient = useQueryClient();
   const { projectId } = useParams();
-  const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['common', 'form', 'message']);
+  const { notify, errorNotify } = useToast();
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -90,23 +91,16 @@ const EditEnvironmentModal = ({
       });
       if (resp) {
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {`has been successfully updated!`}
-            </span>
-          )
+          message: t('message:collection-action-success', {
+            collection: t('source-type:environment'),
+            action: t('updated')
+          })
         });
         invalidateEnvironments(queryClient);
         onClose();
       }
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message
-      });
+      errorNotify(error);
     }
   };
 

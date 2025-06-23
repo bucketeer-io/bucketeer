@@ -7,7 +7,7 @@ import { invalidateFeatures } from '@queries/features';
 import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
-import { AxiosError } from 'axios';
+import { translation } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
@@ -71,17 +71,17 @@ const defaultVariations: FeatureVariation[] = [
 
 export const flagTypeOptions = [
   {
-    label: 'Boolean',
+    label: translation('form:boolean'),
     value: 'BOOLEAN',
     icon: IconFlagSwitch
   },
   {
-    label: 'String',
+    label: translation('form:string'),
     value: 'STRING',
     icon: IconFlagString
   },
   {
-    label: 'Number',
+    label: translation('form:number'),
     value: 'NUMBER',
     icon: IconFlagNumber
   },
@@ -106,8 +106,8 @@ const CreateFlagForm = ({
   const editable = hasEditable(consoleAccount!);
 
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['common', 'form', 'message']);
+  const { notify, errorNotify } = useToast();
 
   const [tagOptions, setTagOptions] = useState<DropdownOption[]>([]);
 
@@ -196,22 +196,17 @@ const CreateFlagForm = ({
       });
       if (resp) {
         notify({
-          message: 'Feature flag created successfully.'
+          message: t('message:collection-action-success', {
+            collection: t('source-type.feature-flag'),
+            action: t('updated')
+          })
         });
         invalidateFeatures(queryClient);
         onCompleted?.(resp.feature);
         onClose();
       }
     } catch (error) {
-      const _error = error as AxiosError;
-      const { status, message } = _error || {};
-      notify({
-        messageType: 'error',
-        message:
-          status === 409
-            ? 'The same data already exists'
-            : message || 'Something went wrong.'
-      });
+      errorNotify(error);
     }
   };
 
@@ -318,7 +313,6 @@ const CreateFlagForm = ({
                     fieldValues={field.value}
                     onChange={field.onChange}
                     disabled={isLoadingTags}
-                    // onChangeTagOptions={setTagOptions}
                   />
                 </Form.Control>
                 <Form.Message />

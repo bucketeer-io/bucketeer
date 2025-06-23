@@ -9,6 +9,7 @@ import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
 import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
+import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
 import PageContent from './page-content';
 import { UserSegmentsActionsType } from './types';
@@ -18,6 +19,7 @@ import EditUserSegmentModal from './user-segment-modal/edit-segment-modal';
 import FlagsConnectedModal from './user-segment-modal/flags-connected-modal';
 
 const PageLoader = () => {
+  const { t } = useTranslation(['common', 'message']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const editable = hasEditable(consoleAccount!);
@@ -70,17 +72,14 @@ const PageLoader = () => {
       onCloseDeleteModal();
       invalidateUserSegments(queryClient);
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{selectedSegment?.name}</b>
-            {` has been deleted successfully!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.segment'),
+          action: t('deleted')
+        })
       });
       mutation.reset();
-    }
+    },
+    onError: error => errorNotify(error)
   });
 
   const onDeleteSegment = () => {

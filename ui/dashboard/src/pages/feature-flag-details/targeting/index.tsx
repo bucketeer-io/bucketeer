@@ -61,7 +61,7 @@ const TargetingPage = ({
 }) => {
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
 
@@ -269,7 +269,10 @@ const TargetingPage = ({
           }
           if (resp) {
             notify({
-              message: t('message:flag-updated')
+              message: t('message:collection-action-success', {
+                collection: t('source-type.feature-flag'),
+                action: t('updated')
+              })
             });
             invalidateFeature(queryClient);
             invalidateFeatures(queryClient);

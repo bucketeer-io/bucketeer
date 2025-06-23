@@ -1,4 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import {
+  enabledOptions,
+  filterEnabledOptions,
+  FilterOption,
+  FilterTypes
+} from 'constants/filters';
 import { useTranslation } from 'i18n';
 import { isNotEmpty } from 'utils/data-type';
 import { APIKeysFilters } from 'pages/api-keys/types';
@@ -26,28 +32,6 @@ export interface Option {
   label: string;
 }
 
-export enum FilterTypes {
-  ENABLED = 'enabled'
-}
-
-export const filterOptions: Option[] = [
-  {
-    value: FilterTypes.ENABLED,
-    label: 'Enabled'
-  }
-];
-
-export const enabledOptions: Option[] = [
-  {
-    value: 'yes',
-    label: 'Yes'
-  },
-  {
-    value: 'no',
-    label: 'No'
-  }
-];
-
 const FilterAPIKeyModal = ({
   onSubmit,
   isOpen,
@@ -56,8 +40,8 @@ const FilterAPIKeyModal = ({
   filters
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
-  const [selectedFilterType, setSelectedFilterType] = useState<Option>();
-  const [valueOption, setValueOption] = useState<Option>();
+  const [selectedFilterType, setSelectedFilterType] = useState<FilterOption>();
+  const [valueOption, setValueOption] = useState<FilterOption>();
 
   const isDisabledSubmitBtn = useMemo(
     () => !selectedFilterType || !valueOption,
@@ -78,7 +62,7 @@ const FilterAPIKeyModal = ({
 
   useEffect(() => {
     if (isNotEmpty(filters?.disabled)) {
-      setSelectedFilterType(filterOptions[0]);
+      setSelectedFilterType(filterEnabledOptions[0]);
       setValueOption(enabledOptions[filters?.disabled ? 1 : 0]);
     } else {
       setSelectedFilterType(undefined);
@@ -107,17 +91,17 @@ const FilterAPIKeyModal = ({
               className="w-full"
             />
             <DropdownMenuContent className="w-[235px]" align="start">
-              {filterOptions.map((item, index) => (
+              {filterEnabledOptions.map((item, index) => (
                 <DropdownMenuItem
                   key={index}
-                  value={item.value}
+                  value={item.value as string}
                   label={item.label}
                   onSelectOption={() => setSelectedFilterType(item)}
                 />
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <p className="typo-para-medium text-gray-600">{`is`}</p>
+          <p className="typo-para-medium text-gray-600">{t(`is`)}</p>
           <DropdownMenu>
             <DropdownMenuTrigger
               placeholder={t(`select-value`)}
@@ -130,7 +114,7 @@ const FilterAPIKeyModal = ({
               {enabledOptions.map((item, index) => (
                 <DropdownMenuItem
                   key={index}
-                  value={item.value}
+                  value={item.value as string}
                   label={item.label}
                   onSelectOption={() => setValueOption(item)}
                 />

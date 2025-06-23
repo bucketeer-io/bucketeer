@@ -22,7 +22,7 @@ const ArchiveFlag = ({
   feature: Feature;
   disabled: boolean;
 }) => {
-  const { t } = useTranslation(['common', 'form', 'table']);
+  const { t } = useTranslation(['common', 'form', 'table', 'message']);
   const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
@@ -41,7 +41,10 @@ const ArchiveFlag = ({
     onSuccess: () => {
       onCloseArchiveFlagModal();
       notify({
-        message: 'Updated feature flag successfully.'
+        message: t('message:collection-action-success', {
+          collection: t('common:source-type.feature-flag'),
+          action: t('updated')
+        })
       });
       invalidateFeature(queryClient);
       invalidateFeatures(queryClient);

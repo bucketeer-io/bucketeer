@@ -118,7 +118,10 @@ const Variation = ({ feature, editable }: VariationProps) => {
           });
           if (resp) {
             notify({
-              message: t('message:flag-updated')
+              message: t('message:collection-action-success', {
+                collection: t('source-type.feature-flag'),
+                action: t('updated')
+              })
             });
 
             invalidateFeature(queryClient);
