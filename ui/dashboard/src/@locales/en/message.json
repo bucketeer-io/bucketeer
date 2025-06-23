@@ -6,7 +6,6 @@
     "must-be-unique": "This must be unique",
     "max-length-number": "The maximum length for this field is {{count}} numbers.",
     "max-length-string": "The maximum length for this field is {{count}} characters.",
-    "flag-id-rule": "flagId must start with a letter or number and only contain letters, numbers, or '-'",
     "id-rule": "{{name}} id must start with a letter or number and only contain letters, numbers, or '-'",
     "experiment-running-warning": "Variation changes might impact experiment accuracy",
     "experiment-running-warning-desc": "To maintain the integrity and accuracy of experiment results, adding, deleting, or modifying variation values is not allowed while the experiment is running.",
@@ -28,10 +27,6 @@
   "copy-trigger-url": "Copy and store this URL. Once you leave this page, the URL will be hidden.",
   "something-went-wrong": "Oops! Something went wrong.",
   "operation": {
-    "stopped": "Operation stopped successfully.",
-    "deleted": "Operation deleted successfully.",
-    "created": "Operation created successfully.",
-    "updated": "Operation updated successfully.",
     "the-weight": "The weight",
     "must-be-greater-value": "{{name}} must be greater than or equal to {{value}}",
     "must-be-less-value": "{{name}} must be less than or equal to {{value}}"
