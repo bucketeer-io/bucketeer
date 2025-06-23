@@ -415,7 +415,12 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 .PHONY: docker-compose-setup
 docker-compose-setup:
 	@echo "Setting up Docker Compose environment..."
-	@mkdir -p docker-compose/init-db
+	@if [ ! -d "docker-compose/init-db" ]; then \
+		echo "Creating docker-compose/init-db directory..."; \
+		mkdir -p docker-compose/init-db; \
+	else \
+		echo "docker-compose/init-db directory already exists"; \
+	fi
 	@if [ ! -d tools/dev/cert ]; then \
 		echo "Generating development certificates..."; \
 		make -C tools/dev service-cert-secret; \
@@ -424,10 +429,46 @@ docker-compose-setup:
 	fi
 	@echo "✅ Docker Compose setup complete"
 
+.PHONY: docker-compose-init-env
+docker-compose-init-env:
+	@if [ -f docker-compose/.env ]; then \
+		echo "⚠️  docker-compose/.env already exists. Skipping..."; \
+		echo "To recreate it, run: rm docker-compose/.env && make docker-compose-init-env"; \
+	else \
+		echo "📝 Creating docker-compose/.env from template..."; \
+		cp docker-compose/env.default docker-compose/.env; \
+		echo "✅ Created docker-compose/.env"; \
+		echo ""; \
+		echo "You can now customize the environment variables in docker-compose/.env"; \
+		echo "Then run 'make docker-compose-up' to start the services."; \
+	fi
+
+.PHONY: docker-compose-build
+docker-compose-build:
+	@echo "🔨 Building Bucketeer Docker images..."
+	@echo "Building Go applications with embedded web console..."
+	make -C ./ build-go-embed
+	@echo "Building Docker images with TAG=localenv..."
+	TAG=localenv make -C ./ build-docker-images
+	@echo "✅ Docker images built successfully"
+
 .PHONY: docker-compose-up
-docker-compose-up: docker-compose-setup
-	@echo "Starting Bucketeer services with Docker Compose..."
-	docker-compose -f docker-compose/docker-compose.yml up -d
+docker-compose-up: docker-compose-setup docker-compose-build
+	@echo "🚀 Starting Bucketeer services with Docker Compose..."
+	@if [ -f docker-compose/.env ]; then \
+		echo "✅ Using environment variables from docker-compose/.env"; \
+		set -a && source docker-compose/.env && set +a && \
+		docker-compose -f docker-compose/docker-compose.yml up -d; \
+	else \
+		echo "❌ Error: docker-compose/.env file not found!"; \
+		echo ""; \
+		echo "Please create docker-compose/.env file with your environment variables."; \
+		echo "You can start by copying the default template:"; \
+		echo "  cp docker-compose/env.default docker-compose/.env"; \
+		echo ""; \
+		echo "Then customize the variables as needed and run 'make docker-compose-up' again."; \
+		exit 1; \
+	fi
 
 .PHONY: docker-compose-down
 docker-compose-down:
@@ -447,6 +488,3 @@ docker-compose-clean:
 	@echo "Stopping and removing all containers, networks, and volumes..."
 	docker-compose -f docker-compose/docker-compose.yml down -v
 	docker system prune -f
-
-.PHONY: start-docker-compose
-start-docker-compose: docker-compose-up
