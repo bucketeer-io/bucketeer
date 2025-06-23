@@ -432,6 +432,15 @@ func (s *AccountService) UpdateAccountV2(
 	)
 	if err != nil {
 		// If not admin, check if user is updating their own account
+		editor, err = s.checkOrganizationRole(
+			ctx,
+			accountproto.AccountV2_Role_Organization_MEMBER,
+			req.OrganizationId,
+			localizer,
+		)
+		if err != nil {
+			return nil, err
+		}
 		if editor.Email != req.Email {
 			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -441,15 +450,6 @@ func (s *AccountService) UpdateAccountV2(
 				return nil, statusInternal.Err()
 			}
 			return nil, dt.Err()
-		}
-		editor, err = s.checkOrganizationRole(
-			ctx,
-			accountproto.AccountV2_Role_Organization_MEMBER,
-			req.OrganizationId,
-			localizer,
-		)
-		if err != nil {
-			return nil, err
 		}
 	} else {
 		isAdmin = true
@@ -543,9 +543,7 @@ func (s *AccountService) checkRestrictedCommands(
 	localizer locale.Localizer,
 ) error {
 	if req.ChangeOrganizationRoleCommand != nil ||
-		req.ChangeEnvironmentRolesCommand != nil ||
-		req.OrganizationRole != nil ||
-		req.EnvironmentRoles != nil {
+		req.OrganizationRole != nil {
 		dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.PermissionDenied),
