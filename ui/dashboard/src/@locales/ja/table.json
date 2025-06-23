@@ -123,7 +123,9 @@
     "confirm-unarchive-desc": "エクスペリメント「<bold>{{name}}</bold>」のアーカイブを解除します。よろしいですか？",
     "scheduled": "スケジュール",
     "running": "実行中",
-    "stopped": "終了",
+    "stopped": "停止済み",
+    "waiting": "待っている",
+    "force-stopped": "強制停止",
     "not-started": "未開始",
     "scheduled-experiment": "スケジュール",
     "running-experiment": "実行中",
@@ -285,5 +287,6 @@
   "stop-kill-switch": "キルスイッチを停止",
   "stop-rollout": "段階的ロールアウトを停止",
   "stop-operation-type-desc": "{{type}}が停止されます。続行してもよろしいですか？",
-  "current-event-rate-tooltip": "ゴール数 / 評価数 * 100"
+  "current-event-rate-tooltip": "ゴール数 / 評価数 * 100",
+  "retry": "リトライ"
 }

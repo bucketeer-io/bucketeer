@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  enabledOptions,
-  FilterOption,
-  FilterTypes,
-  memberFilterOptions,
-  roleOptions
-} from 'constants/filters';
+import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { isEmpty } from 'utils/data-type';
 import { cn } from 'utils/style';
@@ -39,6 +33,7 @@ const FilterMemberModal = ({
   filters
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
+  const { enabledOptions, memberFilterOptions, roleOptions } = useOptions();
   const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([
     memberFilterOptions[0]
   ]);

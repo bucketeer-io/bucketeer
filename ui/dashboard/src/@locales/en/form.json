@@ -113,6 +113,7 @@
   "select-evaluation": "Select Evaluation",
   "save-with-comment": "Save With Comment",
   "member-tags-tooltip": "Tags can be used to group members making it easier when listing them on the list page",
+  "member-role-tooltip": "Admin can do anything, but the Member role can't create or update Projects, Environments, API Keys, and Members.",
   "feature-flag-tags": "Feature Flag Tags",
   "no-tags-found": "No tags were found in the selected environment",
   "placeholder-search": "Search",

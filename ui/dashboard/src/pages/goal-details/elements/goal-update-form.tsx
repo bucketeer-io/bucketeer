@@ -2,7 +2,7 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { GoalUpdaterPayload } from '@api/goal/goal-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { requiredMessage } from 'constants/message';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Goal } from '@types';
@@ -18,11 +18,12 @@ export interface GoalDetailsForm {
   description?: string;
 }
 
-const formSchema = yup.object().shape({
-  name: yup.string().required(requiredMessage),
-  id: yup.string().required(requiredMessage),
-  description: yup.string()
-});
+const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+  yup.object().shape({
+    name: yup.string().required(requiredMessage),
+    id: yup.string().required(requiredMessage),
+    description: yup.string()
+  });
 
 const GoalUpdateForm = ({
   disabled,
@@ -39,7 +40,7 @@ const GoalUpdateForm = ({
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       name: goal.name,
       id: goal.id,

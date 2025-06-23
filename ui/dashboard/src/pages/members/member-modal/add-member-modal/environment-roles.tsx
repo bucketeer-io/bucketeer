@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { EnvironmentRoleItem } from '@api/account/account-creator';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { Environment, EnvironmentRoleType } from '@types';
 import { IconTrash } from '@icons';
@@ -17,29 +18,13 @@ import Icon from 'components/icon';
 import { AddMemberForm } from '.';
 import { EditMemberForm } from '../edit-member-modal';
 
-interface environmentRoleOption {
-  value: EnvironmentRoleType;
-  label: string;
-}
-
-const environmentRoleOptions: environmentRoleOption[] = [
-  {
-    value: 'Environment_EDITOR',
-    label: 'Editor'
-  },
-  {
-    value: 'Environment_VIEWER',
-    label: 'Viewer'
-  }
-];
-
 const EnvironmentRoles = ({
   environments
 }: {
   environments: Environment[];
 }) => {
   const { t } = useTranslation(['common', 'form']);
-
+  const { environmentRoleOptions } = useOptions();
   const methods = useFormContext<AddMemberForm | EditMemberForm>();
   const { control, watch, setValue } = methods;
 

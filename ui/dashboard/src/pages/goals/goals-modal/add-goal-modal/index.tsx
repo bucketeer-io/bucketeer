@@ -4,8 +4,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateGoals } from '@queries/goals';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { requiredMessage, translation } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { ConnectionType } from '@types';
@@ -32,20 +32,21 @@ export interface AddGoalForm {
   description?: string;
 }
 
-const formSchema = yup.object().shape({
-  id: yup
-    .string()
-    .required(requiredMessage)
-    .matches(
-      /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
-      translation('message:validation.id-rule', {
-        name: translation('common:source-type.feature-flag')
-      })
-    ),
-  name: yup.string().required(requiredMessage),
-  description: yup.string(),
-  connectionType: yup.string()
-});
+const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
+  yup.object().shape({
+    id: yup
+      .string()
+      .required(requiredMessage)
+      .matches(
+        /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
+        translation('message:validation.id-rule', {
+          name: translation('common:source-type.feature-flag')
+        })
+      ),
+    name: yup.string().required(requiredMessage),
+    description: yup.string(),
+    connectionType: yup.string()
+  });
 
 const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
   const { consoleAccount } = useAuth();
@@ -56,7 +57,7 @@ const AddGoalModal = ({ isOpen, onClose }: AddGoalModalProps) => {
   const { notify, errorNotify } = useToast();
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       id: '',
       name: '',

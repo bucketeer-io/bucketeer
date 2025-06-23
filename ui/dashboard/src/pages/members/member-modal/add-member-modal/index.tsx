@@ -13,8 +13,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { translation } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
+import useOptions from 'hooks/use-options';
 import { Language, useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
@@ -46,26 +47,10 @@ interface AddMemberModalProps {
   onClose: () => void;
 }
 
-interface OrganizationRoleOption {
-  value: OrganizationRole;
-  label: string;
-}
-
 export const defaultEnvironmentRole: EnvironmentRoleItem = {
   environmentId: '',
   role: 'Environment_UNASSIGNED'
 };
-
-export const organizationRoles: OrganizationRoleOption[] = [
-  {
-    value: 'Organization_MEMBER',
-    label: translation('member')
-  },
-  {
-    value: 'Organization_ADMIN',
-    label: translation('admin')
-  }
-];
 
 interface LanguageItem {
   readonly label: string;
@@ -84,26 +69,28 @@ export interface AddMemberForm {
   tags: string[];
 }
 
-export const formSchema = yup.object().shape({
-  email: yup.string().email().required(),
-  role: yup.mixed<OrganizationRole>().required(),
-  environmentRoles: yup
-    .array()
-    .required()
-    .of(
-      yup.object().shape({
-        environmentId: yup.string().required(),
-        role: yup.mixed<EnvironmentRoleType>().required()
-      })
-    ),
-  tags: yup.array().of(yup.string())
-});
+export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+  yup.object().shape({
+    email: yup.string().email().required(requiredMessage),
+    role: yup.mixed<OrganizationRole>().required(requiredMessage),
+    environmentRoles: yup
+      .array()
+      .required(requiredMessage)
+      .of(
+        yup.object().shape({
+          environmentId: yup.string().required(requiredMessage),
+          role: yup.mixed<EnvironmentRoleType>().required(requiredMessage)
+        })
+      ),
+    tags: yup.array().of(yup.string())
+  });
 
 const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify, errorNotify } = useToast();
+  const { organizationRoles } = useOptions();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const [tagOptions, setTagOptions] = useState<DropdownOption[]>([]);
@@ -114,7 +101,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   });
 
   const form = useForm<AddMemberForm>({
-    resolver: yupResolver(formSchema) as Resolver<AddMemberForm>,
+    resolver: yupResolver(useFormSchema(formSchema)) as Resolver<AddMemberForm>,
     defaultValues: {
       email: '',
       role: undefined,
@@ -214,7 +201,20 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
               name="role"
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label required>{t('role')}</Form.Label>
+                  <Form.Label className="relative w-fit">
+                    {t('role')}
+                    <Tooltip
+                      align="start"
+                      alignOffset={-30}
+                      trigger={
+                        <div className="flex-center absolute top-0 -right-6">
+                          <Icon icon={IconInfo} size={'sm'} color="gray-600" />
+                        </div>
+                      }
+                      content={t('form:member-role-tooltip')}
+                      className="!z-[100] max-w-[400px]"
+                    />
+                  </Form.Label>
                   <Form.Control className="w-full">
                     <DropdownMenu>
                       <DropdownMenuTrigger

@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       setIsLogin(true);
 
       if (response.account.language !== getLanguage()) {
-        setLanguage(response.account.language as Language);
+        await setLanguage(response.account.language as Language);
       }
       if (!environmentId) {
         setCurrentEnvIdStorage(environmentRoles[0].environment.id);

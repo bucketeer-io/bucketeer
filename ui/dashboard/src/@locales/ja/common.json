@@ -275,5 +275,7 @@
   "add": "追加",
   "profile": "プロフィール",
   "started": "開始済み",
-  "has-flag-as-rule": "ルールにフィーチャーフラグあり"
+  "has-flag-as-rule": "ルールにフィーチャーフラグあり",
+  "editor": "編集者",
+  "viewer": "閲覧者"
 }

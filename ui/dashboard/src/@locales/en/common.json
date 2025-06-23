@@ -276,5 +276,7 @@
   "add": "Add",
   "profile": "Profile",
   "started": "started",
-  "has-flag-as-rule": "Has Feature Flag as Rule"
+  "has-flag-as-rule": "Has Feature Flag as Rule",
+  "editor": "Editor",
+  "viewer": "Viewer"
 }

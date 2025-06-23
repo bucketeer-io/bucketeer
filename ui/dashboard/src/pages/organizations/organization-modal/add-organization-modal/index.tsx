@@ -3,8 +3,8 @@ import { organizationCreator } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateOrganizations } from '@queries/organizations';
 import { useQueryClient } from '@tanstack/react-query';
-import { requiredMessage, translation } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { onGenerateSlug } from 'utils/converts';
@@ -29,21 +29,22 @@ export interface AddOrganizationForm {
   description?: string;
 }
 
-const formSchema = yup.object().shape({
-  name: yup.string().required(requiredMessage),
-  urlCode: yup
-    .string()
-    .required(requiredMessage)
-    .matches(
-      /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
-      translation('message:validation.id-rule', {
-        name: translation('common:url-code')
-      })
-    ),
-  description: yup.string(),
-  ownerEmail: yup.string().email().required(requiredMessage),
-  isTrial: yup.bool()
-});
+const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
+  yup.object().shape({
+    name: yup.string().required(requiredMessage),
+    urlCode: yup
+      .string()
+      .required(requiredMessage)
+      .matches(
+        /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
+        translation('message:validation.id-rule', {
+          name: translation('common:url-code')
+        })
+      ),
+    description: yup.string(),
+    ownerEmail: yup.string().email().required(requiredMessage),
+    isTrial: yup.bool()
+  });
 
 const AddOrganizationModal = ({
   isOpen,
@@ -54,7 +55,7 @@ const AddOrganizationModal = ({
   const { notify, errorNotify } = useToast();
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       name: '',
       urlCode: '',

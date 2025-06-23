@@ -113,6 +113,7 @@
   "select-evaluation": "評価を選択",
   "save-with-comment": "コメントを付けてで保存",
   "member-tags-tooltip": "タグを使用してメンバーをグループ化し、リストページでの表示を簡単にできます",
+  "member-role-tooltip": "管理者はすべての操作を行えますが、メンバーはプロジェクト、環境、APIキー、およびメンバーの作成または更新ができません。",
   "feature-flag-tags": "フィーチャーフラグタグ",
   "no-tags-found": "選択した環境にタグが見つかりませんでした",
   "placeholder-search": "検索",

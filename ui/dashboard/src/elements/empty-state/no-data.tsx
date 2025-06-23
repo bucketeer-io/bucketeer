@@ -1,4 +1,4 @@
-import { translation } from 'constants/message';
+import { useTranslation } from 'i18n';
 import EmptyState, { type EmptyStateProps } from 'elements/empty-state';
 
 interface NoDataStateProps {
@@ -10,22 +10,28 @@ interface NoDataStateProps {
 
 export const NoDataState = ({
   size = 'md',
-  title = translation('message:no-data'),
-  description = translation('data-appear'),
+  title = '',
+  description = '',
   onAdd
 }: NoDataStateProps) => {
+  const { t } = useTranslation(['common', 'message']);
+  const defaultTitle = t('message:no-data');
+  const defaultDescription = t('data-appear');
+
   return (
     <EmptyState.Root variant="no-data" size={size}>
       <EmptyState.Illustration />
       <EmptyState.Body>
-        <EmptyState.Title>{title}</EmptyState.Title>
+        <EmptyState.Title>{title || defaultTitle}</EmptyState.Title>
         {description && (
-          <EmptyState.Description>{description}</EmptyState.Description>
+          <EmptyState.Description>
+            {description || defaultDescription}
+          </EmptyState.Description>
         )}
         {onAdd && (
           <EmptyState.Actions>
             <EmptyState.ActionButton onClick={onAdd}>
-              {translation(`common:add`)}
+              {t(`add`)}
             </EmptyState.ActionButton>
           </EmptyState.Actions>
         )}

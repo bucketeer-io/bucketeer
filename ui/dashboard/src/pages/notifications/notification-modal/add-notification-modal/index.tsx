@@ -10,9 +10,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateNotifications } from '@queries/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from 'auth';
-import { requiredMessage, translation } from 'constants/message';
 import { languageList } from 'constants/notification';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
@@ -58,21 +58,22 @@ export interface AddNotificationForm {
   types: SourceType[];
 }
 
-export const formSchema = yup.object().shape({
-  name: yup.string().required(requiredMessage),
-  url: yup
-    .string()
-    .required(requiredMessage)
-    .url(
-      translation('message:validation.id-rule', {
-        name: translation('common:url')
-      })
-    ),
-  environment: yup.string().required(requiredMessage),
-  tags: yup.array(),
-  language: yup.mixed<NotificationLanguage>().required(requiredMessage),
-  types: yup.array().min(1, 'Required').required(requiredMessage)
-});
+export const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
+  yup.object().shape({
+    name: yup.string().required(requiredMessage),
+    url: yup
+      .string()
+      .required(requiredMessage)
+      .url(
+        translation('message:validation.id-rule', {
+          name: translation('common:url')
+        })
+      ),
+    environment: yup.string().required(requiredMessage),
+    tags: yup.array(),
+    language: yup.mixed<NotificationLanguage>().required(requiredMessage),
+    types: yup.array().min(1, 'Required').required(requiredMessage)
+  });
 
 const AddNotificationModal = ({
   disabled,
@@ -99,7 +100,9 @@ const AddNotificationModal = ({
   const { formattedEnvironments } = onFormatEnvironments(editorEnvironments);
 
   const form = useForm<AddNotificationForm>({
-    resolver: yupResolver(formSchema) as Resolver<AddNotificationForm>,
+    resolver: yupResolver(
+      useFormSchema(formSchema)
+    ) as Resolver<AddNotificationForm>,
     defaultValues: {
       name: '',
       url: '',

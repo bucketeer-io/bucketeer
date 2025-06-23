@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  FilterOption,
-  filterStatusOptions,
-  FilterTypes,
-  segmentStatusOptions
-} from 'constants/filters';
+import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { isNotEmpty } from 'utils/data-type';
 import { UserSegmentsFilters } from 'pages/user-segments/types';
@@ -35,6 +30,7 @@ const FilterUserSegmentModal = ({
   filters
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
+  const { filterStatusOptions, segmentStatusOptions } = useOptions();
   const [selectedFilterType, setSelectedFilterType] = useState<FilterOption>();
   const [valueOption, setValueOption] = useState<FilterOption>();
 

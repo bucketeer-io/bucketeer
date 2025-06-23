@@ -9,6 +9,7 @@ import {
 } from '@api/auto-ops';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useToast } from 'hooks';
+import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { isEqual } from 'lodash';
 import { AutoOpsRule, DatetimeClause, Rollout } from '@types';
@@ -78,7 +79,7 @@ const ScheduleOperationModal = ({
   };
 
   const form = useForm({
-    resolver: yupResolver(dateTimeClauseListSchema),
+    resolver: yupResolver(useFormSchema(dateTimeClauseListSchema)),
     defaultValues: {
       datetimeClausesList: handleCreateDefaultValues()
     },

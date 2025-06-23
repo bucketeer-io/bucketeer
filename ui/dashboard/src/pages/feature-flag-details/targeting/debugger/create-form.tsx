@@ -5,6 +5,7 @@ import { debuggerEvaluate } from '@api/debugger';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
+import useFormSchema from 'hooks/use-form-schema';
 import { Evaluation, Feature } from '@types';
 import AddDebuggerForm from 'pages/debugger/add-debugger-form';
 import {
@@ -57,7 +58,7 @@ const CreateDebuggerForm = ({
   );
 
   const form = useForm({
-    resolver: yupResolver(addDebuggerFormSchema),
+    resolver: yupResolver(useFormSchema(addDebuggerFormSchema)),
     defaultValues: {
       ...(debuggerForm ? debuggerForm : defaultValues)
     },

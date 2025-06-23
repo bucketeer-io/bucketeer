@@ -11,8 +11,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
@@ -37,7 +38,7 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { Tooltip } from 'components/tooltip';
 import TagsSelectMenu from 'elements/tags-select-menu';
-import { languageList, organizationRoles } from '../add-member-modal';
+import { languageList } from '../add-member-modal';
 import EnvironmentRoles from '../add-member-modal/environment-roles';
 
 interface EditMemberModalProps {
@@ -55,38 +56,40 @@ export interface EditMemberForm {
   tags: string[];
 }
 
-export const formSchema = yup.object().shape({
-  firstName: yup.string().required(requiredMessage),
-  lastName: yup.string().required(requiredMessage),
-  language: yup.string().required(requiredMessage),
-  role: yup.string().required(requiredMessage),
-  environmentRoles: yup
-    .array()
-    .required()
-    .of(
-      yup.object().shape({
-        environmentId: yup.string().required(requiredMessage),
-        role: yup
-          .mixed<EnvironmentRoleType>()
-          .required()
-          .test('isUnassigned', (value, context) => {
-            if (value === 'Environment_UNASSIGNED')
-              return context.createError({
-                message: requiredMessage,
-                path: context.path
-              });
-            return true;
-          })
-      })
-    ),
-  tags: yup.array().of(yup.string())
-});
+export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+  yup.object().shape({
+    firstName: yup.string().required(requiredMessage),
+    lastName: yup.string().required(requiredMessage),
+    language: yup.string().required(requiredMessage),
+    role: yup.string().required(requiredMessage),
+    environmentRoles: yup
+      .array()
+      .required()
+      .of(
+        yup.object().shape({
+          environmentId: yup.string().required(requiredMessage),
+          role: yup
+            .mixed<EnvironmentRoleType>()
+            .required()
+            .test('isUnassigned', (value, context) => {
+              if (value === 'Environment_UNASSIGNED')
+                return context.createError({
+                  message: requiredMessage,
+                  path: context.path
+                });
+              return true;
+            })
+        })
+      ),
+    tags: yup.array().of(yup.string())
+  });
 
 const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify } = useToast();
+  const { organizationRoles } = useOptions();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const [tagOptions, setTagOptions] = useState<DropdownOption[]>([]);
 
@@ -104,7 +107,9 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
 
   const tags = tagCollection?.tags || [];
   const form = useForm<EditMemberForm>({
-    resolver: yupResolver(formSchema) as Resolver<EditMemberForm>,
+    resolver: yupResolver(
+      useFormSchema(formSchema)
+    ) as Resolver<EditMemberForm>,
     values: {
       firstName: member.firstName,
       lastName: member.lastName,

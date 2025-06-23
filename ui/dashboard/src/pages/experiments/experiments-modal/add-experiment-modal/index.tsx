@@ -13,9 +13,10 @@ import { useQueryGoals } from '@queries/goals';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
+import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { IconInfo, IconPlus } from '@icons';
-import { experimentFormSchema } from 'pages/experiments/form-schema';
+import { createExperimentFormSchema } from 'pages/experiments/form-schema';
 import CreateFlagForm from 'pages/feature-flags/flags-modal/add-flag-modal/create-flag-form';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -94,7 +95,7 @@ const AddExperimentModal = ({
 }: AddExperimentModalProps) => {
   const { t } = useTranslation(['form', 'common', 'message']);
   const { notify, errorNotify } = useToast();
-
+  const formSchema = useFormSchema(createExperimentFormSchema);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
@@ -149,7 +150,7 @@ const AddExperimentModal = ({
   }, [goalCollection]);
 
   const form = useForm({
-    resolver: yupResolver(experimentFormSchema),
+    resolver: yupResolver(formSchema),
     defaultValues: {
       baseVariationId: '',
       name: '',

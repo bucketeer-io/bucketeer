@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  enabledOptions,
-  filterEnabledOptions,
-  FilterOption,
-  FilterTypes
-} from 'constants/filters';
+import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { isNotEmpty } from 'utils/data-type';
 import { APIKeysFilters } from 'pages/api-keys/types';
@@ -40,6 +35,7 @@ const FilterAPIKeyModal = ({
   filters
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
+  const { filterEnabledOptions, enabledOptions } = useOptions();
   const [selectedFilterType, setSelectedFilterType] = useState<FilterOption>();
   const [valueOption, setValueOption] = useState<FilterOption>();
 

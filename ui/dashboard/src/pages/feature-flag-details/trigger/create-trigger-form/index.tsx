@@ -7,6 +7,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateTriggers } from '@queries/triggers';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from 'hooks';
+import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { TriggerActionType, TriggerItemType, TriggerType } from '@types';
 import { IconWebhook } from '@icons';
@@ -93,7 +94,7 @@ const CreateTriggerForm = forwardRef(
     );
 
     const form = useForm<CreateTriggerSchema>({
-      resolver: yupResolver(formSchema),
+      resolver: yupResolver(useFormSchema(formSchema)),
       defaultValues: {
         type: selectedTrigger?.flagTrigger?.type || TriggerType.WEBHOOK,
         action: selectedTrigger?.flagTrigger?.action || undefined,

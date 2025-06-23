@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { switchOrganization } from '@api/auth';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuth } from 'auth';
-import { requiredMessage } from 'constants/message';
 import { PAGE_PATH_ROOT } from 'constants/routing';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { jwtDecode } from 'jwt-decode';
 import { setOrgIdStorage } from 'storage/organization';
@@ -21,9 +21,10 @@ import {
 import Form from 'components/form';
 import AuthWrapper from './elements/auth-wrapper';
 
-const formSchema = yup.object().shape({
-  organization: yup.string().required(requiredMessage)
-});
+const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+  yup.object().shape({
+    organization: yup.string().required(requiredMessage)
+  });
 
 const SelectOrganization = () => {
   const { t } = useTranslation(['auth', 'common']);
@@ -31,7 +32,7 @@ const SelectOrganization = () => {
   const { myOrganizations, onMeFetcher } = useAuth();
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       organization: ''
     }

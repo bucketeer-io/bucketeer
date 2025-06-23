@@ -2,13 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryAccounts } from '@queries/accounts';
 import { useQueryTags } from '@queries/tags';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import {
-  booleanOptions,
-  FilterOption,
-  FilterTypes,
-  flagFilterOptions,
-  flagStatusOptions
-} from 'constants/filters';
+import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { debounce } from 'lodash';
 import { isEmpty } from 'utils/data-type';
@@ -46,7 +40,7 @@ const FilterFlagModal = ({
   const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-
+  const { booleanOptions, flagFilterOptions, flagStatusOptions } = useOptions();
   const inputSearchRef = useRef<HTMLInputElement>(null);
 
   const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([

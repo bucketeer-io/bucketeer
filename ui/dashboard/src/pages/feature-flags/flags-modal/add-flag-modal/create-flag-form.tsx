@@ -7,21 +7,17 @@ import { invalidateFeatures } from '@queries/features';
 import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
-import { translation } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema from 'hooks/use-form-schema';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { Feature, FeatureVariation, FeatureVariationType } from '@types';
 import { onGenerateSlug } from 'utils/converts';
 import { cn } from 'utils/style';
-import {
-  IconFlagJSON,
-  IconFlagNumber,
-  IconFlagString,
-  IconFlagSwitch,
-  IconInfo
-} from '@icons';
+import { IconInfo } from '@icons';
+import { createFlagFormSchema } from 'pages/create-flag/form-schema';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -40,7 +36,6 @@ import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import TagsSelectMenu from 'elements/tags-select-menu';
-import { formSchema } from './formSchema';
 import Variations from './variations';
 
 export interface AddFlagForm {
@@ -69,29 +64,6 @@ const defaultVariations: FeatureVariation[] = [
   }
 ];
 
-export const flagTypeOptions = [
-  {
-    label: translation('form:boolean'),
-    value: 'BOOLEAN',
-    icon: IconFlagSwitch
-  },
-  {
-    label: translation('form:string'),
-    value: 'STRING',
-    icon: IconFlagString
-  },
-  {
-    label: translation('form:number'),
-    value: 'NUMBER',
-    icon: IconFlagNumber
-  },
-  {
-    label: 'JSON',
-    value: 'JSON',
-    icon: IconFlagJSON
-  }
-];
-
 const CreateFlagForm = ({
   className,
   onClose,
@@ -104,7 +76,8 @@ const CreateFlagForm = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const editable = hasEditable(consoleAccount!);
-
+  const formSchema = useFormSchema(createFlagFormSchema);
+  const { flagTypeOptions } = useOptions();
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();

@@ -9,13 +9,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_FEATURES } from 'constants/routing';
 import { useToast } from 'hooks';
+import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
 import { FeatureVariation } from '@types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Form from 'components/form';
-import { AddFlagForm, formSchema } from '../form-schema';
+import { createFlagFormSchema, FlagFormSchema } from '../form-schema';
 import { FlagSwitchVariationType } from '../types';
 import FlagVariations from './flag-variations';
 import GeneralInfo from './general-info';
@@ -43,7 +44,7 @@ const FlagForm = () => {
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
   const navigate = useNavigate();
-
+  const formSchema = useFormSchema(createFlagFormSchema);
   const { data: collection } = useQueryTags({
     params: {
       cursor: String(0),
@@ -79,7 +80,7 @@ const FlagForm = () => {
     [currentEnvironment]
   );
 
-  const onSubmit: SubmitHandler<AddFlagForm> = async values => {
+  const onSubmit: SubmitHandler<FlagFormSchema> = async values => {
     try {
       const {
         flagId,

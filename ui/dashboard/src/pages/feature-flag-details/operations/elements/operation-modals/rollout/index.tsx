@@ -4,6 +4,7 @@ import { rolloutCreator, RolloutCreatorParams } from '@api/rollouts';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryExperiments } from '@queries/experiments';
 import { useToast } from 'hooks';
+import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
 import {
@@ -101,7 +102,7 @@ const ProgressiveRolloutModal = ({
   }, [experiments, hasRolloutRunning, feature]);
 
   const form = useForm({
-    resolver: yupResolver(rolloutSchema),
+    resolver: yupResolver(useFormSchema(rolloutSchema)),
     defaultValues: {
       progressiveRolloutType: RolloutTypeMap.TEMPLATE_SCHEDULE,
       progressiveRollout: createProgressiveRollout(feature)

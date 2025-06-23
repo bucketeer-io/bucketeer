@@ -15,10 +15,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
+import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { Experiment } from '@types';
 import { IconInfo } from '@icons';
-import { experimentFormSchema } from 'pages/experiments/form-schema';
+import { createExperimentFormSchema } from 'pages/experiments/form-schema';
 import Button from 'components/button';
 import { CreatableSelect } from 'components/creatable-select';
 import { ReactDatePicker } from 'components/date-time-picker';
@@ -110,7 +111,7 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   );
 
   const form = useForm({
-    resolver: yupResolver(experimentFormSchema),
+    resolver: yupResolver(useFormSchema(createExperimentFormSchema)),
     defaultValues: {
       id: experiment.id,
       name: experiment.name,

@@ -5,8 +5,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidatePushes } from '@queries/pushes';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from 'auth';
-import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
@@ -44,12 +44,13 @@ export interface AddPushForm {
   environmentId: string;
 }
 
-export const formSchema = yup.object().shape({
-  name: yup.string().required(requiredMessage),
-  fcmServiceAccount: yup.string().required(requiredMessage),
-  tags: yup.array(),
-  environmentId: yup.string().required(requiredMessage)
-});
+export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+  yup.object().shape({
+    name: yup.string().required(requiredMessage),
+    fcmServiceAccount: yup.string().required(requiredMessage),
+    tags: yup.array(),
+    environmentId: yup.string().required(requiredMessage)
+  });
 
 const AddPushModal = ({ disabled, isOpen, onClose }: AddPushModalProps) => {
   const { consoleAccount } = useAuth();
@@ -70,7 +71,7 @@ const AddPushModal = ({ disabled, isOpen, onClose }: AddPushModalProps) => {
   const { formattedEnvironments } = onFormatEnvironments(editorEnvironments);
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       name: '',
       fcmServiceAccount: '',

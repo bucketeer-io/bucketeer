@@ -20,9 +20,10 @@ import { LIST_PAGE_SIZE } from 'constants/app';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
+import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { IconInfo } from '@icons';
-import { experimentFormSchema } from 'pages/experiments/form-schema';
+import { createExperimentFormSchema } from 'pages/experiments/form-schema';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import { CreatableSelect } from 'components/creatable-select';
@@ -81,7 +82,7 @@ const EditExperimentModal = ({
 }: EditExperimentModalProps) => {
   const { t } = useTranslation(['form', 'common']);
   const { notify, errorNotify } = useToast();
-
+  const formSchema = useFormSchema(createExperimentFormSchema);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const editable = hasEditable(consoleAccount!);
@@ -150,7 +151,7 @@ const EditExperimentModal = ({
   );
 
   const form = useForm({
-    resolver: yupResolver(experimentFormSchema),
+    resolver: yupResolver(formSchema),
     defaultValues: {
       id: '',
       name: '',

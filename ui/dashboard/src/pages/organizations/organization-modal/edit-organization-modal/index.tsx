@@ -5,8 +5,8 @@ import { useQueryAccounts } from '@queries/accounts';
 import { invalidateOrganizations } from '@queries/organizations';
 import { useQueryClient } from '@tanstack/react-query';
 import { LIST_PAGE_SIZE } from 'constants/app';
-import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Organization } from '@types';
@@ -35,11 +35,12 @@ export interface EditOrganizationForm {
   description?: string;
 }
 
-const formSchema = yup.object().shape({
-  name: yup.string().required(requiredMessage),
-  description: yup.string(),
-  ownerEmail: yup.string().email().required(requiredMessage)
-});
+const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+  yup.object().shape({
+    name: yup.string().required(requiredMessage),
+    description: yup.string(),
+    ownerEmail: yup.string().email().required(requiredMessage)
+  });
 
 const EditOrganizationModal = ({
   isOpen,
@@ -51,7 +52,7 @@ const EditOrganizationModal = ({
   const { notify, errorNotify } = useToast();
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       name: organization.name,
       description: organization.description,

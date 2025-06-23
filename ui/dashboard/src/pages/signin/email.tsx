@@ -13,8 +13,8 @@ import {
   DEMO_SIGN_IN_ENABLED,
   DEMO_SIGN_IN_PASSWORD
 } from 'configs';
-import { translation } from 'constants/message';
 import { PAGE_PATH_ROOT } from 'constants/routing';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { SignInForm } from '@types';
@@ -26,19 +26,20 @@ import Input from 'components/input';
 import InputGroup from 'components/input-group';
 import AuthWrapper from './elements/auth-wrapper';
 
-const formSchema = yup.object().shape({
-  email: yup.string().email().required(),
-  password: yup
-    .string()
-    .required()
-    .min(
-      4,
-      translation('message:validation.name-at-least-characters', {
-        name: translation('auth:password').toLowerCase(),
-        count: 4
-      })
-    )
-});
+const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
+  yup.object().shape({
+    email: yup.string().email().required(requiredMessage),
+    password: yup
+      .string()
+      .required(requiredMessage)
+      .min(
+        4,
+        translation('message:validation.name-at-least-characters', {
+          name: translation('auth:password').toLowerCase(),
+          count: 4
+        })
+      )
+  });
 
 const SignInWithEmail = () => {
   const { t } = useTranslation(['auth']);
@@ -49,7 +50,7 @@ const SignInWithEmail = () => {
   const [showAuthError, setShowAuthError] = useState(false);
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       email: '',
       password: ''

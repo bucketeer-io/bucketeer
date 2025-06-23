@@ -6,13 +6,13 @@ import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
 import { FeatureVariationType } from '@types';
 import { IconTrash } from '@icons';
+import { FlagFormSchema } from 'pages/create-flag/form-schema';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
-import { AddFlagForm } from './formSchema';
 
 const Variations = ({
   variationType
@@ -21,7 +21,7 @@ const Variations = ({
 }) => {
   const { t } = useTranslation(['common', 'form']);
 
-  const methods = useFormContext<AddFlagForm>();
+  const methods = useFormContext<FlagFormSchema>();
   const { control, watch } = methods;
 
   const {

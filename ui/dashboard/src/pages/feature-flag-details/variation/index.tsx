@@ -9,6 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
+import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { isEqual } from 'lodash';
 import { Feature, FeatureVariation, VariationChange } from '@types';
@@ -51,7 +52,7 @@ const Variation = ({ feature, editable }: VariationProps) => {
     !!experimentCollection && experimentCollection?.experiments?.length > 0;
 
   const form = useForm({
-    resolver: yupResolver(variationsFormSchema),
+    resolver: yupResolver(useFormSchema(variationsFormSchema)),
     defaultValues: {
       variations: feature.variations,
       variationType: feature.variationType,

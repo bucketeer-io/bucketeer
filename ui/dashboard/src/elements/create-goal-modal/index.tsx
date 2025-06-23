@@ -5,8 +5,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateGoals } from '@queries/goals';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { ConnectionType, Goal } from '@types';
@@ -31,11 +31,12 @@ interface CreateGoalForm {
   description?: string;
 }
 
-const formSchema = yup.object().shape({
-  id: yup.string().required(requiredMessage),
-  name: yup.string().required(requiredMessage),
-  description: yup.string()
-});
+const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+  yup.object().shape({
+    id: yup.string().required(requiredMessage),
+    name: yup.string().required(requiredMessage),
+    description: yup.string()
+  });
 
 const CreateGoalModal = ({
   isOpen,
@@ -50,7 +51,7 @@ const CreateGoalModal = ({
   const queryClient = useQueryClient();
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       id: '',
       name: '',

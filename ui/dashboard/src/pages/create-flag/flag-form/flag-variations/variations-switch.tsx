@@ -3,7 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
 import { cn } from 'utils/style';
-import { AddFlagForm } from 'pages/create-flag/form-schema';
+import { FlagFormSchema } from 'pages/create-flag/form-schema';
 import { FlagSwitchVariationType } from 'pages/create-flag/types';
 import Button from 'components/button';
 import Form from 'components/form';
@@ -16,7 +16,7 @@ const buttonActiveCls =
 const VariationsSwitch = () => {
   const { t } = useTranslation(['form', 'common']);
 
-  const { watch, setValue, resetField } = useFormContext<AddFlagForm>();
+  const { watch, setValue, resetField } = useFormContext<FlagFormSchema>();
 
   const currentSwitchVariation = watch('switchVariationType');
 
