@@ -14,11 +14,15 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import useOptions from 'hooks/use-options';
-import { useTranslation } from 'i18n';
+import { Language, setLanguage, useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { Account, EnvironmentRoleType, OrganizationRole } from '@types';
-import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
+import {
+  checkEnvironmentEmptyId,
+  onChangeFontWithLocalized,
+  onFormatEnvironments
+} from 'utils/function';
 import { IconInfo } from '@icons';
 import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
@@ -128,7 +132,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
     formState: { isValid, isSubmitting }
   } = form;
 
-  const onSubmit: SubmitHandler<EditMemberForm> = values => {
+  const onSubmit: SubmitHandler<EditMemberForm> = async values => {
     return accountUpdater({
       organizationId: currentEnvironment.organizationId,
       email: member.email,
@@ -146,6 +150,11 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
         values: values.tags
       }
     }).then(() => {
+      const { email } = consoleAccount!;
+      if (email === member.email && values.language !== member.language) {
+        setLanguage(values.language as Language);
+        onChangeFontWithLocalized(values.language === Language.JAPANESE);
+      }
       notify({
         message: t('message:collection-action-success', {
           collection: t('member'),

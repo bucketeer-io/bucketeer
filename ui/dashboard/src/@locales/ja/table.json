@@ -288,5 +288,6 @@
   "stop-rollout": "段階的ロールアウトを停止",
   "stop-operation-type-desc": "{{type}}が停止されます。続行してもよろしいですか？",
   "current-event-rate-tooltip": "ゴール数 / 評価数 * 100",
-  "retry": "リトライ"
+  "retry": "リトライ",
+  "baseline": "ベースライン"
 }
