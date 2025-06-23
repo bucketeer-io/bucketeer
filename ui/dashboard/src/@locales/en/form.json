@@ -24,9 +24,9 @@
   "trial": "Trial",
   "api-key": {
     "client-sdk": "Client SDKs",
-    "client-sdk-desc": "This role allows all SDKs to evaluate end users on the Bucketeer server.",
+    "client-sdk-desc": "This role allows all SDKs to evaluate end users using the Bucketeer server.",
     "server-sdk": "Server SDKs",
-    "server-sdk-desc": "This role allows the server SDK to evaluate end users locally within the SDK. To evaluate them on the Bucketeer server, use the client SDK key instead.",
+    "server-sdk-desc": "This role allows the server SDK to evaluate end users locally. To evaluate users using the Bucketeer server, use the client SDK key instead.",
     "public-api-read-only": "Public API (Read Only)",
     "public-api-read-only-desc": "This role allows you to read the data in Bucketeer.",
     "public-api-write": "Public API (Read and Write)",
@@ -309,7 +309,7 @@
       "custom-rules": "Define conditions based on user attributes (e.g., app version, genre) to assign variations. Rules are evaluated in order, and the first matching rule determines the variation.",
       "default-rule": "If no prerequisites, targets, or custom rules match, users will receive the variation defined here. This acts as the fallback behavior for all other users.",
       "attribute": "The user attribute used for targeting. This must match the attribute passed when initializing the client SDK (e.g., appVersion, genre, os).",
-      "value": "One or more expected values for the selected attribute. If the user’s attribute matches any of these values, the condition will evaluate as true.",
+      "value": "One or more expected values for the selected attribute. If the user's attribute matches any of these values, the condition will evaluate as true.",
       "debugger": "The debugger can verify what variation will be assigned to a specific end-user under different conditions in real-time.",
       "audience": "All end-users will be evaluated against the targeting rules. If no rules match, the default rule will determine which variation they receive."
     },

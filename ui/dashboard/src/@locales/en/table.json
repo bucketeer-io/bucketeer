@@ -119,8 +119,8 @@
     "delete-user-segment-desc": "The <bold>{{name}}</bold> is going to be deleted permanently. Are you sure you want to proceed?"
   },
   "experiment": {
-    "confirm-archive-desc": "The experiment \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
-    "confirm-unarchive-desc": "The experiment \"<bold>{{name}}</bold>\" will be unarchived. Are you sure you want to proceed?",
+    "confirm-archive-desc": "Are you sure you want to archive the experiment \"<bold>{{name}}</bold>\"?",
+    "confirm-unarchive-desc": "Are you sure you want to unarchive the experiment \"<bold>{{name}}</bold>\"?",
     "scheduled": "Scheduled",
     "running": "Running",
     "stopped": "Stopped",
