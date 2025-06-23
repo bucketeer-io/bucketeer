@@ -3,7 +3,7 @@ import { OperationStatus } from './goal';
 export type AutoOpsType = 'TYPE_UNKNOWN' | 'SCHEDULE' | 'EVENT_RATE';
 export type ClauseActionType = 'UNKNOWN' | 'ENABLE' | 'DISABLE';
 export type OpsEventRateClauseOperator = 'GREATER_OR_EQUAL' | 'LESS_OR_EQUAL';
-
+export type AutoOpsChangeType = 'UNSPECIFIED' | 'CREATE' | 'UPDATE' | 'DELETE';
 export interface AutoOpsRule {
   id: string;
   featureId: string;
@@ -40,4 +40,19 @@ export interface OpsEventRateClause {
 export interface DatetimeClause {
   time: string;
   actionType: ClauseActionType;
+}
+
+export interface AutoOpsCountCollection {
+  cursor: string;
+  opsCounts: AutoOpsCount[];
+}
+
+export interface AutoOpsCount {
+  id: string;
+  autoOpsRuleId: string;
+  clauseId: string;
+  updatedAt: string;
+  opsEventCount: string;
+  evaluationCount: string;
+  featureId: string;
 }

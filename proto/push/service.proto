@@ -25,6 +25,18 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 import "proto/push/push.proto";
 import "proto/push/command.proto";
 
+enum ChangeType {
+  UNSPECIFIED = 0;
+  CREATE = 1;
+  UPDATE = 2;
+  DELETE = 3;
+}
+
+message TagChange {
+  ChangeType change_type = 1 [(google.api.field_behavior) = REQUIRED];
+  string tag = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
 message CreatePushRequest {
   reserved 1;
   CreatePushCommand command = 2 [deprecated = true];
@@ -57,9 +69,10 @@ message ListPushesRequest {
   OrderBy order_by = 4;
   OrderDirection order_direction = 5;
   string search_keyword = 6;
-  string environment_id = 7;
+  string environment_id = 7 [deprecated = true];
   string organization_id = 8;
   google.protobuf.BoolValue disabled = 9;
+  repeated string environment_ids = 10;
 }
 
 message ListPushesResponse {
@@ -70,8 +83,8 @@ message ListPushesResponse {
 
 message DeletePushRequest {
   reserved 1;
-  string id = 2;
-  DeletePushCommand command = 3;
+  string id = 2 [(google.api.field_behavior) = REQUIRED];
+  DeletePushCommand command = 3 [deprecated = true];
   string environment_id = 4;
 }
 
@@ -83,10 +96,11 @@ message UpdatePushRequest {
   AddPushTagsCommand add_push_tags_command = 3 [deprecated = true];
   DeletePushTagsCommand delete_push_tags_command = 4 [deprecated = true];
   RenamePushCommand rename_push_command = 5 [deprecated = true];
-  repeated string tags = 6;
+  repeated string tags = 6 [deprecated = true];
   google.protobuf.StringValue name = 7;
   string environment_id = 8 [(google.api.field_behavior) = REQUIRED];
   google.protobuf.BoolValue disabled = 11;
+  repeated TagChange tag_changes = 12;
 }
 
 message UpdatePushResponse {
@@ -237,5 +251,48 @@ service PushService {
       }
     };
   }
-  rpc DeletePush(DeletePushRequest) returns (DeletePushResponse) {}
+  rpc DeletePush(DeletePushRequest) returns (DeletePushResponse) {
+    option (google.api.http) = {
+      delete: "/v1/push"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete",
+      description: "Delete a push."
+      tags: "push"
+      operation_id: "web.v1.push.delete"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "404"
+        value: {
+          description: "Returned when the push is not found."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 5, "message": "not found", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 }

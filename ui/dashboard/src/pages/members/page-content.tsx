@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
-import { useAuth } from 'auth';
+import { useAuthAccess } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -9,6 +9,7 @@ import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
 import Icon from 'components/icon';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import TableListContainer from 'elements/table-list-container';
@@ -24,10 +25,7 @@ const PageContent = ({
   onHandleActions: (item: Account, type: MemberActionsType) => void;
 }) => {
   const { t } = useTranslation(['common']);
-  const { consoleAccount } = useAuth();
-  const isOrganizationAdmin =
-    consoleAccount?.organizationRole === 'Organization_ADMIN';
-
+  const { envEditable, isOrganizationAdmin } = useAuthAccess();
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<MembersFilters> = searchOptions;
 
@@ -43,11 +41,30 @@ const PageContent = ({
   const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
     useToggleOpen(false);
 
+  const filterCount = useMemo(() => {
+    const filterKeys = ['disabled', 'organizationRole'];
+    const count = filterKeys.reduce((acc, curr) => {
+      if (isNotEmpty(filters[curr as keyof MembersFilters])) ++acc;
+      return acc;
+    }, 0);
+    return count || undefined;
+  }, [filters]);
+
   const onChangeFilters = (values: Partial<MembersFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });
   };
+
+  const onClearFilters = useCallback(() => {
+    onChangeFilters({
+      ...filters,
+      searchQuery: '',
+      disabled: undefined,
+      organizationRole: undefined
+    });
+    onCloseFilterModal();
+  }, [filters]);
 
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
@@ -60,19 +77,23 @@ const PageContent = ({
       <Filter
         onOpenFilter={onOpenFilterModal}
         action={
-          isOrganizationAdmin && (
-            <Button className="flex-1 lg:flex-none" onClick={onAdd}>
-              <Icon icon={IconAddOutlined} size="sm" />
-              {t(`invite-member`)}
-            </Button>
-          )
+          <DisabledButtonTooltip
+            type={!isOrganizationAdmin ? 'admin' : 'editor'}
+            hidden={envEditable && isOrganizationAdmin}
+            trigger={
+              <Button
+                className="flex-1 lg:flex-none"
+                onClick={onAdd}
+                disabled={!envEditable || !isOrganizationAdmin}
+              >
+                <Icon icon={IconAddOutlined} size="sm" />
+                {t(`invite-member`)}
+              </Button>
+            }
+          />
         }
         searchValue={filters.searchQuery}
-        filterCount={
-          isNotEmpty(filters.disabled || filters.organizationRole)
-            ? 1
-            : undefined
-        }
+        filterCount={filterCount}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
       {openFilterModal && (
@@ -101,6 +122,7 @@ const PageContent = ({
           filters={filters}
           setFilters={onChangeFilters}
           onActions={onHandleActions}
+          onClearFilters={onClearFilters}
         />
       </TableListContainer>
     </PageLayout.Content>

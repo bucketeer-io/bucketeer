@@ -39,6 +39,11 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
+const (
+	// Maximum page size for audit logs. Also used as default when page_size is not set or exceeds this value.
+	maxAuditLogPageSize = 200
+)
+
 type options struct {
 	logger *zap.Logger
 }
@@ -194,7 +199,13 @@ func (s *auditlogService) ListAuditLogs(
 	if err != nil {
 		return nil, err
 	}
+
+	// Use maximum page size as default when not provided, is 0, or exceeds the maximum
 	limit := int(req.PageSize)
+	if limit <= 0 || limit > maxAuditLogPageSize {
+		limit = maxAuditLogPageSize
+	}
+
 	cursor := req.Cursor
 	if cursor == "" {
 		cursor = "0"
@@ -380,7 +391,13 @@ func (s *auditlogService) ListAdminAuditLogs(
 		)
 		return nil, err
 	}
+
+	// Use maximum page size as default when not provided, is 0, or exceeds the maximum
 	limit := int(req.PageSize)
+	if limit <= 0 || limit > maxAuditLogPageSize {
+		limit = maxAuditLogPageSize
+	}
+
 	cursor := req.Cursor
 	if cursor == "" {
 		cursor = "0"
@@ -516,7 +533,13 @@ func (s *auditlogService) ListFeatureHistory(
 		)
 		return nil, err
 	}
+
+	// Use maximum page size as default when not provided, is 0, or exceeds the maximum
 	limit := int(req.PageSize)
+	if limit <= 0 || limit > maxAuditLogPageSize {
+		limit = maxAuditLogPageSize
+	}
+
 	cursor := req.Cursor
 	if cursor == "" {
 		cursor = "0"

@@ -7,7 +7,13 @@ export type FlagActionType =
   | 'CLONE'
   | 'ACTIVE'
   | 'INACTIVE';
-export type SummaryType = 'TOTAL' | 'ACTIVE' | 'INACTIVE';
+
+export enum StatusFilterType {
+  NEW = 'NEW',
+  ACTIVE = 'ACTIVE',
+  NO_ACTIVITY = 'NO_ACTIVITY',
+  UNKNOWN = 'UNKNOWN'
+}
 
 export interface FlagFilters {
   page: number;
@@ -15,7 +21,7 @@ export interface FlagFilters {
   orderDirection: OrderDirection;
   archived?: boolean;
   searchQuery: string;
-  status: CollectionStatusType;
+  tab: CollectionStatusType;
   environmentId: string;
   pageSize?: number;
   maintainer?: string;
@@ -23,6 +29,8 @@ export interface FlagFilters {
   enabled?: boolean;
   hasPrerequisites?: boolean;
   tags?: string[];
+  status?: StatusFilterType;
+  hasFeatureFlagAsRule?: boolean;
 }
 
 export enum FeatureActivityStatus {
@@ -33,6 +41,6 @@ export enum FeatureActivityStatus {
 
 export enum FlagOperationType {
   ROLLOUT = 'ROLLOUT',
-  SCHEDULED = 'SCHEDULED',
-  KILL_SWITCH = 'KILL_SWITCH'
+  SCHEDULE = 'SCHEDULE',
+  EVENT_RATE = 'EVENT_RATE'
 }

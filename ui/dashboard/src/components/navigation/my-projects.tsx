@@ -20,7 +20,7 @@ import {
 import { clearOrgIdStorage } from 'storage/organization';
 import { Environment, Project } from '@types';
 import { cn } from 'utils/style';
-import { IconChevronRight, IconFolder, IconNoData } from '@icons';
+import { IconChecked, IconChevronRight, IconFolder, IconNoData } from '@icons';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
 import List from 'components/list';
@@ -105,12 +105,38 @@ const MyProjects = () => {
   const onHandleChange = useCallback(
     (value: Environment) => {
       setSelectedEnvironment(value);
+      clearCurrentEnvIdStorage();
       setCurrentEnvIdStorage(value.id || value.urlCode);
-      navigate(`/${value.urlCode}${PAGE_PATH_FEATURES}`);
+      navigate(`/${value.urlCode}${PAGE_PATH_FEATURES}`, {
+        replace: false,
+        state: {
+          clearFilters: true
+        }
+      });
       setIsShowProjectsList(false);
       onClearSearch();
     },
     [setSelectedEnvironment, consoleAccount]
+  );
+
+  const handleOpenSelectMenu = useCallback(
+    (value: boolean) => {
+      if (value && selectedEnvironment) {
+        setTimeout(() => {
+          const selectedElement = document.getElementById(
+            selectedEnvironment.id
+          );
+          if (selectedElement) {
+            selectedElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
+        }, 100);
+      }
+      onOpenChange(value);
+    },
+    [selectedEnvironment]
   );
 
   const onChangeProject = useCallback(
@@ -139,7 +165,7 @@ const MyProjects = () => {
   }, [consoleAccount]);
 
   return (
-    <Popover.Root onOpenChange={onOpenChange} open={isShowProjectsList}>
+    <Popover.Root onOpenChange={handleOpenSelectMenu} open={isShowProjectsList}>
       <Popover.Portal>
         <Popover.Content align="start" className="border-none mt-2 z-20">
           <div className="w-[600px] bg-white rounded-lg shadow-menu">
@@ -181,14 +207,13 @@ const MyProjects = () => {
                     <ScrollArea className="h-[120px] pr-2">
                       <List
                         items={
-                          environments
-                            ?.filter(i => i.id !== selectedEnvironment?.id)
-                            .map(item => ({
-                              label: item.name,
-                              value: item.id,
-                              selected: item.id === selectedEnvironment?.id,
-                              onSelect: () => onHandleChange(item)
-                            })) || []
+                          environments?.map(item => ({
+                            label: item.name,
+                            value: item.id,
+                            selected: item.id === selectedEnvironment?.id,
+                            icon: IconChecked,
+                            onSelect: () => onHandleChange(item)
+                          })) || []
                         }
                       />
                     </ScrollArea>

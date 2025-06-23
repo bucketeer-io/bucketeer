@@ -10,6 +10,7 @@ import { cn } from 'utils/style';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import TableListContainer from 'elements/table-list-container';
@@ -24,10 +25,12 @@ import {
 } from './types';
 
 const PageContent = ({
+  disabled,
   summary,
   onAdd,
   onHandleActions
 }: {
+  disabled: boolean;
   summary?: ExperimentCollection['summary'];
   onAdd: () => void;
   onHandleActions: (item: Experiment, type: ExperimentActionsType) => void;
@@ -54,6 +57,18 @@ const PageContent = ({
   const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
     useToggleOpen(false);
 
+  const filterCount = useMemo(() => {
+    if (isNotEmpty(filters?.isFilter || filters?.filterBySummary)) {
+      const filterKeys = ['statuses', 'maintainer'];
+      const count = filterKeys.reduce((acc, curr) => {
+        if (isNotEmpty(filters[curr as keyof ExperimentFilters])) ++acc;
+        return acc;
+      }, 0);
+      return count || undefined;
+    }
+    return undefined;
+  }, [filters]);
+
   const isHiddenTab = useMemo(
     () =>
       (!!filters.searchQuery ||
@@ -79,7 +94,8 @@ const PageContent = ({
       isFilter: undefined,
       status: 'ACTIVE',
       filterByTab: true,
-      filterBySummary: undefined
+      filterBySummary: undefined,
+      maintainer: undefined
     });
     onCloseFilterModal();
   }, []);
@@ -133,17 +149,22 @@ const PageContent = ({
       <Filter
         onOpenFilter={onOpenFilterModal}
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
-            <Icon icon={IconAddOutlined} size="sm" />
-            {t(`new-experiment`)}
-          </Button>
+          <DisabledButtonTooltip
+            hidden={!disabled}
+            trigger={
+              <Button
+                className="flex-1 lg:flex-none"
+                onClick={onAdd}
+                disabled={disabled}
+              >
+                <Icon icon={IconAddOutlined} size="sm" />
+                {t(`new-experiment`)}
+              </Button>
+            }
+          />
         }
         searchValue={filters.searchQuery}
-        filterCount={
-          isNotEmpty(filters?.isFilter || filters?.filterBySummary)
-            ? 1
-            : undefined
-        }
+        filterCount={filterCount}
         onSearchChange={searchQuery => {
           onChangeFilters(
             {

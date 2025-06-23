@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   FormProvider,
   Resolver,
@@ -9,17 +9,20 @@ import { notificationCreator } from '@api/notification';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateNotifications } from '@queries/notifications';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { useAuth } from 'auth';
 import { languageList } from 'constants/notification';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { NotificationLanguage, SourceType } from '@types';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { cn } from 'utils/style';
 import { IconInfo, IconNoData } from '@icons';
+import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { useFetchTags } from 'pages/members/collection-loader';
-import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
+import { SOURCE_TYPE_ITEMS } from 'pages/notifications/constants';
+import { NotificationOption } from 'pages/notifications/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
@@ -37,17 +40,13 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import SearchInput from 'components/search-input';
 import { Tooltip } from 'components/tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface AddNotificationModalProps {
+  disabled?: boolean;
   isOpen: boolean;
   onClose: () => void;
 }
-
-type NotificationOption = {
-  value: SourceType;
-  label: string;
-  description: string;
-};
 
 export interface AddNotificationForm {
   name: string;
@@ -68,6 +67,7 @@ export const formSchema = yup.object().shape({
 });
 
 const AddNotificationModal = ({
+  disabled,
   isOpen,
   onClose
 }: AddNotificationModalProps) => {
@@ -76,79 +76,19 @@ const AddNotificationModal = ({
   const { t } = useTranslation(['common', 'form']);
 
   const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-
-  const SOURCE_TYPE_ITEMS: NotificationOption[] = [
-    {
-      label: t(`source-type.account`),
-      description: t(`source-type.account-description`),
-      value: 'DOMAIN_EVENT_ACCOUNT'
-    },
-    {
-      label: t(`source-type.api-key`),
-      description: t(`source-type.api-key-description`),
-      value: 'DOMAIN_EVENT_APIKEY'
-    },
-    {
-      label: t(`source-type.auto-ops`),
-      description: t(`source-type.auto-ops-description`),
-      value: 'DOMAIN_EVENT_AUTOOPS_RULE'
-    },
-    {
-      label: t(`source-type.experiment`),
-      description: t(`source-type.experiment-description`),
-      value: 'DOMAIN_EVENT_EXPERIMENT'
-    },
-    {
-      label: t(`source-type.feature-flag`),
-      description: t(`source-type.feature-flag-description`),
-      value: 'DOMAIN_EVENT_FEATURE'
-    },
-    {
-      label: t(`source-type.goal`),
-      description: t(`source-type.goal-description`),
-      value: 'DOMAIN_EVENT_GOAL'
-    },
-    {
-      label: t(`source-type.mau-count`),
-      description: t(`source-type.mau-count-description`),
-      value: 'MAU_COUNT'
-    },
-    {
-      label: t(`source-type.notification`),
-      description: t(`source-type.notification-description`),
-      value: 'DOMAIN_EVENT_SUBSCRIPTION'
-    },
-    {
-      label: t(`source-type.push`),
-      description: t(`source-type.push-description`),
-      value: 'DOMAIN_EVENT_PUSH'
-    },
-    {
-      label: t(`source-type.running-experiments`),
-      description: t(`source-type.running-experiments-description`),
-      value: 'EXPERIMENT_RUNNING'
-    },
-    {
-      label: t(`source-type.segment`),
-      description: t(`source-type.segment-description`),
-      value: 'DOMAIN_EVENT_SEGMENT'
-    },
-    {
-      label: t(`source-type.stale-feature-flag`),
-      description: t(`source-type.stale-feature-flag-description`),
-      value: 'FEATURE_STALE'
-    }
-  ];
-
   const [searchValue, setSearchValue] = useState('');
   const [filteredTypes, setSearchTypes] =
     useState<NotificationOption[]>(SOURCE_TYPE_ITEMS);
 
-  const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId
-  });
-  const environments = (collection?.environments || []).filter(item => item.id);
+  const editorEnvironments = useMemo(
+    () =>
+      consoleAccount?.environmentRoles
+        .filter(item => item.role === 'Environment_EDITOR')
+        ?.map(item => item.environment) || [],
+    [consoleAccount]
+  );
+
+  const { formattedEnvironments } = onFormatEnvironments(editorEnvironments);
 
   const form = useForm<AddNotificationForm>({
     resolver: yupResolver(formSchema) as Resolver<AddNotificationForm>,
@@ -174,12 +114,15 @@ const AddNotificationModal = ({
 
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
     entityType: 'FEATURE_FLAG',
-    environmentId: watch('environment'),
+    environmentId: checkEnvironmentEmptyId(watch('environment')),
     options: {
       enabled: isSelectedEnv
     }
   });
-  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
+  const tagOptions = uniqBy(tagCollection?.tags || [], 'name')?.map(tag => ({
+    label: tag.name,
+    value: tag.name
+  }));
 
   const onSearchTypes = (value: string) => {
     if (!value) {
@@ -197,7 +140,7 @@ const AddNotificationModal = ({
 
   const onSubmit: SubmitHandler<AddNotificationForm> = values => {
     return notificationCreator({
-      environmentId: values.environment,
+      environmentId: checkEnvironmentEmptyId(values.environment),
       name: values.name,
       sourceTypes: values.types,
       recipient: {
@@ -222,11 +165,7 @@ const AddNotificationModal = ({
   };
 
   return (
-    <SlideModal
-      title={t('new-push-notification')}
-      isOpen={isOpen}
-      onClose={onClose}
-    >
+    <SlideModal title={t('new-notification')} isOpen={isOpen} onClose={onClose}>
       <div className="w-full p-5 pb-28">
         <div className="typo-para-small text-gray-600 mb-3">
           {t('new-notification-subtitle')}
@@ -285,11 +224,10 @@ const AddNotificationModal = ({
                       <DropdownMenuTrigger
                         placeholder={t(`form:select-environment`)}
                         label={
-                          environments.find(
+                          formattedEnvironments.find(
                             item => item.id === getValues('environment')
-                          )?.name
+                          )?.name || ''
                         }
-                        disabled={isLoadingEnvs}
                         variant="secondary"
                         className="w-full"
                       />
@@ -298,7 +236,7 @@ const AddNotificationModal = ({
                         align="start"
                         {...field}
                       >
-                        {environments.map((item, index) => (
+                        {formattedEnvironments.map((item, index) => (
                           <DropdownMenuItem
                             {...field}
                             key={index}
@@ -475,15 +413,38 @@ const AddNotificationModal = ({
                                           ? `form:no-tags-found`
                                           : `form:placeholder-tags`
                                       )}
-                                      options={tagOptions?.map(tag => ({
-                                        label: tag.name,
-                                        value: tag.id
-                                      }))}
+                                      allowCreateWhileLoading={false}
+                                      isValidNewOption={() => false}
+                                      isClearable
+                                      onKeyDown={e => {
+                                        const { value } =
+                                          e.target as HTMLInputElement;
+                                        const isExists = tagOptions.find(
+                                          item =>
+                                            item.label
+                                              .toLowerCase()
+                                              .includes(value.toLowerCase()) &&
+                                            !field.value?.includes(item.label)
+                                        );
+                                        if (
+                                          e.key === 'Enter' &&
+                                          (!isExists || !value)
+                                        ) {
+                                          e.preventDefault();
+                                        }
+                                      }}
+                                      options={tagOptions}
                                       onChange={value =>
                                         field.onChange(
                                           value.map(tag => tag.value)
                                         )
                                       }
+                                      noOptionsMessage={() => (
+                                        <UserMessage
+                                          message={t('no-options-found')}
+                                        />
+                                      )}
+                                      onCreateOption={() => {}}
                                     />
                                   </Form.Control>
                                   <Form.Message />
@@ -513,13 +474,18 @@ const AddNotificationModal = ({
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!isValid}
-                    loading={isSubmitting}
-                  >
-                    {t(`submit`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    hidden={!disabled}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={!isValid || disabled}
+                        loading={isSubmitting}
+                      >
+                        {t(`submit`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>

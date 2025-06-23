@@ -19,14 +19,14 @@ import (
 	"fmt"
 	"time"
 
-	"go.uber.org/zap"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/api/api"
+	auditlogclient "github.com/bucketeer-io/bucketeer/pkg/auditlog/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	coderefclient "github.com/bucketeer-io/bucketeer/pkg/coderef/client"
@@ -63,6 +63,7 @@ type server struct {
 	accountService         *string
 	codeRefService         *string
 	pushService            *string
+	auditLogService        *string
 	redisServerName        *string
 	redisAddr              *string
 	certPath               *string
@@ -128,6 +129,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"code-ref-service",
 			"bucketeer-code-ref-service address.",
 		).Default("code-ref:9090").String(),
+		auditLogService: cmd.Flag(
+			"audit-log-service",
+			"bucketeer-audit-log-service address.",
+		).Default("audit-log:9090").String(),
 		redisServerName:  cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
 		redisAddr:        cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
@@ -311,6 +316,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer codeRefClient.Close()
 
+	auditLogClient, err := auditlogclient.NewClient(*s.auditLogService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer auditLogClient.Close()
+
 	redisV3Client, err := redisv3.NewClient(
 		*s.redisAddr,
 		redisv3.WithPoolSize(*s.redisPoolMaxActive),
@@ -330,6 +347,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		accountClient,
 		pushClient,
 		codeRefClient,
+		auditLogClient,
 		goalPublisher,
 		evaluationPublisher,
 		userPublisher,

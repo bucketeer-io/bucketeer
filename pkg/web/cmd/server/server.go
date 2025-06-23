@@ -24,6 +24,7 @@ import (
 
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
@@ -64,6 +65,7 @@ import (
 	bqquerier "github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/querier"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	tagapi "github.com/bucketeer-io/bucketeer/pkg/tag/api"
+	teamapi "github.com/bucketeer-io/bucketeer/pkg/team/api"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	auditlogproto "github.com/bucketeer-io/bucketeer/proto/auditlog"
@@ -77,6 +79,7 @@ import (
 	notificationproto "github.com/bucketeer-io/bucketeer/proto/notification"
 	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
 	tagproto "github.com/bucketeer-io/bucketeer/proto/tag"
+	teamproto "github.com/bucketeer-io/bucketeer/proto/team"
 )
 
 const (
@@ -128,6 +131,7 @@ type server struct {
 	dashboardServicePort            *int
 	tagServicePort                  *int
 	codeReferenceServicePort        *int
+	teamServicePort                 *int
 	webGrpcGatewayPort              *int
 	accountService                  *string
 	authService                     *string
@@ -152,6 +156,31 @@ type server struct {
 	pubSubRedisPoolSize             *int
 	pubSubRedisMinIdle              *int
 	pubSubRedisPartitionCount       *int
+	dataWarehouseType               *string
+	dataWarehouseConfigPath         *string
+}
+
+type DataWarehouseConfig struct {
+	Type      string                      `yaml:"type"`
+	BatchSize int                         `yaml:"batchSize"`
+	Timezone  string                      `yaml:"timezone"`
+	BigQuery  DataWarehouseBigQueryConfig `yaml:"bigquery"`
+	MySQL     DataWarehouseMySQLConfig    `yaml:"mysql"`
+}
+
+type DataWarehouseBigQueryConfig struct {
+	Project  string `yaml:"project"`
+	Dataset  string `yaml:"dataset"`
+	Location string `yaml:"location"`
+}
+
+type DataWarehouseMySQLConfig struct {
+	UseMainConnection bool   `yaml:"useMainConnection"`
+	Host              string `yaml:"host"`
+	Port              int    `yaml:"port"`
+	User              string `yaml:"user"`
+	Password          string `yaml:"password"`
+	Database          string `yaml:"database"`
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -264,6 +293,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"code-reference-service-port",
 			"Port to bind to code reference service.",
 		).Default("9105").Int(),
+		teamServicePort: cmd.Flag(
+			"team-service-port",
+			"Port to bind to team service.",
+		).Default("9107").Int(),
 		webGrpcGatewayPort: cmd.Flag(
 			"web-grpc-gateway-port",
 			"Port to bind to web gRPC gateway.",
@@ -300,6 +333,14 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"code-reference-service",
 			"bucketeer-code-reference-service address.",
 		).Default("localhost:9001").String(),
+		dataWarehouseType: cmd.Flag(
+			"data-warehouse-type",
+			"Data warehouse type (bigquery, mysql).",
+		).Default("bigquery").String(),
+		dataWarehouseConfigPath: cmd.Flag(
+			"data-warehouse-config-path",
+			"Path to data warehouse configuration file.",
+		).String(),
 		timezone:         cmd.Flag("timezone", "Time zone").Required().String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
 		keyPath:          cmd.Flag("key", "Path to TLS key.").Required().String(),
@@ -351,6 +392,13 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 
 func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Logger) error {
 	registerer := metrics.DefaultRegisterer()
+
+	// dataWarehouse config
+	dataWarehouseConfig, err := s.readDataWarehouseConfig(ctx, logger)
+	if err != nil {
+		logger.Error("Failed to read dataWarehouse config", zap.Error(err))
+		return err
+	}
 
 	// oauth config
 	oAuthConfig, err := s.readOAuthConfig(ctx, logger)
@@ -416,18 +464,23 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	nonPersistentRedisV3Cache := cachev3.NewRedisCache(nonPersistentRedisClient)
 	// bigQueryQuerier
-	bigQueryQuerier, err := s.createBigQueryQuerier(ctx, *s.project, *s.bigQueryDataLocation, registerer, logger)
-	if err != nil {
-		logger.Error("Failed to create BigQuery client",
-			zap.Error(err),
-			zap.String("project", *s.project),
-			zap.String("location", *s.bigQueryDataLocation),
-			zap.String("data-set", *s.bigQueryDataSet),
+	var bigQueryQuerier bqquerier.Client
+	if dataWarehouseConfig.Type == "bigquery" {
+		bigQueryQuerier, err = s.createBigQueryQuerier(
+			ctx, *s.project, dataWarehouseConfig.BigQuery.Location, registerer, logger,
 		)
-		return err
+		if err != nil {
+			logger.Error("Failed to create BigQuery client",
+				zap.Error(err),
+				zap.String("project", *s.project),
+				zap.String("location", dataWarehouseConfig.BigQuery.Location),
+				zap.String("data-set", dataWarehouseConfig.BigQuery.Dataset),
+			)
+			return err
+		}
 	}
 	// bigQueryDataSet
-	bigQueryDataSet := *s.bigQueryDataSet
+	bigQueryDataSet := dataWarehouseConfig.BigQuery.Dataset
 	// location
 	location, err := locale.GetLocation(*s.timezone)
 	if err != nil {
@@ -616,6 +669,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		persistentRedisV3Cache,
 		location,
 		logger,
+		eventcounterapi.WithDataWarehouseConfig(s.convertToAPIDataWarehouseConfig(dataWarehouseConfig)),
 	)
 	eventCounterServer := rpc.NewServer(eventCounterService, *s.certPath, *s.keyPath,
 		"event-counter-server",
@@ -736,6 +790,22 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go codeReferenceServer.Run()
 
+	// teamService
+	teamService := teamapi.NewTeamService(
+		mysqlClient,
+		accountClient,
+		domainTopicPublisher,
+		teamapi.WithLogger(logger),
+	)
+	teamServer := rpc.NewServer(teamService, *s.certPath, *s.keyPath,
+		"team-server",
+		rpc.WithPort(*s.teamServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	go teamServer.Run()
+
 	// Start the web console and dashboard servers
 	webConsoleServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
@@ -792,12 +862,15 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go tagServer.Stop(serverShutDownTimeout)
 		go webConsoleServer.Stop(serverShutDownTimeout)
 		go codeReferenceServer.Stop(serverShutDownTimeout)
+		go teamServer.Stop(serverShutDownTimeout)
 		go webGrpcGateway.Stop(serverShutDownTimeout)
 		// Close clients
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()
-		go bigQueryQuerier.Close()
+		if dataWarehouseConfig.Type == "bigquery" {
+			go bigQueryQuerier.Close()
+		}
 		go domainTopicPublisher.Stop()
 		go segmentUsersPublisher.Stop()
 		go accountClient.Close()
@@ -1025,9 +1098,81 @@ func (s *server) createGatewayHandlers() []gatewayapi.HandlerRegistrar {
 			tagGrpcAddr := fmt.Sprintf("localhost:%d", *s.tagServicePort)
 			return tagproto.RegisterTagServiceHandlerFromEndpoint(ctx, mux, tagGrpcAddr, opts)
 		},
+		func(ctx context.Context, mux *runtime.ServeMux, options []grpc.DialOption) error {
+			teamGrpcAddr := fmt.Sprintf("localhost:%d", *s.teamServicePort)
+			return teamproto.RegisterTeamServiceHandlerFromEndpoint(ctx, mux, teamGrpcAddr, options)
+		},
 		func(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) error {
 			codeRefGrpcAddr := fmt.Sprintf("localhost:%d", *s.codeReferenceServicePort)
 			return coderefproto.RegisterCodeReferenceServiceHandlerFromEndpoint(ctx, mux, codeRefGrpcAddr, opts)
+		},
+	}
+}
+
+func (s *server) readDataWarehouseConfig(
+	ctx context.Context,
+	logger *zap.Logger,
+) (*DataWarehouseConfig, error) {
+	// If config path is provided, read from file
+	if *s.dataWarehouseConfigPath != "" {
+		bytes, err := os.ReadFile(*s.dataWarehouseConfigPath)
+		if err != nil {
+			logger.Error("Failed to read dataWarehouse config file",
+				zap.Error(err),
+				zap.String("path", *s.dataWarehouseConfigPath),
+			)
+			return nil, err
+		}
+		config := DataWarehouseConfig{}
+		if err = yaml.Unmarshal(bytes, &config); err != nil {
+			logger.Error("Failed to unmarshal dataWarehouse config",
+				zap.Error(err),
+			)
+			return nil, err
+		}
+		return &config, nil
+	}
+
+	// Fallback to environment variables / command line flags
+	config := &DataWarehouseConfig{
+		Type:      *s.dataWarehouseType,
+		BatchSize: 1000,
+		Timezone:  *s.timezone,
+	}
+
+	// Set default configurations based on type
+	switch config.Type {
+	case "mysql":
+		config.MySQL = DataWarehouseMySQLConfig{
+			UseMainConnection: true, // Default to using main connection
+		}
+	case "bigquery":
+		config.BigQuery = DataWarehouseBigQueryConfig{
+			Dataset:  *s.bigQueryDataSet,
+			Location: *s.bigQueryDataLocation,
+		}
+	}
+
+	return config, nil
+}
+
+func (s *server) convertToAPIDataWarehouseConfig(config *DataWarehouseConfig) *eventcounterapi.DataWarehouseConfig {
+	return &eventcounterapi.DataWarehouseConfig{
+		Type:      config.Type,
+		BatchSize: config.BatchSize,
+		Timezone:  config.Timezone,
+		MySQL: eventcounterapi.DataWarehouseMySQLConfig{
+			UseMainConnection: config.MySQL.UseMainConnection,
+			Host:              config.MySQL.Host,
+			Port:              config.MySQL.Port,
+			User:              config.MySQL.User,
+			Password:          config.MySQL.Password,
+			Database:          config.MySQL.Database,
+		},
+		BigQuery: eventcounterapi.DataWarehouseBigQueryConfig{
+			Project:  config.BigQuery.Project,
+			Dataset:  config.BigQuery.Dataset,
+			Location: config.BigQuery.Location,
 		},
 	}
 }

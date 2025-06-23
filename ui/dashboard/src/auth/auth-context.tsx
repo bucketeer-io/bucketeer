@@ -27,6 +27,7 @@ import {
   setTokenStorage
 } from 'storage/token';
 import { AuthToken, ConsoleAccount, Organization } from '@types';
+import { getAccountAccess } from './utils';
 
 interface AuthContextType {
   logout: () => void;
@@ -131,6 +132,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, []);
 
+  useEffect(() => {
+    const handleTokenRefreshed = () => {
+      setIsInitialLoading(false);
+    };
+    window.addEventListener('tokenRefreshed', handleTokenRefreshed);
+    window.addEventListener('unauthenticated', () => {
+      logout();
+      clearOrgIdStorage();
+    });
+    return () => {
+      window.removeEventListener('tokenRefreshed', handleTokenRefreshed);
+      window.removeEventListener('unauthenticated', () => {
+        logout();
+        clearOrgIdStorage();
+      });
+    };
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -161,4 +180,9 @@ export const useAuth = (): AuthContextType => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+};
+
+export const useAuthAccess = () => {
+  const { consoleAccount } = useAuth();
+  return getAccountAccess(consoleAccount!);
 };

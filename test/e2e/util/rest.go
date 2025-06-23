@@ -19,6 +19,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"testing"
@@ -31,12 +32,13 @@ import (
 )
 
 const (
-	version          = "/v1"
-	service          = "/gateway"
-	evaluationsAPI   = "/evaluations"
-	evaluationAPI    = "/evaluation"
-	eventsAPI        = "/events"
-	authorizationKey = "authorization"
+	version           = "/v1"
+	service           = "/gateway"
+	evaluationsAPI    = "/evaluations"
+	getEvaluationsAPI = "/get_evaluations"
+	evaluationAPI     = "/evaluation"
+	eventsAPI         = "/events"
+	authorizationKey  = "authorization"
 )
 
 type successResponse struct {
@@ -99,6 +101,27 @@ func GetEvaluations(t *testing.T, tag, userID, gatewayAddr, apiKeyPath string) *
 	var ger getEvaluationsResponse
 	if err := json.Unmarshal(resp.Data, &ger); err != nil {
 		t.Fatal(err)
+	}
+	return &ger
+}
+
+func GetEvaluationsRaw(
+	t *testing.T,
+	requestBody map[string]interface{},
+	gatewayAddr,
+	apiKeyPath string,
+) *getEvaluationsResponse {
+	t.Helper()
+	url := fmt.Sprintf("https://%s%s",
+		gatewayAddr,
+		getEvaluationsAPI,
+	)
+	// Send the raw request body to test boolean string handling
+	resp := SendHTTPRequestRaw(t, url, requestBody, apiKeyPath)
+
+	var ger getEvaluationsResponse
+	if err := json.Unmarshal(resp, &ger); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v, data: %s", err, string(resp))
 	}
 	return &ger
 }
@@ -168,13 +191,79 @@ func SendHTTPRequest(t *testing.T, url string, body interface{}, apiKeyPath stri
 		t.Fatal(err)
 	}
 	defer resp.Body.Close()
+
+	// Read the response body for debugging
+	var responseBody bytes.Buffer
+	_, err = responseBody.ReadFrom(resp.Body)
+	if err != nil {
+		t.Fatalf("Error reading response body: %v", err)
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("Send HTTP request failed: %d", resp.StatusCode)
+		// Try to parse as error response
+		var errorResp struct {
+			Code    int           `json:"code"`
+			Message string        `json:"message"`
+			Details []interface{} `json:"details"`
+		}
+		if err := json.Unmarshal(responseBody.Bytes(), &errorResp); err == nil {
+			t.Fatalf("gRPC-Gateway error: code=%d, message=%s, details=%v", errorResp.Code, errorResp.Message, errorResp.Details)
+		}
+		t.Fatalf("Send HTTP request failed: %d, body: %s", resp.StatusCode, responseBody.String())
 	}
 	var sr successResponse
-	err = json.NewDecoder(resp.Body).Decode(&sr)
+	err = json.Unmarshal(responseBody.Bytes(), &sr)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return &sr
+}
+
+// SendHTTPRequestRaw sends an HTTP request and returns the raw response body without assuming a data wrapper
+func SendHTTPRequestRaw(t *testing.T, url string, body interface{}, apiKeyPath string) []byte {
+	data, err := os.ReadFile(apiKeyPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := json.Marshal(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(encoded))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Add(authorizationKey, string(data))
+	req.Header.Add("Content-Type", "application/json")
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // ignore expired SSL certificates
+		},
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("Error reading response body: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		// Try to parse as error response
+		var errorResp struct {
+			Code    int           `json:"code"`
+			Message string        `json:"message"`
+			Details []interface{} `json:"details"`
+		}
+		if err := json.Unmarshal(responseBody, &errorResp); err == nil {
+			t.Fatalf("gRPC-Gateway error: code=%d, message=%s, details=%v", errorResp.Code, errorResp.Message, errorResp.Details)
+		}
+		t.Fatalf("Send HTTP request failed: %d, body: %s", resp.StatusCode, string(responseBody))
+	}
+
+	return responseBody
 }

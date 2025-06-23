@@ -1,6 +1,7 @@
 import { FunctionComponent } from 'react';
 import { useTranslation } from 'i18n';
 import { FeatureCountByStatus, IconSize } from '@types';
+import { cn } from 'utils/style';
 import {
   IconCalendarXL,
   IconFlagOperationXL,
@@ -50,41 +51,42 @@ const overviewOptions: OverviewOption[] = [
 ];
 
 const Overview = ({
+  disabled,
   onOperationActions
 }: {
+  disabled: boolean;
   onOperationActions: (operationType: OpsTypeMap) => void;
 }) => {
   const { t } = useTranslation(['form', 'table']);
 
   return (
-    <div className="flex flex-col w-full gap-6">
-      <p className="typo-head-bold-big text-gray-800">
-        {t('table:feature-flags:operations-desc')}
-      </p>
-      <div className="flex flex-wrap items-center w-full gap-6 pb-8">
-        {overviewOptions.map(
-          (
-            { titleKey, color, icon, iconSize, opsType, description },
-            index
-          ) => (
-            <OverviewCard
-              key={index}
-              title={
-                <p className="typo-head-bold-medium text-gray-900">
-                  {t(titleKey)}
-                </p>
+    <div className="flex flex-wrap items-center w-full gap-6 pb-4 px-6">
+      {overviewOptions.map(
+        ({ titleKey, color, icon, iconSize, opsType, description }, index) => (
+          <OverviewCard
+            key={index}
+            title={
+              <p className="typo-head-bold-medium text-gray-900">
+                {t(titleKey)}
+              </p>
+            }
+            description={<p>{t(description)}</p>}
+            color={color}
+            icon={icon}
+            iconSize={iconSize}
+            className={cn(
+              'items-start border border-transparent min-h-full self-stretch min-w-[300px]',
+              {
+                'pointer-events-none': disabled
               }
-              description={<p>{t(description)}</p>}
-              color={color}
-              icon={icon}
-              iconSize={iconSize}
-              className="border border-transparent"
-              iconClassName={'p-4'}
-              onClick={() => onOperationActions(opsType)}
-            />
-          )
-        )}
-      </div>
+            )}
+            iconClassName={'p-4'}
+            onClick={() => {
+              if (!disabled) onOperationActions(opsType);
+            }}
+          />
+        )
+      )}
     </div>
   );
 };

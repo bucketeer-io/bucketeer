@@ -34,6 +34,38 @@ export namespace FixedStrategy {
   };
 }
 
+export class Audience extends jspb.Message {
+  getPercentage(): number;
+  setPercentage(value: number): void;
+
+  getDefaultVariation(): string;
+  setDefaultVariation(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): Audience.AsObject;
+  static toObject(includeInstance: boolean, msg: Audience): Audience.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: Audience,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): Audience;
+  static deserializeBinaryFromReader(
+    message: Audience,
+    reader: jspb.BinaryReader
+  ): Audience;
+}
+
+export namespace Audience {
+  export type AsObject = {
+    percentage: number;
+    defaultVariation: string;
+  };
+}
+
 export class RolloutStrategy extends jspb.Message {
   clearVariationsList(): void;
   getVariationsList(): Array<RolloutStrategy.Variation>;
@@ -42,6 +74,11 @@ export class RolloutStrategy extends jspb.Message {
     value?: RolloutStrategy.Variation,
     index?: number
   ): RolloutStrategy.Variation;
+
+  hasAudience(): boolean;
+  clearAudience(): void;
+  getAudience(): Audience | undefined;
+  setAudience(value?: Audience): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): RolloutStrategy.AsObject;
@@ -67,6 +104,7 @@ export class RolloutStrategy extends jspb.Message {
 export namespace RolloutStrategy {
   export type AsObject = {
     variationsList: Array<RolloutStrategy.Variation.AsObject>;
+    audience?: Audience.AsObject;
   };
 
   export class Variation extends jspb.Message {

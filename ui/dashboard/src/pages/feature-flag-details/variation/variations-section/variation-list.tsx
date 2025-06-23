@@ -14,11 +14,16 @@ import {
 import Form from 'components/form';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
+import VariationLabel from 'elements/variation-label';
 import { VariationProps } from '..';
 import { VariationForm } from '../form-schema';
 import Variations from './variations';
 
-const VariationList = ({ feature, isRunningExperiment }: VariationProps) => {
+const VariationList = ({
+  feature,
+  isRunningExperiment,
+  editable
+}: VariationProps) => {
   const { t } = useTranslation(['common', 'form', 'table']);
 
   const { consoleAccount } = useAuth();
@@ -55,6 +60,11 @@ const VariationList = ({ feature, isRunningExperiment }: VariationProps) => {
   const offVariation = watch('offVariation');
   const variations = watch('variations');
 
+  const variationOptions = variations.map((item, index) => ({
+    label: <VariationLabel label={item.name || item.value} index={index} />,
+    value: item.id
+  }));
+
   const offVariationId = useMemo(() => {
     const variation = variations.find(item => item.id === offVariation);
     return variation?.id || '';
@@ -73,6 +83,7 @@ const VariationList = ({ feature, isRunningExperiment }: VariationProps) => {
                 rollouts={rollouts}
                 isRunningExperiment={isRunningExperiment}
                 eventRateOperations={eventRateOperations}
+                editable={editable}
               />
             </Form.Control>
           </Form.Item>
@@ -100,19 +111,19 @@ const VariationList = ({ feature, isRunningExperiment }: VariationProps) => {
               <DropdownMenu>
                 <DropdownMenuTrigger
                   label={
-                    variations.find(item => item.id === offVariationId)?.name ||
-                    ''
+                    variationOptions.find(item => item.value === offVariationId)
+                      ?.label || ''
                   }
                   isExpand
-                  disabled={isRunningExperiment}
+                  disabled={isRunningExperiment || !editable}
                 />
                 <DropdownMenuContent align="start">
-                  {variations?.map((item, index) => (
+                  {variationOptions?.map((item, index) => (
                     <DropdownMenuItem
                       {...field}
                       key={index}
-                      label={item.name || item.value}
-                      value={item.id}
+                      label={item.label}
+                      value={item.value}
                       onSelectOption={value => field.onChange(value)}
                     />
                   ))}

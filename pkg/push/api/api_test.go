@@ -128,23 +128,14 @@ func TestCreatePushMySQL(t *testing.T) {
 			},
 			expectedErr: createError(statusFCMServiceAccountRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fcm_service_account")),
 		},
-		{
-			desc:  "err: ErrTagsRequired",
-			setup: nil,
-			req: &pushproto.CreatePushRequest{
-				Command: &pushproto.CreatePushCommand{
-					FcmServiceAccount: fcmServiceAccountDummy,
-				},
-			},
-			expectedErr: createError(statusTagsRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag")),
-		},
+
 		{
 			desc:  "err: ErrNameRequired",
 			setup: nil,
 			req: &pushproto.CreatePushRequest{
 				Command: &pushproto.CreatePushCommand{
 					FcmServiceAccount: fcmServiceAccountDummy,
-					Tags:              []string{"tag-0"},
+					Tags:              []string{}, // Tags are now optional
 				},
 			},
 			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
@@ -175,7 +166,7 @@ func TestCreatePushMySQL(t *testing.T) {
 			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
 		{
-			desc: "success",
+			desc: "success: with tags",
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
 					gomock.Any(), gomock.Any(),
@@ -195,6 +186,32 @@ func TestCreatePushMySQL(t *testing.T) {
 				Command: &pushproto.CreatePushCommand{
 					FcmServiceAccount: fcmServiceAccountDummy,
 					Tags:              []string{"tag-0"},
+					Name:              "name-1",
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: without tags",
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
+					gomock.Any(), gomock.Any(),
+				).Return([]*proto.Push{}, 0, int64(0), nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().CreatePush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			req: &pushproto.CreatePushRequest{
+				EnvironmentId: "ns0",
+				Command: &pushproto.CreatePushCommand{
+					FcmServiceAccount: fcmServiceAccountDummy,
+					Tags:              []string{}, // Empty tags should be allowed
 					Name:              "name-1",
 				},
 			},
@@ -246,20 +263,13 @@ func TestCreatePushNoCommandMySQL(t *testing.T) {
 			},
 			expectedErr: createError(statusFCMServiceAccountRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fcm_service_account")),
 		},
-		{
-			desc:  "err: ErrTagsRequired",
-			setup: nil,
-			req: &pushproto.CreatePushRequest{
-				FcmServiceAccount: fcmServiceAccountDummy,
-			},
-			expectedErr: createError(statusTagsRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag")),
-		},
+
 		{
 			desc:  "err: ErrNameRequired",
 			setup: nil,
 			req: &pushproto.CreatePushRequest{
 				FcmServiceAccount: fcmServiceAccountDummy,
-				Tags:              []string{"tag-0"},
+				Tags:              []string{}, // Tags are now optional
 			},
 			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
@@ -287,7 +297,7 @@ func TestCreatePushNoCommandMySQL(t *testing.T) {
 			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
 		{
-			desc: "success",
+			desc: "success: with tags",
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
 					gomock.Any(), gomock.Any(),
@@ -306,6 +316,30 @@ func TestCreatePushNoCommandMySQL(t *testing.T) {
 				EnvironmentId:     "ns0",
 				FcmServiceAccount: fcmServiceAccountDummy,
 				Tags:              []string{"tag-0"},
+				Name:              "name-1",
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: without tags",
+			setup: func(s *PushService) {
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
+					gomock.Any(), gomock.Any(),
+				).Return([]*proto.Push{}, 0, int64(0), nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().CreatePush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			req: &pushproto.CreatePushRequest{
+				EnvironmentId:     "ns0",
+				FcmServiceAccount: fcmServiceAccountDummy,
+				Tags:              []string{}, // Empty tags should be allowed
 				Name:              "name-1",
 			},
 			expectedErr: nil,
@@ -571,25 +605,16 @@ func TestUpdatePushNoCommandMySQL(t *testing.T) {
 			setup: func(s *PushService) {
 				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().GetPush(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.Push{
-					Push: &proto.Push{
-						Id: "key-0",
-					},
-				}, nil)
+				).Return(nil, v2ps.ErrPushNotFound)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
 					gomock.Any(), gomock.Any(),
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(v2ps.ErrPushNotFound)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().UpdatePush(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(v2ps.ErrPushNotFound)
 			},
 			req: &pushproto.UpdatePushRequest{
 				Id:   "key-1",
 				Name: wrapperspb.String("push-0"),
-				Tags: []string{"tag-0"},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -644,8 +669,13 @@ func TestUpdatePushNoCommandMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &pushproto.UpdatePushRequest{
-				Id:   "key-0",
-				Tags: []string{"tag-0"},
+				Id: "key-0",
+				TagChanges: []*pushproto.TagChange{
+					{
+						ChangeType: pushproto.ChangeType_CREATE,
+						Tag:        "tag-1",
+					},
+				},
 			},
 			expectedErr: nil,
 		},
@@ -675,7 +705,12 @@ func TestUpdatePushNoCommandMySQL(t *testing.T) {
 				EnvironmentId: "ns0",
 				Id:            "key-0",
 				Name:          wrapperspb.String("name-1"),
-				Tags:          []string{"tag-0"},
+				TagChanges: []*pushproto.TagChange{
+					{
+						ChangeType: pushproto.ChangeType_CREATE,
+						Tag:        "tag-0",
+					},
+				},
 			},
 			expectedErr: nil,
 		},
@@ -799,14 +834,6 @@ func TestDeletePushMySQL(t *testing.T) {
 			req:         &pushproto.DeletePushRequest{},
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
-		// command is deprecating
-		//{
-		//	desc: "err: ErrNoCommand",
-		//	req: &pushproto.DeletePushRequest{
-		//		Id: "key-0",
-		//	},
-		//	expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		//},
 		{
 			desc: "err: ErrNotFound",
 			setup: func(s *PushService) {
@@ -842,13 +869,8 @@ func TestDeletePushMySQL(t *testing.T) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
 				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().UpdatePush(
-					gomock.Any(), &domain.Push{
-						Push: &proto.Push{
-							Id:      "key-0",
-							Deleted: true,
-						},
-					}, gomock.Any(),
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().DeletePush(
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &pushproto.DeletePushRequest{
@@ -939,6 +961,51 @@ func TestListPushesMySQL(t *testing.T) {
 			input:       &pushproto.ListPushesRequest{PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
 			expected:    &pushproto.ListPushesResponse{Pushes: []*pushproto.Push{}, Cursor: "0"},
 			expectedErr: nil,
+		},
+		{
+			desc:    "success: filter by environmentIDs",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_EDITOR),
+			setup: func(s *PushService) {
+				s.accountClient.(*accountclientmock.MockClient).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(&accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						Email:            "email",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "ns0",
+								Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+							},
+							{
+								EnvironmentId: "ns1",
+								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+							},
+						},
+					},
+				}, nil)
+				s.pushStorage.(*storagemock.MockPushStorage).EXPECT().ListPushes(
+					gomock.Any(), gomock.Any(),
+				).Return([]*proto.Push{
+					{Id: "push-1", EnvironmentId: "ns0"},
+					{Id: "push-2", EnvironmentId: "ns1"},
+				}, 2, int64(2), nil)
+			},
+			input: &pushproto.ListPushesRequest{
+				PageSize:       2,
+				Cursor:         "",
+				EnvironmentIds: []string{"ns0"},
+				OrganizationId: "org-1",
+			},
+			expected: &pushproto.ListPushesResponse{
+				Pushes: []*pushproto.Push{
+					{Id: "push-1", EnvironmentId: "ns0"},
+					{Id: "push-2", EnvironmentId: "ns1"},
+				},
+				Cursor:     "2",
+				TotalCount: 2,
+			},
 		},
 	}
 	for _, p := range patterns {

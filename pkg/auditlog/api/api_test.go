@@ -34,6 +34,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -262,6 +263,42 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			},
 		},
 		{
+			desc:    "success with default page size when page_size is 0",
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
+			context: createContextWithToken(t, true),
+			setup: func(s *auditlogService) {
+				// Expect the default page size (200) to be used
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+					gomock.Any(),
+					&mysql.ListOptions{
+						Limit:  200, // maxAuditLogPageSize (used as default when page_size is 0)
+						Offset: 0,
+						Filters: []*mysql.FilterV2{
+							{
+								Column:   "environment_id",
+								Operator: mysql.OperatorEqual,
+								Value:    "ns0",
+							},
+						},
+						Orders: []*mysql.Order{
+							{
+								Column:    "timestamp",
+								Direction: mysql.OrderDirectionDesc,
+							},
+						},
+					},
+				).Return(createAuditLogs(t), 200, int64(10), nil)
+				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAvatarAccountsV2(
+					gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.AccountV2{}, nil)
+			},
+			input:    &proto.ListAuditLogsRequest{PageSize: 0, Cursor: "", EnvironmentId: "ns0"},
+			expected: &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "200", TotalCount: 10},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
 			desc:    "success with Viewer Account",
 			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: createContextWithToken(t, false),
@@ -275,6 +312,51 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			},
 			input:    &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
 			expected: &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "success: page size exceeds maximum",
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
+			context: createContextWithToken(t, true),
+			setup: func(s *auditlogService) {
+				// Expect the maximum page size (200) to be used even though 1000 was requested
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+					gomock.Any(),
+					&mysql.ListOptions{
+						Limit:  200, // maxAuditLogPageSize
+						Offset: 0,
+						Filters: []*mysql.FilterV2{
+							{
+								Column:   "environment_id",
+								Operator: mysql.OperatorEqual,
+								Value:    "ns0",
+							},
+						},
+						Orders: []*mysql.Order{
+							{
+								Column:    "timestamp",
+								Direction: mysql.OrderDirectionDesc,
+							},
+						},
+					},
+				).Return(createAuditLogs(t), 200, int64(10), nil)
+				s.accountStorage.(*v2asmock.MockAccountStorage).EXPECT().GetAvatarAccountsV2(
+					gomock.Any(), gomock.Any(),
+				).Return([]*accountproto.AccountV2{}, nil)
+			},
+			input: &proto.ListAuditLogsRequest{
+				PageSize:       1000, // Exceeds maximum, should be capped at 200
+				EnvironmentId:  "ns0",
+				OrderBy:        proto.ListAuditLogsRequest_TIMESTAMP,
+				OrderDirection: proto.ListAuditLogsRequest_DESC,
+			},
+			expected: &proto.ListAuditLogsResponse{
+				AuditLogs:  createAuditLogs(t),
+				Cursor:     "200", // Capped at maximum page size
+				TotalCount: 10,
+			},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
 			},
@@ -353,6 +435,40 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 			},
 			input:       &proto.ListAdminAuditLogsRequest{PageSize: 2, Cursor: ""},
 			expected:    &proto.ListAdminAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
+			expectedErr: nil,
+		},
+		{
+			desc: "success with default page size when page_size is 0",
+			setup: func(s *auditlogService) {
+				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
+					gomock.Any(),
+					&mysql.ListOptions{
+						Limit:   200, // maxAuditLogPageSize (used as default when page_size is 0)
+						Offset:  0,
+						Orders:  []*mysql.Order{{Column: "timestamp", Direction: mysql.OrderDirectionDesc}},
+						Filters: []*mysql.FilterV2{},
+					},
+				).Return(createAuditLogs(t), 200, int64(10), nil)
+			},
+			input:       &proto.ListAdminAuditLogsRequest{PageSize: 0, Cursor: ""},
+			expected:    &proto.ListAdminAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "200", TotalCount: 10},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: page size exceeds maximum",
+			setup: func(s *auditlogService) {
+				s.adminAuditLogStorage.(*v2alsmock.MockAdminAuditLogStorage).EXPECT().ListAdminAuditLogs(
+					gomock.Any(),
+					&mysql.ListOptions{
+						Limit:   200, // maxAuditLogPageSize
+						Offset:  0,
+						Orders:  []*mysql.Order{{Column: "timestamp", Direction: mysql.OrderDirectionDesc}},
+						Filters: []*mysql.FilterV2{},
+					},
+				).Return(createAuditLogs(t), 200, int64(10), nil)
+			},
+			input:       &proto.ListAdminAuditLogsRequest{PageSize: 1000, Cursor: ""},
+			expected:    &proto.ListAdminAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "200", TotalCount: 10},
 			expectedErr: nil,
 		},
 	}
@@ -461,6 +577,94 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 				FeatureId: "fid-1", PageSize: 2, Cursor: "", EnvironmentId: "ns0",
 			},
 			expected: &proto.ListFeatureHistoryResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: int64(10)},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "success with default page size when page_size is 0",
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
+			context: createContextWithToken(t, false),
+			setup: func(s *auditlogService) {
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+					gomock.Any(),
+					&mysql.ListOptions{
+						Limit:  200, // maxAuditLogPageSize (used as default when page_size is 0)
+						Offset: 0,
+						Filters: []*mysql.FilterV2{
+							{
+								Column:   "environment_id",
+								Operator: mysql.OperatorEqual,
+								Value:    "ns0",
+							},
+							{
+								Column:   "entity_type",
+								Operator: mysql.OperatorEqual,
+								Value:    int32(domaineventproto.Event_FEATURE),
+							},
+							{
+								Column:   "entity_id",
+								Operator: mysql.OperatorEqual,
+								Value:    "fid-1",
+							},
+						},
+						Orders: []*mysql.Order{
+							{
+								Column:    "timestamp",
+								Direction: mysql.OrderDirectionDesc,
+							},
+						},
+					},
+				).Return(createAuditLogs(t), 200, int64(10), nil)
+			},
+			input: &proto.ListFeatureHistoryRequest{
+				FeatureId: "fid-1", PageSize: 0, Cursor: "", EnvironmentId: "ns0",
+			},
+			expected: &proto.ListFeatureHistoryResponse{AuditLogs: createAuditLogs(t), Cursor: "200", TotalCount: int64(10)},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "success: page size exceeds maximum",
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
+			context: createContextWithToken(t, false),
+			setup: func(s *auditlogService) {
+				s.auditLogStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
+					gomock.Any(),
+					&mysql.ListOptions{
+						Limit:  200, // maxAuditLogPageSize
+						Offset: 0,
+						Filters: []*mysql.FilterV2{
+							{
+								Column:   "environment_id",
+								Operator: mysql.OperatorEqual,
+								Value:    "ns0",
+							},
+							{
+								Column:   "entity_type",
+								Operator: mysql.OperatorEqual,
+								Value:    int32(domaineventproto.Event_FEATURE),
+							},
+							{
+								Column:   "entity_id",
+								Operator: mysql.OperatorEqual,
+								Value:    "fid-1",
+							},
+						},
+						Orders: []*mysql.Order{
+							{
+								Column:    "timestamp",
+								Direction: mysql.OrderDirectionDesc,
+							},
+						},
+					},
+				).Return(createAuditLogs(t), 200, int64(10), nil)
+			},
+			input: &proto.ListFeatureHistoryRequest{
+				FeatureId: "fid-1", PageSize: 1000, Cursor: "", EnvironmentId: "ns0",
+			},
+			expected: &proto.ListFeatureHistoryResponse{AuditLogs: createAuditLogs(t), Cursor: "200", TotalCount: int64(10)},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
 			},

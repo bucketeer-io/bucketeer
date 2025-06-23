@@ -41,7 +41,12 @@ const DebuggerAttributes = () => {
                 <Form.Item className="py-0 flex-1">
                   <Form.Label>{t('form:key')}</Form.Label>
                   <Form.Control>
-                    <Input {...field} />
+                    <Input
+                      {...field}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') e.preventDefault();
+                      }}
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>
@@ -54,7 +59,12 @@ const DebuggerAttributes = () => {
                 <Form.Item className="py-0 flex-1">
                   <Form.Label>{t('form:feature-flags.value')}</Form.Label>
                   <Form.Control>
-                    <Input {...field} />
+                    <Input
+                      {...field}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') e.preventDefault();
+                      }}
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>

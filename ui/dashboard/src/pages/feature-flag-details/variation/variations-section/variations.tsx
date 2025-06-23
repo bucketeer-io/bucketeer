@@ -12,7 +12,7 @@ import {
   Rollout,
   StrategyType
 } from '@types';
-import { cn, getVariationSpecificColor } from 'utils/style';
+import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
@@ -47,12 +47,14 @@ const Variations = ({
   feature,
   rollouts,
   isRunningExperiment,
-  eventRateOperations
+  eventRateOperations,
+  editable
 }: {
   feature: Feature;
   rollouts: Rollout[];
   isRunningExperiment?: boolean;
   eventRateOperations: AutoOpsRule[];
+  editable: boolean;
 }) => {
   const { t } = useTranslation(['common', 'form', 'table']);
 
@@ -141,6 +143,7 @@ const Variations = ({
   const isDisableRemoveBtn = useCallback(
     (variationId: string) => {
       return (
+        !editable ||
         isBoolean ||
         isRunningExperiment ||
         fields.length <= 2 ||
@@ -167,7 +170,8 @@ const Variations = ({
       prerequisiteVariationIds,
       isRunningExperiment,
       rolloutVariationIds,
-      eventRateVariationIds
+      eventRateVariationIds,
+      editable
     ]
   );
   const isProgressiveRolloutsRunningWaiting = (status: OperationStatus) =>
@@ -175,11 +179,12 @@ const Variations = ({
 
   const isDisableAddBtn = useCallback(
     () =>
+      !editable ||
       isBoolean ||
       isRunningExperiment ||
       rollouts.filter(item => isProgressiveRolloutsRunningWaiting(item.status))
         ?.length > 0,
-    [isBoolean, rollouts, isRunningExperiment]
+    [isBoolean, rollouts, isRunningExperiment, editable]
   );
 
   const onAddVariation = () => {
@@ -221,12 +226,7 @@ const Variations = ({
       {fields.map((variation, variationIndex) => (
         <div key={variation.variationField} className="flex w-full gap-x-2">
           <div className="flex flex-col w-full gap-y-3">
-            <VariationLabel
-              index={variationIndex}
-              specificColor={
-                isBoolean ? getVariationSpecificColor(variation.value) : ''
-              }
-            />
+            <VariationLabel index={variationIndex} />
             <div className="flex flex-col w-full gap-y-5">
               <div className="flex items-end w-full gap-x-2">
                 {!isJSON && (
@@ -242,7 +242,9 @@ const Variations = ({
                           <Form.Control>
                             <Input
                               {...field}
-                              disabled={isBoolean || isRunningExperiment}
+                              disabled={
+                                isBoolean || isRunningExperiment || !editable
+                              }
                               placeholder={t('form:feature-flags.value')}
                               className="px-3"
                             />
@@ -264,7 +266,7 @@ const Variations = ({
                         <Input
                           {...field}
                           placeholder={t('name')}
-                          disabled={isRunningExperiment}
+                          disabled={isRunningExperiment || !editable}
                         />
                       </Form.Control>
                       <Form.Message />
@@ -281,7 +283,7 @@ const Variations = ({
                         <Input
                           {...field}
                           placeholder={t('form:description')}
-                          disabled={isRunningExperiment}
+                          disabled={isRunningExperiment || !editable}
                         />
                       </Form.Control>
                       <Form.Message />
@@ -301,7 +303,7 @@ const Variations = ({
                         </Form.Label>
                         <Form.Control>
                           <ReactCodeEditor
-                            readOnly={isRunningExperiment}
+                            readOnly={isRunningExperiment || !editable}
                             value={field.value}
                             onChange={field.onChange}
                           />

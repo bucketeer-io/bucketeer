@@ -5,7 +5,8 @@ import {
   Route,
   Routes,
   useParams,
-  useNavigate
+  useNavigate,
+  useLocation
 } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
@@ -45,6 +46,7 @@ import { v4 as uuid } from 'uuid';
 import { ConsoleAccount } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams, useSearchParams } from 'utils/search-params';
+import AccessDeniedPage from 'pages/access-denied';
 import APIKeysPage from 'pages/api-keys';
 import AuditLogsPage from 'pages/audit-logs';
 import DebuggerPage from 'pages/debugger';
@@ -156,6 +158,7 @@ export const Root = memo(() => {
 export const EnvironmentRoot = memo(
   ({ account }: { account: ConsoleAccount }) => {
     const navigate = useNavigate();
+    const { pathname } = useLocation();
     const { envUrlCode, ...params } = useParams();
     const { searchOptions } = useSearchParams();
 
@@ -193,12 +196,14 @@ export const EnvironmentRoot = memo(
 
     useEffect(() => handleCheckEnvCodeOnInit(), [account, envUrlCode]);
 
+    if (pathname === '/') return <AppLoading />;
+
     return (
       <Routes>
         {!editable && (
           <Route
             path={`/:any${PAGE_PATH_NEW}`}
-            element={<h3>{`403 Access denied`}</h3>}
+            element={<AccessDeniedPage />}
           />
         )}
         <Route
@@ -207,16 +212,16 @@ export const EnvironmentRoot = memo(
         />
         <Route path={`${PAGE_PATH_SETTINGS}`} element={<SettingsPage />} />
         <Route path={`${PAGE_PATH_PROJECTS}/*`} element={<ProjectsRoot />} />
-        <Route path={`${PAGE_PATH_APIKEYS}`} element={<APIKeysPage />} />
+        <Route path={`${PAGE_PATH_APIKEYS}/*`} element={<APIKeysPage />} />
         <Route path={`${PAGE_PATH_MEMBERS}`} element={<MembersPage />} />
         <Route
-          path={`${PAGE_PATH_NOTIFICATIONS}`}
+          path={`${PAGE_PATH_NOTIFICATIONS}/*`}
           element={<NotificationsPage />}
         />
-        <Route path={`${PAGE_PATH_PUSHES}`} element={<PushesPage />} />
+        <Route path={`${PAGE_PATH_PUSHES}/*`} element={<PushesPage />} />
         <Route path={`${PAGE_PATH_GOALS}/*`} element={<GoalsRoot />} />
         <Route
-          path={`${PAGE_PATH_USER_SEGMENTS}`}
+          path={`${PAGE_PATH_USER_SEGMENTS}/*`}
           element={<UserSegmentsPage />}
         />
         <Route

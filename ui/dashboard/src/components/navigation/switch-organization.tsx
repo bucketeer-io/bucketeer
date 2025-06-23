@@ -6,7 +6,11 @@ import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { clearCurrentEnvIdStorage } from 'storage/environment';
-import { getOrgIdStorage, setOrgIdStorage } from 'storage/organization';
+import {
+  clearOrgIdStorage,
+  getOrgIdStorage,
+  setOrgIdStorage
+} from 'storage/organization';
 import { getTokenStorage, setTokenStorage } from 'storage/token';
 import { cn } from 'utils/style';
 import { IconChecked } from '@icons';
@@ -90,8 +94,9 @@ const SwitchOrganization = ({
         setIsLoading(true);
         const token = getTokenStorage();
         if (token?.accessToken) {
-          setOrgIdStorage(organizationId);
+          clearOrgIdStorage();
           clearCurrentEnvIdStorage();
+          setOrgIdStorage(organizationId);
           const resp = await switchOrganization({
             accessToken: token.accessToken,
             organizationId

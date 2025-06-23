@@ -25,6 +25,7 @@
     "edit-push": "Edit Push",
     "disable-push": "Disable Push",
     "enable-push": "Enable Push",
+    "delete-push": "Delete Push",
     "delete-goal": "Delete Goal",
     "archive-goal": "Archive Goal",
     "unarchive-goal": "Unarchive Goal",
@@ -70,7 +71,9 @@
     "feature-flags-desc": "There are no registered feature flags. Add a new one to start managing.",
     "notifications": "No notifications to show just yet, but don't worry, we're here to keep you in the loop.",
     "audit-logs-title": "No registered audit logs",
-    "audit-logs-desc": "There are no audit logs for this environment."
+    "audit-logs-desc": "There are no audit logs for this environment.",
+    "flag-operations-title": "No registered operations",
+    "flag-operations-desc": "There are no operations for this feature flag."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
@@ -95,7 +98,8 @@
   },
   "push": {
     "confirm-enable-desc": "The Push \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
-    "confirm-disable-desc": "The Push \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
+    "confirm-disable-desc": "The Push \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?",
+    "confirm-delete-desc": "The Push \"<bold>{{name}}</bold>\" will be deleted permanently. Are you sure you want to proceed?"
   },
   "operations": {
     "confirm-delete-operation": "The <bold>{{type}}</bold> will be deleted permanently. Are you sure you want to proceed?"
@@ -186,8 +190,6 @@
     "target-segments": "Target Segments",
     "target-individuals": "Target Individuals",
     "set-prerequisites": "Set Prerequisites",
-    "default-rule": "Default Rule",
-    "default-rule-desc": "When targeting is ON and contexts don't match any targeting rules",
     "rules": "Rules",
     "rule-index": "Rule {{index}}",
     "total-flags": "Total Flags",
@@ -209,7 +211,10 @@
     "operations-desc": "Automate your release and reduce risks with auto operations",
     "operations-schedule-desc": "Schedule a flag to turn on or off",
     "operations-event-rate-desc": "Turn off automatically a flag based on KPI events",
-    "operations-rollout-desc": "Automate to release a feature progressively"
+    "operations-rollout-desc": "Automate to release a feature progressively",
+    "rollout-create-desc": "Gradually roll out a variation of a feature flag to users in controlled phases. You can choose between a manual rollout schedule or an automated template that handles increments and timing for you.",
+    "kill-switch": "Kill Switch",
+    "event-rate-create-desc": "Automatically disables a feature flag when a specified goal event rate is reached for a particular variation. Useful for stopping flags causing high error rates or collecting data up to a defined threshold."
   },
   "audit-log-title": "<b>{{username}}</b> {{action}} the {{entityType}} <highlight>{{entityName}}</highlight>",
   "no-data-change": "No data change",
@@ -277,7 +282,8 @@
     "dropdown-desc": "Webhook: Change the feature flag ON/OFF status via HTTP request"
   },
   "stop-schedule": "Stop Schedule",
-  "stop-event-rate": "Stop Event Rate",
+  "stop-kill-switch": "Stop Kill Switch",
   "stop-rollout": "Stop Progressive Rollout",
-  "stop-operation-type-desc": "The {{type}} will be stopped. Are you sure you want to proceed?"
+  "stop-operation-type-desc": "The {{type}} will be stopped. Are you sure you want to proceed?",
+  "current-event-rate-tooltip": "Goal Count / Evaluation Count * 100"
 }

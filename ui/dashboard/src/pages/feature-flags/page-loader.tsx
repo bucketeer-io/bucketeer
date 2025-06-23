@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Trans } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { autoOpsCreator } from '@api/auto-ops';
 import { featureUpdater } from '@api/features';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures } from '@queries/features';
@@ -11,18 +12,20 @@ import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import { useTranslation } from 'i18n';
 import { Feature, FeatureUpdaterParams } from '@types';
+import ConfirmationRequiredModal, {
+  ConfirmRequiredValues
+} from 'pages/feature-flag-details/elements/confirm-required-modal';
 import { getFlagStatus } from './collection-layout/elements/utils';
 import AddFlagModal from './flags-modal/add-flag-modal';
 import ArchiveModal from './flags-modal/archive-modal';
 import CloneFlagModal from './flags-modal/clone-flag-modal';
-import ConfirmationRequiredModal from './flags-modal/confirm-required-modal';
 import PageContent from './page-content';
 import { FeatureActivityStatus, FlagActionType } from './types';
 
 const PageLoader = () => {
-  const { t } = useTranslation(['common', 'table']);
+  const { t } = useTranslation(['common', 'table', 'message']);
   const queryClient = useQueryClient();
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
@@ -77,7 +80,7 @@ const PageLoader = () => {
     onSuccess: () => {
       onCloseConfirmModal();
       notify({
-        message: 'Updated feature flag successfully.'
+        message: t('message:flag-updated')
       });
       invalidateFeatures(queryClient);
       invalidateFeature(queryClient);
@@ -97,6 +100,47 @@ const PageLoader = () => {
       }
     },
     [selectedFlag]
+  );
+
+  const handleToggleFeatureState = useCallback(
+    async (additionalValues?: ConfirmRequiredValues) => {
+      try {
+        if (selectedFlag) {
+          const { scheduleType, comment, scheduleAt } = additionalValues || {};
+          let resp;
+          if (['ENABLE', 'DISABLE'].includes(scheduleType as string)) {
+            resp = await featureUpdater({
+              id: selectedFlag.id,
+              environmentId: currentEnvironment.id,
+              enabled: !selectedFlag.enabled,
+              comment
+            });
+          } else {
+            resp = await autoOpsCreator({
+              environmentId: currentEnvironment.id,
+              featureId: selectedFlag.id,
+              opsType: 'SCHEDULE',
+              datetimeClauses: [
+                {
+                  actionType: selectedFlag.enabled ? 'DISABLE' : 'ENABLE',
+                  time: scheduleAt as string
+                }
+              ]
+            });
+          }
+          if (resp) {
+            notify({
+              message: t('message:flag-updated')
+            });
+            invalidateFeatures(queryClient);
+            onCloseConfirmRequiredModal();
+          }
+        }
+      } catch (error) {
+        errorNotify(error);
+      }
+    },
+    [isEnabling, selectedFlag, currentEnvironment]
   );
 
   return (
@@ -148,10 +192,12 @@ const PageLoader = () => {
       )}
       {openConfirmRequiredModal && selectedFlag && (
         <ConfirmationRequiredModal
-          isEnabling={isEnabling}
-          selectedFlag={selectedFlag}
           isOpen={openConfirmRequiredModal}
+          feature={selectedFlag}
+          isShowScheduleSelect={true}
+          isShowRolloutWarning={selectedFlag.enabled}
           onClose={onCloseConfirmRequiredModal}
+          onSubmit={handleToggleFeatureState}
         />
       )}
     </>

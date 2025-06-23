@@ -36,8 +36,10 @@ import TextArea from 'components/textarea';
 import CreateGoalModal from 'elements/create-goal-modal';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import FeatureFlagStatus from 'elements/feature-flag-status';
+import VariationLabel from 'elements/variation-label';
 
 interface AddExperimentModalProps {
+  disabled: boolean;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -85,7 +87,11 @@ const CreateNewOptionButton = ({
   </Button>
 );
 
-const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
+const AddExperimentModal = ({
+  disabled,
+  isOpen,
+  onClose
+}: AddExperimentModalProps) => {
   const { t } = useTranslation(['form', 'common']);
   const { notify } = useToast();
 
@@ -171,8 +177,12 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
   const featureId = watch('featureId');
 
   const variationOptions =
-    featureFlagOptions?.find(item => item.value === featureId)?.variations ||
-    [];
+    featureFlagOptions
+      ?.find(item => item.value === featureId)
+      ?.variations?.map((item, index) => ({
+        label: <VariationLabel label={item.name || item.value} index={index} />,
+        value: item.id
+      })) || [];
 
   // const startOptions = [
   //   {
@@ -454,10 +464,12 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                         />
                       )}
                       createNewOption={
-                        <CreateNewOptionButton
-                          text={t('common:create-a-new-flag')}
-                          onClick={onOpenCreateFlagModal}
-                        />
+                        disabled ? undefined : (
+                          <CreateNewOptionButton
+                            text={t('common:create-a-new-flag')}
+                            onClick={onOpenCreateFlagModal}
+                          />
+                        )
                       }
                       onSelectOption={field.onChange}
                     />
@@ -481,8 +493,8 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                           placeholder={t(`experiments.select-variation`)}
                           label={
                             variationOptions?.find(
-                              item => item.id === field.value
-                            )?.name || ''
+                              item => item.value === field.value
+                            )?.label || ''
                           }
                           variant="secondary"
                           className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
@@ -496,8 +508,8 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                             <DropdownMenuItem
                               {...field}
                               key={index}
-                              value={item.id}
-                              label={item.name}
+                              value={item.value}
+                              label={item.label}
                               onSelectOption={value => {
                                 field.onChange(value);
                               }}
@@ -547,10 +559,12 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                       options={goalOptions}
                       selectedOptions={field.value as string[]}
                       createNewOption={
-                        <CreateNewOptionButton
-                          text={t('common:create-a-new-goal')}
-                          onClick={onOpenCreateGoalModal}
-                        />
+                        disabled ? undefined : (
+                          <CreateNewOptionButton
+                            text={t('common:create-a-new-goal')}
+                            onClick={onOpenCreateGoalModal}
+                          />
+                        )
                       }
                       onSelectOption={value => {
                         const isExisted = field.value?.find(
@@ -595,7 +609,7 @@ const AddExperimentModal = ({ isOpen, onClose }: AddExperimentModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isValid || !isDirty}
+                    disabled={!isValid || !isDirty || disabled}
                     loading={isSubmitting}
                   >
                     {t(`common:submit`)}

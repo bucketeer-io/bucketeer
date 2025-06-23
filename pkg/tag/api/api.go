@@ -189,25 +189,59 @@ func (s *TagService) ListTags(
 	req *proto.ListTagsRequest,
 ) (*proto.ListTagsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(
-		ctx, accproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
-	if err != nil {
-		return nil, err
-	}
-	whereParts := []mysql.WherePart{}
+	inFilters := make([]*mysql.InFilter, 0)
+	filters := []*mysql.FilterV2{}
 	if req.OrganizationId != "" {
 		// New console
-		whereParts = append(whereParts, mysql.NewFilter("env.organization_id", "=", req.OrganizationId))
+		editor, err := s.checkOrganizationRole(
+			ctx, accproto.AccountV2_Role_Organization_MEMBER,
+			req.OrganizationId, localizer)
+		if err != nil {
+			return nil, err
+		}
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "env.organization_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.OrganizationId,
+		})
+		filterEnvironmentIDs := s.getAllowedEnvironments([]string{req.EnvironmentId}, editor)
+		values := make([]interface{}, 0)
+		for _, id := range filterEnvironmentIDs {
+			values = append(values, id)
+		}
+		if len(filterEnvironmentIDs) > 0 {
+			inFilters = append(inFilters, &mysql.InFilter{
+				Column: "tag.environment_id",
+				Values: values,
+			})
+		}
 	} else {
 		// Current console
-		whereParts = append(whereParts, mysql.NewFilter("tag.environment_id", "=", req.EnvironmentId))
+		_, err := s.checkEnvironmentRole(
+			ctx, accproto.AccountV2_Role_Environment_VIEWER,
+			req.EnvironmentId, localizer)
+		if err != nil {
+			return nil, err
+		}
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "tag.environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    req.EnvironmentId,
+		})
 	}
+	var searchQuery *mysql.SearchQuery
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"tag.name"}, req.SearchKeyword))
+		searchQuery = &mysql.SearchQuery{
+			Columns: []string{"tag.name"},
+			Keyword: req.SearchKeyword,
+		}
 	}
 	if req.EntityType != proto.Tag_UNSPECIFIED {
-		whereParts = append(whereParts, mysql.NewFilter("tag.entity_type", "=", req.EntityType))
+		filters = append(filters, &mysql.FilterV2{
+			Column:   "tag.entity_type",
+			Operator: mysql.OperatorEqual,
+			Value:    req.EntityType,
+		})
 	}
 	orders, err := s.newListTagsOrdersMySQL(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -236,13 +270,17 @@ func (s *TagService) ListTags(
 		}
 		return nil, dt.Err()
 	}
-	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(
-		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
-	)
+	options := &mysql.ListOptions{
+		Filters:     filters,
+		SearchQuery: searchQuery,
+		Orders:      orders,
+		Limit:       limit,
+		Offset:      offset,
+		JSONFilters: nil,
+		InFilters:   inFilters,
+		NullFilters: nil,
+	}
+	tags, nextCursor, totalCount, err := s.tagStorage.ListTags(ctx, options)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list tags",
@@ -416,6 +454,107 @@ func (s *TagService) checkEnvironmentRole(
 		}
 	}
 	return editor, nil
+}
+
+func (s *TagService) checkOrganizationRole(
+	ctx context.Context,
+	requiredRole accproto.AccountV2_Role_Organization,
+	organizationID string,
+	localizer locale.Localizer,
+) (*eventproto.Editor, error) {
+	editor, err := role.CheckOrganizationRole(ctx, requiredRole, func(
+		email string,
+	) (*accproto.GetAccountV2Response, error) {
+		resp, err := s.accountClient.GetAccountV2(ctx, &accproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: organizationID,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return resp, nil
+	})
+	if err != nil {
+		switch status.Code(err) {
+		case codes.Unauthenticated:
+			s.logger.Error(
+				"Unauthenticated",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationID", organizationID),
+				)...,
+			)
+			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.UnauthenticatedError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		case codes.PermissionDenied:
+			s.logger.Error(
+				"Permission denied",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationID", organizationID),
+				)...,
+			)
+			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.PermissionDenied),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		default:
+			s.logger.Error(
+				"Failed to check role",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationID", organizationID),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+	}
+	return editor, nil
+}
+
+func (s *TagService) getAllowedEnvironments(
+	reqEnvironmentIDs []string,
+	editor *eventproto.Editor,
+) []string {
+	filterEnvironmentIDs := make([]string, 0)
+	if editor.OrganizationRole == accproto.AccountV2_Role_Organization_ADMIN || editor.IsAdmin {
+		// if the user is an admin, no need to filter environments.
+		filterEnvironmentIDs = append(filterEnvironmentIDs, reqEnvironmentIDs...)
+	} else {
+		// only show API keys in allowed environments for member.
+		if len(reqEnvironmentIDs) > 0 {
+			for _, id := range reqEnvironmentIDs {
+				for _, e := range editor.EnvironmentRoles {
+					if e.EnvironmentId == id {
+						filterEnvironmentIDs = append(filterEnvironmentIDs, id)
+						break
+					}
+				}
+			}
+		} else {
+			for _, e := range editor.EnvironmentRoles {
+				filterEnvironmentIDs = append(filterEnvironmentIDs, e.EnvironmentId)
+			}
+		}
+	}
+	return filterEnvironmentIDs
 }
 
 func (s *TagService) newListTagsOrdersMySQL(

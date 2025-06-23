@@ -5,6 +5,8 @@ import { ActionTypeMap, ScheduleItem } from './types';
 
 export const createInitialDatetimeClause = (lastTime?: number) => ({
   time: dayjs(lastTime ? new Date(lastTime) : new Date())
+    .set('second', 0)
+    .set('millisecond', 0)
     .add(1, 'hour')
     .toDate()
 });
@@ -22,7 +24,7 @@ export const createEventRate = (feature: Feature) => ({
   minCount: 50,
   threadsholdRate: 50,
   operator: 'GREATER_OR_EQUAL' as OpsEventRateClauseOperator,
-  actionType: ActionTypeMap.ENABLE
+  actionType: ActionTypeMap.DISABLE
 });
 
 export const createProgressiveRollout = (feature: Feature) => ({

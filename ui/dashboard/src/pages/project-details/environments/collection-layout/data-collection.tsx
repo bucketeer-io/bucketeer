@@ -1,15 +1,14 @@
 import {
   IconArchiveOutlined,
-  IconEditOutlined,
-  IconMoreHorizOutlined
+  IconEditOutlined
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'i18n';
 import { Environment } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
-import { Popover } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { EnvironmentActionsType } from '../types';
 
@@ -93,7 +92,8 @@ export const useColumns = ({
         const environment = row.original;
 
         return (
-          <Popover
+          <DisabledPopoverTooltip
+            isNeedAdminAccess
             options={[
               {
                 label: `${t('table:popover.edit-env')}`,
@@ -112,11 +112,9 @@ export const useColumns = ({
                     value: 'ARCHIVE'
                   }
             ]}
-            icon={IconMoreHorizOutlined}
             onClick={value =>
               onActions(environment, value as EnvironmentActionsType)
             }
-            align="end"
           />
         );
       }

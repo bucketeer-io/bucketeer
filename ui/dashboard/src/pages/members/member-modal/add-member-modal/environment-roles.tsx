@@ -14,6 +14,8 @@ import {
 } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
+import { AddMemberForm } from '.';
+import { EditMemberForm } from '../edit-member-modal';
 
 interface environmentRoleOption {
   value: EnvironmentRoleType;
@@ -32,47 +34,47 @@ const environmentRoleOptions: environmentRoleOption[] = [
 ];
 
 const EnvironmentRoles = ({
-  environments,
-  memberEnvironments,
-  onChangeEnvironments
+  environments
 }: {
   environments: Environment[];
-  memberEnvironments: EnvironmentRoleItem[];
-  onChangeEnvironments: (v: EnvironmentRoleItem[]) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
 
-  const methods = useFormContext();
-  const { control, watch } = methods;
+  const methods = useFormContext<AddMemberForm | EditMemberForm>();
+  const { control, watch, setValue } = methods;
 
-  const selectedEnvs = memberEnvironments.map(item => item.environmentId);
+  const environmentRolesWatch: EnvironmentRoleItem[] =
+    watch('environmentRoles');
+
+  const selectedEnvs = environmentRolesWatch.map(item => item.environmentId);
   const environmentsOptions = environments.filter(
     item => item.id && !selectedEnvs.includes(item.id)
   );
 
-  const environmentRoles = watch('environmentRoles');
-
   const isDisabledAddMemberButton = useMemo(
     () =>
-      environmentRoles?.length >=
+      environmentRolesWatch?.length >=
         environments?.filter(item => item.id).length ||
       !environmentsOptions.length,
-    [environmentRoles, environments, environmentsOptions]
+    [environmentRolesWatch, environments, environmentsOptions]
   );
 
   const onAddEnvironment = () => {
-    memberEnvironments.push({
-      environmentId: '',
-      role: 'Environment_UNASSIGNED'
-    });
-    onChangeEnvironments([...memberEnvironments]);
+    const newEnvironmentRoles: EnvironmentRoleItem[] = [
+      ...environmentRolesWatch,
+      {
+        environmentId: '',
+        role: 'Environment_UNASSIGNED'
+      }
+    ];
+
+    setValue('environmentRoles', newEnvironmentRoles, { shouldDirty: true });
   };
 
   const onDeleteEnvironment = (itemIndex: number) => {
-    const environments = memberEnvironments.filter(
-      (_item, index) => itemIndex !== index
-    );
-    onChangeEnvironments([...environments]);
+    const newEnvironmentRoles: EnvironmentRoleItem[] =
+      environmentRolesWatch.filter((_, index) => index !== itemIndex);
+    setValue('environmentRoles', newEnvironmentRoles, { shouldDirty: true });
   };
 
   return (
@@ -89,7 +91,7 @@ const EnvironmentRoles = ({
         {t(`add-environment`)}
       </Button>
 
-      {memberEnvironments.map((environment, envIndex) => (
+      {environmentRolesWatch?.map((environment, envIndex) => (
         <div key={envIndex} className="flex items-start w-full gap-x-4">
           <div className="flex-1">
             <Form.Field
@@ -103,7 +105,6 @@ const EnvironmentRoles = ({
                       <DropdownMenuTrigger
                         placeholder={t(`form:select-environment`)}
                         label={
-                          // TODO: remove empty id when the backend is fixed
                           environments.find(
                             item =>
                               item.id && item.id === environment.environmentId
@@ -124,7 +125,14 @@ const EnvironmentRoles = ({
                             value={item.id}
                             label={item.name}
                             onSelectOption={value => {
-                              field.onChange(value);
+                              setValue(
+                                `environmentRoles.${envIndex}.environmentId`,
+                                value as string,
+                                {
+                                  shouldDirty: true,
+                                  shouldValidate: true
+                                }
+                              );
                             }}
                           />
                         ))}
@@ -168,7 +176,14 @@ const EnvironmentRoles = ({
                             value={item.value}
                             label={item.label}
                             onSelectOption={value => {
-                              field.onChange(value);
+                              setValue(
+                                `environmentRoles.${envIndex}.role`,
+                                value as EnvironmentRoleType,
+                                {
+                                  shouldDirty: true,
+                                  shouldValidate: true
+                                }
+                              );
                             }}
                           />
                         ))}
@@ -180,7 +195,7 @@ const EnvironmentRoles = ({
               )}
             />
           </div>
-          {memberEnvironments.length > 1 && (
+          {environmentRolesWatch.length > 1 && (
             <Button
               variant="text"
               size="icon"

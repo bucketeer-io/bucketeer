@@ -9,6 +9,38 @@ import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-o
 import * as proto_push_push_pb from '../../proto/push/push_pb';
 import * as proto_push_command_pb from '../../proto/push/command_pb';
 
+export class TagChange extends jspb.Message {
+  getChangeType(): ChangeTypeMap[keyof ChangeTypeMap];
+  setChangeType(value: ChangeTypeMap[keyof ChangeTypeMap]): void;
+
+  getTag(): string;
+  setTag(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): TagChange.AsObject;
+  static toObject(includeInstance: boolean, msg: TagChange): TagChange.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: TagChange,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): TagChange;
+  static deserializeBinaryFromReader(
+    message: TagChange,
+    reader: jspb.BinaryReader
+  ): TagChange;
+}
+
+export namespace TagChange {
+  export type AsObject = {
+    changeType: ChangeTypeMap[keyof ChangeTypeMap];
+    tag: string;
+  };
+}
+
 export class CreatePushRequest extends jspb.Message {
   hasCommand(): boolean;
   clearCommand(): void;
@@ -126,6 +158,11 @@ export class ListPushesRequest extends jspb.Message {
   getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
+  clearEnvironmentIdsList(): void;
+  getEnvironmentIdsList(): Array<string>;
+  setEnvironmentIdsList(value: Array<string>): void;
+  addEnvironmentIds(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListPushesRequest.AsObject;
   static toObject(
@@ -157,6 +194,7 @@ export namespace ListPushesRequest {
     environmentId: string;
     organizationId: string;
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    environmentIdsList: Array<string>;
   };
 
   export interface OrderByMap {
@@ -330,6 +368,11 @@ export class UpdatePushRequest extends jspb.Message {
   getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
+  clearTagChangesList(): void;
+  getTagChangesList(): Array<TagChange>;
+  setTagChangesList(value: Array<TagChange>): void;
+  addTagChanges(value?: TagChange, index?: number): TagChange;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdatePushRequest.AsObject;
   static toObject(
@@ -361,6 +404,7 @@ export namespace UpdatePushRequest {
     name?: google_protobuf_wrappers_pb.StringValue.AsObject;
     environmentId: string;
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    tagChangesList: Array<TagChange.AsObject>;
   };
 }
 
@@ -464,3 +508,12 @@ export namespace GetPushResponse {
     push?: proto_push_push_pb.Push.AsObject;
   };
 }
+
+export interface ChangeTypeMap {
+  UNSPECIFIED: 0;
+  CREATE: 1;
+  UPDATE: 2;
+  DELETE: 3;
+}
+
+export const ChangeType: ChangeTypeMap;

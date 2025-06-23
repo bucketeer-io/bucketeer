@@ -1,16 +1,18 @@
+import { useCallback, useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { pushUpdater } from '@api/push';
+import { pushUpdater, TagChange } from '@api/push';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidatePushes } from '@queries/pushes';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { Push } from '@types';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
+import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { useFetchTags } from 'pages/members/collection-loader';
-import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import { CreatableSelect } from 'components/creatable-select';
@@ -23,52 +25,72 @@ import {
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
-import Spinner from 'components/spinner';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import FormLoading from 'elements/form-loading';
 
 interface EditPushModalProps {
+  disabled?: boolean;
   isOpen: boolean;
+  isLoadingPush: boolean;
+  push?: Push;
   onClose: () => void;
-  push: Push;
 }
 
 export interface EditPushForm {
   name: string;
-  fcmServiceAccount?: string;
-  tags: string[];
+  tags?: string[];
+  environmentId: string;
 }
 
 const formSchema = yup.object().shape({
   name: yup.string().required(),
-  fcmServiceAccount: yup.string(),
-  tags: yup.array().required(),
+  tags: yup.array(),
   environmentId: yup.string().required()
 });
 
-const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
+const EditPushModal = ({
+  disabled,
+  isOpen,
+  isLoadingPush,
+  push,
+  onClose
+}: EditPushModalProps) => {
   const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
 
-  const { data: collection } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId
+  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
+    environmentId: push?.environmentId || '',
+    entityType: 'FEATURE_FLAG',
+    options: {
+      enabled: !!push
+    }
   });
 
-  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
-    environmentId: push.environmentId,
-    entityType: 'FEATURE_FLAG'
-  });
-  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
-  const environments = (collection?.environments || []).filter(item => item.id);
+  const tagOptions = (uniqBy(tagCollection?.tags || [], 'name') || [])?.map(
+    tag => ({
+      label: tag.name,
+      value: tag.name
+    })
+  );
+  const editorEnvironments = useMemo(
+    () =>
+      consoleAccount?.environmentRoles
+        .filter(item => item.role === 'Environment_EDITOR')
+        ?.map(item => item.environment) || [],
+    [consoleAccount]
+  );
+
+  const { emptyEnvironmentId, formattedEnvironments } =
+    onFormatEnvironments(editorEnvironments);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
-    defaultValues: {
-      name: push.name,
-      fcmServiceAccount: push.fcmServiceAccount,
-      tags: push.tags,
-      environmentId: push.environmentId
+    values: {
+      name: push?.name || '',
+      tags: push?.tags || [],
+      environmentId: push?.environmentId || emptyEnvironmentId
     }
   });
 
@@ -77,10 +99,43 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
     formState: { isValid, isSubmitting, isDirty }
   } = form;
 
+  const handleCheckTags = useCallback(
+    (tagValues: string[]) => {
+      if (push?.tags) {
+        const tagChanges: TagChange[] = [];
+        const { tags } = push;
+        tags?.forEach(item => {
+          if (!tagValues.find(tag => tag === item)) {
+            tagChanges.push({
+              changeType: 'DELETE',
+              tag: item
+            });
+          }
+        });
+        tagValues.forEach(item => {
+          const currentTag = tags.find(tag => tag === item);
+          if (!currentTag) {
+            tagChanges.push({
+              changeType: 'CREATE',
+              tag: item
+            });
+          }
+        });
+
+        return tagChanges;
+      }
+      return [];
+    },
+    [push]
+  );
+
   const onSubmit: SubmitHandler<EditPushForm> = async values => {
+    const { name, tags, environmentId } = values;
     await pushUpdater({
-      ...values,
-      id: push.id
+      name,
+      tagChanges: handleCheckTags(tags || []),
+      id: push?.id || '',
+      environmentId: checkEnvironmentEmptyId(environmentId)
     }).then(() => {
       notify({
         toastType: 'toast',
@@ -98,10 +153,8 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
 
   return (
     <SlideModal title={t('edit-push')} isOpen={isOpen} onClose={onClose}>
-      {isLoadingTags ? (
-        <div className="flex items-center justify-center pt-12">
-          <Spinner />
-        </div>
+      {isLoadingPush ? (
+        <FormLoading />
       ) : (
         <div className="w-full p-5 pb-28">
           <div className="typo-para-small text-gray-600 mb-3">
@@ -121,6 +174,7 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                     <Form.Control>
                       <Input
                         placeholder={`${t('form:placeholder-name')}`}
+                        disabled={disabled}
                         {...field}
                       />
                     </Form.Control>
@@ -139,7 +193,7 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                         <DropdownMenuTrigger
                           placeholder={t(`form:select-environment`)}
                           label={
-                            environments.find(
+                            formattedEnvironments.find(
                               item => item.id === getValues('environmentId')
                             )?.name
                           }
@@ -152,7 +206,7 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                           align="start"
                           {...field}
                         >
-                          {environments.map((item, index) => (
+                          {formattedEnvironments.map((item, index) => (
                             <DropdownMenuItem
                               {...field}
                               key={index}
@@ -175,30 +229,46 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                 name={`tags`}
                 render={({ field }) => (
                   <Form.Item className="py-2">
-                    <Form.Label required>
-                      {t('form:feature-flag-tags')}
-                    </Form.Label>
+                    <Form.Label>{t('form:feature-flag-tags')}</Form.Label>
                     <Form.Control>
                       <CreatableSelect
                         value={field.value?.map(tag => {
                           const tagItem = tagOptions.find(
-                            item => item.id === tag
+                            item => item.value === tag
                           );
                           return {
-                            label: tagItem?.name || tag,
-                            value: tagItem?.id || tag
+                            label: tagItem?.label || tag,
+                            value: tagItem?.value || tag
                           };
                         })}
-                        disabled={isLoadingTags}
+                        disabled={
+                          isLoadingTags || !tagOptions.length || disabled
+                        }
                         loading={isLoadingTags}
+                        allowCreateWhileLoading={false}
+                        isValidNewOption={() => false}
+                        isClearable
+                        onKeyDown={e => {
+                          const { value } = e.target as HTMLInputElement;
+                          const isExists = tagOptions.find(
+                            item =>
+                              item.label
+                                .toLowerCase()
+                                .includes(value.toLowerCase()) &&
+                              !field.value?.includes(item.label)
+                          );
+                          if (e.key === 'Enter' && (!isExists || !value)) {
+                            e.preventDefault();
+                          }
+                        }}
                         placeholder={t(`form:placeholder-tags`)}
-                        options={tagOptions?.map(tag => ({
-                          label: tag.name,
-                          value: tag.id
-                        }))}
+                        options={tagOptions}
                         onChange={value =>
                           field.onChange(value.map(tag => tag.value))
                         }
+                        noOptionsMessage={() => (
+                          <UserMessage message={t('no-options-found')} />
+                        )}
                       />
                     </Form.Control>
                     <Form.Message />
@@ -214,13 +284,19 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                     </Button>
                   }
                   secondaryButton={
-                    <Button
-                      type="submit"
-                      disabled={!isValid || !isDirty}
-                      loading={isSubmitting}
-                    >
-                      {t(`submit`)}
-                    </Button>
+                    <DisabledButtonTooltip
+                      align="center"
+                      hidden={!disabled}
+                      trigger={
+                        <Button
+                          type="submit"
+                          disabled={!isValid || !isDirty || disabled}
+                          loading={isSubmitting}
+                        >
+                          {t(`submit`)}
+                        </Button>
+                      }
+                    />
                   }
                 />
               </div>

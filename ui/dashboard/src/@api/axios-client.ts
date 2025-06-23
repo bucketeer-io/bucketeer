@@ -1,13 +1,9 @@
 import axios from 'axios';
 import type { AxiosInstance } from 'axios';
-import { PAGE_PATH_ROOT } from 'constants/routing';
-import { clearOrgIdStorage } from 'storage/organization';
-import {
-  clearTokenStorage,
-  getTokenStorage,
-  setTokenStorage
-} from 'storage/token';
+import { getTokenStorage, setTokenStorage } from 'storage/token';
 import { refreshTokenFetcher } from './auth';
+
+let isRefreshing = false;
 
 const axiosClient: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_WEB_API_ENDPOINT
@@ -31,23 +27,38 @@ axiosClient.interceptors.response.use(
   async error => {
     const authToken = getTokenStorage();
     const originalRequest = error.config;
+    if (!authToken && error.response?.status === 401) {
+      return document.dispatchEvent(
+        new CustomEvent('unauthenticated', {
+          bubbles: true
+        })
+      );
+    }
     if (
       authToken?.refreshToken &&
       error.response?.status === 401 &&
-      !originalRequest._retry
+      !isRefreshing
     ) {
-      originalRequest._retry = true;
+      isRefreshing = true;
       refreshTokenFetcher(authToken?.refreshToken)
         .then(response => {
           const newAccessToken = response.token.accessToken;
           setTokenStorage(response.token);
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          document.dispatchEvent(
+            new CustomEvent('tokenRefreshed', {
+              bubbles: true
+            })
+          );
           return axiosClient(originalRequest);
         })
         .catch(err => {
-          clearOrgIdStorage();
-          clearTokenStorage();
-          window.location.href = `${PAGE_PATH_ROOT}/v3`; // TODO: Remove the `/v3` when the new console is released
+          isRefreshing = false;
+          document.dispatchEvent(
+            new CustomEvent('unauthenticated', {
+              bubbles: true
+            })
+          );
           return Promise.reject(err);
         });
     }

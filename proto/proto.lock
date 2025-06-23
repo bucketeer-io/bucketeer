@@ -207,6 +207,18 @@
                 "id": 18,
                 "name": "tags",
                 "type": "string",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 19,
+                "name": "teams",
+                "type": "string",
                 "is_repeated": true
               }
             ],
@@ -905,6 +917,26 @@
       "def": {
         "enums": [
           {
+            "name": "ChangeType",
+            "enum_fields": [
+              {
+                "name": "UNSPECIFIED"
+              },
+              {
+                "name": "CREATE",
+                "integer": 1
+              },
+              {
+                "name": "UPDATE",
+                "integer": 2
+              },
+              {
+                "name": "DELETE",
+                "integer": 3
+              }
+            ]
+          },
+          {
             "name": "ListAccountsV2Request.OrderBy",
             "enum_fields": [
               {
@@ -1110,6 +1142,18 @@
                 "id": 11,
                 "name": "tags",
                 "type": "string",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 12,
+                "name": "teams",
+                "type": "string",
                 "is_repeated": true
               }
             ]
@@ -1224,6 +1268,33 @@
           },
           {
             "name": "DeleteAccountV2Response"
+          },
+          {
+            "name": "TeamChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "change_type",
+                "type": "ChangeType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "team",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
           },
           {
             "name": "UpdateAccountV2Request",
@@ -1391,7 +1462,13 @@
               {
                 "id": 22,
                 "name": "tags",
-                "type": "common.StringListValue"
+                "type": "common.StringListValue",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 23,
@@ -1403,6 +1480,11 @@
                     "value": "true"
                   }
                 ]
+              },
+              {
+                "id": 24,
+                "name": "team_changes",
+                "type": "TeamChange"
               }
             ],
             "messages": [
@@ -7999,6 +8081,26 @@
       "def": {
         "enums": [
           {
+            "name": "ChangeType",
+            "enum_fields": [
+              {
+                "name": "UNSPECIFIED"
+              },
+              {
+                "name": "CREATE",
+                "integer": 1
+              },
+              {
+                "name": "UPDATE",
+                "integer": 2
+              },
+              {
+                "name": "DELETE",
+                "integer": 3
+              }
+            ]
+          },
+          {
             "name": "ListProgressiveRolloutsRequest.OrderBy",
             "enum_fields": [
               {
@@ -8309,6 +8411,80 @@
             "name": "DeleteAutoOpsRuleResponse"
           },
           {
+            "name": "OpsEventRateClauseChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "clause",
+                "type": "OpsEventRateClause",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "The clause value must be fully filled if the create or update clause action is requested."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "change_type",
+                "type": "ChangeType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "DatetimeClauseChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "clause",
+                "type": "DatetimeClause",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "The clause value must be fully filled if the create or update clause action is requested."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "change_type",
+                "type": "ChangeType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "name": "UpdateAutoOpsRuleRequest",
             "fields": [
               {
@@ -8434,128 +8610,20 @@
               },
               {
                 "id": 10,
-                "name": "update_ops_event_rate_clauses",
-                "type": "UpdateOpsEventRateClause",
+                "name": "ops_event_rate_clause_changes",
+                "type": "OpsEventRateClauseChange",
                 "is_repeated": true
               },
               {
                 "id": 11,
-                "name": "update_datetime_clauses",
-                "type": "UpdateDatetimeClause",
+                "name": "datetime_clause_changes",
+                "type": "DatetimeClauseChange",
                 "is_repeated": true
               }
             ],
             "reserved_ids": [
               1,
               3
-            ],
-            "messages": [
-              {
-                "name": "UpdateOpsEventRateClause",
-                "fields": [
-                  {
-                    "id": 1,
-                    "name": "id",
-                    "type": "string",
-                    "options": [
-                      {
-                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                        "aggregated": [
-                          {
-                            "name": "description",
-                            "value": "The clause ID, if not set, a new event rate clause will be created."
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "id": 2,
-                    "name": "deleted",
-                    "type": "google.protobuf.BoolValue",
-                    "options": [
-                      {
-                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                        "aggregated": [
-                          {
-                            "name": "description",
-                            "value": "If true and the number of clause is greater than 1, the clause will be deleted"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "id": 3,
-                    "name": "clause",
-                    "type": "OpsEventRateClause",
-                    "options": [
-                      {
-                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                        "aggregated": [
-                          {
-                            "name": "description",
-                            "value": "The clause value, must be fully filled if update or create clause action is requested."
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "UpdateDatetimeClause",
-                "fields": [
-                  {
-                    "id": 1,
-                    "name": "id",
-                    "type": "string",
-                    "options": [
-                      {
-                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                        "aggregated": [
-                          {
-                            "name": "description",
-                            "value": "The clause ID, if not set, a new date time clause will be created."
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "id": 2,
-                    "name": "deleted",
-                    "type": "google.protobuf.BoolValue",
-                    "options": [
-                      {
-                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                        "aggregated": [
-                          {
-                            "name": "description",
-                            "value": "If true and the number of clause is greater than 1, the clause will be deleted"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "id": 3,
-                    "name": "clause",
-                    "type": "DatetimeClause",
-                    "options": [
-                      {
-                        "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                        "aggregated": [
-                          {
-                            "name": "description",
-                            "value": "The clause value, must be fully filled if update or create clause action is requested."
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
             ]
           },
           {
@@ -19625,6 +19693,10 @@
               {
                 "name": "CODEREF",
                 "integer": 18
+              },
+              {
+                "name": "TEAM",
+                "integer": 19
               }
             ],
             "reserved_ids": [
@@ -20426,6 +20498,14 @@
               {
                 "name": "CODE_REFERENCE_DELETED",
                 "integer": 1802
+              },
+              {
+                "name": "TEAM_CREATED",
+                "integer": 1900
+              },
+              {
+                "name": "TEAM_DELETED",
+                "integer": 1901
               }
             ],
             "reserved_ids": [
@@ -20539,6 +20619,17 @@
                 "id": 7,
                 "name": "avatar_file_type",
                 "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "environment_roles",
+                "type": "bucketeer.account.AccountV2.EnvironmentRole",
+                "is_repeated": true
+              },
+              {
+                "id": 9,
+                "name": "organization_role",
+                "type": "bucketeer.account.AccountV2.Role.Organization"
               }
             ],
             "reserved_ids": [
@@ -22803,14 +22894,14 @@
               },
               {
                 "id": 10,
-                "name": "update_ops_event_rate_clauses",
-                "type": "autoops.UpdateAutoOpsRuleRequest.UpdateOpsEventRateClause",
+                "name": "ops_event_rate_clause_changes",
+                "type": "autoops.OpsEventRateClauseChange",
                 "is_repeated": true
               },
               {
                 "id": 11,
-                "name": "update_datetime_clauses",
-                "type": "autoops.UpdateAutoOpsRuleRequest.UpdateDatetimeClause",
+                "name": "datetime_clause_changes",
+                "type": "autoops.DatetimeClauseChange",
                 "is_repeated": true
               }
             ]
@@ -24043,6 +24134,56 @@
               {
                 "id": 2,
                 "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "TeamCreatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 6,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "TeamDeletedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
                 "type": "string"
               }
             ]
@@ -32527,6 +32668,11 @@
                 "id": 14,
                 "name": "status",
                 "type": "FeatureLastUsedInfo.Status"
+              },
+              {
+                "id": 15,
+                "name": "has_feature_flag_as_rule",
+                "type": "google.protobuf.BoolValue"
               }
             ],
             "reserved_ids": [
@@ -38370,6 +38516,21 @@
             ]
           },
           {
+            "name": "Audience",
+            "fields": [
+              {
+                "id": 1,
+                "name": "percentage",
+                "type": "int32"
+              },
+              {
+                "id": 2,
+                "name": "default_variation",
+                "type": "string"
+              }
+            ]
+          },
+          {
             "name": "RolloutStrategy",
             "fields": [
               {
@@ -38377,6 +38538,11 @@
                 "name": "variations",
                 "type": "Variation",
                 "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "audience",
+                "type": "Audience"
               }
             ],
             "messages": [
@@ -39832,6 +39998,403 @@
           },
           {
             "name": "DeleteCodeReferenceResponse"
+          },
+          {
+            "name": "CreateSegmentRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "description",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "CreateSegmentResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "segment",
+                "type": "feature.Segment"
+              }
+            ]
+          },
+          {
+            "name": "GetSegmentRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "GetSegmentResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "segment",
+                "type": "feature.Segment"
+              }
+            ]
+          },
+          {
+            "name": "ListSegmentsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "order_by",
+                "type": "feature.ListSegmentsRequest.OrderBy"
+              },
+              {
+                "id": 4,
+                "name": "order_direction",
+                "type": "feature.ListSegmentsRequest.OrderDirection"
+              },
+              {
+                "id": 5,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "status",
+                "type": "google.protobuf.Int32Value"
+              },
+              {
+                "id": 7,
+                "name": "is_in_use_status",
+                "type": "google.protobuf.BoolValue"
+              }
+            ]
+          },
+          {
+            "name": "ListSegmentsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "segments",
+                "type": "feature.Segment",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "DeleteSegmentRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "DeleteSegmentResponse"
+          },
+          {
+            "name": "UpdateSegmentRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "google.protobuf.StringValue"
+              }
+            ]
+          },
+          {
+            "name": "UpdateSegmentResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "segment",
+                "type": "feature.Segment"
+              }
+            ]
+          },
+          {
+            "name": "BulkUploadSegmentUsersRequest",
+            "fields": [
+              {
+                "id": 2,
+                "name": "segment_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "data",
+                "type": "bytes",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "segment user ids separated by comma or new line"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "state",
+                "type": "feature.SegmentUser.State"
+              }
+            ],
+            "reserved_ids": [
+              1
+            ]
+          },
+          {
+            "name": "BulkUploadSegmentUsersResponse"
+          },
+          {
+            "name": "GetAuditLogRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "GetAuditLogResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "audit_log",
+                "type": "auditlog.AuditLog"
+              }
+            ]
+          },
+          {
+            "name": "ListAuditLogsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "page_size"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Page size for pagination, maximum allowed value is 200"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "order_by",
+                "type": "auditlog.ListAuditLogsRequest.OrderBy"
+              },
+              {
+                "id": 4,
+                "name": "order_direction",
+                "type": "auditlog.ListAuditLogsRequest.OrderDirection"
+              },
+              {
+                "id": 5,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "from",
+                "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "to",
+                "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "entity_type",
+                "type": "google.protobuf.Int32Value"
+              }
+            ]
+          },
+          {
+            "name": "ListAuditLogsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "audit_logs",
+                "type": "auditlog.AuditLog",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "ListFeatureHistoryRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "page_size",
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "page_size"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Page size for pagination, maximum allowed value is 200"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "order_by",
+                "type": "auditlog.ListFeatureHistoryRequest.OrderBy"
+              },
+              {
+                "id": 5,
+                "name": "order_direction",
+                "type": "auditlog.ListFeatureHistoryRequest.OrderDirection"
+              },
+              {
+                "id": 6,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "from",
+                "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "to",
+                "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListFeatureHistoryResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "audit_logs",
+                "type": "auditlog.AuditLog",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
           }
         ],
         "services": [
@@ -40895,6 +41458,351 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "CreateSegment",
+                "in_type": "CreateSegmentRequest",
+                "out_type": "CreateSegmentResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/segment"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a new Segment. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Segments"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.segments.create"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetSegment",
+                "in_type": "GetSegmentRequest",
+                "out_type": "GetSegmentResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/segment"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get a Segment. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Segments"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.segments.get"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListSegments",
+                "in_type": "ListSegmentsRequest",
+                "out_type": "ListSegmentsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/segments"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List Segments. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Segments"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.segments.list"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DeleteSegment",
+                "in_type": "DeleteSegmentRequest",
+                "out_type": "DeleteSegmentResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/segment"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete a Segment. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Segments"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.segments.delete"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpdateSegment",
+                "in_type": "UpdateSegmentRequest",
+                "out_type": "UpdateSegmentResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/segment"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update a Segment. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Segments"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.segments.update"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "BulkUploadSegmentUsers",
+                "in_type": "BulkUploadSegmentUsersRequest",
+                "out_type": "BulkUploadSegmentUsersResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/segment/bulk_upload_users"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Bulk Upload Segment Users"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Bulk upload users to a Segment. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Segments"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.segments.bulk_upload_users"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetAuditLog",
+                "in_type": "GetAuditLogRequest",
+                "out_type": "GetAuditLogResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/audit_log"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Audit Log"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get an Audit Log by ID. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Audit Logs"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.audit_logs.get"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListAuditLogs",
+                "in_type": "ListAuditLogsRequest",
+                "out_type": "ListAuditLogsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/audit_logs"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List Audit Logs"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List Audit Logs. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Audit Logs"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.audit_logs.list"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListFeatureHistory",
+                "in_type": "ListFeatureHistoryRequest",
+                "out_type": "ListFeatureHistoryResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/feature_history"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List Feature History"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List Feature History. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Audit Logs"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.feature_history.list"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -40956,6 +41864,12 @@
           },
           {
             "path": "proto/coderef/service.proto"
+          },
+          {
+            "path": "proto/auditlog/auditlog.proto"
+          },
+          {
+            "path": "proto/auditlog/service.proto"
           }
         ],
         "package": {
@@ -42060,7 +42974,13 @@
               {
                 "id": 9,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 10,
@@ -42072,6 +42992,12 @@
                     "value": "REQUIRED"
                   }
                 ]
+              },
+              {
+                "id": 11,
+                "name": "environment_ids",
+                "type": "string",
+                "is_repeated": true
               }
             ],
             "reserved_ids": [
@@ -43166,6 +44092,10 @@
                 "integer": 18
               },
               {
+                "name": "DOMAIN_EVENT_TEAM",
+                "integer": 19
+              },
+              {
                 "name": "FEATURE_STALE",
                 "integer": 100
               },
@@ -43462,7 +44392,13 @@
               {
                 "id": 4,
                 "name": "deleted",
-                "type": "bool"
+                "type": "bool",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 5,
@@ -43521,6 +44457,26 @@
       "def": {
         "enums": [
           {
+            "name": "ChangeType",
+            "enum_fields": [
+              {
+                "name": "UNSPECIFIED"
+              },
+              {
+                "name": "CREATE",
+                "integer": 1
+              },
+              {
+                "name": "UPDATE",
+                "integer": 2
+              },
+              {
+                "name": "DELETE",
+                "integer": 3
+              }
+            ]
+          },
+          {
             "name": "ListPushesRequest.OrderBy",
             "enum_fields": [
               {
@@ -43562,6 +44518,33 @@
           }
         ],
         "messages": [
+          {
+            "name": "TagChange",
+            "fields": [
+              {
+                "id": 1,
+                "name": "change_type",
+                "type": "ChangeType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "tag",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
           {
             "name": "CreatePushRequest",
             "fields": [
@@ -43643,7 +44626,13 @@
               {
                 "id": 7,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 8,
@@ -43654,6 +44643,12 @@
                 "id": 9,
                 "name": "disabled",
                 "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 10,
+                "name": "environment_ids",
+                "type": "string",
+                "is_repeated": true
               }
             ],
             "reserved_ids": [
@@ -43687,12 +44682,24 @@
               {
                 "id": 2,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "command",
-                "type": "DeletePushCommand"
+                "type": "DeletePushCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 4,
@@ -43758,7 +44765,13 @@
                 "id": 6,
                 "name": "tags",
                 "type": "string",
-                "is_repeated": true
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 7,
@@ -43780,6 +44793,12 @@
                 "id": 11,
                 "name": "disabled",
                 "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 12,
+                "name": "tag_changes",
+                "type": "TagChange",
+                "is_repeated": true
               }
             ],
             "reserved_ids": [
@@ -44357,7 +45376,174 @@
               {
                 "name": "DeletePush",
                 "in_type": "DeletePushRequest",
-                "out_type": "DeletePushResponse"
+                "out_type": "DeletePushResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/push"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete a push."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "push"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.push.delete"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned when the push is not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -45090,6 +46276,701 @@
           {
             "name": "go_package",
             "value": "github.com/bucketeer-io/bucketeer/proto/tag"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "team:/:service.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "ListTeamsRequest.OrderBy",
+            "enum_fields": [
+              {
+                "name": "DEFAULT"
+              },
+              {
+                "name": "NAME",
+                "integer": 1
+              },
+              {
+                "name": "CREATED_AT",
+                "integer": 2
+              },
+              {
+                "name": "UPDATED_AT",
+                "integer": 3
+              },
+              {
+                "name": "ORGANIZATION",
+                "integer": 4
+              }
+            ]
+          },
+          {
+            "name": "ListTeamsRequest.OrderDirection",
+            "enum_fields": [
+              {
+                "name": "ASC"
+              },
+              {
+                "name": "DESC",
+                "integer": 1
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "CreateTeamRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "organization_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "CreateTeamResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "team",
+                "type": "Team"
+              }
+            ]
+          },
+          {
+            "name": "DeleteTeamRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "DeleteTeamResponse"
+          },
+          {
+            "name": "ListTeamsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "order_by",
+                "type": "OrderBy"
+              },
+              {
+                "id": 4,
+                "name": "order_direction",
+                "type": "OrderDirection"
+              },
+              {
+                "id": 5,
+                "name": "organization_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 6,
+                "name": "search_keyword",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ListTeamsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "teams",
+                "type": "Team",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "next_cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          }
+        ],
+        "services": [
+          {
+            "name": "TeamService",
+            "rpcs": [
+              {
+                "name": "CreateTeam",
+                "in_type": "CreateTeamRequest",
+                "out_type": "CreateTeamResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/team"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a team."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "team"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.team.create"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DeleteTeam",
+                "in_type": "DeleteTeamRequest",
+                "out_type": "DeleteTeamResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/team"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete a team."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "team"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.team.delete"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "404"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned when the team is not found."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":5,\"message\":\"not found\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListTeams",
+                "in_type": "ListTeamsRequest",
+                "out_type": "ListTeamsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/teams"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List teams."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "team"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.team.list"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/api/field_behavior.proto"
+          },
+          {
+            "path": "protoc-gen-openapiv2/options/annotations.proto"
+          },
+          {
+            "path": "proto/team/team.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.team"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/team"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "team:/:team.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "Team",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "organization_name",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.team"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/team"
           }
         ]
       }

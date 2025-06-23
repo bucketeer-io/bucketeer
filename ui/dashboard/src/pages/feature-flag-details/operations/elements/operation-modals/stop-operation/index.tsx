@@ -7,6 +7,7 @@ import { ButtonBar } from 'components/button-bar';
 import DialogModal from 'components/modal/dialog';
 
 export type StopOperationModalProps = {
+  editable: boolean;
   operationType: OpsTypeMap;
   isOpen: boolean;
   loading?: boolean;
@@ -15,6 +16,7 @@ export type StopOperationModalProps = {
 };
 
 const StopOperationModal = ({
+  editable,
   operationType,
   isOpen,
   loading,
@@ -27,7 +29,7 @@ const StopOperationModal = ({
       operationType === OpsTypeMap.SCHEDULE
         ? 'schedule'
         : operationType === OpsTypeMap.EVENT_RATE
-          ? 'event-rate'
+          ? 'kill-switch'
           : 'rollout',
     [operationType]
   );
@@ -52,8 +54,8 @@ const StopOperationModal = ({
 
       <ButtonBar
         secondaryButton={
-          <Button loading={loading} onClick={onSubmit}>
-            {t(`submit`)}
+          <Button loading={loading} onClick={onSubmit} disabled={!editable}>
+            {t(`stop`)}
           </Button>
         }
         primaryButton={

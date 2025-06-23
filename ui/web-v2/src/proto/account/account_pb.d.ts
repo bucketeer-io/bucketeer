@@ -145,6 +145,11 @@ export class AccountV2 extends jspb.Message {
   setTagsList(value: Array<string>): void;
   addTags(value: string, index?: number): string;
 
+  clearTeamsList(): void;
+  getTeamsList(): Array<string>;
+  setTeamsList(value: Array<string>): void;
+  addTeams(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AccountV2.AsObject;
   static toObject(includeInstance: boolean, msg: AccountV2): AccountV2.AsObject;
@@ -183,6 +188,7 @@ export namespace AccountV2 {
     avatarImage: Uint8Array | string;
     environmentCount: number;
     tagsList: Array<string>;
+    teamsList: Array<string>;
   };
 
   export class Role extends jspb.Message {

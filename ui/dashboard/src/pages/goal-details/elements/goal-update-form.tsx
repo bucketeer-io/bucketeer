@@ -9,6 +9,7 @@ import Button from 'components/button';
 import Form from 'components/form';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 export interface GoalDetailsForm {
   name: string;
@@ -23,9 +24,11 @@ const formSchema = yup.object().shape({
 });
 
 const GoalUpdateForm = ({
+  disabled,
   goal,
   onSubmit
 }: {
+  disabled: boolean;
   goal: Goal;
   onSubmit: (payload: GoalUpdaterPayload) => Promise<void>;
 }) => {
@@ -74,6 +77,7 @@ const GoalUpdateForm = ({
                 <Form.Label required>{t('name')}</Form.Label>
                 <Form.Control>
                   <Input
+                    disabled={disabled}
                     placeholder={`${t('form:placeholder-name')}`}
                     {...field}
                   />
@@ -107,6 +111,7 @@ const GoalUpdateForm = ({
                 <Form.Label optional>{t('form:description')}</Form.Label>
                 <Form.Control>
                   <TextArea
+                    disabled={disabled}
                     placeholder={t('form:placeholder-desc')}
                     rows={4}
                     {...field}
@@ -116,16 +121,21 @@ const GoalUpdateForm = ({
               </Form.Item>
             )}
           />
-
-          <Button
-            loading={isSubmitting}
-            disabled={!isValid || !isDirty}
-            type="submit"
-            className="w-fit"
-            variant={'secondary'}
-          >
-            {t(`save`)}
-          </Button>
+          <DisabledButtonTooltip
+            align="start"
+            hidden={!disabled}
+            trigger={
+              <Button
+                loading={isSubmitting}
+                disabled={!isValid || !isDirty || disabled}
+                type="submit"
+                className="w-fit"
+                variant={'secondary'}
+              >
+                {t(`save`)}
+              </Button>
+            }
+          />
         </Form>
       </FormProvider>
     </div>

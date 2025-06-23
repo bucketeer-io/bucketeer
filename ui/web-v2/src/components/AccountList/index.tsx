@@ -116,8 +116,9 @@ export const AccountList: FC<AccountListProps> = memo(
                     (r) => r.environmentId === currentEnvironment.id
                   );
                   const accountDisabled =
+                    !envRole ||
                     envRole.role ===
-                    AccountV2.Role.Environment.ENVIRONMENT_UNASSIGNED;
+                      AccountV2.Role.Environment.ENVIRONMENT_UNASSIGNED;
                   const orgRole = account.organizationRole;
                   return (
                     <tr key={account.email} className={classNames('p-2')}>
@@ -146,7 +147,14 @@ export const AccountList: FC<AccountListProps> = memo(
                       >
                         <div className="flex justify-center items-center rounded-md w-16 h-6 bg-gray-200">
                           <span className="text-xs text-gray-700">
-                            {getRoleV1(orgRole, envRole.role).label}
+                            {
+                              getRoleV1(
+                                orgRole,
+                                envRole?.role ??
+                                  AccountV2.Role.Environment
+                                    .ENVIRONMENT_UNASSIGNED
+                              ).label
+                            }
                           </span>
                         </div>
                       </td>

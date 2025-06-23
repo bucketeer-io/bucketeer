@@ -532,7 +532,7 @@ proto.bucketeer.account.Account.prototype.setDeleted = function (value) {
  * @private {!Array<number>}
  * @const
  */
-proto.bucketeer.account.AccountV2.repeatedFields_ = [6, 10, 18];
+proto.bucketeer.account.AccountV2.repeatedFields_ = [6, 10, 18, 19];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -594,7 +594,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         avatarImage: msg.getAvatarImage_asB64(),
         environmentCount: jspb.Message.getFieldWithDefault(msg, 17, 0),
         tagsList:
-          (f = jspb.Message.getRepeatedField(msg, 18)) == null ? undefined : f
+          (f = jspb.Message.getRepeatedField(msg, 18)) == null ? undefined : f,
+        teamsList:
+          (f = jspb.Message.getRepeatedField(msg, 19)) == null ? undefined : f
       };
 
     if (includeInstance) {
@@ -720,6 +722,10 @@ proto.bucketeer.account.AccountV2.deserializeBinaryFromReader = function (
         var value = /** @type {string} */ (reader.readString());
         msg.addTags(value);
         break;
+      case 19:
+        var value = /** @type {string} */ (reader.readString());
+        msg.addTeams(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -829,6 +835,10 @@ proto.bucketeer.account.AccountV2.serializeBinaryToWriter = function (
   f = message.getTagsList();
   if (f.length > 0) {
     writer.writeRepeatedString(18, f);
+  }
+  f = message.getTeamsList();
+  if (f.length > 0) {
+    writer.writeRepeatedString(19, f);
   }
 };
 
@@ -1548,6 +1558,44 @@ proto.bucketeer.account.AccountV2.prototype.addTags = function (
  */
 proto.bucketeer.account.AccountV2.prototype.clearTagsList = function () {
   return this.setTagsList([]);
+};
+
+/**
+ * repeated string teams = 19;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.account.AccountV2.prototype.getTeamsList = function () {
+  return /** @type {!Array<string>} */ (
+    jspb.Message.getRepeatedField(this, 19)
+  );
+};
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.setTeamsList = function (value) {
+  return jspb.Message.setField(this, 19, value || []);
+};
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.addTeams = function (
+  value,
+  opt_index
+) {
+  return jspb.Message.addToRepeatedField(this, 19, value, opt_index);
+};
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.clearTeamsList = function () {
+  return this.setTeamsList([]);
 };
 
 /**

@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import {
   PAGE_PATH_FEATURES,
   PAGE_PATH_FEATURE_TARGETING,
@@ -21,6 +21,7 @@ import EvaluationPage from './evaluation';
 import HistoryPage from './history';
 import Operations from './operations';
 import SettingsPage from './settings';
+import TargetingPage from './targeting';
 import TriggerPage from './trigger';
 import { TabItem } from './types';
 import Variation from './variation';
@@ -31,6 +32,7 @@ const PageContent = ({ feature }: { feature: Feature }) => {
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   const url = `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${flagId}`;
 
@@ -94,11 +96,11 @@ const PageContent = ({ feature }: { feature: Feature }) => {
             />
             <Route
               path={PAGE_PATH_FEATURE_SETTING}
-              element={<SettingsPage feature={feature} />}
+              element={<SettingsPage feature={feature} editable={editable} />}
             />
             <Route
               path={PAGE_PATH_FEATURE_VARIATION}
-              element={<Variation feature={feature} />}
+              element={<Variation feature={feature} editable={editable} />}
             />
             <Route
               path={`${PAGE_PATH_FEATURE_EVALUATION}/*`}
@@ -110,12 +112,17 @@ const PageContent = ({ feature }: { feature: Feature }) => {
             />
             <Route
               path={`${PAGE_PATH_FEATURE_TRIGGER}/*`}
-              element={<TriggerPage feature={feature} />}
+              element={<TriggerPage feature={feature} editable={editable} />}
             />
             <Route
               path={`${PAGE_PATH_FEATURE_AUTOOPS}/*`}
-              element={<Operations feature={feature} />}
+              element={<Operations feature={feature} editable={editable} />}
             />
+            <Route
+              path={PAGE_PATH_FEATURE_TARGETING}
+              element={<TargetingPage feature={feature} editable={editable} />}
+            />
+
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </TabsContent>

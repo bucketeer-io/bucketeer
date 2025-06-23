@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { featureCreator } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateFeatures } from '@queries/features';
-import { useQueryTags } from '@queries/tags';
+import { invalidateTags, useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { AxiosError } from 'axios';
@@ -112,6 +112,7 @@ const FlagForm = () => {
           message: 'Feature flag created successfully.'
         });
         invalidateFeatures(queryClient);
+        invalidateTags(queryClient);
         onBack();
       }
     } catch (error) {

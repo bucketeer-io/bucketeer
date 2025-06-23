@@ -643,7 +643,7 @@ func TestGetSegmentMySQL(t *testing.T) {
 				).Return(&domain.Segment{
 					Segment: &featureproto.Segment{}}, nil, nil)
 				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.Feature{
 					{
 						Id: "id",
@@ -669,7 +669,7 @@ func TestGetSegmentMySQL(t *testing.T) {
 				).Return(&domain.Segment{
 					Segment: &featureproto.Segment{}}, nil, nil)
 				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.Feature{
 					{
 						Id: "id",
@@ -759,7 +759,7 @@ func TestListSegmentsMySQL(t *testing.T) {
 					"id": {"id"},
 				}, nil)
 				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.Feature{
 					{
 						Id: "id",
@@ -790,7 +790,7 @@ func TestListSegmentsMySQL(t *testing.T) {
 					"id": {"id"},
 				}, nil)
 				s.featureStorage.(*storagemock.MockFeatureStorage).EXPECT().ListFeatures(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(),
 				).Return([]*featureproto.Feature{
 					{
 						Id: "id",

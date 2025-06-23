@@ -37,6 +37,8 @@ import "proto/account/account.proto";
 import "proto/event/client/event.proto";
 import "proto/coderef/code_reference.proto";
 import "proto/coderef/service.proto";
+import "proto/auditlog/auditlog.proto";
+import "proto/auditlog/service.proto";
 
 message PingRequest {}
 
@@ -405,6 +407,118 @@ message DeleteCodeReferenceRequest {
 }
 
 message DeleteCodeReferenceResponse {}
+
+message CreateSegmentRequest {
+  string name = 1 [(google.api.field_behavior) = REQUIRED];
+  string description = 2;
+}
+
+message CreateSegmentResponse {
+  feature.Segment segment = 1;
+}
+
+message GetSegmentRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetSegmentResponse {
+  feature.Segment segment = 1;
+}
+
+message ListSegmentsRequest {
+  int64 page_size = 1;
+  string cursor = 2;
+  feature.ListSegmentsRequest.OrderBy order_by = 3;
+  feature.ListSegmentsRequest.OrderDirection order_direction = 4;
+  string search_keyword = 5;
+  google.protobuf.Int32Value status = 6;
+  google.protobuf.BoolValue is_in_use_status = 7;
+}
+
+message ListSegmentsResponse {
+  repeated feature.Segment segments = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message DeleteSegmentRequest {
+  string id = 1;
+}
+
+message DeleteSegmentResponse {}
+
+message UpdateSegmentRequest {
+  string id = 1;
+  google.protobuf.StringValue name = 2;
+  google.protobuf.StringValue description = 3;
+}
+
+message UpdateSegmentResponse {
+  feature.Segment segment = 1;
+}
+
+message BulkUploadSegmentUsersRequest {
+  reserved 1;
+  string segment_id = 2;
+  bytes data = 3
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "segment user ids separated by comma or new line"
+      }];
+  feature.SegmentUser.State state = 4;
+}
+
+message BulkUploadSegmentUsersResponse {}
+
+message GetAuditLogRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetAuditLogResponse {
+  auditlog.AuditLog audit_log = 1;
+}
+
+message ListAuditLogsRequest {
+  int64 page_size = 1
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        title: "page_size"
+        description: "Page size for pagination, maximum allowed value is 200"
+      }];
+  string cursor = 2;
+  auditlog.ListAuditLogsRequest.OrderBy order_by = 3;
+  auditlog.ListAuditLogsRequest.OrderDirection order_direction = 4;
+  string search_keyword = 5;
+  int64 from = 6;
+  int64 to = 7;
+  google.protobuf.Int32Value entity_type = 8;
+}
+
+message ListAuditLogsResponse {
+  repeated auditlog.AuditLog audit_logs = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message ListFeatureHistoryRequest {
+  string feature_id = 1 [(google.api.field_behavior) = REQUIRED];
+  int64 page_size = 2
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        title: "page_size"
+        description: "Page size for pagination, maximum allowed value is 200"
+      }];
+  string cursor = 3;
+  auditlog.ListFeatureHistoryRequest.OrderBy order_by = 4;
+  auditlog.ListFeatureHistoryRequest.OrderDirection order_direction = 5;
+  string search_keyword = 6;
+  int64 from = 7;
+  int64 to = 8;
+  string environment_id = 9;
+}
+
+message ListFeatureHistoryResponse {
+  repeated auditlog.AuditLog audit_logs = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: { title: "Bucketeer Gateway Service" version: "1.0" }
@@ -786,6 +900,110 @@ service Gateway {
       description: "Delete a code reference. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
       tags: "Code References",
       operation_id: "api.gateway.v1.code_references.delete"
+    };
+  }
+  rpc CreateSegment(CreateSegmentRequest) returns (CreateSegmentResponse) {
+    option (google.api.http) = {
+      post: "/v1/segment"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create",
+      description: "Create a new Segment. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Segments",
+      operation_id: "api.gateway.v1.segments.create"
+    };
+  }
+  rpc GetSegment(GetSegmentRequest) returns (GetSegmentResponse) {
+    option (google.api.http) = {
+      get: "/v1/segment"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get a Segment. To call this API, you need a `READ` API Key role.",
+      tags: "Segments",
+      operation_id: "api.gateway.v1.segments.get"
+    };
+  }
+  rpc ListSegments(ListSegmentsRequest) returns (ListSegmentsResponse) {
+    option (google.api.http) = {
+      get: "/v1/segments"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "List Segments. To call this API, you need a `READ` API Key role.",
+      tags: "Segments",
+      operation_id: "api.gateway.v1.segments.list"
+    };
+  }
+  rpc DeleteSegment(DeleteSegmentRequest) returns (DeleteSegmentResponse) {
+    option (google.api.http) = {
+      delete: "/v1/segment"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete",
+      description: "Delete a Segment. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Segments",
+      operation_id: "api.gateway.v1.segments.delete"
+    };
+  }
+  rpc UpdateSegment(UpdateSegmentRequest) returns (UpdateSegmentResponse) {
+    option (google.api.http) = {
+      patch: "/v1/segment"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update",
+      description: "Update a Segment. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Segments",
+      operation_id: "api.gateway.v1.segments.update"
+    };
+  }
+  rpc BulkUploadSegmentUsers(BulkUploadSegmentUsersRequest)
+      returns (BulkUploadSegmentUsersResponse) {
+    option (google.api.http) = {
+      post: "/v1/segment/bulk_upload_users"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Bulk Upload Segment Users",
+      description: "Bulk upload users to a Segment. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Segments",
+      operation_id: "api.gateway.v1.segments.bulk_upload_users"
+    };
+  }
+  rpc GetAuditLog(GetAuditLogRequest) returns (GetAuditLogResponse) {
+    option (google.api.http) = {
+      get: "/v1/audit_log"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Audit Log",
+      description: "Get an Audit Log by ID. To call this API, you need a `READ` API Key role.",
+      tags: "Audit Logs",
+      operation_id: "api.gateway.v1.audit_logs.get"
+    };
+  }
+  rpc ListAuditLogs(ListAuditLogsRequest) returns (ListAuditLogsResponse) {
+    option (google.api.http) = {
+      get: "/v1/audit_logs"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Audit Logs",
+      description: "List Audit Logs. To call this API, you need a `READ` API Key role.",
+      tags: "Audit Logs",
+      operation_id: "api.gateway.v1.audit_logs.list"
+    };
+  }
+  rpc ListFeatureHistory(ListFeatureHistoryRequest)
+      returns (ListFeatureHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v1/feature_history"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Feature History",
+      description: "List Feature History. To call this API, you need a `READ` API Key role.",
+      tags: "Audit Logs",
+      operation_id: "api.gateway.v1.feature_history.list"
     };
   }
 }

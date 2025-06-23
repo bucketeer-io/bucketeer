@@ -42,6 +42,8 @@ message ListAuditLogsRequest {
     DESC = 0;
     ASC = 1;
   }
+  // Page size for pagination. If not set, 0, or exceeds 200, defaults to 200.
+  // Maximum allowed value is 200.
   int64 page_size = 1;
   string cursor = 2;
   reserved 3;
@@ -69,6 +71,8 @@ message ListAdminAuditLogsRequest {
     DESC = 0;
     ASC = 1;
   }
+  // Page size for pagination. If not set, 0, or exceeds 200, defaults to 200.
+  // Maximum allowed value is 200.
   int64 page_size = 1;
   string cursor = 2;
   OrderBy order_by = 3;
@@ -95,6 +99,8 @@ message ListFeatureHistoryRequest {
     ASC = 1;
   }
   string feature_id = 1 [(google.api.field_behavior) = REQUIRED];
+  // Page size for pagination. If not set, 0, or exceeds 200, defaults to 200.
+  // Maximum allowed value is 200.
   int64 page_size = 2;
   string cursor = 3;
   reserved 4;

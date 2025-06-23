@@ -1484,6 +1484,22 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.CodeReference),
 			),
 		}
+	case proto.Event_TEAM_CREATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.DeletedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Team),
+			),
+		}
+	case proto.Event_TEAM_DELETED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.CreatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Team),
+			),
+		}
 	}
 	return &proto.LocalizedMessage{
 		Locale:  localizer.GetLocale(),

@@ -1,9 +1,7 @@
 import { FunctionComponent, useCallback, useMemo } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import {
-  IconEditOutlined,
-  IconMoreHorizOutlined
-} from 'react-icons-material-design';
+import { IconEditOutlined } from 'react-icons-material-design';
+import { hasEditable, useAuth } from 'auth';
 import { cva } from 'class-variance-authority';
 import { Color, RolloutStoppedBy } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
@@ -11,7 +9,6 @@ import {
   IconCalendar,
   IconDisable,
   IconFlagOperation,
-  IconOperationClone,
   IconOperationDetails,
   IconStoppedByUser,
   IconTrash,
@@ -19,8 +16,9 @@ import {
 } from '@icons';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
-import { Popover, PopoverOption, PopoverValue } from 'components/popover';
+import { PopoverOption, PopoverValue } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import { OperationModalState } from '../..';
 import {
   OperationActionType,
@@ -126,6 +124,8 @@ const OperationStatus = ({
 }) => {
   const { t } = useTranslation(['form']);
   const formatDateTime = useFormatDateTime();
+  const { consoleAccount } = useAuth();
+  const editable = hasEditable(consoleAccount!);
 
   const isRollout = useMemo(
     () => ['MANUAL_SCHEDULE', 'TEMPLATE_SCHEDULE'].includes(operation.type),
@@ -149,24 +149,6 @@ const OperationStatus = ({
   }, [operation]);
 
   const completedOptions: PopoverOption<PopoverValue>[] = useMemo(() => {
-    if (isRollout)
-      return [
-        {
-          label: t('clone-operation'),
-          icon: IconOperationClone,
-          value: 'CLONE'
-        },
-        {
-          label: (
-            <p className="text-accent-red-500">
-              {t('feature-flags.delete-rollout')}
-            </p>
-          ),
-          icon: IconTrash,
-          value: 'DELETE',
-          color: 'accent-red-500'
-        }
-      ];
     return [
       {
         label: t('feature-flags.operation-details'),
@@ -175,18 +157,18 @@ const OperationStatus = ({
       },
       {
         label: (
-          <p className="text-accent-red-500">
+          <p className={editable ? 'text-accent-red-500' : ''}>
             {t(
-              `feature-flags.delete-${isKillSwitch ? 'kill-switch' : 'schedule'}`
+              `feature-flags.delete-${isKillSwitch ? 'kill-switch' : isRollout ? 'rollout' : 'schedule'}`
             )}
           </p>
         ),
         icon: IconTrash,
         value: 'DELETE',
-        color: 'accent-red-500'
+        color: editable ? 'accent-red-500' : undefined
       }
     ];
-  }, [isRollout, isKillSwitch]);
+  }, [isRollout, isKillSwitch, editable]);
 
   const operationOptions: PopoverOption<PopoverValue>[] = useMemo(() => {
     const translationKey = isRollout
@@ -212,20 +194,20 @@ const OperationStatus = ({
       },
       {
         label: (
-          <p className="text-accent-red-500">
+          <p className={editable ? 'text-accent-red-500' : ''}>
             {t(`feature-flags.delete-${translationKey}`)}
           </p>
         ),
         icon: IconTrash,
         value: 'DELETE',
-        color: 'accent-red-500'
+        color: editable ? 'accent-red-500' : undefined
       }
     ];
-  }, [isKillSwitch, isRollout]);
+  }, [isKillSwitch, isRollout, editable]);
 
   const popoverOptions = useMemo(
     () => (isFinished ? completedOptions : operationOptions),
-    [isFinished, isKillSwitch, operationOptions, completedOptions]
+    [isFinished, isKillSwitch, operationOptions, completedOptions, editable]
   );
 
   const titleKey = useMemo(() => {
@@ -242,9 +224,8 @@ const OperationStatus = ({
         </p>
         <div className="flex items-center gap-x-4">
           <Status status={operationType} />
-          <Popover
+          <DisabledPopoverTooltip
             options={popoverOptions}
-            icon={IconMoreHorizOutlined}
             onClick={value =>
               onActions({
                 actionType: value as OperationActionType,
@@ -252,7 +233,6 @@ const OperationStatus = ({
                 selectedData: operation
               })
             }
-            align="end"
           />
         </div>
       </div>

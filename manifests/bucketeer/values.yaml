@@ -2,6 +2,30 @@ global:
   image:
     tag: v1.3.0 # x-release-please-version
     imagePullSecrets:
+  
+  # Global data warehouse configuration
+  dataWarehouse:
+    # Data warehouse type configuration
+    # Supported types: bigquery, mysql
+    type: bigquery  # Options: bigquery, mysql
+    batchSize: 1000
+    timezone: "UTC"
+    
+    # BigQuery configuration (used when type: bigquery)
+    bigquery:
+      project: ""
+      dataset: ""
+      location: ""
+    
+    # MySQL configuration (used when type: mysql)
+    mysql:
+      useMainConnection: true
+      host: ""
+      port: 3306
+      user: ""
+      password: ""
+      database: ""
+  
   pubsub:
     # Type of pubsub to use: redis-stream or google
     type: ""

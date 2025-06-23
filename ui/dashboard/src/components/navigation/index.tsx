@@ -42,11 +42,6 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           label: t(`projects`),
           icon: IconSystem.IconFolder,
           href: `/${envUrlCode}${ROUTING.PAGE_PATH_PROJECTS}`
-        },
-        {
-          label: t(`usage`),
-          icon: IconSystem.IconUsage,
-          href: `/${envUrlCode}${ROUTING.PAGE_PATH_USAGE}`
         }
       ])
     },
@@ -139,7 +134,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
   return (
     <div className="fixed h-screen w-[248px] bg-primary-500 z-50 py-8 px-6">
       <div className="flex flex-col size-full relative overflow-hidden">
-        <Link to={ROUTING.PAGE_PATH_ROOT}>
+        <Link to={ROUTING.PAGE_PATH_ROOT} onClick={onCloseSetting}>
           <img src={logo} alt="Bucketer" />
         </Link>
 

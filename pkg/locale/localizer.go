@@ -104,6 +104,7 @@ const (
 	WebhookRule                  = "WebhookRule"
 	FlagTrigger                  = "FlagTrigger"
 	CodeReference                = "CodeReference"
+	Team                         = "Team"
 	// error sentence
 	RequiredFieldTemplate = "RequiredField"
 	InternalServerError   = "InternalServerError"

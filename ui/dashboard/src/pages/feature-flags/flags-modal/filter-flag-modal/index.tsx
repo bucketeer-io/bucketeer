@@ -4,9 +4,10 @@ import { useQueryTags } from '@queries/tags';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { debounce } from 'lodash';
-import { isEmpty, isNotEmpty } from 'utils/data-type';
+import { isEmpty } from 'utils/data-type';
 import { cn } from 'utils/style';
-import { FlagFilters } from 'pages/feature-flags/types';
+import { IconPlus, IconTrash } from '@icons';
+import { FlagFilters, StatusFilterType } from 'pages/feature-flags/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
@@ -17,6 +18,7 @@ import {
   DropdownMenuSearch,
   DropdownMenuTrigger
 } from 'components/dropdown';
+import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
 
 export type FilterProps = {
@@ -28,8 +30,9 @@ export type FilterProps = {
 };
 
 export interface Option {
-  value: string | number;
+  value: FilterTypes | undefined;
   label: string;
+  filterValue?: string | boolean | number | string[];
 }
 
 export enum FilterTypes {
@@ -37,33 +40,50 @@ export enum FilterTypes {
   HAS_PREREQUISITES = 'hasPrerequisites',
   MAINTAINER = 'maintainer',
   ENABLED = 'enabled',
-  TAGS = 'tags'
+  TAGS = 'tags',
+  STATUS = 'status',
+  HAS_RULE = 'hasFeatureFlagAsRule'
 }
 
 export const filterOptions: Option[] = [
   {
     value: FilterTypes.HAS_EXPERIMENT,
-    label: 'Has Experiment'
+    label: 'Has Experiment',
+    filterValue: ''
   },
   {
     value: FilterTypes.HAS_PREREQUISITES,
-    label: 'Has Prerequisites'
+    label: 'Has Prerequisites',
+    filterValue: ''
   },
   {
     value: FilterTypes.MAINTAINER,
-    label: 'Maintainer'
+    label: 'Maintainer',
+    filterValue: ''
   },
   {
     value: FilterTypes.ENABLED,
-    label: 'Enabled'
+    label: 'Enabled',
+    filterValue: ''
   },
   {
     value: FilterTypes.TAGS,
-    label: 'Tags'
+    label: 'Tags',
+    filterValue: ''
+  },
+  {
+    value: FilterTypes.STATUS,
+    label: 'Status',
+    filterValue: ''
+  },
+  {
+    value: FilterTypes.HAS_RULE,
+    label: 'Has Feature Flag As Rule',
+    filterValue: ''
   }
 ];
 
-export const booleanOptions: Option[] = [
+export const booleanOptions = [
   {
     value: 1,
     label: 'Yes'
@@ -71,6 +91,21 @@ export const booleanOptions: Option[] = [
   {
     value: 0,
     label: 'No'
+  }
+];
+
+export const flagStatusOptions = [
+  {
+    value: StatusFilterType.NEW,
+    label: 'New'
+  },
+  {
+    value: StatusFilterType.ACTIVE,
+    label: 'Active'
+  },
+  {
+    value: StatusFilterType.NO_ACTIVITY,
+    label: 'No Activity'
   }
 ];
 
@@ -87,29 +122,11 @@ const FilterFlagModal = ({
 
   const inputSearchRef = useRef<HTMLInputElement>(null);
 
-  const [selectedFilter, setSelectedFilter] = useState<Option>(
+  const [selectedFilters, setSelectedFilters] = useState<Option[]>([
     filterOptions[0]
-  );
-  const [filterValue, setFilterValue] = useState<string | number | string[]>(
-    ''
-  );
+  ]);
   const [searchValue, setSearchValue] = useState('');
   const [debounceValue, setDebounceValue] = useState('');
-
-  const isMaintainerFilter = useMemo(
-    () => selectedFilter.value === FilterTypes.MAINTAINER,
-    [selectedFilter]
-  );
-
-  const isTagFilter = useMemo(
-    () => selectedFilter.value === FilterTypes.TAGS,
-    [selectedFilter]
-  );
-
-  const isHaveSearchingDropdown = useMemo(
-    () => isMaintainerFilter || isTagFilter,
-    [isMaintainerFilter, isTagFilter]
-  );
 
   const { data: collection, isLoading } = useQueryAccounts({
     params: {
@@ -117,7 +134,9 @@ const FilterFlagModal = ({
       environmentId: currentEnvironment?.id,
       organizationId: currentEnvironment?.organizationId
     },
-    enabled: isMaintainerFilter
+    enabled: !!selectedFilters?.find(
+      item => item.value === FilterTypes.MAINTAINER
+    )
   });
 
   const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
@@ -126,120 +145,31 @@ const FilterFlagModal = ({
       environmentId: currentEnvironment?.id,
       entityType: 'FEATURE_FLAG'
     },
-    enabled: isTagFilter
+    enabled: !!selectedFilters?.find(item => item.value === FilterTypes.TAGS)
   });
 
   const accounts = collection?.accounts || [];
   const tags = tagCollection?.tags || [];
 
-  const valueOptions = useMemo(() => {
-    if (isHaveSearchingDropdown) {
-      const options = isMaintainerFilter
-        ? accounts.map(item => ({ label: item.email, value: item.email }))
-        : tags.map(item => ({
-            label: item.name,
-            value: item.name
-          }));
-      return options?.filter(item =>
-        searchValue
-          ? item.value.toLowerCase().includes(searchValue.toLowerCase())
-          : item
-      );
-    }
+  const remainingFilterOptions = useMemo(
+    () =>
+      filterOptions.filter(
+        option => !selectedFilters.find(item => item.value === option.value)
+      ),
+    [selectedFilters, filterOptions]
+  );
 
-    return booleanOptions;
-  }, [
-    isMaintainerFilter,
-    accounts,
-    isTagFilter,
-    tags,
-    searchValue,
-    isHaveSearchingDropdown
-  ]);
+  const isDisabledAddButton = useMemo(
+    () =>
+      !remainingFilterOptions.length ||
+      selectedFilters.length >= filterOptions.length,
 
-  const handleFocusSearchInput = useCallback(() => {
-    let timerId: NodeJS.Timeout | null = null;
-    if (timerId) clearTimeout(timerId);
-    timerId = setTimeout(() => inputSearchRef?.current?.focus(), 50);
-  }, []);
+    [filterOptions, selectedFilters, remainingFilterOptions]
+  );
 
-  const onConfirmHandler = useCallback(() => {
-    const defaultFilters = {
-      hasExperiment: undefined,
-      hasPrerequisites: undefined,
-      maintainer: undefined,
-      enabled: undefined,
-      tags: undefined
-    };
-
-    onSubmit({
-      ...defaultFilters,
-      [selectedFilter.value]: isHaveSearchingDropdown
-        ? filterValue
-        : !!filterValue
-    });
-  }, [isMaintainerFilter, isTagFilter, filterValue, isHaveSearchingDropdown]);
-
-  const handleSetFilterOnInit = useCallback(() => {
-    if (filters) {
-      const { maintainer, hasExperiment, hasPrerequisites, enabled, tags } =
-        filters || {};
-      const isNotEmptyMaintainer = isNotEmpty(maintainer);
-      const isNotTagMaintainer = isNotEmpty(tags);
-      const isNotEmptyExperiment = isNotEmpty(hasExperiment);
-      const isNotEmptyPrerequisites = isNotEmpty(hasPrerequisites);
-      const isNotEmptyEnabled = isNotEmpty(enabled);
-
-      if (isNotEmptyMaintainer) {
-        setFilterValue(maintainer!);
-        return setSelectedFilter(filterOptions[2]);
-      }
-      if (isNotTagMaintainer) {
-        setFilterValue(tags!);
-        return setSelectedFilter(filterOptions[4]);
-      }
-      if (
-        isNotEmptyExperiment ||
-        isNotEmptyPrerequisites ||
-        isNotEmptyEnabled
-      ) {
-        setFilterValue(hasExperiment || hasPrerequisites || enabled ? 1 : 0);
-        return setSelectedFilter(
-          filterOptions[
-            isNotEmptyExperiment ? 0 : isNotEmptyPrerequisites ? 1 : 3
-          ]
-        );
-      }
-      setSelectedFilter(filterOptions[0]);
-    }
-  }, [filters]);
-
-  const handleGetLabelFilterValue = useCallback(() => {
-    return isMaintainerFilter
-      ? String(filterValue)
-      : isTagFilter
-        ? (Array.isArray(filterValue) &&
-            tags.length &&
-            filterValue
-              .map(item => tags.find(tag => tag.name === item)?.name)
-              ?.join(', ')) ||
-          ''
-        : booleanOptions.find(item => item.value === filterValue)?.label || '';
-  }, [filterValue, isMaintainerFilter, isTagFilter, tags]);
-
-  const handleChangeFilterValue = useCallback(
-    (value: string | number) => {
-      if (!isTagFilter) return setFilterValue(value);
-      if (Array.isArray(filterValue)) {
-        const isExistedTag = filterValue.includes(value as string);
-        setFilterValue(
-          isExistedTag
-            ? filterValue.filter(item => item !== value)
-            : [...filterValue, value as string]
-        );
-      }
-    },
-    [isTagFilter, filterValue]
+  const isDisabledSubmitButton = useMemo(
+    () => !!selectedFilters.find(item => isEmpty(item.filterValue)),
+    [selectedFilters]
   );
 
   const debouncedSearch = useCallback(
@@ -248,6 +178,174 @@ const FilterFlagModal = ({
     }, 500),
     []
   );
+
+  const getValueOptions = useCallback(
+    (filterOption: Option) => {
+      if (!filterOption.value) return [];
+      const isMaintainerFilter = filterOption.value === FilterTypes.MAINTAINER;
+      const isTagFilter = filterOption.value === FilterTypes.TAGS;
+      const isStatusFilter = filterOption.value === FilterTypes.STATUS;
+
+      const isHaveSearchingDropdown =
+        isMaintainerFilter || isTagFilter || isStatusFilter;
+      if (isHaveSearchingDropdown) {
+        const options = isMaintainerFilter
+          ? accounts.map(item => ({
+              label: item.email,
+              value: item.email
+            }))
+          : isTagFilter
+            ? tags.map(item => ({
+                label: item.name,
+                value: item.name
+              }))
+            : flagStatusOptions;
+
+        return options?.filter(item =>
+          searchValue
+            ? item.value.toLowerCase().includes(searchValue.toLowerCase())
+            : item
+        );
+      }
+
+      return booleanOptions;
+    },
+    [accounts, tags, searchValue]
+  );
+
+  const handleFocusSearchInput = useCallback(() => {
+    let timerId: NodeJS.Timeout | null = null;
+    if (timerId) clearTimeout(timerId);
+    timerId = setTimeout(() => inputSearchRef?.current?.focus(), 50);
+  }, []);
+
+  const handleSetFilterOnInit = useCallback(() => {
+    if (filters) {
+      const {
+        maintainer,
+        hasExperiment,
+        hasPrerequisites,
+        enabled,
+        tags,
+        status,
+        hasFeatureFlagAsRule
+      } = filters || {};
+      const filterTypeArr: Option[] = [];
+      const addFilterOption = (index: number, value: Option['filterValue']) => {
+        if (!isEmpty(value)) {
+          const option = filterOptions[index];
+
+          filterTypeArr.push({
+            ...option,
+            filterValue: [
+              FilterTypes.TAGS,
+              FilterTypes.MAINTAINER,
+              FilterTypes.STATUS
+            ].includes(option.value!)
+              ? value
+              : value
+                ? 1
+                : 0
+          });
+        }
+      };
+      addFilterOption(0, hasExperiment);
+      addFilterOption(1, hasPrerequisites);
+      addFilterOption(2, maintainer);
+      addFilterOption(3, enabled);
+      addFilterOption(4, tags);
+      addFilterOption(5, status);
+      addFilterOption(6, hasFeatureFlagAsRule);
+
+      setSelectedFilters(
+        filterTypeArr.length ? filterTypeArr : [filterOptions[0]]
+      );
+    }
+  }, [filters]);
+
+  const handleGetLabelFilterValue = useCallback(
+    (filterOption?: Option) => {
+      if (filterOption) {
+        const { value: filterType, filterValue } = filterOption;
+        const isMaintainerFilter = filterType === FilterTypes.MAINTAINER;
+        const isTagFilter = filterType === FilterTypes.TAGS;
+        const isStatusFilter = filterType === FilterTypes.STATUS;
+
+        return isMaintainerFilter
+          ? filterValue || ''
+          : isTagFilter
+            ? (Array.isArray(filterValue) &&
+                tags.length &&
+                filterValue
+                  .map(item => tags.find(tag => tag.name === item)?.name)
+                  ?.join(', ')) ||
+              ''
+            : (isStatusFilter ? flagStatusOptions : booleanOptions).find(
+                item => item.value === filterValue
+              )?.label || '';
+      }
+      return '';
+    },
+    [tags]
+  );
+
+  const handleChangeFilterValue = useCallback(
+    (value: string | number, filterIndex: number) => {
+      const filterOption = selectedFilters[filterIndex];
+      const { value: filterType, filterValue } = filterOption;
+      const isTagOption = filterType === FilterTypes.TAGS;
+      if (isTagOption) {
+        const values = filterValue as string[];
+        const isExisted = values.find(item => item === value);
+        const newValue: string[] = isExisted
+          ? values.filter(item => item !== value)
+          : [...values, value as string];
+        selectedFilters[filterIndex] = {
+          ...selectedFilters[filterIndex],
+          filterValue: newValue
+        };
+        return setSelectedFilters([...selectedFilters]);
+      }
+      selectedFilters[filterIndex] = {
+        ...selectedFilters[filterIndex],
+        filterValue: value
+      };
+      setSelectedFilters([...selectedFilters]);
+    },
+    [selectedFilters]
+  );
+
+  const onConfirmHandler = useCallback(() => {
+    const defaultFilters = {
+      hasExperiment: undefined,
+      hasPrerequisites: undefined,
+      maintainer: undefined,
+      enabled: undefined,
+      tags: undefined,
+      status: undefined,
+      hasFeatureFlagAsRule: undefined
+    };
+
+    const newFilters = {};
+
+    selectedFilters.forEach(filter => {
+      const filterByText = [
+        FilterTypes.MAINTAINER,
+        FilterTypes.TAGS,
+        FilterTypes.STATUS
+      ].includes(filter.value!);
+      Object.assign(newFilters, {
+        [filter.value!]: filterByText
+          ? filter.filterValue
+          : !!filter.filterValue
+      });
+    });
+
+    onSubmit({
+      ...defaultFilters,
+      ...newFilters
+    });
+  }, [selectedFilters]);
 
   useEffect(() => {
     handleSetFilterOnInit();
@@ -261,93 +359,157 @@ const FilterFlagModal = ({
       onClose={onClose}
     >
       <div className="flex flex-col w-full items-start p-5 gap-y-4">
-        <div className="flex items-center w-full h-12 gap-x-4">
-          <div className="typo-para-small text-center py-[3px] px-4 rounded text-accent-pink-500 bg-accent-pink-50">
-            {t(`if`)}
-          </div>
-          <Divider vertical={true} className="border-primary-500" />
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              placeholder={t(`select-filter`)}
-              label={selectedFilter.label}
-              variant="secondary"
-              className="w-full"
-            />
-            <DropdownMenuContent className="w-[235px]" align="start">
-              {filterOptions.map((item, index) => (
-                <DropdownMenuItem
-                  key={index}
-                  value={item.value}
-                  label={item.label}
-                  onSelectOption={() => {
-                    setSelectedFilter(item);
-                    setFilterValue(item.value === FilterTypes.TAGS ? [] : '');
-                  }}
-                />
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <p className="typo-para-medium text-gray-600">{`is`}</p>
-          <DropdownMenu
-            onOpenChange={open => {
-              if (open) return handleFocusSearchInput();
-              setDebounceValue('');
-              setSearchValue('');
-            }}
-          >
-            <DropdownMenuTrigger
-              disabled={isLoading || isLoadingTags}
-              placeholder={t(`select-value`)}
-              label={handleGetLabelFilterValue()}
-              variant="secondary"
-              className="w-full max-w-[235px] truncate"
-            />
-            <DropdownMenuContent
-              className={cn('w-[235px]', {
-                'pt-0 w-[300px]': isHaveSearchingDropdown
-              })}
-              align="start"
+        {selectedFilters.map((filterOption, filterIndex) => {
+          const { label, value: filterType } = filterOption;
+          const isMaintainerFilter = filterType === FilterTypes.MAINTAINER;
+          const isTagFilter = filterType === FilterTypes.TAGS;
+          const isHaveSearchingDropdown = isMaintainerFilter || isTagFilter;
+          const valueOptions = getValueOptions(filterOption);
+          return (
+            <div
+              className="flex items-center w-full h-12 gap-x-4"
+              key={filterIndex}
             >
-              {isHaveSearchingDropdown && (
-                <DropdownMenuSearch
-                  ref={inputSearchRef}
-                  value={debounceValue}
-                  onChange={value => {
-                    setDebounceValue(value);
-                    debouncedSearch(value);
-                    handleFocusSearchInput();
-                  }}
+              <div
+                className={cn(
+                  'typo-para-small text-center py-[3px] w-[42px] min-w-[42px] rounded text-accent-pink-500 bg-accent-pink-50',
+                  {
+                    'bg-gray-200 text-gray-600': filterIndex !== 0
+                  }
+                )}
+              >
+                {t(filterIndex === 0 ? `if` : 'and')}
+              </div>
+              <Divider vertical={true} className="border-primary-500" />
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  placeholder={t(`select-filter`)}
+                  label={label}
+                  variant="secondary"
+                  className="w-full max-w-[250px] truncate"
                 />
-              )}
-              {valueOptions?.length > 0 ? (
-                valueOptions.map((item, index) => (
-                  <DropdownMenuItem
-                    key={index}
-                    isSelected={
-                      isTagFilter &&
-                      Array.isArray(filterValue) &&
-                      filterValue.includes(item.value as string)
-                    }
-                    isMultiselect={isTagFilter}
-                    value={item.value}
-                    label={item.label}
-                    className="flex items-center max-w-full truncate"
-                    onSelectOption={value => handleChangeFilterValue(value)}
-                  />
-                ))
-              ) : (
-                <div className="flex-center py-2.5 typo-para-medium text-gray-600">
-                  {t('no-options-found')}
-                </div>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+                <DropdownMenuContent className="w-[250px]" align="start">
+                  {remainingFilterOptions.map((item, index) => (
+                    <DropdownMenuItem
+                      key={index}
+                      value={item.value || ''}
+                      label={item.label}
+                      onSelectOption={() => {
+                        const filterValue =
+                          item.value === FilterTypes.TAGS ? [] : '';
+                        selectedFilters[filterIndex] = { ...item, filterValue };
+                        setSelectedFilters([...selectedFilters]);
+                      }}
+                    />
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <p className="typo-para-medium text-gray-600">{`is`}</p>
+              <DropdownMenu
+                onOpenChange={open => {
+                  if (open) return handleFocusSearchInput();
+                  setDebounceValue('');
+                  setSearchValue('');
+                }}
+              >
+                <DropdownMenuTrigger
+                  disabled={
+                    (isTagFilter && isLoadingTags) ||
+                    (isMaintainerFilter && isLoading) ||
+                    !filterType
+                  }
+                  loading={
+                    (isTagFilter && isLoadingTags) ||
+                    (isMaintainerFilter && isLoading)
+                  }
+                  placeholder={t(`select-value`)}
+                  label={handleGetLabelFilterValue(filterOption)}
+                  variant="secondary"
+                  className="w-full max-w-[235px] truncate"
+                />
+                <DropdownMenuContent
+                  className={cn('w-[235px]', {
+                    'pt-0 w-[300px]': isHaveSearchingDropdown
+                  })}
+                  align="start"
+                >
+                  {isHaveSearchingDropdown && (
+                    <DropdownMenuSearch
+                      ref={inputSearchRef}
+                      value={debounceValue}
+                      onChange={value => {
+                        setDebounceValue(value);
+                        debouncedSearch(value);
+                        handleFocusSearchInput();
+                      }}
+                    />
+                  )}
+                  {valueOptions?.length > 0 ? (
+                    valueOptions.map((item, index) => (
+                      <DropdownMenuItem
+                        key={index}
+                        isSelected={
+                          isTagFilter &&
+                          Array.isArray(filterOption?.filterValue) &&
+                          filterOption.filterValue?.includes(
+                            item.value as string
+                          )
+                        }
+                        isMultiselect={isTagFilter}
+                        value={item.value}
+                        label={item.label}
+                        className="flex items-center max-w-full truncate"
+                        onSelectOption={value =>
+                          handleChangeFilterValue(value, filterIndex)
+                        }
+                      />
+                    ))
+                  ) : (
+                    <div className="flex-center py-2.5 typo-para-medium text-gray-600">
+                      {t('no-options-found')}
+                    </div>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                variant={'grey'}
+                className="px-0 w-fit"
+                disabled={selectedFilters.length <= 1}
+                onClick={() =>
+                  setSelectedFilters(
+                    selectedFilters.filter((_, index) => filterIndex !== index)
+                  )
+                }
+              >
+                <Icon icon={IconTrash} size={'sm'} />
+              </Button>
+            </div>
+          );
+        })}
+
+        <Button
+          disabled={isDisabledAddButton}
+          variant={'text'}
+          className="h-6 px-0"
+          onClick={() => {
+            setSelectedFilters([
+              ...selectedFilters,
+              {
+                label: '',
+                value: undefined,
+                filterValue: ''
+              }
+            ]);
+          }}
+        >
+          <Icon icon={IconPlus} />
+          {t('add-filter')}
+        </Button>
       </div>
 
       <ButtonBar
         secondaryButton={
-          <Button disabled={isEmpty(filterValue)} onClick={onConfirmHandler}>
+          <Button disabled={isDisabledSubmitButton} onClick={onConfirmHandler}>
             {t(`confirm`)}
           </Button>
         }

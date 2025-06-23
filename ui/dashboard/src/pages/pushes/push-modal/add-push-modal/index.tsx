@@ -1,18 +1,19 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { pushCreator } from '@api/push';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidatePushes } from '@queries/pushes';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
-import { covertFileToByteString } from 'utils/converts';
+import { covertFileToUint8ToBase64 } from 'utils/converts';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { IconInfo } from '@icons';
+import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { useFetchTags } from 'pages/members/collection-loader';
-import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import { CreatableSelect } from 'components/creatable-select';
@@ -27,8 +28,10 @@ import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import UploadFiles from 'components/upload-files';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface AddPushModalProps {
+  disabled?: boolean;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -36,38 +39,41 @@ interface AddPushModalProps {
 export interface AddPushForm {
   name: string;
   fcmServiceAccount: Uint8Array | string;
-  tags: string[];
+  tags?: string[];
   environmentId: string;
 }
 
 export const formSchema = yup.object().shape({
   name: yup.string().required(),
   fcmServiceAccount: yup.string().required(),
-  tags: yup.array().required(),
+  tags: yup.array(),
   environmentId: yup.string().required()
 });
 
-const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
+const AddPushModal = ({ disabled, isOpen, onClose }: AddPushModalProps) => {
   const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
 
   const [files, setFiles] = useState<File[]>([]);
 
-  const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId
-  });
+  const editorEnvironments = useMemo(
+    () =>
+      consoleAccount?.environmentRoles
+        .filter(item => item.role === 'Environment_EDITOR')
+        ?.map(item => item.environment) || [],
+    [consoleAccount]
+  );
 
-  const environments = (collection?.environments || []).filter(item => item.id);
+  const { formattedEnvironments } = onFormatEnvironments(editorEnvironments);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
       name: '',
       fcmServiceAccount: '',
-      tags: [],
+      tags: undefined,
       environmentId: ''
     }
   });
@@ -82,38 +88,45 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
 
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
     entityType: 'FEATURE_FLAG',
-    environmentId: watch('environmentId'),
+    environmentId: checkEnvironmentEmptyId(watch('environmentId')),
     options: {
       enabled: isEnabledTags
     }
   });
 
-  const tagOptions = uniqBy(tagCollection?.tags || [], 'name');
+  const tagOptions = (uniqBy(tagCollection?.tags || [], 'name') || [])?.map(
+    tag => ({
+      label: tag.name,
+      value: tag.name
+    })
+  );
 
   const onSubmit: SubmitHandler<AddPushForm> = async values => {
     try {
-      covertFileToByteString(files[0], data => {
-        pushCreator({ ...values, fcmServiceAccount: data }).then(() => {
-          notify({
-            toastType: 'toast',
-            messageType: 'success',
-            message: (
-              <span>
-                <b>{values.name}</b> {` has been successfully created!`}
-              </span>
-            )
-          });
-          invalidatePushes(queryClient);
-          onClose();
+      const base64String: string = await new Promise(rs =>
+        covertFileToUint8ToBase64(files[0], data => rs(data))
+      );
+      const { environmentId, ...rest } = values || {};
+      const resp = await pushCreator({
+        ...rest,
+        environmentId: checkEnvironmentEmptyId(environmentId),
+        fcmServiceAccount: base64String
+      });
+      if (resp) {
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: (
+            <span>
+              <b>{values.name}</b> {` has been successfully created!`}
+            </span>
+          )
         });
-      });
+        invalidatePushes(queryClient);
+        onClose();
+      }
     } catch (error) {
-      const errorMessage = (error as Error)?.message;
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: errorMessage || 'Something went wrong.'
-      });
+      errorNotify(error);
     }
   };
 
@@ -189,11 +202,10 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                       <DropdownMenuTrigger
                         placeholder={t(`form:select-environment`)}
                         label={
-                          environments.find(
+                          formattedEnvironments.find(
                             item => item.id === getValues('environmentId')
-                          )?.name
+                          )?.name || ''
                         }
-                        disabled={isLoadingEnvs}
                         variant="secondary"
                         className="w-full"
                       />
@@ -202,7 +214,7 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                         align="start"
                         {...field}
                       >
-                        {environments.map((item, index) => (
+                        {formattedEnvironments.map((item, index) => (
                           <DropdownMenuItem
                             {...field}
                             key={index}
@@ -227,27 +239,42 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
               name={`tags`}
               render={({ field }) => (
                 <Form.Item className="py-2">
-                  <Form.Label required>
-                    {t('form:feature-flag-tags')}
-                  </Form.Label>
+                  <Form.Label>{t('form:feature-flag-tags')}</Form.Label>
                   <Form.Control>
                     <CreatableSelect
                       disabled={
                         isLoadingTags || !isEnabledTags || !tagOptions.length
                       }
                       loading={isLoadingTags}
+                      allowCreateWhileLoading={false}
+                      isValidNewOption={() => false}
+                      isClearable
+                      onKeyDown={e => {
+                        const { value } = e.target as HTMLInputElement;
+                        const isExists = tagOptions.find(
+                          item =>
+                            item.label
+                              .toLowerCase()
+                              .includes(value.toLowerCase()) &&
+                            !field.value?.includes(item.label)
+                        );
+                        if (e.key === 'Enter' && (!isExists || !value)) {
+                          e.preventDefault();
+                        }
+                      }}
                       placeholder={t(
                         isEnabledTags && !tagOptions.length && !isLoadingTags
                           ? `form:no-tags-found`
                           : `form:placeholder-tags`
                       )}
-                      options={tagOptions?.map(tag => ({
-                        label: tag.name,
-                        value: tag.id
-                      }))}
+                      options={tagOptions}
                       onChange={value =>
                         field.onChange(value.map(tag => tag.value))
                       }
+                      noOptionsMessage={() => (
+                        <UserMessage message={t('no-options-found')} />
+                      )}
+                      onCreateOption={() => {}}
                     />
                   </Form.Control>
                   <Form.Message />
@@ -263,13 +290,18 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!isValid}
-                    loading={isSubmitting}
-                  >
-                    {t(`submit`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    hidden={!disabled}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={!isValid || disabled}
+                        loading={isSubmitting}
+                      >
+                        {t(`submit`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>

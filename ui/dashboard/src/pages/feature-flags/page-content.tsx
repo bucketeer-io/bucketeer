@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
+import { useLocation } from 'react-router-dom';
+import { hasEditable, useAuth } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { pickBy } from 'lodash';
@@ -9,6 +11,7 @@ import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import TableListContainer from 'elements/table-list-container';
@@ -26,6 +29,11 @@ const PageContent = ({
   onHandleActions: (item: Feature, type: FlagActionType) => void;
 }) => {
   const { t } = useTranslation(['common']);
+  const location = useLocation();
+  const { consoleAccount } = useAuth();
+
+  const editable = hasEditable(consoleAccount!);
+
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const [summary, setSummary] = useState<FeatureCountByStatus>();
 
@@ -38,20 +46,27 @@ const PageContent = ({
     page: 1,
     orderBy: 'CREATED_AT',
     orderDirection: 'DESC',
-    status: 'ACTIVE',
+    tab: 'ACTIVE',
     ...searchFilters
   } as FlagFilters;
 
   const [filters, setFilters] = usePartialState<FlagFilters>(defaultFilters);
 
   const filterCount = useMemo(() => {
-    const { hasExperiment, hasPrerequisites, maintainer, enabled, tags } =
-      filters || {};
-    return isNotEmpty(
-      enabled ?? hasExperiment ?? hasPrerequisites ?? maintainer ?? tags
-    )
-      ? 1
-      : undefined;
+    const filterKeys = [
+      'hasExperiment',
+      'hasPrerequisites',
+      'maintainer',
+      'enabled',
+      'tags',
+      'status',
+      'hasFeatureFlagAsRule'
+    ];
+    const count = filterKeys.reduce((acc, curr) => {
+      if (isNotEmpty(filters[curr as keyof FlagFilters])) ++acc;
+      return acc;
+    }, 0);
+    return count || undefined;
   }, [filters]);
 
   const isHiddenTab = useMemo(
@@ -75,7 +90,9 @@ const PageContent = ({
       enabled: undefined,
       archived: undefined,
       tags: undefined,
-      status: 'ACTIVE'
+      tab: 'ACTIVE',
+      status: undefined,
+      hasFeatureFlagAsRule: undefined
     });
     onCloseFilterModal();
   }, [filters]);
@@ -86,17 +103,50 @@ const PageContent = ({
     }
   }, [searchOptions]);
 
+  useEffect(() => {
+    if (location?.state?.clearFilters) {
+      setFilters({
+        ...filters,
+        searchQuery: '',
+        hasExperiment: undefined,
+        hasPrerequisites: undefined,
+        maintainer: undefined,
+        enabled: undefined,
+        archived: undefined,
+        tags: undefined,
+        tab: 'ACTIVE'
+      });
+    }
+  }, [location]);
+
   return (
     <PageLayout.Content>
-      <Overview summary={summary} onChangeFilters={() => {}} />
+      <Overview
+        summary={summary}
+        statusFilter={filters?.status}
+        onChangeFilters={status =>
+          onChangeFilters({
+            status
+          })
+        }
+      />
       <Filter
         action={
           <>
             <SortBy filters={filters} setFilters={setFilters} />
-            <Button className="flex-1 lg:flex-none" onClick={onAdd}>
-              <Icon icon={IconAddOutlined} size="sm" />
-              {t(`create-flag`)}
-            </Button>
+            <DisabledButtonTooltip
+              hidden={editable}
+              trigger={
+                <Button
+                  className="flex-1 lg:flex-none"
+                  onClick={onAdd}
+                  disabled={!editable}
+                >
+                  <Icon icon={IconAddOutlined} size="sm" />
+                  {t(`create-flag`)}
+                </Button>
+              }
+            />
           </>
         }
         filterCount={filterCount}
@@ -118,13 +168,13 @@ const PageContent = ({
       )}
       <Tabs
         className="flex-1 flex h-full flex-col mt-6"
-        value={filters.status}
+        value={filters.tab}
         onValueChange={value => {
-          const status = value as CollectionStatusType;
+          const tab = value as CollectionStatusType;
           onChangeFilters({
             searchQuery: '',
-            status,
-            archived: status === 'ARCHIVED' || undefined
+            tab,
+            archived: tab === 'ARCHIVED' || undefined
           });
         }}
       >
@@ -135,7 +185,7 @@ const PageContent = ({
           </TabsList>
         )}
 
-        <TabsContent value={filters.status} className="pb-6">
+        <TabsContent value={filters.tab} className="pb-6">
           <TableListContainer>
             <CollectionLoader
               filters={filters}

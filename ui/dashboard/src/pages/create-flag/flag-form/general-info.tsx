@@ -8,7 +8,7 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import { Tooltip } from 'components/tooltip';
-import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+import TagsSelectMenu from 'elements/tags-select-menu';
 
 const GeneralInfo = ({
   tags,
@@ -22,7 +22,7 @@ const GeneralInfo = ({
     () =>
       tags?.map(tag => ({
         label: tag.name,
-        value: tag.id
+        value: tag.name
       })),
     [tags]
   );
@@ -125,32 +125,10 @@ const GeneralInfo = ({
                   />
                 </Form.Label>
                 <Form.Control>
-                  <DropdownMenuWithSearch
-                    label={
-                      field.value
-                        ?.map(
-                          (item: string) =>
-                            tagOptions.find(tag => tag.value === item)?.label
-                        )
-                        ?.join(', ') || ''
-                    }
-                    isExpand
-                    isMultiselect
-                    placeholder={t('experiments.select-flag')}
-                    options={tagOptions}
-                    selectedOptions={field.value}
-                    onSelectOption={value => {
-                      const isExisted = field.value?.find(
-                        (item: string) => item === value
-                      );
-                      field.onChange(
-                        isExisted
-                          ? field.value?.filter(
-                              (item: string) => item !== value
-                            )
-                          : [...field.value, value]
-                      );
-                    }}
+                  <TagsSelectMenu
+                    fieldValues={field.value || []}
+                    onChange={field.onChange}
+                    tagOptions={tagOptions}
                   />
                 </Form.Control>
                 <Form.Message />

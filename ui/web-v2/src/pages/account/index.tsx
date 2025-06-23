@@ -337,7 +337,10 @@ export const AccountIndexPage: FC = memo(() => {
       resetUpdate({
         name: a.name,
         email: a.email,
-        role: getRoleV1(a.organizationRole, envRole.role).value,
+        role: getRoleV1(
+          a.organizationRole,
+          envRole?.role ?? AccountV2.Role.Environment.ENVIRONMENT_UNASSIGNED
+        ).value,
         tags: a.tagsList
       });
       history.push({
@@ -489,7 +492,10 @@ export const AccountIndexPage: FC = memo(() => {
         resetUpdate({
           name: payload.name,
           email: payload.email,
-          role: getRoleV1(payload.organizationRole, envRole.role).value,
+          role: getRoleV1(
+            payload.organizationRole,
+            envRole?.role ?? AccountV2.Role.Environment.ENVIRONMENT_UNASSIGNED
+          ).value,
           tags: payload.tagsList
         });
       });

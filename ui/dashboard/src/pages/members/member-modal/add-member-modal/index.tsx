@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import {
   FormProvider,
   Resolver,
@@ -18,24 +18,26 @@ import { Language, useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { EnvironmentRoleType, OrganizationRole } from '@types';
+import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { IconInfo } from '@icons';
 import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import { CreatableSelect } from 'components/creatable-select';
 import Divider from 'components/divider';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownOption
 } from 'components/dropdown';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { Tooltip } from 'components/tooltip';
+import TagsSelectMenu from 'elements/tags-select-menu';
 import EnvironmentRoles from './environment-roles';
 
 interface AddMemberModalProps {
@@ -103,8 +105,11 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
+  const [tagOptions, setTagOptions] = useState<DropdownOption[]>([]);
+
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
-    organizationId: currentEnvironment.organizationId
+    organizationId: currentEnvironment.organizationId,
+    entityType: 'ACCOUNT'
   });
 
   const form = useForm<AddMemberForm>({
@@ -122,15 +127,28 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
     formState: { dirtyFields, isValid, isSubmitting }
   } = form;
   const memberEnvironments = watch('environmentRoles');
+  const tags = tagCollection?.tags || [];
 
-  const tagOptions = uniqBy(tagCollection?.tags || [], 'name')?.filter(tag =>
-    memberEnvironments.find(env => env.environmentId === tag.environmentId)
+  const uniqueNameTags = uniqBy(tags || [], 'name')?.map(item => ({
+    label: item.name,
+    value: item.id,
+    environmentId: item.environmentId
+  }));
+
+  const tagDropdownOptions = uniqBy(
+    [...tagOptions, ...uniqueNameTags],
+    'label'
+  )?.filter(
+    tag =>
+      memberEnvironments.find(env => env.environmentId === tag.environmentId) ||
+      !tag?.environmentId
   );
 
   const { data: collection } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
   const environments = collection?.environments || [];
+  const { formattedEnvironments } = onFormatEnvironments(environments);
 
   const checkSubmitBtnDisabled = useCallback(() => {
     const checkEnvironments = memberEnvironments.every(
@@ -147,7 +165,10 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
       organizationId: currentEnvironment.organizationId,
       email: values.email,
       organizationRole: values.role,
-      environmentRoles: values.environmentRoles,
+      environmentRoles: values.environmentRoles.map(item => ({
+        ...item,
+        environmentId: checkEnvironmentEmptyId(item.environmentId)
+      })),
       tags: values.tags ?? []
     }).then(() => {
       notify({
@@ -250,17 +271,12 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                     />
                   </Form.Label>
                   <Form.Control>
-                    <CreatableSelect
+                    <TagsSelectMenu
+                      tagOptions={tagDropdownOptions}
+                      fieldValues={field.value}
+                      onChange={field.onChange}
                       disabled={isLoadingTags}
-                      loading={isLoadingTags}
-                      placeholder={t(`form:placeholder-member-tags`)}
-                      options={tagOptions?.map(tag => ({
-                        label: tag.name,
-                        value: tag.id
-                      }))}
-                      onChange={value =>
-                        field.onChange(value.map(tag => tag.value))
-                      }
+                      onChangeTagOptions={setTagOptions}
                     />
                   </Form.Control>
                   <Form.Message />
@@ -269,24 +285,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
             />
 
             <Divider className="mt-1 mb-3" />
-            <Form.Field
-              control={form.control}
-              name="environmentRoles"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Control>
-                    <EnvironmentRoles
-                      environments={environments}
-                      memberEnvironments={memberEnvironments}
-                      onChangeEnvironments={values => {
-                        field.onChange(values);
-                      }}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
+            <EnvironmentRoles environments={formattedEnvironments} />
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={

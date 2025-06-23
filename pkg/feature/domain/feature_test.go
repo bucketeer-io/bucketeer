@@ -3223,6 +3223,126 @@ func TestValidateStrategy(t *testing.T) {
 			variations:  variations,
 			expectedErr: ErrDefaultStrategyCannotBeBothFixedAndRollout,
 		},
+		{
+			desc: "success: rollout strategy with valid audience",
+			strategy: &feature.Strategy{
+				Type: feature.Strategy_ROLLOUT,
+				RolloutStrategy: &feature.RolloutStrategy{
+					Variations: []*feature.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 50},
+						{Variation: id2.String(), Weight: 50},
+					},
+					Audience: &feature.Audience{
+						Percentage:       50,
+						DefaultVariation: id1.String(),
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: nil,
+		},
+		{
+			desc: "success: rollout strategy with 0% audience",
+			strategy: &feature.Strategy{
+				Type: feature.Strategy_ROLLOUT,
+				RolloutStrategy: &feature.RolloutStrategy{
+					Variations: []*feature.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 100},
+					},
+					Audience: &feature.Audience{
+						Percentage:       0,
+						DefaultVariation: "",
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: nil,
+		},
+		{
+			desc: "success: rollout strategy with 100% audience",
+			strategy: &feature.Strategy{
+				Type: feature.Strategy_ROLLOUT,
+				RolloutStrategy: &feature.RolloutStrategy{
+					Variations: []*feature.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 100},
+					},
+					Audience: &feature.Audience{
+						Percentage:       100,
+						DefaultVariation: "",
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: nil,
+		},
+		{
+			desc: "fail: audience percentage below 0",
+			strategy: &feature.Strategy{
+				Type: feature.Strategy_ROLLOUT,
+				RolloutStrategy: &feature.RolloutStrategy{
+					Variations: []*feature.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 100},
+					},
+					Audience: &feature.Audience{
+						Percentage:       -1,
+						DefaultVariation: id1.String(),
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: ErrInvalidAudiencePercentage,
+		},
+		{
+			desc: "fail: audience percentage above 100",
+			strategy: &feature.Strategy{
+				Type: feature.Strategy_ROLLOUT,
+				RolloutStrategy: &feature.RolloutStrategy{
+					Variations: []*feature.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 100},
+					},
+					Audience: &feature.Audience{
+						Percentage:       101,
+						DefaultVariation: id1.String(),
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: ErrInvalidAudiencePercentage,
+		},
+		{
+			desc: "fail: audience percentage between 1-99 without default variation",
+			strategy: &feature.Strategy{
+				Type: feature.Strategy_ROLLOUT,
+				RolloutStrategy: &feature.RolloutStrategy{
+					Variations: []*feature.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 100},
+					},
+					Audience: &feature.Audience{
+						Percentage:       50,
+						DefaultVariation: "",
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: ErrInvalidAudienceDefaultVariation,
+		},
+		{
+			desc: "fail: audience with non-existent default variation",
+			strategy: &feature.Strategy{
+				Type: feature.Strategy_ROLLOUT,
+				RolloutStrategy: &feature.RolloutStrategy{
+					Variations: []*feature.RolloutStrategy_Variation{
+						{Variation: id1.String(), Weight: 100},
+					},
+					Audience: &feature.Audience{
+						Percentage:       50,
+						DefaultVariation: "non-existent",
+					},
+				},
+			},
+			variations:  variations,
+			expectedErr: ErrDefaultVariationNotFound,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {

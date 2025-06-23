@@ -31,6 +31,7 @@ import SlideModal from 'components/modal/slide';
 import ScheduleList from './schedule-list';
 
 export interface OperationModalProps {
+  editable: boolean;
   isFinishedTab: boolean;
   featureId: string;
   environmentId: string;
@@ -44,6 +45,7 @@ export interface OperationModalProps {
 }
 
 const ScheduleOperationModal = ({
+  editable,
   isFinishedTab,
   featureId,
   environmentId,
@@ -90,7 +92,7 @@ const ScheduleOperationModal = ({
   const handleCheckDateTimeClauses = useCallback(
     (datetimeClausesList: DateTimeClauseListType['datetimeClausesList']) => {
       if (selectedData) {
-        const updateDatetimeClauses: ClauseUpdateType<DatetimeClause>[] = [];
+        const datetimeClauseChanges: ClauseUpdateType<DatetimeClause>[] = [];
         const { clauses } = selectedData;
         const clausesFormatted = clauses.map(clause => {
           const time = new Date(
@@ -108,9 +110,9 @@ const ScheduleOperationModal = ({
             clause => clause?.id === item.id
           );
           if (!currentClause) {
-            updateDatetimeClauses.push({
+            datetimeClauseChanges.push({
               id: item.id,
-              deleted: true
+              changeType: 'DELETE'
             });
           }
         });
@@ -120,7 +122,8 @@ const ScheduleOperationModal = ({
             clause => clause.id === item?.id
           );
           if (!currentClause) {
-            updateDatetimeClauses.push({
+            datetimeClauseChanges.push({
+              changeType: 'CREATE',
               clause: {
                 actionType: item.actionType,
                 time: Math.trunc(item.time.getTime() / 1000)?.toString()
@@ -129,9 +132,9 @@ const ScheduleOperationModal = ({
           }
 
           if (currentClause && !isEqual(currentClause, item)) {
-            updateDatetimeClauses.push({
+            datetimeClauseChanges.push({
               id: item.id || '',
-              deleted: false,
+              changeType: 'UPDATE',
               clause: {
                 actionType: item.actionType,
                 time: Math.trunc(item.time.getTime() / 1000)?.toString()
@@ -139,7 +142,7 @@ const ScheduleOperationModal = ({
             });
           }
         });
-        return updateDatetimeClauses;
+        return datetimeClauseChanges;
       }
       return [];
     },
@@ -149,46 +152,50 @@ const ScheduleOperationModal = ({
   const onSubmit = useCallback(
     async (values: DateTimeClauseListType) => {
       try {
-        const { datetimeClausesList } = values;
+        if (editable) {
+          const { datetimeClausesList } = values;
 
-        let resp: AutoOpsCreatorResponse | null = null;
+          let resp: AutoOpsCreatorResponse | null = null;
 
-        if (!isCreate && selectedData) {
-          const updateDatetimeClauses =
-            handleCheckDateTimeClauses(datetimeClausesList);
+          if (!isCreate && selectedData) {
+            const datetimeClauseChanges =
+              handleCheckDateTimeClauses(datetimeClausesList);
 
-          resp = await autoOpsUpdate({
-            id: selectedData.id,
-            environmentId,
-            updateDatetimeClauses
-          });
-        } else {
-          const datetimeClauses = datetimeClausesList.map(item => {
-            const time = Math.trunc(item.time.getTime() / 1000)?.toString();
-            return {
-              time,
-              actionType: item.actionType
-            };
-          });
-          resp = await autoOpsCreator({
-            featureId,
-            environmentId,
-            opsType: 'SCHEDULE',
-            datetimeClauses
-          });
-        }
+            resp = await autoOpsUpdate({
+              id: selectedData.id,
+              environmentId,
+              datetimeClauseChanges
+            });
+          } else {
+            const datetimeClauses = datetimeClausesList.map(item => {
+              const time = Math.trunc(item.time.getTime() / 1000)?.toString();
+              return {
+                time,
+                actionType: item.actionType
+              };
+            });
+            resp = await autoOpsCreator({
+              featureId,
+              environmentId,
+              opsType: 'SCHEDULE',
+              datetimeClauses
+            });
+          }
 
-        if (resp) {
-          onSubmitOperationSuccess();
-          notify({
-            message: t(`message:operation.${isCreate ? 'created' : 'updated'}`)
-          });
+          if (resp) {
+            onSubmitOperationSuccess();
+            notify({
+              message: t(
+                `message:operation.${isCreate ? 'created' : 'updated'}`
+              )
+            });
+          }
         }
       } catch (error) {
         errorNotify(error);
       }
     },
-    [isCreate, actionType, selectedData]
+    [isCreate, actionType, selectedData, editable]
   );
 
   return (
@@ -239,7 +246,9 @@ const ScheduleOperationModal = ({
                 <Button
                   type="submit"
                   loading={isSubmitting}
-                  disabled={!isValid || (isFinishedTab && !!selectedData)}
+                  disabled={
+                    !isValid || (isFinishedTab && !!selectedData) || !editable
+                  }
                 >
                   {t(
                     isCreate

@@ -1,21 +1,29 @@
 import { useCallback, useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { Trans } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { autoOpsCreator } from '@api/auto-ops';
 import { featureUpdater } from '@api/features';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateFeature } from '@queries/feature-details';
 import { invalidateFeatures } from '@queries/features';
+import { useQueryRollouts } from '@queries/rollouts';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import {
+  PAGE_PATH_FEATURE_AUTOOPS,
+  PAGE_PATH_FEATURES
+} from 'constants/routing';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Feature } from '@types';
+import { IconToastWarning } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import { ReactDatePicker } from 'components/date-time-picker';
 import Form from 'components/form';
+import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
@@ -25,6 +33,7 @@ export type ConfirmationRequiredModalProps = {
   selectedFlag: Feature;
   isOpen: boolean;
   isEnabling: boolean;
+  isOnFlagList?: boolean;
   onClose: () => void;
 };
 
@@ -39,17 +48,33 @@ const ConfirmationRequiredModal = ({
   selectedFlag,
   isOpen,
   isEnabling,
+  isOnFlagList,
   onClose
 }: ConfirmationRequiredModalProps) => {
-  const { t } = useTranslation(['common', 'form', 'table']);
+  const { t } = useTranslation(['common', 'form', 'table', 'message']);
   const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
+  const navigate = useNavigate();
   const isRequireComment = currentEnvironment?.requireComment;
 
   const isEnabled = useMemo(() => selectedFlag.enabled, [selectedFlag]);
+
+  const { data: rolloutCollection } = useQueryRollouts({
+    params: {
+      cursor: String(0),
+      environmentId: currentEnvironment.id,
+      featureIds: selectedFlag?.id ? [selectedFlag?.id] : []
+    },
+    refetchOnMount: 'always',
+    enabled: !!selectedFlag && isOnFlagList
+  });
+
+  const hasRolloutRunning = !!rolloutCollection?.progressiveRollouts?.find(
+    item => ['WAITING', 'RUNNING'].includes(item.status)
+  );
 
   const formSchema = yup.object().shape({
     id: yup.string(),
@@ -66,12 +91,14 @@ const ConfirmationRequiredModal = ({
         if (scheduleType === 'SCHEDULE') {
           if (!value)
             return context.createError({
-              message: `This field is required.`,
+              message: t('message:required-field'),
               path: context.path
             });
           if (+value * 1000 < new Date().getTime())
             return context.createError({
-              message: `This must be later than the current time.`,
+              message: t(
+                'message:validation.operation.later-than-current-time'
+              ),
               path: context.path
             });
         }
@@ -255,6 +282,28 @@ const ConfirmationRequiredModal = ({
                       </Form.Item>
                     )}
                   />
+                </div>
+              )}
+              {!isEnabling && hasRolloutRunning && (
+                <div className="flex w-full gap-x-3 p-4 mt-5 rounded-md bg-accent-yellow-50 typo-para-small">
+                  <Icon icon={IconToastWarning} />
+                  <p className="w-full typo-para-medium text-accent-yellow-700">
+                    <Trans
+                      i18nKey={'form:has-rollout-running'}
+                      components={{
+                        comp: (
+                          <span
+                            onClick={() =>
+                              navigate(
+                                `/${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${selectedFlag.id}${PAGE_PATH_FEATURE_AUTOOPS}`
+                              )
+                            }
+                            className="inline-flex text-primary-500 underline whitespace-nowrap cursor-pointer"
+                          />
+                        )
+                      }}
+                    />
+                  </p>
                 </div>
               )}
             </div>

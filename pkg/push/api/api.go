@@ -43,6 +43,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/role"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+	proto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
 )
@@ -394,16 +395,6 @@ func (s *PushService) validateCreatePushRequest(req *pushproto.CreatePushRequest
 		}
 		return dt.Err()
 	}
-	if len(req.Command.Tags) == 0 {
-		dt, err := statusTagsRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	if req.Command.Name == "" {
 		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -422,16 +413,6 @@ func (s *PushService) validateCreatePushNoCommand(req *pushproto.CreatePushReque
 		dt, err := statusFCMServiceAccountRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fcm_service_account"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if len(req.Tags) == 0 {
-		dt, err := statusTagsRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -554,7 +535,7 @@ func (s *PushService) updatePushNoCommand(
 			return err
 		}
 
-		updated, err := push.Update(req.Name, req.Tags, req.Disabled)
+		updated, err := push.Update(req.Name, req.TagChanges, req.Disabled)
 		if err != nil {
 			return err
 		}
@@ -782,7 +763,6 @@ func (s *PushService) DeletePush(
 		if err = copier.Copy(prev, push); err != nil {
 			return err
 		}
-		push.Deleted = true
 		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_PUSH,
@@ -803,7 +783,7 @@ func (s *PushService) DeletePush(
 		if err = s.publisher.Publish(ctx, event); err != nil {
 			return err
 		}
-		return s.pushStorage.UpdatePush(contextWithTx, push, req.EnvironmentId)
+		return s.pushStorage.DeletePush(contextWithTx, push.Id, req.EnvironmentId)
 	})
 	if err != nil {
 		switch {
@@ -1047,7 +1027,7 @@ func (s *PushService) listAllPushes(
 		mysql.QueryNoLimit,
 		"",
 		"",
-		environmentId,
+		[]string{environmentId},
 		"",
 		wrapperspb.Bool(false),
 		nil,
@@ -1064,11 +1044,26 @@ func (s *PushService) ListPushes(
 	req *pushproto.ListPushesRequest,
 ) (*pushproto.ListPushesResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
-	if err != nil {
-		return nil, err
+	var filterEnvironmentIDs []string
+	if req.OrganizationId != "" {
+		// console v3
+		editor, err := s.checkOrganizationRole(
+			ctx, accountproto.AccountV2_Role_Organization_MEMBER,
+			req.OrganizationId, localizer,
+		)
+		if err != nil {
+			return nil, err
+		}
+		filterEnvironmentIDs = s.getAllowedEnvironments(req.EnvironmentIds, editor)
+	} else {
+		// console v2
+		_, err := s.checkEnvironmentRole(
+			ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+			req.EnvironmentId, localizer)
+		if err != nil {
+			return nil, err
+		}
+		filterEnvironmentIDs = append(filterEnvironmentIDs, req.EnvironmentId)
 	}
 
 	orders, err := s.newListOrders(req.OrderBy, req.OrderDirection, localizer)
@@ -1084,7 +1079,7 @@ func (s *PushService) ListPushes(
 		req.PageSize,
 		req.Cursor,
 		req.OrganizationId,
-		req.EnvironmentId,
+		filterEnvironmentIDs,
 		req.SearchKeyword,
 		req.Disabled,
 		orders,
@@ -1102,6 +1097,34 @@ func (s *PushService) ListPushes(
 		Cursor:     cursor,
 		TotalCount: totalCount,
 	}, nil
+}
+
+func (s *PushService) getAllowedEnvironments(
+	reqEnvironmentIDs []string,
+	editor *eventproto.Editor,
+) []string {
+	filterEnvironmentIDs := make([]string, 0)
+	if editor.OrganizationRole == accountproto.AccountV2_Role_Organization_ADMIN || editor.IsAdmin {
+		// if the user is an admin, no need to filter environments.
+		filterEnvironmentIDs = append(filterEnvironmentIDs, reqEnvironmentIDs...)
+	} else {
+		// only show API keys in allowed environments for member.
+		if len(reqEnvironmentIDs) > 0 {
+			for _, id := range reqEnvironmentIDs {
+				for _, e := range editor.EnvironmentRoles {
+					if e.EnvironmentId == id {
+						filterEnvironmentIDs = append(filterEnvironmentIDs, id)
+						break
+					}
+				}
+			}
+		} else {
+			for _, e := range editor.EnvironmentRoles {
+				filterEnvironmentIDs = append(filterEnvironmentIDs, e.EnvironmentId)
+			}
+		}
+	}
+	return filterEnvironmentIDs
 }
 
 func (s *PushService) newListOrders(
@@ -1144,13 +1167,14 @@ func (s *PushService) listPushes(
 	pageSize int64,
 	cursor string,
 	organizationId string,
-	environmentId string,
+	environmentIDs []string,
 	searchKeyword string,
 	disabled *wrapperspb.BoolValue,
 	orders []*mysql.Order,
 	localizer locale.Localizer,
 ) ([]*pushproto.Push, string, int64, error) {
 	var filters []*mysql.FilterV2
+	var inFilters []*mysql.InFilter
 	if organizationId != "" {
 		// console v3
 		filters = append(filters, &mysql.FilterV2{
@@ -1158,13 +1182,25 @@ func (s *PushService) listPushes(
 			Operator: mysql.OperatorEqual,
 			Value:    organizationId,
 		})
+		if len(environmentIDs) > 0 {
+			envIDs := make([]interface{}, 0, len(environmentIDs))
+			for _, id := range environmentIDs {
+				envIDs = append(envIDs, id)
+			}
+			inFilters = append(inFilters, &mysql.InFilter{
+				Column: "push.environment_id",
+				Values: envIDs,
+			})
+		}
 	} else {
 		// console v2
-		filters = append(filters, &mysql.FilterV2{
-			Column:   "push.environment_id",
-			Operator: mysql.OperatorEqual,
-			Value:    environmentId,
-		})
+		if len(environmentIDs) > 0 {
+			filters = append(filters, &mysql.FilterV2{
+				Column:   "push.environment_id",
+				Operator: mysql.OperatorEqual,
+				Value:    environmentIDs[0],
+			})
+		}
 	}
 	if disabled != nil {
 		filters = append(filters, &mysql.FilterV2{
@@ -1201,7 +1237,7 @@ func (s *PushService) listPushes(
 		Offset:      offset,
 		Filters:     filters,
 		SearchQuery: searchQuery,
-		InFilters:   nil,
+		InFilters:   inFilters,
 		Orders:      orders,
 		JSONFilters: nil,
 		NullFilters: nil,
@@ -1215,7 +1251,7 @@ func (s *PushService) listPushes(
 			"Failed to list pushes",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentId", environmentId),
+				zap.Strings("environmentId", environmentIDs),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -1290,6 +1326,77 @@ func (s *PushService) checkEnvironmentRole(
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", environmentId),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+	}
+	return editor, nil
+}
+
+func (s *PushService) checkOrganizationRole(
+	ctx context.Context,
+	requiredRole proto.AccountV2_Role_Organization,
+	organizationID string,
+	localizer locale.Localizer,
+) (*eventproto.Editor, error) {
+	editor, err := role.CheckOrganizationRole(ctx, requiredRole, func(email string) (*proto.GetAccountV2Response, error) {
+		resp, err := s.accountClient.GetAccountV2(ctx, &proto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: organizationID,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return resp, nil
+	})
+	if err != nil {
+		switch status.Code(err) {
+		case codes.Unauthenticated:
+			s.logger.Error(
+				"Unauthenticated",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationID", organizationID),
+				)...,
+			)
+			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.UnauthenticatedError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		case codes.PermissionDenied:
+			s.logger.Error(
+				"Permission denied",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationID", organizationID),
+				)...,
+			)
+			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.PermissionDenied),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		default:
+			s.logger.Error(
+				"Failed to check role",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationID", organizationID),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

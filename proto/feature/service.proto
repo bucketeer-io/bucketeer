@@ -89,6 +89,7 @@ message ListFeaturesRequest {
   google.protobuf.BoolValue has_prerequisites = 12;
   string environment_id = 13 [(google.api.field_behavior) = REQUIRED];
   FeatureLastUsedInfo.Status status = 14;
+  google.protobuf.BoolValue has_feature_flag_as_rule = 15;
 }
 
 message FeatureSummary {
