@@ -7,7 +7,7 @@ import defaultAvatar from 'assets/avatars/default.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { requiredMessage, translation } from 'constants/message';
 import { useToast } from 'hooks';
-import { Language, useTranslation } from 'i18n';
+import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { UserInfoForm } from '@types';
 import { isNotEmptyObject } from 'utils/data-type';
@@ -70,11 +70,12 @@ const UserProfileModal = ({
 
   const form = useForm({
     resolver: yupResolver(formSchema),
-    defaultValues: {
+    values: {
       firstName: consoleAccount?.firstName || '',
       lastName: consoleAccount?.lastName || '',
       language: consoleAccount?.language || ''
-    }
+    },
+    mode: 'onChange'
   });
 
   const avatarType =
@@ -88,7 +89,9 @@ const UserProfileModal = ({
     [avatar, selectedAvatar, defaultAvatar]
   );
 
-  const { trigger } = form;
+  const {
+    formState: { isDirty, isValid, isSubmitting }
+  } = form;
 
   const onSubmit: SubmitHandler<UserInfoForm> = async values => {
     try {
@@ -113,6 +116,8 @@ const UserProfileModal = ({
         });
 
         if (resp) {
+          const i18nLanguage = getLanguage();
+          if (language !== i18nLanguage) setLanguage(language as Language);
           notify({
             message: t('message:collection-action-success', {
               collection: t('profile'),
@@ -162,10 +167,7 @@ const UserProfileModal = ({
                     <Input
                       placeholder={t(`form:enter-first-name`)}
                       {...field}
-                      onChange={value => {
-                        field.onChange(value);
-                        trigger('firstName');
-                      }}
+                      onChange={value => field.onChange(value)}
                     />
                   </Form.Control>
                   <Form.Message />
@@ -182,10 +184,7 @@ const UserProfileModal = ({
                     <Input
                       placeholder={t(`form:enter-last-name`)}
                       {...field}
-                      onChange={value => {
-                        field.onChange(value);
-                        trigger('lastName');
-                      }}
+                      onChange={value => field.onChange(value)}
                     />
                   </Form.Control>
                   <Form.Message />
@@ -221,7 +220,6 @@ const UserProfileModal = ({
                             value={item.value}
                             label={item.label}
                             onSelectOption={value => {
-                              field.onBlur();
                               field.onChange(value);
                             }}
                           />
@@ -237,11 +235,8 @@ const UserProfileModal = ({
           <ButtonBar
             secondaryButton={
               <Button
-                disabled={
-                  (!selectedAvatar && !form.formState.isDirty) ||
-                  !form.formState.isValid
-                }
-                loading={form.formState.isSubmitting}
+                disabled={(!selectedAvatar && !isDirty) || !isValid}
+                loading={isSubmitting}
               >
                 {t(`save`)}
               </Button>

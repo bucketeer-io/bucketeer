@@ -10,7 +10,7 @@ import { accountOrganizationFetcher, MeFetcherParams } from '@api/account';
 import { accountMeFetcher } from '@api/account';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
-import { Language, useTranslation } from 'i18n';
+import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
 import { Undefinable } from 'option-t/undefinable';
 import {
   clearCurrentEnvIdStorage,
@@ -88,6 +88,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       onChangeFontWithLocalized(isJapanese);
       setConsoleAccount(response.account);
       setIsLogin(true);
+
+      if (response.account.language !== getLanguage()) {
+        setLanguage(response.account.language as Language);
+      }
       if (!environmentId) {
         setCurrentEnvIdStorage(environmentRoles[0].environment.id);
       }
