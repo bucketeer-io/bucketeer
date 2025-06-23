@@ -3,6 +3,7 @@ import pickBy from 'lodash/pickBy';
 import { CollectionParams, FeatureCollection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { stringifyParams } from 'utils/search-params';
+import { StatusFilterType } from 'pages/feature-flags/types';
 
 export interface FeaturesFetcherParams extends CollectionParams {
   environmentId: string;
@@ -12,6 +13,8 @@ export interface FeaturesFetcherParams extends CollectionParams {
   enabled?: boolean;
   hasPrerequisites?: boolean;
   tags?: string[];
+  status?: StatusFilterType;
+  hasFeatureFlagAsRule?: boolean;
 }
 
 export const featuresFetcher = async (

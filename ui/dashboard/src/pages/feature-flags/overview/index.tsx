@@ -1,18 +1,17 @@
 import { FunctionComponent } from 'react';
 import { useTranslation } from 'i18n';
-import { ExperimentStatus, FeatureCountByStatus } from '@types';
+import { FeatureCountByStatus } from '@types';
 import { cn } from 'utils/style';
 import { IconActiveFlags, IconInactiveFlags, IconTotalFlags } from '@icons';
 import OverviewCard, { OverviewIconColor } from 'elements/overview-card';
-import { SummaryType } from '../types';
+import { StatusFilterType } from '../types';
 
 interface OverviewOption {
   titleKey: string;
   countKey?: keyof FeatureCountByStatus;
   color: OverviewIconColor;
   icon: FunctionComponent;
-  summaryFilterValue: SummaryType;
-  filterValues: ExperimentStatus[];
+  filterValue: StatusFilterType | undefined;
 }
 
 const overviewOptions: OverviewOption[] = [
@@ -21,38 +20,32 @@ const overviewOptions: OverviewOption[] = [
     countKey: 'total',
     color: 'brand',
     icon: IconTotalFlags,
-    summaryFilterValue: 'TOTAL',
-    filterValues: []
+    filterValue: undefined
   },
   {
     titleKey: 'feature-flags.active-flags',
     countKey: 'active',
     color: 'green',
     icon: IconActiveFlags,
-    summaryFilterValue: 'ACTIVE',
-    filterValues: []
+    filterValue: StatusFilterType.ACTIVE
   },
   {
     titleKey: 'feature-flags.inactive-flags',
     countKey: 'inactive',
     color: 'yellow',
     icon: IconInactiveFlags,
-    summaryFilterValue: 'INACTIVE',
-    filterValues: []
+    filterValue: StatusFilterType.NO_ACTIVITY
   }
 ];
 
 const Overview = ({
   summary,
-  filterBySummary,
+  statusFilter,
   onChangeFilters
 }: {
   summary?: FeatureCountByStatus;
-  filterBySummary?: SummaryType;
-  onChangeFilters: (
-    statuses: ExperimentStatus[],
-    summaryFilterValue: SummaryType
-  ) => void;
+  statusFilter?: StatusFilterType;
+  onChangeFilters: (filterValue: StatusFilterType | undefined) => void;
 }) => {
   const { t } = useTranslation(['table']);
 
@@ -69,12 +62,9 @@ const Overview = ({
             color={item.color}
             icon={item.icon}
             className={cn('border border-transparent', {
-              'border-gray-300':
-                filterBySummary && item.summaryFilterValue === filterBySummary
+              'border-gray-300': item.filterValue === statusFilter
             })}
-            onClick={() =>
-              onChangeFilters(item.filterValues, item.summaryFilterValue)
-            }
+            onClick={() => onChangeFilters(item.filterValue)}
           />
         ))}
       </div>

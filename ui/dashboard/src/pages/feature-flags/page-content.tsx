@@ -41,7 +41,7 @@ const PageContent = ({
     page: 1,
     orderBy: 'CREATED_AT',
     orderDirection: 'DESC',
-    status: 'ACTIVE',
+    tab: 'ACTIVE',
     ...searchFilters
   } as FlagFilters;
 
@@ -53,7 +53,9 @@ const PageContent = ({
       'hasPrerequisites',
       'maintainer',
       'enabled',
-      'tags'
+      'tags',
+      'status',
+      'hasFeatureFlagAsRule'
     ];
     const count = filterKeys.reduce((acc, curr) => {
       if (isNotEmpty(filters[curr as keyof FlagFilters])) ++acc;
@@ -83,7 +85,9 @@ const PageContent = ({
       enabled: undefined,
       archived: undefined,
       tags: undefined,
-      status: 'ACTIVE'
+      tab: 'ACTIVE',
+      status: undefined,
+      hasFeatureFlagAsRule: undefined
     });
     onCloseFilterModal();
   }, [filters]);
@@ -105,14 +109,22 @@ const PageContent = ({
         enabled: undefined,
         archived: undefined,
         tags: undefined,
-        status: 'ACTIVE'
+        tab: 'ACTIVE'
       });
     }
   }, [location]);
 
   return (
     <PageLayout.Content>
-      <Overview summary={summary} onChangeFilters={() => {}} />
+      <Overview
+        summary={summary}
+        statusFilter={filters?.status}
+        onChangeFilters={status =>
+          onChangeFilters({
+            status
+          })
+        }
+      />
       <Filter
         action={
           <>
@@ -142,13 +154,13 @@ const PageContent = ({
       )}
       <Tabs
         className="flex-1 flex h-full flex-col mt-6"
-        value={filters.status}
+        value={filters.tab}
         onValueChange={value => {
-          const status = value as CollectionStatusType;
+          const tab = value as CollectionStatusType;
           onChangeFilters({
             searchQuery: '',
-            status,
-            archived: status === 'ARCHIVED' || undefined
+            tab,
+            archived: tab === 'ARCHIVED' || undefined
           });
         }}
       >
@@ -159,7 +171,7 @@ const PageContent = ({
           </TabsList>
         )}
 
-        <TabsContent value={filters.status} className="pb-6">
+        <TabsContent value={filters.tab} className="pb-6">
           <TableListContainer>
             <CollectionLoader
               filters={filters}
