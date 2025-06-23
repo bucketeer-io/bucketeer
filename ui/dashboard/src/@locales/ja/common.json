@@ -274,5 +274,6 @@
   "push-notification": "プッシュ通知",
   "add": "追加",
   "profile": "プロフィール",
-  "started": "開始済み"
+  "started": "開始済み",
+  "has-flag-as-rule": "ルールにフィーチャーフラグあり"
 }
