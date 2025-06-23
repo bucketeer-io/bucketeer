@@ -36,7 +36,7 @@ var (
 	// nolint:lll
 	emailRegex                  = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 	ErrSearchFilterNotFound     = errors.New("account: search filter not found")
-	ErrValueNotFound            = errors.New("value not found")
+	ErrTeamNotFound             = errors.New("team: not found")
 	statusMissingOrganizationID = gstatus.New(
 		codes.InvalidArgument,
 		"account: organization id must be specified",
@@ -158,21 +158,15 @@ func (a *AccountV2) AddTeam(team string) error {
 		return nil
 	}
 	a.Teams = append(a.Teams, team)
-	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
 
 func (a *AccountV2) RemoveTeam(team string) error {
 	idx := slices.Index(a.Teams, team)
 	if idx == -1 {
-		return ErrValueNotFound
+		return ErrTeamNotFound
 	}
-	if len(a.Teams) == 1 {
-		a.Teams = []string{}
-	} else {
-		a.Teams = append(a.Teams[:idx], a.Teams[idx+1:]...)
-	}
-	a.UpdatedAt = time.Now().Unix()
+	a.Teams = slices.Delete(a.Teams, idx, idx+1)
 	return nil
 }
 

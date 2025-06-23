@@ -634,6 +634,20 @@ func (s *AccountService) updateAccountV2NoCommand(
 			}
 		}
 	}
+	if updatedAccountPb.Teams != nil {
+		if err := s.upsertTeams(ctx, updatedAccountPb.Teams, req.OrganizationId); err != nil {
+			s.logger.Error(
+				"Failed to upsert account teams",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationId", req.OrganizationId),
+					zap.String("email", req.Email),
+					zap.Any("teams", updatedAccountPb.Teams),
+				)...,
+			)
+			return nil, statusInternal.Err()
+		}
+	}
 	return &accountproto.UpdateAccountV2Response{
 		Account: updatedAccountPb,
 	}, nil
