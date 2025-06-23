@@ -168,7 +168,7 @@
     "expected-loss-tooltip": "最良のバリエーションと比較して、このバリエーションを選択した場合の平均機会費用。期待損失が低いほど、より良いパフォーマンスを逃すリスクが少ないことを示します。"
   },
   "feature-flags": {
-    "confirm-archive-desc": "これによりアーカイブされ、すべてのユーザーに対してコードで定義されたデフォルト値が返されます。アーカイブする前に、アプリケーションから「<text>{{name}}</text>」へのコード参照を削除することをお勧めします。",
+    "confirm-archive-desc": "これによりアーカイブされ、すべてのユーザーに対してコードで定義されたデフォルト値が返されます。アーカイブする前に、アプリケーションから「<text>{{name}}</text>」へのコードリファレンスを削除することをお勧めします。",
     "confirm-unarchive-desc": "フィーチャーフラグ「<text>{{name}}</text>」のアーカイブを解除してもよろしいですか？",
     "archive-warning": "過去<text>{{days}}</text>にリクエストを受信しています。",
     "confirm-required": "確認が必要です",
@@ -181,7 +181,7 @@
     "operations": "オペレーション",
     "trigger": "トリガー",
     "triggers": "トリガー",
-    "code-references": "コード参照",
+    "code-references": "コードリファレンス",
     "experiments": "エクスペリメント",
     "history": "履歴",
     "when-targeting": "ターゲティングが{{state}}の時",
@@ -239,7 +239,7 @@
     "tooltip-content": "評価イベントのリアルタイムカウントとこのフラグを受け取ったユニークユーザーを表示します。"
   },
   "code-refs": {
-    "title": "コード参照",
+    "title": "コードリファレンス",
     "description": "コードベースで見つかったこのフィーチャーフラグへの参照",
     "repository-name": "リポジトリ: <text>{{name}}</text>",
     "branch-name": "ブランチ: <text>{{name}}</text>",
@@ -248,10 +248,10 @@
     "single-ref": "<highlight>{{branchLink}}</highlight>ブランチで{{count}}個の参照が見つかりました",
     "multiple-refs": "<highlight>{{branchLink}}</highlight>ブランチで{{count}}個の参照が見つかりました",
     "view-in-src": "ソースで表示",
-    "enable": "コード参照を有効化",
+    "enable": "コードリファレンスを有効化",
     "enable-desc": "コードベースで活用されているフィーチャーフラグのインスタンスをすばやく確認し、Bucketeerから選択したプラットフォームへの直接リンクを提供します。",
-    "empty": "登録されたコード参照がありません",
-    "empty-desc": "コードベースにはまだコード参照がありません。参照が追加されると、ここに表示されます。"
+    "empty": "登録されたコードリファレンスがありません",
+    "empty-desc": "コードベースにはまだコードリファレンスがありません。参照が追加されると、ここに表示されます。"
   },
   "trigger": {
     "title": "トリガー",
