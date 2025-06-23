@@ -10,7 +10,7 @@ import { accountOrganizationFetcher, MeFetcherParams } from '@api/account';
 import { accountMeFetcher } from '@api/account';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
-import { useTranslation } from 'i18n';
+import { Language, useTranslation } from 'i18n';
 import { Undefinable } from 'option-t/undefinable';
 import {
   clearCurrentEnvIdStorage,
@@ -28,6 +28,7 @@ import {
   setTokenStorage
 } from 'storage/token';
 import { AuthToken, ConsoleAccount, Organization } from '@types';
+import { onChangeFontWithLocalized } from 'utils/function';
 import { getAccountAccess } from './utils';
 
 interface AuthContextType {
@@ -83,7 +84,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         errorNotify(null, t('message:env-are-empty'));
         return logout();
       }
-
+      const isJapanese = response.account.language === Language.JAPANESE;
+      onChangeFontWithLocalized(isJapanese);
       setConsoleAccount(response.account);
       setIsLogin(true);
       if (!environmentId) {
