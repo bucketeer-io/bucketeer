@@ -110,3 +110,13 @@ export const onFormatEnvironments = (environments: Environment[]) => {
 
 export const checkEnvironmentEmptyId = (environmentId: string) =>
   environmentId.includes(ENVIRONMENT_WITH_EMPTY_ID) ? '' : environmentId;
+
+export const onChangeFontWithLocalized = (isLanguageJapanese: boolean) => {
+  const htmlElement = document.getElementsByTagName('html')[0];
+  if (htmlElement)
+    htmlElement.style.setProperty(
+      'font-family',
+      isLanguageJapanese ? 'Noto Sans, sans-serif' : 'Sofia Pro, sans-serif',
+      'important'
+    );
+};

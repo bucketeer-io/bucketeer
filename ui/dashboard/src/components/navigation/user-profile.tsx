@@ -7,10 +7,11 @@ import defaultAvatar from 'assets/avatars/default.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { requiredMessage, translation } from 'constants/message';
 import { useToast } from 'hooks';
-import { useTranslation } from 'i18n';
+import { Language, useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { UserInfoForm } from '@types';
 import { isNotEmptyObject } from 'utils/data-type';
+import { onChangeFontWithLocalized } from 'utils/function';
 import { languageList } from 'pages/members/member-modal/add-member-modal';
 import { AvatarImage } from 'components/avatar';
 import Button from 'components/button';
@@ -92,6 +93,7 @@ const UserProfileModal = ({
   const onSubmit: SubmitHandler<UserInfoForm> = async values => {
     try {
       if (consoleAccount) {
+        const { firstName, lastName, language } = values;
         const environmentRoles = consoleAccount?.environmentRoles.map(item => ({
           environmentId: item.environment.id,
           role: item.role
@@ -99,12 +101,9 @@ const UserProfileModal = ({
         const resp = await accountUpdater({
           organizationId: currentEnvironment.organizationId,
           email: consoleAccount.email,
-          firstName: values.firstName,
-          lastName: values.lastName,
-          language: values.language,
-          organizationRole: {
-            role: consoleAccount.organizationRole
-          },
+          firstName: firstName,
+          lastName: lastName,
+          language: language,
           environmentRoles,
           ...(selectedAvatar && isNotEmptyObject(selectedAvatar)
             ? {
@@ -120,6 +119,7 @@ const UserProfileModal = ({
               action: t('updated')
             })
           });
+          onChangeFontWithLocalized(language === Language.JAPANESE);
           onMeFetcher({ organizationId: currentEnvironment.organizationId });
           onClose();
         }

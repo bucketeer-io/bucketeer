@@ -140,7 +140,8 @@ const theme = {
   },
   fontFamily: {
     'sofia-pro': ['Sofia Pro', 'sans-serif'],
-    'fira-code': ['FiraCode', 'monospace']
+    'fira-code': ['FiraCode', 'monospace'],
+    'noto-sans': ['Noto Sans', 'sans-serif']
   },
   extend: {
     animation: {

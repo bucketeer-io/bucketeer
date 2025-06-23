@@ -32,6 +32,10 @@ export default defineConfig({
           {
             name: 'FiraCode',
             src: './src/assets/fonts/firacode/*.ttf'
+          },
+          {
+            name: 'Noto Sans',
+            src: './src/assets/fonts/noto-sans/*.ttf'
           }
         ]
       }
