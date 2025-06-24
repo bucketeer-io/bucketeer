@@ -221,6 +221,85 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			desc: "success: with admin role",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().CreateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			req: &accountproto.CreateAccountV2Request{
+				Command: &accountproto.CreateAccountV2Command{
+					Email:            "bucketeer@example.com",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					EnvironmentRoles: nil,
+				},
+				OrganizationId: "org0",
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: create admin account with environment roles",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().CreateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			req: &accountproto.CreateAccountV2Request{
+				Command: &accountproto.CreateAccountV2Command{
+					Email:            "bucketeer@example.com",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{
+							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+							EnvironmentId: "test",
+						},
+					},
+				},
+				OrganizationId: "org0",
+			},
+			expectedErr: nil,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -707,6 +786,99 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 				},
 				ChangeLastNameCommand: &accountproto.ChangeAccountV2LastNameCommand{
 					LastName: "newLastName",
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: update admin account",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).Times(2)
+			},
+			req: &accountproto.UpdateAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				ChangeFirstNameCommand: &accountproto.ChangeAccountV2FirstNameCommand{
+					FirstName: "newFirstName",
+				},
+				ChangeLastNameCommand: &accountproto.ChangeAccountV2LastNameCommand{
+					LastName: "newLastName",
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: update member to admin",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					},
+				}, nil)
+
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
+					_ = fn(ctx, nil)
+				}).Return(nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).Times(2)
+			},
+			req: &accountproto.UpdateAccountV2Request{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				ChangeOrganizationRoleCommand: &accountproto.ChangeAccountV2OrganizationRoleCommand{
+					Role: accountproto.AccountV2_Role_Organization_ADMIN,
 				},
 			},
 			expectedErr: nil,

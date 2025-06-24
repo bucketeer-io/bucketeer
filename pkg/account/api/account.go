@@ -70,6 +70,10 @@ func (s *AccountService) CreateAccountV2(
 		)
 		return nil, err
 	}
+	envRoles := req.Command.EnvironmentRoles
+	if req.Command.OrganizationRole == accountproto.AccountV2_Role_Organization_ADMIN {
+		envRoles = nil
+	}
 	account := domain.NewAccountV2(
 		req.Command.Email,
 		req.Command.Name,
@@ -81,7 +85,7 @@ func (s *AccountService) CreateAccountV2(
 		nil,
 		req.OrganizationId,
 		req.Command.OrganizationRole,
-		req.Command.EnvironmentRoles,
+		envRoles,
 	)
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		// TODO: temporary implementation: double write account v2 ---
@@ -179,6 +183,10 @@ func (s *AccountService) createAccountV2NoCommand(
 		)
 		return nil, err
 	}
+	envRoles := req.EnvironmentRoles
+	if req.OrganizationRole == accountproto.AccountV2_Role_Organization_ADMIN {
+		envRoles = nil
+	}
 	account := domain.NewAccountV2(
 		req.Email,
 		req.Name,
@@ -190,7 +198,7 @@ func (s *AccountService) createAccountV2NoCommand(
 		req.Teams,
 		req.OrganizationId,
 		req.OrganizationRole,
-		req.EnvironmentRoles,
+		envRoles,
 	)
 	var createAccountEvent *eventproto.Event
 	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {

@@ -169,7 +169,12 @@ func (s *AccountService) GetMe(
 	if err != nil {
 		return nil, err
 	}
-	envRoles := s.getConsoleAccountEnvironmentRoles(account.EnvironmentRoles, environments, projects)
+	var envRoles []*accountproto.ConsoleAccount_EnvironmentRole
+	if account.OrganizationRole == accountproto.AccountV2_Role_Organization_ADMIN {
+		envRoles = s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
+	} else {
+		envRoles = s.getConsoleAccountEnvironmentRoles(account.EnvironmentRoles, environments, projects)
+	}
 
 	// update user last seen
 	err = s.updateLastSeen(ctx, account.Email, req.OrganizationId)

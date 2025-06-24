@@ -128,6 +128,15 @@ func checkRole(
 	organizationRole accountproto.AccountV2_Role_Organization,
 	isAdmin bool,
 ) (*eventproto.Editor, error) {
+	if organizationRole == accountproto.AccountV2_Role_Organization_ADMIN {
+		return &eventproto.Editor{
+			Email:            email,
+			Name:             name,
+			IsAdmin:          isAdmin,
+			EnvironmentRoles: environmentRoles,
+			OrganizationRole: organizationRole,
+		}, nil
+	}
 	if role < requiredRole {
 		return nil, ErrPermissionDenied
 	}

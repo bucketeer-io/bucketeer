@@ -142,6 +142,9 @@ func (a *AccountV2) Update(
 	if len(environmentRoles) > 0 {
 		updated.EnvironmentRoles = environmentRoles
 	}
+	if updated.OrganizationRole == proto.AccountV2_Role_Organization_ADMIN {
+		updated.EnvironmentRoles = nil
+	}
 	if isDisabled != nil {
 		updated.Disabled = isDisabled.Value
 	}
@@ -215,6 +218,9 @@ func (a *AccountV2) ChangeTags(tags []string) error {
 
 func (a *AccountV2) ChangeOrganizationRole(role proto.AccountV2_Role_Organization) error {
 	a.AccountV2.OrganizationRole = role
+	if role == proto.AccountV2_Role_Organization_ADMIN {
+		a.AccountV2.EnvironmentRoles = nil
+	}
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
