@@ -2,7 +2,7 @@
   "flags": "フラグ",
   "created-at": "作成日時",
   "updated-at": "更新日時",
-  "last-seen": "最終確認日時",
+  "last-seen": "最終アクセス日時",
   "popover": {
     "edit-project": "プロジェクトを編集",
     "edit-env": "環境を編集",
