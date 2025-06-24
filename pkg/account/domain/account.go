@@ -17,6 +17,7 @@ package domain
 import (
 	"errors"
 	"regexp"
+	"slices"
 	"time"
 
 	"github.com/jinzhu/copier"
@@ -35,6 +36,7 @@ var (
 	// nolint:lll
 	emailRegex                  = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 	ErrSearchFilterNotFound     = errors.New("account: search filter not found")
+	ErrTeamNotFound             = errors.New("team: not found")
 	statusMissingOrganizationID = gstatus.New(
 		codes.InvalidArgument,
 		"account: organization id must be specified",
@@ -61,6 +63,7 @@ type AccountWithOrganization struct {
 func NewAccountV2(
 	email, name, firstName, lastName, language, avatarImageURL string,
 	tags []string,
+	teams []string,
 	organizationID string,
 	organizationRole proto.AccountV2_Role_Organization,
 	environmentRoles []*proto.AccountV2_EnvironmentRole,
@@ -71,6 +74,7 @@ func NewAccountV2(
 		Name:             name,
 		AvatarImageUrl:   avatarImageURL,
 		Tags:             tags,
+		Teams:            teams,
 		OrganizationId:   organizationID,
 		OrganizationRole: organizationRole,
 		EnvironmentRoles: environmentRoles,
@@ -88,6 +92,7 @@ func (a *AccountV2) Update(
 	name, firstName, lastName, language, avatarImageURL *wrapperspb.StringValue,
 	avatar *proto.UpdateAccountV2Request_AccountV2Avatar,
 	tags *common.StringListValue,
+	teamChanges []*proto.TeamChange,
 	organizationRole *proto.UpdateAccountV2Request_OrganizationRoleValue,
 	environmentRoles []*proto.AccountV2_EnvironmentRole,
 	isDisabled *wrapperspb.BoolValue,
@@ -119,10 +124,22 @@ func (a *AccountV2) Update(
 	if tags != nil {
 		updated.Tags = tags.Values
 	}
+	for _, teamChange := range teamChanges {
+		switch teamChange.ChangeType {
+		case proto.ChangeType_CREATE, proto.ChangeType_UPDATE:
+			if err := updated.AddTeam(teamChange.Team); err != nil {
+				return nil, err
+			}
+		case proto.ChangeType_DELETE:
+			if err := updated.RemoveTeam(teamChange.Team); err != nil {
+				return nil, err
+			}
+		}
+	}
 	if organizationRole != nil {
 		updated.OrganizationRole = organizationRole.Role
 	}
-	if len(updated.EnvironmentRoles) > 0 {
+	if len(environmentRoles) > 0 {
 		updated.EnvironmentRoles = environmentRoles
 	}
 	if isDisabled != nil {
@@ -133,6 +150,24 @@ func (a *AccountV2) Update(
 		return nil, err
 	}
 	return updated, nil
+}
+
+func (a *AccountV2) AddTeam(team string) error {
+	if slices.Contains(a.Teams, team) {
+		// output info log
+		return nil
+	}
+	a.Teams = append(a.Teams, team)
+	return nil
+}
+
+func (a *AccountV2) RemoveTeam(team string) error {
+	idx := slices.Index(a.Teams, team)
+	if idx == -1 {
+		return ErrTeamNotFound
+	}
+	a.Teams = slices.Delete(a.Teams, idx, idx+1)
+	return nil
 }
 
 func (a *AccountV2) ChangeName(newName string) error {

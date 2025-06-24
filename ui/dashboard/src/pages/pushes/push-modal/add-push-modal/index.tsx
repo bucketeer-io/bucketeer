@@ -5,6 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidatePushes } from '@queries/pushes';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
@@ -28,8 +29,10 @@ import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import UploadFiles from 'components/upload-files';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface AddPushModalProps {
+  disabled?: boolean;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -42,16 +45,16 @@ export interface AddPushForm {
 }
 
 export const formSchema = yup.object().shape({
-  name: yup.string().required(),
-  fcmServiceAccount: yup.string().required(),
+  name: yup.string().required(requiredMessage),
+  fcmServiceAccount: yup.string().required(requiredMessage),
   tags: yup.array(),
-  environmentId: yup.string().required()
+  environmentId: yup.string().required(requiredMessage)
 });
 
-const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
+const AddPushModal = ({ disabled, isOpen, onClose }: AddPushModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
 
   const [files, setFiles] = useState<File[]>([]);
@@ -104,21 +107,18 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
       const base64String: string = await new Promise(rs =>
         covertFileToUint8ToBase64(files[0], data => rs(data))
       );
-      const { environmentId } = values;
+      const { environmentId, ...rest } = values || {};
       const resp = await pushCreator({
-        ...values,
+        ...rest,
         environmentId: checkEnvironmentEmptyId(environmentId),
         fcmServiceAccount: base64String
       });
       if (resp) {
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {` has been successfully created!`}
-            </span>
-          )
+          message: t('message:collection-action-success', {
+            collection: t('push-notification'),
+            action: t('created')
+          })
         });
         invalidatePushes(queryClient);
         onClose();
@@ -288,13 +288,18 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!isValid}
-                    loading={isSubmitting}
-                  >
-                    {t(`submit`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    hidden={!disabled}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={!isValid || disabled}
+                        loading={isSubmitting}
+                      >
+                        {t(`submit`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>

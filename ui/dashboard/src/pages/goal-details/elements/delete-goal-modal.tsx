@@ -12,6 +12,7 @@ export type DeleteMemberProps = {
   onClose: () => void;
   goal: Goal;
   loading: boolean;
+  disabled?: boolean;
 };
 
 const DeleteGoalModal = ({
@@ -19,7 +20,8 @@ const DeleteGoalModal = ({
   isOpen,
   onClose,
   goal,
-  loading
+  loading,
+  disabled
 }: DeleteMemberProps) => {
   const { t } = useTranslation(['common']);
 
@@ -44,6 +46,7 @@ const DeleteGoalModal = ({
       <ButtonBar
         secondaryButton={
           <Button
+            disabled={disabled}
             variant="negative"
             loading={loading}
             className="w-24"

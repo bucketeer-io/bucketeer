@@ -5,7 +5,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateEnvironments } from '@queries/environments';
 import { useQueryProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
+import { requiredMessage, translation } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -24,6 +25,7 @@ import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface AddEnvironmentModalProps {
   isOpen: boolean;
@@ -39,27 +41,33 @@ export interface AddEnvironmentForm {
 }
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
+  name: yup.string().required(requiredMessage),
   urlCode: yup
     .string()
-    .required()
+    .required(requiredMessage)
     .matches(
       /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
-      "urlCode must start with a letter or number and only contain letters, numbers, or '-'"
+      translation('message:validation.id-rule', {
+        name: translation('common:url-code')
+      })
     ),
   description: yup.string(),
-  projectId: yup.string().required(),
-  requireComment: yup.boolean().required()
+  projectId: yup.string().required(requiredMessage),
+  requireComment: yup.boolean().required(requiredMessage)
 });
 
 const AddEnvironmentModal = ({ isOpen, onClose }: AddEnvironmentModalProps) => {
   const queryClient = useQueryClient();
   const { projectId } = useParams();
-  const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['common', 'form', 'message']);
+  const { notify, errorNotify } = useToast();
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const { envEditable, isOrganizationAdmin } = getAccountAccess(
+    consoleAccount!
+  );
 
   const { data: projectList } = useQueryProjects({
     params: {
@@ -87,23 +95,16 @@ const AddEnvironmentModal = ({ isOpen, onClose }: AddEnvironmentModalProps) => {
       });
       if (resp) {
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {`has been successfully created!`}
-            </span>
-          )
+          message: t('message:collection-action-success', {
+            collection: t('source-type:environment'),
+            action: t('created')
+          })
         });
         invalidateEnvironments(queryClient);
         onClose();
       }
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message
-      });
+      errorNotify(error);
     }
   };
 
@@ -244,13 +245,23 @@ const AddEnvironmentModal = ({ isOpen, onClose }: AddEnvironmentModalProps) => {
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!form.formState.isDirty}
-                    loading={form.formState.isSubmitting}
-                  >
-                    {t(`create-env`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    type={!isOrganizationAdmin ? 'admin' : 'editor'}
+                    hidden={envEditable && isOrganizationAdmin}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={
+                          !form.formState.isDirty ||
+                          !envEditable ||
+                          !isOrganizationAdmin
+                        }
+                        loading={form.formState.isSubmitting}
+                      >
+                        {t(`create-env`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>

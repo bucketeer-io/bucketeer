@@ -42,11 +42,6 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           label: t(`projects`),
           icon: IconSystem.IconFolder,
           href: `/${envUrlCode}${ROUTING.PAGE_PATH_PROJECTS}`
-        },
-        {
-          label: t(`usage`),
-          icon: IconSystem.IconUsage,
-          href: `/${envUrlCode}${ROUTING.PAGE_PATH_USAGE}`
         }
       ])
     },

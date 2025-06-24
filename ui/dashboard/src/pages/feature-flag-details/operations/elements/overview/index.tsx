@@ -1,6 +1,7 @@
 import { FunctionComponent } from 'react';
 import { useTranslation } from 'i18n';
 import { FeatureCountByStatus, IconSize } from '@types';
+import { cn } from 'utils/style';
 import {
   IconCalendarXL,
   IconFlagOperationXL,
@@ -50,8 +51,10 @@ const overviewOptions: OverviewOption[] = [
 ];
 
 const Overview = ({
+  disabled,
   onOperationActions
 }: {
+  disabled: boolean;
   onOperationActions: (operationType: OpsTypeMap) => void;
 }) => {
   const { t } = useTranslation(['form', 'table']);
@@ -71,9 +74,16 @@ const Overview = ({
             color={color}
             icon={icon}
             iconSize={iconSize}
-            className="items-start border border-transparent min-h-full self-stretch min-w-[300px]"
+            className={cn(
+              'items-start border border-transparent min-h-full self-stretch min-w-[300px]',
+              {
+                'pointer-events-none': disabled
+              }
+            )}
             iconClassName={'p-4'}
-            onClick={() => onOperationActions(opsType)}
+            onClick={() => {
+              if (!disabled) onOperationActions(opsType);
+            }}
           />
         )
       )}

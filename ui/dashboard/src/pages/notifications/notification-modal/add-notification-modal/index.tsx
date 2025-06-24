@@ -10,6 +10,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateNotifications } from '@queries/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from 'auth';
+import { requiredMessage, translation } from 'constants/message';
 import { languageList } from 'constants/notification';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -21,6 +22,8 @@ import { cn } from 'utils/style';
 import { IconInfo, IconNoData } from '@icons';
 import { UserMessage } from 'pages/feature-flag-details/targeting/individual-rule';
 import { useFetchTags } from 'pages/members/collection-loader';
+import { SOURCE_TYPE_ITEMS } from 'pages/notifications/constants';
+import { NotificationOption } from 'pages/notifications/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
@@ -38,17 +41,13 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import SearchInput from 'components/search-input';
 import { Tooltip } from 'components/tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface AddNotificationModalProps {
+  disabled?: boolean;
   isOpen: boolean;
   onClose: () => void;
 }
-
-type NotificationOption = {
-  value: SourceType;
-  label: string;
-  description: string;
-};
 
 export interface AddNotificationForm {
   name: string;
@@ -60,87 +59,31 @@ export interface AddNotificationForm {
 }
 
 export const formSchema = yup.object().shape({
-  name: yup.string().required(),
-  url: yup.string().required().url('Must be a valid URL'),
-  environment: yup.string().required(),
+  name: yup.string().required(requiredMessage),
+  url: yup
+    .string()
+    .required(requiredMessage)
+    .url(
+      translation('message:validation.id-rule', {
+        name: translation('common:url')
+      })
+    ),
+  environment: yup.string().required(requiredMessage),
   tags: yup.array(),
-  language: yup.mixed<NotificationLanguage>().required(),
-  types: yup.array().min(1, 'Required').required()
+  language: yup.mixed<NotificationLanguage>().required(requiredMessage),
+  types: yup.array().min(1, 'Required').required(requiredMessage)
 });
 
 const AddNotificationModal = ({
+  disabled,
   isOpen,
   onClose
 }: AddNotificationModalProps) => {
   const { notify } = useToast();
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
 
   const { consoleAccount } = useAuth();
-
-  const SOURCE_TYPE_ITEMS: NotificationOption[] = [
-    {
-      label: t(`source-type.account`),
-      description: t(`source-type.account-description`),
-      value: 'DOMAIN_EVENT_ACCOUNT'
-    },
-    {
-      label: t(`source-type.api-key`),
-      description: t(`source-type.api-key-description`),
-      value: 'DOMAIN_EVENT_APIKEY'
-    },
-    {
-      label: t(`source-type.auto-ops`),
-      description: t(`source-type.auto-ops-description`),
-      value: 'DOMAIN_EVENT_AUTOOPS_RULE'
-    },
-    {
-      label: t(`source-type.experiment`),
-      description: t(`source-type.experiment-description`),
-      value: 'DOMAIN_EVENT_EXPERIMENT'
-    },
-    {
-      label: t(`source-type.feature-flag`),
-      description: t(`source-type.feature-flag-description`),
-      value: 'DOMAIN_EVENT_FEATURE'
-    },
-    {
-      label: t(`source-type.goal`),
-      description: t(`source-type.goal-description`),
-      value: 'DOMAIN_EVENT_GOAL'
-    },
-    {
-      label: t(`source-type.mau-count`),
-      description: t(`source-type.mau-count-description`),
-      value: 'MAU_COUNT'
-    },
-    {
-      label: t(`source-type.notification`),
-      description: t(`source-type.notification-description`),
-      value: 'DOMAIN_EVENT_SUBSCRIPTION'
-    },
-    {
-      label: t(`source-type.push`),
-      description: t(`source-type.push-description`),
-      value: 'DOMAIN_EVENT_PUSH'
-    },
-    {
-      label: t(`source-type.running-experiments`),
-      description: t(`source-type.running-experiments-description`),
-      value: 'EXPERIMENT_RUNNING'
-    },
-    {
-      label: t(`source-type.segment`),
-      description: t(`source-type.segment-description`),
-      value: 'DOMAIN_EVENT_SEGMENT'
-    },
-    {
-      label: t(`source-type.stale-feature-flag`),
-      description: t(`source-type.stale-feature-flag-description`),
-      value: 'FEATURE_STALE'
-    }
-  ];
-
   const [searchValue, setSearchValue] = useState('');
   const [filteredTypes, setSearchTypes] =
     useState<NotificationOption[]>(SOURCE_TYPE_ITEMS);
@@ -216,13 +159,10 @@ const AddNotificationModal = ({
       featureFlagTags: values.tags
     }).then(() => {
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {` has been successfully created!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('notification'),
+          action: t('created')
+        })
       });
       invalidateNotifications(queryClient);
       onClose();
@@ -539,13 +479,18 @@ const AddNotificationModal = ({
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!isValid}
-                    loading={isSubmitting}
-                  >
-                    {t(`submit`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    hidden={!disabled}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={!isValid || disabled}
+                        loading={isSubmitting}
+                      >
+                        {t(`submit`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>

@@ -5,6 +5,7 @@ import { useQueryAccounts } from '@queries/accounts';
 import { invalidateOrganizations } from '@queries/organizations';
 import { useQueryClient } from '@tanstack/react-query';
 import { LIST_PAGE_SIZE } from 'constants/app';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -35,9 +36,9 @@ export interface EditOrganizationForm {
 }
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
+  name: yup.string().required(requiredMessage),
   description: yup.string(),
-  ownerEmail: yup.string().email().required()
+  ownerEmail: yup.string().email().required(requiredMessage)
 });
 
 const EditOrganizationModal = ({
@@ -46,8 +47,8 @@ const EditOrganizationModal = ({
   organization
 }: EditOrganizationModalProps) => {
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['common', 'form', 'message']);
+  const { notify, errorNotify } = useToast();
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -74,23 +75,16 @@ const EditOrganizationModal = ({
       });
       if (resp) {
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {`has been successfully updated!`}
-            </span>
-          )
+          message: t('message:collection-action-success', {
+            collection: t('organization'),
+            action: t('updated')
+          })
         });
         invalidateOrganizations(queryClient);
         onClose();
       }
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message || 'Something went wrong.'
-      });
+      errorNotify(error);
     }
   };
 

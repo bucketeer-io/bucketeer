@@ -23,10 +23,11 @@ import VariationsSection from './variations-section';
 
 export interface VariationProps {
   feature: Feature;
+  editable: boolean;
   isRunningExperiment?: boolean;
 }
 
-const Variation = ({ feature }: VariationProps) => {
+const Variation = ({ feature, editable }: VariationProps) => {
   const { t } = useTranslation(['common', 'message']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -102,31 +103,36 @@ const Variation = ({ feature }: VariationProps) => {
 
   const onSubmit = useCallback(
     async (additionalValues?: ConfirmRequiredValues) => {
-      try {
-        const { variations, offVariation } = form.getValues();
-        const { comment, resetSampling } = additionalValues || {};
+      if (editable) {
+        try {
+          const { variations, offVariation } = form.getValues();
+          const { comment, resetSampling } = additionalValues || {};
 
-        const resp = await featureUpdater({
-          id: feature.id,
-          environmentId: currentEnvironment.id,
-          comment,
-          resetSamplingSeed: resetSampling,
-          offVariation,
-          ...handleCheckVariations(variations)
-        });
-        if (resp) {
-          notify({
-            message: t('message:flag-updated')
+          const resp = await featureUpdater({
+            id: feature.id,
+            environmentId: currentEnvironment.id,
+            comment,
+            resetSamplingSeed: resetSampling,
+            offVariation,
+            ...handleCheckVariations(variations)
           });
+          if (resp) {
+            notify({
+              message: t('message:collection-action-success', {
+                collection: t('source-type.feature-flag'),
+                action: t('updated')
+              })
+            });
 
-          invalidateFeature(queryClient);
-          onCloseConfirmDialog();
+            invalidateFeature(queryClient);
+            onCloseConfirmDialog();
+          }
+        } catch (error) {
+          errorNotify(error);
         }
-      } catch (error) {
-        errorNotify(error);
       }
     },
-    [feature]
+    [feature, editable]
   );
 
   useEffect(() => {
@@ -142,6 +148,7 @@ const Variation = ({ feature }: VariationProps) => {
         <Form onSubmit={form.handleSubmit(() => onSubmit())}>
           <div className="flex flex-col w-full gap-y-6">
             <SubmitBar
+              editable={editable}
               feature={feature}
               onShowConfirmDialog={onOpenConfirmDialog}
             />
@@ -168,6 +175,7 @@ const Variation = ({ feature }: VariationProps) => {
               />
             )}
             <VariationsSection
+              editable={editable}
               feature={feature}
               isRunningExperiment={isRunningExperiment}
             />

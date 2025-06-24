@@ -1484,7 +1484,8 @@
               {
                 "id": 24,
                 "name": "team_changes",
-                "type": "TeamChange"
+                "type": "TeamChange",
+                "is_repeated": true
               }
             ],
             "messages": [

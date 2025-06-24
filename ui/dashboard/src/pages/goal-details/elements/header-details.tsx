@@ -8,19 +8,13 @@ import Icon from 'components/icon';
 import Status from 'elements/status';
 
 const HeaderDetails = ({ goal }: { goal: Goal }) => {
-  const { t } = useTranslation(['common']);
+  const { t } = useTranslation(['common', 'message']);
   const { notify } = useToast();
 
   const handleCopyId = (id: string) => {
     copyToClipBoard(id);
     notify({
-      toastType: 'toast',
-      messageType: 'success',
-      message: (
-        <span>
-          <b>ID</b> {` has been successfully copied!`}
-        </span>
-      )
+      message: t('message:copied')
     });
   };
 

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import { environmentUpdater } from '@api/environment';
@@ -5,7 +6,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateEnvironments } from '@queries/environments';
 import { useQueryProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -18,6 +20,7 @@ import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface EditEnvironmentModalProps {
   isOpen: boolean;
@@ -32,9 +35,9 @@ export interface EditEnvironmentForm {
 }
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
+  name: yup.string().required(requiredMessage),
   description: yup.string(),
-  requireComment: yup.boolean().required()
+  requireComment: yup.boolean().required(requiredMessage)
 });
 
 const EditEnvironmentModal = ({
@@ -44,11 +47,20 @@ const EditEnvironmentModal = ({
 }: EditEnvironmentModalProps) => {
   const queryClient = useQueryClient();
   const { projectId } = useParams();
-  const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['common', 'form', 'message']);
+  const { notify, errorNotify } = useToast();
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const { envEditable, isOrganizationAdmin } = getAccountAccess(
+    consoleAccount!
+  );
+
+  const disabled = useMemo(
+    () => !envEditable || !isOrganizationAdmin,
+    [envEditable, isOrganizationAdmin]
+  );
 
   const { data: collection } = useQueryProjects({
     params: {
@@ -79,23 +91,16 @@ const EditEnvironmentModal = ({
       });
       if (resp) {
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {`has been successfully updated!`}
-            </span>
-          )
+          message: t('message:collection-action-success', {
+            collection: t('source-type:environment'),
+            action: t('updated')
+          })
         });
         invalidateEnvironments(queryClient);
         onClose();
       }
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message
-      });
+      errorNotify(error);
     }
   };
 
@@ -115,6 +120,7 @@ const EditEnvironmentModal = ({
                   <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
                     <Input
+                      disabled={disabled}
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                     />
@@ -158,6 +164,7 @@ const EditEnvironmentModal = ({
                     <TextArea
                       placeholder={t('form:placeholder-desc')}
                       rows={4}
+                      disabled={disabled}
                       {...field}
                     />
                   </Form.Control>
@@ -177,6 +184,7 @@ const EditEnvironmentModal = ({
                 <Form.Item>
                   <Form.Control>
                     <Checkbox
+                      disabled={disabled}
                       onCheckedChange={checked => field.onChange(checked)}
                       checked={field.value}
                       title={`${t(`form:require-comments-flag`)}`}
@@ -195,13 +203,19 @@ const EditEnvironmentModal = ({
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!form.formState.isDirty}
-                    loading={form.formState.isSubmitting}
-                  >
-                    {t(`update-env`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    type={!isOrganizationAdmin ? 'admin' : 'editor'}
+                    hidden={!disabled}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={!form.formState.isDirty || disabled}
+                        loading={form.formState.isSubmitting}
+                      >
+                        {t(`update-env`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>

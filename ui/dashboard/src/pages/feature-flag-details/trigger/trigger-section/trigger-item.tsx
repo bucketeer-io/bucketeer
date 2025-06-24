@@ -16,10 +16,12 @@ import { TriggerAction } from '../types';
 import TriggerPopover from './trigger-popover';
 
 const TriggerItem = ({
+  disabledAction,
   trigger,
   triggerNewlyCreated,
   onActions
 }: {
+  disabledAction: boolean;
   trigger: TriggerItemType;
   triggerNewlyCreated?: TriggerItemType;
   onActions: (action: TriggerAction) => void;
@@ -89,6 +91,7 @@ const TriggerItem = ({
               />
             </div>
             <TriggerPopover
+              disabled={disabledAction}
               trigger={trigger.flagTrigger}
               onActions={onActions}
             />

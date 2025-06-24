@@ -1,5 +1,5 @@
 import { AUTOOPS_MAX_MIN_COUNT } from 'constants/autoops';
-import { i18n } from 'i18n';
+import { requiredMessage, translation } from 'constants/message';
 import * as yup from 'yup';
 import { OpsEventRateClauseOperator } from '@types';
 import {
@@ -10,9 +10,6 @@ import {
 } from 'utils/function';
 import { ActionTypeMap, IntervalMap, RolloutTypeMap } from './types';
 
-const translation = i18n.t;
-
-const requiredMessage = translation('message:required-field');
 const laterThanCurrentTimeMessage = translation(
   'message:validation.operation.later-than-current-time'
 );

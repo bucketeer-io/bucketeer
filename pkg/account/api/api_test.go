@@ -32,6 +32,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
+	teamstoragemock "github.com/bucketeer-io/bucketeer/pkg/team/storage/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 )
 
@@ -58,6 +59,7 @@ func createAccountService(t *testing.T, mockController *gomock.Controller, db st
 		environmentClient:    ecmock.NewMockClient(mockController),
 		mysqlClient:          mysqlmock.NewMockClient(mockController),
 		accountStorage:       storagemock.NewMockAccountStorage(mockController),
+		teamStorage:          teamstoragemock.NewMockTeamStorage(mockController),
 		adminAuditLogStorage: auditlogstoragemock.NewMockAdminAuditLogStorage(mockController),
 		publisher:            publishermock.NewMockPublisher(mockController),
 		logger:               logger.Named("api"),

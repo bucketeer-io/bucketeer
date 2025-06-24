@@ -124,6 +124,8 @@
     "scheduled": "Scheduled",
     "running": "Running",
     "stopped": "Stopped",
+    "waiting": "Waiting",
+    "force-stopped": "Force Stopped",
     "not-started": "Not started",
     "scheduled-experiment": "Scheduled Experiment",
     "running-experiment": "Running Experiment",
@@ -285,5 +287,8 @@
   "stop-kill-switch": "Stop Kill Switch",
   "stop-rollout": "Stop Progressive Rollout",
   "stop-operation-type-desc": "The {{type}} will be stopped. Are you sure you want to proceed?",
-  "current-event-rate-tooltip": "Goal Count / Evaluation Count * 100"
+  "current-event-rate-tooltip": "Goal Count / Evaluation Count * 100",
+  "from-last-month": "from last month",
+  "created-at-time": "Created {{time}}",
+  "pending-invite": "Pending invite"
 }

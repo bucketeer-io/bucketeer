@@ -2,6 +2,7 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { GoalUpdaterPayload } from '@api/goal/goal-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Goal } from '@types';
@@ -9,6 +10,7 @@ import Button from 'components/button';
 import Form from 'components/form';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 export interface GoalDetailsForm {
   name: string;
@@ -17,15 +19,17 @@ export interface GoalDetailsForm {
 }
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
-  id: yup.string().required(),
+  name: yup.string().required(requiredMessage),
+  id: yup.string().required(requiredMessage),
   description: yup.string()
 });
 
 const GoalUpdateForm = ({
+  disabled,
   goal,
   onSubmit
 }: {
+  disabled: boolean;
   goal: Goal;
   onSubmit: (payload: GoalUpdaterPayload) => Promise<void>;
 }) => {
@@ -74,6 +78,7 @@ const GoalUpdateForm = ({
                 <Form.Label required>{t('name')}</Form.Label>
                 <Form.Control>
                   <Input
+                    disabled={disabled}
                     placeholder={`${t('form:placeholder-name')}`}
                     {...field}
                   />
@@ -107,6 +112,7 @@ const GoalUpdateForm = ({
                 <Form.Label optional>{t('form:description')}</Form.Label>
                 <Form.Control>
                   <TextArea
+                    disabled={disabled}
                     placeholder={t('form:placeholder-desc')}
                     rows={4}
                     {...field}
@@ -116,16 +122,21 @@ const GoalUpdateForm = ({
               </Form.Item>
             )}
           />
-
-          <Button
-            loading={isSubmitting}
-            disabled={!isValid || !isDirty}
-            type="submit"
-            className="w-fit"
-            variant={'secondary'}
-          >
-            {t(`save`)}
-          </Button>
+          <DisabledButtonTooltip
+            align="start"
+            hidden={!disabled}
+            trigger={
+              <Button
+                loading={isSubmitting}
+                disabled={!isValid || !isDirty || disabled}
+                type="submit"
+                className="w-fit"
+                variant={'secondary'}
+              >
+                {t(`save`)}
+              </Button>
+            }
+          />
         </Form>
       </FormProvider>
     </div>

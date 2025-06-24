@@ -5,19 +5,25 @@ import {
   EXPERIMENT_NAME_MAX_LENGTH,
   EXPERIMENT_START_AT_OLDEST_DAYS
 } from 'constants/experiment';
+import { requiredMessage, translation } from 'constants/message';
 import * as yup from 'yup';
 
 export const experimentFormSchema = yup.object().shape({
   id: yup.string().max(EXPERIMENT_NAME_MAX_LENGTH),
-  name: yup.string().required(),
-  baseVariationId: yup.string().required(),
-  startType: yup.string().oneOf(['manual', 'schedule']).required(),
+  name: yup.string().required(requiredMessage),
+  baseVariationId: yup.string().required(requiredMessage),
+  startType: yup
+    .string()
+    .oneOf(['manual', 'schedule'])
+    .required(requiredMessage),
   startAt: yup
     .string()
-    .required()
+    .required(requiredMessage)
     .test(
       'laterThanStartAt',
-      `This must be later than or equal to ${EXPERIMENT_START_AT_OLDEST_DAYS} days ago.`,
+      translation('message:validation.later-or-equal-days', {
+        count: EXPERIMENT_START_AT_OLDEST_DAYS
+      }),
       function (value) {
         const startDate = new Date(+value * 1000);
         const d = new Date();
@@ -27,7 +33,7 @@ export const experimentFormSchema = yup.object().shape({
     ),
   stopAt: yup
     .string()
-    .required()
+    .required(requiredMessage)
     .test('laterThanStartAt', (value, context) => {
       const endDate = new Date(+value * 1000);
       const startAtValue = context?.from && context?.from[0]?.value?.startAt;
@@ -36,7 +42,7 @@ export const experimentFormSchema = yup.object().shape({
       const endTime = endDate.getTime();
       if (startTime && endTime && endTime <= startTime) {
         return context.createError({
-          message: 'Stop at must be later than the start at.',
+          message: translation('message:validation.stop-later-than-start'),
           path: context.path
         });
       }
@@ -51,7 +57,9 @@ export const experimentFormSchema = yup.object().shape({
       const endTime = endDate.getTime();
       if (endTime / 1000 - startTime / 1000 >= maxPeriodSeconds) {
         return context.createError({
-          message: `The period must be less than or equals to ${EXPERIMENT_START_AT_OLDEST_DAYS} days.`,
+          message: translation('message:validation.less-or-equal-days', {
+            count: EXPERIMENT_START_AT_OLDEST_DAYS
+          }),
           path: context.path
         });
       }
@@ -60,10 +68,10 @@ export const experimentFormSchema = yup.object().shape({
     }),
   description: yup.string().max(EXPERIMENT_DESCRIPTION_MAX_LENGTH),
   audience: yup.mixed(),
-  featureId: yup.string().required(),
+  featureId: yup.string().required(requiredMessage),
   goalIds: yup
     .array()
     .min(EXPERIMENT_GOAL_MIN_LENGTH)
     .max(EXPERIMENT_GOAL_MAX_LENGTH)
-    .required()
+    .required(requiredMessage)
 });

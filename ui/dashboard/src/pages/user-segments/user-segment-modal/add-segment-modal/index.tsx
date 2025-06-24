@@ -26,10 +26,10 @@ interface AddUserSegmentModalProps {
 }
 
 const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
 
   const [userIdsType, setUserIdsType] = useState('upload');
@@ -51,28 +51,25 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
     trigger
   } = form;
 
-  const addSuccess = (name: string, isUpload = false) => {
+  const addSuccess = (isUpload = false) => {
     if (!isUpload) {
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{name}</b> {` has been successfully created!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.segment'),
+          action: t('created')
+        })
       });
       onClose();
     }
     invalidateUserSegments(queryClient);
   };
 
-  const onAddSuccess = (name: string, isUpload = false) => {
+  const onAddSuccess = (isUpload = false) => {
     let timerId: NodeJS.Timeout | null = null;
     if (timerId) clearTimeout(timerId);
     if (isUpload)
-      return (timerId = setTimeout(() => addSuccess(name, isUpload), 10000));
-    return addSuccess(name, isUpload);
+      return (timerId = setTimeout(() => addSuccess(isUpload), 10000));
+    return addSuccess(isUpload);
   };
 
   const onSubmit: SubmitHandler<UserSegmentForm> = async values => {
@@ -100,17 +97,13 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
               state: 'INCLUDED',
               data: base64String
             });
-            onAddSuccess(values.name);
-            if (uploadResp) onAddSuccess(values.name, true);
+            onAddSuccess();
+            if (uploadResp) onAddSuccess(true);
           });
-        } else onAddSuccess(values.name, false);
+        } else onAddSuccess();
       }
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message || 'Something went wrong.'
-      });
+      errorNotify(error);
     }
   };
 

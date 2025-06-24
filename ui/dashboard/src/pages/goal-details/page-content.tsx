@@ -5,7 +5,7 @@ import { goalUpdater, GoalUpdaterPayload } from '@api/goal/goal-updater';
 import { invalidateGoalDetails } from '@queries/goal-details';
 import { invalidateGoals } from '@queries/goals';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -22,11 +22,12 @@ const PageContent = ({ goal }: { goal: Goal }) => {
   const navigate = useNavigate();
   const { t } = useTranslation(['common', 'form', 'table']);
 
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   const [isOpenDeleteModal, onOpenDeleteModal, onCloseDeleteModal] =
     useToggleOpen(false);
@@ -44,14 +45,10 @@ const PageContent = ({ goal }: { goal: Goal }) => {
       onCloseDeleteModal();
       invalidateGoals(queryClient);
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{goal?.name}</b>
-            {` has been deleted successfully!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.goal'),
+          action: t('deleted')
+        })
       });
       navigate(`/${currentEnvironment.urlCode}/${PAGE_PATH_GOALS}`);
     }
@@ -61,7 +58,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
     mutationFn: async (payload: GoalUpdaterPayload) => {
       return goalUpdater(payload);
     },
-    onSuccess: data => {
+    onSuccess: () => {
       onCloseConfirmModal();
       invalidateGoalDetails(queryClient, {
         id: goal.id,
@@ -69,19 +66,14 @@ const PageContent = ({ goal }: { goal: Goal }) => {
       });
       invalidateGoals(queryClient);
       notify({
-        message: (
-          <span>
-            <b>{data?.goal?.name}</b> {`has been successfully updated!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.goal'),
+          action: t('updated')
+        })
       });
       mutationState.reset();
     },
-    onError: error =>
-      notify({
-        messageType: 'error',
-        message: error?.message || 'Something went wrong.'
-      })
+    onError: error => errorNotify(error)
   });
 
   const onUpdateGoal = async (payload: GoalUpdaterPayload) =>
@@ -90,9 +82,14 @@ const PageContent = ({ goal }: { goal: Goal }) => {
 
   return (
     <PageLayout.Content className="p-6 gap-y-6 overflow-auto">
-      <GoalUpdateForm goal={goal} onSubmit={onUpdateGoal} />
+      <GoalUpdateForm
+        disabled={!editable}
+        goal={goal}
+        onSubmit={onUpdateGoal}
+      />
       {connections > 0 && <GoalConnections goal={goal} />}
       <GoalActions
+        editable={editable}
         title={
           goal.archived
             ? t(`table:popover.unarchive-goal`)
@@ -105,17 +102,20 @@ const PageContent = ({ goal }: { goal: Goal }) => {
             : t(`table:popover.archive-goal`)
         }
         onClick={onOpenConfirmModal}
-        disabled={goal.isInUseStatus}
+        disabled={goal.isInUseStatus || !editable}
       >
         {(goal.experiments?.length > 0 || goal.isInUseStatus) && (
           <InfoMessage title={t('form:goal-details.archive-warning-desc')} />
         )}
       </GoalActions>
       <GoalActions
+        editable={editable}
         title={t('delete-goal')}
         description={t('form:goal-details.delete-desc')}
         btnText={t('delete-goal')}
-        disabled={goal.experiments?.length > 0 || goal.isInUseStatus}
+        disabled={
+          goal.experiments?.length > 0 || goal.isInUseStatus || !editable
+        }
         onClick={onOpenDeleteModal}
       >
         {(goal.experiments?.length > 0 || goal.isInUseStatus) && (
@@ -124,6 +124,7 @@ const PageContent = ({ goal }: { goal: Goal }) => {
       </GoalActions>
       {isOpenDeleteModal && (
         <DeleteGoalModal
+          disabled={!editable}
           goal={goal}
           isOpen={isOpenDeleteModal}
           loading={mutation.isPending}

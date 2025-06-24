@@ -46,7 +46,7 @@ const GoalResultItem = ({
   onChangeResultState: (tab?: GoalResultTab, chartType?: ChartDataType) => void;
   handleNarrowGoalResult: (goalId: string) => void;
 }) => {
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
 
   const conversionRateChartRef = useRef<ChartToggleLegendRef>(null);
   const evaluationChartRef = useRef<ChartToggleLegendRef>(null);
@@ -97,7 +97,10 @@ const GoalResultItem = ({
           });
           if (resp) {
             notify({
-              message: 'Rollout variant updated successfully.'
+              message: t('message:collection-action-success', {
+                collection: t('rollout-variant'),
+                action: t('updated')
+              })
             });
             invalidateFeature(queryClient);
             invalidateExperimentDetails(queryClient, {

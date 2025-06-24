@@ -43,7 +43,13 @@ export interface OperationModalState {
   selectedData?: AutoOpsRule | Rollout;
 }
 
-const Operations = ({ feature }: { feature: Feature }) => {
+const Operations = ({
+  feature,
+  editable
+}: {
+  feature: Feature;
+  editable: boolean;
+}) => {
   const { t } = useTranslation(['common', 'table', 'form', 'message']);
   const navigate = useNavigate();
   const { notify, errorNotify } = useToast();
@@ -204,7 +210,10 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
         if (resp) {
           notify({
-            message: t('message:operation.stopped')
+            message: t('message:collection-action-success', {
+              collection: t('operation'),
+              action: t('stopped')
+            })
           });
           onSubmitOperationSuccess();
           setOperationModalState({
@@ -235,7 +244,10 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
         if (resp) {
           notify({
-            message: t('message:operation.deleted')
+            message: t('message:collection-action-success', {
+              collection: t('operation'),
+              action: t('deleted')
+            })
           });
           onSubmitOperationSuccess();
           onResetModalState();
@@ -273,12 +285,18 @@ const Operations = ({ feature }: { feature: Feature }) => {
           {t('table:feature-flags:operations-desc')}
         </p>
         <Filter
-          action={<OperationActions onOperationActions={onOperationActions} />}
+          action={
+            <OperationActions
+              disabled={!editable}
+              onOperationActions={onOperationActions}
+            />
+          }
           className="justify-end w-fit px-0"
           link={DOCUMENTATION_LINKS.FLAG_OPERATION}
         />
       </div>
       <Overview
+        disabled={!editable}
         onOperationActions={operationType =>
           onOperationActions({
             operationType,
@@ -318,6 +336,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
       )}
       {isScheduleAction && isOpenModalAction && feature && (
         <ScheduleOperationModal
+          editable={editable}
           isFinishedTab={currentTab === OperationTab.FINISHED}
           isOpen={isScheduleAction}
           featureId={feature.id}
@@ -332,6 +351,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
       )}
       {isEventRateAction && isOpenModalAction && feature && (
         <EventRateOperationModal
+          editable={editable}
           isOpen={isEventRateAction}
           feature={feature}
           environmentId={currentEnvironment.id}
@@ -346,6 +366,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
         operationModalState.actionType === 'NEW' &&
         feature && (
           <ProgressiveRolloutModal
+            editable={editable}
             isOpen={isRolloutAction}
             feature={feature}
             urlCode={currentEnvironment.urlCode}
@@ -372,6 +393,7 @@ const Operations = ({ feature }: { feature: Feature }) => {
 
       {isStop && !!operationModalState?.selectedData && (
         <StopOperationModal
+          editable={editable}
           loading={isLoading}
           operationType={operationModalState.operationType!}
           isOpen={isStop && !!operationModalState?.selectedData}

@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
 import { Trans } from 'react-i18next';
-import { useParams } from 'react-router-dom';
 import { experimentUpdater, ExperimentUpdaterParams } from '@api/experiment';
 import { invalidateExperimentDetails } from '@queries/experiment-details';
 import { invalidateExperiments } from '@queries/experiments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { useToast, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Experiment, ExperimentResult } from '@types';
@@ -23,6 +22,7 @@ import {
 import Button from 'components/button';
 import Icon from 'components/icon';
 import ConfirmModal from 'elements/confirm-modal';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 const ExperimentState = ({
   experimentResult,
@@ -31,12 +31,13 @@ const ExperimentState = ({
   experiment: Experiment;
   experimentResult?: ExperimentResult;
 }) => {
-  const { t } = useTranslation(['table', 'form']);
+  const { t } = useTranslation(['table', 'form', 'common', 'message']);
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const params = useParams();
-  const { notify } = useToast();
+  const editable = hasEditable(consoleAccount!);
+
+  const { notify, errorNotify } = useToast();
   const isRunning = experiment.status === 'RUNNING',
     isWaiting = experiment.status === 'WAITING',
     isStopped = ['STOPPED', 'FORCE_STOPPED'].includes(experiment.status);
@@ -66,23 +67,27 @@ const ExperimentState = ({
     mutationFn: async (params: ExperimentUpdaterParams) => {
       return experimentUpdater(params);
     },
-    onSuccess: () => {
+    onSuccess: ({ experiment }, params) => {
       onCloseToggleExperimentModal();
 
       invalidateExperiments(queryClient);
       invalidateExperimentDetails(queryClient, {
         environmentId: currentEnvironment.id,
-        id: params?.experimentId ?? ''
+        id: experiment?.id ?? ''
       });
       mutation.reset();
-    },
-    onError: error => {
       notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: error?.message || 'Something went wrong.'
+        message: t('message:collection-action-success', {
+          collection: t('common:source-type.experiment'),
+          action: t(
+            params?.status?.status === 'FORCE_STOPPED'
+              ? 'common:stopped'
+              : 'common:started'
+          )
+        })
       });
-    }
+    },
+    onError: error => errorNotify(error)
   });
 
   const onToggleExperiment = () => {
@@ -167,20 +172,27 @@ const ExperimentState = ({
           </p>
         </div>
       </div>
-      <Button
-        disabled={isStopped}
-        variant={'text'}
-        className={cn('!typo-para-small h-10 whitespace-nowrap', {
-          'text-accent-red-500 hover:text-accent-red-600': isRunning
-        })}
-        onClick={onOpenToggleExperimentModal}
-      >
-        <Icon
-          icon={isRunning ? IconStopExperiment : IconStartExperiment}
-          size={'sm'}
-        />
-        {t(isRunning ? `popover.stop-experiment` : `popover.start-experiment`)}
-      </Button>
+      <DisabledButtonTooltip
+        hidden={editable}
+        trigger={
+          <Button
+            disabled={isStopped || !editable}
+            variant={'text'}
+            className={cn('!typo-para-small h-10 whitespace-nowrap', {
+              'text-accent-red-500 hover:text-accent-red-600': isRunning
+            })}
+            onClick={onOpenToggleExperimentModal}
+          >
+            <Icon
+              icon={isRunning ? IconStopExperiment : IconStartExperiment}
+              size={'sm'}
+            />
+            {t(
+              isRunning ? `popover.stop-experiment` : `popover.start-experiment`
+            )}
+          </Button>
+        }
+      />
       {openToggleExperimentModal && (
         <ConfirmModal
           isOpen={openToggleExperimentModal}

@@ -504,15 +504,17 @@ func validateUpdateAccountV2NoCommandRequest(
 		}
 		return dt.Err()
 	}
-	if len(req.EnvironmentRoles) == 0 {
-		dt, err := statusInvalidEnvironmentRole.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_roles"),
-		})
-		if err != nil {
-			return statusInternal.Err()
+	for _, r := range req.EnvironmentRoles {
+		if r.Role == accountproto.AccountV2_Role_Environment_UNASSIGNED {
+			dt, err := statusInvalidEnvironmentRole.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "environment_role"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
-		return dt.Err()
 	}
 	return nil
 }

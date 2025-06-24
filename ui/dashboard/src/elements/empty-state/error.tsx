@@ -1,3 +1,4 @@
+import { translation } from 'constants/message';
 import EmptyState, { type EmptyStateProps } from 'elements/empty-state';
 
 interface ErrorStateProps {
@@ -9,8 +10,8 @@ interface ErrorStateProps {
 
 export const ErrorState = ({
   size = 'lg',
-  title = `Oops! Something went wrong`,
-  description = `We're on it. Please try again later.`,
+  title = translation('message:something-went-wrong'),
+  description = translation('message:try-again-later'),
   onRetry
 }: ErrorStateProps) => {
   return (

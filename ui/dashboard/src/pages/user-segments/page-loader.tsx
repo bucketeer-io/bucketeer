@@ -1,65 +1,109 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { userSegmentBulkDownload } from '@api/user-segment';
 import { userSegmentDelete } from '@api/user-segment/user-segment-delete';
+import { useQueryUserSegment } from '@queries/user-segment-details';
 import { invalidateUserSegments } from '@queries/user-segments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
+import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
 import { useToast } from 'hooks';
+import useActionWithURL from 'hooks/use-action-with-url';
 import { useToggleOpen } from 'hooks/use-toggle-open';
+import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
 import PageContent from './page-content';
+import { UserSegmentsActionsType } from './types';
 import AddUserSegmentModal from './user-segment-modal/add-segment-modal';
 import DeleteUserSegmentModal from './user-segment-modal/delete-segment-modal';
 import EditUserSegmentModal from './user-segment-modal/edit-segment-modal';
 import FlagsConnectedModal from './user-segment-modal/flags-connected-modal';
 
 const PageLoader = () => {
+  const { t } = useTranslation(['common', 'message']);
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
+
+  const {
+    id,
+    isAdd,
+    isEdit,
+    onOpenAddModal,
+    onOpenEditModal,
+    onCloseActionModal
+  } = useActionWithURL({
+    closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}`
+  });
+
+  const [isOpenFlagModal, onOpenFlagModal, onCloseFlagModal] =
+    useToggleOpen(false);
+  const [isOpenDeleteModal, onOpenDeleteModal, onCloseDeleteModal] =
+    useToggleOpen(false);
   const [selectedSegment, setSelectedSegment] = useState<UserSegment>();
   const [segmentUploading, setSegmentUploading] = useState<UserSegment | null>(
     null
   );
 
-  const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
-    useToggleOpen(false);
-  const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
-    useToggleOpen(false);
-  const [isOpenFlagModal, onOpenFlagModal, onCloseFlagModal] =
-    useToggleOpen(false);
-  const [isOpenDeleteModal, onOpenDeleteModal, onCloseDeleteModal] =
-    useToggleOpen(false);
+  const {
+    data: segmentCollection,
+    isLoading: isLoadingSegment,
+    isError,
+    error
+  } = useQueryUserSegment({
+    params: {
+      environmentId: currentEnvironment.id,
+      id: id as string
+    },
+    enabled: !!isEdit && !!id && !selectedSegment
+  });
 
-  const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async (selectedSegment: UserSegment) => {
-      return userSegmentDelete({
-        id: selectedSegment.id,
-        environmentId: currentEnvironment.id
-      });
+      if (editable)
+        return userSegmentDelete({
+          id: selectedSegment.id,
+          environmentId: currentEnvironment.id
+        });
     },
     onSuccess: () => {
       onCloseDeleteModal();
       invalidateUserSegments(queryClient);
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{selectedSegment?.name}</b>
-            {` has been deleted successfully!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.segment'),
+          action: t('deleted')
+        })
       });
       mutation.reset();
-    }
+    },
+    onError: error => errorNotify(error)
   });
 
   const onDeleteSegment = () => {
-    if (selectedSegment) {
+    if (selectedSegment && editable) {
       mutation.mutate(selectedSegment);
+    }
+  };
+
+  const onActionHandler = (
+    segment: UserSegment,
+    type: UserSegmentsActionsType
+  ) => {
+    if (type !== 'DOWNLOAD') setSelectedSegment(segment);
+    switch (type) {
+      case 'EDIT':
+        return onOpenEditModal(
+          `/${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}/${segment.id}`
+        );
+      case 'FLAG':
+        return onOpenFlagModal();
+      case 'DELETE':
+        return onOpenDeleteModal();
+      default:
+        return onBulkDownloadSegment(segment);
     }
   };
 
@@ -86,36 +130,37 @@ const PageLoader = () => {
     }
   };
 
+  useEffect(() => {
+    if (segmentCollection) {
+      setSelectedSegment(segmentCollection.segment);
+    }
+  }, [segmentCollection]);
+
+  useEffect(() => {
+    if (isError && error) {
+      errorNotify(error);
+      onCloseActionModal();
+    }
+  }, [isError, error]);
+
   return (
     <>
       <PageContent
+        editable={editable}
         segmentUploading={segmentUploading}
         onAdd={onOpenAddModal}
-        onEdit={segment => {
-          setSelectedSegment(segment);
-          onOpenEditModal();
-        }}
-        onOpenFlagModal={segment => {
-          setSelectedSegment(segment);
-          onOpenFlagModal();
-        }}
-        onDelete={segment => {
-          setSelectedSegment(segment);
-          onOpenDeleteModal();
-        }}
-        onDownload={onBulkDownloadSegment}
+        onActionHandler={onActionHandler}
       />
-      {isOpenAddModal && (
-        <AddUserSegmentModal
-          isOpen={isOpenAddModal}
-          onClose={onCloseAddModal}
-        />
+      {isAdd && (
+        <AddUserSegmentModal isOpen={isAdd} onClose={onCloseActionModal} />
       )}
-      {isOpenEditModal && selectedSegment && (
+      {isEdit && (
         <EditUserSegmentModal
-          isOpen={isOpenEditModal}
-          onClose={onCloseEditModal}
+          isDisabled={!editable}
+          isOpen={isEdit}
+          isLoadingSegment={isLoadingSegment}
           userSegment={selectedSegment!}
+          onClose={onCloseActionModal}
           setSegmentUploading={setSegmentUploading}
         />
       )}
@@ -128,6 +173,7 @@ const PageLoader = () => {
       )}
       {isOpenDeleteModal && selectedSegment && (
         <DeleteUserSegmentModal
+          isDisabled={!editable}
           isOpen={isOpenDeleteModal}
           loading={false}
           userSegment={selectedSegment}

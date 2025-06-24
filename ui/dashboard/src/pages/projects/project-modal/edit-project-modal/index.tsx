@@ -1,8 +1,11 @@
+import { useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { projectUpdater } from '@api/project';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
+import { getAccountAccess, useAuth } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -13,6 +16,7 @@ import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface EditProjectModalProps {
   isOpen: boolean;
@@ -26,7 +30,7 @@ export interface EditProjectForm {
 }
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
+  name: yup.string().required(requiredMessage),
   description: yup.string()
 });
 
@@ -36,8 +40,17 @@ const EditProjectModal = ({
   project
 }: EditProjectModalProps) => {
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['common', 'form', 'message']);
+  const { notify, errorNotify } = useToast();
+  const { consoleAccount } = useAuth();
+  const { envEditable, isOrganizationAdmin } = getAccountAccess(
+    consoleAccount!
+  );
+
+  const disabled = useMemo(
+    () => !envEditable || !isOrganizationAdmin,
+    [envEditable, isOrganizationAdmin]
+  );
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -57,22 +70,15 @@ const EditProjectModal = ({
       if (resp) {
         invalidateProjects(queryClient);
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {`has been successfully updated!`}
-            </span>
-          )
+          message: t('message:collection-action-success', {
+            collection: t('project'),
+            action: t('updated')
+          })
         });
         onClose();
       }
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message
-      });
+      errorNotify(error);
     }
   };
 
@@ -92,6 +98,7 @@ const EditProjectModal = ({
                   <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
                     <Input
+                      disabled={disabled}
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                     />
@@ -121,6 +128,7 @@ const EditProjectModal = ({
                   <Form.Label optional>{t('form:description')}</Form.Label>
                   <Form.Control>
                     <TextArea
+                      disabled={disabled}
                       placeholder={t('form:placeholder-desc')}
                       rows={4}
                       {...field}
@@ -139,13 +147,19 @@ const EditProjectModal = ({
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!form.formState.isDirty}
-                    loading={form.formState.isSubmitting}
-                  >
-                    {t(`update-project`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    type={!envEditable ? 'editor' : 'admin'}
+                    hidden={!disabled}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={!form.formState.isDirty || disabled}
+                        loading={form.formState.isSubmitting}
+                      >
+                        {t(`update-project`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>

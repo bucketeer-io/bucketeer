@@ -1,7 +1,9 @@
 import { ReactNode } from 'react';
 import Button from 'components/button';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface Props {
+  editable: boolean;
   title: string;
   description: string;
   btnText: string;
@@ -11,6 +13,7 @@ interface Props {
 }
 
 const GoalActions = ({
+  editable,
   title,
   description,
   btnText,
@@ -27,15 +30,21 @@ const GoalActions = ({
         </p>
       )}
       {children}
-      <Button
-        className="w-fit"
-        type="button"
-        variant={'secondary'}
-        disabled={disabled}
-        onClick={onClick}
-      >
-        {btnText}
-      </Button>
+      <DisabledButtonTooltip
+        align="start"
+        hidden={editable}
+        trigger={
+          <Button
+            className="w-fit"
+            type="button"
+            variant={'secondary'}
+            disabled={disabled}
+            onClick={onClick}
+          >
+            {btnText}
+          </Button>
+        }
+      />
     </div>
   );
 };

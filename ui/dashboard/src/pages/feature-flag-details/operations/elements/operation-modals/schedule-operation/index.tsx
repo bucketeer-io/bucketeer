@@ -31,6 +31,7 @@ import SlideModal from 'components/modal/slide';
 import ScheduleList from './schedule-list';
 
 export interface OperationModalProps {
+  editable: boolean;
   isFinishedTab: boolean;
   featureId: string;
   environmentId: string;
@@ -44,6 +45,7 @@ export interface OperationModalProps {
 }
 
 const ScheduleOperationModal = ({
+  editable,
   isFinishedTab,
   featureId,
   environmentId,
@@ -150,46 +152,51 @@ const ScheduleOperationModal = ({
   const onSubmit = useCallback(
     async (values: DateTimeClauseListType) => {
       try {
-        const { datetimeClausesList } = values;
+        if (editable) {
+          const { datetimeClausesList } = values;
 
-        let resp: AutoOpsCreatorResponse | null = null;
+          let resp: AutoOpsCreatorResponse | null = null;
 
-        if (!isCreate && selectedData) {
-          const datetimeClauseChanges =
-            handleCheckDateTimeClauses(datetimeClausesList);
+          if (!isCreate && selectedData) {
+            const datetimeClauseChanges =
+              handleCheckDateTimeClauses(datetimeClausesList);
 
-          resp = await autoOpsUpdate({
-            id: selectedData.id,
-            environmentId,
-            datetimeClauseChanges
-          });
-        } else {
-          const datetimeClauses = datetimeClausesList.map(item => {
-            const time = Math.trunc(item.time.getTime() / 1000)?.toString();
-            return {
-              time,
-              actionType: item.actionType
-            };
-          });
-          resp = await autoOpsCreator({
-            featureId,
-            environmentId,
-            opsType: 'SCHEDULE',
-            datetimeClauses
-          });
-        }
+            resp = await autoOpsUpdate({
+              id: selectedData.id,
+              environmentId,
+              datetimeClauseChanges
+            });
+          } else {
+            const datetimeClauses = datetimeClausesList.map(item => {
+              const time = Math.trunc(item.time.getTime() / 1000)?.toString();
+              return {
+                time,
+                actionType: item.actionType
+              };
+            });
+            resp = await autoOpsCreator({
+              featureId,
+              environmentId,
+              opsType: 'SCHEDULE',
+              datetimeClauses
+            });
+          }
 
-        if (resp) {
-          onSubmitOperationSuccess();
-          notify({
-            message: t(`message:operation.${isCreate ? 'created' : 'updated'}`)
-          });
+          if (resp) {
+            onSubmitOperationSuccess();
+            notify({
+              message: t('message:collection-action-success', {
+                collection: t('common:operation'),
+                action: t(isCreate ? 'common:created' : 'common:updated')
+              })
+            });
+          }
         }
       } catch (error) {
         errorNotify(error);
       }
     },
-    [isCreate, actionType, selectedData]
+    [isCreate, actionType, selectedData, editable]
   );
 
   return (
@@ -240,7 +247,9 @@ const ScheduleOperationModal = ({
                 <Button
                   type="submit"
                   loading={isSubmitting}
-                  disabled={!isValid || (isFinishedTab && !!selectedData)}
+                  disabled={
+                    !isValid || (isFinishedTab && !!selectedData) || !editable
+                  }
                 >
                   {t(
                     isCreate

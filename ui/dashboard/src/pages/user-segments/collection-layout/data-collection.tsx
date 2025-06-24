@@ -2,17 +2,16 @@ import { useCallback } from 'react';
 import {
   IconCloudDownloadOutlined,
   IconDeleteOutlined,
-  IconEditOutlined,
-  IconMoreHorizOutlined
+  IconEditOutlined
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
-import { Popover } from 'components/popover';
 import Spinner from 'components/spinner';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { UserSegmentsActionsType } from '../types';
 
@@ -117,8 +116,8 @@ export const useColumns = ({
             {isUploading
               ? 'Uploading'
               : segment.isInUseStatus
-                ? 'In Use'
-                : 'Not In Use'}
+                ? t('in-use')
+                : t('not-in-use')}
           </div>
         );
       }
@@ -157,7 +156,7 @@ export const useColumns = ({
         const segment = row.original;
 
         return (
-          <Popover
+          <DisabledPopoverTooltip
             options={[
               {
                 label: `${t('table:popover.download-segment')}`,
@@ -176,7 +175,6 @@ export const useColumns = ({
                 value: 'DELETE'
               }
             ]}
-            icon={IconMoreHorizOutlined}
             onClick={value =>
               onActionHandler(segment, value as UserSegmentsActionsType)
             }

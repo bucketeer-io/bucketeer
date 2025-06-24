@@ -147,7 +147,7 @@ message UpdateAccountV2Request {
   google.protobuf.BoolValue disabled = 21;
   common.StringListValue tags = 22 [deprecated = true];
   ChangeAccountV2TagsCommand change_tags_command = 23 [deprecated = true];
-  TeamChange team_changes = 24;
+  repeated TeamChange team_changes = 24;
 }
 
 message UpdateAccountV2Response {

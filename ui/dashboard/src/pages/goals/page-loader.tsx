@@ -4,7 +4,7 @@ import { goalDeleter } from '@api/goal';
 import { goalUpdater, GoalUpdaterPayload } from '@api/goal/goal-updater';
 import { invalidateGoals } from '@queries/goals';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { PAGE_PATH_GOALS } from 'constants/routing';
 import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
@@ -17,12 +17,13 @@ import PageContent from './page-content';
 import { GoalActions } from './types';
 
 const PageLoader = () => {
-  const { t } = useTranslation(['common', 'table']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['common', 'table', 'message']);
+  const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
 
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const editable = hasEditable(consoleAccount!);
 
   const { isAdd, onOpenAddModal, onCloseActionModal } = useActionWithURL({
     closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_GOALS}`
@@ -65,14 +66,10 @@ const PageLoader = () => {
       onCloseDeleteModal();
       invalidateGoals(queryClient);
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{selectedGoal?.name}</b>
-            {` has been deleted successfully!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.goal'),
+          action: t('deleted')
+        })
       });
     }
   });
@@ -87,23 +84,18 @@ const PageLoader = () => {
     mutationFn: async (payload: GoalUpdaterPayload) => {
       return goalUpdater(payload);
     },
-    onSuccess: data => {
+    onSuccess: () => {
       onCloseConfirmModal();
       invalidateGoals(queryClient);
       notify({
-        message: (
-          <span>
-            <b>{data?.goal?.name}</b> {`has been successfully updated!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.goal'),
+          action: t('updated')
+        })
       });
       mutationState.reset();
     },
-    onError: error =>
-      notify({
-        messageType: 'error',
-        message: error?.message || 'Something went wrong.'
-      })
+    onError: error => errorNotify(error)
   });
 
   const onUpdateGoal = async (payload: GoalUpdaterPayload) =>
@@ -111,7 +103,11 @@ const PageLoader = () => {
 
   return (
     <>
-      <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
+      <PageContent
+        editable={editable}
+        onAdd={onOpenAddModal}
+        onHandleActions={onHandleActions}
+      />
       {isAdd && <AddGoalModal isOpen={isAdd} onClose={onCloseActionModal} />}
       {isOpenConnectionModal && selectedGoal && (
         <ConnectionsModal
@@ -122,6 +118,7 @@ const PageLoader = () => {
       )}
       {isOpenDeleteModal && (
         <DeleteGoalModal
+          disabled={!editable}
           goal={selectedGoal!}
           isOpen={isOpenDeleteModal}
           loading={mutation.isPending}
@@ -132,6 +129,7 @@ const PageLoader = () => {
       {openConfirmModal && selectedGoal && (
         <ConfirmModal
           isOpen={openConfirmModal}
+          disabled={!editable}
           loading={mutationState.isPending}
           title={
             selectedGoal.archived

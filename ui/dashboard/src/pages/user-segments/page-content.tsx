@@ -9,6 +9,7 @@ import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
 import Icon from 'components/icon';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import TableListContainer from 'elements/table-list-container';
@@ -17,19 +18,18 @@ import { UserSegmentsActionsType, UserSegmentsFilters } from './types';
 import FilterUserSegmentModal from './user-segment-modal/filter-segment-modal';
 
 const PageContent = ({
+  editable,
   segmentUploading,
   onAdd,
-  onEdit,
-  onOpenFlagModal,
-  onDelete,
-  onDownload
+  onActionHandler
 }: {
+  editable: boolean;
   segmentUploading: UserSegment | null;
   onAdd: () => void;
-  onEdit: (v: UserSegment) => void;
-  onOpenFlagModal: (v: UserSegment) => void;
-  onDelete: (v: UserSegment) => void;
-  onDownload: (v: UserSegment) => void;
+  onActionHandler: (
+    segment: UserSegment,
+    type: UserSegmentsActionsType
+  ) => void;
 }) => {
   const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
@@ -57,22 +57,6 @@ const PageContent = ({
     setFilters({ ...values });
   };
 
-  const onActionHandler = (
-    segment: UserSegment,
-    type: UserSegmentsActionsType
-  ) => {
-    switch (type) {
-      case 'EDIT':
-        return onEdit(segment);
-      case 'FLAG':
-        return onOpenFlagModal(segment);
-      case 'DELETE':
-        return onDelete(segment);
-      default:
-        return onDownload(segment);
-    }
-  };
-
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {
       setFilters({ ...defaultFilters });
@@ -84,10 +68,20 @@ const PageContent = ({
       <Filter
         onOpenFilter={onOpenFilterModal}
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
-            <Icon icon={IconAddOutlined} size="sm" />
-            {t(`new-user-segment`)}
-          </Button>
+          <DisabledButtonTooltip
+            align="end"
+            hidden={editable}
+            trigger={
+              <Button
+                className="flex-1 lg:flex-none"
+                onClick={onAdd}
+                disabled={!editable}
+              >
+                <Icon icon={IconAddOutlined} size="sm" />
+                {t(`new-user-segment`)}
+              </Button>
+            }
+          />
         }
         searchValue={filters.searchQuery as string}
         filterCount={

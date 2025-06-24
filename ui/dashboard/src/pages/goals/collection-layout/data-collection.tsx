@@ -1,7 +1,4 @@
-import {
-  IconArchiveOutlined,
-  IconMoreHorizOutlined
-} from 'react-icons-material-design';
+import { IconArchiveOutlined } from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -17,8 +14,8 @@ import { useSearchParams } from 'utils/search-params';
 import { cn } from 'utils/style';
 import { IconArrowDown, IconCopy, IconTrash } from '@icons';
 import Icon from 'components/icon';
-import { Popover } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { GoalActions } from '../types';
 
@@ -44,7 +41,7 @@ export const useColumns = ({
 }: {
   onActions: (item: Goal, type: GoalActions) => void;
 }): ColumnDef<Goal>[] => {
-  const { t } = useTranslation(['common', 'table']);
+  const { t } = useTranslation(['common', 'table', 'message']);
   const formatDateTime = useFormatDateTime();
   const { notify } = useToast();
   const { searchOptions } = useSearchParams();
@@ -54,13 +51,7 @@ export const useColumns = ({
   const handleCopyId = (id: string) => {
     copyToClipBoard(id);
     notify({
-      toastType: 'toast',
-      messageType: 'success',
-      message: (
-        <span>
-          <b>ID</b> {` has been successfully copied!`}
-        </span>
-      )
+      message: t('message:copied')
     });
   };
 
@@ -164,9 +155,9 @@ export const useColumns = ({
       enableSorting: false,
       cell: ({ row }) => {
         const goal = row.original;
-
+        const { isInUseStatus } = goal;
         return (
-          <Popover
+          <DisabledPopoverTooltip
             options={compact([
               searchOptions.status === 'ARCHIVED'
                 ? {
@@ -178,8 +169,8 @@ export const useColumns = ({
                     label: `${t('table:popover.archive-goal')}`,
                     icon: IconArchiveOutlined,
                     value: 'ARCHIVE',
-                    disabled: goal.isInUseStatus,
-                    tooltip: goal.isInUseStatus
+                    disabled: isInUseStatus,
+                    tooltip: isInUseStatus
                       ? t('form:goal-details.archive-warning-desc')
                       : ''
                   },
@@ -187,15 +178,13 @@ export const useColumns = ({
                 label: `${t('table:popover.delete-goal')}`,
                 icon: IconTrash,
                 value: 'DELETE',
-                disabled: goal.isInUseStatus,
-                tooltip: goal.isInUseStatus
+                disabled: isInUseStatus,
+                tooltip: isInUseStatus
                   ? t('form:goal-details.delete-warning-desc')
                   : ''
               }
             ])}
-            icon={IconMoreHorizOutlined}
             onClick={value => onActions(goal, value as GoalActions)}
-            align="end"
           />
         );
       }

@@ -1,7 +1,6 @@
 import {
   IconArchiveOutlined,
-  IconEditOutlined,
-  IconMoreHorizOutlined
+  IconEditOutlined
 } from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -24,8 +23,8 @@ import {
   IconWaitingExperiment
 } from '@icons';
 import Icon from 'components/icon';
-import { Popover } from 'components/popover';
 import DateTooltip from 'elements/date-tooltip';
+import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import NameWithTooltip from 'elements/name-with-tooltip';
 import { ExperimentActionsType } from '../types';
 
@@ -70,7 +69,7 @@ export const useColumns = ({
 }: {
   onActions: (item: Experiment, type: ExperimentActionsType) => void;
 }): ColumnDef<Experiment>[] => {
-  const { t } = useTranslation(['common', 'table', 'form']);
+  const { t } = useTranslation(['common', 'table', 'form', 'message']);
   const { searchOptions } = useSearchParams();
 
   const { consoleAccount } = useAuth();
@@ -80,12 +79,7 @@ export const useColumns = ({
   const handleCopyId = (id: string) => {
     copyToClipBoard(id);
     notify({
-      toastType: 'toast',
-      message: (
-        <span>
-          <b>ID</b> {` has been successfully copied!`}
-        </span>
-      )
+      message: t('message:copied')
     });
   };
 
@@ -233,7 +227,10 @@ export const useColumns = ({
         const experiment = row.original;
         const { status } = experiment;
         return (
-          <Popover
+          <DisabledPopoverTooltip
+            onClick={value =>
+              onActions(experiment, value as ExperimentActionsType)
+            }
             options={[
               {
                 label: `${t('table:popover.edit-experiment')}`,
@@ -270,11 +267,6 @@ export const useColumns = ({
                     )
                   }
             ]}
-            icon={IconMoreHorizOutlined}
-            onClick={value =>
-              onActions(experiment, value as ExperimentActionsType)
-            }
-            align="end"
           />
         );
       }

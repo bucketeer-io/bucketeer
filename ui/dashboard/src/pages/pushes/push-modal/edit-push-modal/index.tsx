@@ -5,6 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidatePushes } from '@queries/pushes';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
@@ -25,37 +26,49 @@ import {
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
-import Spinner from 'components/spinner';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import FormLoading from 'elements/form-loading';
 
 interface EditPushModalProps {
+  disabled?: boolean;
   isOpen: boolean;
-  push: Push;
+  isLoadingPush: boolean;
+  push?: Push;
   onClose: () => void;
 }
 
 export interface EditPushForm {
   name: string;
-  fcmServiceAccount?: string;
   tags?: string[];
   environmentId: string;
 }
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
+  name: yup.string().required(requiredMessage),
   tags: yup.array(),
-  environmentId: yup.string().required()
+  environmentId: yup.string().required(requiredMessage)
 });
 
-const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
+const EditPushModal = ({
+  disabled,
+  isOpen,
+  isLoadingPush,
+  push,
+  onClose
+}: EditPushModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
+  const { t } = useTranslation(['common', 'form', 'message']);
+  const { notify, errorNotify } = useToast();
 
   const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
-    environmentId: push.environmentId,
-    entityType: 'FEATURE_FLAG'
+    environmentId: push?.environmentId || '',
+    entityType: 'FEATURE_FLAG',
+    options: {
+      enabled: !!push
+    }
   });
+
   const tagOptions = (uniqBy(tagCollection?.tags || [], 'name') || [])?.map(
     tag => ({
       label: tag.name,
@@ -76,9 +89,9 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
   const form = useForm({
     resolver: yupResolver(formSchema),
     values: {
-      name: push.name,
-      tags: push.tags || undefined,
-      environmentId: push.environmentId || emptyEnvironmentId
+      name: push?.name || '',
+      tags: push?.tags || [],
+      environmentId: push?.environmentId || emptyEnvironmentId
     }
   });
 
@@ -89,27 +102,30 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
 
   const handleCheckTags = useCallback(
     (tagValues: string[]) => {
-      const tagChanges: TagChange[] = [];
-      const { tags } = push;
-      tags?.forEach(item => {
-        if (!tagValues.find(tag => tag === item)) {
-          tagChanges.push({
-            changeType: 'DELETE',
-            tag: item
-          });
-        }
-      });
-      tagValues.forEach(item => {
-        const currentTag = tags.find(tag => tag === item);
-        if (!currentTag) {
-          tagChanges.push({
-            changeType: 'CREATE',
-            tag: item
-          });
-        }
-      });
+      if (push?.tags) {
+        const tagChanges: TagChange[] = [];
+        const { tags } = push;
+        tags?.forEach(item => {
+          if (!tagValues.find(tag => tag === item)) {
+            tagChanges.push({
+              changeType: 'DELETE',
+              tag: item
+            });
+          }
+        });
+        tagValues.forEach(item => {
+          const currentTag = tags.find(tag => tag === item);
+          if (!currentTag) {
+            tagChanges.push({
+              changeType: 'CREATE',
+              tag: item
+            });
+          }
+        });
 
-      return tagChanges;
+        return tagChanges;
+      }
+      return [];
     },
     [push]
   );
@@ -119,29 +135,26 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
     await pushUpdater({
       name,
       tagChanges: handleCheckTags(tags || []),
-      id: push.id,
+      id: push?.id || '',
       environmentId: checkEnvironmentEmptyId(environmentId)
-    }).then(() => {
-      notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {` has been successfully updated!`}
-          </span>
-        )
-      });
-      invalidatePushes(queryClient);
-      onClose();
-    });
+    })
+      .then(() => {
+        notify({
+          message: t('message:collection-action-success', {
+            collection: t('push-notification'),
+            action: t('updated')
+          })
+        });
+        invalidatePushes(queryClient);
+        onClose();
+      })
+      .catch(error => errorNotify(error));
   };
 
   return (
     <SlideModal title={t('edit-push')} isOpen={isOpen} onClose={onClose}>
-      {isLoadingTags ? (
-        <div className="flex items-center justify-center pt-12">
-          <Spinner />
-        </div>
+      {isLoadingPush ? (
+        <FormLoading />
       ) : (
         <div className="w-full p-5 pb-28">
           <div className="typo-para-small text-gray-600 mb-3">
@@ -161,6 +174,7 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                     <Form.Control>
                       <Input
                         placeholder={`${t('form:placeholder-name')}`}
+                        disabled={disabled}
                         {...field}
                       />
                     </Form.Control>
@@ -227,7 +241,9 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                             value: tagItem?.value || tag
                           };
                         })}
-                        disabled={isLoadingTags || !tagOptions.length}
+                        disabled={
+                          isLoadingTags || !tagOptions.length || disabled
+                        }
                         loading={isLoadingTags}
                         allowCreateWhileLoading={false}
                         isValidNewOption={() => false}
@@ -268,13 +284,19 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                     </Button>
                   }
                   secondaryButton={
-                    <Button
-                      type="submit"
-                      disabled={!isValid || !isDirty}
-                      loading={isSubmitting}
-                    >
-                      {t(`submit`)}
-                    </Button>
+                    <DisabledButtonTooltip
+                      align="center"
+                      hidden={!disabled}
+                      trigger={
+                        <Button
+                          type="submit"
+                          disabled={!isValid || !isDirty || disabled}
+                          loading={isSubmitting}
+                        >
+                          {t(`submit`)}
+                        </Button>
+                      }
+                    />
                   }
                 />
               </div>

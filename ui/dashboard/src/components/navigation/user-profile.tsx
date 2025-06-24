@@ -5,11 +5,13 @@ import { accountUpdater, AccountAvatar } from '@api/account/account-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
 import defaultAvatar from 'assets/avatars/default.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { requiredMessage, translation } from 'constants/message';
 import { useToast } from 'hooks';
-import { useTranslation } from 'i18n';
+import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { UserInfoForm } from '@types';
 import { isNotEmptyObject } from 'utils/data-type';
+import { onChangeFontWithLocalized } from 'utils/function';
 import { languageList } from 'pages/members/member-modal/add-member-modal';
 import { AvatarImage } from 'components/avatar';
 import Button from 'components/button';
@@ -28,15 +30,26 @@ import DialogModal from 'components/modal/dialog';
 const formSchema = yup.object().shape({
   firstName: yup
     .string()
-    .required()
-    .min(2, 'The first name you have provided must have at least 2 characters'),
+    .required(requiredMessage)
+    .min(
+      2,
+      translation('message:validation.name-at-least-characters', {
+        count: 2,
+        name: translation('common:first-name').toLowerCase()
+      })
+    ),
   lastName: yup
     .string()
-    .required()
-    .min(2, 'The last name you have provided must have at least 2 characters'),
-  language: yup.string().required()
+    .required(requiredMessage)
+    .min(
+      2,
+      translation('message:validation.name-at-least-characters', {
+        count: 2,
+        name: translation('common:last-name').toLowerCase()
+      })
+    ),
+  language: yup.string().required(requiredMessage)
 });
-
 export type FilterProps = {
   selectedAvatar: AccountAvatar | null;
   isOpen: boolean;
@@ -50,18 +63,19 @@ const UserProfileModal = ({
   onClose,
   onEditAvatar
 }: FilterProps) => {
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { consoleAccount, onMeFetcher } = useAuth();
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
-    defaultValues: {
+    values: {
       firstName: consoleAccount?.firstName || '',
       lastName: consoleAccount?.lastName || '',
       language: consoleAccount?.language || ''
-    }
+    },
+    mode: 'onChange'
   });
 
   const avatarType =
@@ -75,11 +89,14 @@ const UserProfileModal = ({
     [avatar, selectedAvatar, defaultAvatar]
   );
 
-  const { trigger } = form;
+  const {
+    formState: { isDirty, isValid, isSubmitting }
+  } = form;
 
   const onSubmit: SubmitHandler<UserInfoForm> = async values => {
     try {
       if (consoleAccount) {
+        const { firstName, lastName, language } = values;
         const environmentRoles = consoleAccount?.environmentRoles.map(item => ({
           environmentId: item.environment.id,
           role: item.role
@@ -87,12 +104,9 @@ const UserProfileModal = ({
         const resp = await accountUpdater({
           organizationId: currentEnvironment.organizationId,
           email: consoleAccount.email,
-          firstName: values.firstName,
-          lastName: values.lastName,
-          language: values.language,
-          organizationRole: {
-            role: consoleAccount.organizationRole
-          },
+          firstName: firstName,
+          lastName: lastName,
+          language: language,
           environmentRoles,
           ...(selectedAvatar && isNotEmptyObject(selectedAvatar)
             ? {
@@ -102,21 +116,21 @@ const UserProfileModal = ({
         });
 
         if (resp) {
+          const i18nLanguage = getLanguage();
+          if (language !== i18nLanguage) setLanguage(language as Language);
           notify({
-            toastType: 'toast',
-            messageType: 'success',
-            message: `Profile has been successfully updated!`
+            message: t('message:collection-action-success', {
+              collection: t('profile'),
+              action: t('updated')
+            })
           });
+          onChangeFontWithLocalized(language === Language.JAPANESE);
           onMeFetcher({ organizationId: currentEnvironment.organizationId });
           onClose();
         }
       }
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message || 'Something went wrong.'
-      });
+      errorNotify(error);
     }
   };
 
@@ -153,10 +167,7 @@ const UserProfileModal = ({
                     <Input
                       placeholder={t(`form:enter-first-name`)}
                       {...field}
-                      onChange={value => {
-                        field.onChange(value);
-                        trigger('firstName');
-                      }}
+                      onChange={value => field.onChange(value)}
                     />
                   </Form.Control>
                   <Form.Message />
@@ -173,10 +184,7 @@ const UserProfileModal = ({
                     <Input
                       placeholder={t(`form:enter-last-name`)}
                       {...field}
-                      onChange={value => {
-                        field.onChange(value);
-                        trigger('lastName');
-                      }}
+                      onChange={value => field.onChange(value)}
                     />
                   </Form.Control>
                   <Form.Message />
@@ -212,7 +220,6 @@ const UserProfileModal = ({
                             value={item.value}
                             label={item.label}
                             onSelectOption={value => {
-                              field.onBlur();
                               field.onChange(value);
                             }}
                           />
@@ -228,11 +235,8 @@ const UserProfileModal = ({
           <ButtonBar
             secondaryButton={
               <Button
-                disabled={
-                  (!selectedAvatar && !form.formState.isDirty) ||
-                  !form.formState.isValid
-                }
-                loading={form.formState.isSubmitting}
+                disabled={(!selectedAvatar && !isDirty) || !isValid}
+                loading={isSubmitting}
               >
                 {t(`save`)}
               </Button>

@@ -10,6 +10,7 @@ import { accountOrganizationFetcher, MeFetcherParams } from '@api/account';
 import { accountMeFetcher } from '@api/account';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToast } from 'hooks';
+import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
 import { Undefinable } from 'option-t/undefinable';
 import {
   clearCurrentEnvIdStorage,
@@ -27,6 +28,8 @@ import {
   setTokenStorage
 } from 'storage/token';
 import { AuthToken, ConsoleAccount, Organization } from '@types';
+import { onChangeFontWithLocalized } from 'utils/function';
+import { getAccountAccess } from './utils';
 
 interface AuthContextType {
   logout: () => void;
@@ -50,6 +53,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children
 }) => {
+  const { t } = useTranslation(['message']);
   const navigate = useNavigate();
   const authToken: AuthToken | null = getTokenStorage();
   const organizationId = getOrgIdStorage();
@@ -77,18 +81,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const environmentRoles = response.account.environmentRoles;
       if (!environmentRoles.length) {
         clearOrgAndEnvStorage();
-        errorNotify(null, 'The environments are empty.');
+        errorNotify(null, t('message:env-are-empty'));
         return logout();
       }
-
+      const isJapanese = response.account.language === Language.JAPANESE;
+      onChangeFontWithLocalized(isJapanese);
       setConsoleAccount(response.account);
       setIsLogin(true);
+
+      if (response.account.language !== getLanguage()) {
+        setLanguage(response.account.language as Language);
+      }
       if (!environmentId) {
         setCurrentEnvIdStorage(environmentRoles[0].environment.id);
       }
     } catch (error) {
       clearOrgAndEnvStorage();
-      errorNotify(error, 'The organization is not found.');
+      errorNotify(error, t('message:org-not-found'));
     } finally {
       setIsInitialLoading(false);
     }
@@ -175,8 +184,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
+  const { t } = useTranslation(['message']);
+
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error(t('auth-context-error'));
   }
   return context;
+};
+
+export const useAuthAccess = () => {
+  const { consoleAccount } = useAuth();
+  return getAccountAccess(consoleAccount!);
 };

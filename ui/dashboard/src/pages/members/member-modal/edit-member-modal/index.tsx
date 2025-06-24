@@ -11,13 +11,13 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { Account, EnvironmentRoleType, OrganizationRole } from '@types';
 import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
-import { joinName } from 'utils/name';
 import { IconInfo } from '@icons';
 import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
@@ -56,25 +56,23 @@ export interface EditMemberForm {
 }
 
 export const formSchema = yup.object().shape({
-  firstName: yup.string().required(),
-  lastName: yup.string().required(),
-  language: yup.string().required(),
-  role: yup.string().required(),
+  firstName: yup.string().required(requiredMessage),
+  lastName: yup.string().required(requiredMessage),
+  language: yup.string().required(requiredMessage),
+  role: yup.string().required(requiredMessage),
   environmentRoles: yup
     .array()
     .required()
     .of(
       yup.object().shape({
-        environmentId: yup
-          .string()
-          .required(`Environment is a required field.`),
+        environmentId: yup.string().required(requiredMessage),
         role: yup
           .mixed<EnvironmentRoleType>()
           .required()
           .test('isUnassigned', (value, context) => {
             if (value === 'Environment_UNASSIGNED')
               return context.createError({
-                message: 'Role is a required field.',
+                message: requiredMessage,
                 path: context.path
               });
             return true;
@@ -87,7 +85,7 @@ export const formSchema = yup.object().shape({
 const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const [tagOptions, setTagOptions] = useState<DropdownOption[]>([]);
@@ -144,14 +142,10 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
       }
     }).then(() => {
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{joinName(values.firstName, values.lastName)}</b>
-            {` has been successfully updated!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('member'),
+          action: t('updated')
+        })
       });
       invalidateAccounts(queryClient);
       onClose();

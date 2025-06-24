@@ -13,9 +13,16 @@ import ArchiveModal from 'pages/feature-flags/flags-modal/archive-modal';
 import { FeatureActivityStatus } from 'pages/feature-flags/types';
 import Button from 'components/button';
 import Card from 'elements/card';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
-const ArchiveFlag = ({ feature }: { feature: Feature }) => {
-  const { t } = useTranslation(['common', 'form', 'table']);
+const ArchiveFlag = ({
+  feature,
+  disabled
+}: {
+  feature: Feature;
+  disabled: boolean;
+}) => {
+  const { t } = useTranslation(['common', 'form', 'table', 'message']);
   const { notify, errorNotify } = useToast();
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
@@ -34,7 +41,10 @@ const ArchiveFlag = ({ feature }: { feature: Feature }) => {
     onSuccess: () => {
       onCloseArchiveFlagModal();
       notify({
-        message: 'Updated feature flag successfully.'
+        message: t('message:collection-action-success', {
+          collection: t('common:source-type.feature-flag'),
+          action: t('updated')
+        })
       });
       invalidateFeature(queryClient);
       invalidateFeatures(queryClient);
@@ -67,13 +77,20 @@ const ArchiveFlag = ({ feature }: { feature: Feature }) => {
             : 'form:archive-flag-desc'
         )}
       </p>
-      <Button
-        className="w-fit"
-        variant="secondary"
-        onClick={onOpenArchiveFlagModal}
-      >
-        {t(feature.archived ? 'unarchive-flag' : 'archive-flag')}
-      </Button>
+      <DisabledButtonTooltip
+        align="start"
+        hidden={!disabled}
+        trigger={
+          <Button
+            disabled={disabled}
+            className="w-fit"
+            variant="secondary"
+            onClick={onOpenArchiveFlagModal}
+          >
+            {t(feature.archived ? 'unarchive-flag' : 'archive-flag')}
+          </Button>
+        }
+      />
       {isOpenArchiveFlagModal && (
         <ArchiveModal
           isOpen={isOpenArchiveFlagModal}

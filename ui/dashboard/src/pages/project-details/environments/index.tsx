@@ -3,6 +3,7 @@ import { Trans } from 'react-i18next';
 import { environmentArchive, environmentUnarchive } from '@api/environment';
 import { invalidateEnvironments } from '@queries/environments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuthAccess } from 'auth';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { useTranslation } from 'i18n';
 import { Environment } from '@types';
@@ -15,6 +16,7 @@ import { EnvironmentActionsType } from './types';
 const ProjectEnvironments = () => {
   const { t } = useTranslation(['common', 'table']);
   const queryClient = useQueryClient();
+  const { envEditable, isOrganizationAdmin } = useAuthAccess();
 
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>();
   const [isArchiving, setIsArchiving] = useState<boolean>();
@@ -104,6 +106,7 @@ const ProjectEnvironments = () => {
             />
           }
           loading={mutation.isPending}
+          disabled={!envEditable || !isOrganizationAdmin}
         />
       )}
     </>

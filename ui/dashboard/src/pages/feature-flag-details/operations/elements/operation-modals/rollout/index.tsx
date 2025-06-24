@@ -42,6 +42,7 @@ import TemplateSchedule from './template-schedule';
 import RolloutWarning from './warning';
 
 export interface OperationModalProps {
+  editable: boolean;
   feature: Feature;
   environmentId: string;
   urlCode: string;
@@ -59,6 +60,7 @@ const buttonActiveCls =
   '!text-accent-pink-500 border-accent-pink-500 hover:!text-accent-pink-500 hover:border-accent-pink-500';
 
 const ProgressiveRolloutModal = ({
+  editable,
   feature,
   environmentId,
   urlCode,
@@ -140,83 +142,92 @@ const ProgressiveRolloutModal = ({
 
   const onSubmit = useCallback(
     async (values: RolloutSchemaType) => {
-      try {
-        const { manual, template } = values.progressiveRollout;
-        const payload: RolloutCreatorParams = {
-          environmentId,
-          featureId: feature.id
-        };
-        if (values.progressiveRolloutType === RolloutTypeMap.MANUAL_SCHEDULE) {
-          const progressiveRolloutManualScheduleClause: RolloutManualScheduleClause =
-            {
-              variationId: manual.variationId,
-              schedules: manual.schedulesList.map(item => ({
-                ...item,
-                weight: item.weight * 1000,
-                executeAt: Math.trunc(
-                  item.executeAt?.getTime() / 1000
-                )?.toString()
-              }))
-            };
-          Object.assign(payload, { progressiveRolloutManualScheduleClause });
-        } else {
-          const { increments, interval, startDate, variationId } = template;
-          const lastSchedule: ScheduleItem = {
-            scheduleId: uuid(),
-            weight: increments,
-            executeAt: startDate,
-            triggeredAt: '0'
+      if (editable) {
+        try {
+          const { manual, template } = values.progressiveRollout;
+          const payload: RolloutCreatorParams = {
+            environmentId,
+            featureId: feature.id
           };
-          const scheduleList = [lastSchedule];
-          const templateInterval = interval as IntervalMap;
-          const incrementType =
-            templateInterval === IntervalMap.DAILY
-              ? 'day'
-              : templateInterval === IntervalMap.WEEKLY
-                ? 'week'
-                : 'hour';
-
-          while (
-            !scheduleList.find(item => item.weight === 100) &&
-            lastSchedule.weight !== 100
+          if (
+            values.progressiveRolloutType === RolloutTypeMap.MANUAL_SCHEDULE
           ) {
-            const incrementItem = handleCreateIncrement({
-              lastSchedule: scheduleList.at(-1)!,
-              incrementType,
-              increment: increments
+            const progressiveRolloutManualScheduleClause: RolloutManualScheduleClause =
+              {
+                variationId: manual.variationId,
+                schedules: manual.schedulesList.map(item => ({
+                  ...item,
+                  weight: item.weight * 1000,
+                  executeAt: Math.trunc(
+                    item.executeAt?.getTime() / 1000
+                  )?.toString()
+                }))
+              };
+            Object.assign(payload, { progressiveRolloutManualScheduleClause });
+          } else {
+            const { increments, interval, startDate, variationId } = template;
+            const lastSchedule: ScheduleItem = {
+              scheduleId: uuid(),
+              weight: increments,
+              executeAt: startDate,
+              triggeredAt: '0'
+            };
+            const scheduleList = [lastSchedule];
+            const templateInterval = interval as IntervalMap;
+            const incrementType =
+              templateInterval === IntervalMap.DAILY
+                ? 'day'
+                : templateInterval === IntervalMap.WEEKLY
+                  ? 'week'
+                  : 'hour';
+
+            while (
+              !scheduleList.find(item => item.weight === 100) &&
+              lastSchedule.weight !== 100
+            ) {
+              const incrementItem = handleCreateIncrement({
+                lastSchedule: scheduleList.at(-1)!,
+                incrementType,
+                increment: increments
+              });
+              scheduleList.push(incrementItem);
+            }
+
+            const progressiveRolloutTemplateScheduleClause: RolloutTemplateScheduleClause =
+              {
+                variationId,
+                increments: increments.toString(),
+                schedules: scheduleList.map(schedule => ({
+                  ...schedule,
+                  weight: schedule.weight * 1000,
+                  executeAt: Math.round(
+                    schedule.executeAt.getTime() / 1000
+                  ).toString()
+                })) as RolloutSchedule[],
+                interval: interval as IntervalType
+              };
+
+            Object.assign(payload, {
+              progressiveRolloutTemplateScheduleClause
             });
-            scheduleList.push(incrementItem);
           }
 
-          const progressiveRolloutTemplateScheduleClause: RolloutTemplateScheduleClause =
-            {
-              variationId,
-              increments: increments.toString(),
-              schedules: scheduleList.map(schedule => ({
-                ...schedule,
-                weight: schedule.weight * 1000,
-                executeAt: Math.round(
-                  schedule.executeAt.getTime() / 1000
-                ).toString()
-              })) as RolloutSchedule[],
-              interval: interval as IntervalType
-            };
-
-          Object.assign(payload, { progressiveRolloutTemplateScheduleClause });
+          const resp = await rolloutCreator(payload);
+          if (resp) {
+            notify({
+              message: t(`message:collection-action-success`, {
+                collection: t('common:source-type.progressive-rollout'),
+                action: t(`common:created`)
+              })
+            });
+            onSubmitRolloutSuccess();
+          }
+        } catch (error) {
+          errorNotify(error);
         }
-
-        const resp = await rolloutCreator(payload);
-        if (resp) {
-          notify({
-            message: t('message:operation.created')
-          });
-          onSubmitRolloutSuccess();
-        }
-      } catch (error) {
-        errorNotify(error);
       }
     },
-    [actionType, selectedData]
+    [actionType, selectedData, editable]
   );
 
   return (
@@ -292,11 +303,13 @@ const ProgressiveRolloutModal = ({
             </div>
             {isTemplateRollout ? (
               <TemplateSchedule
+                disabled={!editable}
                 variationOptions={variationOptions}
                 isDisableCreateRollout={isDisableCreateRollout}
               />
             ) : (
               <ManualSchedule
+                disabled={!editable}
                 variationOptions={variationOptions}
                 isDisableCreateRollout={isDisableCreateRollout}
               />
@@ -313,7 +326,7 @@ const ProgressiveRolloutModal = ({
                 <Button
                   type="submit"
                   loading={isSubmitting}
-                  disabled={!isValid || isDisableCreateRollout}
+                  disabled={!isValid || isDisableCreateRollout || !editable}
                 >
                   {t(`feature-flags.create-operation`)}
                 </Button>

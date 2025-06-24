@@ -1,9 +1,11 @@
+import { useMemo } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { organizationUpdater } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryAccounts } from '@queries/accounts';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { getCurrentEnvironment, useAuth, useAuthAccess } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
@@ -18,13 +20,14 @@ import {
 import Form from 'components/form';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import PageLayout from 'elements/page-layout';
 
 const formSchema = yup.object().shape({
-  name: yup.string().required(),
-  urlCode: yup.string().required(),
+  name: yup.string().required(requiredMessage),
+  urlCode: yup.string().required(requiredMessage),
   description: yup.string(),
-  ownerEmail: yup.string().required()
+  ownerEmail: yup.string().required(requiredMessage)
 });
 
 export interface PageContentForm {
@@ -35,10 +38,12 @@ export interface PageContentForm {
 }
 
 const PageContent = ({ organization }: { organization: Organization }) => {
-  const { notify } = useToast();
+  const { notify, errorNotify } = useToast();
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const { t } = useTranslation(['common', 'form']);
+  const { envEditable, isOrganizationAdmin } = useAuthAccess();
+
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { data: accounts, isLoading: isLoadingAccounts } = useQueryAccounts({
     params: {
       cursor: String(0),
@@ -46,6 +51,10 @@ const PageContent = ({ organization }: { organization: Organization }) => {
       organizationId: currentEnvironment.organizationId
     }
   });
+  const disabled = useMemo(
+    () => !envEditable || !isOrganizationAdmin,
+    [envEditable, isOrganizationAdmin]
+  );
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -67,21 +76,14 @@ const PageContent = ({ organization }: { organization: Organization }) => {
       });
       if (resp) {
         notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {`has been successfully updated!`}
-            </span>
-          )
+          message: t('message:collection-action-success', {
+            collection: t('organization'),
+            action: t('updated')
+          })
         });
       }
     } catch (error) {
-      notify({
-        toastType: 'toast',
-        messageType: 'error',
-        message: (error as Error)?.message || 'Something went wrong.'
-      });
+      errorNotify(error);
     }
   };
 
@@ -101,6 +103,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                   <Form.Label required>{t('name')}</Form.Label>
                   <Form.Control>
                     <Input
+                      disabled={disabled}
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                     />
@@ -134,6 +137,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                   <Form.Label optional>{t('form:description')}</Form.Label>
                   <Form.Control>
                     <TextArea
+                      disabled={disabled}
                       placeholder={t('form:placeholder-desc')}
                       rows={4}
                       {...field}
@@ -160,7 +164,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                         }
                         variant="secondary"
                         className="w-full"
-                        disabled={isLoadingAccounts}
+                        disabled={isLoadingAccounts || disabled}
                       />
                       <DropdownMenuContent
                         className="w-[400px]"
@@ -185,14 +189,21 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                 </Form.Item>
               )}
             />
-            <Button
-              loading={form.formState.isSubmitting}
-              disabled={!form.formState.isDirty}
-              type="submit"
-              className="w-fit mt-6"
-            >
-              {t(`save`)}
-            </Button>
+            <DisabledButtonTooltip
+              align="start"
+              type={!isOrganizationAdmin ? 'admin' : 'editor'}
+              hidden={!disabled}
+              trigger={
+                <Button
+                  loading={form.formState.isSubmitting}
+                  disabled={!form.formState.isDirty || disabled}
+                  type="submit"
+                  className="w-fit mt-6"
+                >
+                  {t(`save`)}
+                </Button>
+              }
+            />
           </Form>
         </FormProvider>
       </div>

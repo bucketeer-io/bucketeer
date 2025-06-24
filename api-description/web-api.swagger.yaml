@@ -9137,7 +9137,10 @@ definitions:
       changeTagsCommand:
         $ref: '#/definitions/accountChangeAccountV2TagsCommand'
       teamChanges:
-        $ref: '#/definitions/accountTeamChange'
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountTeamChange'
   accountUpdateAccountV2Response:
     type: object
     properties:

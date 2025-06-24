@@ -4,14 +4,9 @@ import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { FeatureVariation, FeatureVariationType } from '@types';
-import {
-  IconFlagJSON,
-  IconFlagNumber,
-  IconFlagString,
-  IconFlagSwitch,
-  IconInfo
-} from '@icons';
+import { IconInfo } from '@icons';
 import { AddFlagForm } from 'pages/create-flag/form-schema';
+import { flagTypeOptions } from 'pages/feature-flags/flags-modal/add-flag-modal/create-flag-form';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,29 +16,6 @@ import {
 import Form from 'components/form';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
-
-export const flagTypeOptions = [
-  {
-    label: 'Boolean',
-    value: 'BOOLEAN',
-    icon: IconFlagSwitch
-  },
-  {
-    label: 'String',
-    value: 'STRING',
-    icon: IconFlagString
-  },
-  {
-    label: 'Number',
-    value: 'NUMBER',
-    icon: IconFlagNumber
-  },
-  {
-    label: 'JSON',
-    value: 'JSON',
-    icon: IconFlagJSON
-  }
-];
 
 const defaultVariations: FeatureVariation[] = [
   {

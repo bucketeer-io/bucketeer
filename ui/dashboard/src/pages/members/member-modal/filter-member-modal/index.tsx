@@ -1,4 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  enabledOptions,
+  FilterOption,
+  FilterTypes,
+  memberFilterOptions,
+  roleOptions
+} from 'constants/filters';
 import { useTranslation } from 'i18n';
 import { isEmpty } from 'utils/data-type';
 import { cn } from 'utils/style';
@@ -24,56 +31,6 @@ export type FilterProps = {
   filters?: Partial<MembersFilters>;
 };
 
-export interface Option {
-  value: string | number;
-  label: string;
-  filterValue?: string | number | boolean;
-}
-
-export enum FilterTypes {
-  ENABLED = 'enabled',
-  ROLE = 'organizationRole'
-}
-
-export const filterOptions: Option[] = [
-  {
-    value: FilterTypes.ENABLED,
-    label: 'Enabled',
-    filterValue: ''
-  },
-  {
-    value: FilterTypes.ROLE,
-    label: 'Role',
-    filterValue: ''
-  }
-];
-
-export const enabledOptions: Option[] = [
-  {
-    value: 1,
-    label: 'Yes'
-  },
-  {
-    value: 0,
-    label: 'No'
-  }
-];
-
-export const roleOptions: Option[] = [
-  {
-    value: '1',
-    label: 'Member'
-  },
-  {
-    value: '2',
-    label: 'Admin'
-  },
-  {
-    value: '3',
-    label: 'Owner'
-  }
-];
-
 const FilterMemberModal = ({
   onSubmit,
   isOpen,
@@ -82,48 +39,54 @@ const FilterMemberModal = ({
   filters
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
-  const [selectedFilters, setSelectedFilters] = useState<Option[]>([
-    filterOptions[0]
+  const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([
+    memberFilterOptions[0]
   ]);
 
   const remainingFilterOptions = useMemo(
     () =>
-      filterOptions.filter(
+      memberFilterOptions.filter(
         option => !selectedFilters.find(item => item.value === option.value)
       ),
-    [selectedFilters, filterOptions]
+    [selectedFilters, memberFilterOptions]
   );
 
   const isDisabledAddButton = useMemo(
     () =>
       !remainingFilterOptions.length ||
-      selectedFilters.length >= filterOptions.length,
+      selectedFilters.length >= memberFilterOptions.length,
 
-    [filterOptions, selectedFilters, remainingFilterOptions]
+    [memberFilterOptions, selectedFilters, remainingFilterOptions]
   );
 
   const isDisabledSubmitButton = useMemo(() => {
     return !!selectedFilters.find(item => isEmpty(item.filterValue));
   }, [[...selectedFilters]]);
 
-  const handleGetLabelFilterValue = useCallback((filterOption?: Option) => {
-    if (filterOption) {
-      const { value: filterType, filterValue } = filterOption;
-      const currentOption = (
-        filterType === FilterTypes.ENABLED ? enabledOptions : roleOptions
-      ).find(item => item.value === filterValue);
-      if (currentOption) return currentOption.label;
-    }
-    return '';
-  }, []);
+  const handleGetLabelFilterValue = useCallback(
+    (filterOption?: FilterOption) => {
+      if (filterOption) {
+        const { value: filterType, filterValue } = filterOption;
+        const currentOption = (
+          filterType === FilterTypes.ENABLED ? enabledOptions : roleOptions
+        ).find(item => item.value === filterValue);
+        if (currentOption) return currentOption.label;
+      }
+      return '';
+    },
+    []
+  );
 
   const handleSetFilterOnInit = useCallback(() => {
     if (filters) {
       const { disabled, organizationRole } = filters || {};
-      const filterTypeArr: Option[] = [];
-      const addFilterOption = (index: number, value: Option['filterValue']) => {
+      const filterTypeArr: FilterOption[] = [];
+      const addFilterOption = (
+        index: number,
+        value: FilterOption['filterValue']
+      ) => {
         if (!isEmpty(value)) {
-          const option = filterOptions[index];
+          const option = memberFilterOptions[index];
 
           filterTypeArr.push({
             ...option,
@@ -139,7 +102,7 @@ const FilterMemberModal = ({
       addFilterOption(0, disabled);
       addFilterOption(1, organizationRole);
       setSelectedFilters(
-        filterTypeArr.length ? filterTypeArr : [filterOptions[0]]
+        filterTypeArr.length ? filterTypeArr : [memberFilterOptions[0]]
       );
     }
   }, [filters]);
@@ -209,7 +172,7 @@ const FilterMemberModal = ({
                   {remainingFilterOptions.map((item, index) => (
                     <DropdownMenuItem
                       key={index}
-                      value={item.value}
+                      value={item.value as string}
                       label={item.label}
                       onSelectOption={() => {
                         selectedFilters[filterIndex] = item;
@@ -219,7 +182,7 @@ const FilterMemberModal = ({
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <p className="typo-para-medium text-gray-600">{`is`}</p>
+              <p className="typo-para-medium text-gray-600">{t(`is`)}</p>
               <DropdownMenu>
                 <DropdownMenuTrigger
                   placeholder={t(`select-value`)}
@@ -235,7 +198,7 @@ const FilterMemberModal = ({
                   ).map((item, index) => (
                     <DropdownMenuItem
                       key={index}
-                      value={item.value}
+                      value={item.value as string}
                       label={item.label}
                       onSelectOption={() => {
                         selectedFilters[filterIndex] = {

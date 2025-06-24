@@ -15,13 +15,16 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Switch from 'components/switch';
 import { Tooltip } from 'components/tooltip';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import { TargetingSchema } from '../form-schema';
 
 const FlagSwitch = ({
   feature,
+  editable,
   setIsShowRules
 }: {
   feature: Feature;
+  editable: boolean;
   setIsShowRules: (value: boolean) => void;
 }) => {
   const { t } = useTranslation(['form', 'common']);
@@ -59,15 +62,24 @@ const FlagSwitch = ({
                   i18nKey={`form:targeting.flag-switch-${field.value ? 'on' : 'off'}`}
                   components={{
                     switch: (
-                      <Switch
-                        className="-mb-1"
-                        checked={!!field.value}
-                        onCheckedChange={checked => {
-                          field.onChange(checked, {
-                            shouldDirty: false
-                          });
-                          setIsShowRules(checked);
-                        }}
+                      <DisabledButtonTooltip
+                        align="start"
+                        hidden={editable}
+                        trigger={
+                          <div className="w-fit flex items-center">
+                            <Switch
+                              className="-mb-1"
+                              disabled={!editable}
+                              checked={!!field.value}
+                              onCheckedChange={checked => {
+                                field.onChange(checked, {
+                                  shouldDirty: false
+                                });
+                                setIsShowRules(checked);
+                              }}
+                            />
+                          </div>
+                        }
                       />
                     )
                   }}
@@ -101,6 +113,7 @@ const FlagSwitch = ({
                       options.find(item => item.value === field.value)?.label ||
                       ''
                     }
+                    disabled={!editable}
                   />
                   <DropdownMenuContent align="end">
                     {options.map((item, index) => (

@@ -79,3 +79,10 @@ export const getEditorEnvironmentIds = (account: ConsoleAccount): string[] => {
     .map(item => item.environment.id);
   return ids;
 };
+
+export const getAccountAccess = (account: ConsoleAccount) => {
+  const envEditable = hasEditable(account);
+  const isOrganizationAdmin =
+    account?.organizationRole === 'Organization_ADMIN';
+  return { envEditable, isOrganizationAdmin };
+};

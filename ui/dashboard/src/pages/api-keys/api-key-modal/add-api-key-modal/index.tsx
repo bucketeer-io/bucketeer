@@ -3,14 +3,15 @@ import { apiKeyCreator } from '@api/api-key';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAPIKeys } from '@queries/api-keys';
 import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
+import { useAuthAccess } from 'auth';
+import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
-import { APIKeyRole } from '@types';
+import { APIKeyRole, Environment } from '@types';
 import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { IconInfo } from '@icons';
-import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
+import { apiKeyOptions } from 'pages/api-keys/constants';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import {
@@ -25,18 +26,14 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
+import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 interface AddAPIKeyModalProps {
   isOpen: boolean;
+  environments: Environment[];
+  isLoadingEnvs: boolean;
   onClose: () => void;
 }
-
-type APIKeyOption = {
-  id: string;
-  label: string;
-  description: string;
-  value: APIKeyRole;
-};
 
 export interface AddAPIKeyForm {
   name: string;
@@ -46,23 +43,24 @@ export interface AddAPIKeyForm {
 }
 
 export const formSchema = yup.object().shape({
-  name: yup.string().required(),
-  environmentId: yup.string().required(),
+  name: yup.string().required(requiredMessage),
+  environmentId: yup.string().required(requiredMessage),
   description: yup.string(),
-  role: yup.mixed<APIKeyRole>().required()
+  role: yup.mixed<APIKeyRole>().required(requiredMessage)
 });
 
-const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
-  const { consoleAccount } = useAuth();
+const AddAPIKeyModal = ({
+  isOpen,
+  isLoadingEnvs,
+  environments,
+  onClose
+}: AddAPIKeyModalProps) => {
   const queryClient = useQueryClient();
-  const { t } = useTranslation(['common', 'form']);
+  const { t } = useTranslation(['common', 'form', 'message']);
   const { notify } = useToast();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId
-  });
-  const environments = collection?.environments || [];
+  const { envEditable, isOrganizationAdmin } = useAuthAccess();
+
   const { formattedEnvironments } = onFormatEnvironments(environments);
 
   const form = useForm({
@@ -74,39 +72,6 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
       role: 'SDK_CLIENT'
     }
   });
-
-  const options: APIKeyOption[] = [
-    {
-      id: 'client-sdk',
-      label: t('form:api-key.client-sdk'),
-      description: t('form:api-key.client-sdk-desc'),
-      value: 'SDK_CLIENT'
-    },
-    {
-      id: 'server-sdk',
-      label: t('form:api-key.server-sdk'),
-      description: t('form:api-key.server-sdk-desc'),
-      value: 'SDK_SERVER'
-    },
-    {
-      id: 'public-api-read-only',
-      label: t('form:api-key.public-api-read-only'),
-      description: t('form:api-key.public-api-read-only-desc'),
-      value: 'PUBLIC_API_READ_ONLY'
-    },
-    {
-      id: 'public-api-write',
-      label: t('form:api-key.public-api-write'),
-      description: t('form:api-key.public-api-write-desc'),
-      value: 'PUBLIC_API_WRITE'
-    },
-    {
-      id: 'public-api-admin',
-      label: t('form:api-key.public-api-admin'),
-      description: t('form:api-key.public-api-admin-desc'),
-      value: 'PUBLIC_API_ADMIN'
-    }
-  ];
 
   const {
     getValues,
@@ -121,13 +86,10 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
       description: values.description
     }).then(() => {
       notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {` has been successfully created!`}
-          </span>
-        )
+        message: t('message:collection-action-success', {
+          collection: t('source-type.api-key'),
+          action: t('created')
+        })
       });
       invalidateAPIKeys(queryClient);
       onClose();
@@ -243,23 +205,28 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
                       defaultValue={field.value}
                       onValueChange={field.onChange}
                     >
-                      {options.map(({ id, label, description, value }) => (
-                        <div
-                          key={id}
-                          className="flex items-center last:border-b-0 border-b py-4 gap-x-5"
-                        >
-                          <label htmlFor={id} className="flex-1 cursor-pointer">
-                            <p className="typo-para-medium text-gray-700">
-                              {label}
-                            </p>
-                            <p className="typo-para-small text-gray-600">
-                              {description}
-                            </p>
-                          </label>
+                      {apiKeyOptions.map(
+                        ({ id, label, description, value }) => (
+                          <div
+                            key={id}
+                            className="flex items-center last:border-b-0 border-b py-4 gap-x-5"
+                          >
+                            <label
+                              htmlFor={id}
+                              className="flex-1 cursor-pointer"
+                            >
+                              <p className="typo-para-medium text-gray-700">
+                                {label}
+                              </p>
+                              <p className="typo-para-small text-gray-600">
+                                {description}
+                              </p>
+                            </label>
 
-                          <RadioGroupItem value={value} id={id} />
-                        </div>
-                      ))}
+                            <RadioGroupItem value={value} id={id} />
+                          </div>
+                        )
+                      )}
                     </RadioGroup>
                   </Form.Control>
                 </Form.Item>
@@ -273,13 +240,21 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
                   </Button>
                 }
                 secondaryButton={
-                  <Button
-                    type="submit"
-                    disabled={!isValid}
-                    loading={isSubmitting}
-                  >
-                    {t(`create-api-key`)}
-                  </Button>
+                  <DisabledButtonTooltip
+                    hidden={envEditable && isOrganizationAdmin}
+                    type={!isOrganizationAdmin ? 'admin' : 'editor'}
+                    trigger={
+                      <Button
+                        type="submit"
+                        disabled={
+                          !isValid || !envEditable || !isOrganizationAdmin
+                        }
+                        loading={isSubmitting}
+                      >
+                        {t(`create-api-key`)}
+                      </Button>
+                    }
+                  />
                 }
               />
             </div>

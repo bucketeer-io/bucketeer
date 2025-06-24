@@ -27,12 +27,14 @@ import { CreateTriggerSchema, formSchema } from './form-schema';
 const CreateTriggerForm = forwardRef(
   (
     {
+      disabled,
       featureId,
       environmentId,
       selectedTrigger,
       onCancel,
       setTriggerNewlyCreated
     }: {
+      disabled: boolean;
       featureId: string;
       environmentId: string;
       selectedTrigger?: TriggerItemType;
@@ -122,35 +124,40 @@ const CreateTriggerForm = forwardRef(
 
     const onSubmit = useCallback(
       async (values: CreateTriggerSchema) => {
-        try {
-          let resp: TriggerItemType;
-          if (isEdit && selectedTrigger) {
-            resp = await triggerUpdate({
-              id: selectedTrigger.flagTrigger.id,
-              environmentId,
-              description: values.description
-            });
-          } else {
-            resp = await triggerCreator({
-              ...values,
-              featureId,
-              environmentId
-            });
-          }
+        if (!disabled) {
+          try {
+            let resp: TriggerItemType;
+            if (isEdit && selectedTrigger) {
+              resp = await triggerUpdate({
+                id: selectedTrigger.flagTrigger.id,
+                environmentId,
+                description: values.description
+              });
+            } else {
+              resp = await triggerCreator({
+                ...values,
+                featureId,
+                environmentId
+              });
+            }
 
-          if (resp) {
-            invalidateTriggers(queryClient);
-            notify({
-              message: t(`message:trigger-${isEdit ? 'updated' : 'created'}`)
-            });
-            setTriggerNewlyCreated(isEdit ? undefined : resp);
-            onCancel();
+            if (resp) {
+              invalidateTriggers(queryClient);
+              notify({
+                message: t('message:collection-action-success', {
+                  collection: t('feature-flags.trigger'),
+                  action: t(isEdit ? 'common:updated' : 'common:created')
+                })
+              });
+              setTriggerNewlyCreated(isEdit ? undefined : resp);
+              onCancel();
+            }
+          } catch (error) {
+            errorNotify(error);
           }
-        } catch (error) {
-          errorNotify(error);
         }
       },
-      [featureId, environmentId, selectedTrigger, isEdit]
+      [featureId, environmentId, selectedTrigger, isEdit, disabled]
     );
 
     return (
@@ -182,7 +189,7 @@ const CreateTriggerForm = forwardRef(
                           </div>
                         }
                         isExpand
-                        disabled={isEdit}
+                        disabled={isEdit || disabled}
                       />
                       <DropdownMenuContent align="start">
                         {triggerTypeOptions.map((item, index) => (
@@ -216,7 +223,7 @@ const CreateTriggerForm = forwardRef(
                         placeholder={t('trigger.select-action')}
                         label={currentActionOption?.label}
                         isExpand
-                        disabled={isEdit}
+                        disabled={isEdit || disabled}
                       />
                       <DropdownMenuContent align="start">
                         {triggerActionOptions.map((item, index) => (
@@ -247,6 +254,7 @@ const CreateTriggerForm = forwardRef(
                       {...field}
                       placeholder={t('form:placeholder-desc')}
                       rows={2}
+                      disabled={disabled}
                       style={{
                         resize: 'vertical',
                         maxHeight: 98
@@ -265,7 +273,10 @@ const CreateTriggerForm = forwardRef(
                 </Button>
               }
               secondaryButton={
-                <Button disabled={!isDirty || !isValid} loading={isSubmitting}>
+                <Button
+                  disabled={!isDirty || !isValid || disabled}
+                  loading={isSubmitting}
+                >
                   {t('trigger.save-trigger')}
                 </Button>
               }
