@@ -133,6 +133,7 @@ services:
       - BUCKETEER_WEB_FEATURE_SERVICE=web:9098
       - BUCKETEER_WEB_AUTO_OPS_SERVICE=web:9094
       - BUCKETEER_WEB_CODE_REFERENCE_SERVICE=web:9105
+      - BUCKETEER_WEB_DATA_WAREHOUSE_CONFIG_PATH=/usr/local/datawarehouse-config/datawarehouse.yaml
     volumes:
       - ../tools/dev/cert/tls.crt:/usr/local/certs/service/tls.crt:ro
       - ../tools/dev/cert/tls.key:/usr/local/certs/service/tls.key:ro
@@ -140,6 +141,7 @@ services:
       - ../tools/dev/cert/oauth-public.pem:/usr/local/oauth-key/public.pem:ro
       - ../tools/dev/cert/oauth-private.pem:/usr/local/oauth-key/private.pem:ro
       - ./config/oauth-config.json:/usr/local/oauth-config/oauth-config.json:ro
+      - ./config/datawarehouse.yaml:/usr/local/datawarehouse-config/datawarehouse.yaml:ro
       - ./static-files:/usr/local/static:ro
     networks:
       - bucketeer
