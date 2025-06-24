@@ -131,9 +131,9 @@
     "not-started-experiment": "未開始エクスペリメント",
     "confirm-stop-desc": "エクスペリメント「<bold>{{name}}</bold>」が停止されます。続行してもよろしいですか？",
     "confirm-start-desc": "エクスペリメント「<bold>{{name}}</bold>」が開始されます。続行してもよろしいですか？",
-    "running-experiment-desc": "エクスペリメントは{{date}}に停止予定です",
-    "scheduled-experiment-desc": "エクスペリメントは{{date}}に開始予定です",
-    "stopped-experiment-desc": "このエクスペリメントは終了しています",
+    "running-experiment-desc": "{{date}}に終了予定",
+    "scheduled-experiment-desc": "{{date}}に開始予定",
+    "stopped-experiment-desc": "エクスペリメントは終了しています",
     "not-started-experiment-desc": "これは手動開始のエクスペリメントです"
   },
   "results": {
@@ -164,7 +164,7 @@
     "rollout": "ロールアウト",
     "choose-variant": "続行するバリアントを選択してください。",
     "variant-percent": "{{name}}: {{percent}}%",
-    "total-users-use": "このエクスペリメントの総ユーザー数: <bold>{{value}}</bold>",
+    "total-users-use": "総ユーザー数: <bold>{{value}}</bold>",
     "expected-loss-tooltip": "最良のバリエーションと比較して、このバリエーションを選択した場合の平均機会費用。期待損失が低いほど、より良いパフォーマンスを逃すリスクが少ないことを示します。"
   },
   "feature-flags": {
