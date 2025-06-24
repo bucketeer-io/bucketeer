@@ -41,7 +41,7 @@ services:
 
   # Database migration service
   migration:
-    image: ghcr.io/bucketeer-io/bucketeer-migration:${BUCKETEER_MIGRATION_VERSION:-v0.4.5}
+    image: ghcr.io/bucketeer-io/bucketeer-migration:${BUCKETEER_MIGRATION_VERSION:-localenv}
     container_name: bucketeer-migration
     depends_on:
       mysql:
@@ -49,8 +49,6 @@ services:
     command: 
       - migrate
       - apply
-      - --baseline
-      - "20240626022133"
       - -u
       - mysql://bucketeer:bucketeer@mysql:3306/bucketeer
     networks:
