@@ -296,6 +296,17 @@ func TestGetMeMySQL(t *testing.T) {
 							},
 							Role: accountproto.AccountV2_Role_Environment_EDITOR,
 						},
+						{
+							Environment: &environmentproto.EnvironmentV2{
+								Id:        "ns1",
+								Name:      "ns1",
+								ProjectId: "pj0",
+							},
+							Project: &environmentproto.Project{
+								Id: "pj0",
+							},
+							Role: accountproto.AccountV2_Role_Environment_EDITOR,
+						},
 					},
 					SearchFilters: []*accountproto.SearchFilter{
 						{
