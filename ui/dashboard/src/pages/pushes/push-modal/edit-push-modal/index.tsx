@@ -5,8 +5,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidatePushes } from '@queries/pushes';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from 'auth';
-import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
@@ -43,11 +43,12 @@ export interface EditPushForm {
   environmentId: string;
 }
 
-const formSchema = yup.object().shape({
-  name: yup.string().required(requiredMessage),
-  tags: yup.array(),
-  environmentId: yup.string().required(requiredMessage)
-});
+const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+  yup.object().shape({
+    name: yup.string().required(requiredMessage),
+    tags: yup.array(),
+    environmentId: yup.string().required(requiredMessage)
+  });
 
 const EditPushModal = ({
   disabled,
@@ -87,7 +88,7 @@ const EditPushModal = ({
     onFormatEnvironments(editorEnvironments);
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     values: {
       name: push?.name || '',
       tags: push?.tags || [],

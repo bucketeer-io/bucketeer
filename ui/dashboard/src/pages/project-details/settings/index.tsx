@@ -8,8 +8,8 @@ import { invalidateAccounts } from '@queries/accounts';
 import { invalidateProjectDetails } from '@queries/project-details';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthAccess } from 'auth';
-import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Project } from '@types';
@@ -20,11 +20,12 @@ import Input from 'components/input';
 import TextArea from 'components/textarea';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
-const formSchema = yup.object().shape({
-  name: yup.string().required(requiredMessage),
-  urlCode: yup.string().required(requiredMessage),
-  description: yup.string()
-});
+const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+  yup.object().shape({
+    name: yup.string().required(requiredMessage),
+    urlCode: yup.string().required(requiredMessage),
+    description: yup.string()
+  });
 
 export interface ProjectSettingsForm {
   name: string;
@@ -47,7 +48,7 @@ const ProjectSettings = ({ project }: { project: Project }) => {
   );
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       name: project.name,
       urlCode: project.urlCode,

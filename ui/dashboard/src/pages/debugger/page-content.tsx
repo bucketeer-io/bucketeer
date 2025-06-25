@@ -5,6 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryFeatures } from '@queries/features';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
+import useFormSchema from 'hooks/use-form-schema';
 import { Evaluation } from '@types';
 import { ExpandOrCollapse } from 'pages/audit-logs/types';
 import Form from 'components/form';
@@ -53,7 +54,7 @@ const PageContent = () => {
   );
 
   const form = useForm({
-    resolver: yupResolver(addDebuggerFormSchema),
+    resolver: yupResolver(useFormSchema(addDebuggerFormSchema)),
     defaultValues: {
       ...defaultValues
     },

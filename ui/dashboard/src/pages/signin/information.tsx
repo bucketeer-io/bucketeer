@@ -1,6 +1,6 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { requiredMessage, translation } from 'constants/message';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { UserInfoForm } from '@types';
@@ -9,34 +9,35 @@ import Form from 'components/form';
 import Input from 'components/input';
 import AuthWrapper from './elements/auth-wrapper';
 
-const formSchema = yup.object().shape({
-  firstName: yup
-    .string()
-    .required(requiredMessage)
-    .min(
-      2,
-      translation('message:validation.name-at-least-characters', {
-        count: 2,
-        name: translation('common:first-name').toLowerCase()
-      })
-    ),
-  lastName: yup
-    .string()
-    .required(requiredMessage)
-    .min(
-      2,
-      translation('message:validation.name-at-least-characters', {
-        count: 2,
-        name: translation('common:first-name').toLowerCase()
-      })
-    ),
-  language: yup.string().required(requiredMessage)
-});
+const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
+  yup.object().shape({
+    firstName: yup
+      .string()
+      .required(requiredMessage)
+      .min(
+        2,
+        translation('message:validation.name-at-least-characters', {
+          count: 2,
+          name: translation('common:first-name').toLowerCase()
+        })
+      ),
+    lastName: yup
+      .string()
+      .required(requiredMessage)
+      .min(
+        2,
+        translation('message:validation.name-at-least-characters', {
+          count: 2,
+          name: translation('common:first-name').toLowerCase()
+        })
+      ),
+    language: yup.string().required(requiredMessage)
+  });
 
 const UserInformation = () => {
   const { t } = useTranslation(['auth']);
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       firstName: '',
       lastName: '',

@@ -10,9 +10,9 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateNotifications } from '@queries/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from 'auth';
-import { requiredMessage } from 'constants/message';
 import { languageList } from 'constants/notification';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
@@ -60,14 +60,15 @@ export interface EditNotificationForm {
   tags: string[];
 }
 
-export const formSchema = yup.object().shape({
-  name: yup.string().required(requiredMessage),
-  url: yup.string(),
-  environment: yup.string(),
-  language: yup.mixed<NotificationLanguage>().required(requiredMessage),
-  types: yup.array().min(1).required(requiredMessage),
-  tags: yup.array()
-});
+export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+  yup.object().shape({
+    name: yup.string().required(requiredMessage),
+    url: yup.string(),
+    environment: yup.string(),
+    language: yup.mixed<NotificationLanguage>().required(requiredMessage),
+    types: yup.array().min(1).required(requiredMessage),
+    tags: yup.array()
+  });
 
 const EditNotificationModal = ({
   disabled,
@@ -98,7 +99,9 @@ const EditNotificationModal = ({
     onFormatEnvironments(editorEnvironments);
 
   const form = useForm<EditNotificationForm>({
-    resolver: yupResolver(formSchema) as Resolver<EditNotificationForm>,
+    resolver: yupResolver(
+      useFormSchema(formSchema)
+    ) as Resolver<EditNotificationForm>,
     values: {
       name: notification?.name || '',
       url: notification?.recipient.slackChannelRecipient.webhookUrl,

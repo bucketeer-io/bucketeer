@@ -8,6 +8,7 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryGoals } from '@queries/goals';
 import { useToast, useToggleOpen } from 'hooks';
+import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { AutoOpsRule, Feature, OpsEventRateClause } from '@types';
 import { IconInfo, IconPlus } from '@icons';
@@ -147,7 +148,7 @@ const EventRateOperationModal = ({
   };
 
   const form = useForm({
-    resolver: yupResolver(eventRateSchema),
+    resolver: yupResolver(useFormSchema(eventRateSchema)),
     defaultValues: {
       ...handleCreateDefaultValues()
     },

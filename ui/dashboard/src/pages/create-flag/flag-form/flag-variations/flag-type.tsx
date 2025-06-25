@@ -1,12 +1,11 @@
 import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { FeatureVariation, FeatureVariationType } from '@types';
 import { IconInfo } from '@icons';
-import { AddFlagForm } from 'pages/create-flag/form-schema';
-import { flagTypeOptions } from 'pages/feature-flags/flags-modal/add-flag-modal/create-flag-form';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,8 +33,8 @@ const defaultVariations: FeatureVariation[] = [
 
 const FlagType = () => {
   const { t } = useTranslation(['form', 'common']);
-  const { control, watch, setValue, setFocus, resetField } =
-    useFormContext<AddFlagForm>();
+  const { flagTypeOptions } = useOptions();
+  const { control, watch, setValue, setFocus, resetField } = useFormContext();
 
   const variationType = watch('variationType');
 

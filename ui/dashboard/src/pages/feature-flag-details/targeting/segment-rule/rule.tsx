@@ -219,6 +219,7 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                             <Form.Control>
                               {isFlag ? (
                                 <DropdownMenuWithSearch
+                                  align="start"
                                   label={truncateBySide(
                                     features?.find(item =>
                                       [field.value, clause?.attribute].includes(
@@ -244,6 +245,7 @@ const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
                                   onSelectOption={value => {
                                     field.onChange(value);
                                   }}
+                                  contentClassName="!w-fit !max-w-[500px]"
                                 />
                               ) : (
                                 <Input {...field} />

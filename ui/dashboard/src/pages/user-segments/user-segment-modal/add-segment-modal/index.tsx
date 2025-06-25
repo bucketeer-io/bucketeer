@@ -6,6 +6,7 @@ import { invalidateUserSegments } from '@queries/user-segments';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
+import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { covertFileToUint8ToBase64 } from 'utils/converts';
 import { UserSegmentForm } from 'pages/user-segments/types';
@@ -36,7 +37,7 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
   const [files, setFiles] = useState<File[]>([]);
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       id: '',
       name: '',

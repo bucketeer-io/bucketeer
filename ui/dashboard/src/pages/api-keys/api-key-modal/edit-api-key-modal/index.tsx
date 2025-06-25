@@ -5,8 +5,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAPIKeys } from '@queries/api-keys';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthAccess } from 'auth';
-import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { APIKey, Environment } from '@types';
@@ -44,11 +44,12 @@ export interface EditAPIKeyForm {
   description?: string;
 }
 
-export const formSchema = yup.object().shape({
-  name: yup.string().required(requiredMessage),
-  environmentId: yup.string().required(requiredMessage),
-  description: yup.string()
-});
+export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+  yup.object().shape({
+    name: yup.string().required(requiredMessage),
+    environmentId: yup.string().required(requiredMessage),
+    description: yup.string()
+  });
 
 const EditAPIKeyModal = ({
   isOpen,
@@ -79,7 +80,7 @@ const EditAPIKeyModal = ({
   );
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     values: {
       name: apiKey?.name || '',
       environmentId: apiEnvironmentId || emptyEnvironmentId,

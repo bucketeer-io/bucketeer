@@ -8,8 +8,8 @@ import { invalidateFeatures } from '@queries/features';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
-import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import Button from 'components/button';
@@ -38,12 +38,13 @@ export interface CloneFlagForm {
   destinationEnvironmentId: string;
 }
 
-const formSchema = yup.object().shape({
-  id: yup.string().required(requiredMessage),
-  name: yup.string().required(requiredMessage),
-  originEnvironmentId: yup.string().required(requiredMessage),
-  destinationEnvironmentId: yup.string().required(requiredMessage)
-});
+const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+  yup.object().shape({
+    id: yup.string().required(requiredMessage),
+    name: yup.string().required(requiredMessage),
+    originEnvironmentId: yup.string().required(requiredMessage),
+    destinationEnvironmentId: yup.string().required(requiredMessage)
+  });
 
 const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
   const { consoleAccount } = useAuth();
@@ -82,7 +83,7 @@ const CloneFlagModal = ({ flagId, isOpen, onClose }: CloneFlagModalProps) => {
   const feature = featureCollection?.feature;
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     values: {
       id: feature?.id || '',
       name: feature?.name || '',

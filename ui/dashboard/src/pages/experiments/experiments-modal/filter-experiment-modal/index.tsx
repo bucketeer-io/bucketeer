@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryAccounts } from '@queries/accounts';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import {
-  experimentFilterOptions,
-  experimentStatusOptions,
-  FilterOption,
-  FilterTypes
-} from 'constants/filters';
+import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { debounce } from 'lodash';
 import { isEmpty } from 'utils/data-type';
@@ -44,6 +39,7 @@ const FilterExperimentModal = ({
   const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const { experimentStatusOptions, experimentFilterOptions } = useOptions();
 
   const inputSearchRef = useRef<HTMLInputElement>(null);
 
@@ -112,7 +108,7 @@ const FilterExperimentModal = ({
       }
       return experimentStatusOptions;
     },
-    [accounts, searchValue]
+    [accounts, searchValue, experimentStatusOptions]
   );
 
   const handleFocusSearchInput = useCallback(() => {
@@ -154,12 +150,19 @@ const FilterExperimentModal = ({
         return isMaintainerFilter
           ? filterValue || ''
           : Array.isArray(filterValue)
-            ? filterValue?.join(', ')?.replace('_', ' ')?.toLowerCase()
+            ? filterValue
+                .map(
+                  value =>
+                    experimentStatusOptions.find(item => item.value === value)
+                      ?.label
+                )
+                ?.join(', ')
+                ?.toLowerCase()
             : filterValue;
       }
       return '';
     },
-    []
+    [experimentStatusOptions]
   );
 
   const handleChangeFilterValue = useCallback(

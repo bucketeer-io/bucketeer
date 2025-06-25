@@ -12,7 +12,7 @@ interface Props {
 
 interface DefaultTriggerProps {
   id: string;
-  name: string;
+  name: ReactNode;
   maxLines?: number;
   className?: string;
   haveAction?: boolean;

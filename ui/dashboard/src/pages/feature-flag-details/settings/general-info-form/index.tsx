@@ -9,8 +9,8 @@ import { invalidateFeatures } from '@queries/features';
 import { invalidateTags, useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { requiredMessage } from 'constants/message';
 import { useToast, useToggleOpen } from 'hooks';
+import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import { Feature, TagChange } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
@@ -62,13 +62,12 @@ const GeneralInfoForm = ({
         cursor: String(0),
         environmentId: currentEnvironment.id,
         organizationId: currentEnvironment.organizationId,
-        environmentRole: 2,
-        organizationRole: 2
+        environmentRole: 2
       }
     });
 
   const form = useForm<GeneralInfoFormType>({
-    resolver: yupResolver(generalInfoFormSchema),
+    resolver: yupResolver(useFormSchema(generalInfoFormSchema)),
     defaultValues: {
       maintainer: feature.maintainer,
       name: feature.name,
@@ -138,7 +137,7 @@ const GeneralInfoForm = ({
         const { flagId, comment, tags, ...rest } = values;
         if (currentEnvironment.requireComment && !comment)
           return setError('comment', {
-            message: requiredMessage
+            message: t('message:required-field')
           });
 
         const resp = await featureUpdater({

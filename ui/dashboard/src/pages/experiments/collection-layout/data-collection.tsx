@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   IconArchiveOutlined,
   IconEditOutlined
@@ -33,10 +34,22 @@ export const ExperimentStatuses = ({
 }: {
   status: ExperimentStatus;
 }) => {
-  const isRunning = status === 'RUNNING',
-    isWaiting = status === 'WAITING',
-    isStopped = ['STOPPED', 'FORCE_STOPPED'].includes(status);
+  const { t } = useTranslation(['table']);
+  const { isRunning, isWaiting, isStopped } = useMemo(() => {
+    const isRunning = status === 'RUNNING';
+    const isWaiting = status === 'WAITING';
+    const isStopped = ['STOPPED', 'FORCE_STOPPED'].includes(status);
+    return {
+      isRunning,
+      isWaiting,
+      isStopped
+    };
+  }, [status]);
 
+  const translationKey = useMemo(
+    () => status.replace('_', '-').toLowerCase(),
+    [status]
+  );
   return (
     <div
       className={cn(
@@ -59,7 +72,7 @@ export const ExperimentStatuses = ({
         size={'xxs'}
         className="flex-center [&>svg]:size-4"
       />
-      {status.replace('_', ' ').toLowerCase()}
+      {t(`experiment.${translationKey}`)}
     </div>
   );
 };

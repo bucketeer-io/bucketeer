@@ -1,8 +1,8 @@
+import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
-import { cn } from 'utils/style';
 import { IconInfo } from '@icons';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import {
@@ -32,25 +32,22 @@ const FlagSwitch = ({
 
   const enabledWatch = watch('enabled');
 
-  const options = feature.variations.map((item, index) => ({
-    label: (
-      <div className="flex items-center gap-x-2">
-        <FlagVariationPolygon index={index} />
-        {item.name || item.value}
-      </div>
-    ),
-    value: item.id
-  }));
+  const options = useMemo(
+    () =>
+      feature.variations.map((item, index) => ({
+        label: (
+          <div className="flex items-center gap-x-2">
+            <FlagVariationPolygon index={index} />
+            {item.name || item.value}
+          </div>
+        ),
+        value: item.id
+      })),
+    [feature]
+  );
 
   return (
-    <div
-      className={cn(
-        'flex items-center justify-between w-full p-5 rounded-lg shadow-card-secondary',
-        {
-          'p-4': !enabledWatch
-        }
-      )}
-    >
+    <div className="flex items-center justify-between w-full px-5 h-[104px] rounded-lg shadow-card-secondary">
       <Form.Field
         control={control}
         name="enabled"

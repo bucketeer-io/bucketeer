@@ -5,8 +5,8 @@ import { accountUpdater, AccountAvatar } from '@api/account/account-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
 import defaultAvatar from 'assets/avatars/default.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { requiredMessage, translation } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { UserInfoForm } from '@types';
@@ -27,29 +27,30 @@ import Icon from 'components/icon';
 import Input from 'components/input';
 import DialogModal from 'components/modal/dialog';
 
-const formSchema = yup.object().shape({
-  firstName: yup
-    .string()
-    .required(requiredMessage)
-    .min(
-      2,
-      translation('message:validation.name-at-least-characters', {
-        count: 2,
-        name: translation('common:first-name').toLowerCase()
-      })
-    ),
-  lastName: yup
-    .string()
-    .required(requiredMessage)
-    .min(
-      2,
-      translation('message:validation.name-at-least-characters', {
-        count: 2,
-        name: translation('common:last-name').toLowerCase()
-      })
-    ),
-  language: yup.string().required(requiredMessage)
-});
+const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
+  yup.object().shape({
+    firstName: yup
+      .string()
+      .required(requiredMessage)
+      .min(
+        2,
+        translation('message:validation.name-at-least-characters', {
+          count: 2,
+          name: translation('common:first-name').toLowerCase()
+        })
+      ),
+    lastName: yup
+      .string()
+      .required(requiredMessage)
+      .min(
+        2,
+        translation('message:validation.name-at-least-characters', {
+          count: 2,
+          name: translation('common:last-name').toLowerCase()
+        })
+      ),
+    language: yup.string().required(requiredMessage)
+  });
 export type FilterProps = {
   selectedAvatar: AccountAvatar | null;
   isOpen: boolean;
@@ -69,7 +70,7 @@ const UserProfileModal = ({
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     values: {
       firstName: consoleAccount?.firstName || '',
       lastName: consoleAccount?.lastName || '',

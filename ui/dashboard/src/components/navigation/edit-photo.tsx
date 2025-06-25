@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { AccountAvatar } from '@api/account/account-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { requiredMessage } from 'constants/message';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { readImageFile } from 'utils/files';
@@ -17,10 +17,11 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 Mb
 
 type ProcessingStatus = 'select' | 'resize';
 
-const formSchema = yup.object().shape({
-  avatarImage: yup.string().required(requiredMessage),
-  avatarFileType: yup.string().required(requiredMessage)
-});
+const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+  yup.object().shape({
+    avatarImage: yup.string().required(requiredMessage),
+    avatarFileType: yup.string().required(requiredMessage)
+  });
 
 export type EditPhotoProfileProps = {
   isOpen: boolean;
@@ -36,7 +37,7 @@ const EditPhotoProfileModal = ({
   const { t } = useTranslation(['common']);
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       avatarImage: '',
       avatarFileType: ''

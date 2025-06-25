@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  enabledOptions,
-  filterEnabledOptions,
-  FilterOption,
-  FilterTypes
-} from 'constants/filters';
+import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { isNotEmpty } from 'utils/data-type';
 import { OrganizationFilters } from 'pages/organizations/types';
@@ -35,6 +30,7 @@ const FilterOrganizationModal = ({
   filters
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
+  const { enabledOptions, filterEnabledOptions } = useOptions();
   const [selectedFilterType, setSelectedFilterType] = useState<FilterOption>();
   const [selectedValue, setSelectedValue] = useState<FilterOption>();
 

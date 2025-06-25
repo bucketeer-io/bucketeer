@@ -7,8 +7,8 @@ import { invalidateEnvironments } from '@queries/environments';
 import { useQueryProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
 import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
-import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Environment } from '@types';
@@ -34,11 +34,12 @@ export interface EditEnvironmentForm {
   requireComment: boolean;
 }
 
-const formSchema = yup.object().shape({
-  name: yup.string().required(requiredMessage),
-  description: yup.string(),
-  requireComment: yup.boolean().required(requiredMessage)
-});
+const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+  yup.object().shape({
+    name: yup.string().required(requiredMessage),
+    description: yup.string(),
+    requireComment: yup.boolean().required(requiredMessage)
+  });
 
 const EditEnvironmentModal = ({
   isOpen,
@@ -73,7 +74,7 @@ const EditEnvironmentModal = ({
   const project = collection?.projects.find(item => item.id === projectId);
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       name: environment.name,
       description: environment.description,

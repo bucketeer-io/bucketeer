@@ -2,7 +2,7 @@ import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
 import { FeatureVariation } from '@types';
-import { AddFlagForm } from 'pages/create-flag/form-schema';
+import { FlagFormSchema } from 'pages/create-flag/form-schema';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import {
   DropdownMenu,
@@ -14,7 +14,7 @@ import Form from 'components/form';
 
 const DefaultVariations = () => {
   const { t } = useTranslation(['form', 'common', 'table']);
-  const { control, watch } = useFormContext<AddFlagForm>();
+  const { control, watch } = useFormContext<FlagFormSchema>();
 
   const currentVariations = watch('variations') as FeatureVariation[];
 

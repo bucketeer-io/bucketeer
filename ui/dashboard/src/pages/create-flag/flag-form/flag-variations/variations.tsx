@@ -6,7 +6,7 @@ import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
 import { cn } from 'utils/style';
 import { IconTrash } from '@icons';
-import { AddFlagForm } from 'pages/create-flag/form-schema';
+import { FlagFormSchema } from 'pages/create-flag/form-schema';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
 import Button from 'components/button';
 import ReactCodeEditor from 'components/code-editor';
@@ -16,7 +16,8 @@ import Input from 'components/input';
 
 const Variations = () => {
   const { t } = useTranslation(['form', 'common', 'table']);
-  const { control, watch } = useFormContext<AddFlagForm>();
+
+  const { control, watch } = useFormContext<FlagFormSchema>();
   const {
     fields: variations,
     append,

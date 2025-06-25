@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Trans } from 'react-i18next';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { OrderBy, OrderDirection } from '@types';
 import { IconChecked } from '@icons';
@@ -36,55 +37,16 @@ const SortBy = ({
   filters: FlagFilters;
   setFilters: (filters: FlagFilters) => void;
 }) => {
-  const { t } = useTranslation(['common', 'table', 'form']);
+  useTranslation(['common', 'table', 'form']);
+  const { flagSortByOptions, flagSortDirectionOptions } = useOptions();
   const [sortedState, setSortedState] = useState<SortedState>({
     orderBy: filters.orderBy,
     orderDirection: filters.orderDirection
   });
 
-  const sortByOptions = useMemo(
-    () => [
-      {
-        label: t('name'),
-        value: 'NAME'
-      },
-      {
-        label: t('tags'),
-        value: 'TAGS'
-      },
-      {
-        label: t('table:created-at'),
-        value: 'CREATED_AT'
-      },
-      {
-        label: t('table:updated-at'),
-        value: 'UPDATED_AT'
-      },
-      {
-        label: t('enabled'),
-        value: 'ENABLED'
-      }
-    ],
-    []
-  );
-
-  const sortDirectionOptions = useMemo(
-    () => [
-      {
-        label: t('sort-asc'),
-        value: 'ASC'
-      },
-      {
-        label: t('sort-desc'),
-        value: 'DESC'
-      }
-    ],
-    []
-  );
-
   const currentOption = useMemo(
-    () => sortByOptions.find(item => item.value === sortedState.orderBy),
-    [sortedState]
+    () => flagSortByOptions.find(item => item.value === sortedState.orderBy),
+    [sortedState, flagSortByOptions]
   );
 
   const handleSorting = useCallback(
@@ -119,7 +81,7 @@ const SortBy = ({
       />
       <DropdownMenuContent className="!max-h-fit divide-y">
         <div className="pb-1">
-          {sortByOptions.map(({ label, value }, index) => (
+          {flagSortByOptions.map(({ label, value }, index) => (
             <DropdownMenuItem
               label={label}
               value={value}
@@ -136,7 +98,7 @@ const SortBy = ({
           ))}
         </div>
         <div className="pt-1">
-          {sortDirectionOptions.map(({ label, value }, index) => (
+          {flagSortDirectionOptions.map(({ label, value }, index) => (
             <DropdownMenuItem
               key={index}
               label={label}

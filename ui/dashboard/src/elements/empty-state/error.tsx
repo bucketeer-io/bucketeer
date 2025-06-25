@@ -1,4 +1,4 @@
-import { translation } from 'constants/message';
+import { useTranslation } from 'i18n';
 import EmptyState, { type EmptyStateProps } from 'elements/empty-state';
 
 interface ErrorStateProps {
@@ -10,21 +10,26 @@ interface ErrorStateProps {
 
 export const ErrorState = ({
   size = 'lg',
-  title = translation('message:something-went-wrong'),
-  description = translation('message:try-again-later'),
+  title = '',
+  description = '',
   onRetry
 }: ErrorStateProps) => {
+  const { t } = useTranslation(['message', 'table']);
+  const defaultTitle = t('message:something-went-wrong');
+  const defaultDescription = t('message:try-again-later');
   return (
     <EmptyState.Root variant="error" size={size}>
       <EmptyState.Illustration />
       <EmptyState.Body>
-        <EmptyState.Title>{title}</EmptyState.Title>
-        <EmptyState.Description>{description}</EmptyState.Description>
+        <EmptyState.Title>{title || defaultTitle}</EmptyState.Title>
+        <EmptyState.Description>
+          {description || defaultDescription}
+        </EmptyState.Description>
       </EmptyState.Body>
       <EmptyState.Actions>
         {onRetry && (
           <EmptyState.ActionButton variant="primary" onClick={onRetry}>
-            {`Retry`}
+            {t(`table:retry`)}
           </EmptyState.ActionButton>
         )}
       </EmptyState.Actions>

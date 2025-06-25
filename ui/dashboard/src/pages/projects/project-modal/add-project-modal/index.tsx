@@ -5,8 +5,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
 import { getAccountAccess, getCurrentEnvironment, useAuth } from 'auth';
-import { requiredMessage, translation } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { onGenerateSlug } from 'utils/converts';
@@ -29,20 +29,21 @@ export interface AddProjectForm {
   description?: string;
 }
 
-const formSchema = yup.object().shape({
-  name: yup.string().required(requiredMessage),
-  urlCode: yup
-    .string()
-    .required(requiredMessage)
-    .matches(
-      /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
-      translation('message:validation.id-rule', {
-        name: translation('common:url-code')
-      })
-    ),
-  description: yup.string(),
-  id: yup.string()
-});
+const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
+  yup.object().shape({
+    name: yup.string().required(requiredMessage),
+    urlCode: yup
+      .string()
+      .required(requiredMessage)
+      .matches(
+        /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
+        translation('message:validation.id-rule', {
+          name: translation('common:url-code')
+        })
+      ),
+    description: yup.string(),
+    id: yup.string()
+  });
 
 const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
   const { consoleAccount } = useAuth();
@@ -60,7 +61,7 @@ const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
   );
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       name: '',
       urlCode: '',

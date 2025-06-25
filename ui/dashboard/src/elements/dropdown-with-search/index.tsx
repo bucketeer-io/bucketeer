@@ -84,7 +84,6 @@ const DropdownMenuWithSearch = ({
   onClear?: () => void;
 }) => {
   const { t } = useTranslation(['common']);
-
   const inputSearchRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);

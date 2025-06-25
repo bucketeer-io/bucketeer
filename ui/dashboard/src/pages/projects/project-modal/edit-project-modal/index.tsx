@@ -5,8 +5,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateProjects } from '@queries/projects';
 import { useQueryClient } from '@tanstack/react-query';
 import { getAccountAccess, useAuth } from 'auth';
-import { requiredMessage } from 'constants/message';
 import { useToast } from 'hooks';
+import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Project } from '@types';
@@ -29,10 +29,11 @@ export interface EditProjectForm {
   description?: string;
 }
 
-const formSchema = yup.object().shape({
-  name: yup.string().required(requiredMessage),
-  description: yup.string()
-});
+const formSchema = ({ requiredMessage }: FormSchemaProps) =>
+  yup.object().shape({
+    name: yup.string().required(requiredMessage),
+    description: yup.string()
+  });
 
 const EditProjectModal = ({
   isOpen,
@@ -53,7 +54,7 @@ const EditProjectModal = ({
   );
 
   const form = useForm({
-    resolver: yupResolver(formSchema),
+    resolver: yupResolver(useFormSchema(formSchema)),
     defaultValues: {
       name: project.name,
       description: project.description

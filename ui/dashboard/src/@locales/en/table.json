@@ -119,22 +119,22 @@
     "delete-user-segment-desc": "The <bold>{{name}}</bold> is going to be deleted permanently. Are you sure you want to proceed?"
   },
   "experiment": {
-    "confirm-archive-desc": "The experiment \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
-    "confirm-unarchive-desc": "The experiment \"<bold>{{name}}</bold>\" will be unarchived. Are you sure you want to proceed?",
+    "confirm-archive-desc": "Are you sure you want to archive the experiment \"<bold>{{name}}</bold>\"?",
+    "confirm-unarchive-desc": "Are you sure you want to unarchive the experiment \"<bold>{{name}}</bold>\"?",
     "scheduled": "Scheduled",
     "running": "Running",
     "stopped": "Stopped",
     "waiting": "Waiting",
     "force-stopped": "Force Stopped",
     "not-started": "Not started",
-    "scheduled-experiment": "Scheduled Experiment",
-    "running-experiment": "Running Experiment",
-    "stopped-experiment": "Stopped Experiment",
+    "scheduled-experiment": "Scheduled",
+    "running-experiment": "Running",
+    "stopped-experiment": "Stopped",
     "not-started-experiment": "Not Started Experiment",
     "confirm-stop-desc": "The experiment \"<bold>{{name}}</bold>\" will be stopped. Are you sure you want to proceed?",
     "confirm-start-desc": "The experiment \"<bold>{{name}}</bold>\" will be started. Are you sure you want to proceed?",
-    "running-experiment-desc": "The experiment is scheduled to stop on {{date}}",
-    "scheduled-experiment-desc": "The experiment is scheduled to start on {{date}}",
+    "running-experiment-desc": "Scheduled to stop on {{date}}",
+    "scheduled-experiment-desc": "Scheduled to start on {{date}}",
     "stopped-experiment-desc": "This experiment is currently stopped",
     "not-started-experiment-desc": "This is a manual start experiment"
   },
@@ -166,7 +166,7 @@
     "rollout": "Rollout",
     "choose-variant": "Choose which variant you want to proceed with.",
     "variant-percent": "{{name}}: {{percent}}%",
-    "total-users-use": "Total users in this experiment: <bold>{{value}}</bold>",
+    "total-users-use": "Total users: <bold>{{value}}</bold>",
     "expected-loss-tooltip": "The average opportunity cost of choosing this variation compared to the best possible variation. A lower expected loss indicates less risk of missing out on better performance."
   },
   "feature-flags": {
@@ -290,5 +290,7 @@
   "current-event-rate-tooltip": "Goal Count / Evaluation Count * 100",
   "from-last-month": "from last month",
   "created-at-time": "Created {{time}}",
-  "pending-invite": "Pending invite"
+  "pending-invite": "Pending invite",
+  "retry": "Retry",
+  "baseline": "Baseline"
 }
