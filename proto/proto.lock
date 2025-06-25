@@ -972,7 +972,17 @@
               },
               {
                 "name": "TAGS",
-                "integer": 8
+                "integer": 8,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "TEAMS",
+                "integer": 9
               }
             ]
           },
@@ -1632,6 +1642,18 @@
               {
                 "id": 11,
                 "name": "tags",
+                "type": "string",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 12,
+                "name": "teams",
                 "type": "string",
                 "is_repeated": true
               }
@@ -39741,6 +39763,12 @@
                 "id": 10,
                 "name": "environment_role",
                 "type": "google.protobuf.Int32Value"
+              },
+              {
+                "id": 11,
+                "name": "teams",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },

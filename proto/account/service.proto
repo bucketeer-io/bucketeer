@@ -182,7 +182,8 @@ message ListAccountsV2Request {
     ENVIRONMENT_COUNT = 5;
     LAST_SEEN = 6;
     STATE = 7;
-    TAGS = 8;
+    TAGS = 8 [deprecated = true];
+    TEAMS = 9;
   }
   enum OrderDirection {
     ASC = 0;
@@ -198,7 +199,8 @@ message ListAccountsV2Request {
   google.protobuf.Int32Value organization_role = 8;
   google.protobuf.StringValue environment_id = 9;
   google.protobuf.Int32Value environment_role = 10;
-  repeated string tags = 11;
+  repeated string tags = 11 [deprecated = true];
+  repeated string teams = 12;
 }
 
 message ListAccountsV2Response {
