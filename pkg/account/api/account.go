@@ -1219,6 +1219,10 @@ func (s *AccountService) ListAccountsV2(
 	for _, tag := range req.Tags {
 		tagValues = append(tagValues, tag)
 	}
+	teamValues := make([]interface{}, 0, len(req.Teams))
+	for _, team := range req.Teams {
+		teamValues = append(teamValues, team)
+	}
 	var jsonFilters []*mysql.JSONFilter
 	if len(tagValues) > 0 {
 		jsonFilters = append(
@@ -1229,6 +1233,16 @@ func (s *AccountService) ListAccountsV2(
 				Values: tagValues,
 			})
 	}
+	if len(teamValues) > 0 {
+		jsonFilters = append(
+			jsonFilters,
+			&mysql.JSONFilter{
+				Column: "teams",
+				Func:   mysql.JSONContainsString,
+				Values: teamValues,
+			})
+	}
+
 	if req.OrganizationRole != nil {
 		filters = append(filters, &mysql.FilterV2{
 			Column:   "organization_role",
@@ -1433,6 +1447,8 @@ func (s *AccountService) newAccountV2ListOrders(
 		column = "disabled"
 	case accountproto.ListAccountsV2Request_TAGS:
 		column = "tags"
+	case accountproto.ListAccountsV2Request_TEAMS:
+		column = "teams"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

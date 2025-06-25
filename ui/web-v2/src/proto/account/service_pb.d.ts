@@ -1057,6 +1057,11 @@ export class ListAccountsV2Request extends jspb.Message {
   setTagsList(value: Array<string>): void;
   addTags(value: string, index?: number): string;
 
+  clearTeamsList(): void;
+  getTeamsList(): Array<string>;
+  setTeamsList(value: Array<string>): void;
+  addTeams(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListAccountsV2Request.AsObject;
   static toObject(
@@ -1091,6 +1096,7 @@ export namespace ListAccountsV2Request {
     environmentId?: google_protobuf_wrappers_pb.StringValue.AsObject;
     environmentRole?: google_protobuf_wrappers_pb.Int32Value.AsObject;
     tagsList: Array<string>;
+    teamsList: Array<string>;
   };
 
   export interface OrderByMap {
@@ -1103,6 +1109,7 @@ export namespace ListAccountsV2Request {
     LAST_SEEN: 6;
     STATE: 7;
     TAGS: 8;
+    TEAMS: 9;
   }
 
   export const OrderBy: OrderByMap;
