@@ -178,6 +178,53 @@ func TestCreateAccountV2(t *testing.T) {
 	}
 }
 
+func TestCreateAccountV2Admin(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	c := newAccountClient(t)
+	defer c.Close()
+	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+	firstName := fmt.Sprintf("first-name-%v", time.Now().Unix())
+	lastName := fmt.Sprintf("last-name-%v", time.Now().Unix())
+	avatarURL := fmt.Sprintf("https://example.com/avatar-%v.png", time.Now().Unix())
+	tags := []string{fmt.Sprintf("tag-%d", time.Now().Unix())}
+	envRole := &accountproto.AccountV2_EnvironmentRole{
+		Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+		EnvironmentId: "test",
+	}
+	resp, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+		OrganizationId: defaultOrganizationID,
+		Command: &accountproto.CreateAccountV2Command{
+			Name:             name,
+			Email:            email,
+			FirstName:        firstName,
+			LastName:         lastName,
+			Language:         language,
+			AvatarImageUrl:   avatarURL,
+			Tags:             tags,
+			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{envRole},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Account.Email != email {
+		t.Fatalf("different email, expected: %v, actual: %v", email, resp.Account.Email)
+	}
+	if resp.Account.OrganizationRole != accountproto.AccountV2_Role_Organization_ADMIN {
+		t.Fatalf("different organization role, expected: %v, actual: %v",
+			accountproto.AccountV2_Role_Organization_ADMIN,
+			resp.Account.OrganizationRole,
+		)
+	}
+	if len(resp.Account.EnvironmentRoles) != 0 {
+		t.Fatalf("env roles length should be zero, actual: %d", len(resp.Account.EnvironmentRoles))
+	}
+}
+
 func TestListAccounts(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)

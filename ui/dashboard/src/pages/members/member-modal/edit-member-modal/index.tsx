@@ -42,7 +42,7 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { Tooltip } from 'components/tooltip';
 import TagsSelectMenu from 'elements/tags-select-menu';
-import { languageList } from '../add-member-modal';
+import { defaultEnvironmentRole, languageList } from '../add-member-modal';
 import EnvironmentRoles from '../add-member-modal/environment-roles';
 
 interface EditMemberModalProps {
@@ -55,8 +55,8 @@ export interface EditMemberForm {
   firstName: string;
   lastName: string;
   language: string;
-  role: string;
-  environmentRoles: EnvironmentRoleItem[];
+  memberRole: string;
+  environmentRoles?: EnvironmentRoleItem[];
   tags: string[];
 }
 
@@ -65,18 +65,30 @@ export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
     firstName: yup.string().required(requiredMessage),
     lastName: yup.string().required(requiredMessage),
     language: yup.string().required(requiredMessage),
-    role: yup.string().required(requiredMessage),
+    memberRole: yup.string().required(requiredMessage),
     environmentRoles: yup
       .array()
-      .required()
+      .when('memberRole', {
+        is: (role: OrganizationRole) => role === 'Organization_MEMBER',
+        then: schema => schema.required(requiredMessage)
+      })
       .of(
         yup.object().shape({
-          environmentId: yup.string().required(requiredMessage),
+          environmentId: yup.string().when('memberRole', {
+            is: (role: OrganizationRole) => role === 'Organization_MEMBER',
+            then: schema => schema.required(requiredMessage)
+          }),
           role: yup
             .mixed<EnvironmentRoleType>()
-            .required()
+            .when('memberRole', {
+              is: (role: OrganizationRole) => role === 'Organization_MEMBER',
+              then: schema => schema.required(requiredMessage)
+            })
             .test('isUnassigned', (value, context) => {
-              if (value === 'Environment_UNASSIGNED')
+              const isMemberRole =
+                context?.from &&
+                context?.from[1]?.value?.memberRole === 'Organization_MEMBER';
+              if (value === 'Environment_UNASSIGNED' && isMemberRole)
                 return context.createError({
                   message: requiredMessage,
                   path: context.path
@@ -118,28 +130,33 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
       firstName: member.firstName,
       lastName: member.lastName,
       language: member.language,
-      role: member.organizationRole,
-      environmentRoles: member.environmentRoles.map(item => ({
-        ...item,
-        environmentId: item.environmentId || emptyEnvironmentId
-      })),
+      memberRole: member.organizationRole,
+      environmentRoles: member.environmentRoles?.length
+        ? member.environmentRoles.map(item => ({
+            ...item,
+            environmentId: item.environmentId || emptyEnvironmentId
+          }))
+        : [defaultEnvironmentRole],
       tags: member.tags
     },
     mode: 'onChange'
   });
 
   const {
-    formState: { isValid, isSubmitting }
+    formState: { isValid, isSubmitting },
+    watch
   } = form;
+  const roleWatch = watch('memberRole');
+  const isAdminRole = roleWatch === 'Organization_ADMIN';
 
   const onSubmit: SubmitHandler<EditMemberForm> = async values => {
     return accountUpdater({
       organizationId: currentEnvironment.organizationId,
       email: member.email,
       organizationRole: {
-        role: values.role as OrganizationRole
+        role: values.memberRole as OrganizationRole
       },
-      environmentRoles: values.environmentRoles.map(item => ({
+      environmentRoles: values.environmentRoles?.map(item => ({
         ...item,
         environmentId: checkEnvironmentEmptyId(item.environmentId)
       })),
@@ -271,7 +288,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
             />
             <Form.Field
               control={form.control}
-              name="role"
+              name="memberRole"
               render={({ field }) => (
                 <Form.Item>
                   <Form.Label required>{t('role')}</Form.Label>
@@ -298,6 +315,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                             key={index}
                             value={item.value}
                             label={item.label}
+                            description={item.description}
                             onSelectOption={value => {
                               field.onChange(value);
                             }}
@@ -342,9 +360,12 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                 </Form.Item>
               )}
             />
-            <Divider className="mt-1 mb-3" />
-
-            <EnvironmentRoles environments={formattedEnvironments} />
+            {!isAdminRole && !!roleWatch && (
+              <>
+                <Divider className="mt-1 mb-3" />
+                <EnvironmentRoles environments={formattedEnvironments} />
+              </>
+            )}
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={

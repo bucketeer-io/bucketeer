@@ -284,7 +284,7 @@ const DropdownMenuItem = forwardRef<
             maxLines={1}
           />
           {description && (
-            <p className="typo-para-small leading-[14px] text-gray-500">
+            <p className="typo-para-small leading-4 text-gray-500">
               {description}
             </p>
           )}

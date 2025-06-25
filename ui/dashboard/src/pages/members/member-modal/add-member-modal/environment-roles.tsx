@@ -32,7 +32,7 @@ const EnvironmentRoles = ({
   const { control, watch, setValue } = methods;
 
   const environmentRolesWatch: EnvironmentRoleItem[] =
-    watch('environmentRoles');
+    watch('environmentRoles') || [];
 
   const selectedEnvs = environmentRolesWatch.map(item => item.environmentId);
   const environmentsOptions = environments.filter(

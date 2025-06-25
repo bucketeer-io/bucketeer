@@ -169,7 +169,12 @@ func (s *AccountService) GetMe(
 	if err != nil {
 		return nil, err
 	}
-	envRoles := s.getConsoleAccountEnvironmentRoles(account.EnvironmentRoles, environments, projects)
+	var envRoles []*accountproto.ConsoleAccount_EnvironmentRole
+	if account.OrganizationRole == accountproto.AccountV2_Role_Organization_ADMIN {
+		envRoles = s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
+	} else {
+		envRoles = s.getConsoleAccountEnvironmentRoles(account.EnvironmentRoles, environments, projects)
+	}
 
 	// update user last seen
 	err = s.updateLastSeen(ctx, account.Email, req.OrganizationId)
@@ -410,6 +415,12 @@ func (s *AccountService) getMyOrganizations(
 	myOrgs := make([]*environmentproto.Organization, 0, len(accountsWithOrg))
 	for _, accWithOrg := range accountsWithOrg {
 		if accWithOrg.AccountV2.Disabled || accWithOrg.Organization.Disabled || accWithOrg.Organization.Archived {
+			continue
+		}
+		// If the account is an admin account, we append the organization.
+		// Otherwise, we check if the account is enabled in any environment in this organization.
+		if accWithOrg.AccountV2.OrganizationRole == accountproto.AccountV2_Role_Organization_ADMIN {
+			myOrgs = append(myOrgs, accWithOrg.Organization)
 			continue
 		}
 		// TODO: Remove this loop after the web console 3.0 is ready

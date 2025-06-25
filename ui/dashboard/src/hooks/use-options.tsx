@@ -257,11 +257,13 @@ const useOptions = () => {
     () => [
       {
         value: 'Organization_MEMBER',
-        label: translation('member')
+        label: translation('member'),
+        description: translation('member-role-description')
       },
       {
         value: 'Organization_ADMIN',
-        label: translation('admin')
+        label: translation('admin'),
+        description: translation('admin-role-description')
       }
     ],
     [language]
@@ -310,12 +312,12 @@ const useOptions = () => {
   const environmentRoleOptions = useMemo(
     () => [
       {
-        value: 'Environment_EDITOR',
-        label: translation('editor')
-      },
-      {
         value: 'Environment_VIEWER',
         label: translation('viewer')
+      },
+      {
+        value: 'Environment_EDITOR',
+        label: translation('editor')
       }
     ],
     [language]

@@ -64,7 +64,7 @@ export const languageList: LanguageItem[] = [
 
 export interface AddMemberForm {
   email: string;
-  role: OrganizationRole;
+  memberRole: OrganizationRole;
   environmentRoles: EnvironmentRoleItem[];
   tags: string[];
 }
@@ -72,14 +72,36 @@ export interface AddMemberForm {
 export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
   yup.object().shape({
     email: yup.string().email().required(requiredMessage),
-    role: yup.mixed<OrganizationRole>().required(requiredMessage),
+    memberRole: yup.mixed<OrganizationRole>().required(requiredMessage),
     environmentRoles: yup
       .array()
-      .required(requiredMessage)
+      .when('memberRole', {
+        is: (role: OrganizationRole) => role === 'Organization_MEMBER',
+        then: schema => schema.required(requiredMessage)
+      })
       .of(
         yup.object().shape({
-          environmentId: yup.string().required(requiredMessage),
-          role: yup.mixed<EnvironmentRoleType>().required(requiredMessage)
+          environmentId: yup.string().when('memberRole', {
+            is: (role: OrganizationRole) => role === 'Organization_MEMBER',
+            then: schema => schema.required(requiredMessage)
+          }),
+          role: yup
+            .mixed<EnvironmentRoleType>()
+            .when('memberRole', {
+              is: (role: OrganizationRole) => role === 'Organization_MEMBER',
+              then: schema => schema.required(requiredMessage)
+            })
+            .test('isUnassigned', (value, context) => {
+              const isMemberRole =
+                context?.from &&
+                context?.from[1]?.value?.memberRole === 'Organization_MEMBER';
+              if (value === 'Environment_UNASSIGNED' && isMemberRole)
+                return context.createError({
+                  message: requiredMessage,
+                  path: context.path
+                });
+              return true;
+            })
         })
       ),
     tags: yup.array().of(yup.string())
@@ -104,7 +126,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
     resolver: yupResolver(useFormSchema(formSchema)) as Resolver<AddMemberForm>,
     defaultValues: {
       email: '',
-      role: undefined,
+      memberRole: undefined,
       environmentRoles: [defaultEnvironmentRole],
       tags: []
     }
@@ -112,9 +134,11 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
 
   const {
     watch,
-    formState: { dirtyFields, isValid, isSubmitting }
+    formState: { isValid, isSubmitting }
   } = form;
   const memberEnvironments = watch('environmentRoles');
+  const roleWatch = watch('memberRole');
+  const isAdminRole = roleWatch === 'Organization_ADMIN';
   const tags = tagCollection?.tags || [];
 
   const uniqueNameTags = uniqBy(tags || [], 'name')?.map(item => ({
@@ -139,25 +163,29 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const { formattedEnvironments } = onFormatEnvironments(environments);
 
   const checkSubmitBtnDisabled = useCallback(() => {
+    if (isValid && isAdminRole) return false;
     const checkEnvironments = memberEnvironments.every(
       item => item.environmentId && item.role !== 'Environment_UNASSIGNED'
     );
-    if (!checkEnvironments || !isValid) {
-      return true;
-    }
+    if (!checkEnvironments || !isValid) return true;
+
     return false;
-  }, [dirtyFields, isValid, memberEnvironments]);
+  }, [isValid, memberEnvironments, isAdminRole]);
 
   const onSubmit: SubmitHandler<AddMemberForm> = async values => {
     return accountCreator({
       organizationId: currentEnvironment.organizationId,
       email: values.email,
-      organizationRole: values.role,
-      environmentRoles: values.environmentRoles.map(item => ({
-        ...item,
-        environmentId: checkEnvironmentEmptyId(item.environmentId)
-      })),
-      tags: values.tags ?? []
+      organizationRole: values.memberRole,
+      tags: values.tags ?? [],
+      ...(isAdminRole
+        ? {}
+        : {
+            environmentRoles: values.environmentRoles.map(item => ({
+              ...item,
+              environmentId: checkEnvironmentEmptyId(item.environmentId)
+            }))
+          })
     })
       .then(() => {
         notify({
@@ -198,23 +226,10 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
             />
             <Form.Field
               control={form.control}
-              name="role"
+              name="memberRole"
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label className="relative w-fit">
-                    {t('role')}
-                    <Tooltip
-                      align="start"
-                      alignOffset={-30}
-                      trigger={
-                        <div className="flex-center absolute top-0 -right-6">
-                          <Icon icon={IconInfo} size={'sm'} color="gray-600" />
-                        </div>
-                      }
-                      content={t('form:member-role-tooltip')}
-                      className="!z-[100] max-w-[400px]"
-                    />
-                  </Form.Label>
+                  <Form.Label required>{t('role')}</Form.Label>
                   <Form.Control className="w-full">
                     <DropdownMenu>
                       <DropdownMenuTrigger
@@ -238,6 +253,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                             key={index}
                             value={item.value}
                             label={item.label}
+                            description={item.description}
                             onSelectOption={value => {
                               field.onChange(value);
                             }}
@@ -284,8 +300,12 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
               )}
             />
 
-            <Divider className="mt-1 mb-3" />
-            <EnvironmentRoles environments={formattedEnvironments} />
+            {!isAdminRole && !!roleWatch && (
+              <>
+                <Divider className="mt-1 mb-3" />
+                <EnvironmentRoles environments={formattedEnvironments} />
+              </>
+            )}
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={

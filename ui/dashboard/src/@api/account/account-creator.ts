@@ -10,7 +10,7 @@ export interface AccountCreatorPayload {
   organizationId: string;
   email: string;
   organizationRole: OrganizationRole;
-  environmentRoles: EnvironmentRoleItem[];
+  environmentRoles?: EnvironmentRoleItem[];
   tags: string[];
 }
 
