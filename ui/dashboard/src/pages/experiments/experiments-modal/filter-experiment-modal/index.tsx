@@ -318,7 +318,6 @@ const FilterExperimentModal = ({
                         key={index}
                         value={item.value as string}
                         label={item.label}
-                        className="flex items-center max-w-full truncate"
                         onSelectOption={value => {
                           handleChangeFilterValue(value, filterIndex);
                         }}

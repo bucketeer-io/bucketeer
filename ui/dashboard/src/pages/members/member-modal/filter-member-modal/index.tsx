@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryTeams } from '@queries/teams';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import useOptions, { FilterOption, FilterTypes } from 'hooks/use-options';
 import { useTranslation } from 'i18n';
+import { debounce } from 'lodash';
 import { isEmpty } from 'utils/data-type';
 import { cn } from 'utils/style';
 import { IconPlus, IconTrash } from '@icons';
@@ -12,6 +15,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSearch,
   DropdownMenuTrigger
 } from 'components/dropdown';
 import Icon from 'components/icon';
@@ -26,17 +30,41 @@ export type FilterProps = {
 };
 
 const FilterMemberModal = ({
-  onSubmit,
   isOpen,
+  filters,
+  onSubmit,
   onClose,
-  onClearFilters,
-  filters
+  onClearFilters
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
-  const { enabledOptions, memberFilterOptions, roleOptions } = useOptions();
+  const { booleanOptions, memberFilterOptions, roleOptions } = useOptions();
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
   const [selectedFilters, setSelectedFilters] = useState<FilterOption[]>([
     memberFilterOptions[0]
   ]);
+  const [searchValue, setSearchValue] = useState('');
+  const [debounceValue, setDebounceValue] = useState('');
+
+  const inputSearchRef = useRef<HTMLInputElement>(null);
+
+  const { data: teamCollection, isLoading: isLoadingTeams } = useQueryTeams({
+    params: {
+      cursor: String(0),
+      organizationId: currentEnvironment.organizationId
+    },
+    enabled: !!selectedFilters.find(item => item.value === FilterTypes.TEAMS)
+  });
+  const teams = useMemo(() => teamCollection?.teams || [], [teamCollection]);
+  const teamOptions = useMemo(
+    () =>
+      teams?.map(item => ({
+        label: item.name,
+        value: item.name
+      })) || [],
+    [teams]
+  );
 
   const remainingFilterOptions = useMemo(
     () =>
@@ -62,19 +90,88 @@ const FilterMemberModal = ({
     (filterOption?: FilterOption) => {
       if (filterOption) {
         const { value: filterType, filterValue } = filterOption;
+        const isTeamsFilter = filterType === FilterTypes.TEAMS;
+        if (isTeamsFilter) {
+          return (
+            (Array.isArray(filterValue) &&
+              teams.length &&
+              filterValue
+                .map(item => teams.find(team => team.name === item)?.name)
+                ?.join(', ')) ||
+            ''
+          );
+        }
+
         const currentOption = (
-          filterType === FilterTypes.ENABLED ? enabledOptions : roleOptions
+          filterType === FilterTypes.ENABLED ? booleanOptions : roleOptions
         ).find(item => item.value === filterValue);
         if (currentOption) return currentOption.label;
       }
       return '';
     },
+    [teams]
+  );
+
+  const debouncedSearch = useCallback(
+    debounce(value => {
+      setSearchValue(value);
+    }, 500),
     []
+  );
+
+  const getValueOptions = useCallback(
+    (filterOption: FilterOption) => {
+      if (!filterOption.value) return [];
+      const isRoleFilter = filterOption.value === FilterTypes.ROLE;
+      const isTeamsFilter = filterOption.value === FilterTypes.TEAMS;
+
+      if (isTeamsFilter)
+        return teamOptions.filter(item =>
+          searchValue
+            ? item.value.toLowerCase().includes(searchValue.toLowerCase())
+            : item
+        );
+      if (isRoleFilter) return roleOptions;
+      return booleanOptions;
+    },
+    [searchValue, teamOptions]
+  );
+
+  const handleFocusSearchInput = useCallback(() => {
+    let timerId: NodeJS.Timeout | null = null;
+    if (timerId) clearTimeout(timerId);
+    timerId = setTimeout(() => inputSearchRef?.current?.focus(), 50);
+  }, []);
+
+  const handleChangeFilterValue = useCallback(
+    (value: string | number, filterIndex: number) => {
+      const filterOption = selectedFilters[filterIndex];
+      const { value: filterType, filterValue } = filterOption;
+      const isTeamsFilter = filterType === FilterTypes.TEAMS;
+      if (isTeamsFilter) {
+        const values = filterValue as string[];
+        const isExisted = values.find(item => item === value);
+        const newValue: string[] = isExisted
+          ? values.filter(item => item !== value)
+          : [...values, value as string];
+        selectedFilters[filterIndex] = {
+          ...selectedFilters[filterIndex],
+          filterValue: newValue
+        };
+        return setSelectedFilters([...selectedFilters]);
+      }
+      selectedFilters[filterIndex] = {
+        ...selectedFilters[filterIndex],
+        filterValue: value
+      };
+      setSelectedFilters([...selectedFilters]);
+    },
+    [selectedFilters]
   );
 
   const handleSetFilterOnInit = useCallback(() => {
     if (filters) {
-      const { disabled, organizationRole } = filters || {};
+      const { disabled, organizationRole, teams } = filters || {};
       const filterTypeArr: FilterOption[] = [];
       const addFilterOption = (
         index: number,
@@ -86,16 +183,19 @@ const FilterMemberModal = ({
           filterTypeArr.push({
             ...option,
             filterValue:
-              option.value! === FilterTypes.ROLE
-                ? value?.toString()
-                : value
-                  ? 0
-                  : 1
+              option.value! === FilterTypes.TEAMS
+                ? value
+                : option.value! === FilterTypes.ROLE
+                  ? value?.toString()
+                  : value
+                    ? 0
+                    : 1
           });
         }
       };
       addFilterOption(0, disabled);
       addFilterOption(1, organizationRole);
+      addFilterOption(2, teams);
       setSelectedFilters(
         filterTypeArr.length ? filterTypeArr : [memberFilterOptions[0]]
       );
@@ -105,16 +205,21 @@ const FilterMemberModal = ({
   const onConfirmHandler = () => {
     const defaultFilters = {
       disabled: undefined,
-      organizationRole: undefined
+      organizationRole: undefined,
+      teams: undefined
     };
 
     const newFilters = {};
 
     selectedFilters.forEach(filter => {
+      const isEnabledFilter = filter.value === FilterTypes.ENABLED;
+      const isTeamsFilter = filter.value === FilterTypes.TEAMS;
+
       Object.assign(newFilters, {
-        [filter.value! === FilterTypes.ENABLED ? 'disabled' : filter.value!]:
-          filter.value === FilterTypes.ENABLED
-            ? !filter.filterValue
+        [isEnabledFilter ? 'disabled' : filter.value!]: isEnabledFilter
+          ? !filter.filterValue
+          : isTeamsFilter
+            ? filter.filterValue
             : Number(filter?.filterValue)
       });
     });
@@ -139,7 +244,8 @@ const FilterMemberModal = ({
       <div className="flex flex-col w-full items-start p-5 gap-y-4">
         {selectedFilters.map((filterOption, filterIndex) => {
           const { label, value: filterType } = filterOption;
-
+          const isTeamsFilter = filterType === FilterTypes.TEAMS;
+          const valueOptions = getValueOptions(filterOption);
           return (
             <div
               key={filterIndex}
@@ -178,32 +284,63 @@ const FilterMemberModal = ({
                 </DropdownMenuContent>
               </DropdownMenu>
               <p className="typo-para-medium text-gray-600">{t(`is`)}</p>
-              <DropdownMenu>
+              <DropdownMenu
+                onOpenChange={open => {
+                  if (open) return handleFocusSearchInput();
+                  setDebounceValue('');
+                  setSearchValue('');
+                }}
+              >
                 <DropdownMenuTrigger
                   placeholder={t(`select-value`)}
                   label={handleGetLabelFilterValue(filterOption)}
-                  disabled={!filterType}
+                  disabled={(isTeamsFilter && isLoadingTeams) || !filterType}
+                  loading={isTeamsFilter && isLoadingTeams}
                   variant="secondary"
-                  className="w-full"
+                  className="w-full max-w-[235px] truncate"
                 />
-                <DropdownMenuContent className="w-[235px]" align="start">
-                  {(filterType === FilterTypes.ENABLED
-                    ? enabledOptions
-                    : roleOptions
-                  ).map((item, index) => (
-                    <DropdownMenuItem
-                      key={index}
-                      value={item.value as string}
-                      label={item.label}
-                      onSelectOption={() => {
-                        selectedFilters[filterIndex] = {
-                          ...selectedFilters[filterIndex],
-                          filterValue: item.value
-                        };
-                        setSelectedFilters([...selectedFilters]);
+                <DropdownMenuContent
+                  className={cn('w-[235px]', {
+                    'pt-0 w-[300px]': isTeamsFilter
+                  })}
+                  align="start"
+                >
+                  {isTeamsFilter && (
+                    <DropdownMenuSearch
+                      ref={inputSearchRef}
+                      value={debounceValue}
+                      onChange={value => {
+                        setDebounceValue(value);
+                        debouncedSearch(value);
+                        handleFocusSearchInput();
                       }}
                     />
-                  ))}
+                  )}
+                  {valueOptions.length > 0 ? (
+                    valueOptions.map((item, index) => (
+                      <DropdownMenuItem
+                        key={index}
+                        value={item.value as string}
+                        label={item.label}
+                        isSelected={
+                          isTeamsFilter &&
+                          Array.isArray(filterOption?.filterValue) &&
+                          filterOption.filterValue?.includes(
+                            item.value as string
+                          )
+                        }
+                        isMultiselect={isTeamsFilter}
+                        onSelectOption={value =>
+                          handleChangeFilterValue(value, filterIndex)
+                        }
+                        className="flex items-center w-full max-w-full"
+                      />
+                    ))
+                  ) : (
+                    <div className="flex-center py-2.5 typo-para-medium text-gray-600">
+                      {t('no-options-found')}
+                    </div>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
               <Button

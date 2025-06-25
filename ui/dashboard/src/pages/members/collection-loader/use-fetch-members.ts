@@ -11,7 +11,8 @@ export const useFetchMembers = ({
   organizationId,
   environmentId,
   disabled,
-  organizationRole
+  organizationRole,
+  teams
 }: {
   pageSize?: number;
   page?: number;
@@ -22,6 +23,7 @@ export const useFetchMembers = ({
   environmentId?: string;
   disabled?: boolean;
   organizationRole?: number;
+  teams?: string[];
 } = {}) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
 
@@ -35,7 +37,8 @@ export const useFetchMembers = ({
       organizationId,
       environmentId,
       disabled,
-      organizationRole
+      organizationRole,
+      teams
     }
   });
 };
