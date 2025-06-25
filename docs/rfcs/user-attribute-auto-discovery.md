@@ -140,35 +140,36 @@ I adopt **Solution3** because it will not increase development costs or PubSub c
 ## Cache
 
 - Create `UserAttributesCache` in the cache package
-  - Key: string (environment_id:user-attributes)
-  - Value: []string (user_attribute_keys)
+  - Key: string `{environment_id}:user_attrs:{attribute_key}`
+  - Value: string (user attribute value)
   - Interface: Put and Get
+  - The value is saved with `SADD` using a key that contains the UserAttributeKey. The expiration time of the UserAttributeKey is managed by `EXPIRE`, and the UserAttributeKey for each environment is obtained by `SCAN`.
+      - ex):
+        ```
+          localhost:6379> SADD dev:attr:key1 "value1" "value2"  // store value1 and value2 in key1
+          localhost:6379> EXPIRE dev:attr:key1 60               // set expiration time to 60 seconds
+          localhost:6379> SCAN 0 MATCH "dev:attr:*" COUNT 100   // get the keys for the dev environment
+        ```
 
 ## Processor
 - Add a process to the `EvalEvtWriter` to extract new attributes from the `EvaluationEvent`'s `UserData` and save them in the `UserAttributesCache`.
 
 ## API
 
-Add a new API to get UserAttributes in the environment:
+Add a new API to get UserAttributeKeys in the environment:
 
 ```protobuf
-message ListUserAttributesRequest {
+message ListUserAttributeKeysRequest {
     string environment_id = 1;
+    int64 page_size = 2;
+    string cursor = 3;
 }
 
-message ListUserAttributesResponse {
-    repeated string userAttributes = 1;
+message ListUserAttributeKeysResponse {
+    repeated string userAttributeKeys = 1;
+    string cursor = 2;
 }
 ```
-
-Note: Pagination is not implemented for this API.
-
-# Important Considerations
-
--  Intentionally not implementing user attribute delete API
-   - The deleted attribute may be needed again in the future, but there is currently no way to undo the deletion using the console.
-   - However, the console takes into account the large number of user attributes by providing incremental search to improve usability.
-
 
 # Testing
 
