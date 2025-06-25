@@ -1,3 +1,4 @@
+import { useQueryTeams } from '@queries/teams';
 import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { sortingListFields } from 'constants/collection';
@@ -12,7 +13,6 @@ import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { MemberActionsType, MembersFilters } from '../types';
 import { useFetchMembers } from './use-fetch-members';
-import { useFetchTags } from './use-fetch-tags';
 
 export * from './use-fetch-tags';
 
@@ -32,12 +32,14 @@ const CollectionLoader = ({
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
-    organizationId: currentEnvironment.organizationId,
-    entityType: 'ACCOUNT'
+  const { data: teamCollection, isLoading: isLoadingTeams } = useQueryTeams({
+    params: {
+      cursor: String(0),
+      organizationId: currentEnvironment.organizationId
+    }
   });
-  const tagList = tagCollection?.tags || [];
-  const columns = useColumns({ onActions, tags: tagList });
+  const teamList = teamCollection?.teams || [];
+  const columns = useColumns({ onActions, teams: teamList });
 
   const {
     data: collection,
@@ -79,7 +81,7 @@ const CollectionLoader = ({
   ) : (
     <TableListContent className="min-w-[1000px]">
       <DataTable
-        isLoading={isLoading || isLoadingTags}
+        isLoading={isLoading || isLoadingTeams}
         data={accounts}
         columns={columns}
         onSortingChange={onSortingChangeHandler}

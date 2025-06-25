@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   FormProvider,
   Resolver,
@@ -9,6 +9,7 @@ import { EnvironmentRoleItem } from '@api/account/account-creator';
 import { accountUpdater } from '@api/account/account-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
+import { invalidateTeams, useQueryTeams } from '@queries/teams';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
@@ -17,14 +18,18 @@ import useOptions from 'hooks/use-options';
 import { Language, setLanguage, useTranslation } from 'i18n';
 import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
-import { Account, EnvironmentRoleType, OrganizationRole } from '@types';
+import {
+  Account,
+  EnvironmentRoleType,
+  OrganizationRole,
+  TeamChange
+} from '@types';
 import {
   checkEnvironmentEmptyId,
   onChangeFontWithLocalized,
   onFormatEnvironments
 } from 'utils/function';
 import { IconInfo } from '@icons';
-import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -41,7 +46,7 @@ import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { Tooltip } from 'components/tooltip';
-import TagsSelectMenu from 'elements/tags-select-menu';
+import SelectMenu from 'elements/select-menu';
 import { defaultEnvironmentRole, languageList } from '../add-member-modal';
 import EnvironmentRoles from '../add-member-modal/environment-roles';
 
@@ -56,8 +61,8 @@ export interface EditMemberForm {
   lastName: string;
   language: string;
   memberRole: string;
-  environmentRoles?: EnvironmentRoleItem[];
-  tags: string[];
+  environmentRoles: EnvironmentRoleItem[];
+  teams: string[];
 }
 
 export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
@@ -97,7 +102,7 @@ export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
             })
         })
       ),
-    tags: yup.array().of(yup.string())
+    teams: yup.array().of(yup.string())
   });
 
 const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
@@ -107,11 +112,13 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   const { notify } = useToast();
   const { organizationRoles } = useOptions();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const [tagOptions, setTagOptions] = useState<DropdownOption[]>([]);
+  const [teamOptions, setTeamOptions] = useState<DropdownOption[]>([]);
 
-  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
-    organizationId: currentEnvironment.organizationId,
-    entityType: 'ACCOUNT'
+  const { data: teamCollection, isLoading: isLoadingTeams } = useQueryTeams({
+    params: {
+      cursor: String(0),
+      organizationId: currentEnvironment.organizationId
+    }
   });
 
   const { data: collection } = useFetchEnvironments({
@@ -121,7 +128,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   const { emptyEnvironmentId, formattedEnvironments } =
     onFormatEnvironments(environments);
 
-  const tags = tagCollection?.tags || [];
+  const teams = teamCollection?.teams || [];
   const form = useForm<EditMemberForm>({
     resolver: yupResolver(
       useFormSchema(formSchema)
@@ -137,7 +144,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
             environmentId: item.environmentId || emptyEnvironmentId
           }))
         : [defaultEnvironmentRole],
-      tags: member.tags
+      teams: member.teams
     },
     mode: 'onChange'
   });
@@ -148,6 +155,33 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   } = form;
   const roleWatch = watch('memberRole');
   const isAdminRole = roleWatch === 'Organization_ADMIN';
+
+  const handleCheckTags = useCallback(
+    (teamValues: string[]) => {
+      const teamChanges: TeamChange[] = [];
+      const { teams } = member;
+      teams?.forEach(item => {
+        if (!teamValues.find(tag => tag === item)) {
+          teamChanges.push({
+            changeType: 'DELETE',
+            team: item
+          });
+        }
+      });
+      teamValues.forEach(item => {
+        const currentTeam = teams.find(team => team === item);
+        if (!currentTeam) {
+          teamChanges.push({
+            changeType: 'CREATE',
+            team: item
+          });
+        }
+      });
+
+      return teamChanges;
+    },
+    [member]
+  );
 
   const onSubmit: SubmitHandler<EditMemberForm> = async values => {
     return accountUpdater({
@@ -163,9 +197,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
       firstName: values.firstName,
       lastName: values.lastName,
       language: values.language,
-      tags: {
-        values: values.tags
-      }
+      teamChanges: handleCheckTags(values.teams)
     }).then(() => {
       const { email } = consoleAccount!;
       if (email === member.email && values.language !== member.language) {
@@ -179,21 +211,20 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
         })
       });
       invalidateAccounts(queryClient);
+      invalidateTeams(queryClient);
       onClose();
     });
   };
 
   useEffect(() => {
-    if (tags.length > 0) {
-      const uniqueTags = uniqBy(tagCollection?.tags || [], 'name')?.map(
-        item => ({
-          label: item.name,
-          value: item.id
-        })
-      );
-      setTagOptions(uniqueTags);
+    if (teams.length > 0) {
+      const uniqueTeams = uniqBy(teams || [], 'name')?.map(item => ({
+        label: item.name,
+        value: item.name
+      }));
+      setTeamOptions(uniqueTeams);
     }
-  }, [tags]);
+  }, [teams]);
 
   return (
     <SlideModal title={t('update-member')} isOpen={isOpen} onClose={onClose}>
@@ -330,11 +361,11 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
             />
             <Form.Field
               control={form.control}
-              name={`tags`}
+              name={`teams`}
               render={({ field }) => (
                 <Form.Item className="py-2">
                   <Form.Label className="relative w-fit">
-                    {t('tags')}
+                    {t('teams')}
                     <Tooltip
                       align="start"
                       alignOffset={-30}
@@ -343,17 +374,19 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                           <Icon icon={IconInfo} size={'sm'} color="gray-600" />
                         </div>
                       }
-                      content={t('form:member-tags-tooltip')}
+                      content={t('form:teams-tooltip')}
                       className="!z-[100] max-w-[400px]"
                     />
                   </Form.Label>
                   <Form.Control>
-                    <TagsSelectMenu
-                      tagOptions={tagOptions}
+                    <SelectMenu
+                      options={teamOptions}
                       fieldValues={field.value}
+                      disabled={isLoadingTeams}
+                      inputPlaceholderKey="search-teams-placeholder"
+                      dropdownPlaceholderKey="select-teams"
                       onChange={field.onChange}
-                      disabled={isLoadingTags}
-                      onChangeTagOptions={setTagOptions}
+                      onChangeOptions={setTeamOptions}
                     />
                   </Form.Control>
                   <Form.Message />

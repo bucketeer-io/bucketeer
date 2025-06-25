@@ -4,7 +4,7 @@ import primaryAvatar from 'assets/avatars/primary.svg';
 import { useAuthAccess } from 'auth';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
-import { Account, Tag } from '@types';
+import { Account, Team } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { joinName } from 'utils/name';
 import { IconTrash } from '@icons';
@@ -19,10 +19,10 @@ import { MemberActionsType } from '../types';
 
 export const useColumns = ({
   onActions,
-  tags
+  teams
 }: {
   onActions: (item: Account, type: MemberActionsType) => void;
-  tags: Tag[];
+  teams: Team[];
 }): ColumnDef<Account>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
@@ -111,17 +111,17 @@ export const useColumns = ({
       }
     },
     {
-      accessorKey: 'tags',
-      header: `${t('tags')}`,
+      accessorKey: 'teams',
+      header: `${t('teams')}`,
       size: 300,
       cell: ({ row }) => {
         const account = row.original;
-        const formattedTags = account.tags?.map(
-          item => tags.find(tag => tag.id === item)?.name || item
+        const formattedTeams = account.teams?.map(
+          item => teams.find(team => team.id === item)?.name || item
         );
         return (
           <ExpandableTag
-            tags={formattedTags}
+            tags={formattedTeams}
             rowId={account.email}
             className="!max-w-[250px] truncate"
           />

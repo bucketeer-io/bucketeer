@@ -323,5 +323,8 @@
   "search-or-create-tags": "Search or create new tags",
   "boolean": "Boolean",
   "string": "String",
-  "number": "Number"
+  "number": "Number",
+  "select-teams": "Select teams",
+  "search-teams-placeholder": "Search or create new teams",
+  "teams-tooltip": "Teams can be used to group members, making it easier when listing them on the list page"
 }

@@ -30,7 +30,8 @@ export type OrderBy =
   | 'STATUS'
   | 'GOALS_COUNT'
   | 'ENABLED'
-  | 'TIMESTAMP';
+  | 'TIMESTAMP'
+  | 'TEAMS';
 
 export type OrderDirection = 'ASC' | 'DESC';
 
