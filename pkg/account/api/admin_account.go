@@ -417,6 +417,12 @@ func (s *AccountService) getMyOrganizations(
 		if accWithOrg.AccountV2.Disabled || accWithOrg.Organization.Disabled || accWithOrg.Organization.Archived {
 			continue
 		}
+		// If the account is an admin account, we append the organization.
+		// Otherwise, we check if the account is enabled in any environment in this organization.
+		if accWithOrg.AccountV2.OrganizationRole == accountproto.AccountV2_Role_Organization_ADMIN {
+			myOrgs = append(myOrgs, accWithOrg.Organization)
+			continue
+		}
 		// TODO: Remove this loop after the web console 3.0 is ready
 		// If the account is enabled in any environment in this organization,
 		// we append the organization.

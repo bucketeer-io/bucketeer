@@ -594,6 +594,350 @@ func TestGetMyOrganizationsByEmailMySQL(t *testing.T) {
 	}
 }
 
+func TestGetMyOrganizationsAdminRole(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithDefaultToken(t, true)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AccountService)
+		email       string
+		expected    []*environmentproto.Organization
+		expectedErr error
+	}{
+		{
+			desc: "success: organization admin gets organization included",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), "admin@example.com",
+				).Return([]*domain.AccountWithOrganization{
+					{
+						Organization: &environmentproto.Organization{
+							Id:       "org1",
+							Name:     "Organization 1",
+							Disabled: false,
+							Archived: false,
+						},
+						AccountV2: &accountproto.AccountV2{
+							Email:            "admin@example.com",
+							OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+							Disabled:         false,
+						},
+					},
+				}, nil)
+			},
+			email: "admin@example.com",
+			expected: []*environmentproto.Organization{
+				{
+					Id:       "org1",
+					Name:     "Organization 1",
+					Disabled: false,
+					Archived: false,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: member with environment roles gets organization included",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), "member@example.com",
+				).Return([]*domain.AccountWithOrganization{
+					{
+						Organization: &environmentproto.Organization{
+							Id:       "org1",
+							Name:     "Organization 1",
+							Disabled: false,
+							Archived: false,
+						},
+						AccountV2: &accountproto.AccountV2{
+							Email:            "member@example.com",
+							OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+							EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+								{
+									EnvironmentId: "env1",
+									Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+								},
+							},
+							Disabled: false,
+						},
+					},
+				}, nil)
+			},
+			email: "member@example.com",
+			expected: []*environmentproto.Organization{
+				{
+					Id:       "org1",
+					Name:     "Organization 1",
+					Disabled: false,
+					Archived: false,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: member with unassigned roles gets organization excluded",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), "member@example.com",
+				).Return([]*domain.AccountWithOrganization{
+					{
+						Organization: &environmentproto.Organization{
+							Id:       "org1",
+							Name:     "Organization 1",
+							Disabled: false,
+							Archived: false,
+						},
+						AccountV2: &accountproto.AccountV2{
+							Email:            "member@example.com",
+							OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+							EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+								{
+									EnvironmentId: "env1",
+									Role:          accountproto.AccountV2_Role_Environment_UNASSIGNED,
+								},
+							},
+							Disabled: false,
+						},
+					},
+				}, nil)
+			},
+			email:       "member@example.com",
+			expected:    []*environmentproto.Organization{},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: disabled admin account gets organization excluded",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), "admin@example.com",
+				).Return([]*domain.AccountWithOrganization{
+					{
+						Organization: &environmentproto.Organization{
+							Id:       "org1",
+							Name:     "Organization 1",
+							Disabled: false,
+							Archived: false,
+						},
+						AccountV2: &accountproto.AccountV2{
+							Email:            "admin@example.com",
+							OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+							Disabled:         true,
+						},
+					},
+				}, nil)
+			},
+			email:       "admin@example.com",
+			expected:    []*environmentproto.Organization{},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: admin in disabled organization gets organization excluded",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), "admin@example.com",
+				).Return([]*domain.AccountWithOrganization{
+					{
+						Organization: &environmentproto.Organization{
+							Id:       "org1",
+							Name:     "Organization 1",
+							Disabled: true,
+							Archived: false,
+						},
+						AccountV2: &accountproto.AccountV2{
+							Email:            "admin@example.com",
+							OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+							Disabled:         false,
+						},
+					},
+				}, nil)
+			},
+			email:       "admin@example.com",
+			expected:    []*environmentproto.Organization{},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: admin in archived organization gets organization excluded",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), "admin@example.com",
+				).Return([]*domain.AccountWithOrganization{
+					{
+						Organization: &environmentproto.Organization{
+							Id:       "org1",
+							Name:     "Organization 1",
+							Disabled: false,
+							Archived: true,
+						},
+						AccountV2: &accountproto.AccountV2{
+							Email:            "admin@example.com",
+							OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+							Disabled:         false,
+						},
+					},
+				}, nil)
+			},
+			email:       "admin@example.com",
+			expected:    []*environmentproto.Organization{},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: multiple organizations with mixed admin/member roles",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), "user@example.com",
+				).Return([]*domain.AccountWithOrganization{
+					{
+						Organization: &environmentproto.Organization{
+							Id:       "org1",
+							Name:     "Organization 1",
+							Disabled: false,
+							Archived: false,
+						},
+						AccountV2: &accountproto.AccountV2{
+							Email:            "user@example.com",
+							OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+							Disabled:         false,
+						},
+					},
+					{
+						Organization: &environmentproto.Organization{
+							Id:       "org2",
+							Name:     "Organization 2",
+							Disabled: false,
+							Archived: false,
+						},
+						AccountV2: &accountproto.AccountV2{
+							Email:            "user@example.com",
+							OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+							EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+								{
+									EnvironmentId: "env1",
+									Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+								},
+							},
+							Disabled: false,
+						},
+					},
+				}, nil)
+			},
+			email: "user@example.com",
+			expected: []*environmentproto.Organization{
+				{
+					Id:       "org1",
+					Name:     "Organization 1",
+					Disabled: false,
+					Archived: false,
+				},
+				{
+					Id:       "org2",
+					Name:     "Organization 2",
+					Disabled: false,
+					Archived: false,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "error: GetAccountsWithOrganization fails",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), "user@example.com",
+				).Return(nil, errors.New("database error"))
+			},
+			email:       "user@example.com",
+			expected:    nil,
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success: system admin gets all organizations",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountsWithOrganization(
+					gomock.Any(), "sysadmin@example.com",
+				).Return([]*domain.AccountWithOrganization{
+					{
+						Organization: &environmentproto.Organization{
+							Id:          "system-org",
+							Name:        "System Admin Org",
+							SystemAdmin: true,
+							Disabled:    false,
+							Archived:    false,
+						},
+						AccountV2: &accountproto.AccountV2{
+							Email:            "sysadmin@example.com",
+							OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+							Disabled:         false,
+						},
+					},
+				}, nil)
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListOrganizations(
+					gomock.Any(), gomock.Any(),
+				).Return(&environmentproto.ListOrganizationsResponse{
+					Organizations: []*environmentproto.Organization{
+						{
+							Id:          "system-org",
+							Name:        "System Admin Org",
+							SystemAdmin: true,
+							Disabled:    false,
+							Archived:    false,
+						},
+						{
+							Id:       "regular-org",
+							Name:     "Regular Org",
+							Disabled: false,
+							Archived: false,
+						},
+					},
+				}, nil)
+			},
+			email: "sysadmin@example.com",
+			expected: []*environmentproto.Organization{
+				{
+					Id:          "system-org",
+					Name:        "System Admin Org",
+					SystemAdmin: true,
+					Disabled:    false,
+					Archived:    false,
+				},
+				{
+					Id:       "regular-org",
+					Name:     "Regular Org",
+					Disabled: false,
+					Archived: false,
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := createAccountService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			actual, err := service.getMyOrganizations(ctx, p.email, localizer)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+			assert.Equal(t, p.expected, actual, p.desc)
+		})
+	}
+}
+
 func getProjects(t *testing.T) []*environmentproto.Project {
 	t.Helper()
 	return []*environmentproto.Project{
