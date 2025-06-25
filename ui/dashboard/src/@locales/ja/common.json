@@ -281,7 +281,7 @@
   "admin-account": "管理者アカウント",
   "admin-subscription": "管理者サブスクリプション",
   "flag-trigger": "フラグトリガー",
-  "autoops-rule": "操作ルール",
+  "autoops-rule": "自動オペレーション",
   "tag": "タグ",
   "segment": "セグメント",
   "pagination-count": "{{total}}件中{{count}}件を表示"

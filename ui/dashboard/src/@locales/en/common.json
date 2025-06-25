@@ -282,7 +282,7 @@
   "admin-account": "Admin Account",
   "admin-subscription": "Admin Subscription",
   "flag-trigger": "Flag Trigger",
-  "autoops-rule": "Operation Rule",
+  "autoops-rule": "Auto Operation",
   "tag": "Tag",
   "segment": "Segment",
   "pagination-count": "Showing {{count}} of {{total}} results"
