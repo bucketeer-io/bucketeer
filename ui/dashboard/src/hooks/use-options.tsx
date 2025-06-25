@@ -312,12 +312,12 @@ const useOptions = () => {
   const environmentRoleOptions = useMemo(
     () => [
       {
-        value: 'Environment_EDITOR',
-        label: translation('editor')
-      },
-      {
         value: 'Environment_VIEWER',
         label: translation('viewer')
+      },
+      {
+        value: 'Environment_EDITOR',
+        label: translation('editor')
       }
     ],
     [language]
