@@ -2365,7 +2365,12 @@ func TestPermissionDenied(t *testing.T) {
 		return st.Err()
 	}
 
-	service := createFeatureService(mockController)
+	// Use a service with unassigned roles instead of admin
+	service := createFeatureServiceWithGetAccountByEnvironmentMock(
+		mockController,
+		accountproto.AccountV2_Role_Organization_UNASSIGNED,
+		accountproto.AccountV2_Role_Environment_UNASSIGNED,
+	)
 	patterns := []struct {
 		desc     string
 		action   func(context.Context, *FeatureService) error

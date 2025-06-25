@@ -849,7 +849,7 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 						FirstName:        "Test",
 						LastName:         "User",
 						Language:         "en",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
 
@@ -858,6 +858,8 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 				).Do(func(ctx context.Context, fn func(ctx context.Context, tx mysql.Transaction) error) {
 					_ = fn(ctx, nil)
 				}).Return(nil)
+
+				// This is the GetAccountV2 call inside the transaction
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.AccountV2{
@@ -866,13 +868,20 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 						FirstName:        "Test",
 						LastName:         "User",
 						Language:         "en",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "env1",
+								Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+							},
+						},
 					},
 				}, nil)
+
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).Times(2)
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",

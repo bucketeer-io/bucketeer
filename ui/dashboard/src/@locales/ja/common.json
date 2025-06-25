@@ -284,5 +284,7 @@
   "autoops-rule": "自動オペレーション",
   "tag": "タグ",
   "segment": "セグメント",
-  "pagination-count": "{{total}}件中{{count}}件を表示"
+  "pagination-count": "{{total}}件中{{count}}件を表示",
+  "member-role-description": "特定の環境にのみアクセスでき、組織設定、プロジェクト、環境、APIキー、メンバーの作成や更新はできません。",
+  "admin-role-description": "すべての環境にアクセスでき、すべての操作を実行できます。"
 }

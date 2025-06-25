@@ -257,11 +257,13 @@ const useOptions = () => {
     () => [
       {
         value: 'Organization_MEMBER',
-        label: translation('member')
+        label: translation('member'),
+        description: translation('member-role-description')
       },
       {
         value: 'Organization_ADMIN',
-        label: translation('admin')
+        label: translation('admin'),
+        description: translation('admin-role-description')
       }
     ],
     [language]

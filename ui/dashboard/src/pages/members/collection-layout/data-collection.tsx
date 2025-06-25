@@ -129,19 +129,6 @@ export const useColumns = ({
       }
     },
     {
-      accessorKey: 'environmentCount',
-      header: `${t('environments')}`,
-      size: 120,
-      cell: ({ row }) => {
-        const account = row.original;
-        return (
-          <div className="text-gray-700 typo-para-medium">
-            {account.environmentRoles.length}
-          </div>
-        );
-      }
-    },
-    {
       accessorKey: 'lastSeen',
       header: `${t('table:last-seen')}`,
       size: 180,
