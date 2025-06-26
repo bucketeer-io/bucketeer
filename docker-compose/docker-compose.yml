@@ -124,15 +124,15 @@ services:
       - BUCKETEER_WEB_SERVICE_TOKEN=/usr/local/service-token/token
       - BUCKETEER_WEB_EMAIL_FILTER=
       - BUCKETEER_WEB_WEB_CONSOLE_ENV_JS_PATH=/usr/local/static/js
-      # External service connections (from web service to other services)
-      - BUCKETEER_WEB_ACCOUNT_SERVICE=web:9091
-      - BUCKETEER_WEB_AUTH_SERVICE=web:9092
+      # Internal gRPC client connections (routed through nginx gRPC proxy)
+      - BUCKETEER_WEB_ACCOUNT_SERVICE=nginx:443
+      - BUCKETEER_WEB_AUTH_SERVICE=nginx:443
       - BUCKETEER_WEB_BATCH_SERVICE=batch:9000
-      - BUCKETEER_WEB_ENVIRONMENT_SERVICE=web:9095
-      - BUCKETEER_WEB_EXPERIMENT_SERVICE=web:9097
-      - BUCKETEER_WEB_FEATURE_SERVICE=web:9098
-      - BUCKETEER_WEB_AUTO_OPS_SERVICE=web:9094
-      - BUCKETEER_WEB_CODE_REFERENCE_SERVICE=web:9105
+      - BUCKETEER_WEB_ENVIRONMENT_SERVICE=nginx:443
+      - BUCKETEER_WEB_EXPERIMENT_SERVICE=nginx:443
+      - BUCKETEER_WEB_FEATURE_SERVICE=nginx:443
+      - BUCKETEER_WEB_AUTO_OPS_SERVICE=nginx:443
+      - BUCKETEER_WEB_CODE_REFERENCE_SERVICE=nginx:443
       - BUCKETEER_WEB_DATA_WAREHOUSE_CONFIG_PATH=/usr/local/datawarehouse-config/datawarehouse.yaml
     volumes:
       - ../tools/dev/cert/tls.crt:/usr/local/certs/service/tls.crt:ro
@@ -340,6 +340,7 @@ services:
     volumes:
       - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./config/nginx/bucketeer.conf:/etc/nginx/conf.d/bucketeer.conf:ro
+      - ./logs/nginx:/var/log/nginx
       - ../tools/dev/cert:/etc/nginx/certs:ro
     networks:
       - bucketeer
