@@ -40392,6 +40392,224 @@
                 "type": "int64"
               }
             ]
+          },
+          {
+            "name": "GetAutoOpsRuleRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "GetAutoOpsRuleResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "auto_ops_rule",
+                "type": "autoops.AutoOpsRule"
+              }
+            ]
+          },
+          {
+            "name": "CreateAutoOpsRuleRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "ops_type",
+                "type": "autoops.OpsType",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "ops_event_rate_clauses",
+                "type": "autoops.OpsEventRateClause",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "datetime_clauses",
+                "type": "autoops.DatetimeClause",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "CreateAutoOpsRuleResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "auto_ops_rule",
+                "type": "autoops.AutoOpsRule"
+              }
+            ]
+          },
+          {
+            "name": "ListAutoOpsRulesRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "feature_ids",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "ListAutoOpsRulesResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "auto_ops_rules",
+                "type": "autoops.AutoOpsRule",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "StopAutoOpsRuleRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "StopAutoOpsRuleResponse"
+          },
+          {
+            "name": "DeleteAutoOpsRuleRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "DeleteAutoOpsRuleResponse"
+          },
+          {
+            "name": "UpdateAutoOpsRuleRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "ops_event_rate_clause_changes",
+                "type": "autoops.OpsEventRateClauseChange",
+                "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "datetime_clause_changes",
+                "type": "autoops.DatetimeClauseChange",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "UpdateAutoOpsRuleResponse"
+          },
+          {
+            "name": "ExecuteAutoOpsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 6,
+                "name": "clause_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "ExecuteAutoOpsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "already_triggered",
+                "type": "bool"
+              }
+            ]
           }
         ],
         "services": [
@@ -41800,6 +42018,281 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "GetAutoOpsRule",
+                "in_type": "GetAutoOpsRuleRequest",
+                "out_type": "GetAutoOpsRuleResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/auto_ops_rule"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Auto Ops Rule"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get an Auto Ops Rule by ID. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Auto Ops Rules"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.auto_ops_rules.get"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "CreateAutoOpsRule",
+                "in_type": "CreateAutoOpsRuleRequest",
+                "out_type": "CreateAutoOpsRuleResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auto_ops_rule"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create Auto Ops Rule"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a new Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Auto Ops Rules"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.auto_ops_rules.create"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListAutoOpsRules",
+                "in_type": "ListAutoOpsRulesRequest",
+                "out_type": "ListAutoOpsRulesResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/auto_ops_rules"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List Auto Ops Rules"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List Auto Ops Rules. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Auto Ops Rules"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.auto_ops_rules.list"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "StopAutoOpsRule",
+                "in_type": "StopAutoOpsRuleRequest",
+                "out_type": "StopAutoOpsRuleResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auto_ops_rule/stop"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Stop Auto Ops Rule"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Stop an Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Auto Ops Rules"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.auto_ops_rules.stop"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DeleteAutoOpsRule",
+                "in_type": "DeleteAutoOpsRuleRequest",
+                "out_type": "DeleteAutoOpsRuleResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "delete",
+                        "value": "/v1/auto_ops_rule"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete Auto Ops Rule"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete an Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Auto Ops Rules"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.auto_ops_rules.delete"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpdateAutoOpsRule",
+                "in_type": "UpdateAutoOpsRuleRequest",
+                "out_type": "UpdateAutoOpsRuleResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/auto_ops_rule"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update Auto Ops Rule"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update an Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Auto Ops Rules"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.auto_ops_rules.update"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ExecuteAutoOps",
+                "in_type": "ExecuteAutoOpsRequest",
+                "out_type": "ExecuteAutoOpsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/auto_ops_rule/execute"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Execute Auto Ops Rule"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Execute an Auto Ops Rule. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Auto Ops Rules"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.auto_ops_rules.execute"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -41867,6 +42360,15 @@
           },
           {
             "path": "proto/auditlog/service.proto"
+          },
+          {
+            "path": "proto/autoops/auto_ops_rule.proto"
+          },
+          {
+            "path": "proto/autoops/clause.proto"
+          },
+          {
+            "path": "proto/autoops/service.proto"
           }
         ],
         "package": {
