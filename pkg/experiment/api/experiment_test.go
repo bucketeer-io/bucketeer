@@ -1041,7 +1041,13 @@ func TestExperimentPermissionDenied(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	ctx := createContextWithTokenRoleUnassigned()
-	service := createExperimentService(mockController, nil, nil, nil)
+	// Use unassigned roles instead of default admin
+	service := createExperimentService(
+		mockController,
+		toPtr("ns0"),
+		toPtr(accountproto.AccountV2_Role_Organization_UNASSIGNED),
+		toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+	)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})

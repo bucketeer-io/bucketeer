@@ -9,6 +9,7 @@ export interface MembersFilters {
   searchQuery: string;
   organizationId?: string;
   organizationRole?: number;
+  teams?: string[];
 }
 
 export interface CollectionProps {

@@ -35,7 +35,7 @@ import Input from 'components/input';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
-import TagsSelectMenu from 'elements/tags-select-menu';
+import SelectMenu from 'elements/select-menu';
 import Variations from './variations';
 
 export interface AddFlagForm {
@@ -281,8 +281,8 @@ const CreateFlagForm = ({
                   {t('tags')}
                 </Form.Label>
                 <Form.Control>
-                  <TagsSelectMenu
-                    tagOptions={tagOptions}
+                  <SelectMenu
+                    options={tagOptions}
                     fieldValues={field.value}
                     onChange={field.onChange}
                     disabled={isLoadingTags}

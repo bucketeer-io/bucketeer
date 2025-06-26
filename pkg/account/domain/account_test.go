@@ -25,7 +25,13 @@ import (
 	"github.com/bucketeer-io/bucketeer/proto/common"
 )
 
-func TestNewAccountV2(t *testing.T) {
+func TestNewMemberAccount(t *testing.T) {
+	envRoles := []*proto.AccountV2_EnvironmentRole{
+		{
+			EnvironmentId: "environmentID",
+			Role:          proto.AccountV2_Role_Environment_VIEWER,
+		},
+	}
 	a := NewAccountV2(
 		"email",
 		"name",
@@ -37,7 +43,7 @@ func TestNewAccountV2(t *testing.T) {
 		[]string{"team"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
-		[]*proto.AccountV2_EnvironmentRole{},
+		envRoles,
 	)
 	assert.Equal(t, "email", a.Email)
 	assert.Equal(t, "name", a.Name)
@@ -48,6 +54,38 @@ func TestNewAccountV2(t *testing.T) {
 	assert.Equal(t, []string{"tag"}, a.Tags)
 	assert.Equal(t, "organizationID", a.OrganizationId)
 	assert.Equal(t, proto.AccountV2_Role_Organization_MEMBER, a.OrganizationRole)
+	assert.Equal(t, envRoles, a.EnvironmentRoles)
+}
+
+func TestNewAdminAccount(t *testing.T) {
+	envRoles := []*proto.AccountV2_EnvironmentRole{
+		{
+			EnvironmentId: "environmentID",
+			Role:          proto.AccountV2_Role_Environment_EDITOR,
+		},
+	}
+	a := NewAccountV2(
+		"email",
+		"name",
+		"John",
+		"Doe",
+		"en",
+		"avatarImageURL",
+		[]string{"tag"},
+		[]string{"team"},
+		"organizationID",
+		proto.AccountV2_Role_Organization_ADMIN,
+		envRoles,
+	)
+	assert.Equal(t, "email", a.Email)
+	assert.Equal(t, "name", a.Name)
+	assert.Equal(t, "John", a.FirstName)
+	assert.Equal(t, "Doe", a.LastName)
+	assert.Equal(t, "en", a.Language)
+	assert.Equal(t, "avatarImageURL", a.AvatarImageUrl)
+	assert.Equal(t, []string{"tag"}, a.Tags)
+	assert.Equal(t, "organizationID", a.OrganizationId)
+	assert.Equal(t, proto.AccountV2_Role_Organization_ADMIN, a.OrganizationRole)
 	assert.Equal(t, []*proto.AccountV2_EnvironmentRole{}, a.EnvironmentRoles)
 }
 
@@ -135,10 +173,16 @@ func TestChangeOrganizationRole(t *testing.T) {
 		[]string{"team"},
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
-		[]*proto.AccountV2_EnvironmentRole{},
+		[]*proto.AccountV2_EnvironmentRole{
+			{
+				EnvironmentId: "environmentID",
+				Role:          proto.AccountV2_Role_Environment_VIEWER,
+			},
+		},
 	)
 	a.ChangeOrganizationRole(proto.AccountV2_Role_Organization_ADMIN)
 	assert.Equal(t, proto.AccountV2_Role_Organization_ADMIN, a.OrganizationRole)
+	assert.Equal(t, []*proto.AccountV2_EnvironmentRole{}, a.EnvironmentRoles)
 }
 
 func TestChangeEnvironmentRole(t *testing.T) {
@@ -1125,14 +1169,7 @@ func TestAccountV2_Update(t *testing.T) {
 	assert.Equal(t, []string{"tag-1"}, updated.Tags)
 	assert.Equal(t, "organizationID", updated.OrganizationId)
 	assert.Equal(t, proto.AccountV2_Role_Organization_ADMIN, updated.OrganizationRole)
-	assert.Equal(t, []*proto.AccountV2_EnvironmentRole{
-		{
-			EnvironmentId: "e2e",
-		},
-		{
-			EnvironmentId: "default",
-		},
-	}, updated.EnvironmentRoles)
+	assert.Equal(t, []*proto.AccountV2_EnvironmentRole{}, updated.EnvironmentRoles)
 }
 
 func TestAccountV2_GetAccountFullName(t *testing.T) {

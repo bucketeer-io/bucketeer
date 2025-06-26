@@ -31,8 +31,8 @@ import (
 )
 
 const (
-	oldestTimestampDuration   = 24 * time.Hour
-	furthestTimestampDuration = 24 * time.Hour
+	oldestTimestampDuration   = 744 * time.Hour // 31 days - aligns with 30-day DB retention + 1 day buffer
+	furthestTimestampDuration = 1 * time.Hour   // 1 hour - handles legitimate clock skew while preventing malicious timestamps
 )
 
 func TestNewEventValidator(t *testing.T) {
@@ -109,13 +109,18 @@ func TestValidateTimestamp(t *testing.T) {
 			expected:  true,
 		},
 		{
-			desc:      "fail: invalid past time",
-			timestamp: time.Now().AddDate(0, 0, -2).Unix(),
+			desc:      "success: within 30-day retention window",
+			timestamp: time.Now().Add(-30 * 24 * time.Hour).Unix(),
+			expected:  true,
+		},
+		{
+			desc:      "fail: invalid past time - older than 30-day retention",
+			timestamp: time.Now().Add(-31 * 24 * time.Hour).Unix(),
 			expected:  false,
 		},
 		{
 			desc:      "fail: invalid future time",
-			timestamp: time.Now().AddDate(0, 0, 2).Unix(),
+			timestamp: time.Now().Add(2 * time.Hour).Unix(),
 			expected:  false,
 		},
 	}
@@ -261,8 +266,8 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 			v := &eventGoalValidator{
 				event:                     p.inputFunc(),
 				logger:                    logger,
-				oldestTimestampDuration:   24 * time.Hour,
-				furthestTimestampDuration: 24 * time.Hour,
+				oldestTimestampDuration:   oldestTimestampDuration,
+				furthestTimestampDuration: furthestTimestampDuration,
 			}
 			actual, err := v.validate(context.Background())
 			assert.Equal(t, p.expected, actual)
@@ -722,8 +727,8 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 			v := &eventEvaluationValidator{
 				event:                     p.inputFunc(),
 				logger:                    logger,
-				oldestTimestampDuration:   24 * time.Hour,
-				furthestTimestampDuration: 24 * time.Hour,
+				oldestTimestampDuration:   oldestTimestampDuration,
+				furthestTimestampDuration: furthestTimestampDuration,
 			}
 			actual, err := v.validate(context.Background())
 			assert.Equal(t, p.expected, actual)

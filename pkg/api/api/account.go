@@ -326,6 +326,7 @@ func (s *grpcGatewayService) ListAccountsV2(
 			OrganizationRole: request.OrganizationRole,
 			EnvironmentId:    request.EnvironmentId,
 			EnvironmentRole:  request.EnvironmentRole,
+			Teams:            request.Teams,
 		},
 	)
 	if err != nil {

@@ -42,7 +42,7 @@ const PageContent = ({
     useToggleOpen(false);
 
   const filterCount = useMemo(() => {
-    const filterKeys = ['disabled', 'organizationRole'];
+    const filterKeys = ['disabled', 'organizationRole', 'teams'];
     const count = filterKeys.reduce((acc, curr) => {
       if (isNotEmpty(filters[curr as keyof MembersFilters])) ++acc;
       return acc;
@@ -50,18 +50,27 @@ const PageContent = ({
     return count || undefined;
   }, [filters]);
 
-  const onChangeFilters = (values: Partial<MembersFilters>) => {
-    const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
-    onChangSearchParams(options);
-    setFilters({ ...values });
-  };
+  const onChangeFilters = useCallback(
+    (values: Partial<MembersFilters>) => {
+      const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
+      onChangSearchParams(options);
+      setFilters({ ...values });
+    },
+    [filters]
+  );
+
+  const onAddMember = useCallback(() => {
+    if (!envEditable || !isOrganizationAdmin) return undefined;
+    return onAdd;
+  }, [isOrganizationAdmin, envEditable]);
 
   const onClearFilters = useCallback(() => {
     onChangeFilters({
       ...filters,
       searchQuery: '',
       disabled: undefined,
-      organizationRole: undefined
+      organizationRole: undefined,
+      teams: undefined
     });
     onCloseFilterModal();
   }, [filters]);
@@ -105,20 +114,12 @@ const PageContent = ({
             onChangeFilters(value);
             onCloseFilterModal();
           }}
-          onClearFilters={() => {
-            onChangeFilters({
-              disabled: undefined,
-              organizationRole: undefined
-            });
-            onCloseFilterModal();
-          }}
+          onClearFilters={onClearFilters}
         />
       )}
       <TableListContainer>
         <CollectionLoader
-          onAdd={() => {
-            if (isOrganizationAdmin) onAdd();
-          }}
+          onAdd={onAddMember}
           filters={filters}
           setFilters={onChangeFilters}
           onActions={onHandleActions}

@@ -99,9 +99,11 @@ var defaultOptions = options{
 	apiKeyMemoryCacheTTL:              5 * time.Minute,
 	apiKeyMemoryCacheEvictionInterval: 30 * time.Second,
 	pubsubTimeout:                     20 * time.Second,
-	oldestEventTimestamp:              24 * time.Hour,
-	furthestEventTimestamp:            24 * time.Hour,
-	logger:                            zap.NewNop(),
+	// 31 days - aligns with 30-day DB retention + 1 day buffer
+	oldestEventTimestamp: 744 * time.Hour,
+	// 1 hour - handles legitimate clock skew while preventing malicious timestamps
+	furthestEventTimestamp: 1 * time.Hour,
+	logger:                 zap.NewNop(),
 }
 
 type Option func(*options)

@@ -187,15 +187,17 @@ func validateCreateAccountV2Request(req *accountproto.CreateAccountV2Request, lo
 		}
 		return dt.Err()
 	}
-	if len(req.Command.EnvironmentRoles) == 0 {
-		dt, err := statusInvalidEnvironmentRole.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_roles"),
-		})
-		if err != nil {
-			return statusInternal.Err()
+	if req.Command.OrganizationRole == accountproto.AccountV2_Role_Organization_MEMBER {
+		if len(req.Command.EnvironmentRoles) == 0 {
+			dt, err := statusInvalidEnvironmentRole.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_roles"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
-		return dt.Err()
 	}
 	return nil
 }
@@ -244,15 +246,17 @@ func validateCreateAccountV2NoCommandRequest(
 		}
 		return dt.Err()
 	}
-	if len(req.EnvironmentRoles) == 0 {
-		dt, err := statusInvalidEnvironmentRole.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_roles"),
-		})
-		if err != nil {
-			return statusInternal.Err()
+	if req.OrganizationRole == accountproto.AccountV2_Role_Organization_MEMBER {
+		if len(req.EnvironmentRoles) == 0 {
+			dt, err := statusInvalidEnvironmentRole.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_roles"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
-		return dt.Err()
 	}
 	return nil
 }

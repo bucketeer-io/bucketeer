@@ -4,21 +4,26 @@ import { cn } from 'utils/style';
 import { DropdownOption } from 'components/dropdown';
 import Icon from 'components/icon';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+import NameWithTooltip from 'elements/name-with-tooltip';
 
-const TagsSelectMenu = ({
+const SelectMenu = ({
   fieldValues,
-  tagOptions,
+  options,
   disabled,
   selectedFieldValue = 'value',
+  inputPlaceholderKey = 'search-or-create-tags',
+  dropdownPlaceholderKey = 'placeholder-tags',
   onChange,
-  onChangeTagOptions
+  onChangeOptions
 }: {
   fieldValues: string[];
-  tagOptions: DropdownOption[];
+  options: DropdownOption[];
   disabled?: boolean;
   selectedFieldValue?: string;
+  inputPlaceholderKey?: string;
+  dropdownPlaceholderKey?: string;
   onChange: (values: string[]) => void;
-  onChangeTagOptions?: (options: DropdownOption[]) => void;
+  onChangeOptions?: (options: DropdownOption[]) => void;
 }) => {
   const { t } = useTranslation(['form']);
   return (
@@ -28,46 +33,70 @@ const TagsSelectMenu = ({
       showArrow={!fieldValues?.length}
       ariaLabel={'tag-delete-btn'}
       disabled={disabled}
-      inputPlaceholder={t('search-or-create-tags')}
+      inputPlaceholder={t(inputPlaceholderKey)}
       selectedFieldValue={selectedFieldValue}
       trigger={
         fieldValues?.length ? (
           <div className="flex items-center justify-between w-full ">
             <div className="flex items-center w-full gap-1 flex-wrap">
-              {fieldValues?.map((item: string, index: number) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-x-2 px-1.5 rounded bg-primary-100"
-                >
-                  <p className="typo-para-small py-1 whitespace-nowrap text-primary-500">
-                    {tagOptions.find(
-                      ({ label, value }) => item === value || item === label
-                    )?.label || item}
-                  </p>
+              {fieldValues?.map((item: string, index: number) => {
+                const content =
+                  options.find(
+                    ({ label, value }) => item === value || item === label
+                  )?.label || item;
+                const id = `menu-item-${index}`;
+                return (
                   <div
-                    aria-label="tag-delete-btn"
-                    className="flex-center w-3 min-h-full self-stretch cursor-pointer hover:text-gray-900"
-                    onClick={() =>
-                      onChange(
-                        fieldValues.filter((tag: string) => tag !== item)
-                      )
-                    }
+                    key={index}
+                    className="flex items-center max-w-full gap-x-2 px-1.5 rounded bg-primary-100"
                   >
-                    <Icon
-                      icon={IconCloseFilled}
-                      className="h-full w-3 pointer-events-none"
-                    />
+                    <div>
+                      <NameWithTooltip
+                        id={id}
+                        maxLines={1}
+                        content={
+                          <NameWithTooltip.Content content={content} id={id} />
+                        }
+                        trigger={
+                          <NameWithTooltip.Trigger
+                            name={content}
+                            id={id}
+                            className="typo-para-small py-1 !text-primary-500"
+                            maxLines={1}
+                            haveAction={false}
+                          />
+                        }
+                      />
+                    </div>
+
+                    {/* <p className=" truncate">
+                          {content}
+                        </p> */}
+                    <div
+                      aria-label="tag-delete-btn"
+                      className="flex-center w-3 min-w-3 min-h-full self-stretch cursor-pointer hover:text-gray-900"
+                      onClick={() =>
+                        onChange(
+                          fieldValues.filter((tag: string) => tag !== item)
+                        )
+                      }
+                    >
+                      <Icon
+                        icon={IconCloseFilled}
+                        className="h-full w-3 pointer-events-none"
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ) : undefined
       }
       isExpand
       isMultiselect
-      placeholder={t('placeholder-tags')}
-      options={tagOptions}
+      placeholder={t(dropdownPlaceholderKey)}
+      options={options}
       selectedOptions={fieldValues}
       onClear={() => onChange([])}
       onKeyDown={({ event, searchValue, matchOptions, onClearSearchValue }) => {
@@ -76,16 +105,16 @@ const TagsSelectMenu = ({
           : searchValue;
         if (event.key === 'Enter' && !fieldValues?.includes(value)) {
           if (!matchOptions?.length) {
-            if (onChangeTagOptions) {
-              onChangeTagOptions([
-                ...tagOptions,
+            if (onChangeOptions) {
+              onChangeOptions([
+                ...options,
                 {
                   label: value,
                   value
                 }
               ]);
             } else {
-              tagOptions.push({
+              options.push({
                 label: value,
                 value
               });
@@ -120,16 +149,16 @@ const TagsSelectMenu = ({
               onClick={() => {
                 onChange([...fieldValues, searchValue]);
                 onChangeValue('');
-                if (onChangeTagOptions) {
-                  onChangeTagOptions([
-                    ...tagOptions,
+                if (onChangeOptions) {
+                  onChangeOptions([
+                    ...options,
                     {
                       label: searchValue,
                       value: searchValue
                     }
                   ]);
                 } else {
-                  tagOptions.push({
+                  options.push({
                     label: searchValue,
                     value: searchValue
                   });
@@ -149,4 +178,4 @@ const TagsSelectMenu = ({
   );
 };
 
-export default TagsSelectMenu;
+export default SelectMenu;

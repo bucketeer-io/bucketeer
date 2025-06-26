@@ -337,6 +337,7 @@ message ListAccountsV2Request {
   google.protobuf.Int32Value organization_role = 8;
   google.protobuf.StringValue environment_id = 9;
   google.protobuf.Int32Value environment_role = 10;
+  repeated string teams = 11;
 }
 
 message ListAccountsV2Response {

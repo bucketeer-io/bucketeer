@@ -320,5 +320,8 @@
   "select-or-create-tags": "タグを選択または新規作成",
   "no-opts-type-to-create": "オプションがありません。新しいものを作成するには入力してください。",
   "type-to-create": "新しいものを作成するには入力してください。",
-  "search-or-create-tags": "タグを検索または新規作成"
+  "search-or-create-tags": "タグを検索または新規作成",
+  "select-teams": "チームを選択",
+  "search-teams-placeholder": "チームを検索または新規作成",
+  "teams-tooltip": "チームを使用してメンバーをグループ化し、リストページでの表示を簡単にできます"
 }

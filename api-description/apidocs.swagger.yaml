@@ -686,6 +686,7 @@ paths:
             - LAST_SEEN
             - STATE
             - TAGS
+            - TEAMS
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -717,6 +718,13 @@ paths:
           required: false
           type: integer
           format: int32
+        - name: teams
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
       tags:
         - Account
   /v1/audit_log:
@@ -2608,6 +2616,7 @@ definitions:
       - LAST_SEEN
       - STATE
       - TAGS
+      - TEAMS
     default: DEFAULT
   accountListAccountsV2RequestOrderDirection:
     type: string

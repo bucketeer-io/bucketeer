@@ -21,11 +21,12 @@ export enum FilterTypes {
   HAS_PREREQUISITES = 'hasPrerequisites',
   MAINTAINER = 'maintainer',
   TAGS = 'tags',
-  ROLE = 'role',
+  ROLE = 'organizationRole',
   STATUSES = 'statuses',
   HAS_RULE = 'hasFeatureFlagAsRule',
   IN_USE = 'in-use',
-  NOT_IN_USE = 'not-in-use'
+  NOT_IN_USE = 'not-in-use',
+  TEAMS = 'teams'
 }
 
 const useOptions = () => {
@@ -174,6 +175,11 @@ const useOptions = () => {
         value: FilterTypes.ROLE,
         label: translation('role'),
         filterValue: ''
+      },
+      {
+        value: FilterTypes.TEAMS,
+        label: translation('teams'),
+        filterValue: []
       }
     ],
     [language]
@@ -257,11 +263,13 @@ const useOptions = () => {
     () => [
       {
         value: 'Organization_MEMBER',
-        label: translation('member')
+        label: translation('member'),
+        description: translation('member-role-description')
       },
       {
         value: 'Organization_ADMIN',
-        label: translation('admin')
+        label: translation('admin'),
+        description: translation('admin-role-description')
       }
     ],
     [language]
@@ -310,12 +318,12 @@ const useOptions = () => {
   const environmentRoleOptions = useMemo(
     () => [
       {
-        value: 'Environment_EDITOR',
-        label: translation('editor')
-      },
-      {
         value: 'Environment_VIEWER',
         label: translation('viewer')
+      },
+      {
+        value: 'Environment_EDITOR',
+        label: translation('editor')
       }
     ],
     [language]

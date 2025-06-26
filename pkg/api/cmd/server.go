@@ -150,11 +150,11 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		oldestEventTimestamp: cmd.Flag(
 			"oldest-event-timestamp",
 			"The duration of oldest event timestamp from processing time to allow.",
-		).Default("24h").Duration(),
+		).Default("744h").Duration(),
 		furthestEventTimestamp: cmd.Flag(
 			"furthest-event-timestamp",
 			"The duration of furthest event timestamp from processing time to allow.",
-		).Default("24h").Duration(),
+		).Default("1h").Duration(),
 		// PubSub configurations
 		pubSubType: cmd.Flag("pubsub-type",
 			"Type of PubSub to use (google or redis-stream).",

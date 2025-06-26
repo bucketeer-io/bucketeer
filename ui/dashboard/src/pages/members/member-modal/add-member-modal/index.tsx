@@ -11,6 +11,7 @@ import {
 } from '@api/account/account-creator';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateAccounts } from '@queries/accounts';
+import { invalidateTeams, useQueryTeams } from '@queries/teams';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
@@ -22,7 +23,6 @@ import * as yup from 'yup';
 import { EnvironmentRoleType, OrganizationRole } from '@types';
 import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
 import { IconInfo } from '@icons';
-import { useFetchTags } from 'pages/members/collection-loader';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -39,7 +39,7 @@ import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { Tooltip } from 'components/tooltip';
-import TagsSelectMenu from 'elements/tags-select-menu';
+import SelectMenu from 'elements/select-menu';
 import EnvironmentRoles from './environment-roles';
 
 interface AddMemberModalProps {
@@ -64,25 +64,47 @@ export const languageList: LanguageItem[] = [
 
 export interface AddMemberForm {
   email: string;
-  role: OrganizationRole;
+  memberRole: OrganizationRole;
   environmentRoles: EnvironmentRoleItem[];
-  tags: string[];
+  teams: string[];
 }
 
 export const formSchema = ({ requiredMessage }: FormSchemaProps) =>
   yup.object().shape({
     email: yup.string().email().required(requiredMessage),
-    role: yup.mixed<OrganizationRole>().required(requiredMessage),
+    memberRole: yup.mixed<OrganizationRole>().required(requiredMessage),
     environmentRoles: yup
       .array()
-      .required(requiredMessage)
+      .when('memberRole', {
+        is: (role: OrganizationRole) => role === 'Organization_MEMBER',
+        then: schema => schema.required(requiredMessage)
+      })
       .of(
         yup.object().shape({
-          environmentId: yup.string().required(requiredMessage),
-          role: yup.mixed<EnvironmentRoleType>().required(requiredMessage)
+          environmentId: yup.string().when('memberRole', {
+            is: (role: OrganizationRole) => role === 'Organization_MEMBER',
+            then: schema => schema.required(requiredMessage)
+          }),
+          role: yup
+            .mixed<EnvironmentRoleType>()
+            .when('memberRole', {
+              is: (role: OrganizationRole) => role === 'Organization_MEMBER',
+              then: schema => schema.required(requiredMessage)
+            })
+            .test('isUnassigned', (value, context) => {
+              const isMemberRole =
+                context?.from &&
+                context?.from[1]?.value?.memberRole === 'Organization_MEMBER';
+              if (value === 'Environment_UNASSIGNED' && isMemberRole)
+                return context.createError({
+                  message: requiredMessage,
+                  path: context.path
+                });
+              return true;
+            })
         })
       ),
-    tags: yup.array().of(yup.string())
+    teams: yup.array().of(yup.string())
   });
 
 const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
@@ -93,43 +115,42 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const { organizationRoles } = useOptions();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const [tagOptions, setTagOptions] = useState<DropdownOption[]>([]);
+  const [teamOptions, setTeamOptions] = useState<DropdownOption[]>([]);
 
-  const { data: tagCollection, isLoading: isLoadingTags } = useFetchTags({
-    organizationId: currentEnvironment.organizationId,
-    entityType: 'ACCOUNT'
+  const { data: teamCollection, isLoading: isLoadingTeams } = useQueryTeams({
+    params: {
+      cursor: String(0),
+      organizationId: currentEnvironment.organizationId
+    }
   });
 
   const form = useForm<AddMemberForm>({
     resolver: yupResolver(useFormSchema(formSchema)) as Resolver<AddMemberForm>,
     defaultValues: {
       email: '',
-      role: undefined,
+      memberRole: undefined,
       environmentRoles: [defaultEnvironmentRole],
-      tags: []
+      teams: []
     }
   });
 
   const {
     watch,
-    formState: { dirtyFields, isValid, isSubmitting }
+    formState: { isValid, isSubmitting }
   } = form;
   const memberEnvironments = watch('environmentRoles');
-  const tags = tagCollection?.tags || [];
+  const roleWatch = watch('memberRole');
+  const isAdminRole = roleWatch === 'Organization_ADMIN';
+  const teams = teamCollection?.teams || [];
 
-  const uniqueNameTags = uniqBy(tags || [], 'name')?.map(item => ({
+  const uniqueNameTeams = uniqBy(teams || [], 'name')?.map(item => ({
     label: item.name,
-    value: item.id,
-    environmentId: item.environmentId
+    value: item.name
   }));
 
-  const tagDropdownOptions = uniqBy(
-    [...tagOptions, ...uniqueNameTags],
+  const teamDropdownOptions = uniqBy(
+    [...teamOptions, ...uniqueNameTeams],
     'label'
-  )?.filter(
-    tag =>
-      memberEnvironments.find(env => env.environmentId === tag.environmentId) ||
-      !tag?.environmentId
   );
 
   const { data: collection } = useFetchEnvironments({
@@ -139,25 +160,29 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const { formattedEnvironments } = onFormatEnvironments(environments);
 
   const checkSubmitBtnDisabled = useCallback(() => {
+    if (isValid && isAdminRole) return false;
     const checkEnvironments = memberEnvironments.every(
       item => item.environmentId && item.role !== 'Environment_UNASSIGNED'
     );
-    if (!checkEnvironments || !isValid) {
-      return true;
-    }
+    if (!checkEnvironments || !isValid) return true;
+
     return false;
-  }, [dirtyFields, isValid, memberEnvironments]);
+  }, [isValid, memberEnvironments, isAdminRole]);
 
   const onSubmit: SubmitHandler<AddMemberForm> = async values => {
     return accountCreator({
       organizationId: currentEnvironment.organizationId,
       email: values.email,
-      organizationRole: values.role,
-      environmentRoles: values.environmentRoles.map(item => ({
-        ...item,
-        environmentId: checkEnvironmentEmptyId(item.environmentId)
-      })),
-      tags: values.tags ?? []
+      organizationRole: values.memberRole,
+      ...(isAdminRole
+        ? {}
+        : {
+            environmentRoles: values.environmentRoles.map(item => ({
+              ...item,
+              environmentId: checkEnvironmentEmptyId(item.environmentId)
+            }))
+          }),
+      teams: values.teams ?? []
     })
       .then(() => {
         notify({
@@ -167,6 +192,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
           })
         });
         invalidateAccounts(queryClient);
+        invalidateTeams(queryClient);
         onClose();
       })
       .catch(error => errorNotify(error));
@@ -198,23 +224,10 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
             />
             <Form.Field
               control={form.control}
-              name="role"
+              name="memberRole"
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label className="relative w-fit">
-                    {t('role')}
-                    <Tooltip
-                      align="start"
-                      alignOffset={-30}
-                      trigger={
-                        <div className="flex-center absolute top-0 -right-6">
-                          <Icon icon={IconInfo} size={'sm'} color="gray-600" />
-                        </div>
-                      }
-                      content={t('form:member-role-tooltip')}
-                      className="!z-[100] max-w-[400px]"
-                    />
-                  </Form.Label>
+                  <Form.Label required>{t('role')}</Form.Label>
                   <Form.Control className="w-full">
                     <DropdownMenu>
                       <DropdownMenuTrigger
@@ -238,6 +251,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                             key={index}
                             value={item.value}
                             label={item.label}
+                            description={item.description}
                             onSelectOption={value => {
                               field.onChange(value);
                             }}
@@ -253,11 +267,11 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
 
             <Form.Field
               control={form.control}
-              name={`tags`}
+              name={`teams`}
               render={({ field }) => (
                 <Form.Item className="py-2">
                   <Form.Label className="relative w-fit">
-                    {t('tags')}
+                    {t('teams')}
                     <Tooltip
                       align="start"
                       alignOffset={-30}
@@ -266,17 +280,19 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                           <Icon icon={IconInfo} size={'sm'} color="gray-600" />
                         </div>
                       }
-                      content={t('form:member-tags-tooltip')}
+                      content={t('form:teams-tooltip')}
                       className="!z-[100] max-w-[400px]"
                     />
                   </Form.Label>
                   <Form.Control>
-                    <TagsSelectMenu
-                      tagOptions={tagDropdownOptions}
+                    <SelectMenu
+                      options={teamDropdownOptions}
                       fieldValues={field.value}
+                      disabled={isLoadingTeams}
+                      inputPlaceholderKey="search-teams-placeholder"
+                      dropdownPlaceholderKey="select-teams"
                       onChange={field.onChange}
-                      disabled={isLoadingTags}
-                      onChangeTagOptions={setTagOptions}
+                      onChangeOptions={setTeamOptions}
                     />
                   </Form.Control>
                   <Form.Message />
@@ -284,8 +300,12 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
               )}
             />
 
-            <Divider className="mt-1 mb-3" />
-            <EnvironmentRoles environments={formattedEnvironments} />
+            {!isAdminRole && !!roleWatch && (
+              <>
+                <Divider className="mt-1 mb-3" />
+                <EnvironmentRoles environments={formattedEnvironments} />
+              </>
+            )}
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={
