@@ -102,7 +102,7 @@ export const useColumns = ({
         const account = row.original;
         return (
           <div className="text-gray-700 typo-para-medium">
-            {String(account.organizationRole).split('_')[1]}
+            {t(String(account.organizationRole).split('_')[1]?.toLowerCase())}
           </div>
         );
       }

@@ -81,7 +81,7 @@ const EvaluationTable = ({
               </p>
             </div>
             <div className="w-[60%] typo-para-medium text-gray-700">
-              {item.timeseries?.totalCounts}
+              {Number(item.timeseries?.totalCounts || 0)?.toLocaleString()}
             </div>
           </div>
         );

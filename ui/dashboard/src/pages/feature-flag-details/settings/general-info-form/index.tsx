@@ -216,6 +216,7 @@ const GeneralInfoForm = ({
                 <Form.Label required>{t('common:maintainer')}</Form.Label>
                 <Form.Control>
                   <DropdownMenuWithSearch
+                    align="start"
                     disabled={disabled}
                     isLoading={isLoadingAccounts}
                     placeholder={t('placeholder-maintainer')}

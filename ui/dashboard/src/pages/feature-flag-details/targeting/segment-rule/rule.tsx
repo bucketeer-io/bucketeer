@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useFieldArray, useFormContext, FieldPath } from 'react-hook-form';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { omit } from 'lodash';
 import { v4 as uuid } from 'uuid';
@@ -23,11 +24,6 @@ import { Tooltip } from 'components/tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import FeatureFlagStatus from 'elements/feature-flag-status';
 import VariationLabel from 'elements/variation-label';
-import {
-  conditionerCompareOptions,
-  conditionerDateOptions,
-  situationOptions
-} from '../constants';
 import { TargetingSchema } from '../form-schema';
 import { UserMessage } from '../individual-rule';
 import { RuleClauseType } from '../types';
@@ -41,6 +37,11 @@ interface Props {
 
 const RuleForm = ({ feature, features, segmentIndex, userSegments }: Props) => {
   const { t } = useTranslation(['form', 'common', 'table']);
+  const {
+    conditionerCompareOptions,
+    conditionerDateOptions,
+    situationOptions
+  } = useOptions();
 
   const methods = useFormContext<TargetingSchema>();
   const { control, watch, setValue } = methods;

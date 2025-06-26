@@ -6,7 +6,7 @@
     "must-be-unique": "This must be unique",
     "max-length-number": "The maximum length for this field is {{count}} numbers.",
     "max-length-string": "The maximum length for this field is {{count}} characters.",
-    "id-rule": "{{name}} id must start with a letter or number and only contain letters, numbers, or '-'",
+    "id-rule": "{{name}} ID must start with a letter or number and only contain letters, numbers, or '-'",
     "experiment-running-warning": "Changing variations may affect the accuracy of the experiment.",
     "experiment-running-warning-desc": "To maintain the integrity and accuracy of experiment results, you cannot add, delete, or modify variation values while the experiment is running.",
     "operation": {

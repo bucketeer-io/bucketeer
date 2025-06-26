@@ -33,6 +33,7 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
+import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 
 export interface ExperimentSettingsForm {
@@ -374,12 +375,6 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                   <Form.Item className="flex flex-col flex-1 overflow-hidden py-0">
                     <Form.Label required className="relative w-fit">
                       {t('common:flag')}
-                      <Icon
-                        icon={IconInfo}
-                        size="xs"
-                        color="gray-500"
-                        className="absolute -right-6"
-                      />
                     </Form.Label>
                     <Form.Control>
                       <DropdownMenu>
@@ -475,11 +470,16 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                   <Form.Item className="py-0">
                     <Form.Label required className="relative w-fit">
                       {t('common:goals')}
-                      <Icon
-                        icon={IconInfo}
-                        size="xs"
-                        color="gray-500"
-                        className="absolute -right-6"
+                      <Tooltip
+                        align="start"
+                        alignOffset={-50}
+                        content={t('experiments.goals-tooltip')}
+                        trigger={
+                          <div className="flex-center absolute top-0 -right-6">
+                            <Icon icon={IconInfo} size="xs" color="gray-500" />
+                          </div>
+                        }
+                        className="max-w-[300px]"
                       />
                     </Form.Label>
                     <Form.Control>

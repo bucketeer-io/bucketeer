@@ -207,6 +207,7 @@ const DropdownMenuItem = forwardRef<
     closeWhenSelected?: boolean;
     additionalElement?: ReactNode;
     disabled?: boolean;
+    isNormalItem?: boolean;
     onSelectOption?: (value: DropdownValue, event: Event) => void;
   }
 >(
@@ -223,6 +224,7 @@ const DropdownMenuItem = forwardRef<
       closeWhenSelected = true,
       additionalElement,
       disabled,
+      isNormalItem = false,
       onSelectOption,
       ...props
     },
@@ -265,24 +267,30 @@ const DropdownMenuItem = forwardRef<
           ))}
 
         <div className="flex flex-col gap-y-1.5 w-full overflow-hidden">
-          <NameWithTooltip
-            id={dropdownMenuItemId}
-            content={
-              <NameWithTooltip.Content
-                content={label}
-                id={dropdownMenuItemId}
-              />
-            }
-            trigger={
-              <NameWithTooltip.Trigger
-                id={dropdownMenuItemId}
-                name={label as string}
-                haveAction={false}
-                maxLines={1}
-              />
-            }
-            maxLines={1}
-          />
+          {isNormalItem ? (
+            <div className="typo-para-medium leading-5 text-gray-700 truncate">
+              {label}
+            </div>
+          ) : (
+            <NameWithTooltip
+              id={dropdownMenuItemId}
+              content={
+                <NameWithTooltip.Content
+                  content={label}
+                  id={dropdownMenuItemId}
+                />
+              }
+              trigger={
+                <NameWithTooltip.Trigger
+                  id={dropdownMenuItemId}
+                  name={label as string}
+                  haveAction={false}
+                  maxLines={1}
+                />
+              }
+              maxLines={1}
+            />
+          )}
           {description && (
             <p className="typo-para-small leading-4 text-gray-500">
               {description}

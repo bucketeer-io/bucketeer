@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 import { getLanguage, i18n } from 'i18n';
+import { FeatureRuleClauseOperator } from '@types';
 import {
   IconFlagJSON,
   IconFlagNumber,
   IconFlagString,
   IconFlagSwitch
 } from '@icons';
+import { RuleClauseType } from 'pages/feature-flag-details/targeting/types';
 import { StatusFilterType } from 'pages/feature-flags/types';
 
 export interface FilterOption {
@@ -329,6 +331,78 @@ const useOptions = () => {
     [language]
   );
 
+  const situationOptions = useMemo(
+    () => [
+      {
+        label: translation('feature-flags.compare', 'form'),
+        value: RuleClauseType.COMPARE
+      },
+      {
+        label: translation('feature-flags.user-segment', 'form'),
+        value: RuleClauseType.SEGMENT
+      },
+      {
+        label: translation('feature-flags.date', 'form'),
+        value: RuleClauseType.DATE
+      },
+      {
+        label: translation('feature-flags.feature-flag', 'form'),
+        value: RuleClauseType.FEATURE_FLAG
+      }
+    ],
+    [language]
+  );
+
+  const conditionerCompareOptions = [
+    {
+      label: '=',
+      value: FeatureRuleClauseOperator.EQUALS
+    },
+    {
+      label: '>=',
+      value: FeatureRuleClauseOperator.GREATER_OR_EQUAL
+    },
+    {
+      label: '>',
+      value: FeatureRuleClauseOperator.GREATER
+    },
+    {
+      label: '<=',
+      value: FeatureRuleClauseOperator.LESS_OR_EQUAL
+    },
+    {
+      label: '<',
+      value: FeatureRuleClauseOperator.LESS
+    },
+    {
+      label: translation('contains', 'form'),
+      value: FeatureRuleClauseOperator.IN
+    },
+    {
+      label: translation('partially-matches', 'form'),
+      value: FeatureRuleClauseOperator.PARTIALLY_MATCH
+    },
+    {
+      label: translation('starts-with', 'form'),
+      value: FeatureRuleClauseOperator.STARTS_WITH
+    },
+    {
+      label: translation('ends-with', 'form'),
+      value: FeatureRuleClauseOperator.ENDS_WITH
+    }
+  ];
+
+  const conditionerDateOptions = [
+    {
+      label: translation('before', 'form'),
+      value: FeatureRuleClauseOperator.BEFORE
+    },
+    {
+      label: translation('after', 'form'),
+      value: FeatureRuleClauseOperator.AFTER
+    }
+  ];
+
   return {
     filterEnabledOptions,
     filterStatusOptions,
@@ -345,7 +419,10 @@ const useOptions = () => {
     organizationRoles,
     flagSortByOptions,
     flagSortDirectionOptions,
-    environmentRoleOptions
+    environmentRoleOptions,
+    situationOptions,
+    conditionerCompareOptions,
+    conditionerDateOptions
   };
 };
 

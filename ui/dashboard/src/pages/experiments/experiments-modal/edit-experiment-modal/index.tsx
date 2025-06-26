@@ -40,6 +40,7 @@ import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import FormLoading from 'elements/form-loading';
 import VariationLabel from 'elements/variation-label';
@@ -573,11 +574,16 @@ const EditExperimentModal = ({
                   <Form.Item>
                     <Form.Label required className="relative w-fit">
                       {t('common:goals')}
-                      <Icon
-                        icon={IconInfo}
-                        size="xs"
-                        color="gray-500"
-                        className="absolute -right-6"
+                      <Tooltip
+                        align="start"
+                        alignOffset={-52}
+                        content={t('experiments.goals-tooltip')}
+                        trigger={
+                          <div className="flex-center absolute top-0 -right-6">
+                            <Icon icon={IconInfo} size="xs" color="gray-500" />
+                          </div>
+                        }
+                        className="max-w-[300px]"
                       />
                     </Form.Label>
                     <Form.Control>

@@ -13,7 +13,8 @@ import { isNumber } from 'utils/chart';
 import { isJsonString } from 'utils/converts';
 import { FlagSwitchVariationType } from './types';
 
-const nameSchema = yup.string().max(FEATURE_NAME_MAX_LENGTH).required();
+const nameSchema = ({ requiredMessage }: { requiredMessage: string }) =>
+  yup.string().max(FEATURE_NAME_MAX_LENGTH).required(requiredMessage);
 const descriptionSchema = yup.string().max(FEATURE_DESCRIPTION_MAX_LENGTH);
 
 export interface VariationSchema {
@@ -136,7 +137,7 @@ export const createFlagFormSchema = ({
   translation
 }: FormSchemaProps) =>
   yup.object().shape({
-    name: nameSchema,
+    name: nameSchema({ requiredMessage }),
     flagId: yup
       .string()
       .required(requiredMessage)

@@ -23,7 +23,14 @@ const DebuggerUserIds = () => {
                   label: item,
                   value: item
                 }))}
-                placeholder={t(`enter-user-ids`)}
+                placeholder={t(`type-to-create-user-id`)}
+                formatCreateLabel={value => (
+                  <p>
+                    {`${t('create-option', {
+                      option: value
+                    })}`}
+                  </p>
+                )}
                 options={[]}
                 onChange={ids => field.onChange(ids.map(item => item.value))}
                 noOptionsMessage={() => (

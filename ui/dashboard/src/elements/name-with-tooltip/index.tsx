@@ -40,7 +40,7 @@ const DefaultTrigger = forwardRef<HTMLDivElement, DefaultTriggerProps>(
         )}
         onClick={onClick}
       >
-        <p
+        <div
           className="text-start break-all"
           style={{
             display: '-webkit-box',
@@ -50,13 +50,13 @@ const DefaultTrigger = forwardRef<HTMLDivElement, DefaultTriggerProps>(
           }}
         >
           {name}
-        </p>
-        <p
+        </div>
+        <div
           id={childrenId}
           className="w-full break-all -z-10 invisible absolute left-0 right-0 text-transparent"
         >
           {name}
-        </p>
+        </div>
       </div>
     );
   }

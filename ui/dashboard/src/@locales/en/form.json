@@ -66,6 +66,7 @@
   "placeholder-search-user-segments": "Search user segment",
   "list-of-users-ids": "List Of Users IDs",
   "browse-files": "Browse files",
+  "browse": "browse",
   "enter-user-ids": "Enter user IDs",
   "update-user-segment": "Updating this field will replace the current list with the new one.",
   "update-user-segment-warning": "<p>The user ID list can't be updated because {{count}} flag is using it. Remove the segment from the flag before updating it.</p>",
@@ -103,7 +104,8 @@
     "select-variation": "Select Variation",
     "time": "Time",
     "on": "On",
-    "off": "Off"
+    "off": "Off",
+    "goals-tooltip": "The goal is the event you track to measure which variation performs better."
   },
   "advanced": "Advanced",
   "link": "Link",
@@ -326,5 +328,19 @@
   "number": "Number",
   "select-teams": "Select teams",
   "search-teams-placeholder": "Search or create new teams",
-  "teams-tooltip": "Teams can be used to group members, making it easier when listing them on the list page"
+  "teams-tooltip": "Teams can be used to group members, making it easier when listing them on the list page",
+  "available": "Available",
+  "unavailable": "Unavailable",
+  "control": "Control",
+  "treatment": "Treatment",
+  "disabled": "Disabled",
+  "enabled": "Enabled",
+  "env-url-tooltip": "The URL code will be used as part of the management console's URL, so it must be unique across all projects. It can contain lowercase letters, numbers, and hyphens (-), up to a maximum of 50 characters.",
+  "project-url-tooltip": "The Project's URL code is used as part of the management console's URL. It must be unique within the organization. It can contain lowercase letters, numbers, and hyphens (-), up to 50 characters.",
+  "sdk-api-endpoint": "SDK API endpoint",
+  "getting-started": "Getting started",
+  "sdk-configuration": "SDK configuration",
+  "type-to-create-user-id": "Type to create a user ID.",
+  "upload-files-error": "Some files were not uploaded because they are of an unsupported type. Please try again with the allowed formats.",
+  "create-option": "Create \"{{option}}\""
 }

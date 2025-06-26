@@ -66,6 +66,7 @@
   "placeholder-search-user-segments": "ユーザーセグメントを検索",
   "list-of-users-ids": "ユーザーIDリスト",
   "browse-files": "ファイルを参照",
+  "browse": "ブラウズ",
   "enter-user-ids": "ユーザーIDを入力",
   "update-user-segment": "このフィールドを更新すると、現在のリストが新しいリストに置き換えられます。",
   "update-user-segment-warning": "<p>{{count}}個のフラグが使用しているため、ユーザーIDリストを更新できません。更新する前にフラグからセグメントを削除してください。</p>",
@@ -103,7 +104,8 @@
     "select-variation": "バリエーションを選択",
     "time": "時間",
     "on": "オン",
-    "off": "オフ"
+    "off": "オフ",
+    "goals-tooltip": "ゴールは、エクスペリメントを測定し、優れたバリエーションを判断するためのイベントです。"
   },
   "advanced": "詳細設定",
   "link": "リンク",
@@ -323,5 +325,22 @@
   "search-or-create-tags": "タグを検索または新規作成",
   "select-teams": "チームを選択",
   "search-teams-placeholder": "チームを検索または新規作成",
-  "teams-tooltip": "チームを使用してメンバーをグループ化し、リストページでの表示を簡単にできます"
+  "teams-tooltip": "チームを使用してメンバーをグループ化し、リストページでの表示を簡単にできます",
+  "boolean": "ブール値",
+  "string": "文字列",
+  "number": "数値",
+  "available": "利用可能",
+  "unavailable": "利用不可",
+  "control": "コントロール",
+  "treatment": "処置",
+  "disabled": "無効",
+  "enabled": "有効",
+  "env-url-tooltip": "URLコードは管理画面のURLの一部として使用されるため、他プロジェクトと重複しない値である必要があります。小文字、数字、ハイフン (-) の任意の組み合わせ（最大 50 文字）。",
+  "project-url-tooltip": "プロジェクトのURLコードは管理画面のURLの一部として使用されます。組織内で一意である必要があります。小文字、数字、ハイフン（-）の組み合わせで、最大50文字まで使用できます。",
+  "sdk-api-endpoint": "SDK APIエンドポイント",
+  "getting-started": "はじめに",
+  "sdk-configuration": "SDK設定",
+  "type-to-create-user-id": "user IDを入力してください。",
+  "upload-files-error": "一部のファイルはサポートされていない形式であるためアップロードできませんでした。許可されている形式でもう一度お試しください。",
+  "create-option": "「{{option}}」作成する"
 }

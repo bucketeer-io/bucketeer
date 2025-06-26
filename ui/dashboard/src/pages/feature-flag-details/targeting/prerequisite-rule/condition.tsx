@@ -123,7 +123,7 @@ const ConditionForm = forwardRef(
               <Trans
                 i18nKey={'form:feature-flags.receiving-state'}
                 values={{
-                  state: 'ON'
+                  state: t('form:experiments.on').toUpperCase()
                 }}
               />
             </div>

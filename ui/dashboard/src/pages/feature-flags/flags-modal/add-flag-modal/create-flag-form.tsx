@@ -10,7 +10,7 @@ import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import useFormSchema from 'hooks/use-form-schema';
 import useOptions from 'hooks/use-options';
-import { useTranslation } from 'i18n';
+import { getLanguage, Language, useTranslation } from 'i18n';
 import { cloneDeep } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { Feature, FeatureVariation, FeatureVariationType } from '@types';
@@ -79,6 +79,8 @@ const CreateFlagForm = ({
   const formSchema = useFormSchema(createFlagFormSchema);
   const { flagTypeOptions } = useOptions();
   const queryClient = useQueryClient();
+  const isJapaneseLanguage = getLanguage() === Language.JAPANESE;
+
   const { t } = useTranslation(['common', 'form', 'message']);
   const { notify, errorNotify } = useToast();
 
@@ -399,7 +401,9 @@ const CreateFlagForm = ({
                       <Trans
                         i18nKey={'form:feature-flags.serve-targeting'}
                         values={{
-                          state: 'ON'
+                          state: isJapaneseLanguage
+                            ? t('form:experiments.on')
+                            : t('form:experiments.on').toUpperCase()
                         }}
                       />
                     </Form.Label>
@@ -457,7 +461,9 @@ const CreateFlagForm = ({
                       <Trans
                         i18nKey={'form:feature-flags.serve-targeting'}
                         values={{
-                          state: 'OFF'
+                          state: isJapaneseLanguage
+                            ? t('form:experiments.off')
+                            : t('form:experiments.off').toUpperCase()
                         }}
                       />
                     </Form.Label>

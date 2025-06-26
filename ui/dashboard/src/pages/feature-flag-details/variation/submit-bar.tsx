@@ -1,15 +1,10 @@
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
+import useOptions from 'hooks/use-options';
 import { useTranslation } from 'i18n';
 import { Feature } from '@types';
 import { cn } from 'utils/style';
-import {
-  IconFlagJSON,
-  IconFlagNumber,
-  IconFlagString,
-  IconFlagSwitch,
-  IconInfo
-} from '@icons';
+import { IconInfo } from '@icons';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tooltip } from 'components/tooltip';
@@ -25,18 +20,15 @@ const SubmitBar = ({
   onShowConfirmDialog: () => void;
 }) => {
   const { t } = useTranslation(['common', 'table']);
-
+  const { flagTypeOptions } = useOptions();
   const {
     formState: { isDirty, isValid }
   } = useFormContext();
 
-  const flagTypeIcon = useMemo(() => {
-    const { variationType } = feature;
-    if (variationType === 'JSON') return IconFlagJSON;
-    if (variationType === 'BOOLEAN') return IconFlagSwitch;
-    if (variationType === 'NUMBER') return IconFlagNumber;
-    return IconFlagString;
-  }, [feature]);
+  const currentOption = useMemo(
+    () => flagTypeOptions.find(item => item.value === feature.variationType),
+    [feature, flagTypeOptions]
+  );
 
   return (
     <div className="flex items-center justify-between w-full gap-x-6">
@@ -60,13 +52,13 @@ const SubmitBar = ({
           }
           className="max-w-[300px]"
         />
-        <Icon icon={flagTypeIcon} size="sm" />
+        {currentOption && <Icon icon={currentOption?.icon} size="sm" />}
         <p
-          className={cn('typo-para-small text-gray-600 capitalize', {
+          className={cn('typo-para-small text-gray-600', {
             uppercase: feature.variationType === 'JSON'
           })}
         >
-          {feature?.variationType?.toLowerCase()}
+          {currentOption?.label}
         </p>
       </div>
       <DisabledButtonTooltip

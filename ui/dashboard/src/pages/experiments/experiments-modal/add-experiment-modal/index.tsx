@@ -34,6 +34,7 @@ import Input from 'components/input';
 import DialogModal from 'components/modal/dialog';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
+import { Tooltip } from 'components/tooltip';
 import CreateGoalModal from 'elements/create-goal-modal';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
 import FeatureFlagStatus from 'elements/feature-flag-status';
@@ -430,12 +431,6 @@ const AddExperimentModal = ({
                 <Form.Item className="flex flex-col w-full">
                   <Form.Label required className="relative w-fit">
                     {t('common:flag')}
-                    <Icon
-                      icon={IconInfo}
-                      size="xs"
-                      color="gray-500"
-                      className="absolute -right-6"
-                    />
                   </Form.Label>
                   <Form.Control>
                     <DropdownMenuWithSearch
@@ -532,11 +527,16 @@ const AddExperimentModal = ({
                 <Form.Item>
                   <Form.Label required className="relative w-fit">
                     {t('common:goals')}
-                    <Icon
-                      icon={IconInfo}
-                      size="xs"
-                      color="gray-500"
-                      className="absolute -right-6"
+                    <Tooltip
+                      align="start"
+                      alignOffset={-52}
+                      content={t('experiments.goals-tooltip')}
+                      trigger={
+                        <div className="flex-center absolute top-0 -right-6">
+                          <Icon icon={IconInfo} size="xs" color="gray-500" />
+                        </div>
+                      }
+                      className="max-w-[300px]"
                     />
                   </Form.Label>
                   <Form.Control>

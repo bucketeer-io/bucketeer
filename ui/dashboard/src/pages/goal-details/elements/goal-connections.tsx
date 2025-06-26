@@ -72,6 +72,7 @@ const ConnectionItem = ({
   name: string;
   status: ExperimentStatus | OperationStatus;
 }) => {
+  const { t } = useTranslation(['table']);
   return (
     <div className="grid grid-cols-12 w-full gap-x-4">
       <div className={experimentCls}>
@@ -85,7 +86,7 @@ const ConnectionItem = ({
       <div className={experimentStatusCls}>
         <Status
           status={status}
-          text={status?.toLowerCase()?.replace('_', ' ')}
+          text={t(`experiment.${status?.toLowerCase()?.replace('_', '-')}`)}
         />
       </div>
     </div>

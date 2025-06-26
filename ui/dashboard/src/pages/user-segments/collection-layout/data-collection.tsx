@@ -89,7 +89,7 @@ export const useColumns = ({
             }
           >
             {segment?.features?.length}
-            {` ${segment?.features?.length === 1 ? 'Flag' : 'Flags'}`}
+            {` ${segment?.features?.length === 1 ? t('flag') : t('table:flags')}`}
           </div>
         );
       }
@@ -114,7 +114,7 @@ export const useColumns = ({
             )}
           >
             {isUploading
-              ? 'Uploading'
+              ? t('uploading')
               : segment.isInUseStatus
                 ? t('in-use')
                 : t('not-in-use')}
