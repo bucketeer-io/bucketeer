@@ -152,7 +152,7 @@ I adopt **Solution3** because it will not increase development costs or PubSub c
         ```
 
 ## Processor
-- Add a process to the `EvalEvtWriter` to extract new attributes from the `EvaluationEvent`'s `UserData` and save them in the `UserAttributesCache`.
+- Extract the UserAttribute from the `EvaluationEvent` obtained by the existing `EvaluationCountEventPersister.Process()`. Save the UserAttribute using `UserAttributesCache`.
 
 ## API
 
