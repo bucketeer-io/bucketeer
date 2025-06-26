@@ -14,3 +14,5 @@ tools/dev/cert/api_key_server
 tools/redis/bin
 .idea
 .vscode
+# Docker Compose logs
+docker-compose/logs/
