@@ -26,7 +26,7 @@ import Card from 'elements/card';
 import DateTooltip from 'elements/date-tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import DropdownMenuWithSearch from 'elements/dropdown-with-search';
-import TagsSelectMenu from 'elements/tags-select-menu';
+import SelectMenu from 'elements/select-menu';
 import { generalInfoFormSchema, GeneralInfoFormType } from './form-schema';
 import SaveWithCommentModal from './modals/save-with-comment';
 
@@ -301,12 +301,12 @@ const GeneralInfoForm = ({
                   />
                 </Form.Label>
                 <Form.Control>
-                  <TagsSelectMenu
+                  <SelectMenu
                     disabled={isLoadingTags || disabled}
                     fieldValues={field.value || []}
-                    tagOptions={tagOptions}
+                    options={tagOptions}
                     onChange={field.onChange}
-                    onChangeTagOptions={setTagOptions}
+                    onChangeOptions={setTagOptions}
                   />
                 </Form.Control>
                 <Form.Message />

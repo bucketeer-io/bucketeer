@@ -8,7 +8,7 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import { Tooltip } from 'components/tooltip';
-import TagsSelectMenu from 'elements/tags-select-menu';
+import SelectMenu from 'elements/select-menu';
 
 const GeneralInfo = ({
   tags,
@@ -125,10 +125,10 @@ const GeneralInfo = ({
                   />
                 </Form.Label>
                 <Form.Control>
-                  <TagsSelectMenu
+                  <SelectMenu
                     fieldValues={field.value || []}
                     onChange={field.onChange}
-                    tagOptions={tagOptions}
+                    options={tagOptions}
                   />
                 </Form.Control>
                 <Form.Message />

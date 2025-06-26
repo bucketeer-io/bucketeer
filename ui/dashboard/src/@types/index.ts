@@ -23,3 +23,4 @@ export * from './debugger';
 export * from './evaluation';
 export * from './code-refs';
 export * from './trigger';
+export * from './team';

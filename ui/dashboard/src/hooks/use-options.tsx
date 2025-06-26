@@ -21,11 +21,12 @@ export enum FilterTypes {
   HAS_PREREQUISITES = 'hasPrerequisites',
   MAINTAINER = 'maintainer',
   TAGS = 'tags',
-  ROLE = 'role',
+  ROLE = 'organizationRole',
   STATUSES = 'statuses',
   HAS_RULE = 'hasFeatureFlagAsRule',
   IN_USE = 'in-use',
-  NOT_IN_USE = 'not-in-use'
+  NOT_IN_USE = 'not-in-use',
+  TEAMS = 'teams'
 }
 
 const useOptions = () => {
@@ -174,6 +175,11 @@ const useOptions = () => {
         value: FilterTypes.ROLE,
         label: translation('role'),
         filterValue: ''
+      },
+      {
+        value: FilterTypes.TEAMS,
+        label: translation('teams'),
+        filterValue: []
       }
     ],
     [language]

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { accountDisable, accountEnable } from '@api/account';
 import { accountDeleter } from '@api/account/account-deleter';
@@ -89,23 +89,26 @@ const PageLoader = () => {
     }
   };
 
-  const onHandleActions = (member: Account, type: MemberActionsType) => {
-    setSelectedMember(member);
-    switch (type) {
-      case 'EDIT':
-        return onOpenEditModal();
-      case 'DELETE':
-        return onOpenDeleteModal();
-      case 'DETAILS':
-        return onOpenDetailsModal();
-      case 'DISABLE':
-      case 'ENABLE':
-        setIsDisabling(type === 'DISABLE');
-        return onOpenConfirmModal();
-      default:
-        return;
-    }
-  };
+  const onHandleActions = useCallback(
+    (member: Account, type: MemberActionsType) => {
+      setSelectedMember(member);
+      switch (type) {
+        case 'EDIT':
+          return onOpenEditModal();
+        case 'DELETE':
+          return onOpenDeleteModal();
+        case 'DETAILS':
+          return onOpenDetailsModal();
+        case 'DISABLE':
+        case 'ENABLE':
+          setIsDisabling(type === 'DISABLE');
+          return onOpenConfirmModal();
+        default:
+          return;
+      }
+    },
+    []
+  );
 
   return (
     <>

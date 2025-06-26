@@ -11,7 +11,8 @@ export interface AccountCreatorPayload {
   email: string;
   organizationRole: OrganizationRole;
   environmentRoles?: EnvironmentRoleItem[];
-  tags: string[];
+  tags?: string[];
+  teams?: string[];
 }
 
 export interface AccountCreatorResponse {

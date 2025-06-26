@@ -34,6 +34,7 @@ export interface Account {
   updatedAt: string;
   searchFilters: SearchFilter[];
   tags: string[];
+  teams: string[];
 }
 
 export interface AccountCollection {

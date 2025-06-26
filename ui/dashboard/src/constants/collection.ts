@@ -30,5 +30,6 @@ export const sortingListFields: SortingListFields = {
   start_at: 'START_AT',
   stop_at: 'STOP_AT',
   status: 'STATUS',
-  goals_count: 'GOALS_COUNT'
+  goals_count: 'GOALS_COUNT',
+  teams: 'TEAMS'
 };

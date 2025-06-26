@@ -1,5 +1,5 @@
 import axiosClient from '@api/axios-client';
-import { OrganizationRole } from '@types';
+import { TeamChange, OrganizationRole } from '@types';
 import { EnvironmentRoleItem } from './account-creator';
 
 export interface AccountAvatar {
@@ -25,6 +25,7 @@ export interface AccountUpdaterParams {
   tags?: {
     values: string[];
   };
+  teamChanges?: TeamChange[];
 }
 
 export const accountUpdater = async (params?: AccountUpdaterParams) => {

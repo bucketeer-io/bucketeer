@@ -9,6 +9,7 @@ export interface AccountsFetcherParams extends CollectionParams {
   organizationRole?: number;
   environmentId?: string;
   environmentRole?: number;
+  teams?: string[];
 }
 
 export const accountsFetcher = async (

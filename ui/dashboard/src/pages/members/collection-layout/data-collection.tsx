@@ -1,10 +1,11 @@
+import { useCallback } from 'react';
 import { IconEditOutlined } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import primaryAvatar from 'assets/avatars/primary.svg';
 import { useAuthAccess } from 'auth';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
-import { Account, Tag } from '@types';
+import { Account, Team } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { joinName } from 'utils/name';
 import { IconTrash } from '@icons';
@@ -15,18 +16,35 @@ import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
 import DisabledPopoverTooltip from 'elements/disabled-popover-tooltip';
 import ExpandableTag from 'elements/expandable-tag';
 import NameWithTooltip from 'elements/name-with-tooltip';
-import { MemberActionsType } from '../types';
+import { MemberActionsType, MembersFilters } from '../types';
 
 export const useColumns = ({
+  filters,
+  teams,
   onActions,
-  tags
+  setFilters
 }: {
+  filters: MembersFilters;
+  teams: Team[];
   onActions: (item: Account, type: MemberActionsType) => void;
-  tags: Tag[];
+  setFilters: (values: Partial<MembersFilters>) => void;
 }): ColumnDef<Account>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
   const { envEditable, isOrganizationAdmin } = useAuthAccess();
+
+  const handleFilterTeams = useCallback(
+    (team: string) => {
+      const isExisted = filters.teams?.includes(team);
+      const newTeams = isExisted
+        ? filters.teams?.filter(item => item !== team)
+        : [...(filters.teams || []), team];
+      setFilters({
+        teams: newTeams?.length ? newTeams : undefined
+      });
+    },
+    [filters]
+  );
 
   return compact([
     {
@@ -111,19 +129,21 @@ export const useColumns = ({
       }
     },
     {
-      accessorKey: 'tags',
-      header: `${t('tags')}`,
+      accessorKey: 'teams',
+      header: `${t('teams')}`,
       size: 300,
       cell: ({ row }) => {
         const account = row.original;
-        const formattedTags = account.tags?.map(
-          item => tags.find(tag => tag.id === item)?.name || item
+        const formattedTeams = account.teams?.map(
+          item => teams.find(team => team.id === item)?.name || item
         );
         return (
           <ExpandableTag
-            tags={formattedTags}
+            tags={formattedTeams}
             rowId={account.email}
-            className="!max-w-[250px] truncate"
+            filterTags={filters.teams}
+            className="!max-w-[250px] truncate cursor-pointer"
+            onTagClick={team => handleFilterTeams(team)}
           />
         );
       }
