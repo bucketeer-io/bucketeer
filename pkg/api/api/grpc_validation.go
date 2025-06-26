@@ -97,40 +97,31 @@ func newEventValidator(
 }
 
 func (v *eventGoalValidator) validate(ctx context.Context) (string, error) {
-	if err := uuid.ValidateUUID(v.event.Id); err != nil {
-		v.logger.Warn(
-			"Failed to validate goal event id format",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", v.event.Id),
-			)...,
-		)
-		return codeInvalidID, errInvalidIDFormat
-	}
 	ev, err := v.unmarshal(ctx)
 	if err != nil {
 		return codeUnmarshalFailed, errUnmarshalFailed
+	}
+
+	if err := uuid.ValidateUUID(v.event.Id); err != nil {
+		v.logger.Warn(
+			"Failed to validate goal event id format",
+			append(v.buildGoalEventLogFields(ctx, ev), zap.Error(err))...,
+		)
+		return codeInvalidID, errInvalidIDFormat
 	}
 
 	// validate required fields
 	if ev.GoalId == "" {
 		v.logger.Debug(
 			"Empty goal_id",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("id", v.event.Id),
-				zap.String("goal_id", ev.GoalId),
-			)...,
+			v.buildGoalEventLogFields(ctx, ev)...,
 		)
 		return codeEmptyField, errEmptyGoalID
 	}
 	if (ev.User == nil || (ev.User != nil && ev.User.Id == "")) && ev.UserId == "" {
 		v.logger.Debug(
 			"Empty user_id",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("id", v.event.Id),
-				zap.Any("user", ev.User),
-				zap.String("user_id", ev.UserId),
-			)...,
+			v.buildGoalEventLogFields(ctx, ev)...,
 		)
 		return codeEmptyField, errEmptyUserID
 	}
@@ -138,10 +129,7 @@ func (v *eventGoalValidator) validate(ctx context.Context) (string, error) {
 	if !validateTimestamp(ev.Timestamp, v.oldestTimestampDuration, v.furthestTimestampDuration) {
 		v.logger.Debug(
 			"Failed to validate goal event timestamp",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("id", v.event.Id),
-				zap.Int64("timestamp", ev.Timestamp),
-			)...,
+			v.buildGoalEventTimestampLogFields(ctx, ev)...,
 		)
 		return codeInvalidTimestamp, errInvalidTimestamp
 	}
@@ -156,6 +144,7 @@ func (v *eventGoalValidator) unmarshal(ctx context.Context) (*eventproto.GoalEve
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", v.event.Id),
+				zap.String("environment_id", v.event.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -164,29 +153,24 @@ func (v *eventGoalValidator) unmarshal(ctx context.Context) (*eventproto.GoalEve
 }
 
 func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error) {
-	if err := uuid.ValidateUUID(v.event.Id); err != nil {
-		v.logger.Warn(
-			"Failed to validate evaluation event id format",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", v.event.Id),
-			)...,
-		)
-		return codeInvalidID, errInvalidIDFormat
-	}
 	ev, err := v.unmarshal(ctx)
 	if err != nil {
 		return codeUnmarshalFailed, errUnmarshalFailed
+	}
+
+	if err := uuid.ValidateUUID(v.event.Id); err != nil {
+		v.logger.Warn(
+			"Failed to validate evaluation event id format",
+			append(v.buildEvaluationEventLogFields(ctx, ev), zap.Error(err))...,
+		)
+		return codeInvalidID, errInvalidIDFormat
 	}
 
 	// validate required fields
 	if ev.FeatureId == "" {
 		v.logger.Debug(
 			"Empty feature_id",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("id", v.event.Id),
-				zap.String("feature_id", ev.FeatureId),
-			)...,
+			v.buildEvaluationEventLogFields(ctx, ev)...,
 		)
 		return codeEmptyField, errEmptyFeatureID
 	}
@@ -202,31 +186,21 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 	if !isErrorReason && ev.VariationId == "" {
 		v.logger.Debug(
 			"Empty variation_id",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("id", v.event.Id),
-				zap.String("variation_id", ev.VariationId),
-			)...,
+			v.buildEvaluationEventLogFields(ctx, ev)...,
 		)
 		return codeEmptyField, errEmptyVariationID
 	}
 	if (ev.User == nil || (ev.User != nil && ev.User.Id == "")) && ev.UserId == "" {
 		v.logger.Debug(
 			"Empty user_id",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("id", v.event.Id),
-				zap.Any("user", ev.User),
-				zap.String("user_id", ev.UserId),
-			)...,
+			v.buildEvaluationEventLogFields(ctx, ev)...,
 		)
 		return codeEmptyField, errEmptyUserID
 	}
 	if ev.Reason == nil {
 		v.logger.Debug(
 			"Nil reason",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("id", v.event.Id),
-				zap.Any("reason", ev.Reason),
-			)...,
+			v.buildEvaluationEventLogFields(ctx, ev)...,
 		)
 		return codeEmptyField, errNilReason
 	}
@@ -234,10 +208,7 @@ func (v *eventEvaluationValidator) validate(ctx context.Context) (string, error)
 	if !validateTimestamp(ev.Timestamp, v.oldestTimestampDuration, v.furthestTimestampDuration) {
 		v.logger.Debug(
 			"Failed to validate evaluation event timestamp",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("id", v.event.Id),
-				zap.Int64("timestamp", ev.Timestamp),
-			)...,
+			v.buildEvaluationEventTimestampLogFields(ctx, ev)...,
 		)
 		return codeInvalidTimestamp, errInvalidTimestamp
 	}
@@ -252,6 +223,7 @@ func (v *eventEvaluationValidator) unmarshal(ctx context.Context) (*eventproto.E
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", v.event.Id),
+				zap.String("environment_id", v.event.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -261,19 +233,16 @@ func (v *eventEvaluationValidator) unmarshal(ctx context.Context) (*eventproto.E
 
 // For metrics events we don't need to validate the timestamp
 func (v *eventMetricsValidator) validate(ctx context.Context) (string, error) {
+	ev, err := v.unmarshal(ctx)
+	if err != nil {
+		return codeUnmarshalFailed, errUnmarshalFailed
+	}
 	if err := uuid.ValidateUUID(v.event.Id); err != nil {
 		v.logger.Warn(
 			"Failed to validate metrics event id format",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("id", v.event.Id),
-			)...,
+			append(v.buildMetricsEventLogFields(ctx, ev), zap.Error(err))...,
 		)
 		return codeInvalidID, errInvalidIDFormat
-	}
-	_, err := v.unmarshal(ctx)
-	if err != nil {
-		return codeUnmarshalFailed, errUnmarshalFailed
 	}
 	return "", nil
 }
@@ -286,6 +255,7 @@ func (v *eventMetricsValidator) unmarshal(ctx context.Context) (*eventproto.Metr
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", v.event.Id),
+				zap.String("environment_id", v.event.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -310,4 +280,91 @@ func validateTimestamp(
 	// Reject events too far in the future (clock skew, malicious timestamps)
 	maxFuture := time.Now().Add(furthestTimestampDuration)
 	return !given.After(maxFuture)
+}
+
+// buildGoalEventLogFields creates common log fields for goal event logging
+func (v *eventGoalValidator) buildGoalEventLogFields(
+	ctx context.Context,
+	ev *eventproto.GoalEvent,
+) []zap.Field {
+	return log.FieldsFromImcomingContext(ctx).AddFields(
+		zap.String("id", v.event.Id),
+		zap.Int64("timestamp", ev.Timestamp),
+		zap.String("environment_id", v.event.EnvironmentId),
+		zap.String("goal_id", ev.GoalId),
+		zap.Float64("value", ev.Value),
+		zap.Any("user", ev.User),
+		zap.String("user_id", ev.UserId),
+		zap.Any("metadata", ev.Metadata),
+		zap.String("tag", ev.Tag),
+		zap.String("sdk_version", ev.SdkVersion),
+		zap.String("source_id", ev.SourceId.String()),
+	)
+}
+
+// buildGoalEventTimestampLogFields creates enhanced log fields for goal event timestamp validation
+func (v *eventGoalValidator) buildGoalEventTimestampLogFields(
+	ctx context.Context,
+	ev *eventproto.GoalEvent,
+) []zap.Field {
+	now := time.Now().Unix()
+	ageHours := float64(now-ev.Timestamp) / 3600.0
+
+	return append(v.buildGoalEventLogFields(ctx, ev),
+		zap.Int64("currentTime", now),
+		zap.Float64("ageHours", ageHours),
+		zap.String("timestampDate", time.Unix(ev.Timestamp, 0).Format(time.RFC3339)),
+	)
+}
+
+// buildEvaluationEventLogFields creates common log fields for evaluation event logging
+func (v *eventEvaluationValidator) buildEvaluationEventLogFields(
+	ctx context.Context,
+	ev *eventproto.EvaluationEvent,
+) []zap.Field {
+	return log.FieldsFromImcomingContext(ctx).AddFields(
+		zap.String("id", v.event.Id),
+		zap.Int64("timestamp", ev.Timestamp),
+		zap.String("environment_id", v.event.EnvironmentId),
+		zap.String("feature_id", ev.FeatureId),
+		zap.Int32("feature_version", ev.FeatureVersion),
+		zap.String("variation_id", ev.VariationId),
+		zap.Any("reason", ev.Reason),
+		zap.Any("user", ev.User),
+		zap.String("user_id", ev.UserId),
+		zap.Any("metadata", ev.Metadata),
+		zap.String("tag", ev.Tag),
+		zap.String("source_id", ev.SourceId.String()),
+		zap.String("sdk_version", ev.SdkVersion),
+	)
+}
+
+// buildEvaluationEventTimestampLogFields creates enhanced log fields for evaluation event timestamp validation
+func (v *eventEvaluationValidator) buildEvaluationEventTimestampLogFields(
+	ctx context.Context,
+	ev *eventproto.EvaluationEvent,
+) []zap.Field {
+	now := time.Now().Unix()
+	ageHours := float64(now-ev.Timestamp) / 3600.0
+
+	return append(v.buildEvaluationEventLogFields(ctx, ev),
+		zap.Int64("currentTime", now),
+		zap.Float64("ageHours", ageHours),
+		zap.String("timestampDate", time.Unix(ev.Timestamp, 0).Format(time.RFC3339)),
+	)
+}
+
+// buildMetricsEventLogFields creates common log fields for metrics event logging
+func (v *eventMetricsValidator) buildMetricsEventLogFields(
+	ctx context.Context,
+	ev *eventproto.MetricsEvent,
+) []zap.Field {
+	return log.FieldsFromImcomingContext(ctx).AddFields(
+		zap.String("id", v.event.Id),
+		zap.String("environment_id", v.event.EnvironmentId),
+		zap.Int64("timestamp", ev.Timestamp),
+		zap.String("source_id", ev.SourceId.String()),
+		zap.String("sdk_version", ev.SdkVersion),
+		zap.Any("metadata", ev.Metadata),
+	)
 }
