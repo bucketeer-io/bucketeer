@@ -477,8 +477,19 @@ const AddExperimentModal = ({
                 name={`baseVariationId`}
                 render={({ field }) => (
                   <Form.Item className="flex flex-col w-full overflow-hidden">
-                    <Form.Label required>
+                    <Form.Label required className="relative w-fit">
                       {t('experiments.base-variation')}
+                      <Tooltip
+                        align="start"
+                        alignOffset={-100}
+                        content={t('experiments.baseline-variation-tooltip')}
+                        trigger={
+                          <div className="flex-center size-fit absolute top-0 -right-6">
+                            <Icon icon={IconInfo} size="xs" color="gray-500" />
+                          </div>
+                        }
+                        className="max-w-[320px]"
+                      />
                     </Form.Label>
                     <Form.Control>
                       <DropdownMenu>

@@ -29,15 +29,15 @@ const SupportPopover = () => {
       className="py-1.5 shadow-card-secondary"
       trigger={
         <div className="flex-center size-fit">
-          <Icon icon={IconHelpOutlineOutlined} size="sm" />
+          <Icon icon={IconHelpOutlineOutlined} size="sm" color="gray-500" />
         </div>
       }
     >
       <div className="flex flex-col w-full gap-y-0.5">
-        <SupportPopoverItem
-          to={urls.SDK_API_ENDPOINT || ''}
-          title={t('sdk-api-endpoint')}
-        />
+        <div className="flex flex-col w-full gap-y-0.5 px-3 py-1 typo-para-small">
+          <p className="text-gray-700">{t('sdk-api-endpoint')}</p>
+          <p className="text-gray-600">{urls.SDK_API_ENDPOINT || ''}</p>
+        </div>
         <Divider />
         <SupportPopoverItem
           to={DOCUMENTATION_LINKS.GETTING_STARTED}

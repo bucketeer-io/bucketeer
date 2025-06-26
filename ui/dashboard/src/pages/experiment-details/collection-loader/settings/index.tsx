@@ -35,6 +35,7 @@ import Input from 'components/input';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import VariationLabel from 'elements/variation-label';
 
 export interface ExperimentSettingsForm {
   id?: string;
@@ -142,8 +143,17 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   const featureId = watch('featureId');
 
   const variationOptions =
-    featureFlagOptions?.find(item => item.value === featureId)?.variations ||
-    [];
+    featureFlagOptions
+      ?.find(item => item.value === featureId)
+      ?.variations.map((variation, index) => ({
+        label: (
+          <VariationLabel
+            label={variation.name || variation.value}
+            index={index}
+          />
+        ),
+        value: variation.id
+      })) || [];
 
   const onSubmit: SubmitHandler<ExperimentSettingsForm> = async values => {
     const { id, name, description, startAt, stopAt } = values;
@@ -428,8 +438,8 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                             placeholder={t(`experiments.select-flag`)}
                             label={
                               variationOptions.find(
-                                item => item.id === field.value
-                              )?.name || ''
+                                item => item.value === field.value
+                              )?.label || ''
                             }
                             variant="secondary"
                             className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
@@ -443,8 +453,8 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                               <DropdownMenuItem
                                 {...field}
                                 key={index}
-                                value={item.id}
-                                label={item.name}
+                                value={item.value}
+                                label={item.label}
                                 onSelectOption={value => {
                                   field.onChange(value);
                                 }}

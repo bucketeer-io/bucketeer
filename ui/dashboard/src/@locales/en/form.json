@@ -105,7 +105,8 @@
     "time": "Time",
     "on": "On",
     "off": "Off",
-    "goals-tooltip": "The goal is the event you track to measure which variation performs better."
+    "goals-tooltip": "The goal is the event you track to measure which variation performs better.",
+    "baseline-variation-tooltip": "The baseline variation is the control group used as a reference to compare other variations in the experiment."
   },
   "advanced": "Advanced",
   "link": "Link",
@@ -341,6 +342,6 @@
   "getting-started": "Getting started",
   "sdk-configuration": "SDK configuration",
   "type-to-create-user-id": "Type to create a user ID.",
-  "upload-files-error": "Some files were not uploaded because they are of an unsupported type. Please try again with the allowed formats.",
+  "upload-files-error": "Some files could not be uploaded because they are in unsupported formats. Please check the allowed file types and try again.",
   "create-option": "Create \"{{option}}\""
 }
