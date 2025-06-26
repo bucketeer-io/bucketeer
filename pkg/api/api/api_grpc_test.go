@@ -3489,6 +3489,27 @@ func TestGrpcGetEvaluation(t *testing.T) {
 										Value: "false",
 									},
 								},
+								Rules: []*featureproto.Rule{
+									{
+										Id: "rule-1",
+										Strategy: &featureproto.Strategy{
+											Type: featureproto.Strategy_FIXED,
+											FixedStrategy: &featureproto.FixedStrategy{
+												Variation: "variation-b",
+											},
+										},
+										Clauses: []*featureproto.Clause{
+											{
+												Id:        "clause-1",
+												Attribute: "name",
+												Operator:  featureproto.Clause_SEGMENT,
+												Values: []string{
+													"id-0",
+												},
+											},
+										},
+									},
+								},
 								DefaultStrategy: &featureproto.Strategy{
 									Type: featureproto.Strategy_FIXED,
 									FixedStrategy: &featureproto.FixedStrategy{
