@@ -283,7 +283,7 @@ const FilterMemberModal = ({
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <p className="typo-para-medium text-gray-600">{t(`is`)}</p>
+              <p className="typo-para-medium text-gray-600">Is</p>
               <DropdownMenu
                 onOpenChange={open => {
                   if (open) return handleFocusSearchInput();

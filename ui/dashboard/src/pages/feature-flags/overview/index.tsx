@@ -50,7 +50,7 @@ const Overview = ({
   const { t } = useTranslation(['table']);
 
   return (
-    <div className="w-full px-6">
+    <div className="w-full px-6 lg:pr-2">
       <div className="flex flex-wrap items-center w-full gap-6 pb-8">
         {overviewOptions.map((item, index) => (
           <OverviewCard
