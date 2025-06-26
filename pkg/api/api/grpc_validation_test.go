@@ -140,16 +140,6 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "invalid uuid",
-			inputFunc: func() *eventproto.Event {
-				return &eventproto.Event{
-					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
-				}
-			},
-			expected:    codeInvalidID,
-			expectedErr: errInvalidIDFormat,
-		},
-		{
 			desc: "unmarshal fails",
 			inputFunc: func() *eventproto.Event {
 				return &eventproto.Event{
@@ -158,6 +148,35 @@ func TestGrpcValidateGoalEvent(t *testing.T) {
 			},
 			expected:    codeUnmarshalFailed,
 			expectedErr: errUnmarshalFailed,
+		},
+		{
+			desc: "invalid uuid",
+			inputFunc: func() *eventproto.Event {
+				bGoalEvent, err := proto.Marshal(&eventproto.GoalEvent{
+					Timestamp: time.Now().Unix(),
+					GoalId:    "goal-id",
+					User: &user.User{
+						Id: "user-id",
+					},
+					Evaluations: []*feature.Evaluation{
+						{
+							Id: "evaluation-id",
+						},
+					},
+				})
+				if err != nil {
+					t.Fatal("could not serialize event")
+				}
+				return &eventproto.Event{
+					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
+					Event: &any.Any{
+						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.GoalEvent",
+						Value:   bGoalEvent,
+					},
+				}
+			},
+			expected:    codeInvalidID,
+			expectedErr: errInvalidIDFormat,
 		},
 		{
 			desc: "empty goal_id",
@@ -285,16 +304,6 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "invalid uuid",
-			inputFunc: func() *eventproto.Event {
-				return &eventproto.Event{
-					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
-				}
-			},
-			expected:    codeInvalidID,
-			expectedErr: errInvalidIDFormat,
-		},
-		{
 			desc: "unmarshal fails",
 			inputFunc: func() *eventproto.Event {
 				return &eventproto.Event{
@@ -303,6 +312,35 @@ func TestGrpcValidateEvaluationEvent(t *testing.T) {
 			},
 			expected:    codeUnmarshalFailed,
 			expectedErr: errUnmarshalFailed,
+		},
+		{
+			desc: "invalid uuid",
+			inputFunc: func() *eventproto.Event {
+				bEvaluationEvent, err := proto.Marshal(&eventproto.EvaluationEvent{
+					Timestamp:      time.Now().Unix(),
+					FeatureId:      "feature-id",
+					FeatureVersion: 1,
+					VariationId:    "variation-id",
+					User: &user.User{
+						Id: "user-id",
+					},
+					Reason: &feature.Reason{
+						Type: feature.Reason_DEFAULT,
+					},
+				})
+				if err != nil {
+					t.Fatal("could not serialize event")
+				}
+				return &eventproto.Event{
+					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
+					Event: &any.Any{
+						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.EvaluationEvent",
+						Value:   bEvaluationEvent,
+					},
+				}
+			},
+			expected:    codeInvalidID,
+			expectedErr: errInvalidIDFormat,
 		},
 		{
 			desc: "empty feature_id",
@@ -746,16 +784,6 @@ func TestGrpcValidateMetrics(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "invalid uuid",
-			inputFunc: func() *eventproto.Event {
-				return &eventproto.Event{
-					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
-				}
-			},
-			expected:    codeInvalidID,
-			expectedErr: errInvalidIDFormat,
-		},
-		{
 			desc: "unmarshal fails",
 			inputFunc: func() *eventproto.Event {
 				return &eventproto.Event{
@@ -764,6 +792,26 @@ func TestGrpcValidateMetrics(t *testing.T) {
 			},
 			expected:    codeUnmarshalFailed,
 			expectedErr: errUnmarshalFailed,
+		},
+		{
+			desc: "invalid uuid",
+			inputFunc: func() *eventproto.Event {
+				b, err := proto.Marshal(&eventproto.MetricsEvent{
+					Timestamp: time.Now().Unix(),
+				})
+				if err != nil {
+					t.Fatal("could not serialize event")
+				}
+				return &eventproto.Event{
+					Id: "0efe416e 2fd2 4996 c5c3 194f05444f1f",
+					Event: &any.Any{
+						TypeUrl: "github.com/bucketeer-io/bucketeer/proto/event/client/bucketeer.event.client.MetricsEvent",
+						Value:   b,
+					},
+				}
+			},
+			expected:    codeInvalidID,
+			expectedErr: errInvalidIDFormat,
 		},
 		{
 			desc: "invalid timestamp",
