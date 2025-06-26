@@ -421,12 +421,6 @@ docker-compose-setup:
 	else \
 		echo "docker-compose/init-db directory already exists"; \
 	fi
-	@if [ ! -d tools/dev/cert ]; then \
-		echo "Generating development certificates..."; \
-		make -C tools/dev service-cert-secret; \
-		make -C tools/dev service-token-secret; \
-		make -C tools/dev oauth-key-secret; \
-	fi
 	@echo "✅ Docker Compose setup complete"
 
 .PHONY: docker-compose-init-env
