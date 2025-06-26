@@ -109,24 +109,31 @@ sequenceDiagram
     participant SDK as SDK/App Client
     participant BackendService as Backend Service
     participant PubSub as Google Cloud Pub/Sub
-    participant Subscriber as EvaluationCountEventPersister
+    participant Persister as EvaluationCountEventPersister
     participant UserAttributeStore as Redis
 
     rect rgb(220, 220, 220)
-        note over SDK,Subscriber: This Sequence that already exists
-    SDK->>BackendService: User Action / Send RegisterEventsRequest
-    activate BackendService
-        BackendService->>PubSub: Publish Evaluation Event Message
-    deactivate BackendService
-    PubSub-->>Subscriber: Message Delivered (Push/Pull)
-    activate Subscriber
-    end
-    Subscriber->>Subscriber: Parse the Pub/Sub message and extract the UserAttribute.
-    Subscriber->>UserAttributeStore: SET new UserAttribute
+        note over SDK,Persister: Existing Sequence
+        SDK->>BackendService: User Action / Send RegisterEventsRequest
+        activate BackendService
+            BackendService->>PubSub: Publish Evaluation Event Message
+        deactivate BackendService
+        
+        PubSub-->>Persister: Message Delivered (Push/Pull)
+        activate Persister
 
-    note over Subscriber,PubSub: Acking regardless of success or failure
-        Subscriber-->>PubSub: Acknowledge Message
-    deactivate Subscriber
+    Persister->>Persister: Parse the Pub/Sub message and temporarily store the EvaluationEvent in memory.
+
+    
+    Persister-->>PubSub: Acknowledge Message
+    deactivate Persister
+    
+    Persister->>Persister: Trigger a periodic job
+    activate Persister
+        Persister->>Persister: Extract UserAttribute information from the in-memory EvaluationEvent
+    end
+        Persister->>UserAttributeStore: SET UserAttribute
+    deactivate Persister
 ```
 ### Topic
 - Existing PubSub subscriptions will be leveraged, so your PubSub costs will not increase.
@@ -155,7 +162,7 @@ I adopt **Solution3** because it will not increase development costs or PubSub c
 - UserAttributes are extracted from the `EvaluationEvent` obtained by the existing process `EvaluationCountEventPersister.Process()` and are stored in In-memory for a certain period of time (for example, 1 minute) to manage the last information obtained.
 After a certain period of time has passed, the information stored in memory is cached using `UserAttributesCache`.
 
-Note: This Solution is mainly for user suggestion, so there is no need to manage `UserAttributes` sensitively. Also, since the information about `UserAttributeKeys` changes infrequently, there is no need to save it every time in `EvaluationEvent`, which occurs in large numbers.
+**Note:** This Solution is mainly for user suggestion, so there is no need to manage `UserAttributes` sensitively. Also, since the information about `UserAttributeKeys` changes infrequently, there is no need to save it every time in `EvaluationEvent`, which occurs in large numbers.
 
 (The process of storing `EvaluationEvent` in In-memory is already present in `evaluationCountEventPersister.cacheLastUsedInfoPerEnv()`.)
 ## API
