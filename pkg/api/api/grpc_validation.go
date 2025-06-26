@@ -293,17 +293,21 @@ func (v *eventMetricsValidator) unmarshal(ctx context.Context) (*eventproto.Metr
 	return ev, nil
 }
 
-// validateTimestamp limits date range of the given timestamp
-// because we can't stream data outside the allowed bounds into a persistent datastore.
+// validateTimestamp limits date range of the given timestamp to align with database
+// retention policies and prevent problematic timestamps that could affect data quality.
 func validateTimestamp(
 	timestamp int64,
 	oldestTimestampDuration, furthestTimestampDuration time.Duration,
 ) bool {
 	given := time.Unix(timestamp, 0)
+
+	// Reject events older than retention policy (default: 31 days)
 	maxPast := time.Now().Add(-oldestTimestampDuration)
 	if given.Before(maxPast) {
 		return false
 	}
+
+	// Reject events too far in the future (clock skew, malicious timestamps)
 	maxFuture := time.Now().Add(furthestTimestampDuration)
 	return !given.After(maxFuture)
 }

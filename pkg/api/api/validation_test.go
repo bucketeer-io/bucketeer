@@ -27,7 +27,7 @@ import (
 func TestValidateGoalEvent(t *testing.T) {
 	t.Parallel()
 	logger, _ := log.NewLogger()
-	now := time.Now().Unix()
+	now := time.Now()
 	ctx := context.TODO()
 	patterns := []struct {
 		desc         string
@@ -39,21 +39,42 @@ func TestValidateGoalEvent(t *testing.T) {
 		{
 			desc:         "err: invalid uuid",
 			id:           "0efe416e 2fd2 4996 c5c3 194f05444f1f",
-			timestamp:    now,
+			timestamp:    now.Unix(),
 			expectedCode: codeInvalidID,
 			expectedErr:  errInvalidIDFormat,
 		},
 		{
-			desc:         "err: invalid timestamp",
+			desc:         "err: invalid timestamp - far future",
 			id:           newUUID(t),
 			timestamp:    int64(999999999999999),
 			expectedCode: codeInvalidTimestamp,
 			expectedErr:  errInvalidTimestamp,
 		},
 		{
-			desc:         "success",
+			desc:         "err: invalid timestamp - older than 30-day retention",
 			id:           newUUID(t),
-			timestamp:    now,
+			timestamp:    now.Add(-31 * 24 * time.Hour).Unix(), // 31 days ago
+			expectedCode: codeInvalidTimestamp,
+			expectedErr:  errInvalidTimestamp,
+		},
+		{
+			desc:         "success: current time",
+			id:           newUUID(t),
+			timestamp:    now.Unix(),
+			expectedCode: "",
+			expectedErr:  nil,
+		},
+		{
+			desc:         "success: within 31-day retention window",
+			id:           newUUID(t),
+			timestamp:    now.Add(-30 * 24 * time.Hour).Unix(), // 30 days ago
+			expectedCode: "",
+			expectedErr:  nil,
+		},
+		{
+			desc:         "success: just within retention window",
+			id:           newUUID(t),
+			timestamp:    now.Add(-744*time.Hour + time.Minute).Unix(), // Just under 31 days
 			expectedCode: "",
 			expectedErr:  nil,
 		},
@@ -71,7 +92,7 @@ func TestValidateGoalEvent(t *testing.T) {
 func TestValidateEvaluationEvent(t *testing.T) {
 	t.Parallel()
 	logger, _ := log.NewLogger()
-	now := time.Now().Unix()
+	now := time.Now()
 	ctx := context.TODO()
 	patterns := map[string]struct {
 		id           string
@@ -81,19 +102,37 @@ func TestValidateEvaluationEvent(t *testing.T) {
 	}{
 		"err: invalid uuid": {
 			id:           "0efe416e 2fd2 4996 c5c3 194f05444f1f",
-			timestamp:    now,
+			timestamp:    now.Unix(),
 			expectedCode: codeInvalidID,
 			expectedErr:  errInvalidIDFormat,
 		},
-		"err: invalid timestamp": {
+		"err: invalid timestamp - far future": {
 			id:           newUUID(t),
 			timestamp:    int64(999999999999999),
 			expectedCode: codeInvalidTimestamp,
 			expectedErr:  errInvalidTimestamp,
 		},
-		"success": {
+		"err: invalid timestamp - older than 31-day retention": {
 			id:           newUUID(t),
-			timestamp:    now,
+			timestamp:    now.Add(-32 * 24 * time.Hour).Unix(), // 32 days ago
+			expectedCode: codeInvalidTimestamp,
+			expectedErr:  errInvalidTimestamp,
+		},
+		"success: current time": {
+			id:           newUUID(t),
+			timestamp:    now.Unix(),
+			expectedCode: "",
+			expectedErr:  nil,
+		},
+		"success: within 31-day retention window": {
+			id:           newUUID(t),
+			timestamp:    now.Add(-30 * 24 * time.Hour).Unix(), // 30 days ago
+			expectedCode: "",
+			expectedErr:  nil,
+		},
+		"success: just within retention window": {
+			id:           newUUID(t),
+			timestamp:    now.Add(-744*time.Hour + time.Minute).Unix(), // Just under 31 days
 			expectedCode: "",
 			expectedErr:  nil,
 		},
