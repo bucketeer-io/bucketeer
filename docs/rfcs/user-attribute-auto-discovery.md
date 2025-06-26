@@ -99,7 +99,7 @@ sequenceDiagram
 This solution simply leverages the UserAttribute contained in the `EvaluationEvent` sent by the `RegisterEventsRequest` and adds a UserAttribute save operation to the existing data save sequence by leveraging the existing PubSub subscription.
 
 1. Create `UserAttributesCache` for Redis.
-2. In the `EvalEvtWriter` used by `EventsPersister` (which updates data related to `EvaluationEvent`), add a process to determine whether the attribute is new and save it using `UserAttributesCache`.
+2. In the `EvalEvtWriter` used by the `EventsPersister` which updates data related to `EvaluationEvent`, we will add a process to store the data in memory for a certain period of time and then store it using the `UserAttributesCache` when the time comes.
 3. Provide an API for the console to retrieve the attribute list.
 
 
@@ -152,8 +152,12 @@ I adopt **Solution3** because it will not increase development costs or PubSub c
         ```
 
 ## Processor
-- Extract the UserAttribute from the `EvaluationEvent` obtained by the existing `EvaluationCountEventPersister.Process()`. Save the UserAttribute using `UserAttributesCache`.
+- UserAttributes are extracted from the `EvaluationEvent` obtained by the existing process `EvaluationCountEventPersister.Process()` and are stored in In-memory for a certain period of time (for example, 1 minute) to manage the last information obtained.
+After a certain period of time has passed, the information stored in memory is cached using `UserAttributesCache`.
 
+Note: This Solution is mainly for user suggestion, so there is no need to manage `UserAttributes` sensitively. Also, since the information about `UserAttributeKeys` changes infrequently, there is no need to save it every time in `EvaluationEvent`, which occurs in large numbers.
+
+(The process of storing `EvaluationEvent` in In-memory is already present in `evaluationCountEventPersister.cacheLastUsedInfoPerEnv()`.)
 ## API
 
 Add a new API to get UserAttributeKeys in the environment:
