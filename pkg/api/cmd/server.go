@@ -27,6 +27,7 @@ import (
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	auditlogclient "github.com/bucketeer-io/bucketeer/pkg/auditlog/client"
+	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	coderefclient "github.com/bucketeer-io/bucketeer/pkg/coderef/client"
@@ -328,6 +329,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer auditLogClient.Close()
 
+	autoOpsClient, err := autoopsclient.NewClient(*s.auditLogService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer auditLogClient.Close()
+
 	redisV3Client, err := redisv3.NewClient(
 		*s.redisAddr,
 		redisv3.WithPoolSize(*s.redisPoolMaxActive),
@@ -348,6 +361,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		pushClient,
 		codeRefClient,
 		auditLogClient,
+		autoOpsClient,
 		goalPublisher,
 		evaluationPublisher,
 		userPublisher,
