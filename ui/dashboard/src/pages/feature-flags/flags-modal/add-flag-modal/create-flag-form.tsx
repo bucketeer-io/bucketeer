@@ -110,7 +110,10 @@ const CreateFlagForm = ({
     },
     mode: 'onChange'
   });
-  const { watch } = form;
+  const {
+    formState: { isDirty, isValid },
+    watch
+  } = form;
 
   const variationType = watch('variationType');
 
@@ -522,7 +525,7 @@ const CreateFlagForm = ({
                   trigger={
                     <Button
                       type="submit"
-                      disabled={!form.formState.isDirty || !editable}
+                      disabled={!isDirty || !isValid || !editable}
                       loading={form.formState.isSubmitting}
                     >
                       {t(`create-flag`)}

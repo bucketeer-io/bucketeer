@@ -61,17 +61,13 @@ const SelectMenu = ({
                           <NameWithTooltip.Trigger
                             name={content}
                             id={id}
-                            className="typo-para-small py-1 !text-primary-500"
+                            className="typo-para-small py-1 [&>div]:!text-primary-500"
                             maxLines={1}
                             haveAction={false}
                           />
                         }
                       />
                     </div>
-
-                    {/* <p className=" truncate">
-                          {content}
-                        </p> */}
                     <div
                       aria-label="tag-delete-btn"
                       className="flex-center w-3 min-w-3 min-h-full self-stretch cursor-pointer hover:text-gray-900"

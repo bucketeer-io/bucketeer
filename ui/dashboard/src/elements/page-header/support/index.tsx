@@ -11,7 +11,6 @@ import { useTranslation } from 'i18n';
 import { copyToClipBoard } from 'utils/function';
 import { IconCopy } from '@icons';
 import Button from 'components/button';
-import Divider from 'components/divider';
 import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 
@@ -19,7 +18,7 @@ const SupportPopoverItem = ({ to, title }: { to: string; title: string }) => (
   <Link
     to={to}
     target="_blank"
-    className="flex items-center w-full gap-x-2 px-6 py-1 typo-para-small text-gray-700 hover:bg-gray-200 hover:text-primary-500 hover:underline transition-colors rounded"
+    className="flex items-center w-full gap-x-2 px-3 py-1 typo-para-small text-gray-700 hover:bg-gray-200 hover:text-primary-500 hover:underline transition-colors rounded"
   >
     {title}
     <Icon icon={IconLaunchOutlined} size="xxs" />
@@ -52,7 +51,9 @@ const SupportPopover = () => {
         {urls.API_ENDPOINT && (
           <>
             <div className="flex flex-col w-full gap-y-0.5 px-3 py-1 typo-para-small">
-              <p className="text-gray-700">{t('sdk-api-endpoint')}</p>
+              <p className="typo-para-tiny font-semibold text-gray-700 pt-1">
+                {t('sdk-api-endpoint')}
+              </p>
               <div className="flex items-center gap-x-1.5">
                 <p className="text-gray-600">{urls.API_ENDPOINT || ''}</p>
                 <Button
@@ -64,11 +65,10 @@ const SupportPopover = () => {
                 </Button>
               </div>
             </div>
-            <Divider />
           </>
         )}
-        <div className="px-3">
-          <p className="typo-para-small font-semibold text-gray-700 pt-1">
+        <div>
+          <p className="typo-para-tiny font-semibold text-gray-700 pt-1 px-3">
             {t('common:docs')}
           </p>
           <SupportPopoverItem

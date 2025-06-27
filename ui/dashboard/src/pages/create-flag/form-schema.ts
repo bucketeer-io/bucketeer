@@ -125,7 +125,7 @@ export interface FlagFormSchema {
   flagId: string;
   description?: string;
   tags: string[];
-  switchVariationType: FlagSwitchVariationType;
+  switchVariationType?: FlagSwitchVariationType;
   variationType: FeatureVariationType;
   variations: VariationSchema[];
   defaultOnVariation: string;
@@ -149,9 +149,7 @@ export const createFlagFormSchema = ({
       ),
     description: descriptionSchema,
     tags: yup.array().min(1).required(requiredMessage),
-    switchVariationType: yup
-      .mixed<FlagSwitchVariationType>()
-      .required(requiredMessage),
+    switchVariationType: yup.mixed<FlagSwitchVariationType>(),
     variationType: yup.mixed<FeatureVariationType>().required(requiredMessage),
     variations: createVariationsSchema({ requiredMessage, translation }),
     defaultOnVariation: yup.string().required(requiredMessage),
