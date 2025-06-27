@@ -510,6 +510,7 @@ func (s *server) registerPubSubProcessorMap(
 			processorsConfigMap[processor.SegmentUserPersisterName],
 			batchClient,
 			mysqlClient,
+			registerer,
 			logger,
 		)
 		if err != nil {
