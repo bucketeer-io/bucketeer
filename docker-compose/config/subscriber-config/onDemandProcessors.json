@@ -3,10 +3,24 @@
     "flushSize": 20,
     "flushInterval": 5,
     "flushTimeout": 30,
-    "project": "bucketeer",
-    "bigQueryDataSet": "bucketeer",
-    "bigQueryBatchSize": 1000,
-    "timezone": "UTC"
+    "dataWarehouse": {
+      "type": "mysql",
+      "batchSize": 1000,
+      "timezone": "UTC",
+      "mysql": {
+        "useMainConnection": true,
+        "host": "mysql",
+        "port": 3306,
+        "user": "bucketeer",
+        "password": "bucketeer",
+        "database": "bucketeer"
+      },
+      "bigquery": {
+        "project": "",
+        "dataset": "",
+        "location": "US"
+      }
+    }
   },
   "evaluationCountEventOPSPersister": {
     "flushSize": 20,
@@ -17,13 +31,26 @@
     "flushSize": 20,
     "flushInterval": 5,
     "flushTimeout": 30,
-    "project": "bucketeer",
-    "bigQueryDataSet": "bucketeer",
-    "bigQueryDataLocation": "US",
-    "bigQueryBatchSize": 1000,
-    "timezone": "UTC",
-    "MaxRetryGoalEventPeriod": 86400,
-    "RetryGoalEventInterval": 300
+    "maxRetryGoalEventPeriod": 86400,
+    "retryGoalEventInterval": 300,
+    "dataWarehouse": {
+      "type": "mysql",
+      "batchSize": 1000,
+      "timezone": "UTC",
+      "mysql": {
+        "useMainConnection": true,
+        "host": "mysql",
+        "port": 3306,
+        "user": "bucketeer",
+        "password": "bucketeer",
+        "database": "bucketeer"
+      },
+      "bigquery": {
+        "project": "",
+        "dataset": "",
+        "location": "US"
+      }
+    }
   },
   "goalCountEventOPSPersister": {
     "flushSize": 20,
