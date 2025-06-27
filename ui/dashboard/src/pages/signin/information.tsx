@@ -1,47 +1,21 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import useFormSchema, { FormSchemaProps } from 'hooks/use-form-schema';
+import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
-import * as yup from 'yup';
 import { UserInfoForm } from '@types';
 import Button from 'components/button';
 import Form from 'components/form';
 import Input from 'components/input';
+import { userFormSchema } from 'components/navigation/user-profile';
 import AuthWrapper from './elements/auth-wrapper';
-
-const formSchema = ({ requiredMessage, translation }: FormSchemaProps) =>
-  yup.object().shape({
-    firstName: yup
-      .string()
-      .required(requiredMessage)
-      .min(
-        2,
-        translation('message:validation.name-at-least-characters', {
-          count: 2,
-          name: translation('common:first-name').toLowerCase()
-        })
-      ),
-    lastName: yup
-      .string()
-      .required(requiredMessage)
-      .min(
-        2,
-        translation('message:validation.name-at-least-characters', {
-          count: 2,
-          name: translation('common:first-name').toLowerCase()
-        })
-      ),
-    language: yup.string().required(requiredMessage)
-  });
 
 const UserInformation = () => {
   const { t } = useTranslation(['auth']);
   const form = useForm({
-    resolver: yupResolver(useFormSchema(formSchema)),
+    resolver: yupResolver(useFormSchema(userFormSchema)),
     defaultValues: {
       firstName: '',
-      lastName: '',
-      language: ''
+      lastName: ''
     }
   });
 

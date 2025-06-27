@@ -44,7 +44,6 @@ export interface AuthResponse {
 export interface UserInfoForm {
   firstName: string;
   lastName: string;
-  language: string;
 }
 
 export interface EnvironmentRole {

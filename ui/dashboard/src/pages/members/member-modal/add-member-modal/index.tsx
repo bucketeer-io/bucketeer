@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { FunctionComponent, useCallback, useState } from 'react';
 import {
   FormProvider,
   Resolver,
@@ -22,7 +22,7 @@ import uniqBy from 'lodash/uniqBy';
 import * as yup from 'yup';
 import { EnvironmentRoleType, OrganizationRole } from '@types';
 import { checkEnvironmentEmptyId, onFormatEnvironments } from 'utils/function';
-import { IconInfo } from '@icons';
+import { IconEnglishFlag, IconInfo, IconJapanFlag } from '@icons';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -55,11 +55,11 @@ export const defaultEnvironmentRole: EnvironmentRoleItem = {
 interface LanguageItem {
   readonly label: string;
   readonly value: Language;
+  readonly icon: FunctionComponent;
 }
-
 export const languageList: LanguageItem[] = [
-  { label: '日本語', value: Language.JAPANESE },
-  { label: 'English', value: Language.ENGLISH }
+  { label: '日本語', value: Language.JAPANESE, icon: IconJapanFlag },
+  { label: 'English', value: Language.ENGLISH, icon: IconEnglishFlag }
 ];
 
 export interface AddMemberForm {

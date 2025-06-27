@@ -284,42 +284,59 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
             <Form.Field
               control={form.control}
               name="language"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Label required>{t('language')}</Form.Label>
-                  <Form.Control className="w-full">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        placeholder={t('form:select-language')}
-                        label={
-                          languageList.find(item => item.value === field.value)
-                            ?.label
-                        }
-                        variant="secondary"
-                        className="w-full"
-                      />
-                      <DropdownMenuContent
-                        className="w-[500px]"
-                        align="start"
-                        {...field}
-                      >
-                        {languageList.map((item, index) => (
-                          <DropdownMenuItem
-                            {...field}
-                            key={index}
-                            value={item.value}
-                            label={item.label}
-                            onSelectOption={value => {
-                              field.onChange(value);
-                            }}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
+              render={({ field }) => {
+                const currentItem = languageList.find(
+                  item => item.value === field.value
+                );
+
+                return (
+                  <Form.Item>
+                    <Form.Label required>{t('language')}</Form.Label>
+                    <Form.Control className="w-full">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          placeholder={t('form:select-language')}
+                          trigger={
+                            <div className="flex items-center gap-x-2">
+                              {currentItem?.icon && (
+                                <div className="flex-center size-fit mt-0.5">
+                                  <Icon icon={currentItem?.icon} size={'sm'} />
+                                </div>
+                              )}
+                              {currentItem?.label}
+                            </div>
+                          }
+                          variant="secondary"
+                          className="w-full"
+                        />
+                        <DropdownMenuContent
+                          className="w-[500px]"
+                          align="start"
+                          {...field}
+                        >
+                          {languageList.map((item, index) => (
+                            <DropdownMenuItem
+                              {...field}
+                              key={index}
+                              value={item.value}
+                              label={item.label}
+                              iconElement={
+                                <div className="flex-center size-fit mt-0.5">
+                                  <Icon icon={item.icon} size={'sm'} />
+                                </div>
+                              }
+                              onSelectOption={value => {
+                                field.onChange(value);
+                              }}
+                            />
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </Form.Control>
+                    <Form.Message />
+                  </Form.Item>
+                );
+              }}
             />
             <Form.Field
               control={form.control}

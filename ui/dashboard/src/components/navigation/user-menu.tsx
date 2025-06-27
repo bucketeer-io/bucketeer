@@ -1,13 +1,16 @@
-import { useMemo, useState } from 'react';
-import { AccountAvatar } from '@api/account/account-updater';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { AccountAvatar, accountUpdater } from '@api/account/account-updater';
 import * as Popover from '@radix-ui/react-popover';
 import defaultAvatar from 'assets/avatars/default.svg';
-import { useAuth } from 'auth';
-import { useToggleOpen } from 'hooks';
-import { useTranslation } from 'i18n';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { useToast, useToggleOpen } from 'hooks';
+import { getLanguage, Language, setLanguage, useTranslation } from 'i18n';
 import compact from 'lodash/compact';
+import { onChangeFontWithLocalized } from 'utils/function';
 import { IconBuilding, IconChevronRight, IconLogout, IconUser } from '@icons';
+import { languageList } from 'pages/members/member-modal/add-member-modal';
 import { AvatarImage } from 'components/avatar';
+import { DropdownOption } from 'components/dropdown';
 import EditPhotoProfileModal from './edit-photo';
 import MenuItemComponent from './menu-item';
 import UploadAvatarModal from './upload-avatar';
@@ -15,12 +18,15 @@ import UserProfileModal from './user-profile';
 
 const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
   const { t } = useTranslation(['common']);
-  const { logout, myOrganizations, consoleAccount } = useAuth();
+  const { myOrganizations, consoleAccount, logout, onMeFetcher } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const { errorNotify } = useToast();
+  const popoverCloseRef = useRef<HTMLButtonElement>(null);
 
   const [selectedAvatar, setSelectedAvatar] = useState<AccountAvatar | null>(
     null
   );
-
+  const [isLoading, setIsLoading] = useState(false);
   const [openProfileModal, onOpenProfileModal, onCloseProfileModal] =
     useToggleOpen(false);
 
@@ -54,11 +60,50 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
     if (cb) cb();
   };
 
+  const handleUpdateLanguage = useCallback(
+    async (value: string) => {
+      try {
+        if (value === consoleAccount?.language)
+          return popoverCloseRef?.current?.click();
+        setIsLoading(true);
+        const resp = await accountUpdater({
+          organizationId: currentEnvironment.organizationId,
+          email: consoleAccount!.email,
+          language: value
+        });
+        if (resp) {
+          const i18nLanguage = getLanguage();
+          if (value !== i18nLanguage) setLanguage(value as Language);
+          onChangeFontWithLocalized(value === Language.JAPANESE);
+          popoverCloseRef?.current?.click();
+          await onMeFetcher({
+            organizationId: currentEnvironment.organizationId
+          });
+          setIsLoading(false);
+        }
+      } catch (error) {
+        errorNotify(error);
+      }
+    },
+    [consoleAccount, currentEnvironment]
+  );
+
   const menuItems = compact([
     !isHiddenProfileMenu && {
       label: t(`navigation.user-profile`),
       icon: IconUser,
       onClick: onOpenProfileModal
+    },
+    !isHiddenProfileMenu && {
+      label:
+        languageList.find(item => item.value === consoleAccount?.language)
+          ?.label || '',
+      icon: languageList.find(item => item.value === consoleAccount?.language)
+        ?.icon,
+      actIcon: IconChevronRight,
+      loading: isLoading,
+      options: languageList as DropdownOption[],
+      onSelectOption: handleUpdateLanguage
     },
     myOrganizations.length > 1 && {
       label: consoleAccount?.organization?.name || '',
@@ -76,6 +121,7 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
   return (
     <Popover.Root>
       <Popover.Content align="start" className="border-none p-0">
+        <Popover.Close ref={popoverCloseRef} className="hidden" />
         <div className="bg-primary-600 rounded-lg min-w-[200px] max-w-[220px] mb-2">
           {menuItems.map((item, index) => (
             <MenuItemComponent {...item} key={index} />
