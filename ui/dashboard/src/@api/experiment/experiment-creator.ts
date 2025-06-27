@@ -12,14 +12,14 @@ export interface ExperimentCreatorParams {
   description?: string;
 }
 
-export interface ExperimentCreatorResponse {
-  experiment: Array<Experiment>;
+export interface ExperimentCreateUpdateResponse {
+  experiment: Experiment;
 }
 
 export const experimentCreator = async (
   params?: ExperimentCreatorParams
-): Promise<ExperimentCreatorResponse> => {
+): Promise<ExperimentCreateUpdateResponse> => {
   return axiosClient
-    .post<ExperimentCreatorResponse>('/v1/experiment', params)
+    .post<ExperimentCreateUpdateResponse>('/v1/experiment', params)
     .then(response => response.data);
 };

@@ -13,10 +13,9 @@ import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
 import PageContent from './page-content';
 import { UserSegmentsActionsType } from './types';
-import AddUserSegmentModal from './user-segment-modal/add-segment-modal';
 import DeleteUserSegmentModal from './user-segment-modal/delete-segment-modal';
-import EditUserSegmentModal from './user-segment-modal/edit-segment-modal';
 import FlagsConnectedModal from './user-segment-modal/flags-connected-modal';
+import SegmentCreateUpdateModal from './user-segment-modal/segment-create-update-form';
 
 const PageLoader = () => {
   const { t } = useTranslation(['common', 'message']);
@@ -151,19 +150,22 @@ const PageLoader = () => {
         onAdd={onOpenAddModal}
         onActionHandler={onActionHandler}
       />
-      {isAdd && (
-        <AddUserSegmentModal isOpen={isAdd} onClose={onCloseActionModal} />
-      )}
-      {isEdit && (
-        <EditUserSegmentModal
+
+      {(!!isAdd || !!isEdit) && (
+        <SegmentCreateUpdateModal
+          isUpdate={!!isEdit || !!id || !!selectedSegment || isLoadingSegment}
           isDisabled={!editable}
-          isOpen={isEdit}
+          isOpen={!!isAdd || !!isEdit}
           isLoadingSegment={isLoadingSegment}
           userSegment={selectedSegment!}
-          onClose={onCloseActionModal}
+          onClose={() => {
+            setSelectedSegment(undefined);
+            onCloseActionModal();
+          }}
           setSegmentUploading={setSegmentUploading}
         />
       )}
+
       {isOpenFlagModal && selectedSegment && (
         <FlagsConnectedModal
           segment={selectedSegment}

@@ -1,11 +1,15 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   ControllerRenderProps,
   FormProvider,
   SubmitHandler,
   useForm
 } from 'react-hook-form';
-import { experimentUpdater } from '@api/experiment';
+import {
+  ExperimentCreateUpdateResponse,
+  experimentCreator,
+  experimentUpdater
+} from '@api/experiment';
 import { yupResolver } from '@hookform/resolvers/yup';
 import {
   invalidateExperimentDetails,
@@ -18,15 +22,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, hasEditable, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { PAGE_PATH_EXPERIMENTS } from 'constants/routing';
-import { useToast } from 'hooks';
+import { useToast, useToggleOpen } from 'hooks';
 import useActionWithURL from 'hooks/use-action-with-url';
 import useFormSchema from 'hooks/use-form-schema';
 import { useTranslation } from 'i18n';
-import { IconInfo } from '@icons';
+import { IconInfo, IconPlus } from '@icons';
 import { createExperimentFormSchema } from 'pages/experiments/form-schema';
+import CreateFlagForm from 'pages/feature-flags/flags-modal/add-flag-modal/create-flag-form';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import { CreatableSelect } from 'components/creatable-select';
 import { ReactDatePicker } from 'components/date-time-picker';
 import Divider from 'components/divider';
 import {
@@ -38,21 +42,26 @@ import {
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
+import DialogModal from 'components/modal/dialog';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
 import { Tooltip } from 'components/tooltip';
+import CreateGoalModal from 'elements/create-goal-modal';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import DropdownMenuWithSearch from 'elements/dropdown-with-search';
+import FeatureFlagStatus from 'elements/feature-flag-status';
 import FormLoading from 'elements/form-loading';
 import VariationLabel from 'elements/variation-label';
-import { StartType } from '../add-experiment-modal';
 
-interface EditExperimentModalProps {
+interface ExperimentCreateUpdateModalProps {
   disabled: boolean;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export interface EditExperimentForm {
+type StartType = 'manual' | 'schedule';
+
+export interface ExperimentCreateUpdateForm {
   id?: string;
   baseVariationId: string;
   name: string;
@@ -72,15 +81,33 @@ export interface EditExperimentForm {
 }
 
 export type DefineAudienceField = ControllerRenderProps<
-  EditExperimentForm,
+  ExperimentCreateUpdateForm,
   'audience'
 >;
 
-const EditExperimentModal = ({
+const CreateNewOptionButton = ({
+  text,
+  onClick
+}: {
+  text: string;
+  onClick: () => void;
+}) => (
+  <Button
+    type="button"
+    variant="text"
+    className="h-10 self-center w-full bg-white hover:bg-gray-100 sticky left-0 right-0 bottom-0 border-t border-gray-200"
+    onClick={onClick}
+  >
+    <Icon icon={IconPlus} color="primary-500" size={'xs'} />
+    {text}
+  </Button>
+);
+
+const ExperimentCreateUpdateModal = ({
   disabled,
   isOpen,
   onClose
-}: EditExperimentModalProps) => {
+}: ExperimentCreateUpdateModalProps) => {
   const { t } = useTranslation(['form', 'common']);
   const { notify, errorNotify } = useToast();
   const formSchema = useFormSchema(createExperimentFormSchema);
@@ -89,9 +116,22 @@ const EditExperimentModal = ({
   const editable = hasEditable(consoleAccount!);
   const queryClient = useQueryClient();
 
-  const { id: experimentId } = useActionWithURL({
+  const [
+    isOpenCreateGoalModal,
+    onOpenCreateGoalModal,
+    onHiddenCreateGoalModal
+  ] = useToggleOpen(false);
+
+  const [
+    isOpenCreateFlagModal,
+    onOpenCreateFlagModal,
+    onHiddenCreateFlagModal
+  ] = useToggleOpen(false);
+
+  const { isEdit, params } = useActionWithURL({
     closeModalPath: `/${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}`
   });
+  const experimentId = useMemo(() => params?.experimentId, [params]);
 
   const {
     data: experimentCollection,
@@ -101,7 +141,8 @@ const EditExperimentModal = ({
     params: {
       id: experimentId as string,
       environmentId: currentEnvironment.id
-    }
+    },
+    enabled: !!experimentId
   });
 
   const experiment = useMemo(
@@ -110,7 +151,9 @@ const EditExperimentModal = ({
   );
 
   const isEnabledEdit = useMemo(
-    () => ['WAITING', 'NOT_STARTED'].includes(experiment?.status as string),
+    () =>
+      ['WAITING', 'NOT_STARTED'].includes(experiment?.status as string) ||
+      !experiment,
     [experiment]
   );
 
@@ -131,24 +174,27 @@ const EditExperimentModal = ({
     );
   }, [goalCollection]);
 
-  const { data: featureCollection } = useQueryFeatures({
-    params: {
-      cursor: String(0),
-      pageSize: LIST_PAGE_SIZE,
-      environmentId: currentEnvironment.id,
-      hasExperiment: true
-    }
-  });
+  const { data: featureCollection, isLoading: isLoadingFeature } =
+    useQueryFeatures({
+      params: {
+        cursor: String(0),
+        pageSize: LIST_PAGE_SIZE,
+        environmentId: currentEnvironment.id,
+        hasExperiment: true
+      }
+    });
 
-  const featureFlagOptions = (featureCollection?.features || []).map(
-    feature => {
-      return {
-        value: feature.id,
-        label: feature.name,
-        enabled: feature.enabled,
-        variations: feature.variations
-      };
-    }
+  const featureFlagOptions = useMemo(
+    () =>
+      (featureCollection?.features || []).map(feature => {
+        return {
+          value: feature.id,
+          label: feature.name,
+          enabled: feature.enabled,
+          variations: feature.variations
+        };
+      }),
+    [featureCollection]
   );
 
   const form = useForm({
@@ -180,13 +226,18 @@ const EditExperimentModal = ({
   } = form;
   const featureId = watch('featureId');
 
-  const variationOptions =
-    featureFlagOptions
-      ?.find(item => item.value === featureId)
-      ?.variations?.map((item, index) => ({
-        label: <VariationLabel label={item.name || item.value} index={index} />,
-        value: item.id
-      })) || [];
+  const variationOptions = useMemo(
+    () =>
+      featureFlagOptions
+        ?.find(item => item.value === featureId)
+        ?.variations?.map((item, index) => ({
+          label: (
+            <VariationLabel label={item.name || item.value} index={index} />
+          ),
+          value: item.id
+        })) || [],
+    [featureFlagOptions, featureId]
+  );
 
   // const startOptions = [
   //   {
@@ -199,35 +250,61 @@ const EditExperimentModal = ({
   //   }
   // ];
 
-  const onSubmit: SubmitHandler<EditExperimentForm> = async values => {
-    try {
-      const { id, name, description, startAt, stopAt } = values;
-      const resp = await experimentUpdater({
-        id,
-        name,
-        description,
-        startAt,
-        stopAt,
-        environmentId: currentEnvironment.id
-      });
-      if (resp) {
-        notify({
-          message: t('message:collection-action-success', {
-            collection: t('common:source-type.experiment'),
-            action: t('common:updated')
-          })
-        });
-        invalidateExperiments(queryClient);
-        invalidateExperimentDetails(queryClient, {
-          id: experimentId as string,
-          environmentId: currentEnvironment.id
-        });
-        onClose();
+  const onSubmit: SubmitHandler<ExperimentCreateUpdateForm> = useCallback(
+    async values => {
+      try {
+        const {
+          id,
+          baseVariationId,
+          featureId,
+          goalIds,
+          name,
+          startAt,
+          stopAt,
+          description
+        } = values;
+        let resp: ExperimentCreateUpdateResponse | null = null;
+        if (isEdit) {
+          resp = await experimentUpdater({
+            id,
+            name,
+            description,
+            startAt,
+            stopAt,
+            environmentId: currentEnvironment.id
+          });
+        } else {
+          resp = await experimentCreator({
+            baseVariationId,
+            featureId,
+            goalIds,
+            name,
+            startAt,
+            stopAt,
+            description,
+            environmentId: currentEnvironment.id
+          });
+        }
+        if (resp) {
+          notify({
+            message: t('message:collection-action-success', {
+              collection: t('common:source-type.experiment'),
+              action: t(isEdit ? 'common:updated' : 'common:created')
+            })
+          });
+          invalidateExperiments(queryClient);
+          invalidateExperimentDetails(queryClient, {
+            id: experimentId as string,
+            environmentId: currentEnvironment.id
+          });
+          onClose();
+        }
+      } catch (error) {
+        errorNotify(error);
       }
-    } catch (error) {
-      errorNotify(error);
-    }
-  };
+    },
+    [currentEnvironment, experimentId, isEdit]
+  );
 
   useEffect(() => {
     if (experiment) {
@@ -270,7 +347,7 @@ const EditExperimentModal = ({
 
   return (
     <SlideModal
-      title={t('common:edit-experiment')}
+      title={t(`common:${isEdit ? 'edit' : 'new'}-experiment`)}
       isOpen={isOpen}
       onClose={onClose}
     >
@@ -471,7 +548,7 @@ const EditExperimentModal = ({
                 control={form.control}
                 name={`featureId`}
                 render={({ field }) => (
-                  <Form.Item className="flex flex-col w-full overflow-hidden">
+                  <Form.Item className="flex flex-col w-full">
                     <Form.Label required className="relative w-fit">
                       {t('common:flag')}
                       <Icon
@@ -482,36 +559,42 @@ const EditExperimentModal = ({
                       />
                     </Form.Label>
                     <Form.Control>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          disabled
-                          placeholder={t(`experiments.select-flag`)}
-                          label={
-                            featureFlagOptions.find(
-                              item => item.value === field.value
-                            )?.label || ''
-                          }
-                          variant="secondary"
-                          className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
-                        />
-                        <DropdownMenuContent
-                          className="w-[502px]"
-                          align="start"
-                          {...field}
-                        >
-                          {featureFlagOptions.map((item, index) => (
-                            <DropdownMenuItem
-                              {...field}
-                              key={index}
-                              value={item.value}
-                              label={item.label}
-                              onSelectOption={value => {
-                                field.onChange(value);
-                              }}
+                      <DropdownMenuWithSearch
+                        disabled={!!isEdit || disabled}
+                        hidden={isOpenCreateFlagModal}
+                        isLoading={isLoadingFeature}
+                        placeholder={t(`experiments.select-flag`)}
+                        label={
+                          featureFlagOptions.find(
+                            item => item.value === field.value
+                          )?.label || ''
+                        }
+                        options={featureFlagOptions?.map(flag => ({
+                          label: flag.label,
+                          value: flag.value,
+                          enabled: flag.enabled
+                        }))}
+                        selectedOptions={[field.value]}
+                        additionalElement={item => (
+                          <FeatureFlagStatus
+                            status={t(
+                              item.enabled
+                                ? 'experiments.on'
+                                : 'experiments.off'
+                            )}
+                            enabled={item.enabled as boolean}
+                          />
+                        )}
+                        createNewOption={
+                          disabled ? undefined : (
+                            <CreateNewOptionButton
+                              text={t('common:create-a-new-flag')}
+                              onClick={onOpenCreateFlagModal}
                             />
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                          )
+                        }
+                        onSelectOption={field.onChange}
+                      />
                     </Form.Control>
                     <Form.Message />
                   </Form.Item>
@@ -529,10 +612,10 @@ const EditExperimentModal = ({
                       <Form.Control>
                         <DropdownMenu>
                           <DropdownMenuTrigger
-                            disabled
+                            disabled={!!isEdit || disabled}
                             placeholder={t(`experiments.select-variation`)}
                             label={
-                              variationOptions.find(
+                              variationOptions?.find(
                                 item => item.value === field.value
                               )?.label || ''
                             }
@@ -587,21 +670,41 @@ const EditExperimentModal = ({
                       />
                     </Form.Label>
                     <Form.Control>
-                      <CreatableSelect
-                        disabled
-                        loading={isLoadingGoals}
-                        value={goalOptions.filter(item =>
-                          field.value.includes(item.value)
-                        )}
+                      <DropdownMenuWithSearch
+                        isMultiselect
+                        disabled={!!isEdit || disabled}
+                        hidden={isOpenCreateGoalModal}
+                        isLoading={isLoadingGoals}
                         placeholder={t(`experiments.select-goal`)}
-                        options={goalOptions?.map(goal => ({
-                          label: goal.label,
-                          value: goal.value
-                        }))}
-                        onChange={value =>
-                          field.onChange(value.map(goal => goal.value))
+                        label={
+                          field.value
+                            ?.map(
+                              item =>
+                                goalOptions.find(goal => goal.value === item)
+                                  ?.label
+                            )
+                            ?.join(', ') || ''
                         }
-                        onCreateOption={() => {}}
+                        options={goalOptions}
+                        selectedOptions={field.value as string[]}
+                        createNewOption={
+                          disabled ? undefined : (
+                            <CreateNewOptionButton
+                              text={t('common:create-a-new-goal')}
+                              onClick={onOpenCreateGoalModal}
+                            />
+                          )
+                        }
+                        onSelectOption={value => {
+                          const isExisted = field.value?.find(
+                            item => item === value
+                          );
+                          field.onChange(
+                            isExisted
+                              ? field.value?.filter(item => item !== value)
+                              : [...field.value, value]
+                          );
+                        }}
                       />
                     </Form.Control>
                     <Form.Message />
@@ -652,8 +755,36 @@ const EditExperimentModal = ({
           </FormProvider>
         </div>
       )}
+      {isOpenCreateGoalModal && (
+        <CreateGoalModal
+          isOpen={isOpenCreateGoalModal}
+          onClose={onHiddenCreateGoalModal}
+          onCompleted={goal => {
+            form.setValue('goalIds', [
+              ...(form.getValues('goalIds') || []),
+              goal.id
+            ]);
+          }}
+        />
+      )}
+      {isOpenCreateFlagModal && (
+        <DialogModal
+          className="w-[500px] h-full max-h-[700px] overflow-hidden"
+          title={t('common:new-flag')}
+          isOpen={isOpenCreateFlagModal}
+          onClose={onHiddenCreateFlagModal}
+        >
+          <CreateFlagForm
+            className={'flex flex-col flex-1 h-full overflow-auto pb-[170px]'}
+            onClose={onHiddenCreateFlagModal}
+            onCompleted={flag => {
+              form.setValue('featureId', flag.id);
+            }}
+          />
+        </DialogModal>
+      )}
     </SlideModal>
   );
 };
 
-export default EditExperimentModal;
+export default ExperimentCreateUpdateModal;

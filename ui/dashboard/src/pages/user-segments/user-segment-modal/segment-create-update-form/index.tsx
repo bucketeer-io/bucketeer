@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { userSegmentBulkUpload } from '@api/user-segment';
+import { userSegmentBulkUpload, userSegmentCreator } from '@api/user-segment';
 import { userSegmentUpdater } from '@api/user-segment/user-segment-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidateUserSegments } from '@queries/user-segments';
@@ -27,23 +27,25 @@ import FormLoading from 'elements/form-loading';
 import { formSchema } from '../../form-schema';
 import SegmentWarning from './segment-warning';
 
-interface EditUserSegmentModalProps {
+interface SegmentCreateUpdateModalProps {
+  isUpdate: boolean;
   isOpen: boolean;
-  isLoadingSegment: boolean;
+  isLoadingSegment?: boolean;
   userSegment?: UserSegment;
   isDisabled: boolean;
   onClose: () => void;
   setSegmentUploading: (userSegment: UserSegment | null) => void;
 }
 
-const EditUserSegmentModal = ({
+const SegmentCreateUpdateModal = ({
+  isUpdate,
   isOpen,
   isLoadingSegment,
   userSegment,
   isDisabled,
   onClose,
   setSegmentUploading
-}: EditUserSegmentModalProps) => {
+}: SegmentCreateUpdateModalProps) => {
   const { t } = useTranslation(['common', 'form', 'message']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -70,13 +72,13 @@ const EditUserSegmentModal = ({
       description: userSegment?.description || '',
       userIds: '',
       file: null
-    }
+    },
+    mode: 'onChange'
   });
 
   const {
     formState: { isValid, isDirty, isSubmitting },
-    getFieldState,
-    trigger
+    getFieldState
   } = form;
 
   const updateSuccess = (isUpload = false) => {
@@ -84,7 +86,7 @@ const EditUserSegmentModal = ({
       notify({
         message: t('message:collection-action-success', {
           collection: t('source-type.segment'),
-          action: t('updated')
+          action: t(userSegment ? 'updated' : 'created')
         })
       });
       onClose();
@@ -101,51 +103,67 @@ const EditUserSegmentModal = ({
     return updateSuccess(isUpload);
   };
 
-  const onSubmit: SubmitHandler<UserSegmentForm> = async values => {
-    try {
-      const { id, name, description } = values;
-
-      let file: File | null = null;
-      if (values.file || files.length) {
-        file = (values.file as File) || files[0];
-      } else if (values.userIds?.length) {
-        file = new File([values.userIds], 'filename.txt', {
-          type: 'text/plain'
-        });
-      }
-      if (file) {
-        covertFileToUint8ToBase64(file, async base64String => {
-          await userSegmentBulkUpload({
-            segmentId: id as string,
+  const onSubmit: SubmitHandler<UserSegmentForm> = useCallback(
+    async values => {
+      try {
+        const { id, name, description } = values;
+        let segmentId = id;
+        let newSegment = userSegment;
+        if (!userSegment) {
+          const resp = await userSegmentCreator({
             environmentId: currentEnvironment.id,
-            state: 'INCLUDED',
-            data: base64String
+            name: values.name,
+            description: values.description
           });
-          onUpdateSuccess(true);
-        });
-      }
+          segmentId = resp.segment.id;
+          newSegment = resp.segment;
+        }
 
-      if (
-        getFieldState('name').isDirty ||
-        getFieldState('description').isDirty
-      ) {
-        await userSegmentUpdater({
-          id: id as string,
-          name,
-          description,
-          environmentId: currentEnvironment.id
-        });
+        let file: File | null = null;
+        if (values.file || files.length) {
+          file = (values.file as File) || files[0];
+        } else if (values.userIds?.length) {
+          file = new File([values.userIds], 'filename.txt', {
+            type: 'text/plain'
+          });
+        }
+        if (file) {
+          covertFileToUint8ToBase64(file, async base64String => {
+            await userSegmentBulkUpload({
+              segmentId: segmentId as string,
+              environmentId: currentEnvironment.id,
+              state: 'INCLUDED',
+              data: base64String
+            });
+            onUpdateSuccess(true);
+          });
+        }
+
+        if (userSegment) {
+          if (
+            getFieldState('name').isDirty ||
+            getFieldState('description').isDirty
+          ) {
+            await userSegmentUpdater({
+              id: segmentId as string,
+              name,
+              description,
+              environmentId: currentEnvironment.id
+            });
+          }
+        }
+        if (file) setSegmentUploading(newSegment!);
+        onUpdateSuccess();
+      } catch (error) {
+        errorNotify(error);
       }
-      if (file) setSegmentUploading(userSegment!);
-      onUpdateSuccess();
-    } catch (error) {
-      errorNotify(error);
-    }
-  };
+    },
+    [files, currentEnvironment, userSegment]
+  );
 
   return (
     <SlideModal
-      title={t('update-user-segment')}
+      title={t(isUpdate ? 'update-user-segment' : 'new-user-segment')}
       isOpen={isOpen}
       onClose={onClose}
     >
@@ -153,9 +171,11 @@ const EditUserSegmentModal = ({
         <FormLoading />
       ) : (
         <div className="w-full p-5 pb-28">
-          <p className="text-gray-600 typo-para-medium mb-4">
-            {t('form:update-user-segment')}
-          </p>
+          {isUpdate && (
+            <p className="text-gray-600 typo-para-medium mb-4">
+              {t('form:update-user-segment')}
+            </p>
+          )}
           <p className="text-gray-800 typo-head-bold-small">
             {t('form:general-info')}
           </p>
@@ -245,7 +265,6 @@ const EditUserSegmentModal = ({
                                   field.onChange(
                                     files?.length ? files[0] : null
                                   );
-                                  trigger('file');
                                 }}
                               />
                             </div>
@@ -347,4 +366,4 @@ const EditUserSegmentModal = ({
   );
 };
 
-export default EditUserSegmentModal;
+export default SegmentCreateUpdateModal;

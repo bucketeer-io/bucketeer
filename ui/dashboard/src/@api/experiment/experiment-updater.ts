@@ -1,5 +1,6 @@
 import axiosClient from '@api/axios-client';
-import { Experiment, ExperimentStatus } from '@types';
+import { ExperimentStatus } from '@types';
+import { ExperimentCreateUpdateResponse } from './experiment-creator';
 
 export interface ExperimentUpdaterParams {
   id?: string;
@@ -14,14 +15,10 @@ export interface ExperimentUpdaterParams {
   };
 }
 
-export interface ExperimentUpdaterResponse {
-  experiment: Experiment;
-}
-
 export const experimentUpdater = async (
   params?: ExperimentUpdaterParams
-): Promise<ExperimentUpdaterResponse> => {
+): Promise<ExperimentCreateUpdateResponse> => {
   return axiosClient
-    .patch<ExperimentUpdaterResponse>('/v1/experiment', params)
+    .patch<ExperimentCreateUpdateResponse>('/v1/experiment', params)
     .then(response => response.data);
 };
