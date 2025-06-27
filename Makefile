@@ -441,7 +441,7 @@ docker-compose-init-env:
 docker-compose-build:
 	@echo "🔨 Building Bucketeer Docker images..."
 	@echo "Building Go applications with embedded web console..."
-	make -C ./ build-go-embed
+	GOOS=linux make -C ./ build-go-embed
 	@echo "Building Docker images with TAG=localenv..."
 	TAG=localenv make -C ./ build-docker-images
 	@echo "✅ Docker images built successfully"
