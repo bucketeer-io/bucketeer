@@ -16,11 +16,13 @@ import IconCopy from './customized-icons/copy.svg?react';
 import IconDisable from './customized-icons/disable.svg?react';
 import IconDocument from './customized-icons/document.svg?react';
 import IconEmail from './customized-icons/email.svg?react';
+import IconEnglishFlag from './customized-icons/english-flag.svg?react';
 import IconExpand from './customized-icons/expand.svg?react';
 import IconGitHub from './customized-icons/github.svg?react';
 import IconGitLab from './customized-icons/gitlab.svg?react';
 import IconInfoFilled from './customized-icons/info-filled.svg?react';
 import IconInfo from './customized-icons/info.svg?react';
+import IconJapanFlag from './customized-icons/japan-flag.svg?react';
 import IconFlagJSON from './customized-icons/json.svg?react';
 import IconLink from './customized-icons/link.svg?react';
 import IconFlagNumber from './customized-icons/number.svg?react';
@@ -171,6 +173,8 @@ export {
   IconPrerequisite,
   IconPercentage,
   IconCircleDashed,
+  IconJapanFlag,
+  IconEnglishFlag,
   // Special icons
   IconGoal,
   IconGoogle,

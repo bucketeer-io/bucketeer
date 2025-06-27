@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { IconTranslateOutlined } from 'react-icons-material-design';
 import { AccountAvatar, accountUpdater } from '@api/account/account-updater';
 import * as Popover from '@radix-ui/react-popover';
 import defaultAvatar from 'assets/avatars/default.svg';
@@ -99,7 +98,8 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
       label:
         languageList.find(item => item.value === consoleAccount?.language)
           ?.label || '',
-      icon: IconTranslateOutlined,
+      icon: languageList.find(item => item.value === consoleAccount?.language)
+        ?.icon,
       actIcon: IconChevronRight,
       loading: isLoading,
       options: languageList as DropdownOption[],

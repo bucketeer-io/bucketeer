@@ -11,7 +11,7 @@ import {
 import Icon from 'components/icon';
 
 export type MenuItem = {
-  icon: FunctionComponent;
+  icon?: FunctionComponent;
   label: string;
   actIcon?: FunctionComponent;
   href?: string;
@@ -31,7 +31,9 @@ const MenuItemComponent = ({
   onClick,
   onSelectOption
 }: MenuItem) => {
-  const iconEl = <Icon color="primary-50" size="sm" icon={icon} />;
+  const iconEl = icon ? (
+    <Icon color="primary-50" size="sm" icon={icon} />
+  ) : null;
   const actionIcon = actIcon ? (
     <Icon color="primary-50" size="sm" icon={actIcon} />
   ) : null;
@@ -50,7 +52,7 @@ const MenuItemComponent = ({
           trigger={
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center w-full gap-x-2 !text-primary-50">
-                {iconEl}
+                <div className="flex-center size-fit mt-0.5">{iconEl}</div>
                 {label}
               </div>
               {!loading && actionIcon}
@@ -65,6 +67,14 @@ const MenuItemComponent = ({
               key={index}
               label={item.label}
               value={item.value}
+              icon={item?.icon}
+              iconElement={
+                item?.icon ? (
+                  <div className="flex-center size-fit mt-0.5">
+                    <Icon size="sm" icon={item?.icon} />
+                  </div>
+                ) : null
+              }
               className="[&>div>button]:!cursor-pointer"
               onSelectOption={value => onSelectOption?.(value as string)}
             />
