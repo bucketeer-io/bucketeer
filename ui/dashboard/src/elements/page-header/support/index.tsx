@@ -19,7 +19,7 @@ const SupportPopoverItem = ({ to, title }: { to: string; title: string }) => (
   <Link
     to={to}
     target="_blank"
-    className="flex items-center w-full gap-x-2 px-8 py-1 typo-para-small text-gray-700 hover:bg-gray-200 hover:text-primary-500 hover:underline transition-colors rounded"
+    className="flex items-center w-full gap-x-2 px-6 py-1 typo-para-small text-gray-700 hover:bg-gray-200 hover:text-primary-500 hover:underline transition-colors rounded"
   >
     {title}
     <Icon icon={IconLaunchOutlined} size="xxs" />
