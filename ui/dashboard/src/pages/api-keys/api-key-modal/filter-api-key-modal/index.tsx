@@ -97,7 +97,7 @@ const FilterAPIKeyModal = ({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <p className="typo-para-medium text-gray-600">Is</p>
+          <p className="typo-para-medium text-gray-600">is</p>
           <DropdownMenu>
             <DropdownMenuTrigger
               placeholder={t(`select-value`)}
