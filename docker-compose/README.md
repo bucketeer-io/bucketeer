@@ -268,18 +268,18 @@ When using Docker Compose, you can run E2E tests against the local services:
 ```shell
 WEB_GATEWAY_URL=web-gateway.bucketeer.io \
 WEB_GATEWAY_PORT=443 \
-SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
+SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
 API_KEY_NAME="e2e-test-$(date +%s)-client" \
-API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_client \
+API_KEY_PATH=$PWD/tools/dev/cert/api_key_client \
 API_KEY_ROLE=SDK_CLIENT \
 ENVIRONMENT_ID=e2e \
 make create-api-key
 
 WEB_GATEWAY_URL=web-gateway.bucketeer.io \
 WEB_GATEWAY_PORT=443 \
-SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
+SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
 API_KEY_NAME="e2e-test-$(date +%s)-server" \
-API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_server \
+API_KEY_PATH=$PWD/tools/dev/cert/api_key_server \
 API_KEY_ROLE=SDK_SERVER \
 ENVIRONMENT_ID=e2e \
 make create-api-key
@@ -291,9 +291,9 @@ WEB_GATEWAY_URL=web-gateway.bucketeer.io \
 GATEWAY_URL=api-gateway.bucketeer.io \
 WEB_GATEWAY_PORT=443 \
 GATEWAY_PORT=443 \
-SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
-API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_client \
-API_KEY_SERVER_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_server \
+SERVICE_TOKEN_PATH=$PWD/tools/dev/cert/service-token \
+API_KEY_PATH=$PWD/tools/dev/cert/api_key_client \
+API_KEY_SERVER_PATH=$PWD/tools/dev/cert/api_key_server \
 ENVIRONMENT_ID=e2e \
 ORGANIZATION_ID=default \
 make e2e
