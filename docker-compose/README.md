@@ -26,24 +26,31 @@ The Docker Compose setup provides an alternative to the Minikube deployment for 
     │                                │
 ┌─────────────────┐    ┌─────────────────┐
 │   Web Service   │    │   API Service   │
-│   gRPC + REST   │    │   gRPC + REST   │
-│   Port: 9090    │    │   Port: 9090    │
+│ (gRPC internal) │    │ (gRPC internal) │
 └─────────────────┘    └─────────────────┘
          │                       │
          └───────────┬───────────┘
-                     │                        ┌─────────────────┐
-           ┌─────────────────┐                │     Nginx       │
-           │                 │                │ (Reverse Proxy) │
-    ┌─────────────────┐    ┌─────────────────┐ │  Port: 80,8080  │
-    │ Batch Service   │    │ Subscriber Svc  │ └─────────────────┘
-    │   Port: 9090    │    │   Port: 9090    │          │
-    └─────────────────┘    └─────────────────┘          │
-                                                        │
-    ┌───────────────────────────────────────────────────┘
-    │
-    │  Port 80: Web UI & Admin API
-    │  Port 8080: SDK API
-    │
+                     │
+           ┌─────────────────┐
+           │                 │
+    ┌─────────────────┐    ┌─────────────────┐
+    │ Batch Service   │    │ Subscriber Svc  │
+    │ (gRPC internal) │    │ (gRPC internal) │
+    └─────────────────┘    └─────────────────┘
+                     │
+                     |
+┌─────────────────────────────────────────┐
+│                   Nginx                 │
+│              (Reverse Proxy)            │
+│  Ports: 80 (HTTP), 443 (HTTPS)          │
+│                                         │
+│ - web-gateway.bucketeer.io              │
+│ - api-gateway.bucketeer.io              │
+└─────────────────────────────────────────┘
+                    │
+                    |
+    ┌───────────────┴────────────────┐
+    │                                │
 ┌─────────────────┐    ┌─────────────────┐
 │   Client/SDK    │    │   Admin UI      │
 │                 │    │                 │
@@ -55,19 +62,24 @@ The Docker Compose setup provides an alternative to the Minikube deployment for 
 ### Infrastructure Services
 - **MySQL 8.0**: Primary database (port 3306)
 - **Redis 7**: Cache and pub/sub messaging (port 6379)
-- **Nginx**: Reverse proxy for routing (ports 80, 8080)
+- **Nginx**: Reverse proxy for routing (ports 80, 443)
 
 ### Application Services
 - **Migration**: Database schema migration (runs once)
-- **Web**: Core backend with gRPC gateway (frontend + admin APIs, port 9090)
-- **API**: Gateway service with gRPC gateway (SDK client communication, port 9090)
-- **Batch**: Background job processing (port 9090)
-- **Subscriber**: Event processing service (port 9090)
+- **Web**: Core backend with gRPC gateway (frontend + admin APIs, internal ports)
+- **API**: Gateway service with gRPC gateway (SDK client communication, internal ports)
+- **Batch**: Background job processing (internal ports)
+- **Subscriber**: Event processing service (internal ports)
 
 ## Prerequisites
 
 1. **Docker & Docker Compose**: Ensure you have Docker and Docker Compose installed
 2. **Development Certificates**: The setup requires TLS certificates in `../tools/dev/cert/`
+3. **Hosts file**: You need to add the following entries to your `/etc/hosts` file:
+   ```
+   127.0.0.1 web-gateway.bucketeer.io
+   127.0.0.1 api-gateway.bucketeer.io
+   ```
 
 ## Quick Start
 
@@ -175,17 +187,17 @@ The services start in the following order:
 
 After starting the services, you can access:
 
-- **Web Dashboard**: http://localhost or https://localhost
+- **Web Dashboard**: https://web-gateway.bucketeer.io
   - Admin interface for managing feature flags, experiments, etc.
-  - Routes internally to Web service gRPC Gateway (port 9089)
-  
-- **API Gateway**: http://localhost/api or https://localhost/api  
-  - SDK and client API endpoints
-  - Routes internally to API service gRPC Gateway (port 9089)
-  
-- **Health Check**: http://localhost/health or https://localhost/health
-  - Service health status
-  - Routes internally to health endpoints (port 8000)
+  - Routes internally to Web service gRPC Gateway.
+
+- **API Gateway**: https://api-gateway.bucketeer.io
+  - SDK and client API endpoints.
+  - Routes internally to API service gRPC Gateway.
+
+- **Health Check**:
+  - Web: https://web-gateway.bucketeer.io/health
+  - API: https://api-gateway.bucketeer.io/health
 
 **Note**: All Bucketeer services communicate using HTTPS/TLS internally. Nginx handles SSL termination and routing to the appropriate service ports.
 
@@ -198,15 +210,19 @@ The Docker Compose setup uses nginx as a reverse proxy. Internal service archite
 - gRPC Gateway: 9089 (used by nginx)
 - Health Check: 8000
 
-**Web Service:**  
+**Web Service:**
 - gRPC Gateway: 9089 (used by nginx)
 - Health Check: 8000
-- Individual services: 9091-9105 (internal routing)
+- Individual services: 9091-9107 (internal routing)
+
+**Batch & Subscriber Services:**
+- Main gRPC: 9000
+- gRPC Gateway: 9089
 
 **Communication Flow:**
-1. Client → nginx (80/443)
-2. nginx → API/Web services (9089 for gRPC Gateway, 8000 for health)
-3. Services communicate internally via gRPC (port 9000) and specific service ports
+1. Client/Admin UI → nginx (80/443) via `web-gateway.bucketeer.io` or `api-gateway.bucketeer.io`
+2. nginx → API/Web services (gRPC Gateway, health check)
+3. Services communicate internally via gRPC.
 
 ### Direct Database Access
 - **MySQL**: localhost:3306 (bucketeer/bucketeer)
@@ -250,20 +266,20 @@ When using Docker Compose, you can run E2E tests against the local services:
 
 ### Create API Keys
 ```shell
-WEB_GATEWAY_URL=localhost \
-WEB_GATEWAY_CERT_PATH=/dev/null \
-SERVICE_TOKEN_PATH=./tools/dev/cert/service-token \
+WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+WEB_GATEWAY_PORT=443 \
+SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
 API_KEY_NAME="e2e-test-$(date +%s)-client" \
-API_KEY_PATH=./tools/dev/cert/api_key_client \
+API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_client \
 API_KEY_ROLE=SDK_CLIENT \
 ENVIRONMENT_ID=e2e \
 make create-api-key
 
-WEB_GATEWAY_URL=localhost \
-WEB_GATEWAY_CERT_PATH=/dev/null \
-SERVICE_TOKEN_PATH=./tools/dev/cert/service-token \
+WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+WEB_GATEWAY_PORT=443 \
+SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
 API_KEY_NAME="e2e-test-$(date +%s)-server" \
-API_KEY_PATH=./tools/dev/cert/api_key_server \
+API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_server \
 API_KEY_ROLE=SDK_SERVER \
 ENVIRONMENT_ID=e2e \
 make create-api-key
@@ -271,13 +287,13 @@ make create-api-key
 
 ### Run E2E Tests
 ```shell
-WEB_GATEWAY_URL=localhost \
-GATEWAY_URL=localhost \
-WEB_GATEWAY_CERT_PATH=/dev/null \
-GATEWAY_CERT_PATH=/dev/null \
-SERVICE_TOKEN_PATH=./tools/dev/cert/service-token \
-API_KEY_PATH=./tools/dev/cert/api_key_client \
-API_KEY_SERVER_PATH=./tools/dev/cert/api_key_server \
+WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+GATEWAY_URL=api-gateway.bucketeer.io \
+WEB_GATEWAY_PORT=443 \
+GATEWAY_PORT=443 \
+SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
+API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_client \
+API_KEY_SERVER_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_server \
 ENVIRONMENT_ID=e2e \
 ORGANIZATION_ID=default \
 make e2e
@@ -287,9 +303,10 @@ make e2e
 
 ### Common Issues
 
-1. **Port conflicts**: Ensure ports 80, 3306, 6379, 8080 are available
-2. **Certificate issues**: Make sure development certificates exist in `../tools/dev/cert/`
-3. **Service startup order**: Services have dependencies; wait for each tier to be healthy
+1. **Port conflicts**: Ensure ports 80, 443, 3306, 6379 are available on your host machine.
+2. **Certificate issues**: Make sure development certificates exist in `../tools/dev/cert/`.
+3. **`/etc/hosts` not configured**: Ensure `web-gateway.bucketeer.io` and `api-gateway.bucketeer.io` are mapped to `127.0.0.1`.
+4. **Service startup order**: Services have dependencies; wait for each tier to be healthy.
 
 ### Debugging Commands
 
@@ -322,6 +339,7 @@ make start-docker-compose
 - **Local storage**: Uses Docker volumes instead of persistent volumes
 - **Redis Streams**: Uses Redis Streams for pub/sub instead of Google Pub/Sub emulator
 - **No BigQuery emulator**: Events are processed but not stored in BigQuery
+- **TLS between services**: All internal gRPC communication between services is secured with TLS. Nginx proxy also connects to backends using TLS.
 
 ## File Structure
 
@@ -329,9 +347,14 @@ make start-docker-compose
 docker-compose/
 ├── README.md                 # This file
 ├── docker-compose.yml        # Main Docker Compose configuration
-├── env.default              # Default environment variables
-├── .gitignore               # Git ignore rules
+├── env.default               # Default environment variables
+├── .gitignore                # Git ignore rules
 └── config/
+    ├── nginx/                # Nginx configuration
+    │   ├── nginx.conf
+    │   └── bucketeer.conf
+    ├── datawarehouse.yaml    # Data warehouse configuration
+    ├── oauth-config.json     # OAuth configuration
     └── subscriber-config/    # Subscriber service configuration
         ├── subscribers.json
         ├── onDemandSubscribers.json
