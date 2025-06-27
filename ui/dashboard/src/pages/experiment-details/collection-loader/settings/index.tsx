@@ -33,7 +33,9 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import TextArea from 'components/textarea';
+import { Tooltip } from 'components/tooltip';
 import DisabledButtonTooltip from 'elements/disabled-button-tooltip';
+import VariationLabel from 'elements/variation-label';
 
 export interface ExperimentSettingsForm {
   id?: string;
@@ -141,8 +143,17 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
   const featureId = watch('featureId');
 
   const variationOptions =
-    featureFlagOptions?.find(item => item.value === featureId)?.variations ||
-    [];
+    featureFlagOptions
+      ?.find(item => item.value === featureId)
+      ?.variations.map((variation, index) => ({
+        label: (
+          <VariationLabel
+            label={variation.name || variation.value}
+            index={index}
+          />
+        ),
+        value: variation.id
+      })) || [];
 
   const onSubmit: SubmitHandler<ExperimentSettingsForm> = async values => {
     const { id, name, description, startAt, stopAt } = values;
@@ -374,12 +385,6 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                   <Form.Item className="flex flex-col flex-1 overflow-hidden py-0">
                     <Form.Label required className="relative w-fit">
                       {t('common:flag')}
-                      <Icon
-                        icon={IconInfo}
-                        size="xs"
-                        color="gray-500"
-                        className="absolute -right-6"
-                      />
                     </Form.Label>
                     <Form.Control>
                       <DropdownMenu>
@@ -433,8 +438,8 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                             placeholder={t(`experiments.select-flag`)}
                             label={
                               variationOptions.find(
-                                item => item.id === field.value
-                              )?.name || ''
+                                item => item.value === field.value
+                              )?.label || ''
                             }
                             variant="secondary"
                             className="w-full [&>div>p]:truncate [&>div]:max-w-[calc(100%-36px)]"
@@ -448,8 +453,8 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                               <DropdownMenuItem
                                 {...field}
                                 key={index}
-                                value={item.id}
-                                label={item.name}
+                                value={item.value}
+                                label={item.label}
                                 onSelectOption={value => {
                                   field.onChange(value);
                                 }}
@@ -475,11 +480,16 @@ const ExperimentSettings = ({ experiment }: { experiment: Experiment }) => {
                   <Form.Item className="py-0">
                     <Form.Label required className="relative w-fit">
                       {t('common:goals')}
-                      <Icon
-                        icon={IconInfo}
-                        size="xs"
-                        color="gray-500"
-                        className="absolute -right-6"
+                      <Tooltip
+                        align="start"
+                        alignOffset={-50}
+                        content={t('experiments.goals-tooltip')}
+                        trigger={
+                          <div className="flex-center absolute top-0 -right-6">
+                            <Icon icon={IconInfo} size="xs" color="gray-500" />
+                          </div>
+                        }
+                        className="max-w-[300px]"
                       />
                     </Form.Label>
                     <Form.Control>

@@ -64,11 +64,11 @@ const ConnectionsModal = ({ goal, isOpen, onClose }: ConfirmModalProps) => {
               }}
             />
           </div>
-          <div className="flex flex-col w-full p-4 gap-y-5 rounded bg-gray-100 max-h-[300px] overflow-auto">
+          <div className="flex flex-col w-full p-4 gap-y-3 rounded bg-gray-100 max-h-[300px] overflow-auto">
             {connections?.map((item, index) => (
               <div
                 key={index}
-                className="flex items-center gap-x-2 typo-para-medium leading-4 text-primary-500"
+                className="flex items-center gap-x-2 typo-para-medium text-primary-500"
               >
                 <p>{index + 1}.</p>
                 <Link

@@ -4,6 +4,7 @@ import {
   IconFilterListOutlined
 } from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
+import { useScreen } from 'hooks';
 import { useTranslation } from 'i18n';
 import { cn } from 'utils/style';
 import Button from 'components/button';
@@ -32,16 +33,17 @@ const Filter = ({
   onOpenFilter
 }: FilterProps) => {
   const { t } = useTranslation(['common', 'form']);
+  const { lessThanXLScreen } = useScreen();
   return (
     <div
       className={cn(
-        'flex w-full lg:items-center justify-between flex-col lg:flex-row px-6 gap-x-6',
+        'flex w-full lg:items-center justify-between flex-col lg:flex-row pl-6 pr-6 gap-x-6',
         { '!flex-row !justify-end': !onSearchChange },
         className
       )}
     >
       {onSearchChange && (
-        <div className="w-full lg:w-[365px]">
+        <div className="w-full max-w-[365px]">
           <SearchInput
             placeholder={`${t('form:placeholder-search-input')}`}
             value={searchValue}
@@ -49,7 +51,14 @@ const Filter = ({
           />
         </div>
       )}
-      <div className="flex items-center gap-4 mt-3 lg:mt-0 flex-wrap">
+      <div
+        className={cn(
+          'flex flex-1 w-full items-center justify-end gap-4 mt-3 lg:mt-0',
+          {
+            'flex-wrap': lessThanXLScreen
+          }
+        )}
+      >
         {isShowDocumentation && (
           <Link
             target="_blank"

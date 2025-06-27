@@ -288,6 +288,9 @@
   "stop-rollout": "段階的ロールアウトを停止",
   "stop-operation-type-desc": "{{type}}が停止されます。続行してもよろしいですか？",
   "current-event-rate-tooltip": "ゴール数 / 評価数 * 100",
+  "from-last-month": "先月から",
+  "created-at-time": "{{time}}作成されました",
+  "pending-invite": "招待保留中",
   "retry": "リトライ",
   "baseline": "ベースライン"
 }

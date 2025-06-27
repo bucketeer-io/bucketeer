@@ -24,10 +24,17 @@ const DebuggerUserIds = () => {
                   value: item
                 }))}
                 placeholder={t(`enter-user-ids`)}
+                formatCreateLabel={value => (
+                  <p>
+                    {`${t('create-option', {
+                      option: value
+                    })}`}
+                  </p>
+                )}
                 options={[]}
                 onChange={ids => field.onChange(ids.map(item => item.value))}
                 noOptionsMessage={() => (
-                  <UserMessage message={t('no-opts-type-to-create')} />
+                  <UserMessage message={t('type-to-create-user-id')} />
                 )}
               />
               <p className="typo-para-small text-gray-600">

@@ -122,8 +122,8 @@ export const useColumns = ({
       cell: ({ row }) => {
         const account = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {String(account.organizationRole).split('_')[1]}
+          <div className="text-gray-700 typo-para-medium capitalize">
+            {t(String(account.organizationRole).split('_')[1]?.toLowerCase())}
           </div>
         );
       }

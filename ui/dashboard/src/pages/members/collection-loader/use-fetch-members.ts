@@ -29,7 +29,7 @@ export const useFetchMembers = ({
 
   return useQueryAccounts({
     params: {
-      pageSize: pageSize || LIST_PAGE_SIZE,
+      pageSize: typeof pageSize === 'number' ? pageSize : LIST_PAGE_SIZE,
       cursor: String(cursor),
       orderBy,
       orderDirection,

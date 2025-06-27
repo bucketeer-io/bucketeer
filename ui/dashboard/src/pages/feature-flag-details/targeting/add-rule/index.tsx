@@ -91,6 +91,7 @@ const AddRule = ({
                 icon={item.icon}
                 label={item.label}
                 value={item.value}
+                isNormalItem
                 disabled={item?.disabled}
                 onSelectOption={value => onAddRule(value as RuleCategory)}
               />

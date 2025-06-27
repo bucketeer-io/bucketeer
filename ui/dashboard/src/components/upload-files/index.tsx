@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { Trans } from 'react-i18next';
 import { useToast } from 'hooks';
+import { useTranslation } from 'i18n';
 import { formatFileSize } from 'utils/converts';
 import { cn } from 'utils/style';
 import { IconFolder, IconUpload } from '@icons';
@@ -34,7 +35,8 @@ const UploadFiles = ({
   onChange
 }: Props) => {
   const uploadRef = useRef<HTMLInputElement>(null);
-  const { notify } = useToast();
+  const { errorNotify } = useToast();
+  const { t } = useTranslation(['form']);
 
   const formatAccept = useMemo(() => {
     if (typeof accept === 'string') return accept;
@@ -51,12 +53,7 @@ const UploadFiles = ({
         return !accept.includes(fileExtension);
       });
       if (isInvalidField) {
-        notify({
-          message:
-            'Some files were not uploaded because they are of an unsupported type. Please try again with the allowed formats.',
-          messageType: 'error',
-          toastType: 'toast'
-        });
+        errorNotify(undefined, t('upload-files-error'));
         return false;
       }
       return true;
@@ -126,7 +123,7 @@ const UploadFiles = ({
               <div>
                 <Trans
                   i18nKey="form:upload-files"
-                  values={{ text: 'browse' }}
+                  values={{ text: t('browse') }}
                   components={{
                     underline: <u className="text-primary-500 inline" />
                   }}

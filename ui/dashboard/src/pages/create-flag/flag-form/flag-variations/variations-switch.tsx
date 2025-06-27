@@ -34,19 +34,19 @@ const VariationsSwitch = () => {
         return setValue('variations', [
           {
             id: onVariationId,
-            name: 'Control',
+            name: t('control'),
             value: '',
             description: ''
           },
           {
             id: offVariation,
-            name: 'Treatment 1',
+            name: `${t('treatment')} 1`,
             value: '',
             description: ''
           },
           {
             id: uuid(),
-            name: 'Treatment 2',
+            name: `${t('treatment')} 2`,
             value: '',
             description: ''
           }
@@ -58,13 +58,17 @@ const VariationsSwitch = () => {
       return setValue('variations', [
         {
           id: onVariationId,
-          name: isRelease ? 'Available' : isKillSwitch ? 'Enabled' : '',
+          name: isRelease ? t('available') : isKillSwitch ? t('enabled') : '',
           value: 'true',
           description: ''
         },
         {
           id: offVariation,
-          name: isRelease ? 'Unavailable' : isKillSwitch ? 'Disabled' : '',
+          name: isRelease
+            ? t('unavailable')
+            : isKillSwitch
+              ? t('disabled')
+              : '',
           value: 'false',
           description: ''
         }

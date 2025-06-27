@@ -9,7 +9,6 @@ import compact from 'lodash/compact';
 import { IconBuilding, IconChevronRight, IconLogout, IconUser } from '@icons';
 import { AvatarImage } from 'components/avatar';
 import EditPhotoProfileModal from './edit-photo';
-import LogoutConfirmModal from './logout-confirm';
 import MenuItemComponent from './menu-item';
 import UploadAvatarModal from './upload-avatar';
 import UserProfileModal from './user-profile';
@@ -21,9 +20,6 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
   const [selectedAvatar, setSelectedAvatar] = useState<AccountAvatar | null>(
     null
   );
-
-  const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
-    useToggleOpen(false);
 
   const [openProfileModal, onOpenProfileModal, onCloseProfileModal] =
     useToggleOpen(false);
@@ -58,11 +54,6 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
     if (cb) cb();
   };
 
-  const onHandleLogout = () => {
-    logout();
-    onCloseConfirmModal();
-  };
-
   const menuItems = compact([
     !isHiddenProfileMenu && {
       label: t(`navigation.user-profile`),
@@ -78,14 +69,14 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
     {
       label: t(`navigation.logout`),
       icon: IconLogout,
-      onClick: onOpenConfirmModal
+      onClick: logout
     }
   ]);
 
   return (
     <Popover.Root>
       <Popover.Content align="start" className="border-none p-0">
-        <div className="bg-primary-600 rounded-lg min-w-[200px] mb-2">
+        <div className="bg-primary-600 rounded-lg min-w-[200px] max-w-[220px] mb-2">
           {menuItems.map((item, index) => (
             <MenuItemComponent {...item} key={index} />
           ))}
@@ -94,14 +85,6 @@ const UserMenu = ({ onOpenSwitchOrg }: { onOpenSwitchOrg: () => void }) => {
       <Popover.Trigger>
         <AvatarImage image={avatarSrc} size="sm" alt="user-avatar" />
       </Popover.Trigger>
-
-      {openConfirmModal && (
-        <LogoutConfirmModal
-          isOpen={openConfirmModal}
-          onClose={onCloseConfirmModal}
-          onSubmit={onHandleLogout}
-        />
-      )}
 
       {openProfileModal && (
         <UserProfileModal

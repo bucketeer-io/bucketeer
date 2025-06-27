@@ -152,14 +152,14 @@ const ConversionRateTable = ({
             item.variationId === experiment.baseVariationId;
 
           const improvementValueConversionRate = isSameVariationId
-            ? t('baseline')
+            ? t('table:baseline')
             : (isNumber(conversionRate - baseConversionRate)
                 ? conversionRate - baseConversionRate
                 : 0
               ).toFixed(1) + '%';
 
           const improvementValuePerUser = isSameVariationId
-            ? t('baseline')
+            ? t('table:baseline')
             : (isNumber(valuePerUser - baseValuePerUser)
                 ? valuePerUser - baseValuePerUser
                 : 0
@@ -170,7 +170,7 @@ const ConversionRateTable = ({
             : goalValueSumPerUserProbBeatBaseline;
 
           const probBeatBaselineValue = isSameVariationId
-            ? t('baseline')
+            ? t('table:baseline')
             : isNumber(probBeatBaseline?.mean)
               ? (probBeatBaseline.mean * 100).toFixed(1) + '%'
               : '-';

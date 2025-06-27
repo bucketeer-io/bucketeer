@@ -92,7 +92,7 @@ const EntityTypeDropdown = memo(
       <DropdownMenu>
         <DropdownMenuTrigger
           showClear
-          className="max-w-[175px] xxl:max-w-fit"
+          className="max-w-[175px] xxl:max-w-fit [&>div>p]:!text-gray-700"
           label={
             isNotEmpty(entityType) ? (
               <Trans

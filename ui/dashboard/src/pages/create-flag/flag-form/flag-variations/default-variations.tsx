@@ -1,6 +1,6 @@
 import { useFormContext } from 'react-hook-form';
 import { Trans } from 'react-i18next';
-import { useTranslation } from 'i18n';
+import { getLanguage, Language, useTranslation } from 'i18n';
 import { FeatureVariation } from '@types';
 import { FlagFormSchema } from 'pages/create-flag/form-schema';
 import { FlagVariationPolygon } from 'pages/feature-flags/collection-layout/elements';
@@ -15,7 +15,7 @@ import Form from 'components/form';
 const DefaultVariations = () => {
   const { t } = useTranslation(['form', 'common', 'table']);
   const { control, watch } = useFormContext<FlagFormSchema>();
-
+  const isJapaneseLanguage = getLanguage() === Language.JAPANESE;
   const currentVariations = watch('variations') as FeatureVariation[];
 
   return (
@@ -34,7 +34,9 @@ const DefaultVariations = () => {
                 <Trans
                   i18nKey={'form:feature-flags.serve-targeting'}
                   values={{
-                    state: 'ON'
+                    state: isJapaneseLanguage
+                      ? t(`form:experiments.on`)
+                      : t(`form:experiments.on`).toUpperCase()
                   }}
                 />
               </Form.Label>
@@ -103,7 +105,9 @@ const DefaultVariations = () => {
                 <Trans
                   i18nKey={'form:feature-flags.serve-targeting'}
                   values={{
-                    state: 'OFF'
+                    state: isJapaneseLanguage
+                      ? t(`form:experiments.off`)
+                      : t(`form:experiments.off`).toUpperCase()
                   }}
                 />
               </Form.Label>
@@ -135,15 +139,17 @@ const DefaultVariations = () => {
                         key={index}
                         value={item.id}
                         label={
-                          <div className="flex items-center gap-x-2 text-gray-700 typo-para-medium">
-                            <FlagVariationPolygon index={index} />
-                            <Trans
-                              i18nKey={'form:feature-flags.variation'}
-                              values={{
-                                index: index + 1
-                              }}
-                            />
-                          </div>
+                          <>
+                            <div className="flex items-center gap-x-2 text-gray-700 typo-para-medium">
+                              <FlagVariationPolygon index={index} />
+                              <Trans
+                                i18nKey={'form:feature-flags.variation'}
+                                values={{
+                                  index: index + 1
+                                }}
+                              />
+                            </div>
+                          </>
                         }
                         onSelectOption={() => {
                           field.onChange(item.id);
