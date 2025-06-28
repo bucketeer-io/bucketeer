@@ -13,7 +13,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./init-db:/docker-entrypoint-initdb.d
-    command: --default-authentication-plugin=mysql_native_password
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "bucketeer", "-pbucketeer"]
       timeout: 20s
@@ -203,6 +203,8 @@ services:
     depends_on:
       web:
         condition: service_started
+      httpstan:
+        condition: service_healthy
     command: ["server"]
     environment:
       - BUCKETEER_BATCH_PROJECT=bucketeer-test
@@ -253,6 +255,8 @@ services:
       - BUCKETEER_BATCH_PROFILE=false
       - BUCKETEER_BATCH_GCP_TRACE_ENABLED=false
       - BUCKETEER_BATCH_STAN_MODEL_ID=y3qsnd7m
+      - BUCKETEER_BATCH_STAN_HOST=httpstan
+      - BUCKETEER_BATCH_STAN_PORT=8080
     volumes:
       - ../tools/dev/cert/tls.crt:/usr/local/certs/service/tls.crt:ro
       - ../tools/dev/cert/tls.key:/usr/local/certs/service/tls.key:ro
@@ -320,6 +324,21 @@ services:
       - ../tools/dev/cert/service-token:/usr/local/service-token/token:ro
       - ../tools/dev/cert/oauth-public.pem:/usr/local/oauth-key/public.pem:ro
       - ./config/subscriber-config:/usr/local/conf:ro
+    networks:
+      - bucketeer
+    restart: unless-stopped
+
+  # HTTPStan service for statistical modeling
+  httpstan:
+    image: ghcr.io/bucketeer-io/bucketeer-httpstan:${HTTPSTAN_VERSION:-0.0.1}
+    container_name: bucketeer-httpstan
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/v1/health"]
+      timeout: 5s
+      retries: 5
+      interval: 30s
     networks:
       - bucketeer
     restart: unless-stopped
